@@ -108,6 +108,7 @@ classDiagram
     class Concept
     class Condition {
         conditionKey (xsd:string)
+        hierarchyRelation, at most one
         negated, at most one
         negated, only boolean
     }
@@ -163,6 +164,7 @@ classDiagram
     Condition --> Concept : excludedConcept
     Condition --> Concept : requiredConcept
     Condition --> MatchStrategy : matchStrategy
+    Condition --> Property : hierarchyRelation
     Condition --> RangeSet : requiredRangeSet
     Condition --> SchemeContract : constrainedByContract
     Condition --> WildcardSemantics : wildcardSemantics
@@ -225,16 +227,18 @@ flowchart LR
     P -- "hasCondition" --> C
 ```
 
-`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded `skos:broader` hierarchy. Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme. A scheme can reach a hierarchical condition without a hierarchy, because a contract resolves to different schemes in different contexts (ADR-A85). Where no member of the resolved scheme has a broader concept within it, the condition decides only the concepts it names (L14, ADR-A100).
+`HierarchicalMatch` is valid when a dimension is backed by a concept scheme whose membership is resolved against a well-founded hierarchy, the links of the condition's hierarchy relation (below). Evaluation may compute closure at query time or use a generated surface, provided closure is interpreted over the bound scheme. A scheme can reach a hierarchical condition without a hierarchy, because a contract resolves to different schemes in different contexts (ADR-A85). Where no member of the resolved scheme has a link of the condition's hierarchy relation to another member, the condition decides only the concepts it names (L14, ADR-A100).
 
-Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. An admission profile declares no concepts of its own, since its conditions do. A layer above may place one of its defined words, itself a `skos:Concept`, in `elg:requiredConcept` or `elg:excludedConcept` ("a Site in the Territory"), and replace it for each instance by the concepts the word means, so that a condition it generates never names a word. Instrument does, and its shapes report a word that is also a concept of the scheme its condition is constrained by, and a word whose meaning is not a concept (Instrument README §15.1). A word's meaning may come from a variable or from another word, and must not loop back to itself (Instrument README §18.4). A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct, since a `qnt:RangeSet` is a union of ranges and already expresses gaps.
+A condition names the relation it walks with `elg:hierarchyRelation`, `skos:broader` or a property declared a sub-property of it (`rdfs:subPropertyOf`, however many steps). Absent, the relation is `skos:broader`, so a condition that names none keeps the meaning it had. A thesaurus may state several kinds of link between the same concepts, such as a kind link and a part link, each a sub-property of `skos:broader`. Which of them a clause relies on is the clause's own question. "A kind of tumour" walks kind links, and a tumour margin, which is part of a tumour and not a kind of one, is not admitted. "Part of Europe" walks part links, and a city that is part of a country that is part of Europe is. The walk follows the named property only. It does not read a link asserted under a sub-property of the named one, and it does not infer a link from a super-property, so a scheme that wants a plain `skos:broader` consumer to see the hierarchy asserts each link under both. Eligibility names no thesaurus standard's relations. The sub-property declaration is made where the relation is defined (§8.5).
+
+Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` state what they match against with `elg:requiredConcept` and `elg:excludedConcept`. A candidate *matches* a concept by equality under `ExactMatch` and `SetMembership`, and by standing at or below it in the bound scheme's ordering, the condition's hierarchy relation, under `HierarchicalMatch`. Several required concepts are alternatives to one another, and each excluded concept excludes independently. An admission profile declares no concepts of its own, since its conditions do. A layer above may place one of its defined words, itself a `skos:Concept`, in `elg:requiredConcept` or `elg:excludedConcept` ("a Site in the Territory"), and replace it for each instance by the concepts the word means, so that a condition it generates never names a word. Instrument does, and its shapes report a word that is also a concept of the scheme its condition is constrained by, and a word whose meaning is not a concept (Instrument README §15.1). A word's meaning may come from a variable or from another word, and must not loop back to itself (Instrument README §18.4). A question offers its candidate with `elg:candidateConcept`. `IntervalContainment` needs no exclusion construct, since a `qnt:RangeSet` is a union of ranges and already expresses gaps.
 
 | Candidate | Decision | Law |
 |---|---|---|
 | absent, unresolved, more than one per question, or outside the bound scheme where the decision needs that scheme | `Undetermined` | |
 | matches an excluded concept | `Denied`, whether or not it also matches a required concept | L10 |
 | under `HierarchicalMatch`, stands strictly above an excluded concept and is otherwise admitted | `Undetermined`, since its true value may fall under the exclusion | L11 |
-| under `HierarchicalMatch`, is a member of a resolved scheme in which no member has a broader concept within the scheme, and is neither a required nor an excluded concept | `Undetermined`, since the scheme cannot place it | L14 |
+| under `HierarchicalMatch`, is a member of a resolved scheme in which no member has a link of the condition's hierarchy relation to another member, and is neither a required nor an excluded concept | `Undetermined`, since the scheme cannot place it | L14 |
 | matches a required concept, or the condition declares exclusions only and the candidate is a member of the bound scheme | `Permitted` | L12 for the second case |
 | otherwise | `Denied` | |
 
@@ -246,7 +250,7 @@ flowchart LR
     Absent{"absent, unresolved, more than<br/>one per question, or outside<br/>the bound scheme where the<br/>decision needs that scheme?"}
     Excluded{"matches an<br/>excluded concept?"}
     AboveExcl{"HierarchicalMatch: stands<br/>strictly above an excluded<br/>concept, otherwise admitted?"}
-    NoClosure{"HierarchicalMatch: scheme<br/>resolves, no member has a<br/>broader concept within it,<br/>candidate neither required<br/>nor excluded?"}
+    NoClosure{"HierarchicalMatch: scheme<br/>resolves, no member has a<br/>link of the hierarchy relation<br/>to another member, candidate<br/>neither required nor excluded?"}
     Required{"matches a required concept, or<br/>exclusions-only and a member<br/>of the bound scheme?"}
     U["Undetermined"]
     D["Denied"]
@@ -498,14 +502,7 @@ flowchart TB
     end
 ```
 
-L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every
-candidate. A compiler may refuse such a condition instead of compiling a plan that answers
-Undetermined everywhere, and the compilers in `tools/mork_compilers/` do. They refuse a hierarchical
-condition with no `elg:constrainedByContract`, a contract with neither a `voc:SchemeBinding` nor a
-`voc:boundScheme`, and a contract whose bindings resolve to no scheme at the resolution time. Their
-SPARQL and SHACL backends also refuse a hierarchical plan that carries no scheme. A refusal decides
-no candidate, so it does not contradict L9. The reference semantics (`tools/reference/eligibility/`)
-answers Undetermined.
+L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every candidate. A compiler may refuse such a condition instead of compiling a plan that answers Undetermined everywhere. The compilers in `tools/mork_compilers/` compile a plan that answers Undetermined when a contract's bindings resolve to no scheme at the resolution time, and refuse a hierarchical condition with no `elg:constrainedByContract`, a contract with neither a `voc:SchemeBinding` nor a `voc:boundScheme`, and a contract whose applicable bindings conflict. The OWL and SWRL backends refuse a hierarchical plan that carries no scheme, since neither can state Undetermined. The SPARQL and SHACL backends refuse one that carries no scheme unless it was compiled as unresolved. A refusal decides no candidate, so it does not contradict L9. The reference semantics (`tools/reference/eligibility/`) answers Undetermined.
 
 ## 6. Description Logic Encoding
 
@@ -521,6 +518,7 @@ answers Undetermined.
 |---|---|---|---|
 | `elg:negated` | max 1 | SHACL |  |
 | `elg:negated` | only `xsd:boolean` | SHACL |  |
+| `elg:hierarchyRelation` | max 1 | SHACL |  |
 
 #### `elg:ExactCondition`
 
@@ -711,6 +709,16 @@ answers Undetermined.
 **Domain.** `elg:Condition`
 
 **Range.** `skos:Concept`
+
+#### `elg:hierarchyRelation`
+
+**Definition.** The relation a condition matching by HierarchicalMatch walks: `skos:broader` or a property declared a sub-property of it. Absent, `skos:broader`.
+
+**Domain.** `elg:Condition`
+
+**Range.** `rdf:Property`
+
+**Characteristics.** functional
 
 #### `elg:candidateRangeSet`
 
@@ -1064,13 +1072,13 @@ elg:L8 a elg:Law ;
 	rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the condition's hierarchy relation, restricted to that scheme's members, below the asserted value. The ordering relation is the condition's hierarchy relation, skos:broader when it names none, and it is acyclic over the bound scheme. A scheme carrying a cycle in that relation is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
 elg:L10 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
 elg:L11 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the bound scheme's ordering, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
+	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the condition's hierarchy relation, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
 elg:L12 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded." .
@@ -1079,7 +1087,7 @@ elg:L13 a elg:Law ;
 	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
 elg:L14 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
+	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a link of the condition's hierarchy relation to another member of it, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say, by that relation, whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
 elg:L15 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic. Under some value it is Permitted if any value is Permitted. Under every value it is Denied if any value is Denied. An outcome that needs the values reached to be all there are, Denied under some value and Permitted under every value, follows only under a closure in force that the binding names (L17): then some value is Denied when every value is Denied, and every value Permitted when every value is Permitted, the empty case included. Otherwise the condition is Undetermined." .
@@ -1100,7 +1108,7 @@ elg:L17 a elg:Law ;
 | `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Version`. Restrictions `elg:compositionOperation` exactly 1 (SHACL only), `elg:hasCondition` min 1, `elg:matchStrategy` max 0 (SHACL only), `elg:wildcardSemantics` max 0 (SHACL only). |
 | `elg:Closure` | Class | Disjoint with `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
 | `elg:CompositionOperation` | Class | Disjoint with `elg:Closure`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
+| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:hierarchyRelation` max 1 (SHACL only), `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
 | `elg:Decision` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:EligibilityDecision` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:closureReliedOn` only `elg:Closure` (SHACL only), `elg:decisionValue` exactly 1, `elg:forProfile` exactly 1, `elg:hasQuestion` min 1, `elg:usesOperationalProfile` exactly 1 (SHACL only). |
 | `elg:EvidenceBinding` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:bindsCondition` exactly 1 (SHACL only), `elg:closedUnder` max 1 (SHACL only), `elg:closedUnder` only `elg:Closure` (SHACL only), `elg:evidenceStep` min 1 (SHACL only), `elg:singleValued` max 1 (SHACL only), `elg:singleValued` only `xsd:boolean` (SHACL only), `elg:subjectClass` exactly 1 (SHACL only), `elg:valueReading` max 1 (SHACL only), `elg:valueReading` only {`elg:SingleValue`, `elg:SomeValue`, `elg:EveryValue`} (SHACL only). |
@@ -1132,6 +1140,7 @@ elg:L17 a elg:Law ;
 | `elg:forProfile` | Object property | Domain `elg:EligibilityDecision`. Range `elg:AdmissionProfile`. Functional. |
 | `elg:hasCondition` | Object property | Domain `elg:AdmissionProfile`. Range `elg:Condition`. |
 | `elg:hasQuestion` | Object property | Domain `elg:EligibilityDecision`. Range `elg:Question`. |
+| `elg:hierarchyRelation` | Object property | Domain `elg:Condition`. Range `rdf:Property`. Functional. |
 | `elg:lawRegister` | Object property | Domain `elg:Law`. Range `elg:LawRegister`. Functional. |
 | `elg:licensedBy` | Object property | Domain `elg:Closure`. Functional. |
 | `elg:matchStrategy` | Object property | Domain `elg:Condition`. Range `elg:MatchStrategy`. Functional. |
@@ -1200,10 +1209,17 @@ requires a closure's one source.
 (ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows
 a closure only on a binding read some or every value, and `elg:ClosureReliedOnNamedShape` allows a
 decision to rely only on a closure a binding of its profile names (ADR-A105).
+`elg:HierarchyRelationShape` allows a condition one hierarchy relation, and only `skos:broader` or a property
+the graph declares a sub-property of it. `elg:HierarchyRelationNeedsHierarchicalMatchShape` warns of a
+condition that names one without matching hierarchically.
+
+`elg:ReachableExclusionShape` and `elg:HierarchyWellFoundednessShape` (§7.3) read `skos:broader`, whichever relation a condition names. They are exact for a condition that names none. For one that names a relation they are conservative where the scheme asserts each link under `skos:broader` as well (§5.1), and silent about a link asserted only under the named property, because a SHACL-SPARQL constraint cannot take its property path from data. The compilers check the named relation itself (§5.8).
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 
 elg:SingleConditionMechanismShape a sh:NodeShape ;
@@ -1311,6 +1327,31 @@ elg:ClosureReliedOnNamedShape a sh:NodeShape ;
 					$this elg:forProfile/elg:hasCondition+ ?condition .
 					?binding elg:bindsCondition ?condition ; elg:closedUnder ?value .
 				}
+			}
+		"""
+	] .
+
+elg:HierarchyRelationShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:hierarchyRelation ;
+	sh:property [
+		sh:path elg:hierarchyRelation ;
+		sh:maxCount 1 ;
+		sh:or (
+			[ sh:hasValue skos:broader ]
+			[ sh:property [ sh:path [ sh:oneOrMorePath rdfs:subPropertyOf ] ; sh:hasValue skos:broader ] ]
+		) ;
+		sh:message "A hierarchy relation is skos:broader or a property declared a sub-property of it (rdfs:subPropertyOf)." ;
+	] .
+
+elg:HierarchyRelationNeedsHierarchicalMatchShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:hierarchyRelation ;
+	sh:severity sh:Warning ;
+	sh:sparql [
+		sh:message "Only a condition matching by HierarchicalMatch walks a hierarchy relation, so this one names a relation that decides nothing." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS { $this elg:matchStrategy elg:HierarchicalMatch }
 			}
 		"""
 	] .
@@ -1508,6 +1549,30 @@ authoring one question per subject, and `ex:dan`'s row is L11 in practice, not m
 rule: the scheme cannot yet say whether he is a platform engineer or a contractor, so the exclusion
 is only possible, not certain.
 
+### 8.5 Hierarchy relation
+
+[`hierarchy-relation.ttl`](examples/hierarchy-relation.ttl). A diagnosis scheme whose links are of two kinds, each declared a sub-property of `skos:broader` and each also asserted as `skos:broader`. Three conditions require `ex:tumour` and differ only in the relation they walk.
+
+```mermaid
+flowchart TB
+    Tumour["ex:tumour — REQUIRED"]
+    Carcinoma["ex:carcinoma"]
+    Lung["ex:lung-carcinoma"]
+    Margin["ex:tumour-margin"]
+    Carcinoma -- "kind-of" --> Tumour
+    Lung -- "kind-of" --> Carcinoma
+    Margin -- "part-of" --> Tumour
+```
+
+| Candidate | `ex:kind-of-tumour` | `ex:part-of-tumour` | `ex:any-link-to-tumour` (names none) |
+|---|---|---|---|
+| `ex:lung-carcinoma` | Permitted | Denied | Permitted |
+| `ex:tumour-margin` | Denied | Permitted | Permitted |
+
+A condition that names no relation walks `skos:broader` and admits the margin, which a clause asking for a kind of tumour does not mean to. Naming `ex:kind-of` stops the walk at kind links. The second scheme in the file states a licence for any territory that is part of Europe. A city in a country that is part of Europe is admitted by walking part links, two steps from the required concept.
+
+What it shows: the clause, not the scheme, says which relation it relies on, and one scheme can answer both questions. The sub-property declaration travels with the graph, so `elg:HierarchyRelationShape` can refuse a relation that is not an ordering of the kind `skos:broader` states.
+
 ## 9. Canonicalisation
 
 Eligibility canonicalisation is declaration-first and profile-stable.
@@ -1552,6 +1617,8 @@ The tables are for a reader. The clauses below are the one normative statement o
 the kernel's laws are proved against them. `decision_leq`, the information order, is a predicate over
 equality rather than a finite case table, and is stated beside the laws.
 
+L9 and L14 are stated over a hierarchy relation taken as a parameter, any relation from a concept to the concepts above it, so a proof about them holds for every relation a condition may name. The theory is hand-written in `tools/proofs/eligibility/Hierarchy.thy`, since only the three-valued kernel is generated.
+
 L15's readings, `some_value` and `every_value`, each take whether the binding is closed (L17). Closed,
 `some_value` folds `or3` from `Denied`, and `every_value` folds `and3` from `Permitted`. Each starts from its
 connective's identity, so the empty case decides. Open, `some_value` is Permitted when a value is Permitted
@@ -1594,7 +1661,11 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- Next release. Re-pinned: a new substrate layer joins the release. No other change.
+- Next release. Re-pinned: a new substrate layer joins the release.
+  - New `elg:hierarchyRelation`, naming the relation a hierarchical condition walks. Absent, the relation is `skos:broader`, so every existing graph keeps its meaning (no effect).
+  - L9, L11 and L14 are restated over the condition's hierarchy relation, and L9's acyclicity requirement is over that relation (no effect for a graph that names none).
+  - New shapes `elg:HierarchyRelationShape` and `elg:HierarchyRelationNeedsHierarchicalMatchShape`. A graph that does not name a hierarchy relation is not affected. One that does and names a property that is not `skos:broader` and has no declared route to it is invalid (may invalidate).
+  - A hierarchical condition whose contract has bindings that apply at no instant compiles to a plan that answers Undetermined for every candidate, where the compilers refused it before (changes meaning for a consumer of the compilers, not for a graph).
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every

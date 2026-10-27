@@ -23,7 +23,11 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   `elg:SetMembership` and `elg:HierarchicalMatch` (laws L9-L12, L14), and the set-reading and
   negation composition on top of it (L15, L16), deciding on completeness only for a binding
   that names a closure (L17, ADR-A105). `decide_condition_with_reliance` also reports whether
-  that decision relied on the closure (HQ6a2-Q3). It was written directly from
+  that decision relied on the closure (HQ6a2-Q3). L9, L11 and L14 are stated over the ordering of
+  one hierarchy relation, the condition's own (`elg:hierarchyRelation`, `skos:broader` when it
+  names none). `Scheme.over` builds a scheme from the links of that one relation, and the
+  differential tests build it from the graph's links of the named relation, not from the
+  compiler's plan, so a compiler that walked another relation would disagree. It was written directly from
   `ontology/eligibility/README.md` §6's law prose, then cross-checked against
   `tools/mork_compilers/src/mork_compilers/eligibility_ir.py`'s `_expand` function only to confirm
   no case was missed — not copied from it. `_expand` is what every compiler backend (SPARQL,

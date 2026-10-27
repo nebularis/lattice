@@ -38,7 +38,7 @@ from .test_hierarchical_conditions import DIAGNOSES, EX
 ROOT = Path(__file__).resolve().parents[4]
 DIAGNOSTICS = {
     EXE.MissingCandidate, EXE.SeveralCandidates, EXE.OutsideScheme, EXE.AboveExclusion, EXE.NoHierarchy,
-    EXE.ValueSpaceMismatch, EXE.NoBoundInUnit, EXE.RefusedOperation, EXE.NoClosureLicence,
+    EXE.ValueSpaceMismatch, EXE.NoBoundInUnit, EXE.RefusedOperation, EXE.NoClosureLicence, EXE.NoApplicableBinding,
 }
 DECISIONS = {ELG.Permitted: "Permitted", ELG.Denied: "Denied"}
 

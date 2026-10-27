@@ -106,7 +106,10 @@
 	rdfs:comment "Under hierarchical match, the candidate stands strictly above an excluded concept (elg:L11)." .
 
 :NoHierarchy a :Diagnostic ;
-	rdfs:comment "Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+	rdfs:comment "Under hierarchical match, no member of the resolved scheme has a link of the condition's hierarchy relation to another member, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+
+:NoApplicableBinding a :Diagnostic ;
+	rdfs:comment "The condition's scheme contract has bindings, and none applies at the resolution time or in the active scopes, with no bound scheme as a fallback, so there is no scheme to decide the candidate against (ADR-A85, elg:L9)." .
 
 :ValueSpaceMismatch a :Diagnostic ;
 	rdfs:comment "The value an evidence binding reaches is not read on the condition's value space." .

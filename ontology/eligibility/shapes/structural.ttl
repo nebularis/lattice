@@ -23,7 +23,7 @@ elg:ClosureShape a sh:NodeShape ;
 
 elg:ConditionShape a sh:NodeShape ;
     sh:targetClass elg:Condition ;
-    sh:property [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+    sh:property [ sh:path elg:hierarchyRelation ; sh:maxCount 1 ], [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
 
 elg:EligibilityDecisionShape a sh:NodeShape ;
     sh:targetClass elg:EligibilityDecision ;

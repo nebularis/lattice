@@ -171,6 +171,11 @@ elg:hasQuestion a owl:ObjectProperty ;
     rdfs:domain elg:EligibilityDecision ;
     rdfs:range elg:Question .
 
+elg:hierarchyRelation a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The relation a condition matching by HierarchicalMatch walks: skos:broader or a property declared a sub-property of it. Absent, skos:broader." ;
+    rdfs:domain elg:Condition ;
+    rdfs:range rdf:Property .
+
 elg:lawRegister a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How a logical law of the Eligibility layer is discharged." ;
     rdfs:domain elg:Law ;

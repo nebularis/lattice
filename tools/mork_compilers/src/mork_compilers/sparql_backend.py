@@ -35,13 +35,29 @@ Concept plans (ADR-A89) follow the ADR-A87 decision table: a question with no
 ``elg:candidateConcept``, or more than one, is Undetermined. An excluded
 candidate is Denied (L10), a required one Permitted, and any other Denied.
 Where the plan resolved a scheme, a candidate outside it is Undetermined, and
-hierarchical match walks ``skos:broader`` at query time (the "QueryTime" form
-of ADR-A89 item 3). The walk does not check that intermediate concepts belong
-to the scheme. The plan's own expansion does, and the two agree on any scheme
-whose members are broader only than other members. Over a scheme whose members
-have no broader member (L14, ADR-A100), no walk happens: the named concepts
-decide by equality and every other member is Undetermined with
-``exe:NoHierarchy``.
+hierarchical match walks the plan's hierarchy relation at query time (the
+"QueryTime" form of ADR-A89 item 3), ``elg:hierarchyRelation`` or ``skos:broader``
+when the condition names none (L9). The walk does not check that intermediate
+concepts belong to the scheme. The plan's own expansion does, and the two agree on
+any scheme whose members are above only other members by that relation. Over a
+scheme in which no member has a link of the relation to another member (L14,
+ADR-A100), no walk happens: the named concepts decide by equality and every other
+member is Undetermined with ``exe:NoHierarchy``. A plan whose contract's bindings
+apply at no instant (``plan.unresolved``) answers Undetermined for every row, with
+``exe:NoApplicableBinding``, and runs no walk.
+
+**Cost (STD-020).** The relation is a constant IRI of the plan, so each walk is a
+property path over one predicate, never a variable predicate, and a scheme that
+carries other relations costs nothing extra. Per decided candidate (one question,
+one bound subject, or one value under a set reading) the query runs at most three
+path tests: ``<r>*`` upwards from the candidate to a required concept, the same to
+an excluded concept, and ``<r>+`` from an excluded concept down to the candidate,
+each bounded by the candidate's ancestors or descendants by ``<r>``. Naming the
+relation never costs more than the ``skos:broader`` walk it replaces and costs less
+where a scheme states other links as ``skos:broader`` too. The shape is the one
+the module's other concept queries have, one grouped sub-select per condition and
+no join between conditions. Measured on neither engine yet: the first measurement
+should use the largest scheme an applied module carries.
 """
 
 from __future__ import annotations
@@ -184,13 +200,15 @@ def _flat_decision(plan: ConceptPlan) -> str:
 
 
 def _hierarchical_decision(plan: ConceptPlan) -> str:
+    relation = f"<{plan.relation}>"
+
     def below(concepts: Sequence[URIRef]) -> str:
-        return f"EXISTS {{ ?candidate skos:broader* ?target . FILTER (?target IN ({_in_list(concepts)})) }}"
+        return f"EXISTS {{ ?candidate {relation}* ?target . FILTER (?target IN ({_in_list(concepts)})) }}"
 
     admitted = below(plan.required) if plan.required else "true"
     if not plan.excluded:
         return f'IF({admitted}, "Permitted", "Denied")'
-    above = f"EXISTS {{ ?target skos:broader+ ?candidate . FILTER (?target IN ({_in_list(plan.excluded)})) }}"
+    above = f"EXISTS {{ ?target {relation}+ ?candidate . FILTER (?target IN ({_in_list(plan.excluded)})) }}"
     return (
         f'IF({below(plan.excluded)}, "Denied", '
         f'IF({admitted}, IF({above}, "Undetermined", "Permitted"), "Denied"))'
@@ -221,22 +239,25 @@ def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -
 def _concept_core(plan: ConceptPlan, carry: str, key: str, per_value: bool) -> str:
     """The per-candidate decision. With ``per_value``, one row per value the
     binding's path reaches, each decided as a single candidate (L15)."""
-    if plan.hierarchical and plan.scheme is None:
+    if plan.hierarchical and plan.scheme is None and not plan.unresolved:
         raise IRCompileError(f"{plan.condition} matches hierarchically with no resolved scheme (L9)")
-    if plan.no_hierarchy:
-        decision = _no_hierarchy_decision(plan)
+    if plan.unresolved:
+        decision, diagnostic = '"Undetermined"', f"<{EXE.NoApplicableBinding}>"
     else:
-        decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
-    reason = EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion
-    determined = f'IF(?decision = "Undetermined", <{reason}>, ?none)'
-    if plan.scheme is not None:
-        membership = f"EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}"
-        decision = f'IF({membership}, {decision}, "Undetermined")'
-        determined = f"IF({membership}, {determined}, <{EXE.OutsideScheme}>)"
-    diagnostic = (
-        f"IF(?candidates = 0, <{EXE.MissingCandidate}>, "
-        f"IF(?candidates > 1, <{EXE.SeveralCandidates}>, {determined}))"
-    )
+        if plan.no_hierarchy:
+            decision = _no_hierarchy_decision(plan)
+        else:
+            decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
+        reason = EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion
+        determined = f'IF(?decision = "Undetermined", <{reason}>, ?none)'
+        if plan.scheme is not None:
+            membership = f"EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}"
+            decision = f'IF({membership}, {decision}, "Undetermined")'
+            determined = f"IF({membership}, {determined}, <{EXE.OutsideScheme}>)"
+        diagnostic = (
+            f"IF(?candidates = 0, <{EXE.MissingCandidate}>, "
+            f"IF(?candidates > 1, <{EXE.SeveralCandidates}>, {determined}))"
+        )
     if plan.evidence is None:
         source = (
             f"      {key} elg:forCondition <{plan.condition}> .\n"
