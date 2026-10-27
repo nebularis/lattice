@@ -28,7 +28,7 @@ Our generated SPARQL is tested on Oxigraph by default and on rdflib before a mer
 
 ## Where it runs, and keeping it isolated
 
-- **Base.** The unit starts from `ccs-trunk` at the commit that adds this plan, since it needs TSD-41 to TSD-43, the aggregate matrix and `check:mork-compilers`' engine switch, which are not yet on `main`. It has its own integration branch, `msc-trunk`, and each slice its own branch and worktree under `~/work/lattice-wt/`, for example `msc/1-jena-engine` in `~/work/lattice-wt/msc-1-jena-engine`. `msc-trunk` merges into `main` only after `ccs-trunk` has, and takes `main` back in before it does.
+- **Base.** The unit starts from `ccs-trunk` at the commit that adds this plan, since it needs TSD-41 to TSD-43, the aggregate matrix and `check:mork-compilers`' engine switch, which are not yet on `main`. It has its own integration branch, `multi-store-conformance` (see the operating rule under Answers). `multi-store-conformance` merges into `main` only after `ccs-trunk` has, and takes `main` back in before it does.
 - **Files shared with other work.** Keep edits to these small, and append rather than rewrite: `mise.toml` (new tasks, and the engine lists of existing conformance tasks), `tools/persistence/tests/engines.py` (one registry entry and one branch in `dataset`), `tools/mork_compilers/src/mork_compilers/engines.py` (the same), `docs/architecture/triple-store-discovery.md` (new entries and rows only), `docs/architecture/efficient-queries-and-shapes.md`, `repository-catalogue.md`, the registers.
 - **Reserved identifiers,** so this unit and the CCS unit never collide: TSD-50 to TSD-69, TSD-Q30 to TSD-Q39, run records R-S to R-Z (the CCS unit stays below R-S), TD-100 to TD-109, STD-290 to STD-299, CAP-90 to CAP-99, PDD-30 to PDD-34. CAP-90 is registered with this plan.
 
@@ -85,4 +85,12 @@ flowchart LR
 
 ## Answers
 
-To be recorded by the maintainer before MSC-1 starts.
+Decided by us on 2026-10-27, under the maintainer's mandate to complete the plan autonomously, for the maintainer's review before `main`.
+
+- **MSC-Q1 (a).** A Java test kit, `platform/sparql-testkit`, driven over standard input and output as the reasoning kit is, and its Python wrapper `tools/testing/jena`.
+- **MSC-Q2.** Jena 5.1.0, from the platform parent POM.
+- **MSC-Q3.** `tools/testing/sparql_probes`, holding the aggregate matrix moved from `tools/mork_compilers`.
+- **MSC-Q4.** P3 moves to `benchmark/persistence-store-probes` and leaves `check:persistence`.
+- **MSC-Q5.** Each suite's conformance task, plus `check:conformance` running them all.
+
+**Operating rule for this unit.** Commits go to the `multi-store-conformance` branch only, which stands in for `msc-trunk`. Sub-agents work in worktrees detached from it and never commit, and we bring their changes onto the branch after review.
