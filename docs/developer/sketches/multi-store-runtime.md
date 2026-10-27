@@ -215,7 +215,7 @@ Two refinements to §5.2 of the history sketch, which stand either way.
 
 A restore must land somewhere that cannot be mistaken for the record, which is the epoch question Persistence §5.6.8 answers for restores generally. The epoch is bumped on restore, so a position minted before cannot be confused with one minted after. Whether that serves a *partial* restore of one archived period into a scratch dataset is MS-Q4.
 
-The fourth row matters more than it looks. An archive that cannot be shown to be what was written is worse than no archive, because it invites the argument that the record was changed. A digest per archived period, recorded at the close, costs a handful of triples and settles it.
+The fourth row matters more than it looks. An archive that cannot be shown to be what was written is worse than no archive, because it invites the argument that the record was changed. **Answered 2026-10-27 with no new mechanism.** [ADR-A34](../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md)'s addendum of that date has a family declare where its graphs seal, and only a sealed graph may be registered. A period's book seals at its close, so the close is its registration event, and the content hash that ADR already verifies before registration is this digest. The restore path checks the registry rather than carrying a digest scheme of its own.
 
 ### 5.4 Consequences
 
@@ -338,7 +338,7 @@ Speculative, and marked as such. None of this should be written until §12 settl
 | how a read that crosses a boundary is composed | nothing | §3's table says a cross-store read costs a second query and an outside join. Nothing declares that |
 | retention for two kinds of record on two schedules | `dal:PrefixOnlyRetention`, `dal:BucketAnyRetention` on `dal:ReceiptProfile` | receipts are one kind of record. §5.2 needs postings and checkpoints retired independently |
 | a residency model, and thresholds for the third one | nothing | §5's three models are a declaration LATTICE does not have. The watermark and floor of §6 are values an adopter sets |
-| an archive digest, and the restore of one period | `dal:digestScheme`, `dal:EpochProfile` | both exist for other purposes. Whether they serve a partial restore is MS-Q4 |
+| the restore of one period | `dal:EpochProfile` | the epoch covers a whole-dataset restore. Whether it serves a partial one is MS-Q4. The archive digest is no longer missing, since ADR-A34's registry supplies it |
 | the period in a graph template | `dal:graphIriTemplate` | the template exists. Whether a period is a legitimate template variable is MS-Q2 |
 
 **The further step, and the reason to be careful about it.** Once Persistence records where a graph lives, which store answers which read and what transport reaches it, that record is close to a description of a deployment. Generating deployment control artefacts from it is a real possibility, and it is also how a configuration vocabulary turns into an orchestration tool it was not designed to be. The test is the one Persistence already passes: it records an adopter's choices so a compiler can turn them into portable SPARQL, and it decides nothing. "This graph lives in the hot store" passes. "Here is how to provision the hot store" does not, and belongs to whatever the adopter provisions with. That is MS-Q5.
@@ -363,7 +363,7 @@ Speculative, and marked as such. None of this should be written until §12 settl
 | ID | Question | Options | Leaning | Needed by |
 |---|---|---|---|---|
 | **MS-Q1** | Does the graph boundary bound the ancestor read on a real engine? | (a) yes, periods in named graphs. (b) no, the scan floor survives | **answered (a)** on Oxigraph, 2026-10-24. Flat at 0.34 to 0.54 ms over a hundredfold growth, same fold, same stored triples | answered |
-| **MS-Q2** | Is the closing period a variable in a graph IRI template? | (a) yes, `dal:graphIriTemplate` gains a period variable bound from the account's recurrence. (b) no, a separate dimension. (c) no, graphs are per aggregate root and the period is a filter | (a). The template exists and the recurrence exists | persistence, before LG-2 |
+| **MS-Q2** | Is the closing period a variable in a graph IRI template? | (a) yes, `dal:graphIriTemplate` gains a period variable bound from the account's recurrence. (b) no, a separate dimension. (c) no, graphs are per aggregate root and the period is a filter | **answered**, 2026-10-27, by [ADR-A13](../../architecture/decisions/ADR-A13-dataset-graph-role-model.md)'s addendum. Not (a): the grammar stands. The period sits inside a minted period-book node, which is itself the aggregate root, and the role is declared once per family rather than per graph. STD-274 records why the grammar must not gain a second variable | answered |
 | **MS-Q3** | Are postings and checkpoints retired on separate schedules? | (a) yes, two retention declarations. (b) one schedule for both. (c) checkpoints are never retired | (a), where a partition is large enough to need retirement at all | persistence |
 | **MS-Q4** | How is one archived period restored for an as-of read? | (a) a partial restore into a scratch dataset under a bumped epoch. (b) a whole-dataset restore. (c) the archive is queried in place | (a), but whether `dal:EpochProfile` serves a partial restore is unchecked | ledger, and a persistence addendum |
 | **MS-Q5** | Does Persistence record where a graph lives and which store answers a read? | (a) yes, extending `dal:GraphLocatorRole`. (b) yes, and it generates deployment artefacts. (c) no, this sits outside the ontology | (a). §10's test admits (a) and refuses (b) | after the partition question settles |
@@ -379,7 +379,7 @@ Speculative, and marked as such. None of this should be written until §12 settl
 | Unit | Effect |
 |---|---|
 | `ledger` | §5.2 of the history sketch needs the measured result, the graph partition and the derived checkpoint IRI recorded, and MS-Q6's correction applied. Its §6 judgement stands and is now measured. LF-Q21 should be reopened per MS-Q11 |
-| `persistence` | MS-Q2, MS-Q3, MS-Q5 and MS-Q10 are its questions. MS-Q2 is unblocked. MS-Q5 and MS-Q10 wait on §4.1 |
+| `persistence` | MS-Q3, MS-Q5 and MS-Q10 are its questions. MS-Q2 is answered, and the period-book node it settles on needs minting, which LF-Q19 already decided. MS-Q5 and MS-Q10 wait on §4.1 |
 | `surface` | nothing. §12's two laws already decide what a projection may be, and the projection is off the general read path |
 | `quantification` | nothing new, and the closing recurrence gains a second role as what makes a checkpoint addressable |
 | `docs/architecture/` | §4.1 should graduate here as durable guidance on demarcating a deployment, once §12 settles |
