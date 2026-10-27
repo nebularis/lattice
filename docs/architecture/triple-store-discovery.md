@@ -6,7 +6,7 @@
 
 **Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), and Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H). Each finding names the versions it was seen on.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40 and TSD-41. Each finding names the versions it was seen on.
 A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
@@ -51,6 +51,7 @@ first line.
 | **R-G** | a macOS arm64 laptop, used by an agent for TSD-34's upstream report, 2026-10-20 | 3.14.7 | rdflib 7.6.0, rdflib `main` at `62bf240` (7.7.0a0), rdflib `next` at `0fdac39` (8.0.0a0) |
 | **R-H** | a Linux x86_64 container, 4 logical cores, used by an agent for H2.8c, 2026-10-20, where a fresh bootstrap installed pyoxigraph 0.5.12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 and 0.5.12 |
 | **R-I** | a macOS arm64 laptop, used for the ledger posting-cost and graph-partition benchmarks, 2026-10-24 and 2026-10-27 | 3.14.7 | pyoxigraph 0.5.13 |
+| **R-J** | a macOS arm64 laptop, used by an agent to isolate TSD-41, 2026-10-27 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.13, and 0.5.11 for the minimal probes |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -234,7 +235,7 @@ to the store or where it is a matter of capacity.
 | [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
-| [TSD-41](#tsd-41-a-group_concat-over-a-union-of-nested-aggregate-sub-selects-drops-one-groups-contribution-on-oxigraph) | `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects | not specified | keeps every contributing group's value | drops one group's value for one case found so far | Observed |
+| [TSD-41](#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib) | `GROUP_CONCAT`, `SUM` and `AVG` over an expression that errors on one row of the group. `COUNT` over such an expression | an error for `GROUP_CONCAT`, `SUM` and `AVG`. `COUNT` removes the error | ✘ skips the row. ✘ `COUNT` counts it | ✔ unbound. ✘ `COUNT` unbound | Source, Observed |
 
 ## 6. The findings
 
@@ -1418,30 +1419,56 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 
 **Reproduce it.** The three forms above against the benchmark's `post-once` store at 20,000 events, under each version.
 
-### TSD-41. A `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects drops one group's contribution on Oxigraph
+### TSD-41. An aggregate over an expression that errors on one row of a group is unbound on Oxigraph and skips the row on rdflib
 
-**Evidence:** Observed on rdflib 7.6.0 and Oxigraph 0.5.11, 2026-10-27, building `check:mork-compilers-conformance` (`python-test-melting` TM11). Not read from source. The mechanism is open (new question, below).
+**Evidence:** Source and Observed, run R-J, on rdflib 7.6.0 and Oxigraph 0.5.11 and 0.5.13, 2026-10-27, building `check:mork-compilers-conformance` (`python-test-melting` TM11) and then isolating it (CCS C9b3). The specification text is SPARQL 1.1 Query §18.5.1, read from the W3C Recommendation. Oxigraph's source is `lib/spareval/src/eval.rs` at v0.5.13, read on GitHub. Answers TSD-Q20. Corrected 2026-10-27, see §7.6, since the first version of this entry blamed the `UNION` and the nested sub-selects.
 
-**Context.** `tools/mork_compilers`' generated SPARQL had run on rdflib alone since the suite was written, with no engine abstraction. Giving it one (`mork_compilers/engines.py`), so a conformance task could run it on Oxigraph too, surfaced a real disagreement between the two engines on one of its own 126 tests, not a defect in the new wrapper: the wrapper's own round-trip of every other binding in every other test matched rdflib exactly.
+**Context.** `tools/mork_compilers`' generated SPARQL had run on rdflib alone since the suite was written, with no engine abstraction. Giving it one (`mork_compilers/engines.py`), so a conformance task could run it on Oxigraph too, surfaced one disagreement in the suite's 126 tests, not a defect in the new wrapper: the wrapper's round-trip of every other binding in every other test matched rdflib exactly. The test was `test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures`, which failed every run on Oxigraph.
 
-**How we found it.** Running the whole suite with `MORK_SPARQL_ENGINE=oxigraph` gave exactly one failure, every time, out of 126 tests: `test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures`. Isolating the one query (`sparql_profile`, compiled by `compile_query_template` for an `elg:AdmissionProfile` with two conditions, `no-medicine` and `stem-qualification`) and running it directly on both engines, for the fixture's four records (`ada`, `ben`, `cai`, `dee`), reproduces it on its own, outside the test runner.
+**How we found it.** In order.
 
-**What the store does.** The compiled query is a `UNION` of two conditions, each itself several levels of nested aggregate sub-selects computing a per-record, per-condition `decision` and `closure`, feeding an outer `SELECT ?record ... WHERE { ... } GROUP BY ?record` whose `GROUP_CONCAT(DISTINCT STR(?relied); separator=" ")` collects every contributing row's closure into one string per record. By the fixture's own setup, `ada` relies on the closure through the `no-medicine` branch alone, `ben` and `cai` through both branches, and `dee` through neither.
+1. Running the whole suite with `MORK_SPARQL_ENGINE=oxigraph` gave one failure, every time. Running the one generated query, `render_profile_query` for the `elg:AdmissionProfile` of `set-reading-admissions.ttl` (two conditions, `no-medicine` and `stem-qualification`, over four records), on both engines gave the same `decision` for every record and a different `closures` for one. `ada` relies on the closure through `no-medicine` alone, so one of its two condition rows carries a closure and the other none. rdflib named it. Oxigraph left `closures` unbound.
+2. Each condition's branch alone, in the outer aggregate, agreed on both engines. So did both branches' rows with the outer aggregate removed. The rows were identical, so the disagreement was in the outer `GROUP_CONCAT`, not in the sub-selects, the `UNION` or the `?none` idiom that produce them.
+3. Dropping `DISTINCT`, then `STR`, still disagreed. Wrapping the argument in `COALESCE(STR(?relied), "")` agreed.
+4. The same disagreement without a `UNION`, a sub-select or a `GROUP BY`, in one pattern: `VALUES ?x { <urn:a> UNDEF }`. The same for `SUM`, `AVG`, `MIN`, `MAX`, and for `COUNT` over an expression, but not for `COUNT(?x)`, `COUNT(*)` or `SAMPLE`.
+5. Reading each engine's aggregate code (below).
 
-| Record | rdflib | Oxigraph |
-|---|---|---|
-| `ada` | `closures` bound to the closure | `closures` **unbound** |
-| `ben` | `closures` bound to the closure | `closures` bound to the closure |
-| `cai` | `closures` bound to the closure | `closures` bound to the closure |
-| `dee` | `closures` unbound | `closures` unbound |
+The bisection table, with the result of every step, is in the Validation Pack `computable-contract-substrate-c9b3-profile-union.md`.
 
-Every other field of every row (`record`, `decision`) agrees between the two engines. Only `ada`'s `closures` differs, and only on Oxigraph, and only in this one direction (a binding rdflib keeps, Oxigraph drops, never the reverse). The two engines also return the four records' rows in a different order, which does not by itself explain the missing binding, since `GROUP BY` groups all of one record's rows together regardless of order.
+**What the store does.** The smallest query, over a solution with `?x` bound and one without.
 
-**Why.** Not yet traced to the engine's source on either side. The outer aggregation uses the `?none`-as-unbound idiom the compiler's templates use throughout (`BIND(IF(condition, value, ?none) AS ?x)`, where `?none` is a variable the query never otherwise binds, so referencing it makes the whole expression unbound), nested inside a `UNION` whose two branches each contribute rows through further aggregate sub-selects. TSD-19 already found that `GROUP_CONCAT`'s order is the store's scan order on rdflib, not a specification guarantee, so the two engines are free to group and aggregate in different orders, and a record whose contributing rows arrive in a different relative order between the branches could plausibly take a different path through the `?none` idiom in one engine and not the other. This is a hypothesis, not a finding: we have not isolated a smaller query that reproduces it, and have not read either engine's source for how it evaluates an aggregate `UNION`'s branches relative to each other.
+```sparql
+SELECT (GROUP_CONCAT(STR(?x)) AS ?g) WHERE { VALUES ?x { <urn:a> UNDEF } }
+```
 
-**What it means for LATTICE.** `check:mork-compilers` keeps rdflib as its default engine (see `mork_compilers/engines.py`'s own docstring), where it has always run and where this divergence does not arise: flipping the default here, as skill `lattice-testing`'s usual practice asks (STD-153), would have turned this one passing test into a failing one for a reason this unit does not fix. `check:mork-compilers-conformance` runs Oxigraph explicitly, on demand and before a merge, specifically so this kind of divergence stays visible rather than hidden by never trying the other engine. TD-91 records the compiler-level gap this finding exposes (a generated query whose correctness depends on which engine runs it). STD-274 generalises the lesson: prove conformance before trusting a new default.
+| Aggregate over `<urn:a>` and an unbound `?x` | Specification (§18.5.1) | rdflib 7.6.0 | Oxigraph 0.5.11 and 0.5.13 |
+|---|---|---|---|
+| `GROUP_CONCAT(STR(?x))`, with or without `DISTINCT`, and `GROUP_CONCAT(?x)` | an error, so `?g` is unbound | ✘ `"urn:a"`, the row is skipped | ✔ unbound |
+| `SUM(?x)`, `AVG(?x)` over `1` and an unbound | an error | ✘ `1` | ✔ unbound |
+| `MIN(?x)`, `MAX(?x)` over `1` and an unbound | not stated, since the text orders the flattened values and does not say where an error sorts | `1` | unbound |
+| `COUNT(STR(?x))` | `1`, since `Count` removes errors | ✘ `2`, it counts the error | ✘ unbound |
+| `COUNT(?x)`, `COUNT(*)`, `SAMPLE(?x)` | `1`, `2`, any bound value | ✔ | ✔ |
+| `GROUP_CONCAT(COALESCE(STR(?x), ""))` | `"urn:a "` or `" urn:a"`, by the order of the group | ✔ | ✔ |
+| `GROUP_CONCAT(STR(?x))` over an empty group | `""` | ✔ | ✔ |
 
-**Reproduce it.** `MORK_SPARQL_ENGINE=oxigraph mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures -q`, or `mise run check:mork-compilers-conformance`, which runs the whole suite on Oxigraph.
+In the generated query the group is a record's rows, one per condition. A condition that did not rely on a closure leaves `?closure` unbound, and a record that relied through one condition has one row with a closure and one without. Oxigraph turns that mix into an unbound `?closures`. A record whose rows all rely, or none does, agrees on both engines. The generated query's UNION, nesting and `?none` idiom only produce the unbound row.
+
+**Why.** The specification defines an aggregate over `Flatten(M)`, a multiset of lists in which `ListEval` keeps an error, and says "`ListEval((unbound), μ) = (error)`" (§18.5.1). `Count` removes the error elements before counting. `Sum` and `GroupConcat` do not. `GroupConcat(S, sep) = CONCAT(S0, sep, ...)` over a sequence with an error element is an error, and an aggregate whose value is an error leaves its variable unbound in the row. So the specification gives unbound for `GROUP_CONCAT` and `SUM`, and Oxigraph follows it. Its `AccumulatorWrapper::Expression` and `DistinctExpression` (`eval.rs`, `accumulate`) set the accumulator to `None` the first time the argument's evaluator returns `None`, which is an error or an unbound value, and `finish` then returns no value. That is the poisoning the specification asks for in `GROUP_CONCAT`, `SUM` and `AVG`. It is also applied to `COUNT` over an expression that is not a plain variable (`CountAccumulator` is built inside the same wrapper, while `COUNT(?x)` takes the `CountInternal` path that skips a missing value), where the specification says to remove the error. That one is a departure from the specification on Oxigraph's side.
+
+rdflib's `GroupConcat.update` (`rdflib/plugins/sparql/aggregates.py`) catches the unbound value as an `NotBoundError` value and returns without appending, with the comment "skip UNDEF". `Sum`, `Average`, `Minimum` and `Maximum` skip it the same way, and `Counter` counts it when the expression is not a bare variable. A different error, such as division by zero, is appended as its message (`GROUP_CONCAT(STR(?x/0))` gives `"divide by 0"`). So rdflib's `GROUP_CONCAT` and `SUM` are the lenient departure, and its `COUNT(STR(?x))` over-counts. Hypothesis, not read in rdflib's evaluator beyond the aggregate classes: the `MIN` and `MAX` results of both engines are each defensible, since the text does not say where an error element sorts.
+
+The first version of this entry guessed that the order of `GROUP_CONCAT` (TSD-19) or the `?none` idiom made the engines take different paths through the `UNION`. That was wrong. Neither the order nor the `UNION` matters, and the rows the two engines feed to the aggregate are identical.
+
+**What it means for LATTICE.**
+- An aggregate whose argument can be unbound or error on some row of its group must not be written bare. Coalesce it, or make its rows never error (STD-279). The other aggregates in `tools/mork_compilers` already do (`SUM(IF(COALESCE(?outcome, "") = ...))`, `MAX(COALESCE(STR(?reason), ''))`), and `COUNT(DISTINCT ?condition)` and `SAMPLE` are safe on both. The profile query's `GROUP_CONCAT` was the one that did not.
+- The profile query now builds `?closures` from one coalesced `SUM` flag per distinct closure its conditions name, in IRI order, with no `GROUP_CONCAT`. Both engines return the same strings. A `GROUP_CONCAT(DISTINCT COALESCE(STR(?x), ""))` also agrees but puts the empty element at either end by the group's order, which differs between engines, and needs a trim.
+- `check:mork-compilers` and `check:mork-compilers-conformance` both pass. `check:mork-compilers` keeps rdflib as its default engine until the maintainer decides under STD-274. Tests `PU-01` to `PU-09` in `test_profile_union.py` pin the probes of each engine and the generated query on both.
+- rdflib's leniency is the one the persistence suite never meets, since its generated SPARQL runs on Oxigraph by default. A query written to run on rdflib may rely on it without knowing. The conformance task is what shows it (STD-054).
+- A possible upstream report, not filed: Oxigraph's `COUNT(expr)` over an erroring expression returns an unbound value where §18.5.1.2 says to count the rest.
+
+**Reproduce it.** The query above on each engine, or `mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_profile_union.py -q`, which runs every probe of this entry on both engines whichever engine the task sets.
+
+---
 
 ## 7. Corrections, and what they taught us
 
@@ -1499,6 +1526,12 @@ Without the reset every such case was wrong on every seed. The defect is that th
 What we take from it. A change that makes a failing case pass is not a fix until the cases the changed code exists for have been run. Before calling a line
 wrong, find out why it is there.
 
+### 7.6 The mechanism of TSD-41
+
+TSD-41 first said that Oxigraph dropped one record's contribution from a `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects, and guessed at an interaction between the order of the groups and the `?none` idiom. It named nothing smaller than the generated query. Bisecting it removed one construct at a time and found that no construct of the query mattered. The rows entering the aggregate were identical on both engines, and the disagreement reproduced on one `VALUES` row with no `UNION`, no sub-select and no `GROUP BY`. The cause is the aggregate's treatment of a row on which its argument errors, which Oxigraph follows from the specification and rdflib does not.
+
+What we take from it. A divergence found in a large generated query is not explained by the large query's features until a small one reproduces it. The guess about the `UNION` pointed at constructs that were not at fault, while the cause sat in the aggregate. Dump the rows entering the aggregate on each engine first. If they match, the aggregate is the suspect.
+
 ## 8. Open questions
 
 | # | Question | Why it matters | Next step |
@@ -1517,4 +1550,5 @@ wrong, find out why it is there.
 | TSD-Q17 | why Oxigraph returns no row for `COUNT(*)` over a statically false filter | TSD-33 is observed, not explained | read Oxigraph's query optimiser |
 | TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |
 | TSD-Q19 | why the sub-select decides TSD-34 when a `UNION` alone does not, and whether Fuseki or Jena ARQ shows the defect | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION`. The part of TSD-Q19 about the generated operations is answered under TSD-34 (FMH-H2-6g) | trace which solution comes first and which are kept in TSD-34's query, and run the query on Fuseki. The defect was reported upstream 2026-10-20 ([RDFLib/rdflib#3585](https://github.com/RDFLib/rdflib/issues/3585)) |
-| TSD-Q20 | why Oxigraph drops one record's `GROUP_CONCAT` contribution in TSD-41's query, and whether the minimal case is the `?none`-as-unbound idiom, the nested aggregate sub-selects, or their combination with `UNION` | TSD-41 is observed on the real generated query only, not isolated to a smaller one, and not read from either engine's source | bisect TSD-41's query to the smallest form that still disagrees, as TSD-34's step 3 did, and read Oxigraph's query optimiser for how it evaluates an aggregate's branches |
+| TSD-Q20 | answered 2026-10-27 | the profile query's `?closures` differed between engines | TSD-41. An aggregate over an expression that errors on one row of its group is unbound on Oxigraph and skips the row on rdflib, and the `UNION` and the nesting play no part |
+| TSD-Q21 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | the Recommendation's `Min` and `Max` do not say where an error element sorts, and TSD-41 states Oxigraph's `COUNT` departure from its source and one probe | read the Recommendation's ORDER BY ordering of an error, then probe Jena ARQ and Fuseki. The `COUNT` report is drafted in the Validation Pack and not filed |

@@ -69,6 +69,7 @@ This is the part to read first. The rules in §4 and §5 are not equally general
 | R4 | Prefer `FILTER NOT EXISTS` to `GROUP BY … HAVING COUNT` for absence | the forms mean the same | 1.4 times on one rule, noise on `OPTIONAL` plus `!BOUND` | noise | little anywhere, take it when rewriting |
 | R5 | A shape's cost is its focus nodes times one run, so target narrowly | the specification defines a constraint per focus node | one run per focus node, 15,713 runs for one rule | pySHACL runs only on rdflib | **pySHACL** (Source) |
 | R6 | Never write a constant `FILTER` to make a query fail | a constant false filter removes every solution | **dropped**, so it removes none (TSD-32) | correct | **rdflib defect**, a correctness rule |
+| R9 | Never aggregate an expression that can error on a row of its group, so coalesce it first | an aggregate over an error is an error for `GROUP_CONCAT`, `SUM` and `AVG`, and `COUNT` removes it (§18.5.1) | **skips the row** for `GROUP_CONCAT`, `SUM` and `AVG`, and counts it for `COUNT(expr)` (TSD-41) | unbound for `GROUP_CONCAT`, `SUM` and `AVG`, and for `COUNT(expr)` | **rdflib and Oxigraph defects**, a correctness rule, and the specification's own for `GROUP_CONCAT` and `SUM` |
 | H1 | Translate each distinct query text once | none | parsing is 20 ms of a 20 ms run, 0.5 ms when prepared (E5) | 0.17 ms for parse and run | **rdflib** |
 | H2 | Sort the `PREFIX` block before keying a cache | order does not matter | pySHACL writes it in a varying order | not applicable | **pySHACL** |
 | H3 | Parse a fixture once and copy it | blank-node labels are minted fresh by every parser | two parses never match as sets | the same | **any parser** |
@@ -255,6 +256,10 @@ reports the suite produces (§6.3), with `mise run dev:record-validations`, and 
 **Do.** A property path with `*` or `+`, or a long alternation, written with its unbound end first enumerates from there. Start from the end that is bound or restricted. **Evidence:** Reasoned, and consistent with the
 instrument word-use query, where the sections stage (a `wrd:directlyComprises*` closure) cost 9.5 ms of 18 ms per template. We did not isolate it. **Scope.** unknown.
 
+### R9. Never aggregate an expression that can error on a row of its group
+
+**Do.** Coalesce the argument of an aggregate to a value that is neutral for it, `COALESCE(STR(?x), "")` for `GROUP_CONCAT` and `COALESCE(?x, 0)` for `SUM`, or test it inside the argument as `SUM(IF(COALESCE(?x, "") = "a", 1, 0))` does. A group whose rows leave a variable unbound, as an `OPTIONAL` or a branch of a `UNION` does, otherwise gives a different answer on each engine. **Why.** Under SPARQL 1.1 §18.5.1 an aggregate over an error is an error for `GROUP_CONCAT`, `SUM` and `AVG`, so the variable is unbound, which is what Oxigraph does, while rdflib skips the row. `COUNT` removes the error before counting, which neither engine does for `COUNT(STR(?x))`. `COUNT(?x)`, `COUNT(*)` and `SAMPLE` agree on both ([TSD-41](triple-store-discovery.md#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib)). A coalesced `GROUP_CONCAT` puts the empty element at either end of the string by the engine's order of the group, so build a list of known members from one coalesced flag per member, as the profile query's `?closures` does, or trim the result. **Evidence:** Source and Observed, on rdflib 7.6.0 and Oxigraph 0.5.11 and 0.5.13. **Scope.** a correctness rule for both engines, and a portability rule for everyone.
+
 ### 4.1 A checklist for a new constraint query
 
 1. Does it name `$this` in every pattern that can, so that rdflib runs it bound-first? Is any pattern that tests a bound variable a pattern and not an `EXISTS` (R1)?
@@ -262,6 +267,7 @@ instrument word-use query, where the sections stage (a `wrd:directlyComprises*` 
 3. How many focus nodes will the target have in the largest data the tests build (R5)?
 4. Does a test make it fail, and is its cost per focus node measured on a graph of realistic size (R7, §6)?
 5. Does it use a constant filter, a `GROUP BY` on `$this`, or a projection of `$this` that a text-substituting engine would break (R6, TSD-33)?
+6. Does any aggregate take an expression that is unbound or errors on some row of its group (R9, TSD-41)?
 
 ## 5. Rules for the test harness
 
