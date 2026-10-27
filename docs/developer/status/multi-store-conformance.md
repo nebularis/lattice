@@ -17,7 +17,7 @@
 | MSC-4 | built 2026-10-27: `benchmark/persistence-store-probes`, P3 out of `check:persistence`, TSD-42 rerun with rdflib, STD-290, CAP-97. Jena's column added in MSC-5 |
 | MSC-5 | built 2026-10-27: TSD-42 and TSD-43 on Jena, TSD-Q12, Q18, Q19 narrowed to Fuseki, Q21's `MAX` left to the specification's authors, TSD-54 to TSD-57, `sparql-constraint-query-cost` runs Jena, thirteen upstream drafts under `.local/upstream/`, none filed |
 
-**Next action, for the maintainer:** review the unit on `multi-store-conformance` before it reaches `main`, after `ccs-trunk`. Decide whether to file the upstream drafts in `.local/upstream/` (TSD-Q32, checking RDFLib/rdflib#3498 first), and the Ratified state of CAP-90 to CAP-97 and STD-290.
+**Next action, for the maintainer:** review the unit on `multi-store-conformance` before it reaches `main`, after `ccs-trunk`. Decide whether to file the upstream drafts in `.local/upstream/` (TSD-Q32, checking RDFLib/rdflib#3498 first).
 
 ## History
 
@@ -30,3 +30,4 @@
 - 2026-10-27: MSC-5 built and reviewed. Every slice is built. `check:conformance` passes on the branch: persistence on three engines 4727, the compilers 169 on rdflib and on Jena, Eligibility's reference tests 67 on each, the engine probes 55. TD-100 records that the knowledge index does not read the discovery record's open questions
 - 2026-10-27: the maintainer accepts the ADR-A125 addendum of 2026-10-27
 - 2026-10-27: `graph:ask -- read` prints an entry's register row before the section its Pointer names, which 574 of 585 register entries hid. The discovery record's open questions are indexed as discoveries (TD-100 removed), and a Ratified cell is read by its leading yes or no, so CAP-84 to CAP-97, MEC-84, MEC-85 and PRI-51 now carry their status
+- 2026-10-27: the maintainer ratifies CAP-90 to CAP-97 and STD-290, with the capabilities that list the stores reworded to name every supported store and CAP-93 rephrased
