@@ -147,9 +147,23 @@ mise run test:config-studio
 | CS6-12 | an admission profile / opened / its tests marked as under construction | L6 | + | pass |
 | CS6-13 | the live stack / an interval test failing then passing, a condition's expansion, a contract's table / each as the real engines decide | L5 | +/− | pass |
 
+## CS7: starting and stopping the stack
+
+`tools/test_config_studio_stack.py`, 2 cases, in `check:config-studio`, and the stack by hand.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS7-01 | a spawned process with a child of its own / stopped / both gone, its process id file removed, a second stop reports nothing to stop | L1 | + | pass |
+| CS7-02 | a download whose SHA-256 is not the pinned one / fetched / refused, nothing left behind, and accepted with the right one | L1 | +/− | pass |
+| CS7-03 | a clean `.build` / `mise run studio:up` / Fuseki and RabbitMQ downloaded and checked, service and worker built and started, the service answering, in 17 s | L5 | + | pass, macOS, 2026-10-27 |
+| CS7-04 | the stack from CS7-03 / `test:stack` / both live-stack browser tests pass against 8090 | L5 | + | pass. A first run failed: the tests pointed at the dev server, which `up` starts only with `--dev`. Now configurable, 8090 by default |
+| CS7-05 | the stack / `mise run studio:down` / RabbitMQ shut down by `rabbitmqctl`, its log saying "Successfully stopped RabbitMQ and its dependencies", the others stopped within the grace period, every port free | L5 | + | pass, macOS |
+
+Not run: Windows and Linux, and `--docker`, since Docker was not running. The Windows path is authored from the platform's documented behaviour.
+
 ## Artefacts to inspect
 
-- The studio itself: `mise run studio:service`, `studio:worker`, `studio:web`, then <http://127.0.0.1:4175>.
+- The studio itself: `mise run studio:up`, then <http://127.0.0.1:8090>, and `mise run studio:down`.
 - A job graph: `curl http://127.0.0.1:8090/api/jobs/<id>` after a compile.
 - Browser test traces under `.build/config-studio-test-results` on a failure.
 

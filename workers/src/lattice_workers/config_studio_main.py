@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -72,8 +73,17 @@ def main() -> None:
     def _on_message(ch: object, method: object, properties: object, body: bytes) -> None:
         worker.handle(channel, method.delivery_tag, body)
 
+    def _stop(signum: int, frame: object) -> None:
+        # Finishes the job in hand, then stops consuming, so no job is cut off half written.
+        connection.add_callback_threadsafe(channel.stop_consuming)
+
+    for name in ("SIGTERM", "SIGINT", "SIGBREAK"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), _stop)
+
     channel.basic_consume(queue=JOBS_QUEUE, on_message_callback=_on_message, auto_ack=False)
     channel.start_consuming()
+    connection.close()
 
 
 if __name__ == "__main__":

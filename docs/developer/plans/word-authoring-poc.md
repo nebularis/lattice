@@ -64,6 +64,12 @@ No implementation is authorised by this note.
 
 ---
 
+## Alignment with the Configuration Studio
+
+**Recorded 2026-10-27.** We intend to unify this proof of concept with the Configuration Studio in a later slice, CS12 of the [studio's plan](config-studio.md#roadmap). The web app of the follow-on tranche (WA14 to WA16) would then be a wording mode of the studio rather than a new `apps/word-authoring-webapp`, so WA-D14 and WA-D15 should be decided with CS12's questions, not alone. WA12 (nested clauses) and WA17 (add-in parity) stand either way. The authoring service's HTTP server (WA-D4, Javalin) should follow the studio's choice in its CS8. No implementation is authorised by this note.
+
+---
+
 ## 1. Goal and acceptance
 
 A drafter opens Word (web or desktop), loads the add-in from the local stack without installing

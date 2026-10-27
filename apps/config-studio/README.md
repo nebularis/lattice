@@ -46,7 +46,7 @@ mise run test:config-studio
 
 The first installs the dependencies. The second stages the vocabulary and samples and runs the unit tests of the stage script, the worker, the service and this application, and type-checks it. The third runs the browser tests against a fake service (`e2e/fake-service.ts`), so it needs no Fuseki or RabbitMQ, and writes results under `.build/config-studio-test-results`. A pass is a zero exit status. Run `mise exec -- yarn workspace @lattice/config-studio exec playwright install chromium` once if Playwright asks for a browser.
 
-To run the whole studio, start Fuseki and RabbitMQ (the service's README says how, with or without Docker), then each of these in its own terminal and browse <http://127.0.0.1:4175>:
+To run the whole studio in the background, `mise run studio:up`, browse <http://127.0.0.1:8090>, and `mise run studio:down` when done (the service's README, "Run it"). To run each part in its own terminal instead, start Fuseki and RabbitMQ (the service's README says how, with or without Docker), then each of these in its own terminal and browse <http://127.0.0.1:4175>:
 
 ```bash
 mise run studio:service
@@ -60,7 +60,7 @@ mise run studio:worker
 mise run studio:web
 ```
 
-With all of that up, `mise exec -- yarn workspace @lattice/config-studio run test:stack` runs a browser test over the real stack.
+With the stack up, `mise exec -- yarn workspace @lattice/config-studio run test:stack` runs the browser tests over the real stack, against <http://127.0.0.1:8090>, or the address in `LATTICE_STUDIO_URL`.
 
 ## Depends on
 

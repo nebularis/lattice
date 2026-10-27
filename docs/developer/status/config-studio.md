@@ -34,6 +34,7 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B9 | The worker reads a missing baseline graph as empty | a workspace of vocabulary and eligibility alone has an empty baseline, which the store does not keep |
 | CS-B10 | A field is single-valued where its property is functional, or is a `dal:` property | `srf:`, `voc:`, `qnt:` and `elg:` declare functionality, `dal:` does not. A unit test found the first rule treating every `elg:` property as single-valued |
 | CS-B11 | An expansion and a question with no `cst:resolutionTime` resolve at the job's submission time with no scope | PRI-56 forbids reading the clock inside the logic, and the submission time is the job's input |
+| CS-B13 | `studio:up` and `studio:down` run `tools/config_studio_stack.py`, which downloads Fuseki and RabbitMQ with pinned SHA-256s and stops each process through its own shutdown: `rabbitmqctl shutdown` for RabbitMQ, SIGTERM with a minute's grace for the rest. The worker now finishes its job on SIGTERM | the maintainer asked for start and stop scripts for every platform that stop the tools by the means they support. Python, since every platform the repository supports already runs it through mise |
 | CS-B12 | Foundation's `vocab` is staged with the vocabularies | its governance states are what `fnd:hasGovernanceState` offers |
 
 ## Learnings
@@ -59,5 +60,6 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-27, later still: CS7, start and stop scripts for every platform, verified on macOS. Roadmap CS8 to CS13 added to the plan at the maintainer's request.
 - 2026-10-27, later: CS5 and CS6 at the maintainer's request: vocabulary, quantification and eligibility configurations, the resolution table, decision by concept and tests, with what waits on other work marked as under construction. Checked against the live stack.
 - 2026-10-27: unit opened, oriented, branch `claude/config-authoring-studio` cut from `main`. Sketch, contracts, staging, worker, service, browser application, stack tasks, compose file, tests, audit and documents written and verified. Fuseki 6.2.0 and RabbitMQ 4.4.0 run by hand, since Docker was not running.

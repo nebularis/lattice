@@ -43,6 +43,12 @@ The first stages the vocabulary and samples. The second builds and runs the 29 t
 
 ## Run it
 
+`mise run studio:up` starts the whole stack in the background on every platform, and `mise run studio:down` stops it. `up` downloads Fuseki and RabbitMQ once into `.build/config-studio/infra`, refusing either unless its SHA-256 is the one `tools/config_studio_stack.py` pins, then builds and starts the service and the worker and serves the studio on <http://127.0.0.1:8090>. `mise run studio:up -- --docker` runs Fuseki and RabbitMQ with the compose file instead, and `-- --dev` adds the browser code with hot reload on <http://127.0.0.1:4175>. `mise run studio:status` shows what is running. Logs and process ids are in `.build/config-studio/run`.
+
+`down` stops each process through its own shutdown. RabbitMQ is stopped with `rabbitmqctl shutdown`, which waits for the node to stop its applications and its metadata store. Fuseki, the service, the worker and the dev server get a termination request (SIGTERM) and up to a minute to stop: the service's shutdown hook closes its HTTP server, AMQP connection and store, and the worker finishes the job in hand and closes its connection. Windows has no termination request a detached console process can receive, so there the last four are stopped at once, which loses nothing: Fuseki holds an in-memory dataset, the service holds no state outside the store, and a job the worker had not acknowledged is redelivered.
+
+To run each part in its own terminal instead, as below.
+
 The studio needs Fuseki on `127.0.0.1:3130` with an updatable dataset `studio`, and RabbitMQ on `127.0.0.1:5673` with its default `guest` user, which RabbitMQ accepts from the loopback address only. The compose file lets `guest` in from the container network, since the host is not loopback there.
 
 With Docker:

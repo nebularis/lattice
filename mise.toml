@@ -510,6 +510,7 @@ run = "docker compose -f deployment/compose/docker-compose.yml down"
 # Fuseki on 127.0.0.1:3130 with a dataset "studio", and RabbitMQ on 127.0.0.1:5673, from
 # `mise run studio:infra` (Docker) or started by hand (the service's README). Then studio:service,
 # studio:worker and studio:web, each in its own terminal, and browse http://127.0.0.1:4175.
+# studio:up and studio:down do all of it in the background, on every platform.
 
 [tasks."build:config-studio-assets"]
 description = "Stage the Configuration Studio's vocabulary and samples into .build/config-studio"
@@ -519,7 +520,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets"]
 run = [
-  "python -m pytest tools/test_config_studio_stage.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
+  "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-service -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]
@@ -528,6 +529,19 @@ run = [
 description = "Run the Configuration Studio's browser tests against a fake service"
 depends = ["build:config-studio-assets"]
 run = "yarn workspace @lattice/config-studio run test"
+
+[tasks."studio:up"]
+description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the service and the worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
+depends = ["build:config-studio-assets"]
+run = "python tools/config_studio_stack.py up"
+
+[tasks."studio:down"]
+description = "Stop what studio:up started, each through its own shutdown"
+run = "python tools/config_studio_stack.py down"
+
+[tasks."studio:status"]
+description = "Show what studio:up started and which of the studio's ports are listening"
+run = "python tools/config_studio_stack.py status"
 
 [tasks."studio:infra"]
 description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"
