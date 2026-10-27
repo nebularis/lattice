@@ -146,3 +146,40 @@ Each broke one place, ran the tests that guard it on Oxigraph, and restored the 
 ## Acceptance
 
 Awaiting the maintainer. The items under "Decisions taken without the maintainer" want a countersignature, and the merge into `main`, with `release:prepare`, is the sign-off.
+
+## OWL `Within` class per relation (C9b3c-OWL)
+
+Run on 2026-10-27 in the worktree `ccs-c9b3c-owl-per-relation`. This section supersedes row 26, which asserted the refusal and is replaced by C9b3c-OWL-01, and the deliberate non-coverage line on the OWL `Within` class above.
+
+`within(concept, relation)` mints one class per relation and concept. For `skos:broader` the IRI is `mint(concept, "within")`, unchanged. For another relation it is `mint(concept, "within-" + local name of the relation)`, for example `.../tumour-within-part-of`. `_hierarchy` keys by (relation, member), sibling disjointness is computed per relation, and a module is still refused where one relation places one member differently across schemes, or where two relations share a local name.
+
+| ID | Scenario / Action / Expected | Test |
+|---|---|---|
+| C9b3c-OWL-01 | kind and part conditions over one scheme / compile one module / separate classes with each relation's subclass axioms and none across | `OwlModuleTests::test_a_kind_and_a_part_condition_compile_into_separate_within_classes` |
+| C9b3c-OWL-02 | a `skos:broader` condition / compile / the `Within` IRIs are the literal old ones | `OwlModuleTests::test_a_skos_broader_condition_keeps_the_iri_it_always_had` |
+| C9b3c-OWL-03 | kind and part conditions, siblings disjoint / compile / one disjointness group per relation, none mixing relations | `OwlModuleTests::test_sibling_disjointness_is_computed_per_relation` |
+| C9b3c-OWL-04 | one relation placing a member differently in two schemes / compile / refused naming the relation. Kind and part together compile | `OwlModuleTests::test_one_relation_placing_a_member_differently_in_two_schemes_is_refused` |
+| C9b3c-OWL-05 | no hierarchical condition / compile / no `Within` class | `OwlModuleTests::test_a_module_with_no_hierarchical_condition_mints_no_within_class` |
+| C9b3c-OWL-06 | two relations with one local name / compile / refused, since their classes would collide | `OwlModuleTests::test_two_relations_with_one_local_name_are_refused` |
+| C9b3c-OWL-07 | a patient with one diagnosis, a tumour margin, part-linked / subsumption by the reasoner / under the part condition, not under the kind condition | `OwlReasonerTests::test_a_part_linked_member_is_not_under_the_kind_relation_class` |
+| C9b3c-OWL-08 | a patient with one diagnosis, a lung carcinoma, kind-linked / subsumption by the reasoner / under the kind condition, not under the part condition | `OwlReasonerTests::test_a_kind_linked_member_is_not_under_the_part_relation_class` |
+
+Command, from the worktree: `mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_hierarchy_relation.py -q`. A pass is 28 passed with the reasoning test kit built, so rows 07 and 08 run.
+
+### Results
+
+| ID | Result |
+|---|---|
+| 01 to 08 | `test_hierarchy_relation.py`: 28 passed, 6 subtests passed, reasoner tests included |
+| all | `check:mork-compilers` (Oxigraph): 185 passed, 753 subtests passed. `check:mork-compilers-conformance` (rdflib): 185 passed, 753 subtests passed |
+| other | `build:knowledge` built. `check:deny-terms`: 0 findings. `check:identifiers`: failed on five identifiers mentioned in `docs/developer/plans/multi-store-conformance.md:33` (CAP-99, STD-290, STD-299, TSD-50, TSD-69), a file from `ccs-trunk` this unit does not touch |
+
+### Probes
+
+Each broke one place, ran `test_hierarchy_relation.py` and restored the file.
+
+| Defect introduced | Caught by |
+|---|---|
+| `within` ignores the relation | 4 fail: 01, 03, 07 and 08 |
+| `_hierarchy` keyed by member only again | 6 fail: 01, 03, 04, 06, 07 and 08 |
+| sibling grouping ignores the relation | 1 fails: 03 |
