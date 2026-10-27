@@ -171,6 +171,8 @@ ki:Accepted    rdf:type ki:Status ; rdfs:label "accepted" .
 ki:Superseded  rdf:type ki:Status ; rdfs:label "superseded" .
 ki:Open        rdf:type ki:Status ; rdfs:label "open" ;
     rdfs:comment "A register entry still live." .
+ki:Answered    rdf:type ki:Status ; rdfs:label "answered" ;
+    rdfs:comment "An open question that a finding answers in full. The row is kept, so a question once asked can still be found with its answer." .
 
 # These five are what the corpus exhibits, measured: no decision's Status line opens with
 # "Rejected", "Withdrawn", "Deferred" or "Complete", and an earlier draft of this file declared all
@@ -271,6 +273,11 @@ ki:answers
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Question ;
     rdfs:label "answers" ;
     rdfs:comment "Earns its place from the query for a question's answer, and from the check that a closed question has one." .
+
+ki:answeredBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Discovery ; rdfs:range ki:Discovery ;
+    rdfs:label "answered by" ;
+    rdfs:comment "Read from the 'Answered by' column of the store-discovery record's open questions: the finding that answers the question in full, which makes the question's status Answered. A finding that answers in part is named in the row's next step and leaves the question Open." .
 
 ki:waitsOn
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;

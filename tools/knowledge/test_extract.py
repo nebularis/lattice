@@ -493,6 +493,18 @@ def test_an_open_store_question_is_a_discovery_with_its_row(built):
     assert where.startswith("row docs/architecture/triple-store-discovery.md:") and text.startswith("| TSD-Q1 |")
 
 
+def test_an_answered_store_question_names_its_finding_and_is_labelled_not_hidden(built):
+    """A question answered in full keeps its row, with status Answered and a link to the finding."""
+    import ask
+
+    _, store = built
+    q = f"<{extract.KI}node/TSDQ20>"
+    rows = list(store.query(f"SELECT ?s ?f WHERE {{ GRAPH ?g {{ {q} <{extract.KI}status> ?s ; <{extract.KI}answeredBy> ?f }} }}"))
+    assert [(r["s"].value, r["f"].value) for r in rows] == [(extract.KI + "Answered", extract.KI + "node/TSD41")]
+    # find filters on kind, phase and audience only, so an answered question stays a candidate.
+    assert any(r["id"] == "TSD-Q20" for r in ask.rows_of(store.query(ask.CANDIDATES)))
+
+
 def test_a_ratified_cell_is_read_by_its_leading_word(built):
     """A tail after the yes or no, such as "added 2026-10-27", is for the reader and costs no status."""
     out, _ = built

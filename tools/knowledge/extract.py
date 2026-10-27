@@ -321,6 +321,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Evidenced by": ("evidencedBy", "ids"),
     "Decided by": ("decidedBy", "ids"),
     "Refines": ("refines", "ids"),
+    "Answered by": ("answeredBy", "ids"),
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
     "Unchecked because": ("uncheckedBecause", "text"),
@@ -509,6 +510,8 @@ def register_rows(out: Extract) -> None:
                                 if other != canonical:
                                     add(prop, node(other))
                                     out.bump(prop)
+                                    if prop == "answeredBy":
+                                        status = "Answered"
                         elif kind == "ratified":
                             # The leading yes or no is the fact, and a tail such as "added 2026-10-27" is for the reader.
                             value = CONTROLLED["ratified"].get(cell.split(",")[0].strip().lower())
