@@ -803,6 +803,18 @@ Concept schemes read as lines, with interval labels or closure bitsets as Surfac
 conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
 and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
 
+## 8.23 Multi-Store Conformance — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📋 Planned 2026-10-27. Design questions MSC-Q1 to MSC-Q5 open |
+| **Unit ID** | `multi-store-conformance` |
+| **Plan** | [multi-store-conformance.md](plans/multi-store-conformance.md) |
+| **Status Record** | [multi-store-conformance.md](status/multi-store-conformance.md) |
+| **ADRs** | builds on A-83, A-124, A-125 and its 2026-10-21 addendum, A-128 |
+
+Apache Jena joins rdflib and Oxigraph in every conformance run, engine probes get a home of their own, and cost assertions move out of `check` into benchmarks.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
