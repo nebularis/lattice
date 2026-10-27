@@ -3,9 +3,7 @@
 # Plan: Ledger, amounts consumed and restored over time
 
 **Unit ID:** `ledger`
-**Status:** proposed 2026-10-19, amended 2026-10-21 (two phases, exactness, LG-Q6 to LG-Q8). LG-Q1 to
-LG-Q8 answered 2026-10-21. LG-0 to LG-2 briefed below. ADR-A131 and ADR-A01's 2026-10-19 addendum accepted 2026-10-21, ADR-A131 published 2026-10-26.
-Amended 2026-10-27: LG-0 and LG-1 built, LG-5 part built ahead of its dependency, and the runtime questions LF-Q17 to LF-Q22 answered, so LG-2 is unblocked. An ADR-A131 addendum is owed for LF-Q19's reversal of decision 4 and for the two orderings.
+**Status:** proposed 2026-10-19, amended 2026-10-21 (two phases, exactness, LG-Q6 to LG-Q8). LG-Q1 to LG-Q8 answered 2026-10-21. LG-0 to LG-2 briefed below. ADR-A131 and ADR-A01's 2026-10-19 addendum accepted 2026-10-21, ADR-A131 published 2026-10-26. Amended 2026-10-27: LG-0 and LG-1 built, LG-5 part built ahead of its dependency, and the runtime questions LF-Q17 to LF-Q22 answered, so LG-2 is unblocked. An ADR-A131 addendum is owed for LF-Q19's reversal of decision 4 and for the two orderings.
 **ADRs:** [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) and ADR-A01's 2026-10-19
 addendum, both Accepted 2026-10-21
 **Sketches:** [evaluation context](../sketches/evaluation-context.md) §5 (the ledger in outline),
