@@ -213,6 +213,31 @@ flowchart TB
   (ADR-A127). This ADR is published with the first slice that creates the README, citing accepted
   decisions it builds on by their GitHub links.
 
+## Addendum (2026-10-27): an account instance is named, and a posting carries two orderings
+
+Two amendments, both from designing the runtime document that decision 2 promised. Neither changes what Ledger is for.
+
+**An account instance gains a minted IRI, which reverses part of decision 4.** Decision 4 has a posting name its account by the account definition, the owner and the key, so that no account instance needs an identity of its own and a balance read joins nothing. That reasoning holds for a balance read and fails for a partition. Once postings are separated by closing period, the separation needs a name for the unit it separates, and a composite of three values is not a name. [ADR-A122](ADR-A122-aggregate-ownership.md) decision 8 keeps a named graph's IRI injective in its root, which presupposes the root has an IRI at all.
+
+So an account instance is a node with a minted IRI, and a posting names that node rather than repeating the three values. A balance record is keyed by the account node and the position rather than by account, owner and position.
+
+The natural key is kept, not replaced. The account definition, the owner and the key value remain a key in the sense of [ADR-A114](ADR-A114-external-and-natural-keys.md), so an adopter holding those values still resolves the instance, and the uniqueness they express is still enforced. What changes is that the instance has its own name as well, which the key resolves to. The cost is one node and one IRI per account instance where there were none. The gain is that a posting's reference to its account is one term rather than three, and that the unit of a partition can be named.
+
+**A posting carries two orderings, not one.** A fact may be recorded after the time from which it takes effect. A correction belongs where the fact it corrects belongs, a restoration of consumed amount may take effect as of the act that consumed it, and an adjustment may be agreed later and apply earlier. One ordering cannot hold both without either losing the sequence in which facts were recorded or putting a fact in the wrong place.
+
+- **Effective position.** Where the fact sits in the arrangement the accounts describe. Supplied by the domain, comparable across accounts, and never assigned by an evaluator.
+- **Recorded position.** Where the fact sits in the account's own append-only sequence. Assigned by the writer, monotonic, and total only within one account.
+
+Nothing is mutated to achieve this. A correction is a compensating posting whose effective position is that of the fact it corrects and whose recorded position is current, so the append-only property of decision 4 and the key guard both survive.
+
+Three consequences follow.
+
+1. **A reading is reproducible only when paired with the recorded position at which it was taken.** A balance as of an effective position depends on every posting at or before that effective position, whatever its recorded position, so a posting recorded late and effective early changes a historical reading. That is correct behaviour rather than a defect, and it has to be stated, because a reading quoted without its recorded position cannot be reproduced.
+2. **The axis that compares accounts is effective position.** No global counter is needed, and none is wanted, since recorded position is total only within one account.
+3. **Correctness arguments about what a write touches are stated over two axes**, with append-only as an explicit hypothesis rather than an assumption.
+
+**What this does not decide.** How the name of a period's partitioned unit is minted. That rests on the account IRI this addendum provides, and it is held open until the read that spans a change of closing recurrence has been measured, because the cost of that read is what separates a derived name from a recorded one.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -229,3 +254,16 @@ maintainer answered LG-Q1 to LG-Q8 the same day, as the plan leaned, and asked t
 checked for its cost at runtime. Decision 3 then states keyed accounts, conversion and purposes, and
 decision 4 carries a posting's amount as a literal in the unit of account. The maintainer accepted
 this ADR, with ADR-A01's 2026-10-19 addendum, on 2026-10-21.
+
+The maintainer published this ADR on 2026-10-26, once the README of its first slice existed.
+
+**The 2026-10-27 addendum.** Designed in the
+[ledger history and runtime sketch](../../developer/sketches/ledger-history-and-runtime.md), whose §2.1
+states the two orderings and whose §7 holds the questions. The maintainer answered LF-Q11 (two orderings),
+LF-Q17 to LF-Q22 on 2026-10-27. LF-Q19 is the reversal of decision 4's keying, and the sketch records that
+the partition template of the
+[multi-store runtime sketch](../../developer/sketches/multi-store-runtime.md) rests on it (MS-Q2, answered
+the same day). The minting of a period's unit is deliberately left out, tracked as PDD-12 in the
+[pending design decisions](../../developer/pending-design-decisions.md), pending the measurement of a read
+spanning a change of closing recurrence. The addendum's examples are domain-neutral by the substrate rule,
+where the sketch's are drawn from insurance.
