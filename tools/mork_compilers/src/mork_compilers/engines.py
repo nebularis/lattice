@@ -4,15 +4,15 @@
 """Which engine runs a compiled query's SPARQL (python-test-melting TM11).
 
 Every backend test calls :func:`run_query` in place of ``graph.query(text)``. **rdflib stays the
-default here**, unlike the skill's usual default (ADR-A125, Oxigraph): building this module's
-conformance task found a real divergence between the two engines on one of this suite's own
-generated queries (TSD-41), a record whose closure a deeply nested ``UNION``/``GROUP_CONCAT``
-aggregation drops on Oxigraph but keeps on rdflib. Flipping the default would turn a passing test
-into a failing one for a reason this unit does not fix, so `check:mork-compilers` keeps running on
-rdflib exactly as it always has, and `check:mork-compilers-conformance` is the one that runs
-Oxigraph, to keep the divergence visible rather than hidden. ``MORK_SPARQL_ENGINE`` names one of
-``REGISTRY``, read once at import, so each task sets it, since these tests are ``unittest.TestCase``
-methods with no per-test engine parametrisation.
+default here**, unlike the skill's usual default (ADR-A125, Oxigraph), until the maintainer decides
+otherwise (STD-274). Building this module's conformance task found one real disagreement between
+the two engines on this suite's own generated queries (TSD-41). It is understood and the profile
+query no longer depends on it, since an aggregate over an expression that errors on some row of its
+group is an error on Oxigraph and a skipped row on rdflib. The whole suite now passes on both, and
+`check:mork-compilers-conformance` runs Oxigraph, on demand and before a merge, to keep any further
+divergence visible. ``MORK_SPARQL_ENGINE`` names one of ``REGISTRY``, read once at import, so each
+task sets it, since these tests are ``unittest.TestCase`` methods with no per-test engine
+parametrisation. :func:`run_query` takes an ``engine`` for a test of one engine's behaviour.
 
 On rdflib, :func:`run_query` returns ``graph.query(text)`` unchanged: every existing call site's
 ``row.question``-style attribute access already works, since rdflib's own result rows support it.
@@ -87,10 +87,14 @@ class _Row:
         return {name: value for name, value in self._bindings.items() if value is not None}
 
 
-def run_query(graph: Graph, text: str) -> list:
-    """``text`` run against ``graph`` on :data:`ENGINE`, as a list of rows with rdflib terms,
-    readable the same way whichever engine ran it."""
-    if ENGINE == "rdflib":
+def run_query(graph: Graph, text: str, engine: str | None = None) -> list:
+    """``text`` run against ``graph`` on ``engine``, :data:`ENGINE` when none is named, as a list of
+    rows with rdflib terms, readable the same way whichever engine ran it. A test of one engine's
+    own behaviour names it, so it holds under either task (STD-153)."""
+    engine = engine or ENGINE
+    if engine not in REGISTRY:
+        raise ValueError(f"{engine!r} is not one of the engines we have, {REGISTRY}")
+    if engine == "rdflib":
         return list(graph.query(text))
     store = ox.Store()
     store.load(input=graph.serialize(format="nt").encode("utf-8"), format=ox.RdfFormat.N_TRIPLES)

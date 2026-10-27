@@ -388,12 +388,12 @@ description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
 [tasks."check:mork-compilers"]
-description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). rdflib is the default engine (python-test-melting TM11): check:mork-compilers-conformance runs the same suite on Oxigraph, which TSD-41 found disagrees with rdflib on one test, not yet understood. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
+description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). rdflib is the default engine (python-test-melting TM11) until the maintainer decides otherwise (STD-274). check:mork-compilers-conformance runs the same suite on Oxigraph, and both pass since TSD-41's cause was found and the profile query changed. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "rdflib" }
 
 [tasks."check:mork-compilers-conformance"]
-description = "Run the MORK backend compiler tests on Oxigraph (python-test-melting TM11). Run on demand and before a merge into main, not part of check, since TSD-41's divergence is expected to fail test_a_profile_row_names_the_union_of_its_conditions_closures until its mechanism (TSD-Q20) is understood"
+description = "Run the MORK backend compiler tests on Oxigraph (python-test-melting TM11). Run on demand and before a merge into main, not part of check, so a query that depends on rdflib's leniency stays visible (TSD-41, STD-279)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "oxigraph" }
 

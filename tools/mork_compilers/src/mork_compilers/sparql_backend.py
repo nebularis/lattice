@@ -349,7 +349,22 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
 
     ``record`` names the record variable. A SHACL-SPARQL constraint passes
     ``$this``, which SHACL then requires every nested SELECT to project, so it
-    is carried through each condition block as well."""
+    is carried through each condition block as well.
+
+    ``?closures`` is built from one ``SUM`` flag per distinct closure the conditions name, in IRI
+    order, and not from a ``GROUP_CONCAT`` over the rows' ``?closure``. A record's rows leave
+    ``?closure`` unbound for each condition that did not rely on a closure, and an aggregate over an
+    expression that errors on any row of its group is an error under SPARQL 1.1 §18.5.1, for
+    ``GROUP_CONCAT``, ``SUM``, ``AVG``, ``MIN`` and ``MAX``. Oxigraph follows that and returns
+    no value for the group, and rdflib skips the row, so the two engines disagreed (TSD-41,
+    STD-279). Each flag coalesces the unbound value first, as the other aggregates here do.
+
+    Cost (STD-020). The outer group holds one row per condition for each record, so ``c`` rows. It
+    gains ``k`` accumulators, ``k`` being the number of distinct closures the conditions name, at
+    most ``c`` and in practice 0 or 1, and no join, sub-select or ``UNION`` branch, so the nested
+    condition blocks, which dominate the query, are unchanged. That is ``c * k`` additions per
+    record on either engine, and the string is built once per record from ``k`` terms. Not measured
+    against the old form on a large graph, so any speed claim is a hypothesis (STD-176, TSD-41)."""
     if plan.subject_class is not None:
         key, carry = record, ""
         records = f"{record} a/rdfs:subClassOf* <{plan.subject_class}> ."
@@ -370,12 +385,17 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
     def count(outcome: str) -> str:
         return f'(SUM(IF(COALESCE(?outcome, "") = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
 
+    closures = sorted({str(c.evidence.closure) for c in plan.conditions if c.evidence is not None and c.evidence.closure is not None})
+    flags = " ".join(f'(SUM(IF(COALESCE(STR(?relied), "") = "{closure}", 1, 0)) AS ?relied{i})' for i, closure in enumerate(closures))
+    names = ", ".join(f'IF(?relied{i} > 0, " {closure}", "")' for i, closure in enumerate(closures))
+    listed = f"SUBSTR(CONCAT({names}), 2)" if closures else '""'
+
     return (
         f"SELECT {record} ?decision ?diagnostic ?closures WHERE {{\n"
         "  {\n"
         f"    SELECT {record} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
         "      (COUNT(DISTINCT ?condition) AS ?answered) (MAX(COALESCE(STR(?reason), '')) AS ?conditionDiagnostic)\n"
-        '      (GROUP_CONCAT(DISTINCT STR(?relied); separator=" ") AS ?closureList) WHERE {\n'
+        f"      {flags} WHERE {{\n"
         f"      {records}\n"
         "      OPTIONAL {\n"
         f"{link}"
@@ -392,6 +412,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         f"  BIND({len(plan.conditions)} - ?answered AS ?missing)\n"
         f"  BIND({_aggregate(plan)} AS ?decision)\n"
         f'  BIND(IF(?decision != "Undetermined", ?none, IF(?missing > 0, <{EXE.MissingCandidate}>, IRI(?conditionDiagnostic))) AS ?diagnostic)\n'
+        f"  BIND({listed} AS ?closureList)\n"
         '  BIND(IF(?closureList = "", ?none, ?closureList) AS ?closures)\n'
         "}\n"
     )
