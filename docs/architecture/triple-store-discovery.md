@@ -6,7 +6,7 @@
 
 **Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40, TSD-41 and TSD-43. Apache Jena ARQ 5.1.0 (the version `benchmark/ledger-store-comparison` pins) is covered for TSD-43, TSD-60 and TSD-61, run in process through `platform/sparql-testkit`. Each finding names the versions it was seen on.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40, TSD-41 and TSD-43. Apache Jena ARQ 5.1.0 (the version `benchmark/ledger-store-comparison` pins) is covered for TSD-43, TSD-50 to TSD-53, TSD-60 and TSD-61, run in process through `platform/sparql-testkit` and `tools/testing/jena`. That is an in-memory transactional dataset (`DatasetFactory.createTxnMem()`) and never TDB2. Each finding names the versions it was seen on.
 A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
@@ -38,7 +38,7 @@ A finding is only as strong as its evidence. Source tells us the mechanism, Obse
 version, and the two together are what we aim for. A finding built only on Documented or Reasoned evidence says so in its
 first line.
 
-**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of machine, never the machine or person (ADR-A124 decision 5). Thirteen run records appear below.
+**A run record** goes with every Observed finding: the date, the store and its version, the Python version, and the kind of machine, never the machine or person (ADR-A124 decision 5). Sixteen run records appear below.
 
 | Run | Machine | Python | Stores |
 |---|---|---|---|
@@ -55,6 +55,8 @@ first line.
 | **R-K** | a macOS arm64 laptop, used to review C9b3 and the pyoxigraph lock, 2026-10-27 | 3.14.7 | pyoxigraph 0.5.11, 0.5.12 and 0.5.13 |
 | **R-L** | a macOS arm64 laptop, used by an agent for the aggregate matrix of TSD-43, 2026-10-27 | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 |
 | **R-S** | a macOS arm64 laptop with 8 logical cores, used by an agent to run `benchmark/persistence-store-probes` for TSD-42, 2026-10-27 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11, 0.5.12 and 0.5.13 |
+| **R-T** | a macOS arm64 laptop, used by an agent to run `check:persistence-conformance` on three engines for MSC-2, 2026-10-27 | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 in memory |
+| **R-U** | the same laptop, used by an agent to run the standalone Java reproduction of TSD-50's `CLEAR GRAPH` departure, 2026-10-27 | OpenJDK 25.0.2 | Apache Jena ARQ 5.1.0 (`DatasetFactory.createTxnMem()`) |
 | **R-V** | a macOS arm64 laptop, used by an agent to run the MORK compilers and Eligibility on Jena and to probe the profile read set, 2026-10-27 (MSC-3) | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
@@ -242,6 +244,10 @@ to the store or where it is a matter of capacity.
 | [TSD-41](#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib) | `GROUP_CONCAT`, `SUM` and `AVG` over an expression that errors on one row of the group. `COUNT` over such an expression | an error for `GROUP_CONCAT`, `SUM` and `AVG`. `COUNT` removes the error | ✘ skips the row. ✘ `COUNT` counts it | ✔ unbound. ✘ `COUNT` unbound | Source, Observed |
 | [TSD-42](#tsd-42-a-graph-variable-bound-outside-an-optional-makes-oxigraph-0513-read-every-graph) | `OPTIONAL { GRAPH ?g }`, `?g` bound outside | joined afterwards | reads one graph (R-S) | passes the binding in. ✘ reads every graph from 0.5.13 | Observed |
 | [TSD-43](#tsd-43-what-an-aggregate-does-with-a-row-that-has-no-value-or-errors-for-every-aggregate-and-what-each-remedy-does) | each aggregate over a group with an unbound row, a row of the wrong type and no row, and the four remedies | `COUNT` removes an error row. `SUM`, `AVG` (unless the count is 0) and `GROUP_CONCAT` are an error. `MIN` is unbound. `MAX` is `2` or unbound, the text allowing both | ✘ skips the row for `SUM`, `MIN`, `GROUP_CONCAT`, counts it for `COUNT(expr)`, raises for `SUM` over an IRI, returns a row for a grouped query over no rows. 54 of 91 cells conform | ✔ except `COUNT(expr)` and `AVG` over an all-unbound group. 84 of 91 conform. Jena ARQ 5.1.0: 84 of 91 | Source, Observed, Documented |
+| [TSD-50](#tsd-50-on-jena-arq-in-memory-a-failed-request-is-rolled-back-and-clear-graph-of-an-absent-graph-fails-where-drop-graph-does-not) | a request whose second operation fails. `CLEAR GRAPH` and `DROP GRAPH` of a graph that is not there | should be atomic. A store that does not record empty graphs always returns success for both (§3.2.1, §3.2.2) | not tested | not tested. Jena ARQ in memory: rolled back. ✘ `CLEAR GRAPH` fails and `DROP GRAPH` succeeds | Observed |
+| [TSD-51](#tsd-51-jena-arq-matches-a-zero-length-path-from-a-term-in-no-triple-with-the-term-itself) | zero-length path from a term in no triple | our reading: matches the term | as TSD-08 | as TSD-08. Jena ARQ: matches it, as rdflib does | Observed |
+| [TSD-52](#tsd-52-jena-arq-keeps-xsdlong-counts-distinct-terms-groups-arithmetic-from-the-left-and-divides-integers-into-a-decimal) | `"1"^^xsd:long` stored and read, `COUNT(DISTINCT)` over `xsd:long` and `xsd:integer`, a chain of `-` and `+`, a division of integers | the term is kept, distinct is by term, from the left, `xsd:decimal` (§17.3) | as TSD-07, TSD-18 and TSD-17 | as TSD-07, TSD-18 and TSD-17. Jena ARQ: ✔ all four, so `"8 / 4 / 2"` is `"1.0"^^xsd:decimal` | Observed |
+| [TSD-53](#tsd-53-jena-arq-applies-a-delete-insert-in-the-specifications-order-skips-an-unbound-template-graph-and-tests-the-right-graph-in-tsd-34s-form) | probes P1 (order of an update), P4 (unbound graph variable in a template) and TSD-34's `FILTER NOT EXISTS` | as TSD-01, TSD-05 and TSD-34 | as TSD-01, TSD-05 and TSD-34 | as TSD-01, TSD-05 and TSD-34. Jena ARQ: ✔ all three | Observed |
 | [TSD-60](#tsd-60-an-aggregate-over-if-of-an-unbound-variable-raises-on-rdflib-and-is-unbound-on-oxigraph-and-jena) | `SUM(IF(?d = "x", 1, 0))` and `MAX(IF(...))` over a row whose `?d` is unbound | an error, so the aggregate is unbound | ✘ `AttributeError` from `SUM` when the result is read, and no row from `MAX` | ✔ unbound. Jena ARQ 5.1.0 ✔ unbound | Source, Observed |
 | [TSD-61](#tsd-61-rdflib-orders-a-string-against-a-number-where-the-specification-gives-a-type-error) | `"abc" >= 5`, `"abc" < 5` | a type error, so unbound | ✘ a boolean | ✔ unbound. Jena ARQ 5.1.0 ✔ unbound | Observed |
 
@@ -1649,6 +1655,104 @@ Three groups at once, `GROUP BY ?s`, one with two values, one with none and one 
 
 **Reproduce it.** `mise run check:sparql-probes-conformance` runs the cases on rdflib, Oxigraph and Jena and compares them with the recorded run. `mise exec -- python -m sparql_probes.aggregate_error_cases DIR` writes the data states and the cases for another engine. The one-off Jena runner that first produced the column is in the C9b3 Validation Pack, appendix.
 
+### TSD-50. On Jena ARQ in memory a failed request is rolled back, and CLEAR GRAPH of an absent graph fails where DROP GRAPH does not
+
+**Evidence:** Observed on Apache Jena ARQ 5.1.0, in memory, run R-T for the request and run R-U for the departure, 2026-10-27. The specification text is SPARQL 1.1 Update §3.2.1 and §3.2.2, read from the W3C Recommendation. Jena's source was not read. A first answer to TSD-Q13 for Jena, for the in-memory dataset only.
+
+**Context.** TSD-06 asked each store whether a request whose second operation fails keeps its first, because the composite replace's two-operation form needs the answer. TSD-Q13 asks it of Jena TDB2. Joining Jena to the persistence conformance run (MSC-2) made probe P2 ask it of Jena ARQ. **This is an in-memory dataset, `DatasetFactory.createTxnMem()`, and says nothing yet about TDB2.**
+
+**How we found it.** P2 sends `INSERT DATA { GRAPH <urn:g> { <urn:s> <urn:p> <urn:o> } } ; <a failing operation>` through `tools/testing/jena`, which runs each request in one write transaction, and reads back. The failing operations that Oxigraph and rdflib answer to were tried in turn, and the departure was then isolated in a Java program on `jena-arq` alone (`Repro.java`, drafted under `.local/upstream/`, not filed).
+
+**What the store does.**
+
+| Second operation | The request | The first insert |
+|---|---|---|
+| `LOAD <urn:no-such>` | fails | rolled back |
+| `CLEAR GRAPH <urn:absent>` | fails, "No such graph" | rolled back |
+| `ADD`, `MOVE` or `COPY` from `<urn:absent>` | fails, "No such graph" | rolled back |
+| `INSERT ... WHERE { SERVICE <http://127.0.0.1:1/sparql> { ... } }` | fails | rolled back |
+| `DROP GRAPH <urn:absent>` | succeeds | kept |
+| `CREATE GRAPH <urn:new>` | succeeds, and the graph is not there afterwards | kept |
+| `CLEAR SILENT GRAPH <urn:absent>`, `CLEAR DEFAULT`, `CLEAR ALL` on an empty dataset | succeed | not applicable |
+
+The dataset does not record an empty graph. `CREATE GRAPH <g> ; CLEAR GRAPH <g>` fails, and so does `CLEAR GRAPH <g>` after the last triple of `<g>` was deleted. `DROP GRAPH <g>` succeeds in both cases.
+
+**Why.** Not read in Jena's source. Each request is one write transaction and an exception aborts it, which is consistent with the rollback and is the same as what Oxigraph does (TSD-06). That `CLEAR` checks for the graph and `DROP` does not is observed only.
+
+**Against the specification.** §3.2.1 and §3.2.2 say a store that records empty graphs SHOULD fail by default on a graph that does not exist, and that "stores that do not record empty graphs will always return success". Jena's dataset does not record them, so `CLEAR GRAPH` should succeed, as `DROP GRAPH` does. Departure, drafted for upstream and not filed. `ADD`, `MOVE` and `COPY` MAY fail on an absent source (§3.2.3 to §3.2.5), so they conform.
+
+**What it means for LATTICE.** The two-operation replace (R1) is atomic on Jena in memory, as on Oxigraph and unlike rdflib. No generated operation in `tools/persistence/src` emits `CLEAR` or `DROP`. A hand-written update that clears a graph it may not have written to should say `SILENT`, which all three engines accept. Probe P2 expects `DROP GRAPH <urn:absent>` to succeed and `CLEAR GRAPH <urn:absent>` and `LOAD <urn:no-such>` to fail and roll back on Jena (`test_h2_4b_t3`), so a fix upstream shows as a failure there. Whether TDB2 does the same is TSD-Q13.
+
+**Reproduce it.** `mise exec -- java -cp platform/sparql-testkit/target/sparql-testkit.jar Repro.java` from the draft's directory prints the three outcomes and exits 1 while `CLEAR GRAPH` fails. For the request itself, `mise run check:persistence-conformance`.
+
+---
+
+### TSD-51. Jena ARQ matches a zero-length path from a term in no triple with the term itself
+
+**Evidence:** Observed on Apache Jena ARQ 5.1.0 in memory, run R-T, 2026-10-27. Extends TSD-08 and narrows TSD-Q3.
+
+**What the store does.**
+
+```sparql
+# the graph <urn:h> holds only <urn:a> <urn:p> <urn:b>
+SELECT ?x WHERE { GRAPH <urn:h> { <urn:lonely> <urn:p>* ?x } }
+SELECT ?x WHERE { GRAPH <urn:h> { <urn:lonely> <urn:p>+ ?x } }
+```
+
+| Store | `*` | `+` |
+|---|---|---|
+| rdflib 7.6.0 | `<urn:lonely>` | not tested |
+| Oxigraph (TSD-08) | no rows | not tested |
+| Jena ARQ 5.1.0 | `<urn:lonely>` | no rows |
+
+**What it means for LATTICE.** Two of three engines match the term, which supports TSD-08's reading and leaves Oxigraph as the outlier, though TSD-Q3 is still unanswered from the specification's text. The sweep is unaffected (TSD-08). `test_h2_4a_t6` expects the term on rdflib and Jena and nothing on Oxigraph.
+
+**Reproduce it.** The two queries on each store.
+
+---
+
+### TSD-52. Jena ARQ keeps xsd:long, counts distinct terms, groups arithmetic from the left and divides integers into a decimal
+
+**Evidence:** Observed on Apache Jena ARQ 5.1.0 in memory, run R-T, 2026-10-27. Extends TSD-07, TSD-17 and TSD-18.
+
+**What the store does.** The probes of those entries, on Jena.
+
+| Probe | Jena ARQ | Oxigraph | rdflib |
+|---|---|---|---|
+| `"1"^^xsd:long` stored, `DATATYPE` of a constant, a substituted parameter, a `VALUES` row and the stored value | `xsd:long` in all four, and the stored value equals the constant | `xsd:integer` (TSD-07) | `xsd:long` |
+| `COUNT(DISTINCT ?o)` over `1^^long`, `1^^integer`, `2^^long` | 3 | 2 (TSD-18) | 3 |
+| the same over a `VALUES` row of `1^^long` and `1^^integer` | 2 | 1 | 2 |
+| `10 - 3 + 2`, `10 - 3 - 2` | `9`, `5` as `xsd:integer` | `9`, `5` from 0.5.12 | `9`, `5` |
+| `8 / 4 / 2` | `"1.0"^^xsd:decimal` | `1` | `1` |
+
+The last row is the specification's. A division of two integers is an `xsd:decimal` (§17.3), and Jena writes the lexical form `1.0`. `test_h2_5_t44` read the result with `int(...)` of the term, which fails on `1.0`, so it now reads the number with `int(float(...))` for every engine. That was the harness, and the assertion is as strict as before, the three values `[9, 5, 1]`.
+
+**What it means for LATTICE.** The profile's `xsd:long` pinning can be checked on Jena, which Oxigraph cannot do (TSD-07). A receipt whose `seq` was written as `xsd:integer` adds a distinct term on Jena and is reported by the gap scan, as on rdflib (`test_h2_5_t43`). Guard D passes a well typed `xsd:long` epoch and refuses an `xsd:integer` one on Jena, as on rdflib (`test_h2_5_t4`). None of this departs from the specification. Oxigraph's canonicalisation is the departure, recorded in TSD-07.
+
+**Reproduce it.** `mise run check:persistence-conformance`, tests `test_h2_4b_t6`, `test_h2_5_t1`, `test_h2_5_t4`, `test_h2_5_t42` to `test_h2_5_t44`.
+
+---
+
+### TSD-53. Jena ARQ applies a DELETE/INSERT in the specification's order, skips an unbound template graph and tests the right graph in TSD-34's form
+
+**Evidence:** Observed on Apache Jena ARQ 5.1.0 in memory, run R-T, 2026-10-27. Extends TSD-01, TSD-05 and TSD-34.
+
+**What the store does.**
+
+| Probe | Specification | Jena ARQ 5.1.0 |
+|---|---|---|
+| P1, `DELETE { ?d } INSERT { ?i } WHERE { VALUES ... }` where one solution deletes the triple another inserts | every deletion, then every insertion | the triple survives with the inserting row first and with the deleting row first, as on Oxigraph from 0.5.12 |
+| P4, `INSERT { GRAPH ?g { ... } } WHERE {}` with `?g` unbound | the quad is skipped | nothing is written, as on Oxigraph |
+| TSD-34, `FILTER NOT EXISTS` with no `GRAPH` of its own inside a `GRAPH` block that holds a sub-select and a `UNION` | tests the block's graph | `b` and `c` with a constant and with a parameter, with and without the sub-select, as on Oxigraph |
+
+Jena evaluates each in one run, with no hash seed. The rdflib columns that vary with `PYTHONHASHSEED` have no counterpart.
+
+**What it means for LATTICE.** The generated named-graph operations rely on none of the three departures that rdflib shows, and Jena agrees with Oxigraph on them. `test_h2_4b_t1`, `t2`, `t5` and `test_tsd_34_...` hold the Jena expectation beside the other two.
+
+**Reproduce it.** `mise run check:persistence-conformance`.
+
+---
+
 ---
 
 ### TSD-60. An aggregate over IF of an unbound variable raises on rdflib and is unbound on Oxigraph and Jena
@@ -1763,7 +1867,7 @@ What we take from it. A divergence found in a large generated query is not expla
 | TSD-Q5 | why Oxigraph turns `xsd:long` into `xsd:integer` | TSD-07 is observed, not explained | read Oxigraph's literal encoding |
 | TSD-Q11 | whether Oxigraph groups a chain of same-precedence operators from the right in a later version, and why in 0.5.11 | TSD-17 is observed, not explained, and the renderer works around it | read the parser, try the newer releases, and report it upstream if it still holds |
 | TSD-Q12 | whether Fuseki, which `platform/semantic-dataset-fuseki` targets, shows TSD-15 to TSD-18 | they are measured on two in-process stores only | run the same probes against it |
-| TSD-Q13 | whether Virtuoso applies even one `DELETE`/`INSERT` atomically under `log_enable(2)` or `(2,1)`, and whether Jena TDB2 and Neptune make a multi-operation request one transaction | the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06) | probe each store, with a failing operation and with a large update interrupted, starting with Fuseki (TSD-Q12) |
+| TSD-Q13 | whether Virtuoso applies even one `DELETE`/`INSERT` atomically under `log_enable(2)` or `(2,1)`, and whether Jena TDB2 and Neptune make a multi-operation request one transaction. Jena ARQ in memory does (TSD-50, 2026-10-27), and TDB2 is untested | the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06) | probe each store, with a failing operation and with a large update interrupted, starting with Fuseki (TSD-Q12) |
 | TSD-Q14 | whether Jena SHACL, TopBraid or another validator runs a SPARQL constraint once per focus node, and what a node shape costs there | TSD-23 and the choice of targets (rule R6) are measured on pySHACL only | run the same shapes on another validator |
 | TSD-Q15 | why moving W8's identity lookup ahead of its pair enumeration halved its cost | TSD-26 does not explain it | trace the join order and the sizes of the operands |
 | TSD-Q16 | what `inplace=True` saves, and whether it is safe with shared graphs | TSD-31's 9% is a fixed cost per validation | run the suite with a copy per test and `inplace=True`, and with the mutation guard on |
@@ -1774,4 +1878,6 @@ What we take from it. A divergence found in a large generated query is not expla
 | TSD-Q21 | answered in part 2026-10-27 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | TSD-43. `MIN` is unbound on either reading, which Oxigraph and Jena do and rdflib does not. `MAX` is `2` if an error element is "no value" in §15.1's ordering and unbound otherwise, and the text does not say, so it stays open. rdflib answers `2`, Oxigraph and Jena unbound. The `COUNT(expr)` departure is Oxigraph's alone among the three, and the report is drafted in the Validation Pack and not filed. What remains is `MAX` only, to ask the working group or check the SPARQL 1.2 text |
 | TSD-Q22 | whether an Oxigraph release after 0.5.13 passes an outer binding into a left join again, and whether it is reported upstream | TSD-42 makes the named-graph replace's sweep read every graph, and the project's floor is 0.5.13 (TSD-40) | run `mise run check:persistence-store-probes` on each new release, and read the bind-optional and values-optional ratios (near 1 means the binding is passed in again). Search Oxigraph's issues, and report it if no one has |
 | TSD-Q23 | which of TSD-43's departures to report upstream, and whether a later release removes them | rdflib returns a row for a grouped query over no rows and raises for `SUM` over an IRI. Oxigraph's `COUNT(expr)` and `AVG` over an all-unbound group depart from §18.5.1. Jena's `GROUP_CONCAT(DISTINCT)` over an empty group is unbound | file each with its smallest query, and re-run `check:sparql-probes-conformance` on each release. The same probes against Fuseki (TSD-Q12) if it differs from in-process ARQ |
+| TSD-Q30 | whether Jena TDB2, and Fuseki over it, rolls back the first operation of a request whose second fails, and whether `CLEAR GRAPH` of an absent graph fails there | TSD-50 is in-memory ARQ only, and TSD-Q13 asks it of TDB2 | run probe P2 against a TDB2 dataset |
+| TSD-Q31 | whether a Jena release after 5.1.0 makes `CLEAR GRAPH` of an absent graph succeed on a dataset that does not record empty graphs, and whether the draft report under `.local/upstream/` is filed | TSD-50 expects the failure, so a fix shows as a test failure | rerun `Repro.java` and the persistence conformance run on each new Jena |
 | TSD-Q35 | whether the two rdflib departures drafted in MSC-3 (TSD-60, TSD-61) are filed upstream, and whether a release after 7.6.0 fixes them | both are drafted with a failing test under `.local/upstream/` and not filed | file them with their smallest query, and re-run `check:sparql-probes-conformance` on each rdflib release. MSC3-11 and MSC3-14 fail when one is fixed |

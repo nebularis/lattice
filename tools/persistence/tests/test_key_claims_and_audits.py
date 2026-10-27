@@ -484,9 +484,9 @@ def test_h2_5_t42_count_distinct_counts_xsd_long_and_xsd_integer_terms_apart_on_
         '"2"^^<http://www.w3.org/2001/XMLSchema#long> } }'
     )
     (stored,) = _scalar(ds, "SELECT (COUNT(DISTINCT ?o) AS ?n) WHERE { GRAPH <urn:g> { <urn:s> <urn:p> ?o } }")
-    assert int(stored) == (3 if engines.CURRENT == "rdflib" else 2)
+    assert int(stored) == (3 if engines.CURRENT in ("rdflib", "jena") else 2)  # Jena keeps the datatype and counts terms (TSD-52)
     (valued,) = _scalar(ds, 'SELECT (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?o { "1"^^<http://www.w3.org/2001/XMLSchema#long> "1"^^<http://www.w3.org/2001/XMLSchema#integer> } }')
-    assert int(valued) == (2 if engines.CURRENT == "rdflib" else 1)
+    assert int(valued) == (2 if engines.CURRENT in ("rdflib", "jena") else 1)
 
 
 @pytest.mark.conformance
@@ -496,7 +496,7 @@ def test_h2_5_t43_a_duplicate_seq_written_with_another_integer_type_is_reported_
     _row(ds, STREAM, 1)
     _receipt(ds, BUCKETS[0], "a", target=STREAM, seq=LONG(1))
     _receipt(ds, BUCKETS[0], "b", target=STREAM, seq=RdfLiteral(1))  # the same position as an xsd:integer
-    assert rows("gap-scan-audit", ds) == ([(STREAM, "1", "1", "2")] if engines.CURRENT == "rdflib" else [])
+    assert rows("gap-scan-audit", ds) == ([(STREAM, "1", "1", "2")] if engines.CURRENT in ("rdflib", "jena") else [])
 
 
 @pytest.mark.conformance
@@ -505,8 +505,9 @@ def test_h2_5_t44_a_chain_of_additions_and_subtractions_is_grouped_from_the_left
     """TSD-17. The gap scan's `?S - ?L + 1` would count wrongly on Oxigraph 0.5.11, which groups from the right, so the renderer writes the
     parentheses. Changed on 2026-10-20: pyoxigraph 0.5.12 groups from the left, so the expectation follows the installed version."""
     ds = engines.dataset()
-    flat = [int(_scalar(ds, f"SELECT ({e} AS ?x) WHERE {{}}")[0]) for e in ("10 - 3 + 2", "10 - 3 - 2", "8 / 4 / 2")]
-    if engines.CURRENT == "rdflib":
+    # `8 / 4 / 2` is an xsd:decimal on Jena, as the specification says of a division of integers, so the lexical form is read as a number (TSD-52)
+    flat = [int(float(_scalar(ds, f"SELECT ({e} AS ?x) WHERE {{}}")[0])) for e in ("10 - 3 + 2", "10 - 3 - 2", "8 / 4 / 2")]
+    if engines.CURRENT in ("rdflib", "jena"):
         from_the_left = True
     else:
         from lattice_testing_oxigraph import LEFT_GROUPED_ARITHMETIC as from_the_left

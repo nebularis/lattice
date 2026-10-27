@@ -280,9 +280,10 @@ run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q 
 env = { PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-conformance"]
-description = "Run the persistence tests on every engine we have (rdflib and Oxigraph) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
+depends = ["bootstrap:testing-jena"]
+description = "Run the persistence tests on every engine we have (rdflib, Oxigraph and Jena ARQ in memory) and the conformance tests that check:persistence leaves out: the generated SPARQL on rdflib, the hash-seed sweeps and the probes of each engine's behaviour (ADR-A125). Run on demand and before a merge into main, not part of check. A new engine is added to PERSISTENCE_ENGINES here"
 run = "python -m pytest tools/testing/oxigraph/tests tools/persistence/tests -q -n auto --dist loadgroup"
-env = { PERSISTENCE_ENGINES = "rdflib,oxigraph", PERSISTENCE_ENGINES_REQUIRED = "1" }
+env = { PERSISTENCE_ENGINES = "rdflib,oxigraph,jena", PERSISTENCE_ENGINES_REQUIRED = "1" }
 
 [tasks."check:persistence-expected-profiles"]
 description = "Check that the expected compiled profiles under ontology/persistence/test/expected-profiles are what the builders and compile give now (formal-methods H2.6). Fails with the names of the stale files. Part of check:persistence"
