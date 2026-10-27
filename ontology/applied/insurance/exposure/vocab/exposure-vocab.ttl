@@ -28,7 +28,7 @@
                 <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
-#    Reference schemes (AIR-4.1), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -82,7 +82,7 @@ aeo-voc:ProgrammeRoleScheme a voc:ConceptScheme ;
 
 #################################################################
 #    Reference bindings: one voc:SchemeContract per concept-valued
-#    property of this slice, bound to its reference scheme as the
+#    property of this region, bound to its reference scheme as the
 #    unscoped fallback (ADR-A99 decision 1), declared as
 #    insurance/common's contracts are.
 #################################################################
@@ -142,7 +142,7 @@ aeo-voc:LegalFormContract a voc:SchemeContract ;
 
 aeo-voc:Rooftop a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ; skos:notation "1"^^xsd:integer ;
     skos:prefLabel "Rooftop"@en ; skos:definition "Located to the exact building footprint."@en ;
-    skos:note "No single published standard names this axis. Follows common catastrophe-modelling geocoding precision levels. Notation 1, the finest: AIR-4.2's geo-precision-for-peril shape (sketch §5.7) compares these ranks."@en .
+    skos:note "No single published standard names this axis. Follows common catastrophe-modelling geocoding precision levels. Notation 1, the finest: the geo-precision-for-peril shape compares these ranks."@en .
 aeo-voc:Parcel a skos:Concept ; skos:inScheme aeo-voc:GeoPrecisionScheme ; skos:topConceptOf aeo-voc:GeoPrecisionScheme ; skos:notation "2"^^xsd:integer ;
     skos:prefLabel "Parcel"@en ; skos:definition "Located to the land parcel a building sits on."@en ;
     skos:note "Common catastrophe-modelling geocoding precision usage."@en .
@@ -355,7 +355,7 @@ aeo-voc:FirstNamedInsured a owl:NamedIndividual , pty:Role ;
 aeo-voc:AdditionalInsured a owl:NamedIndividual , pty:Role ;
     rdfs:label "Additional insured"@en ;
     rdfs:comment "A party added as an insured by endorsement, typically at a counterparty's request." ;
-    skos:note "Common liability market usage. The additional-insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract (Phase 5), not this role alone."@en ;
+    skos:note "Common liability market usage. The additional-insured variants by ISO endorsement (CG 20 10, CG 20 37, CG 20 38) are conferred by the contract module, not this role alone."@en ;
     fnd:utility "Type a pty:RoleOccupancy with this role for an additional insured."@en .
 aeo-voc:LossPayee a owl:NamedIndividual , pty:Role ;
     rdfs:label "Loss payee"@en ;
@@ -386,15 +386,15 @@ aeo-voc:Bailor a owl:NamedIndividual , pty:Role ;
 aeo-voc:WaiverOfSubrogationBeneficiary a owl:NamedIndividual , pty:Role ;
     rdfs:label "Waiver of subrogation beneficiary"@en ;
     rdfs:comment "A party who benefits from a waiver of the insurer's subrogation rights against them." ;
-    skos:note "Common liability market usage. The waiver itself is a contract term (Phase 5): this role only names who benefits."@en ;
+    skos:note "Common liability market usage. The waiver itself is a contract term: this role only names who benefits."@en ;
     fnd:utility "Type a pty:RoleOccupancy with this role for a waiver beneficiary."@en .
 
-# ==== BEGIN README SECTION zones-attributes-assessments (AIR-4.2) ====
+# ==== BEGIN README SECTION zones-attributes-assessments ====
 
 #################################################################
-#    Zone contracts (AIR-4.2, sketch §5.4). Each has no reference
+#    Zone contracts. Each has no reference
 #    scheme: a deployment binds each jurisdiction's edition by
-#    territory scope (ADR-A99). AIR-4.6 adds example editions.
+#    territory scope (ADR-A99).
 #################################################################
 
 aeo-voc:FloodZoneContract a voc:SchemeContract ;
@@ -521,7 +521,7 @@ aeo-voc:AssessmentKindScheme skos:hasTopConcept aeo-voc:SurveyReport , aeo-voc:S
     aeo-voc:GeocoderRun , aeo-voc:ScreeningRun .
 
 #################################################################
-#    Profile family and attribute family (sketch §5.8). The eight
+#    Profile family and attribute family. The eight
 #    profile family concepts are also attribute family concepts
 #    (skos:inScheme both schemes), since a profile family and the
 #    attribute family it groups are the same grouping for these
@@ -603,7 +603,7 @@ aeo-voc:OperationsAndWorkforce a skos:Concept ; skos:inScheme aeo-voc:ProfileFam
 aeo-voc:SupplyChain a skos:Concept ; skos:inScheme aeo-voc:ProfileFamilyScheme , aeo-voc:AttributeFamilyScheme ;
     skos:topConceptOf aeo-voc:ProfileFamilyScheme ;
     skos:prefLabel "Supply chain"@en ; skos:definition "The question family covering an entity's supplier dependencies, summarised from questionnaires."@en ;
-    skos:note "Common contingent business interruption underwriting usage. The underlying dependency structure is AIR-4.3."@en .
+    skos:note "Common contingent business interruption underwriting usage. The underlying dependency structure is `aeo:Dependency`."@en .
 
 aeo-voc:ProfileFamilyScheme skos:hasTopConcept aeo-voc:ConstructionAndProtection , aeo-voc:CyberPosture ,
     aeo-voc:BusinessContinuity , aeo-voc:Environmental , aeo-voc:Fleet , aeo-voc:Compliance ,
@@ -615,7 +615,7 @@ aeo-voc:AttributeFamilyScheme skos:hasTopConcept aeo-voc:Construction , aeo-voc:
 
 #################################################################
 #    Value form, geo precision order, value spaces and ordinal
-#    scales for attribute types (sketch §5.7, §5.8).
+#    scales for attribute types.
 #################################################################
 
 aeo-voc:ValueFormScheme a voc:ConceptScheme ;
@@ -638,7 +638,7 @@ aeo-voc:ValueFormScheme skos:hasTopConcept aeo-voc:ConceptForm , aeo-voc:Quantit
 
 aeo-voc:GeoPrecisionOrder a skos:OrderedCollection ;
     skos:memberList ( aeo-voc:Rooftop aeo-voc:Parcel aeo-voc:Street aeo-voc:Postcode aeo-voc:City aeo-voc:ZoneCentroid ) ;
-    skos:note "AIR-4.1's geographic precision concepts, finest first, for human reading. The geo-precision-for-peril shape compares the skos:notation integer rank each concept now carries (1 finest to 6 coarsest), not this list, since SPARQL has no portable way to read a position out of an rdf:List."@en .
+    skos:note "The geographic precision concepts, finest first, for human reading. The geo-precision-for-peril shape compares the skos:notation integer rank each concept now carries (1 finest to 6 coarsest), not this list, since SPARQL has no portable way to read a position out of an rdf:List."@en .
 
 aeo-voc:Count a qnt:ValueSpace ;
     qnt:spaceKey "count" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Discrete ; qnt:spaceHash "count-v1" ;
@@ -651,10 +651,10 @@ aeo-voc:Length a qnt:ValueSpace ;
     skos:note "Canonical unit metre (icm-voc:Metre), commonly reported in feet (icm-voc:Foot)."@en .
 aeo-voc:Duration a qnt:ValueSpace ;
     qnt:spaceKey "exposure-duration" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "exposure-duration-v1" ;
-    skos:note "Canonical unit hour (icm-voc:Hour), commonly reported in days (icm-voc:Day). Distinct from AIR-2.6's peril-specific prl-voc:EventDurationSpace: this space measures an exposure attribute's own duration (a lead time, a response time, a recovery objective), not a peril's customary event window."@en .
+    skos:note "Canonical unit hour (icm-voc:Hour), commonly reported in days (icm-voc:Day). Distinct from the peril-specific prl-voc:EventDurationSpace: this space measures an exposure attribute's own duration (a lead time, a response time, a recovery objective), not a peril's customary event window."@en .
 aeo-voc:Speed a qnt:ValueSpace ;
     qnt:spaceKey "exposure-speed" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "exposure-speed-v1" ;
-    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in miles per hour (icm-voc:MilePerHour) for design wind speed. Distinct from AIR-2.6's peril-specific wind measure spaces: this space measures a design or rating speed, not an observed intensity."@en .
+    skos:note "Canonical unit metre per second (icm-voc:MPerSec), commonly reported in miles per hour (icm-voc:MilePerHour) for design wind speed. Distinct from the peril-specific wind measure spaces: this space measures a design or rating speed, not an observed intensity."@en .
 aeo-voc:AreaShare a qnt:DerivedValueSpace ;
     qnt:spaceKey "area-share" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ; qnt:spaceHash "area-share-v1" ;
     qnt:numeratorSpace aeo-voc:Area ; qnt:denominatorSpace aeo-voc:Area ;
@@ -736,11 +736,11 @@ aeo-voc:ConstructionClassScheme a voc:ConceptScheme ;
 aeo-voc:ConstructionClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Construction ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Construction ; aeo:valueContract aeo-voc:ConstructionClassContract ;
     skos:prefLabel "Construction class"@en ; skos:definition "The primary construction material and system of a building."@en ;
-    skos:note "Corresponds to the OED location field ConstructionCode. No bound reference scheme (market): a deployment binds the US ISO construction classes 1 to 6, or another market's own code list, in AIR-4.6."@en .
+    skos:note "Corresponds to the OED location field ConstructionCode. No bound reference scheme (market): a deployment binds the US ISO construction classes 1 to 6, or another market's own code list."@en .
 aeo-voc:ConstructionClassContract a voc:SchemeContract ;
     fnd:hasIdentity aeo-voc:ConstructionClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Construction class contract"@en ;
-    skos:note "No reference scheme: a deployment binds a market's own construction class code list (for example the US ISO construction classes 1 to 6) in AIR-4.6."@en ;
+    skos:note "No reference scheme: a deployment binds a market's own construction class code list (for example the US ISO construction classes 1 to 6)."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:YearBuilt a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Construction ;
@@ -1008,9 +1008,9 @@ aeo-voc:SoftStorey a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , 
 aeo-voc:OccupancyClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Occupancy ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Occupancy ; aeo:valueContract aeo-voc:OccupancyClassContract ;
     skos:prefLabel "Occupancy class"@en ; skos:definition "The primary use of a building or location."@en ;
-    skos:note "Corresponds to the OED location field OccupancyCode. No bound reference scheme (market): a deployment binds a market's own occupancy code list (for example ATC-13) in AIR-4.6."@en .
+    skos:note "Corresponds to the OED location field OccupancyCode. No bound reference scheme (market): a deployment binds a market's own occupancy code list (for example ATC-13)."@en .
 aeo-voc:OccupancyClassContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:OccupancyClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
-    skos:prefLabel "Occupancy class contract"@en ; skos:note "No reference scheme: a deployment binds a market's own occupancy code list (for example ATC-13) in AIR-4.6."@en ;
+    skos:prefLabel "Occupancy class contract"@en ; skos:note "No reference scheme: a deployment binds a market's own occupancy code list (for example ATC-13)."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:VacantShare a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Occupancy ;
@@ -1147,9 +1147,9 @@ aeo-voc:SpecialSuppression a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeS
 aeo-voc:PublicProtectionClass a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Protection ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Protection ; aeo:valueContract aeo-voc:PublicProtectionClassContract ;
     skos:prefLabel "Public protection class"@en ; skos:definition "The public fire protection grading of the location's community."@en ;
-    skos:note "No bound reference scheme (market): a deployment binds the US public protection classification, 1 to 10, in AIR-4.6."@en .
+    skos:note "No bound reference scheme (market): a deployment binds the US public protection classification, 1 to 10."@en .
 aeo-voc:PublicProtectionClassContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:PublicProtectionClassContract-identity ; fnd:hasGovernanceState fnd:Active ;
-    skos:prefLabel "Public protection class contract"@en ; skos:note "No reference scheme: a deployment binds the US public protection classification 1 to 10 in AIR-4.6."@en ;
+    skos:prefLabel "Public protection class contract"@en ; skos:note "No reference scheme: a deployment binds the US public protection classification 1 to 10."@en ;
     voc:constrainsProperty aeo:conceptValue .
 
 aeo-voc:FireServiceResponseTime a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Protection ;
@@ -1383,7 +1383,7 @@ aeo-voc:EntityStatusContract a voc:SchemeContract ; fnd:hasIdentity aeo-voc:Enti
 aeo-voc:EntityStatus a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Corporate ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Corporate ; aeo:valueContract aeo-voc:EntityStatusContract ;
     skos:prefLabel "Entity status"@en ; skos:definition "A legal entity's current trading status."@en ;
-    skos:note "Changes over time, so it is an attribute of the entity's assessment (AIR-4.1 review R2), not asserted directly on aeo:LegalEntity."@en .
+    skos:note "Changes over time, so it is an attribute of the entity's assessment, not asserted directly on aeo:LegalEntity."@en .
 
 aeo-voc:OperatingTerritory a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:Corporate ;
     aeo:valueForm aeo-voc:ConceptForm ; aeo:attributeFamily aeo-voc:Corporate ; aeo:valueContract cls-voc:TerritoryContract ;
@@ -1535,7 +1535,7 @@ aeo-voc:ContinuityPlanLastTested a skos:Concept ; skos:inScheme aeo-voc:Attribut
 aeo-voc:RecoveryTimeObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Recovery time objective"@en ; skos:definition "The targeted time to restore a process or system after a disruption."@en ;
-    skos:note "Follows ISO 22301. An entity's own objective, distinct from AIR-4.3's derived maximum foreseeable period of interruption."@en .
+    skos:note "Follows ISO 22301. An entity's own objective, distinct from the derived maximum foreseeable period of interruption."@en .
 aeo-voc:RecoveryPointObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Recovery point objective"@en ; skos:definition "The maximum tolerable period of data loss, measured back from the point of disruption."@en ;
@@ -1543,7 +1543,7 @@ aeo-voc:RecoveryPointObjective a skos:Concept ; skos:inScheme aeo-voc:AttributeT
 aeo-voc:MaximumTolerablePeriodOfDisruption a skos:Concept ; skos:inScheme aeo-voc:AttributeTypeScheme , aeo-voc:BusinessContinuity ;
     aeo:valueForm aeo-voc:QuantityForm ; aeo:attributeFamily aeo-voc:BusinessContinuity ; aeo:valueSpace aeo-voc:Duration ;
     skos:prefLabel "Maximum tolerable period of disruption"@en ; skos:definition "The entity's own stated limit on how long a disruption can last before unacceptable harm follows."@en ;
-    skos:note "Follows ISO 22301. An entity's own stated limit, distinct from AIR-4.3's derived maximum foreseeable period of interruption."@en .
+    skos:note "Follows ISO 22301. An entity's own stated limit, distinct from the derived maximum foreseeable period of interruption."@en .
 
 #################################################################
 #    Attribute types: Environmental (profile-only)
@@ -1744,7 +1744,7 @@ aeo-voc:SupplierConcentration a skos:Concept ; skos:inScheme aeo-voc:AttributeTy
     skos:note "Uses classification's own territory contract (cls-voc:TerritoryContract)."@en .
 
 #################################################################
-#    Links from perils to exposure (sketch §5.7). Written here, as
+#    Links from perils to exposure. Written here, as
 #    triples on peril concepts from prl-voc:, because the link is
 #    read by this module's own shapes. A link on a concept also
 #    holds for the concepts below it (read through skos:broader*),
@@ -1799,10 +1799,10 @@ prl-voc:C.MAL prl:relevantAttribute aeo-voc:MfaCoverage , aeo-voc:EndpointDetect
 
 # ==== END README SECTION zones-attributes-assessments ====
 
-# ==== BEGIN README SECTION dependencies-metrics-units (AIR-4.3) ====
+# ==== BEGIN README SECTION dependencies-metrics-units ====
 
 #################################################################
-#    Value spaces (AIR-4.3). OutputShare is a proportion over a
+#    Value spaces. OutputShare is a proportion over a
 #    production space named twice (ADR-A93), so a share of one
 #    dependent's output is never summed with a share of another's.
 #################################################################
@@ -1822,7 +1822,7 @@ aeo-voc:ExceedanceProbabilitySpace a qnt:ValueSpace ;
     skos:note "Dimensionless, an annual probability from 0 to 1. The reciprocal of a return period in years."@en .
 
 #################################################################
-#    Reference schemes (AIR-4.3), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -1863,7 +1863,7 @@ aeo-voc:ModelOptionScheme a voc:ConceptScheme ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
 #################################################################
-#    Reference bindings (AIR-4.3). The schedule group and scenario
+#    Reference bindings. The schedule group and scenario
 #    contracts have no reference scheme: a deployment binds one per
 #    insured, drafter or regulator (ADR-A99).
 #################################################################
@@ -2046,10 +2046,10 @@ aeo-voc:ModelOptionScheme skos:hasTopConcept aeo-voc:SecondaryUncertainty , aeo-
 
 # ==== END README SECTION dependencies-metrics-units ====
 
-# ==== BEGIN README SECTION losses-requirements-cover (AIR-4.4) ====
+# ==== BEGIN README SECTION losses-requirements-cover ====
 
 #################################################################
-#    Value spaces (AIR-4.4). MoneyShare is a proportion of money
+#    Value spaces. MoneyShare is a proportion of money
 #    over the same money space twice (ADR-A93): a capacity share of
 #    a limit, or a bound relative to a financial metric.
 #################################################################
@@ -2060,7 +2060,7 @@ aeo-voc:MoneyShare a qnt:DerivedValueSpace ;
     skos:note "A proportion space (ADR-A93): an amount of money as a share of another amount of money, for example a participant's share of a limit or a net retained loss as a share of equity. Dimensionless, from 0 upwards."@en .
 
 #################################################################
-#    Reference schemes (AIR-4.4), each the unscoped fallback
+#    Reference schemes, each the unscoped fallback
 #    (ADR-A99 decision 1).
 #################################################################
 
@@ -2125,7 +2125,7 @@ aeo-voc:FinancialMetricKindScheme a voc:ConceptScheme ;
     skos:editorialNote "Reference edition published by LATTICE. Not a market standard."@en .
 
 #################################################################
-#    Reference bindings (AIR-4.4)
+#    Reference bindings
 #################################################################
 
 aeo-voc:LossExperienceSourceContract a voc:SchemeContract ;
@@ -2425,5 +2425,5 @@ aeo-voc:FinancialMetricKindScheme skos:hasTopConcept aeo-voc:RevenueMetric , aeo
 
 # ==== END README SECTION losses-requirements-cover ====
 
-# ==== BEGIN README SECTION liability (AIR-4.5) ====
+# ==== BEGIN README SECTION liability ====
 # ==== END README SECTION liability ====

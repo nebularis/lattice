@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Cross-node shapes for the asset exposure ontology: control cycles
-# (applied-insurance-reference AIR-4.1). Per-node shapes are in
+# Cross-node shapes for the asset exposure ontology: control cycles. Per-node shapes are in
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
@@ -20,7 +19,7 @@ aeo:ControlRelationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.2: peril-attribute completeness and geo precision,
+#    Peril-attribute completeness and geo precision,
 #    read per location, not per asset (a per-asset rule would
 #    warn about a roof on stock, since attribute types do not say
 #    which asset classes they apply to).
@@ -77,7 +76,7 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.3: dependency cycles, comparability, unit derivation
+#    Dependency cycles, comparability, unit derivation
 #################################################################
 
 aeo:DependencyCycleShape a sh:NodeShape ;
@@ -133,7 +132,7 @@ aeo:UnitDerivationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.4: loss period, defaulted characteristics, scope
+#    Loss period, defaulted characteristics, scope
 #################################################################
 
 aeo:LossInPeriodShape a sh:NodeShape ;

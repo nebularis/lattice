@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Profile shape: construction and protection (applied-insurance-reference
-# AIR-4.2, shapes/profiles/construction-protection.ttl). An assessment of
+# Profile shape: construction and protection (shapes/profiles/construction-protection.ttl). An assessment of
 # this profile family is expected to carry the four core attribute types
 # below, and only types from the four families a construction and
 # protection survey is about.

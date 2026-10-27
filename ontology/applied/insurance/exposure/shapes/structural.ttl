@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Structural (per-node) shapes for the asset exposure ontology (ADR-A99-style
-# well-formedness, applied-insurance-reference AIR-4.1). Cross-node and
+# well-formedness). Cross-node and
 # cycle shapes are in constraints.ttl. Every rule is SHACL-SPARQL (sh:sparql,
 # never sh:property), so pySHACL's sh:sourceShape always names the shape
 # itself rather than an anonymous nested property shape, validated with
@@ -218,7 +218,7 @@ aeo:LegalEntityShape a sh:NodeShape ;
 aeo:DocumentationShape a sh:NodeShape ;
     sh:targetClass skos:Concept ;
     sh:sparql [
-        sh:message "A concept in a reference exposure scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows (AIR-2.0 documentation rule)." ;
+        sh:message "A concept in a reference exposure scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows." ;
         sh:select """
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -233,7 +233,7 @@ aeo:DocumentationShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.2: zones, pool participation, assessments, attributes
+#    Zones, pool participation, assessments, attributes
 #################################################################
 
 aeo:ZoneDesignationShape a sh:NodeShape ;
@@ -262,7 +262,7 @@ aeo:ZoneDesignationShape a sh:NodeShape ;
 aeo:ZoneInTerritoryShape a sh:NodeShape ;
     sh:targetClass aeo:ZoneDesignation ;
     sh:sparql [
-        sh:message "A zone designation's zone must be in the scheme currently bound to its contract, where a deployment has bound one (AIR-4.6 binds a scheme per market; a zone kind with no binding yet is not checked here)." ;
+        sh:message "A zone designation's zone must be in the scheme currently bound to its contract, where a deployment has bound one (a deployment binds a scheme per market, and a zone kind with no binding yet is not checked here)." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
             PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
@@ -373,7 +373,7 @@ aeo:AttributeValueShape a sh:NodeShape ;
             }
         """ ] ;
     sh:sparql [
-        sh:message "A concept-valued attribute value's concept must be in the scheme currently bound to its attribute type's contract, where one is bound (an unbound, market-only contract is not checked here, see AIR-4.6)." ;
+        sh:message "A concept-valued attribute value's concept must be in the scheme currently bound to its attribute type's contract, where one is bound (an unbound, market-only contract is not checked here)." ;
         sh:select """
             PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
@@ -430,7 +430,7 @@ aeo:ScreeningShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.3: dependencies, peril metrics, exposure units
+#    Dependencies, peril metrics, exposure units
 #################################################################
 
 aeo:DependencyShape a sh:NodeShape ;
@@ -549,7 +549,7 @@ aeo:ExposureUnitShape a sh:NodeShape ;
         """ ] .
 
 #################################################################
-#    AIR-4.4: losses, requirements, cover, financial metrics
+#    Losses, requirements, cover, financial metrics
 #################################################################
 
 aeo:LossExperienceShape a sh:NodeShape ;
