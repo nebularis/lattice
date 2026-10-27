@@ -254,9 +254,20 @@ path = "tools/testing/mem_check"
 import-names = ["mem_check"]
 
 [[tools]]
+name = "testing/jena"
+path = "tools/testing/jena"
+import-names = ["lattice_testing_jena"]
+reaches = ["platform/sparql-testkit"]
+
+[[tools]]
 name = "testing/oxigraph"
 path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
+
+[[tools]]
+name = "testing/sparql_probes"
+path = "tools/testing/sparql_probes"
+import-names = ["sparql_probes"]
 
 [[tools]]
 name = "vocabulary"
@@ -304,6 +315,7 @@ paths = [
     ".build/",
     "docs/_site/",
     "platform/reasoning-testkit/target/reasoning-testkit.jar",
+    "platform/sparql-testkit/target/sparql-testkit.jar",
 ]
 ```
 

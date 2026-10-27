@@ -59,6 +59,9 @@ Then:
 |---|---|---|---|
 | rdflib | `rdflib.Dataset`, in the test process, parameters as `initBindings` | part of every Python bootstrap | `mise run check:persistence` |
 | Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence` (the default engine), `mise run check:persistence-conformance` |
+| Apache Jena ARQ | `tools/testing/jena` (MSC-1), in-memory, one JVM per Python process from `platform/sparql-testkit`, parameters substituted as text, rdflib terms in and out | `mise run bootstrap:testing-jena` (builds the jar, needs Java) | conformance runs only: `mise run check:sparql-probes-conformance`, and `mise run check:conformance` for every conformance task |
+
+Engine probes that are not about one tool (the aggregate matrix, TSD-43) live in `tools/testing/sparql_probes` and run on all three engines, with the expected result per engine recorded beside the cases.
 
 A measurement of cost belongs in a benchmark under `benchmark/` (ADR-A124), which fails on a wrong result and never on time.
 `benchmark/sparql-constraint-query-cost` is the one for query forms, and `mise run check:sparql-constraint-query-cost` runs it.

@@ -131,8 +131,9 @@ class OxigraphEngine:
 
 
 class JenaEngine:
-    """Jena through `tools/testing/jena` (MSC-1), loaded and queried with the SPARQL its `JenaStore` runs. Not yet exercised here, since the
-    package is built in a parallel slice. Whoever lands it runs this benchmark once and corrects the two calls below if its names differ."""
+    """Jena through `tools/testing/jena`, loaded and queried with the SPARQL its `JenaStore` runs. The test kit's default JVM options stop
+    at the C1 compiler for a fast start, which slows a large query, so the benchmark runs the JVM with its full compiler unless
+    `LATTICE_SPARQL_TESTKIT_JVM_OPTIONS` is already set."""
 
     name = "jena"
 
@@ -140,11 +141,12 @@ class JenaEngine:
     def version() -> str:
         import lattice_testing_jena as jena
 
-        return getattr(jena, "VERSION", "5.1.0")
+        return getattr(jena, "VERSION", "5.1.0")  # ponytail: the package states no version yet, so this is the platform POM's Jena
 
     def __init__(self, graphs: int, triples: int) -> None:
         import lattice_testing_jena as jena
 
+        os.environ.setdefault("LATTICE_SPARQL_TESTKIT_JVM_OPTIONS", "-XX:+UseSerialGC -Xlog:disable")
         self.store = jena.JenaStore()
         for i in range(graphs):
             for start in range(0, triples, 1000):

@@ -2,23 +2,26 @@
 # NB: This module has been produced using GenAI
 
 """
-What an aggregate does with a row that has no value or errors, on both engines, and what each remedy does (TSD-41, TSD-43, CCS C9b3).
+What an aggregate does with a row that has no value or errors, on rdflib, Oxigraph and Jena, and what each remedy does (TSD-41, TSD-43, CCS C9b3, MSC-1).
 
-The cases are in ``aggregate_error_cases`` and what each engine returned is in ``aggregate_error_expected``. Every probe names
-its engine, so it holds under both ``check:mork-compilers`` and ``check:mork-compilers-conformance``. Test IDs are AE-nn.
-Jena ARQ's column is recorded and not run, since the repository has no cheap Jena runner for Python (Validation Pack).
+The cases are in ``sparql_probes.aggregate_error_cases`` and what each engine returned is in ``sparql_probes.aggregate_error_expected``.
+Every probe names its engine, so it holds under any task. Test IDs are AE-nn. An engine that is not installed or built here is skipped, and
+``SPARQL_PROBES_REQUIRED=1`` (set by ``check:sparql-probes-conformance``) makes AE-23 fail instead.
 """
 
 from __future__ import annotations
 
+import os
 import unittest
 
 from rdflib import Graph
 
-from .aggregate_error_cases import REMEDY_STATES, all_cases, cell, graph, matrix_cases, run
-from .aggregate_error_expected import EXPECTED
-from .engines import REGISTRY, run_query
+from sparql_probes.aggregate_error_cases import REMEDY_STATES, all_cases, cell, graph, matrix_cases, run
+from sparql_probes.aggregate_error_expected import EXPECTED
+from sparql_probes.engines import REGISTRY, available, run_query
 
+AVAILABLE = available()
+ENGINES = tuple(engine for engine in REGISTRY if AVAILABLE[engine])
 CELLS = {engine: None for engine in REGISTRY}
 
 
@@ -36,7 +39,7 @@ class MatrixTests(unittest.TestCase):
     def test_every_cell_is_as_recorded_on_each_engine(self) -> None:
         # AE-01
         self.assertEqual(set(EXPECTED["rdflib"]), set(all_cases()))
-        for engine in REGISTRY:
+        for engine in ENGINES:
             for name, value in cells(engine).items():
                 with self.subTest(engine=engine, case=name):
                     self.assertEqual(value, EXPECTED[engine][name])
@@ -45,10 +48,15 @@ class MatrixTests(unittest.TestCase):
         # AE-02
         self.assertEqual(len(matrix_cases()), 13 * len(REMEDY_STATES))
 
+    def test_every_engine_is_available_where_all_are_required(self) -> None:
+        # AE-23: check:sparql-probes-conformance sets SPARQL_PROBES_REQUIRED, so a missing engine cannot pass as a skip
+        if os.environ.get("SPARQL_PROBES_REQUIRED") == "1":
+            self.assertEqual(ENGINES, REGISTRY, f"not available: {[e for e in REGISTRY if not AVAILABLE[e]]}")
+
 
 class FilterTests(unittest.TestCase):
     def test_a_type_guarded_filter_gives_one_answer_on_every_engine_in_every_state(self) -> None:
-        # AE-03: remedy (a), FILTER(isNumeric(?x)), for the numeric aggregates. Jena's column is recorded. The last state is left out for
+        # AE-03: remedy (a), FILTER(isNumeric(?x)), for the numeric aggregates. The last state is left out for
         # rdflib, which returns a row there (AE-17)
         for aggregate in ("SUM", "AVG", "MIN", "MAX"):
             with self.subTest(aggregate=aggregate):
@@ -64,7 +72,7 @@ class FilterTests(unittest.TestCase):
 
     def test_filtering_the_rows_out_also_removes_them_from_count_star(self) -> None:
         # AE-05
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["COUNT(*) | one unbound"], "3")
                 self.assertEqual(cells(engine)["a filter | COUNT(*) | one unbound"], "2")
@@ -73,21 +81,21 @@ class FilterTests(unittest.TestCase):
 class CoalesceTests(unittest.TestCase):
     def test_coalescing_to_zero_cannot_tell_a_missing_value_from_a_zero(self) -> None:
         # AE-06: SUM over one unbound row is the sum of the others, the same as the filter gives
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["b coalesce | SUM(COALESCE(?x, 0)) | one unbound"], "3")
                 self.assertEqual(cells(engine)["a filter | SUM | one unbound"], "3")
 
     def test_coalescing_changes_the_denominator_of_an_average(self) -> None:
         # AE-07
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["b coalesce | AVG(COALESCE(?x, 0)) | one unbound"], "1^dec")
                 self.assertEqual(cells(engine)["a filter | AVG | one unbound"], "1.5^dec")
 
     def test_coalescing_a_group_concat_leaves_an_empty_element_and_a_stray_separator(self) -> None:
         # AE-08: the sorted elements of "1  2" or " 1 2" start with the empty one
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["b coalesce | GROUP_CONCAT(COALESCE(STR(?x), '')) | one unbound"], " 1 2")
 
@@ -113,7 +121,7 @@ class DetectTests(unittest.TestCase):
 
     def test_the_guarded_aggregate_is_unknown_when_a_row_is_missing_and_known_when_none_is(self) -> None:
         # AE-12: IF(COUNT(?x) = COUNT(*), agg, 1/0), on a group with and without a missing row
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 for name in ("SUM(COALESCE(?x, 0))", "MAX(?x)"):
                     guarded = f"c detect | IF(COUNT(?x) = COUNT(*), {name}, 1/0)"
@@ -123,7 +131,7 @@ class DetectTests(unittest.TestCase):
 
     def test_an_empty_group_has_nothing_missing_so_the_guarded_sum_is_the_neutral_element(self) -> None:
         # AE-13
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["c detect | IF(COUNT(?x) = COUNT(*), SUM(COALESCE(?x, 0)), 1/0) | empty"], "0")
 
@@ -146,7 +154,7 @@ class GroupsTests(unittest.TestCase):
 
     def test_a_filter_removes_the_group_with_no_value_where_a_coalesce_keeps_it_at_zero(self) -> None:
         # AE-19
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(cells(engine)["groups | a filter BOUND, SUM"], "s1=3;s3=5")
                 self.assertEqual(cells(engine)["groups | a filter BOUND, COUNT(*)"], "s1=2;s3=1")

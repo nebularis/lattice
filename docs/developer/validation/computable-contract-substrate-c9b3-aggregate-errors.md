@@ -18,7 +18,7 @@ In scope. The evidence matrix, the specification reading per cell, four remedies
 
 ## The matrix
 
-The tables are in TSD-43 and are not repeated. The cases are `aggregate_error_cases.py`, the recorded results `aggregate_error_expected.py`, and the engine probes `test_aggregate_errors.py` (AE-01 to AE-22).
+The files moved in MSC-1 from `tools/mork_compilers` to `tools/testing/sparql_probes`, and the paths below are the new ones. Results in the verification table are as of this slice, and the suite now also executes Jena (MSC-1 Validation Pack). The tables are in TSD-43 and are not repeated. The cases are `aggregate_error_cases.py`, the recorded results `aggregate_error_expected.py`, and the engine probes `test_aggregate_errors.py` (AE-01 to AE-22).
 
 Conformance to §18.5.1 over the 91 cells of the 13 aggregates and 7 states, where a cell that the text leaves open counts as conforming for either answer.
 
@@ -178,8 +178,7 @@ AE-01 pins every cell, so a change in either engine fails it and sends us to TSD
 ## One command
 
 ```bash
-MORK_SPARQL_ENGINE=rdflib mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_aggregate_errors.py -q
-MORK_SPARQL_ENGINE=oxigraph mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_aggregate_errors.py -q
+mise exec -- python -m pytest tools/testing/sparql_probes/tests/test_aggregate_errors.py -q
 mise run check:mork-compilers
 mise run check:mork-compilers-conformance
 ```
@@ -188,9 +187,9 @@ The tests name their engines, so they pass under either task and either `MORK_SP
 
 ## Artefacts to inspect
 
-- `tools/mork_compilers/src/mork_compilers/aggregate_error_cases.py`: the states, the 13 aggregates, the four remedies and the three-group probe
-- `tools/mork_compilers/src/mork_compilers/aggregate_error_expected.py`: the recorded results on three engines
-- `tools/mork_compilers/src/mork_compilers/test_aggregate_errors.py`: AE-01 to AE-22
+- `tools/testing/sparql_probes/src/sparql_probes/aggregate_error_cases.py`: the states, the 13 aggregates, the four remedies and the three-group probe
+- `tools/testing/sparql_probes/src/sparql_probes/aggregate_error_expected.py`: the recorded results on three engines
+- `tools/testing/sparql_probes/tests/test_aggregate_errors.py`: AE-01 to AE-22
 - `docs/architecture/triple-store-discovery.md`: TSD-43, the edits to TSD-41, TSD-Q21, TSD-Q23 and run R-L
 - the draft above, which replaces nothing yet
 
@@ -212,7 +211,7 @@ Run on 2026-10-27 on this branch, after the last edit of the code and the record
 
 | Command | Result |
 |---|---|
-| `mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_aggregate_errors.py -q` | `22 passed, 728 subtests passed in 1.48s`. Also run with `MORK_SPARQL_ENGINE=rdflib` and `oxigraph` and `PYTHONHASHSEED=3` or `7`, all passed |
+| `mise exec -- python -m pytest tools/testing/sparql_probes/tests/test_aggregate_errors.py -q` | `22 passed, 728 subtests passed in 1.48s`. Also run with `MORK_SPARQL_ENGINE=rdflib` and `oxigraph` and `PYTHONHASHSEED=3` or `7`, all passed |
 | `mise run check:mork-compilers` (rdflib, the default on this branch) | `171 passed, 7 skipped, 753 subtests passed in 13.13s` |
 | `mise run check:mork-compilers-conformance` (Oxigraph) | `171 passed, 7 skipped, 753 subtests passed in 9.26s` |
 | `mise run build:knowledge` | `knowledge index built at .build/knowledge/store` |
@@ -227,10 +226,10 @@ Not yet accepted. The lead's review and the maintainer's merge into `ccs-trunk` 
 
 ## Appendix: the Jena runner
 
-A single-file Java program, run with the classpath of `benchmark/ledger-store-comparison` (Jena 5.1.0). It reads the cases and states that `python -m mork_compilers.aggregate_error_cases DIR` writes, and prints one line per case with the number of rows, the lexical form and datatype of the last row's `?g`, and every row's `?s` and `?g`.
+A single-file Java program, run with the classpath of `benchmark/ledger-store-comparison` (Jena 5.1.0). It reads the cases and states that `python -m sparql_probes.aggregate_error_cases DIR` writes, and prints one line per case with the number of rows, the lexical form and datatype of the last row's `?g`, and every row's `?s` and `?g`.
 
 ```bash
-mise exec -- python -m mork_compilers.aggregate_error_cases /tmp/aggregate-cases
+mise exec -- python -m sparql_probes.aggregate_error_cases /tmp/aggregate-cases
 cd benchmark/ledger-store-comparison
 mise exec -- mvn -o -q dependency:build-classpath -Dmdep.outputFile=/tmp/jena.cp
 mise exec -- java -cp "$(cat /tmp/jena.cp)" Probe.java /tmp/aggregate-cases > /tmp/jena.out

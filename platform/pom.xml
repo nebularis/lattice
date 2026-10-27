@@ -12,6 +12,7 @@
     <module>release-integration</module>
     <module>surface-workflow</module>
     <module>reasoning-testkit</module>
+    <module>sparql-testkit</module>
     <module>authoring-service</module>
   </modules>
   <properties>

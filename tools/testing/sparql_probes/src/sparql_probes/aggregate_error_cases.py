@@ -5,8 +5,8 @@
 
 A case is a data state and a query. The data states are the row states of one group, built the way a generated query builds
 one, as ``?s a <urn:T>`` with an ``OPTIONAL`` for ``?x``, so a row with no value leaves ``?x`` unbound. The aggregate is over
-``?x`` or an expression of it. :func:`cell` runs a case on rdflib or Oxigraph and :func:`dump` writes the cases for a runner
-of another engine (Jena ARQ, see the Validation Pack). Run ``python -m mork_compilers.aggregate_error_cases DIR`` to write them."""
+``?x`` or an expression of it. :func:`cell` runs a case on one of the engines of ``engines.REGISTRY`` (rdflib, Oxigraph, Jena ARQ) and
+:func:`dump` writes the cases for a runner of another engine. Run ``python -m sparql_probes.aggregate_error_cases DIR`` to write them."""
 
 from __future__ import annotations
 
@@ -162,6 +162,7 @@ def _term(g) -> str:
 
 
 def cell(engine: str, state: str, text: str) -> str:
+    """One cell, run on ``engine``."""
     try:
         rows = run_query(graph(state), text, engine)
         rows = list(rows)

@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -79,6 +79,35 @@ run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persi
 depends = ["bootstrap:pip"]
 description = "Install the Oxigraph test-support package, the default engine of the persistence tests (ADR-A125)"
 run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
+[tasks."bootstrap:testing-jena"]
+depends = ["bootstrap:pip", "bootstrap:sparql-testkit"]
+description = "Build the Jena testkit jar and install the Jena test-support package, the third engine of the conformance runs (ADR-A125). Tests skip without the jar"
+run = "python -m pip install -e \"./tools/testing/jena[test]\""
+
+[tasks."check:testing-jena"]
+depends = ["bootstrap:testing-jena"]
+description = "Run the Jena test-support package's own tests (ADR-A125)"
+run = "python -m pytest tools/testing/jena/tests -q"
+
+[tasks."bootstrap:testing-sparql-probes"]
+depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-jena"]
+description = "Install the engine probes package and the three engines it runs on (ADR-A125)"
+run = "python -m pip install -e \"./tools/testing/sparql_probes[test]\""
+
+[tasks."check:sparql-probes-conformance"]
+depends = ["bootstrap:testing-sparql-probes"]
+description = "Run the engine probes (the aggregate-over-an-error matrix, TSD-43) on rdflib, Oxigraph and Jena ARQ, with Jena executed, and the Jena package's own tests. Run on demand and before a merge into main, not part of check (ADR-A125). SPARQL_PROBES_REQUIRED=1 fails where an engine is missing instead of skipping it"
+run = "python -m pytest tools/testing/sparql_probes/tests tools/testing/jena/tests -q"
+env = { SPARQL_PROBES_REQUIRED = "1" }
+
+[tasks."check:conformance"]
+description = "Run every conformance task in turn, so one command checks every engine before a merge into main (ADR-A125, MSC-Q5). Each task is on demand and none is part of check. Add a conformance task here when a suite gains one"
+run = [
+  { task = "check:persistence-conformance" },
+  { task = "check:mork-compilers-conformance" },
+  { task = "check:sparql-probes-conformance" },
+]
 
 [tasks."bootstrap:testing-mem-check"]
 depends = ["bootstrap:pip"]
@@ -452,6 +481,14 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am package -DskipTests"
 [tasks."check:reasoning-testkit"]
 description = "Run the reasoning harness self-tests (ADR-A83)"
 run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
+
+[tasks."bootstrap:sparql-testkit"]
+description = "Build the test-only Jena ARQ harness jar, the engine of tools/testing/jena (ADR-A125). Tests that need it skip without it"
+run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am package -DskipTests"
+
+[tasks."check:sparql-testkit"]
+description = "Run the Jena harness self-tests and build its jar (ADR-A125)"
+run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am verify"
 
 [tasks."check:reasoning-isolation"]
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"

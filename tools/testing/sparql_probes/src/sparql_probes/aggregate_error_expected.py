@@ -2,8 +2,10 @@
 # NB: This module has been produced using GenAI
 
 """What each engine returned for every case of ``aggregate_error_cases`` (TSD-43), run 2026-10-27 on rdflib 7.6.0 and
-pyoxigraph 0.5.13. ``jena`` is recorded from Apache Jena ARQ 5.1.0 and is not run by the suite (the Java runner is in the Validation
-Pack). To regenerate, run the cases on each engine, read what changed, and paste the results."""
+pyoxigraph 0.5.13. ``jena`` was recorded from Apache Jena ARQ 5.1.0 by a one-off Java runner, and since MSC-1 the suite executes it
+through ``lattice_testing_jena`` (``platform/sparql-testkit``, the same Jena). Where the executed result differed from the recorded one
+the executed result is here, and the difference is in the slice's Validation Pack. To regenerate, run the cases on each engine, read
+what changed, and paste the results."""
 
 EXPECTED = {
     "rdflib": {
