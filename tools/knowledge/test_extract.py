@@ -355,13 +355,18 @@ def test_every_table_in_a_register_is_a_data_table():
     rdfs:comment of the T-Box property it maps to, written once. A register that explains its own
     columns does so in a second table, whose first column is not an identifier, so that is what
     fails. The first register written carried one, and every later register would have repeated it."""
-    registers = {
-        path
-        for family in identifiers.FAMILIES
-        if family.definition == "table-row"
-        for pattern in family.defines
-        for path in identifiers.ROOT.glob(pattern)
-    }
+    def files(definition):
+        return {
+            path
+            for family in identifiers.FAMILIES
+            if family.definition == definition
+            for pattern in family.defines
+            for path in identifiers.ROOT.glob(pattern)
+        }
+
+    # A document whose headings define entries, such as the store-discovery record, holds a register
+    # table among its other tables, so only files that are registers and nothing else are held to it.
+    registers = files("table-row") - files("heading")
     assert len(registers) >= 6
     offenders = []
     for path in sorted(registers):
@@ -475,6 +480,23 @@ def test_read_prints_the_register_row_before_what_its_pointer_names(built, ident
     assert where.startswith("row docs/developer/") and text.startswith(f"| {identifier} |")
     assert len(pieces) > 1 and all(w.startswith("pointed-at ") for w, _ in pieces[1:])
 
+
+
+def test_an_open_store_question_is_a_discovery_with_its_row(built):
+    """The discovery record's open questions are rows of its own table, read like a register's."""
+    import ask
+
+    _, store = built
+    rows = list(store.query(f"SELECT ?k ?s WHERE {{ GRAPH ?g {{ <{extract.KI}node/TSDQ1> a ?k ; <{extract.KI}status> ?s }} }}"))
+    assert [(r["k"].value, r["s"].value) for r in rows] == [(extract.KI + "Discovery", extract.KI + "Open")]
+    where, text = ask.read_ranges(store, "TSD-Q1")[0]
+    assert where.startswith("row docs/architecture/triple-store-discovery.md:") and text.startswith("| TSD-Q1 |")
+
+
+def test_a_ratified_cell_is_read_by_its_leading_word(built):
+    """A tail after the yes or no, such as "added 2026-10-27", is for the reader and costs no status."""
+    out, _ = built
+    assert not [p for p in out.problems if "has Ratified" in p]
 
 def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monkeypatch):
     """The maintainer's requirement: when a document changes, the index must pick up the new line

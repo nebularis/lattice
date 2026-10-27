@@ -87,6 +87,7 @@ FAMILY_CLASS = {
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
     "store-discovery": "Discovery",
+    "store-question": "Discovery",
     "mechanism": "Mechanism",
     "capability": "Capability",
     "pattern": "Pattern",
@@ -308,6 +309,8 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Capability": ("claim", "claim"),
     "Debt": ("claim", "claim"),
     "Decision": ("claim", "claim"),
+    "Question": ("claim", "claim"),
+    "Why it matters": ("problemShape", "text"),
     "Name": ("label", "label"),
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
@@ -342,6 +345,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
+        "Next step",
     }
 )
 
@@ -506,7 +510,8 @@ def register_rows(out: Extract) -> None:
                                     add(prop, node(other))
                                     out.bump(prop)
                         elif kind == "ratified":
-                            value = CONTROLLED["ratified"].get(cell.lower())
+                            # The leading yes or no is the fact, and a tail such as "added 2026-10-27" is for the reader.
+                            value = CONTROLLED["ratified"].get(cell.split(",")[0].strip().lower())
                             if value is None:
                                 out.problems.append(f"{here} has Ratified '{cell}', not yes or no")
                             else:
