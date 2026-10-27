@@ -257,13 +257,4 @@ this ADR, with ADR-A01's 2026-10-19 addendum, on 2026-10-21.
 
 The maintainer published this ADR on 2026-10-26, once the README of its first slice existed.
 
-**The 2026-10-27 addendum.** Designed in the
-[ledger history and runtime sketch](../../developer/sketches/ledger-history-and-runtime.md), whose §2.1
-states the two orderings and whose §7 holds the questions. The maintainer answered LF-Q11 (two orderings),
-LF-Q17 to LF-Q22 on 2026-10-27. LF-Q19 is the reversal of decision 4's keying, and the sketch records that
-the partition template of the
-[multi-store runtime sketch](../../developer/sketches/multi-store-runtime.md) rests on it (MS-Q2, answered
-the same day). The minting of a period's unit is deliberately left out, tracked as PDD-12 in the
-[pending design decisions](../../developer/pending-design-decisions.md), pending the measurement of a read
-spanning a change of closing recurrence. The addendum's examples are domain-neutral by the substrate rule,
-where the sketch's are drawn from insurance.
+**The 2026-10-27 addendum.** Designed in the [ledger history and runtime sketch](../../developer/sketches/ledger-history-and-runtime.md), whose §2.1 states the two orderings and whose §7 holds the questions. The maintainer answered LF-Q11 (two orderings), LF-Q17 to LF-Q22 on 2026-10-27. LF-Q19 is the reversal of decision 4's keying, and the sketch records that the partition template of the [multi-store runtime sketch](../../developer/sketches/multi-store-runtime.md) rests on it (MS-Q2, answered the same day). The minting of a period's unit is deliberately left out, tracked as PDD-12 in the [pending design decisions](../../developer/pending-design-decisions.md), pending the measurement of a read spanning a change of closing recurrence. The addendum's examples are domain-neutral by the substrate rule, where the sketch's are drawn from insurance.
