@@ -3,9 +3,7 @@
 # Plan: Python test speed
 
 **Unit ID:** `python-test-melting`
-**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0-TM3, TM6-TM8 built and validated. TM4 and TM5
-deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record). Reopened 2026-10-21 for
-TM9 to TM12, every suite on the defaults (planned).
+**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0-TM3, TM6-TM8 built and validated. TM4 and TM5 deferred, with reasoning recorded (slices table). All of TM-Q1 to TM-Q5 decided (status record). Reopened 2026-10-21 for TM9 to TM12, every suite on the defaults, built and verified 2026-10-27 on `py-test-xtra`, not yet reviewed by the maintainer.
 **Trigger:** request, 2026-10-09. The `check:ontology-catalog` run took 19 minutes in a fresh
 cloud environment, and about 31 s for one test locally.
 **Status record:** [python-test-melting.md](../status/python-test-melting.md)
@@ -194,10 +192,10 @@ laptop with an editor open. Governing decisions: ADR-A124 (benchmarks out of `ch
 
 | Slice | Scope | Suites | Estimate | Status |
 |---|---|---|---|---|
-| TM9 | Measure. For every `pytest` task `check` runs, the wall time serially and with `-n auto`, the peak resident memory of one process (`-n 0`) and of one worker, the number of workers xdist starts, and whether any test executes SPARQL on a store beyond pySHACL's own use of rdflib. A table in the Validation Pack orders the suites by peak memory per worker. No behaviour change | all | 40k | planned |
-| TM10 | The parallel suites, which use the most memory: `check:ontology-catalog` and `check:peril-vocabulary` answer `pytest_xdist_auto_num_workers` with `mem_check` from TM9's measured peak per worker. A test that starts the reasoner's JVM counts the JVM's heap in that peak, and the JVM's own maximum is set so two workers fit in 8 GB | `tools/test_*.py`, `tools/conftest.py` | 60k | planned, after TM9 |
-| TM11 | The engine split, only for suites TM9 finds executing generated or hand-written SPARQL on a store. Their behaviour tests run on Oxigraph, a test whose subject is one engine's behaviour is marked `conformance`, and each such suite gains a `check:<suite>-conformance` task, run before a merge. A suite with no such test is listed and left alone | per TM9 | 60k per suite | planned, after TM9 |
-| TM12 | The serial suites (`check:workers`, `check:vocabulary`, `check:mork-compilers`, `check:reference-eligibility`, `check:minting-python`, `check:persistence-library`). Each one over 10 s serially gets `-n auto` with `mem_check`, after the work its tests share is made safe for workers. Each one under 10 s stays serial, with its time recorded | those six | 50k | planned, after TM10 |
+| TM9 | Measure. For every `pytest` task `check` runs, the wall time serially and with `-n auto`, the peak resident memory of one process (`-n 0`) and of one worker, the number of workers xdist starts, and whether any test executes SPARQL on a store beyond pySHACL's own use of rdflib. A table in the Validation Pack orders the suites by peak memory per worker. No behaviour change | all | 40k | done, 2026-10-27 |
+| TM10 | The parallel suites, which use the most memory: `check:ontology-catalog` and `check:peril-vocabulary` answer `pytest_xdist_auto_num_workers` with `mem_check` from TM9's measured peak per worker. A test that starts the reasoner's JVM counts the JVM's heap in that peak, and the JVM's own maximum is set so two workers fit in 8 GB | `tools/test_*.py`, `tools/conftest.py` | 60k | done, 2026-10-27 |
+| TM11 | The engine split, only for suites TM9 finds executing generated or hand-written SPARQL on a store. Their behaviour tests run on Oxigraph, a test whose subject is one engine's behaviour is marked `conformance`, and each such suite gains a `check:<suite>-conformance` task, run before a merge. A suite with no such test is listed and left alone | per TM9 | 60k per suite | done, 2026-10-27 (`check:mork-compilers` kept rdflib as its default: trying Oxigraph found a real divergence, TSD-41, so the conformance task runs Oxigraph instead of the default flipping to it) |
+| TM12 | The serial suites (`check:workers`, `check:vocabulary`, `check:mork-compilers`, `check:reference-eligibility`, `check:minting-python`, `check:persistence-library`). Each one over 10 s serially gets `-n auto` with `mem_check`, after the work its tests share is made safe for workers. Each one under 10 s stays serial, with its time recorded | those six | 50k | done, 2026-10-27 (`check:mork-compilers` already handled by TM11, the other five all measured under 10s and stay serial) |
 
 Validation: TM10 and TM12 each show, with `MEM_CHECK_AVAILABLE_MIB` set low and high, that the suite starts two workers and the
 default count, and that every test outcome is the same as before (the baseline diff of "Measure before changing anything" in the

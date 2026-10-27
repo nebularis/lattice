@@ -172,3 +172,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-testing` | a slow test suite, writing or extending a Python test under `tools/` that parses an ontology graph or calls pySHACL, sharing state across test modules with pytest fixtures, or a repository-wide text scan that must work on every platform |
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
 | `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |
+| `lattice-constrained-environments` | a bootstrap, install or download refused by a registry, mirror or proxy, and deciding whether a blocked package can be worked around safely |

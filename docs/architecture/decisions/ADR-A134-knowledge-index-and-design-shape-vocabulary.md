@@ -132,4 +132,4 @@ The two questions that prompted this now answer. ADR-A122 returns at 0.82 pointi
 
 **What it costs.** Decisions rise against other kinds in general, because a narrow section matches a specific question more closely than a 200-character claim. Over the four questions above and eleven from the miss log, the top five changed in 13 of 15 and the top answer in three. One of those three now puts a grounding decision above the principle it grounds, with the principle third, which the guidance on asking for what is related already anticipates. The other two were weak matches before and after. Where an entry should outrank a decision at equal meaning, a small bias against section-derived scores is the lever, and it was not applied.
 
-**What it does not fix.** A decision whose Decision section is prose rather than a numbered list gets no sections, so its rules retrieve only through the truncated claim. ADR-A74 is the instance, recorded as TD-91.
+**What it does not fix.** A decision whose Decision section is prose rather than a numbered list gets no sections, so its rules retrieve only through the truncated claim. ADR-A74 is the instance, recorded as TD-93.

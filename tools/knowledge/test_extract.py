@@ -677,7 +677,7 @@ SECTIONED = [
 
 def test_each_numbered_decision_and_addendum_is_a_section_with_its_own_range():
     """A decision's claim covers only the opening of its Decision section, so a later rule is found
-    through a section of its own (TD-91). Numbers outside the Decision section and inside a code
+    through a section of its own (TD-93). Numbers outside the Decision section and inside a code
     block are not decisions, and an addendum runs through its own subheadings."""
     found = extract.decision_sections(SECTIONED)
     assert [(s, e) for _, s, e in found] == [(12, 17), (19, 19), (25, 33)]

@@ -3,11 +3,11 @@
 # Python Test Speed - Status
 
 **Unit ID:** `python-test-melting`
-**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built
-and validated. TM4 and TM5 deferred, with reasoning recorded below.
-**Last updated:** 2026-10-21 (reopened for TM9 to TM12)
+**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built and validated. TM4 and TM5 deferred, with reasoning recorded below. Reopened 2026-10-21 for TM9 to TM12, **all four built and verified 2026-10-27 on `py-test-xtra`**, not yet reviewed by the maintainer.
+**Last updated:** 2026-10-27 (TM12 built, the follow-on complete)
 **Plan:** [python-test-melting.md](../plans/python-test-melting.md)
 **Sketch:** [python-test-melting.md](../sketches/python-test-melting.md)
+**Validation Packs:** [TM9](../validation/python-test-melting-tm9.md), [TM10](../validation/python-test-melting-tm10.md), [TM11](../validation/python-test-melting-tm11.md), [TM12](../validation/python-test-melting-tm12.md)
 
 ## Current position
 
@@ -30,12 +30,36 @@ out to all 16 modules with a `validate()` call site. Full detail in "Final resul
 
 ## Next action
 
-**Reopened 2026-10-21** for TM9 to TM12 (plan, "Follow-on, 2026-10-21"), at the maintainer's request: every suite of
-`check` on the defaults of skill `lattice-testing`, in the order of expected memory use. TM9, measuring every suite, is next.
+**Reopened 2026-10-21** for TM9 to TM12 (plan, "Follow-on, 2026-10-21"), at the maintainer's request: every suite of `check` on the defaults of skill `lattice-testing`, in the order of expected memory use.
 
-For TM0 to TM8: none, it is done. Review and merge `test/slow-py` to `main` (the maintainer's). The two
-superseded sketches (`python-test-melting.md`, `test-suite-performance.md`) stay until the maintainer
-decides whether to delete them, per TM8's own text.
+**TM9 done, 2026-10-27, on `py-test-xtra` (branched from `docs/placement-vehicles-structure`), machine S, Windows.** Full detail, including the suite-by-peak-memory table TM9 asks for, in its [Validation Pack](../validation/python-test-melting-tm9.md). In short:
+- `tools/time_ontology_tests.py` generalised to profile any pytest-shaped task (not only `check:ontology-catalog`) and gained a Windows memory sampler, since this machine had neither. Committed (`7e8f7049`).
+- Every pytest task `check` depends on was measured, serially and (where worth it) under `-n auto`.
+- A TM11 candidate the brief did not name: `check:mork-compilers` runs generated SPARQL through plain `rdflib`, with no `@engines.each_engine` opt-in and no Oxigraph default. Needs the maintainer's confirmation before TM11 starts.
+- `check:mork` could not be measured: `tools/mork` is not installed on this machine (a pip-mirror block several packages deep in its dependency chain, recorded in repo memory). Handed to the maintainer, not retried.
+- TM12's own 10-second bar leaves only `check:mork-compilers` (23.9s serially) as a real parallelisation candidate among its six named suites. The other five stay serial. Since `check:mork-compilers` is also the new TM11 candidate, **TM11 and TM12 need to agree which of them changes it, and in what order, before either starts.**
+
+**2026-10-27, the maintainer confirmed `check:mork-compilers` is in TM11's scope**, and asked for the agent's own leaning on ordering: TM11 goes first for that one suite (it decides what the default task contains before a worker count means anything), and builds both resulting tasks on the skill's defaults from the start. TM12's own list then needs no separate entry for it.
+
+**TM10 done, 2026-10-27, same branch.** Full detail in its [Validation Pack](../validation/python-test-melting-tm10.md). In short:
+- `tools/conftest.py` gains `pytest_xdist_auto_num_workers`, the same shape as `tools/persistence/tests/conftest.py`'s, with `PER_WORKER` at 900 MiB (measured with `-n 0`: 0.80 GB tree, 305 MB largest Python process, up to 3 JVMs holding 584 MB at once). One hook and one constant serve both `check:ontology-catalog` and `check:peril-vocabulary`, since the second's file is already part of the first's run.
+- On this machine (over 30 GB free) the hook changes nothing observable, by design: its value is on a shorter machine.
+- TM9's "flaky" guess for `check:ontology-catalog`'s 2 failures was wrong, corrected here and in TM9's own Validation Pack: a real, deterministic bug in `tools/import_guard.py` (`Path.read_text()` with no explicit encoding, decoding a UTF-8 ontology file as `cp1252` on Windows). Out of scope for this unit, flagged for the maintainer.
+- Not run: TM10-03, showing the hook actually lowers the worker count under `MEM_CHECK_AVAILABLE_MIB` set low, since this machine has nothing short to observe directly.
+
+**TM11 done, 2026-10-27, same branch.** Full detail in its [Validation Pack](../validation/python-test-melting-tm11.md). In short:
+- `tools/mork_compilers` gained an engine abstraction (`mork_compilers/engines.py`) it never had, and eight test files route their query calls through it.
+- **Departed from TM11's literal brief, recorded per `lattice-design`:** running the suite on Oxigraph found a real divergence on one of its 126 tests (TSD-41, a `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects that drops one record's contribution on Oxigraph only). `check:mork-compilers` therefore keeps rdflib as its default, exactly as it has always run, rather than flipping to Oxigraph as the skill's usual practice (STD-153) would ask. `check:mork-compilers-conformance` is the new task that runs Oxigraph, on demand and before a merge, so the divergence stays visible.
+- Both tasks run `-n auto`, sized by TM10's shared `mem_check` hook (no new wiring needed, since pytest discovers `tools/conftest.py` for any test under `tools/`).
+- New registers from this finding: TSD-41, STD-274 (prove conformance before trusting a new default), STD-275 (read text with an explicit encoding, generalising TM10's import_guard.py finding), TD-91 (the import_guard.py bug itself) and TD-92 (the mork_compilers divergence). TD-87 corrected (nine files to eight). Committed separately (`44c82c6d`) before TM11's own implementation commit.
+
+**TM12 done, 2026-10-27, same branch, the follow-on complete.** Full detail in its [Validation Pack](../validation/python-test-melting-tm12.md). In short:
+- `check:mork-compilers` was already handled by TM11, so TM12's own list was the remaining five: `check:workers`, `check:vocabulary`, `check:reference-eligibility`, `check:minting-python`, `check:persistence-library`.
+- Every one re-measured under the plan's 10-second bar (1.6s to 7.0s), so every one stays serial, per the rule, with its time recorded. No code changed.
+- `check:workers`' own TM9 figure (9.5s auto against 5.1s serial) independently confirms the bar's own reasoning: parallelising a suite this small costs time rather than saving it.
+- Carried forward, unresolved: TSD-41 / TD-92 (the mork_compilers divergence, mechanism untraced), TD-91 (the import_guard.py encoding bug, a one-line fix not made here), and `check:mork` (still not measurable, `tools/mork` not installed on this machine).
+
+For TM0 to TM8: none, it is done. Review and merge `test/slow-py` to `main` (the maintainer's). The two superseded sketches (`python-test-melting.md`, `test-suite-performance.md`) stay until the maintainer decides whether to delete them, per TM8's own text.
 
 ## Final result
 

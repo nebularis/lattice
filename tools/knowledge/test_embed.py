@@ -219,7 +219,7 @@ def section(store: ox.Store, parent: str, number: int, claim: str, pointer: str)
 
 
 def test_a_decision_is_scored_by_its_best_section_and_points_at_it(tmp_path, words, monkeypatch, capsys):
-    """ADR-1's own claim says nothing about minting, but its second section does (TD-91). It is found
+    """ADR-1's own claim says nothing about minting, but its second section does (TD-93). It is found
     by that section, reports the section's pointer, and appears once, since a section is no entry.
     A question that its own claim answers keeps the whole-file pointer."""
     store = ox.Store()

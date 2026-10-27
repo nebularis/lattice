@@ -12,7 +12,7 @@ a space.
 
 An entry's text is its name, its claim and its problem shape. A decision's numbered decisions and
 addenda are embedded too, each as its own text under a node that is not an entry, so that a rule stated
-below the opening of a decision is found by its own subject (TD-91). The vectors are written beside the
+below the opening of a decision is found by its own subject (TD-93). The vectors are written beside the
 store, keyed by node and by a digest of that text, so a rebuild embeds only what changed.
 
 Nothing here is a source. When the model cannot be fetched, the build records why and leaves no

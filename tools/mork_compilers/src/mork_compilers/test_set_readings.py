@@ -26,6 +26,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_profile
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, SH
 from .owl_backend import compile_classes
 from .shacl_backend import compile_shapes
@@ -91,7 +92,7 @@ ex:closure a elg:Closure ; elg:licensedBy ex:registry .
 def sparql(plan, data: Graph) -> Dict[str, Tuple[str, Optional[URIRef]]]:
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = list(data.query(str(artefact.value(template, MORK.queryText))))
+    rows = list(run_query(data, str(artefact.value(template, MORK.queryText))))
     keyed = {str(row[0]).rsplit("/", 1)[1]: (str(row.decision), row.diagnostic) for row in rows}
     assert len(keyed) == len(rows), "one decision per subject or question"
     return keyed

@@ -217,7 +217,7 @@ def decision_sections(lines: list[str]) -> list[tuple[str, int, int]]:
 
     Each numbered item of the Decision section and each ``## Addendum`` section. A decision's claim
     is the opening of its Decision section, so a rule stated further down, or in an addendum, would
-    never be found by its subject (TD-91). Code blocks are left out of the text, which is cut at
+    never be found by its subject (TD-93). Code blocks are left out of the text, which is cut at
     ``SECTION_LIMIT``."""
     top = anchors.headings(lines)
     decision = next((i for i, (n, lv, _) in enumerate(top) if lv == 2 and lines[n - 1].startswith("## Decision")), None)

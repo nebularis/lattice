@@ -234,6 +234,7 @@ to the store or where it is a matter of capacity.
 | [TSD-35](#tsd-35-a-literal-as-the-graph-of-a-graph-block-is-refused-by-oxigraph-and-parsed-by-rdflib) | a literal as the graph of a `GRAPH` block | a syntax error | ✘ parsed, the block matches nothing | ✔ a syntax error | Observed |
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
+| [TSD-41](#tsd-41-a-group_concat-over-a-union-of-nested-aggregate-sub-selects-drops-one-groups-contribution-on-oxigraph) | `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects | not specified | keeps every contributing group's value | drops one group's value for one case found so far | Observed |
 
 ## 6. The findings
 
@@ -1417,6 +1418,31 @@ SELECT ?b WHERE { <urn:checkpoint:100000:a0> l:balance ?b }
 
 **Reproduce it.** The three forms above against the benchmark's `post-once` store at 20,000 events, under each version.
 
+### TSD-41. A `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects drops one group's contribution on Oxigraph
+
+**Evidence:** Observed on rdflib 7.6.0 and Oxigraph 0.5.11, 2026-10-27, building `check:mork-compilers-conformance` (`python-test-melting` TM11). Not read from source. The mechanism is open (new question, below).
+
+**Context.** `tools/mork_compilers`' generated SPARQL had run on rdflib alone since the suite was written, with no engine abstraction. Giving it one (`mork_compilers/engines.py`), so a conformance task could run it on Oxigraph too, surfaced a real disagreement between the two engines on one of its own 126 tests, not a defect in the new wrapper: the wrapper's own round-trip of every other binding in every other test matched rdflib exactly.
+
+**How we found it.** Running the whole suite with `MORK_SPARQL_ENGINE=oxigraph` gave exactly one failure, every time, out of 126 tests: `test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures`. Isolating the one query (`sparql_profile`, compiled by `compile_query_template` for an `elg:AdmissionProfile` with two conditions, `no-medicine` and `stem-qualification`) and running it directly on both engines, for the fixture's four records (`ada`, `ben`, `cai`, `dee`), reproduces it on its own, outside the test runner.
+
+**What the store does.** The compiled query is a `UNION` of two conditions, each itself several levels of nested aggregate sub-selects computing a per-record, per-condition `decision` and `closure`, feeding an outer `SELECT ?record ... WHERE { ... } GROUP BY ?record` whose `GROUP_CONCAT(DISTINCT STR(?relied); separator=" ")` collects every contributing row's closure into one string per record. By the fixture's own setup, `ada` relies on the closure through the `no-medicine` branch alone, `ben` and `cai` through both branches, and `dee` through neither.
+
+| Record | rdflib | Oxigraph |
+|---|---|---|
+| `ada` | `closures` bound to the closure | `closures` **unbound** |
+| `ben` | `closures` bound to the closure | `closures` bound to the closure |
+| `cai` | `closures` bound to the closure | `closures` bound to the closure |
+| `dee` | `closures` unbound | `closures` unbound |
+
+Every other field of every row (`record`, `decision`) agrees between the two engines. Only `ada`'s `closures` differs, and only on Oxigraph, and only in this one direction (a binding rdflib keeps, Oxigraph drops, never the reverse). The two engines also return the four records' rows in a different order, which does not by itself explain the missing binding, since `GROUP BY` groups all of one record's rows together regardless of order.
+
+**Why.** Not yet traced to the engine's source on either side. The outer aggregation uses the `?none`-as-unbound idiom the compiler's templates use throughout (`BIND(IF(condition, value, ?none) AS ?x)`, where `?none` is a variable the query never otherwise binds, so referencing it makes the whole expression unbound), nested inside a `UNION` whose two branches each contribute rows through further aggregate sub-selects. TSD-19 already found that `GROUP_CONCAT`'s order is the store's scan order on rdflib, not a specification guarantee, so the two engines are free to group and aggregate in different orders, and a record whose contributing rows arrive in a different relative order between the branches could plausibly take a different path through the `?none` idiom in one engine and not the other. This is a hypothesis, not a finding: we have not isolated a smaller query that reproduces it, and have not read either engine's source for how it evaluates an aggregate `UNION`'s branches relative to each other.
+
+**What it means for LATTICE.** `check:mork-compilers` keeps rdflib as its default engine (see `mork_compilers/engines.py`'s own docstring), where it has always run and where this divergence does not arise: flipping the default here, as skill `lattice-testing`'s usual practice asks (STD-153), would have turned this one passing test into a failing one for a reason this unit does not fix. `check:mork-compilers-conformance` runs Oxigraph explicitly, on demand and before a merge, specifically so this kind of divergence stays visible rather than hidden by never trying the other engine. TD-91 records the compiler-level gap this finding exposes (a generated query whose correctness depends on which engine runs it). STD-274 generalises the lesson: prove conformance before trusting a new default.
+
+**Reproduce it.** `MORK_SPARQL_ENGINE=oxigraph mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures -q`, or `mise run check:mork-compilers-conformance`, which runs the whole suite on Oxigraph.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -1491,3 +1517,4 @@ wrong, find out why it is there.
 | TSD-Q17 | why Oxigraph returns no row for `COUNT(*)` over a statically false filter | TSD-33 is observed, not explained | read Oxigraph's query optimiser |
 | TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |
 | TSD-Q19 | why the sub-select decides TSD-34 when a `UNION` alone does not, and whether Fuseki or Jena ARQ shows the defect | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION`. The part of TSD-Q19 about the generated operations is answered under TSD-34 (FMH-H2-6g) | trace which solution comes first and which are kept in TSD-34's query, and run the query on Fuseki. The defect was reported upstream 2026-10-20 ([RDFLib/rdflib#3585](https://github.com/RDFLib/rdflib/issues/3585)) |
+| TSD-Q20 | why Oxigraph drops one record's `GROUP_CONCAT` contribution in TSD-41's query, and whether the minimal case is the `?none`-as-unbound idiom, the nested aggregate sub-selects, or their combination with `UNION` | TSD-41 is observed on the real generated query only, not isolated to a smaller one, and not read from either engine's source | bisect TSD-41's query to the smallest form that still disagrees, as TSD-34's step 3 did, and read Oxigraph's query optimiser for how it evaluates an aggregate's branches |

@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""Profiles the `check:ontology-catalog` mise task, slowest first.
+"""Profiles a pytest-shaped mise task, slowest first. Defaults to `check:ontology-catalog`.
 
 Run from the repository root:
-python tools/time_ontology_tests.py [--top N] [--per-file] [--workers N] [--dist MODE]
+python tools/time_ontology_tests.py [--task NAME] [--top N] [--per-file] [--workers N] [--dist MODE]
 
 Default: runs the task's own pytest command once, with its own flags (so the same xdist
 workers and `--dist` mode), plus a JUnit report, and prints the wall time, the
 slowest files and the slowest tests. This is the shape of a real run, so a tail made of a few
 big files shows up here. It also prints when each xdist worker finished and which files it ran,
-which shows a run waiting on one worker, and the peak memory of the process tree (macOS and
-Linux). `--workers` and `--dist` replace the task's own `-n` and `--dist`, to compare worker
-counts and scheduling modes on the machine in front of you, for example
-`--workers 4 --dist loadfile`. On a machine with performance and efficiency cores, a late
-worker is often one the scheduler put on an efficiency core.
+which shows a run waiting on one worker, and the peak memory of the process tree (macOS, Linux
+and Windows, python-test-melting TM9). `--workers` and `--dist` replace the task's own `-n` and
+`--dist`, to compare worker counts and scheduling modes on the machine in front of you, for
+example `--workers 4 --dist loadfile`. On a machine with performance and efficiency cores, a
+late worker is often one the scheduler put on an efficiency core.
+
+--task NAME: any `check:*` task whose `run` line has a `python -m pytest ...` segment, found
+wherever it falls among the task's `&&`-joined steps. A task with no such segment is reported
+and left alone, since this tool profiles pytest, not an arbitrary script.
 
 --per-file: runs each test file in its own process, one after another. Import-time ontology
 parsing is counted against the file that pays it, and the sum exceeds a real run. Use it to
@@ -33,10 +37,14 @@ import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-TASK = "check:ontology-catalog"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import lattice_repo_catalogue  # noqa: E402
+
+ROOT = lattice_repo_catalogue.find_root()
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--task", default="check:ontology-catalog", help="the mise task to profile (default check:ontology-catalog)")
 parser.add_argument("--top", type=int, default=15, help="slowest tests and files to show")
 parser.add_argument("--per-file", action="store_true", help="one process per file instead of one real run")
 parser.add_argument("--workers", help="xdist workers for the run, replacing the task's -n (a number or auto)")
@@ -44,8 +52,14 @@ parser.add_argument("--dist", help="xdist scheduling mode for the run, replacing
 parser.add_argument("--timeout", type=int, default=1800, help="seconds before a run, or a file with --per-file, is reported as hung and killed")
 args = parser.parse_args()
 
-run = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"][TASK]["run"]
-pytest_part, *rest = [p.strip() for p in run.split("&&")]
+run = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"][args.task]["run"]
+segments = [p.strip() for p in run.split("&&")]
+pytest_index = next((i for i, s in enumerate(segments) if shlex.split(s)[:3] == ["python", "-m", "pytest"]), None)
+if pytest_index is None:
+    print(f"{args.task}'s run line has no `python -m pytest` segment, so there is nothing for this tool to profile:\n  {run}")
+    sys.exit(1)
+pytest_part = segments[pytest_index]
+rest = segments[:pytest_index] + segments[pytest_index + 1:]
 tokens = shlex.split(pytest_part)
 files = [t for t in tokens if t.endswith(".py")]
 python_flags = [t for t in tokens[3:] if not t.endswith(".py")]  # drop `python -m pytest`
@@ -91,27 +105,107 @@ def report_steps(steps):
         print(f"{elapsed:7.1f}s  {step}" + ("" if proc and proc.returncode == 0 else "  [FAILED OR HUNG]"), flush=True)
 
 
+def _windows_process_tree():
+    """pid -> (ppid, executable name) for every running process, from the Toolhelp32 snapshot
+    (``kernel32.dll``, the same family of raw Windows API ``mem_check`` already uses for
+    system-wide memory). Standard library only (``ctypes``)."""
+    import ctypes
+    from ctypes import wintypes
+
+    class PROCESSENTRY32(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD), ("th32ProcessID", wintypes.DWORD),
+            ("th32DefaultHeapID", ctypes.POINTER(ctypes.c_ulong)), ("th32ModuleID", wintypes.DWORD),
+            ("cntThreads", wintypes.DWORD), ("th32ParentProcessID", wintypes.DWORD), ("pcPriClassBase", ctypes.c_long),
+            ("dwFlags", wintypes.DWORD), ("szExeFile", ctypes.c_char * 260),
+        ]
+
+    TH32CS_SNAPPROCESS = 0x00000002
+    kernel32 = ctypes.windll.kernel32
+    snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if snapshot == -1:
+        return {}
+    try:
+        entry = PROCESSENTRY32()
+        entry.dwSize = ctypes.sizeof(PROCESSENTRY32)
+        rows = {}
+        found = kernel32.Process32First(snapshot, ctypes.byref(entry))
+        while found:
+            rows[entry.th32ProcessID] = (entry.th32ParentProcessID, entry.szExeFile.decode(errors="replace"))
+            found = kernel32.Process32Next(snapshot, ctypes.byref(entry))
+        return rows
+    finally:
+        kernel32.CloseHandle(snapshot)
+
+
+def _windows_rss(pid):
+    """A process's working set size in bytes, from ``psapi.dll``, or 0 where it cannot be opened
+    (it may have just exited)."""
+    import ctypes
+
+    class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+        _fields_ = [
+            ("cb", ctypes.c_ulong), ("PageFaultCount", ctypes.c_ulong),
+            ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+            ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t),
+        ]
+
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        return 0
+    try:
+        counters = PROCESS_MEMORY_COUNTERS()
+        counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
+        if ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+            return counters.WorkingSetSize
+        return 0
+    finally:
+        ctypes.windll.kernel32.CloseHandle(handle)
+
+
 def sample_memory(root_pid, stop, peaks):
-    """Every second until `stop`, the resident memory of the process tree under `root_pid`,
-    from `ps` (macOS and Linux). `peaks` gets the largest tree, the largest Python process,
-    and the most JVMs, and their combined size, seen at once."""
+    """Every second until `stop`, the resident memory of the process tree under `root_pid`:
+    from `ps` on macOS and Linux, from the Toolhelp32 snapshot and `GetProcessMemoryInfo` on
+    Windows (python-test-melting TM9). `peaks` gets the largest tree, the largest Python
+    process, and the most JVMs, and their combined size, seen at once."""
     while not stop.is_set():
-        try:
-            listing = subprocess.run(["ps", "-axo", "pid=,ppid=,rss=,comm="], capture_output=True, text=True, timeout=10).stdout
-        except (OSError, subprocess.SubprocessError):
-            return
-        rows, children = {}, collections.defaultdict(list)
-        for line in listing.splitlines():
-            fields = line.split(None, 3)
-            if len(fields) == 4 and fields[0].isdigit() and fields[1].isdigit() and fields[2].isdigit():
-                rows[int(fields[0])] = (int(fields[2]) * 1024, os.path.basename(fields[3].strip()))
-                children[int(fields[1])].append(int(fields[0]))
-        tree, pending = [], [root_pid]
-        while pending:
-            pid = pending.pop()
-            if pid in rows:
-                tree.append(rows[pid])
-            pending.extend(children[pid])
+        tree = []
+        if sys.platform == "win32":
+            try:
+                rows = _windows_process_tree()
+            except (OSError, AttributeError):
+                return
+            children = collections.defaultdict(list)
+            for pid, (ppid, _) in rows.items():
+                children[ppid].append(pid)
+            pending = [root_pid]
+            while pending:
+                pid = pending.pop()
+                if pid in rows:
+                    rss = _windows_rss(pid)
+                    if rss:
+                        tree.append((rss, os.path.basename(rows[pid][1])))
+                pending.extend(children[pid])
+        else:
+            try:
+                listing = subprocess.run(["ps", "-axo", "pid=,ppid=,rss=,comm="], capture_output=True, text=True, timeout=10).stdout
+            except (OSError, subprocess.SubprocessError):
+                return
+            rows, children = {}, collections.defaultdict(list)
+            for line in listing.splitlines():
+                fields = line.split(None, 3)
+                if len(fields) == 4 and fields[0].isdigit() and fields[1].isdigit() and fields[2].isdigit():
+                    rows[int(fields[0])] = (int(fields[2]) * 1024, os.path.basename(fields[3].strip()))
+                    children[int(fields[1])].append(int(fields[0]))
+            pending = [root_pid]
+            while pending:
+                pid = pending.pop()
+                if pid in rows:
+                    tree.append(rows[pid])
+                pending.extend(children[pid])
         jvms = [rss for rss, name in tree if name.startswith("java")]
         peaks["tree"] = max(peaks["tree"], sum(rss for rss, _ in tree))
         peaks["python"] = max([peaks["python"], *(rss for rss, name in tree if not name.startswith("java"))])
@@ -134,7 +228,13 @@ def system_memory():
         if sys.platform.startswith("linux"):
             info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in Path("/proc/meminfo").read_text().splitlines())}
             return f"{info['MemAvailable'] / 1024 ** 2:.1f} GB of {info['MemTotal'] / 1024 ** 2:.1f} GB available, {(info['SwapTotal'] - info['SwapFree']) / 1024:.0f} MB swapped out"
-    except (OSError, subprocess.SubprocessError, KeyError, ValueError):
+        if sys.platform == "win32":
+            import mem_check
+            available = mem_check.available_bytes()
+            if available is None:
+                return None
+            return f"{available / mem_check.GIB:.1f} GB available"
+    except (OSError, subprocess.SubprocessError, KeyError, ValueError, ImportError):
         pass
     return None
 
@@ -152,8 +252,7 @@ def streamed(cmd):
     killer = threading.Timer(args.timeout, lambda: (hung.set(), proc.kill()))
     killer.daemon = True
     killer.start()
-    if os.name != "nt":
-        threading.Thread(target=sample_memory, args=(proc.pid, stop, peaks), daemon=True).start()
+    threading.Thread(target=sample_memory, args=(proc.pid, stop, peaks), daemon=True).start()
     lines, mark = [], 10
     try:
         for line in proc.stdout:

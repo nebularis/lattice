@@ -22,6 +22,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, ProfilePlan, compile_profile
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, SH
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -93,7 +94,7 @@ def name_of(profile: str, record: URIRef) -> str:
 def sparql(plan: ProfilePlan, data: Graph, profile: str) -> Dict[str, Tuple[str, object]]:
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = data.query(str(artefact.value(template, MORK.queryText)))
+    rows = run_query(data, str(artefact.value(template, MORK.queryText)))
     return {name_of(profile, row.record): (str(row.decision), row.diagnostic) for row in rows}
 
 
@@ -177,7 +178,7 @@ class ProfileTests(unittest.TestCase):
         data = Graph().parse(ROOT / "ontology/eligibility/examples/interval-containment.ttl")
         artefact = compile_query_template(compile_profile(data, EX["profile-a"]))
         template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-        rows = [(row.record, str(row.decision), row.diagnostic) for row in data.query(str(artefact.value(template, MORK.queryText)))]
+        rows = [(row.record, str(row.decision), row.diagnostic) for row in run_query(data, str(artefact.value(template, MORK.queryText)))]
         self.assertEqual(rows, [(EX["decision-1"], "Permitted", None)])
 
     def test_profile_artefacts_are_deterministic(self) -> None:

@@ -21,6 +21,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
 from .eligibility_ir import IRCompileError, compile_any_condition, compile_profile
+from .engines import run_query
 from .namespaces import ELG, MORK
 from .sparql_backend import compile_query_template
 from .test_set_readings import shacl
@@ -73,7 +74,7 @@ def sparql(plan, data: Graph) -> Dict[str, Tuple[str, Optional[URIRef]]]:
     """Each subject's decision and the closure it relied on, if any."""
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = list(data.query(str(artefact.value(template, MORK.queryText))))
+    rows = list(run_query(data, str(artefact.value(template, MORK.queryText))))
     keyed = {str(row[0]).rsplit("/", 1)[1]: (str(row.decision), row.closure) for row in rows}
     assert len(keyed) == len(rows), "one decision per subject"
     return keyed
@@ -83,7 +84,7 @@ def sparql_profile(plan, data: Graph) -> Dict[str, Tuple[str, FrozenSet[URIRef]]
     """Each record's decision and the closures it relied on, split from ``?closures``."""
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = list(data.query(str(artefact.value(template, MORK.queryText))))
+    rows = list(run_query(data, str(artefact.value(template, MORK.queryText))))
     keyed = {
         str(row[0]).rsplit("/", 1)[1]: (
             str(row.decision),

@@ -172,7 +172,7 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
   }
 } GROUP BY ?n ?id ?kind ?status ?claim ?pointer"""
 )
-# The sections of a decision, which find scores beside the decision's own text (TD-91).
+# The sections of a decision, which find scores beside the decision's own text (TD-93).
 SECTIONS = (
     PREFIXES
     + """
