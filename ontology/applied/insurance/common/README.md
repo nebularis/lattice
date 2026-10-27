@@ -5,7 +5,7 @@
 Literate specification for `insurance/common`, built by the
 [`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
 epic (AIR-1.2). Insurance scheme contracts shared by two or more of the applied insurance
-domain's modules ([ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-insurance-domain-layout.md)
+domain's modules ([ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md)
 decision 1, epic D7), and the liability role types of
 [ADR-A102](../../../../docs/architecture/decisions/ADR-A102-liability-direction-from-party-roles.md).
 

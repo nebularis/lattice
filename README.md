@@ -460,6 +460,6 @@ Copilot run `mise run skills:link` from a LATTICE checkout. AI-assisted contribu
 
 ## Development environment
 
-Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the toolchain guide](docs/developer/toolchain.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/status/phase-0-1-handoff.md).
+Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the developer guide](docs/developer/developer-guide.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/status/phase-0-1-handoff.md).
 
 For the current implementation boundaries and reading order, see the [platform implementation map](docs/architecture/implementation-map.md). Architecture decisions are indexed in [docs/architecture/decisions](docs/architecture/decisions/README.md).

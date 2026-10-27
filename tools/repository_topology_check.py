@@ -15,6 +15,7 @@ DECISIONS_PATH = ROOT / "docs" / "architecture" / "decisions"
 LEGACY_ADR_PATH = ROOT / "docs" / "adr"
 LEGACY_CURRENT_PATH = ROOT / "docs" / "developer" / "current"
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
+FENCED_CODE = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)
 # The first line of a copy that `tools/site_sections.py` writes into docs/_includes, which names its source.
 GENERATED_COPY = re.compile(r"\A\{% comment %\}Copied from (\S+) by mise run build:site-sections")
 
@@ -91,7 +92,8 @@ def check_links_in(markdown_files) -> list[str]:
         # A generated copy is verbatim, so its links are relative to the source it was copied from.
         copied = GENERATED_COPY.match(text)
         base = (ROOT / copied.group(1)).parent if copied else markdown_file.parent
-        for target in MARKDOWN_LINK.findall(text):
+        # Text in a fenced block, such as a regular expression like [A](x), is not a link.
+        for target in MARKDOWN_LINK.findall(FENCED_CODE.sub("", text)):
             target = unquote(target.strip())
             if not target or target.startswith(("#", "http://", "https://", "mailto:")):
                 continue
