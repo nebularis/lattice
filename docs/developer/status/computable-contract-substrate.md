@@ -23,8 +23,7 @@ gave Eligibility 0.12.0 with L15 restated and L17 (2026-10-12), and HQ-6a.2 the 
 and `exe:NoClosureLicence` (Executable 0.7.0, merged 2026-10-16). From C5 on, slices are built and
 verified on the branch, and the maintainer commits by hand.
 
-**Next action, for us:** brief C9b3, set comparisons and substrate S2, which no longer waits on
-HQ-6a. HQ-6b, closures over a period, follows before C12.
+**Next action, for the maintainer:** C9b3-Q1 to Q5 are answered. Set the operating rules for the two sub-agents, then create `ccs/c9b3c-hierarchy-relation` from `main` and a branch for the TD-92 bisection. HQ-6b, closures over a period, follows before C12.
 
 ## Slice board
 
@@ -182,3 +181,4 @@ HQ-6a. HQ-6b, closures over a period, follows before C12.
 - 2026-10-12: HQ-6a.2 accepted by the maintainer (commit `349ccfa2`), who asked us to complete the slice autonomously. Verification found three things, fixed: an unterminated string in `profile_select`, AIR32-08 still expecting an open every-value reading to decide (its binding now names a closure, and the open case is asserted Undetermined, for countersignature), and `exe:NoClosureLicence` missing from the pinned diagnostic set. `check:full-sweep` passes, all 14 checks. Four adversarial probes, our pick, each caught: open bindings read as closed (5 tests fail), a closure with no source accepted (HQ6a2-07), a profile dropping reliance (HQ6a2-08), and the reference deciding reliance after negation (`TestReliance`). A first reference probe was an equivalent mutant, recorded in the Validation Pack
 - 2026-10-27: status corrected. HQ-6a.2 was merged into `main` on 2026-10-16 and tagged `executable-v0.7.0`, but the record still asked for the merge and the tag. The AIR32-08 countersignature is not recorded and is the maintainer's remaining item. C9b3 is next to brief
 - 2026-10-27: the maintainer countersigned HQ-6a.2's AIR32-08 change under the non-weakening rule, recorded in its Validation Pack. HQ-6a is complete
+- 2026-10-27: C9b3 briefed on `main`, with questions C9b3-Q1 to Q5 (split, set comparison form, aggregate binding form, where hierarchical matching names its relation, TD-92)
