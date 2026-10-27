@@ -6,7 +6,7 @@
 
 **Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40 and TSD-41. Each finding names the versions it was seen on.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40, TSD-41 and TSD-43. Apache Jena ARQ 5.1.0 (the version `benchmark/ledger-store-comparison` pins) is covered for TSD-43 only, run in process from a short Java program. Each finding names the versions it was seen on.
 A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
@@ -52,6 +52,7 @@ first line.
 | **R-H** | a Linux x86_64 container, 4 logical cores, used by an agent for H2.8c, 2026-10-20, where a fresh bootstrap installed pyoxigraph 0.5.12 | 3.14.8 | rdflib 7.6.0, pyoxigraph 0.5.11 and 0.5.12 |
 | **R-I** | a macOS arm64 laptop, used for the ledger posting-cost and graph-partition benchmarks, 2026-10-24 and 2026-10-27 | 3.14.7 | pyoxigraph 0.5.13 |
 | **R-J** | a macOS arm64 laptop, used by an agent to isolate TSD-41, 2026-10-27 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.13, and 0.5.11 for the minimal probes |
+| **R-K** | a macOS arm64 laptop, used by an agent for the aggregate matrix of TSD-43, 2026-10-27 | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -236,6 +237,7 @@ to the store or where it is a matter of capacity.
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
 | [TSD-41](#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib) | `GROUP_CONCAT`, `SUM` and `AVG` over an expression that errors on one row of the group. `COUNT` over such an expression | an error for `GROUP_CONCAT`, `SUM` and `AVG`. `COUNT` removes the error | ✘ skips the row. ✘ `COUNT` counts it | ✔ unbound. ✘ `COUNT` unbound | Source, Observed |
+| [TSD-43](#tsd-43-what-an-aggregate-does-with-a-row-that-has-no-value-or-errors-for-every-aggregate-and-what-each-remedy-does) | each aggregate over a group with an unbound row, a row of the wrong type and no row, and the four remedies | `COUNT` removes an error row. `SUM`, `AVG` (unless the count is 0) and `GROUP_CONCAT` are an error. `MIN` is unbound. `MAX` is `2` or unbound, the text allowing both | ✘ skips the row for `SUM`, `MIN`, `GROUP_CONCAT`, counts it for `COUNT(expr)`, raises for `SUM` over an IRI, returns a row for a grouped query over no rows. 54 of 91 cells conform | ✔ except `COUNT(expr)` and `AVG` over an all-unbound group. 84 of 91 conform. Jena ARQ 5.1.0: 84 of 91 | Source, Observed, Documented |
 
 ## 6. The findings
 
@@ -1445,7 +1447,7 @@ SELECT (GROUP_CONCAT(STR(?x)) AS ?g) WHERE { VALUES ?x { <urn:a> UNDEF } }
 |---|---|---|---|
 | `GROUP_CONCAT(STR(?x))`, with or without `DISTINCT`, and `GROUP_CONCAT(?x)` | an error, so `?g` is unbound | ✘ `"urn:a"`, the row is skipped | ✔ unbound |
 | `SUM(?x)`, `AVG(?x)` over `1` and an unbound | an error | ✘ `1` | ✔ unbound |
-| `MIN(?x)`, `MAX(?x)` over `1` and an unbound | not stated, since the text orders the flattened values and does not say where an error sorts | `1` | unbound |
+| `MIN(?x)`, `MAX(?x)` over `1` and an unbound | `MIN` unbound. `MAX` unbound or `1`, since §15.1 orders no value lowest and the text does not say whether an error element is no value (TSD-43) | `1` | unbound |
 | `COUNT(STR(?x))` | `1`, since `Count` removes errors | ✘ `2`, it counts the error | ✘ unbound |
 | `COUNT(?x)`, `COUNT(*)`, `SAMPLE(?x)` | `1`, `2`, any bound value | ✔ | ✔ |
 | `GROUP_CONCAT(COALESCE(STR(?x), ""))` | `"urn:a "` or `" urn:a"`, by the order of the group | ✔ | ✔ |
@@ -1455,7 +1457,7 @@ In the generated query the group is a record's rows, one per condition. A condit
 
 **Why.** The specification defines an aggregate over `Flatten(M)`, a multiset of lists in which `ListEval` keeps an error, and says "`ListEval((unbound), μ) = (error)`" (§18.5.1). `Count` removes the error elements before counting. `Sum` and `GroupConcat` do not. `GroupConcat(S, sep) = CONCAT(S0, sep, ...)` over a sequence with an error element is an error, and an aggregate whose value is an error leaves its variable unbound in the row. So the specification gives unbound for `GROUP_CONCAT` and `SUM`, and Oxigraph follows it. Its `AccumulatorWrapper::Expression` and `DistinctExpression` (`eval.rs`, `accumulate`) set the accumulator to `None` the first time the argument's evaluator returns `None`, which is an error or an unbound value, and `finish` then returns no value. That is the poisoning the specification asks for in `GROUP_CONCAT`, `SUM` and `AVG`. It is also applied to `COUNT` over an expression that is not a plain variable (`CountAccumulator` is built inside the same wrapper, while `COUNT(?x)` takes the `CountInternal` path that skips a missing value), where the specification says to remove the error. That one is a departure from the specification on Oxigraph's side.
 
-rdflib's `GroupConcat.update` (`rdflib/plugins/sparql/aggregates.py`) catches the unbound value as an `NotBoundError` value and returns without appending, with the comment "skip UNDEF". `Sum`, `Average`, `Minimum` and `Maximum` skip it the same way, and `Counter` counts it when the expression is not a bare variable. A different error, such as division by zero, is appended as its message (`GROUP_CONCAT(STR(?x/0))` gives `"divide by 0"`). So rdflib's `GROUP_CONCAT` and `SUM` are the lenient departure, and its `COUNT(STR(?x))` over-counts. Hypothesis, not read in rdflib's evaluator beyond the aggregate classes: the `MIN` and `MAX` results of both engines are each defensible, since the text does not say where an error element sorts.
+rdflib's `GroupConcat.update` (`rdflib/plugins/sparql/aggregates.py`) catches the unbound value as an `NotBoundError` value and returns without appending, with the comment "skip UNDEF". `Sum`, `Average`, `Minimum` and `Maximum` skip it the same way, and `Counter` counts it when the expression is not a bare variable. A different error, such as division by zero, is appended as its message (`GROUP_CONCAT(STR(?x/0))` gives `"divide by 0"`). So rdflib's `GROUP_CONCAT` and `SUM` are the lenient departure, and its `COUNT(STR(?x))` over-counts. Corrected 2026-10-27 by TSD-43: `MIN` unbound is what the specification gives on either reading, so rdflib's skip departs and Oxigraph conforms. `MAX` is the open one, and Jena ARQ answers as Oxigraph does.
 
 The first version of this entry guessed that the order of `GROUP_CONCAT` (TSD-19) or the `?none` idiom made the engines take different paths through the `UNION`. That was wrong. Neither the order nor the `UNION` matters, and the rows the two engines feed to the aggregate are identical.
 
@@ -1464,9 +1466,150 @@ The first version of this entry guessed that the order of `GROUP_CONCAT` (TSD-19
 - The profile query now builds `?closures` from one coalesced `SUM` flag per distinct closure its conditions name, in IRI order, with no `GROUP_CONCAT`. Both engines return the same strings. A `GROUP_CONCAT(DISTINCT COALESCE(STR(?x), ""))` also agrees but puts the empty element at either end by the group's order, which differs between engines, and needs a trim.
 - `check:mork-compilers` and `check:mork-compilers-conformance` both pass. `check:mork-compilers` keeps rdflib as its default engine until the maintainer decides under STD-274. Tests `PU-01` to `PU-09` in `test_profile_union.py` pin the probes of each engine and the generated query on both.
 - rdflib's leniency is the one the persistence suite never meets, since its generated SPARQL runs on Oxigraph by default. A query written to run on rdflib may rely on it without knowing. The conformance task is what shows it (STD-054).
-- A possible upstream report, not filed: Oxigraph's `COUNT(expr)` over an erroring expression returns an unbound value where §18.5.1.2 says to count the rest.
+- A possible upstream report, not filed: Oxigraph's `COUNT(expr)` over an erroring expression returns an unbound value where §18.5.1.2 says to count the rest. Jena ARQ 5.1.0 counts the rest (TSD-43).
+- TSD-43 works through every aggregate and four remedies, and shows the coalesce this entry first recommended changes the meaning of `SUM` and `AVG`. STD-279 is under review for that reason.
 
 **Reproduce it.** The query above on each engine, or `mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_profile_union.py -q`, which runs every probe of this entry on both engines whichever engine the task sets.
+
+---
+
+### TSD-43. What an aggregate does with a row that has no value or errors, for every aggregate, and what each remedy does
+
+**Evidence:** Source, Observed and Documented, run R-K, on rdflib 7.6.0, Oxigraph 0.5.13 and Apache Jena ARQ 5.1.0, 2026-10-27 (CCS C9b3, aggregate errors). The specification text is SPARQL 1.1 Query §15.1 and §18.5.1, read from the W3C Recommendation. rdflib's source is `rdflib/plugins/sparql/aggregates.py` and `evaluate.py` at 7.6.0, read locally. Oxigraph's accumulators are as TSD-41 read them at v0.5.13, and Jena's source was not read, so its column is Observed only. Extends TSD-41, which probed five aggregates in one row state on two engines. Narrows TSD-Q21.
+
+**Context.** TSD-41 led to STD-279 and rule R9, which say to coalesce the argument of an aggregate. The maintainer challenged that as not worked through for every aggregate and scenario, since a coalesce changes what the group means. This entry sets out every aggregate against every row state, says what the specification prescribes in each cell, and probes each remedy on each engine, so a rule can be derived from the evidence.
+
+**How we found it.** In order.
+
+1. Read §18.5.1 and §15.1 again for each set function. The result is the specification table below.
+2. Wrote one data state per row state and one query per aggregate (`tools/mork_compilers/src/mork_compilers/aggregate_error_cases.py`). A group is the subjects of `?s a <urn:T>` with `OPTIONAL { ?s <urn:p> ?x }`, which is how a generated query leaves a variable unbound. Every query also projects a constant, because rdflib drops a result row whose projected variables are all unbound (TSD-10), which would otherwise make an unbound aggregate look like no row.
+3. Ran the 13 aggregates over the seven states on rdflib and Oxigraph through `mork_compilers.engines.run_query`, and on Jena ARQ 5.1.0 through a single-file Java program on the classpath of `benchmark/ledger-store-comparison` (Validation Pack, appendix). 91 cells per engine.
+4. Added the remedies, 252 more queries over the same states (36 forms), and nine queries over three groups where one group has no value.
+5. Read the aggregate classes of rdflib for each result that differs from the specification.
+
+The run is pinned for rdflib and Oxigraph in `test_aggregate_errors.py` (AE-01 to AE-22). Jena's column is recorded in `aggregate_error_expected.py` and not run by the suite.
+
+**What the store does.** The states. `all bound` is two rows with `?x` 1 and 2. `one unbound` adds a third row with no `?x`. `one IRI` and `one blank node` add a third row whose `?x` is `<urn:a>` or a blank node. `all unbound` is two rows with no `?x`. `empty` is no row and no `GROUP BY`. `empty, grouped` is no row with `GROUP BY ?s`. The aggregate is over `?x`, or over `STR(?x)` where the row says `expr`, which errors for an unbound variable and for a blank node and not for an IRI. `GROUP_CONCAT` uses the separator `" "` and its elements are sorted before they are compared, since their order is the engine's. `unbound` is a row whose aggregate has no value, `none` is no row. `a member` is any value of the group, which is all `SAMPLE` promises.
+
+What SPARQL 1.1 prescribes, by subsection.
+
+| Aggregate | all bound | one unbound | one IRI | one blank node | all unbound | empty | empty, grouped |
+|---|---|---|---|---|---|---|---|
+| `COUNT(?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(expr)` | `2` | `2` | `3` | `2` | `0` | `0` | `none` |
+| `COUNT(*)` | `2` | `3` | `3` | `3` | `2` | `0` | `none` |
+| `COUNT(DISTINCT ?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(DISTINCT expr)` | `2` | `2` | `3` | `2` | `0` | `0` | `none` |
+| `SUM` | `3` | `unbound` | `unbound` | `unbound` | `unbound` | `0` | `none` |
+| `AVG` | `1.5 dec` | `unbound` | `unbound` | `unbound` | `0` | `0` | `none` |
+| `MIN` | `1` | `unbound` | `<urn:a>` | `_:b` | `unbound` | `unbound` | `none` |
+| `MAX` | `2` | `2 or unbound` | `2` | `2` | `unbound` | `unbound` | `none` |
+| `SAMPLE` | `a member` | `a member or unbound` | `a member` | `a member` | `unbound` | `unbound` | `none` |
+| `GROUP_CONCAT(expr)` | `1 2` | `unbound` | `1 2 urn:a` | `unbound` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(?x)` | `unbound or 1 2` | `unbound` | `unbound or 1 2 urn:a` | `unbound` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(DISTINCT expr)` | `1 2` | `unbound` | `1 2 urn:a` | `unbound` | `unbound` | `""` | `none` |
+
+Reading of the table. `COUNT` removes error elements before it counts (§18.5.1.2), so a row whose argument is unbound or errors is not counted, and `COUNT(*)` counts rows and never looks at an argument. `Sum` is an error when any element is (§18.5.1.3, `op:numeric-add` of an error). `Avg` is `0` when `Count` is 0 and `Sum / Count` otherwise (§18.5.1.4), so over an all-unbound group the first clause gives `0` and over a group with one unbound row `Sum` gives an error. `Min` and `Max` order the flattened values, and the Recommendation orders "no value assigned to the variable or expression in this solution" lowest, then blank nodes, IRIs and literals (§15.1). Read that way a no-value element sorts first, so `Min` is that element and the aggregate is unbound, and `Max` skips it and gives `2`. Read as the other aggregates read an error, `Max` is unbound too. The text does not say which, so the `Max` cell allows both. `Min({})` and `Max({})` are errors (§18.5.1.5, §18.5.1.6), so unbound. `Sample` is any element of `Flatten(M)` (§18.5.1.8), which may include the error, so the `one unbound` cell allows both, and `Sample({})` is an error. `GroupConcat` is `CONCAT` over the sequence (§18.5.1.7) and `CONCAT` accepts string literals (§17.4.3.12), so an error element is an error and read strictly a bare `?x` of numbers or an IRI is a type error too, which engines treat differently, so those cells allow both. An empty group without `GROUP BY` is the one group of `Group((1), Ω)` (§18.2.4.1), so `COUNT` is 0 and `SUM` is 0. With `GROUP BY` there is no group, so no row. `STR` of a blank node is an error (§17.4.2.5 defines it for literals and IRIs only).
+
+What each engine returned. A cross marks a departure from the table above.
+
+**rdflib 7.6.0**
+
+| Aggregate | all bound | one unbound | one IRI | one blank node | all unbound | empty | empty, grouped |
+|---|---|---|---|---|---|---|---|
+| `COUNT(?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `a row ✘` |
+| `COUNT(expr)` | `2` | `3 ✘` | `3` | `3 ✘` | `2 ✘` | `0` | `a row ✘` |
+| `COUNT(*)` | `2` | `3` | `3` | `3` | `2` | `0` | `a row ✘` |
+| `COUNT(DISTINCT ?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `a row ✘` |
+| `COUNT(DISTINCT expr)` | `2` | `3 ✘` | `3` | `3 ✘` | `2 ✘` | `0` | `a row ✘` |
+| `SUM` | `3` | `3 ✘` | `raises ✘` | `raises ✘` | `0 ✘` | `0` | `a row ✘` |
+| `AVG` | `1.5 dec` | `1.5 dec ✘` | `1.5 dec ✘` | `1.5 dec ✘` | `0` | `0` | `a row ✘` |
+| `MIN` | `1` | `1 ✘` | `urn:a ✘` | `_:b` | `unbound` | `unbound` | `a row ✘` |
+| `MAX` | `2` | `2` | `2` | `2` | `unbound` | `unbound` | `a row ✘` |
+| `SAMPLE` | `a member` | `a member` | `a member` | `a member` | `unbound` | `unbound` | `a row ✘` |
+| `GROUP_CONCAT(expr)` | `1 2` | `1 2 ✘` | `1 2 urn:a` | `1 2 _:b ✘` | ` ✘` | `""` | `a row ✘` |
+| `GROUP_CONCAT(?x)` | `1 2` | `1 2 ✘` | `1 2 urn:a` | `1 2 _:b ✘` | ` ✘` | `""` | `a row ✘` |
+| `GROUP_CONCAT(DISTINCT expr)` | `1 2` | `1 2 ✘` | `1 2 urn:a` | `1 2 _:b ✘` | ` ✘` | `""` | `a row ✘` |
+
+54 of 91 cells conform.
+
+**Oxigraph 0.5.13**
+
+| Aggregate | all bound | one unbound | one IRI | one blank node | all unbound | empty | empty, grouped |
+|---|---|---|---|---|---|---|---|
+| `COUNT(?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(expr)` | `2` | `unbound ✘` | `3` | `unbound ✘` | `unbound ✘` | `0` | `none` |
+| `COUNT(*)` | `2` | `3` | `3` | `3` | `2` | `0` | `none` |
+| `COUNT(DISTINCT ?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(DISTINCT expr)` | `2` | `unbound ✘` | `3` | `unbound ✘` | `unbound ✘` | `0` | `none` |
+| `SUM` | `3` | `unbound` | `unbound` | `unbound` | `unbound` | `0` | `none` |
+| `AVG` | `1.5 dec` | `unbound` | `unbound` | `unbound` | `unbound ✘` | `0` | `none` |
+| `MIN` | `1` | `unbound` | `<urn:a>` | `_:b` | `unbound` | `unbound` | `none` |
+| `MAX` | `2` | `unbound` | `2` | `2` | `unbound` | `unbound` | `none` |
+| `SAMPLE` | `a member` | `a member` | `a member` | `a member` | `unbound` | `unbound` | `none` |
+| `GROUP_CONCAT(expr)` | `1 2` | `unbound` | `1 2 urn:a` | `unbound` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(?x)` | `unbound` | `unbound` | `unbound` | `unbound` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(DISTINCT expr)` | `1 2` | `unbound` | `1 2 urn:a` | `unbound` | `unbound` | `""` | `none` |
+
+84 of 91 cells conform.
+
+**Jena ARQ 5.1.0**
+
+| Aggregate | all bound | one unbound | one IRI | one blank node | all unbound | empty | empty, grouped |
+|---|---|---|---|---|---|---|---|
+| `COUNT(?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(expr)` | `2` | `2` | `3` | `3 ✘` | `0` | `0` | `none` |
+| `COUNT(*)` | `2` | `3` | `3` | `3` | `2` | `0` | `none` |
+| `COUNT(DISTINCT ?x)` | `2` | `2` | `3` | `3` | `0` | `0` | `none` |
+| `COUNT(DISTINCT expr)` | `2` | `2` | `3` | `3 ✘` | `0` | `0` | `none` |
+| `SUM` | `3` | `unbound` | `unbound` | `unbound` | `unbound` | `0` | `none` |
+| `AVG` | `1.5 dec` | `unbound` | `unbound` | `unbound` | `unbound ✘` | `0` | `none` |
+| `MIN` | `1` | `unbound` | `<urn:a>` | `_:b` | `unbound` | `unbound` | `none` |
+| `MAX` | `2` | `unbound` | `2` | `2` | `unbound` | `unbound` | `none` |
+| `SAMPLE` | `a member` | `a member` | `a member` | `a member` | `unbound` | `unbound` | `none` |
+| `GROUP_CONCAT(expr)` | `1 2` | `unbound` | `1 2 urn:a` | `1 2 _:b ✘` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(?x)` | `1 2` | `unbound` | `1 2 urn:a` | `1 2 _:b ✘` | `unbound` | `""` | `none` |
+| `GROUP_CONCAT(DISTINCT expr)` | `1 2` | `unbound` | `1 2 urn:a` | `1 2 _:b ✘` | `unbound` | `unbound ✘` | `none` |
+
+84 of 91 cells conform.
+
+One departure is about a function and not an aggregate. rdflib and Jena return the label for `STR` of a blank node, where the specification has an error, which is the cause of the crosses in the `one blank node` column of the `expr` rows for them. That column tests `STR`.
+
+Summary of the aggregate departures.
+
+| Engine | Departure |
+|---|---|
+| rdflib | skips an unbound or erroring row for `SUM`, `AVG`, `MIN`, `GROUP_CONCAT`, where the specification gives an error. Counts it for `COUNT(expr)`. Over an all-unbound group gives `0` for `SUM` and `""` for `GROUP_CONCAT`. `SUM` over an IRI or a blank node raises (the query fails with an `AttributeError`), `AVG` over them skips them. Returns one row for a grouped query over no rows. `MIN` over IRIs returns a plain literal (TSD-16). Gives `Max` `2` over a group with an unbound row, which the ordering reading allows |
+| Oxigraph | `COUNT(expr)` and `COUNT(DISTINCT expr)` are unbound when any row errors, where §18.5.1.2 removes it. `AVG` over an all-unbound group is unbound where §18.5.1.4's first clause gives `0`. Bare `GROUP_CONCAT(?x)` of numbers is unbound, which is the strict reading. Unbound `Max` over a group with an unbound row is one of the two readings. Otherwise conforms |
+| Jena ARQ | `COUNT(expr)` removes the row as §18.5.1.2 asks. `AVG` over an all-unbound group is unbound as Oxigraph's. `GROUP_CONCAT(DISTINCT expr)` over an empty group is unbound where the specification gives `""`. `STR` of a blank node gives its label. Unbound `Max` as Oxigraph. Otherwise conforms |
+
+Remedies. Each form is probed on every state. A slash separates the results of rdflib, Oxigraph and Jena where they differ, and one value means they agree. Only the states that mean something for a remedy are discussed in the text, and the full table is in the Validation Pack.
+
+| Remedy | Result on the four aggregates that matter |
+|---|---|
+| (a) `FILTER(BOUND(?x))` in the group | Gives the same answer on all three engines in the states `all bound`, `one unbound`, `all unbound` and `empty` for every aggregate except bare `GROUP_CONCAT(?x)` of numbers (unbound on Oxigraph, the strict reading) and `GROUP_CONCAT(DISTINCT ...)` over an empty group (unbound on Jena). It does not remove a row that is bound and of the wrong type, so `SUM` over an IRI is still an error (unbound on Oxigraph and Jena, a raise on rdflib). A `FILTER(isNumeric(?x))` does remove it, and `SUM`, `AVG`, `MIN` and `MAX` then agree on every engine in every state. The filter removes the row from `COUNT(*)` as well (3 becomes 2). It also removes a subject whose rows all go, so under `GROUP BY ?s` a group with no value is absent from the result and not a group with `SUM` 0 |
+| (b) coalesce to the neutral element | `SUM(COALESCE(?x, 0))` agrees on all three engines wherever the values are numbers and equals the filtered sum, so it cannot tell a missing weight from a zero. `AVG(COALESCE(?x, 0))` gives `1` over 1, 2 and a missing row where the filter gives `1.5`, so it changes the denominator. `MAX(COALESCE(?x, 0))` is right only where 0 is below every value. `MIN` has no neutral element. `GROUP_CONCAT(COALESCE(STR(?x), ''))` gives ` 1 2`, an empty element and a stray separator, on every engine (an all-unbound group gives a single space), `SUM(COALESCE(?x, 0))` over an IRI is still an error. `COUNT(COALESCE(STR(?x), ''))` counts the missing row, so it agrees on all three engines and is `COUNT(*)` |
+| (c) detect with `COUNT(*) - COUNT(?x)` | The number of rows with no value agrees on all three engines in every state (0, 1, 0, 0, 2, 0). `COUNT(*) - COUNT(STR(?x))` does not, since `COUNT(expr)` differs (TSD-41, above). `IF(COUNT(?x) = COUNT(*), SUM(COALESCE(?x, 0)), 1/0)` is the sum when no row is missing and unbound otherwise, on all three engines, and `0` for an empty group. It propagates the unknown where a coalesce would hide it. It does not catch a bound value of the wrong type |
+| (d) a sub-select per row | Computing `?v` with `BIND(?x + 0 AS ?v)` or `BIND(STR(?x) AS ?v)` in a sub-select and aggregating `?v` outside is the bare aggregate again, since `?v` is unbound on the row. Oxigraph and Jena are unbound where the group has a missing row, and rdflib skips it. A `FILTER(BOUND(?v))` outside the sub-select is remedy (a) |
+
+Three groups at once, `GROUP BY ?s`, one with two values, one with none and one with one value. Bare `SUM` is 3, then `0` on rdflib and unbound on Oxigraph and Jena, then 5. The filtered `SUM` is 3 and 5 with no row for the group with no value, on all three engines. `SUM(COALESCE(?x, 0))` is 3, 0, 5 on all three. The detecting `IF` is 3, unbound, 5 on all three. `AVG(COALESCE(?x, 0))` is 1.5, 0, 5 on all three.
+
+**Why.** Specification and source.
+
+- Oxigraph follows §18.5.1 as TSD-41 describes, through `AccumulatorWrapper` setting its accumulator to `None` on the first argument that evaluates to nothing. That gives unbound for `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT` and the departures above for `COUNT(expr)`. Its `AVG` over an all-unbound group takes the same path, so it does not reach §18.5.1.4's first clause.
+- rdflib's `Sum.update` catches `NotBoundError` and passes ("skip UNDEF") and does not catch `SPARQLTypeError`, which is what an IRI raises from `numeric()`. The error surfaces as an `AttributeError` from the result object, because the evaluator's generator fails inside `SPARQLResult`. `Average.update` catches both and skips. `Extremum.update` catches both and skips ("skip UNDEF or BNode => SPARQLTypeError"), and `set_value` wraps the value in `Literal`, which is why `MIN` over an IRI is a plain literal (TSD-16). `Counter.update` skips a `NotBoundError` and counts any other error, so `COUNT(STR(?x))` counts the row. `evalAggregateJoin` ends with "there were no matches" and yields one empty row whether or not there is a `GROUP BY`, so a grouped query over no rows returns a row.
+- Jena's `GROUP_CONCAT(DISTINCT)` over an empty group, and `STR` of a blank node, are observed and not explained.
+
+**What it means for LATTICE.**
+- No single rule fits every aggregate. A row with no value can mean "not a member of the group" (filter), "contributes the neutral element" (coalesce), or "the answer is unknown" (detect and propagate), and each aggregate has the choices the table shows. STD-279 and R9 say to coalesce, which is the second only. A proposed replacement is in the Validation Pack for CCS C9b3, not ratified.
+- A coalesce is correct only where the aggregate has a neutral element and the meaning is that absence contributes nothing. `SUM` over weights where a missing weight must be reported Undetermined is not that case, and neither is `AVG` where the denominator should be the rows that have a value.
+- `FILTER(BOUND(?x))` removes a group as well as a row. Where a group with no value must appear, the filter belongs inside the `OPTIONAL` and then leaves the variable unbound again, or a coalesce or a detect is the form.
+- `COUNT(?x)` over a bare variable and `COUNT(*)` agree on all three engines and are the safe pair for detection. `COUNT(expr)` is not portable, since each engine differs from the others (rdflib counts the row, Oxigraph is unbound, Jena removes the row, which §18.5.1.2 asks for).
+- A grouped query over no rows returns a row on rdflib and none elsewhere, so a consumer of generated SPARQL must not depend on it (candidate for TSD-Q23).
+- `SUM` over a term that is not a number raises on rdflib and is unbound elsewhere, so a type guard (`isNumeric`) belongs in any `SUM` or `AVG` over data not validated.
+- Audit of `tools/mork_compilers` and `tools/persistence` against this table is in the Validation Pack.
+
+**Reproduce it.** `mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_aggregate_errors.py -q` runs the cases on rdflib and Oxigraph and compares them with the recorded run. `mise exec -- python -m mork_compilers.aggregate_error_cases DIR` writes the data states and the cases for another engine. The Jena runner and its command are in the Validation Pack, appendix.
 
 ---
 
@@ -1551,4 +1694,5 @@ What we take from it. A divergence found in a large generated query is not expla
 | TSD-Q18 | whether Fuseki or Jena ARQ shows the sensitivity of TSD-25 to TSD-27 | the rules in ADR-A128 assume only rdflib is sensitive | run benchmark `sparql-constraint-query-cost` against a Fuseki endpoint |
 | TSD-Q19 | why the sub-select decides TSD-34 when a `UNION` alone does not, and whether Fuseki or Jena ARQ shows the defect | TSD-34 is isolated on a non-lazy join of a sub-select and a `UNION`. The part of TSD-Q19 about the generated operations is answered under TSD-34 (FMH-H2-6g) | trace which solution comes first and which are kept in TSD-34's query, and run the query on Fuseki. The defect was reported upstream 2026-10-20 ([RDFLib/rdflib#3585](https://github.com/RDFLib/rdflib/issues/3585)) |
 | TSD-Q20 | answered 2026-10-27 | the profile query's `?closures` differed between engines | TSD-41. An aggregate over an expression that errors on one row of its group is unbound on Oxigraph and skips the row on rdflib, and the `UNION` and the nesting play no part |
-| TSD-Q21 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | the Recommendation's `Min` and `Max` do not say where an error element sorts, and TSD-41 states Oxigraph's `COUNT` departure from its source and one probe | read the Recommendation's ORDER BY ordering of an error, then probe Jena ARQ and Fuseki. The `COUNT` report is drafted in the Validation Pack and not filed |
+| TSD-Q21 | answered in part 2026-10-27 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | TSD-43. `MIN` is unbound on either reading, which Oxigraph and Jena do and rdflib does not. `MAX` is `2` if an error element is "no value" in §15.1's ordering and unbound otherwise, and the text does not say, so it stays open. rdflib answers `2`, Oxigraph and Jena unbound. The `COUNT(expr)` departure is Oxigraph's alone among the three, and the report is drafted in the Validation Pack and not filed. What remains is `MAX` only, to ask the working group or check the SPARQL 1.2 text |
+| TSD-Q23 | which of TSD-43's departures to report upstream, and whether a later release removes them | rdflib returns a row for a grouped query over no rows and raises for `SUM` over an IRI. Oxigraph's `COUNT(expr)` and `AVG` over an all-unbound group depart from §18.5.1. Jena's `GROUP_CONCAT(DISTINCT)` over an empty group is unbound | file each with its smallest query, and re-run `test_aggregate_errors.py` on each release. The same probes against Fuseki (TSD-Q12) if it differs from in-process ARQ |
