@@ -106,6 +106,7 @@ description = "Run every conformance task in turn, so one command checks every e
 run = [
   { task = "check:persistence-conformance" },
   { task = "check:mork-compilers-conformance" },
+  { task = "check:reference-eligibility-conformance" },
   { task = "check:sparql-probes-conformance" },
 ]
 
@@ -341,6 +342,25 @@ run = "python -m pytest tools/vocabulary/tests -q"
 description = "Run Eligibility's hand-written reference semantics and its differential tests against tools/mork_compilers (kernel, denotation, laws L9-L16; formal-methods track B1/B2, ADR-A-FM3)"
 run = "python -m pytest tools/reference/eligibility/tests -q"
 
+[tasks."check:reference-eligibility-conformance"]
+description = "Run Eligibility's differential tests on rdflib and on Jena (MSC-3). They run the compilers' generated SPARQL through mork_compilers.engines, so MORK_SPARQL_ENGINE picks the engine. check:reference-eligibility keeps Oxigraph. Run on demand and before a merge into main, not part of check (ADR-A125)"
+depends = ["bootstrap:testing-jena"]
+run = [
+  { task = "check:reference-eligibility-conformance:rdflib" },
+  { task = "check:reference-eligibility-conformance:jena" },
+]
+
+[tasks."check:reference-eligibility-conformance:rdflib"]
+description = "Eligibility's tests with the compilers' SPARQL on rdflib (part of check:reference-eligibility-conformance)"
+run = "python -m pytest tools/reference/eligibility/tests -q"
+env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:reference-eligibility-conformance:jena"]
+description = "Eligibility's tests with the compilers' SPARQL on Jena ARQ (part of check:reference-eligibility-conformance)"
+depends = ["bootstrap:testing-jena"]
+run = "python -m pytest tools/reference/eligibility/tests -q"
+env = { MORK_SPARQL_ENGINE = "jena" }
+
 [tasks."check:formal-freshness"]
 description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
 run = "python tools/check_formal_freshness.py"
@@ -426,10 +446,23 @@ description = "Run the MORK backend compiler tests, including generated SPARQL e
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "oxigraph" }
 
-[tasks."check:mork-compilers-conformance"]
-description = "Run the MORK backend compiler tests on rdflib. Run on demand and before a merge into main, not part of check, so a query that depends on one engine's reading of the specification stays visible (TSD-41)"
+[tasks."check:mork-compilers-conformance:rdflib"]
+description = "Run the MORK backend compiler tests on rdflib. Part of check:mork-compilers-conformance, so a query that depends on one engine's reading of the specification stays visible (TSD-41)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:mork-compilers-conformance:jena"]
+description = "Run the MORK backend compiler tests on Apache Jena ARQ, through the test kit of tools/testing/jena (MSC-3). Part of check:mork-compilers-conformance. Fails where the kit is not built, since a silent skip would pass the run without Jena"
+depends = ["bootstrap:testing-jena"]
+run = "python -m pytest tools/mork_compilers -q -n auto"
+env = { MORK_SPARQL_ENGINE = "jena" }
+
+[tasks."check:mork-compilers-conformance"]
+description = "Run the MORK backend compiler tests on rdflib and on Jena, one task per engine. Run on demand and before a merge into main, not part of check (ADR-A125). check:mork-compilers keeps Oxigraph"
+run = [
+  { task = "check:mork-compilers-conformance:rdflib" },
+  { task = "check:mork-compilers-conformance:jena" },
+]
 [tasks."check:ontology-versioning"]
 description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, a missing version, or a current version with no release row (ADR-A86)"
 run = "python tools/ontology_version_check.py && python tools/ontology_releases.py check"

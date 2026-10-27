@@ -6,7 +6,7 @@
 
 **Status:** a living document, begun 2026-10-13 from formal-methods Track H's persistence work (slices H2.1 to H2.4b). It is a source of truth for the project. Read it before relying on how a store behaves, and add to it when you find something. The skill `lattice-triple-stores` has the procedure.
 
-**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40, TSD-41 and TSD-43. Apache Jena ARQ 5.1.0 (the version `benchmark/ledger-store-comparison` pins) is covered for TSD-43 only, run in process from a short Java program. Each finding names the versions it was seen on.
+**Stores covered:** rdflib 7.6.0 and Oxigraph 0.5.11 (through `pyoxigraph`), Oxigraph 0.5.12 for the findings the test suite probes, of which TSD-01 and TSD-17 changed (R-H), and Oxigraph 0.5.13 for TSD-40, TSD-41 and TSD-43. Apache Jena ARQ 5.1.0 (the version `benchmark/ledger-store-comparison` pins) is covered for TSD-43, TSD-60 and TSD-61, run in process through `platform/sparql-testkit`. Each finding names the versions it was seen on.
 A finding holds for those versions only, until it is checked again. **Tools above a store covered:** pySHACL 0.40.1, which validates shapes on rdflib (TSD-23, TSD-24, TSD-31). TSD-22 to TSD-33 are about the cost of running queries and shapes, and [Efficient queries and shapes](efficient-queries-and-shapes.md) says which of them are properties of rdflib or pySHACL and which hold anywhere.
 
 ## Contents
@@ -55,6 +55,7 @@ first line.
 | **R-K** | a macOS arm64 laptop, used to review C9b3 and the pyoxigraph lock, 2026-10-27 | 3.14.7 | pyoxigraph 0.5.11, 0.5.12 and 0.5.13 |
 | **R-L** | a macOS arm64 laptop, used by an agent for the aggregate matrix of TSD-43, 2026-10-27 | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 |
 | **R-S** | a macOS arm64 laptop with 8 logical cores, used by an agent to run `benchmark/persistence-store-probes` for TSD-42, 2026-10-27 | 3.14.7 | rdflib 7.6.0, pyoxigraph 0.5.11, 0.5.12 and 0.5.13 |
+| **R-V** | a macOS arm64 laptop, used by an agent to run the MORK compilers and Eligibility on Jena and to probe the profile read set, 2026-10-27 (MSC-3) | 3.14.7, and OpenJDK 25.0.2 for Jena | rdflib 7.6.0, pyoxigraph 0.5.13, Apache Jena ARQ 5.1.0 |
 
 **How to add a finding** is in §6.0 and in the skill. In short: say what you were testing, how you found it, the smallest
 SPARQL that shows it, the result on each store you have, the reason if you can find it in the source, what it means for
@@ -241,6 +242,8 @@ to the store or where it is a matter of capacity.
 | [TSD-41](#tsd-41-an-aggregate-over-an-expression-that-errors-on-one-row-of-a-group-is-unbound-on-oxigraph-and-skips-the-row-on-rdflib) | `GROUP_CONCAT`, `SUM` and `AVG` over an expression that errors on one row of the group. `COUNT` over such an expression | an error for `GROUP_CONCAT`, `SUM` and `AVG`. `COUNT` removes the error | ✘ skips the row. ✘ `COUNT` counts it | ✔ unbound. ✘ `COUNT` unbound | Source, Observed |
 | [TSD-42](#tsd-42-a-graph-variable-bound-outside-an-optional-makes-oxigraph-0513-read-every-graph) | `OPTIONAL { GRAPH ?g }`, `?g` bound outside | joined afterwards | reads one graph (R-S) | passes the binding in. ✘ reads every graph from 0.5.13 | Observed |
 | [TSD-43](#tsd-43-what-an-aggregate-does-with-a-row-that-has-no-value-or-errors-for-every-aggregate-and-what-each-remedy-does) | each aggregate over a group with an unbound row, a row of the wrong type and no row, and the four remedies | `COUNT` removes an error row. `SUM`, `AVG` (unless the count is 0) and `GROUP_CONCAT` are an error. `MIN` is unbound. `MAX` is `2` or unbound, the text allowing both | ✘ skips the row for `SUM`, `MIN`, `GROUP_CONCAT`, counts it for `COUNT(expr)`, raises for `SUM` over an IRI, returns a row for a grouped query over no rows. 54 of 91 cells conform | ✔ except `COUNT(expr)` and `AVG` over an all-unbound group. 84 of 91 conform. Jena ARQ 5.1.0: 84 of 91 | Source, Observed, Documented |
+| [TSD-60](#tsd-60-an-aggregate-over-if-of-an-unbound-variable-raises-on-rdflib-and-is-unbound-on-oxigraph-and-jena) | `SUM(IF(?d = "x", 1, 0))` and `MAX(IF(...))` over a row whose `?d` is unbound | an error, so the aggregate is unbound | ✘ `AttributeError` from `SUM` when the result is read, and no row from `MAX` | ✔ unbound. Jena ARQ 5.1.0 ✔ unbound | Source, Observed |
+| [TSD-61](#tsd-61-rdflib-orders-a-string-against-a-number-where-the-specification-gives-a-type-error) | `"abc" >= 5`, `"abc" < 5` | a type error, so unbound | ✘ a boolean | ✔ unbound. Jena ARQ 5.1.0 ✔ unbound | Observed |
 
 ## 6. The findings
 
@@ -1648,6 +1651,45 @@ Three groups at once, `GROUP BY ?s`, one with two values, one with none and one 
 
 ---
 
+### TSD-60. An aggregate over IF of an unbound variable raises on rdflib and is unbound on Oxigraph and Jena
+
+**Evidence:** Source and Observed, run R-V, on rdflib 7.6.0, pyoxigraph 0.5.13 and Apache Jena ARQ 5.1.0, 2026-10-27 (MSC-3). rdflib's source is `rdflib/plugins/sparql/aggregates.py` at 7.6.0, read locally. The specification text is SPARQL 1.1 Query §18.5.1. Extends TSD-43 to an argument that is a conditional.
+
+**Context.** The profile read set aggregates `IF(?decision = "Permitted", 1, 0)` and two similar expressions over a record's per-value rows (audit items 4 to 6 of the C9b3 aggregate-errors Validation Pack). It relies on `?decision` never being unbound. The Validation Pack predicted that an unbound `?decision` would make the aggregate an error on Oxigraph and Jena and a skipped row on rdflib. MSC-3 probed it on all three.
+
+**How we found it.** `tools/testing/sparql_probes/tests/test_decision_read_set.py` (MSC3-11 to MSC3-16) runs the three aggregate expressions of the generated query over `VALUES ?c { 7 "abc" }` with `BIND(IF(<test on ?c>, "Permitted", "Denied") AS ?decision)`, where the test is an error for `"abc"`.
+
+| Aggregate, with `?decision` unbound for one of two rows | rdflib 7.6.0 | Oxigraph 0.5.13 | Jena ARQ 5.1.0 |
+|---|---|---|---|
+| `SUM(IF(?decision = "Permitted", 1, 0))`, the error being `?c + 1 > 5` | ✘ `AttributeError` when the result is read | unbound | unbound |
+| the second flag, with `&& COALESCE(STR(?diagnostic), "") = ""` | ✘ `AttributeError` | unbound | unbound |
+| `MAX(IF(?decision = "Permitted", COALESCE(STR(?diagnostic), "z"), ""))` | ✘ no row | unbound | unbound |
+| `SUM(IF(COALESCE(?decision, "") = "Permitted", 1, 0))` | `1` | `1` | `1` |
+
+**What the store does.** Oxigraph and Jena follow §18.5.1, an error in the argument makes `SUM` and `MAX` an error, and the projected value is unbound. rdflib's `Sum.update` receives the `SPARQLTypeError` object that the evaluated `IF` returns, treats it as a literal and fails at `value.datatype` (`aggregates.py`, line 133). Because the query is evaluated lazily, the error surfaces on the first read of the result and not from `query()`. The audit's own error, `"abc" >= 5`, does not reach this on rdflib, since rdflib answers it (TSD-61).
+
+**What it means for LATTICE.** Oxigraph and Jena agree in every cell, so the dependence on `?decision` is a property of the generated query and not of one engine. On rdflib a malformed value would crash the profile query where the other two engines return an unbound count. `COALESCE(?decision, "")` gives `1` on all three engines for the arithmetic error, which makes the row count as none of the outcomes. Whether that is the intended meaning is a design decision for CCS slice C9b3b, and the generated query is not changed here.
+
+**Upstream.** Drafted and not filed, with a standalone failing test, in `.local/upstream/rdflib-aggregate-over-erroring-if/`.
+
+**Reproduce it.** `mise run check:sparql-probes-conformance`.
+
+---
+
+### TSD-61. rdflib orders a string against a number where the specification gives a type error
+
+**Evidence:** Observed, run R-V, on rdflib 7.6.0, pyoxigraph 0.5.13 and Apache Jena ARQ 5.1.0, 2026-10-27 (MSC-3). The specification text is SPARQL 1.1 Query §17.3, whose operator mapping defines `<`, `>`, `<=` and `>=` for pairs of one kind. rdflib's code was not read.
+
+**What the store does.** `BIND(("abc" >= 5) AS ?r)` is `true` on rdflib, `"abc" < 5` is `false` and `5 < "abc"` is `true`. Oxigraph and Jena leave `?r` unbound. `"abc" = 5` is `false` on all three, as the specification says. A string against a string orders the same on all three.
+
+**What it means for LATTICE.** A test such as a containment check `?candLower >= 5` decides on rdflib where a candidate value is a string, and drops the row on Oxigraph and Jena. This is the divergence the C9b3 aggregate-errors audit saw in item 4 and attributed to the aggregate. It is the comparison. A generated query that orders a value of unchecked type guards it with `isNumeric` (rule R9, option 1).
+
+**Upstream.** Drafted and not filed, in `.local/upstream/rdflib-string-number-ordering/`.
+
+**Reproduce it.** `mise run check:sparql-probes-conformance` (MSC3-14, MSC3-15).
+
+---
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)
@@ -1732,3 +1774,4 @@ What we take from it. A divergence found in a large generated query is not expla
 | TSD-Q21 | answered in part 2026-10-27 | what `MIN` and `MAX` over a group with an error should give, and whether to report Oxigraph's `COUNT(expr)` upstream | TSD-43. `MIN` is unbound on either reading, which Oxigraph and Jena do and rdflib does not. `MAX` is `2` if an error element is "no value" in §15.1's ordering and unbound otherwise, and the text does not say, so it stays open. rdflib answers `2`, Oxigraph and Jena unbound. The `COUNT(expr)` departure is Oxigraph's alone among the three, and the report is drafted in the Validation Pack and not filed. What remains is `MAX` only, to ask the working group or check the SPARQL 1.2 text |
 | TSD-Q22 | whether an Oxigraph release after 0.5.13 passes an outer binding into a left join again, and whether it is reported upstream | TSD-42 makes the named-graph replace's sweep read every graph, and the project's floor is 0.5.13 (TSD-40) | run `mise run check:persistence-store-probes` on each new release, and read the bind-optional and values-optional ratios (near 1 means the binding is passed in again). Search Oxigraph's issues, and report it if no one has |
 | TSD-Q23 | which of TSD-43's departures to report upstream, and whether a later release removes them | rdflib returns a row for a grouped query over no rows and raises for `SUM` over an IRI. Oxigraph's `COUNT(expr)` and `AVG` over an all-unbound group depart from §18.5.1. Jena's `GROUP_CONCAT(DISTINCT)` over an empty group is unbound | file each with its smallest query, and re-run `check:sparql-probes-conformance` on each release. The same probes against Fuseki (TSD-Q12) if it differs from in-process ARQ |
+| TSD-Q35 | whether the two rdflib departures drafted in MSC-3 (TSD-60, TSD-61) are filed upstream, and whether a release after 7.6.0 fixes them | both are drafted with a failing test under `.local/upstream/` and not filed | file them with their smallest query, and re-run `check:sparql-probes-conformance` on each rdflib release. MSC3-11 and MSC3-14 fail when one is fixed |
