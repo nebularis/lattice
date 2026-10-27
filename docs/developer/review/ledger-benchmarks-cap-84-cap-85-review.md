@@ -8,7 +8,7 @@
 **Status record:** the measurements are recorded in [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) and [benchmark/ledger-store-comparison](../../../benchmark/ledger-store-comparison/README.md)
 **Decisions they serve:** MS-Q9 (answered), the ADR-A67 addendum of 2026-10-27, [TSD-40](../../architecture/triple-store-discovery.md)
 
-Both rows are marked unratified. This note is what each one claims, why it exists, what it is not, and the one thing about each worth disagreeing with.
+Both rows were ratified on 2026-10-27. This note records what each one claims, why it exists, what it is not, and the one thing about each worth disagreeing with.
 
 ## CAP-84, the partition sweep
 
@@ -47,6 +47,8 @@ Both rows are marked unratified. This note is what each one claims, why it exist
 
 Neither is in `check`. Both fail on a wrong balance and never on time, as ADR-A124 requires, and both remove their temporary stores on failure.
 
-## Open question for the reviewer
+## Question for the reviewer, answered
 
 **LB-Q1.** Should the store comparison grow to the other three strategies, or stay at the two that carry the claim? Staying is cheaper to keep correct and answers the question asked. Growing would let a figure from either benchmark be read against the other, which needs the streams to agree, which needs the event stream to become a committed fixture rather than a seeded generator. That is a real change and it is not obviously worth it.
+
+**Answer, decided 2026-10-27.** No. The additional work is not being done now. The store comparison stays at the two strategies that carry the claim.
