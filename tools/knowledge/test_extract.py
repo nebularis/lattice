@@ -660,3 +660,52 @@ def test_a_decision_is_claimed_by_what_it_decides_not_its_title():
     assert claim.startswith("Rules: Core, Every adapter implements it.")
     assert "Tier" not in claim and "Principal" not in claim and "later" not in claim
     assert extract.decision_claim(["# ADR-A1: X", "## Context", "text"]) is None
+
+
+SECTIONED = [
+    "# ADR-A998: Sectioned", "", "**Status:** Accepted", "", "## Context", "1. not a decision", "",
+    "## Decision", "", "Preamble.", "",
+    "1. **A shape is a tree.** First rule.", "   continued.", "",
+    "```", "2. inside a fence", "```", "",
+    "2. **An IRI is injective in its root.** Second rule.", "",
+    "## Consequences", "", "1. not a decision either", "",
+    "## Addendum, 2026-10-12: who names a graph", "", "**Status:** Accepted", "", "The caller does.", "",
+    "### Detail", "kept in the addendum", "",
+    "## Provenance", "text",
+]
+
+
+def test_each_numbered_decision_and_addendum_is_a_section_with_its_own_range():
+    """A decision's claim covers only the opening of its Decision section, so a later rule is found
+    through a section of its own (TD-91). Numbers outside the Decision section and inside a code
+    block are not decisions, and an addendum runs through its own subheadings."""
+    found = extract.decision_sections(SECTIONED)
+    assert [(s, e) for _, s, e in found] == [(12, 17), (19, 19), (25, 33)]
+    assert found[0][0] == "A shape is a tree. First rule. continued."  # the fenced line is range, not text
+    assert found[1][0].startswith("An IRI is injective in its root.")
+    assert found[2][0].startswith("who names a graph The caller does. kept in the addendum")
+    assert "Accepted" not in found[2][0] and "inside a fence" not in found[0][0]
+    assert extract.decision_sections(["# ADR-A1: X", "## Context", "1. text"]) == []
+
+
+def test_a_section_is_an_auxiliary_node_and_never_an_entry(tmp_path, monkeypatch):
+    """A section node carries a claim, a pointer and its parent. It has no identifier and no type,
+    so a query for entries, which find uses, never returns it as a row of its own."""
+    decision = tmp_path / "docs/architecture/decisions/ADR-A998-sectioned.md"
+    decision.parent.mkdir(parents=True)
+    decision.write_text("\n".join(SECTIONED), encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    monkeypatch.setattr(extract, "tracked", lambda *patterns: [decision])
+    out = extract.Extract()
+    extract.decisions(out)
+    parent = extract.node("ADR-A998")
+    sections = [q.subject for q in out.quads if q.predicate == extract.ki("sectionOf") and q.object == parent]
+    assert len(sections) == out.counts["decision-section"] == 3
+    for section in sections:
+        quads = [q for q in out.quads if q.subject == section]
+        assert {q.predicate.value.rsplit("#", 1)[-1] for q in quads} == {"sectionOf", "claim", "pointer"}
+    assert {str(q.object.value) for q in out.quads if q.predicate == extract.ki("pointer") and q.subject in sections} == {
+        "docs/architecture/decisions/ADR-A998-sectioned.md:" + r for r in ("12-17", "19-19", "25-33")
+    }
+    entries = {q.subject for q in out.quads if q.predicate == extract.ki("identifier")}
+    assert entries == {parent} and not entries & set(sections)

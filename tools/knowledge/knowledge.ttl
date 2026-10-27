@@ -201,6 +201,11 @@ ki:publishedOn
     rdfs:label "published on" ;
     rdfs:comment "The date a decision was published to the site, where it was. Earns its place because publication is a flag on an Accepted decision and not a lifecycle state of its own: 20 of the 120 decisions read \"Published, <date>. Accepted <date>.\", and treating Published as a status lost the fact that they are Accepted. tools/published_decisions.py already models it this way." .
 
+ki:sectionOf
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Decision ;
+    rdfs:label "section of" ;
+    rdfs:comment "Ties a numbered decision or an addendum of a decision file to that decision, with its own claim and pointer. The section node has no identifier and no type, so it is no entry. graph:ask -- find embeds it, scores its decision by the best of its sections and reports that section's pointer (TD-91)." .
+
 ki:problemShape
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "problem shape" ;

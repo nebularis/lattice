@@ -10,7 +10,9 @@ never committed (ADR-A134, addendum of 2026-10-26). A downstream index whose vec
 compared with these must embed with the same revision, because vectors from two models do not share
 a space.
 
-An entry's text is its name, its claim and its problem shape. The vectors are written beside the
+An entry's text is its name, its claim and its problem shape. A decision's numbered decisions and
+addenda are embedded too, each as its own text under a node that is not an entry, so that a rule stated
+below the opening of a decision is found by its own subject (TD-91). The vectors are written beside the
 store, keyed by node and by a digest of that text, so a rebuild embeds only what changed.
 
 Nothing here is a source. When the model cannot be fetched, the build records why and leaves no
@@ -50,7 +52,8 @@ PREFIX ki: <{KI}>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?n (SAMPLE(?l) AS ?label) (SAMPLE(?c) AS ?claim) (SAMPLE(?ps) AS ?shape) WHERE {{
   GRAPH ki:index {{
-    ?n ki:identifier ?id ; ki:claim ?c .
+    ?n ki:claim ?c .
+    {{ ?n ki:identifier ?id }} UNION {{ ?n ki:sectionOf ?parent }}
     OPTIONAL {{ ?n rdfs:label ?l }}
     OPTIONAL {{ ?n ki:problemShape ?ps }}
   }}

@@ -172,6 +172,12 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
   }
 } GROUP BY ?n ?id ?kind ?status ?claim ?pointer"""
 )
+# The sections of a decision, which find scores beside the decision's own text (TD-91).
+SECTIONS = (
+    PREFIXES
+    + """
+SELECT ?s ?n ?pointer WHERE { GRAPH ki:index { ?s ki:sectionOf ?n ; ki:pointer ?pointer } }"""
+)
 KINDS = {
     "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
@@ -339,6 +345,9 @@ def find(
         print(FALLBACK)
         return 0
     index = {node: i for i, node in enumerate(nodes)}
+    sections: dict[str, list[dict]] = {}
+    for section in rows_of(db.query(SECTIONS)):
+        sections.setdefault(section["n"], []).append(section)
     # An identifier written in the question names one entry outright, which no amount of meaning can
     # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
     # first stops `find PDD-08` reporting that the index may not hold PDD-08.
@@ -347,6 +356,11 @@ def find(
         r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
         if identifiers.normalise(r["id"]) in named:
             r["meaning"] = 1.0
+        # An entry is as close as its closest section and then points at it. After the name, so that
+        # a named entry keeps its whole-file pointer.
+        for section in sections.get(r["n"], []):
+            if section["s"] in index and (m := float(vectors[index[section["s"]]] @ question)) > r["meaning"]:
+                r["meaning"], r["pointer"] = m, section["pointer"]
         r["facets"] = sum(bool(wanted & set((r[c] or "").split())) for c, wanted in facets.items())
         r["score"] = r["meaning"] + BOOST * r["facets"]
     best = max((r["meaning"] for r in rows), default=-1.0)

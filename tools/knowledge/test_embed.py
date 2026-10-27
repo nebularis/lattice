@@ -207,3 +207,35 @@ def test_a_phase_matches_up_and_down_its_chain_and_never_a_sibling():
     assert ask.phase_matches(store, {"Runtime"}) == {"Runtime", "Testing", "Benchmarking", "Production"}
     assert "Production" not in ask.phase_matches(store, {"Testing"})
     assert ask.phase_matches(store, {"Authoring"}) == {"Authoring"}
+
+
+def section(store: ox.Store, parent: str, number: int, claim: str, pointer: str) -> None:
+    n = ox.NamedNode(f"{KI}node/{parent.replace('-', '')}/section-{number}")
+    store.extend([
+        ox.Quad(n, ox.NamedNode(KI + "sectionOf"), ox.NamedNode(KI + "node/" + parent.replace("-", "")), INDEX),
+        ox.Quad(n, ox.NamedNode(KI + "claim"), ox.Literal(claim), INDEX),
+        ox.Quad(n, ox.NamedNode(KI + "pointer"), ox.Literal(pointer), INDEX),
+    ])
+
+
+def test_a_decision_is_scored_by_its_best_section_and_points_at_it(tmp_path, words, monkeypatch, capsys):
+    """ADR-1's own claim says nothing about minting, but its second section does (TD-91). It is found
+    by that section, reports the section's pointer, and appears once, since a section is no entry.
+    A question that its own claim answers keeps the whole-file pointer."""
+    store = ox.Store()
+    entry(store, "ADR-1", "Decision", "a ledger account")
+    entry(store, "CAP-1", "Capability", "minting in Java")
+    store.add(ox.Quad(ox.NamedNode(KI + "node/ADR1"), ox.NamedNode(KI + "pointer"), ox.Literal("adr.md:1-90"), INDEX))
+    section(store, "ADR-1", 1, "a ledger account", "adr.md:10-20")
+    section(store, "ADR-1", 2, "minting minting slow", "adr.md:30-40")
+    assert embed.build(store, tmp_path) == 4, "the sections are embedded beside the entries"
+    assert len(embed.load(tmp_path)[0]) == 4
+    monkeypatch.setattr(ask, "STORE_PATH", tmp_path / "store")
+    monkeypatch.setattr(ask, "log_miss", lambda question: None)
+    candidates = {r["id"] for r in ask.rows_of(store.query(ask.CANDIDATES))}
+    assert candidates == {"ADR-1", "CAP-1"}
+    ask.find(store, "minting slow", set(), set(), set(), 8)
+    rows = [line.split() for line in capsys.readouterr().out.splitlines()[2:4]]
+    assert [r[1] for r in rows] == ["ADR-1", "CAP-1"] and rows[0][-1] == "adr.md:30-40"
+    ask.find(store, "a ledger account", set(), set(), set(), 8)
+    assert capsys.readouterr().out.splitlines()[2].split()[-1] == "adr.md:1-90"

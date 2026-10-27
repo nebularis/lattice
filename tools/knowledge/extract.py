@@ -119,6 +119,9 @@ DECLARES_RE = re.compile(
 LABEL_RE = re.compile(r'rdfs:label\s+"(?P<label>[^"]{1,200})"')
 
 CLAIM_LIMIT = 200
+# A section's own text is embedded, and the model reads at most 512 tokens, so more would not be read.
+SECTION_LIMIT = 600
+NUMBERED_RE = re.compile(r"^\d+\.\s")
 
 
 def tracked(*patterns: str) -> list[Path]:
@@ -144,10 +147,10 @@ def ki(local: str) -> ox.NamedNode:
     return ox.NamedNode(KI + local)
 
 
-def shorten(text: str) -> str:
+def shorten(text: str, limit: int = CLAIM_LIMIT) -> str:
     """A claim is one sentence. Anything longer is a narrative and is cut, not stored whole."""
     text = re.sub(r"\s+", " ", re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)).strip()
-    return text if len(text) <= CLAIM_LIMIT else text[: CLAIM_LIMIT - 1].rstrip() + "…"
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
 
 
 def status_of(line: str) -> str | None:
@@ -207,6 +210,48 @@ def decision_claim(lines: list[str]) -> str | None:
             break
     text = re.sub(r"\*\*|`", "", " ".join(items))
     return shorten(text) if text.strip() else None
+
+
+def decision_sections(lines: list[str]) -> list[tuple[str, int, int]]:
+    """The parts of a decision file that state a rule of their own, as ``(text, start, end)``.
+
+    Each numbered item of the Decision section and each ``## Addendum`` section. A decision's claim
+    is the opening of its Decision section, so a rule stated further down, or in an addendum, would
+    never be found by its subject (TD-91). Code blocks are left out of the text, which is cut at
+    ``SECTION_LIMIT``."""
+    top = anchors.headings(lines)
+    decision = next((i for i, (n, lv, _) in enumerate(top) if lv == 2 and lines[n - 1].startswith("## Decision")), None)
+    found: list[tuple[int, int, str]] = []
+    if decision is not None:
+        last = anchors.section_end(top, decision, len(lines))
+        opens: list[int] = []
+        fenced = False
+        for number in range(top[decision][0] + 1, last + 1):
+            if lines[number - 1].lstrip().startswith(("```", "~~~")):
+                fenced = not fenced
+            elif not fenced and NUMBERED_RE.match(lines[number - 1]):
+                opens.append(number)
+        for start, stop in zip(opens, opens[1:] + [last + 1]):
+            end = stop - 1
+            while end > start and not lines[end - 1].strip():
+                end -= 1
+            found.append((start, end, ""))
+    for number, level, _ in top:
+        if level == 2 and lines[number - 1].startswith("## Addendum"):
+            found.append((*anchors.section_at(lines, number), re.sub(r"^## Addendum[^:]*:\s*", "", lines[number - 1])))
+    out = []
+    for start, end, title in found:
+        body, fenced = [title], False
+        for line in lines[start - 1 : end]:
+            stripped = line.strip()
+            if stripped.startswith(("```", "~~~")):
+                fenced = not fenced
+            elif not fenced and stripped and not stripped.startswith(("#", "<!--")) \
+                    and not SEPARATOR_RE.match(stripped) and not STATUS_RE.match(stripped):
+                body.append(stripped.replace("|", " "))
+        text = re.sub(r"\*\*|`", "", " ".join(body))
+        out.append((shorten(NUMBERED_RE.sub("", text.strip(), 1), SECTION_LIMIT), start, end))
+    return out
 
 
 def decisions(out: Extract) -> dict[str, ox.NamedNode]:
@@ -269,6 +314,14 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
                     if key in defined and key != identifiers.normalise(canonical):
                         out.quads.append(ox.Quad(subject, ki("relatedTo"), node(spelling), INDEX_GRAPH))
                         out.bump("relatedTo")
+        # Auxiliary nodes, not entries: no type and no identifier, so no query for entries returns them.
+        # The embedder scores them and find reports the best one's pointer under the decision.
+        for count, (text, start, end) in enumerate(decision_sections(lines), 1):
+            section = ox.NamedNode(f"{subject.value}/section-{count}")
+            out.quads.append(ox.Quad(section, ki("sectionOf"), subject, INDEX_GRAPH))
+            out.quads.append(ox.Quad(section, ki("claim"), ox.Literal(text), INDEX_GRAPH))
+            out.quads.append(ox.Quad(section, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
+            out.bump("decision-section")
         if not seen_status:
             # Measured: 7 of the 120 decisions carry their status as a `## Status` section rather
             # than a `**Status:**` header field, which is the older of two conventions in the

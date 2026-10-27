@@ -117,3 +117,19 @@ The design was presented to the maintainer in session on 2026-10-24, over four e
 The addendum on the facet register (decision 26) was approved by the maintainer on 2026-10-26 before it was drafted, with its four choices: a register table per scheme, the file beside the other registers, the version dropped, and an addendum rather than a change to decision 24.
 
 The addendum on phases (decision 27) was approved by the maintainer on 2026-10-26, who chose phases under runtime over phases beside it, so that a rule can bind in every environment and new environments can join.
+
+## Addendum (2026-10-27): a decision is embedded by its sections as well as its claim
+
+Decision 20 ranks an entry by the cosine of its embedded name, claim and problem shape. For a decision that holds several numbered decisions, that text is its title and the first 200 characters of its Decision section, so ADR-A122's embedded claim was its decision 1 in thirty-four characters. A question about its decision 8, that a named graph's IRI is injective in its root, returned a superseded policy and two adjacent entries and never ADR-A122. The same held for every later numbered decision and for all 68 addenda across 33 decision files, where ADR-A77 holds 20 numbered decisions and ADR-A104 holds 16.
+
+**A decision node now carries one vector per numbered decision and per addendum, besides its own.** An entry is scored by the best of them, and where a section wins, the row reports that section's line range instead of the whole file, so the reader lands on the part that answered. The node keeps its single identifier, its claim, its kind and its status, and the candidate set that facets filter is unchanged. Section nodes carry only `ki:sectionOf`, `ki:claim` and `ki:pointer`, with no identifier and no type, so they are never entries in their own right.
+
+**This is not the negative result above.** Embedding a section's first prose with each entry made both measures worse, because one section serving several entries gave each the same unrelated text. Here a section belongs to exactly one decision and holds that decision's own words, which is the opposite arrangement.
+
+**Measured on the corpus, 2026-10-27.** 430 numbered items and 68 addenda give 498 sections. Vectors rise from 817 to 1,315 and the store from 82,985 to 84,484 quads. A cold build goes from 12.7 s to 37.5 s, which is 2.95 times, and every later build is unchanged at 2.3 s because the per-text digest cache is untouched. A section's text is capped at 600 characters, chosen because a larger cap was expected to take the cold build past three times the old one.
+
+The two questions that prompted this now answer. ADR-A122 returns at 0.82 pointing at decision 8, and ADR-A123 at 0.82 pointing at its addendum on who names a named graph, where neither was in the top five before. A decision's own main subject is unaffected: ADR-A122 still returns at 0.85 for a question about classified boundary shapes, with its whole-file pointer, because its own vector wins.
+
+**What it costs.** Decisions rise against other kinds in general, because a narrow section matches a specific question more closely than a 200-character claim. Over the four questions above and eleven from the miss log, the top five changed in 13 of 15 and the top answer in three. One of those three now puts a grounding decision above the principle it grounds, with the principle third, which the guidance on asking for what is related already anticipates. The other two were weak matches before and after. Where an entry should outrank a decision at equal meaning, a small bias against section-derived scores is the lever, and it was not applied.
+
+**What it does not fix.** A decision whose Decision section is prose rather than a numbered list gets no sections, so its rules retrieve only through the truncated claim. ADR-A74 is the instance, recorded as TD-91.
