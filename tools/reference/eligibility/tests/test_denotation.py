@@ -98,7 +98,7 @@ class TestL10ExclusionPrecedence:
 
     def test_flat_excluded_match_denies(self) -> None:
         decision = decide_concept_match(
-            "y", hierarchical=False, required=set(), excluded={"y"}, scheme=YZ_SCHEME
+            "y", hierarchical=False, required=set(), excluded={"y"}, scheme=None
         )
         assert decision is DENIED
 
@@ -133,26 +133,29 @@ class TestL12DefaultInclusion:
 
     def test_exact_match_default_inclusion(self) -> None:
         decision = decide_concept_match(
-            "z", hierarchical=False, required=set(), excluded={"y"}, scheme=YZ_SCHEME
+            "z", hierarchical=False, required=set(), excluded={"y"}, scheme=None
         )
         assert decision is PERMITTED
 
+    def test_a_member_of_a_resolved_scheme_is_admitted(self) -> None:
+        assert decide_concept_match("z", hierarchical=False, required=set(), excluded={"y"}, scheme=YZ_SCHEME) is PERMITTED
+
     def test_no_resolved_scheme_leaves_a_candidate_not_excluded_undetermined(self) -> None:
         decision = decide_concept_match(
-            "z", hierarchical=False, required=set(), excluded={"y"}, scheme=None
+            "z", hierarchical=False, required=set(), excluded={"y"}, scheme=None, unresolved=True
         )
         assert decision is UNDETERMINED
 
     def test_no_resolved_scheme_leaves_an_excluded_candidate_undetermined(self) -> None:
         decision = decide_concept_match(
-            "y", hierarchical=False, required=set(), excluded={"y"}, scheme=None
+            "y", hierarchical=False, required=set(), excluded={"y"}, scheme=None, unresolved=True
         )
         assert decision is UNDETERMINED
 
     def test_a_condition_with_a_required_concept_decides_without_a_scheme(self) -> None:
         """Only hierarchical match and exclusions only read the bound scheme (Resolution.thy, TR3)."""
-        assert decide_concept_match("z", hierarchical=False, required={"z"}, excluded={"y"}, scheme=None) is PERMITTED
-        assert decide_concept_match("y", hierarchical=False, required={"z"}, excluded={"y"}, scheme=None) is DENIED
+        assert decide_concept_match("z", hierarchical=False, required={"z"}, excluded={"y"}, unresolved=True) is PERMITTED
+        assert decide_concept_match("y", hierarchical=False, required={"z"}, excluded={"y"}, unresolved=True) is DENIED
 
 
 class TestL14HierarchyPrecondition:

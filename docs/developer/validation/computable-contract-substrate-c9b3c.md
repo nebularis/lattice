@@ -172,7 +172,7 @@ Command, from the worktree: `mise exec -- python -m pytest tools/mork_compilers/
 |---|---|
 | 01 to 08 | `test_hierarchy_relation.py`: 28 passed, 6 subtests passed, reasoner tests included |
 | all | `check:mork-compilers` (Oxigraph): 185 passed, 753 subtests passed. `check:mork-compilers-conformance` (rdflib): 185 passed, 753 subtests passed |
-| other | `build:knowledge` built. `check:deny-terms`: 0 findings. `check:identifiers`: failed on five identifiers mentioned in `docs/developer/plans/multi-store-conformance.md:33` (CAP-99, STD-290, STD-299, TSD-50, TSD-69), a file from `ccs-trunk` this unit does not touch |
+| other | `build:knowledge` built. `check:deny-terms`: 0 findings. `check:identifiers`: failed on five identifiers mentioned in `docs/developer/plans/multi-store-conformance.md:33`, its reserved ranges written as identifiers (reworded on `ccs-trunk` the same day), a file from `ccs-trunk` this unit does not touch |
 
 ### Probes
 

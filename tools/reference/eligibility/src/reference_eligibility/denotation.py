@@ -81,12 +81,16 @@ def decide_concept_match(
     required: AbstractSet[Concept],
     excluded: AbstractSet[Concept],
     scheme: Optional[Scheme] = None,
+    unresolved: bool = False,
 ) -> Decision:
     """The single-candidate decision for ``elg:ExactMatch``, ``elg:SetMembership``
     or ``elg:HierarchicalMatch`` (ADR-A87's decision table), laws L9-L12 and
     L14. ``scheme`` is required when ``hierarchical`` is true, or when the
     condition declares exclusions only (no required concept) -- the two
     cases the law register's own decision table needs the bound scheme for.
+    ``unresolved`` says the condition's contract has bindings and none of them
+    applies at the resolution time, which differs from a condition bound to no
+    contract at all.
     """
 
     # L9: the closure is "restricted to that scheme's members" -- a candidate
@@ -110,11 +114,12 @@ def decide_concept_match(
         return UNDETERMINED
 
     # L12: a condition with exclusions only admits every member of its bound
-    # scheme. With no resolved scheme there are no members to admit, and the
-    # empty scheme that could have resolved leaves every candidate
-    # Undetermined, so no other answer holds under every resolution, an
-    # excluded candidate included (Resolution.thy, TR4).
-    if not required and scheme is None:
+    # scheme. When its contract's bindings resolve to no scheme there are no
+    # members to admit, and the empty scheme that could have resolved leaves
+    # every candidate Undetermined, so no other answer holds under every
+    # resolution, an excluded candidate included (Resolution.thy, TR4). A
+    # condition bound to no contract keeps its open reading below.
+    if not required and unresolved:
         return UNDETERMINED
 
     def matches(concept: Concept) -> bool:

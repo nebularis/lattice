@@ -235,7 +235,7 @@ Conditions matching by `ExactMatch`, `SetMembership`, or `HierarchicalMatch` sta
 
 | Candidate | Decision | Law |
 |---|---|---|
-| absent, unresolved, or more than one per question, or the decision needs the bound scheme (hierarchical match, or exclusions only) and no scheme resolves at the resolution time or the candidate is outside it | `Undetermined` | L9, L12 for no scheme |
+| absent, unresolved, or more than one per question, or the decision needs the bound scheme (hierarchical match, or exclusions only) and its contract's bindings resolve to no scheme at the resolution time, or the candidate is outside the scheme | `Undetermined` | L9, L12 for no scheme |
 | matches an excluded concept | `Denied`, whether or not it also matches a required concept | L10 |
 | under `HierarchicalMatch`, stands strictly above an excluded concept and is otherwise admitted | `Undetermined`, since its true value may fall under the exclusion | L11 |
 | under `HierarchicalMatch`, is a member of a resolved scheme in which no member has a link of the condition's hierarchy relation to another member, and is neither a required nor an excluded concept | `Undetermined`, since the scheme cannot place it | L14 |
@@ -1081,7 +1081,7 @@ elg:L11 a elg:Law ;
 	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the condition's hierarchy relation, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
 elg:L12 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded. With no scheme resolved at the resolution time it has no members to admit, and no answer other than undetermined holds under every scheme that could have resolved, so it is undetermined for every candidate, an excluded one included, as L9 states for hierarchical match." .
+	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded. When its contract has scheme bindings and none of them applies at the resolution time it has no members to admit, and no answer other than undetermined holds under every scheme that could have resolved, so it is undetermined for every candidate, an excluded one included, as L9 states for hierarchical match." .
 elg:L13 a elg:Law ;
 	elg:lawRegister elg:StaticConstraint ;
 	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
@@ -1665,7 +1665,7 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - L9, L11 and L14 are restated over the condition's hierarchy relation, and L9's acyclicity requirement is over that relation (no effect for a graph that names none).
   - New shapes `elg:HierarchyRelationShape` and `elg:HierarchyRelationNeedsHierarchicalMatchShape`. A graph that does not name a hierarchy relation is not affected. One that does and names a property that is not `skos:broader` and has no declared route to it is invalid (may invalidate).
   - A hierarchical condition, or one with exclusions only, whose contract has bindings that apply at no instant compiles to a plan that answers Undetermined for every candidate, where the compilers refused it before (changes meaning for a consumer of the compilers, not for a graph).
-  - L12 states that a condition with exclusions only and no resolved scheme is Undetermined for every candidate. The reference semantics answered Permitted for a candidate not excluded, and Denied for an excluded one (changes meaning).
+  - L12 states that a condition with exclusions only, whose contract has scheme bindings and none applies at the resolution time, is Undetermined for every candidate. A condition bound to no contract keeps its reading (changes meaning only where a contract's bindings leave a gap).
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every

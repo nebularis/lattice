@@ -192,9 +192,9 @@ def dump(directory: Path) -> None:
     """Write ``<state>.ttl`` for each state and ``cases.tsv`` (id, state, query) for a runner of another engine."""
     directory.mkdir(parents=True, exist_ok=True)
     for state, data in STATES.items():
-        (directory / f"{state.replace(' ', '_')}.ttl").write_text(PRE + data + "\n")
+        (directory / f"{state.replace(' ', '_')}.ttl").write_text(PRE + data + "\n", encoding="utf-8", newline="\n")
     lines = [f"{name}\t{state.replace(' ', '_')}\t{text}" for name, (state, text) in all_cases().items()]
-    (directory / "cases.tsv").write_text("\n".join(lines) + "\n")
+    (directory / "cases.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":
