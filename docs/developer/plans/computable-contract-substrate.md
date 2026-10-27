@@ -4373,7 +4373,7 @@ A thesaurus states both relations, and which one a clause relies on is the claus
 
 - **C9b3c, hierarchy:** a condition walking kind links rejects a part link the old walk admitted. The default stays `skos:broader`. L9 and L14 over a named relation, in the reference and the theory. A no-applicable-binding plan answers Undetermined with its diagnostic. OWL and SWRL refuse a schemeless hierarchical plan. Both engines.
 - **C9b3a, set comparisons:** each comparison at its Permitted, Denied and Undetermined rows, with neither, one and both closures. Membership law in the reference and the theory, the existing readings' proofs reused. SPARQL and SHACL agree. Both engines.
-- **C9b3b, aggregate bindings:** a share above and below a threshold with each set's closure present or absent, a missing weight, mixed units, the Q12 shape over an intensive space, TD-92's fix on both engines, and the aggregate law in the reference and the theory.
+- **C9b3b, aggregate bindings:** a share above and below a threshold with each set's closure present or absent, a missing weight, mixed units, the Q12 shape over an intensive space, TD-92's fix on both engines, and the aggregate law in the reference and the theory. The profile read set's three aggregates over `?decision`, which is unbound when a containment test errors: the multi-store unit's probes (2026-10-27) show the dependence is the query's on rdflib, Oxigraph and Jena alike, so C9b3b decides between coalescing it, which counts the row as no outcome, and guarding the test with a numeric check so the value is Undetermined with a diagnostic (STD-279's third meaning, the leaning).
 
 ### Tranche E: evaluation
 
