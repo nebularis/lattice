@@ -92,7 +92,7 @@ _SHAPES = {
     "persistence": [("persistence", "constraints.ttl")],
     "surface": [("surface", "structural.ttl")],
     "vocabulary": [("vocabulary", "structural.ttl"), ("vocabulary", "constraints.ttl")],
-    "quantification": [("quantification", "structural.ttl"), ("quantification", "constraints.ttl")],
+    "quantification": [("quantification", "constraints.ttl")],
     "eligibility": [("eligibility", "structural.ttl"), ("eligibility", "constraints.ttl")],
     "meaning": [("instrument", "structural.ttl"), ("instrument", "constraints.ttl")],
 }

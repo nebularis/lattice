@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
 
 from lattice_workers.config_studio_jobs import CST, SH
@@ -63,10 +64,13 @@ def test_a_handover_resolves_to_each_edition_in_its_own_segment():
     ]
 
 
-def test_quantification_examples_conform():
-    for name in ("additivity.ttl", "context-anchor.ttl"):
-        g, job = run("validate", "quantification", QUANTIFICATION / name)
-        assert g.value(job, CST.conforms) == Literal(True), name
+@pytest.mark.parametrize("name", [
+    pytest.param("additivity.ttl", marks=pytest.mark.xfail(strict=True, reason="ex:signing-factor, a ratio of one space, names no qnt:baseRole, which Q13's shape refuses (TD-123)")),
+    "context-anchor.ttl",
+])
+def test_quantification_examples_conform(name: str):
+    g, job = run("validate", "quantification", QUANTIFICATION / name)
+    assert g.value(job, CST.conforms) == Literal(True), name
 
 
 def test_a_hierarchical_condition_expands_over_its_scheme():

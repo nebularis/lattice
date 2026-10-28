@@ -1,5 +1,5 @@
 {
-  "ontology": "sha256:fa60e568cad8e4d27d6bf35b8c9f351adad89794babee38b017c886b139df2ca",
+  "ontology": "sha256:bd8e614de962a2da9e287ef17ba186cfdee79138c75b8becb58d8c585b0610b3",
   "term:http://www.nebularis.org/ontologies/Mork#AnonymousElement": "sha256:9a9d86aab337bf55f07a042b943509c008f88280535fd2667dcee858841cef3d",
   "term:http://www.nebularis.org/ontologies/Mork#Array": "sha256:d7b87f2d42ca7eca59655d696588394950c504d076836d9d91924c806d3f15d0",
   "term:http://www.nebularis.org/ontologies/Mork#Association": "sha256:bb7b124d0fdf44792ec882e90db6f5ba383ef4d240d1ce6b4336b19c15f6ce07",
@@ -27,7 +27,7 @@
   "term:http://www.nebularis.org/ontologies/Mork#DraftMode": "sha256:5bfe53436c2fd59f50869259aff6a7ee3e353fcaf6c232133ed49598ccaf0ea6",
   "term:http://www.nebularis.org/ontologies/Mork#Entity": "sha256:cd463c2cfc287b46caeab0ad35f71086adaa7977476216d3af6988af626ac7fd",
   "term:http://www.nebularis.org/ontologies/Mork#ExclusionIntent": "sha256:ec5c212b117a6f7706569cc69b63d84f676e984810764aaa03da0ede84b07ebb",
-  "term:http://www.nebularis.org/ontologies/Mork#GenerativeMapping": "sha256:af46200b4d7a29c40ac046634a5e01cb90b10b35ef8f9e422503504e409e289f",
+  "term:http://www.nebularis.org/ontologies/Mork#GenerativeMapping": "sha256:e6748d94910e9adc77a46fb4a51232588a16e965591f3417aa939e5e4525428f",
   "term:http://www.nebularis.org/ontologies/Mork#Hypothesis": "sha256:d2699e7a98dc2b77a94abe76466df249be01e35f697f81d5a9abcdc6539d29bb",
   "term:http://www.nebularis.org/ontologies/Mork#IdentifiableElement": "sha256:ad09d00b0935e67e8a581935633c0e7eccf55d56b37b2bf0fa40a96047eb2f8b",
   "term:http://www.nebularis.org/ontologies/Mork#InclusionIntent": "sha256:d8996dddde05366a194c99092606b764683fd09c2c887441baf21d558d9f181b",

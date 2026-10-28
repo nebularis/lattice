@@ -246,7 +246,7 @@ describe("the new parts", () => {
     expect(parts.vocabulary.types(ex + "SectorContract")).toContain(VOC("SchemeContract"));
     expect(parts.vocabulary.types(ex + "FoodProcessing")).toContain(SKOS("Concept"));
     expect(parts.quantification.types(ex + "RequiredAmount")).toContain(QNT("RangeSet"));
-    expect(parts.eligibility.types(ex + "EligibleSector")).toContain(ELG("Condition"));
+    expect(parts.eligibility.types(ex + "FacilityAdmission-Sector")).toContain(ELG("Condition"));
     expect(parts.eligibility.ofType(ELG("Question")).length).toBe(17);
     expect(parts.persistence.types(ex + "BorrowerPrivacy")).toContain(DAL("PrivacyProfile"));
     expect(parts.surface.types(ex + "drawdown-sector-promotion")).toContain(SRF("PromotionContract"));

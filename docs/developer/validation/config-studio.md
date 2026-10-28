@@ -355,7 +355,7 @@ Not run: the add-in against a live studio, Word itself, the old service's end-to
 | CS12e-01 | the stack script / its tests / the add-in among the processes, on 4176 | L1 | + | pass, 5 tests |
 | CS12d-17 | the repository without the proof of concept's service, worker, contracts and stack / `check:config-studio`, `check:java`, `check:knowledge`, `check:catalogue` and the reference scan / pass, with the knowledge test of the removed compose file dropped, since `test_quanta.py` keeps its rule, and the scan's known list one shorter | L1 | + | pass, 64 service, 3 writer and 9 authoring module tests, 48 studio Python and 40 browser |
 
-Not run: `studio:up` with the add-in's development server, the Docker stack's HTTPS proxy, Word loading the add-in, the add-in against a live studio (TD-100), and Windows and Linux.
+Not run: `studio:up` with the add-in's development server, the Docker stack's HTTPS proxy, Word loading the add-in, the add-in against a live studio (TD-121), and Windows and Linux.
 
 ## CB1: builder mode, the library and assembly parts, and the assemble job
 
@@ -438,6 +438,22 @@ Not run: a regime in the live stack, since the builder sample states none, the d
 | MCP-08 | a stated term in the builder's editor / its fields / `ins:boundIn` shown read only with why | L1 | + | pass |
 
 Not run: a host other than `curl` connected to the live server, such as Claude Code, and a stdio host through a bridge.
+
+## Merging `main`, 2026-10-28
+
+`main` at `1ebed385`, after it renumbered its colliding identifiers (ADR-A141 to ADR-A143, TD-119, TD-120, CAP-98). Five text conflicts, resolved by keeping both sides. The studio's TD-100 became TD-121, since `main`'s row came first.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| MG-01 | the merged tree / `mise run check:config-studio` / the staging, worker, service, writer, authoring module and browser suites pass | L1 | + | pass: 63 and 1 expected failure, the Java modules, 21 and 92 browser tests |
+| MG-02 | the merged tree / `mise run check:workers` / every worker test passes | L1 | + | pass, 134 and 1 expected failure |
+| MG-03 | the merged registers / `mise run check:knowledge` and the identifier test / no claim over the limit, no whole-file pointer, no identifier defined twice | L1 | + − | pass, 116 and 12, after seven claims were cut and MEC-87 pointed at a section |
+| MG-04 | the stack's fake service / `mise run test:config-studio` / every browser test passes with `main`'s shapes in the forms | L4 | + | pass, 20 |
+| MG-05 | Quantification's `additivity.ttl` / validated by the studio / refused by law Q13's shape, `main`'s own defect | L1 | − | expected failure, strict, recorded as TD-123 |
+
+Fixed for `main`'s hardening: `wrd:AssemblyModel` subclasses `fnd:Versioned`, the staging and the worker no longer name the shape files `main` deleted (Party's, TD-110, and Quantification's `structural.ttl`), the facility sample's versioned Quantification nodes and its admission profile carry identities, and the profile's conditions are minted under it, so Foundation's meaning-bearing warning does not fire.
+
+Not run: the studio in a browser against the live stack, where every versioned class's form now shows its identity as required.
 
 ## Dependency upgrades, 2026-10-28
 

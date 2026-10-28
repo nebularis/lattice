@@ -180,12 +180,12 @@ def test_each_question_is_decided_as_expected():
 
 def test_the_sector_condition_expands_over_the_edition_in_force_at_its_resolution_time():
     g = run("validate", "eligibility")
-    expansion = {r["concept"]: r["decision"] for r in rows(g, JOB, CST.expansion) if r["condition"] == "EligibleSector"}
+    expansion = {r["concept"]: r["decision"] for r in rows(g, JOB, CST.expansion) if r["condition"] == "FacilityAdmission-Sector"}
     assert expansion == {
         "Industrials": "Permitted", "Manufacturing": "Permitted", "FoodProcessing": "Permitted", "Textiles": "Permitted",
         "Consumer": "Permitted", "Retail": "Permitted", "Energy": "Undetermined", "Coal": "Denied", "Renewables": "Permitted",
     }
-    emea = {r["concept"]: r["decision"] for r in rows(g, JOB, CST.expansion) if r["condition"] == "EligibleRegion"}
+    emea = {r["concept"]: r["decision"] for r in rows(g, JOB, CST.expansion) if r["condition"] == "FacilityAdmission-Region"}
     assert emea == {
         "Emea": "Denied", "Europe": "Undetermined", "Germany": "Permitted", "UnitedKingdom": "Permitted",
         "Belarus": "Denied", "MiddleEast": "Denied",
@@ -207,7 +207,7 @@ def test_eligibility_compiles_a_query_and_shapes_per_condition_and_profile():
     g = run("compile", "eligibility")
     assert g.value(JOB, CST.conforms) == Literal(True)
     files = artefacts(g, JOB)
-    for group in ("EligibleSector", "EligibleRegion", "EligibleAmount", "EligibleMargin", "FacilityAdmission"):
+    for group in ("FacilityAdmission-Sector", "FacilityAdmission-Region", "FacilityAdmission-Amount", "FacilityAdmission-Margin", "FacilityAdmission"):
         assert f"{group}/decision.rq" in files and f"{group}/shapes.ttl" in files, group
 
 

@@ -683,7 +683,7 @@ An assembled wording records the model version it was assembled under, and the a
 
 ```turtle-spec
 wrd:AssemblyModel a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable ;
 	rdfs:label "Assembly model"@en ;
 	rdfs:comment "A set of rules for drawing an assembled wording from a form: how inclusion conditions are decided, what an undetermined one does, and how a variation slot is resolved." ;
 	fnd:utility "Declare one individual per model, with an identity. An assembler names the model version it applied on every assembled wording it produces, with wrd:assembledUnder." .

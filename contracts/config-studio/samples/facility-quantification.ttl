@@ -11,6 +11,7 @@
 # The required amount is stated in US dollars only. A candidate in sterling is compared with no
 # statement in its own unit, so the eligibility question about it is deliberately Undetermined.
 
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix ex:   <https://example.org/lending#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -27,37 +28,41 @@ ex:Percent a qnt:Unit ; rdfs:label "percent" .
 
 # Exchange rates are observations at a date, so the conversion is contextual. No observation is
 # recorded in this sample.
-ex:fx-spot a qnt:ConversionFunction ; rdfs:label "spot exchange rate on the context's date" .
-ex:gbp-to-usd a qnt:Conversion ;
+ex:fx-spot a qnt:ConversionFunction ; fnd:hasIdentity ex:fx-spot-identity ; rdfs:label "spot exchange rate on the context's date" .
+ex:gbp-to-usd a qnt:Conversion ; fnd:hasIdentity ex:gbp-to-usd-identity ;
     qnt:fromUnit ex:GBP ; qnt:toUnit ex:USD ;
     qnt:conversionKind qnt:Contextual ;
     qnt:conversionFunction ex:fx-spot .
 
 # --- value spaces --------------------------------------------------------------------------------
 
-ex:FacilityAmountSpace a qnt:ValueSpace ;
+ex:FacilityAmountSpace a qnt:ValueSpace ; fnd:hasIdentity ex:FacilityAmountSpace-identity ;
     qnt:spaceKey "facility-amount" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
     qnt:spaceHash "facility-amount-v1" ;
     qnt:additivity qnt:Extensive ;
-    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
-                       qnt:unitFamily ex:Currencies ; qnt:canonicalUnit ex:USD ] ;
+    qnt:unitContract ex:FacilityAmountSpace-units ;
     qnt:hasOperationCapability ex:amount-compare , ex:amount-sum .
 
-ex:amount-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
-ex:amount-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ;
+ex:FacilityAmountSpace-units a qnt:UnitContract ; fnd:hasIdentity ex:FacilityAmountSpace-units-identity ;
+    qnt:requiresUnit true ; qnt:unitFamily ex:Currencies ; qnt:canonicalUnit ex:USD .
+
+ex:amount-compare a qnt:OperationCapability ; fnd:hasIdentity ex:amount-compare-identity ; qnt:operationKind qnt:Compare .
+ex:amount-sum a qnt:OperationCapability ; fnd:hasIdentity ex:amount-sum-identity ; qnt:operationKind qnt:Sum ;
     qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:FacilityAmountSpace ] ,
                    [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:FacilityAmountSpace ] ;
     qnt:resultSpace ex:FacilityAmountSpace .
 
-ex:MarginSpace a qnt:ValueSpace ;
+ex:MarginSpace a qnt:ValueSpace ; fnd:hasIdentity ex:MarginSpace-identity ;
     qnt:spaceKey "margin" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
     qnt:spaceHash "margin-v1" ;
     qnt:additivity qnt:Intensive ;
-    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
-                       qnt:unitFamily ex:RateUnits ; qnt:canonicalUnit ex:Percent ] ;
+    qnt:unitContract ex:MarginSpace-units ;
     qnt:hasOperationCapability ex:margin-compare .
 
-ex:margin-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+ex:MarginSpace-units a qnt:UnitContract ; fnd:hasIdentity ex:MarginSpace-units-identity ;
+    qnt:requiresUnit true ; qnt:unitFamily ex:RateUnits ; qnt:canonicalUnit ex:Percent .
+
+ex:margin-compare a qnt:OperationCapability ; fnd:hasIdentity ex:margin-compare-identity ; qnt:operationKind qnt:Compare .
 
 # --- the required range sets the eligibility conditions use ------------------------------------------
 #

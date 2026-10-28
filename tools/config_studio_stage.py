@@ -32,8 +32,8 @@ VOCABULARY = (
 
 # The layers whose SHACL shapes place and constrain the forms' properties. The browser reads only
 # node shapes and property shapes, so only the triples below are staged. SHACL-SPARQL constraints,
-# messages and rules stay out.
-SHAPED = ("persistence", "surface", "foundation", "vocabulary", "quantification", "eligibility", "wording", "party", "instrument")
+# messages and rules stay out. Party has no shapes (TD-110).
+SHAPED = ("persistence", "surface", "foundation", "vocabulary", "quantification", "eligibility", "wording", "instrument")
 SHAPE_PREDICATES = frozenset(
     SH[n] for n in ("targetClass", "property", "path", "datatype", "class", "nodeKind", "in", "minCount", "maxCount", "name", "description")
 ) | {RDF.first, RDF.rest}
