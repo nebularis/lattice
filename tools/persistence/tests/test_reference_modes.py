@@ -231,3 +231,25 @@ def test_h2_8c_t11_the_vocabulary_declares_record_class_with_no_domain():
     g = Graph().parse(witness.SPEC_TTL, format="turtle")
     assert (DAL.recordClass, RDF.type, URIRef("http://www.w3.org/2002/07/owl#ObjectProperty")) in g
     assert list(g.objects(DAL.recordClass, URIRef("http://www.w3.org/2000/01/rdf-schema#domain"))) == []
+
+
+# OR-7 (ADR-A137): a meaning-bearing edge from a versioned class is owned or pinned, never by identity.
+_VERSIONED_ROOT = "ex:Order rdfs:subClassOf fnd:Versioned . ex:customer fnd:meaningBearing true ."
+
+
+def test_or7_t1_a_meaning_bearing_reference_by_identity_from_a_versioned_root_is_refused():
+    assert _kind(_VERSIONED_ROOT) == "MeaningBearingEdgeByIdentity"
+
+
+def test_or7_t2_a_meaning_bearing_edge_pinned_to_a_versioned_target_compiles():
+    extra = "ex:Order rdfs:subClassOf fnd:Versioned . ex:referee fnd:meaningBearing true . ex:Versioned rdfs:subClassOf fnd:Versioned ."
+    assert "MeaningBearingEdgeByIdentity" not in _warnings(extra + _edge("referee", "Versioned", "; dal:referenceMode dal:Pinned"))
+
+
+def test_or7_t2b_a_meaning_bearing_edge_owned_by_the_root_compiles():
+    extra = "ex:Order rdfs:subClassOf fnd:Versioned . ex:note fnd:meaningBearing true ."
+    assert "MeaningBearingEdgeByIdentity" not in _warnings(extra + _edge("note", "Note", ownership="dal:Owned"))
+
+
+def test_or7_t3_the_same_edge_from_an_unversioned_root_compiles_by_identity():
+    assert "MeaningBearingEdgeByIdentity" not in _warnings("ex:customer fnd:meaningBearing true .")

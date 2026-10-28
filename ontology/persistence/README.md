@@ -111,8 +111,8 @@ flowchart TB
 
 **This ontology targets classes, graphs and shapes by IRI reference only.** It imports nothing from
 Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour or Instrument, and none
-of them imports it. It has no place in the layer order of
-[ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers):
+of them imports it. It has no place in the layer order the
+[repository catalogue](../../repository-catalogue.md) records:
 it sits beside Surface and MORK as a cross-cutting substrate. An adopter's domain ontology never needs
 to know that Persistence exists, and a configuration can be added, changed or removed without touching
 it (ADR-A78). The one exception is optional: `persistent-foundation` (§5.11) imports Foundation, so that
@@ -1283,6 +1283,7 @@ ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
 | `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Versioned` (by IRI, with no import), or it has no target class, or it is a value property |
 | `ReferenceModeUnknown` (refusal) | the value is neither individual |
 | `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or a record class, its target class is versioned, and the edge is by identity |
+| `MeaningBearingEdgeByIdentity` (refusal) | an edge is `dal:Reference` by identity, its predicate is `fnd:meaningBearing true` in the loaded ontology, and the shape's class is versioned. Own the edge, or pin it to a version of its target (Foundation §4) |
 
 **Record classes.** A class whose instances are records, cited for what they said at a time, need not be modelled as `fnd:Evidence`. A
 profile names it with `dal:recordClass`, and its subclasses, as the configuration asserts them, are records too. The warning above reads
@@ -7341,7 +7342,7 @@ Not applicable.
 
 The configuration vocabulary, `spec/persistence.ttl`, imports nothing. None of Foundation, Vocabulary, Quantification,
 Party, Eligibility, Wording, Behaviour or Instrument imports it, and it has no place in the layer order of
-[ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers). It targets classes,
+the [repository catalogue](../../repository-catalogue.md). It targets classes,
 graphs and shapes by IRI reference only (ADR-A78).
 
 Only `spec/persistent-foundation.ttl` imports a layer. It imports Foundation and `spec/persistence.ttl`, at this README's

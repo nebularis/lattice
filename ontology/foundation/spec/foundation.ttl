@@ -15,6 +15,11 @@
 fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "A concise explanation of what a term is for and how to use it." .
 
+fnd:meaningBearing a owl:AnnotationProperty ;
+    rdfs:comment "Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was." ;
+    fnd:utility "Set it to true on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity." ;
+    rdfs:range xsd:boolean .
+
 fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
     fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;

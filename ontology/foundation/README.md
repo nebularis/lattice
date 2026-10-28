@@ -96,6 +96,8 @@ shapes = ["shapes/constraints.ttl"]
 
 **Four focused mixins.** An earlier pass considered a single `fnd:Governed` class carrying all four capabilities at once. This was rejected as it would force every class adopting any one capability to adopt all four, which overclaims, whereas independent, non-disjoint mixins let a downstream class pick exactly what it needs.
 
+**A meaning-bearing edge from a versioned thing is owned or pinned.** A versioned thing's past versions are only reproducible if what they point at cannot change under them. So an object property whose object is part of its subject's meaning is marked `fnd:meaningBearing true`, and the thing at its end is itself versioned, content-addressed, or minted under the subject so that it is written and swept with it. A reference by identity to a mutable node is the defect: editing the node rewrites every past judgement made with the subject. The mark is read twice. `shapes/constraints.ttl` warns on data where such an edge leads to a node that is neither versioned nor minted under the subject, and a Persistence profile refuses to compile such an edge as a reference by identity, so it is either owned by the subject's aggregate or pinned to one version of its target (ADR-A137).
+
 **`GovernanceState` is open at the OWL level, closed in SHACL.** OWL's open-world assumption sees us push closed-world constraints into `shapes/constraints.ttl` via `sh:in` restrictions over named individuals. The class exists here so the property `fnd:hasGovernanceState` has somewhere to range over; the enumeration itself is a different layer's concern, per the established `spec/` vs `vocab/` vs `shapes/` architectural boundary.
 
 ## 5. Annotation Properties
@@ -109,6 +111,19 @@ shapes = ["shapes/constraints.ttl"]
 ```turtle-spec
 fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "A concise explanation of what a term is for and how to use it." .
+```
+
+#### `fnd:meaningBearing`
+
+**Definition.** Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was.
+
+**Utility.** Set it to `true` on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant: a profile's conditions, a definition's rules, a binding's scheme. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity (§4).
+
+```turtle-spec
+fnd:meaningBearing a owl:AnnotationProperty ;
+    rdfs:comment "Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was." ;
+    fnd:utility "Set it to true on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity." ;
+    rdfs:range xsd:boolean .
 ```
 
 ## 6. Classes
@@ -800,10 +815,27 @@ fnd:MergedNaturalKeyShape a sh:NodeShape ;
             }
         """
     ] .
+
+fnd:MeaningBearingEdgeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:hasIdentity ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned nor minted under it, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:select """
+            SELECT $this ?p ?o WHERE {
+                $this ?p ?o .
+                ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
+                FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER (!STRSTARTS(STR(?o), STR($this)))
+            }
+        """
+    ] .
 ```
 
 The shapes match subclasses through `rdfs:subClassOf*` in the data graph, so validate data
 together with the adopter's ontology. A pair is reported from both sides, once per member.
+
+`fnd:MeaningBearingEdgeShape` runs one query per versioned focus node over its outgoing edges, joined to the `fnd:meaningBearing` annotations, so the adopter's ontology is in the data graph when it runs, as for the key shapes. It warns rather than fails, since a content-addressed object that is neither versioned nor minted under the subject is a legitimate case the data cannot distinguish. The compile-time refusal in Persistence is the exact check (§4).
 
 ### 8.8 Worked example and related documents
 

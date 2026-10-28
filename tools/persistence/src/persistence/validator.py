@@ -12,10 +12,10 @@ from __future__ import annotations
 import string
 from itertools import combinations
 
-from rdflib import RDF, RDFS, SKOS, Graph, URIRef
+from rdflib import RDF, RDFS, SKOS, Graph, Literal, URIRef
 
 from .functional import functional_value
-from .boundary import BY_IDENTITY, PINNED, MissingBoundaryShapeError, walk_ownership
+from .boundary import BY_IDENTITY, PINNED, REFERENCE, MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
 from .namespaces import DAL, FND, SH
@@ -415,6 +415,19 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
             "Use dal:ByIdentity, or dal:Pinned on an edge to a versioned class.",
         )
     for edge in tree.edges:
+        # A meaning-bearing edge from a versioned class is owned or pinned, never by identity (Foundation §4, ADR-A137).
+        source_class = tree.root_class if edge.source_shape == tree.root_shape else graph.value(edge.source_shape, SH.targetClass)
+        if (edge.kind == REFERENCE and edge.reference_mode == BY_IDENTITY
+                and (edge.step.predicate, FND.meaningBearing, Literal(True)) in graph
+                and _is_versioned(graph, source_class)):
+            raise CrossAxisViolation(
+                "MeaningBearingEdgeByIdentity",
+                str(target),
+                f"the property shape for {edge.step.predicate} on {edge.source_shape} is a reference by identity, "
+                f"the predicate is fnd:meaningBearing and {source_class} is versioned, so editing the node at its end "
+                "would change what a past version meant. Own the edge (dal:Owned), or pin it (dal:referenceMode dal:Pinned) "
+                "to a version of its target.",
+            )
         # H2.6e-Q2: an edge pinned to a version needs a target that has versions. A value property has no target class.
         if edge.reference_mode == PINNED and not _is_versioned(graph, edge.target_class):
             raise CrossAxisViolation(

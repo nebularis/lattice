@@ -117,3 +117,18 @@ fnd:MergedNaturalKeyShape a sh:NodeShape ;
             }
         """
     ] .
+
+fnd:MeaningBearingEdgeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:hasIdentity ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned nor minted under it, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:select """
+            SELECT $this ?p ?o WHERE {
+                $this ?p ?o .
+                ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
+                FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER (!STRSTARTS(STR(?o), STR($this)))
+            }
+        """
+    ] .
