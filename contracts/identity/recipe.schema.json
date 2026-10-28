@@ -755,6 +755,7 @@
           "items": {
             "enum": [
               "reject_unassigned",
+              "strip_format",
               "nfc",
               "nfkc",
               "nfkc_casefold",
