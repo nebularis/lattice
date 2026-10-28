@@ -87,7 +87,7 @@ imports = []
 
 [module.extract]
 spec = ["spec/foundation.ttl"]
-shapes = ["shapes/constraints.ttl"]
+shapes = ["shapes/constraints.ttl", "shapes/structural.ttl"]
 ```
 
 ## 4. Design Decisions
@@ -871,6 +871,46 @@ fnd:MeaningBearingEdgeShape a sh:NodeShape ;
 
 The shapes match subclasses through `rdfs:subClassOf*` in the data graph, so validate data
 together with the adopter's ontology. A pair is reported from both sides, once per member.
+
+The structural shapes, in `shapes/structural.ttl`, check the cardinalities the OWL restrictions above state, for an adopter validating data without a reasoner. They were empty until 2026-10-28, and Vocabulary restated them for its own classes meanwhile.
+
+```turtle-shapes
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+fnd:VersionedShape a sh:NodeShape ;
+    sh:targetClass fnd:Versioned ;
+    sh:property [
+        sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ;
+        sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity."
+    ] .
+
+fnd:EvidenceShape a sh:NodeShape ;
+    sh:targetClass fnd:Evidence ;
+    sh:property [
+        sh:path [ sh:alternativePath ( fnd:supports [ sh:inversePath fnd:hasEvidence ] ) ] ; sh:minCount 1 ;
+        sh:message "Evidence supports at least one thing, stated as fnd:supports or from the thing by fnd:hasEvidence."
+    ] ;
+    sh:property [
+        sh:path fnd:recordedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+        sh:message "Evidence states exactly when it was recorded."
+    ] .
+
+fnd:TemporallyScopedShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporallyScoped ;
+    sh:property [
+        sh:path fnd:hasTemporalScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:TemporalScope ;
+        sh:message "A temporally scoped thing has exactly one fnd:hasTemporalScope."
+    ] .
+
+fnd:GovernableShape a sh:NodeShape ;
+    sh:targetClass fnd:Governable ;
+    sh:property [
+        sh:path fnd:hasGovernanceState ; sh:maxCount 1 ; sh:class fnd:GovernanceState ;
+        sh:message "A governable thing has at most one current fnd:hasGovernanceState."
+    ] .
+```
 
 `fnd:SupersessionAcyclicShape` walks the chain from each of its members, so a chain of n versions costs n walks of at most n steps, the pattern Ledger uses for `ldg:partOf`. `fnd:TemporalScopeShape` is plain SHACL over every scope.
 

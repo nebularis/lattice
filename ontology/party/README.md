@@ -41,7 +41,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 ```toml repository-catalogue
 [module]
 kind = "substrate"
-roles = ["projection", "shapes", "spec", "vocab"]
+roles = ["projection", "spec", "vocab"]
 imports = ["foundation", "vocabulary", "quantification"]
 
 [module.extract]
