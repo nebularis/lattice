@@ -18,9 +18,9 @@
 # Loaded together with examples/core.ttl and peril's vocab (for the
 # prl-voc: cause concepts), it passes every shape with no warning.
 
-@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
-@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix prov:     <http://www.w3.org/ns/prov#> .

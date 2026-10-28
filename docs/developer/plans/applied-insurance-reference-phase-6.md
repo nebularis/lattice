@@ -66,7 +66,7 @@ What is left out, and what each item can build on, is in [leftovers](air-leftove
 
 `ontology/applied/insurance/submission/`, literate from the start (AIR-2.0): `README.md`,
 `spec/submission.ttl`, `vocab/submission-vocab.ttl`, `shapes/` with `.version` `0.1.0`,
-`examples/`. Namespace `https://www.nebularis.org/neuro-semantic/insurance/submission#`, prefix
+`examples/`. Namespace `https://www.nebularis.org/neuro-semantic/lattice/insurance/submission#`, prefix
 `sbm:` (proposed here under ADR-A98 decision 6), vocabulary `…/insurance/submission/vocab#`
 (`sbm-voc:`). Version IRIs `…/insurance/submission/0.1.0` and `…/insurance/submission-vocab/0.1.0`.
 The spec imports the exposure spec (`0.1.0`), and Foundation, Vocabulary and Party at the versions

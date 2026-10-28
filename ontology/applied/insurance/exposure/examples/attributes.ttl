@@ -15,9 +15,9 @@
 # prl:relevantAttribute / prl:minimumGeoPrecision), it passes every shape
 # in structural.ttl, constraints.ttl and shapes/profiles/ with no warning.
 
-@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
-@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:     <http://www.w3.org/2004/02/skos/core#> .

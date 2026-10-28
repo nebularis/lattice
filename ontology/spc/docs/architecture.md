@@ -216,8 +216,8 @@ flowchart LR
 
     subgraph AB["📊 A-Box (RDF/Turtle)"]
         RDF["<pre>
-@prefix : &lt;http://spc.march.com/protocol/&gt; .
-@prefix spc: &lt;http://spc.march.com/ontology/core/&gt; .
+@prefix : &lt;https://www.nebularis.org/neuro-semantic/lattice/spc/protocol/&gt; .
+@prefix spc: &lt;https://www.nebularis.org/neuro-semantic/lattice/spc#&gt; .
 
 :ProtocolIndividual
     a spc:ProtocolIndividual ;

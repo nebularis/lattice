@@ -53,7 +53,7 @@ importer.
    |---|---|---|
    | cross-domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/applied/<module>#` | per module |
    | `classification/` | as above | `cls:` |
-   | insurance `<module>` | `https://www.nebularis.org/neuro-semantic/insurance/<module>#` | per module |
+   | insurance `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#` | per module |
    | `insurance/common/` | as above | `icm:` |
    | `insurance/peril/` | as above | `prl:` |
    | `insurance/exposure/` | as above | `aeo:` |

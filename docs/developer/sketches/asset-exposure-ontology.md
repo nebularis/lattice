@@ -46,8 +46,8 @@ precedence.
 
 | Prefix | IRI | Content |
 |---|---|---|
-| `aeo:` | `https://www.nebularis.org/neuro-semantic/insurance/exposure#` | T-Box |
-| `aeo-voc:` | `https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#` | V1 individuals, scheme contracts, value spaces |
+| `aeo:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#` | T-Box |
+| `aeo-voc:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#` | V1 individuals, scheme contracts, value spaces |
 | `geo:` | `http://www.opengis.net/ont/geosparql#` | optional alignment for geometry |
 
 ```

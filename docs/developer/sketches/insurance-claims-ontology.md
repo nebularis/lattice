@@ -293,8 +293,8 @@ Before adding anything, each need is matched to what exists or is planned. Statu
 
 | Prefix | IRI | Content |
 |---|---|---|
-| `clm:` | `https://www.nebularis.org/neuro-semantic/insurance/claims#` | T-Box (proposed under ADR-A98 decision 6, CL-Q7) |
-| `clm-voc:` | `https://www.nebularis.org/neuro-semantic/insurance/claims/vocab#` | scheme contracts, reference schemes, value spaces |
+| `clm:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/claims#` | T-Box (proposed under ADR-A98 decision 6, CL-Q7) |
+| `clm-voc:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/claims/vocab#` | scheme contracts, reference schemes, value spaces |
 
 ```
 ontology/applied/insurance/claims/

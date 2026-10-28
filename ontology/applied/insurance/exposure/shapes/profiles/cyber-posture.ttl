@@ -5,16 +5,16 @@
 # legal entity, and carry only types from the Cyber posture family.
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 
 aeo:CyberPostureProfileShape a sh:NodeShape ;
     sh:targetClass aeo:Assessment ;
     sh:sparql [
         sh:message "An assessment of the cyber posture profile family must assess a legal entity." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:assesses ?s .
               FILTER NOT EXISTS { ?s a aeo:LegalEntity }
@@ -23,8 +23,8 @@ aeo:CyberPostureProfileShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment of the cyber posture profile family must have values for MfaCoverage, BackupStrategy and EndpointDetectionAndResponse." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture .
               {
@@ -43,8 +43,8 @@ aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An attribute value on a cyber posture profile assessment is outside the Cyber posture family." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:hasAttribute ?av .
               ?av aeo:attributeType ?type .

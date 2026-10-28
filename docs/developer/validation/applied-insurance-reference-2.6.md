@@ -53,7 +53,7 @@ Written by S in the `[AIR-2.6] Handoff` commit. S runs the checks itself, so say
     4217 and the minor unit. `common-vocab` bumped `0.5.0` → `0.6.0`.
   - `insurance/peril`'s README §5.5 "Intensity measures and thresholds": a new document
     `vocab/peril-intensity.ttl` (its own ontology self-IRI
-    `https://www.nebularis.org/neuro-semantic/insurance/peril/intensity`, versioned in unison with
+    `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity`, versioned in unison with
     `peril-vocab` at `0.5.0`, per ADR-A120 addendum decision 3 and the AIR-2.0 precedent set by
     `behaviour-runtime.ttl`). Contains `prl-voc:IntensityMeasureScheme` (a `voc:ConceptScheme`) and
     24 measure concepts, each `skos:inScheme`/`skos:topConceptOf` it and `prl:measuredOn` its own
@@ -123,7 +123,7 @@ Written by S in the `[AIR-2.6] Handoff` commit. S runs the checks itself, so say
      The first draft reused `peril-vocab.ttl`'s own ontology IRI verbatim (and its `owl:imports`
      named itself), which `tools/ontology_releases.py check` exposed (both files reporting under
      the same product name). Fixed to its own self-IRI
-     `https://www.nebularis.org/neuro-semantic/insurance/peril/intensity`, following the precedent
+     `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity`, following the precedent
      `behaviour-runtime.ttl` sets for a second spec document in one layer (ADR-A120 decision 2):
      own self-IRI, version number in unison with the module's other vocab document.
   2. The 24 measure concepts' first draft omitted `skos:inScheme`/`skos:topConceptOf` on

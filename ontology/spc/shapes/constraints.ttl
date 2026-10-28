@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix spc: <https://www.nebularis.org/neuro-semantic/lattice/spc#> .
+
+spc:ReceiveBranchLabelUniqueShape a sh:NodeShape ;
+    sh:targetClass spc:ReceiveBranch ;
+    sh:sparql [
+        sh:message "Two spc:ReceiveBranch nodes share one parent and one label. owl:hasKey would merge them, so the duplicate is refused here." ;
+        sh:select """
+            PREFIX spc: <https://www.nebularis.org/neuro-semantic/lattice/spc#>
+            SELECT $this ?other WHERE {
+                $this spc:hasBranchParent ?parent ; spc:hasBranchLabel ?label .
+                ?other spc:hasBranchParent ?parent ; spc:hasBranchLabel ?label .
+                FILTER (?other != $this)
+            }
+        """
+    ] .
+
+spc:MessageOptionLabelUniqueShape a sh:NodeShape ;
+    sh:targetClass spc:MessageOption ;
+    sh:sparql [
+        sh:message "Two spc:MessageOption nodes share one parent and one label. owl:hasKey would merge them, so the duplicate is refused here." ;
+        sh:select """
+            PREFIX spc: <https://www.nebularis.org/neuro-semantic/lattice/spc#>
+            SELECT $this ?other WHERE {
+                $this spc:hasOptionParent ?parent ; spc:hasOptionLabel ?label .
+                ?other spc:hasOptionParent ?parent ; spc:hasOptionLabel ?label .
+                FILTER (?other != $this)
+            }
+        """
+    ] .
+
+spc:TypeOptionLabelUniqueShape a sh:NodeShape ;
+    sh:targetClass spc:TypeOption ;
+    sh:sparql [
+        sh:message "Two spc:TypeOption nodes share one parent and one label. owl:hasKey would merge them, so the duplicate is refused here." ;
+        sh:select """
+            PREFIX spc: <https://www.nebularis.org/neuro-semantic/lattice/spc#>
+            SELECT $this ?other WHERE {
+                $this spc:hasTypeOptionParent ?parent ; spc:hasOptionLabel ?label .
+                ?other spc:hasTypeOptionParent ?parent ; spc:hasOptionLabel ?label .
+                FILTER (?other != $this)
+            }
+        """
+    ] .

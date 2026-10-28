@@ -8,8 +8,8 @@
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 
 prl:LabelAndDefinitionShape
     a sh:NodeShape ;
@@ -17,8 +17,8 @@ prl:LabelAndDefinitionShape
     sh:sparql [
         sh:message "A concept in a reference peril scheme needs exactly one skos:prefLabel and exactly one skos:definition, each tagged @en (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme ?scheme .
@@ -39,8 +39,8 @@ prl:CharacteristicsShape
     sh:sparql [
         sh:message "A cause concept needs at least one prl:typicalAgency (in the agency scheme), exactly one prl:onset (in the onset scheme), exactly one prl:definitionBasis (in the definition-basis scheme), and at most one prl:accumulationClass (in the accumulation-class scheme) (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .

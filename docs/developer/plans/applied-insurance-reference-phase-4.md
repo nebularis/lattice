@@ -104,7 +104,7 @@ snapshot versions.
 
 | Document | Ontology IRI | Version IRI | Prefix |
 |---|---|---|---|
-| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
+| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
 | `vocab/exposure-vocab.ttl` | `…/insurance/exposure/vocab` | `…/insurance/exposure-vocab/0.1.0` | `aeo-voc:` (`…/insurance/exposure/vocab#`) |
 
 The spec imports, by exact version IRI, the live versions of Foundation (0.4.0), Vocabulary (0.4.0),

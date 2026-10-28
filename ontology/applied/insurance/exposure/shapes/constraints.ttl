@@ -4,14 +4,14 @@
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
-@prefix aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 
 aeo:ControlRelationShape a sh:NodeShape ;
     sh:targetClass aeo:ControlRelation ;
     sh:sparql [
         sh:message "A control relation must not create a cycle through aeo:controller / aeo:controlled." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:controller ?a ; aeo:controlled ?b .
               ?b (^aeo:controller/aeo:controlled)+ ?a .
@@ -31,9 +31,9 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this a aeo:Location ; aeo:poolParticipation ?pp .
@@ -60,8 +60,8 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location exposed to a peril with a minimum geographic precision should be known at least that precisely (aeo:geoPrecision no coarser than the peril's minimum, by skos:notation rank)." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             SELECT $this WHERE {
@@ -85,7 +85,7 @@ aeo:DependencyCycleShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A cycle of dependencies is reported: a provider that depends, through other providers, on the dependent that depends on it." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:dependent ?a ; aeo:provider ?b .
               ?b (^aeo:dependent/aeo:provider)+ ?a .
@@ -97,7 +97,7 @@ aeo:MetricComparabilityShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Peril metrics compared together must have equal peril scope, region scope and perspective." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:comparedMetric ?m1 .
               $this aeo:comparedMetric ?m2 .
@@ -122,7 +122,7 @@ aeo:UnitDerivationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An exposure unit in a graph with no derivation run that produced it is reported: units are computed on demand, not asserted." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             PREFIX prov: <http://www.w3.org/ns/prov#>
             SELECT $this WHERE {
@@ -140,7 +140,7 @@ aeo:LossInPeriodShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A loss record's date must be within the temporal scope of the loss experience that lists it." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               ?exp aeo:hasLossRecord $this ; fnd:hasTemporalScope ?ts .
@@ -156,7 +156,7 @@ aeo:DefaultedAgencyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An effective agency that differs from every recorded agency needs a defaulted characteristic, and one with a recorded agency must have none." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 $this aeo:effectiveAgency ?e .
@@ -174,7 +174,7 @@ aeo:DefaultedMechanismShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An effective mechanism that differs from every recorded mechanism needs a defaulted characteristic, and a cause with a recorded mechanism must have none." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 $this aeo:effectiveMechanism ?e .
@@ -192,7 +192,7 @@ aeo:RequirementScopeShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A requirement's scope must be an admission profile whose conditions are bound to subject class aeo:ExposureUnit." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
             SELECT $this WHERE {
               $this aeo:requirementScope ?profile .
