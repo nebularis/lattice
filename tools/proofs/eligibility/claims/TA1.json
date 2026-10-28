@@ -1,7 +1,7 @@
 {
   "subject": "TA1",
   "statedAs": "KernelLaws.or3_monotone_left/right, and3_monotone_left/right",
-  "statementDigest": "sha256:655a4b9ef39a0e4bea1a8d50e60c4317ba3c2f52a41094a028cb7ac3b8ecd8a7",
+  "statementDigest": "sha256:43c1a4df796cf4d4fc0e3e714684fd81c2b21dbec327a4c9329545db5311a555",
   "method": "Proof",
   "scope": "EveryPair",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

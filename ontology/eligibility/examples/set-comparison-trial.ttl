@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A clinical trial protocol prohibits some medications. A participant may be
+# dosed only when the medications they take alongside the study drug are
+# disjoint from the protocol's prohibited list, compared by exact match.
+#
+# The tested set is the participant's concomitant medications. The site
+# records every one by the protocol's logging requirement. The reference set is
+# the prohibited list of the protocol the participant is enrolled under, a
+# second set read from the same participant by a longer path, and complete by
+# the protocol's own schedule. Each binding names its closure (ADR-A105).
+#
+# Disjoint is some value, negated (elg:L16, elg:L18), so a participant is
+# Denied when any medication they take is prohibited.
+#
+# | Participant | Takes                | Disjoint                        |
+# |-------------|----------------------|---------------------------------|
+# | pat-1       | aspirin, metformin   | Permitted                       |
+# | pat-2       | aspirin, warfarin    | Denied (warfarin is prohibited) |
+# | pat-3       | none                 | Permitted (nothing is taken)    |
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/eligibility/medications/> .
+
+# The applied ontology's own terms.
+ex:Participant a owl:Class .
+ex:Protocol a owl:Class .
+ex:takes a owl:ObjectProperty .
+ex:enrolledUnder a owl:ObjectProperty .
+ex:prohibits a owl:ObjectProperty .
+
+ex:aspirin a skos:Concept .
+ex:metformin a skos:Concept .
+ex:warfarin a skos:Concept .
+ex:ketoconazole a skos:Concept .
+
+# The closures. Their sources are the protocol's clauses.
+ex:logging-clause rdfs:label "Protocol 6.1: the site records every medication the participant takes" .
+ex:schedule-clause rdfs:label "Protocol Schedule 3 lists every prohibited medication" .
+ex:logging-closure a elg:Closure ; elg:licensedBy ex:logging-clause .
+ex:schedule-closure a elg:Closure ; elg:licensedBy ex:schedule-clause .
+
+# The comparison and its two bindings.
+ex:no-prohibited-medication a elg:SetComparison ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:comparison elg:Disjoint ;
+    elg:testedBinding ex:medication-binding ;
+    elg:referenceBinding ex:prohibited-binding .
+
+ex:medication-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:no-prohibited-medication ;
+    elg:subjectClass ex:Participant ;
+    elg:closedUnder ex:logging-closure ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:takes ; elg:stepDirection elg:Forward ] .
+
+ex:prohibited-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:no-prohibited-medication ;
+    elg:subjectClass ex:Participant ;
+    elg:closedUnder ex:schedule-closure ;
+    elg:evidenceStep
+        [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:enrolledUnder ; elg:stepDirection elg:Forward ] ,
+        [ a elg:EvidenceStep ; elg:stepIndex 1 ; elg:stepProperty ex:prohibits ;     elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data.
+ex:protocol-7 a ex:Protocol ; ex:prohibits ex:warfarin , ex:ketoconazole .
+ex:pat-1 a ex:Participant ; ex:enrolledUnder ex:protocol-7 ; ex:takes ex:aspirin , ex:metformin .
+ex:pat-2 a ex:Participant ; ex:enrolledUnder ex:protocol-7 ; ex:takes ex:aspirin , ex:warfarin .
+ex:pat-3 a ex:Participant ; ex:enrolledUnder ex:protocol-7 .

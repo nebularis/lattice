@@ -1,7 +1,7 @@
 {
   "subject": "TL1-every",
   "statedAs": "Eligibility.every_value_spec_denied/permitted/undetermined",
-  "statementDigest": "sha256:28cef063ebd3e6ef7636e97487da00f54bc61658cc7eeee3d7103ce53224f622",
+  "statementDigest": "sha256:bf0db11247fcabb14c9ae93f61730157af81d53f30a47f84cbd099b735697b17",
   "method": "Proof",
   "scope": "EveryList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

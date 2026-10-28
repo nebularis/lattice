@@ -49,6 +49,7 @@ elg:ConceptConditionDeclarationShape a sh:NodeShape ;
 				FILTER NOT EXISTS { $this elg:requiredConcept ?required }
 				FILTER NOT EXISTS { $this elg:excludedConcept ?excluded }
 				FILTER NOT EXISTS { $this elg:hasCondition ?member }
+				FILTER NOT EXISTS { $this elg:comparison ?comparison }
 			}
 		"""
 	] ;
@@ -89,11 +90,12 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 elg:ClosureNeedsSetReadingShape a sh:NodeShape ;
 	sh:targetSubjectsOf elg:closedUnder ;
 	sh:sparql [
-		sh:message "Only a binding read elg:SomeValue or elg:EveryValue names a closure (ADR-A105, L15)." ;
+		sh:message "Only a binding read elg:SomeValue or elg:EveryValue, or a binding of a set comparison, names a closure (ADR-A105, L15, L18)." ;
 		sh:select """
 			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
 			SELECT $this WHERE {
 				FILTER NOT EXISTS { $this elg:valueReading ?reading . FILTER (?reading IN (elg:SomeValue, elg:EveryValue)) }
+				FILTER NOT EXISTS { $this elg:bindsCondition ?comparison . ?comparison elg:comparison ?kind }
 			}
 		"""
 	] .
@@ -135,6 +137,66 @@ elg:HierarchyRelationNeedsHierarchicalMatchShape a sh:NodeShape ;
 			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
 			SELECT $this WHERE {
 				FILTER NOT EXISTS { $this elg:matchStrategy elg:HierarchicalMatch }
+			}
+		"""
+	] .
+
+elg:SetComparisonBindingsShape a sh:NodeShape ;
+	sh:targetClass elg:SetComparison ;
+	sh:sparql [
+		sh:message "A set comparison's tested binding and reference binding are two bindings (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				$this elg:testedBinding ?binding ; elg:referenceBinding ?binding .
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "Each binding of a set comparison names the comparison with elg:bindsCondition (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				{ $this elg:testedBinding ?binding } UNION { $this elg:referenceBinding ?binding }
+				FILTER NOT EXISTS { ?binding elg:bindsCondition $this }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "The two bindings of a set comparison name the same subject class, since both read from one subject (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:testedBinding ?tested ; elg:referenceBinding ?reference .
+				?tested elg:subjectClass ?testedClass .
+				?reference elg:subjectClass ?referenceClass .
+				FILTER (?testedClass != ?referenceClass)
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A binding of a set comparison declares no value reading and no value space. The comparison fixes the reading, and its values are IRIs (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				{ $this elg:testedBinding ?binding } UNION { $this elg:referenceBinding ?binding }
+				?binding ?property ?value .
+				FILTER (?property IN (elg:valueReading, elg:readOnSpace))
+			}
+		"""
+	] .
+
+elg:SetComparisonBindingShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:bindsCondition ;
+	sh:sparql [
+		sh:message "A binding that binds a set comparison is that comparison's tested binding or its reference binding (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:bindsCondition ?comparison .
+				?comparison elg:comparison ?kind .
+				FILTER NOT EXISTS { ?comparison elg:testedBinding $this }
+				FILTER NOT EXISTS { ?comparison elg:referenceBinding $this }
 			}
 		"""
 	] .

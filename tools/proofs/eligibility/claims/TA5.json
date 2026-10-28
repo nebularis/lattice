@@ -1,7 +1,7 @@
 {
   "subject": "TA5",
   "statedAs": "KernelLaws.neg3_or3_demorgan/neg3_and3_demorgan",
-  "statementDigest": "sha256:0c7ec6aa770636df2d09e67974ceddc8a9bcf43ea26d90d1956057f701d5a760",
+  "statementDigest": "sha256:e9e295d4f3f5fafecca8681fcf9849fbbab4e130175e71b11c02800b6dbd2230",
   "method": "Proof",
   "scope": "EveryPair",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

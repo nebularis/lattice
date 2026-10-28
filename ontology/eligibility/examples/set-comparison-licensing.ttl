@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A trade mark licence is granted for some territories, and the licensee
+# distributes in others. The licence is in order when every territory the
+# licensee distributes in is, or is part of, a territory the grant covers:
+# the distribution territories are a subset of the licensed territories,
+# matched hierarchically over the part-of relation.
+#
+# Both sets are read from the licence. The distribution schedule is complete
+# by the licence's schedule clause, and the grant is complete by its grant
+# clause, so each binding names a closure (ADR-A105).
+#
+# | Licence | Licensed in | Distributes in    | Subset                    |
+# |---------|-------------|-------------------|---------------------------|
+# | lic-1   | Europe      | Paris, Germany    | Permitted (both inside)   |
+# | lic-2   | France      | Paris, Germany    | Denied (Germany is not)   |
+# | lic-3   | Europe      | Paris, Canada     | Denied (Canada is not)    |
+# | lic-4   | France      | none              | Permitted (nothing to test)|
+#
+# Without the grant's closure a territory not found in the grant is not a
+# territory outside it, only one not yet shown to be inside:
+#
+# | Licence | Subset, grant open |
+# |---------|--------------------|
+# | lic-1   | Permitted          |
+# | lic-2   | Undetermined       |
+# | lic-3   | Undetermined       |
+# | lic-4   | Permitted          |
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/eligibility/licensing/> .
+
+# The applied ontology's own terms.
+ex:Licence a owl:Class .
+ex:distributedIn a owl:ObjectProperty .
+ex:licensedIn a owl:ObjectProperty .
+ex:part-of a owl:ObjectProperty ; rdfs:subPropertyOf skos:broader .
+
+# The territory scheme, each part link also asserted as skos:broader.
+ex:territories a voc:ConceptScheme ;
+    fnd:hasIdentity ex:territories-identity ;
+    fnd:hasGovernanceState fnd:Active .
+ex:territory-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:territory-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:licensedIn ;
+    voc:boundScheme ex:territories .
+
+ex:europe a skos:Concept ; skos:inScheme ex:territories .
+ex:france a skos:Concept ; skos:inScheme ex:territories ; ex:part-of ex:europe ; skos:broader ex:europe .
+ex:paris a skos:Concept ; skos:inScheme ex:territories ; ex:part-of ex:france ; skos:broader ex:france .
+ex:germany a skos:Concept ; skos:inScheme ex:territories ; ex:part-of ex:europe ; skos:broader ex:europe .
+ex:north-america a skos:Concept ; skos:inScheme ex:territories .
+ex:canada a skos:Concept ; skos:inScheme ex:territories ; ex:part-of ex:north-america ; skos:broader ex:north-america .
+
+# The closures. Their sources are the licence's clauses.
+ex:schedule-clause rdfs:label "Clause 4: the Licensee's distribution schedule lists every territory it distributes in" .
+ex:grant-clause rdfs:label "Clause 2: the Territory of the licence is the territories listed, and no others" .
+ex:schedule-closure a elg:Closure ; elg:licensedBy ex:schedule-clause .
+ex:grant-closure a elg:Closure ; elg:licensedBy ex:grant-clause .
+
+# The comparison and its two bindings.
+ex:distribution-within-grant a elg:SetComparison ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:territory-contract ;
+    elg:hierarchyRelation ex:part-of ;
+    elg:comparison elg:Subset ;
+    elg:testedBinding ex:distribution-binding ;
+    elg:referenceBinding ex:grant-binding .
+
+ex:distribution-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:distribution-within-grant ;
+    elg:subjectClass ex:Licence ;
+    elg:closedUnder ex:schedule-closure ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:distributedIn ; elg:stepDirection elg:Forward ] .
+
+ex:grant-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:distribution-within-grant ;
+    elg:subjectClass ex:Licence ;
+    elg:closedUnder ex:grant-closure ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:licensedIn ; elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data.
+ex:lic-1 a ex:Licence ; ex:licensedIn ex:europe ; ex:distributedIn ex:paris , ex:germany .
+ex:lic-2 a ex:Licence ; ex:licensedIn ex:france ; ex:distributedIn ex:paris , ex:germany .
+ex:lic-3 a ex:Licence ; ex:licensedIn ex:europe ; ex:distributedIn ex:paris , ex:canada .
+ex:lic-4 a ex:Licence ; ex:licensedIn ex:france .

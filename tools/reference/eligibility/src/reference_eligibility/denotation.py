@@ -24,7 +24,7 @@ in ``decide_condition`` below -- a different reason for the same absence here.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import AbstractSet, Hashable, Iterable, Mapping, Optional, Sequence, Tuple
+from typing import AbstractSet, FrozenSet, Hashable, Iterable, Mapping, Optional, Sequence, Tuple
 
 from .kernel import DENIED, PERMITTED, UNDETERMINED, Decision, every_value, neg3, some_value
 
@@ -246,3 +246,108 @@ def decide_condition_with_reliance(
         raise ValueError(f"unknown value reading {reading!r}")
 
     return (neg3(decision) if negated else decision), relied
+
+
+SUBSET, INTERSECTS, DISJOINT = "Subset", "Intersects", "Disjoint"
+
+
+def _found(
+    value: Concept, reference: AbstractSet[Concept], *, hierarchical: bool, scheme: Optional[Scheme]
+) -> bool:
+    """Whether ``value`` matches a reference value (L18): equal under exact match, and under
+    hierarchical match a member of the scheme at or below a reference value that is a member,
+    by the condition's hierarchy relation (L9)."""
+    if not hierarchical:
+        return value in reference
+    return (
+        scheme is not None
+        and value in scheme.members
+        and any(r in scheme.members and r in scheme.ancestors(value) for r in reference)
+    )
+
+
+def decide_member(
+    value: Concept,
+    reference: AbstractSet[Concept],
+    *,
+    hierarchical: bool,
+    scheme: Optional[Scheme],
+    reference_closed: bool,
+) -> Decision:
+    """One tested value's decision (L18): Permitted when found among the reference values,
+    Denied when found in none and the reference binding names a closure in force, otherwise
+    Undetermined."""
+    if _found(value, reference, hierarchical=hierarchical, scheme=scheme):
+        return PERMITTED
+    return DENIED if reference_closed else UNDETERMINED
+
+
+def decide_set_comparison_with_reliance(
+    tested: Sequence[Concept],
+    reference: AbstractSet[Concept],
+    *,
+    comparison: str,
+    hierarchical: bool,
+    scheme: Optional[Scheme] = None,
+    tested_closed: bool = False,
+    reference_closed: bool = False,
+    negated: bool = False,
+    unresolved: bool = False,
+) -> Tuple[Decision, FrozenSet[str]]:
+    """L18: ``decide_set_comparison``'s decision, and which closures it relied on, a subset of
+    ``{"tested", "reference"}``.
+
+    The tested set's closure is relied on when completeness of the tested set decided: Subset
+    Permitted, or Intersects Denied. The reference set's closure is relied on when a value was
+    Denied and that decided: Subset Denied, or Intersects Denied with a tested value. Disjoint
+    relies on what Intersects relied on (L16)."""
+    if unresolved or (hierarchical and scheme is None):
+        return UNDETERMINED, frozenset()  # L9: there is no scheme to decide a value against
+    outcomes = [
+        decide_member(v, reference, hierarchical=hierarchical, scheme=scheme, reference_closed=reference_closed)
+        for v in tested
+    ]
+    if comparison == SUBSET:
+        decision = every_value(tested_closed, outcomes)
+        relied = {"tested"} if tested_closed and decision is PERMITTED else set()
+        if decision is DENIED:
+            relied.add("reference")
+    elif comparison in (INTERSECTS, DISJOINT):
+        decision = some_value(tested_closed, outcomes)
+        relied = {"tested"} if tested_closed and decision is DENIED else set()
+        if decision is DENIED and outcomes:
+            relied.add("reference")
+        if comparison == DISJOINT:
+            decision = neg3(decision)
+    else:
+        raise ValueError(f"unknown comparison {comparison!r}")
+    return (neg3(decision) if negated else decision), frozenset(relied)
+
+
+def decide_set_comparison(
+    tested: Sequence[Concept],
+    reference: AbstractSet[Concept],
+    *,
+    comparison: str,
+    hierarchical: bool,
+    scheme: Optional[Scheme] = None,
+    tested_closed: bool = False,
+    reference_closed: bool = False,
+    negated: bool = False,
+    unresolved: bool = False,
+) -> Decision:
+    """L18, with L15 to L17 and L9: each tested value is decided against the reference values
+    (``decide_member``), and the outcomes are read as every value under Subset, some value under
+    Intersects, and some value negated under Disjoint, the tested set's closure licensing the
+    reading. ``negated`` is the condition's own ``elg:negated`` (L16)."""
+    return decide_set_comparison_with_reliance(
+        tested,
+        reference,
+        comparison=comparison,
+        hierarchical=hierarchical,
+        scheme=scheme,
+        tested_closed=tested_closed,
+        reference_closed=reference_closed,
+        negated=negated,
+        unresolved=unresolved,
+    )[0]

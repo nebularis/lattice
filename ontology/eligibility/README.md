@@ -104,6 +104,7 @@ classDiagram
     class Closure {
         licensedBy, exactly one
     }
+    class Comparison
     class CompositionOperation
     class Concept
     class Condition {
@@ -151,6 +152,15 @@ classDiagram
     class RangeSet
     class RoleOccupancy
     class SchemeContract
+    class SetComparison {
+        comparison, exactly one
+        comparison, only one of Subset, Intersects, Disjoint
+        excludedConcept, at most zero
+        matchStrategy, only one of ExactMatch, HierarchicalMatch
+        referenceBinding, exactly one
+        requiredConcept, at most zero
+        testedBinding, exactly one
+    }
     class SetMembershipCondition
     class StepDirection
     class Value
@@ -171,6 +181,7 @@ classDiagram
     Condition <|-- AdmissionProfile
     Condition <|-- ExactCondition
     Condition <|-- IntervalCondition
+    Condition <|-- SetComparison
     Condition <|-- SetMembershipCondition
     Condition <|-- WildcardCondition
     EligibilityDecision --> AdmissionProfile : forProfile
@@ -193,6 +204,9 @@ classDiagram
     Question --> RangeSet : candidateRangeSet
     Question --> RoleOccupancy : subjectRoleOccupancy
     Question --> Value : candidateValue
+    SetComparison --> Comparison : comparison
+    SetComparison --> EvidenceBinding : referenceBinding
+    SetComparison --> EvidenceBinding : testedBinding
     Version <|-- AdmissionProfile
     Version <|-- OperationalProfile
 ```
@@ -499,10 +513,38 @@ flowchart TB
         L15["L15 set readings"]
         L16["L16 negation"]
         L17["L17 closures"]
+        L18["L18 set comparison"]
     end
 ```
 
 L9's last sentence makes a hierarchical condition with no resolved scheme Undetermined for every candidate, and L12's last sentence does the same for a condition with exclusions only. A compiler may refuse such a condition instead of compiling a plan that answers Undetermined everywhere. The compilers in `tools/mork_compilers/` compile a plan that answers Undetermined when a contract's bindings resolve to no scheme at the resolution time, and refuse a hierarchical condition with no `elg:constrainedByContract`, a contract with neither a `voc:SchemeBinding` nor a `voc:boundScheme`, and a contract whose applicable bindings conflict. The OWL and SWRL backends refuse a hierarchical plan that carries no scheme, since neither can state Undetermined. The SPARQL and SHACL backends refuse one that carries no scheme unless it was compiled as unresolved. A refusal decides no candidate, so it does not contradict L9. The reference semantics (`tools/reference/eligibility/`) answers Undetermined.
+
+### 5.9 Set comparisons
+
+A condition may relate two sets reached from one subject, where a binding on its own reads one set. An `elg:SetComparison` is an `elg:Condition` that names two evidence bindings, the one that reads the values to be tested (`elg:testedBinding`) and the one that reads the values they are looked for in (`elg:referenceBinding`), and one `elg:comparison`, `elg:Subset`, `elg:Intersects` or `elg:Disjoint`. Both bindings name the comparison (`elg:bindsCondition`) and the same subject class, and each keeps its own path and its own closure. A comparison fixes how the tested values combine, so neither binding declares a value reading. Its match strategy is `elg:ExactMatch` or `elg:HierarchicalMatch`, and it names no required or excluded concept, since the reference values take their place.
+
+Each tested value is decided as a single candidate would be. It is Permitted when it matches a reference value, equal to it under exact match and at or below it by the condition's hierarchy relation under hierarchical match. It is Denied when it matches none and the reference binding names a closure in force, because only then are the reference values all there are. Otherwise it is Undetermined. The comparison then reads the outcomes as L15 reads a set (L18).
+
+```mermaid
+flowchart TB
+    A["each value a of the tested set"] --> M{"a found in the reference set,<br/>under the match strategy?"}
+    M -- "yes" --> P["Permitted"]
+    M -- "no, and the reference set is closed" --> D["Denied"]
+    M -- "no, reference set open" --> U["Undetermined"]
+    P --> R["combine by the comparison<br/>Subset: every value<br/>Intersects: some value<br/>Disjoint: some value, negated<br/>the tested set's closure licenses the reading (L15, L17)"]
+    D --> R
+    U --> R
+```
+
+| Comparison | Permitted | Denied |
+|---|---|---|
+| `elg:Subset` | the tested set is closed and every tested value is found | a tested value is not found and the reference set is closed |
+| `elg:Intersects` | a tested value is found | the tested set is closed and no tested value is found, the reference set being closed unless the tested set is empty |
+| `elg:Disjoint` | the outcome of `elg:Intersects` is Denied | the outcome of `elg:Intersects` is Permitted |
+
+An empty tested set is read as L15 reads it. Under a closure every value over no value is Permitted and some value over no value is Denied, so a subset holds of an empty set and an intersection does not. Whether a set has a member is not stated by a comparison. It is a count over the set's binding.
+
+`set-comparison-licensing.ttl`, `set-comparison-trial.ttl` and `set-comparison-bonds.ttl` (§8.6) show one comparison each. A hierarchical comparison needs its contract's scheme as any hierarchical condition does (L9), and one whose contract has no binding that applies at the resolution time is Undetermined for every subject. The literal values a path may end at are not compared (§13).
 
 ## 6. Description Logic Encoding
 
@@ -543,6 +585,24 @@ L9's last sentence makes a hierarchical condition with no resolved scheme Undete
 **Definition.** A condition that stands in for one or more dimensions of a match, as its wildcard policy allows (Wildcard).
 
 **Subclass of.** `elg:Condition`
+
+#### `elg:SetComparison`
+
+**Definition.** A condition that relates the values one evidence binding reads from a subject to the values another reads from the same subject, by one comparison. Each tested value is decided by whether it is found among the reference values, and the comparison combines the outcomes (L18).
+
+**Subclass of.** `elg:Condition`
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `elg:comparison` | exactly 1 | SHACL | A set comparison declares exactly one comparison (L18). |
+| `elg:comparison` | only { `elg:Subset`, `elg:Intersects`, `elg:Disjoint` } | SHACL | A set comparison declares exactly one comparison (L18). |
+| `elg:testedBinding` | exactly 1 | SHACL | A set comparison names exactly one tested binding (L18). |
+| `elg:referenceBinding` | exactly 1 | SHACL | A set comparison names exactly one reference binding (L18). |
+| `elg:matchStrategy` | only { `elg:ExactMatch`, `elg:HierarchicalMatch` } | SHACL | A set comparison matches by ExactMatch or HierarchicalMatch (L18). |
+| `elg:requiredConcept` | max 0 | SHACL | A set comparison names no required concept, since its reference binding supplies the values (L18). |
+| `elg:excludedConcept` | max 0 | SHACL | A set comparison names no excluded concept, since its reference binding supplies the values (L18). |
 
 #### `elg:AdmissionProfile`
 
@@ -656,6 +716,10 @@ L9's last sentence makes a hierarchical condition with no resolved scheme Undete
 
 **Definition.** How a bound condition reads the values its binding's path reaches: one value, some value, or every value (ADR-A103, L15).
 
+#### `elg:Comparison`
+
+**Definition.** How a set comparison relates its tested values to its reference values, one of a closed set of named comparisons (L18).
+
 #### `elg:Closure`
 
 **Definition.** A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it.
@@ -717,6 +781,36 @@ L9's last sentence makes a hierarchical condition with no resolved scheme Undete
 **Domain.** `elg:Condition`
 
 **Range.** `rdf:Property`
+
+**Characteristics.** functional
+
+#### `elg:comparison`
+
+**Definition.** The one comparison a set comparison makes between its tested values and its reference values.
+
+**Domain.** `elg:SetComparison`
+
+**Range.** `elg:Comparison`
+
+**Characteristics.** functional
+
+#### `elg:testedBinding`
+
+**Definition.** The evidence binding that reads the values a set comparison tests. Each is looked for among the values the reference binding reads.
+
+**Domain.** `elg:SetComparison`
+
+**Range.** `elg:EvidenceBinding`
+
+**Characteristics.** functional
+
+#### `elg:referenceBinding`
+
+**Definition.** The evidence binding that reads the values a set comparison looks for its tested values in.
+
+**Domain.** `elg:SetComparison`
+
+**Range.** `elg:EvidenceBinding`
 
 **Characteristics.** functional
 
@@ -914,7 +1008,7 @@ L9's last sentence makes a hierarchical condition with no resolved scheme Undete
 
 #### `elg:closedUnder`
 
-**Definition.** The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue names one.
+**Definition.** The closure an evidence binding relies on. Only a binding read elg:SomeValue or elg:EveryValue, or a binding of a set comparison, names one.
 
 **Domain.** `elg:EvidenceBinding`
 
@@ -974,9 +1068,7 @@ L9's last sentence makes a hierarchical condition with no resolved scheme Undete
 
 ### 6.4 Individuals
 
-The mechanisms, value readings, decisions, step directions, reference profiles and law registers are each a
-closed set of named individuals, written to the vocabulary document. The laws, L1 to L17, each name their
-register, so they are in 6.6.
+The mechanisms, value readings, comparisons, decisions, step directions, reference profiles and law registers are each a closed set of named individuals, written to the vocabulary document. The laws, L1 to L18, each name their register, so they are in 6.6.
 
 | Individual | Type | Definition |
 |---|---|---|
@@ -996,6 +1088,12 @@ register, so they are in 6.6.
 | `elg:SingleValue` | `elg:ValueReading` | The path reaches one value. None, or several, leaves the condition undetermined. The default reading. |
 | `elg:SomeValue` | `elg:ValueReading` | Permitted when any value is Permitted. Under a closure the binding names, Denied when every value is Denied, with no value included. Otherwise Undetermined (L15). |
 | `elg:EveryValue` | `elg:ValueReading` | Denied when any value is Denied. Under a closure the binding names, Permitted when every value is Permitted, with no value included. Otherwise Undetermined (L15). |
+
+| Individual | Type | Definition |
+|---|---|---|
+| `elg:Subset` | `elg:Comparison` | Every tested value is found among the reference values. Read as every value of the tested binding's set (L18). |
+| `elg:Intersects` | `elg:Comparison` | Some tested value is found among the reference values. Read as some value of the tested binding's set (L18). |
+| `elg:Disjoint` | `elg:Comparison` | No tested value is found among the reference values. Read as some value, negated (L18, L16). |
 
 | Individual | Type | Definition |
 |---|---|---|
@@ -1031,7 +1129,7 @@ register, so they are in 6.6.
 
 **All disjoint.** `elg:Condition`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`,
 `elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision`, `elg:OperationalProfile`, `elg:Law`,
-`elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:StepDirection`, `elg:ValueReading`, `elg:Closure`
+`elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:StepDirection`, `elg:ValueReading`, `elg:Closure`, `elg:Comparison`
 
 ### 6.6 Other Axioms
 
@@ -1097,6 +1195,9 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+elg:L18 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Set comparison. A set comparison relates the values its tested binding reads from a subject to the values its reference binding reads from the same subject. Each tested value is decided as a single candidate would be. It is Permitted when it matches a reference value under the comparison's match strategy, equal to it under exact match and at or below it by the condition's hierarchy relation under hierarchical match. It is Denied when it matches none and the reference binding names a closure in force, and undetermined otherwise. Under subset the outcomes are read as every value, under intersects as some value, and under disjoint as some value and then negated (L16), the tested binding's closure licensing the reading (L15, L17). Under hierarchical match the comparison needs its contract's scheme as any hierarchical condition does, and is undetermined for every subject when no binding of the contract applies (L9)." .
 ```
 
 ### 6.7 Axiom Index
@@ -1106,31 +1207,34 @@ elg:L17 a elg:Law ;
 | Term | Kind | Summary |
 |---|---|---|
 | `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Version`. Restrictions `elg:compositionOperation` exactly 1 (SHACL only), `elg:hasCondition` min 1, `elg:matchStrategy` max 0 (SHACL only), `elg:wildcardSemantics` max 0 (SHACL only). |
-| `elg:Closure` | Class | Disjoint with `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
-| `elg:CompositionOperation` | Class | Disjoint with `elg:Closure`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:hierarchyRelation` max 1 (SHACL only), `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
-| `elg:Decision` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:EligibilityDecision` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:closureReliedOn` only `elg:Closure` (SHACL only), `elg:decisionValue` exactly 1, `elg:forProfile` exactly 1, `elg:hasQuestion` min 1, `elg:usesOperationalProfile` exactly 1 (SHACL only). |
-| `elg:EvidenceBinding` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:bindsCondition` exactly 1 (SHACL only), `elg:closedUnder` max 1 (SHACL only), `elg:closedUnder` only `elg:Closure` (SHACL only), `elg:evidenceStep` min 1 (SHACL only), `elg:singleValued` max 1 (SHACL only), `elg:singleValued` only `xsd:boolean` (SHACL only), `elg:subjectClass` exactly 1 (SHACL only), `elg:valueReading` max 1 (SHACL only), `elg:valueReading` only {`elg:SingleValue`, `elg:SomeValue`, `elg:EveryValue`} (SHACL only). |
-| `elg:EvidenceStep` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:stepDirection` exactly 1 (SHACL only), `elg:stepDirection` only {`elg:Forward`, `elg:Inverse`} (SHACL only), `elg:stepIndex` exactly 1 (SHACL only), `elg:stepProperty` exactly 1 (SHACL only). |
+| `elg:Closure` | Class | Disjoint with `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
+| `elg:Comparison` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:CompositionOperation` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:hierarchyRelation` max 1 (SHACL only), `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
+| `elg:Decision` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:EligibilityDecision` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:closureReliedOn` only `elg:Closure` (SHACL only), `elg:decisionValue` exactly 1, `elg:forProfile` exactly 1, `elg:hasQuestion` min 1, `elg:usesOperationalProfile` exactly 1 (SHACL only). |
+| `elg:EvidenceBinding` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:bindsCondition` exactly 1 (SHACL only), `elg:closedUnder` max 1 (SHACL only), `elg:closedUnder` only `elg:Closure` (SHACL only), `elg:evidenceStep` min 1 (SHACL only), `elg:singleValued` max 1 (SHACL only), `elg:singleValued` only `xsd:boolean` (SHACL only), `elg:subjectClass` exactly 1 (SHACL only), `elg:valueReading` max 1 (SHACL only), `elg:valueReading` only {`elg:SingleValue`, `elg:SomeValue`, `elg:EveryValue`} (SHACL only). |
+| `elg:EvidenceStep` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:stepDirection` exactly 1 (SHACL only), `elg:stepDirection` only {`elg:Forward`, `elg:Inverse`} (SHACL only), `elg:stepIndex` exactly 1 (SHACL only), `elg:stepProperty` exactly 1 (SHACL only). |
 | `elg:ExactCondition` | Class | Subclass of `elg:Condition`. |
 | `elg:IntervalCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:Law` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Law` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:LawRegister` | Class |  |
-| `elg:MatchStrategy` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:OperationalProfile` | Class | Subclass of `fnd:Version`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:Question` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:forCondition` exactly 1 (OWL only). |
+| `elg:MatchStrategy` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:OperationalProfile` | Class | Subclass of `fnd:Version`. Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:Question` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:forCondition` exactly 1 (OWL only). |
+| `elg:SetComparison` | Class | Subclass of `elg:Condition`. Restrictions `elg:comparison` exactly 1 (SHACL only), `elg:comparison` only {`elg:Subset`, `elg:Intersects`, `elg:Disjoint`} (SHACL only), `elg:excludedConcept` max 0 (SHACL only), `elg:matchStrategy` only {`elg:ExactMatch`, `elg:HierarchicalMatch`} (SHACL only), `elg:referenceBinding` exactly 1 (SHACL only), `elg:requiredConcept` max 0 (SHACL only), `elg:testedBinding` exactly 1 (SHACL only). |
 | `elg:SetMembershipCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:StepDirection` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:ValueReading` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:WildcardSemantics`. |
+| `elg:StepDirection` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:ValueReading` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:WildcardSemantics`. |
 | `elg:WildcardCondition` | Class | Subclass of `elg:Condition`. |
-| `elg:WildcardSemantics` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`. |
+| `elg:WildcardSemantics` | Class | Disjoint with `elg:Closure`, `elg:Comparison`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`. |
 | `elg:bindsCondition` | Object property | Domain `elg:EvidenceBinding`. Range `elg:Condition`. Functional. |
 | `elg:candidateConcept` | Object property | Domain `elg:Question`. Range `skos:Concept`. |
 | `elg:candidateRangeSet` | Object property | Domain `elg:Question`. Range `qnt:RangeSet`. |
 | `elg:candidateValue` | Object property | Domain `elg:Question`. Range `qnt:Value`. |
 | `elg:closedUnder` | Object property | Domain `elg:EvidenceBinding`. Range `elg:Closure`. Functional. |
 | `elg:closureReliedOn` | Object property | Domain `elg:EligibilityDecision`. Range `elg:Closure`. |
+| `elg:comparison` | Object property | Domain `elg:SetComparison`. Range `elg:Comparison`. Functional. |
 | `elg:compositionOperation` | Object property | Domain `elg:AdmissionProfile`. Range `elg:CompositionOperation`. Functional. |
 | `elg:constrainedByContract` | Object property | Domain `elg:Condition`. Range `voc:SchemeContract`. |
 | `elg:decisionValue` | Object property | Domain `elg:EligibilityDecision`. Range `elg:Decision`. Functional. |
@@ -1145,12 +1249,14 @@ elg:L17 a elg:Law ;
 | `elg:licensedBy` | Object property | Domain `elg:Closure`. Functional. |
 | `elg:matchStrategy` | Object property | Domain `elg:Condition`. Range `elg:MatchStrategy`. Functional. |
 | `elg:readOnSpace` | Object property | Domain `elg:EvidenceBinding`. Range `qnt:ValueSpace`. Functional. |
+| `elg:referenceBinding` | Object property | Domain `elg:SetComparison`. Range `elg:EvidenceBinding`. Functional. |
 | `elg:requiredConcept` | Object property | Domain `elg:Condition`. Range `skos:Concept`. |
 | `elg:requiredRangeSet` | Object property | Domain `elg:Condition`. Range `qnt:RangeSet`. |
 | `elg:stepDirection` | Object property | Domain `elg:EvidenceStep`. Range `elg:StepDirection`. Functional. |
 | `elg:stepProperty` | Object property | Domain `elg:EvidenceStep`. Range `rdf:Property`. Functional. |
 | `elg:subjectClass` | Object property | Domain `elg:EvidenceBinding`. Functional. |
 | `elg:subjectRoleOccupancy` | Object property | Domain `elg:Question`. Range `pty:RoleOccupancy`. |
+| `elg:testedBinding` | Object property | Domain `elg:SetComparison`. Range `elg:EvidenceBinding`. Functional. |
 | `elg:usesOperationalProfile` | Object property | Domain `elg:EligibilityDecision`. Range `elg:OperationalProfile`. Functional. |
 | `elg:valueReading` | Object property | Domain `elg:EvidenceBinding`. Range `elg:ValueReading`. Functional. |
 | `elg:wildcardSemantics` | Object property | Domain `elg:Condition`. Range `elg:WildcardSemantics`. Functional. |
@@ -1161,6 +1267,7 @@ elg:L17 a elg:Law ;
 | `elg:AllRequired` | Individual | Type `elg:CompositionOperation`. |
 | `elg:AnySufficient` | Individual | Type `elg:CompositionOperation`. |
 | `elg:Denied` | Individual | Type `elg:Decision`. |
+| `elg:Disjoint` | Individual | Type `elg:Comparison`. |
 | `elg:E1` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E2` | Individual | Type `elg:OperationalProfile`. |
 | `elg:E3` | Individual | Type `elg:OperationalProfile`. |
@@ -1170,6 +1277,7 @@ elg:L17 a elg:Law ;
 | `elg:ExactMatch` | Individual | Type `elg:MatchStrategy`. |
 | `elg:Forward` | Individual | Type `elg:StepDirection`. |
 | `elg:HierarchicalMatch` | Individual | Type `elg:MatchStrategy`. |
+| `elg:Intersects` | Individual | Type `elg:Comparison`. |
 | `elg:IntervalContainment` | Individual | Type `elg:MatchStrategy`. |
 | `elg:Inverse` | Individual | Type `elg:StepDirection`. |
 | `elg:MultiDimensionWildcard` | Individual | Type `elg:WildcardSemantics`. |
@@ -1181,6 +1289,7 @@ elg:L17 a elg:Law ;
 | `elg:SingleValue` | Individual | Type `elg:ValueReading`. |
 | `elg:SomeValue` | Individual | Type `elg:ValueReading`. |
 | `elg:StaticConstraint` | Individual | Type `elg:LawRegister`. |
+| `elg:Subset` | Individual | Type `elg:Comparison`. |
 | `elg:Undetermined` | Individual | Type `elg:Decision`. |
 | `elg:Wildcard` | Individual | Type `elg:MatchStrategy`. |
 
@@ -1207,8 +1316,10 @@ requires a closure's one source.
 `elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06).
 `elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match
 (ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows
-a closure only on a binding read some or every value, and `elg:ClosureReliedOnNamedShape` allows a
+a closure only on a binding read some or every value or a binding of a set comparison, and `elg:ClosureReliedOnNamedShape` allows a
 decision to rely only on a closure a binding of its profile names (ADR-A105).
+
+`elg:SetComparisonBindingsShape` checks the two bindings of a set comparison. They are two bindings, each names the comparison with `elg:bindsCondition`, they name the same subject class, and neither declares a value reading or a value space. `elg:SetComparisonBindingShape` requires a binding that binds a set comparison to be that comparison's tested or reference binding. The cardinalities of a comparison, its match strategy, and its having no required or excluded concept, are in the structural shapes (§7.1). A binding of a set comparison may name a closure without a value reading, since the comparison fixes the reading (L18).
 
 `elg:HierarchyRelationShape` allows a condition one hierarchy relation, and only `skos:broader` or a property the graph declares a sub-property of it. `elg:HierarchyRelationNeedsHierarchicalMatchShape` warns of a condition that names one without matching hierarchically.
 
@@ -1265,6 +1376,7 @@ elg:ConceptConditionDeclarationShape a sh:NodeShape ;
 				FILTER NOT EXISTS { $this elg:requiredConcept ?required }
 				FILTER NOT EXISTS { $this elg:excludedConcept ?excluded }
 				FILTER NOT EXISTS { $this elg:hasCondition ?member }
+				FILTER NOT EXISTS { $this elg:comparison ?comparison }
 			}
 		"""
 	] ;
@@ -1305,11 +1417,12 @@ elg:ReachableExclusionShape a sh:NodeShape ;
 elg:ClosureNeedsSetReadingShape a sh:NodeShape ;
 	sh:targetSubjectsOf elg:closedUnder ;
 	sh:sparql [
-		sh:message "Only a binding read elg:SomeValue or elg:EveryValue names a closure (ADR-A105, L15)." ;
+		sh:message "Only a binding read elg:SomeValue or elg:EveryValue, or a binding of a set comparison, names a closure (ADR-A105, L15, L18)." ;
 		sh:select """
 			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
 			SELECT $this WHERE {
 				FILTER NOT EXISTS { $this elg:valueReading ?reading . FILTER (?reading IN (elg:SomeValue, elg:EveryValue)) }
+				FILTER NOT EXISTS { $this elg:bindsCondition ?comparison . ?comparison elg:comparison ?kind }
 			}
 		"""
 	] .
@@ -1351,6 +1464,66 @@ elg:HierarchyRelationNeedsHierarchicalMatchShape a sh:NodeShape ;
 			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
 			SELECT $this WHERE {
 				FILTER NOT EXISTS { $this elg:matchStrategy elg:HierarchicalMatch }
+			}
+		"""
+	] .
+
+elg:SetComparisonBindingsShape a sh:NodeShape ;
+	sh:targetClass elg:SetComparison ;
+	sh:sparql [
+		sh:message "A set comparison's tested binding and reference binding are two bindings (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				$this elg:testedBinding ?binding ; elg:referenceBinding ?binding .
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "Each binding of a set comparison names the comparison with elg:bindsCondition (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				{ $this elg:testedBinding ?binding } UNION { $this elg:referenceBinding ?binding }
+				FILTER NOT EXISTS { ?binding elg:bindsCondition $this }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "The two bindings of a set comparison name the same subject class, since both read from one subject (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:testedBinding ?tested ; elg:referenceBinding ?reference .
+				?tested elg:subjectClass ?testedClass .
+				?reference elg:subjectClass ?referenceClass .
+				FILTER (?testedClass != ?referenceClass)
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A binding of a set comparison declares no value reading and no value space. The comparison fixes the reading, and its values are IRIs (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this ?binding WHERE {
+				{ $this elg:testedBinding ?binding } UNION { $this elg:referenceBinding ?binding }
+				?binding ?property ?value .
+				FILTER (?property IN (elg:valueReading, elg:readOnSpace))
+			}
+		"""
+	] .
+
+elg:SetComparisonBindingShape a sh:NodeShape ;
+	sh:targetSubjectsOf elg:bindsCondition ;
+	sh:sparql [
+		sh:message "A binding that binds a set comparison is that comparison's tested binding or its reference binding (L18)." ;
+		sh:select """
+			PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+			SELECT $this WHERE {
+				$this elg:bindsCondition ?comparison .
+				?comparison elg:comparison ?kind .
+				FILTER NOT EXISTS { ?comparison elg:testedBinding $this }
+				FILTER NOT EXISTS { ?comparison elg:referenceBinding $this }
 			}
 		"""
 	] .
@@ -1572,6 +1745,50 @@ A condition that names no relation walks `skos:broader` and admits the margin, w
 
 What it shows: the clause, not the scheme, says which relation it relies on, and one scheme can answer both questions. The sub-property declaration travels with the graph, so `elg:HierarchyRelationShape` can refuse a relation that is not an ordering of the kind `skos:broader` states.
 
+### 8.6 Set comparison
+
+Three comparisons, one per file, each over two sets read from one subject (§5.9).
+
+[`set-comparison-licensing.ttl`](examples/set-comparison-licensing.ttl). A trade mark licence is in order when the territories the licensee distributes in are a subset of the territories the grant covers. The match is hierarchical over `ex:part-of`, so Paris is inside a grant for France, and both sets are closed by the licence's clauses.
+
+```mermaid
+flowchart LR
+    S["ex:licence"]
+    T["tested binding<br/>distributedIn<br/>closure: the schedule clause"]
+    R["reference binding<br/>licensedIn<br/>closure: the grant clause"]
+    C["ex:distribution-within-grant<br/>elg:Subset<br/>HierarchicalMatch over ex:part-of"]
+    S --> T
+    S --> R
+    T -- "testedBinding" --> C
+    R -- "referenceBinding" --> C
+```
+
+| Licence | Licensed in | Distributes in | Subset, grant closed | Subset, grant open |
+|---|---|---|---|---|
+| `ex:lic-1` | Europe | Paris, Germany | Permitted | Permitted |
+| `ex:lic-2` | France | Paris, Germany | Denied | Undetermined |
+| `ex:lic-3` | Europe | Paris, Canada | Denied | Undetermined |
+| `ex:lic-4` | France | none | Permitted | Permitted |
+
+[`set-comparison-trial.ttl`](examples/set-comparison-trial.ttl). A participant's concomitant medications are disjoint from the medications the protocol they are enrolled under prohibits, by exact match. The reference set is reached by a two-step path, from the participant through the protocol to its prohibited list.
+
+| Participant | Takes | Disjoint |
+|---|---|---|
+| `ex:pat-1` | aspirin, metformin | Permitted |
+| `ex:pat-2` | aspirin, warfarin | Denied |
+| `ex:pat-3` | none | Permitted |
+
+[`set-comparison-bonds.ttl`](examples/set-comparison-bonds.ttl). A written resolution passes when every holder on the record date has consented, which is a subset of the consenting holders, and a quorum test asks whether some holder has, an intersection. The holders are closed by the trustee's register. The consents are not, since they are still arriving, so a holder not found among them leaves the outcome Undetermined and never Denied.
+
+| Bond | Holders | Consents | All consented | Some consented |
+|---|---|---|---|---|
+| `ex:bond-1` | h1, h2 | h1, h2, h3 | Permitted | Permitted |
+| `ex:bond-2` | h1, h2 | h1 | Undetermined | Permitted |
+| `ex:bond-3` | h1, h2 | none | Undetermined | Undetermined |
+| `ex:bond-4` | none | h1 | Permitted | Denied |
+
+What it shows: the two sets are read from the same subject by paths of their own, each closure licenses only the outcome that needs its set to be complete, and an open reference set leaves a missing value Undetermined. `ex:bond-4` has no holders, so the subset holds and the intersection does not (L15). That a bond has holders at all is a count, not a comparison.
+
 ## 9. Canonicalisation
 
 Eligibility canonicalisation is declaration-first and profile-stable.
@@ -1618,6 +1835,8 @@ equality rather than a finite case table, and is stated beside the laws.
 
 L9 and L14 are stated over a hierarchy relation taken as a parameter, any relation from a concept to the concepts above it, so a proof about them holds for every relation a condition may name. The theory is hand-written in `tools/proofs/eligibility/Hierarchy.thy`, since only the three-valued kernel is generated.
 
+A set comparison (L18) decides each tested value against the reference values by `member_decide`, then reads the outcomes with L15's readings. The per-value decision is a parameter of the theory, a match predicate, so what is proved holds for exact match and for hierarchical match over any relation. The theory is hand-written in `tools/proofs/eligibility/SetComparison.thy`.
+
 L15's readings, `some_value` and `every_value`, each take whether the binding is closed (L17). Closed,
 `some_value` folds `or3` from `Denied`, and `every_value` folds `and3` from `Permitted`. Each starts from its
 connective's identity, so the empty case decides. Open, `some_value` is Permitted when a value is Permitted
@@ -1661,6 +1880,9 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
 - Next release. Re-pinned: a new substrate layer joins the release.
+  - New `elg:SetComparison`, a condition that relates the values two evidence bindings read from one subject, with `elg:comparison`, `elg:testedBinding`, `elg:referenceBinding` and the closed class `elg:Comparison` of `elg:Subset`, `elg:Intersects` and `elg:Disjoint`. New law L18 (no effect on a graph that declares none).
+  - A binding of a set comparison may name a closure without declaring a value reading, and `elg:ConceptConditionDeclarationShape` no longer warns of a set comparison that names no concept (no effect).
+  - New shapes `elg:SetComparisonBindingsShape` and `elg:SetComparisonBindingShape`, and the structural shapes of `elg:SetComparison`. A graph that declares no set comparison is not affected.
   - New `elg:hierarchyRelation`, naming the relation a hierarchical condition walks. Absent, the relation is `skos:broader`, so every existing graph keeps its meaning (no effect).
   - L9, L11 and L14 are restated over the condition's hierarchy relation, and L9's acyclicity requirement is over that relation (no effect for a graph that names none).
   - New shapes `elg:HierarchyRelationShape` and `elg:HierarchyRelationNeedsHierarchicalMatchShape`. A graph that does not name a hierarchy relation is not affected. One that does and names a property that is not `skos:broader` and has no declared route to it is invalid (may invalidate).
@@ -1701,4 +1923,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 - **Eleven individuals have no definition**, the match strategies, the wildcard policies and the
   decisions. §5.1 and §5.4 describe them.
+- **Literal-valued sets are not compared.** A set comparison compares IRIs. A shape refuses a binding of a set comparison that declares a value space, because the equality of literals depends on their datatype and differs between engines. A comparison of dates or amounts waits for a need.
+- **A requirement that a set have a member** is not stated by a comparison, which reads an empty tested set as L15 does. It is a count over the set's binding, read by an interval condition from one.
 - **A closure over a period**, such as "within 60 days of the request", is not yet declared (§5.7).

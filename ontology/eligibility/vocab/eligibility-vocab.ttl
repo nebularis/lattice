@@ -30,6 +30,9 @@ elg:AnySufficient a elg:CompositionOperation ;
 
 elg:Denied a elg:Decision .
 
+elg:Disjoint a elg:Comparison ;
+    rdfs:comment "No tested value is found among the reference values. Read as some value, negated (L18, L16)." .
+
 elg:E1 a elg:OperationalProfile ;
     rdfs:comment "Exact-match profile" .
 
@@ -54,6 +57,9 @@ elg:Forward a elg:StepDirection ;
     rdfs:comment "Traversed from subject to object." .
 
 elg:HierarchicalMatch a elg:MatchStrategy .
+
+elg:Intersects a elg:Comparison ;
+    rdfs:comment "Some tested value is found among the reference values. Read as some value of the tested binding's set (L18)." .
 
 elg:IntervalContainment a elg:MatchStrategy .
 
@@ -81,6 +87,9 @@ elg:SomeValue a elg:ValueReading ;
 
 elg:StaticConstraint a elg:LawRegister ;
     rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
+
+elg:Subset a elg:Comparison ;
+    rdfs:comment "Every tested value is found among the reference values. Read as every value of the tested binding's set (L18)." .
 
 elg:Undetermined a elg:Decision .
 
@@ -137,3 +146,6 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+elg:L18 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Set comparison. A set comparison relates the values its tested binding reads from a subject to the values its reference binding reads from the same subject. Each tested value is decided as a single candidate would be. It is Permitted when it matches a reference value under the comparison's match strategy, equal to it under exact match and at or below it by the condition's hierarchy relation under hierarchical match. It is Denied when it matches none and the reference binding names a closure in force, and undetermined otherwise. Under subset the outcomes are read as every value, under intersects as some value, and under disjoint as some value and then negated (L16), the tested binding's closure licensing the reading (L15, L17). Under hierarchical match the comparison needs its contract's scheme as any hierarchical condition does, and is undetermined for every subject when no binding of the contract applies (L9)." .
