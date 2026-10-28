@@ -31,6 +31,7 @@ bhv:State a owl:Class ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty bhv:inStateSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 bhv:TransitionDefinition a owl:Class ;
+	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, ADR-A137)." ;
 	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -87,9 +88,9 @@ bhv:transitionType a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "Whether a transition from a state to itself leaves and enters it again. Subject: a transition definition. Value: a transition type, at most one. Internal when absent and source equals target, External otherwise." ;
 	fnd:utility "Declare bhv:External only to restart what is anchored on entry, such as a notice period re-served. Internal is the default so that an effect-only reaction never restarts a period (nested states sketch §4.1)." .
 
-bhv:hasTrigger a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TriggerDefinition .
-bhv:hasGuard a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:GuardDefinition .
-bhv:hasEffect a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EffectDefinition .
+bhv:hasTrigger a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TriggerDefinition ; fnd:meaningBearing true .
+bhv:hasGuard a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:GuardDefinition ; fnd:meaningBearing true .
+bhv:hasEffect a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EffectDefinition ; fnd:meaningBearing true .
 bhv:triggerKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TriggerDefinition ; rdfs:range bhv:TriggerKind .
 bhv:selectionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:SelectionPolicy .
 bhv:activationPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:ActivationPolicy .

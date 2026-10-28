@@ -398,7 +398,7 @@ def _closure(g: Graph, node) -> Graph:
 ])
 def test_od3_t7_the_grammar_states_two_of_spcs_axioms_as_spc_does(subject: str, expression: str) -> None:
     spc = Graph().parse(ROOT / "ontology/spc/spec/spc.ttl")
-    ns = "http://example.org/spc#"
+    ns = "https://www.nebularis.org/neuro-semantic/lattice/spc#"
     term = lg.class_expression(expression, {"spc": ns, **lg.STANDARD_PREFIXES}, "test")
     ours = Graph().parse(data=f"@prefix spc: <{ns}> . @prefix owl: <http://www.w3.org/2002/07/owl#> . "
                               f"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . "

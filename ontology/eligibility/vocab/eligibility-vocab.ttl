@@ -137,3 +137,6 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+
+# The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
+[ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .

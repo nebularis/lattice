@@ -68,7 +68,7 @@ Term = Union[str, Node, Collection]
 
 # Predicates in the order a statement lists them. Any other predicate follows, alphabetically.
 PREDICATE_ORDER = (
-    "rdf:type", "owl:versionIRI", "owl:imports", "rdfs:label", "skos:prefLabel", "rdfs:comment", "fnd:utility",
+    "rdf:type", "owl:versionIRI", "owl:imports", "rdfs:label", "skos:prefLabel", "rdfs:comment", "fnd:utility", "fnd:meaningBearing",
     "skos:scopeNote", "dct:description", "dct:creator", "dct:contributor", "rdfs:subClassOf", "owl:equivalentClass",
     "owl:disjointWith", "owl:hasKey", "rdfs:subPropertyOf", "owl:inverseOf", "rdfs:domain", "rdfs:range",
     "owl:onProperty", "owl:intersectionOf", "owl:unionOf", "owl:complementOf", "owl:someValuesFrom",
@@ -602,6 +602,9 @@ TURTLE_LITERAL_RE = re.compile(r'^"(?:[^"\\]|\\.)*"(?:@[A-Za-z][\w-]*|\^\^[A-Za-
 ANNOTATIONS = {
     "definition": "rdfs:comment", "utility": "fnd:utility", "label": "rdfs:label",
     "preferred label": "skos:prefLabel", "scope note": "skos:scopeNote",
+    # A property whose object is part of its subject's meaning (Foundation section 4, ADR-A137). Written as a
+    # typed literal, ``"true"^^xsd:boolean``, so the Persistence compiler's by-identity refusal reads it.
+    "meaning bearing": "fnd:meaningBearing",
 }
 CLASS_LABELS = {"subclass of", "equivalent to", "key", "restrictions"}
 PROPERTY_LABELS = {"domain", "range", "characteristics", "inverse of", "subproperty of"}

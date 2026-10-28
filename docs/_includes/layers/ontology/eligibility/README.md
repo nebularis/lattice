@@ -676,6 +676,10 @@ answers Undetermined.
 
 **Definition.** A condition an admission profile composes.
 
+**Utility.** An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4, ADR-A137).
+
+**Meaning bearing.** "true"^^xsd:boolean
+
 **Domain.** `elg:AdmissionProfile`
 
 **Range.** `elg:Condition`
@@ -1091,6 +1095,9 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+
+# The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
+[ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .
 ```
 
 ### 6.7 Axiom Index
