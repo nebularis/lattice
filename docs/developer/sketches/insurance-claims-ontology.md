@@ -27,7 +27,7 @@ be checked against what claims will need of them.
   experience, loss record and loss cause (AIR-4.4)
 - [peril-vocabulary.md](peril-vocabulary.md) §6.8, §8 and [peril-structure-whitepaper.md](peril-structure-whitepaper.md)
   §3.8, §3.11, N7, N10, W-Q2, W-Q3
-- [mork-bridge.md](mork-bridge.md) §1 (B1 to B6) and §6, [robustness-testing-approach.md](robustness-testing-approach.md) §4
+- [mork-bridge.md](mork-bridge.md) §1 (B1 to B6) and §6, [workload-modelling.md](../notes/rdf-engine/workload-modelling.md) §4
 - companions: [claims-sketch-references.md](claims-sketch-references.md) (what was taken from each
   source, definitions, crosswalks to ACORD and the Lloyd's claims bordereau) and
   [claims-wire-formats.md](claims-wire-formats.md) (ingress and egress of claims data)
@@ -293,8 +293,8 @@ Before adding anything, each need is matched to what exists or is planned. Statu
 
 | Prefix | IRI | Content |
 |---|---|---|
-| `clm:` | `https://www.nebularis.org/neuro-semantic/insurance/claims#` | T-Box (proposed under ADR-A98 decision 6, CL-Q7) |
-| `clm-voc:` | `https://www.nebularis.org/neuro-semantic/insurance/claims/vocab#` | scheme contracts, reference schemes, value spaces |
+| `clm:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/claims#` | T-Box (proposed under ADR-A98 decision 6, CL-Q7) |
+| `clm-voc:` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/claims/vocab#` | scheme contracts, reference schemes, value spaces |
 
 ```
 ontology/applied/insurance/claims/
@@ -433,7 +433,7 @@ The claim is the matter an insurer handles, and the case its policy's relations 
 (CCS §5.3, `ins:forCase`).
 
 ```text
-clm:Claim ⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:Evidenced
+clm:Claim ⊑ fnd:Versioned ⊓ fnd:Governable ⊓ fnd:Evidenced
     =1 fnd:hasIdentity        → clm:ClaimIdentity      persists across versions and reopenings
     ≥1 clm:openedBy           → clm:Notification
     ≥0 clm:concernsLoss       → clm:Loss

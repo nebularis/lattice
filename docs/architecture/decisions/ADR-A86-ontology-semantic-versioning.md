@@ -4,7 +4,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-25 (proposed), 2026-09-25 (accepted, with the addendum below)
-**Related:** ADR-A07b (Instrument's per-instance `fnd:Version`/`supersededBy`
+**Related:** ADR-A07b (Instrument's per-instance `fnd:Versioned`/`supersededBy`
 versioning contract — a distinct concern, see "Consequences"), ADR-A22 (MORK
 governance/versioning via Foundation alignment — likewise instance-level, not
 document-level)
@@ -84,7 +84,7 @@ whichever future decision asserts a layer's public API stable.
   `owl:imports` in the same change; this is accepted friction, not a defect
   this decision resolves.
 - This is a document-versioning decision. It does not change, supersede, or
-  otherwise interact with ADR-A07b's or ADR-A22's `fnd:Version`/
+  otherwise interact with ADR-A07b's or ADR-A22's `fnd:Versioned`/
   `fnd:supersededBy` pattern for versioning *instances* inside a populated
   graph — those remain a distinct mechanism at a distinct layer of the
   system, and both ADRs are cited above only to make that boundary explicit.

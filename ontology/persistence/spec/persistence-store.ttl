@@ -1,0 +1,176 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/persistence-store> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.19.0> ;
+    dct:description """A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in tools/persistence turns that record into generated, portable SPARQL and identity minting recipes.
+
+Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional persistent-foundation document imports a layer.""" ;
+    dct:creator <https://github.com/nebularis> .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
+
+pat:KeyClaim a owl:Class ;
+    rdfs:comment "A deterministic node for one normalised key value under one constraint. At most one owner." .
+
+pat:Revision a owl:Class ;
+    rdfs:comment "A receipt for one successful write to one target (aggregate or stream). Append-only. Chained by pat:prevRev." .
+
+pat:VersionRow a owl:Class ;
+    rdfs:comment "An aggregate or stream graph IRI in its role as the subject of a version row. Asserted once, when the row is created, so shapes can target rows without also targeting receipts." .
+
+pat:Deletion a owl:Class ;
+    rdfs:subClassOf pat:Revision ;
+    rdfs:comment "A revision that emptied the target's payload and tombstoned its version row." .
+
+pat:constraint a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The uniqueness constraint id this claim belongs to." .
+
+pat:claimedBy a owl:ObjectProperty ;
+    rdfs:comment "The entity that owns this key value. At most one. Released only by its owner, or on the owner's behalf by erasure." .
+
+pat:retiredBy a owl:ObjectProperty ;
+    rdfs:comment "The former owner that retired this claim. Tombstone. The node is kept, unless the family's erasure policy deletes it." .
+
+pat:retiredAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Audit only." .
+
+pat:quarantinedOwner a owl:ObjectProperty ;
+    rdfs:comment "In the quarantine graph, on a claim: an owner of a duplicated claim that the quarantine operation recorded. The claim itself is not touched." .
+
+pat:quarantinedAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "In the quarantine graph, on a claim: when the operation recorded the owner. Audit only." .
+
+pat:counter a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Sentinel counter on a key shard node. Rewritten by every claim in the shard to materialise a write conflict." .
+
+pat:epoch a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Dataset generation. On the dataset node it is the current epoch, and the only value writes guard on. On a receipt it is the dataset epoch the write was made under. On a version row it is the epoch of the row's last write, rebased on the next write after a bump. Bumped on restore, rebuild, migration and re-key." .
+
+pat:seq a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Dense per-target sequence, allocated inside the writing transaction. Exactly one value per version row. Continues across epoch bumps and tombstones, and never restarts." .
+
+pat:head a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The latest revision of this target. Exactly one value." .
+
+pat:current a owl:ObjectProperty ;
+    rdfs:comment "Snapshot-per-revision model only: the sealed payload graph that is the current state." .
+
+pat:deleted a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Tombstone. Present and true when the target's payload has been deleted. The row and its counter survive." .
+
+pat:fence a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Fencing token from an external lease. Writes with an older token fail the guard." .
+
+pat:lockedBy a owl:ObjectProperty ;
+    rdfs:comment "Editorial lease holder." .
+
+pat:lockExpires a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Editorial lease expiry." .
+
+pat:orderModel a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The dataset's order model, for example per-stream-dense+hlc-global." .
+
+pat:stableWatermark a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Only for sparse tiers that commit before they publish: the highest fully committed dataset-wide position, as {epoch:019}:{position:019}, where position is a store-native feed offset or a single writer's global counter. Never a per-target pat:seq value, which has no single dataset-wide instance to report." .
+
+pat:retentionLowWaterMark a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Per-target, in the retention graph: the lowest pat:seq guaranteed still retained. Every receipt below it has been pruned. Absent means 1. Advanced by the retention job before it drops a bucket, and read by the gap-scan audit." .
+
+pat:etag a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Deprecated. An ETag is always derived from the epoch and the sequence, never stored, so a shape forbids this term on a version row with sh:maxCount 0." .
+
+pat:rev a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The revision this transaction id produced. Exactly one. Its presence, with a matching pat:requestDigest, is the write's outcome." .
+
+pat:requestDigest a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Lower-case hex SHA-256 of enc([operationKind, target, expected, *sorted canonical N-Triples of the skolemized payload and events]). Distinguishes a replay of the same request from a different request reusing the txn id." .
+
+pat:revision a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The revision that wrote this event." .
+
+pat:currentVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version row: the version written last for this identity, the one a read resolves to. Rewritten by every append of a version, and absent before the first." .
+
+pat:previousVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version: the version of the same identity that was current when this one was written. Links the chain of versions, which a version of a family that states its members as changes is read back along. The domain's own supersession term, for example fnd:supersededBy, is asserted under the domain's rule and never by the write." .
+
+pat:addsMember a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member the version adds to those of the version before it." .
+
+pat:dropsMember a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member of the version before it that this version does not have. A member dropped by a version is out of every version from it on until a later one adds it again." .
+
+pat:checkpoint a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True on a version that lists every member, under the domain's membership property, the first version and every dal:checkpointEvery versions after it, so that a read of members never follows a chain back further than the nearest checkpoint." .
+
+pat:target a owl:ObjectProperty ;
+    rdfs:comment "The aggregate or stream graph this revision wrote." .
+
+pat:opSeq a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Client-supplied ordinal of an event within its revision. The store cannot mint it. Authoritative on the event. Also valid, as a denormalised convenience, directly on the pat:Revision itself, but only when that revision covers exactly one event. A multi-event revision has no single representative opSeq and must omit it at the revision level, carrying it only on each event." .
+
+pat:prevRev a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The previous revision of the same target, as an IRI. Because revision IRIs are deterministic from the aggregate, the epoch and the sequence, two colliding writers produce two txn claims on the same revision subject, not two revisions sharing one prevRev. A fork is detected on pat:txn cardinality, not on shared prevRev values." .
+
+pat:txn a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The client transaction id that produced this revision. Also the subject of a claim in the txn graph." .
+
+pat:hlc a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Hybrid logical clock, {physicalMillis:013}:{logical:04}:{node}. Sparse, globally comparable." .
+
+pat:recordedAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Transaction time. Audit only, never an order key. Compare fnd:recordedAt." .
+
+pat:occurredAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Valid time, when the family declares valid time. On the revision, the default valid time for the whole commit. Compare fnd:validFrom. A domain event may carry its own occurredAt when its valid time differs from the revision's, for example a backfill or a multi-event commit whose events did not all occur at once, which then takes precedence for that event." .
+
+pat:actor a owl:ObjectProperty ;
+    rdfs:comment "The principal responsible for the write." .
+
+pat:cause a owl:ObjectProperty ;
+    rdfs:comment "The decision record that authorised this write. Required on deletions." .
+
+pat:hash a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Optional tamper-evidence: H(prevHash ‖ canonicalised change)." .
+
+pat:asserts a owl:ObjectProperty ;
+    rdfs:comment "Patch-log model: the graph of triples this revision added." .
+
+pat:retracts a owl:ObjectProperty ;
+    rdfs:comment "Patch-log model: the graph of triples this revision removed." .

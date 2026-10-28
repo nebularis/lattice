@@ -10,7 +10,9 @@ never committed (ADR-A134, addendum of 2026-10-26). A downstream index whose vec
 compared with these must embed with the same revision, because vectors from two models do not share
 a space.
 
-An entry's text is its name, its claim and its problem shape. The vectors are written beside the
+An entry's text is its name, its claim, its problem shape and what it does not cover, and a declared term's is the claim the term summary derives from its own document. A decision's numbered decisions and
+addenda are embedded too, each as its own text under a node that is not an entry, so that a rule stated
+below the opening of a decision is found by its own subject (ADR-A134 decision 29). The vectors are written beside the
 store, keyed by node and by a digest of that text, so a rebuild embeds only what changed.
 
 Nothing here is a source. When the model cannot be fetched, the build records why and leaves no
@@ -48,11 +50,18 @@ KI = "https://www.nebularis.org/neuro-semantic/lattice/dev/knowledge#"
 TEXTS = f"""
 PREFIX ki: <{KI}>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?n (SAMPLE(?l) AS ?label) (SAMPLE(?c) AS ?claim) (SAMPLE(?ps) AS ?shape) WHERE {{
-  GRAPH ki:index {{
-    ?n ki:identifier ?id ; ki:claim ?c .
-    OPTIONAL {{ ?n rdfs:label ?l }}
-    OPTIONAL {{ ?n ki:problemShape ?ps }}
+SELECT ?n (SAMPLE(?l) AS ?label) (SAMPLE(?c) AS ?claim) (SAMPLE(?ps) AS ?shape) (SAMPLE(?dn) AS ?uncovered) WHERE {{
+  {{
+    GRAPH ki:index {{
+      ?n ki:claim ?c .
+      {{ ?n ki:identifier ?id }} UNION {{ ?n ki:sectionOf ?parent }}
+      OPTIONAL {{ ?n rdfs:label ?l }}
+      OPTIONAL {{ ?n ki:problemShape ?ps }}
+      OPTIONAL {{ ?n ki:doesNotCover ?dn }}
+    }}
+  }} UNION {{
+    # A declared term's claim already opens with its label (ADR-A134 decision 31).
+    GRAPH ki:terms {{ ?n ki:identifier ?id ; ki:claim ?c . }}
   }}
 }} GROUP BY ?n"""
 
@@ -133,8 +142,11 @@ class Model:
 
 
 def text_of(row) -> str:
-    """Name, claim and problem shape, each once, in that order."""
-    parts = [row[k].value.replace("**", "") for k in ("label", "claim", "shape") if row[k] is not None]
+    """Name, claim, problem shape and the case the entry does not cover, each once, in that order.
+
+    The uncovered case is embedded so that a question about it still finds the entry, which find
+    then flags as not answering it (ADR-A134 decision 28)."""
+    parts = [row[k].value.replace("**", "") for k in ("label", "claim", "shape", "uncovered") if row[k] is not None]
     return ". ".join(dict.fromkeys(p for p in parts if p))
 
 
@@ -159,6 +171,9 @@ def build(store: ox.Store, directory: Path) -> int:
             target.unlink(missing_ok=True)
             raise
         by_digest = {digests[node]: text for node, text in entries.items()}
+        # A batch is padded to its longest text, so texts of a length are embedded together. Measured
+        # 2026-10-28: a cold build of 5,168 texts took 317 s in digest order.
+        todo.sort(key=lambda d: len(by_digest[d]))
         for digest, vector in zip(todo, model.embed([by_digest[d] for d in todo])):
             cached[digest] = vector
     nodes = sorted(entries)

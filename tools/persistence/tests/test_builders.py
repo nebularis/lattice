@@ -142,7 +142,7 @@ CONTEXT = {
     "logGraphPrefix": Iri.encode(LOG), "eventGraphPrefix": Iri.encode("urn:g:events/order/"),
     "datasetGraph": Iri.encode("urn:g:dataset"), "datasetNode": Iri.encode("urn:g:dataset-node"),
 }
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 LONG = lambda n: RdfLiteral(n, datatype=XSD.long)
 STREAM = URIRef("urn:stream:orders/1")
 APPEND = {

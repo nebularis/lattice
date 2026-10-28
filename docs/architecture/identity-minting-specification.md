@@ -49,7 +49,7 @@ Canonical JSON is RFC 8785 (JSON Canonicalization Scheme). Recipes are restricte
 
 Every Unicode-dependent step uses the Unicode Character Database **16.0.0**, from `https://www.unicode.org/Public/16.0.0/ucd/`. A recipe's pipeline states its `unicodeVersion`, and this version of the specification accepts only `"16.0.0"`. Moving to another Unicode version is a new pipeline, and so a re-key: an IRI minted under one version is never silently reinterpreted under another.
 
-The steps use these files: `UnicodeData.txt` (assignment, simple case mappings), `SpecialCasing.txt` (full case mappings), `DerivedNormalizationProps.txt` (the `NFKC_CF` mapping), `PropList.txt` (`White_Space`).
+The steps use these files: `UnicodeData.txt` (assignment, `Cf` format characters, simple case mappings), `SpecialCasing.txt` (full case mappings), `DerivedNormalizationProps.txt` (the `NFKC_CF` mapping), `PropList.txt` (`White_Space`).
 
 NFC and NFKC may use the runtime's own implementation, because Unicode's normalization stability policy fixes the normalization of every assigned code point for all later versions. That is safe only if the runtime's Unicode data is at least 16.0.0 and every code point is assigned in 16.0.0, which is why a minter must refuse to run on older Unicode data (`RuntimeUnicodeTooOld`) and why every pipeline starts with `reject_unassigned`.
 
@@ -60,24 +60,27 @@ A pipeline is a list of steps applied in order to one key component. The recipe 
 | Step | Definition |
 |---|---|
 | `reject_unassigned` | If any code point's General_Category is `Cn` in `UnicodeData.txt` 16.0.0 (that is, it is not listed, individually or in a `First`/`Last` range), fail with `UnassignedCodePoint`. Always the first step |
-| `nfc` | Unicode Normalization Form C (UAX #15) |
+| `strip_format` | Remove every code point whose General_Category is `Cf` in `UnicodeData.txt` 16.0.0, such as the zero-width space and joiners, the soft hyphen, the byte order mark and the tag characters. Every pipeline has it as its second step, before any normalization, so that a format character cannot sit between two code points that would otherwise compose. `nfkc_casefold` removes most of them already, but not all (U+0600 ARABIC NUMBER SIGN stays), so the step is not left to it |
+| `nfc` | Unicode Normalization Form C (UAX #15). No pipeline uses it on its own |
 | `nfkc` | Unicode Normalization Form KC (UAX #15) |
 | `nfkc_casefold` | Map every code point through its `NFKC_CF` value in `DerivedNormalizationProps.txt` (a code point with no `NFKC_CF` entry maps to itself; an entry with an empty value maps to nothing), then apply NFC. This is Unicode's `toNFKC_Casefold`. It removes every default-ignorable code point, and it is not the same as lowercasing, nor as casefolding plus NFKC in a language library |
 | `trim_white_space` | Remove code points with the `White_Space` property (`PropList.txt`) from both ends. Not a language's own notion of whitespace: see [§11](#11-pitfalls-m4) |
 | `uppercase_full` | Unicode default full uppercase mapping: the unconditional mappings in `SpecialCasing.txt`, otherwise the simple uppercase in `UnicodeData.txt`, otherwise the code point itself. No language-specific (for example Turkish) mappings |
 | `lowercase_full` | Unicode default full lowercase mapping, the same way, including the `Final_Sigma` context from `SpecialCasing.txt` and no language-specific mappings |
 
-After the last step, an empty component fails with `EmptyKeyComponent`.
+After the last step, an empty component fails with `EmptyKeyComponent`. A key made only of format characters is empty after `strip_format`, so it fails here under every pipeline.
 
 The three pipelines a recipe can name expand to:
 
 | `id` | `steps` |
 |---|---|
-| `NfkcTrimCasefold` | `reject_unassigned`, `nfkc_casefold`, `trim_white_space` |
-| `NfkcTrimUppercase` | `reject_unassigned`, `nfkc`, `trim_white_space`, `uppercase_full`, `nfkc` |
-| `NfkcTrimLowercase` | `reject_unassigned`, `nfkc`, `trim_white_space`, `lowercase_full`, `nfkc` |
+| `NfkcTrimCasefold` | `reject_unassigned`, `strip_format`, `nfkc_casefold`, `trim_white_space` |
+| `NfkcTrimUppercase` | `reject_unassigned`, `strip_format`, `nfkc`, `trim_white_space`, `uppercase_full`, `nfkc` |
+| `NfkcTrimLowercase` | `reject_unassigned`, `strip_format`, `nfkc`, `trim_white_space`, `lowercase_full`, `nfkc` |
 
 Case mapping can produce a sequence that is not in NFKC, which is why the upper- and lowercase pipelines end with a second `nfkc`.
+
+NFKC is the only normalization a pipeline applies to a key. It merges keys that differ only in compatibility form by design, for example `ﬁ` and `fi`, fullwidth and ASCII letters, and superscript and plain digits, so such keys mint one IRI. Canonical-only equivalence (NFC) is not offered.
 
 ## 4. Bytes
 
@@ -122,7 +125,7 @@ A request's inputs are a JSON object, the `inputs` member of a vector. Its membe
 
 In every algorithm below, a key's components are the request's values for the recipe's `key.properties`, in that order. A missing value fails with `MissingKeyComponent`. Each component goes through the key's pipeline (§3.2).
 
-When `key.scopeProperty` is not `null`, the request's value for that property (its IRI, or a literal's lexical form) is the **scope value**. It is placed before the normalized components, and it is used exactly as given: it is not normalized, because a scope is an identifier, not a key someone types. A missing scope value fails with `MissingKeyComponent`. Scope matters for identity: two tenants' identical natural keys must not mint the same IRI.
+When `key.scopeProperty` is not `null`, the request's value for that property (its IRI, or a literal's lexical form) is the **scope value**. It is placed before the normalized components, and it is used exactly as given: it is not normalized, because a scope is an identifier, not a key someone types. A missing scope value fails with `MissingKeyComponent`, and an empty one fails with `EmptyScope`, because the claim tuple in §6.3 writes an absent scope as the empty string and the two must not mint alike. Scope matters for identity: two tenants' identical natural keys must not mint the same IRI.
 
 ### 6.1 `DerivedHashIdentity`
 
@@ -134,16 +137,17 @@ When `key.scopeProperty` is not `null`, the request's value for that property (i
 ### 6.2 `NaturalKeyIdentity`
 
 1. Normalize each key component.
-2. Percent-encode the scope value, if any, and each normalized component, from their UTF-8 bytes: the RFC 3986 unreserved characters `A`–`Z`, `a`–`z`, `0`–`9`, `-`, `.`, `_`, `~` are kept, and every other byte is written `%` followed by two **uppercase** hex digits. A `/` inside a component becomes `%2F`.
-3. Join the encoded values with `/` and render `iriTemplate` with `{key}`.
+2. If the scope value or a normalized component is exactly `.` or `..`, fail with `DotSegment`. Each value becomes a path segment in step 4, and RFC 3986 §6.2.2.3 removes `.` and `..` segments, so two keys would mint one IRI or the IRI would leave its parent. Encoding the dot instead does not help, because §6.2.2.2 turns `%2E` back into `.` before that removal, and it would break the rule in step 3 that unreserved characters are kept. A value such as `...` or `a.b` is not a dot segment.
+3. Percent-encode the scope value, if any, and each normalized component, from their UTF-8 bytes: the RFC 3986 unreserved characters `A`–`Z`, `a`–`z`, `0`–`9`, `-`, `.`, `_`, `~` are kept, and every other byte is written `%` followed by two **uppercase** hex digits. A `/` inside a component becomes `%2F`.
+4. Join the encoded values with `/` and render `iriTemplate` with `{key}`.
 
 ### 6.3 `SurrogateClaimedIdentity`
 
 The entity IRI is a surrogate. The recipe's `claims` are minted alongside it: one claim, or two during a claim-scheme rotation in the `Dual` state, in the order listed.
 
-1. **Surrogate.** For `UuidV4Surrogate`, generate a random version 4 UUID (RFC 9562): take 16 bytes `b` from a cryptographically secure random source, set `b[6] = (b[6] & 0x0F) | 0x40` and `b[8] = (b[8] & 0x3F) | 0x80`, and write the bytes as lowercase hex grouped 8-4-4-4-12 with `-`. Vectors supply the 16 bytes as `randomHex` so that this step can be tested. For `CallerSuppliedSurrogate`, take the request's surrogate and check it matches `surrogate.pattern` in full (§6.8), or fail with `PatternMismatch`.
+1. **Surrogate.** For `UuidV4Surrogate`, generate a random version 4 UUID (RFC 9562): take 16 bytes `b` from a cryptographically secure random source, set `b[6] = (b[6] & 0x0F) | 0x40` and `b[8] = (b[8] & 0x3F) | 0x80`, and write the bytes as lowercase hex grouped 8-4-4-4-12 with `-`. Vectors supply the 16 bytes as `randomHex` so that this step can be tested. For `CallerSuppliedSurrogate`, take the request's surrogate and check it matches `surrogate.pattern` in full (§6.8), or fail with `PatternMismatch`. Then, whatever the pattern admits, check that the surrogate is not empty and that every character is an RFC 3986 unreserved character (`A`–`Z`, `a`–`z`, `0`–`9`, `-`, `.`, `_`, `~`), or fail with `UnsafeSurrogate`, because §5 inserts it into the IRI unescaped. A surrogate that is exactly `.` or `..` fails with `DotSegment`.
 2. Render `iriTemplate` with `{surrogate}`.
-3. **Each claim.** Every claim in a recipe carries the same `key` (a recipe whose claims differ is refused with `UnsupportedRecipeFormat`), so the key components are normalized once, with that key's pipeline. Encode the tuple `[schemeVersion, constraintId, scope value, …normalized components]`, where the scope value is the request's value for `key.scopeProperty`, or the empty string when `scopeProperty` is `null`. Compute HMAC-SHA-256 with the secret identified by `keyId` (§8), or fail with `MissingSecret`. Truncate to `mac.widthBits`, encode with `mac.encoding`, and render the claim's `iriTemplate` with `{constraintId}`, `{schemeVersion}` and `{mac}`.
+3. **Each claim.** Every claim in a recipe carries the same `key` (a recipe whose claims differ is refused with `UnsupportedRecipeFormat`), so the key components are normalized once, with that key's pipeline. Encode the tuple `[schemeVersion, constraintId, scope value, …normalized components]`, where the scope value is the request's value for `key.scopeProperty`, or the empty string when `scopeProperty` is `null` (an empty scope value is refused, so the empty string always means no scope). Compute HMAC-SHA-256 with the secret identified by `keyId` (§8), or fail with `MissingSecret`. Truncate to `mac.widthBits`, encode with `mac.encoding`, and render the claim's `iriTemplate` with `{constraintId}`, `{schemeVersion}` and `{mac}`.
 
 ### 6.4 `RandomSurrogateIdentity`
 
@@ -151,8 +155,8 @@ Generate a version 4 UUID as in §6.3 step 1 and render `iriTemplate` with `{sur
 
 ### 6.5 `PositionDerivedEvent`
 
-1. **Namespace.** For `HashedTargetDerivation`, a missing target fails with `MissingKeyComponent`. Encode the tuple `["occurrence-namespace/1", target IRI]`, SHA-256 it, truncate to `namespace.digest.widthBits`, and encode with `namespace.digest.encoding`. For `RegistryTokenDerivation`, the namespace is the token the request supplies, which must match `^[A-Za-z0-9._~-]+$`, or fail with `PatternMismatch`.
-2. **Position.** A missing or non-integer epoch or sequence fails with `MissingKeyComponent`. Each must be from 0 to 9223372036854775807, or fail with `PositionOutOfRange`. Each is written in decimal, left-padded with zeros to `epochWidth` and `sequenceWidth`.
+1. **Namespace.** For `HashedTargetDerivation`, a missing target fails with `MissingKeyComponent`. Encode the tuple `["occurrence-namespace/1", target IRI]`, SHA-256 it, truncate to `namespace.digest.widthBits`, and encode with `namespace.digest.encoding`. For `RegistryTokenDerivation`, the namespace is the token the request supplies, which must match `^[A-Za-z0-9._~-]+$`, or fail with `PatternMismatch`, and must not be exactly `.` or `..`, or fail with `DotSegment`.
+2. **Position.** A missing or non-integer epoch or sequence fails with `MissingKeyComponent`. Each must be from 0 to 9223372036854775807, or fail with `PositionOutOfRange`. Each is written in decimal, left-padded with zeros to `epochWidth` and `sequenceWidth`. A value with more digits than its width fails with `PositionWidthOverflow`, and the message states the width and the position. Otherwise the fixed width that lets a template without separators be read back as epoch and sequence would not hold.
 3. Render `iriTemplate` with `{namespace}`, `{epoch}` and `{seq}`.
 
 ### 6.6 `ContentAddressedIdentity`
@@ -200,6 +204,10 @@ A recipe names a claim secret by `keyId` and never contains it. A minter receive
 | `PatternMismatch` | a caller-supplied surrogate, registry token or adopted IRI does not match its pattern |
 | `PositionOutOfRange` | an epoch or sequence is negative or above 9223372036854775807 |
 | `CanonicalizerNotDeclared` | a content-addressed request does not name its RDFC-1.0 implementation (§6.6) |
+| `DotSegment` | a natural key's scope value or normalized component, a caller-supplied surrogate or a registry token is exactly `.` or `..` |
+| `EmptyScope` | a key's scope value is the empty string |
+| `UnsafeSurrogate` | a caller-supplied surrogate is empty or has a character outside RFC 3986's unreserved set |
+| `PositionWidthOverflow` | an epoch or sequence has more digits than its declared width |
 
 The checks run in the order of the algorithms in §6, so a request with two faults raises the first one its strategy reaches. A vector never depends on that order: each negative vector has exactly one fault.
 
@@ -235,7 +243,7 @@ Test secrets in generated vectors are SHA-256 of the UTF-8 text `lattice-minting
 
 ### 10.2 Anchor vectors
 
-Generated vectors cover the seven anchor recipes and four coverage recipes ([`identity-minting-coverage.ttl`](../../ontology/persistence/examples/identity-minting-coverage.ttl)) that exercise what the anchors leave out: the lowercase pipeline, base64url, a generated surrogate with two claims in rotation, a registry-token namespace and an external registry identifier. The coverage recipes have no anchors.
+Generated vectors cover the seven compiled anchor recipes and four coverage recipes ([`identity-minting-coverage.ttl`](../../ontology/persistence/examples/identity-minting-coverage.ttl)) that exercise what the anchors leave out: the lowercase pipeline, base64url, a generated surrogate with two claims in rotation, a registry-token namespace and an external registry identifier. The coverage recipes have no anchors. One more anchor set carries a hand-authored recipe that no fixture compiles, a caller-supplied surrogate whose pattern admits any character, because only such a pattern can show the unreserved check of §6.3.
 
 [`anchor-vectors.json`](../../contracts/identity/anchor-vectors.json) holds hand-authored vector sets, one per deterministic strategy, whose every byte is recomputed by [`verify-anchors.py`](../../contracts/identity/verify-anchors.py) with `openssl` and the Python standard library, sharing no code with any minting library. Vectors generated from a library can only show that other implementations agree with it; the anchors are what show that it is right. A conformant implementation passes the anchors **and** the generated vectors for every recipe it serves.
 
@@ -256,7 +264,9 @@ To be completed in M4 with an explanation and a detecting vector for each. Alrea
 - **String length is not byte length.** Java's `String.length()` counts UTF-16 code units and Python's `len()` counts code points. The tuple encoding needs UTF-8 bytes.
 - **Language trims are not `White_Space`.** Python's `str.strip()` removes U+001C–U+001F, which are not `White_Space`. Java's `String.strip()` keeps U+00A0 NO-BREAK SPACE, which is. The anchor `cl-control-not-trimmed` catches the first.
 - **Lowercasing is not case folding.** `toLowerCase` leaves `ß` as `ß`, where `nfkc_casefold` gives `ss` (anchor `cl-sharp-s`).
-- **Default-ignorable code points survive NFKC.** Zero-width space and soft hyphen are removed only by `nfkc_casefold` (anchors `cl-zero-width`, `cl-soft-hyphen`). Under `NfkcTrimUppercase` and `NfkcTrimLowercase` they stay in the key, so a key made of nothing else mints an IRI rather than failing with `EmptyKeyComponent` (generated vector `key-default-ignorable-only-survives`).
+- **Format characters survive NFKC and case mapping.** Zero-width space and soft hyphen are removed by `strip_format` under every pipeline (anchors `cl-zero-width`, `cl-soft-hyphen`, `dh-format-stripped`), and a key of nothing else fails with `EmptyKeyComponent` (anchors `dh-format-only`, `cl-format-only-not-default-ignorable`).
+- **Only `Cf` is stripped.** Default-ignorable code points of other categories, such as variation selectors and U+034F COMBINING GRAPHEME JOINER, are removed by `nfkc_casefold` but stay in a key under the uppercase and lowercase pipelines.
+- **A dot is a path segment.** A natural key component `.` or `..` is refused, and a fullwidth `．．` is refused too because the check follows NFKC (anchors `nk-dot-segment`, `nk-dot-segment-after-nfkc`).
 - **base32 padding and case.** Output is uppercase with no `=`.
 - **Regular-expression classes differ between engines** (§6.8).
 

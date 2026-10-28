@@ -16,7 +16,7 @@ before writing one, and measure before optimising.
 2. [Method: from a use case to a number](#2-method-from-a-use-case-to-a-number)
 3. [Use case 1: Open-CBAA and Lloyd's delegated authority](#3-use-case-1-open-cbaa-and-lloyds-delegated-authority)
 4. [Use case 2: claims handling over computable contracts](#4-use-case-2-claims-handling-over-computable-contracts)
-5. [Use case 3: MERIDIAN-style placement and programme](#5-use-case-3-meridian-style-placement-and-programme)
+5. [Use case 3: placement and programme](#5-use-case-3-placement-and-programme)
 6. [Cross-cutting findings](#6-cross-cutting-findings)
 7. [Storage estimate](#7-storage-estimate)
 8. [Throughput and concurrency estimate](#8-throughput-and-concurrency-estimate)
@@ -181,7 +181,7 @@ store), but:
 ### 4.1 The shape of the workload
 
 A policy, modelled in a domain ontology (`applied/insurance`, or a closed-source model such as
-MERIDIAN), is a computable contract in an RDF store. A claim arrives (first notice of loss, FNOL)
+a private placement model), is a computable contract in an RDF store. A claim arrives (first notice of loss, FNOL)
 and the system computes the extent to which the contract, in its current state, covers it. This is
 Behaviour and Eligibility doing real work: a transition check against the contract's state machine,
 and a three-valued (Asserted, Denied, Undetermined) eligibility evaluation over clauses, exclusions,
@@ -228,7 +228,7 @@ cases. The real risk here is query cost under load, not arrival rate.
 
 ---
 
-## 5. Use case 3: MERIDIAN-style placement and programme
+## 5. Use case 3: placement and programme
 
 ### 5.1 The shape of the workload
 
@@ -243,13 +243,12 @@ exposure, contract, tower and negotiation thread, Surface projections, compiled 
 profiles, and the infrastructure nodes the guide describes.
 
 **This modelling matches real industry practice, not only this paper's own construction.** A
-MERIDIAN documentation extract supplied alongside this paper (`.local/sketches/Theoretical
-Framing.txt`) models negotiation as exactly this shape: a persistent, versioned `NegotiationThread`
+private documentation extract supplied alongside this paper models negotiation as exactly this shape: a persistent, versioned `NegotiationThread`
 per scope (layer, block or programme), carrying atomic `NegotiationMove` events (submission sent,
 quote received, counter-offer, subjectivity satisfied, acceptance, lapse) and a controlled
 `NegotiationState` vocabulary, reduced from the event sequence the way an event-sourced system
 derives current state from an append-only log. §5.2's "20 events/layer" estimate is this paper's own
-guess at the same thing MERIDIAN calls a thread's moves, which is a reassuring convergence rather
+guess at the same thing the extract calls a thread's moves, which is a reassuring convergence rather
 than a coincidence: both arrive at a persistent, versioned, event-bearing object because the
 underlying negotiation process genuinely has that shape. The same extract is the source for §19's
 coverage-completeness treatment.
@@ -885,8 +884,7 @@ tenants.
 
 ### 19.1 A real precedent, not a hypothesis
 
-A MERIDIAN documentation extract supplied alongside this paper
-(`.local/sketches/Theoretical Framing.txt`) describes how a practical implementation already handles
+A private documentation extract supplied alongside this paper describes how a practical implementation already handles
 tower coverage completeness, the question "is this layer, across every peril and the whole policy
 period, fully covered by the quotes selected so far, and if not, where exactly is the gap." **Fact
 (per the attached extract): it is not answered by a live SPARQL-style graph traversal.** Coverage,
@@ -940,7 +938,7 @@ shape of the sub-computation, not the use case, decides whether it is interval-s
 | Is this loss date within the policy period | interval containment | materialised interval check (§19.1), trivial even unmaterialised |
 | Is this loss location within the covered territory | interval or set containment | materialised interval or set check |
 | Does this amount exceed a sublimit | numeric comparison against a stored limit | materialised, or even a single indexed point lookup |
-| Is this layer, across every peril and the whole policy period, fully covered by the quotes bound or firm-quoted so far | interval union, difference, gap detection across many quotes | **materialised and swept, exactly as §19.1 describes**, this is the placement use case's tower-completeness question and MERIDIAN's own worked example |
+| Is this layer, across every peril and the whole policy period, fully covered by the quotes bound or firm-quoted so far | interval union, difference, gap detection across many quotes | **materialised and swept, exactly as §19.1 describes**, this is the placement use case's tower-completeness question and the extract's own worked example |
 | Does this specific loss fall under a clause's exclusion, given the exclusion's boolean structure | rule and clause-graph evaluation | stays graph- and rule-shaped, gated on measurement (§19.2) |
 
 ### 19.4 The architecture: extraction, materialisation, sweep, and the UI pattern
@@ -995,7 +993,7 @@ recomputing the whole tower's gap state from scratch.
 |---|---|
 | **Benefit: latency** | an indexed sweep over a few hundred breakpoints (Appendix B.6) in low milliseconds, against an estimated tens of thousands of nodes for a live graph traversal of the same programme (§5.2), roughly a 40 times reduction in what must be touched, using index-accelerated range operators the target store provides natively |
 | **Benefit: bounded recompute** | monotonicity (§19.4) limits a single quote change to re-sweeping one layer, not the whole tower |
-| **Cost: a second schema and store to maintain** | an extraction and translation layer from RDF triples to interval atoms, which must track ontology changes the same way Surface projections already must (`ontology/surface/docs/revision-lifecycle.md`'s existing invalidation machinery is the pattern to reuse, not reinvent, per ponytail rung 2) |
+| **Cost: a second schema and store to maintain** | an extraction and translation layer from RDF triples to interval atoms, which must track ontology changes the same way Surface projections already must (`docs/operator/surface-revision-lifecycle.md`'s existing invalidation machinery is the pattern to reuse, not reinvent, per ponytail rung 2) |
 | **Cost: operational surface** | one more store technology to provision, patch, back up and monitor, folded into the same fleet-management cost this paper already carries for partitioning (§17.5) |
 | **Cost: staleness is unusually visible here** | a broker trusting a "fully placed" answer mid-negotiation is a more business-visible consumer of a stale projection than the general market-reporting case (§18), which is why §19.4 targets a few seconds of freshness (L7-08), tighter than §18's general lakehouse SLA (minutes), and why the UI must show a staleness indicator rather than presenting a stale gap answer as current truth (L8-05) |
 | **Resolved, per the user's framing** | the synchronisation runs out of band and must never block the UI. §19.4's sequence diagram confirms the write within the 1 to 2 s budget exactly as §10 already does, and lets the gap answer catch up seconds later, exactly as asked |
@@ -1081,12 +1079,12 @@ otherwise be walked, is illustrative, not a measured benchmark result.
 - LATTICE: `ontology/persistence/README.md`, `docs/architecture/rdf-sparql-patterns-guide.md`,
   ADR-A74, ADR-A75, ADR-A78, ADR-A79, `.github/prompts/ponytail.md`,
   `.github/copilot-instructions.md` (test taxonomy L0 to L8).
-- MERIDIAN coverage-algebra and negotiation-thread extract, supplied by the user and repository-
+- a private coverage-algebra and negotiation-thread extract, supplied by the maintainer and repository-
   local at `.local/sketches/Theoretical Framing.txt` (§19).
 - PostgreSQL documentation: range types and GiST indexing *(verify current version's exact operator
   and function names)*.
 - `docs/developer/review/Architecture Review.md` finding G-06 (PostgreSQL/Fuseki dual-write risk,
-  §19.4), and `ontology/surface/docs/revision-lifecycle.md` (projection invalidation, §19.5).
+  §19.4), and `docs/operator/surface-revision-lifecycle.md` (projection invalidation, §19.5).
 - [engine-build-versus-adopt.md](build-adopt-engine.md) (paper 3, this paper's G0 design).
 - [compiled-persistence-physical-planning.md](compiled-persistence-profiles.md) (paper 2,
   shelved, its tiering and access-pattern ideas rehabilitated in §7.2, §9.1 and §18.3).

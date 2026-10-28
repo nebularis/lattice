@@ -3,7 +3,7 @@
 # before by fnd:supersededBy, and nothing is swept or deleted. The terms a revision does not
 # change are shared by reference, so a revision writes only the quote node's own triples.
 # The receipt model is dal:ReceiptOnly, which a composite family may declare because its history
-# is in the data and a patch log would repeat it. The class is a subclass of fnd:Version, named by
+# is in the data and a patch log would repeat it. The class is a subclass of fnd:Versioned, named by
 # IRI and not imported, so dal:InPlace would draw VersionedClassWrittenInPlace. The dataset-level
 # epoch guard is declared, so the dataset-guard variant of the write is generated.
 @prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
@@ -13,7 +13,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
-ex:Quote rdfs:subClassOf fnd:Version .
+ex:Quote rdfs:subClassOf fnd:Versioned .
 
 ex:QuoteClass a dal:ClassScope ;
     dal:targetClass ex:Quote ;

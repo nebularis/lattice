@@ -29,8 +29,8 @@ VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
 
 CLS = Namespace("https://www.nebularis.org/neuro-semantic/lattice/applied/classification#")
 CLSV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#")
-ICM = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common#")
-ICMV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common/vocab#")
+ICM = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common#")
+ICMV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#")
 VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 PTY = Namespace("https://www.nebularis.org/neuro-semantic/lattice/party#")
 
@@ -103,7 +103,7 @@ def test_common_documents_parse_and_import_the_pinned_versions():
         "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.4.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0"}
 
 
 # ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---
@@ -159,7 +159,7 @@ def test_classification_imports_no_insurance_document():
     spec_imports = {str(o) for o in _classification_spec().objects(None, OWL.imports)}
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
     for iri in spec_imports | vocab_imports:
-        assert "neuro-semantic/insurance/" not in iri
+        assert "neuro-semantic/lattice/insurance/" not in iri
 
 
 # ---- AIR12-06: no insurance term anywhere in classification/ ----------------------------------

@@ -60,7 +60,7 @@ Code finds the repository root and every directory the [repository catalogue](..
 
 ## Asking the knowledge index
 
-The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards and store findings against a question, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).
+The knowledge index ranks the project's decisions, mechanisms, capabilities, patterns, principles, standards, store findings and the questions plans and sketches raise against a question, and, only when asked with `--kind term`, the declared ontology terms, so an agent reads the one section that answers it instead of whole documents ([ADR-A134](../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md)).
 
 - **Ask it first,** before a design, modelling, code or efficiency decision, and before adding a mechanism, a dependency or a component. Describe the problem in your own words, name every activity, quality and technology of the work at hand, several at once where several apply, then read the entries that answer it. `--activity`, `--quality` and `--tech` raise matching entries and hide none. `--kind`, `--phase` and `--audience` filter exactly, so use them only where an entry outside them could not answer.
   ```bash
@@ -68,12 +68,18 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
   mise run graph:ask -- read <ID>
   ```
   `mise run graph:ask -- find --help` lists every option, and the [facet register](../docs/developer/facets.md) defines every facet value. `exists <word>` finds a declared ontology term by name.
+- **Ask for terms only when the question is about a term.** `find` searches the declared ontology classes and properties only when `--kind` names `term`, and never otherwise.
+  - Use `--kind term` when you need to know what a class, property, scheme concept or declared individual means, whether one already exists for a concept or a value before you declare one, or what restricts it, such as functional, its domain and range, or at most one value. For example `find which property derives one account per key value --kind term`. A term's row names its module and its line under the row gives its definition and restrictions.
+  - Leave it off for every other question: how to design, model, build or test something, which rule, decision or pattern applies, and what mechanism or capability the project already has. Ranked together, terms push the entries that answer such a question out of the top five, measured as hit@5 0.79 against 0.93 without them.
+  - When you are modelling, ask both ways, once for the rules with no kind and once for the terms with `--kind term`, rather than mixing them. `exists <word>` still finds a term by its name.
 - **Ask more than once.** Reword the question, or narrow, widen or drop a filter, until the answers fit the question or two attempts have found nothing better.
 - **Look for what is related, not only for the entry.** When reviewing, re-sourcing or changing an entry, ask for the decisions that ground it and the standards, patterns and mechanisms that bear on it, in your own words and with `--kind decision` among them, since the entry itself is rarely the whole answer.
-- **The index holds the decisions and the registers, never the plans or the status records.** What a unit is doing now and what it does next is in `docs/developer/status/<unit>.md`, and its scope and slices are in `docs/developer/plans/<unit>.md`, so no wording or facet will find them here. An identifier written in a question, such as `find PDD-08`, names its entry outright and ranks first, and `read <ID>` gives its text.
+- **Read the flags and the line under each row.** `!` says the entry states a case it does not cover, `~` that the text returned was superseded or reversed, `TD` that an open debt bears on the entry, and `?` that it is Proposed. The line under a row holds the whole claim and names each of these, and `read <ID>` prints the entry's fields and every entry linked to it before its text. The boundary is usually in the part of a claim the table cuts.
+- **The index holds a plan's questions, never the rest of the plan or the status records.** A question raised by a bold lead or a table row in a plan or a sketch is an entry, open or answered, found with `--kind question` or among the rest. When questions crowd out the entries that would answer, ask again with `--exclude question`, which keeps every other kind. What a unit is doing now and what it does next is in `docs/developer/status/<unit>.md`, and its scope and slices are in `docs/developer/plans/<unit>.md`, so no wording or facet will find them here. An identifier written in a question, such as `find PDD-08`, names its entry outright and ranks first, and `read <ID>` gives its text.
 - **An empty or weak answer never proves that nothing exists.** When `find` reports one, fall back to reading the documents and the code as you would without the index.
 - **A register gap is technical debt.** If the fallback finds an answer in the repository that no register entry holds, tell the maintainer in the handoff, and add the entry in the same change or a row to `docs/developer/technical-debt.md` (STD-272).
-- **Report misses and improvements as they come up.** At each handoff, list what the index answered weakly or not at all, from `mise run graph:ask -- misses`, and what would have answered it, so the maintainer can decide what to add.
+- **Record a gap when you find it.** When reading finds something the index did not say, such as a case an entry does not cover, run `mise run graph:ask -- gap "<what you found>" <ID> <path:line>` at once. When a change writes the signpost that answers it, run `mise run graph:ask -- close <ID>` in the same change, which removes the gap and the log lines of the question behind it.
+- **Report misses and improvements as they come up.** At each handoff, list what the index answered weakly or not at all, the near answers and the gaps recorded, from `mise run graph:ask -- misses --near`, and say which column or edge would have carried each, so the maintainer can decide what to add.
 
 ## Writing
 
@@ -94,7 +100,7 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - name a thing by the term this repository already uses for it, never by a name another layer already defines for something else
 - do not coin technical terms from insurance market vocabulary. Producing bound meaning is
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
-- call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
+- call a class that is a member of `fnd:Versioned` "versioned". Call a node "a version" only when it is
   one specific version
 - write as the team. Decisions, approvals and actions are ours: "we decided", "accepted
   2026-10-10", "the maintainer accepts", never "the human decided" or "the agent built". An agent is
@@ -173,3 +179,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
 | `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |
 | `lattice-constrained-environments` | a bootstrap, install or download refused by a registry, mirror or proxy, and deciding whether a blocked package can be worked around safely |
+| `lattice-branching` | merging or measuring a branch, a register or index conflict and its renumbering, a git worktree, the git hooks at each moment, and a task that writes to more than one repository |

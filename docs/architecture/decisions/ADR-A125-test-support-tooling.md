@@ -53,7 +53,7 @@ reads back quads. It is used by tests and by benchmarks, and by nothing else. No
 
 ## Addendum, 2026-10-21: Oxigraph is the default engine, conformance runs before a merge, and mem_check (accepted 2026-10-21)
 
-Decided and accepted by the maintainer on 2026-10-21, as the later decision that decision 4 allows.
+**Narrows decision 4.** Decided and accepted by the maintainer on 2026-10-21, as the later decision that decision 4 allows.
 
 1. **The persistence tests run their generated SPARQL on Oxigraph by default.** `check:persistence` needs
    `tools/testing/oxigraph` and runs each engine test once, on Oxigraph. rdflib stays the library the compiler and pySHACL are

@@ -187,7 +187,7 @@ def test_c6_06_exclusion_of_an_obligation_by_another_party() -> None:
     ("ex:facility-v2 a ins:Instrument . ex:term-6-1 ins:boundIn ex:facility-v2 .", (), "/term-6-1", "law I2"),
     ("ex:term-6-1 ins:boundFrom tmpl:term-7-1 .", (), "/term-6-1", "law I2"),
     ("", ((EX["term-6-1"], INS.boundFrom, TMPL["term-6-1"]),), "/term-6-1", "law I2"),
-    ("ex:repay a fnd:Version .", (), "/repay", "never a version"),
+    ("ex:repay a fnd:Versioned .", (), "/repay", "never a version"),
     ("ex:repay ins:boundIn ex:facility-v1 .", (), "/repay", "carries no ins:boundIn"),
     ("ex:repay ins:obligor ex:Borrower .", ((EX.repay, INS.obligor, EX["borrower-occ"]),), "/repay", "laws I2, I13"),
     ("tmpl:repay ins:obligor ex:borrower-occ .", ((TMPL.repay, INS.obligor, EX.Borrower),), "/repay", "laws I2, I13"),

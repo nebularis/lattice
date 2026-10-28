@@ -7,11 +7,11 @@
 **Supersedes:** none
 **Related:** ADR-A24 (Eligibility executable strategy), ADR-A25 (LLM participation and deterministic gate), ADR-A26 (provenance chain completeness)
 **Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
-**Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
+**Source plan:** the Surface-MORK Unified Projection Program plan
 
 ## Context
 
-`ontology/surface/docs/OUTSTANDING-ITEMS.md` §3.4 recorded Surface's own parity law (R2) as unimplemented. `OUTSTANDING-ITEMS 2.md` records the follow-on state: `tools/surface/parity.py` now implements the comparison, but generates its own questions from the contract rather than drawing on the shared conformance corpus the other layers use, so its results are not comparable across layers. Extending parity to Projection and to each new MORK compiler backend (ADR-A23) without a shared corpus repeats that same gap once per mechanism.
+The Surface outstanding items record (§3.4) recorded Surface's own parity law (R2) as unimplemented. The same record gives the follow-on state: `tools/surface/parity.py` now implements the comparison, but generates its own questions from the contract rather than drawing on the shared conformance corpus the other layers use, so its results are not comparable across layers. Extending parity to Projection and to each new MORK compiler backend (ADR-A23) without a shared corpus repeats that same gap once per mechanism.
 
 ## Decision
 

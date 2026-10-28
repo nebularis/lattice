@@ -3,7 +3,7 @@
 # bind: logGraphs = <urn:g:txlog/1> <urn:g:txlog/2>
 # Witness for txn-multi-revision-audit. One transaction id sits on revisions in
 # two different buckets, a request applied twice after its claim was pruned.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:txlog/1> { <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a> . }
 <urn:g:txlog/2> { <urn:rev:2> a pat:Revision ; pat:txn <urn:txn:a> . }

@@ -106,7 +106,7 @@ def test_c9a_01_spec_terms() -> None:
     for term in ("Amendment", "amends", "resultsIn", "affectsExisting", "statedIn", "Assent",
                  "assentBy", "assentTo", "begins", "OnAcceptance"):
         assert terms.value(INS[term], FND.utility) is not None, term
-    assert (INS.Amendment, OWL.disjointWith, FND.Version) in spec
+    assert (INS.Amendment, OWL.disjointWith, FND.Versioned) in spec
     assert (INS_VOC.Conditional, None, None) in _graph(VOCAB)
 
 

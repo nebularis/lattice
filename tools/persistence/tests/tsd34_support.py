@@ -19,7 +19,7 @@ from rdflib import Dataset, Literal, URIRef
 from rdflib.namespace import XSD
 from rdflib.util import from_n3
 
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 ROOT = "urn:root:1"
 LONG = lambda n: Literal(n, datatype=XSD.long)
 

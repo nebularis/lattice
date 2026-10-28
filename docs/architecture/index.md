@@ -5,7 +5,7 @@ The architecture documents of LATTICE. The [decisions](published-architecture-de
 | Document | Title |
 |---|---|
 | [capacity-domain-analysis-and-design](capacity-domain-analysis-and-design.md) | Capacity Domain Ontology on LATTICE |
-| [capacity-model-performance-addendum](capacity-model-performance-addendum.md) | Addendum: Capacity Model Runtime Performance for Financial Transactions |
+| [capacity-model-performance-addendum](../../ontology/applied/capacity/docs/perf.md) | Addendum: Capacity Model Runtime Performance for Financial Transactions |
 | [configuration-studio](configuration-studio.md) | Configuration Studio |
 | [conformance-levels](conformance-levels.md) | Conformance-Level Ladder |
 | [data-architecture](data-architecture.md) | Platform Data Architecture |
@@ -24,7 +24,7 @@ The architecture documents of LATTICE. The [decisions](published-architecture-de
 | [mork-queue-calibration-governance](mork-queue-calibration-governance.md) | MORK Queue, Calibration, and Governance |
 | [mork-review-workbench](mork-review-workbench.md) | MORK Review Workbench |
 | [mork-teaching-pack](mork-teaching-pack.md) | MORK Teaching Pack |
-| [ontology-architecture](ontology-architecture.md) | LATTICE Solution Architecture — Consolidated Reference |
+| [ontology-architecture](ontology-architecture.md) | LATTICE Solution Architecture — Consolidated Reference (retired 2026-10-28, kept for its layer-dependency table) |
 | [ontology-releases](ontology-releases.md) | Ontology Releases |
 | [ontology-versioning-policy](ontology-versioning-policy.md) | Ontology Versioning Policy |
 | [optimistic-concurrency-in-rdf](optimistic-concurrency-in-rdf.md) | Optimistic concurrency (compare-and-set) |

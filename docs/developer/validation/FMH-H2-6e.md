@@ -15,7 +15,7 @@ argument (below).
 ## Invariant
 
 A property shape of a boundary shape may declare `dal:referenceMode`, `dal:ByIdentity` or `dal:Pinned`, and absent means `dal:ByIdentity`. `compile`
-records the mode of every edge that leads to a node, refuses `dal:Pinned` where the edge's target class is not a subclass of `fnd:Version`, and
+records the mode of every edge that leads to a node, refuses `dal:Pinned` where the edge's target class is not a subclass of `fnd:Versioned`, and
 warns `EvidenceEdgeByIdentity` for an edge by identity from an evidence class to a versioned one. The contract of each operation that takes a payload
 carries the same edges and modes. The mode changes no generated operation.
 
@@ -62,7 +62,7 @@ The other nine are unchanged, since no other example names a boundary shape. No 
 5. **The evidence test reads the class of the edge's source shape** (its `sh:targetClass`, and the shape's root class for the root), not the
    target of the profile. A class the profile "names as a record" (Q3) is not built, since the profile has no way to name one (TD-67).
 6. **The warning is per edge, with a witness that reuses the base example's own by-identity edge,** so the fixture is two `rdfs:subClassOf` triples.
-7. **Versioned means a subclass of `fnd:Version` by IRI in the loaded graphs,** the same test as `VersionedClassWrittenInPlace`, with no import.
+7. **Versioned means a subclass of `fnd:Versioned` by IRI in the loaded graphs,** the same test as `VersionedClassWrittenInPlace`, with no import.
 8. **No new example.** The refusals and the warning are tested by small graphs built on `composite-property-boundary-shacl`.
 
 ## Changes to existing tests

@@ -72,7 +72,7 @@ the legacy entries).
 |---|---|---|---|
 | AIR11-01 | the tree / `mise run check:ontology-catalog` / passes, and `KNOWN_DEFECTS` has no applied insurance entry | L1 | + |
 | AIR11-02 | the tree / `mise run check:ontology-versioning` / passes | L1 | + |
-| AIR11-03 | `ontology/` and `tools/` / search for `ontology/nsd`, `neuro-semantic/insurance/contract` and `structure-vocab` / no match | L1 | − |
+| AIR11-03 | `ontology/` and `tools/` / search for `ontology/nsd`, `neuro-semantic/lattice/insurance/contract` and `structure-vocab` / no match | L1 | − |
 | AIR11-04 | `ontology/applied/README.md` and `insurance/domain-README.md` / read against ADR-A98 / every module, level and prefix agrees | L0 | + |
 
 ### AIR-1.2: Shared contracts, `applied/classification/` and `insurance/common/`
@@ -105,7 +105,7 @@ No contract has a `voc:boundScheme` here: reference editions bind themselves whe
 
 | File | Ontology IRI, version IRI | Content |
 |---|---|---|
-| `spec/common.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/common`, `…/insurance/common/0.1.0` | prefix `icm:` (`…/insurance/common#`). Imports Foundation 0.3.0, Vocabulary 0.3.0, Party 0.5.0 and `…/lattice/applied/classification/0.1.0`. Six `owl:ObjectProperty`s with range `skos:Concept`: `icm:peril`, `icm:mechanism`, `icm:agency`, `icm:consequence`, `icm:harmSubject`, `icm:pool` |
+| `spec/common.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/common`, `…/insurance/common/0.1.0` | prefix `icm:` (`…/insurance/common#`). Imports Foundation 0.3.0, Vocabulary 0.3.0, Party 0.5.0 and `…/lattice/applied/classification/0.1.0`. Six `owl:ObjectProperty`s with range `skos:Concept`: `icm:peril`, `icm:mechanism`, `icm:agency`, `icm:consequence`, `icm:harmSubject`, `icm:pool` |
 | `vocab/common-vocab.ttl` | `…/insurance/common/vocab`, `…/insurance/common-vocab/0.1.0` | prefix `icm-voc:`. Imports the spec 0.1.0. Six contracts as in classification: `icm-voc:PerilContract`, `icm-voc:MechanismContract`, `icm-voc:AgencyContract`, `icm-voc:ConsequenceContract`, `icm-voc:HarmSubjectContract`, `icm-voc:PoolContract`. Four roles declared as `pty:Obligor` is in `ontology/party/vocab/party-vocab.ttl` (`owl:NamedIndividual`, `pty:Role`, label, comment, `fnd:utility`): `icm-voc:HarmedParty`, `icm-voc:LiableParty`, `icm-voc:Claimant`, `icm-voc:Payee` |
 | `README.md` | | purpose, the contracts and roles, the specialisation rule, and what arrives later: the loss event (AIR-4.4) and the liability direction scheme (Phase 5, ADR-A102) |
 
@@ -130,7 +130,7 @@ and Party's shape files, pySHACL with `advanced=True` and `inference="none"`.
 | AIR12-02 | the nine contracts / Vocabulary's shapes / conform | L1 | + |
 | AIR12-03 | a contract without `voc:constrainsProperty` / Vocabulary's shapes / violation | L1 | − |
 | AIR12-04 | the four roles / read / each is a `pty:Role` and an `owl:NamedIndividual` | L1 | + |
-| AIR12-05 | `classification`'s import closure / read / contains no document under `neuro-semantic/insurance/` | L1 | − |
+| AIR12-05 | `classification`'s import closure / read / contains no document under `neuro-semantic/lattice/insurance/` | L1 | − |
 | AIR12-06 | every term in `classification/` / searched for insurance terms (peril, policy, premium, claim, insur) / no match | L0 | − |
 
 ## Documentation deltas

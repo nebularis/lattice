@@ -51,15 +51,15 @@ Read this document top to bottom once, then use it as a reference.
 
 ### **Solution Overview**
 
-There are 2 very distinct sides to LATTICE. The first is the "BUILD TIME" or "DESIGN TIME" platform, which is basically a set of react applications and other tools, glued together with various software services, messaging infrastructure, graph database(s), etc. This is a deployable system with many moving parts - it is something we (in this repo) are building and design and WE get to DECIDE how it works.
+LATTICE has two distinct sides. The first is the build-time (design-time) platform, a set of React applications and other tools, glued together with software services, messaging infrastructure and graph databases. It is a deployable system with many moving parts, built in this repository, and the project decides how it works.
 
-Then there is the other side of LATTICE - "PRODUCTION TIME", and that is where things are completely different. We do not own, define, or even know what "PRODUCTION" looks like! It will be different for everyone that builds on LATTICE. Perhaps someone will just use the ontologies and never touch the design-time application suite. Perhaps someone will use the full design-time suite to build their graph and configuration, but once it is populated, just use MORK as an integration layer, or maybe they use something else to pull data in and just use `surface` for making skos vocabularies available via entailment. We simply don't know what they will do, all we know is it will be code in another repo!
+The second side is production time, where the project does not own, define or know the deployment. Production differs for every adopter. An adopter may use only the ontologies and never touch the design-time application suite. An adopter may use the full design-time suite to build its graph and configuration and then use MORK only as an integration layer, or pull data in by other means and use `surface` only to make SKOS vocabularies available via entailment. What adopters do is not known, and their code lives in other repositories.
 
-We cannot decide which patterns are right for this 2nd use of `LATTICE`, because it is not an application we own. Multiple agent outputs have mentioned "multi-tenant", but `LATTICE` is not that kind of platform - though you could use it to build such a thing, I hope.
+The project cannot decide which patterns are right for this second use of `LATTICE`, because it is not an application the project owns. Multi-tenancy is not a goal, since `LATTICE` is not that kind of platform, although it could be used to build one.
 
-We will need to design a means for these users (who are building on top of lattice ontologies and perhaps re-using lattice services) to declaratively choose the patterns they want to use as configuration - perhaps this can be another dimension of `surface` (see the repository).
+Adopters, who build on LATTICE ontologies and may reuse LATTICE services, need a means to choose the patterns they use declaratively, as configuration. This may become another dimension of `surface`.
 
-Yes, we might write a query layer that automatically applies the separate version/identification/sequencing behaviour so the user doesn't need to think about it - but we do that by building a compiler, a query generatory/optimiser, and only then write the layer that uses those things and let the consumer decide if they want the pattern, the tools, the APIs, or the full stack for their app.
+A query layer may apply the separate version, identification and sequencing behaviour automatically, so the user need not think about it. It would be built by first building a compiler and a query generator and optimiser, and only then the layer that uses them, letting the consumer choose the pattern, the tools, the APIs or the full stack for their application.
 
 ---
 
@@ -432,11 +432,11 @@ This is deliberately the smallest correct answer, not a placeholder for a larger
 
 ### 4.4 Release Integration Exposure: the Answer to "Who Calls This?"
 
-This section exists because the request that produced this document asked it explicitly. `release-integration` is a **Java library**, not a standalone service. It has no network listener of its own and never will, per ADR-A31's constraint that LATTICE does not become a release engine.
+This section answers who calls `release-integration`, a question the requirements raised explicitly. `release-integration` is a **Java library**, not a standalone service. It has no network listener of its own and never will, per ADR-A31's constraint that LATTICE does not become a release engine.
 
 **Who calls it.** The Control Plane's Release facade, a thin application service inside `surface-control-plane` (not yet built, see [§4.2](#42-control-plane-runtime-decided-here)), calls `SemanticReleaseAssemblyService.assemble(...)`, then `SemanticReleaseCoordinator.publish(...)` in-process, in the same JVM, in response to an authenticated HTTP request from the Release Operator (`POST /release/candidates/{id}/publish`). No message queue sits in front of it, because assembly and packaging are bounded, deterministic operations over already-recorded evidence, not long-running graph computation.
 
-**How it is exposed.** As an HTTP facade over the library, following the pattern the request describes: "an API acting as a facade in front of something else." The facade's job is authentication, request mapping, and translating `IllegalArgumentException`/`IllegalStateException` into `4xx` responses, exactly as `SurfaceRevisionApi` already does for the workflow module. No new pattern is introduced, the same one is extended to Release.
+**How it is exposed.** As an HTTP facade over the library, following the pattern of an API acting as a facade in front of something else. The facade's job is authentication, request mapping, and translating `IllegalArgumentException`/`IllegalStateException` into `4xx` responses, exactly as `SurfaceRevisionApi` already does for the workflow module. No new pattern is introduced, the same one is extended to Release.
 
 **Where its evidence goes.**
 
@@ -574,7 +574,7 @@ The Control Plane and worker processes are not yet containerized or added to Com
 
 ## 6. UX Design
 
-Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../developer/sketches/governance-and-versioning-migration.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
+Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically the MORK UXD design, with its decisions in [ADR-A42](decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) and [ADR-A43](decisions/ADR-A43-mork-replayable-queue-and-calibrated-governance.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
 
 ---
 
@@ -584,7 +584,7 @@ Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Wor
 
 The CAP theorem describes a tradeoff that only manifests under a network partition between replicas of the same data. This platform, as scoped, runs one authoritative PostgreSQL instance, one authoritative Fuseki dataset, and one RabbitMQ broker per environment. It is not a multi-region, multi-writer, or multi-replica system. That is a deliberate boundary, not an oversight, because the product is a single-tenant-operator "studio" environment, not a globally distributed service.
 
-Given that scope, the request's aim to achieve C (Consistency) and A (Availability) is satisfied by construction in the absence of a partition, because there is only one partition-capable link in the whole system worth naming: the network path between the Control Plane and its data stores within one environment. The robustness design therefore focuses on what actually threatens this platform: component crashes, message loss, stale concurrent writes, and duplicate delivery, not multi-node network partitions.
+Given that scope, the aim of achieving C (Consistency) and A (Availability) is satisfied by construction in the absence of a partition, because there is only one partition-capable link in the whole system worth naming: the network path between the Control Plane and its data stores within one environment. The robustness design therefore focuses on what actually threatens this platform: component crashes, message loss, stale concurrent writes, and duplicate delivery, not multi-node network partitions.
 
 ### 7.2 Consistency Mechanisms
 

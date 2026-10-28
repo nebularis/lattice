@@ -15,7 +15,7 @@ python -m pip install ./packages/minting/python
 ```python
 from lattice_minting import Recipe, Minter, MintError
 
-recipe = Recipe.parse(open("Product-EntityRole-38ce5a73f929.recipe.json").read())
+recipe = Recipe.parse(open("Product-EntityRole-b37178820939.recipe.json").read())
 minter = Minter(recipe)
 minted = minter.mint({"key": [" Widget-9 "]})
 minted.iri     # 'urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM'

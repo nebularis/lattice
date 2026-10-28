@@ -15,9 +15,14 @@
 fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "A concise explanation of what a term is for and how to use it." .
 
-fnd:Version a owl:Class ;
+fnd:meaningBearing a owl:AnnotationProperty ;
+    rdfs:comment "Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was." ;
+    fnd:utility "Set it to true on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity." ;
+    rdfs:range xsd:boolean .
+
+fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -61,7 +66,7 @@ fnd:TemporallyScoped a owl:Class ;
     ] .
 
 fnd:TemporalScope a owl:Class ;
-    rdfs:comment "A validity period: a start, and an optional end." ;
+    rdfs:comment "A validity period: a start, included, and an optional end, excluded, both with a timezone." ;
     fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." ;
     rdfs:subClassOf [
         a owl:Restriction ;
@@ -97,14 +102,14 @@ fnd:DerivationKind a owl:Class ;
     fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
+    owl:members ( fnd:Versioned fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
 fnd:Governable owl:disjointWith fnd:GovernanceState .
 
 fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain fnd:Version ;
+    rdfs:domain fnd:Versioned ;
     rdfs:range fnd:PersistentIdentity ;
     owl:inverseOf fnd:hasVersion ;
     rdfs:comment "A Version's persistent identity." ;
@@ -112,13 +117,13 @@ fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
 
 fnd:hasVersion a owl:ObjectProperty ;
     rdfs:domain fnd:PersistentIdentity ;
-    rdfs:range fnd:Version ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "A PersistentIdentity's versions." ;
     fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
-    rdfs:domain fnd:Version ;
-    rdfs:range fnd:Version ;
+    rdfs:domain fnd:Versioned ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "Direct succession between two versions of the same identity." ;
     fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 
@@ -158,19 +163,25 @@ fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The start of a validity period." ;
-    fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
+    fnd:utility "The point at which a validity period begins, included in it. Always required, with a timezone. Where it is an estimate rather than a recorded fact, set estimatedStart true." .
 
 fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The end of a validity period, if it has one." ;
-    fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+    fnd:utility "Optional and capped at one, excluded from the period, with a timezone. An open-ended scope omits it rather than using a sentinel value." .
+
+fnd:estimatedStart a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when validFrom is an estimate rather than a recorded fact." ;
+    fnd:utility "Set it when the start of a validity period is the best available estimate. A judgement made as of a date inside an estimated period rests on the estimate, and a reader can tell." .
 
 fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Governable ;
     rdfs:range fnd:GovernanceState ;
     rdfs:comment "The current governance status of a Governable thing." ;
-    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
+    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time. On a thing that is also versioned, a change of state is a new version, never an edit of the value on an existing version (ADR-A142). On an unversioned governable thing the value is replaced and the change evidenced." .
 
 fnd:derivationKind a owl:ObjectProperty ;
     rdfs:domain fnd:DerivedArtefact ;

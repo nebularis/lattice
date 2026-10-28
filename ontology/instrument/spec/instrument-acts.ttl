@@ -23,7 +23,7 @@
 
 ins:LegalAct a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "An act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the exercise of a power." ;
 	fnd:utility "Subject: a legal act. Its fnd:hasTemporalScope is when it was done, and its fnd:hasEvidence when that became known. Names who did it (ins:actBy or a sub-property), and optionally its case (ins:forCase) and the acts it relies on (ins:pursuantTo). Whether it had effect is evaluated, never stated (§6.4)." .
 

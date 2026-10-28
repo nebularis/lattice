@@ -26,11 +26,11 @@
 # Loaded with examples/core.ttl, the peril and common vocabularies and the
 # exposure spec and vocabulary, it passes every shape with no warning.
 
-@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
-@prefix icm:      <https://www.nebularis.org/neuro-semantic/insurance/common#> .
-@prefix icm-voc:  <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
-@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix icm:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
+@prefix icm-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix elg:      <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

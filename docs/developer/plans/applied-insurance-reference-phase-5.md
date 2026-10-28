@@ -56,7 +56,7 @@ default candidate is bind-time authority, which does not.
 
 ## Documentation deltas
 
-Contract module README, `ontology/applied/capacity/docs/architecture-overview.md` (the compiled
+Contract module README, `docs/architecture/capacity-domain-analysis-and-design.md` (the compiled
 route and its parity contract), `solution-design-specification.md` (compilation is optional),
 `docs/architecture/ontology-architecture.md` §3.
 

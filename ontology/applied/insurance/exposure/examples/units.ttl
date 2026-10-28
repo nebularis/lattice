@@ -24,9 +24,9 @@
 # Undetermined (exe:MissingCandidate) while the other seven units decide as stated.
 # Loaded with the exposure spec and vocabulary and the peril vocabulary.
 
-@prefix aeo:      <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
-@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix aeo:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix elg:      <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:      <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

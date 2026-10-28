@@ -8,6 +8,6 @@ from __future__ import annotations
 from rdflib import Namespace
 
 DAL = Namespace("https://www.nebularis.org/neuro-semantic/lattice/persistence#")
-PAT = Namespace("https://example.org/lattice/patterns#")
+PAT = Namespace("https://www.nebularis.org/neuro-semantic/lattice/persistence-store#")
 
 __all__ = ["DAL", "PAT"]

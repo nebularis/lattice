@@ -26,7 +26,7 @@
 				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
 
 ins:Instrument a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "A legal instrument: a contract, policy, agreement, deed, licence or protocol. The only version in this layer." ;
 	fnd:utility "Subject: one version of an instrument. Expressed in exactly one assembled wording (ins:expressedIn, law I1). Its persistent identity carries its keys and its runtime state. Its terms are bound in it (ins:boundIn)." .
 
@@ -71,7 +71,7 @@ ins:impliedBy a owl:ObjectProperty ;
 
 ins:Amendment a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "The legal effect of a change to an instrument, from one version to the next." ;
 	fnd:utility "Subject: an amendment. Names the version it amends (ins:amends) and the one it produces (ins:resultsIn), and the documents it is stated in (ins:statedIn). Its fnd:hasTemporalScope is when it takes effect, which may precede its recording and its agreement, and its fnd:hasEvidence when it was recorded. Agreed when the assents it needs exist (§6.3)." .
 
@@ -224,9 +224,9 @@ ins:qualifies a owl:ObjectProperty ;
 [] a owl:AllDisjointClasses ;
 	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ins:Definition ins:Deeming ins:Sectioning ins:PartyResolution ) .
 
-ins:Term owl:disjointWith fnd:Version .
-ins:LegalRelation owl:disjointWith fnd:Version .
-ins:Qualifier owl:disjointWith fnd:Version .
+ins:Term owl:disjointWith fnd:Versioned .
+ins:LegalRelation owl:disjointWith fnd:Versioned .
+ins:Qualifier owl:disjointWith fnd:Versioned .
 ins:Template owl:disjointWith ins:Instrument .
 
 ins:OnExercise a owl:Class ;
@@ -451,8 +451,8 @@ ins:classification a owl:ObjectProperty ;
 	rdfs:comment "A class a term belongs to, such as a condition or a warranty." ;
 	fnd:utility "Subject: a stated term. Value: a concept from the scheme bound to ins-voc:TermClassificationContract, any number. Read for each instrument through the bound term's ins:boundFrom. Never evaluated: a breach's effect is stated as relations (law I12)." .
 
-ins:Definition owl:disjointWith fnd:Version .
-ins:Deeming owl:disjointWith fnd:Version .
+ins:Definition owl:disjointWith fnd:Versioned .
+ins:Deeming owl:disjointWith fnd:Versioned .
 
 ins:Sectioning a owl:Class ;
 	rdfs:comment "A term's dividing its instrument into sections." ;

@@ -29,7 +29,7 @@ from persistence.ir_render import fill_slots
 
 from conftest import EXAMPLES_DIR
 
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 PX = "https://example.org/projects#"
 PROJECT_EXAMPLE = EXAMPLES_DIR / "composite-project-ownership.ttl"
 PROJECT_DATA = Path(__file__).resolve().parent / "fixtures" / "project-data.ttl"

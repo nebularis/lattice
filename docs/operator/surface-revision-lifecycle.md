@@ -427,8 +427,8 @@ Release Gates Summary:
 ## See Also
 
 - [Surface Invalidation Runbook](surface-invalidation-runbook.md) — Technical procedures
-- [Phase 7 Status](../developer/status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Implementation details
-- [Outstanding Items](../developer/status/surface-outstanding-items.md#32-adr-a01-convention-conflict--closed) — Known limitations
+- [ADR-A32](../architecture/decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md) — The lifecycle decision and its consequences
+- [Surface layer README](../../ontology/surface/README.md) — Normative specification
 - `tools/surface/invalidation.py` — API reference
 
 ---

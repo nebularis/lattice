@@ -327,7 +327,7 @@
             dal:operationKind dal:KeyClaimWrite ;
             dal:parameter <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#param-claim>,
                 <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#param-owner> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "key-claim-write" ] ],
         [ a dal:GeneratedOperation ;
@@ -397,7 +397,7 @@
             dal:parameter <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-claim>,
                 <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-now>,
                 <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-owner> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "key-claim-retire" ] ],
         [ a dal:GeneratedOperation ;
@@ -468,7 +468,7 @@
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
             dal:operationKind dal:MergeRewrite ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "key-claim-merge-rewrite" ] ],
         [ a dal:GeneratedOperation ;
@@ -540,7 +540,7 @@
                 <https://example.org/lending/Customer/compiled/gap-scan-audit#result-S>,
                 <https://example.org/lending/Customer/compiled/gap-scan-audit#result-n>,
                 <https://example.org/lending/Customer/compiled/gap-scan-audit#result-target> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "gap-scan-audit" ] ],
         [ a dal:GeneratedOperation ;
@@ -606,7 +606,7 @@
                 dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Customer/compiled/fork-detection-audit#result-n>,
                 <https://example.org/lending/Customer/compiled/fork-detection-audit#result-rev> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "fork-detection-audit" ] ],
         [ a dal:GeneratedOperation ;
@@ -674,7 +674,7 @@
                 dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Customer/compiled/revision-multi-txn-audit#result-n>,
                 <https://example.org/lending/Customer/compiled/revision-multi-txn-audit#result-rev> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "revision-multi-txn-audit" ] ],
         [ a dal:GeneratedOperation ;
@@ -742,7 +742,7 @@
                 dal:NothingExamined ;
             dal:resultColumn <https://example.org/lending/Customer/compiled/txn-multi-revision-audit#result-n>,
                 <https://example.org/lending/Customer/compiled/txn-multi-revision-audit#result-t> ;
-            dal:templateVersion 1 ;
+            dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
     dal:resolvedDimension [ dal:candidateCount 0 ;

@@ -6,7 +6,7 @@ Companion to [Platform Solution Design Specification](solution-design-specificat
 
 ## 1. MORK Review Workbench
 
-The canonical design is [MORK UXD](../developer/sketches/governance-and-versioning-migration.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
+The canonical design is the MORK UXD, whose decisions are in [ADR-A42](decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) and [ADR-A43](decisions/ADR-A43-mork-replayable-queue-and-calibrated-governance.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
 
 ### 1.1 Role-to-API bridge
 

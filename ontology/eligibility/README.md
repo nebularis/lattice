@@ -29,7 +29,7 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 
@@ -155,7 +155,7 @@ classDiagram
     class Value
     class ValueReading
     class ValueSpace
-    class Version
+    class Versioned
     class WildcardCondition
     class WildcardSemantics
     AdmissionProfile --> CompositionOperation : compositionOperation
@@ -191,8 +191,8 @@ classDiagram
     Question --> RangeSet : candidateRangeSet
     Question --> RoleOccupancy : subjectRoleOccupancy
     Question --> Value : candidateValue
-    Version <|-- AdmissionProfile
-    Version <|-- OperationalProfile
+    Versioned <|-- AdmissionProfile
+    Versioned <|-- OperationalProfile
 ```
 
 <!-- end -->
@@ -309,7 +309,7 @@ sequenceDiagram
 Seven classes carry no properties of their own, and each is a closed set of named individuals (6.4), never
 an open class a reader could extend without a new decision. `elg:MatchStrategy`,
 `elg:WildcardSemantics` and `elg:CompositionOperation` are the three mechanisms of §5.1.
-`elg:OperationalProfile` is versioned (`fnd:Version`), since the five reference profiles E1 to E5 are
+`elg:OperationalProfile` is versioned (`fnd:Versioned`), since the five reference profiles E1 to E5 are
 themselves subject to change control. Each names one reference conformance profile that the differential
 test harness (`tools/reference/eligibility/`) checks a compiler backend against, one per mechanism
 combination worth testing in isolation. `elg:Law` and `elg:LawRegister` classify the laws by how each is
@@ -550,7 +550,7 @@ answers Undetermined.
 
 **Definition.** A reusable admissibility profile that composes one or more conditions.
 
-**Subclass of.** `elg:Condition`, `fnd:Version`
+**Subclass of.** `elg:Condition`, `fnd:Versioned`
 
 **Restrictions.**
 
@@ -609,7 +609,7 @@ answers Undetermined.
 
 **Definition.** A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control.
 
-**Subclass of.** `fnd:Version`
+**Subclass of.** `fnd:Versioned`
 
 #### `elg:Law`
 
@@ -673,6 +673,10 @@ answers Undetermined.
 #### `elg:hasCondition`
 
 **Definition.** A condition an admission profile composes.
+
+**Utility.** An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4).
+
+**Meaning bearing.** "true"^^xsd:boolean
 
 **Domain.** `elg:AdmissionProfile`
 
@@ -1089,6 +1093,9 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+
+# The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
+[ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .
 ```
 
 ### 6.7 Axiom Index
@@ -1097,7 +1104,7 @@ elg:L17 a elg:Law ;
 
 | Term | Kind | Summary |
 |---|---|---|
-| `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Version`. Restrictions `elg:compositionOperation` exactly 1 (SHACL only), `elg:hasCondition` min 1, `elg:matchStrategy` max 0 (SHACL only), `elg:wildcardSemantics` max 0 (SHACL only). |
+| `elg:AdmissionProfile` | Class | Subclass of `elg:Condition`, `fnd:Versioned`. Restrictions `elg:compositionOperation` exactly 1 (SHACL only), `elg:hasCondition` min 1, `elg:matchStrategy` max 0 (SHACL only), `elg:wildcardSemantics` max 0 (SHACL only). |
 | `elg:Closure` | Class | Disjoint with `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:licensedBy` exactly 1. |
 | `elg:CompositionOperation` | Class | Disjoint with `elg:Closure`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:Condition` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:negated` max 1 (SHACL only), `elg:negated` only `xsd:boolean` (SHACL only). |
@@ -1110,7 +1117,7 @@ elg:L17 a elg:Law ;
 | `elg:Law` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:LawRegister` | Class |  |
 | `elg:MatchStrategy` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:OperationalProfile`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
-| `elg:OperationalProfile` | Class | Subclass of `fnd:Version`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
+| `elg:OperationalProfile` | Class | Subclass of `fnd:Versioned`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:Question`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. |
 | `elg:Question` | Class | Subclass of `fnd:Evidenced`. Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:StepDirection`, `elg:ValueReading`, `elg:WildcardSemantics`. Restrictions `elg:forCondition` exactly 1 (OWL only). |
 | `elg:SetMembershipCondition` | Class | Subclass of `elg:Condition`. |
 | `elg:StepDirection` | Class | Disjoint with `elg:Closure`, `elg:CompositionOperation`, `elg:Condition`, `elg:Decision`, `elg:EligibilityDecision`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:Law`, `elg:MatchStrategy`, `elg:OperationalProfile`, `elg:Question`, `elg:ValueReading`, `elg:WildcardSemantics`. |
@@ -1591,6 +1598,8 @@ end
 Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantification is a direct dependency because interval admissibility uses declared `qnt:Range` and `qnt:RangeSet` semantics.
 
 ## 12. Release Notes
+
+- **Next release** (additive). `elg:hasCondition` is `fnd:meaningBearing`, so a condition is never edited and a shared one is immutable (Foundation section 4), and the three decision values are `owl:AllDifferent`.
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 

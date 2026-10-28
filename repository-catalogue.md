@@ -363,7 +363,6 @@ layout = "architecture"
 order = 6
 sources = [
     "docs/architecture/capacity-domain-analysis-and-design.md",
-    "docs/architecture/capacity-model-performance-addendum.md",
     "docs/architecture/configuration-studio.md",
     "docs/architecture/conformance-levels.md",
     "docs/architecture/data-architecture.md",

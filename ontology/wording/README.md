@@ -18,7 +18,7 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.7.0`) holds structure, text parts, references, document objects and variables
+This release (`0.19.0`) holds structure, text parts, references, document objects and variables
 (since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), textual
 amendments with the shapes for the layer's laws (since `0.3.0`), and references by identity, with
 editions and reliance for documents outside the wording (since `0.7.0`). Breaking changes are listed
@@ -115,13 +115,13 @@ The equivalence assertion on `WordingNode` also says something the reduntant sub
 
 ```turtle-spec
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
@@ -310,13 +310,13 @@ Law W8 checks that every reference finds exactly one version, or exactly one rel
 
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
 	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract, that its wording relies on." ;
 	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
@@ -1614,7 +1614,7 @@ wrd:AmendmentOperationShape a sh:NodeShape ;
 
 ## 9. How-to
 
-**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Version` with an identity
+**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Versioned` with an identity
 and a governance state, joined by `wrd:directlyComprises` and ordered by rank key. Give each element
 its inclusion mode. For alternatives, add a `wrd:VariationSlot` carrying the shared number, with its
 variants under `wrd:hasVariant`. For a conditional part, give it `wrd:includedWhen` an admission
@@ -1654,7 +1654,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b, the ADR-A112 addendum "references by
   identity"): `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` name a persistent
   identity, never a version, resolved within the wording holding the reference. Document objects and
-  external documents are editions, `fnd:Version`s. New: `wrd:reliesOnEdition` (static) and
+  external documents are editions, `fnd:Versioned`s. New: `wrd:reliesOnEdition` (static) and
   `wrd:reliesAsAmended` (ambulatory) from a wording to a document outside it, and `wrd:displayText`.
   Shapes 0.4.0 (breaking): a reference names an identity, display text only on a reference part,
   reliances, and law W8, which reports a reference that finds no version, or two, or no reliance.

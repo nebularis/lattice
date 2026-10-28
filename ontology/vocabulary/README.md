@@ -31,7 +31,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 
@@ -75,7 +75,12 @@ The class diagram below is generated from section 6.
 
 ```mermaid
 classDiagram
+    class BindingClosure {
+        closedAt, exactly one
+        closesBinding, exactly one
+    }
     class BindingScope
+    class Evidenced
     class Governable
     class GovernanceState
     class Property
@@ -91,12 +96,14 @@ classDiagram
         hasIdentity, exactly one
     }
     class TemporallyScoped
-    class Version
+    class Versioned
     class skos_ConceptScheme
     class voc_ConceptScheme {
         hasGovernanceState, exactly one
         hasIdentity, exactly one
     }
+    BindingClosure --> SchemeBinding : closesBinding
+    Evidenced <|-- BindingClosure
     Governable <|-- SchemeContract
     Governable <|-- voc_ConceptScheme
     SchemeBinding --> BindingScope : bindingScope
@@ -106,8 +113,8 @@ classDiagram
     SchemeContract --> Property : constrainsProperty
     SchemeContract --> voc_ConceptScheme : boundScheme
     TemporallyScoped <|-- SchemeBinding
-    Version <|-- SchemeContract
-    Version <|-- voc_ConceptScheme
+    Versioned <|-- SchemeContract
+    Versioned <|-- voc_ConceptScheme
     skos_ConceptScheme <|-- voc_ConceptScheme
     class ObjectProperty_resolvedUnder["Object Property - resolvedUnder"]
 ```
@@ -118,7 +125,7 @@ classDiagram
 
 ### 5.1 Design decisions
 
-**Scheme-level versioning through Foundation. Concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Version` — it has identity, and one version of a scheme can supersede another. An individual `skos:Concept` does not get its own independent version thread here. Tracking how a specific concept's meaning drifts or splits across scheme versions is a cross-version alignment problem that we do not address in this ontology.
+**Scheme-level versioning through Foundation. Concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Versioned` — it has identity, and one version of a scheme can supersede another. An individual `skos:Concept` does not get its own independent version thread here. Tracking how a specific concept's meaning drifts or splits across scheme versions is a cross-version alignment problem that we do not address in this ontology.
 
 **`SchemeContract` is structural only — it never encodes what a scheme is *about*.** `SchemeContract` therefore constrains only in structural, governance terms — which property, which scheme, what governance state that scheme must hold. What the scheme is *about* is communicated in prose, by whichever domain ontologies extend the framework.
 
@@ -216,7 +223,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Utility.** A published, versioned, governed collection of concepts. Use `fnd:hasIdentity` and `fnd:supersededBy` to track successive editions of the same scheme over time, and `fnd:hasGovernanceState` to record its review status.
 
-**Subclass of.** `fnd:Version`, `fnd:Governable`, `skos:ConceptScheme`
+**Subclass of.** `fnd:Versioned`, `fnd:Governable`, `skos:ConceptScheme`
 
 **Restrictions.**
 
@@ -231,7 +238,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Utility.** Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one.
 
-**Subclass of.** `fnd:Version`, `fnd:Governable`
+**Subclass of.** `fnd:Versioned`, `fnd:Governable`
 
 **Restrictions.**
 
@@ -246,7 +253,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Definition.** A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period.
 
-**Utility.** Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, end this binding's validity and add a new one rather than editing it.
+**Utility.** Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (Foundation section 4).
 
 **Subclass of.** `fnd:TemporallyScoped`
 
@@ -263,6 +270,21 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 **Definition.** A declared context within which a scheme binding applies.
 
 **Utility.** Declare one for each context in which bindings may differ, such as a deployment, tenant, jurisdiction or product. Vocabulary ships no scope individuals and does not decide which scopes hold for a given value.
+
+#### `voc:BindingClosure`
+
+**Definition.** The fact that a scheme binding ended at an instant.
+
+**Utility.** Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (Foundation section 4).
+
+**Subclass of.** `fnd:Evidenced`
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `voc:closesBinding` | exactly 1 |  |  |
+| `voc:closedAt` | exactly 1 |  |  |
 
 ### 6.2 Object Properties
 
@@ -340,9 +362,27 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Range.** `voc:SchemeBinding`
 
+#### `voc:closesBinding`
+
+**Definition.** The binding a closure ends.
+
+**Domain.** `voc:BindingClosure`
+
+**Range.** `voc:SchemeBinding`
+
+**Characteristics.** functional
+
 ### 6.3 Datatype Properties
 
-None.
+#### `voc:closedAt`
+
+**Definition.** The zoned instant at which a binding ended, excluded from its validity.
+
+**Domain.** `voc:BindingClosure`
+
+**Range.** `xsd:dateTime`
+
+**Characteristics.** functional
 
 ### 6.4 Individuals
 
@@ -372,17 +412,20 @@ rdf:Property a owl:Class .
 
 | Term | Kind | Summary |
 |---|---|---|
+| `voc:BindingClosure` | Class | Subclass of `fnd:Evidenced`. Restrictions `voc:closedAt` exactly 1, `voc:closesBinding` exactly 1. |
 | `voc:BindingScope` | Class | Disjoint with `voc:ConceptScheme`, `voc:SchemeBinding`, `voc:SchemeContract`. |
-| `voc:ConceptScheme` | Class | Subclass of `fnd:Governable`, `fnd:Version`, `skos:ConceptScheme`. Disjoint with `skos:Concept`, `voc:BindingScope`, `voc:SchemeBinding`, `voc:SchemeContract`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only). |
+| `voc:ConceptScheme` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`, `skos:ConceptScheme`. Disjoint with `skos:Concept`, `voc:BindingScope`, `voc:SchemeBinding`, `voc:SchemeContract`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only). |
 | `voc:SchemeBinding` | Class | Subclass of `fnd:TemporallyScoped`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeContract`. Restrictions `fnd:hasTemporalScope` exactly 1 (SHACL only), `voc:bindsScheme` exactly 1, `voc:forContract` exactly 1. |
-| `voc:SchemeContract` | Class | Subclass of `fnd:Governable`, `fnd:Version`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeBinding`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only), `voc:boundScheme` max 1 (SHACL only), `voc:constrainsProperty` min 1. |
+| `voc:SchemeContract` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeBinding`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only), `voc:boundScheme` max 1 (SHACL only), `voc:constrainsProperty` min 1. |
 | `voc:bindingScope` | Object property | Domain `voc:SchemeBinding`. Range `voc:BindingScope`. |
 | `voc:bindsScheme` | Object property | Domain `voc:SchemeBinding`. Range `voc:ConceptScheme`. Functional. |
 | `voc:boundScheme` | Object property | Domain `voc:SchemeContract`. Range `voc:ConceptScheme`. Functional. |
+| `voc:closesBinding` | Object property | Domain `voc:BindingClosure`. Range `voc:SchemeBinding`. Functional. |
 | `voc:constrainsProperty` | Object property | Domain `voc:SchemeContract`. Range `rdf:Property`. |
 | `voc:forContract` | Object property | Domain `voc:SchemeBinding`. Range `voc:SchemeContract`. Functional. |
 | `voc:requiresGovernanceState` | Object property | Domain `voc:SchemeContract`. Range `fnd:GovernanceState`. |
 | `voc:resolvedUnder` | Object property | Range `voc:SchemeBinding`. |
+| `voc:closedAt` | Datatype property | Domain `voc:BindingClosure`. Range `xsd:dateTime`. Functional. |
 
 <!-- end -->
 
@@ -526,6 +569,13 @@ voc:HistoricalProvenanceTimeShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+voc:BindingClosureShape a sh:NodeShape ;
+    sh:targetClass voc:BindingClosure ;
+    sh:property [ sh:path voc:closesBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:class voc:SchemeBinding ;
+        sh:message "A closure names exactly one scheme binding." ] ;
+    sh:property [ sh:path voc:closedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype <http://www.w3.org/2001/XMLSchema#dateTime> ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "A closure states exactly one zoned instant." ] .
 ```
 -->
 
@@ -575,6 +625,8 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 `voc:ConceptScheme` specialises.
 
 ## 12. Release Notes
+
+- **Next release** (additive). `voc:BindingClosure`, `voc:closesBinding` and `voc:closedAt`: a binding ends by a closure record and is never edited, which the resolver reads as the end of validity (Foundation section 4). `voc:BindingClosureShape` checks the record.
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 

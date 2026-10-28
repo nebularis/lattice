@@ -247,7 +247,7 @@ That is the worked example from this branch. Six cells, one of which is a senten
 |---|---|---|
 | ID | `MEC-12` | agent |
 | Name | Foundation's versioning | agent |
-| Claim | **bolded.** "A class that is a member of `fnd:Version` is versioned, and Foundation already gives it the version IRI and the ordering it needs." | agent drafts, maintainer ratifies |
+| Claim | **bolded.** "A class that is a member of `fnd:Versioned` is versioned, and Foundation already gives it the version IRI and the ordering it needs." | agent drafts, maintainer ratifies |
 | Owner | `ontology/foundation` | agent |
 | Kind | ontology | agent |
 | Problem shape | `versioning-an-entity-over-time` | maintainer |
@@ -328,11 +328,11 @@ Memory pressure was the concern behind the question, and it does not arise. The 
 
 ### 9.1 The term summary is necessary and not sufficient, which is measured
 
-Built and queried, 2026-10-24. `mise run graph:ask -- exists version` returns `foundation#Version` as a class at `ontology/foundation/spec/foundation.ttl:18`, which is exactly the answer that would have prevented an agent proposing a second versioning system. **`exists versioning` returns nothing.**
+Built and queried, 2026-10-24. `mise run graph:ask -- exists version` returns `foundation#Versioned` as a class at `ontology/foundation/spec/foundation.ttl:18`, which is exactly the answer that would have prevented an agent proposing a second versioning system. **`exists versioning` returns nothing.**
 
 That gap is the whole argument for the registers, stated as sharply as it can be. The corpus declares 2,814 terms and carries an `rdfs:label` on 563 of them, so a term lookup is mostly a substring match against an identifier, and an identifier is a noun while an agent's question is a gerund. No amount of term summarising closes that, because the summary can only hold what the ontology says.
 
-What closes it is the **mechanism register's problem-shape column**, which is written in the words an agent would use for its problem rather than the words the model uses for its solution. `versioning-an-entity-over-time` is matched by the question. `fnd:Version` is not. The register row is the bridge, and this measurement is why that register is the first backfill rather than the last.
+What closes it is the **mechanism register's problem-shape column**, which is written in the words an agent would use for its problem rather than the words the model uses for its solution. `versioning-an-entity-over-time` is matched by the question. `fnd:Versioned` is not. The register row is the bridge, and this measurement is why that register is the first backfill rather than the last.
 
 It also sharpens what the miss log is for. A query returning nothing is not evidence that embeddings are needed, because the first thing to check is whether a register row or a shape would have answered it. Only a miss that survives that check counts.
 

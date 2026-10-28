@@ -113,3 +113,60 @@ def test_a_blank_canonicalizer_is_judged_by_white_space():
     nquads = '<urn:a> <urn:b> "c" .\n'
     assert _kind(lambda: minter.mint({"canonicalNQuads": nquads, "canonicalizer": chr(0x00A0)})) == "CanonicalizerNotDeclared"
     assert minter.mint({"canonicalNQuads": nquads, "canonicalizer": chr(0x1F)}).iri
+
+
+def _scoped_natural_key() -> dict:
+    r = _recipe("Policy")
+    r["key"]["scopeProperty"] = "https://example.org/lending#tenant"
+    return _reseal(r)
+
+
+@pytest.mark.parametrize("component", [".", "..", chr(0xFF0E) * 2])
+def test_a_dot_segment_is_refused_in_a_natural_key(component):
+    minter = Minter(Recipe.parse(_scoped_natural_key()))
+    assert _kind(lambda: minter.mint({"key": [component, "p-1"], "scope": "acme"})) == "DotSegment"
+    if component in (".", ".."):  # a scope is not normalized, so only the literal forms are segments
+        assert _kind(lambda: minter.mint({"key": ["acme", "p-1"], "scope": component})) == "DotSegment"
+    assert minter.mint({"key": ["acme", "..."], "scope": "acme"}).iri.endswith("/ACME/...")
+
+
+def test_a_dot_segment_is_fine_in_a_hashed_key():
+    assert Minter(Recipe.parse(_recipe("Product"))).mint({"key": [".."]}).iri
+
+
+def test_an_empty_scope_is_refused():
+    minter = Minter(Recipe.parse(_scoped_natural_key()))
+    assert _kind(lambda: minter.mint({"key": ["acme", "p-1"], "scope": ""})) == "EmptyScope"
+    claimed = Minter(Recipe.parse(_recipe("Person")), {"example-key-v1": b"k" * 32})
+    assert _kind(lambda: claimed.mint({"key": ["ada@example.org"], "scope": "",
+                                       "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"})) == "EmptyScope"
+
+
+def _permissive_surrogate(pattern: str) -> Minter:
+    r = _recipe("Person")
+    r["surrogate"]["pattern"] = pattern
+    return Minter(Recipe.parse(_reseal(r)), {"example-key-v1": b"k" * 32})
+
+
+@pytest.mark.parametrize("surrogate", ["a/b", "a#b", "a?b", "a b", "a%2Fb", "", "caf" + chr(0xE9)])
+def test_a_surrogate_outside_the_unreserved_set_is_refused(surrogate):
+    minter = _permissive_surrogate(".*")
+    inputs = {"key": ["ada@example.org"], "scope": "acme", "surrogate": surrogate}
+    assert _kind(lambda: minter.mint(inputs)) == "UnsafeSurrogate"
+
+
+def test_an_unreserved_surrogate_is_accepted_and_dot_segments_are_not():
+    minter = _permissive_surrogate(".+")
+    inputs = {"key": ["ada@example.org"], "scope": "acme"}
+    assert minter.mint(inputs | {"surrogate": "A-b.c_d~9"}).iri == "urn:person:A-b.c_d~9"
+    assert _kind(lambda: minter.mint(inputs | {"surrogate": ".."})) == "DotSegment"
+
+
+def test_a_position_wider_than_its_width_is_refused_with_both_numbers():
+    minter = Minter(Recipe.parse(_recipe("Shipment")))
+    with pytest.raises(MintError) as e:
+        minter.mint({"namespaceToken": "ship-1", "epoch": 10000, "seq": 1})
+    assert e.value.kind == "PositionWidthOverflow"
+    assert "10000" in str(e.value) and "4" in str(e.value)
+    assert minter.mint({"namespaceToken": "ship-1", "epoch": 9999, "seq": 1}).iri
+    assert _kind(lambda: minter.mint({"namespaceToken": "..", "epoch": 1, "seq": 1})) == "DotSegment"

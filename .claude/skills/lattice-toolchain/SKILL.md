@@ -5,7 +5,7 @@ description: Building, testing and running LATTICE's checks, and setting up or r
 
 # The LATTICE toolchain
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities environment, build-automation, dependency-management and continuous-integration, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities environment, build-automation, dependency-management and continuous-integration, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 The [developer guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md)
 describes every tool and task, and

@@ -56,7 +56,19 @@ def test_every_family_with_a_definition_rule_names_where_it_defines():
     for family in identifiers.FAMILIES:
         if family.resolvable:
             assert family.defines, family.name
-            assert family.definition in {"filename", "table-row", "heading"}, family.name
+            assert family.definition in {"filename", "table-row", "heading", "question"}, family.name
+
+
+def test_a_question_raised_outside_a_plan_or_sketch_is_counted_and_never_failed():
+    """Questions are raised in notes, status records and decisions too, outside the documents whose
+    leads and rows define them, so an unresolved one is counted. LG-Q7 is defined by its row in the
+    ledger plan, so it resolves."""
+    family = next(f for f in identifiers.FAMILIES if f.name == "question-or-decision-point")
+    assert not family.failing and "LGQ7" in identifiers.definitions(family)
+    found = identifiers.mentions(identifiers.scannable(identifiers.tracked_markdown()))
+    findings = identifiers.examine(found)
+    assert not [m for f, m in findings.unresolved if f is family]
+    assert [m for f, m in findings.counted if f is family], "the corpus raises questions outside plans and sketches"
 
 
 def test_a_removable_family_is_never_failed():
@@ -108,3 +120,21 @@ def test_a_known_decision_resolves_to_its_canonical_filename_spelling():
     defined = identifiers.definitions(DECISION)
     assert defined[identifiers.normalise("ADR-A131")] == "ADR-A131"
     assert defined[identifiers.normalise("ADR-AC2")] == "ADR-A-C2"
+
+
+def test_or1_a_family_defining_one_identifier_twice_is_reported(tmp_path, monkeypatch):
+    """A merge of two branches that each numbered a row leaves one identifier on two rows. The
+    check names both sites, so first in wins is decidable from its output."""
+    (tmp_path / "r.md").write_text("| # | Debt |\n|---|---|\n| TD-7 | one |\n| TD-8 | two |\n| TD-7 | three |\n", encoding="utf-8")
+    debt = next(f for f in identifiers.FAMILIES if f.name == "technical-debt")
+    family = identifiers.Family(name="t", mention=debt.mention, definition="table-row", defines=("r.md",))
+    monkeypatch.setattr(identifiers, "ROOT", tmp_path)
+    found = identifiers.duplicates(family)
+    assert list(found) == ["TD7"]
+    assert [line for _, line, _ in found["TD7"]] == [3, 5]
+    assert identifiers.definitions(family) == {"TD7": "TD-7", "TD8": "TD-8"}
+
+
+def test_or1_the_corpus_defines_no_identifier_twice():
+    twice = {f.name: sorted(k for k in identifiers.duplicates(f)) for f in identifiers.FAMILIES}
+    assert not any(twice.values()), {k: v for k, v in twice.items() if v}
