@@ -408,7 +408,7 @@ srf:generatorVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:canonicalisationVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
-	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under." .
+	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under. The contract is the substrate's, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (ADR-A138), and the version names the rule that selects the content triples." .
 
 srf:namingPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:IndexContract ; rdfs:range xsd:string ;
@@ -433,12 +433,12 @@ srf:producedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:artefactHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of a generation run's emitted content." ;
+	rdfs:comment "The SHA-256, lowercase hex, of a generation run's emitted bytes as the generator version the profile binds serialised them." ;
 	fnd:utility "Compare across runs to establish that regeneration was deterministic. A change here with no change in the read set or profile is a generator defect." .
 
 srf:semanticContentHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of the canonical, meaning-bearing inputs a generation run consumed." ;
+	rdfs:comment "The digest of the canonical, meaning-bearing inputs a generation run consumed: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the dataset whose graphs are the read set's inputs, each in a graph named by its entry (ADR-A138)." ;
 	fnd:utility "Together with the profile identity, decides whether an existing surface may be reused rather than regenerated." .
 
 srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -447,7 +447,7 @@ srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of an input's canonical content at the time it was read." .
+	rdfs:comment "The digest of an input's canonical content at the time it was read: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the input's graph (ADR-A138)." .
 
 srf:resolvedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:dateTime ;

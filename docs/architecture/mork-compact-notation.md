@@ -1011,7 +1011,7 @@ Only OWL class expressions, RDF lists, SWRL atoms, R2RML term maps, `owl:Axiom` 
 
 ### 12.4 Canonical output
 
-The **canonical decoding** of a document is: the N-Triples serialisation of the decoded graph, one triple per line, sorted by the byte order of (subject, predicate, object) after blank-node labelling as in §12.3, with no trailing whitespace and a final newline. Hashes, diffs and cache keys SHOULD be computed over the canonical decoding rather than over the MCN text, since two MCN texts can denote the same graph (different line order, quoted versus bare literals, `M+MD` versus `MD`).
+The **canonical decoding** of a document is: the N-Triples serialisation of the decoded graph, one triple per line, sorted by the byte order of (subject, predicate, object) after blank-node labelling as in §12.3, with no trailing whitespace and a final newline. Hashes, diffs and cache keys SHOULD be computed over the canonical decoding rather than over the MCN text, since two MCN texts can denote the same graph (different line order, quoted versus bare literals, `M+MD` versus `MD`). This canonical decoding is a digest of an MCN document, reproducible by any conforming decoder. A digest of the graph itself, comparable with the rest of LATTICE, is the substrate's canonicalisation ([ADR-A138](decisions/ADR-A138-one-canonicalisation.md)), RDFC-1.0 over the decoded graph. The two coincide for a graph with no blank nodes, since both sort the same N-Triples, and differ only in how blank nodes are labelled.
 
 ---
 

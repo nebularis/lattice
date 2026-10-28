@@ -281,7 +281,7 @@ qnt:spaceKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 qnt:spaceHash a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
-    rdfs:comment "The canonical semantic hash of a ValueSpace declaration." ;
+    rdfs:comment "The digest of a ValueSpace declaration's canonical content: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the space node and every triple reachable from it through qnt: properties, excluding qnt:spaceHash, fnd:hasIdentity, fnd:supersededBy and fnd:hasGovernanceState (ADR-A138)." ;
     fnd:utility "Records the hash of the canonical, meaning-bearing content of a ValueSpace declaration — not a hash of arbitrary RDF serialisation." .
 
 qnt:onSpace a owl:ObjectProperty, owl:FunctionalProperty ;

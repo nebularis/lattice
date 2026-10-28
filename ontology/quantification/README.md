@@ -1228,7 +1228,7 @@ qnt:spaceKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 qnt:spaceHash a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
-    rdfs:comment "The canonical semantic hash of a ValueSpace declaration." ;
+    rdfs:comment "The digest of a ValueSpace declaration's canonical content: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the space node and every triple reachable from it through qnt: properties, excluding qnt:spaceHash, fnd:hasIdentity, fnd:supersededBy and fnd:hasGovernanceState (ADR-A138)." ;
     fnd:utility "Records the hash of the canonical, meaning-bearing content of a ValueSpace declaration — not a hash of arbitrary RDF serialisation." .
 
 qnt:onSpace a owl:ObjectProperty, owl:FunctionalProperty ;
@@ -2170,7 +2170,7 @@ never names a class of a layer above it. Each consumer decides what its ranges a
 
 Quantification uses `fnd:Versioned` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
 
-**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which this document's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. A content-hash contract is not part of it: Surface's read-set hashes remain the only implemented one. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
+**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which the layer's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. The content-hash contract is the substrate's canonicalisation (ADR-A138), and `qnt:spaceHash` names its content triples. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
 
 ### Vocabulary
 

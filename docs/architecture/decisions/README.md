@@ -139,6 +139,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) | A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by | Accepted, 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
 | [A-136](ADR-A136-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Proposed, 2026-10-28 |
 | [A-137](ADR-A137-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Proposed, 2026-10-28 |
+| [A-138](ADR-A138-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Proposed, 2026-10-28 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
