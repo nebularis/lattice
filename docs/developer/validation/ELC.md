@@ -57,7 +57,7 @@ shapes report each declared in the wrong place. No graph in the repository names
    operation in place of `DimensionConsistent`.
 4. **`AllRequired` and `AnySufficient` gain definitions**, the strong Kleene readings ADR-A89 states. Eleven
    individuals still have none (README §13).
-5. **The warranty carve-back is typed a profile**, which makes it versioned (`fnd:Version`), as every profile
+5. **The warranty carve-back is typed a profile**, which makes it versioned (`fnd:Versioned`), as every profile
    is. Nothing else in that example changed.
 6. **The reconciliations are against `82fc2b25`**, the commit before ELC. OD6's command against `dab1c790`
    with OD6's file no longer passes on this branch, since ELC changed the graphs after it. It passed at

@@ -113,16 +113,16 @@ fnd:utility a owl:AnnotationProperty ;
 
 ## 6. Classes
 
-#### `fnd:Version`
+#### `fnd:Versioned`
 
 **Definition.** An individual representing a specific, identified state of some persistent thing.
 
-**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`.
+**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`.
 
 ```turtle-spec
-fnd:Version a owl:Class ;
+fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -286,7 +286,7 @@ fnd:DerivationKind a owl:Class ;
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
+    owl:members ( fnd:Versioned fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
@@ -305,7 +305,7 @@ fnd:Governable owl:disjointWith fnd:GovernanceState .
 
 ```turtle-spec
 fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain fnd:Version ;
+    rdfs:domain fnd:Versioned ;
     rdfs:range fnd:PersistentIdentity ;
     owl:inverseOf fnd:hasVersion ;
     rdfs:comment "A Version's persistent identity." ;
@@ -313,7 +313,7 @@ fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
 
 fnd:hasVersion a owl:ObjectProperty ;
     rdfs:domain fnd:PersistentIdentity ;
-    rdfs:range fnd:Version ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "A PersistentIdentity's versions." ;
     fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 ```
@@ -326,8 +326,8 @@ fnd:hasVersion a owl:ObjectProperty ;
 
 ```turtle-spec
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
-    rdfs:domain fnd:Version ;
-    rdfs:range fnd:Version ;
+    rdfs:domain fnd:Versioned ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "Direct succession between two versions of the same identity." ;
     fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 ```
@@ -832,7 +832,7 @@ Illustration only — `ins:Obligation` isn't defined here; it belongs to Instrum
 
 ```turtle-example
 # Illustrative only — ins: is not part of Foundation's own namespace.
-ins:Obligation rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped .
+ins:Obligation rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped .
 
 ex:ob1
     a ins:Obligation ;
@@ -855,7 +855,7 @@ ex:ob1
 | Term | Kind | Key characteristics |
 |---|---|---|
 | `fnd:utility` | Annotation property | — |
-| `fnd:Version` | Class (mixin) | `hasIdentity` cardinality 1 |
+| `fnd:Versioned` | Class (mixin) | `hasIdentity` cardinality 1 |
 | `fnd:PersistentIdentity` | Class | `hasVersion` min 1 |
 | `fnd:Evidenced` | Class (mixin) | — |
 | `fnd:Evidence` | Class | subClassOf `prov:Entity`; `supports` min 1; `recordedAt` cardinality 1 |
@@ -898,7 +898,7 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
-- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
+- **Next release** (breaking, [ADR-A136](../../docs/architecture/decisions/ADR-A136-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in the same release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)).
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
 - **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,

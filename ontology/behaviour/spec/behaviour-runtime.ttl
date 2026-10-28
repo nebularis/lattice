@@ -172,7 +172,7 @@ bhv:conditionSatisfied a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The deeming's condition, as it was satisfied. Subject: a deemed-fact record. Value: an Eligibility condition, at most one." .
 
 bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Version ;
+	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Versioned ;
 	owl:deprecated true ;
 	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." ;
 	fnd:utility "Deprecated with bhv:AcceptanceRecord." .

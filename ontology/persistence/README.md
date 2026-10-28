@@ -1280,7 +1280,7 @@ ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
 
 | Refused or warned | When |
 |---|---|
-| `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version` (by IRI, with no import), or it has no target class, or it is a value property |
+| `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Versioned` (by IRI, with no import), or it has no target class, or it is a value property |
 | `ReferenceModeUnknown` (refusal) | the value is neither individual |
 | `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or a record class, its target class is versioned, and the edge is by identity |
 
@@ -1896,7 +1896,7 @@ from other facts and never stored here. The first version is written at seq 0 on
 A caller restates only what changed. A member the new version does not restate is shared by reference, so the payload holds the
 new version's own triples and a pointer to each unchanged member. A node a new version points at must already be in the data graph.
 
-**Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Version`, by IRI in the loaded graphs
+**Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Versioned`, by IRI in the loaded graphs
 with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which the chain of `pat:previousVersion`
 keeps. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
 
@@ -2140,7 +2140,7 @@ profile nodes, which node-local shapes cannot see.
 store-local epoch, the row-level epoch guard, a weak ETag with compare-and-set, no global read where
 a dataset tier is declared, an advisory contiguity check, sorted acquisition with a single guarded
 update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
-profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
+profile scoped to a bare class from another namespace, and a subclass of `fnd:Versioned` written in place.
 
 ### 5.11 Keys: `persistent-foundation`
 
@@ -2590,7 +2590,7 @@ flowchart TB
 
 Each event carries its type, its receipt (`pat:revision`), its position within the batch (`pat:opSeq`) and its time, which are the four triples of the picture. `test_append_events.py` holds that a three-row append steps the sequence once and writes one receipt, one claim and three events (`test_h2_6b_t1`), and that the result is the same under every hash seed on rdflib (`test_h2_6b_t2`).
 
-**Append of a version.** A family that appends versions writes no replace and no tombstone. [`examples/write-discipline-composite-append-versions.ttl`](examples/write-discipline-composite-append-versions.ttl) declares a quote as a `fnd:Version`, and `append-version` adds a new version beside the old one. The caller writes only the new version's own triples, and a member it does not restate is reached by reference.
+**Append of a version.** A family that appends versions writes no replace and no tombstone. [`examples/write-discipline-composite-append-versions.ttl`](examples/write-discipline-composite-append-versions.ttl) declares a quote as a `fnd:Versioned`, and `append-version` adds a new version beside the old one. The caller writes only the new version's own triples, and a member it does not restate is reached by reference.
 
 ```mermaid
 flowchart TB
@@ -4433,7 +4433,7 @@ the tag.
 #### `dal:writeDiscipline`
 
 **Definition.** How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a
-target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace.
+target class is a subclass of fnd:Versioned (by IRI, with no import) and the discipline is dal:InPlace.
 
 **Domain.** `dal:WriteDisciplineProfile`
 
@@ -5093,7 +5093,7 @@ The individuals of `dal:ReferenceMode`.
 | Individual | Type | Definition |
 |---|---|---|
 | `dal:ByIdentity` | `dal:ReferenceMode` | The default. The edge names the target's persistent identity, and the version in force is read from the identity's own record, so a new version of the target needs no change to the node that refers to it. |
-| `dal:Pinned` | `dal:ReferenceMode` | The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Version (by IRI, with no import), since there is then no version to name. |
+| `dal:Pinned` | `dal:ReferenceMode` | The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Versioned (by IRI, with no import), since there is then no version to name. |
 
 The individuals of `dal:ConcurrencyStrategy`.
 

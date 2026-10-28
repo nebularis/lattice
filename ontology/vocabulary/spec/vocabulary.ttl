@@ -34,7 +34,7 @@ voc:BindingScope a owl:Class ;
 voc:ConceptScheme a owl:Class ;
     rdfs:comment "A published, identified, governed collection of concepts." ;
     fnd:utility "A published, versioned, governed collection of concepts. Use fnd:hasIdentity and fnd:supersededBy to track successive editions of the same scheme over time, and fnd:hasGovernanceState to record its review status." ;
-    rdfs:subClassOf fnd:Governable, fnd:Version, skos:ConceptScheme .
+    rdfs:subClassOf fnd:Governable, fnd:Versioned, skos:ConceptScheme .
 
 voc:SchemeBinding a owl:Class ;
     rdfs:comment "A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period." ;
@@ -44,7 +44,7 @@ voc:SchemeBinding a owl:Class ;
 voc:SchemeContract a owl:Class ;
     rdfs:comment "A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme." ;
     fnd:utility "Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:constrainsProperty ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], fnd:Governable, fnd:Version .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:constrainsProperty ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], fnd:Governable, fnd:Versioned .
 
 voc:bindingScope a owl:ObjectProperty ;
     rdfs:comment "A scope within which a scheme binding applies." ;

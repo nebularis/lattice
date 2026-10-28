@@ -105,7 +105,7 @@ Pick one width, put it in the grammar, make every example conform, and have the 
 
 **Two further F-9 gaps:**
 
-- **Nothing forbids `fnd:supersededBy` between content revisions.** That is exactly the chain that cycles on revert (A→B→A). The ADR maps content revisions to `fnd:Version`, and the guide (§23.3) says `fnd:Version` carries `fnd:supersededBy`. Add a rule: supersession and history are asserted only between event IRIs, never between content revisions.
+- **Nothing forbids `fnd:supersededBy` between content revisions.** That is exactly the chain that cycles on revert (A→B→A). The ADR maps content revisions to `fnd:Versioned`, and the guide (§23.3) says `fnd:Versioned` carries `fnd:supersededBy`. Add a rule: supersession and history are asserted only between event IRIs, never between content revisions.
 - **The event type differs between documents.** The ADR types the event IRI as `prov:Activity`. iri-policy says events are chained by `pat:prevRev` "exactly as … Part V", which makes them `pat:Revision` (and `RevisionShape` then requires `pat:target`, `pat:txn`, etc.). State the relationship, for example `pat:Revision rdfs:subClassOf prov:Activity`.
 
 ### 2.5 F-12: grammar and escaping are claimed but absent

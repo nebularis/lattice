@@ -343,7 +343,7 @@ def test_h2_6c_t18_a_composite_family_with_receipt_only_is_refused_in_place_and_
 
 # ---- the warning --------------------------------------------------------------------------------------------------------
 
-FND_VERSION = U(str(FND.Version))
+FND_VERSION = U(str(FND.Versioned))
 
 
 def _warnings(graph) -> set:

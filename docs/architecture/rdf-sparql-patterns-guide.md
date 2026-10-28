@@ -185,7 +185,7 @@ Every example in this guide uses the same small domain, so that a corrupted stat
 @prefix prov: <http://www.w3.org/ns/prov#> .
 ```
 
-`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on); it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). Its final IRI, and its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Version`, is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)); the local name is what matters here.
+`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on), it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). Its final IRI, and its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Versioned`, is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)), the local name is what matters here.
 
 **Every IRI in this guide is illustrative.** The URN namespaces used in examples (`urn:g:`, `urn:rev:`, `urn:key:`, `urn:txn:`, `urn:order:`, `urn:person:`, `urn:ds:`, `urn:ev:`, `urn:tenant:`, `urn:decision:`, `urn:user:`) are unregistered URN namespace identifiers (RFC 8141). Copied verbatim into two deployments, they collide the moment the datasets are merged or federated. A deployment selects a controlled `https` authority, a `tag:` URI, or a registered scheme through its identity profile ([iri-identity-patterns.md §17](iri-identity-patterns.md#17-open-design-work)); the patterns do not depend on the choice.
 
@@ -2286,7 +2286,7 @@ Foundation already has the terms the patterns need, with narrower domains:
 |---|---|---|
 | transaction time of a receipt | `fnd:recordedAt` (domain `fnd:Evidence`) | a `pat:Revision` could be modelled as `fnd:Evidence` for the write; otherwise `pat:recordedAt` stays a separate property with the same meaning |
 | valid time of a domain fact | `fnd:TemporallyScoped` → `fnd:hasTemporalScope` → `fnd:validFrom` / `fnd:validTo` | use as is |
-| identity across versions | `fnd:Version` with `fnd:hasIdentity` and `fnd:supersededBy` | the receipt chain (`pat:prevRev`) is the write-level analogue of the domain-level `fnd:supersededBy` |
+| identity across versions | `fnd:Versioned` with `fnd:hasIdentity` and `fnd:supersededBy` | the receipt chain (`pat:prevRev`) is the write-level analogue of the domain-level `fnd:supersededBy` |
 
 Whether `pat:Revision` becomes a `fnd:Evidence` subclass, and whether the receipt chain and `fnd:supersededBy` are unified or kept as separate layers (write log versus domain versioning), is an ontology decision to take with the ADR ([Appendix E](#appendix-e--what-remains-open)). This guide keeps them separate so that the pattern layer does not depend on a domain ontology.
 

@@ -13,7 +13,7 @@ Behaviour depends on a stable target model for writing effects into document str
 Instrument defines the smallest required substrate-facing model:
 
 - Classes: `ins:Element`, `ins:Provision`, `ins:Obligation`, `ins:Qualifier`.
-- `ins:Element` subclasses `fnd:Version`.
+- `ins:Element` subclasses `fnd:Versioned`.
 - `ins:Provision`, `ins:Obligation`, and `ins:Qualifier` subclass `ins:Element`.
 - `ins:Provision`, `ins:Obligation`, and `ins:Qualifier` are mutually disjoint. `ins:Element` is their common superclass, so it is not in the disjointness axiom (corrected 2026-09-25: including it made every subclass unsatisfiable, fixed in `9a12da4`).
 - Cross-reference properties include:
@@ -25,7 +25,7 @@ Instrument defines the smallest required substrate-facing model:
 Versioning contract (R-B7):
 
 - Instrument nodes are never updated in place.
-- Any material change creates a new `fnd:Version` individual with the same `fnd:hasIdentity` and links the old version to the new one via `fnd:supersededBy`.
+- Any material change creates a new `fnd:Versioned` individual with the same `fnd:hasIdentity` and links the old version to the new one via `fnd:supersededBy`.
 - Supersession is only legal between versions sharing the same identity.
 
 ## Consequences

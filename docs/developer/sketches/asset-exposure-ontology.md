@@ -101,7 +101,7 @@ contract module's properties. Peril, territory and asset class editions are boun
 
 ```mermaid
 flowchart LR
-    ES["aeo:ExposureSet<br/>fnd:Version"] -->|aeo:hasLocation| L["aeo:Location"]
+    ES["aeo:ExposureSet<br/>fnd:Versioned"] -->|aeo:hasLocation| L["aeo:Location"]
     ES -->|aeo:hasAsset| A["aeo:Asset"]
     A -->|aeo:locatedAt| L
     A -->|aeo:partOf| A
@@ -145,7 +145,7 @@ queries, never asserted, and a shape rejects cycles.
 ### 5.2 Exposure set
 
 ```
-aeo:ExposureSet ⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:TemporallyScoped ⊓ fnd:Evidenced
+aeo:ExposureSet ⊑ fnd:Versioned ⊓ fnd:Governable ⊓ fnd:TemporallyScoped ⊓ fnd:Evidenced
                ⊓ =1 fnd:hasIdentity.aeo:ExposureIdentity
                ⊓ =1 aeo:reportingUnit.qnt:Unit
 ```
@@ -166,7 +166,7 @@ versions.
 ### 5.3 Location
 
 ```
-aeo:Location ⊑ fnd:Version ⊓ =1 fnd:hasIdentity.aeo:LocationIdentity
+aeo:Location ⊑ fnd:Versioned ⊓ =1 fnd:hasIdentity.aeo:LocationIdentity
 ```
 
 A place where exposure sits: a site, a building footprint, a pipeline segment, a port. A version
@@ -206,7 +206,7 @@ peril scope and the temporal scope. The CBAA SoUA "applicable pool schemes" row 
 ### 5.5 Asset and interest
 
 ```
-aeo:Asset ⊑ fnd:Version ⊓ =1 fnd:hasIdentity.aeo:AssetIdentity ⊓ =1 aeo:assetClass.skos:Concept
+aeo:Asset ⊑ fnd:Versioned ⊓ =1 fnd:hasIdentity.aeo:AssetIdentity ⊓ =1 aeo:assetClass.skos:Concept
           ⊓ ≤1 aeo:locatedAt.aeo:Location
 ```
 
@@ -420,7 +420,7 @@ Requirements arrive from different sources with different force:
 | board mandate | affirmative cyber-physical cover | internal governance |
 
 ```
-aeo:CoverageRequirement ⊑ fnd:Version ⊓ fnd:Evidenced
+aeo:CoverageRequirement ⊑ fnd:Versioned ⊓ fnd:Evidenced
     ⊓ =1 aeo:requirementSource.skos:Concept
     ⊓ ≥1 aeo:requiredMeasure.aeo:MeasureConstraint
 ```
@@ -547,7 +547,7 @@ peril vocabulary declares, reused rather than redeclared.
 
 | AEO element | LATTICE construct | Layer |
 |---|---|---|
-| exposure set, location, asset identities and versions | `fnd:Version`, `fnd:PersistentIdentity`, `fnd:supersededBy` | Foundation |
+| exposure set, location, asset identities and versions | `fnd:Versioned`, `fnd:PersistentIdentity`, `fnd:supersededBy` | Foundation |
 | exposure set review state | `fnd:Governable` | Foundation |
 | valid time of any fact | `fnd:TemporallyScoped` | Foundation |
 | source documents, surveys, questionnaires, geocoders | `fnd:Evidence`, `fnd:hasEvidence` | Foundation |

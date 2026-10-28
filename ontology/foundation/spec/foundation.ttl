@@ -15,9 +15,9 @@
 fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "A concise explanation of what a term is for and how to use it." .
 
-fnd:Version a owl:Class ;
+fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -97,14 +97,14 @@ fnd:DerivationKind a owl:Class ;
     fnd:utility "One of the derivation kinds ADR-A12 names: inferred, validated, materialised, projected, indexed, generated, compiled, or a decision or execution record." .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
+    owl:members ( fnd:Versioned fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
 fnd:Governable owl:disjointWith fnd:GovernanceState .
 
 fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain fnd:Version ;
+    rdfs:domain fnd:Versioned ;
     rdfs:range fnd:PersistentIdentity ;
     owl:inverseOf fnd:hasVersion ;
     rdfs:comment "A Version's persistent identity." ;
@@ -112,13 +112,13 @@ fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
 
 fnd:hasVersion a owl:ObjectProperty ;
     rdfs:domain fnd:PersistentIdentity ;
-    rdfs:range fnd:Version ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "A PersistentIdentity's versions." ;
     fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
-    rdfs:domain fnd:Version ;
-    rdfs:range fnd:Version ;
+    rdfs:domain fnd:Versioned ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "Direct succession between two versions of the same identity." ;
     fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 

@@ -98,7 +98,7 @@ Every piece of text, in documents, code comments, commit messages and replies:
 - name a thing by the term this repository already uses for it, never by a name another layer already defines for something else
 - do not coin technical terms from insurance market vocabulary. Producing bound meaning is
   **instantiation**, done by an **instantiator**, never a "binder" (skill `lattice-ontology-authoring`)
-- call a class that is a member of `fnd:Version` "versioned". Call a node "a version" only when it is
+- call a class that is a member of `fnd:Versioned` "versioned". Call a node "a version" only when it is
   one specific version
 - write as the team. Decisions, approvals and actions are ours: "we decided", "accepted
   2026-10-10", "the maintainer accepts", never "the human decided" or "the agent built". An agent is

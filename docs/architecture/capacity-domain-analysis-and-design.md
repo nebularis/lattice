@@ -408,7 +408,7 @@ It should be a versioned, evidenced resource and may be temporally scoped.
 
 ```text
 cap:CapacityArrangement
-  ⊑ fnd:Version
+  ⊑ fnd:Versioned
   ⊓ fnd:Evidenced
   ⊓ fnd:TemporallyScoped
 ```
@@ -486,7 +486,7 @@ A versioned, evidenced declaration relating two CapacityResources.
 
 ```text
 cap:CapacityDependency
-  ⊑ fnd:Version
+  ⊑ fnd:Versioned
   ⊓ fnd:Evidenced
   ⊓ fnd:TemporallyScoped
   ⊓ cap:dependencySource exactly 1 cap:CapacityResource
@@ -517,7 +517,7 @@ A conservative first model is:
 
 ```text
 cap:CapacityRule
-  ⊑ fnd:Version
+  ⊑ fnd:Versioned
   ⊓ fnd:Evidenced
 ```
 

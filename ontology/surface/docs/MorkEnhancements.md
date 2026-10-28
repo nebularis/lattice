@@ -1400,7 +1400,7 @@ The executable layer could define a small projection vocabulary.
 
 exp:ExecutableProjectionContract
     a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Governable ;
+    rdfs:subClassOf fnd:Versioned, fnd:Governable ;
     rdfs:comment "A governed declaration of how a domain ontology binds its classes and properties to an executable LATTICE substrate operation." .
 
 exp:OperationBinding

@@ -433,7 +433,7 @@ The claim is the matter an insurer handles, and the case its policy's relations 
 (CCS §5.3, `ins:forCase`).
 
 ```text
-clm:Claim ⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:Evidenced
+clm:Claim ⊑ fnd:Versioned ⊓ fnd:Governable ⊓ fnd:Evidenced
     =1 fnd:hasIdentity        → clm:ClaimIdentity      persists across versions and reopenings
     ≥1 clm:openedBy           → clm:Notification
     ≥0 clm:concernsLoss       → clm:Loss

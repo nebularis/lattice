@@ -20,7 +20,7 @@ is the contract module's. The `core` region holds an exposure set's schedule, lo
 
 ```mermaid
 flowchart TB
-    ES["aeo:ExposureSet\n(fnd:Version, one schedule at an as-of date)"]
+    ES["aeo:ExposureSet\n(fnd:Versioned, one schedule at an as-of date)"]
     ES -->|aeo:hasLocation| L["aeo:Location"]
     ES -->|aeo:hasAsset| A["aeo:Asset"]
     ES -->|aeo:hasInterest| I["aeo:Interest"]
@@ -149,9 +149,9 @@ governance state on the earlier version. `examples/versions.ttl` shows both.
 
 | Class | Mixins | Key properties |
 |---|---|---|
-| `aeo:ExposureSet` | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:reportingUnit` (1, `qnt:Unit`) |
-| `aeo:Location` | `fnd:Version` | `aeo:address` (0..1), `aeo:geometry` (0..1, GeoSPARQL optional), `aeo:geoPrecision` (0..1), `aeo:territory` (1..\*) |
-| `aeo:Asset` | `fnd:Version` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional, a `aeo:LocationIdentity`) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
+| `aeo:ExposureSet` | `fnd:Versioned`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:reportingUnit` (1, `qnt:Unit`) |
+| `aeo:Location` | `fnd:Versioned` | `aeo:address` (0..1), `aeo:geometry` (0..1, GeoSPARQL optional), `aeo:geoPrecision` (0..1), `aeo:territory` (1..\*) |
+| `aeo:Asset` | `fnd:Versioned` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional, a `aeo:LocationIdentity`) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
 | `aeo:Interest` | `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:interestHolder` (1, `pty:RoleOccupancy`), `aeo:interestIn` (1, `aeo:Asset`), `aeo:interestKind` (1), `aeo:extent` (0..1) |
 | `aeo:Valuation` | `fnd:Evidenced`, `fnd:TemporallyScoped` | `aeo:valueOf` (1, an `aeo:AssetIdentity` or `aeo:LocationIdentity`), `aeo:valueType` (1), `aeo:valuationBasis` (1), `aeo:valuationMethod` (0..1), `aeo:amount` xor (`aeo:rate` + `aeo:horizon`) |
 
@@ -203,7 +203,7 @@ aeo:AssetIdentity a owl:Class ;
 #################################################################
 
 aeo:ExposureSet a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
@@ -244,7 +244,7 @@ aeo:hasValuation a owl:ObjectProperty ;
 #################################################################
 
 aeo:Location a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:label "Location"@en ;
     rdfs:comment "A place where exposure sits: a site, a building footprint, a pipeline segment, a port." ;
     fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations follow it." .
@@ -347,7 +347,7 @@ aeo:controlShare a owl:ObjectProperty, owl:FunctionalProperty ;
 #################################################################
 
 aeo:Asset a owl:Class ;
-    rdfs:subClassOf fnd:Version ,
+    rdfs:subClassOf fnd:Versioned ,
         [ a owl:Restriction ; owl:onProperty aeo:assetClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:locatedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Asset"@en ;
@@ -1282,7 +1282,7 @@ aeo:RequirementIdentity a owl:Class ;
     fnd:utility "Give every aeo:CoverageRequirement version fnd:hasIdentity an individual of this class." .
 
 aeo:CoverageRequirement a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementStrength ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requiredMeasure ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,

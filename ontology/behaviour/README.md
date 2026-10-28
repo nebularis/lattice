@@ -94,7 +94,7 @@ Behaviour distinguishes four tiers:
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 bhv:StateSpace a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "A declared state space." .
 
 bhv:State a owl:Class ;
@@ -102,7 +102,7 @@ bhv:State a owl:Class ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty bhv:inStateSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 bhv:TransitionDefinition a owl:Class ;
-	rdfs:subClassOf fnd:Version,
+	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:hasTrigger ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -115,7 +115,7 @@ bhv:GuardDefinition a owl:Class ; rdfs:comment "A declared eligibility or policy
 bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared effect on a target, of one target kind." .
 
 bhv:AllowanceDefinition a owl:Class ;
-	rdfs:subClassOf fnd:Version,
+	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:allowanceSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:absorptionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "A declared allowance or quota model." .
@@ -125,7 +125,7 @@ bhv:ActivationPolicy a owl:Class .
 bhv:TriggerKind a owl:Class .
 bhv:TargetKind a owl:Class .
 bhv:AbsorptionPolicy a owl:Class .
-bhv:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
+bhv:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Versioned .
 bhv:EntryMode a owl:Class ; rdfs:comment "How a transition enters a composite state: by default, or by shallow or deep history (behaviour-vocab)." .
 bhv:TransitionType a owl:Class ; rdfs:comment "Whether a transition from a state to itself leaves and enters it again (External) or not (Internal) (behaviour-vocab)." .
 
@@ -432,7 +432,7 @@ bhv:conditionSatisfied a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The deeming's condition, as it was satisfied. Subject: a deemed-fact record. Value: an Eligibility condition, at most one." .
 
 bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Version ;
+	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Versioned ;
 	owl:deprecated true ;
 	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." ;
 	fnd:utility "Deprecated with bhv:AcceptanceRecord." .
@@ -899,7 +899,7 @@ bhv:AcceptanceRecordSubjectShape a sh:NodeShape ;
 	sh:message "Only an acceptance record names a version accepted." .
 bhv:AcceptanceRecordShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
-	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
+	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Versioned ] ;
 	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .
 bhv:AcceptanceRecordDeprecatedShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;

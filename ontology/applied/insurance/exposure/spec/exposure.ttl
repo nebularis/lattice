@@ -56,7 +56,7 @@ aeo:AssetIdentity a owl:Class ;
 #################################################################
 
 aeo:ExposureSet a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
@@ -97,7 +97,7 @@ aeo:hasValuation a owl:ObjectProperty ;
 #################################################################
 
 aeo:Location a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:label "Location"@en ;
     rdfs:comment "A place where exposure sits: a site, a building footprint, a pipeline segment, a port." ;
     fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations follow it." .
@@ -200,7 +200,7 @@ aeo:controlShare a owl:ObjectProperty, owl:FunctionalProperty ;
 #################################################################
 
 aeo:Asset a owl:Class ;
-    rdfs:subClassOf fnd:Version ,
+    rdfs:subClassOf fnd:Versioned ,
         [ a owl:Restriction ; owl:onProperty aeo:assetClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:locatedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Asset"@en ;
@@ -981,7 +981,7 @@ aeo:RequirementIdentity a owl:Class ;
     fnd:utility "Give every aeo:CoverageRequirement version fnd:hasIdentity an individual of this class." .
 
 aeo:CoverageRequirement a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementStrength ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requiredMeasure ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,

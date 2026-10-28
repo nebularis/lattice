@@ -177,7 +177,7 @@ The Surface-MORK Unified Projection program adopts one top-level authoring model
 | Surface compiler test suite (54→**61**/61 tests) | ✅ Complete | Improved from 54 in earlier documents |
 | Focused MORK compiler test suite (15/15) | ✅ Complete | All three backends (SPARQL, SHACL, SWRL) tested |
 | Literate extraction drift check | ✅ Complete | All layer READMEs consistent |
-| OWL reasoner consistency check | ⏳ Pending | `fnd:Governable`/`fnd:Version` axioms + `elg:`/`qnt:` puns need reasoner verification |
+| OWL reasoner consistency check | ⏳ Pending | `fnd:Governable`/`fnd:Versioned` axioms + `elg:`/`qnt:` puns need reasoner verification |
 | SHACL execution (current fixtures) | ✅ Complete | Governance fixture conforms; Eligibility shapes distinguish valid/missing/out-of-range |
 | Execute generated SPARQL query | ✅ Complete | `question-1` resolves to `"Permitted"` |
 | Load generated SWRL rule into reasoner | ⏳ Pending | Rule text generated; SWRL reasoner integration still needed |

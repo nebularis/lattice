@@ -58,7 +58,7 @@ srf:SurfaceContract
   - readPath: SHACL property-path (traversal to value)
   - surfaceProfile: SurfaceProfile (generation policy)
   - populationBudget: xsd:nonNegativeInteger (optional bound)
-  - (inherits from fnd:Version, fnd:Governable)
+  - (inherits from fnd:Versioned, fnd:Governable)
 ```
 
 ### PromotionContract

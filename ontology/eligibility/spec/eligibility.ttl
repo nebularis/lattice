@@ -24,7 +24,7 @@ dct:description a owl:AnnotationProperty .
 
 elg:AdmissionProfile a owl:Class ;
     rdfs:comment "A reusable admissibility profile that composes one or more conditions." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], elg:Condition, fnd:Version .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], elg:Condition, fnd:Versioned .
 
 elg:Closure a owl:Class ;
     rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." ;
@@ -68,7 +68,7 @@ elg:MatchStrategy a owl:Class ;
 
 elg:OperationalProfile a owl:Class ;
     rdfs:comment "A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control." ;
-    rdfs:subClassOf fnd:Version .
+    rdfs:subClassOf fnd:Versioned .
 
 elg:Question a owl:Class ;
     rdfs:comment "An evaluation question posed against one condition." ;

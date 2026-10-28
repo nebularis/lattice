@@ -390,7 +390,7 @@ This is the single most load-bearing library in the system. Slice it finely.
 
 | Slice | Scope | Tests |
 |---|---|---|
-| **P1.1.1** | `surface:Revision` graph model: node per state, `⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:Evidenced`, `fnd:supersededBy` chaining, `fnd:hasGovernanceState` per the P0.3.4 mapping | **L1/L4**: a revision's full history is the version chain (closes `data-architecture §7` gap 5); shapes enforce the mapping |
+| **P1.1.1** | `surface:Revision` graph model: node per state, `⊑ fnd:Versioned ⊓ fnd:Governable ⊓ fnd:Evidenced`, `fnd:supersededBy` chaining, `fnd:hasGovernanceState` per the P0.3.4 mapping | **L1/L4**: a revision's full history is the version chain (closes `data-architecture §7` gap 5), shapes enforce the mapping |
 | **P1.1.2** | `conditionalWrite`-based lifecycle transitions preserving the exact `expectedVersion` → `409` semantics of `data-architecture §5.1`; API contract unchanged | **L4**: 32 concurrent conflicting transitions → one winner, 31 clean 409s; API fixtures from P0.7.5 still pass unmodified |
 | **P1.1.3** | Approval evidence as `fnd:Evidence` on the new version (who approved, when, against which hash) | **L4**: "what did the revision look like when approval X was granted" is answerable by position — write this as a named acceptance test |
 | **P1.1.4** | Delete the JDBC ledger and its migrations; remove the relational system-of-record path entirely | **L4**: no remaining code path writes lifecycle state outside the graph (ArchUnit); `data-architecture.md` updated |

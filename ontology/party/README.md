@@ -103,7 +103,7 @@ pty:Role a owl:Class ;
 
 ```turtle-spec
 pty:RoleOccupancy a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
     fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
@@ -121,7 +121,7 @@ pty:RoleOccupancy a owl:Class ;
 
 ```turtle-spec
 pty:ParticipationGroup a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
     fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [
@@ -384,8 +384,8 @@ ex:delegation-1
 |---|---|---|
 | `pty:Actor` | Class | bare, no mixins |
 | `pty:Role` | Class | bare; open at T-box, closed via `vocab/party-vocab.ttl` |
-| `pty:RoleOccupancy` | Class | `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`; `inRole` cardinality 1 |
-| `pty:ParticipationGroup` | Class | `fnd:Version`, `fnd:Evidenced`; `hasCompositionRule` at most 1; `hasParticipant` min 1 |
+| `pty:RoleOccupancy` | Class | `fnd:Versioned`, `fnd:Evidenced`, `fnd:TemporallyScoped`, `inRole` cardinality 1 |
+| `pty:ParticipationGroup` | Class | `fnd:Versioned`, `fnd:Evidenced`, `hasCompositionRule` at most 1, `hasParticipant` min 1 |
 | `pty:CompositionRule` | Class | open at T-box, closed via `vocab/party-vocab.ttl` |
 | `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf` each cardinality 1 |
 | `pty:Delegation` | Class | `fnd:Evidenced`, `fnd:TemporallyScoped`; `delegatesFrom`, `delegatesTo` each cardinality 1 |

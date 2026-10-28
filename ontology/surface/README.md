@@ -209,7 +209,7 @@ Every contract names one `srf:SurfaceProfile`, and every generated artefact name
 - **`permittedStackDepth`** bounds how many surfaces deep a generation run's read set may reach — this release caps it at one, so a surface may be built over another surface, but not over a surface built over a surface.
 - **`defaultPopulationBudget`** is the fallback a contract's own `srf:populationBudget` overrides.
 
-The practical consequence of all this living on the profile rather than being an implicit compiler default: **a profile change is an estate-wide regeneration.** Bump `namingNormalisation` or `symbolMode` and every minted IRI under that profile changes, so the profile carries its own version (it subclasses `fnd:Version`) and a change to any of these fields is a new profile version, deliberately, not a silent upgrade.
+The practical consequence of all this living on the profile rather than being an implicit compiler default: **a profile change is an estate-wide regeneration.** Bump `namingNormalisation` or `symbolMode` and every minted IRI under that profile changes, so the profile carries its own version (it subclasses `fnd:Versioned`) and a change to any of these fields is a new profile version, deliberately, not a silent upgrade.
 
 #### Authority, conservativity, and signature scope
 
@@ -364,7 +364,7 @@ srf:SurfaceContract a owl:Class ;
 	rdfs:comment "A governed declaration that a relationship reachable from a carrier may be restated locally in a declared form." ;
 	fnd:utility "Author one whenever a question about a carrier must be answerable without traversing the path that establishes the answer. Give it a carrier, a read path, a realisation mode, a stable contract key, a target namespace for minted symbols, and a surface profile. Use PromotionContract to restate a value as a direct assertion and IndexContract to restate it as a retrievable symbol." ;
 	rdfs:subClassOf
-		fnd:Version ,
+		fnd:Versioned ,
 		fnd:Governable ,
 		[ a owl:Restriction ; owl:onProperty srf:carrier ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:contractKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -492,7 +492,7 @@ srf:RangePartitionPopulation a owl:Class ;
 
 ```turtle-spec
 srf:SurfaceProfile a owl:Class ;
-	rdfs:subClassOf fnd:Version ,
+	rdfs:subClassOf fnd:Versioned ,
 		[ a owl:Restriction ; owl:onProperty srf:generatorVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:canonicalisationVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:entailmentRegime ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,

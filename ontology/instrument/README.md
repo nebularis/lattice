@@ -1523,7 +1523,7 @@ The whole layer, with the law each link enforces:
 
 ```mermaid
 flowchart LR
-    IN["ins:Instrument<br/>a fnd:Version"]
+    IN["ins:Instrument<br/>a fnd:Versioned"]
     AW["wrd:AssembledWording"]
     EL["wrd:Element<br/>a clause version"]
     ST["stated ins:Term<br/>a ins:Template"]
@@ -1618,7 +1618,7 @@ the relations' parties, because a relation may name a beneficiary or a regulator
 
 ```turtle-spec
 ins:Instrument a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "A legal instrument: a contract, policy, agreement, deed, licence or protocol. The only version in this layer." ;
 	fnd:utility "Subject: one version of an instrument. Expressed in exactly one assembled wording (ins:expressedIn, law I1). Its persistent identity carries its keys and its runtime state. Its terms are bound in it (ins:boundIn)." .
 
@@ -1791,7 +1791,7 @@ application's concern, outside this layer.
 ```turtle-spec
 ins:Amendment a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "The legal effect of a change to an instrument, from one version to the next." ;
 	fnd:utility "Subject: an amendment. Names the version it amends (ins:amends) and the one it produces (ins:resultsIn), and the documents it is stated in (ins:statedIn). Its fnd:hasTemporalScope is when it takes effect, which may precede its recording and its agreement, and its fnd:hasEvidence when it was recorded. Agreed when the assents it needs exist (§6.3)." .
 
@@ -1908,7 +1908,7 @@ flowchart TB
 
 ins:LegalAct a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "An act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the exercise of a power." ;
 	fnd:utility "Subject: a legal act. Its fnd:hasTemporalScope is when it was done, and its fnd:hasEvidence when that became known. Names who did it (ins:actBy or a sub-property), and optionally its case (ins:forCase) and the acts it relies on (ins:pursuantTo). Whether it had effect is evaluated, never stated (§6.4)." .
 
@@ -2233,9 +2233,9 @@ ins:qualifies a owl:ObjectProperty ;
 [] a owl:AllDisjointClasses ;
 	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ins:Definition ins:Deeming ins:Sectioning ins:PartyResolution ) .
 
-ins:Term owl:disjointWith fnd:Version .
-ins:LegalRelation owl:disjointWith fnd:Version .
-ins:Qualifier owl:disjointWith fnd:Version .
+ins:Term owl:disjointWith fnd:Versioned .
+ins:LegalRelation owl:disjointWith fnd:Versioned .
+ins:Qualifier owl:disjointWith fnd:Versioned .
 ins:Template owl:disjointWith ins:Instrument .
 ```
 
@@ -3467,8 +3467,8 @@ ins:classification a owl:ObjectProperty ;
 	rdfs:comment "A class a term belongs to, such as a condition or a warranty." ;
 	fnd:utility "Subject: a stated term. Value: a concept from the scheme bound to ins-voc:TermClassificationContract, any number. Read for each instrument through the bound term's ins:boundFrom. Never evaluated: a breach's effect is stated as relations (law I12)." .
 
-ins:Definition owl:disjointWith fnd:Version .
-ins:Deeming owl:disjointWith fnd:Version .
+ins:Definition owl:disjointWith fnd:Versioned .
+ins:Deeming owl:disjointWith fnd:Versioned .
 ```
 
 ## 16. Sections
@@ -4222,7 +4222,7 @@ ins:LegalRelationShape a sh:NodeShape ;
 		sh:path ins:activity ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
 		sh:message "A relation has at most one activity, a concept."
 	] ;
-	sh:not [ sh:class fnd:Version ] ;
+	sh:not [ sh:class fnd:Versioned ] ;
 	sh:message "A relation is never a version: it changes only with its owner (law I18)." .
 
 ins:RelationTierShape a sh:NodeShape ;
@@ -5657,7 +5657,7 @@ ins:SingleExpressionShape a sh:NodeShape ;
 | I16 | Definitions of one word that apply within one section combine by union, unless one prevails, and every overlap is reported. Conflicting acting rules are a violation | `ins:DefinitionOverlapShape` (warning, on generated meaning), `ins:FormDefinitionOverlapShape` (warning, on the form), `ins:ActingRuleConflictShape` |
 | I17 | An instrument version binds exactly the stated meaning of the elements its wording includes: nothing from text it does not include, all the stated meaning of what it does, and every included leaf of text either means something or is marked as binding nobody | `ins:BoundFromIncludedShape`, `ins:StatedMeaningBoundShape`, `ins:CoverageShape` (warning) |
 | I9 | A due range, a window and a recurrence are anchored at a named time, never at evaluation time | `ins:DueShape`, `ins:WindowShape`, `ins:RecurrenceShape` |
-| I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Version`, `ins:LegalRelationShape` |
+| I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Versioned`, `ins:LegalRelationShape` |
 | B4 (Behaviour's) | Every Instrument specialisation of a Behaviour term carries the Behaviour type in the graph the engine reads | `ins:RegimeTypeShape`, `ins:RegimeTransitionTypeShape`, `ins:LegalTriggerTypeShape` |
 
 C7c's other design-time rules are registered without a law number. They are that stated meaning is

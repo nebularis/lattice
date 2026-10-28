@@ -24,8 +24,8 @@ from .scopes import Target
 
 
 def _is_versioned(graph: Graph, cls) -> bool:
-    """A subclass of ``fnd:Version`` by IRI in the loaded graphs. Foundation is not imported."""
-    return cls is not None and FND.Version in set(graph.transitive_objects(cls, RDFS.subClassOf))
+    """A subclass of ``fnd:Versioned`` by IRI in the loaded graphs. Foundation is not imported."""
+    return cls is not None and FND.Versioned in set(graph.transitive_objects(cls, RDFS.subClassOf))
 
 
 def _local(value) -> str | None:
@@ -54,7 +54,7 @@ def check_cross_axis(
     discipline = _local(_value(dimensions, "writeDiscipline"))
     appends = discipline in ("AppendVersions", "AppendRecords")
 
-    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Version, written by replace. Foundation is not
+    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Versioned, written by replace. Foundation is not
     # imported, the class is found by its IRI. A replace deletes the version before it, which fnd:supersededBy and ADR-A67 keep.
     if discipline == "InPlace" and _is_versioned(graph, target.cls):
         diagnostics.append(
@@ -63,7 +63,7 @@ def check_cross_axis(
                 severity="WARNING",
                 target=str(target),
                 message=(
-                    "this target's class is a subclass of fnd:Version and dal:writeDiscipline is dal:InPlace, so every write "
+                    "this target's class is a subclass of fnd:Versioned and dal:writeDiscipline is dal:InPlace, so every write "
                     "replaces the version before it and deletes it. Declare dal:AppendVersions to keep each version, or "
                     "dal:InPlace deliberately for a working draft that is not cited (H2.6c, VH-Q3)."
                 ),
@@ -138,7 +138,7 @@ def check_cross_axis(
                 target=str(target),
                 message=(
                     f"dal:receiptModel dal:NoReceipt writes no receipt, and {target.cls} is "
-                    f"{'versioned (a subclass of fnd:Version)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
+                    f"{'versioned (a subclass of fnd:Versioned)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
                     "whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect or "
                     "which transaction made it. Use dal:ReceiptOnly, or dal:NoReceipt deliberately (H2.8c, D-9)."
                 ),
@@ -421,7 +421,7 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
                 "PinnedReferenceToUnversionedClass",
                 str(target),
                 f"the property shape for {edge.step.predicate} on {edge.source_shape} is dal:Pinned, and its target class "
-                f"{edge.target_class} is not a subclass of fnd:Version, so there is no version to pin to. "
+                f"{edge.target_class} is not a subclass of fnd:Versioned, so there is no version to pin to. "
                 "Leave the edge dal:ByIdentity, or make the target class versioned.",
             )
     if composite and not tree.owned_edges():

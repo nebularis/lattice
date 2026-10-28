@@ -25,7 +25,7 @@ srf:SurfaceContract a owl:Class ;
 	rdfs:comment "A governed declaration that a relationship reachable from a carrier may be restated locally in a declared form." ;
 	fnd:utility "Author one whenever a question about a carrier must be answerable without traversing the path that establishes the answer. Give it a carrier, a read path, a realisation mode, a stable contract key, a target namespace for minted symbols, and a surface profile. Use PromotionContract to restate a value as a direct assertion and IndexContract to restate it as a retrievable symbol." ;
 	rdfs:subClassOf
-		fnd:Version ,
+		fnd:Versioned ,
 		fnd:Governable ,
 		[ a owl:Restriction ; owl:onProperty srf:carrier ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:contractKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -99,7 +99,7 @@ srf:RangePartitionPopulation a owl:Class ;
 	fnd:utility "Declared and not yet permitted. Until a partition law is stated, use a DirectProperty index form for quantified dimensions." .
 
 srf:SurfaceProfile a owl:Class ;
-	rdfs:subClassOf fnd:Version ,
+	rdfs:subClassOf fnd:Versioned ,
 		[ a owl:Restriction ; owl:onProperty srf:generatorVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:canonicalisationVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:entailmentRegime ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,

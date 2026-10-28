@@ -132,7 +132,7 @@ ki:Pattern
 
 ki:Mechanism
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "mechanism" ;
-    rdfs:comment "A design the project already provides, which new work ADOPTS and builds on rather than invokes, for example Foundation's versioning. Distinct from ki:Capability by that test alone: a mechanism has no entry point. Earns its class from the query 'is there already a design for this problem', the error class of an agent modelling versioning again beside fnd:Version." .
+    rdfs:comment "A design the project already provides, which new work ADOPTS and builds on rather than invokes, for example Foundation's versioning. Distinct from ki:Capability by that test alone: a mechanism has no entry point. Earns its class from the query 'is there already a design for this problem', the error class of an agent modelling versioning again beside fnd:Versioned." .
 
 ki:Capability
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "capability" ;
@@ -226,7 +226,7 @@ ki:sectionOf
 ki:problemShape
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "problem shape" ;
-    rdfs:comment "The kind of problem this node answers, in the author's own words and phrased as the problem. Earns its place from the measurement of knowledge-index sketch section 9.1, where a term lookup found fnd:Version for 'version' and nothing for 'versioning', and from the bake-off of ADR-A134's addendum of 2026-10-26. It is part of the text graph:ask -- find embeds and ranks." .
+    rdfs:comment "The kind of problem this node answers, in the author's own words and phrased as the problem. Earns its place from the measurement of knowledge-index sketch section 9.1, where a term lookup found fnd:Versioned for 'version' and nothing for 'versioning', and from the bake-off of ADR-A134's addendum of 2026-10-26. It is part of the text graph:ask -- find embeds and ranks." .
 
 ki:status
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Status ;

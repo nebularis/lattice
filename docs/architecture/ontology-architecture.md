@@ -181,7 +181,7 @@ Four independent, composable mixin capabilities: persistent identity/versioning,
 Annotation property: fnd:utility  (concise usage explanation; carried by every term below)
 
 Classes:
-  fnd:Version          ⊑ =1 hasIdentity.PersistentIdentity
+  fnd:Versioned          ⊑ =1 hasIdentity.PersistentIdentity
   fnd:PersistentIdentity ⊑ ≥1 hasVersion.Version                    [hasVersion ≡ hasIdentity⁻]
   fnd:Evidenced         (mixin, no own restriction — target of hasEvidence)
   fnd:Evidence          ⊑ prov:Entity ⊓ ≥1 supports.Evidenced ⊓ =1 recordedAt.xsd:dateTime
@@ -216,7 +216,7 @@ Data properties:
 
 | Term | Kind | Key characteristics |
 |---|---|---|
-| `fnd:Version` | Class/mixin | `hasIdentity` = 1 |
+| `fnd:Versioned` | Class/mixin | `hasIdentity` = 1 |
 | `fnd:PersistentIdentity` | Class | `hasVersion` ≥ 1 |
 | `fnd:Evidenced` | Class/mixin | — |
 | `fnd:Evidence` | Class | `⊑ prov:Entity`; `supports` ≥ 1; `recordedAt` = 1 |
@@ -237,7 +237,7 @@ Data properties:
 A domain class from a higher layer (e.g. `ins:Obligation`, not defined in Foundation) composes mixins directly:
 
 ```
-ins:Obligation ⊑ fnd:Version ⊓ fnd:Evidenced ⊓ fnd:TemporallyScoped
+ins:Obligation ⊑ fnd:Versioned ⊓ fnd:Evidenced ⊓ fnd:TemporallyScoped
 ```
 
 An ordinary populated instance does *not* take `fnd:Governable` — that mixin is for specification artefacts (a wording template, a SHACL shape) under review, not for ordinary contract facts.
@@ -259,7 +259,7 @@ Governs how external, domain-specific concept schemes bind into other layers' co
 
 ### 5.2 Design decisions
 
-- **Scheme-level versioning through Foundation; concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Version`; an individual `skos:Concept` gets no independent version thread — tracking meaning drift of one concept across scheme versions is left unaddressed.
+- **Scheme-level versioning through Foundation, concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Versioned`, an individual `skos:Concept` gets no independent version thread — tracking meaning drift of one concept across scheme versions is left unaddressed.
 - **`SchemeContract` is structural only — never encodes what a scheme is *about*.** It constrains which property, which scheme, and what governance state that scheme must hold; the aboutness is prose, supplied by whichever domain ontology extends the framework.
 - **Concept-level constraints (excluding deprecated concepts, requiring leaf concepts) deliberately deferred** as a plausible future `SchemeContract` extension.
 - SKOS alignment is stated once, in the Alignments section, not duplicated inline (a stricter convention than Foundation's own document follows for its PROV-O alignment — noted as a tidy-up item against Foundation).
@@ -271,8 +271,8 @@ Governs how external, domain-specific concept schemes bind into other layers' co
 
 ```
 Classes:
-  voc:ConceptScheme   ⊑ skos:ConceptScheme ⊓ fnd:Version ⊓ fnd:Governable
-  voc:SchemeContract  ⊑ fnd:Version ⊓ fnd:Governable ⊓ ≥1 constrainsProperty
+  voc:ConceptScheme   ⊑ skos:ConceptScheme ⊓ fnd:Versioned ⊓ fnd:Governable
+  voc:SchemeContract  ⊑ fnd:Versioned ⊓ fnd:Governable ⊓ ≥1 constrainsProperty
   voc:SchemeBinding   ⊑ fnd:TemporallyScoped ⊓ =1 forContract.SchemeContract ⊓ =1 bindsScheme.ConceptScheme
   voc:BindingScope    (bare, opaque to Vocabulary; no individuals shipped)
 
@@ -294,8 +294,8 @@ Object properties:
 
 | Term | Kind | Key characteristics |
 |---|---|---|
-| `voc:ConceptScheme` | Class | `⊑ fnd:Version, fnd:Governable, skos:ConceptScheme`; `⊥ voc:SchemeContract, voc:SchemeBinding, voc:BindingScope, skos:Concept` |
-| `voc:SchemeContract` | Class | `⊑ fnd:Version, fnd:Governable`; `constrainsProperty` ≥ 1 |
+| `voc:ConceptScheme` | Class | `⊑ fnd:Versioned, fnd:Governable, skos:ConceptScheme`, `⊥ voc:SchemeContract, voc:SchemeBinding, voc:BindingScope, skos:Concept` |
+| `voc:SchemeContract` | Class | `⊑ fnd:Versioned, fnd:Governable`, `constrainsProperty` ≥ 1 |
 | `voc:SchemeBinding` | Class | `⊑ fnd:TemporallyScoped`; `forContract` = 1; `bindsScheme` = 1 |
 | `voc:BindingScope` | Class | Opaque context marker; no individuals shipped |
 | `voc:constrainsProperty` | Obj. prop. | dom `SchemeContract`, range `rdf:Property` |
@@ -375,8 +375,8 @@ Actor, Role, and the reified qualified-relation individual (Role Occupancy) conn
 Classes:
   pty:Actor              (bare)
   pty:Role               (bare; open T-box, closed-by-default in vocab/party-vocab.ttl)
-  pty:RoleOccupancy      ⊑ fnd:Version ⊓ fnd:Evidenced ⊓ fnd:TemporallyScoped ⊓ =1 inRole.Role
-  pty:ParticipationGroup ⊑ fnd:Version ⊓ fnd:Evidenced ⊓ =1 hasCompositionRule.CompositionRule ⊓ ≥1 hasParticipant.GroupMembership
+  pty:RoleOccupancy      ⊑ fnd:Versioned ⊓ fnd:Evidenced ⊓ fnd:TemporallyScoped ⊓ =1 inRole.Role
+  pty:ParticipationGroup ⊑ fnd:Versioned ⊓ fnd:Evidenced ⊓ =1 hasCompositionRule.CompositionRule ⊓ ≥1 hasParticipant.GroupMembership
   pty:CompositionRule    (bare; open T-box, closed-by-default in vocab/party-vocab.ttl)
   pty:GroupMembership    ⊑ =1 memberOccupancy.RoleOccupancy ⊓ =1 memberOf.ParticipationGroup ⊓ =1 share.xsd:decimal
   pty:Delegation         ⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped ⊓ =1 delegatesFrom.RoleOccupancy ⊓ =1 delegatesTo.RoleOccupancy
@@ -634,7 +634,7 @@ These recur across the layer sections above and are the load-bearing joints of t
 The current repository does **not** implement this model yet. Foundation currently provides the semantic building blocks for identity and versioning:
 
 - `fnd:PersistentIdentity` represents the continuing thing.
-- `fnd:Version` represents one state of that thing.
+- `fnd:Versioned` represents one state of that thing.
 - `fnd:hasIdentity` links a version to its persistent identity.
 - `fnd:supersededBy` links one version to its successor.
 

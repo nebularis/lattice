@@ -91,7 +91,7 @@ classDiagram
         hasIdentity, exactly one
     }
     class TemporallyScoped
-    class Version
+    class Versioned
     class skos_ConceptScheme
     class voc_ConceptScheme {
         hasGovernanceState, exactly one
@@ -106,8 +106,8 @@ classDiagram
     SchemeContract --> Property : constrainsProperty
     SchemeContract --> voc_ConceptScheme : boundScheme
     TemporallyScoped <|-- SchemeBinding
-    Version <|-- SchemeContract
-    Version <|-- voc_ConceptScheme
+    Versioned <|-- SchemeContract
+    Versioned <|-- voc_ConceptScheme
     skos_ConceptScheme <|-- voc_ConceptScheme
     class ObjectProperty_resolvedUnder["Object Property - resolvedUnder"]
 ```
@@ -118,7 +118,7 @@ classDiagram
 
 ### 5.1 Design decisions
 
-**Scheme-level versioning through Foundation. Concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Version` — it has identity, and one version of a scheme can supersede another. An individual `skos:Concept` does not get its own independent version thread here. Tracking how a specific concept's meaning drifts or splits across scheme versions is a cross-version alignment problem that we do not address in this ontology.
+**Scheme-level versioning through Foundation. Concept-level versioning explicitly out of scope.** A `ConceptScheme` is a `fnd:Versioned` — it has identity, and one version of a scheme can supersede another. An individual `skos:Concept` does not get its own independent version thread here. Tracking how a specific concept's meaning drifts or splits across scheme versions is a cross-version alignment problem that we do not address in this ontology.
 
 **`SchemeContract` is structural only — it never encodes what a scheme is *about*.** `SchemeContract` therefore constrains only in structural, governance terms — which property, which scheme, what governance state that scheme must hold. What the scheme is *about* is communicated in prose, by whichever domain ontologies extend the framework.
 
@@ -216,7 +216,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Utility.** A published, versioned, governed collection of concepts. Use `fnd:hasIdentity` and `fnd:supersededBy` to track successive editions of the same scheme over time, and `fnd:hasGovernanceState` to record its review status.
 
-**Subclass of.** `fnd:Version`, `fnd:Governable`, `skos:ConceptScheme`
+**Subclass of.** `fnd:Versioned`, `fnd:Governable`, `skos:ConceptScheme`
 
 **Restrictions.**
 
@@ -231,7 +231,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Utility.** Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one.
 
-**Subclass of.** `fnd:Version`, `fnd:Governable`
+**Subclass of.** `fnd:Versioned`, `fnd:Governable`
 
 **Restrictions.**
 
@@ -373,9 +373,9 @@ rdf:Property a owl:Class .
 | Term | Kind | Summary |
 |---|---|---|
 | `voc:BindingScope` | Class | Disjoint with `voc:ConceptScheme`, `voc:SchemeBinding`, `voc:SchemeContract`. |
-| `voc:ConceptScheme` | Class | Subclass of `fnd:Governable`, `fnd:Version`, `skos:ConceptScheme`. Disjoint with `skos:Concept`, `voc:BindingScope`, `voc:SchemeBinding`, `voc:SchemeContract`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only). |
+| `voc:ConceptScheme` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`, `skos:ConceptScheme`. Disjoint with `skos:Concept`, `voc:BindingScope`, `voc:SchemeBinding`, `voc:SchemeContract`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only). |
 | `voc:SchemeBinding` | Class | Subclass of `fnd:TemporallyScoped`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeContract`. Restrictions `fnd:hasTemporalScope` exactly 1 (SHACL only), `voc:bindsScheme` exactly 1, `voc:forContract` exactly 1. |
-| `voc:SchemeContract` | Class | Subclass of `fnd:Governable`, `fnd:Version`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeBinding`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only), `voc:boundScheme` max 1 (SHACL only), `voc:constrainsProperty` min 1. |
+| `voc:SchemeContract` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`. Disjoint with `voc:BindingScope`, `voc:ConceptScheme`, `voc:SchemeBinding`. Restrictions `fnd:hasGovernanceState` exactly 1 (SHACL only), `fnd:hasIdentity` exactly 1 (SHACL only), `voc:boundScheme` max 1 (SHACL only), `voc:constrainsProperty` min 1. |
 | `voc:bindingScope` | Object property | Domain `voc:SchemeBinding`. Range `voc:BindingScope`. |
 | `voc:bindsScheme` | Object property | Domain `voc:SchemeBinding`. Range `voc:ConceptScheme`. Functional. |
 | `voc:boundScheme` | Object property | Domain `voc:SchemeContract`. Range `voc:ConceptScheme`. Functional. |

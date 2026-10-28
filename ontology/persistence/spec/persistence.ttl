@@ -584,7 +584,7 @@ dal:PersonalData a dal:PrivacyClass ;
     rdfs:comment "Subject to erasure obligations." .
 
 dal:Pinned a dal:ReferenceMode ;
-    rdfs:comment "The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Version (by IRI, with no import), since there is then no version to name." .
+    rdfs:comment "The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Versioned (by IRI, with no import), since there is then no version to name." .
 
 dal:PlaceholderSubstitution a dal:SelfReferenceRule ;
     rdfs:comment "Exact self references are replaced with a fixed placeholder before canonicalization." .
@@ -1668,7 +1668,7 @@ dal:wonBy a owl:ObjectProperty ;
     rdfs:domain dal:ResolvedDimension .
 
 dal:writeDiscipline a owl:ObjectProperty ;
-    rdfs:comment "How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace." ;
+    rdfs:comment "How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a target class is a subclass of fnd:Versioned (by IRI, with no import) and the discipline is dal:InPlace." ;
     rdfs:domain dal:WriteDisciplineProfile ;
     rdfs:range dal:WriteDiscipline .
 

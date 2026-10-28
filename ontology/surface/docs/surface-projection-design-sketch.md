@@ -133,7 +133,7 @@ Path expressions use SHACL property-path syntax (`sh:path`), because shapes alre
 DL-style, following the notation of `docs/architecture/ontology-architecture.md` §0.
 
 ```
-srf:SurfaceContract        ⊑ fnd:Version ⊓ fnd:Governable
+srf:SurfaceContract        ⊑ fnd:Versioned ⊓ fnd:Governable
                              ⊓ =1 carrier.rdfs:Class          (punned)
                              ⊓ =1 readPath                     (SHACL path node)
                              ⊓ =1 surfaceProfile.SurfaceProfile

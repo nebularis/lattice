@@ -52,7 +52,7 @@ gives no class to a word that stays ambiguous.
 
 ## 3. The model
 
-Four strata, pairwise disjoint, each a `fnd:Version` under ADR-A07b's versioning contract (never
+Four strata, pairwise disjoint, each a `fnd:Versioned` under ADR-A07b's versioning contract (never
 updated in place, superseded within one identity).
 
 ```mermaid
@@ -141,14 +141,14 @@ arising, so no cycle exists.
 
 ```turtle
 # --- strata ------------------------------------------------------------------
-ins:Element        a owl:Class ; rdfs:subClassOf fnd:Version .
+ins:Element        a owl:Class ; rdfs:subClassOf fnd:Versioned .
 ins:Instrument     a owl:Class ; rdfs:subClassOf ins:Element .
-ins:Term           a owl:Class ; rdfs:subClassOf fnd:Version .
-ins:LegalRelation  a owl:Class ; rdfs:subClassOf fnd:Version ;
+ins:Term           a owl:Class ; rdfs:subClassOf fnd:Versioned .
+ins:LegalRelation  a owl:Class ; rdfs:subClassOf fnd:Versioned ;
     owl:equivalentClass [ a owl:Class ; owl:unionOf ( ins:Obligation ins:Permission ins:Power ) ] ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ins:arisesUnder ;
                       owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass ins:Term ] .
-ins:Qualifier      a owl:Class ; rdfs:subClassOf fnd:Version .
+ins:Qualifier      a owl:Class ; rdfs:subClassOf fnd:Versioned .
 [] a owl:AllDisjointClasses ; owl:members ( ins:Element ins:Term ins:LegalRelation ins:Qualifier ) .
 
 # --- legal relations ---------------------------------------------------------
@@ -458,7 +458,7 @@ Instrument 0.7.0 then goes to 0.8.0, breaking. Behaviour re-pins, and so do `beh
 | ADR-A96 | carries over onto terms. `ins:SingleProvisionShape` becomes a single-element shape on `ins:expressedIn` |
 | `behaviour/spec` | re-pin. `bhv:targetsElement`'s range widens to elements, terms and legal relations, since effects end relations |
 | Behaviour fixtures, `tools/test_substrate_extensions.py` | retyped |
-| Foundation README, ontology architecture §3 and §4 | illustrations use `ins:Obligation ⊑ fnd:Version` still, and remain true |
+| Foundation README, ontology architecture §3 and §4 | illustrations use `ins:Obligation ⊑ fnd:Versioned` still, and remain true |
 | NRS plan: N4, §18.2 and §18.3 of the mapping sketch | superseded by this sketch. The laws are I1 to I10 below. N8's `compensatedBy` chain becomes `arisesOnBreachOf` |
 | NRS decisions | D2 answered here. D3 answered by your ruling: align where free, map through MORK otherwise |
 | AIR Phase 5, A-101 | `ctr:TermParameter ⊑ ins:Qualifier` still holds. It qualifies a term or a relation |

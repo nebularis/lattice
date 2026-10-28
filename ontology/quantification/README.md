@@ -718,7 +718,7 @@ qnt:ValueSpace a owl:Class ;
     rdfs:comment "A governed declaration of a space in which values may be represented, ordered, bounded, compared, and used by declared operations." ;
     fnd:utility "Declare a ValueSpace whenever values need a stated home — how they're ordered, whether they require units, and which operations are valid. Set densityKind so range-set normalisation knows what 'adjacent' means for this space, and cycleLength if the space is cyclically ordered." ;
     rdfs:subClassOf
-        fnd:Version ,
+        fnd:Versioned ,
         fnd:Governable ,
         [ a owl:Restriction ; owl:onProperty qnt:spaceKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:orderKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -947,7 +947,7 @@ qnt:UnitContract a owl:Class ;
     rdfs:comment "A declaration governing whether values in a ValueSpace require units, which unit family applies, and how conversion, precision, and rounding are governed." ;
     fnd:utility "Declare whether a ValueSpace requires units, which unit family is permitted, and which unit is canonical. Set precisionPolicy and roundingPolicy where a comparison's exactness depends on them — the substrate ships no unit, precision, or rounding individuals." ;
     rdfs:subClassOf
-        fnd:Version ,
+        fnd:Versioned ,
         [ a owl:Restriction ; owl:onProperty qnt:requiresUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:unitFamily ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
 ```
@@ -968,7 +968,7 @@ qnt:UnitFamily a owl:Class ;
     fnd:utility "Use to group units a ValueSpace permits and whose conversion rules are declared together." .
 
 qnt:Conversion a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared transformation between two units in a UnitFamily." ;
     fnd:utility "State how a value in one unit becomes comparable with a value in another. Give it a conversionFactor for the linear case, or a conversionFunction for anything else — never leave the transformation itself undeclared. Contextual conversions additionally need a ConversionContext at evaluation time." ;
     rdfs:subClassOf
@@ -977,7 +977,7 @@ qnt:Conversion a owl:Class ;
         [ a owl:Restriction ; owl:onProperty qnt:conversionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 qnt:ConversionFunction a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A registered, versioned, deterministic function transforming values between two units." ;
     fnd:utility "Register one of these when a conversion is not a simple factor — declare its signature and determinism claim, and attach conformance evidence via fnd:hasEvidence. Reference it from every Conversion that uses it, rather than restating the transformation per conversion." .
 ```
@@ -1037,7 +1037,7 @@ qnt:Calendar a owl:Class ;
 
 ```turtle-spec
 qnt:OperationCapability a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared permission and signature for applying one operation to values in specified ValueSpaces." ;
     fnd:utility "Declare which operations a ValueSpace permits, their operand spaces, and their result space. For Contains or Overlaps, also set rangeSemanticsKind and participatesInMeet — a consumer doing meet-based enumeration needs to know directly whether this capability is safe to use for it, not re-derive it from the operation kind." ;
     rdfs:subClassOf
@@ -1072,7 +1072,7 @@ qnt:OperationOperand a owl:Class ;
 
 ```turtle-spec
 qnt:Recurrence a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Governable ;
+    rdfs:subClassOf fnd:Versioned, fnd:Governable ;
     rdfs:comment "A governed declaration of a deterministic generator of canonically identified ranges over a compatible extent space." ;
     fnd:utility "Use for repeated periods. Declare an anchor, a period whose space is extent-compatible with the anchor's position space, a binContiguity and boundaryDerivation policy, and a binKeyStrategy — so independently executed processes identify the same generated bin. Set validRange if the recurrence has a bounded domain." ;
     rdfs:subClassOf
@@ -1104,7 +1104,7 @@ qnt:RecurrenceBin a owl:Class ;
 
 ```turtle-spec
 qnt:OrderingBasis a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declaration of deterministic ordering using an ordered sequence of components and an unresolved-order policy." ;
     fnd:utility "Use where a process must order occurrences deterministically and a single position can't establish it alone. Add one OrderingComponent per criterion, in priority order, and state what happens when an ordering value is unresolved." ;
     rdfs:subClassOf
@@ -1146,7 +1146,7 @@ qnt:Comparison a owl:Class ;
 
 ```turtle-spec
 qnt:OperationalProfile a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared implementation strategy and configuration under which a Quantification operation is evaluated." ;
     fnd:utility "Identifies the realisation strategy that produced a result — a SPARQL query set, SHACL package, reasoner configuration, materialisation job, external projection, or compiled evaluator — together with its version. Every persisted Comparison names one." .
 
@@ -2167,7 +2167,7 @@ never names a class of a layer above it. Each consumer decides what its ranges a
 
 ### Foundation
 
-Quantification uses `fnd:Version` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
+Quantification uses `fnd:Versioned` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
 
 **Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which this document's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. A content-hash contract is not part of it: Surface's read-set hashes remain the only implemented one. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
 

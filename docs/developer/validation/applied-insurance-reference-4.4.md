@@ -91,7 +91,7 @@ deferred (amendment of 2026-10-14), so the heavy suites did not run. Cheap ad ho
   - One `aeo:DefaultedCharacteristic` per cause and property rather than per value, so a cause
     with several typical mechanisms has one. The effective agency is single valued, so a cause concept
     with several typical agencies leaves it empty and a check reads Undetermined.
-  - `aeo:CoverageRequirement` has an `aeo:RequirementIdentity`, because it is a `fnd:Version`.
+  - `aeo:CoverageRequirement` has an `aeo:RequirementIdentity`, because it is a `fnd:Versioned`.
   - The loss-in-period shape compares dates as ISO strings, since an `xsd:date` cast was not
     reliable across engines.
   - Quantification has no construct for a bound relative to a value (an anchor binding derives a
