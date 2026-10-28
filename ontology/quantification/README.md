@@ -2032,6 +2032,20 @@ Checked over the relevant union graph and stated operational profile. They do no
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+qnt:ProportionNamesBaseRoleShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:DerivedValueSpace ;
+    sh:sparql [
+        sh:message "A proportion space, whose numerator and denominator are one space, names its baseRole, or shares of different wholes add silently (law Q13)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                $this qnt:numeratorSpace ?space ; qnt:denominatorSpace ?space .
+                FILTER NOT EXISTS { $this qnt:baseRole ?role }
+            }
+        """
+    ] .
+
 qnt:RangeShape
     a sh:NodeShape ;
     sh:targetClass qnt:Range ;
