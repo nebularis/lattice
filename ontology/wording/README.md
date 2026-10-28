@@ -673,6 +673,39 @@ wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .
 ```
 
+### 5.14 The assembly model
+
+Assembly is the act of drawing an assembled wording from a form (§5.11, §5.12). An assembly model
+states how: how an inclusion condition is decided, what happens when it cannot be, and how a variation
+slot is resolved. Wording has one, the baseline model, whose semantics are §5.11 to §5.13 and the rules
+below. A second model is added as a second individual, and what an instrument reads of an assembled
+wording does not change.
+
+The baseline model decides each inclusion condition, three-valued, by Eligibility. Admitted includes the
+element and Denied leaves it out. Undetermined refuses the assembly, naming the governing variable it
+lacks. A variation slot whose variants admit none, or several, refuses the assembly. An optional
+element, and a variant with no inclusion condition, is included only when the drafter chooses it. Every
+mandatory child of an included element is included. A failed assembly produces findings and no assembled
+wording. Object ids are derived after assembly, by rank order among the included siblings, and a chosen
+variant takes its slot's number (law W7).
+
+An assembled wording records the model version it was assembled under, and the assembly as a
+`prov:Activity` that used the form versions, the settings and the model version. An assembled wording
+written from scratch, from no form, names no model.
+
+```turtle-spec
+wrd:AssemblyModel a owl:Class ;
+	rdfs:subClassOf fnd:Version , fnd:Governable ;
+	rdfs:label "Assembly model"@en ;
+	rdfs:comment "A set of rules for drawing an assembled wording from a form: how inclusion conditions are decided, what an undetermined one does, and how a variation slot is resolved." ;
+	fnd:utility "Declare one individual per model, with an identity. An assembler names the model version it applied on every assembled wording it produces, with wrd:assembledUnder." .
+
+wrd:assembledUnder a owl:ObjectProperty ;
+	rdfs:label "assembled under"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:AssemblyModel ;
+	rdfs:comment "The assembly model version the assembled wording was produced under. Subject: an assembled wording. Value: an assembly model, exactly one for a wording drawn from a form (law WA1), none for a wording written from scratch." .
+```
+
 ## 6. Vocabulary
 
 The inclusion modes, population methods, amendment operations and field orientations are closed sets of named individuals. Three scheme
@@ -752,6 +785,14 @@ wrd-voc:Endorsement a skos:Concept ;
 	skos:prefLabel "Endorsement"@en ;
 	skos:altLabel "Amendment letter"@en ;
 	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
+
+# ---- Assembly models ------------------------------------------------------------
+
+wrd-voc:BaselineAssemblyModel a owl:NamedIndividual , wrd:AssemblyModel ;
+	fnd:hasIdentity wrd-voc:BaselineAssemblyModel-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	rdfs:label "Baseline assembly model"@en ;
+	rdfs:comment "Wording's own assembly model: three-valued inclusion conditions, refusal on Undetermined, exactly one admitted variant per slot, and optional elements only when chosen (§5.14)." .
 
 # ---- Inclusion modes: a closed set -------------------------------------------
 
@@ -1137,6 +1178,17 @@ data graph.
 | W7 | Object ids are derived after assembly, never stored as identity | a design rule (§5.4) |
 | W8 | Every reference finds what it means in the wording holding it. A reference to an element or a variable finds exactly one version: the one a form comprises, or the one an assembled wording includes or, for a variable, declares through an included element. A reference to a document outside the wording finds exactly one reliance on it: in the wording itself, or for an assembled wording that states none, in the form it is assembled from | `wrd:W8FormShape`, `wrd:W8AssembledShape`, `wrd:W8RelianceShape` |
 
+Five more laws hold of every assembled wording an assembler produces (§5.14). WA1 is `wrd:WA1Shape`
+and an assembler's own record check. The rest are tests of the assembler.
+
+| Law | Statement |
+|---|---|
+| WA1 | An assembled wording drawn from a form names exactly one assembly model version |
+| WA2 | Whatever the model, the record satisfies W3 to W6 and W8 |
+| WA4 | Assembly reads the forms, the settings and the choices only, never runtime records or state |
+| WA5 | The same form versions, settings, choices and model version give the same record, up to minted identifiers |
+| WA6 | A failed assembly produces findings and no record |
+
 **A slot's conditions** are checked as a set. Every variant's conditions read the same governing
 variables. Where each variant has one interval condition over the same governing variable, no two
 variants' ranges overlap, and together they cover the variable's admissible values (every value,
@@ -1520,6 +1572,20 @@ wrd:W8RelianceShape a sh:NodeShape ;
 				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
 			}""" ] .
 
+# ---- WA1: an assembled wording names one assembly model --------------------------
+# Stated as at most one. That a wording drawn from a form names one is held by every
+# assembler's own record check, since hand-assembled wordings predate the model.
+
+wrd:WA1Shape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "WA1: an assembled wording names at most one assembly model version." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:assembledUnder ?value , ?other .
+				FILTER (STR(?value) < STR(?other))
+			}""" ] .
+
 # ---- Amendments -------------------------------------------------------------------
 
 wrd:AmendmentOperationShape a sh:NodeShape ;
@@ -1612,6 +1678,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
+- Next release. New: `wrd:AssemblyModel`, `wrd:assembledUnder`, the baseline assembly model `wrd-voc:BaselineAssemblyModel` and law WA1's shape `wrd:WA1Shape` (§5.14). An assembled wording that names more than one assembly model is reported (may invalidate, though no earlier release had the property).
 - Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
   longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled

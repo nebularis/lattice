@@ -184,6 +184,7 @@ ordinary Turtle.
 |---|---|---|
 | [`tools/mork_compilers/`](../../tools/mork_compilers/README.md) | Compiles Eligibility conditions into SPARQL, SHACL, SWRL and an OWL design-time-checking backend, through one shared IR (ADR-A23, ADR-A24, ADR-A89) | `mise run check:mork-compilers` |
 | [`tools/vocabulary/`](../../tools/vocabulary/README.md) | The scoped and temporal concept-scheme binding resolver (ADR-A85) | `mise run check:vocabulary` |
+| [`tools/wording_assembler/`](../../tools/wording_assembler/README.md) | Assembles a wording from a form, settings and choices under Wording's baseline model, and renders it in the document markup (ADR-A139, ADR-A140) | `mise run check:wording-assembler` |
 | [`tools/surface/`](../../tools/surface/README.md) | Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27) | `mise run check:python-root` (its tests run under `surface.test_surface`) |
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |

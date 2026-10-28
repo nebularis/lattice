@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-wording-assembler"
+version = "0.1.0"
+description = "Reference implementation of Wording's baseline assembly model (ontology/wording)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7.0,<8",
+  "pyshacl>=0.26,<1",
+  "mork-compilers",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

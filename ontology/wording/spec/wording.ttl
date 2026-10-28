@@ -426,3 +426,14 @@ wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "placed under"@en ;
 	rdfs:domain wrd:Element ; rdfs:range wrd:Element ;
 	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .
+
+wrd:AssemblyModel a owl:Class ;
+	rdfs:subClassOf fnd:Version , fnd:Governable ;
+	rdfs:label "Assembly model"@en ;
+	rdfs:comment "A set of rules for drawing an assembled wording from a form: how inclusion conditions are decided, what an undetermined one does, and how a variation slot is resolved." ;
+	fnd:utility "Declare one individual per model, with an identity. An assembler names the model version it applied on every assembled wording it produces, with wrd:assembledUnder." .
+
+wrd:assembledUnder a owl:ObjectProperty ;
+	rdfs:label "assembled under"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:AssemblyModel ;
+	rdfs:comment "The assembly model version the assembled wording was produced under. Subject: an assembled wording. Value: an assembly model, exactly one for a wording drawn from a form (law WA1), none for a wording written from scratch." .

@@ -71,6 +71,14 @@ wrd-voc:Endorsement a skos:Concept ;
 	skos:altLabel "Amendment letter"@en ;
 	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
 
+# ---- Assembly models ------------------------------------------------------------
+
+wrd-voc:BaselineAssemblyModel a owl:NamedIndividual , wrd:AssemblyModel ;
+	fnd:hasIdentity wrd-voc:BaselineAssemblyModel-identity ;
+	fnd:hasGovernanceState fnd:Active ;
+	rdfs:label "Baseline assembly model"@en ;
+	rdfs:comment "Wording's own assembly model: three-valued inclusion conditions, refusal on Undetermined, exactly one admitted variant per slot, and optional elements only when chosen (§5.14)." .
+
 # ---- Inclusion modes: a closed set -------------------------------------------
 
 wrd-voc:Mandatory a owl:NamedIndividual , wrd:InclusionMode ;

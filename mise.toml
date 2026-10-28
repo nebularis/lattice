@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -64,6 +64,11 @@ run = "python -m pip install -e ./tools/mork"
 depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the MORK backend compiler package"
 run = "python -m pip install -e \"./tools/mork_compilers[test]\""
+
+[tasks."bootstrap:wording-assembler"]
+depends = ["bootstrap:pip", "bootstrap:mork-compilers"]
+description = "Install the Wording assembler package"
+run = "python -m pip install -e \"./tools/wording_assembler[test]\""
 
 [tasks."bootstrap:surface"]
 depends = ["bootstrap:pip", "bootstrap:vocabulary"]
@@ -106,7 +111,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -396,6 +401,10 @@ run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). rdflib is the default engine (python-test-melting TM11): check:mork-compilers-conformance runs the same suite on Oxigraph, which TSD-41 found disagrees with rdflib on one test, not yet understood. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "rdflib" }
+
+[tasks."check:wording-assembler"]
+description = "Run the Wording assembler's tests: the baseline model's decisions, slots, optional elements, determinism (WA5), refusal without a record (WA6), re-assembly and the rendered document (ADR-A139, ADR-A140). Needs the package installed, which bootstrap:python does"
+run = "python -m pytest tools/wording_assembler -q"
 
 [tasks."check:mork-compilers-conformance"]
 description = "Run the MORK backend compiler tests on Oxigraph (python-test-melting TM11). Run on demand and before a merge into main, not part of check, since TSD-41's divergence is expected to fail test_a_profile_row_names_the_union_of_its_conditions_closures until its mechanism (TSD-Q20) is understood"

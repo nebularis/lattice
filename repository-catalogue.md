@@ -263,6 +263,11 @@ name = "vocabulary"
 path = "tools/vocabulary"
 import-names = ["vocabulary"]
 reaches = ["ontology/vocabulary"]
+
+[[tools]]
+name = "wording_assembler"
+path = "tools/wording_assembler"
+import-names = ["wording_assembler"]
 ```
 
 ## Documentation areas

@@ -129,7 +129,7 @@ class Stack:
                 command(argv), cwd=self.root, env={**os.environ, **(env or {})},
                 stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **detached(),
             )
-        self._pid_file(name).write_text(str(process.pid))
+        self._pid_file(name).write_text(str(process.pid), encoding="utf-8", newline="\n")
         return process.pid
 
     def stop(self, name: str) -> bool:
@@ -179,7 +179,7 @@ class Stack:
         store.mkdir(parents=True, exist_ok=True)
         print(f"fuseki: workspaces kept in {store}")
         config = base / "studio.ttl"
-        config.write_text(FUSEKI_CONFIG.replace("{location}", store.resolve().as_posix()))
+        config.write_text(FUSEKI_CONFIG.replace("{location}", store.resolve().as_posix()), encoding="utf-8", newline="\n")
         self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--config", str(config)], {"FUSEKI_BASE": str(base)})
 
     def rabbitmq_home(self) -> Path:
@@ -189,9 +189,9 @@ class Stack:
         data = self.infra / "rabbitmq"
         data.mkdir(parents=True, exist_ok=True)
         plugins = data / "enabled_plugins"
-        plugins.write_text(RABBITMQ_PLUGINS)
+        plugins.write_text(RABBITMQ_PLUGINS, encoding="utf-8", newline="\n")
         conf = data / "rabbitmq.conf"
-        conf.write_text(RABBITMQ_CONF)
+        conf.write_text(RABBITMQ_CONF, encoding="utf-8", newline="\n")
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_CONFIG_FILE": str(conf),
@@ -218,7 +218,7 @@ class Stack:
         if docker:
             run(["docker", "compose", "-f", str(self.compose), "up", "-d", "--build", "--wait"], self.root)
             self.run.mkdir(parents=True, exist_ok=True)
-            (self.run / "docker").write_text(str(self.compose))
+            (self.run / "docker").write_text(str(self.compose), encoding="utf-8", newline="\n")
         else:
             for name, start, port in (("fuseki", self.fuseki, FUSEKI_PORT), ("rabbitmq", self.rabbitmq, RABBITMQ_PORT)):
                 if listening(port):
