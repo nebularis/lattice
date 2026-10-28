@@ -86,6 +86,8 @@ class AuthoringHttpServerTest {
         assertEquals(413, client.send(tooLarge, HttpResponse.BodyHandlers.ofString()).statusCode());
 
         assertEquals(415, put(path, "{}", "text/plain").statusCode());
+        assertEquals(400, put(path, "{not json", "application/json").statusCode());
+        assertEquals(400, put(path, "", "application/json").statusCode());
         assertEquals(404, get("/api/no-such-route").statusCode());
 
         HttpRequest wrongMethod = HttpRequest.newBuilder(uri("/api/templates"))

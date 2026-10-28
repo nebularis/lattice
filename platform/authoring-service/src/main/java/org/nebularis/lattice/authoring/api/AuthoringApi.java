@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Everything the word authoring POC service does, with no knowledge of HTTP: one method per route
  * of plan WA4, plus {@link #onAnalysisResult(JsonNode)} for the worker's result event.
- * {@code http.AuthoringHttpServer} is the only class that knows this runs behind Javalin.
+ * {@code http.AuthoringHttpServer} is the only class that knows this runs over HTTP.
  */
 public final class AuthoringApi {
     private static final Logger LOG = LoggerFactory.getLogger(AuthoringApi.class);
