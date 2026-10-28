@@ -3,7 +3,7 @@
 # Configuration Studio: Runbook
 
 **Purpose:** Symptom, diagnosis and remedy for the problems met running the Configuration Studio
-**Status:** Proof of concept, single machine
+**Status:** Supported, single machine
 **Companion:** [Configuration Studio operations guide](configuration-studio-operations.md), which has the ports, environment, paths and shutdown rules these procedures rely on
 
 ---
@@ -26,7 +26,7 @@ tail -n 50 .build/config-studio/run/service.log
 
 ## Scenario 1: A port is already in use
 
-**Symptom.** `studio:up` stops with "{name} did not listen on 127.0.0.1:{port}" and the last lines of the log, or `up` reports success but the browser shows a different page, a `404` on `/api/health`, or an error that is not the studio's. Or `up` prints "fuseki: already listening on 3130" or "rabbitmq: already listening on 5673" and starts nothing.
+**Symptom.** `studio:up` stops with "service: port 8090 is in use by another process" (or "web: port 4175" with `--dev`), or with "{name} did not listen on 127.0.0.1:{port}" and the last lines of the log. Or `up` prints "fuseki: already listening on 3130" or "rabbitmq: already listening on 5673" and starts nothing.
 
 **Diagnosis.** The ports are `8090` (service), `4175` (dev server), `3130` (Fuseki), `5673` (RabbitMQ AMQP) and `25673` (RabbitMQ Erlang distribution). Find who holds the port.
 
@@ -36,7 +36,7 @@ lsof -nP -iTCP:8090 -sTCP:LISTEN
 
 On Windows, `netstat -ano | findstr :8090`, then `tasklist /FI "PID eq {pid}"`.
 
-`up` treats a listening port as the part being up, without checking that the part is the studio's. So if another program holds `8090`, the service fails to bind (`service.log` has `java.net.BindException: Address already in use`), but `up` sees the port listening, prints the address and carries on. The service's process may stay alive without serving, and `studio:status` then shows it running and "not listening", or running and listening because the other program is. The same holds for `4175` with `--dev`. For `3130` and `5673`, "already listening" may be your own stack from an earlier `up`, a part you started in a terminal, or something else.
+Before it starts the service or the dev server, `up` refuses a port that a process it did not start holds, and skips one its own earlier `up` holds. For `3130` and `5673` it cannot tell, so "already listening" may be your own stack from an earlier `up`, a part you started in a terminal, or something else, and the studio then talks to whatever holds the port.
 
 **Remedy.**
 
@@ -56,7 +56,6 @@ On Windows, `netstat -ano | findstr :8090`, then `tasklist /FI "PID eq {pid}"`.
 
    It answers `ok`. Anything else is not the studio.
 
-If the service was started and then failed to bind, `studio:down` stops its process too.
 
 ---
 
@@ -290,7 +289,7 @@ A job that fails is final. The worker does not retry it. Resubmit from the brows
 
 **Symptom.** After `studio:down` and `studio:up`, or a restart of Fuseki alone, the workspace list is empty, a workspace the browser had open answers `404`, and saved jobs are gone.
 
-**Diagnosis.** Fuseki's dataset is in memory (`--mem`). Stopping Fuseki, for any reason, empties it, and nothing is written to disk. This is by design for the proof of concept. If the service was started without `LATTICE_FUSEKI_URL`, it holds an in-memory dataset of its own and loses it when it exits, and the worker, which needs Fuseki, cannot read its jobs.
+**Diagnosis.** Fuseki's dataset is in memory (`--mem`). Stopping Fuseki, for any reason, empties it, and nothing is written to disk. A persistent dataset is planned work, not yet built. If the service was started without `LATTICE_FUSEKI_URL`, it holds an in-memory dataset of its own and loses it when it exits, and the worker, which needs Fuseki, cannot read its jobs.
 
 **Remedy.** There is no recovery of lost workspaces. To avoid it, keep the configuration as Turtle files in the repository, upload it to a new workspace, and download or copy the edited graphs out of the browser before stopping Fuseki. After a restart, create the workspace again from the sample or the uploaded files. Restarting only the service, the worker or RabbitMQ does not lose workspaces. The queue's persistent messages survive a RabbitMQ restart, while their jobs live in Fuseki.
 

@@ -6,6 +6,7 @@ The architecture documents of LATTICE. The [decisions](published-architecture-de
 |---|---|
 | [capacity-domain-analysis-and-design](capacity-domain-analysis-and-design.md) | Capacity Domain Ontology on LATTICE |
 | [capacity-model-performance-addendum](capacity-model-performance-addendum.md) | Addendum: Capacity Model Runtime Performance for Financial Transactions |
+| [configuration-studio](configuration-studio.md) | Configuration Studio |
 | [conformance-levels](conformance-levels.md) | Conformance-Level Ladder |
 | [data-architecture](data-architecture.md) | Platform Data Architecture |
 | [deferred-scope-and-boundaries](deferred-scope-and-boundaries.md) | Deferred Scope and Integration Boundaries |

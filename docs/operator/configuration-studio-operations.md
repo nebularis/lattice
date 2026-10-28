@@ -3,7 +3,7 @@
 # Configuration Studio: Operations Guide
 
 **Purpose:** How to configure, run, stop and check each part of the Configuration Studio, and what it does and does not protect
-**Status:** Proof of concept. A single-author tool for one machine, not a service to expose on a network
+**Status:** Supported. A single-author tool for one machine, not a service to expose on a network
 **Companion:** [Configuration Studio runbook](configuration-studio-runbook.md)
 
 ---
@@ -146,7 +146,6 @@ Started from the generic Unix release (the Windows release on Windows) through i
 | `RABBITMQ_DIST_PORT` | `25673` | Not the default `25672` |
 | `RABBITMQ_MNESIA_BASE` | `.build/config-studio/infra/rabbitmq/mnesia` | Data stays in the checkout |
 | `RABBITMQ_LOG_BASE` | `.build/config-studio/infra/rabbitmq/log` | Logs stay in the checkout |
-| `RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS` | `-rabbit loopback_users []` | Allows `guest` from any address the node accepts connections on. The node accepts only loopback (see [Security](#security)) |
 | `ERLANG_HOME` | the parent of the directory holding `erl` | RabbitMQ's scripts find Erlang from it. The stack derives it from `erl` on the path, and stops with "RabbitMQ needs Erlang" if there is none |
 
 RabbitMQ runs on the Erlang mise installs, so start it through `mise`. The user is the default `guest` with password `guest`, in virtual host `/` (written `%2F` in the URI). The Docker setup runs `rabbitmq:4.4-management-alpine` with `guest`/`guest` set explicitly, and publishes the AMQP port at `127.0.0.1:5673` and the management interface at `127.0.0.1:15673`.
@@ -295,7 +294,7 @@ The Configuration Studio is a single-author tool for one machine. **It must not 
 | Authentication | None. The service, the API and Fuseki accept any request. There are no users, sessions or permissions |
 | Authorisation | None. Anyone who can reach `/api` can read, change and delete every workspace and job |
 | Network exposure | Every listener is bound to `127.0.0.1`. Fuseki has `--localhost`, RabbitMQ has `RABBITMQ_NODE_IP_ADDRESS=127.0.0.1`, and Docker publishes each port at `127.0.0.1`. Changing `LATTICE_STUDIO_BIND` opens the service, and nothing else protects it |
-| RabbitMQ user | The default `guest`/`guest`. RabbitMQ accepts `guest` from the loopback address only, but the stack sets `loopback_users []` to remove that rule, so what keeps `guest` local is the loopback bind. In Docker the container's own network is not loopback to the broker, so the compose file sets the same option and relies on the loopback-only port publication |
+| RabbitMQ user | The default `guest`/`guest`, which RabbitMQ accepts from the loopback address only, and the node listens on loopback alone. In Docker the container's own network is not loopback to the broker, so the compose file sets `loopback_users []` and relies on the loopback-only port publication instead |
 | Transport | Plain HTTP and plain AMQP. No TLS |
 | Cross-origin | No response carries `Access-Control-Allow-Origin`, so a page on another origin cannot read the API from a browser. This is not authentication, because the browser's same-origin rule does not stop a request from the local machine or a forged request |
 | Request validation | The service validates every request: content type (Turtle or RDF/XML, else `415`), body size (5 MiB, else `413`), syntax (else `400`), every identifier in a path, the revision a save expects (`If-Match`, else `428` or `412`), and that a saved graph holds only its own part's subjects (`422`). RDF/XML that declares a DTD is refused, which prevents external entities |
@@ -304,4 +303,4 @@ The Configuration Studio is a single-author tool for one machine. **It must not 
 | Errors | An unexpected error returns `500` with the text `internal error` and logs the detail to the service log, not to the client |
 | Secrets | The AMQP URI and the optional Fuseki credentials are environment variables. They are not written to the repository, but they are visible in the process environment and the compose file has the broker's password in the clear |
 
-Reaching it from another machine needs authentication, TLS and a persistent store first, which are outside the proof of concept.
+Reaching it from another machine needs authentication, TLS and a persistent store first, none of which the studio has yet.

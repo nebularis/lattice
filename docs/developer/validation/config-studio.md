@@ -190,6 +190,48 @@ Probe P5: with `Parts.strangers` replaced by an empty list, CS8-03 failed (`aGra
 | CS10-06 | RDF/XML declaring an external entity that names a local file / `PUT` / `400`, nothing stored. Found by the test's first run: Jena never read the file but stored the entity as an empty string, so a DTD is now refused | L1 | − | pass |
 | CS10-07 | the staged vocabulary and the seven samples / `GET` as RDF/XML on the live stack / `200` each. The vocabulary takes about 60 ms against 3 ms as Turtle | L5 | + | pass, macOS |
 
+## CS9: a supported component
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS9-01 | the `cst:` namespace without `poc/` / `check:config-studio` and `test:config-studio` / every suite passes: 39 Python, 40 service, 12 package and 23 browser unit tests, and 13 browser tests | L1 to L3 | + | pass |
+| CS9-02 | the new and changed register entries / `check:knowledge`, `check:identifiers` / pass, every pointer resolving | L0 | + | pass, 84 and 9 tests |
+| CS9-03 | the architecture document, the operations guide and the runbook / the pre-commit hooks (links, site sections, published decisions, writing, wrapping) / pass, citing only Accepted ADRs and no working document | L0 | + | pass |
+| CS9-04 | the operations guide's procedures / run against the live stack by its author: up, status, down, every health check, `415`, `400`, `428`, `422`, `413`, `201`, `404`, a job from queued to succeeded, a port in use, a stale process id | L5 | + | pass, macOS. Not run: `--docker`, `--dev`, Windows, a refused checksum, a stale Erlang node |
+| CS9-05 | another process on the service's port / `Stack.claim` / refused before anything starts, and accepted once the port is free. Found by the runbook's author: `up` reported success while the service failed to bind | L1 | − | pass |
+| CS9-06 | the downloaded RabbitMQ without `loopback_users []` / `studio:up`, `test:stack`, a second `up`, `studio:down` / both browser tests pass, the second `up` skips what runs, RabbitMQ shuts down through `rabbitmqctl` | L5 | + | pass, macOS |
+
+### STD-279 review of both services
+
+| Component | Input | Validated at the component | Finding |
+|---|---|---|---|
+| studio service | every body | size, media type, syntax, part membership, no DTD in RDF/XML | CS8 added part membership, CS10 the DTD refusal |
+| studio service | path, query, headers | workspace and job ids as lower-case UUIDs, part names from a fixed list, sample ids by pattern, the slug's encoding, the job's kind and target, `If-Match` | none |
+| studio worker | AMQP message | a studio job IRI, whole and UTF-8 | none |
+| studio worker | the job graph | a known kind, target and submission time, and, since this review, only the job's own input graph and a workspace baseline | fixed, CS-B19, tested by `test_a_job_naming_a_graph_outside_its_own_fails_without_reading_it` |
+| authoring service | path parameters | UUID, key and revision patterns | none |
+| authoring service | snapshot body | media type, size, JSON Schema, then SHACL. Since CS12a, a body that is not JSON is `400` | fixed in CS12a. Under Javalin it reached the general handler |
+| authoring service | the worker's result event | its JSON Schema before it is stored | none |
+| wording worker | AMQP message | the request's field set and types, and its graph reference | partial: not the whole JSON Schema. The JSON contract is retired in CS12d, so not fixed |
+
+## CS12a: the authoring service on Helidon
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS12a-01 | the authoring service on Helidon 4.5.6, Jena 6.2.0, Jackson 2.22.4 / `mvn verify` / 85 unit tests, the HTTP ones unchanged but for two cases added: a body that is not JSON, and an empty body, `400` | L3 | +/− | pass |
+| CS12a-02 | Fuseki and RabbitMQ 4.4 containers / `check:authoring-service-it` / 6 integration tests pass | L4 | + | pass |
+| CS12a-03 | the POC stack / `check:authoring-stack` / 7 end-to-end tests pass, a restart included | L5 | + | pass |
+| CS12a-04 | the runtime dependencies of both services, 82 and 74 / OSV's batch query on 2026-10-28 / no advisory | L0 | + | pass |
+
+## CS12b: the shared domain package
+
+Built by a sub-agent on its own branch, reviewed and merged.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS12b-01 | the document model, tag codec, offsets and graph model moved to `packages/authoring-domain` / every suite / the totals unchanged: studio 23 plus 2 moved, add-in 59 plus 10 moved, the package 12 | L1 | + | pass |
+| CS12b-02 | both apps importing the package / `check:authoring-addin`, `test:authoring-addin`, both production builds / pass, 59 unit and 13 harness tests | L1, L3 | + | pass |
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

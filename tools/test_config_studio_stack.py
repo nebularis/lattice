@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import socket
 import sys
 import time
 from pathlib import Path
@@ -39,3 +40,16 @@ def test_a_download_with_the_wrong_checksum_is_refused(tmp_path: Path) -> None:
     assert not list((tmp_path / "into").iterdir())
     good = hashlib.sha256(b"release").hexdigest()
     assert stack.download(url, good, tmp_path / "into").read_bytes() == b"release"
+
+
+def test_a_port_another_process_holds_is_refused_before_anything_starts(tmp_path: Path) -> None:
+    studio = stack.Stack(lattice_repo_catalogue.find_root())
+    studio.run = tmp_path
+    with socket.socket() as other:
+        other.bind(("127.0.0.1", 0))
+        other.listen()
+        port = other.getsockname()[1]
+        with pytest.raises(SystemExit, match="in use by another process"):
+            studio.claim("service", port)
+        assert not (tmp_path / "service.pid").exists()
+    assert studio.claim("service", port)

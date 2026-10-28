@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** review the Validation Pack, run `mise run check:config-studio` and `mise run test:config-studio`, try the studio (the service's README, "Run it"), and rule on CS-D1 to CS-D14.
+**Next action, for the maintainer:** review the Validation Pack, run `mise run check:config-studio`, `mise run test:config-studio` and `mise run check:authoring`, try the studio with `mise run studio:up`, rule on CS-D1 to CS-D14 and CS-B14 to CS-B22, and decide on accepting ADR-A136 as amended. CS12c waits on the document vocabulary's ADR, and CS11 on the builder's own questions.
 
 ## Decisions taken alone, for ratification
 
@@ -36,6 +36,15 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B11 | An expansion and a question with no `cst:resolutionTime` resolve at the job's submission time with no scope | PRI-56 forbids reading the clock inside the logic, and the submission time is the job's input |
 | CS-B13 | `studio:up` and `studio:down` run `tools/config_studio_stack.py`, which downloads Fuseki and RabbitMQ with pinned SHA-256s and stops each process through its own shutdown: `rabbitmqctl shutdown` for RabbitMQ, SIGTERM with a minute's grace for the rest. The worker now finishes its job on SIGTERM | the maintainer asked for start and stop scripts for every platform that stop the tools by the means they support. Python, since every platform the repository supports already runs it through mise |
 | CS-B12 | Foundation's `vocab` is staged with the vocabularies | its governance states are what `fnd:hasGovernanceState` offers |
+| CS-B14 | Helidon 4.5.6 in both services, not 27 | Helidon 27 is compiled for Java 27 (class file 71), and the platform is on 25 |
+| CS-B15 | The service refuses with `422` a saved graph that holds another part's subjects, by the rule of the browser's `split.ts` | STD-279. The service cannot know the browser sorted the graph |
+| CS-B16 | An RDF/XML body that declares a DTD is refused, and a graph RDF/XML cannot write answers `406` | Jena reads an external entity as an empty string rather than failing, which stores a value nobody wrote. RDF/XML never needs a DTD |
+| CS-B17 | The `cst:` namespace drops `poc/` from its IRI | a supported contract should not carry it, and no workspace outlives an in-memory store, so nothing needs migrating. Before supporting it, since it is a breaking change afterwards |
+| CS-B18 | ADR-A136 is amended in place rather than superseded | the maintainer left the choice to us. It is still Proposed, and supersession is for an Accepted record |
+| CS-B19 | The worker reads only the job's own input graph and a workspace baseline | STD-279. The job graph names the graphs to read, so a forged job could name any graph in the store |
+| CS-B20 | The authoring service moves to Jena 6.2.0 and Jackson 2.22.4 within CS12a | together with the move off Javalin, it clears every advisory OSV knew in both services on 2026-10-28, which closes TD-95 |
+| CS-B21 | `studio:up` refuses a service or dev-server port another process holds, and no longer empties `loopback_users` for the downloaded RabbitMQ | the runbook's author found `up` reporting success while the service failed to bind, and the native node binds to loopback, so `guest` needs no exception |
+| CS-B22 | The package `packages/authoring-domain` takes the add-in's `types.ts` and the studio's `ns.ts` whole | `graph.ts` needs `ns.ts`, and splitting either would leave a second file of the same kind. The JSON-contract types in `types.ts` go when the contracts are retired in CS12d |
 
 ## Learnings
 
@@ -60,6 +69,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, latest: CS9, CS12a and CS12b, under the maintainer's delegation. ADR-A136 amended to make the studio supported, the `cst:` namespace renamed, a published architecture document, an operations guide and a runbook, register entries (CAP-86 updated, MEC-84 to MEC-87, PAT-55), the STD-279 review of both services with the worker's gap fixed, the authoring service on Helidon with Jena 6 and Jackson 2.22 (TD-95 closed), the shared package, and the stack's port check. Two sub-agents wrote CS12b and the operator documents on their own branches, which we reviewed and merged.
 - 2026-10-28, later still: CS10. RDF/XML beside Turtle by content negotiation, chosen in one place, and accepted in bodies, with a DTD refused.
 - 2026-10-28, later: CS8. The service on Helidon SE WebServer 4.5.6, since 27 needs Java 27, and a saved graph refused with `422` when it holds another part's subjects (STD-279). Verified with the unit tests, the shaded jar's self-check and the live stack.
 - 2026-10-28: the maintainer answered CS-Q2 (an amendment to ADR-A136 in CS9) and CS-Q5 (the document vocabulary's own ADR, both schema languages, and delegated the choice of source, which we made: RELAX NG compact as source, XSD generated). `amqp-client` raised to 5.37.0 in `authoring-service` and `platform-outbox`, and RabbitMQ images from 3.13 to 4.4 in the POC's and the platform's compose files and the POC's integration tests. `check:java` and `check:authoring-service-it` pass. CS8 is next.

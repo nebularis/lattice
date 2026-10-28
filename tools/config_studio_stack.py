@@ -94,7 +94,7 @@ class Stack:
 
     def stop(self, name: str) -> bool:
         """Stops a process the way its tool supports: `rabbitmqctl shutdown` for RabbitMQ, which
-        waits for the node to stop its applications and Mnesia, and a termination request for the
+        waits for the node to stop its applications and its metadata store, and a termination request for the
         rest, whose shutdown hooks close the HTTP server, the AMQP connection and the store."""
         pid = self.pid(name)
         if pid is None:
@@ -106,6 +106,16 @@ class Stack:
         stop_tree(pid)
         self._pid_file(name).unlink(missing_ok=True)
         return True
+
+    def claim(self, name: str, port: int) -> bool:
+        """True when the port is free to start `name` on, false when `name` already runs there, and
+        an exit when another process holds it, since a service that cannot bind may stay alive."""
+        if not listening(port):
+            return True
+        if self.pid(name) is not None:
+            print(f"{name}: already running on {port}")
+            return False
+        raise SystemExit(f"{name}: port {port} is in use by another process. Stop it, then run `mise run studio:up` again")
 
     def wait_for(self, name: str, port: int, timeout: float = 180.0) -> None:
         deadline = time.monotonic() + timeout
@@ -136,7 +146,6 @@ class Stack:
             "RABBITMQ_MNESIA_BASE": str(data / "mnesia"), "RABBITMQ_LOG_BASE": str(data / "log"),
             "RABBITMQ_NODENAME": RABBITMQ_NODE, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(RABBITMQ_PORT), "RABBITMQ_DIST_PORT": str(RABBITMQ_PORT + 20000),
-            "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS": "-rabbit loopback_users []",
         }
         erl = shutil.which("erl")
         if erl is None:
@@ -170,11 +179,13 @@ class Stack:
             run(["yarn", "workspace", "@lattice/config-studio", "run", "build"], self.root)
         run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service", "-am", "package", "-DskipTests"], self.root)
         jar = self.platform / "config-studio-service" / "target" / "config-studio-service.jar"
-        self.spawn("service", ["java", "-jar", str(jar)], STUDIO_ENV)
-        self.wait_for("service", SERVICE_PORT)
-        self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
+        if self.claim("service", SERVICE_PORT):
+            self.spawn("service", ["java", "-jar", str(jar)], STUDIO_ENV)
+            self.wait_for("service", SERVICE_PORT)
+        if self.pid("worker") is None:
+            self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
         url = f"http://127.0.0.1:{SERVICE_PORT}"
-        if dev:
+        if dev and self.claim("web", WEB_PORT):
             self.spawn("web", ["yarn", "workspace", "@lattice/config-studio", "run", "dev"])
             self.wait_for("web", WEB_PORT)
             url = f"http://127.0.0.1:{WEB_PORT}"
