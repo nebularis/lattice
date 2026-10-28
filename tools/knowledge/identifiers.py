@@ -40,11 +40,16 @@ Usage, from the repository root::
     mise run check:identifiers           # fail on a new dangling mention
     mise exec -- python tools/knowledge/identifiers.py --report
     mise exec -- python tools/knowledge/identifiers.py --variants
+
+The check also fails when a family defines one identifier twice, which a merge of two branches that
+each numbered a row produces. First in wins: the row committed earlier keeps the number, and the
+check prints both sites with the date each line was committed (ADR-A133 addendum).
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime
 import fnmatch
 import re
 import subprocess
@@ -366,36 +371,70 @@ def mentions(paths: list[Path]) -> dict[str, dict[str, Mention]]:
     return found
 
 
-def definitions(family: Family) -> dict[str, str]:
-    """The identifiers this family defines, as normalised key -> canonical spelling."""
-    if not family.resolvable:
-        return {}
-    defined: dict[str, str] = {}
-    if family.definition == "question":
-        for path in question_documents(family):
-            for q in questions_in(path.read_text(encoding="utf-8", errors="replace").splitlines()):
-                defined.setdefault(normalise(q.identifier), q.identifier)
-        return defined
+def definition_sites(family: Family) -> dict[str, list[tuple[Path, int, str]]]:
+    """Every site at which this family defines an identifier, as normalised key -> (path, line,
+    spelling), line 0 for a filename. The question family keeps its own rule in ``definitions``."""
+    sites: dict[str, list[tuple[Path, int, str]]] = defaultdict(list)
+    if not family.resolvable or family.definition == "question":
+        return sites
     for pattern in family.defines:
         for path in sorted(ROOT.glob(pattern)):
             if family.definition == "filename":
                 match = family.mention.match(path.stem)
                 if match:
-                    defined[normalise(match.group(1))] = match.group(1)
+                    sites[normalise(match.group(1))].append((path, 0, match.group(1)))
                 continue
-            for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            for number, line in enumerate(lines, 1):
                 stripped = line.strip()
+                match = None
                 if family.definition == "table-row" and stripped.startswith("|"):
                     cells = stripped.split("|")
                     if len(cells) > 1:
                         match = family.mention.fullmatch(cells[1].strip())
-                        if match:
-                            defined[normalise(match.group(1))] = match.group(1)
                 elif family.definition == "heading" and stripped.startswith("#"):
                     match = family.mention.match(stripped.lstrip("#").strip())
-                    if match:
-                        defined[normalise(match.group(1))] = match.group(1)
-    return defined
+                if match:
+                    sites[normalise(match.group(1))].append((path, number, match.group(1)))
+    return sites
+
+
+def definitions(family: Family) -> dict[str, str]:
+    """The identifiers this family defines, as normalised key -> canonical spelling."""
+    if not family.resolvable:
+        return {}
+    if family.definition == "question":
+        defined: dict[str, str] = {}
+        for path in question_documents(family):
+            for q in questions_in(path.read_text(encoding="utf-8", errors="replace").splitlines()):
+                defined.setdefault(normalise(q.identifier), q.identifier)
+        return defined
+    return {key: sites[0][2] for key, sites in definition_sites(family).items()}
+
+
+def duplicates(family: Family) -> dict[str, list[tuple[Path, int, str]]]:
+    """The identifiers this family defines more than once, with every site."""
+    return {key: sites for key, sites in definition_sites(family).items() if len(sites) > 1}
+
+
+def committed_on(path: Path, line: int) -> str:
+    """The date the line was committed, from git blame, "uncommitted" for a line not yet committed,
+    or "unknown" where git cannot say. Line 0 dates the file's first commit."""
+    try:
+        if line == 0:
+            out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%cs", "--", str(path)],
+                                 cwd=ROOT, capture_output=True, text=True, check=True).stdout
+            return out.strip().splitlines()[-1] if out.strip() else "uncommitted"
+        out = subprocess.run(["git", "blame", "--line-porcelain", f"-L{line},{line}", "--", str(path)],
+                             cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    except (subprocess.CalledProcessError, OSError, IndexError):
+        return "unknown"
+    if out.startswith("0" * 40):
+        return "uncommitted"
+    for row in out.splitlines():
+        if row.startswith("committer-time "):
+            return datetime.date.fromtimestamp(int(row.split()[1])).isoformat()
+    return "unknown"
 
 
 def excepted() -> set[str]:
@@ -426,6 +465,7 @@ class Findings:
     rehomed: list[tuple[Family, Mention]] = field(default_factory=list)
     counted: list[tuple[Family, Mention]] = field(default_factory=list)
     variants: list[tuple[Family, Mention, str]] = field(default_factory=list)
+    duplicated: list[tuple[Family, str, list[tuple[Path, int, str]]]] = field(default_factory=list)
 
 
 def examine(found: dict[str, dict[str, Mention]]) -> Findings:
@@ -436,6 +476,8 @@ def examine(found: dict[str, dict[str, Mention]]) -> Findings:
         if not family.resolvable:
             continue
         defined = definitions(family)
+        for key, sites in sorted(duplicates(family).items()):
+            findings.duplicated.append((family, key, sites))
         for key, mention in sorted(found[family.name].items()):
             canonical = defined.get(key)
             if canonical is None:
@@ -539,6 +581,18 @@ def main() -> int:
             f"\n{len(findings.unresolved)} identifiers are mentioned but defined nowhere. Define "
             f"each, correct the mention, or add it to {_name(EXCEPTIONS_PATH)} with a reason."
         )
+
+    for family, _, sites in findings.duplicated:
+        where = ", ".join(f"{_name(path)}:{line} ({committed_on(path, line)})" for path, line, _ in sites)
+        print(f"ERROR: {sites[0][2]} ({family.name}) is defined {len(sites)} times: {where}")
+
+    if findings.duplicated:
+        print(
+            f"\n{len(findings.duplicated)} identifiers are defined twice. First in wins: the row "
+            "committed earlier keeps the number. Renumber the later row and every citation of it."
+        )
+
+    if findings.unresolved or findings.duplicated:
         return 1
 
     resolvable = sum(len(found[f.name]) for f in FAMILIES if f.resolvable)
