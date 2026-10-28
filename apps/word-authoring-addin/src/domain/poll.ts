@@ -1,15 +1,10 @@
 /**
- * Polls `GET /api/jobs/{jobId}` until it leaves the `queued` status (plan WA8, used by the
- * Analyse panel added in WA9).
+ * Polls a studio job until it has ended (CS12d, used by the Analyse panel).
  */
-import type { JobStatus } from "@lattice/authoring-domain";
+export type JobStatus = "queued" | "running" | "succeeded" | "failed";
 
 export interface PollableJob {
   status: JobStatus;
-}
-
-export interface JobApi<T extends PollableJob> {
-  getJob(jobId: string): Promise<T>;
 }
 
 export interface PollOptions {
@@ -24,19 +19,15 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Resolves with the final (non-`queued`) job, or rejects with an error named `timeout`. */
-export async function pollJob<T extends PollableJob>(
-  api: JobApi<T>,
-  jobId: string,
-  options: PollOptions = {},
-): Promise<T> {
+/** Resolves with the job once it has succeeded or failed, or rejects with an error named `timeout`. */
+export async function pollJob<T extends PollableJob>(read: () => Promise<T>, options: PollOptions = {}): Promise<T> {
   const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const deadline = Date.now() + timeoutMs;
 
   for (;;) {
-    const job = await api.getJob(jobId);
-    if (job.status !== "queued") {
+    const job = await read();
+    if (job.status === "succeeded" || job.status === "failed") {
       return job;
     }
     const remaining = deadline - Date.now();

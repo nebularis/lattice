@@ -303,3 +303,30 @@ def test_the_partition_is_the_one_java_computes():
     assert routing_key("ffffffff-0000-4000-8000-000000000000") == "7"
     assert routing_key("00000000-ffff-4000-8000-000000000000") == "0"
     assert routing_key("0000000d-0000-4000-8000-000000000000") == "5"
+
+
+def test_an_analysis_gives_the_analysis_view_and_the_proposals_of_its_document():
+    store = FakeStore()
+    iri = submit(store, "analyse", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    document = Graph()
+    document.parse(ROOT / "contracts" / "authoring" / "fixtures" / "wording" / "software-licence.nt", format="nt")
+    store.graphs[f"{iri}:input"] = document
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    found = artefacts(g, job)
+    assert set(found) == {"analysis.json", "proposals.ttl"}
+    view = json.loads(found["analysis.json"][1])
+    assert view["elements"] and "graphView" in view
+    assert len(Graph().parse(data=found["proposals.ttl"][1], format="turtle")) > 0
+
+
+def test_an_analysis_of_a_graph_holding_no_wording_fails():
+    store = FakeStore()
+    iri = submit(store, "analyse", "persistence", None)
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(URIRef(iri), CST.status) == CST.Failed
+    assert "0 wordings" in str(g.value(URIRef(iri), CST.failureMessage))

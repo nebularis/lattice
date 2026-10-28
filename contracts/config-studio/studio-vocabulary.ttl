@@ -45,6 +45,52 @@ cst:modifiedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
 cst:fromSample a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Sample ;
     rdfs:comment "The sample a workspace was made from, when it was. The workspace is a copy, so a later change to the sample does not reach it." .
 
+# --- documents of a workspace's library ---------------------------------------
+
+cst:Document a owl:Class ;
+    rdfs:comment "A document of a workspace, in LATTICE's markup (ADR-A137), held in its own graph with the Wording graph its markup gives. Its IRI is that graph's. Its node in the workspace description carries its title as rdfs:label." .
+cst:document a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Document ;
+    rdfs:comment "A document the workspace holds." .
+cst:template a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:string ;
+    rdfs:comment "The key of the cst:DocumentTemplate the document was drafted from." .
+cst:revision a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:integer ;
+    rdfs:comment "The document's revision, from 1. A save names the revision it expects." .
+cst:markup a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:string ;
+    rdfs:comment "The document's markup as saved, so it is returned exactly, unmarked text included." .
+
+cst:DocumentTemplate a owl:Class ;
+    rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
+cst:templateKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "A document template's or a sample's key, lower-case letters, digits and hyphens." .
+cst:section a owl:ObjectProperty ; rdfs:domain cst:DocumentTemplate ; rdfs:range cst:TemplateSection ;
+    rdfs:comment "A section of the template." .
+cst:TemplateSection a owl:Class ;
+    rdfs:comment "A section of a document template. Its rdfs:label is its heading and its rdfs:comment the guidance shown to a drafter." .
+cst:sectionKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "The key a document's section names in its markup." .
+cst:order a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:integer ;
+    rdfs:comment "The section's place in its template, from 1." .
+cst:elementKind a owl:DatatypeProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "An element the section may hold, clause or definition." .
+cst:termKind a owl:DatatypeProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "A kind of term the section's elements may state: Obligation, Prohibition, Permission, Exclusion, Power, Definition or Deeming." .
+cst:required a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a document drafted from the template must hold an element in the section." .
+
+cst:variable a owl:ObjectProperty ; rdfs:domain cst:DocumentTemplate ; rdfs:range cst:TemplateVariable ;
+    rdfs:comment "A variable a document drafted from the template declares from the start." .
+cst:TemplateVariable a owl:Class ;
+    rdfs:comment "A variable of a document template. Its rdfs:label is the label shown to a drafter." .
+cst:variableKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateVariable ; rdfs:range xsd:string ;
+    rdfs:comment "The key a document's markup names the variable by." .
+cst:valueType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateVariable ; rdfs:range xsd:string ;
+    rdfs:comment "The variable's value type: money, percentage, date, duration, number, text or party." .
+
+cst:DocumentSample a owl:Class ;
+    rdfs:comment "A sample document in LATTICE's markup, with its cst:templateKey as its key and a title as its rdfs:label." .
+cst:sampleKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:DocumentSample ; rdfs:range xsd:string ;
+    rdfs:comment "The sample's key, which names its file in contracts/document/samples." .
+
 cst:Graph a owl:Class ;
     rdfs:comment "A named graph of the studio's dataset." .
 
@@ -69,9 +115,10 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .
 
 cst:Target a owl:Class ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Vocabulary cst:Quantification cst:Eligibility cst:Persistence cst:Surface ) ] .
@@ -191,7 +238,7 @@ cst:Receipt a owl:Class ;
 cst:commandId a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The command's id, a lower-case UUID its sender chose. A command whose receipt exists is answered from it and not applied again." .
 cst:command a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
-    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, submit-job, job-update or delete-job." .
+    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, save-document, delete-document, submit-job, job-update or delete-job." .
 cst:sender a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The component that says it sent the command, service or worker. Not authenticated." .
 cst:job a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Job ;

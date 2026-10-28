@@ -4,7 +4,11 @@
 
 A Word add-in for the word authoring proof of concept (ADR-A118): mark clauses, definitions,
 variables and defined-term references in a document, then read them as Logical English and
-review the proposed `ins:` graph against [`platform/authoring-service`](../../platform/authoring-service).
+review the proposed graph. A document lives in a workspace of the Configuration Studio, which
+stores it as [document markup](../../contracts/document/README.md) with its Wording graph and runs
+the analysis as a job of kind `analyse` (see [`contracts/config-studio`](../../contracts/config-studio/README.md)).
+The sections below that describe the earlier proof-of-concept service and its JSON API are
+out of date and are replaced as the studio's service lands.
 Not a platform contract. Its code, markup and manifest may change or be withdrawn without
 deprecation.
 
@@ -156,19 +160,18 @@ and so on.
 
 | Module | Holds |
 |---|---|
-| `domain/types.ts` | hand-written TypeScript types for every schema under `contracts/authoring` and `contracts/events` |
-| `domain/schemas.ts` | one Ajv 2020-12 instance over the same 14 schemas, `validate(name, value): string[]` |
+| `domain/types.ts` | the document model and the analysis view, in `@lattice/authoring-domain` |
 | `domain/tags.ts` | the content-control tag codec: `encode`/`decode`, and `title` |
 | `domain/offsets.ts` | `occurrenceIndex` and `escapeWordSearch`, for `Range.search` |
 | `domain/keys.ts` | `suggestKey`/`guessValueType`, ported from WA3's Java detector |
 | `domain/xml.ts` | small shared DOM helpers used by `ooxml.ts` and `metadata.ts` |
 | `domain/ooxml.ts` | `parseBody`, `writeSections`, `writeTemplate`, `writePackage` |
-| `domain/snapshot.ts` | `buildSnapshot(parsed, metadata)`, validated against `document-snapshot` |
+| `domain/snapshot.ts` | `buildSnapshot(parsed, metadata)`, the document model that `writeMarkup` saves |
 | `domain/metadata.ts` | `toXml`/`fromXml` for the document's custom XML metadata part |
 | `domain/mermaid.ts` | `toMermaid(graphView)`, a deterministic Mermaid `flowchart` renderer |
-| `domain/poll.ts` | `pollJob(api, jobId, options)` |
+| `domain/poll.ts` | `pollJob(read, options)`, until a studio job has succeeded or failed |
 | `domain/uuid.ts` | a dependency-free UUID v4 generator |
-| `api/client.ts` | `ApiClient`, `HttpApiClient`, `ApiError` |
+| `api/client.ts` | `StudioClient`, `HttpStudioClient`, `ApiError`, and the Turtle readers for workspaces, templates, samples and jobs |
 | `word/port.ts` | the `DocumentPort` interface, `MarkResult`, `InlineMark`, `AuthoringMetadata` |
 | `word/officePort.ts` | `DocumentPort` over the real Word API |
 | `word/fakePort.ts` | `DocumentPort` over an in-memory model, for tests and the harness |

@@ -28,6 +28,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
+import org.nebularis.lattice.studio.authoring.Documents;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
@@ -56,6 +57,8 @@ public final class StudioApi {
     private final Clock clock;
     private final Supplier<UUID> ids;
     private final Path assets;
+
+    private final Documents documents = new Documents();
 
     public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
         this.store = store;
@@ -122,6 +125,19 @@ public final class StudioApi {
         if (s.length == 2 && s[0].equals("samples") && SAMPLE_ID.matcher(s[1]).matches()) {
             return method.equals("GET") ? asset("samples/" + s[1] + ".ttl") : notAllowed("GET");
         }
+        if (s.length == 1 && s[0].equals("document-templates")) {
+            return method.equals("GET") ? ApiResponse.turtle(200, Turtle.write(documents.templates())) : notAllowed("GET");
+        }
+        if (s.length == 1 && s[0].equals("document-samples")) {
+            return method.equals("GET") ? ApiResponse.turtle(200, Turtle.write(documents.samples())) : notAllowed("GET");
+        }
+        if (s.length == 2 && s[0].equals("document-samples")) {
+            if (!method.equals("GET")) {
+                return notAllowed("GET");
+            }
+            byte[] sample = documents.sample(s[1]);
+            return sample == null ? notFound() : xml(200, sample);
+        }
         if (s.length == 1 && s[0].equals("workspaces")) {
             return switch (method) {
                 case "GET" -> ApiResponse.turtle(200, Turtle.write(store.workspaces()));
@@ -146,6 +162,17 @@ public final class StudioApi {
                     case "GET" -> getGraph(ws, s[3]);
                     case "PUT" -> putGraph(req, ws, s[3]);
                     default -> notAllowed("GET, PUT");
+                };
+            }
+            if (s.length == 3 && s[2].equals("documents")) {
+                return method.equals("GET") ? listDocuments(ws) : notAllowed("GET");
+            }
+            if (s.length == 4 && s[2].equals("documents") && Graphs.isId(s[3])) {
+                return switch (method) {
+                    case "GET" -> getDocument(req, ws, s[3]);
+                    case "PUT" -> putDocument(req, ws, s[3]);
+                    case "DELETE" -> deleteDocument(ws, s[3]);
+                    default -> notAllowed("GET, PUT, DELETE");
                 };
             }
             if (s.length == 3 && s[2].equals("jobs")) {
@@ -280,6 +307,9 @@ public final class StudioApi {
         for (String name : TARGETS) {
             add(out, Graphs.config(id, name));
         }
+        for (String doc : ws.documents().keySet()) {
+            add(out, Graphs.document(id, doc));
+        }
         String file = ws.label().replaceAll("[^A-Za-z0-9._-]+", "-").replaceAll("^-+|-+$", "");
         return new ApiResponse(200, new LinkedHashMap<>(Map.of("Content-Type", TRIG + "; charset=utf-8",
             "Content-Disposition", "attachment; filename=\"" + (file.isEmpty() ? "workspace" : file) + ".trig\"")), Turtle.writeTrig(out));
@@ -364,12 +394,85 @@ public final class StudioApi {
         };
     }
 
+    // --- documents ---------------------------------------------------------------------------
+
+    private ApiResponse listDocuments(String id) {
+        if (load(id) == null) {
+            return notFound();
+        }
+        Model description = store.graph(Graphs.workspace(id));
+        Model out = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+        description.listResourcesWithProperty(RDF.type, Cst.Document).forEachRemaining(d -> out.add(d.listProperties()));
+        return ApiResponse.turtle(200, Turtle.write(out));
+    }
+
+    /** The markup when the request prefers XML to Turtle, otherwise the document's graph as RDF. */
+    private ApiResponse getDocument(ApiRequest req, String id, String doc) {
+        Workspace ws = load(id);
+        if (ws == null || !ws.documents().containsKey(doc)) {
+            return notFound();
+        }
+        Model graph = store.graph(Graphs.document(id, doc));
+        String etag = etag(ws.documentRevision(doc));
+        if (Turtle.prefers(req.header("accept"), "application/xml")) {
+            org.apache.jena.rdf.model.Statement markup = graph.createResource(Graphs.documentNode(doc)).getProperty(Cst.markup);
+            return markup == null ? notFound() : xml(200, markup.getString().getBytes(StandardCharsets.UTF_8)).with("ETag", etag).with("Vary", "Accept");
+        }
+        return ApiResponse.turtle(200, Turtle.write(graph)).with("ETag", etag);
+    }
+
+    private ApiResponse putDocument(ApiRequest req, String id, String doc) {
+        Workspace ws = load(id);
+        if (ws == null) {
+            return notFound();
+        }
+        if (!media(req).equals("application/xml")) {
+            return ApiResponse.text(415, "Content-Type must be application/xml");
+        }
+        if (req.body() != null && req.body().length > MAX_BODY_BYTES) {
+            return tooLarge();
+        }
+        String ifMatch = req.header("if-match");
+        if (ifMatch == null) {
+            return ApiResponse.text(428, "If-Match is required");
+        }
+        Long expect = revisionOf(ifMatch);
+        if (expect == null) {
+            return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(ws.documentRevision(doc)));
+        }
+        Documents.Read read = documents.read(req.body() == null ? new byte[0] : req.body(), doc, expect + 1);
+        if (read.problem() != null) {
+            return ApiResponse.text(read.status(), read.problem());
+        }
+        Reply reply = writes.send(Command.saveDocument(id, doc, expect, now(), read.title(), read.template(), read.graph()));
+        if (reply.status() == 412) {
+            return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(reply.revision()));
+        }
+        return reply.applied() ? ApiResponse.empty(204).with("ETag", etag(reply.revision())) : refusal(reply);
+    }
+
+    private ApiResponse deleteDocument(String id, String doc) {
+        Workspace ws = load(id);
+        if (ws == null || !ws.documents().containsKey(doc)) {
+            return notFound();
+        }
+        Reply reply = writes.send(Command.deleteDocument(id, doc));
+        return reply.applied() ? ApiResponse.empty(204) : refusal(reply);
+    }
+
+    private static ApiResponse xml(int status, byte[] body) {
+        return new ApiResponse(status, new LinkedHashMap<>(Map.of("Content-Type", "application/xml; charset=utf-8")), body);
+    }
+
     // --- jobs ------------------------------------------------------------------------------
 
     private ApiResponse submitJob(ApiRequest req, String id) {
         Map<String, String> query = query(req.query());
         String kind = query.get("kind");
         String target = query.get("target");
+        if ("analyse".equals(kind)) {
+            return submitAnalysis(id, target);
+        }
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))) {
             return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", or compile, with target one of " + COMPILED);
         }
@@ -388,6 +491,11 @@ public final class StudioApi {
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);
         Model description = jobDescription(jobIri, id, ws, kind, target, Graphs.jobInput(job));
+        return publishJob(id, job, description, config);
+    }
+
+    private ApiResponse publishJob(String id, String job, Model description, Model config) {
+        String jobIri = Graphs.job(job);
         org.apache.jena.query.Dataset graphs = org.apache.jena.query.DatasetFactory.create();
         graphs.addNamedModel(jobIri, description);
         graphs.addNamedModel(Graphs.jobInput(job), config);
@@ -412,12 +520,32 @@ public final class StudioApi {
         return ApiResponse.turtle(202, Turtle.write(description)).with("Location", "/api/jobs/" + job);
     }
 
+    /** An analysis reads the document as saved, so the request has no body, and the job's input is the document's graph. */
+    private ApiResponse submitAnalysis(String id, String doc) {
+        Workspace ws = load(id);
+        if (ws == null || doc == null || !Graphs.isId(doc) || !ws.documents().containsKey(doc)) {
+            return notFound();
+        }
+        Model input = store.graph(Graphs.document(id, doc));
+        String job = ids.get().toString();
+        String jobIri = Graphs.job(job);
+        Model description = jobDescription(jobIri, id, ws, "analyse", null, Graphs.jobInput(job));
+        description.createResource(jobIri).addProperty(Cst.target, description.createResource(Graphs.document(id, doc)));
+        return publishJob(id, job, description, input);
+    }
+
     private Model jobDescription(String jobIri, String ws, Workspace workspace, String kind, String target, String input) {
         Model m = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
         Resource job = m.createResource(jobIri);
         job.addProperty(RDF.type, Cst.Job);
-        job.addProperty(Cst.kind, kind.equals("validate") ? Cst.Validate : Cst.Compile);
-        job.addProperty(Cst.target, Cst.target(target));
+        job.addProperty(Cst.kind, switch (kind) {
+            case "validate" -> Cst.Validate;
+            case "compile" -> Cst.Compile;
+            default -> Cst.Analyse;
+        });
+        if (target != null) {
+            job.addProperty(Cst.target, Cst.target(target));
+        }
         job.addProperty(Cst.workspace, m.createResource(Graphs.workspace(ws)));
         job.addProperty(Cst.configGraph, m.createResource(input));
         job.addProperty(Cst.baselineGraph, m.createResource(workspace.baselineGraph()));

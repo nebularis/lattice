@@ -20,7 +20,8 @@ public record Command(String id, String sender, Type type, String workspace, Str
 
     public enum Type {
         CREATE("create"), SAVE("save"), IMPORT("import"), DELETE_WORKSPACE("delete-workspace"),
-        SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"), DELETE_JOB("delete-job");
+        SAVE_DOCUMENT("save-document"), DELETE_DOCUMENT("delete-document"), SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"),
+        DELETE_JOB("delete-job");
 
         public final String wire;
 
@@ -44,6 +45,15 @@ public record Command(String id, String sender, Type type, String workspace, Str
 
     public static Command save(String ws, String part, long expect, Instant at, Model graph) {
         return new Command(newId(), SERVICE, Type.SAVE, ws, null, part, expect, at, null, null, withDefault(graph));
+    }
+
+    /** {@code title} is the document's, and {@code template} its template's key, carried as the command's label and sample. */
+    public static Command saveDocument(String ws, String doc, long expect, Instant at, String title, String template, Model graph) {
+        return new Command(newId(), SERVICE, Type.SAVE_DOCUMENT, ws, null, doc, expect, at, title, template, withDefault(graph));
+    }
+
+    public static Command deleteDocument(String ws, String doc) {
+        return new Command(newId(), SERVICE, Type.DELETE_DOCUMENT, ws, null, doc, null, null, null, null, DatasetFactory.create());
     }
 
     public static Command importing(String ws, Instant at, String label, Dataset graphs) {

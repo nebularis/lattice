@@ -24,6 +24,7 @@ Fuseki serves the one database as two services: `studio` reads only, through que
 | `urn:lattice:studio:ws:{ws}` | writer | the `cst:Workspace` node, whose IRI is the graph's: `rdfs:label`, `cst:createdAt`, `cst:modifiedAt`, `cst:baselineGraph`, `cst:fromSample` when it was made from a sample, and `cst:{name}Revision` for each graph name below. A revision the description lacks reads as 0 |
 | `urn:lattice:studio:ws:{ws}:baseline:{n}` | writer, once | baseline revision n, from 1 |
 | `urn:lattice:studio:ws:{ws}:{name}` | writer | the saved configuration `{name}`: `vocabulary` (`voc:` and `skos:`), `quantification` (`qnt:`), `eligibility` (`elg:`), `persistence` (`dal:`) or `surface` (`srf:`) |
+| `urn:lattice:studio:ws:{ws}:document:{doc}` | writer | a document of the workspace's library: its Wording graph, which the `document-to-wording` kit gives from its markup under the base `urn:lattice:studio:ws:{ws}/`, and the markup itself as `cst:markup`, a string, on the node whose IRI is the graph's. The workspace description names it with `cst:document`, and gives it `rdf:type` `cst:Document`, `rdfs:label` (the document's title), `cst:template`, `cst:revision` and `cst:modifiedAt` |
 | `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job` node, whose IRI is the graph's |
 | `urn:lattice:studio:job:{job}:input` | writer, once | the configuration as submitted |
 
@@ -49,6 +50,14 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | `PUT /api/workspaces/{ws}/graphs/{name}` | the new graph. `If-Match: "{revision}"` is required | `204`, `ETag` of the new revision. `428` without `If-Match`, `412` when it is not the current revision, `422` when a subject belongs to another part by the rule the browser's import uses (a named subject belongs to the first of persistence, surface, eligibility, quantification and vocabulary whose namespace its type or predicates use, a SKOS concept or scheme to vocabulary, anything else to the baseline, and a blank node to the subject that refers to it). A baseline is written as a new revision graph |
 | `POST /api/workspaces/{ws}/jobs?kind={validate,compile}&target={name}` | the configuration to check, which need not be saved, and the other configurations beside it as context | `202`, `Location: /api/jobs/{job}`, the job graph. `400` for another kind or target. Every configuration validates. `eligibility`, `persistence` and `surface` compile |
 | `GET /api/workspaces/{ws}/jobs` | | `200`, the description of each compile job of the workspace: status, kind, target and times, without report or artefacts |
+| `GET /api/document-templates` | | `200`, every `cst:DocumentTemplate` a document may be drafted from, each with its `cst:templateKey`, `rdfs:label` and its `cst:section`s in `cst:order`, each section with `cst:sectionKey`, `rdfs:label` (its heading), `cst:elementKind` (`clause` or `definition`), `cst:termKind`, `cst:required` and `rdfs:comment` (its guidance) |
+| `GET /api/document-samples` | | `200`, every `cst:DocumentSample` with `cst:sampleKey` and `rdfs:label` |
+| `GET /api/document-samples/{id}` | | `200`, `application/xml`, the sample document in the markup of `contracts/document` |
+| `GET /api/workspaces/{ws}/documents` | | `200`, the node of each document of the workspace, as the description holds it |
+| `GET /api/workspaces/{ws}/documents/{doc}` | | `200`, `ETag: "{revision}"`. The markup, `application/xml`, when `Accept` ranks it above `text/turtle`, otherwise the document's graph as RDF. `404` for a document the workspace does not hold |
+| `PUT /api/workspaces/{ws}/documents/{doc}` | the document, `application/xml`, in the markup of `contracts/document`. `If-Match: "{revision}"` is required, `"0"` for a new document | `204`, `ETag` of the new revision. `400` for a body that is not well formed or declares a DTD, `422` for one the schema refuses, whose root `id` is not `{doc}`, or whose template is not one of `GET /api/document-templates`, `412` and `428` as for a graph |
+| `DELETE /api/workspaces/{ws}/documents/{doc}` | | `204`. Drops the document's graph and its node |
+| `POST /api/workspaces/{ws}/jobs?kind=analyse&target={doc}` | none | `202`, as for any job. The worker reads each clause of the document as the sentence-form proposer does, and the job's artefacts are `analysis.json`, the analysis view, and `proposals.ttl`, the relations it proposes. `404` for a document the workspace does not hold |
 | `GET /api/jobs/{job}` | | `200`, the job graph |
 | `DELETE /api/jobs/{job}` | | `204`. Drops the job graph and its input graph |
 
@@ -102,6 +111,8 @@ A command's fields are AMQP headers, and the graphs it carries are its body, `co
 | `delete-workspace` | `workspace` | none | service |
 | `submit-job` | `workspace`, `job` | the job graph and its input graph, named | service |
 | `job-update` | `workspace`, `job` | the job graph, named | worker, or the service when the job could not be published |
+| `save-document` | `workspace`, `part` (the document's id), `expect`, `at`, `label` (its title), `sample` (its template's key) | the document's graph, in the default graph | service |
+| `delete-document` | `workspace`, `part` (the document's id) | none | service |
 | `delete-job` | `workspace`, `job` | none | service, and the writer's sweep of jobs finished longer ago than the retention |
 
 `workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service publishes with confirms and sets `reply_to` to `amq.rabbitmq.reply-to` and `correlation_id` to the command's id, and the writer answers with headers alone. The stream keeps `reply_to` as an AMQP 1.0 address, `/queues/` and the percent-encoded queue name, which the writer decodes. The reply's headers are `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.

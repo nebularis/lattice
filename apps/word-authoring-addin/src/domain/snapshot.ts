@@ -1,9 +1,8 @@
 /**
- * Builds a `DocumentSnapshot` from a parsed document and the document's own metadata (plan WA8
- * section "Snapshot builder").
+ * Builds the document model from a parsed document and the document's own metadata. The model is
+ * saved to the studio as markup (`writeMarkup`).
  */
 import type { AuthoringMetadata } from "../word/port";
-import { validate } from "./schemas";
 import type { ParsedDocument } from "./ooxml";
 import type { DocumentSnapshot, VariableDeclaration } from "@lattice/authoring-domain";
 
@@ -36,11 +35,6 @@ export function buildSnapshot(parsed: ParsedDocument, metadata: AuthoringMetadat
     variables: [...declared.values()],
     unmarked: parsed.unmarked,
   };
-
-  const errors = validate("document-snapshot", snapshot);
-  if (errors.length > 0) {
-    throw new Error(`built an invalid document-snapshot: ${errors.join("; ")}`);
-  }
 
   return { snapshot, warnings };
 }

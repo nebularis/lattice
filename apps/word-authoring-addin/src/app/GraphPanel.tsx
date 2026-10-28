@@ -7,14 +7,17 @@ mermaid.initialize({ securityLevel: "strict", startOnLoad: false });
 
 export interface GraphPanelProps {
   analysis: Analysis | null;
-  turtle: string | null;
+  /** The document's own graph, read from the workspace. */
+  documentTurtle: string | null;
+  /** The relations the analysis proposes. */
+  proposalsTurtle: string | null;
   onShowTurtle: () => void;
 }
 
 /** The Graph tab (plan WA9 "Panels"). The SVG is Mermaid's own sanitized output
  * (`securityLevel: "strict"` escapes node labels), a deliberately different, safer code path from
  * the Logical English tab's plain element text, which never goes through `dangerouslySetInnerHTML`. */
-export function GraphPanel({ analysis, turtle, onShowTurtle }: GraphPanelProps): JSX.Element {
+export function GraphPanel({ analysis, documentTurtle, proposalsTurtle, onShowTurtle }: GraphPanelProps): JSX.Element {
   const [svg, setSvg] = useState<string>("");
 
   useEffect(() => {
@@ -41,7 +44,8 @@ export function GraphPanel({ analysis, turtle, onShowTurtle }: GraphPanelProps):
       <button type="button" onClick={onShowTurtle} disabled={!analysis}>
         Turtle
       </button>
-      {turtle && <pre>{turtle}</pre>}
+      {documentTurtle && <pre aria-label="Document graph">{documentTurtle}</pre>}
+      {documentTurtle && proposalsTurtle && <pre aria-label="Proposals">{proposalsTurtle}</pre>}
     </section>
   );
 }

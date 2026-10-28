@@ -112,6 +112,11 @@ final class Turtle {
      * keeps Turtle.
      */
     static boolean prefersXml(String accept) {
+        return prefers(accept, RDF_XML);
+    }
+
+    /** Whether {@code accept} ranks {@code type} above Turtle. A range without {@code q} counts 1, and a wildcard favours Turtle. */
+    static boolean prefers(String accept, String type) {
         if (accept == null) {
             return false;
         }
@@ -131,7 +136,7 @@ final class Turtle {
                     }
                 }
             }
-            if (media.equals(RDF_XML) || media.equals("application/*")) {
+            if (media.equals(type) || media.equals("application/*")) {
                 xml = Math.max(xml, q);
             }
             if (media.equals("text/turtle") || media.equals("text/*")) {

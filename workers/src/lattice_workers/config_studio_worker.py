@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from rdflib import Dataset, Graph, Literal, URIRef
+from rdflib.namespace import RDF
 from rdflib.namespace import XSD
 
 from .config_studio_jobs import CST, run_job
@@ -103,6 +104,9 @@ class ConfigStudioWorker:
         self._store.put_graph(job_iri, final)
 
     def _run(self, job: URIRef, graph: Graph) -> Graph:
+        if graph.value(job, CST.kind) == CST.Analyse:
+            document = self._read(graph, job, CST.configGraph, "document", allowed=lambda iri: iri == f"{job}:input")
+            return analyse_document(job, document)
         kind = _KINDS.get(graph.value(job, CST.kind))
         target = _TARGETS.get(graph.value(job, CST.target))
         submitted = graph.value(job, CST.submittedAt)
@@ -133,6 +137,30 @@ class ConfigStudioWorker:
             if empty_if_missing:
                 return Graph()
             raise ValueError(f"{what} graph {iri} not found") from error
+
+
+def analyse_document(job: URIRef, document: Graph) -> Graph:
+    """An analyse job's result: the document read as the sentence-form proposer reads it. Its artefacts are the analysis
+    view, `analysis.json`, and the relations it proposes, `proposals.ttl` (contracts/config-studio/README.md)."""
+    from .config_studio_jobs import _Result
+    from .wording_le.analyse import analyse_wording
+    from .wording_le.forms import load_profile
+    from .wording_le.model import load_wording
+    from .wording_le.namespaces import WRD
+    from .wording_le.proposal import graph_view, proposal_graph
+
+    wordings = [w for w in document.subjects(RDF.type, WRD.Wording) if isinstance(w, URIRef)]
+    if len(wordings) != 1:
+        raise ValueError(f"the document holds {len(wordings)} wordings, not one")
+    profile = load_profile()
+    wording = load_wording(document, str(wordings[0]))
+    analysis = analyse_wording(wording, profile)
+    proposal = proposal_graph(wording, analysis["elements"], f"{job}:proposals", profile)
+    result = _Result(job)
+    result.artefact("analysis.json", "application/json", json.dumps({**analysis, "graphView": graph_view(wording, proposal)}, sort_keys=True), "analysis")
+    result.artefact("proposals.ttl", "text/turtle", proposal.serialize(format="turtle"), "analysis")
+    result.conforms(True)
+    return result.graph
 
 
 _WORKSPACE = re.compile(rf"urn:lattice:studio:ws:({_UUID})")

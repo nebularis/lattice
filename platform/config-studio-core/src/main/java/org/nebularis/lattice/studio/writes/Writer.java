@@ -37,6 +37,7 @@ import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.store.Cst;
@@ -57,6 +58,7 @@ import org.nebularis.lattice.studio.store.StudioStore;
 public final class Writer {
     private static final Pattern SAMPLE_ID = Pattern.compile("[a-z0-9][a-z0-9-]*");
     private static final int MAX_LABEL = 500;
+    private static final int MAX_TITLE = 200;
     /** What a job update may change. Anything else on the job node is the service's and must stay as it wrote it. */
     private static final Set<Property> WORKER_PREDICATES = Set.of(
         Cst.status, Cst.startedAt, Cst.finishedAt, Cst.failureMessage, p("conforms"), p("report"), p("artefact"),
@@ -149,6 +151,8 @@ public final class Writer {
                 case CREATE -> create(index, c);
                 case SAVE -> save(index, c);
                 case IMPORT -> importing(index, c);
+                case SAVE_DOCUMENT -> saveDocument(index, c);
+                case DELETE_DOCUMENT -> deleteDocument(index, c);
                 case DELETE_WORKSPACE -> deleteWorkspace(index, c);
                 case SUBMIT_JOB -> submitJob(index, c);
                 case JOB_UPDATE -> jobUpdate(index, c);
@@ -220,6 +224,63 @@ public final class Writer {
             });
         }
 
+        /** A document's graph and its node in the description move in one request, guarded by its revision. */
+        private Reply saveDocument(int index, Command c) {
+            String doc = c.part();
+            if (!Graphs.isId(doc) || c.expect() == null || c.at() == null || c.label() == null || c.label().isBlank()
+                || c.label().length() > MAX_TITLE || c.sample() == null || !SAMPLE_ID.matcher(c.sample()).matches() || named(c).hasNext()) {
+                return Reply.refused("a document's save names the document, the revision it expects, a time, its title and its template, and carries its graph alone");
+            }
+            Model graph = c.body().getDefaultModel();
+            String problem = documentProblem(graph, doc);
+            if (problem != null) {
+                return Reply.refused(problem);
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return Reply.notFound();
+            }
+            Workspace ws = found.get();
+            if (ws.documentRevision(doc) != c.expect()) {
+                return Reply.stale(ws.documentRevision(doc));
+            }
+            long next = c.expect() + 1;
+            Workspace updated = ws.withDocument(doc, new Workspace.Document(c.label(), c.sample(), next, c.at()), c.at());
+            String target = Graphs.document(ws.id(), doc);
+            String receipts = Graphs.receipts(ws.id());
+            receipt(c, receipts, documentRevisionIs(ws.id(), doc, c.expect()), List.of(target, Graphs.workspace(ws.id())), next);
+            request.add(clear(target, mine(c, receipts)));
+            request.add(insert(target, graph, mine(c, receipts)));
+            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(ws.id(), Optional.of(updated));
+            String id = ws.id();
+            return planned(index, c, Reply.ok(next), () -> {
+                Workspace now = Workspace.from(id, store.graph(Graphs.workspace(id)));
+                return now == null ? Reply.notFound() : Reply.stale(now.documentRevision(doc));
+            });
+        }
+
+        private Reply deleteDocument(int index, Command c) {
+            String doc = c.part();
+            if (!Graphs.isId(doc) || named(c).hasNext() || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a document's deletion names the document and carries no graph");
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty() || !found.get().documents().containsKey(doc)) {
+                return Reply.notFound();
+            }
+            Workspace ws = found.get();
+            Workspace updated = ws.withDocument(doc, null, ws.modifiedAt());
+            String target = Graphs.document(ws.id(), doc);
+            String receipts = Graphs.receipts(ws.id());
+            Element guard = quad(Graphs.workspace(ws.id()), iri(Graphs.workspace(ws.id())), Cst.document.asNode(), iri(target));
+            receipt(c, receipts, guard, List.of(target, Graphs.workspace(ws.id())), null);
+            request.add(clear(target, mine(c, receipts)));
+            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(ws.id(), Optional.of(updated));
+            return planned(index, c, Reply.ok(), Reply::notFound);
+        }
+
         /** An import's graphs are already under the new workspace's names, which {@code ImportedWorkspace} gave them. */
         private Reply importing(int index, Command c) {
             String id = c.workspace();
@@ -242,7 +303,12 @@ public final class Writer {
                     return Reply.refused("the import holds a graph that is not one of its workspace's: " + name);
                 }
                 Model graph = c.body().getNamedModel(name);
-                if (!part.equals("workspace")) {
+                if (part.equals("document")) {
+                    String problem = documentProblem(graph, Graphs.documentId(id, name));
+                    if (problem != null) {
+                        return Reply.refused(problem);
+                    }
+                } else if (!part.equals("workspace")) {
                     List<String> strangers = Parts.strangers(graph, part, 5);
                     if (!strangers.isEmpty()) {
                         return Reply.refused("the " + part + " graph holds terms of another part: " + String.join(", ", strangers));
@@ -272,6 +338,9 @@ public final class Writer {
             }
             for (String name : CONFIGS) {
                 graphs.add(Graphs.config(id, name));
+            }
+            for (String doc : found.get().documents().keySet()) {
+                graphs.add(Graphs.document(id, doc));
             }
             store.jobsOf(Graphs.workspace(id)).listSubjects().forEachRemaining(job -> {
                 String jobId = job.getURI().substring(Graphs.JOB_PREFIX.length());
@@ -425,6 +494,16 @@ public final class Writer {
             new ElementFilter(new E_NotEquals(new ExprVar(r), NodeValue.makeInteger(0))))));
     }
 
+    /** Document {@code doc}'s stored revision is {@code expect}, where 0 means the workspace holds no such document. */
+    private static Element documentRevisionIs(String ws, String doc, long expect) {
+        Node node = iri(Graphs.document(ws, doc));
+        if (expect > 0) {
+            return quad(Graphs.workspace(ws), node, Cst.documentRevision.asNode(),
+                NodeFactory.createLiteralDT(Long.toString(expect), XSDDatatype.XSDinteger));
+        }
+        return group(exists(ws), notExists(quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), Cst.document.asNode(), node)));
+    }
+
     private static Element exists(String ws) {
         return quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), RDF.type.asNode(), Cst.Workspace.asNode());
     }
@@ -504,6 +583,42 @@ public final class Writer {
             if (graph.equals(Graphs.config(id, name))) {
                 return name;
             }
+        }
+        String doc = Graphs.documentId(id, graph);
+        return doc != null && ws.documents().containsKey(doc) ? "document" : null;
+    }
+
+    private static final Set<String> DOCUMENT_NAMESPACES = Set.of(
+        "https://www.nebularis.org/neuro-semantic/lattice/wording#",
+        "https://www.nebularis.org/neuro-semantic/lattice/poc/word-authoring#",
+        "http://purl.org/dc/terms/", RDF.getURI(), RDFS.getURI());
+
+    /**
+     * Why a document's graph is not one, or null: every subject is a named node under the document's own IRIs, every
+     * predicate and type is Wording's, the authoring vocabulary's, Dublin Core's, RDF's or RDFS's, and the document's
+     * node holds its markup once, as {@code cst:markup}.
+     */
+    static String documentProblem(Model graph, String doc) {
+        if (doc == null) {
+            return "a document's graph is named by its document's id";
+        }
+        String own = Graphs.documentNode(doc);
+        for (Statement s : graph.listStatements().toList()) {
+            if (!s.getSubject().isURIResource() || !s.getSubject().getURI().startsWith(own)) {
+                return "a document's graph describes its own nodes only, under " + own;
+            }
+            if (s.getPredicate().equals(Cst.markup)) {
+                continue;
+            }
+            if (DOCUMENT_NAMESPACES.stream().noneMatch(ns -> s.getPredicate().getURI().startsWith(ns))
+                || (s.getPredicate().equals(RDF.type) && (!s.getObject().isURIResource()
+                    || DOCUMENT_NAMESPACES.stream().noneMatch(ns -> s.getObject().asResource().getURI().startsWith(ns))))) {
+                return "a document's graph holds a term that is not Wording's: " + s.getPredicate().getURI();
+            }
+        }
+        List<Statement> markup = graph.listStatements(graph.createResource(own), Cst.markup, (RDFNode) null).toList();
+        if (markup.size() != 1 || !markup.get(0).getObject().isLiteral() || graph.listStatements(null, Cst.markup, (RDFNode) null).toList().size() != 1) {
+            return "a document's node holds its markup once, as cst:markup";
         }
         return null;
     }

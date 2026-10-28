@@ -315,6 +315,34 @@ Not run: Windows and Linux, and a writer taking a partition over in the middle o
 
 Not run: the property policy sample, which stays a JSON snapshot until CS12d retires them, and the kit in the standalone sidecar process, which does not exist yet.
 
+## CB1, part: the Wording assembler
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CB1-01 | the facility form and a software licence form / `check`, `plan`, `assemble`, `reassemble` and `render` / admitted, denied and undetermined conditions, slots with no and two admitted variants refused, optional elements chosen and not, WA5 with permuted inputs and a repeat giving identical triples, WA6 no record on failure, reassembly sharing unchanged values, numbering after an omitted clause | L1 | + − | pass, `mise run check:wording-assembler`, 20 tests |
+| CB1-02 | the rendered documents / `xmllint` against `contracts/document/document.xsd` / valid | L1 | + | pass, skipped where `xmllint` is absent |
+| CB1-03 | Wording with `wrd:AssemblyModel`, `wrd:assembledUnder`, the baseline model and `wrd:WA1Shape` / the literate extraction check, the wording and catalogue tests, the ontology catalog / consistent, every example conforming | L1 | + | pass, 243 tests and the catalog. The release bump waits for the merge, so `check:ontology-versioning` reports it unbumped |
+
+Not run: amendments assembled or rendered, and the `assemble` job kind, which the worker does not run yet.
+
+## CS12d, part: documents in a workspace, and the add-in on the studio's API
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS12d-01 | the software licence sample / `PUT` with `If-Match: "0"`, then `GET` as XML and as Turtle / `204` with `ETag: "1"`, the markup back byte for byte, its `wrd:Wording` in the document's graph, the document listed | L1 | + | pass, `DocumentsTest` |
+| CS12d-02 | a saved document / a stale `If-Match`, none, then the current one / `412` with the current ETag, `428`, `204` at revision 2 | L1 | + − | pass |
+| CS12d-03 | another content type, XML that is not well formed, a DTD with an external entity, an empty title, an unknown template, a root id unlike the path's / `PUT` / `415`, `400`, `400`, `422`, `422`, `422`, and nothing stored | L1 | − | pass |
+| CS12d-04 | a document graph with a persistence term, and one describing a node outside the document / sent to the writer directly / both refused | L1 | − | pass |
+| CS12d-05 | a saved document / deleted, and its workspace deleted / its graph gone each time | L1 | + | pass |
+| CS12d-06 | a workspace with a document / exported and imported / the copy's markup the same | L1 | + | pass |
+| CS12d-07 | a saved document / `POST …/jobs?kind=analyse` / a `cst:Analyse` job whose input is the document's graph, published. Before the save, `404` | L1 | + − | pass |
+| CS12d-08 | the software licence's Wording graph / the worker runs the analyse job / `cst:Succeeded`, with `analysis.json` holding the elements and the graph view, and `proposals.ttl` | L1 | + | pass. A graph with no wording fails the job |
+| CS12d-09 | the markup reader and writer in `packages/authoring-domain` / both samples read and written / the same bytes, escaping, merged literals and unmarked text kept | L1 | + | pass, 19 domain tests |
+| CS12d-10 | the add-in on the studio's client / its unit tests and its harness against a faked studio / pass | L1, L3 | + | pass, 63 unit and 14 harness tests |
+| CS12d-11 | every module / `mise run check:config-studio`, `check:java`, `check:workers` / pass | L1 | + | pass, 63 service, 3 writer, 92 authoring, 48 studio Python, 40 browser and 170 worker tests. The first run found the templates unreadable from the packaged jar, now read as a stream |
+
+Not run: the add-in against a live studio, Word itself, the old service's end-to-end stack, which now targets nothing, and Windows and Linux.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

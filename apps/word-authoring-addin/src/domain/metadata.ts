@@ -9,6 +9,7 @@ import { childrenByNameNs, escapeXml, firstChildByNameNs, parseXmlDocument } fro
 export const METADATA_NAMESPACE = "urn:nebularis:lattice:authoring:1";
 
 export function toXml(metadata: AuthoringMetadata): string {
+  const workspaceXml = metadata.workspaceId ? `<workspaceId>${escapeXml(metadata.workspaceId)}</workspaceId>` : "";
   const revisionXml = metadata.revision === null ? "" : `<revision>${metadata.revision}</revision>`;
   const variablesXml = metadata.variables
     .map(
@@ -23,6 +24,7 @@ export function toXml(metadata: AuthoringMetadata): string {
     `<documentId>${escapeXml(metadata.documentId)}</documentId>` +
     `<templateId>${escapeXml(metadata.templateId)}</templateId>` +
     `<title>${escapeXml(metadata.title)}</title>` +
+    workspaceXml +
     revisionXml +
     `<variables>${variablesXml}</variables>` +
     `</authoring>`
@@ -42,10 +44,12 @@ export function fromXml(xml: string): AuthoringMetadata {
         valueType: (el.getAttribute("valueType") ?? "text") as ValueType,
       }))
     : [];
+  const workspaceId = text("workspaceId");
   return {
     documentId: text("documentId"),
     templateId: text("templateId"),
     title: text("title"),
+    ...(workspaceId ? { workspaceId } : {}),
     revision: revisionEl ? Number(revisionEl.textContent) : null,
     variables,
   };

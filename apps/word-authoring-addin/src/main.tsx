@@ -5,7 +5,7 @@
  * port with `App`.
  */
 import { createRoot } from "react-dom/client";
-import { HttpApiClient } from "./api/client";
+import { HttpStudioClient } from "./api/client";
 import { App } from "./app/App";
 import "./app/app.css";
 import { UiBridge } from "./app/uiBridge";
@@ -27,7 +27,7 @@ export function render(container: HTMLElement): void {
     root.render(<p>This add-in requires a newer version of Word.</p>);
     return;
   }
-  root.render(<App port={port} api={new HttpApiClient("")} bridge={bridge} />);
+  root.render(<App port={port} api={new HttpStudioClient("")} bridge={bridge} />);
 }
 
 Office.onReady(() => {

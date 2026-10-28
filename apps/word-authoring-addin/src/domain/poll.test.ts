@@ -1,16 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { pollJob } from "./poll";
-import type { JobView } from "@lattice/authoring-domain";
+import { pollJob, type JobStatus } from "./poll";
 
-function job(status: JobView["status"]): JobView {
-  return {
-    jobId: "00000001-0000-4000-8000-000000000099",
-    documentId: "00000001-0000-4000-8000-000000000000",
-    revision: 1,
-    status,
-    error: null,
-  };
-}
+const job = (status: JobStatus) => ({ status });
 
 describe("pollJob", () => {
   beforeEach(() => {
@@ -21,24 +12,24 @@ describe("pollJob", () => {
     vi.useRealTimers();
   });
 
-  it("resolves once completed, after polling three times", async () => {
-    const getJob = vi
-      .fn<(jobId: string) => Promise<JobView>>()
+  it("resolves once succeeded, after polling three times", async () => {
+    const read = vi
+      .fn<() => Promise<{ status: JobStatus }>>()
       .mockResolvedValueOnce(job("queued"))
-      .mockResolvedValueOnce(job("queued"))
-      .mockResolvedValueOnce(job("completed"));
+      .mockResolvedValueOnce(job("running"))
+      .mockResolvedValueOnce(job("succeeded"));
 
-    const promise = pollJob({ getJob }, "job-1", { intervalMs: 100, timeoutMs: 10000 });
+    const promise = pollJob(read, { intervalMs: 100, timeoutMs: 10000 });
     await vi.advanceTimersByTimeAsync(300);
 
-    await expect(promise).resolves.toEqual(job("completed"));
-    expect(getJob).toHaveBeenCalledTimes(3);
+    await expect(promise).resolves.toEqual(job("succeeded"));
+    expect(read).toHaveBeenCalledTimes(3);
   });
 
-  it("rejects with a timeout when the job never leaves queued", async () => {
-    const getJob = vi.fn<(jobId: string) => Promise<JobView>>().mockResolvedValue(job("queued"));
+  it("rejects with a timeout when the job never ends", async () => {
+    const read = vi.fn<() => Promise<{ status: JobStatus }>>().mockResolvedValue(job("running"));
 
-    const promise = pollJob({ getJob }, "job-1", { intervalMs: 100, timeoutMs: 500 });
+    const promise = pollJob(read, { intervalMs: 100, timeoutMs: 500 });
     const assertion = expect(promise).rejects.toThrow("timeout");
     await vi.advanceTimersByTimeAsync(600);
 
@@ -46,11 +37,11 @@ describe("pollJob", () => {
   });
 
   it("resolves a failed job at once, without waiting an interval", async () => {
-    const getJob = vi.fn<(jobId: string) => Promise<JobView>>().mockResolvedValue(job("failed"));
+    const read = vi.fn<() => Promise<{ status: JobStatus }>>().mockResolvedValue(job("failed"));
 
-    const result = await pollJob({ getJob }, "job-1", { intervalMs: 100000, timeoutMs: 100000 });
+    const result = await pollJob(read, { intervalMs: 100000, timeoutMs: 100000 });
 
     expect(result.status).toBe("failed");
-    expect(getJob).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledTimes(1);
   });
 });

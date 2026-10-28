@@ -1,29 +1,17 @@
-import { readFileSync, readdirSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseBody, writePackage, writeSections, type WritableSection } from "./ooxml";
 import { buildSnapshot } from "./snapshot";
-import type { AuthoringTemplate, DocumentSnapshot } from "@lattice/authoring-domain";
+import { loadSample, loadTemplate } from "./fixtures/studio";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "../../../..");
-const SAMPLES_DIR = path.join(REPO_ROOT, "contracts/authoring/samples");
-const TEMPLATES_DIR = path.join(REPO_ROOT, "contracts/authoring/templates");
-
-function load<T>(file: string): T {
-  return JSON.parse(readFileSync(file, "utf-8")) as T;
-}
+const SAMPLE_IDS = ["facility-agreement", "software-licence"];
 
 // S8-02 --------------------------------------------------------------------------------------------
 
 describe("round trip through writeSections, writePackage and parseBody (S8-02)", () => {
-  for (const fileName of readdirSync(SAMPLES_DIR)) {
-    const sampleId = fileName.replace(/\.json$/, "");
-
+  for (const sampleId of SAMPLE_IDS) {
     it(`reproduces the ${sampleId} sample exactly`, () => {
-      const sample = load<DocumentSnapshot>(path.join(SAMPLES_DIR, fileName));
-      const template = load<AuthoringTemplate>(path.join(TEMPLATES_DIR, fileName));
+      const sample = loadSample(sampleId);
+      const template = loadTemplate(sampleId);
       const headingBySectionKey = new Map(template.sections.map((section) => [section.sectionKey, section.heading]));
       const unmarkedBySectionKey = new Map<string, string[]>();
       for (const entry of sample.unmarked) {
@@ -63,7 +51,7 @@ describe("round trip through writeSections, writePackage and parseBody (S8-02)",
 // S8-06 --------------------------------------------------------------------------------------------
 
 describe("buildSnapshot: an undeclared variable (S8-06)", () => {
-  it("adds the declaration as text, with a warning, and the snapshot still validates", () => {
+  it("adds the declaration as text, with a warning, and the model is still built", () => {
     const xml =
       `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ` +
       `xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml">` +

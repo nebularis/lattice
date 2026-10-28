@@ -6,3 +6,4 @@ export * from "./ns";
 export * from "./offsets";
 export * from "./tags";
 export * from "./types";
+export * from "./markup";

@@ -1,26 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import {
-  loadFacilityAnalysis,
-  loadFacilityTurtle,
-  loadSample,
-  loadTemplate,
-  mockAnalysis,
-  mockCatalog,
-  mockGraph,
-  mockJob,
-  mockSnapshotSubmission,
-  textOffsetOf,
-} from "./support";
+import { analysisView, loadFacilityAnalysis, loadFacilityTurtle, loadSample, loadTemplate, mockStudio, textOffsetOf } from "./support";
 
-const HEALTHY = { status: "ok" as const, fuseki: "up" as const, amqp: "up" as const };
 const FACILITY_ELEMENT_11 = "00000001-0000-4000-8000-000000000011";
 const FACILITY_ELEMENT_13 = "00000001-0000-4000-8000-000000000013";
-
-async function mockHealthOk(page: Page): Promise<void> {
-  await page.route("**/api/health", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(HEALTHY) }),
-  );
-}
 
 async function insertFacilitySample(page: Page): Promise<void> {
   const doc = page.locator('section[aria-label="Document"]');
@@ -54,20 +36,19 @@ function harnessCommand(page: Page, id: string) {
   );
 }
 
-test("S9-02: health ok shows Connected and the catalogue loads", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
+test("S9-02: a loaded catalogue shows Connected, the workspace and the templates and samples", async ({ page }) => {
+  await mockStudio(page);
   await page.goto("harness.html");
 
   await expect(page.locator(".status-connected")).toHaveText("Connected");
   const doc = page.locator('section[aria-label="Document"]');
-  await expect(doc.locator("ul").nth(0).getByRole("listitem")).toHaveCount(3);
-  await expect(doc.locator("ul").nth(1).getByRole("listitem")).toHaveCount(3);
+  await expect(doc.getByLabel("Workspace", { exact: true })).toHaveValue("0a1b2c3d-0000-4000-8000-000000000001");
+  await expect(doc.locator("ul").nth(0).getByRole("listitem")).toHaveCount(2);
+  await expect(doc.locator("ul").nth(1).getByRole("listitem")).toHaveCount(2);
 });
 
 test("S9-03: Apply template on the licence creates six sections, each element empty, with guidance shown", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
+  await mockStudio(page);
   await page.goto("harness.html");
 
   const doc = page.locator('section[aria-label="Document"]');
@@ -86,8 +67,7 @@ test("S9-03: Apply template on the licence creates six sections, each element em
 });
 
 test("S9-04: Insert sample facility sets the model, metadata and a new documentId", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
+  await mockStudio(page);
   await page.goto("harness.html");
 
   await insertFacilitySample(page);
@@ -110,8 +90,7 @@ test("S9-04: Insert sample facility sets the model, metadata and a new documentI
 });
 
 test("S9-05: Mark variable turns the selected text into a variable part", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
+  await mockStudio(page);
   await page.goto("harness.html");
   await insertFacilitySample(page);
 
@@ -138,83 +117,45 @@ test("S9-05: Mark variable turns the selected text into a variable part", async 
   expect(declared?.valueType).toBe("money");
 });
 
-test("S9-06: Analyse submits the snapshot and shows validation, findings and detections", async ({ page }) => {
-  const sample = loadSample("facility-agreement");
-  const agentOffset = textOffsetOf(sample, FACILITY_ELEMENT_13, "[Agent]");
-  const detection = {
-    elementId: FACILITY_ELEMENT_13,
-    partIndex: 1,
-    start: agentOffset.start,
-    end: agentOffset.end,
-    text: "[Agent]",
-    kind: "placeholder",
-    suggestion: { action: "mark-variable", valueType: "party", suggestedKey: "agent", targetElementId: null },
-  };
-
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, { detections: [detection] });
-  await mockJob(page, ["completed"]);
-  await mockAnalysis(page);
-
-  const puts: unknown[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "PUT" && request.url().includes("/snapshot")) {
-      puts.push(request.postDataJSON());
-    }
-  });
+test("S9-06: Analyse saves the document as markup, runs the job and shows its findings", async ({ page }) => {
+  const studio = await mockStudio(page);
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
   await tab(page, "Analyse").click();
   await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
 
-  await expect(page.getByText("[Agent]")).toBeVisible();
-  expect(puts).toHaveLength(1);
-  expect((puts[0] as { baseRevision: number | null }).baseRevision).toBeNull();
+  await expect(page.getByText("Unmarked text outside every section")).toBeVisible();
+  await expect(page.getByText("Job: succeeded")).toBeVisible();
+  expect(studio.puts).toHaveLength(1);
+  expect(studio.puts[0].ifMatch).toBe('"0"');
+  expect(studio.puts[0].contentType).toBe("application/xml");
+  expect(studio.puts[0].body).toContain("<template>facility-agreement</template>");
+  expect(studio.jobSubmissions).toHaveLength(1);
+  expect(studio.jobSubmissions[0]).toContain("kind=analyse&target=");
 });
 
-test("S9-07: Accept a detection marks the suggested variable", async ({ page }) => {
-  const sample = loadSample("facility-agreement");
-  const agentOffset = textOffsetOf(sample, FACILITY_ELEMENT_13, "[Agent]");
-  const detection = {
-    elementId: FACILITY_ELEMENT_13,
-    partIndex: 1,
-    start: agentOffset.start,
-    end: agentOffset.end,
-    text: "[Agent]",
-    kind: "placeholder",
-    suggestion: { action: "mark-variable", valueType: "party", suggestedKey: "agent", targetElementId: null },
-  };
-
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, { detections: [detection] });
-  await mockJob(page, ["completed"]);
-  await mockAnalysis(page);
+test("S9-07: a second Analyse sends the revision it kept, and a 412 shows as a conflict", async ({ page }) => {
+  const studio = await mockStudio(page);
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
   await tab(page, "Analyse").click();
-  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
-  await expect(page.getByText("[Agent]")).toBeVisible();
+  const analyse = page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" });
+  await analyse.click();
+  await expect(page.getByText("Job: succeeded")).toBeVisible();
+  await analyse.click();
+  await expect.poll(() => studio.puts.length).toBe(2);
+  expect(studio.puts[1].ifMatch).toBe('"1"');
 
-  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Accept" }).click();
-
-  const model = (await harnessModel(page)) as {
-    sections: { elements: { elementId: string; parts: { kind: string; variableKey?: string; text: string }[] }[] }[];
-  };
-  const element = model.sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === FACILITY_ELEMENT_13)!;
-  const variablePart = element.parts.find((part) => part.kind === "variable" && part.text === "[Agent]");
-  expect(variablePart?.variableKey).toBe("agent");
+  await page.unroute("**/api/workspaces/*/documents/*");
+  await page.route("**/api/workspaces/*/documents/*", (route) => route.fulfill({ status: 412, body: "" }));
+  await analyse.click();
+  await expect(page.getByRole("alert")).toContainText("Conflict");
 });
 
 test("S9-08: Logical English tab shows the facility reading", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, {});
-  await mockJob(page, ["completed"]);
-  await mockAnalysis(page);
+  await mockStudio(page);
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
@@ -229,13 +170,8 @@ test("S9-08: Logical English tab shows the facility reading", async ({ page }) =
   await expect(le.locator("pre")).toHaveText(analysis.leProgram);
 });
 
-test("S9-09: Graph tab renders the diagram and the Turtle toggle shows the mocked text", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, {});
-  await mockJob(page, ["completed"]);
-  await mockAnalysis(page);
-  await mockGraph(page);
+test("S9-09: Graph tab renders the diagram and the Turtle toggle shows the document graph and the proposals", async ({ page }) => {
+  await mockStudio(page);
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
@@ -250,30 +186,28 @@ test("S9-09: Graph tab renders the diagram and the Turtle toggle shows the mocke
   expect(nodeCount).toBe(analysis.graphView.nodes.length);
 
   await graph.getByRole("button", { name: "Turtle" }).click();
-  const turtle = loadFacilityTurtle();
-  await expect(graph.locator("pre")).toContainText(turtle.slice(0, 30));
+  await expect(graph.getByLabel("Document graph")).toContainText("cst:revision");
+  await expect(graph.getByLabel("Proposals")).toContainText(loadFacilityTurtle().slice(0, 30));
 });
 
-test("S9-10: a failing health check shows Disconnected, and a failed submission shows an error banner", async ({ page }) => {
-  await page.route("**/api/health", (route) => route.abort());
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, { status: 500, errorBody: { error: "internal error", details: [] } });
-
+test("S9-10: workspaces that cannot be listed show Disconnected, and a failed save shows an error banner", async ({ page }) => {
+  await mockStudio(page, { workspacesDown: true });
   await page.goto("harness.html");
   await expect(page.locator(".status-disconnected")).toHaveText("Disconnected");
 
-  await insertFacilitySample(page);
-  await tab(page, "Analyse").click();
-  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
+  const failing = await page.context().newPage();
+  await mockStudio(failing, { putStatus: 500 });
+  await failing.route("**/api/workspaces/*/documents/*", (route) => route.fulfill({ status: 500, body: "internal error" }));
+  await failing.goto("harness.html");
+  await insertFacilitySample(failing);
+  await tab(failing, "Analyse").click();
+  await failing.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("internal error");
+  await expect(failing.getByRole("alert")).toContainText("internal error");
 });
 
-test("S9-11: a job that stays queued times out after pollTimeoutMs", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, {});
-  await mockJob(page, ["queued"]);
+test("S9-11: a job that stays running times out after pollTimeoutMs", async ({ page }) => {
+  await mockStudio(page, { jobStatuses: ["Running"] });
 
   await page.goto("harness.html?pollTimeoutMs=1000");
   await insertFacilitySample(page);
@@ -281,6 +215,17 @@ test("S9-11: a job that stays queued times out after pollTimeoutMs", async ({ pa
   await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
 
   await expect(page.getByRole("alert")).toContainText("timeout", { timeout: 5000 });
+});
+
+test("S9-12: a failed job shows its failure message", async ({ page }) => {
+  await mockStudio(page, { jobStatuses: ["Queued", "Failed"] });
+
+  await page.goto("harness.html");
+  await insertFacilitySample(page);
+  await tab(page, "Analyse").click();
+  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("mocked failure");
 });
 
 test("S9-13: Logical English never renders document text as HTML (self-probe target)", async ({ page }) => {
@@ -304,28 +249,7 @@ test("S9-13: Logical English never renders document text as HTML (self-probe tar
     ],
   };
 
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, {});
-  await mockJob(page, ["completed"]);
-  await page.route("**/api/documents/*/revisions/*/analysis", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        documentId: "00000001-0000-4000-8000-000000000000",
-        revision: 1,
-        analysis: maliciousAnalysis,
-        conformance: [],
-        proposalGraph: {
-          tenantId: "poc",
-          projectId: "word-authoring",
-          graphIri: "https://example.org/lattice/authoring/doc/x/rev/1/proposal-graph",
-          revisionHash: `sha256:${"c".repeat(64)}`,
-        },
-      }),
-    }),
-  );
+  await mockStudio(page, { analysis: analysisView(maliciousAnalysis, []) });
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
@@ -339,8 +263,7 @@ test("S9-13: Logical English never renders document text as HTML (self-probe tar
 });
 
 test("S9a-07: markVariable command fills the Markup form, then Mark variable marks the text", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
+  await mockStudio(page);
   await page.goto("harness.html");
   await insertFacilitySample(page);
 
@@ -364,19 +287,8 @@ test("S9a-07: markVariable command fills the Markup form, then Mark variable mar
   expect(element.parts.some((part) => part.kind === "variable" && part.variableKey === "gbp-250")).toBe(true);
 });
 
-test("S9a-08: the analyse command switches to the Analyse tab and sends one PUT", async ({ page }) => {
-  await mockHealthOk(page);
-  await mockCatalog(page);
-  await mockSnapshotSubmission(page, {});
-  await mockJob(page, ["completed"]);
-  await mockAnalysis(page);
-
-  const puts: unknown[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "PUT" && request.url().includes("/snapshot")) {
-      puts.push(request.postDataJSON());
-    }
-  });
+test("S9a-08: the analyse command switches to the Analyse tab and saves the document once", async ({ page }) => {
+  const studio = await mockStudio(page);
 
   await page.goto("harness.html");
   await insertFacilitySample(page);
@@ -384,6 +296,5 @@ test("S9a-08: the analyse command switches to the Analyse tab and sends one PUT"
   await harnessCommand(page, "analyse");
 
   await expect(tab(page, "Analyse")).toHaveClass(/active/);
-  await expect.poll(() => puts.length).toBe(1);
+  await expect.poll(() => studio.puts.length).toBe(1);
 });
-

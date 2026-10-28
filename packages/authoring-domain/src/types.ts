@@ -1,18 +1,13 @@
 /**
- * TypeScript types for every schema under `contracts/authoring` and `contracts/events` used by
- * the word authoring add-in (ADR-A118, plan WA8). Hand-written, not generated: each name matches
- * the schema's own `$defs` name. Kept free of any dependency on `schemas.ts` so these types can be
- * used (and the modules importing them tested) without an Ajv instance.
+ * The document model the Word add-in edits, the analysis view the studio's `analyse` job gives
+ * back, and the template and sample summaries the studio serves. The document travels as XML in
+ * LATTICE's markup (`markup.ts`), never as JSON.
  */
-
-// --- common.schema.json -------------------------------------------------------------------------
 
 export type Uuid = string;
 export type Key = string;
 export type SectionKey = string;
 export type RevisionHash = string;
-export type Timestamp = string;
-
 export type ValueType = "money" | "percentage" | "date" | "duration" | "number" | "text" | "party";
 
 export type TermKind =
@@ -39,47 +34,6 @@ export interface VariableDeclaration {
   variableKey: Key;
   label: string;
   valueType: ValueType;
-}
-
-export interface ValidationResult {
-  shapeId: string;
-  severity: Severity;
-  focusNode: string;
-  elementId: Uuid | null;
-  message: string;
-}
-
-export interface ValidationReport {
-  conforms: boolean;
-  results: ValidationResult[];
-}
-
-export type SuggestionAction = "mark-variable" | "mark-reference" | "none";
-
-export interface Suggestion {
-  action: SuggestionAction;
-  valueType: ValueType | null;
-  suggestedKey: Key | null;
-  targetElementId: Uuid | null;
-}
-
-export type DetectionKind =
-  | "placeholder"
-  | "money"
-  | "percentage"
-  | "date"
-  | "duration"
-  | "defined-term"
-  | "cross-reference";
-
-export interface Detection {
-  elementId: Uuid;
-  partIndex: number;
-  start: number;
-  end: number;
-  text: string;
-  kind: DetectionKind;
-  suggestion: Suggestion;
 }
 
 export type FindingKind =
@@ -162,27 +116,7 @@ export interface Analysis {
   graphView: GraphView;
 }
 
-export type JobStatus = "queued" | "completed" | "failed";
-
-export interface Job {
-  jobId: Uuid;
-  status: JobStatus;
-}
-
-export interface TemplateSummary {
-  templateId: Key;
-  title: string;
-  domain: Key;
-  version: string;
-}
-
-export interface SampleSummary {
-  sampleId: Key;
-  title: string;
-  templateId: Key;
-}
-
-// --- document-snapshot.schema.json --------------------------------------------------------------
+// --- the document model ------------------------------------------------------------------------
 
 export interface LiteralPart {
   kind: "literal";
@@ -230,45 +164,7 @@ export interface DocumentSnapshot {
   unmarked: Unmarked[];
 }
 
-// --- snapshot-submission.schema.json ------------------------------------------------------------
-
-export interface SnapshotSubmission {
-  baseRevision: number | null;
-  snapshot: DocumentSnapshot;
-}
-
-// --- snapshot-accepted.schema.json --------------------------------------------------------------
-
-export interface SnapshotAccepted {
-  documentId: Uuid;
-  revision: number;
-  wordingGraph: GraphRef;
-  validation: ValidationReport;
-  detections: Detection[];
-  templateFindings: Finding[];
-  job: Job;
-}
-
-// --- job-view.schema.json ------------------------------------------------------------------------
-
-export interface JobView {
-  jobId: Uuid;
-  documentId: Uuid;
-  revision: number;
-  status: JobStatus;
-  error: string | null;
-}
-
-// --- document-view.schema.json -------------------------------------------------------------------
-
-export interface DocumentView {
-  documentId: Uuid;
-  title: string;
-  templateId: Key;
-  latestRevision: number;
-}
-
-// --- analysis-view.schema.json -------------------------------------------------------------------
+// --- analysis.json, the analyse job's analysis view -----------------------------------------------
 
 export interface AnalysisView {
   documentId: Uuid;
@@ -278,7 +174,7 @@ export interface AnalysisView {
   proposalGraph: GraphRef;
 }
 
-// --- authoring-template.schema.json ---------------------------------------------------------------
+// --- the studio's document templates and samples ---------------------------------------------------
 
 export interface TemplateSection {
   sectionKey: SectionKey;
@@ -291,56 +187,12 @@ export interface TemplateSection {
 
 export interface AuthoringTemplate {
   templateId: Key;
-  version: string;
   title: string;
-  domain: Key;
   sections: TemplateSection[];
   variables: VariableDeclaration[];
 }
 
-// --- sample-list.schema.json / template-list.schema.json ------------------------------------------
-
-export type SampleList = SampleSummary[];
-export type TemplateList = TemplateSummary[];
-
-// --- health.schema.json --------------------------------------------------------------------------
-
-export interface Health {
-  status: "ok" | "degraded";
-  fuseki: "up" | "down";
-  amqp: "up" | "down";
-}
-
-// --- error.schema.json ---------------------------------------------------------------------------
-
-export interface ApiErrorBody {
-  error: string;
-  details: string[];
-}
-
-// --- events/wording-analysis-request.schema.json ---------------------------------------------------
-
-export interface WordingAnalysisRequest {
-  jobId: Uuid;
-  correlationId: string;
-  documentId: Uuid;
-  revision: number;
-  wordingGraph: GraphRef;
-  wordingIri: string;
-  proposalGraphIri: string;
-  requestedAt: Timestamp;
-}
-
-// --- events/wording-analysis-result.schema.json ----------------------------------------------------
-
-export interface WordingAnalysisResult {
-  jobId: Uuid;
-  correlationId: string;
-  documentId: Uuid;
-  revision: number;
-  status: "completed" | "failed";
-  error: string | null;
-  proposalGraph: GraphRef | null;
-  analysis: Analysis | null;
-  completedAt: Timestamp;
+export interface SampleSummary {
+  sampleId: Key;
+  title: string;
 }

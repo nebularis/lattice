@@ -675,23 +675,11 @@ wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
 
 ### 5.14 The assembly model
 
-Assembly is the act of drawing an assembled wording from a form (§5.11, §5.12). An assembly model
-states how: how an inclusion condition is decided, what happens when it cannot be, and how a variation
-slot is resolved. Wording has one, the baseline model, whose semantics are §5.11 to §5.13 and the rules
-below. A second model is added as a second individual, and what an instrument reads of an assembled
-wording does not change.
+Assembly is the act of drawing an assembled wording from a form (§5.11, §5.12). An assembly model states how: how an inclusion condition is decided, what happens when it cannot be, and how a variation slot is resolved. Wording has one, the baseline model, whose semantics are §5.11 to §5.13 and the rules below. A second model is added as a second individual, and what an instrument reads of an assembled wording does not change.
 
-The baseline model decides each inclusion condition, three-valued, by Eligibility. Admitted includes the
-element and Denied leaves it out. Undetermined refuses the assembly, naming the governing variable it
-lacks. A variation slot whose variants admit none, or several, refuses the assembly. An optional
-element, and a variant with no inclusion condition, is included only when the drafter chooses it. Every
-mandatory child of an included element is included. A failed assembly produces findings and no assembled
-wording. Object ids are derived after assembly, by rank order among the included siblings, and a chosen
-variant takes its slot's number (law W7).
+The baseline model decides each inclusion condition, three-valued, by Eligibility. Admitted includes the element and Denied leaves it out. Undetermined refuses the assembly, naming the governing variable it lacks. A variation slot whose variants admit none, or several, refuses the assembly. An optional element, and a variant with no inclusion condition, is included only when the drafter chooses it. Every mandatory child of an included element is included. A failed assembly produces findings and no assembled wording. Object ids are derived after assembly, by rank order among the included siblings, and a chosen variant takes its slot's number (law W7).
 
-An assembled wording records the model version it was assembled under, and the assembly as a
-`prov:Activity` that used the form versions, the settings and the model version. An assembled wording
-written from scratch, from no form, names no model.
+An assembled wording records the model version it was assembled under, and the assembly as a `prov:Activity` that used the form versions, the settings and the model version. An assembled wording written from scratch, from no form, names no model.
 
 ```turtle-spec
 wrd:AssemblyModel a owl:Class ;
@@ -1178,8 +1166,7 @@ data graph.
 | W7 | Object ids are derived after assembly, never stored as identity | a design rule (§5.4) |
 | W8 | Every reference finds what it means in the wording holding it. A reference to an element or a variable finds exactly one version: the one a form comprises, or the one an assembled wording includes or, for a variable, declares through an included element. A reference to a document outside the wording finds exactly one reliance on it: in the wording itself, or for an assembled wording that states none, in the form it is assembled from | `wrd:W8FormShape`, `wrd:W8AssembledShape`, `wrd:W8RelianceShape` |
 
-Five more laws hold of every assembled wording an assembler produces (§5.14). WA1 is `wrd:WA1Shape`
-and an assembler's own record check. The rest are tests of the assembler.
+Five more laws hold of every assembled wording an assembler produces (§5.14). WA1 is `wrd:WA1Shape` and an assembler's own record check. The rest are tests of the assembler.
 
 | Law | Statement |
 |---|---|

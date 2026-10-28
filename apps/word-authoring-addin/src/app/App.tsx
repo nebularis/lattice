@@ -3,23 +3,16 @@
  * Graph, and an error banner. Holds all shared state; each panel is a plain function of props.
  */
 import { useEffect, useRef, useState } from "react";
-import type { ApiClient } from "../api/client";
+import type { StudioClient, Workspace } from "../api/client";
 import { ApiError } from "../api/client";
 import { buildSnapshot } from "../domain/snapshot";
-import { occurrenceIndex } from "@lattice/authoring-domain";
 import { parseBody, writePackage, writeSections, writeTemplate, type WritableSection } from "../domain/ooxml";
-import { pollJob } from "../domain/poll";
+import type { JobStatus } from "../domain/poll";
 import type {
   AnalysisView,
   AuthoringTemplate,
-  Detection,
-  DocumentSnapshot,
-  Health,
-  JobView,
-  SampleList,
+  SampleSummary,
   Section,
-  SnapshotAccepted,
-  TemplateList,
   ValueType,
 } from "@lattice/authoring-domain";
 import { newUuid } from "../domain/uuid";
@@ -39,7 +32,7 @@ export interface AppOptions {
 
 export interface AppProps {
   port: DocumentPort;
-  api: ApiClient;
+  api: StudioClient;
   bridge: UiBridge;
   options?: AppOptions;
 }
@@ -48,15 +41,17 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>("document");
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
-  const [templates, setTemplates] = useState<TemplateList>([]);
-  const [samples, setSamples] = useState<SampleList>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
+  const [samples, setSamples] = useState<SampleSummary[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<AuthoringTemplate | null>(null);
   const [metadata, setMetadata] = useState<AuthoringMetadata | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [markMessage, setMarkMessage] = useState<string | null>(null);
-  const [snapshotAccepted, setSnapshotAccepted] = useState<SnapshotAccepted | null>(null);
-  const [job, setJob] = useState<JobView | null>(null);
+  const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisView | null>(null);
+  const [proposals, setProposals] = useState<string | null>(null);
   const [graphTurtle, setGraphTurtle] = useState<string | null>(null);
   const [variableDraft, setVariableDraft] = useState<VariableDraft | null>(null);
   const [referenceDraft, setReferenceDraft] = useState<ReferenceDraft | null>(null);
@@ -67,7 +62,6 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
   });
 
   useEffect(() => {
-    void refreshHealth();
     void loadCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -86,20 +80,29 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bridge]);
 
-  async function refreshHealth(): Promise<void> {
+  async function loadCatalog(): Promise<void> {
     try {
-      const health: Health = await api.health();
-      setConnected(health.status === "ok" && health.fuseki === "up" && health.amqp === "up");
-    } catch {
+      const [loadedWorkspaces, loadedTemplates, loadedSamples] = await Promise.all([
+        api.listWorkspaces(),
+        api.listTemplates(),
+        api.listSamples(),
+      ]);
+      setConnected(true);
+      setWorkspaces(loadedWorkspaces);
+      setWorkspaceId((current) => current ?? loadedWorkspaces[0]?.id ?? null);
+      setTemplates(loadedTemplates);
+      setSamples(loadedSamples);
+    } catch (e) {
       setConnected(false);
+      setError(messageOf(e));
     }
   }
 
-  async function loadCatalog(): Promise<void> {
+  async function handleCreateWorkspace(label: string): Promise<void> {
     try {
-      const [loadedTemplates, loadedSamples] = await Promise.all([api.listTemplates(), api.listSamples()]);
-      setTemplates(loadedTemplates);
-      setSamples(loadedSamples);
+      const created = await api.createWorkspace(label);
+      setWorkspaces((current) => [...current, created]);
+      setWorkspaceId(created.id);
     } catch (e) {
       setError(messageOf(e));
     }
@@ -118,11 +121,13 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
 
   async function handleApplyTemplate(templateId: string): Promise<void> {
     try {
-      const template = await api.getTemplate(templateId);
+      const template = templates.find((candidate) => candidate.templateId === templateId);
+      if (!template) throw new Error(`No template ${templateId}.`);
       const nextMetadata: AuthoringMetadata = {
         documentId: newUuid(),
         templateId: template.templateId,
         title: template.title,
+        ...(workspaceId ? { workspaceId } : {}),
         revision: null,
         variables: template.variables,
       };
@@ -138,13 +143,15 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
 
   async function handleInsertSample(sampleId: string): Promise<void> {
     try {
-      const sample: DocumentSnapshot = await api.getSample(sampleId);
-      const template = await api.getTemplate(sample.templateId);
+      const sample = await api.getSample(sampleId);
+      const template = templates.find((candidate) => candidate.templateId === sample.templateId);
+      if (!template) throw new Error(`No template ${sample.templateId}.`);
       const headingBySectionKey = new Map(template.sections.map((section) => [section.sectionKey, section.heading]));
       const nextMetadata: AuthoringMetadata = {
         documentId: newUuid(),
         templateId: sample.templateId,
         title: sample.title,
+        ...(workspaceId ? { workspaceId } : {}),
         revision: null,
         variables: sample.variables,
       };
@@ -216,73 +223,44 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
       setError("Apply a template or insert a sample first.");
       return;
     }
+    if (!workspaceId) {
+      setError("Pick or create a workspace first.");
+      return;
+    }
     try {
       const ooxml = await port.readBodyOoxml();
       const parsed = parseBody(ooxml);
       setSections(parsed.sections);
       const { snapshot } = buildSnapshot(parsed, metadata);
 
-      const accepted = await api.submitSnapshot(metadata.documentId, { baseRevision: metadata.revision, snapshot });
-      const nextMetadata: AuthoringMetadata = { ...metadata, revision: accepted.revision };
+      // A document saved in another workspace is a new document in this one.
+      const revision = metadata.workspaceId === workspaceId ? metadata.revision : null;
+      const saved = await api.saveDocument(workspaceId, snapshot, revision);
+      const nextMetadata: AuthoringMetadata = { ...metadata, workspaceId, revision: saved };
       await port.writeMetadata(nextMetadata);
       setMetadata(nextMetadata);
-      setSnapshotAccepted(accepted);
-      setJob(null);
+      setJobStatus("queued");
       setAnalysis(null);
+      setProposals(null);
 
-      const finalJob = await pollJob(api, accepted.job.jobId, { timeoutMs: options?.pollTimeoutMs });
-      setJob(finalJob);
-      if (finalJob.status === "completed") {
-        const view = await api.getAnalysis(metadata.documentId, accepted.revision);
-        setAnalysis(view);
+      try {
+        const result = await api.analyse(workspaceId, metadata.documentId, { timeoutMs: options?.pollTimeoutMs });
+        setJobStatus("succeeded");
+        setAnalysis(result.view);
+        setProposals(result.proposals);
+      } catch (e) {
+        setJobStatus("failed");
+        throw e;
       }
-    } catch (e) {
-      setError(messageOf(e));
-    }
-  }
-
-  async function handleAccept(detection: Detection): Promise<void> {
-    if (!metadata) return;
-    try {
-      const element = sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === detection.elementId);
-      if (!element) return;
-      const elementText = element.parts.map((part) => part.text).join("");
-      const occurrence = occurrenceIndex(elementText, detection.start, detection.text);
-
-      if (detection.suggestion.action === "mark-variable" && detection.suggestion.suggestedKey && detection.suggestion.valueType) {
-        const variableKey = detection.suggestion.suggestedKey;
-        const valueType = detection.suggestion.valueType;
-        if (!metadata.variables.some((variable) => variable.variableKey === variableKey)) {
-          const nextMetadata: AuthoringMetadata = {
-            ...metadata,
-            variables: [...metadata.variables, { variableKey, label: detection.text, valueType }],
-          };
-          await port.writeMetadata(nextMetadata);
-          setMetadata(nextMetadata);
-        }
-        await port.markOccurrence(detection.elementId, detection.text, occurrence, {
-          kind: "variable",
-          variableKey,
-          label: detection.text,
-        });
-      } else if (detection.suggestion.action === "mark-reference" && detection.suggestion.targetElementId) {
-        await port.markOccurrence(detection.elementId, detection.text, occurrence, {
-          kind: "reference",
-          targetElementId: detection.suggestion.targetElementId,
-          term: detection.text,
-        });
-      }
-      await refreshModel();
     } catch (e) {
       setError(messageOf(e));
     }
   }
 
   async function handleShowTurtle(): Promise<void> {
-    if (!metadata || metadata.revision === null) return;
+    if (!metadata || !metadata.workspaceId || metadata.revision === null) return;
     try {
-      const text = await api.getGraph(metadata.documentId, metadata.revision, "proposal");
-      setGraphTurtle(text);
+      setGraphTurtle(await api.getDocumentGraph(metadata.workspaceId, metadata.documentId));
     } catch (e) {
       setError(messageOf(e));
     }
@@ -330,6 +308,10 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
 
       {activeTab === "document" && (
         <DocumentPanel
+          workspaces={workspaces}
+          workspaceId={workspaceId}
+          onSelectWorkspace={setWorkspaceId}
+          onCreateWorkspace={handleCreateWorkspace}
           templates={templates}
           samples={samples}
           selectedTemplate={selectedTemplate}
@@ -362,16 +344,20 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
         <AnalysePanel
           canAnalyse={metadata !== null}
           onAnalyse={handleAnalyse}
-          snapshotAccepted={snapshotAccepted}
-          job={job}
-          onAccept={handleAccept}
+          jobStatus={jobStatus}
+          findings={analysis?.conformance ?? null}
         />
       )}
 
       {activeTab === "le" && <LogicalEnglishPanel analysis={analysis?.analysis ?? null} />}
 
       {activeTab === "graph" && (
-        <GraphPanel analysis={analysis?.analysis ?? null} turtle={graphTurtle} onShowTurtle={handleShowTurtle} />
+        <GraphPanel
+          analysis={analysis?.analysis ?? null}
+          documentTurtle={graphTurtle}
+          proposalsTurtle={proposals}
+          onShowTurtle={handleShowTurtle}
+        />
       )}
     </div>
   );

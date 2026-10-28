@@ -5,7 +5,7 @@
  * by id without a real Word host.
  */
 import { createRoot } from "react-dom/client";
-import { HttpApiClient } from "./api/client";
+import { HttpStudioClient } from "./api/client";
 import { App } from "./app/App";
 import "./app/app.css";
 import { UiBridge } from "./app/uiBridge";
@@ -18,7 +18,7 @@ const params = new URLSearchParams(window.location.search);
 const pollTimeoutMs = Number(params.get("pollTimeoutMs") ?? "20000");
 
 const port = new FakeWordPort();
-const api = new HttpApiClient("");
+const api = new HttpStudioClient("");
 const bridge = new UiBridge();
 const showPaneCalls: number[] = [];
 const handlers: Handlers = createHandlers({

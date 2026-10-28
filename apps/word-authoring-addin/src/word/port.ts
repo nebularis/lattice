@@ -20,6 +20,9 @@ export interface AuthoringMetadata {
   documentId: string;
   templateId: string;
   title: string;
+  /** The studio workspace the document is saved in, once it has been saved. */
+  workspaceId?: string;
+  /** The revision the workspace holds, null until the document is first saved. */
   revision: number | null;
   variables: VariableDeclaration[];
 }

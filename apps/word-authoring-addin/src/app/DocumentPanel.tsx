@@ -1,8 +1,14 @@
-import type { AuthoringTemplate, SampleList, TemplateList } from "@lattice/authoring-domain";
+import { useState } from "react";
+import type { AuthoringTemplate, SampleSummary } from "@lattice/authoring-domain";
+import type { Workspace } from "../api/client";
 
 export interface DocumentPanelProps {
-  templates: TemplateList;
-  samples: SampleList;
+  workspaces: Workspace[];
+  workspaceId: string | null;
+  onSelectWorkspace: (workspaceId: string) => void;
+  onCreateWorkspace: (label: string) => void;
+  templates: AuthoringTemplate[];
+  samples: SampleSummary[];
   selectedTemplate: AuthoringTemplate | null;
   onApplyTemplate: (templateId: string) => void;
   onInsertSample: (sampleId: string) => void;
@@ -12,6 +18,10 @@ export interface DocumentPanelProps {
 /** The Document tab (plan WA9 "Panels"): template/sample catalogue, apply/insert, and the current
  * template's sections with heading, admitted term kinds and guidance. */
 export function DocumentPanel({
+  workspaces,
+  workspaceId,
+  onSelectWorkspace,
+  onCreateWorkspace,
   templates,
   samples,
   selectedTemplate,
@@ -19,8 +29,32 @@ export function DocumentPanel({
   onInsertSample,
   onCopyBodyOoxml,
 }: DocumentPanelProps): JSX.Element {
+  const [newLabel, setNewLabel] = useState("");
   return (
     <section aria-label="Document">
+      <h2>Workspace</h2>
+      <select aria-label="Workspace" value={workspaceId ?? ""} onChange={(event) => onSelectWorkspace(event.target.value)}>
+        <option value="" disabled>
+          Pick a workspace
+        </option>
+        {workspaces.map((workspace) => (
+          <option key={workspace.id} value={workspace.id}>
+            {workspace.label || workspace.id}
+          </option>
+        ))}
+      </select>
+      <input aria-label="New workspace" value={newLabel} onChange={(event) => setNewLabel(event.target.value)} />
+      <button
+        type="button"
+        disabled={newLabel.trim() === ""}
+        onClick={() => {
+          onCreateWorkspace(newLabel.trim());
+          setNewLabel("");
+        }}
+      >
+        Create workspace
+      </button>
+
       <h2>Templates</h2>
       <ul>
         {templates.map((template) => (

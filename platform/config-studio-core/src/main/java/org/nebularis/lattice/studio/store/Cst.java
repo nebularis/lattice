@@ -45,6 +45,17 @@ public final class Cst {
     public static final Property committedAt = p("committedAt");
     public static final Property wrote = p("wrote");
     public static final Property receiptRevision = p("receiptRevision");
+    public static final Resource Analyse = r("Analyse");
+    public static final Resource Document = r("Document");
+    public static final Property document = p("document");
+    public static final Property template = p("template");
+    /** {@code cst:revision}, a document's revision. A graph's is {@link #revision(String)}. */
+    public static final Property documentRevision = p("revision");
+    public static final Property markup = p("markup");
+    public static final Resource DocumentTemplate = r("DocumentTemplate");
+    public static final Resource DocumentSample = r("DocumentSample");
+    public static final Property templateKey = p("templateKey");
+    public static final Property sampleKey = p("sampleKey");
 
     private Cst() {
     }

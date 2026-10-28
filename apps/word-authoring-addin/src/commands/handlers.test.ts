@@ -1,25 +1,15 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { writePackage, writeSections, type WritableSection } from "../domain/ooxml";
 import { markResultMessage } from "../app/markMessages";
 import { UiBridge } from "../app/uiBridge";
-import type { AuthoringTemplate, DocumentSnapshot } from "@lattice/authoring-domain";
+import { loadSample, loadTemplate } from "../domain/fixtures/studio";
 import { FakeWordPort } from "../word/fakePort";
 import type { DocumentPort, MarkResult } from "../word/port";
 import { createHandlers } from "./handlers";
 import type { CommandEvent, HandlerDeps } from "./handlers";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "../../../..");
-
-function loadJson<T>(relativePath: string): T {
-  return JSON.parse(readFileSync(path.join(REPO_ROOT, relativePath), "utf-8")) as T;
-}
-
-const SAMPLE = loadJson<DocumentSnapshot>("contracts/authoring/samples/facility-agreement.json");
-const TEMPLATE = loadJson<AuthoringTemplate>("contracts/authoring/templates/facility-agreement.json");
+const SAMPLE = loadSample("facility-agreement");
+const TEMPLATE = loadTemplate("facility-agreement");
 
 function offsetOf(elementId: string, needle: string): { start: number; end: number } {
   const element = SAMPLE.sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === elementId)!;

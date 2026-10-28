@@ -1,0 +1,27 @@
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.nebularis.lattice</groupId><artifactId>lattice-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
+  <artifactId>config-studio-authoring</artifactId>
+  <description>Configuration Studio's documents: LATTICE's markup read and validated, mapped to Wording by the document-to-wording kit, and the document templates and samples (ADR-A137, ADR-A138).</description>
+  <dependencies>
+    <dependency><groupId>org.nebularis.lattice</groupId><artifactId>config-studio-core</artifactId><version>${project.version}</version></dependency>
+    <!-- XSLT 3.0 for the document-to-wording kit (ADR-A119). -->
+    <dependency><groupId>net.sf.saxon</groupId><artifactId>Saxon-HE</artifactId><version>12.5</version></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+  </dependencies>
+  <build>
+    <resources>
+      <resource>
+        <directory>${project.basedir}/../../contracts</directory>
+        <targetPath>contracts</targetPath>
+        <includes>
+          <include>document/document.xsd</include>
+          <include>document/samples/*.xml</include>
+          <include>xml/document-to-wording/**/*</include>
+          <include>config-studio/document-templates.ttl</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+</project>

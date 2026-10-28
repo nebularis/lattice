@@ -29,6 +29,28 @@ public final class Graphs {
         return workspace(ws) + ":" + name;
     }
 
+    /** The graph of document {@code doc} of workspace {@code ws}, whose IRI is also the document's. */
+    public static String document(String ws, String doc) {
+        return workspace(ws) + ":document:" + doc;
+    }
+
+    /** The id of the document {@code iri} names in workspace {@code ws}, or null when it names none. */
+    public static String documentId(String ws, String iri) {
+        String prefix = workspace(ws) + ":document:";
+        return iri != null && iri.startsWith(prefix) && isId(iri.substring(prefix.length())) ? iri.substring(prefix.length()) : null;
+    }
+
+    /**
+     * The base the Wording IRIs of every document are minted under. A document's id is a UUID, so its IRIs need no
+     * workspace's, and they stay the same when an export is imported under another workspace.
+     */
+    public static final String DOCUMENT_BASE = "urn:lattice:studio:documents/";
+
+    /** The node of document {@code doc} inside its graph, which the kit mints and which holds its markup. */
+    public static String documentNode(String doc) {
+        return DOCUMENT_BASE + "doc/" + doc + "/";
+    }
+
     public static String job(String job) {
         return JOB_PREFIX + job;
     }
