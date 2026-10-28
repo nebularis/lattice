@@ -41,7 +41,7 @@ shapes report each declared in the wrong place. No graph in the repository names
 - **The migration check** escapes line breaks in a difference, so a changed SPARQL literal is one line of a
   reconciliation file. Before, a difference in a multi-line literal could not be reconciled.
 - **Docs.** ADR-A05 and ADR-A03 addenda, the glossary, `docs/book.html`'s sample, the MORK compilers README and
-  Surface's `MorkEnhancements.md` (§9.3 now records the retirement). ADR-A89 and ADR-A90 still say
+  the Surface-MORK plan's Phase 5 (§9.3 of the MORK enhancements analysis recorded the retirement). ADR-A89 and ADR-A90 still say
   `DimensionConsistent` is refused, which was true when they were decided, and are left as records.
 - **TD-55**, the migration check's whole-file blank node labelling.
 

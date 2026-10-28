@@ -335,7 +335,7 @@ srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:resolvedBindingScope a owl:ObjectProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:BindingScope ;
 	rdfs:comment "A scope that was active when a BoundSchemeSource read-set entry's scheme was resolved." ;
-	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md)." .
+	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable." .
 
 srf:resolvedBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:SchemeBinding ;

@@ -7,7 +7,7 @@
 **Status:** Proposed architecture  
 **Date:** 2026-09-18  
 **Audience:** LATTICE maintainers and applied-ontology authors  
-**Decision sought:** Establish `ontology/applied/capacity/` as a thin, reusable domain ontology above Behaviour. Recast the public insurance layer as a consumer of Capacity. Do not port the proprietary MERIDIAN FBO wholesale into LATTICE.
+**Decision sought:** Establish `ontology/applied/capacity/` as a thin, reusable domain ontology above Behaviour. Recast the public insurance layer as a consumer of Capacity. Do not port the private source ontology wholesale into LATTICE.
 
 ---
 
@@ -65,21 +65,16 @@ Applied domains
   Other future domains
 
 Private or deployment-specific work
-  MERIDIAN-specific FBO configuration
-  Insurance scope dimensions and capital structures
-  Risk Capital Vehicle ontology
-  Continuous-liquidity products
-  Execution optimisations
-  Proprietary mappings, corpora, and models
+  Configuration, calibrations and customer mappings
 ```
 
-The public Capacity ontology becomes the generic, inspectable bridge between Behaviour's allowance mechanism and applied domains. It does not expose the proprietary insurance configuration that MERIDIAN FBO contains.
+The public Capacity ontology becomes the generic, inspectable bridge between Behaviour's allowance mechanism and applied domains. It does not expose any deployment's configuration.
 
 ---
 
 ## 2. The question being resolved
 
-The original MERIDIAN FBO uses `fbo:CapacityTank` as a central primitive. The FBO material demonstrates that a capacity resource can have:
+The private source ontology this generalises uses a capacity tank as its central primitive, and shows that a capacity resource can have:
 
 - an initial amount,
 - an available balance,
@@ -90,7 +85,7 @@ The original MERIDIAN FBO uses `fbo:CapacityTank` as a central primitive. The FB
 - deterministic consumption semantics,
 - derived interval or scenario analysis.
 
-The FBO name and examples are insurance-oriented, but the underlying structure is broader.
+The source's name and examples are insurance-oriented, but the underlying structure is broader.
 
 The relevant question is therefore not:
 
@@ -210,7 +205,7 @@ These are plausible candidates for eventual promotion into Behaviour. They shoul
 
 ### 4.3 What belongs in Insurance, not Capacity
 
-Capacity must not become a disguised FBO.
+Capacity must not become a disguised copy of the source.
 
 The following remain insurance-domain concepts:
 
@@ -233,26 +228,7 @@ Capacity can support all of these through composition. It must not define them.
 
 ### 4.4 What should remain private or deployment-specific
 
-The public Capacity ontology should not publish the proprietary configuration that creates MERIDIAN's differentiation.
-
-Keep private:
-
-- the MERIDIAN twenty-dimension insurance scope model,
-- any proprietary category partition or dimension completeness theorem,
-- specific FBO evaluation profiles,
-- insurance-specific mapping rules from contractual terms to capacity networks,
-- capital-structure and Risk Capital Vehicle ontology,
-- continuous-liquidity product semantics,
-- execution compiler internals where they contain non-obvious optimisation,
-- production decisioning logic,
-- curated wording library data,
-- reviewed extraction corpus,
-- scenario-generation methods,
-- client mappings and client vocabulary bindings.
-
-The public Capacity layer can establish the generic resource graph. It does not reveal a private deployment's dimensions, commercial policies, or analytical configuration.
-
----
+Configuration, calibrations, customer mappings and a deployment's own evaluation profiles stay with the deployment. Capacity publishes the generic mechanism and nothing of a deployment.
 
 ## 5. Design principles
 
@@ -365,7 +341,7 @@ The package should follow LATTICE's literate-spec convention. Its `README.md` is
 @prefix cap: <https://www.nebularis.org/neuro-semantic/lattice/applied/capacity#> .
 ```
 
-The namespace must not use `fbo:`, `ctr:`, `MERIDIAN:`, or any employer-owned namespace.
+The namespace must not reuse a namespace that is not the project's.
 
 ## 6.3 Imports
 
@@ -629,7 +605,7 @@ The first Capacity release should not include broad or underspecified relation t
 - `TransfersToTarget`,
 - `ReinstatesTarget`.
 
-These may be valid generic concepts, but they need separate laws, examples, and tests. They should not be included because they appeared in FBO.
+These may be valid generic concepts, but they need separate laws, examples, and tests. They should not be included because they appeared in the source.
 
 ---
 
@@ -735,7 +711,7 @@ At minimum:
 
 ## 7.6 Phase-restricted acyclicity
 
-The FBO material correctly identified that not all capacity-resource relations should be tested in one combined graph.
+The source material correctly identified that not all capacity-resource relations should be tested in one combined graph.
 
 Capacity should distinguish at least two derived graph views:
 
@@ -964,19 +940,19 @@ Insurance must add concepts that Capacity intentionally does not know:
 
 The public insurance layer may use generic Capacity dependencies, but its own mapping rules and analytical profiles must be distinguished from the Capacity base.
 
-## 9.3 The FBO decomposition
+## 9.3 The source decomposition
 
-The original FBO can be decomposed as follows.
+The source ontology can be decomposed as follows.
 
-| FBO construct or concern | Destination |
+| Source construct or concern | Destination |
 |---|---|
 | Finite resource and balance | Behaviour plus Capacity |
 | Capacity tank declaration | `cap:CapacityResource` |
 | Tank state | `bhv:AllowanceAccount` and Behaviour state |
 | Claim as a probe | `ins:LossDemand` extending `cap:CapacityDemand` |
-| Scenario | Insurance analysis layer or private MERIDIAN extension |
+| Scenario | Insurance analysis layer or a private extension |
 | Scope qualifier mechanics | Eligibility plus private or insurance-specific projection |
-| Twenty insurance dimensions | Private MERIDIAN or a future public insurance profile, not Capacity |
+| Insurance scope dimensions | A private extension or a future public insurance profile, not Capacity |
 | Peril and territory hierarchies | Insurance vocabulary contracts |
 | Flow graph | Capacity dependencies where genuinely generic |
 | Insurance-specific flow meanings | Insurance layer |
@@ -985,30 +961,13 @@ The original FBO can be decomposed as follows.
 | Reinstatement premium and collateral semantics | Insurance or capital-market layer |
 | Execution shadows and runtime compiler | Execution implementation, not ontology requirement |
 
-This is not a claim that the existing FBO is wrong. It is a refactoring claim:
+This is not a claim that the existing source ontology is wrong. It is a refactoring claim:
 
-> The FBO contains a generic capacity kernel, an insurance domain model, and a proprietary execution and analysis profile. Those should not be published or maintained as one indivisible ontology.
+> The source ontology contains a generic capacity kernel, an insurance domain model, and a proprietary execution and analysis profile. Those should not be published or maintained as one indivisible ontology.
 
 ## 9.4 What should not be ported automatically
 
-The following FBO material should not move into Capacity merely because it is already designed:
-
-- the named twenty-dimension qualifier,
-- the fixed partition into insurance applicability, flow modulation, and state gating,
-- claim-specific accessors,
-- insurance scope vocabulary,
-- defence-cost handling,
-- policy trigger modes,
-- cover-span interval semantics,
-- scenario-conditioned coverage findings,
-- insurance-specific reset rules,
-- reinsurance recovery classifications,
-- catastrophe vocabulary,
-- capital and collateral configuration.
-
-Each may later inform an insurance or private extension. None belongs in a public generic Capacity ontology without independent justification.
-
----
+Nothing of the source moves into Capacity merely because it is already designed. Each term passes the promotion tests of §10 or stays where it is.
 
 ## 10. Behaviour promotion protocol
 
@@ -1289,28 +1248,11 @@ The public insurance package should:
 - demonstrate policy limits and retentions as capacity resources,
 - demonstrate a simple ordered resource arrangement,
 - use Eligibility for a non-proprietary admission example,
-- avoid MERIDIAN-specific scope dimensions, tower concepts, and proprietary terminology.
+- avoid deployment-specific scope dimensions, tower concepts and proprietary terminology.
 
 **Exit criterion:** the insurance example becomes simpler because it consumes Capacity rather than recreating resource-network semantics.
 
-## Phase 5: private MERIDIAN refactoring study
-
-Outside the public LATTICE repository, assess the proprietary FBO against the Capacity layer.
-
-Classify every FBO term as:
-
-1. retained private,
-2. mapped to Behaviour,
-3. mapped to Capacity,
-4. mapped to public Insurance,
-5. candidate for later generic promotion,
-6. obsolete duplication.
-
-Do not copy the FBO source into the public repository. Produce a private mapping and equivalence analysis.
-
-**Exit criterion:** a documented private migration path from FBO concepts to the layered LATTICE architecture.
-
-## Phase 6: promotion review
+## Phase 5: promotion review
 
 Only after Phase 2 and Phase 3 should the team consider promoting any Capacity concept to Behaviour.
 
@@ -1396,7 +1338,7 @@ The domain-specific billing consequences of paid overage do not belong in Capaci
 
 ## 14. Commercial and IP implications
 
-This architecture supports a better public/private boundary than publishing or withholding FBO as one block.
+This architecture supports a better public/private boundary than publishing or withholding the source as one block.
 
 ### Public LATTICE and Capacity
 
@@ -1411,35 +1353,9 @@ Publicly reusable assets can include:
 
 This establishes that LATTICE is genuinely cross-domain.
 
-### Private MERIDIAN and product assets
+### Private and product assets
 
-Private commercial assets can include:
-
-- detailed insurance behaviour profiles,
-- high-dimensional insurance scope algebra,
-- proprietary mapping rules,
-- private scenario and capital analysis,
-- Risk Capital Vehicle ontology,
-- continuous-liquidity ontology,
-- execution compiler optimisations,
-- reviewed wording corpora,
-- production rule packs,
-- customer-specific mappings,
-- data products and runtime services.
-
-This avoids the false choice between:
-
-```text
-publish the whole FBO
-```
-
-and:
-
-```text
-hide every generic mechanism inside a private insurance ontology
-```
-
-The public Capacity layer demonstrates the generic capability. The private layers retain the commercial value of specialised configuration, execution quality, data, and market-specific analytical products.
+What a deployment configures, calibrates and maps stays with the deployment, and so do its data products and runtime services. The public Capacity layer demonstrates the generic capability.
 
 ---
 
@@ -1459,7 +1375,7 @@ The public Capacity layer demonstrates the generic capability. The private layer
 
 7. **Relationship to Surface and execution tooling.** Capacity should be designed so a deterministic execution surface can be compiled later, but should not require a specific runtime representation.
 
-8. **Public Insurance scope.** The public Insurance layer must decide what minimum non-proprietary example demonstrates policy limits and retention without reconstructing private FBO semantics.
+8. **Public Insurance scope.** The public Insurance layer must decide what minimum non-proprietary example demonstrates policy limits and retention without reconstructing the private source's semantics.
 
 ---
 
@@ -1482,8 +1398,8 @@ CapacityDependency
 
 Build it by composing existing Behaviour, Eligibility, Quantification, Party, Instrument, and Foundation mechanisms.
 
-Do not add a public `CapacityTank` class to Behaviour. Do not copy FBO's insurance-specific scope model, flow taxonomy, or analysis engine into the Capacity layer. Do not make Capacity a backdoor publication of MERIDIAN.
+Do not add a public `CapacityTank` class to Behaviour. Do not copy any deployment's scope model, flow taxonomy or analysis engine into the Capacity layer.
 
-Use lending and SaaS examples to prove the model first. Then refactor the public Insurance layer to import Capacity. Keep the richer insurance, capital, liquidity, and execution profiles private until there is a deliberate decision to publish a clean, independently justified subset.
+Use lending and SaaS examples to prove the model first. Then refactor the public Insurance layer to import Capacity. Publish a further profile only by a deliberate decision, as a clean, independently justified subset.
 
 This gives LATTICE a reusable capacity domain, makes the public insurance example architecturally honest, and preserves the distinction between open semantic infrastructure and proprietary commercial implementation.

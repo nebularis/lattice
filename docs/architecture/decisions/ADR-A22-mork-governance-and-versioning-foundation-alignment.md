@@ -7,11 +7,11 @@
 **Supersedes:** none
 **Related:** ADR-A12 (identity and derivation-authority model), ADR-A18 (Surface-to-MORK lowering boundary)
 **Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
-**Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
+**Source plan:** the Surface-MORK Unified Projection Program plan
 
 ## Context
 
-`ontology/mork/spec/Mork.ttl` has no governance-state or version-identity terms today. Foundation already owns the persistent-identity/version pattern (a version linked to a persistent identity, direct non-transitive supersession) and is gaining `fnd:GovernanceState` individuals (`ontology/surface/docs/OUTSTANDING-ITEMS 2.md` finding 15.4). MORK mappings, once Surface lowers Projection contracts into them at volume (ADR-A18), need the same governance gate before production compilation trusts them — otherwise an unreviewed mapping compiles into a production artefact indistinguishably from a reviewed one.
+`ontology/mork/spec/Mork.ttl` has no governance-state or version-identity terms today. Foundation already owns the persistent-identity/version pattern (a version linked to a persistent identity, direct non-transitive supersession) and is gaining `fnd:GovernanceState` individuals (the Surface outstanding items record, finding 4.4). MORK mappings, once Surface lowers Projection contracts into them at volume (ADR-A18), need the same governance gate before production compilation trusts them — otherwise an unreviewed mapping compiles into a production artefact indistinguishably from a reviewed one.
 
 ## Decision
 
@@ -22,7 +22,7 @@
 - MORK's ontology gains a Foundation import — MORK's first dependency of this kind.
 - Existing MORK mappings without governance state remain valid for draft and review-mode compilation, and fail production-mode compilation until backfilled. This is a deliberate migration cost, not an oversight.
 - Effective-time windows for mapping applicability follow the same Foundation-aligned pattern, rather than a MORK-specific one.
-- This resolves, for governance and versioning specifically, the question `OUTSTANDING-ITEMS 2.md` §3.1 raised about Foundation alignment. It does not move `srf:DerivedArtefact` itself to Foundation — that remains a separate, still-open question, unaffected by this decision.
+- This resolves, for governance and versioning specifically, the question the Surface outstanding items record §3.1 raised about Foundation alignment. It does not move `srf:DerivedArtefact` itself to Foundation — that remains a separate, still-open question, unaffected by this decision.
 
 ## Addendum (2026-09-18): implemented, with one deliberate deviation
 

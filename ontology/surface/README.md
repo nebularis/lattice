@@ -4,7 +4,7 @@
 
 Literate specification for the Surface layer.
 
-The workflow control boundary for immutable contract revisions and graph-reference jobs is documented in [the revision lifecycle guide](docs/revision-lifecycle.md). It wraps the existing compiler and does not alter this normative specification.
+The workflow control boundary for immutable contract revisions and graph-reference jobs is documented in [the revision lifecycle guide](../../docs/operator/surface-revision-lifecycle.md). It wraps the existing compiler and does not alter this normative specification.
 
 ---
 
@@ -277,7 +277,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 ```toml repository-catalogue
 [module]
 kind = "standalone"
-roles = ["docs", "examples", "execution", "shapes", "spec", "test", "vocab"]
+roles = ["examples", "execution", "shapes", "spec", "test", "vocab"]
 imports = ["foundation", "vocabulary", "quantification"]
 
 [module.extract]
@@ -752,7 +752,7 @@ srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:resolvedBindingScope a owl:ObjectProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:BindingScope ;
 	rdfs:comment "A scope that was active when a BoundSchemeSource read-set entry's scheme was resolved." ;
-	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md)." .
+	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable." .
 
 srf:resolvedBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:SchemeBinding ;
@@ -1343,7 +1343,7 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 srf:BoundSchemeSourceResolutionRecordedShape a sh:NodeShape ;
 	sh:targetClass srf:ReadSetEntry ;
 	sh:sparql [
-		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler. Discharges Finding 2 (docs/developer/plans/temporal-binding-consumer-hardening.md)." ;
+		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {

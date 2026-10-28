@@ -450,9 +450,8 @@ bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
 ### 5.3 Nested states, history, and concurrent regimes
 
 Behaviour takes W3C SCXML as its reference for statecharts, without claiming conformance to it.
-The design and every departure are in the
-[nested states sketch](../../docs/developer/sketches/nested-states-and-history.md), and the
-decisions in ADR-A106's 2026-10-02 addendum. The worked state machines of §10 show each construct
+The design, every departure and the
+decisions are in ADR-A106's 2026-10-02 addendum. The worked state machines of §10 show each construct
 on a full record.
 
 ```mermaid
@@ -710,8 +709,8 @@ delivery gates of the first Eligibility and Behaviour build. The profile binds d
 `bhv:Proportional` stays unusable until the repository carries two non-domain motivating examples,
 an explicit proportional conservation law, and cross-profile conformance coverage. Reset edge cases
 are deferred for the same reason: they need explicit law statements and fixtures, not inferred
-behaviour. Proportional absorption is the merge rule of a parallel environment, which the
-[evaluation context](../../docs/developer/sketches/evaluation-context.md) sketch (§7) takes up.
+behaviour. Proportional absorption is the merge rule of a parallel environment, which a later
+design of the evaluation context takes up.
 
 State occupancy records distinguish hypothetical from current execution state through `bhv:isHypothetical` and `bhv:isCurrent`. A non-hypothetical subject may have at most one current occupancy in a given state space.
 
@@ -1510,8 +1509,8 @@ the internal transitions created none.
 **Proves:** under `AllMatches` every enabled internal transition fires, in descending priority,
 each guard reading what the one before it left, and the state change follows in the same pass. A
 guard reading the bundle as the pass found it would have sent no alert on activation 2. That
-reading is the parallel environment, which is deferred to the
-[evaluation context](../../docs/developer/sketches/evaluation-context.md) design. Either-or
+reading is the parallel environment, which is deferred to a later
+design of the evaluation context. Either-or
 consequences, such as "from the bundle, else from overage", are `bhv:PriorityOrdered` instead,
 where only the highest enabled transition fires.
 

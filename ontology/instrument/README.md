@@ -14,7 +14,7 @@ This ontological substrate allows a user to state what legally binding outcomes 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. It never imports Behaviour's runtime document, which itself imports only Behaviour's configuration, so Instrument meets no runtime record. Instrument is two documents in one namespace. The main document, `spec/instrument.ttl`, holds stated and bound meaning. The acts document, `spec/instrument-acts.ttl`, imports it and holds the legal acts the parties did (§6.4), so a consumer that only states meaning never imports an act. Nothing outside Instrument imports either, and in LATTICE only examples and tests read the acts document ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.16.0, CCS slice C9b1) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
+This version (0.19.0, CCS slice C9b1) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
@@ -83,7 +83,7 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expr
 
 ## 4. Terminology
 
-A lawyer reads words such as "term", "obligation", "exclusion" and "power" as terms of the art developed over millennia of law making, with centuries of meaning behind them. By contrast, a software engineer reads terms like "relation", "template" and "variable", in the context of computing. The naming convention for this layer attempts to adopt the terms a contract lawyer would recognise. This section defines, for every class and property, where its name comes from and why it was chosen over the alternatives. Historical naming conventions and adjustment decisions are recorded in the [CCS sketch](../../docs/developer/sketches/computable-contract-substrate.md) §1.1 and §2, CC-D1 and ADR-A104.
+A lawyer reads words such as "term", "obligation", "exclusion" and "power" as terms of the art developed over millennia of law making, with centuries of meaning behind them. By contrast, a software engineer reads terms like "relation", "template" and "variable", in the context of computing. The naming convention for this layer attempts to adopt the terms a contract lawyer would recognise. This section defines, for every class and property, where its name comes from and why it was chosen over the alternatives. Historical naming conventions and adjustment decisions are recorded in [ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md).
 
 ### 4.1 Contract
 
@@ -2071,7 +2071,7 @@ ins:excepts a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ## 8. Parties
 
-The four party properties range over one union, named once ([C6-Q4](../../docs/developer/plans/computable-contract-substrate.md)):
+The four party properties range over one union, named once:
 a role occupancy, a participation group, or, on stated meaning only, a role (law I13).
 
 - A **group** is the obligee of a several duty (each lender for its share) or the holder of a
@@ -2817,7 +2817,7 @@ Instrument's for each trigger's kind, on the graph the engine reads.
 
 A contract states times relative to dates that lie in the future when it is signed, some of which depend on events that may never happen: "within 24 hours of becoming aware of the loss", "within 10 Business Days after the end of each month", "not less than six months before the Break Date".
 
-Each is stated once, and resolves to a different date for each instrument and each occasion. This section describes how a clause names such a time, and how an obligation's due range, a power's window and a recurrence are built on it (the [terms in time sketch](../../docs/developer/sketches/terms-in-time.md) Part A, [ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)).
+Each is stated once, and resolves to a different date for each instrument and each occasion. This section describes how a clause names such a time, and how an obligation's due range, a power's window and a recurrence are built on it ([ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)).
 
 ### 13.1 An anchor and its offsets
 
@@ -5641,7 +5641,7 @@ ins:SingleExpressionShape a sh:NodeShape ;
 
 ## 21. Laws
 
-| Law | Statement | Register in 0.15.0 |
+| Law | Statement | Register in 0.19.0 |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | `ins:InstrumentShape` |
 | I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, bound from exactly one stated term or implied by a source. A relation belongs to its term | `ins:TermShape`, `ins:LegalRelationShape`, `ins:RelationTierShape` |

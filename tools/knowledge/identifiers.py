@@ -406,6 +406,8 @@ def definitions(family: Family) -> dict[str, str]:
     if family.definition == "question":
         defined: dict[str, str] = {}
         for path in question_documents(family):
+            if not path.is_file():
+                continue
             for q in questions_in(path.read_text(encoding="utf-8", errors="replace").splitlines()):
                 defined.setdefault(normalise(q.identifier), q.identifier)
         return defined

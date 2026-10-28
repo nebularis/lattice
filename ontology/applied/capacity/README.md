@@ -13,17 +13,16 @@ Models finite capacity that can be drawn upon. Example uses include a loan facil
 
 Capacity models networks of such resources, atop [`behaviour`](../../behaviour/) allowances and [`quantification`](../../quantification/)'s handling of value spaces.
 
-**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates the dynamic resource from the instrument's static limit ([computable contract substrate](../../../docs/developer/sketches/computable-contract-substrate.md)
-§7.8). A threshold regime's state is then derived from the resource's value.
+**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates the dynamic resource from the instrument's static limit ([ADR-A-CAP1](../../../docs/architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile_Version2.md)). A threshold regime's state is then derived from the resource's value.
 
-The design, its principles, and laws, are located in [`docs/architecture-overview.md`](docs/architecture-overview.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
+The design, its principles, and laws, are located in [the capacity domain analysis and design](../../../docs/architecture/capacity-domain-analysis-and-design.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
 
 ## 2. What is authored
 
 | Part | Namespace | File | State |
 |---|---|---|---|
 | source ontology: arrangements, resources, demands, draws, dependencies, rules | `cap:` | `spec/capacity.ttl` | **designed, not authored** (architecture overview §"Proposed applied ontology") |
-| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.10.0` |
+| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.17.0` |
 
 The execution profile's `capx:projectsFrom…` properties range over `cap:` classes that no document
 declares yet. They resolve when the source ontology is authored.

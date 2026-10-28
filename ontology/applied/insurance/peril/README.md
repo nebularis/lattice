@@ -4,8 +4,7 @@
 
 Literate specification for the reference peril vocabulary, LATTICE's applied insurance domain's
 default peril scheme ([ADR-A99](../../../../docs/architecture/decisions/ADR-A99-reference-vocabularies-and-peril-structure.md)),
-built by the [`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
-epic, Phase 2. See ADR-A99 and the [peril vocabulary sketch](../../../../docs/developer/sketches/peril-vocabulary.md)
+built with the applied insurance modules. See ADR-A99
 for the design this module implements.
 
 ## 1. Purpose and scope
@@ -144,7 +143,7 @@ scheme (§7, §8):
     rdf:type owl:Ontology ;
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril/0.7.0> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
-    rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99 and docs/developer/sketches/peril-vocabulary.md." ;
+    rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
@@ -1002,10 +1001,8 @@ prl-voc:HarmSubjectScheme skos:hasTopConcept prl-voc:Property , prl-voc:Persons 
 
 ## 5.4 The cause scheme (AIR-2.3, AIR-2.4)
 
-287 reference peril concepts in eight families, each region its own README section. See the
-[peril vocabulary sketch](../../../../docs/developer/sketches/peril-vocabulary.md) §5 for the
-full tables these regions implement, and the phase 2 plan's AIR-2.3/AIR-2.4 briefs for the
-inheritance, mechanism and definition rules.
+287 reference peril concepts in eight families, each region its own README section. ADR-A99 states the
+inheritance, mechanism and definition rules these regions follow.
 
 ### Cause: N (natural hazards)
 

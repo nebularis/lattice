@@ -97,7 +97,7 @@ word is used in law and in the market:
 
 So the proposal is **Wording** (`wrd:`) for the lower layer, **Instrument** (`ins:`) for the
 meaning, and **computable contract** for the composition. The choice is CC-D1. The prefix `ctr:` is
-avoided in any case: MERIDIAN CSO and the term-parameters sketch (A-101) already use it.
+avoided in any case: a private contract ontology and the term-parameters sketch (A-101) already use it.
 
 ---
 
@@ -1029,9 +1029,9 @@ the same way.
 In Lloyd's usage the parts of a contract are **sections**, with a determined meaning, as in the MRC.
 Binding authorities have sections too, and sections may or may not have terms that interact across
 them. A section is modelled as a part of one instrument, not as an instrument of its own. The
-"contract of contracts" (master and child contracts, as MERIDIAN's placement notes sketch) is
+"contract of contracts" (master and child contracts, as private placement notes sketch) is
 deliberately not introduced here, so that the later applied broking and carrier models can choose
-that abstraction freely (CC-D11). MERIDIAN's own notes keep per-section scoping within one contract as
+that abstraction freely (CC-D11). those notes keep per-section scoping within one contract as
 the less disruptive pattern for cross-layer single contracts.
 
 ```text

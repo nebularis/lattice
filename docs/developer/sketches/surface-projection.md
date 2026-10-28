@@ -7,7 +7,7 @@
 **Status:** Sketch (design archived; implementation moved to plan and status documents)  
 **Related plan:** [surface-mork-unified-projection-plan.md](../plans/surface-mork-unified-projection-plan.md)  
 **Related status:** [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md)  
-**Source:** Distilled from `ontology/surface/docs/surface-projection-design-sketch.md` (2026-09-18)
+**Source:** Distilled from the Surface layer's earlier projection design note (2026-09-18)
 
 ---
 
@@ -240,7 +240,7 @@ Two cases:
 
 Source-signature promotions are materialized, not definitional, and require governance review.
 
-**Example:** `DimensionSourcing` in MERIDIAN restates FBO authored properties; it declares `SourceSignature` and `ExactSource`, so the emission is materially an assertion, not a derived triple.
+**Example:** `DimensionSourcing` in the private source restates authored properties. It declares `SourceSignature` and `ExactSource`, so the emission is materially an assertion, not a derived triple.
 
 ---
 

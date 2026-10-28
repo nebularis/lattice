@@ -895,7 +895,7 @@ constraint:= 'dt' IRI                                  sh:datatype
 Example:
 
 ```
-cs MS tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !.viol msg \"credit score out of range\""
+cs MS tg :Applicant pb [min N 700] pv [MappingAgent example-model-1 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !.viol msg \"credit score out of range\""
 ```
 
 decodes to a `sh:NodeShape` (`cs_gs1`) with `sh:targetClass ex:Applicant` and one `sh:property` (`cs_gs1_p1`) carrying `sh:path`, `sh:datatype`, `sh:minInclusive`, `sh:maxInclusive`, `sh:minCount`, `sh:maxCount`, `sh:severity` and `sh:message`. Property shapes are minted IRIs by default and blank nodes under `@opt bnode-shapes`.
@@ -1201,8 +1201,8 @@ The full encoding (1366 tokens against 2674 for the Turtle) decodes to a graph d
 i1 IN src "credit score at least 700" cf 0.93 op GreaterThanOrEqual cv 700 cd :creditScore
 i2 IS src "in US states" sty State sin Include sv :US ri i1
 %M MS md .prod mv 1.2
-cs_shape MS im i1 tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT pd 2026-09-19T10:00:00Z] tl :RangeTemplate se .viol gv .gA fi [PI] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1]"
-cs_rule MR im i1 tg [o :hasCreditScore] aj :US pb [threshold N 700] pv [MappingAgent claude-opus-5 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
+cs_shape MS im i1 tg :Applicant pb [min N 700] pv [MappingAgent example-model-1 0.93 DRAFT pd 2026-09-19T10:00:00Z] tl :RangeTemplate se .viol gv .gA fi [PI] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1]"
+cs_rule MR im i1 tg [o :hasCreditScore] aj :US pb [threshold N 700] pv [MappingAgent example-model-1 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
 v2 MS ss cs_shape ef 2026-10-01T00:00:00Z fi cs_shape_fi1 gv .gA tg :Applicant pb [min N 720] pv [reviewer _ _ APPROVED pd 2026-10-01T00:00:00Z] gs "c :Applicant; :hasCreditScore >=720"
 loanIri = 'http://ex.org/loan/'+$loanId
 ```
@@ -1212,7 +1212,7 @@ Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`s
 ### 16.4 A representation scheme and taxonomy (from the `Mork.ttl` examples)
 
 ```
-@b <http://www.nebularis.org/hyperthunk/Mapping#>
+@b <https://example.org/mapping#>
 %R Scheme_Rep_Contracts .json
 JS_Array_ContractingParties RY et JS_Elem_ContractingParties id contractingParties p contract.signatories.contractingParties ro DC_ContractingParties
 JS_Elem_ContractingParties RN id "" mp JS_Attr_FirstName,JS_Attr_LastName p "contract.signatories.contractingParties[n]" ro DC_ContractingParties_Party

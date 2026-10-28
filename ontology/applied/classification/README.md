@@ -3,8 +3,7 @@
 # Classification (`cls:`)
 
 Cross-domain classification properties (ADR-A98 decision 1, epic D8): territory, asset class and
-industry. Built by the [`applied-insurance-reference`](../../../docs/developer/plans/applied-insurance-reference.md)
-epic (AIR-1.2), because insurance is its first consumer, but the module carries no insurance
+industry. Built with the applied insurance modules, because insurance is its first consumer, but the module carries no insurance
 vocabulary: any domain may use or specialise it.
 
 ## Files and namespaces (ADR-A98 decision 6)

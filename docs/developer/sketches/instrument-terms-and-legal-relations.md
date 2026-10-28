@@ -82,7 +82,7 @@ flowchart LR
 
 **Structure.** `ins:Element` is a recursive structural unit: a section, clause, schedule,
 endorsement or definitions page, told apart by an element type concept rather than by subclass, as
-MERIDIAN CSO's `ctr:ContractElement` and open-cbaa's `wim:` levels do. `ins:Instrument` is the root
+a private contract ontology's element class and open-cbaa's `wim:` levels do. `ins:Instrument` is the root
 element: a contract, policy, agreement, deed, licence or protocol. Making it an element lets an
 ancillary agreement sit inside a binder's structure, as CSO's dual classification allows.
 Ordering among siblings is the wording model's concern (`wim:rankKey`) and is not in the substrate.

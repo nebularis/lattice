@@ -149,7 +149,7 @@ occurrence grouping), with insurance's bases as applied schemes. The CCS templat
 | grouping occurrences into one event | AIR substrate item S4 (occurrence grouping) |
 | parameters attached to terms | A-101 term parameters, `ins:Qualifier` |
 | shares of a group | Party `ParticipationGroup`, `GroupMembership`, `pty:share` |
-| capacity accounting in insurance | `applied/capacity` and the MERIDIAN FBO capacity tank |
+| capacity accounting in insurance | `applied/capacity` and a private capacity tank |
 
 ## 3. What a design must decide
 
