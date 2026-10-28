@@ -44,10 +44,11 @@ bhv:GuardDefinition a owl:Class ; rdfs:comment "A declared eligibility or policy
 bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared effect on a target, of one target kind." .
 
 bhv:AllowanceDefinition a owl:Class ;
+	owl:deprecated true ;
 	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:allowanceSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:absorptionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A declared allowance or quota model." .
+	rdfs:comment "A declared allowance or quota model. Deprecated 2026-10-28 with bhv:AllowanceAccount: an account definition is Ledger's (ADR-A131)." .
 
 bhv:SelectionPolicy a owl:Class .
 bhv:ActivationPolicy a owl:Class .

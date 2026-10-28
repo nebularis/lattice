@@ -115,10 +115,11 @@ bhv:GuardDefinition a owl:Class ; rdfs:comment "A declared eligibility or policy
 bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared effect on a target, of one target kind." .
 
 bhv:AllowanceDefinition a owl:Class ;
+	owl:deprecated true ;
 	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:allowanceSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:absorptionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A declared allowance or quota model." .
+	rdfs:comment "A declared allowance or quota model. Deprecated 2026-10-28 with bhv:AllowanceAccount: an account definition is Ledger's (ADR-A131)." .
 
 bhv:SelectionPolicy a owl:Class .
 bhv:ActivationPolicy a owl:Class .
@@ -291,10 +292,11 @@ bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:T
 bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
 
 bhv:AllowanceAccount a owl:Class ;
+	owl:deprecated true ;
 	rdfs:subClassOf fnd:Evidenced,
 		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A durable state record tracking allowance balance." .
+	rdfs:comment "A durable state record tracking allowance balance. Deprecated 2026-10-28: a stored balance overwritten in place, beside Ledger's derived balance (ADR-A131). Use a Ledger account once Behaviour imports Ledger (LG-3)." .
 
 bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
 
@@ -321,7 +323,7 @@ bhv:resumedFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
-bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
+bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity ; owl:deprecated true .
 ```
 
 ```turtle-spec
@@ -1515,6 +1517,8 @@ consequences, such as "from the bundle, else from overage", are `bhv:PriorityOrd
 where only the highest enabled transition fires.
 
 ## 11. Release notes
+
+- **Next release** (deprecations). `bhv:AllowanceAccount`, `bhv:AllowanceDefinition` and `bhv:availableBalance` are deprecated and reported by warning shapes: a balance is derived from Ledger's postings, never stored and overwritten ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). They are removed when Behaviour imports Ledger (LG-3).
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 

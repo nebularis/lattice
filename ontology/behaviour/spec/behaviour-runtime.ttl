@@ -37,10 +37,11 @@ bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:T
 bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
 
 bhv:AllowanceAccount a owl:Class ;
+	owl:deprecated true ;
 	rdfs:subClassOf fnd:Evidenced,
 		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A durable state record tracking allowance balance." .
+	rdfs:comment "A durable state record tracking allowance balance. Deprecated 2026-10-28: a stored balance overwritten in place, beside Ledger's derived balance (ADR-A131). Use a Ledger account once Behaviour imports Ledger (LG-3)." .
 
 bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
 
@@ -67,7 +68,7 @@ bhv:resumedFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
-bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
+bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity ; owl:deprecated true .
 
 # ---- Occasions ----------------------------------------------------------------
 
