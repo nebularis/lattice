@@ -1,7 +1,7 @@
 {
   "subject": "AQ",
   "statedAs": "Adequacy.adequacy_* (30 lemmas, each row closed and open)",
-  "statementDigest": "sha256:cdd9316a65a59832d62d9b7e40bc7c38c87af1445c7447d16a471c0b63fc92a8",
+  "statementDigest": "sha256:0c648c5ac0bbdd3cecfcbadd1a32f30df415e8670aa85c262ce5490fa47fd71b",
   "method": "Proof",
   "scope": "EveryMixFixture",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

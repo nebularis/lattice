@@ -1,7 +1,7 @@
 {
   "subject": "TA4",
   "statedAs": "KernelLaws.or3_commute/assoc/idempotent/identity/absorb, and3_commute/assoc/idempotent/identity/absorb",
-  "statementDigest": "sha256:d2fd7901f157b7ed0fe111c5c521fa26ae8ebcdf3f461532e522d5f99f361f7d",
+  "statementDigest": "sha256:f95d25f17257d4a8fbbd6cb57e3dc46c9094693d7e5baf5a2efc530aafa71426",
   "method": "Proof",
   "scope": "EveryTriple",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

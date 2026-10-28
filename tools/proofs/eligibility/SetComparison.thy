@@ -4,7 +4,10 @@
    relation a condition may name. The decision is Permitted when a reference value matches, Denied when none
    does and the reference set is closed, and Undetermined otherwise. Subset reads the decisions as every value,
    Intersects as some value, and Disjoint as some value negated. The tested set's closure licenses the reading
-   (L15, L17) and the reference set's closure licenses a value's Denied. *)
+   (L15, L17) and the reference set's closure licenses a value's Denied. Under hierarchical match a tested value
+   outside the scheme is Undetermined (L9), and over a scheme with no link of the relation a value that is not
+   equal to a reference value is Undetermined whatever the closure (L14), so hier_member_decide wraps the
+   generic decision. *)
 
 theory SetComparison
 imports Eligibility Hierarchy
@@ -25,6 +28,19 @@ definition disjoint_decide :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Righta
 
 definition hier_match :: "'a set \<Rightarrow> ('a \<times> 'a) set \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> bool" where
   "hier_match M R x c = (x \<in> M \<and> c \<in> M \<and> matches M R x c)"
+
+definition hier_member_decide :: "'a set \<Rightarrow> ('a \<times> 'a) set \<Rightarrow> 'a list \<Rightarrow> bool \<Rightarrow> 'a \<Rightarrow> decision" where
+  "hier_member_decide M R B closedB x =
+     (if x \<notin> M then Undetermined
+      else if \<exists>b \<in> set B. hier_match M R x b then Permitted
+      else if \<not> has_hierarchy M R then Undetermined
+      else if closedB then Denied else Undetermined)"
+
+definition hier_subset_decide :: "'a set \<Rightarrow> ('a \<times> 'a) set \<Rightarrow> 'a list \<Rightarrow> bool \<Rightarrow> 'a list \<Rightarrow> bool \<Rightarrow> decision" where
+  "hier_subset_decide M R A closedA B closedB = every_value closedA (map (hier_member_decide M R B closedB) A)"
+
+definition hier_intersects_decide :: "'a set \<Rightarrow> ('a \<times> 'a) set \<Rightarrow> 'a list \<Rightarrow> bool \<Rightarrow> 'a list \<Rightarrow> bool \<Rightarrow> decision" where
+  "hier_intersects_decide M R A closedA B closedB = some_value closedA (map (hier_member_decide M R B closedB) A)"
 
 lemma member_decide_eq:
   "member_decide (=) B closedB x = (if x \<in> set B then Permitted else if closedB then Denied else Undetermined)"
@@ -107,11 +123,34 @@ lemma disjoint_decide_is_intersects_negated:
 (* GATE:END *)
   by (cases "intersects_decide match A closedA B closedB"; simp add: disjoint_decide_def)+
 
+(* GATE:BEGIN TS8 *)
+lemma hier_member_decide_outside_scheme_undetermined:
+  "x \<notin> M \<Longrightarrow> hier_member_decide M R B closedB x = Undetermined"
+  "b \<notin> M \<Longrightarrow> \<not> hier_match M R x b"
+(* GATE:END *)
+  by (simp_all add: hier_member_decide_def hier_match_def)
+
+(* GATE:BEGIN TS9 *)
+lemma hier_member_decide_no_hierarchy:
+  assumes h: "\<not> has_hierarchy M R" and m: "x \<in> M"
+  shows "hier_member_decide M R B closedB x = (if x \<in> set B then Permitted else Undetermined)"
+(* GATE:END *)
+proof -
+  from h have o: "ordering M R = {}" by (simp add: has_hierarchy_def)
+  show ?thesis using m h by (auto simp: hier_member_decide_def hier_match_def matches_empty[OF o])
+qed
+
+(* GATE:BEGIN TS10 *)
+lemma hier_member_decide_with_hierarchy:
+  "\<lbrakk> has_hierarchy M R; x \<in> M \<rbrakk> \<Longrightarrow> hier_member_decide M R B closedB x = member_decide (hier_match M R) B closedB x"
+(* GATE:END *)
+  by (simp add: hier_member_decide_def member_decide_def)
+
 (* Adequacy on a territory fixture: Europe, France (part of Europe), Paris (part of France) and Canada (apart),
    tested sets against reference sets, each comparison, closed and open, equality and the part-of relation. The
    same rows as ontology/eligibility/examples/set-comparison-*.ttl. *)
 
-datatype terr = Europe | France | Paris | Canada
+datatype terr = Europe | France | Paris | Canada | Atlantis
 
 definition terr_members :: "terr set" where
   "terr_members = {Europe, France, Paris, Canada}"
@@ -127,6 +166,23 @@ lemma terr_paris_europe: "hier_match terr_members terr_part_of Paris Europe"
   using terr_france_europe terr_paris_france
   by (auto simp: hier_match_def matches_def ordering_def terr_members_def terr_part_of_def intro: rtrancl_into_rtrancl)
 
+lemma terr_members_facts: "Europe \<in> terr_members" "France \<in> terr_members" "Paris \<in> terr_members"
+  "Canada \<in> terr_members" "Atlantis \<notin> terr_members"
+  by (simp_all add: terr_members_def)
+
+lemma terr_canada_atlantis: "\<not> hier_match terr_members terr_part_of Canada Atlantis"
+  by (rule hier_member_decide_outside_scheme_undetermined(2)) (simp add: terr_members_def)
+
+lemma terr_has_hierarchy: "has_hierarchy terr_members terr_part_of"
+  by (auto simp: has_hierarchy_def ordering_def terr_members_def terr_part_of_def)
+
+lemma terr_flat_has_no_hierarchy: "\<not> has_hierarchy terr_members {}"
+  by (simp add: has_hierarchy_def ordering_def)
+
+lemma terr_flat_paris: "hier_match terr_members {} Paris Paris"
+  and terr_flat_france_paris: "\<not> hier_match terr_members {} France Paris"
+  by (auto simp: hier_match_def matches_def ordering_def terr_members_def)
+
 lemma terr_canada_alone: "\<forall>b. (Canada, b) \<notin> ordering terr_members terr_part_of"
   by (auto simp: ordering_def terr_members_def terr_part_of_def)
 
@@ -137,9 +193,13 @@ proof -
 qed
 
 (* GATE:BEGIN ASC *)
-lemma adequacy_subset_inside: "subset_decide (hier_match terr_members terr_part_of) [Paris, France] True [Europe] True = Permitted"
-  and adequacy_subset_outside_closed: "subset_decide (hier_match terr_members terr_part_of) [Paris, Canada] True [Europe] True = Denied"
-  and adequacy_subset_outside_open: "subset_decide (hier_match terr_members terr_part_of) [Paris, Canada] True [Europe] False = Undetermined"
+lemma adequacy_subset_inside: "hier_subset_decide terr_members terr_part_of [Paris, France] True [Europe] True = Permitted"
+  and adequacy_subset_outside_closed: "hier_subset_decide terr_members terr_part_of [Paris, Canada] True [Europe] True = Denied"
+  and adequacy_subset_outside_open: "hier_subset_decide terr_members terr_part_of [Paris, Canada] True [Europe] False = Undetermined"
+  and adequacy_subset_unplaced: "hier_subset_decide terr_members terr_part_of [Paris, Atlantis] True [Europe] True = Undetermined"
+  and adequacy_subset_flat_found: "hier_subset_decide terr_members {} [Paris] True [Paris] True = Permitted"
+  and adequacy_subset_flat_unfound: "hier_subset_decide terr_members {} [France] True [Paris] True = Undetermined"
+  and adequacy_intersects_unplaced_reference: "hier_intersects_decide terr_members terr_part_of [Canada] True [Atlantis] True = Denied"
   and adequacy_subset_empty: "subset_decide (=) ([] :: nat list) True [0] False = Permitted"
   and adequacy_subset_open_tested: "subset_decide (=) [0::nat] False [0] True = Undetermined"
   and adequacy_intersects_found: "intersects_decide (=) [0, 1::nat] False [1] False = Permitted"
@@ -150,7 +210,9 @@ lemma adequacy_subset_inside: "subset_decide (hier_match terr_members terr_part_
   and adequacy_disjoint_shared: "disjoint_decide (=) [0, 1::nat] True [1] True = Denied"
   and adequacy_disjoint_empty: "disjoint_decide (=) ([] :: nat list) True [1] False = Permitted"
 (* GATE:END *)
-  by (simp_all add: subset_decide_def intersects_decide_def disjoint_decide_def member_decide_def
-      terr_france_europe terr_paris_france terr_paris_europe terr_canada_europe)
+  by (simp_all add: hier_subset_decide_def hier_intersects_decide_def subset_decide_def intersects_decide_def
+      disjoint_decide_def member_decide_def hier_member_decide_def terr_members_facts terr_has_hierarchy
+      terr_flat_has_no_hierarchy terr_flat_paris terr_flat_france_paris terr_france_europe terr_paris_france
+      terr_paris_europe terr_canada_europe terr_canada_atlantis)
 
 end

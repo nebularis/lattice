@@ -459,14 +459,14 @@ class TestSetComparisonSweep:
         members = frozenset(data.subjects(URIRef("http://www.w3.org/2004/02/skos/core#inScheme"), CMP.scheme))
         return Scheme.over(members, [(s, o) for s, o in data.subject_objects(CMP["part-of"])])
 
-    def _case(self, comparison, tc, rc, hierarchical, negated):
+    def _case(self, comparison, tc, rc, hierarchical, negated, links=True):
         from mork_compilers.eligibility_ir import compile_any_condition as compile_any
         from mork_compilers.test_set_comparisons import EX as CMP
         from mork_compilers.test_set_comparisons import SUBJECTS, fixture
         from mork_compilers.test_set_readings import decisions, shacl
         from mork_compilers.test_set_readings import sparql as run_sparql
 
-        data = fixture(comparison, tc, rc, negated=negated, hierarchical=hierarchical)
+        data = fixture(comparison, tc, rc, negated=negated, hierarchical=hierarchical, links=links)
         plan = compile_any(data, CMP.comparison)
         scheme = self._scheme(data) if hierarchical else None
         spark = decisions(run_sparql(plan, data))
@@ -494,7 +494,15 @@ class TestSetComparisonSweep:
             for name, decided in self._case(*case).items():
                 assert len(set(decided.values())) == 1, (case, name, decided)
 
-    def test_the_closure_column_is_the_closures_the_reference_relied_on(self) -> None:
+    def test_a_scheme_with_no_links_agrees_too(self) -> None:
+        # C9b3a-52: L14 for a comparison, zero links, every comparison and closure combination
+        for comparison in ("Subset", "Intersects", "Disjoint"):
+            for tc in (False, True):
+                for rc in (False, True):
+                    for name, decided in self._case(comparison, tc, rc, True, False, links=False).items():
+                        assert len(set(decided.values())) == 1, (comparison, tc, rc, name, decided)
+
+    def test_the_closure_columns_are_the_closures_the_reference_relied_on(self) -> None:
         from mork_compilers.eligibility_ir import compile_any_condition as compile_any
         from mork_compilers.engines import run_query
         from mork_compilers.test_set_comparisons import EX as CMP
@@ -512,10 +520,9 @@ class TestSetComparisonSweep:
                             [CMP[v] for v in tested], {CMP[v] for v in reference}, comparison=comparison,
                             hierarchical=False, tested_closed=tc, reference_closed=rc,
                         )
-                        named = {"tested": str(CMP["tested-closure"]), "reference": str(CMP["reference-closure"])}
-                        want = sorted(named[r] for r in relied)
-                        got = sorted(str(rows[name].get("closure", "")).split()) if rows[name].get("closure") else []
-                        assert got == want, (comparison, tc, rc, name, got, want)
+                        assert (rows[name].get("closure") == CMP["tested-closure"]) == ("tested" in relied), (comparison, tc, rc, name)
+                        assert (rows[name].get("referenceClosure") == CMP["reference-closure"]) == ("reference" in relied), (comparison, tc, rc, name)
+                        assert set(rows[name]) >= {"decision"}
 
     def test_a_compiler_that_matches_exactly_under_hierarchical_match_is_caught(self, monkeypatch) -> None:
         # C9b3a-45: the seeded fault, a hierarchical comparison compiled as an exact one

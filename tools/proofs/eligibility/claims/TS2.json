@@ -1,7 +1,7 @@
 {
   "subject": "TS2",
   "statedAs": "SetComparison.subset_decide_denied_eq",
-  "statementDigest": "sha256:2389ea8cdb2dd7dd0effeb163ed8d24177a26e53dcd47ba41a3855af45ff2dc0",
+  "statementDigest": "sha256:e2f2a6519ade1846cee9c69c2a94b70d25f7aeca894d33e13c64b148eb6f565b",
   "method": "Proof",
   "scope": "EveryList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

@@ -1,0 +1,13 @@
+{
+  "subject": "TS8",
+  "statedAs": "SetComparison.hier_member_decide_outside_scheme_undetermined",
+  "statementDigest": "sha256:a1a96a5a8e5638a9e8ac47e8cd8988d974dec08e3feed33c115ed47318028890",
+  "method": "Proof",
+  "scope": "EveryScheme",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

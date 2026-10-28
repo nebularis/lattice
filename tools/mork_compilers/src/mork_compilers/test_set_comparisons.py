@@ -59,6 +59,7 @@ def fixture(
     negated: bool = False,
     hierarchical: bool = False,
     unresolved: bool = False,
+    links: bool = True,
 ) -> Graph:
     """One comparison over ``SUBJECTS``. Hierarchical, ``ex:c`` is part of ``ex:b`` and nothing else is
     related, so a tested ``c`` is found among reference values containing ``b``."""
@@ -76,7 +77,8 @@ def fixture(
         ex:part-of rdfs:subPropertyOf skos:broader .
         """
         + "".join(f"ex:{v} a skos:Concept ; skos:inScheme ex:scheme .\n" for v in "ab")
-        + "ex:c a skos:Concept ; skos:inScheme ex:scheme ; ex:part-of ex:b ; skos:broader ex:b .\n"
+        + "ex:c a skos:Concept ; skos:inScheme ex:scheme"
+        + (" ; ex:part-of ex:b ; skos:broader ex:b .\n" if links else " .\n")
     )
     if unresolved:
         contract = contract.replace(
@@ -210,9 +212,9 @@ class ClosureTableTests(unittest.TestCase):
         flat = decisions(run(fixture("Subset", True, True)))
         self.assertEqual((flat["s-part"], flat["s-out"]), ("Denied", "Denied"))
 
-    def test_a_value_the_scheme_cannot_place_matches_nothing(self) -> None:
+    def test_a_value_the_scheme_cannot_place_is_undetermined_and_a_reference_value_matches_nothing(self) -> None:
         # C9b3a-46: a reference value outside the scheme is no match for a member that walks to it,
-        # and a tested value outside the scheme matches nothing, however it is linked
+        # and a tested value outside the scheme is Undetermined with exe:OutsideScheme (L9), however it is linked
         data = fixture("Subset", True, True, hierarchical=True)
         data.parse(
             data=HEADER + """
@@ -224,9 +226,10 @@ class ClosureTableTests(unittest.TestCase):
             format="turtle",
         )
         rows = decisions(run(data))
-        self.assertEqual((rows["s-ghost"], rows["s-stranger"]), ("Denied", "Denied"))
+        self.assertEqual((rows["s-ghost"], rows["s-stranger"]), ("Denied", "Undetermined"))
+        self.assertEqual(sparql(compile_any_condition(data, EX.comparison), data)["s-stranger"], ("Undetermined", EXE.OutsideScheme))
         self.assertEqual(shacl(compile_any_condition(data, EX.comparison), data, [EX["s-ghost"], EX["s-stranger"]]),
-                         {"s-ghost": "Denied", "s-stranger": "Denied"})
+                         {"s-ghost": "Denied", "s-stranger": "Undetermined"})
 
     def test_a_negated_subset_swaps_permitted_and_denied(self) -> None:
         # C9b3a-29
@@ -242,16 +245,57 @@ class ClosureTableTests(unittest.TestCase):
         self.assertEqual(rows["s-noref"], ("Undetermined", EXE.NoClosureLicence))
 
     def test_a_decision_names_the_closures_it_relied_on(self) -> None:
-        # C9b3a-31: Subset Permitted relies on the tested closure, Denied on the reference closure
-        data = fixture("Subset")
-        artefact = text_of(compile_any_condition(data, EX.comparison))
-        rows = {str(r[0]).rsplit("/", 1)[1]: r.asdict() for r in run_query(data, artefact)}
-        self.assertEqual(str(rows["s-in"]["closure"]), str(EX["tested-closure"]))
-        self.assertEqual(str(rows["s-part"]["closure"]), str(EX["reference-closure"]))
-        intersects = {str(r[0]).rsplit("/", 1)[1]: r.asdict() for r in run_query(
-            fixture("Intersects"), text_of(compile_any_condition(fixture("Intersects"), EX.comparison)))}
-        self.assertEqual(intersects["s-in"].get("closure"), None)
-        self.assertEqual(str(intersects["s-out"]["closure"]), f"{EX['reference-closure']} {EX['tested-closure']}")
+        # C9b3a-31: Subset Permitted relies on the tested closure, Denied on the reference closure.
+        # Each is its own IRI column, ?closure and ?referenceClosure
+        def columns(comparison: str) -> Dict[str, tuple]:
+            data = fixture(comparison)
+            rows = run_query(data, text_of(compile_any_condition(data, EX.comparison)))
+            return {str(r[0]).rsplit("/", 1)[1]: (r.asdict().get("closure"), r.asdict().get("referenceClosure")) for r in rows}
+
+        subset = columns("Subset")
+        self.assertEqual(subset["s-in"], (EX["tested-closure"], None))
+        self.assertEqual(subset["s-part"], (None, EX["reference-closure"]))
+        intersects = columns("Intersects")
+        self.assertEqual(intersects["s-in"], (None, None))
+        self.assertEqual(intersects["s-out"], (EX["tested-closure"], EX["reference-closure"]))
+        self.assertEqual(intersects["s-empty"], (EX["tested-closure"], None))
+        self.assertTrue(all(isinstance(v, URIRef) for pair in intersects.values() for v in pair if v is not None))
+
+    def test_over_a_scheme_with_no_hierarchy_only_an_equal_value_is_found(self) -> None:
+        # C9b3a-50: L14 for a comparison. No member has a link, so an unfound member is Undetermined
+        # with exe:NoHierarchy whatever the closures, an equal value is found, and zero links is the case
+        plan = compile_any_condition(fixture("Subset", hierarchical=True, links=False), EX.comparison)
+        self.assertTrue(plan.no_hierarchy)
+        self.assertFalse(compile_any_condition(fixture("Subset", hierarchical=True), EX.comparison).no_hierarchy)
+        for comparison in ("Subset", "Intersects", "Disjoint"):
+            for tc in (False, True):
+                for rc in (False, True):
+                    data = fixture(comparison, tc, rc, hierarchical=True, links=False)
+                    rows = run(data)
+                    # s-in finds a, s-part finds a but not c, s-out finds nothing, c being a member and not b
+                    per_value = {
+                        name: ["Permitted" if v in reference else "Undetermined" for v in tested]
+                        for name, (tested, reference) in SUBJECTS.items()
+                    }
+                    for name, outcomes in per_value.items():
+                        self.assertEqual(rows[name][0], self.read(comparison, outcomes, tc), (comparison, tc, rc, name))
+                    self.assertEqual(rows["s-out"], ("Undetermined", EXE.NoHierarchy), (comparison, tc, rc))
+
+    @staticmethod
+    def read(comparison: str, outcomes, tc: bool) -> str:
+        if comparison == "Subset":
+            return "Permitted" if tc and all(o == "Permitted" for o in outcomes) else "Undetermined"
+        outcome = "Permitted" if "Permitted" in outcomes else "Denied" if tc and all(o == "Denied" for o in outcomes) else "Undetermined"
+        return {"Permitted": "Denied", "Denied": "Permitted", "Undetermined": "Undetermined"}[outcome] if comparison == "Disjoint" else outcome
+
+    def test_the_same_member_is_denied_once_the_scheme_has_a_link(self) -> None:
+        # C9b3a-51: zero links against one link, c not found in the reference set {a, b} when c is unlinked to b
+        flat = decisions(run(fixture("Subset", True, True, hierarchical=True, links=False)))
+        linked = decisions(run(fixture("Subset", True, True, hierarchical=True)))
+        self.assertEqual((flat["s-out"], linked["s-out"]), ("Undetermined", "Permitted"))
+        data = fixture("Subset", True, True, hierarchical=True)
+        data.parse(data=HEADER + "ex:s-x a ex:Subject ; ex:tested ex:b ; ex:ref ex:a .", format="turtle")
+        self.assertEqual(run(data)["s-x"], ("Denied", None))
 
 
 class ProfileTests(unittest.TestCase):

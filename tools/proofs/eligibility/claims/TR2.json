@@ -1,7 +1,7 @@
 {
   "subject": "TR2",
   "statedAs": "Resolution.no_scheme_is_sound",
-  "statementDigest": "sha256:4f70296aa3b120e183c4df75bb628c61e1dbbbbe2feb739a58b0e915eb3b0c8f",
+  "statementDigest": "sha256:eed746fde70a66b0cabf86744b67c3c21553d580048743779c052a29bfc9efad",
   "method": "Proof",
   "scope": "EveryResolution",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

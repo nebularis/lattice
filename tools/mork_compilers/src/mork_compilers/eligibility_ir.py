@@ -198,7 +198,9 @@ class SetComparisonPlan:
     value is Permitted when it matches a reference value, equal under ``elg:ExactMatch`` and, under
     ``elg:HierarchicalMatch``, a member of ``scheme`` at or below a reference value that is a member,
     by ``relation``. It is Denied when it matches none and ``reference.closure`` is in force,
-    otherwise Undetermined. ``tested.closure`` licenses the reading of the outcomes. ``unresolved``
+    otherwise Undetermined. A tested value outside ``scheme`` is Undetermined (``exe:OutsideScheme``), and
+    when ``no_hierarchy`` a value that is not equal to a reference value is Undetermined
+    (``exe:NoHierarchy``) whatever the closure (L14). ``tested.closure`` licenses the reading of the outcomes. ``unresolved``
     is set when the contract's bindings apply at no instant or in no scope, so ``scheme`` is ``None``
     and every subject is Undetermined (L9, ``exe:NoApplicableBinding``)."""
 
@@ -222,6 +224,12 @@ class SetComparisonPlan:
     @property
     def hierarchical(self) -> bool:
         return self.strategy == ELG.HierarchicalMatch
+
+    @property
+    def no_hierarchy(self) -> bool:
+        """Hierarchical match over a resolved scheme in which no member has a link of ``relation`` to
+        another member: L14 applies to the reference values as it does to required concepts (L18)."""
+        return self.hierarchical and self.scheme is not None and not any(above for _, above in self.hierarchy)
 
     @property
     def closures(self) -> Tuple[URIRef, ...]:

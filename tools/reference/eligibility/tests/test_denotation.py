@@ -466,6 +466,21 @@ class TestL18SetComparison:
         # C9b3a-47: members b and c, c part of b. x is outside the scheme and linked to both.
         scheme = Scheme.over({"b", "c"}, [("c", "b"), ("c", "x"), ("x", "b")])
         kwargs = dict(comparison="Subset", hierarchical=True, scheme=scheme, tested_closed=True, reference_closed=True)
-        assert decide_set_comparison(["c"], {"x"}, **kwargs) is DENIED
-        assert decide_set_comparison(["x"], {"b"}, **kwargs) is DENIED
+        assert decide_set_comparison(["c"], {"x"}, **kwargs) is DENIED  # a reference value outside matches nothing
+        assert decide_set_comparison(["x"], {"b"}, **kwargs) is UNDETERMINED  # a tested value outside is unplaced (L9)
         assert decide_set_comparison(["c"], {"b"}, **kwargs) is PERMITTED
+
+    def test_over_a_scheme_with_no_hierarchy_only_an_equal_value_is_found(self) -> None:
+        # C9b3a-50: L14 for a comparison, zero links. b equals a reference value, c is another member, x is outside.
+        flat = Scheme.over({"b", "c"}, [])
+        for comparison in ("Subset", "Intersects", "Disjoint"):
+            for closed in (False, True):
+                kwargs = dict(comparison=comparison, hierarchical=True, scheme=flat, tested_closed=True, reference_closed=closed)
+                assert decide_set_comparison(["b"], {"b"}, **kwargs) is (DENIED if comparison == "Disjoint" else PERMITTED)
+                assert decide_set_comparison(["c"], {"b"}, **kwargs) is UNDETERMINED, (comparison, closed)
+                assert decide_set_comparison(["x"], {"b"}, **kwargs) is UNDETERMINED, (comparison, closed)
+        # with one link the same unfound member is Denied under a closed reference
+        linked = Scheme.over({"b", "c"}, [("c", "b")])
+        assert decide_set_comparison(
+            ["b"], {"c"}, comparison="Subset", hierarchical=True, scheme=linked, tested_closed=True, reference_closed=True
+        ) is DENIED

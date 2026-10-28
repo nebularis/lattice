@@ -274,11 +274,17 @@ def decide_member(
     scheme: Optional[Scheme],
     reference_closed: bool,
 ) -> Decision:
-    """One tested value's decision (L18): Permitted when found among the reference values,
-    Denied when found in none and the reference binding names a closure in force, otherwise
-    Undetermined."""
+    """One tested value's decision (L18): Permitted when found among the reference values, Denied
+    when found in none and the reference binding names a closure in force, otherwise Undetermined.
+    Under hierarchical match a value outside the scheme is Undetermined, as a single candidate is
+    (L9), and over a scheme in which no member has a link of the relation a value that is not found
+    is Undetermined whatever the closure (L14)."""
+    if hierarchical and scheme is not None and value not in scheme.members:
+        return UNDETERMINED
     if _found(value, reference, hierarchical=hierarchical, scheme=scheme):
         return PERMITTED
+    if hierarchical and scheme is not None and not scheme.has_hierarchy():
+        return UNDETERMINED
     return DENIED if reference_closed else UNDETERMINED
 
 
@@ -299,7 +305,7 @@ def decide_set_comparison_with_reliance(
 
     The tested set's closure is relied on when completeness of the tested set decided: Subset
     Permitted, or Intersects Denied. The reference set's closure is relied on when a value was
-    Denied and that decided: Subset Denied, or Intersects Denied with a tested value. Disjoint
+    Denied and that decided (a Denied value needs a closed reference set and a scheme with a hierarchy): Subset Denied, or Intersects Denied with a tested value. Disjoint
     relies on what Intersects relied on (L16)."""
     if unresolved or (hierarchical and scheme is None):
         return UNDETERMINED, frozenset()  # L9: there is no scheme to decide a value against

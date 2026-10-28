@@ -1,7 +1,7 @@
 {
   "subject": "ASC",
-  "statedAs": "SetComparison.adequacy_* (12 lemmas, one territory fixture, each comparison closed and open)",
-  "statementDigest": "sha256:6db3a20b7db149e81498d035102d3c410a643abffbae2182ab9e385259ec057e",
+  "statedAs": "SetComparison.adequacy_* (16 lemmas, one territory fixture, exact and hierarchical match, closed and open)",
+  "statementDigest": "sha256:3c72deea7b06ac7246449c412db600cff552eb8db44d57017aecb72748725655",
   "method": "Proof",
   "scope": "TerritoryFixture",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

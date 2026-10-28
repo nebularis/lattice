@@ -60,7 +60,7 @@ Two facts shape both. A set read from records is complete only under a closure, 
 - A comparison can be Denied only through the reference set's closure. A reference set still being filled, such as consents before the window closes, leaves a missing value Undetermined and never Denied.
 - A condition that needs an existence check is written as a count once aggregate bindings are built. Until then the requirement cannot be stated.
 - The OWL and SWRL backends refuse a comparison, so a design-time class cannot be produced for one.
-- A tested value outside a hierarchical comparison's scheme matches nothing, so it is Denied under a closed reference set. The single-candidate decision answers Undetermined for a value the scheme cannot place. The two differ until the maintainer decides which a comparison follows.
+- Under hierarchical match a tested value outside the scheme is Undetermined with `exe:OutsideScheme`, as a single candidate is (L9), and a reference value outside the scheme matches nothing. Over a scheme in which no member has a link of the condition's relation, a tested value that is not equal to a reference value is Undetermined with `exe:NoHierarchy` whatever the closure, as ADR-A100 decides for required concepts, which the reference values stand in for.
 
 ## Provenance
 

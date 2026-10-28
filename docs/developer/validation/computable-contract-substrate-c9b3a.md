@@ -45,7 +45,7 @@ A set comparison relates the values two bindings read from one subject, by one o
 | C9b3a-28 | a tested value that is part of a reference value / SPARQL / found under hierarchical match, not under exact | L2 | + − |
 | C9b3a-29 | a negated Subset / SPARQL / every outcome swapped | L2 | + − |
 | C9b3a-30 | a value not found in an open reference set / SPARQL / Undetermined with `exe:NoClosureLicence` | L2 | + − |
-| C9b3a-31 | Subset Permitted and Denied, Intersects Permitted and Denied / SPARQL `?closure` / tested, reference, none, both | L2 | + − |
+| C9b3a-31 | Subset Permitted and Denied, Intersects Permitted and Denied, Intersects over no tested value / SPARQL `?closure` and `?referenceClosure` / the tested IRI, the reference IRI, neither, both, the tested only | L2 | + − |
 | C9b3a-32 | both bond comparisons in an AllRequired profile / SPARQL and SHACL / the profile's decision and its closures | L2 | + − |
 | C9b3a-33 | the trial comparison in a profile / SPARQL / `?closures` lists both of its closures, one when the tested set is empty | L2 | + − |
 | C9b3a-34 | the four example conditions, and 12 closure and strategy combinations of each comparison / SPARQL against SHACL / equal | L2 | + − |
@@ -60,10 +60,13 @@ A set comparison relates the values two bindings read from one subject, by one o
 | C9b3a-43 | `Executable.ttl` / read / the plan class declared and disjoint from the other plans, and the pinned diagnostic set unchanged | L1 | + |
 | C9b3a-44 | 48 cases (three comparisons, both closures, both strategies, negated or not) / the reference against SPARQL and SHACL / equal, and the `?closure` column equal to the reference's reliance | L2 | + − |
 | C9b3a-45 | a compiler that matches exactly under hierarchical match / the differential test / the disagreement is seen | L2 | − |
-| C9b3a-46 | a reference value outside the scheme, and a tested value outside it / SPARQL and SHACL / Denied, no match | L2 | − |
-| C9b3a-47 | the same in the reference / `decide_set_comparison` / Denied, no match | L2 | − |
-| C9b3a-48 | L18 over the match predicate, equality and part-of / Isabelle2025-2 / `TS1` to `TS7` and `ASC` proved, gate passes | L3 | + − |
+| C9b3a-46 | a reference value outside the scheme, and a tested value outside it / SPARQL and SHACL / the first matches nothing (Denied), the second is Undetermined with `exe:OutsideScheme` | L2 | − |
+| C9b3a-47 | the same in the reference / `decide_set_comparison` / Denied for the reference value, Undetermined for the tested one | L2 | − |
+| C9b3a-48 | L18 over the match predicate, equality and part-of, with a value outside the scheme and a scheme with no hierarchy / Isabelle2025-2 / `TS1` to `TS10` and `ASC` proved, gate passes | L3 | + − |
 | C9b3a-49 | the README / literate check, formal freshness / consistent | L0 | + |
+| C9b3a-50 | a scheme with no link, every comparison and closure combination, and the reference / SPARQL and SHACL / L14: an equal value found, any other member Undetermined with `exe:NoHierarchy` whatever the closures, a value outside Undetermined (zero links) | L2 | + − |
+| C9b3a-51 | the same scheme with one link / SPARQL / the unfound member is Denied under a closed reference set | L2 | + − |
+| C9b3a-52 | the zero-link scheme, 12 cases / the reference against SPARQL and SHACL / equal | L2 | + − |
 
 ## One command
 
@@ -93,7 +96,7 @@ mise exec -- python -m pytest tools/test_eligibility_examples.py tools/mork_comp
 - `tools/mork_compilers/src/mork_compilers/eligibility_ir.py`: `SetComparisonPlan`, `compile_set_comparison`, `read_binding`, `refuse_set_comparison`
 - `tools/mork_compilers/src/mork_compilers/sparql_backend.py`: the module docstring's cost statement (STD-020), `_comparison_core`, `_match`, `set_comparison_select`, and `_read_set`'s `comparison` mode
 - `tools/reference/eligibility/src/reference_eligibility/denotation.py`: `decide_member`, `decide_set_comparison`
-- `tools/proofs/eligibility/SetComparison.thy` and claims `TS1` to `TS7` and `ASC`. Adding definitions changes every claim's digest (gate rule E1.4), so the 22 earlier claim records carry a recomputed digest and no changed statement
+- `tools/proofs/eligibility/SetComparison.thy` and claims `TS1` to `TS10` and `ASC`. Adding definitions changes every claim's digest (gate rule E1.4), so the 22 earlier claim records carry a recomputed digest and no changed statement
 - `docs/architecture/decisions/ADR-A136-set-comparisons-and-aggregate-bindings.md` and `docs/developer/mechanisms.md` (MEC-86)
 
 ## Deliberate non-coverage
@@ -102,7 +105,6 @@ mise exec -- python -m pytest tools/test_eligibility_examples.py tools/mork_comp
 - **Literal-valued sets** are refused by a shape on a value space and are not compared (Q3 (a)).
 - **Existence** is not stated by a comparison. A count over a binding states it once aggregate bindings are built, and no example or term for it is added here.
 - **Aggregate bindings** are decided in ADR-A136 and not built.
-- **L14 for a comparison.** Over a scheme in which no member has a link of the relation, hierarchical match reduces to equality between members, and the single-candidate rule that leaves an unnamed member Undetermined has no counterpart, since no concept is named.
 - **Measured cost.** The query's cost is stated, not measured, on any engine.
 - **The reasoner tests** (`needs_reasoner`) are not relied on by any row.
 
@@ -114,20 +116,19 @@ mise exec -- python -m pytest tools/test_eligibility_examples.py tools/mork_comp
 
 - `elg:SetComparison`, `elg:comparison` with the closed class `elg:Comparison` (`elg:Subset`, `elg:Intersects`, `elg:Disjoint`), `elg:testedBinding`, `elg:referenceBinding`, L18, two shapes and the structural shapes, three examples and a release note.
 - The IR's `SetComparisonPlan`, the SPARQL and SHACL compilers, and OWL and SWRL refusals.
-- The reference `decide_set_comparison` and the Isabelle theory.
+- The reference `decide_set_comparison` and the Isabelle theory. Under hierarchical match a tested value outside the scheme is Undetermined with `exe:OutsideScheme` (L9), and over a scheme with no link a value not equal to a reference value is Undetermined with `exe:NoHierarchy` (L14), both as the maintainer ruled. A comparison's `?closure` and `?referenceClosure` are two IRI columns.
 - ADR-A136 (Proposed) and MEC-86.
 
 **Decisions taken without the maintainer, for countersignature:**
 
-1. **`?closure` of a comparison is a string** of the closures it relied on, space-separated, where a bound condition's is one IRI. A comparison can rely on two. The profile's `?closures` tests membership in that string, which a single IRI satisfies as before.
-2. **The reference binding's closure is reported as relied on** when a Denied value decided, which only a closed reference set gives. The brief named only the tested closure for licensing the reading.
-3. **A value the scheme cannot place matches nothing** under hierarchical match: a tested value or a reference value outside the scheme is no match, so a tested value outside it is Denied under a closed reference set. A single candidate outside its scheme is Undetermined (`exe:OutsideScheme`). The brief's L18 reads "matches none", and I took it literally. The alternative is to answer Undetermined with `exe:OutsideScheme` for such a tested value. This differs from the concept condition and wants the lead's decision (ADR-A136, consequences).
-4. **`exe:SetComparisonPlan`** is a new plan class in `Executable.ttl`, a subclass of `exe:ConditionPlan` disjoint from the two others, since a comparison is neither an interval nor a concept match. No existing class fits.
-5. **`exe:NoClosureLicence`** is reused for a value not found in an open reference set. Its definition ("the outcome needs the records a binding reaches to be complete, and no closure in force licenses that") fits. No new diagnostic.
-6. **`elg:ClosureNeedsSetReadingShape` and `elg:ConceptConditionDeclarationShape`** are amended, to allow a closure on a comparison's binding without a value reading and to exempt a comparison from the "states nothing to match" warning. Without them every example would report.
-7. **`SetComparison.thy` imports `Eligibility` and `Hierarchy`**, not `KernelLaws` and `Hierarchy`, since `some_value` and `every_value` are defined in `Eligibility`, which imports `KernelLaws`.
-8. **Isabelle statements** take the form `subset_decide match A closedA B closedB`. All of TS1 to TS7 were proved as stated in the brief. TS2 reads "Denied iff `closedB` and not `set A ⊆ set B`", as the brief has it.
-9. **MEC-86** is added to the mechanism register as not yet ratified.
+1. **The reference binding's closure is reported as relied on** when a Denied value decided, in its own column, `?referenceClosure`. `?closure` stays the tested binding's closure and a single IRI for every condition. The profile's `?closures` tests both columns with equality.
+2. **Values the scheme cannot place** (ruled by the lead): a tested value outside the scheme is Undetermined with `exe:OutsideScheme`, a reference value outside it matches nothing, and L14 applies to a comparison over a scheme with no link. Both are stated once, in L18.
+3. **`exe:SetComparisonPlan`** is a new plan class in `Executable.ttl`, a subclass of `exe:ConditionPlan` disjoint from the two others, since a comparison is neither an interval nor a concept match. Accepted by the lead.
+4. **`exe:NoClosureLicence`** is reused for a value not found in an open reference set. Its definition ("the outcome needs the records a binding reaches to be complete, and no closure in force licenses that") fits. No new diagnostic.
+5. **`elg:ClosureNeedsSetReadingShape` and `elg:ConceptConditionDeclarationShape`** are amended, to allow a closure on a comparison's binding without a value reading and to exempt a comparison from the "states nothing to match" warning. Without them every example would report.
+6. **`SetComparison.thy` imports `Eligibility` and `Hierarchy`**, not `KernelLaws` and `Hierarchy`, since `some_value` and `every_value` are defined in `Eligibility`, which imports `KernelLaws`.
+7. **Isabelle statements** take the form `subset_decide match A closedA B closedB`. All of TS1 to TS7 were proved as stated in the brief. TS2 reads "Denied iff `closedB` and not `set A ⊆ set B`", as the brief has it.
+8. **MEC-86** is added to the mechanism register as not yet ratified.
 
 **What to check first:** `compile_set_comparison` in `eligibility_ir.py`, then `_comparison_core` and `_read_set` in `sparql_backend.py`, then README 5.9 against L18 in 6.6.
 
@@ -138,11 +139,11 @@ Run on 2026-10-27 in the worktree, against `main` for versions.
 | ID | Result |
 |---|---|
 | 01 to 12, 49 | `test_eligibility_examples.py`: 47 passed. `check:ontology-catalog` in the sweep: 1223 passed |
-| 21 to 43, 46 | `test_set_comparisons.py`: 24 passed, 14 subtests, on Oxigraph and on rdflib. `check:mork-compilers`: 193 passed, 44 subtests |
-| 21 to 43, 46 | `check:mork-compilers-conformance`: rdflib 193 passed, Jena 193 passed, each 44 subtests |
-| 13 to 20, 47 | `test_denotation.py`: 40 passed |
-| 44, 45 | `check:reference-eligibility`: 79 passed. `check:reference-eligibility-conformance`: rdflib 79 passed, Jena 79 passed |
-| 48 | `check:proofs -- eligibility`: Eligibility session built, 30 claims, assumption audit clean, `GATE: pass` |
+| 21 to 43, 46, 50, 51 | `test_set_comparisons.py`: 26 passed, 14 subtests. `check:mork-compilers`: 195 passed, 44 subtests |
+| 21 to 43, 46, 50, 51 | `check:mork-compilers-conformance`: rdflib 195 passed, Jena 195 passed, each 44 subtests |
+| 13 to 20, 47 | `test_denotation.py`: 41 passed |
+| 44, 45, 52 | `check:reference-eligibility`: 81 passed. `check:reference-eligibility-conformance`: rdflib 81 passed, Jena 81 passed |
+| 48 | `check:proofs -- eligibility`: Eligibility session built, 33 claims, assumption audit clean, `GATE: pass` |
 | 49 | `check:formal-freshness`: 2 artefacts consistent. The literate check for Eligibility: 7 consistent |
 | sweep | `check:full-sweep`: 16 of 17 passed. Failed: `ontology versions` (UNBUMPED, expected) |
 | other | `build:knowledge`, `check:identifiers` 9 passed, `check:knowledge` 89 passed, `check:deny-terms` 0 findings |
@@ -167,6 +168,10 @@ Each broke one place, ran the tests that guard it, and restored the file from a 
 | shape `elg:SetComparisonBindingsShape` | the subject class compared with itself | row 08 |
 | shape `elg:SetComparisonBindingsShape` | the value space dropped from the refused properties | row 09 |
 | the differential test | a compiler matches exactly under hierarchical match | row 45 sees the disagreement |
+| SPARQL `_comparison_core` | the outside-scheme test on a tested value matches anything (point of L9) | 9 fail, among them rows 21, 22, 46, 50, 51 and 44 |
+| IR `SetComparisonPlan.no_hierarchy` | the test is inverted (L14) | rows 50 and 52 fail, with the sweep's zero-link cases |
+| reference `decide_member` | the L14 rule dropped | row 52 fails. The differential test sees the reference answer Denied where SPARQL and SHACL answer Undetermined |
+| SPARQL `_read_set` | `?referenceClosure` never bound | rows 31, 33 and 44 (the per-column closure test) |
 
 ## Acceptance
 
