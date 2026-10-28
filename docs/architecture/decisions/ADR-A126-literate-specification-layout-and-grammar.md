@@ -131,7 +131,7 @@ state.
 
 ## Addendum 2026-10-21 (accepted 2026-10-21)
 
-Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
+**Narrows decisions 3, 6, 7 and 8.** Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
 needed an individual stated across two places. Three changes follow. None alters a generated file of a module
 that does not use them.
 

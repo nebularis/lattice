@@ -128,7 +128,7 @@ Applied to [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) on 2026-10-10, w
 
 ## Addendum, 2026-10-12: parameter guards are optional, and are type tests
 
-Decided by the maintainer after the review of slice H2.1.
+**Narrows decisions 5 and 8.** Decided by the maintainer after the review of slice H2.1.
 It amends decisions 5 and 8.
 
 1. **Guards are on by default and can be turned off.** Input checking normally belongs in the access layer, not the
@@ -171,7 +171,7 @@ both the query's naming and its guards.
 
 ## Addendum, 2026-10-12: the path is the IR's reference to the tree, and the IR is not stored yet
 
-Decided by the maintainer while planning slice H2.4.
+**Narrows decision 4.** Decided by the maintainer while planning slice H2.4.
 
 1. **Decision 4's "the IR holds a reference to it" is corrected.** The IR is built by the builders inside `instantiate`,
    which reads only the compiled profile (ADR-A79 decision 1), and the profile holds the owned path,

@@ -39,6 +39,7 @@ Usage, from the repository root::
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import re
 import shutil
 import subprocess
@@ -114,11 +115,23 @@ TITLE_RE = re.compile(r"^#\s+ADR[-‑ ]A[\w.-]*?\d+[a-z]?\s*[:.]\s*(?P<title>.+?
 BOLD_RE = re.compile(r"\*\*(?P<claim>.+?)\*\*")
 DECLARES_RE = re.compile(
     r"^(?P<term>[a-z][\w.-]*:[A-Za-z][\w-]*)\s+(?:a|rdf:type)\s+"
-    r"(?P<kind>owl:Class|owl:ObjectProperty|owl:DatatypeProperty|skos:Concept|skos:ConceptScheme)"
+    r"(?P<kind>owl:Class|owl:ObjectProperty|owl:DatatypeProperty|skos:Concept|skos:ConceptScheme"
+    r"|owl:NamedIndividual|[a-z][\w-]*:[A-Z][\w-]*)"
 )
 LABEL_RE = re.compile(r'rdfs:label\s+"(?P<label>[^"]{1,200})"')
 
 CLAIM_LIMIT = 200
+# A section's own text is embedded, and the model reads at most 512 tokens, so more would not be read.
+# Measured 2026-10-28: at 1,800 characters the longest section is 479 tokens and 30 of 512 are cut,
+# against 120 cut at 600, and at 2,400 the model would truncate 21 (ADR-A134 decision 28).
+SECTION_LIMIT = 1800
+# A numbered decision opens its line with its number, bold where the decision is a paragraph.
+NUMBERED_RE = re.compile(r"^(?:\*\*)?\d+\.\s")
+NUMBER_RE = re.compile(r"^(?:\*\*)?(?P<n>\d+)\.\s")
+# The bold lead an addendum opens with when it reverses or narrows numbered decisions of its file,
+# ``**Reverses decision 8.**`` or ``**Narrows decisions 3, 6 and 7.**`` (ADR-A134 decision 29).
+SUPERSESSION_RE = re.compile(r"\*\*(?P<verb>Reverses|Narrows) decisions? (?P<numbers>\d+(?:(?:,| and|, and) \d+)*)\.\*\*")
+SUPERSESSION_EDGE = {"Reverses": "supersededBy", "Narrows": "narrowedBy"}
 
 
 def tracked(*patterns: str) -> list[Path]:
@@ -144,10 +157,10 @@ def ki(local: str) -> ox.NamedNode:
     return ox.NamedNode(KI + local)
 
 
-def shorten(text: str) -> str:
+def shorten(text: str, limit: int = CLAIM_LIMIT) -> str:
     """A claim is one sentence. Anything longer is a narrative and is cut, not stored whole."""
     text = re.sub(r"\s+", " ", re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)).strip()
-    return text if len(text) <= CLAIM_LIMIT else text[: CLAIM_LIMIT - 1].rstrip() + "…"
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
 
 
 def status_of(line: str) -> str | None:
@@ -209,6 +222,93 @@ def decision_claim(lines: list[str]) -> str | None:
     return shorten(text) if text.strip() else None
 
 
+def decision_sections(lines: list[str]) -> list[tuple[str, int, int]]:
+    """The parts of a decision file that state a rule of their own, as ``(text, start, end)``.
+
+    Each numbered item of the Decision section and each ``## Addendum`` section. A decision's claim
+    is the opening of its Decision section, so a rule stated further down, or in an addendum, would
+    never be found by its subject (ADR-A134 decision 29). Code blocks are left out of the text, which is cut at
+    ``SECTION_LIMIT``."""
+    top = anchors.headings(lines)
+    decision = next((i for i, (n, lv, _) in enumerate(top) if lv == 2 and lines[n - 1].startswith("## Decision")), None)
+    found: list[tuple[int, int, str]] = []
+    if decision is not None:
+        last = anchors.section_end(top, decision, len(lines))
+        opens: list[int] = []
+        fenced = False
+        for number in range(top[decision][0] + 1, last + 1):
+            if lines[number - 1].lstrip().startswith(("```", "~~~")):
+                fenced = not fenced
+            elif not fenced and NUMBERED_RE.match(lines[number - 1]):
+                opens.append(number)
+        for start, stop in zip(opens, opens[1:] + [last + 1]):
+            end = stop - 1
+            while end > start and not lines[end - 1].strip():
+                end -= 1
+            found.append((start, end, ""))
+    for number, level, _ in top:
+        if level == 2 and lines[number - 1].startswith("## Addendum"):
+            found.append((*anchors.section_at(lines, number), re.sub(r"^## Addendum[^:]*:\s*", "", lines[number - 1])))
+    out = []
+    for start, end, title in found:
+        body, fenced = [title], False
+        for line in lines[start - 1 : end]:
+            stripped = line.strip()
+            if stripped.startswith(("```", "~~~")):
+                fenced = not fenced
+            elif not fenced and stripped and not stripped.startswith(("#", "<!--")) \
+                    and not SEPARATOR_RE.match(stripped) and not STATUS_RE.match(stripped):
+                body.append(stripped.replace("|", " "))
+        text = re.sub(r"\*\*|`", "", " ".join(body))
+        out.append((shorten(NUMBERED_RE.sub("", text.strip(), 1), SECTION_LIMIT), start, end))
+    return out
+
+
+def section_numbers(lines: list[str], start: int, end: int) -> list[int]:
+    """The decision numbers the lines from ``start`` to ``end`` open, outside code blocks."""
+    numbers, fenced = [], False
+    for line in lines[start - 1 : end]:
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        elif not fenced and (match := NUMBER_RE.match(line)):
+            numbers.append(int(match.group("n")))
+    return numbers
+
+
+def supersessions(lines: list[str], sections: list[tuple[str, int, int]], rel: str, out: Extract) -> list[tuple[int, str, int]]:
+    """What each addendum's bold lead reverses or narrows, as ``(section, edge, addendum section)``
+    indexes into ``sections``.
+
+    A number names the numbered decision of the Decision section, and otherwise the one addendum
+    that numbers it, as ADR-A134's addenda continue the numbering. A number that names neither, or
+    names several addenda and no decision, is reported, never guessed."""
+    is_addendum = [lines[start - 1].startswith("## Addendum") for _, start, _ in sections]
+    by_number: dict[int, int] = {}
+    in_addenda: dict[int, list[int]] = {}
+    for index, (_, start, end) in enumerate(sections):
+        if is_addendum[index]:
+            for number in section_numbers(lines, start, end):
+                in_addenda.setdefault(number, []).append(index)
+        elif (match := NUMBER_RE.match(lines[start - 1])):
+            by_number.setdefault(int(match.group("n")), index)
+    for number, places in in_addenda.items():
+        if number not in by_number and len(set(places)) == 1:
+            by_number[number] = places[0]
+    edges = []
+    for index, (_, start, end) in enumerate(sections):
+        if not is_addendum[index]:
+            continue
+        # A lead quoted in a code span is an example of the grammar, never a lead.
+        for match in SUPERSESSION_RE.finditer(re.sub(r"`[^`]*`", "", "\n".join(lines[start - 1 : end]))):
+            for number in map(int, re.findall(r"\d+", match.group("numbers"))):
+                target = by_number.get(number)
+                if target is None:
+                    out.problems.append(f"{rel}:{start}: {match.group('verb')} decision {number}, which names no numbered decision of the file")
+                elif target != index:
+                    edges.append((target, SUPERSESSION_EDGE[match.group("verb")], index))
+    return edges
+
+
 def decisions(out: Extract) -> dict[str, ox.NamedNode]:
     """One node per decision file, named by its title, with what it decides as the claim and its
     Related line as declared edges."""
@@ -263,12 +363,33 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
                 else:
                     out.quads.append(ox.Quad(subject, ki("status"), ki(word), INDEX_GRAPH))
                     out.bump(f"status:{word}")
+                if word == "Superseded":
+                    # "Superseded by ADR-A104" names the live decision, so a reader of this one is sent there.
+                    successors = [s for s in family.mention.findall(line_status) if identifiers.normalise(s) != identifiers.normalise(canonical)]
+                    for spelling in successors[:1]:
+                        out.quads.append(ox.Quad(subject, ki("supersededBy"), node(spelling), INDEX_GRAPH))
+                        out.bump("supersededBy")
+                    if not successors:
+                        out.problems.append(f"{rel}:{number}: {canonical} is Superseded and its Status line names no successor")
             elif (related := RELATED_RE.match(line)) is not None:
                 for spelling in family.mention.findall(related.group("rest")):
                     key = identifiers.normalise(spelling)
                     if key in defined and key != identifiers.normalise(canonical):
                         out.quads.append(ox.Quad(subject, ki("relatedTo"), node(spelling), INDEX_GRAPH))
                         out.bump("relatedTo")
+        # Auxiliary nodes, not entries: no type and no identifier, so no query for entries returns them.
+        # The embedder scores them and find reports the best one's pointer under the decision.
+        found = decision_sections(lines)
+        for count, (text, start, end) in enumerate(found, 1):
+            section = ox.NamedNode(f"{subject.value}/section-{count}")
+            out.quads.append(ox.Quad(section, ki("sectionOf"), subject, INDEX_GRAPH))
+            out.quads.append(ox.Quad(section, ki("claim"), ox.Literal(text), INDEX_GRAPH))
+            out.quads.append(ox.Quad(section, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
+            out.bump("decision-section")
+        for target, edge, by in supersessions(lines, found, rel, out):
+            out.quads.append(ox.Quad(ox.NamedNode(f"{subject.value}/section-{target + 1}"), ki(edge),
+                                     ox.NamedNode(f"{subject.value}/section-{by + 1}"), INDEX_GRAPH))
+            out.bump(edge)
         if not seen_status:
             # Measured: 7 of the 120 decisions carry their status as a `## Status` section rather
             # than a `**Status:**` header field, which is the older of two conventions in the
@@ -321,6 +442,9 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
     "Unchecked because": ("uncheckedBecause", "text"),
+    "Does not cover": ("doesNotCover", "text"),
+    "Distinguished from": ("distinguishedFrom", "ids"),
+    "Bears on": ("bearsOn", "targets"),
     "Stratum": ("stratum", "stratum"),
     "Governs": ("governs", "names"),
     "Fitness scope": ("fitnessScope", "fitnessScope"),
@@ -359,6 +483,48 @@ CONTROLLED = {
 }
 
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
+# The signpost columns stand last in a table, and a row may leave them out, so adding them changed no
+# row that carries none and a branch editing a row merges cleanly (ADR-A134 decision 28).
+OPTIONAL_TRAILING = frozenset({"Does not cover", "Distinguished from", "Bears on"})
+# A boundary is one case, said briefly, so it fits on the line find prints under an answer.
+DOES_NOT_COVER_LIMIT = 120
+CURIE_RE = re.compile(r"(?<![\w/#.-])(?P<prefix>[a-z][\w-]*):(?P<local>[A-Za-z][\w-]*)(?![\w-])")
+PREFIX_RE = re.compile(r"^\s*@prefix\s+(?P<prefix>[\w-]*):\s*<(?P<iri>[^>]+)>", re.M)
+
+
+_PREFIXES: dict[str, str] | None = None
+
+
+def ontology_prefixes() -> dict[str, str]:
+    """Every prefix the tracked ontology documents declare, so a Bears on cell may name a term by
+    the CURIE its own layer writes. The first declaration of a prefix wins."""
+    global _PREFIXES
+    if _PREFIXES is None:
+        found: dict[str, str] = {}
+        for path in tracked((ONTOLOGY / "*.ttl").as_posix(), (ONTOLOGY / "**" / "*.ttl").as_posix()):
+            for match in PREFIX_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
+                found.setdefault(match.group("prefix"), match.group("iri"))
+        _PREFIXES = found
+    return _PREFIXES
+
+
+def term_node(iri: str) -> ox.NamedNode:
+    """The node the term summary gives a declared term, named by its IRI's last segment."""
+    return ox.NamedNode(KI + "term/" + iri.rsplit("/", 1)[-1].replace("#", "."))
+
+
+def targets(cell: str, here: str, out: Extract) -> list[ox.NamedNode]:
+    """What a Bears on cell names: entries by identifier, and declared terms by CURIE. A CURIE whose
+    prefix no ontology declares is reported. Whether each target exists is checked once the terms
+    are loaded (``dangling``)."""
+    found = [node(other) for other in waited_on(cell)]
+    for match in CURIE_RE.finditer(cell):
+        namespace = ontology_prefixes().get(match.group("prefix"))
+        if namespace is None:
+            out.problems.append(f"{here} has Bears on '{match.group(0)}', whose prefix no ontology document declares")
+        else:
+            found.append(term_node(namespace + match.group("local")))
+    return found
 
 
 _UNITS: dict[str, list[str]] | None = None
@@ -444,6 +610,8 @@ def register_rows(out: Extract) -> None:
                                 )
                     canonical = match.group(1)
                     subject = node(canonical)
+                    if len(cells) < len(headers) and set(headers[len(cells):]) <= OPTIONAL_TRAILING:
+                        cells = cells + [""] * (len(headers) - len(cells))
                     if len(cells) != len(headers):
                         out.problems.append(
                             f"{rel}:{number}: {canonical} has {len(cells)} cells under "
@@ -467,7 +635,11 @@ def register_rows(out: Extract) -> None:
                         prop, kind = COLUMNS[header]
                         if kind == "claim":
                             bold = BOLD_RE.search(cell)
-                            claim = shorten(bold.group("claim") if bold else cell)
+                            lead = bold.group("claim") if bold else cell
+                            if len(shorten(lead, 10_000)) > CLAIM_LIMIT:
+                                # Cut silently, the part a boundary is written in would be lost (decision 28).
+                                out.problems.append(f"{here} has a claim of {len(shorten(lead, 10_000))} characters, which is cut at {CLAIM_LIMIT}")
+                            claim = shorten(lead)
                             add("claim", ox.Literal(claim))
                             has_claim = True
                         elif kind == "label":
@@ -484,6 +656,14 @@ def register_rows(out: Extract) -> None:
                             add(prop, ox.Literal(cell.replace("`", "") if prop == "entryPoint" else cell))
                             if prop == "problemShape":
                                 out.bump("problem-shape")
+                            if prop == "doesNotCover":
+                                out.bump(prop)
+                                if len(cell) > DOES_NOT_COVER_LIMIT:
+                                    out.problems.append(f"{here} has a Does not cover of {len(cell)} characters, over {DOES_NOT_COVER_LIMIT}")
+                        elif kind == "targets":
+                            for target in targets(cell, here, out):
+                                add(prop, target)
+                                out.bump(prop)
                         elif kind == "module":
                             for owner in (o.strip() for o in cell.split(",")):
                                 units = owner_units(owner) if owner else []
@@ -536,6 +716,74 @@ def register_rows(out: Extract) -> None:
                     out.bump(family.name)
 
 
+# An answer that states a rule a later slice must obey says so in these words.
+RULE_WORDS_RE = re.compile(r"\b(must|never|only)\b", re.I)
+# ``Answered 2026-10-19, (a), now MEC-nn.``: the entry the answer was promoted to.
+PROMOTED_RE = re.compile(r"\bnow (?P<ids>[^.;]*)")
+# How long an answered rule may live in a plan before the build reports it unpromoted.
+PROMOTION_DAYS = 30
+
+
+def questions(out: Extract, today: dt.date | None = None) -> None:
+    """One node per question a plan or a sketch raises, open or answered (ADR-A134 decision 30).
+
+    The claim is the question and the start of its answer, each cut at the claim limit, so a
+    question in the words of its answer still finds it. An identifier defined twice keeps its first
+    definition, a plan's before a sketch's. An answer naming the entry it was promoted to, ``now
+    MEC-nn``, gives that entry ki:answers to the question. An answered question whose answer states
+    a rule and names no such entry, answered more than PROMOTION_DAYS ago, is reported, never failed."""
+    family = next(f for f in identifiers.FAMILIES if f.name == "question-or-decision-point")
+    today = today or dt.date.today()
+    seen: set[str] = set()
+    for path in identifiers.question_documents(family):
+        rel = path.relative_to(ROOT).as_posix()
+        for q in identifiers.questions_in(path.read_text(encoding="utf-8", errors="replace").splitlines()):
+            key = identifiers.normalise(q.identifier)
+            if key in seen:
+                out.bump("question-defined-again")
+                continue
+            seen.add(key)
+            subject = node(q.identifier)
+            answer = q.answer.replace("**", "")
+            claim = shorten(q.question.replace("**", "")) + (" " + shorten(answer) if answer else "")
+            out.quads += [
+                ox.Quad(subject, RDF_TYPE, ki("Question"), INDEX_GRAPH),
+                ox.Quad(subject, ki("identifier"), ox.Literal(q.identifier), INDEX_GRAPH),
+                ox.Quad(subject, ki("claim"), ox.Literal(claim), INDEX_GRAPH),
+                ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{q.start}-{q.end}"), INDEX_GRAPH),
+                ox.Quad(subject, ki("status"), ki("Answered" if q.answered else "Open"), INDEX_GRAPH),
+                ox.Quad(subject, ki("definedIn"), ox.NamedNode(f"https://lattice.local/doc/{rel}"), INDEX_GRAPH),
+            ]
+            promoted = [e for m in PROMOTED_RE.finditer(answer) for e in waited_on(m.group("ids"))]
+            for entry in promoted:
+                out.quads.append(ox.Quad(node(entry), ki("answers"), subject, INDEX_GRAPH))
+                out.bump("answers")
+            if q.answered and not promoted and q.answered_on and RULE_WORDS_RE.search(answer) \
+                    and (today - dt.date.fromisoformat(q.answered_on)).days > PROMOTION_DAYS:
+                out.findings.append(
+                    f"{q.identifier} ({rel}:{q.start}) was answered {q.answered_on} with a rule and names no entry "
+                    f"it was promoted to, so the rule lives only in a plan. Promote it and write 'now <ID>' in the answer"
+                )
+            out.bump(f"question:{'answered' if q.answered else 'open'}")
+
+
+DANGLING = f"""
+PREFIX ki: <{KI}>
+SELECT ?id ?edge ?o WHERE {{
+  GRAPH ki:index {{ VALUES ?p {{ ki:distinguishedFrom ki:bearsOn }} ?s ?p ?o ; ki:identifier ?id . }}
+  FILTER NOT EXISTS {{ GRAPH ?g {{ ?o ki:identifier ?any }} }}
+  BIND (REPLACE(STR(?p), "^.*#", "") AS ?edge)
+}}"""
+
+
+def dangling(store: ox.Store, out: Extract) -> None:
+    """A signpost to nothing is reported: a Distinguished from or Bears on that names no entry or
+    declared term. Run once the terms are loaded, since a Bears on may name a term."""
+    for row in store.query(DANGLING):
+        target = str(row["o"].value).removeprefix(KI).replace("node/", "").replace("term/", "term ")
+        out.problems.append(f"{row['id'].value} has {row['edge'].value} {target}, which names no entry or declared term")
+
+
 def technology_words() -> dict[str, re.Pattern[str]]:
     """Each taggable Technology value, with a pattern that finds its slug or label as a whole word."""
     graph = ox.Store()
@@ -586,6 +834,10 @@ def discoveries(out: Extract) -> None:
                 out.quads.append(ox.Quad(subject, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
                 out.quads.append(ox.Quad(subject, ki("claim"), ox.Literal(shorten(claim)), INDEX_GRAPH))
                 evidence = next((l for l in lines[start - 1 : end] if l.startswith("**Evidence:**")), "")
+                bears = next((l for l in lines[start - 1 : end] if l.startswith("**Bears on:**")), "")
+                for target in targets(bears.removeprefix("**Bears on:**"), f"{rel}:{number}: {canonical}", out) if bears else []:
+                    out.quads.append(ox.Quad(subject, ki("bearsOn"), target, INDEX_GRAPH))
+                    out.bump("bearsOn")
                 for slug, pattern in words.items():
                     if pattern.search(evidence) or pattern.search(heading) or ("both stores" in evidence and slug in both):
                         out.quads.append(ox.Quad(subject, ki("technology"), ox.NamedNode(FACET_NS + slug), INDEX_GRAPH))
@@ -612,6 +864,61 @@ def source_lines() -> dict[str, str]:
     return found
 
 
+# Enough of a term's definition to say what it is, which a 512-token model reads whole.
+TERM_LIMIT = 300
+TERM_TEXT = """
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+SELECT ?s (SAMPLE(?l) AS ?label) (SAMPLE(?d) AS ?definition) (SAMPLE(?f) AS ?functional)
+       (GROUP_CONCAT(DISTINCT ?dom) AS ?domains) (GROUP_CONCAT(DISTINCT ?ran) AS ?ranges) (MIN(?max) AS ?most)
+       (GROUP_CONCAT(DISTINCT ?cls) AS ?classes) WHERE {
+  {
+    GRAPH ?g { ?s a ?kind . FILTER (?kind IN (owl:Class, owl:ObjectProperty, owl:DatatypeProperty, skos:Concept, skos:ConceptScheme)) }
+  } UNION {
+    GRAPH ?g { ?s a ?type . FILTER (?type = owl:NamedIndividual || EXISTS { GRAPH ?h { ?type a owl:Class } }) }
+    FILTER (!REGEX(STR(?g), "/(examples|tests?)/"))
+    FILTER (?type != owl:NamedIndividual)
+    BIND (REPLACE(STR(?type), "^.*[#/]", "") AS ?cls)
+  }
+  FILTER (STRSTARTS(STR(?g), "https://lattice.local/graph/") && isIRI(?s))
+  OPTIONAL { GRAPH ?g1 { ?s rdfs:label|skos:prefLabel ?l } }
+  OPTIONAL { GRAPH ?g2 { ?s rdfs:comment|skos:definition ?d } }
+  OPTIONAL { GRAPH ?g3 { ?s a owl:FunctionalProperty } BIND ("functional" AS ?f) }
+  OPTIONAL { GRAPH ?g4 { ?s rdfs:domain ?dm FILTER isIRI(?dm) } BIND (REPLACE(STR(?dm), "^.*[#/]", "") AS ?dom) }
+  OPTIONAL { GRAPH ?g5 { ?s rdfs:range ?rn FILTER isIRI(?rn) } BIND (REPLACE(STR(?rn), "^.*[#/]", "") AS ?ran) }
+  OPTIONAL { GRAPH ?g6 { ?shape sh:path ?s ; sh:maxCount ?max } }
+} GROUP BY ?s"""
+
+
+def term_texts(store: ox.Store) -> dict[str, str]:
+    """Each declared term's claim, from its own document: its label, its comment or definition cut
+    at TERM_LIMIT, and the restrictions stated for it, functional, domain, range and the least
+    maximum count a shape gives its path (ADR-A134 decision 31). A term with no comment still has
+    its name and restrictions, which is what a question about it names."""
+    texts: dict[str, str] = {}
+    for row in store.query(TERM_TEXT):
+        iri = str(row["s"].value)
+        name = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1])
+        parts = [str(row["label"].value) if row["label"] else name]
+        if row["definition"]:
+            parts.append(shorten(str(row["definition"].value), TERM_LIMIT))
+        facts = [str(row["functional"].value)] if row["functional"] else []
+        if row["classes"] and row["classes"].value:
+            facts.append("an individual of " + row["classes"].value)
+        if row["domains"] and row["domains"].value:
+            facts.append("domain " + row["domains"].value)
+        if row["ranges"] and row["ranges"].value:
+            facts.append("range " + row["ranges"].value)
+        if row["most"] is not None:
+            facts.append(f"at most {row['most'].value}")
+        if facts:
+            parts.append(", ".join(facts))
+        texts[iri] = ". ".join(p.rstrip(".") for p in parts) + "."
+    return texts
+
+
 def term_summary(store: ox.Store, out: Extract) -> None:
     """Every term a module declares, with its label, kind and owner.
 
@@ -621,17 +928,29 @@ def term_summary(store: ox.Store, out: Extract) -> None:
     document's own path, so the fact still has exactly one source (ADR-A134 decision 2).
     """
     lines = source_lines()
+    texts = term_texts(store)
     rows = store.query(
         """
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         SELECT ?g ?s ?kind ?label WHERE {
-          GRAPH ?g {
-            ?s a ?kind .
-            FILTER (?kind IN (owl:Class, owl:ObjectProperty, owl:DatatypeProperty,
-                              skos:Concept, skos:ConceptScheme))
-            OPTIONAL { ?s rdfs:label ?label }
+          {
+            GRAPH ?g {
+              ?s a ?kind .
+              FILTER (?kind IN (owl:Class, owl:ObjectProperty, owl:DatatypeProperty,
+                                skos:Concept, skos:ConceptScheme))
+              OPTIONAL { ?s rdfs:label ?label }
+            }
+          } UNION {
+            # An individual a module declares, such as a value of an enumeration, so a question
+            # whether a value or a concept already exists finds it. Example and test data declare nothing.
+            GRAPH ?g { ?s a ?type . OPTIONAL { ?s rdfs:label ?label } }
+            FILTER (?type = owl:NamedIndividual || EXISTS { GRAPH ?h { ?type a owl:Class } })
+            FILTER NOT EXISTS { GRAPH ?any { ?s a ?declared FILTER (?declared IN (owl:Class, owl:ObjectProperty,
+                                owl:DatatypeProperty, skos:Concept, skos:ConceptScheme)) } }
+            FILTER (!REGEX(STR(?g), "/(examples|tests?)/"))
+            BIND (owl:NamedIndividual AS ?kind)
           }
           FILTER (STRSTARTS(STR(?g), "https://lattice.local/graph/"))
         }"""
@@ -658,8 +977,14 @@ def term_summary(store: ox.Store, out: Extract) -> None:
                 ox.Quad(node_iri, ki("declaredAs"), ox.Literal(str(kind.value).rsplit("#", 1)[-1]), TERMS_GRAPH)
             )
             short = name.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
-            pointer = next((v for k, v in lines.items() if k.rsplit(":", 1)[-1] == short), rel)
+            # A declaration in the term's own document first, since another module may declare a
+            # term of the same local name, as exposure and ledger both declare partOf.
+            places = [v for k, v in lines.items() if k.rsplit(":", 1)[-1] == short]
+            pointer = next((v for v in places if v.startswith(rel + ":")), places[0] if places else rel)
             quads.append(ox.Quad(node_iri, ki("pointer"), ox.Literal(pointer), TERMS_GRAPH))
+            if name in texts:
+                quads.append(ox.Quad(node_iri, ki("claim"), ox.Literal(texts[name]), TERMS_GRAPH))
+                out.bump("term-claim")
             out.bump("term")
         if label is not None:
             quads.append(ox.Quad(node_iri, RDFS_LABEL, ox.Literal(str(label.value)), TERMS_GRAPH))
@@ -795,10 +1120,13 @@ def build(store_path: Path) -> Extract:
     decisions(out)
     register_rows(out)
     discoveries(out)
+    questions(out)
     store.bulk_extend(out.quads)
     load_ontologies(store, out)
     # After the documents are loaded, because the summary is derived by query over them.
     term_summary(store, out)
+    # After the terms, because a Bears on may name one.
+    dangling(store, out)
     # After the documents are loaded, because data-view coupling is read from their imports.
     derive_quanta(store, out)
     store.flush()

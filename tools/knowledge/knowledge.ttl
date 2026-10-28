@@ -95,6 +95,21 @@ ki:enforcedBy
     rdfs:label "enforced by" ;
     rdfs:comment "The capability whose check fails when this is broken. A human review is not a check and is never recorded here. Earns its place from the query for what nothing enforces, which is the list of standards held up only by an agent remembering them." .
 
+ki:doesNotCover
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "does not cover" ;
+    rdfs:comment "The case an entry does not decide, in its author's words, at most 120 characters. Read from a register's Does not cover column and embedded with the claim, so a question about the uncovered case still finds the entry, and find flags it ! so the agent knows the entry does not answer it (ADR-A134 decision 28)." .
+
+ki:distinguishedFrom
+    rdf:type owl:ObjectProperty , owl:SymmetricProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "distinguished from" ;
+    rdfs:comment "An entry a reader confuses this one with. Read from a register's Distinguished from column, and symmetric, so the confusable neighbour arrives with either answer in find's linked table and in read (ADR-A134 decision 28)." .
+
+ki:bearsOn
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range [ owl:unionOf ( ki:Node ki:Term ) ] ;
+    rdfs:label "bears on" ;
+    rdfs:comment "The entry or declared term a debt, a pending decision, a capability or a store finding qualifies. Read from a Bears on column or a finding's Bears on line, as identifiers or term CURIEs. Earns its place because an open debt that bears on an entry is shown with it, and find flags that entry TD (ADR-A134 decision 28)." .
+
 ki:uncheckedBecause
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Standard ; rdfs:range xsd:string ;
     rdfs:label "unchecked because" ;
@@ -137,7 +152,7 @@ ki:Slice
 
 ki:Question
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "question" ;
-    rdfs:comment "A design question raised against a slice, answered by a decision. Earns its class from the query for the questions a decision answers." .
+    rdfs:comment "A design question raised in a plan or a sketch, read from its bold lead or its table row, open or answered. Earns its class because a question answered in a plan is a decision taken there, and find returns it beside the entries, so an agent about to design what a question already asks or answers finds it (ADR-A134 decision 30)." .
 
 # Things a node points at, which are not themselves nodes because they carry no claim.
 
@@ -147,7 +162,7 @@ ki:Document
 
 ki:Term
     rdf:type owl:Class ; rdfs:label "term" ;
-    rdfs:comment "A class, property or vocabulary concept an ontology module declares, summarised with its label, owner and source line. Earns its class from the query that answers 'does this already exist' over 3,049 declared terms without reading 270 documents, which is the error class the index exists to prevent. Not a ki:Node, because it carries no claim of its own: the module's own documentation is the claim." .
+    rdfs:comment "A class, property or vocabulary concept an ontology module declares, summarised with its label, owner and source line. Earns its class from the query that answers 'does this already exist' over 3,049 declared terms without reading 270 documents, which is the error class the index exists to prevent. Not a ki:Node, since it is no register entry. Its ki:claim is derived from the term's own label, comment and restrictions in the ontology document, so find ranks it by meaning beside the entries (ADR-A134 decision 31)." .
 
 ki:declaredAs
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Term ; rdfs:range xsd:string ;
@@ -170,9 +185,11 @@ ki:Proposed    rdf:type ki:Status ; rdfs:label "proposed" .
 ki:Accepted    rdf:type ki:Status ; rdfs:label "accepted" .
 ki:Superseded  rdf:type ki:Status ; rdfs:label "superseded" .
 ki:Open        rdf:type ki:Status ; rdfs:label "open" ;
-    rdfs:comment "A register entry still live." .
+    rdfs:comment "A register entry still live, or a question not yet answered." .
+ki:Answered    rdf:type ki:Status ; rdfs:label "answered" ;
+    rdfs:comment "A question whose lead or row says Answered." .
 
-# These five are what the corpus exhibits, measured: no decision's Status line opens with
+# Answered joined when questions became entries, and the rest are what the corpus exhibits, measured: no decision's Status line opens with
 # "Rejected", "Withdrawn", "Deferred" or "Complete", and an earlier draft of this file declared all
 # four. Decision 6 of ADR-A134 applies to a vocabulary as much as to a class, so a status is
 # declared when a document first uses it rather than in anticipation.
@@ -200,6 +217,11 @@ ki:publishedOn
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Decision ; rdfs:range xsd:string ;
     rdfs:label "published on" ;
     rdfs:comment "The date a decision was published to the site, where it was. Earns its place because publication is a flag on an Accepted decision and not a lifecycle state of its own: 20 of the 120 decisions read \"Published, <date>. Accepted <date>.\", and treating Published as a status lost the fact that they are Accepted. tools/published_decisions.py already models it this way." .
+
+ki:sectionOf
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Decision ;
+    rdfs:label "section of" ;
+    rdfs:comment "Ties a numbered decision or an addendum of a decision file to that decision, with its own claim and pointer. The section node has no identifier and no type, so it is no entry. graph:ask -- find embeds it, scores its decision by the best of its sections and reports that section's pointer (ADR-A134 decision 29)." .
 
 ki:problemShape
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
@@ -252,20 +274,25 @@ ki:dependsOn
     rdfs:comment "Earns its place from the check that no Accepted decision depends on a Proposed one." .
 
 ki:supersedes
-    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Decision ;
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
     rdfs:label "supersedes" ;
     rdfs:comment "Earns its place as the inverse of ki:supersededBy, so the query may start from either end." ;
     owl:inverseOf ki:supersededBy .
 
 ki:supersededBy
-    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Decision ;
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
     rdfs:label "superseded by" ;
-    rdfs:comment "Earns its place from the query for whether a decision a document cites is still the live one." .
+    rdfs:comment "Earns its place from the query for whether a decision a document cites is still the live one. From a decision to the one its Status line names, and from a numbered decision's section to the addendum section whose bold lead reverses it. find marks a superseded answer ~ and prints its successor's pointer beside it (ADR-A134 decision 29)." .
+
+ki:narrowedBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
+    rdfs:label "narrowed by" ;
+    rdfs:comment "From a numbered decision's section to the addendum section whose bold lead narrows or amends it, the weaker sibling of ki:supersededBy: the decision stands, but not as written. Earns its place because find prints the narrowing addendum's pointer beside the section it returns, so an agent never acts on the narrowed text alone (ADR-A134 decision 29)." .
 
 ki:answers
-    rdf:type owl:ObjectProperty ; rdfs:domain ki:Decision ; rdfs:range ki:Question ;
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Question ;
     rdfs:label "answers" ;
-    rdfs:comment "Earns its place from the query for a question's answer, and from the check that a closed question has one." .
+    rdfs:comment "From the entry a question's answer was promoted to, a standard, mechanism or decision, to the question, read from the lead's 'now <ID>'. Earns its place from the query for a question's answer, and from the report of answered questions whose rule-shaped answer was never promoted (ADR-A134 decision 30)." .
 
 ki:waitsOn
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;

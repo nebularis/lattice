@@ -5,7 +5,9 @@ description: How to change a LATTICE ontology and model well in it. Use when edi
 
 # Authoring LATTICE ontologies
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
+This skill's tasks are the ones that need the declared terms, which `find` searches only with `--kind term`. Before declaring a class or property, ask `mise run graph:ask -- find <what the term would mean> --kind term`, and declare nothing the answer already holds. Ask it again to learn what an existing term means and what restricts it, its domain, range, functional or at most one value, since that is stated on the line under its row. Ask for the rules that govern the change separately, with no `--kind term`, because terms ranked with the entries push the rules out of the top five.
 
 ## Changing an ontology document
 
@@ -177,12 +179,7 @@ what explains the mechanism best. Headings, captions and table columns name the 
 an example comes from ("Lending", "A guarantee"), and never rank one domain's examples before or
 after another's.
 
-**No market words as technical terms.** A word with a market meaning reads as that meaning to an
-insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is
-**instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md` and
-`ontology/applied/insurance/` first. "Bound" stays where it is technical ("bound meaning",
-`ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the
-process-calculus term and stays.
+**No market words as technical terms.** A word with a market meaning reads as that meaning to an insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is **instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md`, `ontology/applied/insurance/` and `find <its meaning> --kind term` first. "Bound" stays where it is technical ("bound meaning", `ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the process-calculus term and stays.
 
 **A "Formalisation" section names no tool.** Title it "Formalisation". Say what the type means, not
 the ADR, the generation mechanism or past evaluations, which are recorded where they were decided.

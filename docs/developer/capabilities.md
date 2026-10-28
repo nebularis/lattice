@@ -6,8 +6,8 @@
 
 Derived from `mise.toml`, the tool modules' docstrings and the package manifests. Ratified by the maintainer 2026-10-26.
 
-| ID | Capability | Problem shape | Provided by | Entry point | Audience | Phase | Activity | Quality | Technology | Fitness scope | Cadence | Pointer | Ratified |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ID | Capability | Problem shape | Provided by | Entry point | Audience | Phase | Activity | Quality | Technology | Fitness scope | Cadence | Pointer | Ratified | Bears on |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | CAP-01 | **Install configured toolchains and dependency sets, and the git hooks.** | setting up a fresh checkout, or repairing a broken environment, before anything else runs | tools | `mise run bootstrap` | internal | development | environment | efficiency | mise, git |  |  | `mise.toml::bootstrap` | yes |
 | CAP-02 | **Run all repository validation tasks.** | knowing whether the whole repository is in a passing state | tools | `mise run check` | internal | development | continuous-integration, testing | correctness | mise |  |  | `mise.toml::check` | yes |
 | CAP-03 | **Run the repository test suites.** | running every test suite at once | tools | `mise run test` | internal | development | testing | correctness | mise |  |  | `mise.toml::test` | yes |

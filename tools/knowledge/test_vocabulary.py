@@ -108,9 +108,10 @@ def test_status_is_a_closed_set_of_typed_individuals(graph: rdflib.Graph):
     """ADR-A134 decisions 5 and 6. The fifteen literal Status strings across the 120 decisions
     normalise to these five, and no decision's line opens with Rejected, Withdrawn, Deferred or
     Complete, all four of which an earlier draft declared. A status declared in anticipation makes
-    the vocabulary wider than the corpus, so one is added when a document first uses it."""
+    the vocabulary wider than the corpus, so one is added when a document first uses it, as Answered
+    was when the questions of plans and sketches became entries (decision 30)."""
     statuses = {_local(s) for s in graph.subjects(rdflib.RDF.type, rdflib.URIRef(KI + "Status"))}
-    assert statuses == {"Proposed", "Accepted", "Superseded", "Open"}
+    assert statuses == {"Proposed", "Accepted", "Superseded", "Open", "Answered"}
 
 
 def test_the_vocabulary_sits_outside_the_substrate_release(graph: rdflib.Graph):

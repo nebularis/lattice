@@ -45,6 +45,7 @@ Usage, from the repository root::
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import re
 import subprocess
 import sys
@@ -101,11 +102,17 @@ class Family:
         a table row in ``defines`` whose first cell is the identifier, as the registers do
     ``heading``
         a Markdown heading in ``defines`` that opens with the identifier
+    ``question``
+        a bold lead or a table row in a tracked document matching ``defines`` that opens with the
+        identifier, as the questions of plans and sketches do (see ``questions_in``)
     ``none``
         no rule written yet. The family is inventoried, and never failed
 
     ``removable`` marks a family whose definition is meant to disappear once the entry is taken on.
     An unresolved mention there means the entry was rehomed, so it is reported and never failed.
+
+    ``failing`` is False for a family whose identifiers are also raised outside the documents its
+    rule reads, so an unresolved mention is counted and never failed.
     """
 
     name: str
@@ -113,6 +120,7 @@ class Family:
     definition: str
     defines: tuple[str, ...] = ()
     removable: bool = False
+    failing: bool = True
     note: str = ""
 
     @property
@@ -214,10 +222,89 @@ FAMILIES: tuple[Family, ...] = (
     Family(
         name="question-or-decision-point",
         mention=re.compile(r"\b([A-Z]{1,4}\d*[a-z]?-(?:Q|D)\d+)\b"),
-        definition="none",
-        note="design questions and decision points, raised in plans and sketches",
+        definition="question",
+        defines=((DEVELOPER / "plans" / "*.md").as_posix(), (DEVELOPER / "sketches" / "*.md").as_posix()),
+        failing=False,
+        note="design questions and decision points. A question defined by a lead or row in a plan or "
+        "sketch is an entry of the index. One raised in a note, a status record or a decision is "
+        "counted and never failed, and a decision point is not a question",
     ),
 )
+
+
+# A question's own id, as its lead or row writes it, a question and never a decision point.
+QUESTION_ID = r"[A-Z]{1,4}\d*[a-z]?-Q\d+"
+# ``**LG-Q7. A question?**``, ``- **C6-Q1. A question.** text`` and ``- **C3-Q1.** text``.
+QUESTION_LEAD_RE = re.compile(
+    rf"^\s*(?:[-*]\s+|\d+\.\s+)?\*\*(?P<id>{QUESTION_ID})(?:[.:](?P<inside>[^*]*))?\*\*\s*(?P<after>.*)$"
+)
+QUESTION_ROW_RE = re.compile(rf"^\|\s*(?:\*\*)?(?P<id>{QUESTION_ID})(?:\*\*)?\s*\|(?P<rest>.*)$")
+ANSWERED_RE = re.compile(r"\banswered\b(?:\W+(?P<date>\d{4}-\d{2}-\d{2}))?", re.I)
+
+
+@dataclass(frozen=True)
+class Question:
+    """A question as a plan or a sketch raises it: its own words, the answer beside it if any, and
+    the lines that hold both."""
+
+    identifier: str
+    start: int
+    end: int
+    question: str
+    answer: str
+    answered: bool
+    answered_on: str | None
+
+
+def _sentence(text: str) -> tuple[str, str]:
+    """The first sentence of a text and the rest of it."""
+    match = re.match(r"(.+?[.?!])(\s+|$)", text)
+    return (match.group(1), text[match.end():]) if match else (text, "")
+
+
+def questions_in(lines: list[str]) -> list[Question]:
+    """Every question a document raises by a bold lead or a table row, in order.
+
+    A lead's paragraph runs to the next blank line or the next lead. A row is its own line, its
+    second cell the question and the rest its options and answer. A question is answered when its
+    text says Answered, with the date that follows the word if one does."""
+    found: list[Question] = []
+    for number, line in enumerate(lines, 1):
+        row = QUESTION_ROW_RE.match(line)
+        lead = None if row else QUESTION_LEAD_RE.match(line)
+        if row:
+            cells = [c.strip() for c in row.group("rest").split("|")]
+            cells = [c for c in cells if c]
+            question = cells[0] if cells else ""
+            answer = next((c for c in cells[1:] if ANSWERED_RE.search(c)), cells[-1] if len(cells) > 1 else "")
+            end = number
+        elif lead:
+            body = [lead.group("after").strip()]
+            end = number
+            while end < len(lines) and lines[end].strip() and not QUESTION_LEAD_RE.match(lines[end]):
+                body.append(lines[end].strip())
+                end += 1
+            text = " ".join(b for b in body if b)
+            inside = (lead.group("inside") or "").strip()
+            question, answer = (inside, text) if inside else _sentence(text)
+        else:
+            continue
+        answered = ANSWERED_RE.search(answer) or ANSWERED_RE.search(question)
+        found.append(Question(
+            (row or lead).group("id"), number, end, question.strip(), answer.strip(),
+            bool(answered), answered.group("date") if answered else None,
+        ))
+    return found
+
+
+def question_documents(family: "Family") -> list[Path]:
+    """The tracked documents whose leads and rows define the family's questions, in the order of
+    its patterns, so a plan's definition wins over a sketch's."""
+    tracked = tracked_markdown()
+    out: list[Path] = []
+    for pattern in family.defines:
+        out += sorted(p for p in tracked if fnmatch.fnmatch(_name(p), pattern) and p not in out)
+    return out
 
 
 @dataclass
@@ -284,6 +371,11 @@ def definitions(family: Family) -> dict[str, str]:
     if not family.resolvable:
         return {}
     defined: dict[str, str] = {}
+    if family.definition == "question":
+        for path in question_documents(family):
+            for q in questions_in(path.read_text(encoding="utf-8", errors="replace").splitlines()):
+                defined.setdefault(normalise(q.identifier), q.identifier)
+        return defined
     for pattern in family.defines:
         for path in sorted(ROOT.glob(pattern)):
             if family.definition == "filename":
@@ -332,6 +424,7 @@ def _sites(mention: Mention, limit: int = 4) -> str:
 class Findings:
     unresolved: list[tuple[Family, Mention]] = field(default_factory=list)
     rehomed: list[tuple[Family, Mention]] = field(default_factory=list)
+    counted: list[tuple[Family, Mention]] = field(default_factory=list)
     variants: list[tuple[Family, Mention, str]] = field(default_factory=list)
 
 
@@ -347,6 +440,9 @@ def examine(found: dict[str, dict[str, Mention]]) -> Findings:
             canonical = defined.get(key)
             if canonical is None:
                 if key in baseline:
+                    continue
+                if not family.failing:
+                    findings.counted.append((family, mention))
                     continue
                 (findings.rehomed if family.removable else findings.unresolved).append(
                     (family, mention)
@@ -371,9 +467,9 @@ def report(found: dict[str, dict[str, Mention]], files: int) -> None:
             print(f"{family.name:<28} {len(entries):>8} {sites:>7} {'-':>8} {'-':>11}")
             continue
         unresolved = sum(
-            1 for f, _ in findings.unresolved + findings.rehomed if f.name == family.name
+            1 for f, _ in findings.unresolved + findings.rehomed + findings.counted if f.name == family.name
         )
-        mark = f"{unresolved} rehomed" if family.removable else str(unresolved)
+        mark = f"{unresolved} rehomed" if family.removable else f"{unresolved} counted" if not family.failing else str(unresolved)
         print(
             f"{family.name:<28} {len(entries):>8} {sites:>7} "
             f"{len(definitions(family)):>8} {mark:>11}"
@@ -449,7 +545,8 @@ def main() -> int:
     print(
         f"identifier check passed: every mention of {resolvable} resolvable identifiers resolves. "
         f"{len(findings.variants)} written non-canonically (--variants), "
-        f"{len(findings.rehomed)} register entries rehomed (--rehomed)"
+        f"{len(findings.rehomed)} register entries rehomed (--rehomed), "
+        f"{len(findings.counted)} questions raised outside a plan or sketch, counted and never failed"
     )
     return 0
 

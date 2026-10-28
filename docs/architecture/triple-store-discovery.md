@@ -34,6 +34,8 @@ Each finding states its evidence, as one or more of these.
 | **Documented** | the store's own documentation says so | a page of the store's manual |
 | **Reasoned** | it follows from the specification or from other findings, and is not yet observed | marked as a hypothesis until it is |
 
+A finding that qualifies a register entry or a declared term names it on a line of its own, `**Bears on:** PAT-03, dal:keyShards`, by identifier or by the CURIE its layer writes, so a `read` of that entry lists the finding beside it.
+
 A finding is only as strong as its evidence. Source tells us the mechanism, Observed tells us it really happens on this
 version, and the two together are what we aim for. A finding built only on Documented or Reasoned evidence says so in its
 first line.

@@ -56,7 +56,19 @@ def test_every_family_with_a_definition_rule_names_where_it_defines():
     for family in identifiers.FAMILIES:
         if family.resolvable:
             assert family.defines, family.name
-            assert family.definition in {"filename", "table-row", "heading"}, family.name
+            assert family.definition in {"filename", "table-row", "heading", "question"}, family.name
+
+
+def test_a_question_raised_outside_a_plan_or_sketch_is_counted_and_never_failed():
+    """Questions are raised in notes, status records and decisions too, outside the documents whose
+    leads and rows define them, so an unresolved one is counted. LG-Q7 is defined by its row in the
+    ledger plan, so it resolves."""
+    family = next(f for f in identifiers.FAMILIES if f.name == "question-or-decision-point")
+    assert not family.failing and "LGQ7" in identifiers.definitions(family)
+    found = identifiers.mentions(identifiers.scannable(identifiers.tracked_markdown()))
+    findings = identifiers.examine(found)
+    assert not [m for f, m in findings.unresolved if f is family]
+    assert [m for f, m in findings.counted if f is family], "the corpus raises questions outside plans and sketches"
 
 
 def test_a_removable_family_is_never_failed():

@@ -43,13 +43,13 @@ The compiler's output must also remain distinct from two runtime concerns this A
 
 ## Addendum, 2026-10-10
 
-[ADR-A123](ADR-A123-typed-operation-ir.md), accepted on 2026-10-10, supersedes decision 3's Mustache layer,
+**Narrows decisions 1, 3 and 4.** [ADR-A123](ADR-A123-typed-operation-ir.md), accepted on 2026-10-10, supersedes decision 3's Mustache layer,
 decision 4's renderer clause, the consequence that templates stay auditable by inspection, and `dal:templatePath`
 in decision 1. Everything else here stands. The templates were retired on 2026-10-21 (ADR-A123, addendum of that date).
 
 ## Addendum, 2026-10-20: `dal:templatePath` is gone (accepted 2026-10-20)
 
-The addendum of 2026-10-10 said `dal:templatePath` is superseded. We remove it from the vocabulary and from every compiled profile.
+**Narrows decision 1.** The addendum of 2026-10-10 said `dal:templatePath` is superseded. We remove it from the vocabulary and from every compiled profile.
 `dal:templateId` is the identity of a builder, the operation id with no `.mustache` suffix, and `instantiate` finds the builder by it. The templates
 were retired on 2026-10-21, so no template library, template file or Mustache renderer remains, and the id is the builder's identity in memory too. The compiled
 profile also carries the contract of each operation and the run's choices ([ADR-A123](ADR-A123-typed-operation-ir.md), addendum of 2026-10-20),

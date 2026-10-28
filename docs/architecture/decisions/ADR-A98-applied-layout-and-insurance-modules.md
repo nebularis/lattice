@@ -83,7 +83,7 @@ importer.
 
 ## Addendum (2026-09-26): no scheme profile module
 
-Revised ADR-A100 handles schemes without a hierarchy in Eligibility and its compilers (epic
+**Narrows decisions 2 and 5.** Revised ADR-A100 handles schemes without a hierarchy in Eligibility and its compilers (epic
 decision D11, reversing D10). No `applied/scheme-profile/` module exists. Decision 2 therefore
 lists two cross-domain modules, `capacity/` and `classification/`, and decision 5 reads:
 `classification/` imports the substrate only, and `insurance/common/` imports it and the
