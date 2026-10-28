@@ -24,7 +24,9 @@ TOPOLOGY: dict[str, Any] = json.loads(
 )
 JOBS_QUEUE = "lattice.studio.jobs"
 
-_MESSAGE = re.compile(r"urn:lattice:studio:job:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+_UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+_MESSAGE = re.compile(rf"urn:lattice:studio:job:{_UUID}")
+_BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
     CST.Persistence: "persistence", CST.Surface: "surface", CST.Vocabulary: "vocabulary",
@@ -105,20 +107,25 @@ class ConfigStudioWorker:
         submitted = graph.value(job, CST.submittedAt)
         if kind is None or target is None or submitted is None:
             raise ValueError("job lacks a known kind, a known target or a submission time")
+        # The job graph is the service's, but the worker reads only what a job of its own may name (STD-279).
         return run_job(
             job, kind, target,
-            self._read(graph, job, CST.configGraph, "configuration"),
-            self._read(graph, job, CST.baselineGraph, "baseline", empty_if_missing=True),
+            self._read(graph, job, CST.configGraph, "configuration", allowed=lambda iri: iri == f"{job}:input"),
+            self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True),
             self._root, str(submitted),
         )
 
-    def _read(self, graph: Graph, job: URIRef, predicate: URIRef, what: str, empty_if_missing: bool = False) -> Graph:
+    def _read(
+        self, graph: Graph, job: URIRef, predicate: URIRef, what: str, allowed: Callable[[str], Any], empty_if_missing: bool = False,
+    ) -> Graph:
         """A graph the job names. A baseline may be empty, and the store keeps no empty graph, so a
         missing baseline reads as empty. A missing configuration fails the job, since the service
         writes the input of every job it publishes."""
         iri = graph.value(job, predicate)
         if iri is None:
             raise ValueError(f"job names no {what} graph")
+        if not allowed(str(iri)):
+            raise ValueError(f"{what} graph {iri} is not one this job may read")
         try:
             return self._store.get_graph(str(iri))
         except GraphNotFound as error:

@@ -144,6 +144,6 @@ def test_a_missing_baseline_reads_as_empty():
 
     store = FakeStore()
     iri = submit(store, "validate", "vocabulary", VOCABULARY / "temporal-handover.ttl")
-    del store.graphs["urn:lattice:studio:ws:w:baseline:1"]
+    del store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"]
     ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     assert store.graphs[iri].value(URIRef(iri), CST.status) == CST.Succeeded
