@@ -1918,6 +1918,7 @@ Restructured into three registers, per §4's design decision — a discharge's e
 | **Q10** | Unresolved non-coercion — every indeterminate path (insufficient granularity, unresolved value, missing conversion context, incomparability) produces the declared reason, never a definite result invented to fill the gap. |
 | **Q11** | Ordering determinism — an OrderingBasis with a total component sequence produces the same order for the same input set and unresolved-order policy, independently of storage order or evaluation time. |
 | **Q13** | Sums of like values — a sum is evaluated only over values in one unit, after any conversion §9.6 permits with its context at the reference time, and of one base, where the space names a `baseRole`. Otherwise it is `Undetermined` with `ConversionContextAbsent` or `MixedBases`, never a total of unlike values (§9.9). |
+| **Q14** | Month arithmetic — adding a month-denominated extent to a temporal position clamps the day to the last day of the target month, as a monthly recurrence does for an anchor on the 31st (§6), so 31 January plus one month is the last day of February on every implementation, and two months the last day of March. |
 
 ### Gate prerequisites
 

@@ -3523,7 +3523,7 @@ defined "for Section B2" adds to whatever else defines it there unless one defin
 An instance stores only what differs from its form: the instrument and its identity and keys, its
 parties, the values its words take (C8), the elements its assembled wording includes,
 `ins:boundUnder`, and records filling a contingent party. Stated meaning belongs to element
-versions, which are content-addressed (ADR-A51), so a wording seen before brings its stated meaning
+versions, which are versioned things with a persistent identity (Wording names no content digest, and ADR-A82 replaced ADR-A51's content addressing), so a wording seen before is recognised by its identity and version and brings its stated meaning
 with it and is never restated. Only changed, endorsed or novel elements add any. For that to hold,
 **stated meaning is context-free**: a stated term never names another element's version, and a
 scope or an ending names a section's persistent identity, resolved within the assembled wording's
@@ -3780,7 +3780,7 @@ Nothing new is stored at any tier. Each tier holds what resolution reads:
 
 | Tier | What exists | The placeholder resolves to | Checked |
 |---|---|---|---|
-| library element | an element version and its stated meaning, matched on its hash (ADR-A51), and the variable it declares or refers to, each with a persistent identity | nothing: it names the variable's identity, never a version (§16.3) | it names one variable identity, or one defined word |
+| library element | an element version and its stated meaning, matched on its identity and version (ADR-A82), and the variable it declares or refers to, each with a persistent identity | nothing: it names the variable's identity, never a version (§16.3) | it names one variable identity, or one defined word |
 | template, a form: complete text, no data | element versions composed into one wording, each declaring its variables | the variable version of that identity the template declares, so a clause reused under another schedule keeps its stated meaning | the template declares every variable its stated meaning names |
 | instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, `wrd:hasValue` the values, each `wrd:forVariable` a variable version. Variables are declarations, never included (Wording's law W5) | the value whose variable version has that identity, through `wrd:populatedFrom` where one variable takes another's. A table field's variable has one value per entry (`wrd:forEntry`), and an entry may be a section or a party | a variable with no value: the default is used, or the node is not generated and the instantiator reports it. Two values for versions of one identity: reported |
 

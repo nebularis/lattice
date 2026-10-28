@@ -66,7 +66,7 @@ fnd:TemporallyScoped a owl:Class ;
     ] .
 
 fnd:TemporalScope a owl:Class ;
-    rdfs:comment "A validity period: a start, and an optional end." ;
+    rdfs:comment "A validity period: a start, included, and an optional end, excluded, both with a timezone." ;
     fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." ;
     rdfs:subClassOf [
         a owl:Restriction ;
@@ -163,13 +163,19 @@ fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The start of a validity period." ;
-    fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
+    fnd:utility "The point at which a validity period begins, included in it. Always required, with a timezone. Where it is an estimate rather than a recorded fact, set estimatedStart true." .
 
 fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The end of a validity period, if it has one." ;
-    fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+    fnd:utility "Optional and capped at one, excluded from the period, with a timezone. An open-ended scope omits it rather than using a sentinel value." .
+
+fnd:estimatedStart a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when validFrom is an estimate rather than a recorded fact." ;
+    fnd:utility "Set it when the start of a validity period is the best available estimate. A judgement made as of a date inside an estimated period rests on the estimate, and a reader can tell." .
 
 fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Governable ;

@@ -215,13 +215,13 @@ fnd:TemporallyScoped a owl:Class ;
 
 #### `fnd:TemporalScope`
 
-**Definition.** A validity period: a start, and an optional end.
+**Definition.** A validity period: a start, included, and an optional end, excluded, both with a timezone.
 
 **Utility.** A validity period with a start (`validFrom`) and an optional end (`validTo`). If something becomes valid, lapses, and later becomes valid again, model that as a new `Version` with its own new `TemporalScope`.
 
 ```turtle-spec
 fnd:TemporalScope a owl:Class ;
-    rdfs:comment "A validity period: a start, and an optional end." ;
+    rdfs:comment "A validity period: a start, included, and an optional end, excluded, both with a timezone." ;
     fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." ;
     rdfs:subClassOf [
         a owl:Restriction ;
@@ -337,7 +337,7 @@ fnd:hasVersion a owl:ObjectProperty ;
 
 **Definition.** Direct succession between two versions of the same identity.
 
-**Utility.** Points one version at the version that directly replaced it. Set this when you create a new version to supersede an old one. To find the latest version, follow this property repeatedly until none points onward.
+**Utility.** Points one version at the version that directly replaced it. Set this when you create a new version to supersede an old one. The chain is acyclic, which shapes/constraints.ttl checks, so following it ends at the latest version, the one with no successor. A chain of versions is one thing's states. It is not a content revision of the identity guide, which names immutable bytes by their digest, and not an owl:versionIRI, which names a release of a specification
 
 ```turtle-spec
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
@@ -411,22 +411,28 @@ fnd:hasTemporalScope a owl:ObjectProperty, owl:FunctionalProperty ;
 
 #### `fnd:validFrom` / `fnd:validTo`
 
-**Definition.** The start (required) and end (optional) of a validity period.
+**Definition.** The start (required, included) and end (optional, excluded) of a validity period, and whether the start is an estimate.
 
-**Utility.** `validFrom` is the required start point for a validity period. If the exact start is unknown, use the best available estimate. `validTo` remains optional for open-ended validity.
+**Utility.** A validity period is half-open: `validFrom` is in it and `validTo` is not, so a period ending at an instant and one starting at it do not overlap. A period whose ends coincide is empty, which records a state that was entered and left at one instant. Both carry a timezone, since a comparison of a zoned and an unzoned `xsd:dateTime` is undefined and a judgement as of a date must come out the same on every engine. `validFrom` is required. Where the start is an estimate rather than a recorded fact, say so with `fnd:estimatedStart true`, so a judgement made as of a date inside the period can be told from one resting on a recorded start. `validTo` is optional for open-ended validity. `shapes/constraints.ttl` checks the datatypes, the timezones and the order.
 
 ```turtle-spec
 fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The start of a validity period." ;
-    fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
+    fnd:utility "The point at which a validity period begins, included in it. Always required, with a timezone. Where it is an estimate rather than a recorded fact, set estimatedStart true." .
 
 fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The end of a validity period, if it has one." ;
-    fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+    fnd:utility "Optional and capped at one, excluded from the period, with a timezone. An open-ended scope omits it rather than using a sentinel value." .
+
+fnd:estimatedStart a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when validFrom is an estimate rather than a recorded fact." ;
+    fnd:utility "Set it when the start of a validity period is the best available estimate. A judgement made as of a date inside an estimated period rests on the estimate, and a reader can tell." .
 ```
 
 #### `fnd:hasGovernanceState`
@@ -702,6 +708,37 @@ uniqueness check has two severities:
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
+fnd:TemporalScopeShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporalScope ;
+    sh:targetObjectsOf fnd:hasTemporalScope ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validFrom is one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validTo ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validTo is at most one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:lessThanOrEquals fnd:validTo ;
+        sh:message "A validity period is half-open: validFrom is not after validTo. Equal ends make an empty period, a state entered and left at one instant."
+    ] ;
+    sh:property [
+        sh:path fnd:estimatedStart ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "estimatedStart is at most one boolean."
+    ] .
+
+fnd:SupersessionAcyclicShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:supersededBy ;
+    sh:sparql [
+        sh:message "{$this} supersedes itself through a chain of fnd:supersededBy, so the chain has no latest version." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy>+ $this .
+            }
+        """
+    ] .
+
 fnd:KeyShape a sh:NodeShape ;
     sh:targetClass fnd:Key ;
     sh:targetSubjectsOf fnd:keyValue , fnd:keyScheme ;
@@ -835,6 +872,8 @@ fnd:MeaningBearingEdgeShape a sh:NodeShape ;
 The shapes match subclasses through `rdfs:subClassOf*` in the data graph, so validate data
 together with the adopter's ontology. A pair is reported from both sides, once per member.
 
+`fnd:SupersessionAcyclicShape` walks the chain from each of its members, so a chain of n versions costs n walks of at most n steps, the pattern Ledger uses for `ldg:partOf`. `fnd:TemporalScopeShape` is plain SHACL over every scope.
+
 `fnd:MeaningBearingEdgeShape` runs one query per versioned focus node over its outgoing edges, joined to the `fnd:meaningBearing` annotations, so the adopter's ontology is in the data graph when it runs, as for the key shapes. It warns rather than fails, since a content-addressed object that is neither versioned nor minted under the subject is a legitimate case the data cannot distinguish. The compile-time refusal in Persistence is the exact check (§4).
 
 ### 8.8 Worked example and related documents
@@ -930,6 +969,7 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
+- **Next release** (additive). `fnd:estimatedStart` on a temporal scope, validity periods stated half-open with zoned instants and checked by `fnd:TemporalScopeShape`, `fnd:SupersessionAcyclicShape`, and `fnd:meaningBearing` with `fnd:MeaningBearingEdgeShape` ([ADR-A137](../../docs/architecture/decisions/ADR-A137-meaning-bearing-edges.md)).
 - **Next release** (breaking, [ADR-A136](../../docs/architecture/decisions/ADR-A136-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in the same release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)).
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
