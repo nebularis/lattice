@@ -32,8 +32,9 @@ final class Fixture {
         + "@prefix ex: <https://example.org/> .\n";
     static final String TURTLE = "text/turtle; charset=utf-8";
 
-    final StudioStore store = StudioStore.inMemory();
-    final DirectWrites writes = new DirectWrites(new Writer(store));
+    final StudioStore store = textual(org.apache.jena.rdfconnection.RDFConnection.connect(
+        org.apache.jena.query.DatasetFactory.createTxnMem()));
+    final DirectWrites writes = new DirectWrites(new Writer(store, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
     final RecordingJobBus bus = new RecordingJobBus();
     final Path assets;
     final StudioApi api;
@@ -48,6 +49,30 @@ final class Fixture {
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
         this.api = new StudioApi(store, writes, busOverride == null ? bus : busOverride, clock,
             () -> new UUID(0, counter.incrementAndGet()), assets);
+    }
+
+    /**
+     * A store over {@code real} that sends every update and query as text and parses it back, as Fuseki does, so a request
+     * Jena builds but cannot write as valid SPARQL fails here rather than only against a live store.
+     */
+    static StudioStore textual(org.apache.jena.rdfconnection.RDFConnection real) {
+        return new StudioStore((org.apache.jena.rdfconnection.RDFConnection) java.lang.reflect.Proxy.newProxyInstance(
+            org.apache.jena.rdfconnection.RDFConnection.class.getClassLoader(),
+            new Class<?>[] {org.apache.jena.rdfconnection.RDFConnection.class}, (self, method, args) -> {
+                Object[] reparsed = args == null ? null : args.clone();
+                for (int i = 0; reparsed != null && i < reparsed.length; i++) {
+                    if (reparsed[i] instanceof org.apache.jena.update.UpdateRequest u) {
+                        reparsed[i] = org.apache.jena.update.UpdateFactory.create(u.toString());
+                    } else if (reparsed[i] instanceof org.apache.jena.query.Query q) {
+                        reparsed[i] = org.apache.jena.query.QueryFactory.create(q.toString());
+                    }
+                }
+                try {
+                    return method.invoke(real, reparsed);
+                } catch (java.lang.reflect.InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            }));
     }
 
     static String id(long n) {

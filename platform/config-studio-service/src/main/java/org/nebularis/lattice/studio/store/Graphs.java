@@ -36,4 +36,21 @@ public final class Graphs {
     public static String jobInput(String job) {
         return job(job) + ":input";
     }
+
+    /** The store's own receipts, of deletions whose workspace is gone with its graphs. */
+    public static final String STORE_RECEIPTS = "urn:lattice:studio:receipts";
+
+    /** The receipts of a workspace's writes, kept while it is. */
+    public static String receipts(String ws) {
+        return workspace(ws) + ":receipts";
+    }
+
+    /** The receipts of a job's writes, deleted with the job. */
+    public static String jobReceipts(String job) {
+        return job(job) + ":receipts";
+    }
+
+    public static String receipt(String command) {
+        return "urn:lattice:studio:receipt:" + command;
+    }
 }

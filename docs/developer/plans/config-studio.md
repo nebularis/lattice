@@ -47,6 +47,8 @@ Recorded 2026-10-27 at the maintainer's request, toward making the studio a supp
 | CS12 | the Word authoring proof of concept unified with the studio, in the steps below | CS8 for CS12a |
 | CS13 | **done 2026-10-28.** Forms read SHACL shapes first, then `rdfs:domain` and `rdfs:range` (CS-Q7), with the layers' node and property shapes staged into the served vocabulary and a required marker | CS-Q7 |
 | CS14 | **done 2026-10-28.** Partitioned store writers, the store on disk in TDB2, job retention, samples recorded on the workspace, and export and import as TriG (CS-Q8) | CS-Q8 |
+| CS16 | **done 2026-10-28.** Writes batched one request per batch, the revision guard inside the update, a receipt per write, and the surface compiler's refusal of a promotion onto an undeclared authored property | A to D, decided 2026-10-28 |
+| CS17 | the store writers as a deployable of their own, by CS-Q9's answer | CS-Q9 |
 | CS15 | **done 2026-10-28.** A facility agreement sample in every part over one baseline, the parts referring to one another, with deliberate resolution and decision cases | nothing |
 
 ### CS12, unifying the Word authoring proof of concept
@@ -93,6 +95,7 @@ CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model
 | CS-Q6 | whether the platform moves from JDK 25 to 27, so the services can take Helidon 27 (CS-B14). **Decided 2026-10-28:** the platform stays on JDK 25 and Helidon 4.5, and moves when Helidon supports the next long-term JDK, 29 |
 | CS-Q7 | how a form places a property with no `rdfs:domain` (CS-D5). **Decided 2026-10-28:** forms read SHACL shapes first and fall back to `rdfs:domain` and `rdfs:range` where no shape names a property. Built as CS13 |
 | CS-Q8 | how a job's status reaches the service without contention on the store (formerly CS-D4, then PDD-13), and whether the store is kept on disk. **Decided 2026-10-28:** one store writer per workspace through a consistent-hash exchange and partition queues with a single active consumer, a pool of writers sized per deployment, TDB2 on disk in the user's data folder, jobs on disk with a retention, samples copied on demand, and export and import as TriG. Recorded in ADR-A136's second amendment of 2026-10-28, accepted the same day. Built as CS14 |
+| CS-Q9 | how the store writers are deployed (CS-B24 reopened). Raised 2026-10-28 by the maintainer, who asks that the writers deploy apart from the service, with a single process kept for tests and a demonstration. Options are set out to the maintainer, with the partitions' assignment to writer instances the open part |
 
 ## Planned validation
 

@@ -52,6 +52,9 @@ public final class StudioStore implements AutoCloseable {
           FILTER (?finished < ?cutoff)
         }""";
 
+    private static final String RECEIPTS_QUERY = PREFIXES
+        + "SELECT ?id ?revision WHERE { GRAPH ?g { ?r cst:commandId ?id OPTIONAL { ?r cst:receiptRevision ?revision } } }";
+
     private final RDFConnection connection;
 
     public StudioStore(RDFConnection connection) {
@@ -107,6 +110,26 @@ public final class StudioStore implements AutoCloseable {
         ParameterizedSparqlString query = new ParameterizedSparqlString(EXPIRED_JOBS_QUERY);
         query.setLiteral("cutoff", cutoff.toString(), org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime);
         return connection.queryConstruct(query.asQuery());
+    }
+
+    /** Applies one update request, which the store runs as one transaction. */
+    public void update(UpdateRequest request) {
+        connection.update(request);
+    }
+
+    /** For each command id with a receipt in the store, its receipt's revision, or 0 for a receipt without one. */
+    public Map<String, Long> receipts(java.util.Collection<String> ids) {
+        Map<String, Long> out = new java.util.HashMap<>();
+        if (ids.isEmpty()) {
+            return out;
+        }
+        Query query = constant(RECEIPTS_QUERY);
+        org.apache.jena.sparql.core.Var id = org.apache.jena.sparql.core.Var.alloc("id");
+        query.setValuesDataBlock(List.of(id), ids.stream().map(v -> org.apache.jena.sparql.engine.binding.BindingFactory
+            .binding(id, org.apache.jena.graph.NodeFactory.createLiteralString(v))).toList());
+        connection.querySelect(query, row -> out.put(row.getLiteral("id").getString(),
+            row.contains("revision") ? row.getLiteral("revision").getLong() : 0L));
+        return out;
     }
 
     /** Drops the graphs in {@code drops}, then replaces each graph in {@code replacements}, in one request. */

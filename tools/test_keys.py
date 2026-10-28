@@ -305,7 +305,7 @@ def test_f1_15_surface_promotes_every_identity_key_onto_versions() -> None:
     from surface import cli
 
     with tempfile.TemporaryDirectory() as out:
-        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE),
+        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), str(FOUNDATION / "spec" / "foundation.ttl"),
                          "--out", out, "--now", "2026-10-03T00:00:00Z"]) == 0
         generated = Graph()
         for path in Path(out).rglob("*.ttl"):
@@ -323,7 +323,7 @@ def test_f1_15_one_contract_alone_misses_the_external_key() -> None:
     from surface import cli
 
     with tempfile.TemporaryDirectory() as out:
-        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), "--out", out,
+        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), str(FOUNDATION / "spec" / "foundation.ttl"), "--out", out,
                          "--now", "2026-10-03T00:00:00Z",
                          "--contract", "https://example.org/lattice/surface/keys#version-natural-keys"]) == 0
         generated = Graph()

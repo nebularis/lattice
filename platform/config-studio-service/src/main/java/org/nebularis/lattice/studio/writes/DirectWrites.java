@@ -16,4 +16,9 @@ public final class DirectWrites implements Writes {
     public synchronized Reply send(Command command) {
         return writer.apply(command);
     }
+
+    /** Several commands as one writer would take them from its queue, in one request. */
+    public synchronized java.util.List<Reply> sendAll(java.util.List<Command> commands) {
+        return writer.apply(commands);
+    }
 }

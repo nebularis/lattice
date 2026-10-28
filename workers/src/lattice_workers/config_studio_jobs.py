@@ -258,11 +258,12 @@ def _compile_persistence(result: _Result, config: Graph, baseline: Graph, root: 
         result.gap(gap.target, gap.obligation, f"[{gap.gap}] {gap.message}")
 
 
-def _compile_surface(result: _Result, config: Graph, baseline: Graph, now: str) -> None:
+def _compile_surface(result: _Result, config: Graph, baseline: Graph, root: str, now: str) -> None:
     from surface.compile import CompileError, SurfaceCompiler, render
     from surface.model import ContractError, read_contracts
 
-    source = _merge(config, baseline)
+    # A promotion onto a LATTICE term, such as fnd:externalKey, finds it declared in the substrate's specifications.
+    source = _merge(config, baseline, _spec(root, "vocabulary"))
     try:
         contracts = read_contracts(config)
     except ContractError as error:
@@ -304,5 +305,5 @@ def run_job(
     elif target == "eligibility":
         result.conforms(layers.eligibility_artefacts(result, _merge(_spec(base, target), baseline, config), now))
     else:
-        _compile_surface(result, config, baseline, submitted_at)
+        _compile_surface(result, config, baseline, str(root), submitted_at)
     return result.graph

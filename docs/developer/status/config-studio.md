@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** review CS13 to CS15 in the Validation Pack, and rule on CS-B23 to CS-B28. CS12c (the document schema) and CB0 (the builder's three ADRs) can start.
+**Next action, for the maintainer:** decide CS-Q9, the store writers as a deployable of their own, and rule on CS-B29 to CS-B33.
 
 ## Decisions taken alone, for ratification
 
@@ -53,6 +53,12 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B26 | The writer compares a job update with the stored job by value, not by term | rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` (TSD-43), which a term comparison read as tampering, found running the live stack |
 | CS-B27 | Finished jobs are swept hourly after 30 days (`LATTICE_STUDIO_JOB_RETENTION_DAYS`), and the browser still deletes a validation job once it has read it, keeping compile jobs | jobs on disk keep compile history, which the build view lists, while a validation runs on every pause in typing and would fill the store |
 | CS-B28 | A creation and an import refuse a baseline that holds another part's subjects, as a save does (`422`), and a workspace's identity references are no longer warned about as undeclared | the writer must check a creation like any write (STD-279). An identity is a name nothing need describe, as the repository's examples show, so the warning was noise on every sample |
+| CS-B29 | Each write's first operation inserts its receipt where its precondition holds, and its other operations require the receipt. A workspace's receipts live in its own receipts graph, a job's in the job's, deleted with it, and a workspace's deletion in the store's receipts graph. No principal is recorded | one guard per write, as PAT-21 asks, without repeating it in every operation, and the receipt is both PRI-54's record and the proof a write applied. Job receipts go with their job so receipts grow with workspaces, not with every validation |
+| CS-B30 | A writer takes up to 64 waiting writes as one request and retries a batch the store refuses whole, while refusing or answering each command on its own | TSD-44: one commit costs about 65 ms and an operation under one. One transaction makes a retry safe, and receipts make a redelivered command a no-op |
+| CS-B31 | A save expecting revision 0 is guarded by the absence of any other revision | a description written before a part existed has no revision for it, which reads as 0. Found by an existing test |
+| CS-B32 | The surface compiler refuses a promotion outside its target namespace onto a property the source graph does not declare as a property, and the studio's compile adds the substrate's specifications to its source | the maintainer's D. The surface README already says such a property is one an authored layer declares, so the law's text stands. A promotion onto `fnd:externalKey` finds it in Foundation's specification |
+| CS-B33 | The studio does not warn that a promotion's property is undeclared when it lies in the contract's target namespace | the compiler mints that property itself (`compile.py`), so the warning was wrong |
+| CS-B34 | A `NOT EXISTS` pattern is wrapped in a group, and the service's tests send every request as SPARQL text | Jena writes a bare `GRAPH` inside `NOT EXISTS` without braces, which Fuseki refuses while the in-memory store, running the algebra, accepts it. Found on the live stack |
 
 ## Learnings
 
@@ -77,6 +83,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, CS16: the maintainer accepted ADR-A136's second amendment, ratified CS-B23 to CS-B28 except CS-B24, which CS-Q9 reopens, and decided A to D. Writes are batched one request per batch (TSD-44), guarded in the update (PAT-21) and leave a receipt each (PRI-54), and the surface compiler refuses a promotion onto an undeclared authored property. The index review found PAT-55 stale and the writer to be PAT-18.
 - 2026-10-28, latest: CS13 to CS15 under the maintainer's delegation. Forms read shapes first (CS-Q7, by a sub-agent on its own branch, reviewed and merged). Partitioned store writers, the store on TDB2 in the user's data folder, job retention, export and import, and samples recorded on the workspace (CS-Q8), with ADR-A136's second amendment drafted. A facility agreement sample in every part (by a sub-agent, reviewed and merged). TSD-42 and TSD-43 recorded, MEC-88 and TD-97 to TD-99 added, PDD-13 closed into CS-Q8. The maintainer ruled on CS-D5, CS-D10, CS-D12, CS-B14 (stay on JDK 25), CB-Q4 (ODRL) and decided CS-Q8.
 - 2026-10-28, ratification: the maintainer accepted ADR-A136 as amended and ADR-A137 with DM-Q1 to DM-Q3 as recommended, ruled on the decisions as recorded above, and answered the builder's questions (CB-Q1 to CB-Q5 in the plan). CS-D4 reopened as PDD-13. CS-Q6 and CS-Q7 raised.
 - 2026-10-28, latest: CS9, CS12a and CS12b, under the maintainer's delegation. ADR-A136 amended to make the studio supported, the `cst:` namespace renamed, a published architecture document, an operations guide and a runbook, register entries (CAP-86 updated, MEC-84 to MEC-87, PAT-55), the STD-279 review of both services with the worker's gap fixed, the authoring service on Helidon with Jena 6 and Jackson 2.22 (TD-95 closed), the shared package, and the stack's port check. Two sub-agents wrote CS12b and the operator documents on their own branches, which we reviewed and merged.

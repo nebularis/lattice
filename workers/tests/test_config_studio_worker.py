@@ -282,7 +282,8 @@ def test_a_job_graph_goes_to_its_workspace_writer_not_the_store():
     assert reader.history == []
     exchange, key, headers, body = publisher.sent[0]
     assert (exchange, key) == ("lattice.studio.writes", ws)
-    assert headers == {"command": "job-update", "workspace": ws, "job": job}
+    assert uuid.UUID(headers.pop("id")).version == 4
+    assert headers == {"sender": "worker", "command": "job-update", "workspace": ws, "job": job}
     sent = Dataset().parse(data=body.decode("utf-8"), format="nquads")
     assert to_isomorphic(sent.graph(URIRef(iri))) == to_isomorphic(graph)
 

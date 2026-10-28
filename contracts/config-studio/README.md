@@ -90,7 +90,7 @@ Running a job twice gives the same graph but for its times, so a redelivered mes
 
 Every write to the store is a command to the writer of its workspace (ADR-A136, amendment on partitioned writers). A command is published to exchange `lattice.studio.writes`, of type `x-consistent-hash` (RabbitMQ's `rabbitmq_consistent_hash_exchange` plugin), with the workspace's id as its routing key. The exchange routes it to one of the 8 queues `lattice.studio.writes.0` to `.7`, each bound with weight `1`, durable, dead-lettering to `lattice.studio.dlx`, and with a single active consumer, so one writer applies a workspace's commands in order. The number of partitions is fixed here, since changing it moves workspaces between queues.
 
-A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent.
+A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent. Every command carries `id`, a lower-case UUID its sender chooses, and `sender`, `service` or `worker`.
 
 | `command` | Other headers | Body | Sent by |
 |---|---|---|---|
@@ -105,4 +105,14 @@ A command's fields are AMQP headers, and the graphs it carries are its body, `co
 `workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service sets `reply_to` to `amq.rabbitmq.reply-to`, a `correlation_id`, and an `expiration` of its 10-second wait, and the writer answers with headers alone: `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
 
 The writer checks every command, whatever its sender checked: the ids, that a command carries only the graphs its kind may, part membership by the rule of `PUT`, that a job names its workspace, its own input, the workspace's baseline and `cst:Queued`, and that a `job-update` changes nothing on the job node but `cst:status`, `cst:startedAt`, `cst:finishedAt`, `cst:failureMessage`, `cst:conforms`, `cst:report`, `cst:artefact`, `cst:gap`, `cst:resolution`, `cst:expansion` and `cst:testResult`, compared by value. A `job-update` for a deleted job is dropped. A refused command is dead-lettered.
+
+A writer applies the commands waiting for it, up to 64, in one SPARQL Update request, one transaction. Each command's first operation inserts its `cst:Receipt` only where its precondition holds in the store: a save's expected revision, a creation's or an import's absent workspace, a job's workspace. Its other operations require that receipt, so a command applies whole or not at all, and the receipts present after the commit are the commands applied. A command whose receipt already exists, such as one redelivered after a lost acknowledgement, is answered from its receipt and not applied again. A batch the store refuses is retried whole.
+
+| Receipt graph | Holds |
+|---|---|
+| `urn:lattice:studio:ws:{ws}:receipts` | the receipts of the workspace's own writes and of its jobs' deletions, deleted with the workspace |
+| `urn:lattice:studio:job:{job}:receipts` | the receipts of a job's submission and updates, deleted with the job |
+| `urn:lattice:studio:receipts` | the receipt of each workspace's deletion |
+
+A receipt, `urn:lattice:studio:receipt:{id}`, has `cst:commandId`, `cst:command` (the cause), `cst:sender`, `cst:workspace`, `cst:job` where there is one, `cst:requestedAt` where the command has a time, `cst:committedAt` (the transaction time), `cst:wrote` for each graph and `cst:receiptRevision` for a save or a creation. No principal is recorded, since the studio authenticates no one. An export holds no receipt.
 

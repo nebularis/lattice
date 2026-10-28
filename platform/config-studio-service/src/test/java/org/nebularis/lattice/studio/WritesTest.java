@@ -46,7 +46,7 @@ class WritesTest {
     @BeforeEach
     void setUp() throws IOException {
         f = new Fixture(Fixture.assetsDir(dir));
-        writer = new Writer(f.store);
+        writer = new Writer(f.store, Clock.systemUTC());
         assertEquals(201, f.createWorkspace("Plan").status());
     }
 

@@ -27,6 +27,8 @@ public final class Codec {
 
     public static Map<String, Object> headers(Command c) {
         Map<String, Object> h = new HashMap<>();
+        h.put("id", c.id());
+        put(h, "sender", c.sender());
         h.put("command", c.type().wire);
         h.put("workspace", c.workspace());
         put(h, "job", c.job());
@@ -63,7 +65,8 @@ public final class Codec {
                 .strict(true).parse(graphs.asDatasetGraph());
             Object expect = headers.get("expect");
             String at = text(headers, "at");
-            return new Command(type, text(headers, "workspace"), text(headers, "job"), text(headers, "part"),
+            return new Command(text(headers, "id"), text(headers, "sender"), type, text(headers, "workspace"),
+                text(headers, "job"), text(headers, "part"),
                 expect instanceof Number n ? n.longValue() : null, at == null ? null : Instant.parse(at),
                 text(headers, "label"), text(headers, "sample"), graphs);
         } catch (RiotException | DateTimeParseException e) {

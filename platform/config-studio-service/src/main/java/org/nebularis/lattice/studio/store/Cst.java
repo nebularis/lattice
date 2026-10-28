@@ -36,6 +36,15 @@ public final class Cst {
     public static final Property finishedAt = p("finishedAt");
     public static final Property failureMessage = p("failureMessage");
     public static final Property fromSample = p("fromSample");
+    public static final Resource Receipt = r("Receipt");
+    public static final Property commandId = p("commandId");
+    public static final Property command = p("command");
+    public static final Property sender = p("sender");
+    public static final Property job = p("job");
+    public static final Property requestedAt = p("requestedAt");
+    public static final Property committedAt = p("committedAt");
+    public static final Property wrote = p("wrote");
+    public static final Property receiptRevision = p("receiptRevision");
 
     private Cst() {
     }

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import uuid
 from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Protocol
@@ -164,7 +165,11 @@ class WriterStore:
         named = dataset.graph(URIRef(graph_iri))
         for triple in graph:
             named.add(triple)
-        headers = {"command": "job-update", "workspace": workspace.group(1), "job": graph_iri.rsplit(":", 1)[1]}
+        # The id names the command's receipt, so a publish repeated after a broker failure is applied once.
+        headers = {
+            "id": str(uuid.uuid4()), "sender": "worker", "command": "job-update",
+            "workspace": workspace.group(1), "job": graph_iri.rsplit(":", 1)[1],
+        }
         self._publisher.publish(WRITES["exchange"], workspace.group(1), headers, dataset.serialize(format="nquads").encode("utf-8"))
 
 

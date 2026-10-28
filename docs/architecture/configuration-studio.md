@@ -40,7 +40,7 @@ flowchart LR
 |---|---|---|
 | browser application | the editors, derived from the vocabularies it is served, and the sorting of an imported graph into a workspace's parts | interpret a finding or compile |
 | service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store but through a writer |
-| store writer | every write to the store for the workspaces of its partitions, one at a time, and the revision guard | apply a command it has not checked |
+| store writer | every write to the store for the workspaces of its partitions, in batches of one request each, the revision guard, and a receipt per write | apply a command it has not checked |
 | worker | validation and compilation, with the engines `mise run check` uses | take a path, a command or a graph of its own choosing from a message |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
 | RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their workspace | carry a job's content to the worker |
@@ -50,6 +50,8 @@ flowchart LR
 **The store is the only state.** The service keeps no registry. A workspace's revisions are triples in its own graph, and a job's status is read from the job's graph, which the worker's updates write (PRI-52). The store is a TDB2 database on disk, in the user's data folder, so workspaces and the results of past jobs outlive the application. A finished job is deleted after a retention, 30 days unless a deployment sets another.
 
 **One writer per workspace.** The service and the worker never write the store. Each write is a command published to a consistent-hash exchange, keyed by its workspace's id, which routes it to one of eight partition queues. Each queue has a single active consumer, so one writer applies a workspace's writes in order, and a revision it reads cannot change before its own update. A deployment runs from one writer to eight, and a second instance's writers stand by for the partitions of one that stops. The service waits for the writer's reply, so a save still answers the browser at once.
+
+**A batch is one commit, and each write leaves a receipt.** A writer applies the writes waiting for it in one request, since on TDB2 a commit costs far more than the operations in it ([TSD-44](triple-store-discovery.md#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput)). Each write first inserts a receipt of its cause, sender and transaction time, only where its precondition holds in the store, such as the revision a save expects, and its other operations require that receipt. So a write applies whole or not at all even should two writers hold one workspace, a write redelivered after a lost acknowledgement is answered from its receipt, and the receipts are the record of what was written.
 
 **A job message is a job IRI and nothing else.** The worker reads the job graph, which names its input graphs by reference ([ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)). A job's input graph is written once under its IRI, and each baseline revision is a new graph, so a job's inputs never change under it.
 

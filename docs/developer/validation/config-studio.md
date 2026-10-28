@@ -268,6 +268,22 @@ Built by a sub-agent on its own branch, reviewed and merged.
 | CS15-04 | the live studio / the sample opened from the new-workspace dialog / created through the writer, 0 violations, 2 warnings | L5 | + | pass. The warnings are surface's `ConstraintsNotRun` (TD-11) and a promotion's target property the baseline does not declare, as in the repository's surface examples. 10 warnings that identity references were undeclared were removed (CS-B28) |
 | CS15-05 | the whole worker suite / `mise run check:workers` / pass | L1 | + | pass, 167 tests |
 
+## CS16: batched, guarded writes with receipts, and the surface refusal
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS16-01 | a save / applied / a receipt with its command, sender, requested and committed times, the graphs it wrote and its revision, beside the creation's | L1 | + | pass, `ReceiptsTest` |
+| CS16-02 | the same command twice, as after a lost acknowledgement / applied / answered from its receipt, the revision moved once | L1 | + | pass |
+| CS16-03 | a batch of saves expecting 0 and 1, a stale save and a bad id / applied as one request / `200 r1`, `200 r2`, `412 r2`, `400`, and the second graph stored | L1 | + − | pass |
+| CS16-04 | another writer saving between this writer's read and its update / the update runs / `412`, nothing of the overtaken write stored, no receipt for it | L1 | − | pass. The interference is a proxy over the connection |
+| CS16-05 | a workspace deleted / its graphs, jobs and receipts go / the receipt of the deletion is kept in the store's receipts graph | L1 | + | pass |
+| CS16-06 | every update and query the tests send / sent as SPARQL text and parsed back, as Fuseki does / the suite passes, and fails without CS-B34's fix | L1 | + − | pass, 55 tests. With the fix undone, 41 fail. The live run found the fault the in-memory store had hidden |
+| CS16-07 | the live stack / create, save, a stale save, a validation, deletions / `201`, `204`, `412`, `Succeeded`, `204`, receipts from the service and the worker in their graphs, the deletion's kept | L5 | + − | pass |
+| CS16-08 | probe P7, 200 saves of 50 triples over HTTP from 16 clients across 20 workspaces / timed, twice / above TSD-44's 15 commits a second | L5 | + | 54 and 65 saves a second |
+| CS16-09 | a promotion outside its target namespace onto a property the source graph does not declare, and the lossy promotion fixture with its property declared / compiled / refused naming the undeclared property, and refused under srf:X6 for lossiness | L1 | − | pass, 103 surface and keys tests, Phase 8 conformance |
+| CS16-10 | the worker's job update / published / with an id and `sender` `worker` | L1 | + | pass, 24 worker tests |
+| CS16-11 | `mise run check` | L1 | + | every task passes but `check:persistence`, whose probe of TSD-04 on Oxigraph fails alone and in the run, measuring 84 against a bound of 8. This branch changes nothing it reads, so it is recorded for a task of its own |
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

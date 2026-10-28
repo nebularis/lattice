@@ -586,6 +586,17 @@ class SurfaceCompiler:
         in_namespace = str(contract.promotes_to).startswith(str(contract.target_namespace))
         self.signature_scope = SRF.LocalSignature if in_namespace else SRF.SourceSignature
 
+        if not in_namespace and not any(
+            (contract.promotes_to, RDF.type, kind) in self.source
+            for kind in (RDF.Property, OWL.ObjectProperty, OWL.DatatypeProperty)
+        ):
+            raise CompileError(
+                f"{contract.iri} promotes onto {contract.promotes_to}, which is outside the contract's "
+                f"target namespace and which the source graph does not declare. A promotion outside its "
+                f"target namespace restates onto a property an authored layer declares (law srf:X6), so "
+                f"give the source graph that layer, or promote into the target namespace."
+            )
+
         if not in_namespace and contract.lossy:
             raise CompileError(
                 f"{contract.iri} promotes a derived or crosswalk-inexact value onto "

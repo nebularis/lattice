@@ -183,3 +183,24 @@ cst:resolutionTime a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range x
     rdfs:comment "On an elg:Question or a condition, the instant its scheme is resolved at. Absent, the job's submission time." .
 cst:resolutionScope a owl:ObjectProperty ;
     rdfs:comment "On an elg:Question or a condition, a binding scope active when its scheme is resolved." .
+
+# --- Receipts: what each write did, written by the store writer in the same request (PRI-54) ---------
+
+cst:Receipt a owl:Class ;
+    rdfs:comment "One write a store writer applied: its command, cause, sender and times. A workspace's receipts are in urn:lattice:studio:ws:{ws}:receipts, a job's in urn:lattice:studio:job:{job}:receipts, deleted with the job, and a workspace's deletion in urn:lattice:studio:receipts. The principal is not recorded, since the studio authenticates no one." .
+cst:commandId a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The command's id, a lower-case UUID its sender chose. A command whose receipt exists is answered from it and not applied again." .
+cst:command a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, submit-job, job-update or delete-job." .
+cst:sender a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The component that says it sent the command, service or worker. Not authenticated." .
+cst:job a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Job ;
+    rdfs:comment "The job a write concerned." .
+cst:requestedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the sender asked for the write, where the command says." .
+cst:committedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the writer applied the write, the transaction time." .
+cst:wrote a owl:ObjectProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Graph ;
+    rdfs:comment "A graph the write replaced, filled or cleared." .
+cst:receiptRevision a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision a save or a creation moved its graph to." .

@@ -50,12 +50,12 @@ public final class StudioMain {
         if (config.amqpUri() == null) {
             LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker and stay queued");
             bus = new RecordingJobBus();
-            writes = new DirectWrites(new Writer(store));
+            writes = new DirectWrites(new Writer(store, Clock.systemUTC()));
         } else {
             Connection amqp = RabbitJobBus.connect(config.amqpUri());
             bus = new RabbitJobBus(amqp);
             if (config.writers() > 0) {
-                pool = new WriterPool(amqp, new Writer(store), config.writers());
+                pool = new WriterPool(amqp, new Writer(store, Clock.systemUTC()), config.writers());
             }
             writes = new RabbitWrites(amqp, WRITE_TIMEOUT);
         }
@@ -85,7 +85,7 @@ public final class StudioMain {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
             "studio", null, null, null, 1, 30);
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store)), new RecordingJobBus())) {
+             StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());
