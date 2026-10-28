@@ -65,7 +65,7 @@ class AuthoringServiceStackIT {
             .withEnv("ADMIN_PASSWORD", "lattice")
             .withExposedPorts(3030)
             .waitingFor(Wait.forHttp("/$/ping").forStatusCode(200));
-        rabbit = new GenericContainer<>(DockerImageName.parse("rabbitmq:3.13-management-alpine"))
+        rabbit = new GenericContainer<>(DockerImageName.parse("rabbitmq:4.4-management-alpine"))
             .withEnv("RABBITMQ_DEFAULT_USER", "lattice")
             .withEnv("RABBITMQ_DEFAULT_PASS", "lattice")
             .withExposedPorts(5672)

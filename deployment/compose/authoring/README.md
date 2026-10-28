@@ -9,7 +9,7 @@ and uses different host ports, so the two can run side by side.
 | Service | Image | Purpose | Host port (127.0.0.1 only) |
 |---|---|---|---|
 | `fuseki` | `stain/jena-fuseki:5.1.0` | Wording, proposal and analysis graphs | 3130 → 3030 |
-| `rabbitmq` | `rabbitmq:3.13-management-alpine` | `wording-analysis-request`/`-result` events | 5673 → 5672, 15673 → 15672 (management UI) |
+| `rabbitmq` | `rabbitmq:4.4-management-alpine` | `wording-analysis-request`/`-result` events | 5673 → 5672, 15673 → 15672 (management UI) |
 | `authoring-service` | built from [`service.Dockerfile`](service.Dockerfile) | The Java authoring API ([`platform/authoring-service`](../../../platform/authoring-service)) | 8088 → 8080 |
 | `authoring-worker` | built from [`worker.Dockerfile`](worker.Dockerfile) | The Python wording analysis worker ([`workers`](../../../workers)) | none (internal only) |
 | `authoring-proxy` | `caddy:2.10-alpine` | TLS termination (local CA) and static add-in hosting | 3443 → 3443 |

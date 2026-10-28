@@ -161,6 +161,20 @@ mise run test:config-studio
 
 Not run: Windows and Linux, and `--docker`, since Docker was not running. The Windows path is authored from the platform's documented behaviour.
 
+## Dependency upgrades, 2026-10-28
+
+Not a slice of the studio, recorded here because the studio's audit found them (TD-95).
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| UP-01 | `amqp-client` 5.37.0 in `authoring-service` and `platform-outbox` / `mise run check:java` / every module builds and its tests pass | L1 | + | pass, 85 authoring and 31 studio tests |
+| UP-02 | RabbitMQ and Fuseki containers, RabbitMQ on `rabbitmq:4.4-management-alpine` / `mise run check:authoring-service-it` / the stack, bus and store integration tests pass | L4 | + | pass, 6 integration tests |
+| UP-03 | OSV on 2026-10-28 / `amqp-client` 5.37.0 and `pika` 1.4.4 / no advisory | L0 | + | pass. RabbitMQ 4.4.0 lies outside every range in the server's GitHub advisories |
+
+| UP-04 | the POC stack on `rabbitmq:4.4-management-alpine` (4.4.0) / `mise run check:authoring-stack` / every end-to-end test passes, a restart included | L5 | + | pass, 7 tests |
+
+Not run: the platform's compose file, whose RabbitMQ no test starts.
+
 ## Artefacts to inspect
 
 - The studio itself: `mise run studio:up`, then <http://127.0.0.1:8090>, and `mise run studio:down`.

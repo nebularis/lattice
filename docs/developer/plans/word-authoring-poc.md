@@ -199,7 +199,7 @@ The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go t
 | Apache Jena (`jena-arq`, `jena-shacl`, `jena-rdfconnection`) | `${jena.version}` = 5.1.0 |
 | Jackson databind | 2.18.2 |
 | networknt json-schema-validator | 1.5.6 |
-| RabbitMQ amqp-client | 5.22.0 (as `platform-outbox`) |
+| RabbitMQ amqp-client | 5.37.0 (as `platform-outbox`), raised from 5.22.0 on 2026-10-28 for its advisories |
 | slf4j-simple | 2.0.16 |
 | Javalin (`io.javalin:javalin`) | 6.7.0, or the latest 6.x that P3 resolves (record it) |
 | Testcontainers (core only) | 2.0.2. Fallback 1.21.4 if P3 cannot resolve 2.0.2 (record it) |
@@ -208,7 +208,7 @@ The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go t
 | pika, rdflib, jsonschema, pytest | `>=1.3,<2`, `>=7.1,<8`, `>=4.23,<5`, `>=8,<9` |
 | React, Vite, TypeScript, Playwright | as `apps/surface-contract-studio`: 19.0.0, 6.0.5, 5.7.3, 1.50.1 |
 | Vitest, jsdom, ajv, mermaid, @types/office-js | 3.0.x, 25.0.x, 8.17.x, 11.4.x, latest 1.0.x. Exact versions as resolved in WA8, pinned without ranges |
-| images | `stain/jena-fuseki:5.1.0`, `rabbitmq:3.13-management-alpine`, `eclipse-temurin:25-jre`, `python:3.14-slim`, `caddy:2.10-alpine` |
+| images | `stain/jena-fuseki:5.1.0`, `rabbitmq:4.4-management-alpine`, `eclipse-temurin:25-jre`, `python:3.14-slim`, `caddy:2.10-alpine` |
 
 ---
 
@@ -903,7 +903,7 @@ and ADR-A118, and the statement that it is not a platform contract.
 Add `org.testcontainers:testcontainers` (test). Add profile `authoring-it` running
 `maven-failsafe-plugin` 3.5.0 goals `integration-test` and `verify` for `**/*IT.java`. ITs use
 `GenericContainer` only: `stain/jena-fuseki:5.1.0` with `ADMIN_PASSWORD=lattice`, port 3030, wait
-for HTTP `/$/ping`. `rabbitmq:3.13-management-alpine` with `RABBITMQ_DEFAULT_USER` and
+for HTTP `/$/ping`. `rabbitmq:4.4-management-alpine` with `RABBITMQ_DEFAULT_USER` and
 `RABBITMQ_DEFAULT_PASS` `lattice`, port 5672, wait for log `Server startup complete`. Containers start
 in `@BeforeAll` and stop in `@AfterAll`.
 
@@ -1570,7 +1570,7 @@ authoring job does not import. Images build with no network access beyond the ba
 | Service | Image or build | Host ports (all `127.0.0.1`) | Environment | Health | Depends on |
 |---|---|---|---|---|---|
 | `fuseki` | `stain/jena-fuseki:5.1.0` | 3130 → 3030 | `ADMIN_PASSWORD: lattice` | `wget -qO- http://localhost:3030/$$/ping` (the image has `wget`, checked in WA0) | |
-| `rabbitmq` | `rabbitmq:3.13-management-alpine` | 5673 → 5672, 15673 → 15672 | `RABBITMQ_DEFAULT_USER`, `_PASS`: `lattice` | `rabbitmq-diagnostics -q ping` | |
+| `rabbitmq` | `rabbitmq:4.4-management-alpine` | 5673 → 5672, 15673 → 15672 | `RABBITMQ_DEFAULT_USER`, `_PASS`: `lattice` | `rabbitmq-diagnostics -q ping` | |
 | `authoring-service` | build `../../../.build/authoring/service`, `platform: linux/amd64` | 8088 → 8080 | the WA5 variables: Fuseki `http://fuseki:3030`, AMQP `amqp://lattice:lattice@rabbitmq:5672/%2F`, admin password `lattice`, seed `true` | `java -cp /app/authoring-service.jar org.nebularis.lattice.authoring.app.HealthProbe http://localhost:8080/api/health`, interval 10s, retries 12, start period 20s | fuseki, rabbitmq healthy |
 | `authoring-worker` | build `../../../.build/authoring/worker` | none | AMQP and Fuseki as the service, dataset `authoring`, `LATTICE_FUSEKI_USER` `admin`, `LATTICE_FUSEKI_PASSWORD` `lattice` | none | rabbitmq healthy, authoring-service healthy |
 | `authoring-proxy` | `caddy:2.10-alpine` | 3443 → 3443 | | none | authoring-service healthy |

@@ -42,7 +42,7 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 - **The studio shows eligibility law L11 at work.** In the lending sample a required concept (manufacturing) expands to Undetermined, because an excluded concept (textiles) lies beneath it, so a manufacturing candidate's admission depends on its sub-sector. Correct, and a good example for a guide.
 
 - **The `dal:` shapes miss a convenience profile.** Personal data with no erasure on a `dal:DataAccessProfile` passes SHACL and is refused by the compiler. Recorded as TD-94, and covered in the studio by CS-D9.
-- **The Word authoring POC service has nine dependencies with advisories.** Recorded as TD-95.
+- **The Word authoring POC service has nine dependencies with advisories.** Recorded as TD-95. `amqp-client` 5.22.0, in it and in `platform-outbox`, carried ten (four high, fixed by 5.37.0), and the `rabbitmq:3.13` image resolves to 3.13.7, below the community fixes for this year's server advisories. Both raised 2026-10-28.
 - **Fuseki refuses `INSERT DATA` with blank nodes** in this setup, so the service writes with `INSERT { } WHERE { }` and an empty pattern. Not yet a triple-store discovery entry: it was observed through Jena's `RDFConnectionFuseki` only and not probed alone.
 
 ## Knowledge index
@@ -60,7 +60,8 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
-- 2026-10-27, last: the maintainer decided CS-Q1 (Helidon), CS-Q3 and CS-Q4 (one deployable in steps, the document is XML and its meaning RDF, a shared domain package, one `studio:up`), and gave PRI-75 and STD-279. CS12 planned in steps CS12a to CS12e. CS8 is next.
+- 2026-10-28: the maintainer answered CS-Q2 (an amendment to ADR-A136 in CS9) and CS-Q5 (the document vocabulary's own ADR, both schema languages, and delegated the choice of source, which we made: RELAX NG compact as source, XSD generated). `amqp-client` raised to 5.37.0 in `authoring-service` and `platform-outbox`, and RabbitMQ images from 3.13 to 4.4 in the POC's and the platform's compose files and the POC's integration tests. `check:java` and `check:authoring-service-it` pass. CS8 is next.
+- 2026-10-27, latest: the maintainer decided CS-Q1 (Helidon), CS-Q3 and CS-Q4 (one deployable in steps, the document is XML and its meaning RDF, a shared domain package, one `studio:up`), and gave PRI-75 and STD-279. CS12 planned in steps CS12a to CS12e. CS8 is next.
 - 2026-10-27, later still: CS7, start and stop scripts for every platform, verified on macOS. Roadmap CS8 to CS13 added to the plan at the maintainer's request.
 - 2026-10-27, later: CS5 and CS6 at the maintainer's request: vocabulary, quantification and eligibility configurations, the resolution table, decision by concept and tests, with what waits on other work marked as under construction. Checked against the live stack.
 - 2026-10-27: unit opened, oriented, branch `claude/config-authoring-studio` cut from `main`. Sketch, contracts, staging, worker, service, browser application, stack tasks, compose file, tests, audit and documents written and verified. Fuseki 6.2.0 and RabbitMQ 4.4.0 run by hand, since Docker was not running.

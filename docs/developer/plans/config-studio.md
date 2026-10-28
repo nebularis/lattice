@@ -41,10 +41,10 @@ Recorded 2026-10-27 at the maintainer's request, toward making the studio a supp
 | Slice | Delivers | Waits on |
 |---|---|---|
 | CS8 | the service on Helidon SE WebServer, replacing the JDK's HTTP server. The service also checks that a configuration graph holds only its own part's terms, which today only the browser checks (`split.ts`), as STD-279 requires | nothing |
-| CS9 | the studio supported: an ADR replacing ADR-A136's proof-of-concept status, register entries (capability, mechanisms, patterns, the standards it follows), a published architecture and design document drawn from the sketch and the READMEs, an operations guide configuring every part, runbooks, and a review of every handler of both services against STD-279 | CS-Q2. After CS8, so the operations guide describes the server once |
+| CS9 | the studio supported: ADR-A136 amended from a proof of concept to a supported component (CS-Q2), register entries (capability, mechanisms, patterns, the standards it follows), a published architecture and design document drawn from the sketch and the READMEs, an operations guide configuring every part, runbooks, and a review of every handler of both services against STD-279 | CS8, so the operations guide describes the server once |
 | CS10 | RDF/XML on the HTTP API by content negotiation, beside Turtle, for what a document means | nothing, CS-Q3 answered |
 | CS11 | the contract builder, CB0 to CB4 of the builder brief, including the studio's wording mode | the builder's own questions, CS9 and CS12c |
-| CS12 | the Word authoring proof of concept unified with the studio, in the steps below | CS-Q5 for CS12c |
+| CS12 | the Word authoring proof of concept unified with the studio, in the steps below | CS8 for CS12a |
 
 ### CS12, unifying the Word authoring proof of concept
 
@@ -52,13 +52,13 @@ Decided 2026-10-27 (CS-Q4). Wording becomes a mode of the studio, so the Word ad
 
 **The wire rule.** The document is XML, and what it means is RDF. Documents, with their clauses, definitions and marked spans, travel as XML and are validated against a schema in `contracts/`, which takes the place the JSON Schemas hold today, so contract first (PRI-53) still holds. Meaning, configuration, findings and jobs travel as RDF, Turtle by default and RDF/XML on request (CS10). JSON stays only where something generates it.
 
-**The document vocabulary.** LATTICE's own, domain-neutral, extending the add-in's namespace and drawing on Akoma Ntoso for its structure, without depending on it. Akoma Ntoso and InsurML are targets reached by XSLT through the transformation sidecar (ADR-A119), never the base vocabulary. Its definition is a design decision and needs an ADR before CS12c.
+**The document vocabulary.** LATTICE's own, domain-neutral, extending the add-in's namespace and drawing on Akoma Ntoso for its structure, without depending on it. Akoma Ntoso and InsurML are targets reached by XSLT through the transformation sidecar (ADR-A119), never the base vocabulary. It has an ADR of its own, apart from Wording's (CS-Q5), since Wording is what a document means and the vocabulary is the markup that describes it.
 
 | Step | Delivers | Waits on |
 |---|---|---|
 | CS12a | the authoring service on Helidon SE WebServer, replacing Javalin (WA-D4), and on the studio's graph naming and per-graph revisions with `If-Match`, still speaking JSON. Every handler validates its input at the service (STD-279) | CS8 |
 | CS12b | the shared domain package, `packages/authoring-domain`: TypeScript with no UI and no Office.js, holding the document model, the tag codec, UTF-16 offsets, the document XML reader and writer once CS12c defines it, and the studio's graph model (`src/rdf/graph.ts`). Both apps depend on it as a Yarn workspace. The conversion between Word's OOXML and the document XML stays in the add-in, since only Word needs it. Moved with its tests, so both apps' suites pass unchanged | nothing |
-| CS12c | the document XML vocabulary, its ADR and its schema in `contracts/`, with an XSLT mapping to Wording RDF through the sidecar | CS-Q5 |
+| CS12c | the document XML vocabulary, its own ADR and its schema in `contracts/`, in RELAX NG and XSD as CS-Q5 records, with an XSLT mapping to Wording RDF through the sidecar | the ADR's acceptance |
 | CS12d | one deployable service: the authoring API folded into the studio's service as its own Maven module, sharing one Helidon server, store and job bus. The add-in sends documents as XML and reads meaning as RDF, and the authoring JSON Schemas are retired | CS12a, CS12b, CS12c |
 | CS12e | one stack: `studio:up` and `studio:down` start and stop the add-in's dev server too, and `deployment/compose/authoring` is folded into the studio's compose file | CS12d |
 
@@ -69,10 +69,10 @@ Bundling and releasing the studio and the add-in are left until after CS12.
 | ID | Question |
 |---|---|
 | CS-Q1 | which HTTP server the service runs on. **Decided 2026-10-27: Helidon SE WebServer**, for its virtual threads, HTTP/2, its own NIO with no Netty, and no advisory known to OSV across its artefacts on that date |
-| CS-Q2 | whether "supported" is a new ADR superseding ADR-A136 or an amendment to it, and what support covers: compatibility of the HTTP API and `cst:`, security, a shared deployment |
+| CS-Q2 | whether "supported" is a new ADR superseding ADR-A136 or an amendment to it, and what support covers. **Answered 2026-10-28:** supported means we develop and maintain the studio with the ontologies, and it becomes part of a release once the release policy is defined. An amendment to ADR-A136 in CS9, since it is still Proposed and supersession is for an Accepted record. Its decision 1 then makes the HTTP API, the job messages and `cst:` contracts that change only with deprecation, and ADR-A135 then governs any JSON they gain. Which software a release carries, and how it is versioned, is the release policy's own ADR, beside ADR-A129, and outside this unit |
 | CS-Q3 | which XML is wanted. **Answered 2026-10-27:** both, by the wire rule above. RDF/XML for meaning (CS10), and a document XML vocabulary for documents (CS12c) |
 | CS-Q4 | the service, wire and shared code for CS12. **Decided 2026-10-27:** one deployable reached in steps, the wire rule, the shared domain package, one `studio:up` |
-| CS-Q5 | for CS12c, the schema language of the document vocabulary (XSD or RELAX NG), and which ADR defines the vocabulary: a Wording ADR, since Wording owns documents, or one of its own |
+| CS-Q5 | for CS12c, the schema language of the document vocabulary (XSD or RELAX NG), and which ADR defines the vocabulary. **Answered 2026-10-28:** an ADR of its own. Both schema languages, **decided 2026-10-28** under the maintainer's delegation: RELAX NG compact syntax is the source we write and review, and XSD 1.0 is generated from it with Trang, for the tools that expect XSD (the JDK's validator, Word's schema library, schema-aware XSLT). A check validates a corpus of valid and invalid fixtures against both and fails where their verdicts differ, which also keeps the RELAX NG within what XSD can express. RELAX NG is the source because it is the shorter and more readable of the two, composes by pattern, and is what LegalRuleML treats as normative, and XSD because our consumers' tools validate with it |
 
 ## Planned validation
 

@@ -30,7 +30,7 @@ class RabbitMqAnalysisBusIT {
 
     @BeforeAll
     static void startRabbit() {
-        rabbit = new GenericContainer<>(DockerImageName.parse("rabbitmq:3.13-management-alpine"))
+        rabbit = new GenericContainer<>(DockerImageName.parse("rabbitmq:4.4-management-alpine"))
             .withEnv("RABBITMQ_DEFAULT_USER", "lattice")
             .withEnv("RABBITMQ_DEFAULT_PASS", "lattice")
             .withExposedPorts(5672)
