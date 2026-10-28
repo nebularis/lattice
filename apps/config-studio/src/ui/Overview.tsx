@@ -5,8 +5,7 @@
 
 import { Plus } from "lucide-react";
 import { KINDS, create, type Kind } from "../rdf/editors";
-import type { Graph } from "../rdf/graph";
-import { DAL, SRF, compact } from "../rdf/ns";
+import { DAL, SRF, compact, type Graph } from "@lattice/authoring-domain";
 import { PARTS, type Part } from "../state";
 import { go } from "./kit";
 import { useStudio, type Studio } from "./Workspace";

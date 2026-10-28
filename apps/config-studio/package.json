@@ -11,6 +11,7 @@
     "test:stack": "playwright test -c playwright.stack.config.ts"
   },
   "dependencies": {
+    "@lattice/authoring-domain": "workspace:*",
     "lucide-react": "1.62.0",
     "n3": "2.13.12",
     "react": "19.3.1",

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // What the author's baseline declares: classes, properties, concept schemes and instances.
 
-import { Graph } from "./graph";
-import { COMMENT, LABEL, OWL, PREFIXES, RDF, RDFS, SKOS, TYPE, humanise, localName, namespaceOf } from "./ns";
+import { COMMENT, Graph, LABEL, OWL, PREFIXES, RDF, RDFS, SKOS, TYPE, humanise, localName, namespaceOf } from "@lattice/authoring-domain";
 
 const VOC = PREFIXES.voc;
 const CLASS_TYPES = [OWL("Class"), RDFS("Class")];

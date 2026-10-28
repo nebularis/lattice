@@ -25,8 +25,7 @@ import {
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
-import type { Graph } from "../rdf/graph";
-import { compact } from "../rdf/ns";
+import { compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
 import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "../state";

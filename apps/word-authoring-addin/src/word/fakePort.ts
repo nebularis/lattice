@@ -3,7 +3,7 @@
  * section "Files"). No Office.js dependency.
  */
 import { parseBody, writePackage, writeSections, type WritableSection } from "../domain/ooxml";
-import type { DocumentElement, Part } from "../domain/types";
+import type { DocumentElement, Part } from "@lattice/authoring-domain";
 import type { AuthoringMetadata, DocumentPort, InlineMark, MarkResult } from "./port";
 
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";

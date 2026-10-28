@@ -18,7 +18,7 @@ import type {
   JobStatus,
   SampleList,
   TemplateList,
-} from "../src/domain/types";
+} from "@lattice/authoring-domain";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../..");

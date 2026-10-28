@@ -3,7 +3,7 @@
  * exercised under test (no real Word host is available here); only `tsc --noEmit` checks it,
  * against the real `Word`/`OfficeExtension` ambient types `@types/office-js` declares.
  */
-import { decode, encode, title, TAG_APPEARANCE, TAG_COLOUR } from "../domain/tags";
+import { decode, encode, title, TAG_APPEARANCE, TAG_COLOUR } from "@lattice/authoring-domain";
 import { fromXml, METADATA_NAMESPACE, toXml } from "../domain/metadata";
 import type { AuthoringMetadata, DocumentPort, InlineMark, MarkResult } from "./port";
 

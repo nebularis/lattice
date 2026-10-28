@@ -3,8 +3,7 @@
 // each with a qnt:Quantity value on the range's value space, a sense and a closure. Writing one by
 // hand is seven nodes, so the studio writes them together.
 
-import { Graph, iri, typed, type Term } from "./graph";
-import { ELG, QNT, TYPE, XSD } from "./ns";
+import { ELG, Graph, QNT, TYPE, XSD, iri, type Term, typed } from "@lattice/authoring-domain";
 import { mint } from "./editors";
 
 export interface End {

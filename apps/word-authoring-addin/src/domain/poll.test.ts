@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pollJob } from "./poll";
-import type { JobView } from "./types";
+import type { JobView } from "@lattice/authoring-domain";
 
 function job(status: JobView["status"]): JobView {
   return {

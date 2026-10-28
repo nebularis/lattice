@@ -3,7 +3,7 @@
  * (plan WA8 section "`DocumentPort`"), namespace `urn:nebularis:lattice:authoring:1`.
  */
 import type { AuthoringMetadata } from "../word/port";
-import type { ValueType } from "./types";
+import type { ValueType } from "@lattice/authoring-domain";
 import { childrenByNameNs, escapeXml, firstChildByNameNs, parseXmlDocument } from "./xml";
 
 export const METADATA_NAMESPACE = "urn:nebularis:lattice:authoring:1";

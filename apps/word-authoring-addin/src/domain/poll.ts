@@ -2,7 +2,7 @@
  * Polls `GET /api/jobs/{jobId}` until it leaves the `queued` status (plan WA8, used by the
  * Analyse panel added in WA9).
  */
-import type { JobStatus } from "./types";
+import type { JobStatus } from "@lattice/authoring-domain";
 
 export interface PollableJob {
   status: JobStatus;

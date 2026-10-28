@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // The service's HTTP API (contracts/config-studio/README.md). Every body is Turtle.
 
-import { Graph } from "./rdf/graph";
+import { COMMENT, CST, Graph, LABEL, localName } from "@lattice/authoring-domain";
 import { readJob, type Job } from "./rdf/report";
-import { CST, LABEL, COMMENT, localName } from "./rdf/ns";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
 
 export type GraphName = Part;

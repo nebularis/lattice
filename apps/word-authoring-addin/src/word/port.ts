@@ -3,7 +3,7 @@
  * implements this over Office.js (`officePort.ts`) and over an in-memory model for tests and the
  * harness (`fakePort.ts`); WA8 only defines the shape.
  */
-import type { VariableDeclaration } from "../domain/types";
+import type { VariableDeclaration } from "@lattice/authoring-domain";
 
 export type MarkResultReason = "no-selection" | "outside-element" | "outside-section" | "already-marked" | "spans-parts";
 

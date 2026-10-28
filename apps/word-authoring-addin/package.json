@@ -11,6 +11,7 @@
     "test:stack": "playwright test -c playwright.stack.config.ts"
   },
   "dependencies": {
+    "@lattice/authoring-domain": "workspace:*",
     "mermaid": "^12.2.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"

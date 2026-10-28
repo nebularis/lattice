@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { FilePlus2, FolderOpen, Layers, Trash2, Upload } from "lucide-react";
 import { api, type Sample, type WorkspaceSummary } from "../api";
 import { Baseline } from "../rdf/baseline";
-import { Graph, TurtleError } from "../rdf/graph";
+import { Graph, TurtleError } from "@lattice/authoring-domain";
 import { CONFIG_PARTS, split } from "../rdf/split";
 import { Modal, Spinner, ago, go, readFiles } from "./kit";
 
