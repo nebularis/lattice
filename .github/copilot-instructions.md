@@ -178,3 +178,4 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 | `lattice-publication-hygiene` | before a commit or pull request, and whenever writing text that will be published |
 | `lattice-triple-stores` | relying on, probing or recording how a triple store behaves: running generated SPARQL on rdflib, Oxigraph or another engine, writing an engine test, or meeting unexpected store behaviour |
 | `lattice-constrained-environments` | a bootstrap, install or download refused by a registry, mirror or proxy, and deciding whether a blocked package can be worked around safely |
+| `lattice-branching` | merging or measuring a branch, a register or index conflict and its renumbering, a git worktree, the git hooks at each moment, and a task that writes to more than one repository |
