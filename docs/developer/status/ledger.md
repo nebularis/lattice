@@ -3,8 +3,8 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** 🚧 LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked and not started.
-**Last updated:** 2026-10-27
+**Status:** 🚧 LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
+**Last updated:** 2026-10-28
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/ledger-lg-0.md), [LG-1](../validation/ledger-lg-1.md)
 
@@ -32,15 +32,17 @@ Since then the work has been design rather than build, and it has answered the w
 
 | | What | Owner |
 |---|---|---|
-| MS-Q11 against LF-Q21 | whether the proposed-against-bound split is a lifecycle boundary rather than a droppable graph. LF-Q21 is answered (a), a droppable graph, and MS-Q11 leans the other way. One has to give before LG-2 writes the pass stamp | ledger, with LF-Q21 |
-| MS-Q4 | how one archived period is restored for an as-of read. Leaning (a), a partial restore into a scratch dataset under a bumped epoch, with whether `dal:EpochProfile` serves a partial restore unchecked | ledger, and a persistence addendum |
-| PDD-12, narrowed | how a period book's IRI is minted, the one thing ADR-A13's addendum says it does not decide. The role half is settled | ledger, with the ADR-A131 addendum |
-| ADR-A131 addendum | owed for LF-Q19's reversal of decision 4 and for the two orderings | ledger |
-| MS-Q3, MS-Q5, MS-Q10 | retirement schedules, graph residency, and which residency models are declared | persistence |
-| MS-Q7 | what bounds the staleness of a projected balance used by a limit check. Only for the OLTP pattern | persistence |
-| PDD-08 | combinators, the log's grain and a Datalog backend. Its wait condition is satisfied now ADR-A131 is published, so it needs an owner | unowned |
+| PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. `ldg:resetRecurrence` is renamed, since nothing resets | LG-2 and LG-3 to build |
+| TD-97, TD-98 | `licence-seats.ttl` models the reset the decision removes, and `ldg:keyDimension`'s OWL range is narrower than its prose and its shape. Both wait on the slice that implements PDD-15 rather than preceding it | LG-2 and LG-3 |
+| the restatement read's partition | PDD-15's claim that an old period's later books hold only stragglers holds where the partition root is the keyed instance, which the benchmark does not yet partition by. The next measurement, not a blocker | benchmark |
+| MS-Q4 | **answered (a)**, with no persistence addendum owed. A scratch dataset is a dataset, so the restore is an ordinary whole-dataset one of a small dataset and `dal:EpochProfile` needs no change | closed |
+| MS-Q11 and LF-Q21 | **both answered**, and they never competed. Evaluation before commitment is a lifecycle boundary LATTICE does not implement, and a droppable graph governs evaluation against committed record | closed |
+| PDD-12 | **closed**, on a position-derived name for a period's unit, measured flat across a change of recurrence | closed |
+| PDD-14 | **closed**, on STD-278. The correctness-path read is the flat one, since an effective position selects the account and that account's balance now decides the amount | closed |
+| PDD-08 | **split**, not owned. Combinators to a Quantification slice before C7b, the log's grain into LG-2, a Datalog backend to PDD-13 | split |
+| MS-Q3, MS-Q5, MS-Q7, MS-Q10 | **all answered (a)**, 2026-10-27. MS-Q3 gained the rule that a retention declaration states a horizon for a registration too, never shorter than its book's | persistence |
 
-**Next action:** settle MS-Q11 against LF-Q21, then write the ADR-A131 addendum, then LG-2. The README's narrative and exemplar expansion is requested and not started.
+**Next action:** LG-2, briefed against PDD-15's derived period key rather than the reset it replaces, with LG-3 following for Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and now waits on LG-2 rather than on an open question.
 
 ## 2026-10-22, LG-1 built and verified
 
