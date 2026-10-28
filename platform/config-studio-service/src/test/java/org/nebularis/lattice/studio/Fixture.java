@@ -26,7 +26,7 @@ import org.nebularis.lattice.studio.store.StudioStore;
 
 /** An in-memory store, a recording bus, a fixed clock and counting ids. */
 final class Fixture {
-    static final String PREFIXES = "@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#> .\n"
+    static final String PREFIXES = "@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .\n"
         + "@prefix ex: <https://example.org/> .\n";
     static final String TURTLE = "text/turtle; charset=utf-8";
 

@@ -19,7 +19,7 @@ from rdflib.namespace import RDF
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
 
-CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#")
+CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio#")
 SAMPLE_PREFIX = "urn:lattice:studio:sample:"
 
 # The modules whose specifications and vocabularies define what the studio's forms offer.

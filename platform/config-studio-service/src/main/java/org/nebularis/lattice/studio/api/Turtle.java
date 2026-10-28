@@ -21,7 +21,7 @@ final class Turtle {
     static final String RDF_XML = "application/rdf+xml";
 
     private static final Map<String, String> PREFIXES = Map.of(
-        "cst", "https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#",
+        "cst", "https://www.nebularis.org/neuro-semantic/lattice/config-studio#",
         "rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
         "rdfs", "http://www.w3.org/2000/01/rdf-schema#",
         "xsd", "http://www.w3.org/2001/XMLSchema#",

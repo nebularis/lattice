@@ -2,7 +2,7 @@
 
 # Configuration Studio
 
-A web application for authoring vocabulary (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence (`dal:`) and surface (`srf:`) configuration against an applied ontology, its baseline, checking it with each layer's own engine as you edit, and compiling it. A proof of concept ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)): its code and its contracts may change or be withdrawn without deprecation.
+A web application for authoring vocabulary (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence (`dal:`) and surface (`srf:`) configuration against an applied ontology, its baseline, checking it with each layer's own engine as you edit, and compiling it. It is a supported part of LATTICE ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)), developed and maintained with the ontologies. Its contracts change with a deprecation, as [contracts/config-studio](../../contracts/config-studio/README.md) says.
 
 It talks to the [service](../../platform/config-studio-service) in Turtle, as [contracts/config-studio](../../contracts/config-studio/README.md) defines, and the service hands validation and compilation to the [worker](../../workers/README.md#configuration-studio-jobs-adr-a136).
 

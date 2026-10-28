@@ -49,8 +49,8 @@ public final class StudioApi {
     private final Supplier<UUID> ids;
     private final Path assets;
     /**
-     * One lock per workspace, for the If-Match check and the update that follows it. Two service
-     * instances would race, and the proof of concept runs one.
+     * One lock per workspace, for the If-Match check and the update that follows it.
+     * ponytail: two service instances would race, so the studio runs one. Guard the revision inside the update to run more.
      */
     private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
 

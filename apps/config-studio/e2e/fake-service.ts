@@ -11,7 +11,7 @@ import type { Page, Route } from "@playwright/test";
 import { Parser } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
-const CST = "https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#";
+const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
 const PARTS = ["vocabulary", "quantification", "eligibility", "persistence", "surface"];
 const E = "https://example.org/lattice/eligibility/";
 const ELG = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#";

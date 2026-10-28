@@ -7,7 +7,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 /** The terms of `contracts/config-studio/studio-vocabulary.ttl` that the service writes or reads. */
 public final class Cst {
-    public static final String NS = "https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#";
+    public static final String NS = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
 
     public static final Resource Workspace = r("Workspace");
     public static final Resource Job = r("Job");

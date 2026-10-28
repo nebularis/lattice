@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A136: Configuration Studio, a proof of concept for authoring persistence and surface configuration
+# ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
 **Status:** Proposed
 **Date:** 2026-10-27
@@ -15,7 +15,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 
 ## Decision
 
-1. **Status.** The studio is a proof of concept, as ADR-A118's add-in is. Its code, its HTTP API, its job messages and its `cst:` vocabulary are not platform contracts. Nothing outside it may depend on them, and they may change or be removed without deprecation.
+1. **Status.** The studio is a supported part of LATTICE. We develop and maintain it with the ontologies, and it becomes part of a release once the release policy defines how software is released. Its HTTP API, its job messages and its `cst:` vocabulary (`https://www.nebularis.org/neuro-semantic/lattice/config-studio#`) are its contracts, in `contracts/config-studio`. A change that would break a client is announced there and deprecated before it is removed. ADR-A135 governs any JSON type they gain.
 2. **Placement**, inside existing roots:
 
    | Path | Holds |
@@ -28,7 +28,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
    | `tools/config_studio_stage.py` | staging of the vocabulary and samples the service serves |
 
 3. **Runtimes.** Java serves HTTP and the store, through Helidon SE's WebServer and Apache Jena. Python validates and compiles, as a RabbitMQ job, with pySHACL and the repository's own compilers, so the studio answers as `mise run check` would. A validation of persistence configuration also compiles it, because the `dal:` shapes target the dimension classes and do not see a `dal:DataAccessProfile` that declares several dimensions at once.
-4. **RDF on the wire.** Every HTTP body is Turtle. Job descriptions, results, findings and generated artefacts are graphs in the `cst:` vocabulary, and findings of either compiler are `sh:ValidationResult`s, so the browser reads one shape of finding. The AMQP message is a job's IRI and nothing else, and the worker reads the job's inputs by graph reference. Inputs are immutable by construction: a job's input graph is written once under its IRI, and each baseline revision is a new graph. Since no JSON message crosses a process boundary, ADR-A135 has no type to govern here, and its decision 3 leaves a proof of concept outside it in any case.
+4. **RDF on the wire.** Every HTTP body is RDF, Turtle by default or RDF/XML by content negotiation, so an XSLT can read what a configuration means. A request body names its syntax by `Content-Type`, and an RDF/XML body may not declare a DTD. Job descriptions, results, findings and generated artefacts are graphs in the `cst:` vocabulary, and findings of either compiler are `sh:ValidationResult`s, so the browser reads one shape of finding. The AMQP message is a job's IRI and nothing else, and the worker reads the job's inputs by graph reference. Inputs are immutable by construction: a job's input graph is written once under its IRI, and each baseline revision is a new graph. Since no JSON message crosses a process boundary, ADR-A135 has no type to govern here, and its decision 3 leaves a proof of concept outside it in any case.
 5. **The store is the only state.** The service holds no registry. A workspace's revisions are triples in its own graph, and a job's status is read from the job's graph, which the worker writes. A save replaces a configuration graph and moves its revision in one SPARQL Update request, guarded by `If-Match` on the revision.
 6. **Forms are derived from the vocabularies.** The browser derives every field and option from the `dal:`, `srf:`, `fnd:` and `voc:` documents the service serves. It declares only how an editor groups classes into sections and which properties pick a baseline term.
 7. **Store.** Fuseki through Jena's `RDFConnection`, or an in-memory dataset for tests, with the same code. It does not use or extend the semantic dataset SPI (ADR-A71, ADR-A75), and its graph names do not follow ADR-A54.
@@ -41,6 +41,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 - When `ontology/persistence` or `ontology/surface` adds a property or a value, the studio offers it without a change.
 - The studio depends on Fuseki and RabbitMQ to validate. Without them it opens nothing.
 - Validation runs as a job, so feedback takes a broker round trip and a compile, about a second on a laptop.
+- Every component validates what it receives, whatever its client has checked (PRI-75, STD-279): the service checks a body's size, type, syntax and part membership and every identifier, and the worker reads only the graphs its own job may name.
 - No authentication: the service binds to `127.0.0.1` and refuses cross-origin writes by requiring `text/turtle` without answering a preflight. A shared deployment needs authentication first.
 
 ## Provenance
@@ -52,3 +53,8 @@ Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's reques
 ## Addendum, 2026-10-27: vocabulary, quantification and eligibility (Proposed)
 
 The studio keeps three more configurations, `vocabulary`, `quantification` and `eligibility`, as graphs revisioned and saved like persistence and surface, and validated by their layers' own shapes as the author edits. A vocabulary validation also resolves every scheme contract with `tools/vocabulary` for every time segment and set of scopes its bindings draw. An eligibility validation also compiles every condition with `tools/mork_compilers`, expands each concept condition over its resolved scheme, and decides each `elg:Question` with the condition's compiled SPARQL against the decision the author expects of it, given as `cst:expectedDecision`. A question is the eligibility layer's own input, so a test is the query a deployment would run on it. The reference evaluator is not used: it is a test-time oracle (ADR-A-FM3). A job's body is every configuration as edited, and its target names the one checked. Features that wait on other work are shown and marked as under construction. Decision 4 and the rest stand.
+
+## Amendment, 2026-10-28: a supported component (Proposed)
+
+The maintainer decided that the studio is to be supported, meaning developed and maintained with the ontologies and released with them once a release policy exists, and that this is an amendment to this record rather than a new one, since it is still Proposed. Decision 1 now says so, and the title no longer calls the studio a proof of concept. With it the `cst:` namespace drops `poc/` from its IRI, while no workspace is kept outside an in-memory store, so nothing needs migrating. Decision 3's HTTP server is Helidon SE's WebServer, since the JDK's `com.sun.net.httpserver` is a JDK module outside Java SE that another JVM need not ship. Decision 4 adds RDF/XML. Which software a release carries, and how it is versioned, is the release policy's own decision, beside ADR-A129. The other decisions stand.
+

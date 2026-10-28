@@ -4,7 +4,7 @@
 # module's file by module, role and file name, resolved through the repository catalogue, or a
 # file beside this one by file name alone. tools/config_studio_stage.py resolves and stages them.
 
-@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#> .
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <urn:lattice:studio:sample:lending> a cst:Sample ;

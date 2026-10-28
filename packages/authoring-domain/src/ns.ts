@@ -17,7 +17,7 @@ export const PREFIXES: Record<string, string> = {
   qnt: "https://www.nebularis.org/neuro-semantic/lattice/quantification#",
   elg: "https://www.nebularis.org/neuro-semantic/lattice/eligibility#",
   exe: "https://www.nebularis.org/neuro-semantic/lattice/executable#",
-  cst: "https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#",
+  cst: "https://www.nebularis.org/neuro-semantic/lattice/config-studio#",
 };
 
 export const RDF = ns(PREFIXES.rdf);

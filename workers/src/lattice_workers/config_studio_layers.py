@@ -20,7 +20,7 @@ from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Tuple
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, XSD
 
-CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#")
+CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")

@@ -79,7 +79,7 @@ def test_a_hierarchical_condition_expands_over_its_scheme():
 
 def test_a_question_decided_against_its_expectation(tmp_path: Path):
     data = (ELIGIBILITY / "hierarchical-match.ttl").read_text(encoding="utf-8")
-    cst = "<https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#expectedDecision>"
+    cst = "<https://www.nebularis.org/neuro-semantic/lattice/config-studio#expectedDecision>"
     elg = "<https://www.nebularis.org/neuro-semantic/lattice/eligibility#"
     config = tmp_path / "expectations.ttl"
     config.write_text(

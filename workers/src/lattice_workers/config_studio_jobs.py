@@ -19,7 +19,7 @@ from rdflib.namespace import RDF, XSD
 
 from . import config_studio_layers as layers
 
-CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#")
+CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 _JOB_PREFIX = "urn:lattice:studio:job:"

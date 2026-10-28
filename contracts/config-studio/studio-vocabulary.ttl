@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: MPL-2.0
 #
-# The Configuration Studio's own terms (ADR-A136). A proof-of-concept vocabulary, outside
-# ontology/ and outside every release: the service, the worker and the studio's browser code
-# read and write these terms, and nothing else may depend on them.
+# The Configuration Studio's own terms (ADR-A136), a contract of the studio outside ontology/:
+# the service, the worker and the studio's browser code read and write them. A change that would
+# break a client is deprecated first, as contracts/config-studio/README.md says.
 
-@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio#> .
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
-<https://www.nebularis.org/neuro-semantic/lattice/poc/config-studio> a owl:Ontology ;
-    rdfs:comment "Workspaces, jobs and job results of the Configuration Studio proof of concept." .
+<https://www.nebularis.org/neuro-semantic/lattice/config-studio> a owl:Ontology ;
+    rdfs:comment "Workspaces, jobs and job results of the Configuration Studio." .
 
 # --- workspaces ---------------------------------------------------------------
 
