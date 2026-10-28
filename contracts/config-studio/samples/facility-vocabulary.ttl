@@ -1,0 +1,172 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The vocabulary configuration of the facility agreement sample.
+#
+# Two contracts govern the two properties of a borrower that take concepts.
+#
+# The sector contract has no fallback. Its two unscoped bindings hand the sector classification
+# over from edition 1 to edition 2 at 2027-01-01, and edition 1 starts at 2026-01-01. Edition 2
+# retires gambling and adds renewables. The resolution table therefore shows one deliberate
+# Unresolved row for the sector contract, the segment before 2026-01-01, where no binding applies and
+# nothing is bound as a fallback, and one Resolved row for each edition.
+#
+# The region contract falls back to a flat scheme of continents. Two bindings, each for one scope,
+# bind a finer scheme of their own region and start at 2026-01-01. The table shows Fallback rows for
+# every context before that date and for the unscoped context after it, a Resolved row for each
+# single scope, and one deliberate Conflict row for both scopes together, since neither binding names
+# a strict superset of the other's scopes. The conflict is a finding of the resolver, not of the
+# shapes, which only report bindings that name exactly the same scopes. It does not stop the
+# configuration from conforming, and the eligibility part never resolves the region contract under
+# both scopes at once.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# --- the sector classification, in two editions -----------------------------------------------------
+
+ex:SectorScheme2026 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:sector-scheme-2026-identity ;
+    fnd:hasGovernanceState fnd:Superseded ;
+    skos:prefLabel "Sector classification, 2026 edition"@en ;
+    skos:hasTopConcept ex:Industrials , ex:Consumer , ex:Energy , ex:Gambling .
+
+ex:SectorScheme2027 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:sector-scheme-2027-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Sector classification, 2027 edition"@en ;
+    skos:hasTopConcept ex:Industrials , ex:Consumer , ex:Energy .
+
+ex:Industrials a skos:Concept ; skos:prefLabel "Industrials"@en ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Manufacturing a skos:Concept ; skos:prefLabel "Manufacturing"@en ;
+    skos:broader ex:Industrials ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:FoodProcessing a skos:Concept ; skos:prefLabel "Food processing"@en ;
+    skos:broader ex:Manufacturing ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Textiles a skos:Concept ; skos:prefLabel "Textiles"@en ;
+    skos:broader ex:Manufacturing ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Consumer a skos:Concept ; skos:prefLabel "Consumer"@en ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Retail a skos:Concept ; skos:prefLabel "Retail"@en ;
+    skos:broader ex:Consumer ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Energy a skos:Concept ; skos:prefLabel "Energy"@en ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+ex:Coal a skos:Concept ; skos:prefLabel "Coal"@en ;
+    skos:broader ex:Energy ;
+    skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 .
+
+# Only in the 2026 edition, retired from the next.
+ex:Gambling a skos:Concept ; skos:prefLabel "Gambling"@en ;
+    skos:inScheme ex:SectorScheme2026 .
+
+# Only in the 2027 edition.
+ex:Renewables a skos:Concept ; skos:prefLabel "Renewables"@en ;
+    skos:broader ex:Energy ;
+    skos:inScheme ex:SectorScheme2027 .
+
+ex:SectorContract a voc:SchemeContract ;
+    fnd:hasIdentity ex:sector-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:borrowerSector ;
+    voc:requiresGovernanceState fnd:Active .
+
+ex:sector-binding-2026 a voc:SchemeBinding ;
+    voc:forContract ex:SectorContract ;
+    voc:bindsScheme ex:SectorScheme2026 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+        fnd:validTo   "2027-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:sector-binding-2027 a voc:SchemeBinding ;
+    voc:forContract ex:SectorContract ;
+    voc:bindsScheme ex:SectorScheme2027 ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+# --- the region schemes, one per scope and a flat fallback ------------------------------------------
+
+ex:ScopeEmea a voc:BindingScope ; skos:prefLabel "Europe, Middle East and Africa"@en .
+ex:ScopeAmericas a voc:BindingScope ; skos:prefLabel "The Americas"@en .
+
+ex:RegionContinents a voc:ConceptScheme ;
+    fnd:hasIdentity ex:region-continents-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Continents"@en ;
+    skos:hasTopConcept ex:Emea , ex:Americas , ex:Apac .
+
+ex:RegionEmea a voc:ConceptScheme ;
+    fnd:hasIdentity ex:region-emea-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Regions of Europe, the Middle East and Africa"@en ;
+    skos:hasTopConcept ex:Emea .
+
+# A flat list of countries. No member has a broader member within it.
+ex:RegionAmericas a voc:ConceptScheme ;
+    fnd:hasIdentity ex:region-americas-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Countries of the Americas"@en .
+
+ex:Emea a skos:Concept ; skos:prefLabel "Europe, Middle East and Africa"@en ;
+    skos:inScheme ex:RegionContinents , ex:RegionEmea .
+ex:Americas a skos:Concept ; skos:prefLabel "The Americas"@en ;
+    skos:inScheme ex:RegionContinents .
+ex:Apac a skos:Concept ; skos:prefLabel "Asia Pacific"@en ;
+    skos:inScheme ex:RegionContinents .
+
+ex:Europe a skos:Concept ; skos:prefLabel "Europe"@en ;
+    skos:broader ex:Emea ;
+    skos:inScheme ex:RegionEmea .
+ex:MiddleEast a skos:Concept ; skos:prefLabel "Middle East"@en ;
+    skos:broader ex:Emea ;
+    skos:inScheme ex:RegionEmea .
+ex:Germany a skos:Concept ; skos:prefLabel "Germany"@en ;
+    skos:broader ex:Europe ;
+    skos:inScheme ex:RegionEmea .
+ex:UnitedKingdom a skos:Concept ; skos:prefLabel "United Kingdom"@en ;
+    skos:broader ex:Europe ;
+    skos:inScheme ex:RegionEmea .
+ex:Belarus a skos:Concept ; skos:prefLabel "Belarus"@en ;
+    skos:broader ex:Europe ;
+    skos:inScheme ex:RegionEmea .
+
+ex:UnitedStates a skos:Concept ; skos:prefLabel "United States"@en ;
+    skos:inScheme ex:RegionAmericas .
+ex:Canada a skos:Concept ; skos:prefLabel "Canada"@en ;
+    skos:inScheme ex:RegionAmericas .
+ex:Brazil a skos:Concept ; skos:prefLabel "Brazil"@en ;
+    skos:inScheme ex:RegionAmericas .
+
+ex:RegionContract a voc:SchemeContract ;
+    fnd:hasIdentity ex:region-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:borrowerRegion ;
+    voc:requiresGovernanceState fnd:Active ;
+    voc:boundScheme ex:RegionContinents .
+
+ex:region-binding-emea a voc:SchemeBinding ;
+    voc:forContract ex:RegionContract ;
+    voc:bindsScheme ex:RegionEmea ;
+    voc:bindingScope ex:ScopeEmea ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .
+
+ex:region-binding-americas a voc:SchemeBinding ;
+    voc:forContract ex:RegionContract ;
+    voc:bindsScheme ex:RegionAmericas ;
+    voc:bindingScope ex:ScopeAmericas ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

@@ -12,6 +12,8 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 | `amqp-topology.json` | the exchange, the job queue and the dead-letter queue, declared identically by the service and the worker |
 | `samples/samples.ttl` | the samples, each a list of repository files |
 | `samples/lending-baseline.ttl` | a baseline for the lending sample, which the persistence example it pairs with does not declare |
+| `samples/facility-baseline.ttl` | the facility agreement sample's baseline, which extends `lending-baseline.ttl` with a facility, lenders and drawdowns, the boundary shape of the facility and the carrier data |
+| `samples/facility-{vocabulary,quantification,eligibility,persistence,surface}.ttl` | the facility agreement sample's five configurations, one file each, which refer to one another: eligibility draws on the schemes and range sets, persistence scopes a key by a vocabulary property, and surface reads a population from a scheme contract. [`tools/config_studio_stage.py`](../../tools/config_studio_stage.py) stages them merged as sample `facility`, and [`test_config_studio_facility_sample.py`](../../workers/tests/test_config_studio_facility_sample.py) checks each part and the deliberate resolution cases |
 
 ## Graphs
 

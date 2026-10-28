@@ -1,0 +1,136 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The quantification configuration of the facility agreement sample.
+#
+# Two value spaces. The facility amount is money in a family of currencies, additive, with US dollars
+# as the canonical unit and a contextual conversion from sterling that no rate context backs. The
+# margin is a percentage, which does not add. The eligibility configuration draws its two required
+# range sets from here, and the candidate range sets of its questions are here too, since they are
+# values on these spaces.
+#
+# The required amount is stated in US dollars only. A candidate in sterling is compared with no
+# statement in its own unit, so the eligibility question about it is deliberately Undetermined.
+
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# --- units ---------------------------------------------------------------------------------------
+
+ex:Currencies a qnt:UnitFamily .
+ex:USD a qnt:Unit ; rdfs:label "US dollar" .
+ex:GBP a qnt:Unit ; rdfs:label "pound sterling" .
+
+ex:RateUnits a qnt:UnitFamily .
+ex:Percent a qnt:Unit ; rdfs:label "percent" .
+
+# Exchange rates are observations at a date, so the conversion is contextual. No observation is
+# recorded in this sample.
+ex:fx-spot a qnt:ConversionFunction ; rdfs:label "spot exchange rate on the context's date" .
+ex:gbp-to-usd a qnt:Conversion ;
+    qnt:fromUnit ex:GBP ; qnt:toUnit ex:USD ;
+    qnt:conversionKind qnt:Contextual ;
+    qnt:conversionFunction ex:fx-spot .
+
+# --- value spaces --------------------------------------------------------------------------------
+
+ex:FacilityAmountSpace a qnt:ValueSpace ;
+    qnt:spaceKey "facility-amount" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "facility-amount-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+                       qnt:unitFamily ex:Currencies ; qnt:canonicalUnit ex:USD ] ;
+    qnt:hasOperationCapability ex:amount-compare , ex:amount-sum .
+
+ex:amount-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+ex:amount-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ;
+    qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:FacilityAmountSpace ] ,
+                   [ a qnt:OperationOperand ; qnt:operandIndex 1 ; qnt:operandSpace ex:FacilityAmountSpace ] ;
+    qnt:resultSpace ex:FacilityAmountSpace .
+
+ex:MarginSpace a qnt:ValueSpace ;
+    qnt:spaceKey "margin" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "margin-v1" ;
+    qnt:additivity qnt:Intensive ;
+    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+                       qnt:unitFamily ex:RateUnits ; qnt:canonicalUnit ex:Percent ] ;
+    qnt:hasOperationCapability ex:margin-compare .
+
+ex:margin-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
+
+# --- the required range sets the eligibility conditions use ------------------------------------------
+#
+# A facility is eligible from 5 million to 250 million US dollars, and at a margin from 1.00 to 6.50
+# percent, both ends included.
+
+ex:amount-min a qnt:Quantity ; qnt:onSpace ex:FacilityAmountSpace ; qnt:numericValue 5000000.0 ; qnt:inUnit ex:USD .
+ex:amount-max a qnt:Quantity ; qnt:onSpace ex:FacilityAmountSpace ; qnt:numericValue 250000000.0 ; qnt:inUnit ex:USD .
+
+ex:RequiredAmount a qnt:RangeSet ;
+    qnt:onSpace ex:FacilityAmountSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:FacilityAmountSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-min ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-max ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+ex:margin-min a qnt:Quantity ; qnt:onSpace ex:MarginSpace ; qnt:numericValue 1.0 ; qnt:inUnit ex:Percent .
+ex:margin-max a qnt:Quantity ; qnt:onSpace ex:MarginSpace ; qnt:numericValue 6.5 ; qnt:inUnit ex:Percent .
+
+ex:RequiredMargin a qnt:RangeSet ;
+    qnt:onSpace ex:MarginSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:MarginSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-min ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-max ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+# --- the candidates the eligibility questions offer --------------------------------------------------
+#
+# Each candidate is a single value, written as a range whose two bounds are that value.
+
+ex:amount-75m a qnt:Quantity ; qnt:onSpace ex:FacilityAmountSpace ; qnt:numericValue 75000000.0 ; qnt:inUnit ex:USD .
+ex:Amount75m a qnt:RangeSet ;
+    qnt:onSpace ex:FacilityAmountSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:FacilityAmountSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-75m ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-75m ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+ex:amount-400m a qnt:Quantity ; qnt:onSpace ex:FacilityAmountSpace ; qnt:numericValue 400000000.0 ; qnt:inUnit ex:USD .
+ex:Amount400m a qnt:RangeSet ;
+    qnt:onSpace ex:FacilityAmountSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:FacilityAmountSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-400m ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-400m ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+ex:amount-60m-gbp a qnt:Quantity ; qnt:onSpace ex:FacilityAmountSpace ; qnt:numericValue 60000000.0 ; qnt:inUnit ex:GBP .
+ex:Amount60mGbp a qnt:RangeSet ;
+    qnt:onSpace ex:FacilityAmountSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:FacilityAmountSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-60m-gbp ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:FacilityAmountSpace ; qnt:boundValue ex:amount-60m-gbp ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+ex:margin-3-25 a qnt:Quantity ; qnt:onSpace ex:MarginSpace ; qnt:numericValue 3.25 ; qnt:inUnit ex:Percent .
+ex:Margin325 a qnt:RangeSet ;
+    qnt:onSpace ex:MarginSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:MarginSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-3-25 ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-3-25 ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .
+
+ex:margin-8 a qnt:Quantity ; qnt:onSpace ex:MarginSpace ; qnt:numericValue 8.0 ; qnt:inUnit ex:Percent .
+ex:Margin800 a qnt:RangeSet ;
+    qnt:onSpace ex:MarginSpace ;
+    qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:MarginSpace ;
+        qnt:lowerBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-8 ;
+                         qnt:boundSense qnt:Lower ; qnt:boundClosure qnt:Closed ] ;
+        qnt:upperBound [ a qnt:Bound ; qnt:onSpace ex:MarginSpace ; qnt:boundValue ex:margin-8 ;
+                         qnt:boundSense qnt:Upper ; qnt:boundClosure qnt:Closed ] ] .

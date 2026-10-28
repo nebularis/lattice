@@ -39,3 +39,14 @@
     rdfs:label "Quantities and units" ;
     rdfs:comment "Value spaces, units, conversions and derived rate spaces, with the operations each space permits." ;
     cst:part [ cst:module "quantification" ; cst:role "examples" ; cst:fileName "additivity.ttl" ] .
+
+<urn:lattice:studio:sample:facility> a cst:Sample ;
+    rdfs:label "Facility agreement, every part" ;
+    rdfs:comment "A facility agreement with its borrower, lenders and drawdowns, configured in all five parts over one baseline. Sector editions handed over at a date and region schemes bound by scope give a resolution table with Resolved, Fallback, Unresolved and Conflict rows. Eligibility conditions combine concepts of those schemes with amount and margin ranges, and seventeen questions cover Permitted, Denied and Undetermined, one before the handover and some under a scope. Persistence covers a composite facility and a borrower with personal data and erasure, and surface promotes a sector over a three-hop path and indexes borrowers by sector." ;
+    cst:part [ cst:fileName "lending-baseline.ttl" ] ,
+             [ cst:fileName "facility-baseline.ttl" ] ,
+             [ cst:fileName "facility-vocabulary.ttl" ] ,
+             [ cst:fileName "facility-quantification.ttl" ] ,
+             [ cst:fileName "facility-eligibility.ttl" ] ,
+             [ cst:fileName "facility-persistence.ttl" ] ,
+             [ cst:fileName "facility-surface.ttl" ] .
