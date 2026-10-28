@@ -149,8 +149,8 @@ dal:SharedClassProfileWarningShape
               FILTER NOT EXISTS { $this dal:appliesTo [ a ?otherKind ] .
                                   FILTER (?otherKind != dal:ClassScope) }
               FILTER NOT EXISTS { $this dal:acknowledgedSharedClassOverride true }
-              BIND(STRBEFORE(STR($this), "#") AS ?thisNamespace)
-              BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
+              BIND(REPLACE(STR($this), "[^/#]+$", "") AS ?thisNamespace)
+              BIND(REPLACE(STR(?cls), "[^/#]+$", "") AS ?clsNamespace)
               FILTER(?thisNamespace != ?clsNamespace)
             }""" ] .
 

@@ -1145,9 +1145,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 
 "None" means the absence is itself meaningful and checked where it matters: an undeclared privacy
 profile means "this scope declares no privacy stance", not "this scope is public data". The epoch
-guard's baseline is the discouraged row-level guard, kept so that no existing deployment's generated
-SPARQL changed when the dimension was introduced, and it raises its warning whether it was declared
-or defaulted.
+guard's baseline is the discouraged row-level guard, and it raises its warning whether it was declared or defaulted. Making the dataset-level guard the baseline was tried on 2026-10-28 and found to need a dataset-guard variant of every builder family, which the no-receipt families lack (TD-118), so until they exist a family that wants the recommended guard declares it.
 
 **Two authoring conveniences.**
 
@@ -1331,7 +1329,7 @@ write's boundary, and the same shape can keep serving the adopter's own validati
 
 | Strategy | Means | Use when |
 |---|---|---|
-| `dal:ProvidedConcurrency` (baseline) | rely on the store. The compiler generates an unconditional write | no concurrent writers, or a store that serialises them |
+| `dal:ProvidedConcurrency` (baseline) | rely on the environment: the store serialises writes to an aggregate, or the application around it does. The compiler generates an unconditional write and solves no race itself, so the lost update of §5.1 is the environment's to prevent | no concurrent writers, or a store or application that serialises them |
 | `dal:Optimistic` | the guarded compare-and-set of §5.3 | read-modify-write by concurrent writers on a store that detects write conflicts |
 | `dal:AppendOnly` | the append form of §5.3: the store allocates the next position | event streams and decision records |
 | `dal:LockingConcurrency` | a marker that mutual exclusion lives outside the store (an external lock, a single writer per partition) | the store's isolation is too weak or unknown. No guard is generated |
@@ -1614,6 +1612,8 @@ flowchart TB
     classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
     classDef history fill:#fff3cd,stroke:#b7950b,color:#000
 ```
+
+P3, P5 and P6 are described, not generated. A deployment that needs one builds it beside the generated operations, and the compiled profile does not claim it.
 
 **P0, the key as the identity.** If an entity's IRI is derived from its key, a second insert of the same
 thing is a no-op and uniqueness is structural. It suits only keys that are immutable and not personal
@@ -2155,8 +2155,7 @@ A natural key identifies one thing, and something has to keep it that way. An ad
 reasoner alone takes `fnd:MergedOnNaturalKey`, and OWL merges any two things sharing one. **LATTICE
 recommends Persistence instead, for any deployment that writes keyed data**: `owl:hasKey` merges on
 any collision, including a mistaken one, and nothing in OWL can undo a merge or say why it happened.
-Persistence refuses the second claim when it is written, and reports, quarantines or records for
-review anything written around it.
+Persistence refuses the second claim when the store's isolation lets the write see the first (§5.6.6), and otherwise reports, quarantines or records for review what was written around it.
 
 `persistent-foundation` is how. It is optional, and it is Persistence's only document that imports a
 layer: `spec/persistent-foundation.ttl` imports Foundation and this ontology, both at this README's version, so the `dal:`
@@ -6422,8 +6421,8 @@ dal:SharedClassProfileWarningShape
               FILTER NOT EXISTS { $this dal:appliesTo [ a ?otherKind ] .
                                   FILTER (?otherKind != dal:ClassScope) }
               FILTER NOT EXISTS { $this dal:acknowledgedSharedClassOverride true }
-              BIND(STRBEFORE(STR($this), "#") AS ?thisNamespace)
-              BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
+              BIND(REPLACE(STR($this), "[^/#]+$", "") AS ?thisNamespace)
+              BIND(REPLACE(STR(?cls), "[^/#]+$", "") AS ?clsNamespace)
               FILTER(?thisNamespace != ?clsNamespace)
             }""" ] .
 
