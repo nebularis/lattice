@@ -36,7 +36,7 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/nebularis> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 

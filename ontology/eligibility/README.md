@@ -29,7 +29,7 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/nebularis> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 
