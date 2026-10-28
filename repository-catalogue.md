@@ -409,6 +409,8 @@ layout = "architecture"
 order = 8
 sources = [
     "docs/operational-guidance.md",
+    "docs/operator/configuration-studio-operations.md",
+    "docs/operator/configuration-studio-runbook.md",
     "docs/operator/release-stack-reference.md",
     "docs/operator/surface-invalidation-runbook.md",
     "docs/operator/surface-revision-lifecycle.md",
