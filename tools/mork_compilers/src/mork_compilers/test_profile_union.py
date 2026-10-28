@@ -20,10 +20,14 @@ from rdflib import Graph
 from rdflib.namespace import RDF
 
 from .eligibility_ir import compile_profile
-from .engines import REGISTRY, run_query
+from .engines import ENGINE, REGISTRY, run_query
 from .namespaces import ELG, MORK
 from .sparql_backend import compile_query_template, render_profile_query
 from .test_closure_readings import ADM, example
+
+# Jena joins only its own conformance run (ADR-A125's addendum of 2026-10-21), so the default check
+# needs no Jena kit.
+ENGINES = tuple(engine for engine in REGISTRY if engine != "jena" or ENGINE == "jena")
 
 UNDEF = "VALUES ?x { %s UNDEF }"
 
@@ -62,13 +66,13 @@ class ProbeTests(unittest.TestCase):
     def test_coalescing_the_argument_gives_the_same_group_on_both_engines(self) -> None:
         # PU-04
         aggregate = 'GROUP_CONCAT(DISTINCT COALESCE(STR(?x), ""))'
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(one(engine, aggregate, UNDEF % "<urn:a>").split(), ["urn:a"])
 
     def test_an_empty_group_concatenates_to_the_empty_string_on_both_engines(self) -> None:
         # PU-05
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 self.assertEqual(one(engine, "GROUP_CONCAT(STR(?x))", "?s <urn:nothing> ?x"), "")
 
@@ -88,7 +92,7 @@ class ProfileTests(unittest.TestCase):
         data = example("admissions")
         closure = str(ADM["registry-closure"])
         expected = {"ada": closure, "ben": closure, "cai": closure, "dee": None}
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 rows = closures_on(engine, data)
                 self.assertEqual({record: closures for record, (_, closures) in rows.items()}, expected)
@@ -103,7 +107,7 @@ class ProfileTests(unittest.TestCase):
         first = str(ADM["registry-closure"])
         both = f"{first} {second}"
         expected = {"ada": first, "ben": both, "cai": both, "dee": None}
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 rows = closures_on(engine, data)
                 self.assertEqual({record: closures for record, (_, closures) in rows.items()}, expected)
@@ -118,7 +122,7 @@ class ProfileTests(unittest.TestCase):
     def test_a_profile_with_no_closure_has_no_closures(self) -> None:
         # PU-09
         data = example("admissions", closed=False)
-        for engine in REGISTRY:
+        for engine in ENGINES:
             with self.subTest(engine=engine):
                 rows = closures_on(engine, data)
                 self.assertTrue(all(closures is None for _, closures in rows.values()))
