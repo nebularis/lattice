@@ -208,7 +208,7 @@ qed
 
 section \<open>Closures\<close>
 
-text \<open>A binding ends by a closure record rather than by a mutable end date (ADR-A137, applied to
+text \<open>A binding ends by a closure record rather than by a mutable end date (ADR-A142, applied to
 voc:SchemeBinding). Where several closures exist the earliest ends it. Closing never extends a
 binding's validity, and a closed binding is not valid at the instant of its earliest closure.\<close>
 

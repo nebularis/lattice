@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A137: A meaning-bearing edge from a versioned thing is owned or pinned
+# ADR-A142: A meaning-bearing edge from a versioned thing is owned or pinned
 
 **Status:** Proposed 2026-10-28
 **Date:** 2026-10-28

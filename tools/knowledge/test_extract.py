@@ -872,7 +872,7 @@ def test_every_signpost_in_the_corpus_names_something(built):
                 or "whose prefix no ontology document declares" in p]
 
 
-# Measured 2026-10-28 when the check was written, and recorded as TD-99. Remove an entry when its
+# Measured 2026-10-28 when the check was written, and recorded as TD-119. Remove an entry when its
 # pointer names the section that states it, and never add one.
 KNOWN_WHOLE_FILE = frozenset({
     "CAP-52", "MEC-31", "MEC-55", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
@@ -891,7 +891,7 @@ def test_no_new_entry_points_at_the_whole_of_a_long_file(built):
         ?n ki:identifier ?id ; ki:pointer ?pointer FILTER NOT EXISTS {{ ?n a ki:Quantum }} }} }}""")
     whole = {str(r["id"].value) for r in rows for part in str(r["pointer"].value).split(",") if ask.whole_file(part)}
     assert not whole - KNOWN_WHOLE_FILE, sorted(whole - KNOWN_WHOLE_FILE)
-    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline and TD-99: {sorted(KNOWN_WHOLE_FILE - whole)}"
+    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline and TD-119: {sorted(KNOWN_WHOLE_FILE - whole)}"
 
 
 def test_a_declared_term_carries_a_claim_from_its_own_document(built):

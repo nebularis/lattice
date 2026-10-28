@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A138: One canonicalisation for the substrate
+# ADR-A143: One canonicalisation for the substrate
 
 **Status:** Proposed 2026-10-28
 **Date:** 2026-10-28

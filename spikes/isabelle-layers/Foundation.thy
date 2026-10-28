@@ -1,7 +1,7 @@
 (* SPDX-License-Identifier: MPL-2.0 *)
 
 (* Foundation: supersession chains, keys, and meaning-bearing edges.
-   Source: ontology/foundation/README.md sections 4, 6, 7 and 8, and ADR-A137.
+   Source: ontology/foundation/README.md sections 4, 6, 7 and 8, and ADR-A142.
    A spike, not yet aligned to the formal-methods track. *)
 
 theory Foundation
@@ -176,7 +176,7 @@ end
 section \<open>Meaning-bearing edges\<close>
 
 text \<open>A judgement reproduced from a version reads the version's own content and the content of
-the nodes at the ends of its meaning-bearing edges. Foundation section 4 and ADR-A137 say such an
+the nodes at the ends of its meaning-bearing edges. Foundation section 4 and ADR-A142 say such an
 edge must lead to a node that is versioned, content-addressed or minted under the subject: a node
 that is never rewritten. The theorem is the reason for the rule. If the version and every target
 are immutable, the judgement is the same in every store state. The counterexample after it shows

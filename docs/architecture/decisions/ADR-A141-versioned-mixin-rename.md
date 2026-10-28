@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A136: The mixin `fnd:Version` is renamed `fnd:Versioned`
+# ADR-A141: The mixin `fnd:Version` is renamed `fnd:Versioned`
 
 **Status:** Proposed 2026-10-28
 **Date:** 2026-10-28

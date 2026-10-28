@@ -42,7 +42,7 @@ def _read_bindings(graph: Graph, contract: URIRef) -> List[Binding]:
         valid_to_literal = graph.value(scope_node, FND.validTo)
         valid_to = valid_to_literal.toPython() if valid_to_literal is not None else None
         # A closure record ends the binding at its instant, the earliest one winning, so the
-        # binding itself is never edited (ADR-A137, Vocabulary README section 6.1).
+        # binding itself is never edited (ADR-A142, Vocabulary README section 6.1).
         closed_at = [literal.toPython() for closure in graph.subjects(VOC.closesBinding, node)
                      for literal in [graph.value(closure, VOC.closedAt)] if literal is not None]
         if closed_at:
