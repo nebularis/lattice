@@ -9,6 +9,7 @@ import java.util.Map;
 public record ApiResponse(int status, Map<String, String> headers, byte[] body) {
     public static final String TURTLE = "text/turtle; charset=utf-8";
     public static final String TEXT = "text/plain; charset=utf-8";
+    public static final String RDF_XML = "application/rdf+xml; charset=utf-8";
 
     public static ApiResponse text(int status, String message) {
         return new ApiResponse(status, new LinkedHashMap<>(Map.of("Content-Type", TEXT)),

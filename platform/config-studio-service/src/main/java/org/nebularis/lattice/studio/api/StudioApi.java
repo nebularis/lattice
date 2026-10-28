@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.RDF;
 import org.nebularis.lattice.studio.jobs.JobBus;
@@ -63,11 +64,34 @@ public final class StudioApi {
 
     public ApiResponse handle(ApiRequest req) {
         try {
-            return secure(route(req));
+            return secure(negotiate(req, route(req)));
         } catch (RuntimeException e) {
             LOG.error("{} {} failed", req.method(), req.path(), e);
             return secure(ApiResponse.text(500, "internal error"));
         }
+    }
+
+    /**
+     * Rewrites a Turtle response as RDF/XML when the request prefers it. Every route answers in Turtle, so this is the one
+     * place the syntax is chosen. An ETag names a graph's revision and is the same in either syntax.
+     * ponytail: re-parses and re-writes per request, about 60 ms for the 640 KB vocabulary. Cache by ETag if it matters.
+     */
+    private static ApiResponse negotiate(ApiRequest req, ApiResponse r) {
+        if (!r.headers().getOrDefault("Content-Type", "").startsWith("text/turtle")) {
+            return r;
+        }
+        r = r.with("Vary", "Accept");
+        if (!Turtle.prefersXml(req.header("accept"))) {
+            return r;
+        }
+        byte[] xml;
+        try {
+            xml = Turtle.writeXml(Turtle.parse(r.body()));
+        } catch (RuntimeException e) {
+            // RDF/XML cannot write a predicate whose IRI does not end in an XML name, such as one ending in a digit.
+            return ApiResponse.text(406, "this graph cannot be written as RDF/XML: " + e.getMessage()).with("Vary", "Accept");
+        }
+        return new ApiResponse(r.status(), r.with("Content-Type", ApiResponse.RDF_XML).headers(), xml);
     }
 
     private static ApiResponse secure(ApiResponse r) {
@@ -179,9 +203,9 @@ public final class StudioApi {
         } catch (IllegalArgumentException e) {
             return ApiResponse.text(400, "Slug is not percent-encoded UTF-8");
         }
-        Model baseline = parse(req.body());
+        Model baseline = parse(req);
         if (baseline == null) {
-            return ApiResponse.text(400, "the body is not valid Turtle");
+            return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
         String id = ids.get().toString();
         Instant now = now();
@@ -235,9 +259,9 @@ public final class StudioApi {
         if (ifMatch == null) {
             return ApiResponse.text(428, "If-Match is required");
         }
-        Model graph = parse(req.body());
+        Model graph = parse(req);
         if (graph == null) {
-            return ApiResponse.text(400, "the body is not valid Turtle");
+            return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
         List<String> strangers = Parts.strangers(graph, name, 5);
         if (!strangers.isEmpty()) {
@@ -277,9 +301,9 @@ public final class StudioApi {
         if (bad != null) {
             return bad;
         }
-        Model config = parse(req.body());
+        Model config = parse(req);
         if (config == null) {
-            return ApiResponse.text(400, "the body is not valid Turtle");
+            return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);
@@ -352,12 +376,16 @@ public final class StudioApi {
         return "\"" + revision + "\"";
     }
 
-    /** 415 for a content type other than text/turtle, 413 for a body over the limit, otherwise null. */
-    private static ApiResponse checkBody(ApiRequest req) {
+    private static String media(ApiRequest req) {
         String type = req.header("content-type");
-        String media = type == null ? "" : type.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
-        if (!media.equals("text/turtle")) {
-            return ApiResponse.text(415, "Content-Type must be text/turtle");
+        return type == null ? "" : type.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** 415 for a content type other than Turtle or RDF/XML, 413 for a body over the limit, otherwise null. */
+    private static ApiResponse checkBody(ApiRequest req) {
+        String media = media(req);
+        if (!media.equals("text/turtle") && !media.equals(Turtle.RDF_XML)) {
+            return ApiResponse.text(415, "Content-Type must be text/turtle or application/rdf+xml");
         }
         if (req.body() != null && req.body().length > MAX_BODY_BYTES) {
             return tooLarge();
@@ -369,9 +397,11 @@ public final class StudioApi {
         return ApiResponse.text(413, "the body is over 5 MiB");
     }
 
-    private static Model parse(byte[] body) {
+    /** The body in the syntax its Content-Type names, which {@link #checkBody} has allowed, or null if it does not parse. */
+    private static Model parse(ApiRequest req) {
         try {
-            return Turtle.parse(body == null ? new byte[0] : body);
+            byte[] body = req.body() == null ? new byte[0] : req.body();
+            return Turtle.parse(body, media(req).equals(Turtle.RDF_XML) ? Lang.RDFXML : Lang.TURTLE);
         } catch (RiotException e) {
             return null;
         }

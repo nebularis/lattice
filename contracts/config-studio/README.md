@@ -27,7 +27,7 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 
 ## HTTP
 
-Every request and response body is `text/turtle` in UTF-8, unless the table says otherwise. A request body with another content type is refused with `415`, a body over 5 MiB with `413`, Turtle that does not parse with `400`, an unknown workspace or job with `404`.
+Every request and response body is RDF in UTF-8, unless the table says otherwise: `text/turtle` by default, or `application/rdf+xml`. A request body may be either, named by its `Content-Type`. A response is RDF/XML when the request's `Accept` ranks `application/rdf+xml` above `text/turtle` (a range without `q` counts 1, `*/*` favours Turtle), and every RDF response carries `Vary: Accept`. RDF/XML is written plain, one `rdf:Description` per subject, so an XSLT reads one regular shape. A graph whose predicate RDF/XML cannot write, one whose IRI does not end in an XML name, answers `406` in RDF/XML and stays readable as Turtle. An ETag names a graph's revision, the same in either syntax. A request body with another content type is refused with `415`, a body over 5 MiB with `413`, a body that does not parse, or RDF/XML that declares a DTD, with `400`, an unknown workspace or job with `404`.
 
 | Method and path | Request | Response |
 |---|---|---|

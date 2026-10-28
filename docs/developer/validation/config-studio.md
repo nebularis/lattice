@@ -176,6 +176,20 @@ Not run: Windows and Linux, and `--docker`, since Docker was not running. The Wi
 
 Probe P5: with `Parts.strangers` replaced by an empty list, CS8-03 failed (`aGraphHoldingAnotherPartsTermsIs422AndLeavesTheGraphUnchanged`). Restored, 34 pass.
 
+## CS10: RDF/XML by content negotiation
+
+`RdfXmlTest`, 6 cases, in `check:config-studio`, and the staged assets by hand.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS10-01 | a saved surface graph with a blank node / `GET` with `Accept: application/rdf+xml` / RDF/XML isomorphic with the graph, the revision's ETag, `Vary: Accept` | L1 | + | pass |
+| CS10-02 | ten `Accept` headers, a browser's default and an absent one among them / `GET` / Turtle unless RDF/XML ranks higher | L1 | +/− | pass |
+| CS10-03 | every RDF route / `GET` as RDF/XML / RDF/XML that parses, plain text and `404` left alone | L1 | + | pass |
+| CS10-04 | a graph with a predicate ending in a digit / `GET` as RDF/XML / `406`, and `200` as Turtle | L1 | − | pass |
+| CS10-05 | the graph of CS10-01 as RDF/XML / `PUT` / the same graph stored. Truncated RDF/XML `400`, JSON `415` | L1 | +/− | pass |
+| CS10-06 | RDF/XML declaring an external entity that names a local file / `PUT` / `400`, nothing stored. Found by the test's first run: Jena never read the file but stored the entity as an empty string, so a DTD is now refused | L1 | − | pass |
+| CS10-07 | the staged vocabulary and the seven samples / `GET` as RDF/XML on the live stack / `200` each. The vocabulary takes about 60 ms against 3 ms as Turtle | L5 | + | pass, macOS |
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).
