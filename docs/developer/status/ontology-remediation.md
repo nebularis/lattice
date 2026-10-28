@@ -19,7 +19,12 @@
 | OR-3 | built: twelve deprecated Surface documents, three duplicates and the stale migration index deleted, links rehomed, the misnamed execution README renamed, 25 working-document references out of user-facing text, the names outside the project reworded in 14 files, prompt residue and the vendor identifier removed |
 | OR-5 | built: the overview retired (TD-114 for the table the import guard reads), the version lines in three READMEs, the versioning policy's two regimes scoped, Party's unused import, MORK's unmeasured figures and unproven claims reworded, the SPC companion marked non-normative. Not done: the release register's ledger row, which the maintainer's bump regenerates |
 | OR-7 | part built, OR-7a: `fnd:meaningBearing`, the Foundation shape, the compiler refusal `MeaningBearingEdgeByIdentity` with 3 tests, ADR-A137 (Proposed), STD-284. Pending: the four instances in Eligibility, Behaviour, Vocabulary (the closure record) and Party, and Foundation's governance state |
-| OR-6, OR-8 to OR-19 | pending |
+| OR-6 | built: SPC and the store vocabulary under the lattice root, `persistence-store` published with 43 terms, the applied insurance root gains the lattice segment, ADR-A62 executed |
+| OR-8, OR-14 | built: supersession acyclic, validity periods half-open and zoned, `fnd:estimatedStart`, Q14 |
+| OR-9 | built: ADR-A138, Surface, Quantification and MCN name their content and rule |
+| OR-12 | built: the allowance classes deprecated with warning shapes, TD-115 |
+| OR-18 | built: the Instrument README pruned by a subagent, 6,342 to 5,512 lines |
+| OR-7b, OR-10, OR-11, OR-13, OR-15, OR-16, OR-17, OR-19 | pending |
 
 ## History
 
@@ -29,3 +34,4 @@
 - 2026-10-28: OR-4 built and committed. Ran and passed: `check:persistence` (3976), `check:mork` (361), `check:reference-eligibility` (60), `check:identifiers` (12), `check:knowledge` (117), the literate grammar tests (183), the commit hook. `check:ontology-versioning` reports UNBUMPED for the 12 changed release members, which is the expected state until the maintainer runs `release:prepare` (decision 13). `check:ontology-catalog` has two failures that predate this unit, `test_reasoning_isolation` and the shared-specifier test, both from the agent worktrees under `.claude/worktrees/` that the tests walk.
 - 2026-10-28: OR-3 (with one Sonnet subagent on the mechanical part), OR-5 and OR-7a built and committed. Ran and passed: the commit hook on each commit, `check:published-decisions` (0 failures), `check:catalogue`, `check:site-sections`, the persistence reference-mode tests (22), `check:identifiers`, `check:knowledge`. Open for the maintainer: OR-Q12 and OR-Q13, the acronyms of the private source in five sketches and the legacy MORK pipeline, and ADR-A106 and a few other decisions that still link working documents.
 - 2026-10-28: the maintainer deferred OR-Q12 to the end of the unit, chose the organisation as creator (OR-Q13, applied in every spec and vocab document), and confirmed one bump at the end of the unit.
+- 2026-10-28: OR-6 (one Sonnet subagent on the store vocabulary), OR-8, OR-9, OR-12, OR-14 and OR-18 (a second subagent) built and committed. TD-101, TD-106, TD-107 and TD-109 close. The OR-7a refusal gained its witness.

@@ -212,7 +212,7 @@ def test_h2_6c_t10_append_version_never_deletes_from_the_data_graph_and_reads_an
     sets = access_sets(operation)
     assert not any(a.mode == "Delete" and a.role == "data" for a in sets.writes), "no sweep and no delete"
     c = contract_of(operation)
-    assert c.kind is OperationKind.APPEND_VERSION and c.version == 3  # 2 since R2 (pat:previousVersion, H2.6d), 3 since its NOT EXISTS names its graph (H2.6g)
+    assert c.kind is OperationKind.APPEND_VERSION and c.version == 4  # 2 since R2 (pat:previousVersion, H2.6d), 3 since its NOT EXISTS names its graph (H2.6g), 4 since the store vocabulary moved to its published namespace (OR-6)
     by_resource = {(a.resource, a.mode) for a in c.accesses}
     assert (ResourceKind.AGGREGATE.value, "Insert") in by_resource  # the version
     assert (ResourceKind.AGGREGATE.value, "Delete") not in by_resource

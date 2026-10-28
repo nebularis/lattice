@@ -31,7 +31,7 @@ from persistence.compiler import compile_to_graph
 from conftest import EXAMPLES_DIR
 
 EX = "https://example.org/lending#"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 ROOT = URIRef("urn:order:1")
 DATA_GRAPH = URIRef("urn:g:orders")
 PLAIN = "cas-replace-composite-property-patch-log"

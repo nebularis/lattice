@@ -178,14 +178,14 @@ Every example in this guide uses the same small domain, so that a corrupted stat
 
 ```turtle
 @prefix ex:   <https://example.org/ns#> .                  # illustrative domain vocabulary
-@prefix pat:  <https://example.org/lattice/patterns#> .    # illustrative pattern vocabulary (Appendix A)
+@prefix pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .    # the pattern vocabulary (Appendix A)
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 ```
 
-`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on), it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). Its final IRI, and its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Versioned`, is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)), the local name is what matters here.
+`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on), it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). The vocabulary is published as Persistence's `persistence-store` document. Its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Versioned` is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)).
 
 **Every IRI in this guide is illustrative.** The URN namespaces used in examples (`urn:g:`, `urn:rev:`, `urn:key:`, `urn:txn:`, `urn:order:`, `urn:person:`, `urn:ds:`, `urn:ev:`, `urn:tenant:`, `urn:decision:`, `urn:user:`) are unregistered URN namespace identifiers (RFC 8141). Copied verbatim into two deployments, they collide the moment the datasets are merged or federated. A deployment selects a controlled `https` authority, a `tag:` URI, or a registered scheme through its identity profile ([iri-identity-patterns.md §17](iri-identity-patterns.md#17-open-design-work)); the patterns do not depend on the choice.
 
@@ -581,7 +581,7 @@ pat:KeyClaimShape
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 INSERT {
   GRAPH <urn:g:keys> {
@@ -658,7 +658,7 @@ Under MVCC, two inserts of *different* triples do not conflict. Force them to co
 #   for i in 0..1023 -> GRAPH <urn:g:keys> { <urn:keyshard:i> pat:counter "0"^^xsd:long }
 
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 DELETE { GRAPH <urn:g:keys> { ?shard pat:counter ?n } }
 INSERT {
@@ -701,7 +701,7 @@ But when the property is also a unique key, the old claim must be retired and th
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 DELETE {
   GRAPH <urn:g:people> { ex:person-42 ex:email ?old }
@@ -1005,7 +1005,7 @@ Append three events to the `orders/1` stream, allocating positions inside the wr
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE { GRAPH <urn:g:meta/17> { ?stream pat:epoch ?rowEpoch ; pat:seq ?n ; pat:head ?prev } }
@@ -1408,7 +1408,7 @@ SELECT ?step WHERE { ?step ex:partOf ex:procedure-7 ; ex:rank ?r } ORDER BY ?r
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
@@ -1850,7 +1850,7 @@ All positions client-computed, everything ground except the payload sweep, the p
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
@@ -3215,10 +3215,10 @@ A sequencing that respects this: Phase 0.2 builds the port, the TCK harness and 
 
 ## Appendix A — The pattern vocabulary
 
-The `pat:` terms used throughout, as Turtle. The namespace IRI is illustrative; the local names are the contract. Alignment to Foundation is discussed in [§23.3](#233-aligning-pat-with-foundation).
+The `pat:` terms used throughout, as Turtle. The vocabulary is published as Persistence's `persistence-store` document, and the Turtle below is the guide's copy of it. Alignment to Foundation is discussed in [§23.3](#233-aligning-pat-with-foundation).
 
 ```turtle
-@prefix pat:  <https://example.org/lattice/patterns#> .
+@prefix pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -3331,8 +3331,8 @@ Installed on backends whose `commitValidation ≥ SHACL_CORE`; run as an audit o
 **On `sh:prefixes`:** `pat:TxnCardinalityShape`, below, uses `sh:prefixes pat:` inside a `sh:sparql` constraint. For a SHACL engine to resolve the `pat:` prefix used inside that embedded SPARQL string, the node named by `sh:prefixes` (`pat:`, i.e. the ontology's own namespace IRI) must itself carry `sh:declare` triples binding the prefix, as SHACL-SPARQL requires — it is not enough for the Turtle document containing the shape to declare `@prefix pat:`. Declare it once, alongside the vocabulary itself (Appendix A):
 
 ```turtle
-<https://example.org/lattice/patterns#>
-    sh:declare [ sh:prefix "pat" ; sh:namespace "https://example.org/lattice/patterns#"^^xsd:anyURI ] .
+<https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+    sh:declare [ sh:prefix "pat" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"^^xsd:anyURI ] .
 ```
 
 Without this triple, an engine that actually enforces `sh:declare` (rather than falling back to the enclosing document's prefixes, which is not guaranteed) fails to resolve `pat:` inside the embedded SPARQL and the shape does not validate as intended — silently, unless the engine is configured to error on unresolved prefixes.
@@ -3343,7 +3343,7 @@ Without this triple, an engine that actually enforces `sh:declare` (rather than 
 
 ```turtle
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Version row: F4 (one source of truth), F7 (one value, one datatype), F10 (tombstone shape)

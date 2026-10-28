@@ -57,7 +57,7 @@ def test_h2_4a_t1_a_replace_reads_the_closure_and_writes_the_delete_set_the_payl
     writes = {(a.role, a.graph, a.subject, a.predicate) for a in sets.writes}
     assert ("data", data, "$root", path, True) in reads  # the sweep, reached at execution
     assert ("data", data, "?s", "?p") in writes and ("data", data, "{payload}", "*") in writes
-    assert ("meta", str(context["metaGraphPrefix"]), "$root", "<https://example.org/lattice/patterns#seq>") in writes
+    assert ("meta", str(context["metaGraphPrefix"]), "$root", "<https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq>") in writes
     assert not any(a.closure for a in sets.writes)
 
 

@@ -26,7 +26,7 @@ from persistence.terms import Iri
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 OUT_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "membership"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 EX = "https://example.org/membership#"
 DATA, META, TXN = URIRef("urn:g:set"), URIRef("urn:g:meta"), URIRef("urn:g:txn")
 ROOT = URIRef("urn:set:1")
