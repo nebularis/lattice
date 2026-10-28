@@ -43,7 +43,7 @@ Recorded 2026-10-27 at the maintainer's request, toward making the studio a supp
 | CS8 | **done 2026-10-28.** The service on Helidon SE WebServer 4.5.6, replacing the JDK's HTTP server. Helidon 27 is compiled for Java 27 and the platform is on 25, so 4.5 until the platform moves. The service also checks that a configuration graph holds only its own part's terms, which today only the browser checks (`split.ts`), as STD-279 requires | nothing |
 | CS9 | **done 2026-10-28.** The studio supported: ADR-A136 amended from a proof of concept to a supported component (CS-Q2), register entries (capability, mechanisms, patterns, the standards it follows), a published architecture and design document drawn from the sketch and the READMEs, an operations guide configuring every part, runbooks, and a review of every handler of both services against STD-279 | CS8, so the operations guide describes the server once |
 | CS10 | **done 2026-10-28.** RDF/XML on the HTTP API by content negotiation, beside Turtle, for what a document means | nothing, CS-Q3 answered |
-| CS11 | the contract builder, CB0 to CB4 of the builder brief, including the studio's wording mode | the builder's own questions, CS9 and CS12c |
+| CS11 | the contract builder, CB0 to CB4 of the builder brief, including the studio's wording mode | CS12c. The builder's questions are answered below |
 | CS12 | the Word authoring proof of concept unified with the studio, in the steps below | CS8 for CS12a |
 
 ### CS12, unifying the Word authoring proof of concept
@@ -58,11 +58,25 @@ Decided 2026-10-27 (CS-Q4). Wording becomes a mode of the studio, so the Word ad
 |---|---|---|
 | CS12a | **Done 2026-10-28 for the server**, with Jena 6.2.0 and Jackson 2.22.4. The graph naming and revisions moved to CS12d, where the store is shared. The authoring service on Helidon SE WebServer, replacing Javalin (WA-D4), and on the studio's graph naming and per-graph revisions with `If-Match`, still speaking JSON. Every handler validates its input at the service (STD-279) | CS8 |
 | CS12b | **done 2026-10-28**, with the document model, the tag codec, offsets and the graph model. The shared domain package, `packages/authoring-domain`: TypeScript with no UI and no Office.js, holding the document model, the tag codec, UTF-16 offsets, the document XML reader and writer once CS12c defines it, and the studio's graph model (`src/rdf/graph.ts`). Both apps depend on it as a Yarn workspace. The conversion between Word's OOXML and the document XML stays in the add-in, since only Word needs it. Moved with its tests, so both apps' suites pass unchanged | nothing |
-| CS12c | the document XML vocabulary, its own ADR (ADR-A137, drafted 2026-10-28, Proposed, with DM-Q1 to DM-Q3 open) and its schema in `contracts/`, in RELAX NG and XSD as CS-Q5 records, with an XSLT mapping to Wording RDF through the sidecar | the ADR's acceptance |
+| CS12c | the document XML vocabulary, its own ADR (ADR-A137, accepted 2026-10-28 with DM-Q1 to DM-Q3) and its schema in `contracts/`, in RELAX NG and XSD as CS-Q5 records, with an XSLT mapping to Wording RDF through the sidecar | nothing |
 | CS12d | one deployable service: the authoring API folded into the studio's service as its own Maven module, sharing one Helidon server, store and job bus. The add-in sends documents as XML and reads meaning as RDF, and the authoring JSON Schemas are retired | CS12a, CS12b, CS12c |
 | CS12e | one stack: `studio:up` and `studio:down` start and stop the add-in's dev server too, and `deployment/compose/authoring` is folded into the studio's compose file | CS12d |
 
 Bundling and releasing the studio and the add-in are left until after CS12.
+
+### The contract builder's questions
+
+The builder brief's questions, answered 2026-10-28.
+
+| ID | Question | Answer |
+|---|---|---|
+| CB-Q1 | a mode of the studio, or an app of its own | a mode of the studio, sharing its graph model, inspector, problems drawer and jobs, and `packages/authoring-domain` with the Word add-in |
+| CB-Q2 | how far "see how a term would be applied" goes before instantiation | what each term reads, and a dry run on sample facts of its eligibility conditions and of one regime's triggers. No preview instantiation, which would be bound meaning arriving early. Eligibility runs through the compiled SPARQL, as the studio's tests do, and never the reference evaluator (ADR-A-FM3). Stepping a regime has no compiled path yet, so CB0 decides whether that is compiler work or is marked under construction |
+| CB-Q3 | an LLM proposer in LATTICE | a public proposer interface, with manual entry as its trivial proposer, and an LLM proposer whose only pack in the repository is MTP, any other being loaded from outside it. Every proposal carries its span, its template and its provenance, and goes through one review queue (Confirm, Retarget, Decline, Defer) |
+| CB-Q4 | which rule languages CB5 imports | LegalRuleML and Logical English, each behind a feature flag. The brief's "OBRL" was a typo |
+| CB-Q5 | timing | a tag by the end of November 2026 carrying CB0 to CB2 and, from CB4, what each term reads. CB3's LLM proposer and the regime dry run follow if they slip |
+
+CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model, separated from the InsurML default the assembly-interface sketch records under IMA-D17, and the assembler's topology. Its examples are a facility agreement and a software licence. The brief's estimate of 6 to 8 hours for CB0 to CB4 is the low end, since the assembler is new substrate with strict laws.
 
 ### Open questions
 
@@ -73,6 +87,8 @@ Bundling and releasing the studio and the add-in are left until after CS12.
 | CS-Q3 | which XML is wanted. **Answered 2026-10-27:** both, by the wire rule above. RDF/XML for meaning (CS10), and a document XML vocabulary for documents (CS12c) |
 | CS-Q4 | the service, wire and shared code for CS12. **Decided 2026-10-27:** one deployable reached in steps, the wire rule, the shared domain package, one `studio:up` |
 | CS-Q5 | for CS12c, the schema language of the document vocabulary (XSD or RELAX NG), and which ADR defines the vocabulary. **Answered 2026-10-28:** an ADR of its own. Both schema languages, **decided 2026-10-28** under the maintainer's delegation: RELAX NG compact syntax is the source we write and review, and XSD 1.0 is generated from it with Trang, for the tools that expect XSD (the JDK's validator, Word's schema library, schema-aware XSLT). A check validates a corpus of valid and invalid fixtures against both and fails where their verdicts differ, which also keeps the RELAX NG within what XSD can express. RELAX NG is the source because it is the shorter and more readable of the two, composes by pattern, and is what LegalRuleML treats as normative, and XSD because our consumers' tools validate with it |
+| CS-Q6 | whether the platform moves from JDK 25 to 27, so the services can take Helidon 27 (CS-B14). Raised 2026-10-28 by the maintainer, who is willing to move. JDK 27 is not a long-term support release and is superseded by 28 in March 2027, and ADR-A84 and the toolchain unit fix the minting libraries and the repository on JDK 25 |
+| CS-Q7 | how a form places a property with no `rdfs:domain` (CS-D5). Raised 2026-10-28. The studio's five layers give 374 of their 394 properties a domain, and `OVERRIDES` covers the rest it needs. Instrument, which the builder edits, gives 17 of 76, and its SHACL shapes name 54 of the other 59 |
 
 ## Planned validation
 

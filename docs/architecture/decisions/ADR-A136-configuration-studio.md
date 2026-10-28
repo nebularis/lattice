@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Proposed
+**Status:** Accepted 2026-10-28, with its addendum and amendment. How a job's status reaches the service, in decisions 4 and 5, is reopened (see Provenance)
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -48,13 +48,13 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md) (plan), [sketch](../../developer/sketches/config-studio.md), slices CS0 to CS4.
 
-Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's request. The decisions taken alone are CS-D1 to CS-D9 in the [status record](../../developer/status/config-studio.md). The maintainer has not accepted it.
+Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's request. The decisions taken alone are CS-D1 to CS-D9 in the [status record](../../developer/status/config-studio.md). The maintainer accepted it, with the addendum and the amendment, on 2026-10-28, and ratified CS-D1 to CS-D3, CS-D8, CS-D9, CS-D11, CS-D13 and CS-D14, with CS-D6 and CS-D7 superseded by the amendment. CS-D4, a job's status written by the worker into the job graph and read from the store, is reopened as PDD-13 in the [pending design decisions](../../developer/pending-design-decisions.md), since every poll and every worker write meets in the store, and we have no model of concurrent writes there, nor yet the usage patterns to build one from. The studio keeps it as built until PDD-13 is decided. CS-D5, CS-D10 and CS-D12 wait on the maintainer's questions.
 
-## Addendum, 2026-10-27: vocabulary, quantification and eligibility (Proposed)
+## Addendum, 2026-10-27: vocabulary, quantification and eligibility (Accepted 2026-10-28)
 
 The studio keeps three more configurations, `vocabulary`, `quantification` and `eligibility`, as graphs revisioned and saved like persistence and surface, and validated by their layers' own shapes as the author edits. A vocabulary validation also resolves every scheme contract with `tools/vocabulary` for every time segment and set of scopes its bindings draw. An eligibility validation also compiles every condition with `tools/mork_compilers`, expands each concept condition over its resolved scheme, and decides each `elg:Question` with the condition's compiled SPARQL against the decision the author expects of it, given as `cst:expectedDecision`. A question is the eligibility layer's own input, so a test is the query a deployment would run on it. The reference evaluator is not used: it is a test-time oracle (ADR-A-FM3). A job's body is every configuration as edited, and its target names the one checked. Features that wait on other work are shown and marked as under construction. Decision 4 and the rest stand.
 
-## Amendment, 2026-10-28: a supported component (Proposed)
+## Amendment, 2026-10-28: a supported component (Accepted 2026-10-28)
 
 The maintainer decided that the studio is to be supported, meaning developed and maintained with the ontologies and released with them once a release policy exists, and that this is an amendment to this record rather than a new one, since it is still Proposed. Decision 1 now says so, and the title no longer calls the studio a proof of concept. With it the `cst:` namespace drops `poc/` from its IRI, while no workspace is kept outside an in-memory store, so nothing needs migrating. Decision 3's HTTP server is Helidon SE's WebServer, since the JDK's `com.sun.net.httpserver` is a JDK module outside Java SE that another JVM need not ship. Decision 4 adds RDF/XML. Which software a release carries, and how it is versioned, is the release policy's own decision, beside ADR-A129. The other decisions stand.
 

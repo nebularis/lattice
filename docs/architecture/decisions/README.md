@@ -138,8 +138,8 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-133](ADR-A133-git-hooks.md) | Git hooks check what a change touches, never block a push, and gate the merge into `main` | Proposed, 2026-10-23 |
 | [A-134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) | A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by | Accepted, 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
 | [A-135](ADR-A135-contract-first-wire-types.md) | Contract-first wire types | Proposed, 2026-10-26 |
-| [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Proposed, 2026-10-27, amended 2026-10-28 |
-| [A-137](ADR-A137-document-markup-vocabulary.md) | A document markup vocabulary of LATTICE's own, in XML | Proposed, 2026-10-28 |
+| [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Accepted 2026-10-28, amended 2026-10-28 |
+| [A-137](ADR-A137-document-markup-vocabulary.md) | A document markup vocabulary of LATTICE's own, in XML | Accepted 2026-10-28 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

@@ -3,11 +3,11 @@
 # Configuration Studio - Status
 
 **Unit ID:** `config-studio`
-**Status:** 🟡 CS0 to CS6 built and verified. Awaiting the maintainer's review and ratification of CS-D1 to CS-D14
-**Last updated:** 2026-10-27
+**Status:** 🟡 CS0 to CS10, CS12a and CS12b built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28. CS-D4 reopened as PDD-13, and CS-D5, CS-D10, CS-D12 and CS-B14 wait on the maintainer
+**Last updated:** 2026-10-28
 **Plan:** [config-studio.md](../plans/config-studio.md)
 **Sketch:** [config-studio.md](../sketches/config-studio.md)
-**ADR:** [A-136](../../architecture/decisions/ADR-A136-configuration-studio.md), Proposed
+**ADR:** [A-136](../../architecture/decisions/ADR-A136-configuration-studio.md) and [A-137](../../architecture/decisions/ADR-A137-document-markup-vocabulary.md), Accepted 2026-10-28
 **Validation Pack:** [config-studio.md](../validation/config-studio.md)
 **Branch:** `claude/config-authoring-studio`, from `main` at `4dd39e4c`
 
@@ -15,9 +15,11 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** review the Validation Pack, run `mise run check:config-studio`, `mise run test:config-studio` and `mise run check:authoring`, try the studio with `mise run studio:up`, rule on CS-D1 to CS-D14 and CS-B14 to CS-B22, and decide on accepting ADR-A136 as amended. CS12c waits on the document vocabulary's ADR, and CS11 on the builder's own questions.
+**Next action, for the maintainer:** review the Validation Pack, run `mise run check:config-studio`, `mise run test:config-studio` and `mise run check:authoring`, try the studio with `mise run studio:up`, answer CS-Q6 (JDK 27, for CS-B14) and CS-Q7 (forms for properties with no domain, for CS-D5), and rule on CS-D10 and CS-D12 once explained. CS12c and CB0 can start.
 
 ## Decisions taken alone, for ratification
+
+**Ruled 2026-10-28.** Ratified: CS-D1 to CS-D3, CS-D8, CS-D9, CS-D11, CS-D13, CS-D14 and CS-B15 to CS-B22. Superseded by the ADR-A136 amendment: CS-D6 (Helidon) and CS-D7 (supported). Reopened: CS-D4, as [PDD-13](../pending-design-decisions.md), kept as built until it is decided. Waiting: CS-D5 on CS-Q7, CS-D10 and CS-D12 on the maintainer's review, and CS-B14 on CS-Q6.
 
 CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-taken-alone-for-ratification), and CS-D10 to CS-D14 in [sketch §8](../sketches/config-studio.md#8-vocabulary-quantification-and-eligibility-added-2026-10-27). Further decisions made while building:
 
@@ -69,6 +71,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, ratification: the maintainer accepted ADR-A136 as amended and ADR-A137 with DM-Q1 to DM-Q3 as recommended, ruled on the decisions as recorded above, and answered the builder's questions (CB-Q1 to CB-Q5 in the plan). CS-D4 reopened as PDD-13. CS-Q6 and CS-Q7 raised.
 - 2026-10-28, latest: CS9, CS12a and CS12b, under the maintainer's delegation. ADR-A136 amended to make the studio supported, the `cst:` namespace renamed, a published architecture document, an operations guide and a runbook, register entries (CAP-86 updated, MEC-84 to MEC-87, PAT-55), the STD-279 review of both services with the worker's gap fixed, the authoring service on Helidon with Jena 6 and Jackson 2.22 (TD-95 closed), the shared package, and the stack's port check. Two sub-agents wrote CS12b and the operator documents on their own branches, which we reviewed and merged.
 - 2026-10-28, later still: CS10. RDF/XML beside Turtle by content negotiation, chosen in one place, and accepted in bodies, with a DTD refused.
 - 2026-10-28, later: CS8. The service on Helidon SE WebServer 4.5.6, since 27 needs Java 27, and a saved graph refused with `422` when it holds another part's subjects (STD-279). Verified with the unit tests, the shaded jar's self-check and the live stack.
