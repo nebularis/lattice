@@ -304,6 +304,22 @@ A job that fails is final. The worker does not retry it. Resubmit from the brows
 
 ---
 
+## Scenario 9b: The service or the writer cannot declare the writes super stream
+
+**Symptom.** At start the service, the writer or the worker stops with `PRECONDITION_FAILED` or `inequivalent arg 'type' for exchange 'lattice.studio.writes'`.
+
+**Diagnosis.** The broker still holds the writes topology of an earlier version, a consistent-hash exchange of the same name with classic queues `lattice.studio.writes.0` to `.7`, and an exchange cannot be redeclared with another type.
+
+**Remedy.** With everything stopped but RabbitMQ, or with the stack down, reset RabbitMQ (Scenario 10). The broker holds no state the studio needs once the old partition queues are empty, since every write applied is in the store.
+
+## Scenario 9c: A writer holds no partitions, or writes wait
+
+**Symptom.** Saves answer after 10 seconds, or `503`, and `writer.log` shows no batches.
+
+**Diagnosis.** No live writer holds the workspace's partition. List the group with `list_stream_group_consumers` (operations guide, RabbitMQ). Every partition should show one `active` consumer. A writer that cannot reach the stream port logs a connection error, often because the advertised host is not reachable from where the writer runs.
+
+**Remedy.** Start a writer (`mise run studio:writer`, or `studio:up`). A save answered `503` may still apply once a writer holds its partition, and reloading the workspace shows whether it did.
+
 ## Scenario 10: Resetting everything
 
 Use the smallest reset that fits.

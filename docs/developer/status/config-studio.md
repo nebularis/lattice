@@ -15,11 +15,11 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** decide CS-Q9, the store writers as a deployable of their own, and rule on CS-B29 to CS-B33.
+**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, and rule on CS-B35 to CS-B41.
 
 ## Decisions taken alone, for ratification
 
-**Ruled 2026-10-28.** Ratified: CS-D1 to CS-D3, CS-D5 as amended by CS-Q7 (shapes first, then domain and range), CS-D8 to CS-D14, and CS-B14 to CS-B22. Superseded by the ADR-A136 amendment: CS-D6 (Helidon) and CS-D7 (supported). Reopened, then decided as CS-Q8: CS-D4, which ADR-A136's second amendment replaces with partitioned writers.
+**Ruled 2026-10-28.** Ratified: CS-D1 to CS-D3, CS-D5 as amended by CS-Q7 (shapes first, then domain and range), CS-D8 to CS-D14, and CS-B14 to CS-B22. Superseded by the ADR-A136 amendment: CS-D6 (Helidon) and CS-D7 (supported). Reopened, then decided as CS-Q8: CS-D4, which ADR-A136's second amendment replaces with partitioned writers. Later the same day: CS-B23 and CS-B25 to CS-B34 ratified. CS-B24 replaced by CS-Q9's answer, writers deployed apart on super streams (CS17). On CS-B30 the maintainer confirmed that a lone write is applied at once: a writer waits only for the first write and takes what else is already queued.
 
 CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-taken-alone-for-ratification), and CS-D10 to CS-D14 in [sketch §8](../sketches/config-studio.md#8-vocabulary-quantification-and-eligibility-added-2026-10-27). Further decisions made while building:
 
@@ -59,6 +59,13 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B32 | The surface compiler refuses a promotion outside its target namespace onto a property the source graph does not declare as a property, and the studio's compile adds the substrate's specifications to its source | the maintainer's D. The surface README already says such a property is one an authored layer declares, so the law's text stands. A promotion onto `fnd:externalKey` finds it in Foundation's specification |
 | CS-B33 | The studio does not warn that a promotion's property is undeclared when it lies in the contract's target namespace | the compiler mints that property itself (`compile.py`), so the warning was wrong |
 | CS-B34 | A `NOT EXISTS` pattern is wrapped in a group, and the service's tests send every request as SPARQL text | Jena writes a bare `GRAPH` inside `NOT EXISTS` without braces, which Fuseki refuses while the in-memory store, running the algebra, accepts it. Found on the live stack |
+| CS-B35 | A write's partition is its workspace id's first 32 bits modulo 8, and the service and the worker publish to the super stream over AMQP 0.9.1 with that key, so only the writer speaks the stream protocol | identical in Java and Python with no hash library, and even, since workspace ids are random. The stream client's own hash routing would need the worker to reproduce it |
+| CS-B36 | Past its 10-second wait the service reads the write's receipt, answering as applied if it is there and `503` otherwise, and no write expires | a stream keeps a write until a writer reaches it, so the classic queue's expiry has no equivalent, and the receipt tells the truth either way |
+| CS-B37 | Each partition keeps a week of writes or 1 GiB | the receipts in the store are the lasting record, and a writer's stored offset is never older than its last batch |
+| CS-B38 | The writer decodes the reply-to the stream stores as an AMQP 1.0 address, `/queues/` and the percent-encoded name | found on the live stack: every reply was lost until then, and only receipts answered the saves |
+| CS-B39 | Fuseki serves one TDB2 database as two services, `studio`, which reads, and `studio-write`, which updates, from a configuration the stack writes and the compose file mounts, and a test keeps the two alike | least privilege for the service and the worker. Without authentication on Fuseki the separation holds by endpoint, not by credential |
+| CS-B40 | One writer thread per instance, and a deployment scales writers by instances. `LATTICE_STUDIO_WRITERS` is gone, and the sweep moved into the writer | TDB2 commits one write at a time (TSD-42), so threads in one instance add nothing, while instances add failover and spread checking |
+| CS-B41 | The writer logs a write it refuses and passes over it | a stream has no dead letters. The absent receipt records that the write did not apply |
 
 ## Learnings
 
@@ -83,6 +90,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, CS17: the store writer is a deployable of its own, `config-studio-writer`, on a RabbitMQ super stream whose partitions spread across writer instances and fail over, with the shared code in `config-studio-core`, and the service and worker reading through a Fuseki service that cannot update. Verified natively, with two writers sharing and handing over partitions, and in Docker.
 - 2026-10-28, CS16: the maintainer accepted ADR-A136's second amendment, ratified CS-B23 to CS-B28 except CS-B24, which CS-Q9 reopens, and decided A to D. Writes are batched one request per batch (TSD-44), guarded in the update (PAT-21) and leave a receipt each (PRI-54), and the surface compiler refuses a promotion onto an undeclared authored property. The index review found PAT-55 stale and the writer to be PAT-18.
 - 2026-10-28, latest: CS13 to CS15 under the maintainer's delegation. Forms read shapes first (CS-Q7, by a sub-agent on its own branch, reviewed and merged). Partitioned store writers, the store on TDB2 in the user's data folder, job retention, export and import, and samples recorded on the workspace (CS-Q8), with ADR-A136's second amendment drafted. A facility agreement sample in every part (by a sub-agent, reviewed and merged). TSD-42 and TSD-43 recorded, MEC-88 and TD-97 to TD-99 added, PDD-13 closed into CS-Q8. The maintainer ruled on CS-D5, CS-D10, CS-D12, CS-B14 (stay on JDK 25), CB-Q4 (ODRL) and decided CS-Q8.
 - 2026-10-28, ratification: the maintainer accepted ADR-A136 as amended and ADR-A137 with DM-Q1 to DM-Q3 as recommended, ruled on the decisions as recorded above, and answered the builder's questions (CB-Q1 to CB-Q5 in the plan). CS-D4 reopened as PDD-13. CS-Q6 and CS-Q7 raised.

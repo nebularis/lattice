@@ -9,13 +9,15 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 | File | Holds |
 |---|---|
 | `studio-vocabulary.ttl` | workspaces, samples, jobs, job status, artefacts and gaps |
-| `amqp-topology.json` | the exchange, the job queue, the dead-letter queue, and the writes exchange with its partition queues, declared identically by the service and the worker |
+| `amqp-topology.json` | the exchange, the job queue, the dead-letter queue, and the writes super stream with its partitions, declared identically by the service, the writer and the worker |
 | `samples/samples.ttl` | the samples, each a list of repository files |
 | `samples/lending-baseline.ttl` | a baseline for the lending sample, which the persistence example it pairs with does not declare |
 | `samples/facility-baseline.ttl` | the facility agreement sample's baseline, which extends `lending-baseline.ttl` with a facility, lenders and drawdowns, the boundary shape of the facility and the carrier data |
 | `samples/facility-{vocabulary,quantification,eligibility,persistence,surface}.ttl` | the facility agreement sample's five configurations, one file each, which refer to one another: eligibility draws on the schemes and range sets, persistence scopes a key by a vocabulary property, and surface reads a population from a scheme contract. [`tools/config_studio_stage.py`](../../tools/config_studio_stage.py) stages them merged as sample `facility`, and [`test_config_studio_facility_sample.py`](../../workers/tests/test_config_studio_facility_sample.py) checks each part and the deliberate resolution cases |
 
 ## Graphs
+
+Fuseki serves the one database as two services: `studio` reads only, through query and the graph store protocol's reads, and is given to the service and the worker. `studio-write` also updates, and is given to the store writer alone.
 
 | Graph IRI | Written by | Holds |
 |---|---|---|
@@ -50,7 +52,7 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | `GET /api/jobs/{job}` | | `200`, the job graph |
 | `DELETE /api/jobs/{job}` | | `204`. Drops the job graph and its input graph |
 
-A write that no store writer answers within 10 seconds is `503`, and is dropped rather than applied later.
+A write is answered when its writer replies. Past 10 seconds the service looks for the write's receipt: if it is there the write applied and is answered as such, and otherwise the answer is `503`, the write is not applied yet and may still apply, since the stream keeps it until a writer reaches it.
 
 Every response carries `X-Content-Type-Options: nosniff`, and every `/api` response `Cache-Control: no-store`, except the vocabulary, which is revalidated by its `ETag`. No response carries `Access-Control-Allow-Origin`.
 
@@ -88,7 +90,7 @@ Running a job twice gives the same graph but for its times, so a redelivered mes
 
 ## Writes
 
-Every write to the store is a command to the writer of its workspace (ADR-A136, amendment on partitioned writers). A command is published to exchange `lattice.studio.writes`, of type `x-consistent-hash` (RabbitMQ's `rabbitmq_consistent_hash_exchange` plugin), with the workspace's id as its routing key. The exchange routes it to one of the 8 queues `lattice.studio.writes.0` to `.7`, each bound with weight `1`, durable, dead-lettering to `lattice.studio.dlx`, and with a single active consumer, so one writer applies a workspace's commands in order. The number of partitions is fixed here, since changing it moves workspaces between queues.
+Every write to the store is a command to the store writer, `config-studio-writer`, the only component that writes the store (ADR-A136). A command is published to the super stream `lattice.studio.writes`, a direct exchange with argument `x-super-stream` whose binding keys `0` to `7` route to the partition streams `lattice.studio.writes-0` to `-7`, each bound with `x-stream-partition-order` and declared with `x-queue-type` `stream`, `x-max-age` `7D` and `x-max-length-bytes` 1 GiB. A command's routing key is its workspace's partition: the id's first 8 hex digits, as an unsigned number, modulo 8. So a workspace's commands stay in order in one partition. The writers are one single-active-consumer group, `lattice.studio.writers`, so each partition is applied by one live writer at a time, and RabbitMQ spreads the partitions across the writers that run. The number of partitions is fixed here, since changing it moves workspaces between partitions.
 
 A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent. Every command carries `id`, a lower-case UUID its sender chooses, and `sender`, `service` or `worker`.
 
@@ -100,11 +102,11 @@ A command's fields are AMQP headers, and the graphs it carries are its body, `co
 | `delete-workspace` | `workspace` | none | service |
 | `submit-job` | `workspace`, `job` | the job graph and its input graph, named | service |
 | `job-update` | `workspace`, `job` | the job graph, named | worker, or the service when the job could not be published |
-| `delete-job` | `workspace`, `job` | none | service, and its sweep of jobs finished longer ago than the retention |
+| `delete-job` | `workspace`, `job` | none | service, and the writer's sweep of jobs finished longer ago than the retention |
 
-`workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service sets `reply_to` to `amq.rabbitmq.reply-to`, a `correlation_id`, and an `expiration` of its 10-second wait, and the writer answers with headers alone: `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
+`workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service publishes with confirms and sets `reply_to` to `amq.rabbitmq.reply-to` and `correlation_id` to the command's id, and the writer answers with headers alone. The stream keeps `reply_to` as an AMQP 1.0 address, `/queues/` and the percent-encoded queue name, which the writer decodes. The reply's headers are `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
 
-The writer checks every command, whatever its sender checked: the ids, that a command carries only the graphs its kind may, part membership by the rule of `PUT`, that a job names its workspace, its own input, the workspace's baseline and `cst:Queued`, and that a `job-update` changes nothing on the job node but `cst:status`, `cst:startedAt`, `cst:finishedAt`, `cst:failureMessage`, `cst:conforms`, `cst:report`, `cst:artefact`, `cst:gap`, `cst:resolution`, `cst:expansion` and `cst:testResult`, compared by value. A `job-update` for a deleted job is dropped. A refused command is dead-lettered.
+The writer checks every command, whatever its sender checked: the ids, that a command carries only the graphs its kind may, part membership by the rule of `PUT`, that a job names its workspace, its own input, the workspace's baseline and `cst:Queued`, and that a `job-update` changes nothing on the job node but `cst:status`, `cst:startedAt`, `cst:finishedAt`, `cst:failureMessage`, `cst:conforms`, `cst:report`, `cst:artefact`, `cst:gap`, `cst:resolution`, `cst:expansion` and `cst:testResult`, compared by value. A `job-update` for a deleted job is dropped. A refused command is logged by the writer and passed over, since a stream has no dead letters, and its absent receipt records that it did not apply. A writer stores each partition's offset after a batch, so a writer that takes a partition over resumes after the last batch applied.
 
 A writer applies the commands waiting for it, up to 64, in one SPARQL Update request, one transaction. Each command's first operation inserts its `cst:Receipt` only where its precondition holds in the store: a save's expected revision, a creation's or an import's absent workspace, a job's workspace. Its other operations require that receipt, so a command applies whole or not at all, and the receipts present after the commit are the commands applied. A command whose receipt already exists, such as one redelivered after a lost acknowledgement, is answered from its receipt and not applied again. A batch the store refuses is retried whole.
 

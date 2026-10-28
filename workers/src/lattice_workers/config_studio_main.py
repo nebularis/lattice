@@ -14,7 +14,7 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 from .config_studio_jobs import find_root
-from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, WRITES, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore
+from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore, declare_writes
 from .fuseki_gsp import FusekiGraphStore
 from .wording_analysis_worker import declare_topology
 
@@ -79,7 +79,7 @@ def main() -> None:
     declare_topology(channel, TOPOLOGY)
     channel.basic_qos(prefetch_count=1)
 
-    channel.exchange_declare(exchange=WRITES["exchange"], exchange_type=WRITES["type"], durable=True)
+    declare_writes(channel)
     # Writes go out on their own channel, in confirm mode, so a job is acknowledged only once its result is the broker's.
     writes = connection.channel()
     writes.confirm_delivery()

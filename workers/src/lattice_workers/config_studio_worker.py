@@ -145,9 +145,9 @@ class Publisher(Protocol):
 
 
 class WriterStore:
-    """Reads from the store, and writes a job's graph through the writer of its workspace (ADR-A136, partitioned
-    writers): a `job-update` command on the consistent-hash exchange, keyed by the workspace's id, which the writer
-    checks and applies. The worker never writes the store itself."""
+    """Reads from the store, and writes a job's graph through the writer of its workspace (ADR-A136): a `job-update`
+    command on the writes super stream, in its workspace's partition, which the writer checks and applies. The worker
+    never writes the store itself."""
 
     def __init__(self, reader: GraphStore, publisher: Publisher) -> None:
         self._reader = reader
@@ -170,7 +170,25 @@ class WriterStore:
             "id": str(uuid.uuid4()), "sender": "worker", "command": "job-update",
             "workspace": workspace.group(1), "job": graph_iri.rsplit(":", 1)[1],
         }
-        self._publisher.publish(WRITES["exchange"], workspace.group(1), headers, dataset.serialize(format="nquads").encode("utf-8"))
+        key = routing_key(workspace.group(1))
+        self._publisher.publish(WRITES["superStream"], key, headers, dataset.serialize(format="nquads").encode("utf-8"))
+
+
+def routing_key(workspace: str) -> str:
+    """The partition of a workspace's writes, as the Java side computes it: the id's first 32 bits, unsigned, modulo
+    the partitions."""
+    return str(int(workspace[:8], 16) % WRITES["partitions"])
+
+
+def declare_writes(channel: Any) -> None:
+    """Declares the writes super stream as the service and the writer do, from the packaged topology. Idempotent."""
+    channel.exchange_declare(
+        exchange=WRITES["superStream"], exchange_type=WRITES["exchangeType"], durable=True, arguments=WRITES["exchangeArguments"]
+    )
+    for i in range(WRITES["partitions"]):
+        name = WRITES["partitionStream"].format(i=i)
+        channel.queue_declare(queue=name, durable=True, arguments=WRITES["partitionArguments"])
+        channel.queue_bind(queue=name, exchange=WRITES["superStream"], routing_key=str(i), arguments={"x-stream-partition-order": i})
 
 
 class RabbitMqConfigStudioWorker:

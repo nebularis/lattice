@@ -50,18 +50,53 @@ RABBITMQ_ARCHIVE = {
 
 # The same addresses as the studio:service and studio:worker tasks in mise.toml.
 FUSEKI_PORT, RABBITMQ_PORT, SERVICE_PORT, WEB_PORT = 3130, 5673, 8090, 4175
+STREAM_PORT = 5553
 STUDIO_ENV = {
     "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{FUSEKI_PORT}",
     "LATTICE_FUSEKI_DATASET": "studio",
     "LATTICE_AMQP_URI": f"amqp://guest:guest@127.0.0.1:{RABBITMQ_PORT}/%2F",
     "LATTICE_STUDIO_STATIC": "apps/config-studio/dist",
 }
+# The writer alone gets the update service and the stream protocol.
+WRITER_ENV = {
+    **STUDIO_ENV,
+    "LATTICE_FUSEKI_WRITE_DATASET": "studio-write",
+    "LATTICE_STREAM_URI": f"rabbitmq-stream://guest:guest@127.0.0.1:{STREAM_PORT}/%2f",
+}
 
-# RabbitMQ's plugins, so the writes exchange can be a consistent-hash exchange (ADR-A136, partitioned writers).
-RABBITMQ_PLUGINS = "[rabbitmq_consistent_hash_exchange].\n"
+# RabbitMQ's stream plugin, for the writes super stream (ADR-A136), on its own port, advertised as the loopback address
+# so a client on this machine reaches the partitions' leader there.
+RABBITMQ_PLUGINS = "[rabbitmq_stream].\n"
+RABBITMQ_CONF = f"""stream.listeners.tcp.1 = 127.0.0.1:{STREAM_PORT}
+stream.advertised_host = 127.0.0.1
+stream.advertised_port = {STREAM_PORT}
+"""
+
+# One TDB2 database behind two services: `studio` reads only, for the service and the worker, and `studio-write`
+# updates, for the store writer alone.
+FUSEKI_CONFIG = """PREFIX fuseki: <http://jena.apache.org/fuseki#>
+PREFIX tdb2:   <http://jena.apache.org/2016/tdb#>
+PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+<#read> rdf:type fuseki:Service ;
+    fuseki:name "studio" ;
+    fuseki:endpoint [ fuseki:operation fuseki:query ] , [ fuseki:operation fuseki:query ; fuseki:name "query" ] ,
+        [ fuseki:operation fuseki:query ; fuseki:name "sparql" ] , [ fuseki:operation fuseki:gsp-r ; fuseki:name "data" ] ;
+    fuseki:dataset <#store> .
+
+<#write> rdf:type fuseki:Service ;
+    fuseki:name "studio-write" ;
+    fuseki:endpoint [ fuseki:operation fuseki:query ] , [ fuseki:operation fuseki:query ; fuseki:name "query" ] ,
+        [ fuseki:operation fuseki:query ; fuseki:name "sparql" ] , [ fuseki:operation fuseki:update ] ,
+        [ fuseki:operation fuseki:update ; fuseki:name "update" ] , [ fuseki:operation fuseki:gsp-rw ; fuseki:name "data" ] ;
+    fuseki:dataset <#store> .
+
+<#store> rdf:type tdb2:DatasetTDB2 ;
+    tdb2:location "{location}" .
+"""
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
-ORDER = ("fuseki", "rabbitmq", "service", "worker", "web")
+ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "web")
 
 
 class Stack:
@@ -143,7 +178,9 @@ class Stack:
         store = self.data / "tdb2"
         store.mkdir(parents=True, exist_ok=True)
         print(f"fuseki: workspaces kept in {store}")
-        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--tdb2", "--loc", str(store), "--update", "/studio"], {"FUSEKI_BASE": str(base)})
+        config = base / "studio.ttl"
+        config.write_text(FUSEKI_CONFIG.replace("{location}", store.resolve().as_posix()))
+        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--config", str(config)], {"FUSEKI_BASE": str(base)})
 
     def rabbitmq_home(self) -> Path:
         return self.infra / f"rabbitmq_server-{RABBITMQ_VERSION}"
@@ -153,8 +190,11 @@ class Stack:
         data.mkdir(parents=True, exist_ok=True)
         plugins = data / "enabled_plugins"
         plugins.write_text(RABBITMQ_PLUGINS)
+        conf = data / "rabbitmq.conf"
+        conf.write_text(RABBITMQ_CONF)
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
+            "RABBITMQ_CONFIG_FILE": str(conf),
             "RABBITMQ_MNESIA_BASE": str(data / "mnesia"), "RABBITMQ_LOG_BASE": str(data / "log"),
             "RABBITMQ_NODENAME": RABBITMQ_NODE, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(RABBITMQ_PORT), "RABBITMQ_DIST_PORT": str(RABBITMQ_PORT + 20000),
@@ -189,8 +229,10 @@ class Stack:
                 print(f"{name}: up on 127.0.0.1:{port}")
         if not dev:
             run(["yarn", "workspace", "@lattice/config-studio", "run", "build"], self.root)
-        run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service", "-am", "package", "-DskipTests"], self.root)
+        run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer", "-am", "package", "-DskipTests"], self.root)
         jar = self.platform / "config-studio-service" / "target" / "config-studio-service.jar"
+        if self.pid("writer") is None:
+            self.spawn("writer", ["java", "-jar", str(self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar")], WRITER_ENV)
         if self.claim("service", SERVICE_PORT):
             self.spawn("service", ["java", "-jar", str(jar)], STUDIO_ENV)
             self.wait_for("service", SERVICE_PORT)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-package org.nebularis.lattice.studio.writes;
+package org.nebularis.lattice.studio.writer;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -10,6 +10,8 @@ import org.apache.jena.rdf.model.Model;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
+import org.nebularis.lattice.studio.writes.Command;
+import org.nebularis.lattice.studio.writes.Writes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

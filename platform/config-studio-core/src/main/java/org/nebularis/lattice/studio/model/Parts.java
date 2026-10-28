@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-package org.nebularis.lattice.studio.api;
+package org.nebularis.lattice.studio.model;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

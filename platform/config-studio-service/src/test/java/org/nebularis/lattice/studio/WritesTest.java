@@ -10,9 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Map;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -29,10 +27,9 @@ import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.writes.Codec;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
-import org.nebularis.lattice.studio.writes.Sweeper;
 import org.nebularis.lattice.studio.writes.Writer;
 
-/** The writer of a partition, the codec of its messages, export and import, and the sweep of finished jobs. */
+/** The writer of a partition, the codec of its messages, and export and import. */
 class WritesTest {
     private static final String WS = Fixture.id(1);
     private static final String SURFACE = "/api/workspaces/" + WS + "/graphs/surface";
@@ -200,27 +197,4 @@ class WritesTest {
         }
     }
 
-    @Test
-    void theSweeperDeletesOnlyJobsFinishedBeforeTheRetention() {
-        String old = job();
-        String fresh = job();
-        finish(old, "2026-09-01T00:00:00Z");
-        finish(fresh, "2026-10-27T00:00:00Z");
-        Clock now = Clock.fixed(Instant.parse("2026-10-28T00:00:00Z"), ZoneOffset.UTC);
-        try (Sweeper sweeper = new Sweeper(f.store, f.writes, now, Duration.ofDays(30))) {
-            assertEquals(1, sweeper.sweep());
-        }
-        assertTrue(f.store.graph(Graphs.job(old)).isEmpty());
-        assertTrue(!f.store.graph(Graphs.job(fresh)).isEmpty());
-    }
-
-    private void finish(String job, String at) {
-        String jobIri = Graphs.job(job);
-        Model m = ModelFactory.createDefaultModel().add(f.store.graph(jobIri));
-        Resource node = m.createResource(jobIri);
-        m.removeAll(node, Cst.status, null);
-        m.add(node, Cst.status, Cst.Succeeded);
-        m.add(node, Cst.finishedAt, m.createTypedLiteral(at, org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime));
-        assertEquals(200, writer.apply(Command.jobUpdate(WS, job, only(jobIri, m))).status());
-    }
 }

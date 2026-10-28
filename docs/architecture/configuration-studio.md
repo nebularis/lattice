@@ -2,7 +2,7 @@
 
 # Configuration Studio
 
-The Configuration Studio is a web application for authoring an applied ontology's configuration against its baseline: vocabulary bindings (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence profiles (`dal:`) and surface contracts (`srf:`). It checks each configuration with its layer's own shapes and compilers as the author edits, and compiles persistence and surface configuration into the artefacts a deployment runs. It is a supported part of LATTICE, built from a browser application in [`apps/config-studio`](../../apps/config-studio/README.md), a service in [`platform/config-studio-service`](../../platform/config-studio-service/README.md), a worker in [`workers`](../../workers/README.md#configuration-studio-jobs-adr-a136), and its contracts in [`contracts/config-studio`](../../contracts/config-studio/README.md). How to run and operate it is in the [operations guide](../operator/configuration-studio-operations.md) and the [runbook](../operator/configuration-studio-runbook.md).
+The Configuration Studio is a web application for authoring an applied ontology's configuration against its baseline: vocabulary bindings (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence profiles (`dal:`) and surface contracts (`srf:`). It checks each configuration with its layer's own shapes and compilers as the author edits, and compiles persistence and surface configuration into the artefacts a deployment runs. It is a supported part of LATTICE, built from a browser application in [`apps/config-studio`](../../apps/config-studio/README.md), a service in [`platform/config-studio-service`](../../platform/config-studio-service/README.md), a store writer in [`platform/config-studio-writer`](../../platform/config-studio-writer/README.md), their shared core in [`platform/config-studio-core`](../../platform/config-studio-core/README.md), a worker in [`workers`](../../workers/README.md#configuration-studio-jobs-adr-a136), and its contracts in [`contracts/config-studio`](../../contracts/config-studio/README.md). How to run and operate it is in the [operations guide](../operator/configuration-studio-operations.md) and the [runbook](../operator/configuration-studio-runbook.md).
 
 ## Components
 
@@ -19,37 +19,38 @@ flowchart LR
         JOB["job graphs"]
     end
     MQ["RabbitMQ queue lattice.studio.jobs"]
-    WX["RabbitMQ exchange lattice.studio.writes, one queue per partition"]
-    WR["store writers, in the service"]
+    WX["RabbitMQ super stream lattice.studio.writes, 8 partitions"]
+    WR["config-studio-writer instances, one group"]
     subgraph Worker["Python worker"]
         V["validate: pySHACL and the layers' tools"]
         C["compile: tools/persistence, tools/surface"]
     end
     SPA -- "RDF over HTTP" --> API
-    API -- "read" --> Store
+    API -- "read, studio service" --> Store
     API -- "write, keyed by workspace" --> WX
     API -- "job IRI" --> MQ
     MQ -- "job IRI" --> Worker
     Worker -- "read inputs" --> Store
     Worker -- "job-update, keyed by workspace" --> WX
     WX --> WR
-    WR -- "SPARQL Update" --> Store
+    WR -- "SPARQL Update, studio-write service" --> Store
+    WR -. "reply" .-> API
 ```
 
 | Component | Owns | Never does |
 |---|---|---|
 | browser application | the editors, derived from the vocabularies it is served, and the sorting of an imported graph into a workspace's parts | interpret a finding or compile |
-| service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store but through a writer |
-| store writer | every write to the store for the workspaces of its partitions, in batches of one request each, the revision guard, and a receipt per write | apply a command it has not checked |
+| service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store |
+| store writer (`config-studio-writer`) | every write to the store for the partitions it holds, in batches of one request each, the revision guard, a receipt per write, and the sweep of finished jobs | serve HTTP, or apply a command it has not checked |
 | worker | validation and compilation, with the engines `mise run check` uses | take a path, a command or a graph of its own choosing from a message |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
-| RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their workspace | carry a job's content to the worker |
+| RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their partition on a super stream | carry a job's content to the worker |
 
 **Java owns HTTP and storage, Python owns meaning.** Validation and compilation run where pySHACL and the repository's compilers are, so the studio answers as `mise run check` would. A validation of persistence configuration also compiles it, because the `dal:` shapes target the dimension classes and do not see a `dal:DataAccessProfile` that declares several dimensions at once.
 
 **The store is the only state.** The service keeps no registry. A workspace's revisions are triples in its own graph, and a job's status is read from the job's graph, which the worker's updates write (PRI-52). The store is a TDB2 database on disk, in the user's data folder, so workspaces and the results of past jobs outlive the application. A finished job is deleted after a retention, 30 days unless a deployment sets another.
 
-**One writer per workspace.** The service and the worker never write the store. Each write is a command published to a consistent-hash exchange, keyed by its workspace's id, which routes it to one of eight partition queues. Each queue has a single active consumer, so one writer applies a workspace's writes in order, and a revision it reads cannot change before its own update. A deployment runs from one writer to eight, and a second instance's writers stand by for the partitions of one that stops. The service waits for the writer's reply, so a save still answers the browser at once.
+**One writer per workspace, deployed apart.** The service and the worker never write the store, and Fuseki gives them a service that only reads. Each write is a command published to a RabbitMQ super stream, in the partition its workspace's id selects, so a workspace's writes stay in order. The store writer, `config-studio-writer`, is a deployable of its own. Its instances form one single-active-consumer group, so RabbitMQ gives each partition to one live instance, spreads the partitions across the instances that run, and moves them when one joins or leaves. A writer stores each partition's offset after a batch, and a write delivered again after a move is answered from its receipt. The service waits for the writer's reply, so a save still answers the browser at once, and past its wait it reads the write's receipt to say whether it applied.
 
 **A batch is one commit, and each write leaves a receipt.** A writer applies the writes waiting for it in one request, since on TDB2 a commit costs far more than the operations in it ([TSD-44](triple-store-discovery.md#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput)). Each write first inserts a receipt of its cause, sender and transaction time, only where its precondition holds in the store, such as the revision a save expects, and its other operations require that receipt. So a write applies whole or not at all even should two writers hold one workspace, a write redelivered after a lost acknowledgement is answered from its receipt, and the receipts are the record of what was written.
 

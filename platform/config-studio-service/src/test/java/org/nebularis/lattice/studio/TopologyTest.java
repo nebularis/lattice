@@ -23,5 +23,17 @@ class TopologyTest {
         String jobs = json.substring(json.indexOf("\"lattice.studio.jobs\""), json.indexOf("\"lattice.studio.dead\""));
         assertTrue(jobs.contains("\"deadLetter\": true"));
         assertTrue(json.substring(json.indexOf("\"lattice.studio.dead\"")).contains("\"deadLetter\": false"));
+        assertTrue(json.contains("\"superStream\": \"" + Topology.WRITES + "\""));
+        assertTrue(json.contains("\"partitions\": " + Topology.PARTITIONS));
+        assertTrue(json.contains("\"x-max-age\": \"" + Topology.PARTITION_ARGUMENTS.get("x-max-age") + "\""));
+        assertTrue(json.contains("\"x-max-length-bytes\": " + Topology.PARTITION_ARGUMENTS.get("x-max-length-bytes")));
+        assertTrue(json.contains("\"consumerGroup\": \"lattice.studio.writers\""));
+    }
+
+    @Test
+    void aWorkspaceRoutesByItsIdsFirst32Bits() {
+        org.junit.jupiter.api.Assertions.assertEquals("7", Topology.routingKey("ffffffff-0000-4000-8000-000000000000"));
+        org.junit.jupiter.api.Assertions.assertEquals("0", Topology.routingKey("00000000-ffff-4000-8000-000000000000"));
+        org.junit.jupiter.api.Assertions.assertEquals("5", Topology.routingKey("0000000d-0000-4000-8000-000000000000"));
     }
 }

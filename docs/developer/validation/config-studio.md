@@ -284,6 +284,23 @@ Built by a sub-agent on its own branch, reviewed and merged.
 | CS16-10 | the worker's job update / published / with an id and `sender` `worker` | L1 | + | pass, 24 worker tests |
 | CS16-11 | `mise run check` | L1 | + | every task passes but `check:persistence`, whose probe of TSD-04 on Oxigraph fails alone and in the run, measuring 84 against a bound of 8. This branch changes nothing it reads, so it is recorded for a task of its own |
 
+## CS17: the store writer deployed apart, on a super stream
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS17-01 | the three modules / `mvn test` / the service's suite, the writer's and the topology contract pass | L1 | + | pass, 55 service and 3 writer tests |
+| CS17-02 | a workspace id / its routing key in Java and in Python / the same partition for the same ids | L1 | + | pass, `TopologyTest` and the worker's test |
+| CS17-03 | the reply-to RabbitMQ 4.4 stores in a stream / decoded / the direct reply-to queue's name | L1 | + | pass |
+| CS17-04 | the sweep in the writer / jobs finished 57 and 1 days ago / one deleted, with its receipts | L1 | + | pass |
+| CS17-05 | the writer's 43 third-party runtime dependencies / OSV on 2026-10-28 / no advisory | L0 | + | pass, Netty resolved to one version, 4.2.19 |
+| CS17-06 | the native stack with the writer as its own process / create, save, a stale save, a validation / `201`, `204` in 0.1 to 0.3 s, `412` in 0.02 s, `Succeeded` | L5 | + − | pass. The first run lost every reply (CS-B38), and the receipts answered the saves after 10 s |
+| CS17-07 | Fuseki's `studio` service / an update and a graph store write / `405` | L5 | − | pass |
+| CS17-08 | a second writer instance / started / the 8 partitions split 4 and 4, each with the other instance waiting | L5 | + | pass, by `list_stream_group_consumers` |
+| CS17-09 | the first writer stopped / 200 saves over 20 workspaces from 16 clients / every partition active on the second, every save `204` | L5 | + | pass, 56 saves a second |
+| CS17-10 | the Docker stack / the same operations, the read-only check, and a Fuseki restart / as natively, and the workspace still there | L5 | + − | pass, with the stream advertised as `localhost:5553` |
+
+Not run: Windows and Linux, and a writer taking a partition over in the middle of a batch.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

@@ -281,7 +281,7 @@ def test_a_job_graph_goes_to_its_workspace_writer_not_the_store():
     WriterStore(reader, publisher).put_graph(iri, graph)
     assert reader.history == []
     exchange, key, headers, body = publisher.sent[0]
-    assert (exchange, key) == ("lattice.studio.writes", ws)
+    assert (exchange, key) == ("lattice.studio.writes", str(int(ws[:8], 16) % 8))
     assert uuid.UUID(headers.pop("id")).version == 4
     assert headers == {"sender": "worker", "command": "job-update", "workspace": ws, "job": job}
     sent = Dataset().parse(data=body.decode("utf-8"), format="nquads")
@@ -294,3 +294,12 @@ def test_a_graph_naming_no_workspace_is_never_sent():
     with pytest.raises(ValueError):
         WriterStore(FakeStore(), publisher).put_graph(iri, Graph())
     assert publisher.sent == []
+
+
+def test_the_partition_is_the_one_java_computes():
+    from lattice_workers.config_studio_worker import routing_key
+
+    # The same ids as the service's TopologyTest.
+    assert routing_key("ffffffff-0000-4000-8000-000000000000") == "7"
+    assert routing_key("00000000-ffff-4000-8000-000000000000") == "0"
+    assert routing_key("0000000d-0000-4000-8000-000000000000") == "5"

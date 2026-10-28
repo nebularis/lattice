@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.nebularis.lattice.studio.api.ApiResponse;
-import org.nebularis.lattice.studio.api.Parts;
+import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 

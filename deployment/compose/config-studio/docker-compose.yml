@@ -12,6 +12,7 @@ services:
       - "127.0.0.1:3130:3030"
     volumes:
       - studio-data:/data
+      - ./fuseki-studio.ttl:/opt/fuseki/studio.ttl:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3030/$$/ping || exit 1"]
       interval: 5s
@@ -25,11 +26,13 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit loopback_users []"
     volumes:
-      # The image's own plugins, and the consistent-hash exchange the store writers' partitions need.
+      # The image's own plugins, and the stream plugin the writes super stream needs.
       - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./rabbitmq-stream.conf:/etc/rabbitmq/conf.d/20-stream.conf:ro
     ports:
       - "127.0.0.1:5673:5672"
       - "127.0.0.1:15673:15672"
+      - "127.0.0.1:5553:5552"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s

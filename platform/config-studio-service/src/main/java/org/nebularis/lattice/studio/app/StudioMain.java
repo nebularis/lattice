@@ -5,22 +5,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import com.rabbitmq.client.Connection;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.UUID;
 import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.http.StudioHttpServer;
+import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.jobs.RabbitJobBus;
 import org.nebularis.lattice.studio.jobs.RecordingJobBus;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.DirectWrites;
 import org.nebularis.lattice.studio.writes.RabbitWrites;
-import org.nebularis.lattice.studio.writes.Sweeper;
 import org.nebularis.lattice.studio.writes.Writer;
-import org.nebularis.lattice.studio.writes.WriterPool;
 import org.nebularis.lattice.studio.writes.Writes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
 public final class StudioMain {
     private static final Logger LOG = LoggerFactory.getLogger(StudioMain.class);
     private static final Duration WRITE_TIMEOUT = Duration.ofSeconds(10);
-    private static final Duration SWEEP_EVERY = Duration.ofHours(1);
 
     private StudioMain() {
     }
@@ -46,28 +43,19 @@ public final class StudioMain {
         }
         JobBus bus;
         Writes writes;
-        WriterPool pool = null;
         if (config.amqpUri() == null) {
-            LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker and stay queued");
+            // Tests and a demonstration without a broker only: the service writes the store through a writer of its own.
+            LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker, and this service writes the store itself");
             bus = new RecordingJobBus();
             writes = new DirectWrites(new Writer(store, Clock.systemUTC()));
         } else {
-            Connection amqp = RabbitJobBus.connect(config.amqpUri());
-            bus = new RabbitJobBus(amqp);
-            if (config.writers() > 0) {
-                pool = new WriterPool(amqp, new Writer(store, Clock.systemUTC()), config.writers());
-            }
-            writes = new RabbitWrites(amqp, WRITE_TIMEOUT);
+            // Jobs and writes are published on connections of their own, so a broker holding one back does not stall the other.
+            bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
+            writes = new RabbitWrites(Amqp.connect(config.amqpUri(), "config-studio-service writes"), store, WRITE_TIMEOUT);
         }
-        Sweeper sweeper = new Sweeper(store, writes, Clock.systemUTC(), Duration.ofDays(config.jobRetentionDays())).start(SWEEP_EVERY);
         StudioHttpServer server = serve(config, store, writes, bus);
-        WriterPool writers = pool;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
-            sweeper.close();
-            if (writers != null) {
-                writers.close();
-            }
             bus.close();
             store.close();
         }));
@@ -83,7 +71,7 @@ public final class StudioMain {
 
     private static boolean selfCheck() throws Exception {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
-            "studio", null, null, null, 1, 30);
+            "studio", null, null, null);
         try (StudioStore store = StudioStore.inMemory();
              StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(

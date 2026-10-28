@@ -1,0 +1,23 @@
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.nebularis.lattice</groupId><artifactId>lattice-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
+  <artifactId>config-studio-core</artifactId>
+  <description>Configuration Studio's shared contract: the store, its graphs and terms, the workspace model, the write commands and the writer that applies them (ADR-A136).</description>
+  <properties>
+    <studio.jena.version>6.2.0</studio.jena.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <!-- amqp-client brings slf4j-api 1.7, which slf4j-simple 2.0 cannot bind to. -->
+      <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.20</version></dependency>
+      <dependency><groupId>org.slf4j</groupId><artifactId>jcl-over-slf4j</artifactId><version>2.0.20</version></dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency><groupId>org.apache.jena</groupId><artifactId>jena-arq</artifactId><version>${studio.jena.version}</version></dependency>
+    <dependency><groupId>org.apache.jena</groupId><artifactId>jena-rdfconnection</artifactId><version>${studio.jena.version}</version></dependency>
+    <dependency><groupId>com.rabbitmq</groupId><artifactId>amqp-client</artifactId><version>5.37.0</version></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+  </dependencies>
+</project>

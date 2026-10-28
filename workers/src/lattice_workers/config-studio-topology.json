@@ -14,12 +14,23 @@
     }
   ],
   "writes": {
-    "exchange": "lattice.studio.writes",
-    "type": "x-consistent-hash",
-    "queuePrefix": "lattice.studio.writes.",
+    "superStream": "lattice.studio.writes",
+    "exchangeType": "direct",
+    "exchangeArguments": {
+      "x-super-stream": true
+    },
     "partitions": 8,
-    "bindingKey": "1",
-    "singleActiveConsumer": true,
-    "deadLetter": true
+    "partitionStream": "lattice.studio.writes-{i}",
+    "bindingKey": "{i}",
+    "bindingArguments": {
+      "x-stream-partition-order": "{i}"
+    },
+    "partitionArguments": {
+      "x-queue-type": "stream",
+      "x-max-age": "7D",
+      "x-max-length-bytes": 1073741824
+    },
+    "routingKey": "the first 8 hex digits of the workspace id, as an unsigned number, modulo partitions",
+    "consumerGroup": "lattice.studio.writers"
   }
 }

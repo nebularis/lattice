@@ -62,3 +62,9 @@ def test_workspaces_live_in_the_platform_data_folder_unless_told_otherwise() -> 
     assert stack.data_dir({**home, "LOCALAPPDATA": "C:/L"}, "win32") == Path("C:/L/LATTICE/studio")
     assert stack.data_dir(home, "linux") == Path("/h/.local/share/lattice/studio")
     assert stack.data_dir({**home, "XDG_DATA_HOME": "/d"}, "linux") == Path("/d/lattice/studio")
+
+
+def test_the_compose_files_fuseki_configuration_is_the_stacks() -> None:
+    root = lattice_repo_catalogue.find_root(None)
+    mounted = (root / "deployment" / "compose" / "config-studio" / "fuseki-studio.ttl").read_text()
+    assert stack.FUSEKI_CONFIG.replace("{location}", "/data") in mounted

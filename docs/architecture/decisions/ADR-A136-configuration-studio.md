@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day
+**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day. A third, on deploying the writers apart on a super stream, is Proposed
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -74,3 +74,17 @@ The maintainer decided the design on 2026-10-28, after reopening how a job's sta
 
 **Consequences.** A save costs a broker round trip more than it did. TDB2 applies one update at a time per dataset (TSD-42), so more writers do not write faster on one dataset, and more throughput needs a dataset per group of partitions. A delete leaves space TDB2 reclaims only by compaction. Any client of the broker can send a command, so the broker is as trusted as the store.
 
+
+## Amendment, 2026-10-28: the store writers deployed apart, on a super stream (Proposed)
+
+The maintainer decided the design on 2026-10-28, reopening where the writers of the second amendment run. It changes that amendment's decisions 1 and 2, and the others stand.
+
+1. **Three deployables.** `config-studio-service` serves HTTP, reads the store and publishes jobs and writes. `config-studio-writer` is the only component that writes the store. The Python worker validates and compiles. What the service and the writer share, the store's graphs and terms, the workspace model, the commands and the writer's rules, is the module `config-studio-core`.
+2. **Writes travel on a RabbitMQ super stream.** A write is published to the partition its workspace's id selects, so a workspace's writes stay in order in one partition. The writers form one single-active-consumer group on the super stream, so RabbitMQ gives each partition to one live writer instance, spreads the partitions across the instances that run, and moves a partition when an instance joins or leaves. A writer stores each partition's offset after a batch, and the receipts of the second amendment make a write delivered again after a move a no-op. A deployment scales writers by running more instances.
+3. **The service and the worker only read the store.** Fuseki serves one database as two services, one that reads and one that updates, and only the writer is given the second.
+4. **A write the service did not hear back about may still apply.** A stream keeps a write until a writer reaches it. The service waits for the writer's reply, and past that asks the store for the write's receipt, answering `503` only when it finds none.
+5. **One process only for tests.** Without a broker the service writes through a writer of its own, for unit tests, its self-check and a demonstration with no broker. `studio:up` runs the writer as its own process.
+
+**Rejected.** The writers inside the service, which shared its failure domain, its broker connection and its write access, and could not be scaled or deployed apart. Classic queues with a single active consumer each, which fail over but give every partition to the first instance to start, so spreading them would need each instance configured by hand.
+
+**Consequences.** RabbitMQ needs its stream plugin and a port for the stream protocol, advertised at an address the writers reach. Each partition keeps a week of writes or 1 GiB. TDB2 applies one update at a time per dataset (TSD-42), so more writer instances add availability and parallel checking, not commits, while one database serves them.

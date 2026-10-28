@@ -12,8 +12,8 @@ All under `org.nebularis.lattice.studio`.
 
 | Package | Holds |
 |---|---|
-| `store` | `StudioStore` over Jena's `RDFConnection`, in memory or on Fuseki, the graph IRIs and the `cst:` terms. The API only reads through it |
-| `writes` | every write to the store: `Command`, `Codec` (AMQP headers and N-Quads), `Writer`, which checks and applies a command, `DirectWrites` in process, `RabbitWrites`, which publishes to the consistent-hash exchange and waits on direct reply-to, `WriterPool`, the writers over the partition queues, and `Sweeper`, which deletes finished jobs past the retention |
+| `store` | the reads, through `StudioStore` in [`config-studio-core`](../config-studio-core/README.md) |
+| `writes` | the service's side of the writes, which go to the store writer through `RabbitWrites` in `config-studio-core`, or in process without a broker |
 | `jobs` | `JobBus`, `RabbitJobBus`, the recording bus for tests and `Topology`, the declared exchange and queues |
 | `api` | `StudioApi`, every rule of the contract with no HTTP framework, `Parts`, which decides which part a subject belongs to, `ImportedWorkspace`, which renames an export under a new id, and the RDF readers and writers |
 | `http` | `StudioHttpServer`, which adapts Helidon to `StudioApi`, serves the built SPA and adds the security headers |
@@ -30,9 +30,7 @@ All under `org.nebularis.lattice.studio`.
 | `LATTICE_FUSEKI_URL` | none | Fuseki base URL. Absent means an in-memory dataset |
 | `LATTICE_FUSEKI_DATASET` | `studio` | dataset name |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | none | basic authentication |
-| `LATTICE_AMQP_URI` | none | RabbitMQ URI. Absent means jobs are recorded, never delivered, and stay `cst:Queued`, and writes go to one in-process writer |
-| `LATTICE_STUDIO_WRITERS` | `1` | store writers this instance runs over the 8 partitions, 1 to 8, or 0 for none |
-| `LATTICE_STUDIO_JOB_RETENTION_DAYS` | `30` | days a finished job is kept before the hourly sweep deletes it |
+| `LATTICE_AMQP_URI` | none | RabbitMQ URI. Absent means jobs are recorded, never delivered, and stay `cst:Queued`, and writes go to an in-process writer, for tests and a demonstration only. With it, writes go to the [store writer](../config-studio-writer/README.md) |
 
 ## Build and test
 
