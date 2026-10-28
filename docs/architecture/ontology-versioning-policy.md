@@ -40,6 +40,8 @@ release.
 
 ## The versioning unit
 
+This section and those after it govern the modules outside the release set, the applied modules and, since 0.19.0, MORK, SPC, Surface and Persistence. For a member of the substrate's release the section above replaces them, and a member document has no `.version` file.
+
 **One `owl:versionIRI` per `owl:Ontology` document.** `spec/<layer>.ttl` and
 `vocab/<layer>-vocab.ttl` are two independently versioned documents — a
 change to one never bumps the other. A layer's `shapes/` and `projection/`
@@ -200,9 +202,9 @@ references, used by several of its example/test fixtures, were deliberately
 left unversioned — see the checklist's step 2.
 
 **Answered, per ADR-A98 decision 6:** `applied/insurance/contract.ttl`'s namespace family
-(`neuro-semantic/insurance/...`, outside the `lattice/` tree every other in-scope document uses)
+(`neuro-semantic/lattice/insurance/...`, outside the `lattice/` tree every other in-scope document uses)
 was deliberate applied-layer independence, not an oversight. Every insurance module uses the same
-`neuro-semantic/insurance/<module>` family; only cross-domain applied modules use the
+`neuro-semantic/lattice/insurance/<module>` family, only cross-domain applied modules use the
 `neuro-semantic/lattice/applied/<module>` family. The legacy contract document itself was dropped
 by `applied-insurance-reference` (epic decision D1, AIR-1.1).
 

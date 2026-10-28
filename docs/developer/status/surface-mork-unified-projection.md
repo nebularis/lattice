@@ -28,7 +28,7 @@ The Surface-MORK Unified Projection program adopts one top-level authoring model
 **Deliverables:**
 - ADRs A16–A28 authored and accepted (all present in `docs/architecture/decisions/`)
 - Architectural decision for unified authoring model ratified
-- Two key documents: [surface-mork-unified-projection-plan.md](../plans/surface-mork-unified-projection-plan.md) and [OUTSTANDING-ITEMS.md](surface-outstanding-items.md)
+- Two key documents: [surface-mork-unified-projection-plan.md](../plans/surface-mork-unified-projection-plan.md) and [Surface Layer — Outstanding Items](surface-outstanding-items.md)
 
 ---
 
@@ -177,7 +177,7 @@ The Surface-MORK Unified Projection program adopts one top-level authoring model
 | Surface compiler test suite (54→**61**/61 tests) | ✅ Complete | Improved from 54 in earlier documents |
 | Focused MORK compiler test suite (15/15) | ✅ Complete | All three backends (SPARQL, SHACL, SWRL) tested |
 | Literate extraction drift check | ✅ Complete | All layer READMEs consistent |
-| OWL reasoner consistency check | ⏳ Pending | `fnd:Governable`/`fnd:Version` axioms + `elg:`/`qnt:` puns need reasoner verification |
+| OWL reasoner consistency check | ⏳ Pending | `fnd:Governable`/`fnd:Versioned` axioms + `elg:`/`qnt:` puns need reasoner verification |
 | SHACL execution (current fixtures) | ✅ Complete | Governance fixture conforms; Eligibility shapes distinguish valid/missing/out-of-range |
 | Execute generated SPARQL query | ✅ Complete | `question-1` resolves to `"Permitted"` |
 | Load generated SWRL rule into reasoner | ⏳ Pending | Rule text generated; SWRL reasoner integration still needed |
@@ -207,7 +207,7 @@ The Surface-MORK Unified Projection program adopts one top-level authoring model
 | Profile-level aggregate artefacts (`AllRequired`/`AnySufficient`) | Phase 6+ eligibility work | `ontology/mork/docs/eligibility-executable-compiler.md` |
 | Runtime result tracking (`exe:EvaluationRun`, etc.) | Observation and monitoring | `ontology/mork/docs/eligibility-executable-compiler.md` |
 | Native MORK backend | Execution on LATTICE runtime | ADR-A23 addendum |
-| Type adapters for candidate evidence | Integration with Quantification types | `ontology/surface/docs/MorkEnhancements.md` §10 |
+| Type adapters for candidate evidence | Integration with Quantification types | the MORK enhancements analysis §10, now in the [plan](../plans/surface-mork-unified-projection-plan.md)'s Phase 5 |
 | Other eligibility strategies | Broader condition support | `tools/mork_compilers/eligibility_ir.py` scope note |
 | Range-partition two-track remediation | Original Phase 6 deliverable 6 | Awaits Quantification partition semantics |
 

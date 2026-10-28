@@ -67,7 +67,7 @@ by counsel before any rule is encoded (claims sketch §2).
 | [peril-vocabulary.md](peril-vocabulary.md) §6.8, §8 | the cyber write-back profile over one cause link, what the vocabulary leaves to wording | §7.1, §14.1 |
 | [peril-structure-whitepaper.md](peril-structure-whitepaper.md) §3.8, §3.11, N7, N10, W-Q2, W-Q3 | causation by governing law, occurrence grouping by peril window, the open legal review | §2.3, §2.4, §7.12 |
 | [mork-bridge.md](mork-bridge.md) B1 to B6, §4, §6 | the operative scheme is the contract's, never guess, mapping is data, exactness sets authority, lowering never invents codes, bordereau ingestion as MORK mappings | CL7, CL8, §13 |
-| [robustness-testing-approach.md](robustness-testing-approach.md) §4 | the claims workload: about 64,000 open claims market-wide, a catastrophe burst of about 130,000 claims and 2 to 3 first notices a second at peak | §14.3 |
+| [workload-modelling.md](../notes/rdf-engine/workload-modelling.md) §4 | the claims workload: about 64,000 open claims market-wide, a catastrophe burst of about 130,000 claims and 2 to 3 first notices a second at peak | §14.3 |
 | [Persistence README](../../../ontology/persistence/README.md) §7.1, §7.4, §7.9 | aggregate boundaries, receipt pruning, privacy profiles and `dal:ErasurePrecedence` | §12 |
 | [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md) | keys and key schemes for claim references | §7.4 |
 | [assurance-records.md](assurance-records.md) | the EARL and PROV-O profile for what was checked | §16 |

@@ -44,6 +44,31 @@ def entry(store: ox.Store, ident: str, kind: str, claim: str, phase: str | None 
     store.extend([ox.Quad(s, p, o, INDEX) for s, p, o in quads])
 
 
+@pytest.fixture(autouse=True)
+def private_logs(tmp_path, monkeypatch):
+    """No test writes to the real logs under .build."""
+    monkeypatch.setattr(ask, "ASK_LOG", tmp_path / "asks.log")
+    monkeypatch.setattr(ask, "MISS_LOG", tmp_path / "misses.log")
+
+
+def table(out: str) -> list[list[str]]:
+    """The cells of a printed table's rows, read by the columns its dashes mark, so an empty cell
+    stays a cell, without the indented line find prints under each row."""
+    lines = out.splitlines()
+    at = next(i for i, line in enumerate(lines) if line.startswith("---"))
+    spans, column = [], 0
+    for dashes in lines[at].split("  "):
+        spans.append((column, column + len(dashes)))
+        column += len(dashes) + 2
+    rows = []
+    for line in lines[at + 1 :]:
+        if not line.strip():
+            break
+        if not line.startswith(" "):
+            rows.append([line[a:b].strip() for a, b in spans])
+    return rows
+
+
 class Words:
     """A stand-in model: a text's vector counts four words, so closeness is checkable by eye."""
 
@@ -121,8 +146,7 @@ def index(tmp_path, words, monkeypatch):
 
 def test_find_ranks_by_meaning_and_filters_exactly(index, capsys):
     ask.find(index, "a ledger", set(), set(), set(), 8)
-    lines = capsys.readouterr().out.splitlines()
-    assert lines[2].split()[1] == "MEC-1"
+    assert table(capsys.readouterr().out)[0][1] == "MEC-1"
     ask.find(index, "a ledger", {"Capability", "Standard"}, set(), set(), 8)
     out = capsys.readouterr().out
     assert "MEC-1" not in out and "CAP-1" in out
@@ -160,11 +184,11 @@ def test_a_matching_facet_raises_an_entry_and_a_mismatch_hides_none(tmp_path, wo
     monkeypatch.setattr(ask, "STORE_PATH", tmp_path / "store")
     monkeypatch.setattr(ask, "log_miss", lambda question: None)
     ask.find(store, "ledger", set(), set(), set(), 8)
-    assert capsys.readouterr().out.splitlines()[2].split()[1] == "MEC-1"
+    assert table(capsys.readouterr().out)[0][1] == "MEC-1"
     ask.find(store, "ledger", set(), set(), set(), 8, {"activities": {"solution-design"}})
-    out = capsys.readouterr().out.splitlines()
-    assert out[2].split()[1] == "PAT-1" and out[2].split()[0].endswith("+")
-    assert any(line.split()[1:2] == ["MEC-1"] for line in out[2:4]), "a mismatched activity must not hide an entry"
+    rows = table(capsys.readouterr().out)
+    assert rows[0][1] == "PAT-1" and rows[0][0].endswith("+")
+    assert any(row[1] == "MEC-1" for row in rows[:2]), "a mismatched activity must not hide an entry"
 
 
 def test_misses_lists_each_question_once_newest_first(tmp_path, monkeypatch, capsys):
@@ -207,3 +231,35 @@ def test_a_phase_matches_up_and_down_its_chain_and_never_a_sibling():
     assert ask.phase_matches(store, {"Runtime"}) == {"Runtime", "Testing", "Benchmarking", "Production"}
     assert "Production" not in ask.phase_matches(store, {"Testing"})
     assert ask.phase_matches(store, {"Authoring"}) == {"Authoring"}
+
+
+def section(store: ox.Store, parent: str, number: int, claim: str, pointer: str) -> None:
+    n = ox.NamedNode(f"{KI}node/{parent.replace('-', '')}/section-{number}")
+    store.extend([
+        ox.Quad(n, ox.NamedNode(KI + "sectionOf"), ox.NamedNode(KI + "node/" + parent.replace("-", "")), INDEX),
+        ox.Quad(n, ox.NamedNode(KI + "claim"), ox.Literal(claim), INDEX),
+        ox.Quad(n, ox.NamedNode(KI + "pointer"), ox.Literal(pointer), INDEX),
+    ])
+
+
+def test_a_decision_is_scored_by_its_best_section_and_points_at_it(tmp_path, words, monkeypatch, capsys):
+    """ADR-1's own claim says nothing about minting, but its second section does (ADR-A134 decision 29). It is found
+    by that section, reports the section's pointer, and appears once, since a section is no entry.
+    A question that its own claim answers keeps the whole-file pointer."""
+    store = ox.Store()
+    entry(store, "ADR-1", "Decision", "a ledger account")
+    entry(store, "CAP-1", "Capability", "minting in Java")
+    store.add(ox.Quad(ox.NamedNode(KI + "node/ADR1"), ox.NamedNode(KI + "pointer"), ox.Literal("adr.md:1-90"), INDEX))
+    section(store, "ADR-1", 1, "a ledger account", "adr.md:10-20")
+    section(store, "ADR-1", 2, "minting minting slow", "adr.md:30-40")
+    assert embed.build(store, tmp_path) == 4, "the sections are embedded beside the entries"
+    assert len(embed.load(tmp_path)[0]) == 4
+    monkeypatch.setattr(ask, "STORE_PATH", tmp_path / "store")
+    monkeypatch.setattr(ask, "log_miss", lambda question: None)
+    candidates = {r["id"] for r in ask.rows_of(store.query(ask.CANDIDATES))}
+    assert candidates == {"ADR-1", "CAP-1"}
+    ask.find(store, "minting slow", set(), set(), set(), 8)
+    rows = table(capsys.readouterr().out)[:2]
+    assert [r[1] for r in rows] == ["ADR-1", "CAP-1"] and rows[0][-1] == "adr.md:30-40"
+    ask.find(store, "a ledger account", set(), set(), set(), 8)
+    assert table(capsys.readouterr().out)[0][-1] == "adr.md:1-90"

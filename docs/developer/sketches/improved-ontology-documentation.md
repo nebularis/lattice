@@ -16,7 +16,7 @@ I would propose that we DO NOT put this extensive narrative text inside the OWL/
 
 ```turtle-spec
 pfx:UsefulThing a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "DO NOT INCLUDE A LONG NARRATIVE DESCRIPTION IN THE COMMENTS HERE..." .
 ```
 

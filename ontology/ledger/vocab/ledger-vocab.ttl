@@ -37,7 +37,7 @@ When disparate evaluations draw on the same account at the same position (being 
 Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
 
 Ledger accounts do not hold observed values such as prices or temperatures, which are intensive and carry no such law.""" ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dct:creator a owl:AnnotationProperty .
 

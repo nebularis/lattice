@@ -13,7 +13,7 @@ Directly evaluating high-throughput financial transactions against the generic s
 The applied `capacity` layer introduces generic finite-resource semantics.  
 Runtime execution requires a compact, normalised projection profile that preserves semantics while reducing hop depth and join complexity.
 
-Recent MERIDIAN FBO material confirms several valid runtime lessons:
+Recent material from the private source ontology confirms several valid runtime lessons:
 
 - finite-resource state, deterministic precedence, and phase-restricted dependency handling are essential,
 - static versus state-gated admission must remain explicit,
@@ -88,6 +88,6 @@ Some outputs are intentionally outside graph scope, for example materialised swe
 ## Related
 
 - `capacity-domain-analysis-and-design.md`
-- `capacity-model-performance-addendum.md`
+- `ontology/applied/capacity/docs/perf.md`
 - `ADR-A-C1` applied-layer restatement boundary
 - `docs/architecture/deferred-scope-and-boundaries.md`

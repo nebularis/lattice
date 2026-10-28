@@ -67,7 +67,7 @@
 
 # --- the adopter's classes ----------------------------------------------------
 
-ex:Agreement a owl:Class ; rdfs:subClassOf fnd:Version .
+ex:Agreement a owl:Class ; rdfs:subClassOf fnd:Versioned .
 ex:AgreementIdentity a owl:Class ; rdfs:subClassOf fnd:PersistentIdentity , fnd:NaturallyKeyed .
 ex:Company a owl:Class ; rdfs:subClassOf fnd:NaturallyKeyed .
 ex:Person a owl:Class ; rdfs:subClassOf fnd:NaturallyKeyed .
@@ -190,11 +190,11 @@ ex:facility-identity a ex:AgreementIdentity , fnd:PersistentIdentity , fnd:Natur
     # since the bank may reassign the number, it never identifies it.
     fnd:externalKey key:3f6a0c9e-2b7d-4e1f-a58c-06d9b2e47f13 .
 
-ex:facility-v1 a ex:Agreement , fnd:Version ;
+ex:facility-v1 a ex:Agreement , fnd:Versioned ;
     fnd:hasIdentity ex:facility-identity ;
     fnd:supersededBy ex:facility-v2 .
 
-ex:facility-v2 a ex:Agreement , fnd:Version ;            # the amended agreement
+ex:facility-v2 a ex:Agreement , fnd:Versioned ;            # the amended agreement
     fnd:hasIdentity ex:facility-identity .
 
 # --- unversioned things: keys on the thing itself -----------------------------

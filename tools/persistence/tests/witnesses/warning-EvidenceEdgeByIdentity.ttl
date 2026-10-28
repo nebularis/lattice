@@ -9,4 +9,4 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 
 ex:Order rdfs:subClassOf fnd:Evidence .
-ex:Customer rdfs:subClassOf fnd:Version .
+ex:Customer rdfs:subClassOf fnd:Versioned .

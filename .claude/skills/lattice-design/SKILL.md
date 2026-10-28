@@ -7,7 +7,7 @@ description: How to design in LATTICE and projects built on it. Use when writing
 
 ## Design first
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with every design activity that fits the work, such as solution-design, ontology-design, physical-data-modelling or integration-design, and the phase the design runs in. A design often needs several activities, and `--kind` filters exactly, so leave it off unless only one kind of entry will do. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with every design activity that fits the work, such as solution-design, ontology-design, physical-data-modelling or integration-design, and the phase the design runs in. A design often needs several activities, and `--kind` filters exactly, so leave it off unless only one kind of entry will do. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named, and add `question` among the kinds when the roadmap matters. Where it answers weakly, read the documents as before, and report any answer they hold that no register entry does.
 
 Before planning code, find the decisions and architecture sections the change touches, with `find <the change> --kind decision` and `read`, and propose an ADR with either a design sketch or a detailed entry in `docs/architecture/solution-design-specification.md`. Keep these current with every change they cover:
 
@@ -35,7 +35,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 ## Writing a sketch or a plan
 
 - Re-read the latest version of everything the design touches. `graph:ask -- reaches <ID>` names what an entry touches, and `read <ID>` returns its current text. Never work from memory, and above all never describe an ontology's behaviour without re-reading it.
-- Check each modelling consequence against the ontologies themselves.
+- Check each modelling consequence against the ontologies themselves. To find the terms a design would reuse or collide with, ask `find <what the term means> --kind term`, separately from the questions about rules and decisions, which never take `--kind term`.
 - Check the design against the roadmap: the epic plans, the held design questions, which `find <the design> --kind pending-decision` returns, and the slices waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
 - A design that depends on how a triple store evaluates SPARQL cites the finding in
@@ -70,6 +70,8 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 Name each question with the slice's prefix (C9-Q1, MQ3) so answers can be recorded against it.
 Record the answers in the plan or sketch, and in the status record's history.
 
+A question raised by a bold lead, `**LG-Q7. <question>**`, or by a table row whose first cell is its identifier, is an entry of the knowledge index, open until its text says Answered with the date, as in `Answered 2026-10-19, (a).` An answer that states a rule a later slice must obey is promoted in the same change to a standard, a mechanism or a decision addendum, and the answer then names it, `Answered 2026-10-19, (a), now MEC-nn.` (STD-283). The build reports an answer of that kind left unpromoted for 30 days.
+
 ## ADRs
 
 - ADRs live only in `docs/architecture/decisions/`, and are listed in its `README.md`. Take the next
@@ -77,6 +79,7 @@ Record the answers in the plan or sketch, and in the status record's history.
   the same number. Epic-scoped blocks (`A-FM`, `A-CAP`) are reserved for their epics.
 - An ADR states context, decision and consequences. A decision found while building is recorded as
   an addendum, dated, rather than by rewriting the accepted text.
+- An addendum that reverses or narrows a numbered decision of its file opens with a bold lead naming each, `**Reverses decision 8.**` or `**Narrows decisions 3 and 6.**`, so the index marks the text it changed and sends a reader of it to the addendum (STD-282). A whole decision replaced by another says so in its Status line, `Superseded by ADR-Ann`.
 - The agent drafts as Proposed. Only the maintainer accepts.
 
 ## Links and paths

@@ -136,7 +136,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -316,6 +316,16 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
 run = "python -m pytest benchmark/persistence-composite-cost -q -p no:cacheprovider && python benchmark/persistence-composite-cost/check.py"
 
+[tasks."check:persistence-graph-naming-cost"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace with the query and caller graph naming, on rdflib and Oxigraph (ADR-A124, TSD-04, TSD-45, PDD-17). Run on demand, not part of check. Fails on a wrong result, never on time. GRAPH_NAMING_MAX caps the ballast in quads, GRAPH_NAMING_QUICK=1 runs the smallest sizes"
+run = "python -m pytest benchmark/persistence-graph-naming-cost -q -p no:cacheprovider && python benchmark/persistence-graph-naming-cost/check.py"
+
+[tasks."check:persistence-graph-naming-cost-jvm"]
+depends = ["bootstrap:persistence"]
+description = "Measure a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace with the query and caller graph naming, on Jena (in-memory and TDB2) and RDF4J (ADR-A124, TSD-45, PDD-17). Python renders the operations and the JVM runs them. Run on demand, not part of check. Fails on a wrong result, never on time. Add -Dgraphnaming.max=<quads> or -Dgraphnaming.quick=1 to the mvn command to shorten it"
+run = "python benchmark/persistence-graph-naming-cost/check.py --emit benchmark/persistence-graph-naming-cost/operations.json && mvn -q -f benchmark/persistence-graph-naming-cost-jvm/pom.xml compile exec:exec"
+
 [tasks."check:sparql-constraint-query-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib, Oxigraph and Jena when its test kit is built (ADR-A124, ADR-A128, TSD-Q18). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
@@ -407,12 +417,12 @@ description = "Derive the knowledge index from the working documents and ontolog
 run = "python tools/knowledge/extract.py"
 
 [tasks."graph:ask"]
-description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, or sparql <query>. Opens the store read-only and exits, with no resident process (TSD-38)"
+description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, sparql <query>, misses [--near], gap <what reading found> [id] [path:line], or close <id>. Opens the store read-only and exits, with no resident process (TSD-38)"
 run = "python tools/knowledge/ask.py"
 
 [tasks."check:knowledge"]
 description = "Check the knowledge index: the T-Box honours ADR-A134, every facet tag is a value of its scheme, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
-run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py tools/knowledge/test_facets.py -q"
+run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py tools/knowledge/test_facets.py tools/knowledge/test_ask.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
@@ -471,6 +481,10 @@ run = "python tools/ontology_version_check.py && python tools/ontology_releases.
 [tasks."build:ontology-releases"]
 description = "Add a row to docs/architecture/ontology-releases.md for each unreleased ontology version, and list the release tags a person must create (ADR-A86)"
 run = "python tools/ontology_releases.py write"
+
+[tasks."check:owl-profile"]
+description = "Check every ontology document against the structural part of the OWL 2 DL profile: reserved vocabulary redeclared, a class used as a predicate, an IRI of two property kinds, with tools/owl-profile-exceptions.txt as the baseline"
+run = "python tools/owl_profile.py && python -m pytest tools/test_owl_profile.py -q"
 
 [tasks."check:import-guard"]
 description = "Fail when a substrate layer imports or names a layer above it, or a sibling (ADR-A01 addendum, law B7)"

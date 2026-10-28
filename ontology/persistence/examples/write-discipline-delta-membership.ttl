@@ -10,7 +10,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
-ex:Quote rdfs:subClassOf fnd:Version .
+ex:Quote rdfs:subClassOf fnd:Versioned .
 
 ex:QuoteClass a dal:ClassScope ;
     dal:targetClass ex:Quote ;

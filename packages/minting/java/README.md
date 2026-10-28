@@ -13,7 +13,7 @@ mvn -f packages/minting/java/pom.xml install
 ## Minting
 
 ```java
-Recipe recipe = Recipe.parse(Files.readString(Path.of("Product-EntityRole-38ce5a73f929.recipe.json")));
+Recipe recipe = Recipe.parse(Files.readString(Path.of("Product-EntityRole-b37178820939.recipe.json")));
 Minter minter = new Minter(recipe);
 Minted minted = minter.mint(Map.of("key", List.of(" Widget-9 ")));
 minted.iri();    // urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM

@@ -4,6 +4,7 @@
 
   python tools/hooks.py run pre-commit          the commit checks over what is staged
   python tools/hooks.py run pre-merge-commit    the merge checks, when merging into main
+  python tools/hooks.py run post-merge          rebuild the knowledge index after a merge
   python tools/hooks.py merge [--against main]  the merge checks for the current branch, by hand
   python tools/hooks.py install [--bootstrap]   install the hooks into the shared hooks directory
 
@@ -29,7 +30,7 @@ from typing import Callable, Iterable, Sequence
 
 HOOK_MARK = "# lattice hooks (ADR-A133)"
 OLD_MARKS = ("# lattice deny-terms hook",)
-HOOKS = ("pre-commit", "pre-merge-commit")
+HOOKS = ("pre-commit", "pre-merge-commit", "post-merge")
 MERGE_TARGET = "main"
 BLOCK, WARN = "block", "warn"
 
@@ -313,6 +314,9 @@ def checks() -> list[Check]:
         Check("writing", ("*.md",), writing, on_commit=BLOCK, on_merge=WARN),
         Check("wrapping", ("*.md",), wrapping, on_commit=WARN, on_merge=WARN),
         Check("published-decisions", ("*.md",), published_decisions, on_commit=WARN, on_merge=BLOCK),
+        Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
+                              "docs/architecture/triple-store-discovery.md"),
+              whole("tools/knowledge/identifiers.py")),
         Check("ontology-versioning", ("ontology/*",),
               lambda change, touched: (run_tool(change, "tools/ontology_version_check.py")
                                        + run_tool(change, "tools/ontology_releases.py", "check")),
@@ -358,7 +362,21 @@ def install(root: Path, bootstrap: bool = False) -> list[str]:
 
 # ---- entry ------------------------------------------------------------------------------------
 
+def post_merge(root: Path) -> int:
+    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum).
+    The merge has already happened, so this never fails it."""
+    change = Change(root, (), False)
+    try:
+        lines = run_tool(change, "tools/knowledge/extract.py")
+    except Unavailable as reason:
+        lines = [f"not rebuilt: {reason}. Run `mise run build:knowledge`"]
+    print("hooks: post-merge, knowledge index " + ("rebuilt" if not lines else "\n  ".join(["not rebuilt"] + lines)))
+    return 0
+
+
 def run(root: Path, hook: str, registry: Sequence[Check] | None = None) -> int:
+    if hook == "post-merge":
+        return post_merge(root)
     change = Change(root, staged_files(root), merging(root, hook))
     return report(change, evaluate(change, registry or checks(), skipped()), hook)
 

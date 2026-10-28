@@ -12,8 +12,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # Executable semantics IR for MORK's SPARQL/SHACL/SWRL backend compilers
-# (ADR-A23, ADR-A24; a scoped subset of the design in
-# ontology/surface/docs/MorkEnhancements.md — see ontology/mork/docs/eligibility-executable-
+# (ADR-A23, ADR-A24; a scoped subset of the design they record — see ontology/mork/docs/eligibility-executable-
 # compiler.md for exactly what was carried over and what was deliberately
 # left out). Sits alongside ontology/mork/spec/Mork.ttl rather than inside it, for
 # the same reason Surface sits outside the substrate dependency order

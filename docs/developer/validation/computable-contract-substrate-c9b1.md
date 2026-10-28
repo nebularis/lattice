@@ -118,7 +118,7 @@ Written by the building machine.
     fire on fourteen records in five earlier examples
   - **New activities** `ins-voc:Settle`, `ins-voc:Approve` and `ins-voc:Refuse` in
     `instrument-vocab`, for the reinsurance example
-  - **Assent's disjointness with `fnd:Version`** is now entailed through `ins:LegalAct`, not stated on
+  - **Assent's disjointness with `fnd:Versioned`** is now entailed through `ins:LegalAct`, not stated on
     `ins:Assent`
   - **Pack name.** The plan names it `ccs-c9b1.md`. This file follows the brief and C9a's name
 - **Answers after the first handoff (2026-10-09):**

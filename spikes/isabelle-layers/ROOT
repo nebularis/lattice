@@ -1,0 +1,24 @@
+(* Isabelle/HOL models of the laws the LATTICE layers state, one theory per layer. A spike, not
+   yet aligned to the formal-methods track (no claim records, no gate markers, no literate
+   extraction). It extends the committed Eligibility session, so build it with both directories:
+
+     isabelle build -d tools/proofs/eligibility -d spikes/isabelle-layers LatticeLayers
+*)
+
+session LatticeLayers = Eligibility +
+  description "Isabelle/HOL models of the laws the LATTICE layers state, one theory per layer."
+  options [document = false, timeout = 600]
+  theories
+    Foundation
+    Temporal
+    Quantification
+    Vocabulary
+    Behaviour
+    Ledger
+    Instrument
+    Party
+    Persistence
+    Membership
+    Minting
+    Surface
+    EligibilityConditions

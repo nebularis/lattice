@@ -37,6 +37,11 @@ LEFT_GROUPED_ARITHMETIC: bool = VERSION >= (0, 5, 12)
 """Whether ``a - b + c`` and ``a / b / c`` are grouped from the left, as SPARQL 1.1 says. 0.5.11 grouped them from the right, and
 0.5.12 from the left (TSD-17)."""
 
+CONSTANT_GRAPH_INLINED_IN_OPTIONAL: bool = VERSION < (0, 5, 13)
+"""Whether a ``GRAPH ?g`` inside an ``OPTIONAL``, where an enclosing group binds ``?g`` to a constant IRI, reads only that graph. 0.5.11 and
+0.5.12 do, and 0.5.13 reads every graph. A ``?g`` computed by an expression, such as the compiler's, is never passed in, on any of the
+three (TSD-45)."""
+
 
 def iri(value: str) -> ox.NamedNode:
     return ox.NamedNode(value)
@@ -105,4 +110,4 @@ class OxigraphStore:
         return sum(1 for q in self.quads(graph) if q.predicate.value == predicate)
 
 
-__all__ = ["OxigraphStore", "bind_parameters", "iri", "literal", "Term", "XSD", "VERSION", "SNAPSHOT_UPDATES", "LEFT_GROUPED_ARITHMETIC"]
+__all__ = ["OxigraphStore", "bind_parameters", "iri", "literal", "Term", "XSD", "VERSION", "SNAPSHOT_UPDATES", "LEFT_GROUPED_ARITHMETIC", "CONSTANT_GRAPH_INLINED_IN_OPTIONAL"]

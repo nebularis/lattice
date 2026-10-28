@@ -104,13 +104,13 @@ not depend on it. Skills: `lattice-ontology-authoring`, `lattice-toolchain`, `la
 
 Prefix `ens:`, namespace `https://www.nebularis.org/neuro-semantic/lattice/ensemble#`, in
 `ontology/ensemble/spec/ensemble.ttl` and `vocab/ensemble-vocab.ttl`. An instrument version is an
-`ins:Instrument` (a `fnd:Version`), its identity a `fnd:PersistentIdentity` reached by
+`ins:Instrument` (a `fnd:Versioned`), its identity a `fnd:PersistentIdentity` reached by
 `fnd:hasVersion`, and a section is the persistent identity of a wording element (`ins:section`).
 
 | Term | Kind | Domain, range, cardinality | Meaning |
 |---|---|---|---|
 | `ens:Ensemble` | class | ⊑ `fnd:PersistentIdentity` | a set of instruments forming one operation (decision 1) |
-| `ens:EnsembleVersion` | class | ⊑ `fnd:Version` | one version of an ensemble, naming its members |
+| `ens:EnsembleVersion` | class | ⊑ `fnd:Versioned` | one version of an ensemble, naming its members |
 | `ens:Membership` | class | none: part of its ensemble version, as `ins:Term` is part of its instrument | one member of a version, by role |
 | `ens:hasMembership` | object property | EnsembleVersion to Membership, any | the version's members named by list |
 | `ens:member` | object property | Membership to `fnd:PersistentIdentity`, exactly 1 | an instrument's identity, or another ensemble (nesting) |

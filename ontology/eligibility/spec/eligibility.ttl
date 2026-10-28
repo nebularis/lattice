@@ -16,7 +16,7 @@
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ;
     dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dct:creator a owl:AnnotationProperty .
 
@@ -24,7 +24,7 @@ dct:description a owl:AnnotationProperty .
 
 elg:AdmissionProfile a owl:Class ;
     rdfs:comment "A reusable admissibility profile that composes one or more conditions." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], elg:Condition, fnd:Version .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty elg:hasCondition ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], elg:Condition, fnd:Versioned .
 
 elg:Closure a owl:Class ;
     rdfs:comment "A source's warrant that the records an evidence binding reads are complete, so a set reading may decide on what is absent (ADR-A105, L15, L17). It covers exactly the bindings that name it." ;
@@ -71,7 +71,7 @@ elg:MatchStrategy a owl:Class ;
 
 elg:OperationalProfile a owl:Class ;
     rdfs:comment "A reference conformance profile that a compiler backend is checked against. Versioned, since the profiles are themselves subject to change control." ;
-    rdfs:subClassOf fnd:Version .
+    rdfs:subClassOf fnd:Versioned .
 
 elg:Question a owl:Class ;
     rdfs:comment "An evaluation question posed against one condition." ;
@@ -175,6 +175,8 @@ elg:forProfile a owl:FunctionalProperty, owl:ObjectProperty ;
 
 elg:hasCondition a owl:ObjectProperty ;
     rdfs:comment "A condition an admission profile composes." ;
+    fnd:utility "An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4)." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain elg:AdmissionProfile ;
     rdfs:range elg:Condition .
 

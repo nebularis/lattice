@@ -6,8 +6,8 @@
 
 Read from the architecture skill, AGENTS.md, the epic plans and the deciding ADRs. Ratified by the maintainer 2026-10-25 and 2026-10-26.
 
-| ID | Name | Claim | Problem shape | Owner | Decided by | Evidenced by | Audience | Phase | Activity | Quality | Technology | Pointer | Ratified |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ID | Name | Claim | Problem shape | Owner | Decided by | Evidenced by | Audience | Phase | Activity | Quality | Technology | Pointer | Ratified | Does not cover | Distinguished from |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | PRI-01 | LATTICE is a framework | **Offer options and configuration, and impose nothing that correctness does not need.** | deciding how much a framework should prescribe to its users |  |  |  | published | authoring, runtime | cross-layer-design | evolvability | | `.claude/skills/lattice-design/SKILL.md#lattice-is-a-framework` | yes |
 | PRI-02 | Identity and versions | **Give a thing whose content changes while it must stay the same thing one persistent identity across immutable versions. Data never revised needs neither.** | deciding whether a thing needs versions and a persistent identity | foundation | ADR-A07b, ADR-A82 |  | published | authoring, runtime | identity-design, ontology-design | evolvability | | `docs/architecture/decisions/ADR-A51-iri-and-identity-policy.md` | yes |
 | PRI-03 | Versioning of ontologies (AIR E7, P7-6) | **Release the substrate and standalone modules under one number and one tag, let applied modules pin a release, and classify every ontology change under ADR-A86.** | versioning and releasing ontologies so that downstream projects can pin them | ontology/ | ADR-A129, ADR-A86, ADR-A113 |  | published | authoring, runtime | release-and-versioning | evolvability | owl | `docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md` | yes |

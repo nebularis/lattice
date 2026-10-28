@@ -78,7 +78,7 @@ Phase 1, examples first (ADR-A-C2), 2026-10-06:
     If a reliance later needs more (a date, a jurisdiction), a node can replace the two
   - **An outside document's editions** carry `fnd:hasIdentity`, `fnd:hasTemporalScope` (in force
     from) and `fnd:supersededBy`. External documents and document objects are `prov:Entity` today,
-    not `fnd:Version`: the model phase makes them versions
+    not `fnd:Versioned`: the model phase makes them versions
   - **A reliance is stated on the form**, and an assembled wording inherits it through
     `wrd:assembledFrom`. An assembled wording may state its own, which W8 reads first
 
@@ -87,7 +87,7 @@ Phase 2, the model, 2026-10-06:
 - **Built:**
   - Wording 0.7.0 and `wording-vocab` 0.7.0 (breaking), shapes 0.4.0. `wrd:refersToObject`,
     `wrd:refersToVariable` and `wrd:linksTo` range over `fnd:PersistentIdentity`.
-    `wrd:displayText` is new. `wrd:DocumentObject` and `wrd:ExternalDocument` are `fnd:Version`s
+    `wrd:displayText` is new. `wrd:DocumentObject` and `wrd:ExternalDocument` are `fnd:Versioned`s
     (editions), relied on through `wrd:reliesOnEdition` (static) or `wrd:reliesAsAmended`
     (ambulatory). §5.7 and §5.8 rewritten, with a resolution diagram in §5.8
   - law W8 in the constraints shapes: in a form, an identity a reference names has exactly one

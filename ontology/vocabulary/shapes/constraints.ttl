@@ -118,3 +118,10 @@ voc:HistoricalProvenanceTimeShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+voc:BindingClosureShape a sh:NodeShape ;
+    sh:targetClass voc:BindingClosure ;
+    sh:property [ sh:path voc:closesBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:class voc:SchemeBinding ;
+        sh:message "A closure names exactly one scheme binding." ] ;
+    sh:property [ sh:path voc:closedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype <http://www.w3.org/2001/XMLSchema#dateTime> ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "A closure states exactly one zoned instant." ] .

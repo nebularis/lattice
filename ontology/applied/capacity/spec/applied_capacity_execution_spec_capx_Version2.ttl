@@ -29,11 +29,11 @@
 #################################################################
 
 capx:ExecutableArrangement a owl:Class ;
-  rdfs:subClassOf fnd:Version ;
+  rdfs:subClassOf fnd:Versioned ;
   rdfs:comment "Runtime root for one projected capacity arrangement." .
 
 capx:ExecutableResource a owl:Class ;
-  rdfs:subClassOf fnd:Version ;
+  rdfs:subClassOf fnd:Versioned ;
   rdfs:comment "Runtime-normalised finite resource row." .
 
 capx:ExecutableBalance a owl:Class ;
@@ -49,7 +49,7 @@ capx:ExecutableDraw a owl:Class ;
   rdfs:comment "Runtime allocation record for one demand-resource attempt." .
 
 capx:ExecutableDependency a owl:Class ;
-  rdfs:subClassOf fnd:Version ;
+  rdfs:subClassOf fnd:Versioned ;
   rdfs:comment "Runtime dependency relation with explicit phase and precedence." .
 
 capx:ExecutableGuardState a owl:Class ;

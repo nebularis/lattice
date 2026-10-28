@@ -14,8 +14,8 @@
 # of this fixture now loads alongside it (tools/test_peril_vocabulary.py,
 # tools/test_peril_intensity.py), so this fixture adds no placeholder of its own.
 
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix ex:      <https://example.org/lattice/insurance/peril/examples#> .

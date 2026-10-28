@@ -102,6 +102,63 @@ class RefusalTest {
         assertTrue(minter.mint(Map.of("canonicalNQuads", nquads, "canonicalizer", Character.toString(0x1F))).iri().startsWith("urn:rev:content:"));
     }
 
+    private static Map<String, Object> scopedNaturalKey() {
+        Map<String, Object> r = TestFiles.recipe("Policy");
+        Values.map(r.get("key")).put("scopeProperty", "https://example.org/lending#tenant");
+        return r;
+    }
+
+    @Test
+    void aDotSegmentIsRefusedInANaturalKey() {
+        Minter minter = new Minter(Recipe.parse(TestFiles.reseal(scopedNaturalKey())));
+        for (String dots : List.of(".", "..", "\uFF0E\uFF0E")) {
+            assertEquals(MintError.DotSegment, kind(() -> minter.mint(Map.of("key", List.of(dots, "p-1"), "scope", "acme"))));
+            if (dots.length() <= 2 && dots.charAt(0) == '.') { // a scope is not normalized, so only the literal forms are segments
+                assertEquals(MintError.DotSegment, kind(() -> minter.mint(Map.of("key", List.of("acme", "p-1"), "scope", dots))));
+            }
+        }
+        assertTrue(minter.mint(Map.of("key", List.of("acme", "..."), "scope", "acme")).iri().endsWith("/ACME/..."));
+        assertTrue(new Minter(Recipe.parse(TestFiles.recipe("Product"))).mint(Map.of("key", List.of(".."))).iri().startsWith("urn:ex:sku:"));
+    }
+
+    @Test
+    void anEmptyScopeIsRefused() {
+        Minter minter = new Minter(Recipe.parse(TestFiles.reseal(scopedNaturalKey())));
+        assertEquals(MintError.EmptyScope, kind(() -> minter.mint(Map.of("key", List.of("acme", "p-1"), "scope", ""))));
+        Minter claimed = new Minter(Recipe.parse(TestFiles.recipe("Person")), Map.of("example-key-v1", "k".repeat(32).getBytes(java.nio.charset.StandardCharsets.US_ASCII)));
+        assertEquals(MintError.EmptyScope, kind(() -> claimed.mint(Map.of("key", List.of("ada@example.org"), "scope", "",
+                "surrogate", "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"))));
+    }
+
+    private static Minter permissiveSurrogate(String pattern) {
+        Map<String, Object> r = TestFiles.recipe("Person");
+        Values.map(r.get("surrogate")).put("pattern", pattern);
+        return new Minter(Recipe.parse(TestFiles.reseal(r)), Map.of("example-key-v1", "k".repeat(32).getBytes(java.nio.charset.StandardCharsets.US_ASCII)));
+    }
+
+    @Test
+    void aSurrogateOutsideTheUnreservedSetIsRefused() {
+        Minter minter = permissiveSurrogate(".*");
+        for (String surrogate : List.of("a/b", "a#b", "a?b", "a b", "a%2Fb", "", "caf\u00e9")) {
+            assertEquals(MintError.UnsafeSurrogate,
+                    kind(() -> minter.mint(Map.of("key", List.of("ada@example.org"), "scope", "acme", "surrogate", surrogate))), surrogate);
+        }
+        assertEquals("urn:person:A-b.c_d~9",
+                minter.mint(Map.of("key", List.of("ada@example.org"), "scope", "acme", "surrogate", "A-b.c_d~9")).iri());
+        assertEquals(MintError.DotSegment,
+                kind(() -> minter.mint(Map.of("key", List.of("ada@example.org"), "scope", "acme", "surrogate", ".."))));
+    }
+
+    @Test
+    void aPositionWiderThanItsWidthIsRefusedWithBothNumbers() {
+        Minter minter = new Minter(Recipe.parse(TestFiles.recipe("Shipment")));
+        MintException e = assertThrows(MintException.class, () -> minter.mint(Map.of("namespaceToken", "ship-1", "epoch", 10000L, "seq", 1L)));
+        assertEquals(MintError.PositionWidthOverflow, e.kind());
+        assertTrue(e.getMessage().contains("10000") && e.getMessage().contains("4"));
+        assertTrue(minter.mint(Map.of("namespaceToken", "ship-1", "epoch", 9999L, "seq", 1L)).iri().startsWith("urn:ev:shipment:"));
+        assertEquals(MintError.DotSegment, kind(() -> minter.mint(Map.of("namespaceToken", "..", "epoch", 1L, "seq", 1L))));
+    }
+
     @Test
     void randomSurrogatesUseTheSuppliedSource() {
         Recipe recipe = Recipe.parse(TestFiles.recipe("LineItem"));

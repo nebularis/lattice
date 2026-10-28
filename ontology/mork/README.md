@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # MORK for Dummies
 
 **A Plain-English Guide to Mapping Ontological and Representational Knowledge**
@@ -278,15 +280,7 @@ MORK's central theoretical goal is the **convergence theorem**, which says:
 
 > The fraction of fields requiring AI intervention decreases gradually over time.
 
-Specifically: `ε(t) ≈ K × exp(-(1 + d') × t / (K × ln K))`
-
-Where:
-- `ε(t)` is the fraction of fields still needing help at time `t`
-- `K` is the number of concepts in the vocabulary
-- `d'` is the community acceleration factor
-- `t` is the number of mapping runs completed
-
-This is a formal way of saying: **the system learns**. Each mapping run provides evidence that makes the next run faster and more accurate. The community acceleration factor `d'` is the multiplier — because recognising one community member provides evidence for all members, the system learns much faster than if it had to figure out each field independently.
+No formula for the rate is claimed. Each mapping run adds confirmed mappings that the next run reuses, so the fraction of fields needing help falls with the number of runs, at a rate that has not been measured.
 
 In practice, this means we hope to see a gradual improvement such as the table below shows:
 
@@ -311,7 +305,7 @@ The maths exists to formalise properties that matter in production:
 
 5. **Provenance Compositionality:** Every generated axiom traces back to the specific mapping node, input data, and governance decision that produced it. The audit trail composes along the graph structure.
 
-More than aspirational goals, these should be proven theorems. Our The category-theoretic framework aims to provide the machinery to do so rigorously.
+These are stated, not proven. The category-theoretic framework is meant to give the machinery for proving them.
 
 ### Challenges and Witnesses: A Dialogue Between Source and Target
 
@@ -370,7 +364,7 @@ The inference engine is the part that gets smarter over time. It works in three 
 
 **Stratum 3 — Projection:** "Where have *similar things* gone before?" Lookup against confirmed mappings from prior runs. This becomes available after 5–10 runs and provides the strongest evidence.
 
-Each stratum adds evidence that narrows the possibilities further. By steady state, the three strata together resolve 90–98% of fields without any AI involvement.
+Each stratum adds evidence that narrows the possibilities further. By steady state, most fields are resolved without any AI involvement. No proportion has been measured.
 
 ### Graph-RAG: How the AI Gets Its Context
 
@@ -453,7 +447,7 @@ When MORK encounters a completely new domain, it follows a progression:
 
 **Week 2–4 (Projection Accumulation):** After 5–10 runs, the projection store has enough confirmed mappings to provide strong evidence. Most fields are resolved deterministically.
 
-**Month 2+ (Steady State):** The system handles 90–95% of fields autonomously. The AI (or human) is needed only for genuinely novel fields — new concepts, unusual structures, or ambiguous terminology.
+**Month 2+ (Steady State):** The system handles most fields autonomously. The AI (or human) is needed only for genuinely novel fields — new concepts, unusual structures, or ambiguous terminology.
 
 ### Warm-Starting from Analogous Domains
 
@@ -506,9 +500,9 @@ If a regulator asks "why does the system reject a $30M cyber policy?", you can t
 
 1. **A new collaborator sends a data file.** The schema is ingested and its structure recorded as a RepresentationScheme in the knowledge graph.
 
-2. **The tri-stratum engine runs.** For each field, it computes lexical scores, checks type compatibility, matches against communities, and looks up projections. 85% of fields are resolved deterministically.
+2. **The tri-stratum engine runs.** For each field, it computes lexical scores, checks type compatibility, matches against communities, and looks up projections. Most fields are resolved deterministically.
 
-3. **The Mapping Agent handles the rest.** For the remaining 15% of ambiguous fields, the AI is invoked with Graph-RAG context. It proposes mapping nodes in the MORK vocabulary.
+3. **The Mapping Agent handles the rest.** For the remaining ambiguous fields, the AI is invoked with Graph-RAG context. It proposes mapping nodes in the MORK vocabulary.
 
 4. **The validation gate checks everything.** SHACL shapes verify structural completeness. GCI axioms catch type errors. Disjointness checks catch logical contradictions. Invalid proposals bounce back to the AI for retry (bounded at 3–5 attempts).
 
@@ -646,11 +640,11 @@ However, most users interact with MORK at one of three levels:
 
 **The Innovation:** MORK provides a formal vocabulary for expressing these mappings as first-class graph objects, validated against the ontology, compiled into executable artefacts, and governed by humans. AI proposes; the system verifies.
 
-**The Learning:** The system discovers semantic communities from co-occurrence patterns and builds a projection store of confirmed mappings. Each run makes the next one easier. Exponential convergence toward full automation.
+**The Learning:** The system discovers semantic communities from co-occurrence patterns and builds a projection store of confirmed mappings. Each run makes the next one easier. Convergence toward full automation is the aim, not a measured result.
 
-**The Guarantees:** Termination, idempotence, determinism, precedence completeness, and provenance compositionality — all formally proven.
+**The Guarantees:** Termination, idempotence, determinism, precedence completeness, and provenance compositionality — stated as goals, none yet proven.
 
-**The Hedge:** 60–85% of the intelligence can be delivered without any LLM, using classical ML and symbolic reasoning. The LLM is an accelerator, not a dependency.
+**The Hedge:** Much of the intelligence can be delivered without any LLM, using classical ML and symbolic reasoning. The LLM is an accelerator, not a dependency.
 
 **The Result:** A system that starts as an AI-assisted mapping tool and matures into a deterministic, auditable, self-improving semantic integration platform.
 

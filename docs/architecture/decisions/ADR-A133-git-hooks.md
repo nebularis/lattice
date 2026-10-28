@@ -64,3 +64,10 @@ Three facts shape what a hook may do.
 ## Provenance
 
 Proposed on 2026-10-23, after the maintainer asked which checks should become hooks. The maintainer decided that the published-decisions check warns at commit and blocks only at a merge, never at a push, and that one dispatcher installs every hook. Planned in the [git hooks plan](../../developer/plans/git-hooks.md).
+
+## Addendum, 2026-10-28
+
+9. **A fourth moment, after a merge.** The `post-merge` hook derives the knowledge index again (`mise run build:knowledge`, about two seconds), so the index is never stale after a merge. The merge has already happened, so the hook never fails it, and a checkout without the index tools says so and carries on.
+10. **Identifiers at a commit and at a merge.** The identifier check runs over the registers, the decisions and the store record as a commit check and a merge gate, blocking at both. It fails when an identifier is defined twice, which happens when two branches each numbered a row and one is merged into the other. The rule is first in wins: the row whose line was committed earlier keeps its number, and the later row and every citation of it are renumbered. The check prints both sites with the date each line was committed, so the choice is mechanical and the index, rebuilt after the merge, holds one entry per identifier.
+
+Provenance of the addendum: the maintainer chose the uniqueness check as a merge hook with first in wins on 2026-10-28, over provisional identifiers on branches and over reserved ranges, in the ontology remediation unit.

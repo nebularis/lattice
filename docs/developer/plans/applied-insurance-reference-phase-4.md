@@ -104,7 +104,7 @@ snapshot versions.
 
 | Document | Ontology IRI | Version IRI | Prefix |
 |---|---|---|---|
-| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
+| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
 | `vocab/exposure-vocab.ttl` | `…/insurance/exposure/vocab` | `…/insurance/exposure-vocab/0.1.0` | `aeo-voc:` (`…/insurance/exposure/vocab#`) |
 
 The spec imports, by exact version IRI, the live versions of Foundation (0.4.0), Vocabulary (0.4.0),
@@ -128,11 +128,11 @@ the mixins and restrictions in the sketch:
 
 | Class | From | Notes |
 |---|---|---|
-| `aeo:ExposureSet` | §5.2 | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
-| `aeo:Location` | §5.3 | `fnd:Version`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
+| `aeo:ExposureSet` | §5.2 | `fnd:Versioned`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
+| `aeo:Location` | §5.3 | `fnd:Versioned`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
 | `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`, `⊑ fnd:NaturallyKeyed`. Registration and tax numbers and the LEI are `fnd:naturalKey`s, key nodes of declared `fnd:KeyScheme`s (Foundation README §8). A tax number's scheme is sensitive. Added 2026-10-13 (review R2): `aeo:industry ⊑ cls:industry` (0..*, no primary industry is privileged by the property, so a primary industry is an attribute of the entity's assessment), `aeo:domicile ⊑ cls:territory` (functional, the jurisdiction of incorporation or registration) and `aeo:legalForm` (functional). Trading names are `skos:altLabel`s of the entity. Entity status (active, dormant, in liquidation, dissolved) is an attribute type in AIR-4.2, because it changes over time and is evidenced like any assessment |
 | `aeo:ControlRelation` | §5.1 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:controller`, `aeo:controlled` (each exactly one `aeo:LegalEntity`), `aeo:controlKind`, optional `aeo:controlShare` (`qnt:Quantity`) |
-| `aeo:Asset` | §5.5 | `fnd:Version`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
+| `aeo:Asset` | §5.5 | `fnd:Versioned`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
 | `aeo:Interest` | §5.5 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:interestHolder` (`pty:RoleOccupancy`), `aeo:interestIn` (`aeo:Asset`), `aeo:interestKind`, optional `aeo:extent` (`qnt:Quantity`) |
 | `aeo:Valuation` | §5.6 | `fnd:Evidenced`, `fnd:TemporallyScoped`. `aeo:valueOf` (asset or location), `aeo:valueType`, `aeo:valuationBasis`, optional `aeo:valuationMethod`, `aeo:amount`, or `aeo:rate` with `aeo:horizon` (all `qnt:Quantity`) |
 
@@ -742,7 +742,7 @@ Undetermined (sketch §5.12).
 
 | Term | Definition |
 |---|---|
-| `aeo:CoverageRequirement` | `⊑ fnd:Version ⊓ fnd:Evidenced`. Exactly one `aeo:requirementSource`, exactly one `aeo:requirementStrength`, at least one `aeo:requiredMeasure`, at most one `aeo:requirementScope` (`elg:AdmissionProfile` whose subject class is `aeo:ExposureUnit`, AIR-4.3), any number of `aeo:classOfBusiness`, at most one `aeo:owedTo` (`pty:RoleOccupancy`, the lender as mortgagee, for example) |
+| `aeo:CoverageRequirement` | `⊑ fnd:Versioned ⊓ fnd:Evidenced`. Exactly one `aeo:requirementSource`, exactly one `aeo:requirementStrength`, at least one `aeo:requiredMeasure`, at most one `aeo:requirementScope` (`elg:AdmissionProfile` whose subject class is `aeo:ExposureUnit`, AIR-4.3), any number of `aeo:classOfBusiness`, at most one `aeo:owedTo` (`pty:RoleOccupancy`, the lender as mortgagee, for example) |
 | `aeo:hasRequirement` | exposure set membership, inverse functional |
 | `aeo:MeasureConstraint` | exactly one `aeo:measure`, exactly one `aeo:bound` (`qnt:RangeSet` on the measure's space), at most one `aeo:atReturnPeriod` (`qnt:Quantity` in years, for `NetRetainedLoss`), at most one `aeo:relativeTo` (`aeo:FinancialMetric`) |
 | `aeo:measureSpace` | measure concept to the space its bounds are on |

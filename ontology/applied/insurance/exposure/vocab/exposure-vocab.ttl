@@ -1,30 +1,30 @@
 # SPDX-License-Identifier: MPL-2.0
 
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab> .
 
-<https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.1> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.3.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.3.1> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.7.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################

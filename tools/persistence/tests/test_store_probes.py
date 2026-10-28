@@ -149,7 +149,8 @@ def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses
         assert _p2("DROP GRAPH <urn:absent>") == (True, False)  # an error at run time, and the first insert is rolled back
 
 
-# ---- P3 a correlated GRAPH ?g in an inner group is a cost measure, and lives in benchmark/persistence-store-probes (TSD-42, MSC-4) ----
+# ---- P3 a correlated GRAPH ?g in an inner group is a cost measure (STD-290). benchmark/persistence-store-probes and
+# benchmark/persistence-graph-naming-cost measure it, with ?g bound by a constant and as the compiler computes it (TSD-42) ----
 
 
 # ---- P4 an unbound graph variable in a template ------------------------------------------------------------------------

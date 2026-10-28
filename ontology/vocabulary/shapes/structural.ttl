@@ -10,6 +10,10 @@
 @prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+voc:BindingClosureShape a sh:NodeShape ;
+    sh:targetClass voc:BindingClosure ;
+    sh:property [ sh:path voc:closedAt ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path voc:closesBinding ; sh:minCount 1 ; sh:maxCount 1 ] .
+
 voc:ConceptSchemeShape a sh:NodeShape ;
     sh:targetClass voc:ConceptScheme ;
     sh:property [ sh:path fnd:hasGovernanceState ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ] .

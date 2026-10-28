@@ -22,4 +22,4 @@ The authoring host has not run these Python commands. A network-enabled environm
 
 ## Documentation Boundary
 
-The detailed roadmap is [MTP implementation plan](../developer/sketches/mtp-implementation-plan.md). The phase handoff is [MTP handoff](../developer/review/mtp-handoff.md). Decisions affecting curation, pins, packages, code-generation, or backend interfaces require ADRs. Normative MCN and MORK semantics remain in their MORK documents.
+The decisions behind the Teaching Pack are in [ADR-A44](decisions/ADR-A44-mork-teaching-pack-generated-content-boundary.md). Decisions affecting curation, pins, packages, code-generation, or backend interfaces require ADRs. Normative MCN and MORK semantics remain in their MORK documents.

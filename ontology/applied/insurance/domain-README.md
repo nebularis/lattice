@@ -28,9 +28,9 @@ and `contract/`.
 
 | Module | Namespace | Prefix |
 |---|---|---|
-| `common/` | `https://www.nebularis.org/neuro-semantic/insurance/common#` | `icm:` |
-| `peril/` | `https://www.nebularis.org/neuro-semantic/insurance/peril#` | `prl:`, for properties and datatypes. Schemes and concepts live in the module's `vocab/` document, prefix `prl-voc:` |
-| `exposure/` | `https://www.nebularis.org/neuro-semantic/insurance/exposure#` | `aeo:` |
+| `common/` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/common#` | `icm:` |
+| `peril/` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#` | `prl:`, for properties and datatypes. Schemes and concepts live in the module's `vocab/` document, prefix `prl-voc:` |
+| `exposure/` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#` | `aeo:` |
 | `submission/`, `claims/`, `contract/` | fixed when those modules are built | — |
 
 ## The legacy contract module

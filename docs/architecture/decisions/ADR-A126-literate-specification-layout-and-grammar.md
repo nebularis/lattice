@@ -21,7 +21,7 @@ A layer's `README.md` is its authoritative specification, and its Turtle is extr
 document order. Three problems have grown with the layers.
 
 - **Facts are written more than once, and the copies drift.** A term's Definition and Utility are written
-  in prose and again as `rdfs:comment` and `fnd:utility` strings in its block, and for `fnd:Version` the two
+  in prose and again as `rdfs:comment` and `fnd:utility` strings in its block, and for `fnd:Versioned` the two
   already read differently. Vocabulary states `voc:ConceptScheme`'s superclass `skos:ConceptScheme` in an
   alignment block, in a Utility paragraph and in an axiom index row, and not in the class's own block.
 - **Practice differs by layer.** READMEs order and name their sections differently. Instrument checks 91
@@ -131,7 +131,7 @@ state.
 
 ## Addendum 2026-10-21 (accepted 2026-10-21)
 
-Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
+**Narrows decisions 3, 6, 7 and 8.** Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
 needed an individual stated across two places. Three changes follow. None alters a generated file of a module
 that does not use them.
 

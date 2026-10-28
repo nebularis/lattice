@@ -5,7 +5,7 @@ description: How work is run in LATTICE and projects built on it. Use when start
 
 # The LATTICE development lifecycle
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 The always-on rules are in `AGENTS.md`. This skill is the procedure behind them. Paths are relative
 to the LATTICE repository, browsable at <https://github.com/nebularis/lattice>.
@@ -113,7 +113,7 @@ justification in its Validation Pack, countersigned at the gate.
   maintainer commits them. The model phase follows.
 - **Pause before commit.** The agent builds and verifies, writes the Validation Pack's handoff and
   results, updates the status record, and stops. The maintainer commits.
-- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all (`mise run graph:ask -- misses`), say which entry, facet value or relation would have answered each, and add any answer the fallback found to its register in the same change (STD-272).
+- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all, the near answers and the gaps recorded while reading (`mise run graph:ask -- misses --near`). Say which entry, facet value, column or edge would have carried each, such as a Does not cover cell, a Distinguished from or Bears on id, or an addendum's Reverses lead, and add any answer the fallback found to its register in the same change (STD-272). A gap is recorded with `graph:ask -- gap` when it is found, not remembered at the end, and closed with `graph:ask -- close <ID>` in the change that writes its signpost.
 - **Executing a whole plan autonomously.** The request is the go-ahead to author every slice, but do
   not ratify ADRs, record each open design decision in the status record rather than choosing
   silently, and never report a check as passed that could not run.

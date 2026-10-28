@@ -5,7 +5,7 @@
 MORK-to-SWRL compiler for Eligibility interval conditions (ADR-A23, ADR-A24).
 
 SWRL is restricted to positive, monotonic inference in this package,
-matching both ADR-A24's decision and MorkEnhancements.md's own warning: a
+matching both ADR-A24's decision and the MORK enhancements analysis's own warning: a
 SWRL rule must not derive ``elg:Denied`` merely from failing to infer
 ``elg:Permitted`` — open-world reasoning makes that inference invalid.
 ``elg:Undetermined`` is not expressible in SWRL at all for the same reason.

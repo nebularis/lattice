@@ -6,16 +6,16 @@
 # protection survey is about.
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 
 aeo:ConstructionProtectionProfileShape a sh:NodeShape ;
     sh:targetClass aeo:Assessment ;
     sh:sparql [
         sh:message "An assessment of the construction and protection profile family must assess a location or an asset." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:assesses ?s .
               FILTER NOT EXISTS { ?s a aeo:Location }
@@ -25,8 +25,8 @@ aeo:ConstructionProtectionProfileShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment of the construction and protection profile family must have values for ConstructionClass, OccupancyClass, YearBuilt and Storeys." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection .
               {
@@ -47,8 +47,8 @@ aeo:ConstructionProtectionProfileOutsideFamilyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An attribute value on a construction and protection profile assessment is outside the Construction, Occupancy, Protection and External exposure families." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:hasAttribute ?av .
               ?av aeo:attributeType ?type .

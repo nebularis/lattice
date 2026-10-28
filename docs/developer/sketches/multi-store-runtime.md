@@ -49,7 +49,7 @@ A projected aggregate balance can therefore make a limit check fast. It can neve
 
 **Quantification already models the closing interval.** `qnt:Recurrence`, `qnt:RecurrenceBin` and `qnt:AnchorBinding` carry a per-account closing recurrence, as §5.2 of the history sketch uses. That declaration does more than set a storage dial. It is what makes a checkpoint's position computable, and so what makes TSD-36's derived IRI available at all.
 
-**The store's behaviour on graph selection was already recorded.** [TSD-04](../../architecture/triple-store-discovery.md) observes that a `GRAPH ?g` inside an inner group, with `?g` bound outside it, passes the binding in and reads one graph, on both rdflib and Oxigraph. §1's measurement is that finding holding at the scale that matters.
+**The store's behaviour on graph selection was already recorded.** [TSD-04](../../architecture/triple-store-discovery.md) observes that a `GRAPH ?g` inside an inner group, with `?g` bound outside it, passes the binding in and reads one graph, on both rdflib and Oxigraph. §1's measurement is that finding holding at the scale that matters. *Note, 2026-10-28: the benchmark's `VALUES ?g` with `GRAPH ?g` in one group names constants and still reads only the named graphs on 0.5.13. TSD-04 does not hold for a `?g` the query computes, or for a constant one inside an `OPTIONAL` from 0.5.13 ([TSD-45](../../architecture/triple-store-discovery.md)).*
 
 ## 3. Four boundaries, not one
 

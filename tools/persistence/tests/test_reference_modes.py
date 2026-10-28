@@ -75,7 +75,7 @@ def test_h2_6e_t2_an_edge_with_no_mode_is_by_identity_and_a_declared_one_is_read
 
 
 def test_h2_6e_t3_the_compiled_profile_records_each_edge_with_its_mode():
-    out, _ = compile_to_graph(_config(_edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Version ."))
+    out, _ = compile_to_graph(_config(_edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Versioned ."))
     (profile,) = out.subjects(RDF.type, DAL.CompiledProfile)
     nodes = list(out.objects(profile, DAL.referenceEdge))  # stated once, by the profile, which payload contracts point at (H2.8c)
     assert len(nodes) == 3  # the base's two (an owned edge and a reference) and the pinned one
@@ -88,8 +88,8 @@ def test_h2_6e_t3_the_compiled_profile_records_each_edge_with_its_mode():
 
 
 def test_h2_6e_t4_a_pinned_edge_to_a_versioned_class_compiles_and_the_mode_does_not_change_what_is_generated():
-    pinned = _edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Version ."
-    identity = _edge("referee", "Versioned") + "ex:Versioned rdfs:subClassOf fnd:Version ."
+    pinned = _edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Versioned ."
+    identity = _edge("referee", "Versioned") + "ex:Versioned rdfs:subClassOf fnd:Versioned ."
     ops = lambda extra: [(o.operation, o.template_id, [(b.name, b.value) for b in o.bindings]) for o in compile_targets(_config(extra))[0].operations]
     assert ops(pinned) == ops(identity)
 
@@ -106,32 +106,32 @@ def test_h2_6e_t6_a_pinned_edge_with_no_target_class_or_on_a_value_property_is_r
 
 
 def test_h2_6e_t7_a_mode_that_is_neither_individual_is_refused():
-    assert _kind(_edge("referee", "Versioned", "; dal:referenceMode ex:Other") + "ex:Versioned rdfs:subClassOf fnd:Version .") == "ReferenceModeUnknown"
+    assert _kind(_edge("referee", "Versioned", "; dal:referenceMode ex:Other") + "ex:Versioned rdfs:subClassOf fnd:Versioned .") == "ReferenceModeUnknown"
 
 
 def test_h2_6e_t8_a_pinned_owned_edge_is_checked_like_any_other():
     owned = "ex:OrderAggregateShape sh:property [ sh:path ex:part ; sh:node ex:PartShape ; dal:ownership dal:Owned ; dal:referenceMode dal:Pinned ] ."
     part = "ex:PartShape a sh:NodeShape ; sh:targetClass ex:Part ."
     assert _kind(owned + part) == "PinnedReferenceToUnversionedClass"
-    assert "EvidenceEdgeByIdentity" not in _warnings(owned + part + "ex:Part rdfs:subClassOf fnd:Version .")
+    assert "EvidenceEdgeByIdentity" not in _warnings(owned + part + "ex:Part rdfs:subClassOf fnd:Versioned .")
 
 
-EVIDENCE = "ex:Order rdfs:subClassOf fnd:Evidence . ex:Customer rdfs:subClassOf fnd:Version ."
+EVIDENCE = "ex:Order rdfs:subClassOf fnd:Evidence . ex:Customer rdfs:subClassOf fnd:Versioned ."
 
 
 def test_h2_6e_t9_an_evidence_class_that_refers_by_identity_to_a_versioned_class_is_warned():
     assert "EvidenceEdgeByIdentity" in _warnings(EVIDENCE)
-    assert "EvidenceEdgeByIdentity" in _warnings("ex:Order rdfs:subClassOf fnd:DerivedArtefact . ex:Customer rdfs:subClassOf fnd:Version .")
-    assert "EvidenceEdgeByIdentity" in _warnings("ex:Order rdfs:subClassOf ex:Record . ex:Record rdfs:subClassOf fnd:Evidence . ex:Customer rdfs:subClassOf fnd:Version .")
+    assert "EvidenceEdgeByIdentity" in _warnings("ex:Order rdfs:subClassOf fnd:DerivedArtefact . ex:Customer rdfs:subClassOf fnd:Versioned .")
+    assert "EvidenceEdgeByIdentity" in _warnings("ex:Order rdfs:subClassOf ex:Record . ex:Record rdfs:subClassOf fnd:Evidence . ex:Customer rdfs:subClassOf fnd:Versioned .")
 
 
 def test_h2_6e_t10_the_warning_is_not_given_when_the_edge_is_pinned_or_a_class_is_not_what_it_needs_to_be():
     pinned = EVIDENCE.replace("ex:Customer", "ex:Referee") + _edge("referee", "Referee", "; dal:referenceMode dal:Pinned")
     assert "EvidenceEdgeByIdentity" not in _warnings(pinned)
-    assert "EvidenceEdgeByIdentity" not in _warnings("ex:Customer rdfs:subClassOf fnd:Version .")  # the subject is no evidence
+    assert "EvidenceEdgeByIdentity" not in _warnings("ex:Customer rdfs:subClassOf fnd:Versioned .")  # the subject is no evidence
     assert "EvidenceEdgeByIdentity" not in _warnings("ex:Order rdfs:subClassOf fnd:Evidence .")  # the target is not versioned
     # the edge to the unversioned customer is by identity and warns nothing, while one to a versioned class does, so the warning is per edge
-    both = EVIDENCE + _edge("referee", "Referee", "; dal:referenceMode dal:Pinned") + "ex:Referee rdfs:subClassOf fnd:Version ."
+    both = EVIDENCE + _edge("referee", "Referee", "; dal:referenceMode dal:Pinned") + "ex:Referee rdfs:subClassOf fnd:Versioned ."
     (ct,) = compile_targets(_config(both))
     assert [d.kind for d in ct.diagnostics].count("EvidenceEdgeByIdentity") == 1
 
@@ -154,7 +154,7 @@ def _payload(extra: str):
 
 
 def test_h2_6e_t12_the_contract_carries_the_edges_modes_on_its_payload():
-    payload, _, tree = _payload(_edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Version .")
+    payload, _, tree = _payload(_edge("referee", "Versioned", "; dal:referenceMode dal:Pinned") + "ex:Versioned rdfs:subClassOf fnd:Versioned .")
     modes = {e.predicate.rsplit("#", 1)[-1]: e.reference_mode for e in payload.edges}
     assert modes["referee"] == "Pinned" and {m for k, m in modes.items() if k != "referee"} == {"ByIdentity"}
     assert len(payload.edges) == len(tree.node_edges()) and payload.edges == tuple(sorted(payload.edges))
@@ -183,7 +183,7 @@ def test_h2_6e_t14_a_family_with_no_boundary_shape_records_no_edge():
 
 # ---- H2.8c: record classes (plan 4.18 step 3, D-15 (b), D-9). Test IDs are H2.8c-Tn ---------------------------------------
 
-RECORD = "ex:OrderBoundaryProfile dal:recordClass ex:Order . ex:Customer rdfs:subClassOf fnd:Version ."
+RECORD = "ex:OrderBoundaryProfile dal:recordClass ex:Order . ex:Customer rdfs:subClassOf fnd:Versioned ."
 
 
 def _no_receipt(extra: str = ""):
@@ -197,16 +197,16 @@ def _no_receipt(extra: str = ""):
 def test_h2_8c_t8_a_record_class_named_by_a_profile_is_read_as_evidence_by_the_identity_warning():
     assert "EvidenceEdgeByIdentity" in _warnings(RECORD)
     # a subclass of a named record class is a record, as the configuration asserts it
-    assert "EvidenceEdgeByIdentity" in _warnings("ex:OrderBoundaryProfile dal:recordClass ex:Record . ex:Order rdfs:subClassOf ex:Record . ex:Customer rdfs:subClassOf fnd:Version .")
+    assert "EvidenceEdgeByIdentity" in _warnings("ex:OrderBoundaryProfile dal:recordClass ex:Record . ex:Order rdfs:subClassOf ex:Record . ex:Customer rdfs:subClassOf fnd:Versioned .")
     # the control: the same edge with no record class, and a record class whose edge is pinned
-    assert "EvidenceEdgeByIdentity" not in _warnings("ex:Customer rdfs:subClassOf fnd:Version .")
-    pinned = "ex:OrderBoundaryProfile dal:recordClass ex:Order . ex:Referee rdfs:subClassOf fnd:Version ." + _edge("referee", "Referee", "; dal:referenceMode dal:Pinned")
+    assert "EvidenceEdgeByIdentity" not in _warnings("ex:Customer rdfs:subClassOf fnd:Versioned .")
+    pinned = "ex:OrderBoundaryProfile dal:recordClass ex:Order . ex:Referee rdfs:subClassOf fnd:Versioned ." + _edge("referee", "Referee", "; dal:referenceMode dal:Pinned")
     assert "EvidenceEdgeByIdentity" not in _warnings(pinned)
 
 
 def test_h2_8c_t9_no_receipt_on_a_family_whose_target_is_a_record_class_or_versioned_warns_and_otherwise_does_not():
     assert "NoReceiptForRecord" in {d.kind for d in _no_receipt("ex:OrderBoundaryProfile dal:recordClass ex:Order .").diagnostics}
-    assert "NoReceiptForRecord" in {d.kind for d in _no_receipt("ex:Order rdfs:subClassOf fnd:Version .").diagnostics}
+    assert "NoReceiptForRecord" in {d.kind for d in _no_receipt("ex:Order rdfs:subClassOf fnd:Versioned .").diagnostics}
     plain = _no_receipt()
     assert "NoReceiptForRecord" not in {d.kind for d in plain.diagnostics}
     (d,) = [d for d in _no_receipt("ex:OrderBoundaryProfile dal:recordClass ex:Order .").diagnostics if d.kind == "NoReceiptForRecord"]
@@ -231,3 +231,25 @@ def test_h2_8c_t11_the_vocabulary_declares_record_class_with_no_domain():
     g = Graph().parse(witness.SPEC_TTL, format="turtle")
     assert (DAL.recordClass, RDF.type, URIRef("http://www.w3.org/2002/07/owl#ObjectProperty")) in g
     assert list(g.objects(DAL.recordClass, URIRef("http://www.w3.org/2000/01/rdf-schema#domain"))) == []
+
+
+# OR-7 (ADR-A142): a meaning-bearing edge from a versioned class is owned or pinned, never by identity.
+_VERSIONED_ROOT = "ex:Order rdfs:subClassOf fnd:Versioned . ex:customer fnd:meaningBearing true ."
+
+
+def test_or7_t1_a_meaning_bearing_reference_by_identity_from_a_versioned_root_is_refused():
+    assert _kind(_VERSIONED_ROOT) == "MeaningBearingEdgeByIdentity"
+
+
+def test_or7_t2_a_meaning_bearing_edge_pinned_to_a_versioned_target_compiles():
+    extra = "ex:Order rdfs:subClassOf fnd:Versioned . ex:referee fnd:meaningBearing true . ex:Versioned rdfs:subClassOf fnd:Versioned ."
+    assert "MeaningBearingEdgeByIdentity" not in _warnings(extra + _edge("referee", "Versioned", "; dal:referenceMode dal:Pinned"))
+
+
+def test_or7_t2b_a_meaning_bearing_edge_owned_by_the_root_compiles():
+    extra = "ex:Order rdfs:subClassOf fnd:Versioned . ex:note fnd:meaningBearing true ."
+    assert "MeaningBearingEdgeByIdentity" not in _warnings(extra + _edge("note", "Note", ownership="dal:Owned"))
+
+
+def test_or7_t3_the_same_edge_from_an_unversioned_root_compiles_by_identity():
+    assert "MeaningBearingEdgeByIdentity" not in _warnings("ex:customer fnd:meaningBearing true .")
