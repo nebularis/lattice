@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Stages what the Configuration Studio's service serves (ADR-A136): the merged vocabulary and
-the samples. `python tools/config_studio_stage.py [--root .] [--out .build/config-studio]`.
+"""Stages what the Configuration Studio's service serves (ADR-A136): the merged vocabulary, with the
+layers' form shapes, and the samples. `python tools/config_studio_stage.py [--root .] [--out .build/config-studio]`.
 
 The service reads only the staged files, so it needs neither the repository catalogue nor
 rdflib, and finds every repository file through the catalogue here (STD-273).
@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Iterable, List
 
 from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import OWL, RDF, RDFS, SH
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
@@ -27,6 +27,15 @@ VOCABULARY = (
     ("persistence", "spec"), ("surface", "spec"), ("surface", "vocab"), ("foundation", "spec"), ("foundation", "vocab"), ("vocabulary", "spec"),
     ("quantification", "spec"), ("quantification", "vocab"), ("eligibility", "spec"), ("eligibility", "vocab"),
 )
+
+# The layers whose SHACL shapes place and constrain the forms' properties. The browser reads only
+# node shapes and property shapes, so only the triples below are staged. SHACL-SPARQL constraints,
+# messages and rules stay out.
+SHAPED = ("persistence", "surface", "foundation", "vocabulary", "quantification", "eligibility")
+SHAPE_PREDICATES = frozenset(
+    SH[n] for n in ("targetClass", "property", "path", "datatype", "class", "nodeKind", "in", "minCount", "maxCount", "name", "description")
+) | {RDF.first, RDF.rest}
+SHAPE_TYPES = frozenset({SH.NodeShape, SH.PropertyShape, RDFS.Class, OWL.Class})
 
 
 def _turtle(directory: Path) -> List[Path]:
@@ -43,6 +52,21 @@ def _merge(paths: Iterable[Path]) -> Graph:
 def vocabulary_files(catalogue: lattice_repo_catalogue.Catalogue) -> List[Path]:
     root = catalogue.root
     return [path for module, role in VOCABULARY for path in _turtle(root / catalogue.module(module).directory(role))]
+
+
+def shape_files(catalogue: lattice_repo_catalogue.Catalogue) -> List[Path]:
+    return [path for module in SHAPED for path in _turtle(catalogue.root / catalogue.module(module).directory("shapes"))]
+
+
+def form_shapes(shapes: Graph) -> Graph:
+    """The triples of `shapes` that a form reads, with the prefixes of the source files."""
+    kept = Graph()
+    for prefix, namespace in shapes.namespaces():
+        kept.bind(prefix, namespace)
+    for s, p, o in shapes:
+        if p in SHAPE_PREDICATES or (p == RDF.type and o in SHAPE_TYPES):
+            kept.add((s, p, o))
+    return kept
 
 
 def sample_files(catalogue: lattice_repo_catalogue.Catalogue, manifest: Graph, sample: URIRef, samples_dir: Path) -> List[Path]:
@@ -66,7 +90,9 @@ def stage(root: Path, out: Path) -> None:
     samples_dir = catalogue.root / catalogue.area("contracts") / "config-studio" / "samples"
     (out / "samples").mkdir(parents=True, exist_ok=True)
 
-    _merge(vocabulary_files(catalogue)).serialize(out / "vocabulary.ttl", format="turtle", encoding="utf-8")
+    vocabulary = _merge(vocabulary_files(catalogue))
+    vocabulary += form_shapes(_merge(shape_files(catalogue)))
+    vocabulary.serialize(out / "vocabulary.ttl", format="turtle", encoding="utf-8")
 
     manifest = Graph().parse(samples_dir / "samples.ttl", format="turtle")
     listing = Graph()

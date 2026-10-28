@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-// Reads the dal:, srf:, fnd: and voc: vocabularies the service serves and derives every form field
-// from them: a property's rdfs:domain places it, its rdfs:range picks the control, and the
-// individuals of a range class are its options. Only what the ontology cannot say is declared
-// here, in OVERRIDES.
+// Reads the dal:, srf:, fnd: and voc: vocabularies and their SHACL shapes, as the service serves
+// them, and derives every form field from them. A shape that targets a class places a property on
+// it and picks the control (sh:datatype, sh:class, sh:in), and its counts say whether the field is
+// single and required. Where no shape speaks, a property's rdfs:domain places it and its
+// rdfs:range picks the control. The individuals of a range class are its options. Only what the
+// ontology cannot say is declared here, in OVERRIDES.
 
+import { type Constraint, merge, readShapes } from "./shapes";
 import { COMMENT, DAL, ELG, Graph, LABEL, OWL, QNT, RDF, RDFS, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, sentence, type Term } from "@lattice/authoring-domain";
 
 export type FieldKind =
@@ -31,6 +34,8 @@ export interface Field {
   kind: FieldKind;
   /** Only one value. Not functional means several values, shown as chips. */
   single: boolean;
+  /** A shape requires at least one value. */
+  required?: boolean;
   range?: string;
   datatype?: string;
   lang?: string;
@@ -86,9 +91,11 @@ const TEXT = new Set([XSD("string"), XSD("anyURI"), XSD("dateTime"), RDFS("Liter
 export class Vocabulary {
   private readonly superClasses = new Map<string, string[]>();
   private readonly byDomain = new Map<string, string[]>();
+  private readonly shapes: Map<string, Map<string, Constraint>>;
   private readonly fieldCache = new Map<string, Field>();
 
   constructor(readonly graph: Graph) {
+    this.shapes = readShapes(graph);
     for (const q of graph.quads(null, RDFS("subClassOf"))) {
       if (q.object.termType !== "NamedNode") continue;
       const list = this.superClasses.get(q.subject.value) ?? [];
@@ -125,10 +132,13 @@ export class Vocabulary {
     return out;
   }
 
-  /** The properties a class takes: those whose rdfs:domain is the class or one of its ancestors. */
+  /** The properties a class takes: those a shape of the class or one of its ancestors names, and those whose rdfs:domain is one of them. */
   propertiesOf(classIri: string): string[] {
     const seen = new Set<string>();
-    for (const c of this.ancestors(classIri)) for (const p of this.byDomain.get(c) ?? []) seen.add(p);
+    for (const c of this.ancestors(classIri)) {
+      for (const p of this.byDomain.get(c) ?? []) seen.add(p);
+      for (const p of this.shapes.get(c)?.keys() ?? []) if (this.isProperty(p)) seen.add(p);
+    }
     return [...seen].sort((a, b) => this.label(a).localeCompare(this.label(b)));
   }
 
@@ -141,21 +151,36 @@ export class Vocabulary {
     return this.options(this.graph.subjects(TYPE, classIri));
   }
 
-  field(property: string): Field {
-    const cached = this.fieldCache.get(property);
+  /** What the shapes of a class and its ancestors say of a property, the nearest class first. */
+  constraint(classIri: string, property: string): Constraint | undefined {
+    let out: Constraint | undefined;
+    for (const c of this.ancestors(classIri)) {
+      const own = this.shapes.get(c)?.get(property);
+      if (own) out = merge(out, own);
+    }
+    return out;
+  }
+
+  /** The field for a property, as a node of the class takes it. Without a class, or where no shape names the property, only the property's own declarations speak. */
+  field(property: string, classIri?: string): Field {
+    const shape = classIri ? this.constraint(classIri, property) : undefined;
+    const key = shape ? `${classIri}|${property}` : property;
+    const cached = this.fieldCache.get(key);
     if (cached) return cached;
     const g = this.graph;
     const override = OVERRIDES[property];
-    const range = override?.range ?? g.value(property, RDFS("range"));
+    const range = override?.range ?? shape?.datatype ?? shape?.cls ?? g.value(property, RDFS("range"));
     // srf:, voc:, qnt: and elg: declare owl:FunctionalProperty on every single-valued property. dal:
     // declares none, and the persistence compiler reads every dal: property it compiles as
     // single-valued, so there one value is the default and OVERRIDES names the exceptions.
-    const functional = g.types(property).includes(OWL("FunctionalProperty")) || property.startsWith(DAL(""));
+    // A shape's sh:maxCount decides first, and only where a shape gives none do these rules apply.
+    const functional = shape?.maxCount !== undefined ? shape.maxCount === 1 : g.types(property).includes(OWL("FunctionalProperty")) || property.startsWith(DAL(""));
     const base = {
       property,
-      label: override?.label ?? this.label(property),
+      label: override?.label ?? (g.value(property, LABEL) || shape?.name || this.label(property)),
       lang: override?.lang,
-      comment: this.comment(property),
+      comment: this.comment(property) || shape?.description || "",
+      required: (shape?.minCount ?? 0) >= 1,
       range,
       options: [] as Option[],
     };
@@ -167,7 +192,9 @@ export class Vocabulary {
       field = { ...base, kind: "boolean", single: true, datatype: range };
     } else if (range && NUMBERS.has(range)) {
       field = { ...base, kind: "number", single: true, datatype: range };
-    } else if (range && (TEXT.has(range) || g.types(property).includes(OWL("DatatypeProperty")))) {
+    } else if (shape?.in) {
+      field = { ...base, kind: "choice", single: functional, options: this.options(shape.in) };
+    } else if (shape?.datatype || (range && (TEXT.has(range) || g.types(property).includes(OWL("DatatypeProperty"))))) {
       field = { ...base, kind: "text", single: true, datatype: range };
     } else if (range === RDFS("Class") || range === OWL("Class")) {
       field = { ...base, kind: "class", single: functional };
@@ -180,7 +207,7 @@ export class Vocabulary {
     } else {
       field = { ...base, kind: "iri", single: functional };
     }
-    this.fieldCache.set(property, field);
+    this.fieldCache.set(key, field);
     return field;
   }
 

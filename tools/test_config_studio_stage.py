@@ -34,6 +34,16 @@ def test_vocabulary_merges_the_persistence_and_surface_specifications(staged: Pa
     assert (URIRef("https://www.nebularis.org/neuro-semantic/lattice/quantification#ValueSpace"), None, None) in g
 
 
+def test_vocabulary_carries_the_form_shapes_and_no_sparql_constraints(staged: Path) -> None:
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    g = Graph().parse(staged / "vocabulary.ttl")
+    assert (DAL.ProfileScopeShape, sh.targetClass, DAL.ProfileScope) in g
+    assert (None, sh.maxCount, None) in g
+    assert not list(g.subjects(sh.sparql, None))
+    assert not list(g.subjects(sh.select, None))
+    assert not list(g.subjects(sh.message, None))
+
+
 def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path) -> None:
     listing = Graph().parse(staged / "samples.ttl")
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
