@@ -104,6 +104,32 @@ class DocumentsTest {
     }
 
     @Test
+    void theReportHoldsTheShapesTheTemplateAndTheDetections() {
+        String draft = licence
+            .replace("<section key=\"grant\">", "<section key=\"extras\"><unmarked>A note.</unmarked></section>\n    <section key=\"grant\">")
+            .replace("for its internal business purposes.", "for its internal business purposes from 1 January 2027 for 30 days.");
+        assertEquals(204, put("\"0\"", draft).status());
+        ApiResponse r = f.get(DOCS + "/" + DOC + "/report");
+        assertEquals(200, r.status());
+        assertEquals("\"1\"", r.headers().get("ETag"));
+        Model report = org.apache.jena.riot.RDFParser.fromString(new String(r.body(), StandardCharsets.UTF_8), org.apache.jena.riot.Lang.TURTLE).toModel();
+        String sh = "http://www.w3.org/ns/shacl#";
+        Resource node = report.createResource(Graphs.documentNode(DOC) + "report");
+        assertTrue(report.contains(node, RDF.type, report.createResource(sh + "ValidationReport")));
+        java.util.Set<String> codes = new java.util.HashSet<>();
+        report.listObjectsOfProperty(Cst.code).forEachRemaining(o -> codes.add(o.asLiteral().getString()));
+        assertTrue(codes.containsAll(java.util.Set.of("unknown-section", "unmarked-text", "detection")), codes::toString);
+        java.util.Set<String> kinds = new java.util.HashSet<>();
+        report.listObjectsOfProperty(Cst.detectionKind).forEachRemaining(o -> kinds.add(o.asLiteral().getString()));
+        assertTrue(kinds.containsAll(java.util.Set.of("date", "duration")), kinds::toString);
+        Resource duration = report.listResourcesWithProperty(Cst.detectionKind, "duration").next();
+        assertEquals("30 days", duration.getProperty(report.createProperty(sh + "value")).getString());
+        assertEquals("duration-30-days", duration.getProperty(Cst.suggestedKey).getString());
+        assertEquals(f.get(DOCS + "/" + DOC + "/report").body().length, r.body().length, "the same document gives the same report");
+        assertEquals(404, f.get(DOCS + "/00000003-0000-4000-8000-000000000000/report").status());
+    }
+
+    @Test
     void theWriterRefusesADocumentGraphHoldingOtherTerms() {
         Model graph = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
         Resource node = graph.createResource(Graphs.documentNode(DOC));

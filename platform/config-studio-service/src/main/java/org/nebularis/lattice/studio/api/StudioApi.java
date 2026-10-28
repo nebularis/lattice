@@ -175,6 +175,9 @@ public final class StudioApi {
                     default -> notAllowed("GET, PUT, DELETE");
                 };
             }
+            if (s.length == 5 && s[2].equals("documents") && Graphs.isId(s[3]) && s[4].equals("report")) {
+                return method.equals("GET") ? documentReport(ws, s[3]) : notAllowed("GET");
+            }
             if (s.length == 3 && s[2].equals("jobs")) {
                 return switch (method) {
                     case "GET" -> listJobs(ws);
@@ -419,6 +422,20 @@ public final class StudioApi {
             return markup == null ? notFound() : xml(200, markup.getString().getBytes(StandardCharsets.UTF_8)).with("ETag", etag).with("Vary", "Accept");
         }
         return ApiResponse.turtle(200, Turtle.write(graph)).with("ETag", etag);
+    }
+
+    /** The report on the document as saved, computed on each request, with the document's revision as its ETag. */
+    private ApiResponse documentReport(String id, String doc) {
+        Workspace ws = load(id);
+        if (ws == null || !ws.documents().containsKey(doc)) {
+            return notFound();
+        }
+        Model graph = store.graph(Graphs.document(id, doc));
+        org.apache.jena.rdf.model.Statement markup = graph.createResource(Graphs.documentNode(doc)).getProperty(Cst.markup);
+        if (markup == null) {
+            return notFound();
+        }
+        return ApiResponse.turtle(200, Turtle.write(documents.report(doc, markup.getString(), graph))).with("ETag", etag(ws.documentRevision(doc)));
     }
 
     private ApiResponse putDocument(ApiRequest req, String id, String doc) {

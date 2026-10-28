@@ -3,7 +3,6 @@
 # listed file that no longer builds such a path, on a file that builds one and is not listed, and when the
 # technical debt row for this file (docs/developer/technical-debt.md) gives the wrong count.
 tools/agent_guidance.py | names the skills directory and the marketplace file, to move to the reader's docs entries
-tools/authoring_stage.py | stages the authoring service from fixed build paths under platform/, apps/ and deployment/
 tools/check_formal_freshness.py | roots the proofs and reference trees under tools/, to move to the reader's tool packages
 tools/mork/src/mtp/cli.py | reaches ontology/mork by counting parents of __file__, to read the module's roles from the reader
 tools/mork_compilers/src/mork_compilers/reasoning.py | finds the reasoning harness jar under platform/ by counting parents of __file__

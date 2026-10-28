@@ -36,6 +36,52 @@ export interface VariableDeclaration {
   valueType: ValueType;
 }
 
+export interface ValidationResult {
+  /** The shape that produced it, the `cst:code` of a `shacl` result. */
+  shapeId: string;
+  severity: Severity;
+  focusNode: string;
+  elementId: Uuid | null;
+  message: string;
+}
+
+export type SuggestionAction = "mark-variable" | "mark-reference" | "none";
+
+export interface Suggestion {
+  action: SuggestionAction;
+  valueType: ValueType | null;
+  suggestedKey: Key | null;
+  targetElementId: Uuid | null;
+}
+
+export type DetectionKind =
+  | "placeholder"
+  | "money"
+  | "percentage"
+  | "date"
+  | "duration"
+  | "defined-term"
+  | "cross-reference";
+
+/** A construct in an element's text that is not yet marked, with the mark the studio suggests. */
+export interface Detection {
+  elementId: Uuid;
+  partIndex: number;
+  start: number;
+  end: number;
+  text: string;
+  kind: DetectionKind;
+  suggestion: Suggestion;
+}
+
+/** A document's report from the studio, split by the `cst:check` of each result. */
+export interface DocumentReport {
+  conforms: boolean;
+  validation: ValidationResult[];
+  findings: Finding[];
+  detections: Detection[];
+}
+
 export type FindingKind =
   | "unknown-section"
   | "required-section-empty"
@@ -152,6 +198,12 @@ export interface Section {
 export interface Unmarked {
   sectionKey: SectionKey | null;
   text: string;
+  /**
+   * Where the text sits. Within a section, the index of the element it precedes, and for text outside
+   * every section, the index of the section it precedes. A position at or past the end, or none, puts
+   * it last.
+   */
+  position?: number;
 }
 
 export interface DocumentSnapshot {

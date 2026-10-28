@@ -6,8 +6,9 @@
     python tools/config_studio_stack.py status
 
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
-pinned here, or with `--docker` from the compose file. It then builds and starts the service and
-the worker, and with `--dev` the browser code with hot reload. Each process writes its log and its
+pinned here, or with `--docker` from the compose file. It then builds and starts the store writer, the service, the
+worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
+the compose file also serves the built add-in over HTTPS on 3443, which Word needs. Each process writes its log and its
 process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
 TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
 `mise run studio:up`, so Java, Maven, Node, Python and Erlang are on the path.
@@ -49,7 +50,7 @@ RABBITMQ_ARCHIVE = {
 }[WINDOWS]
 
 # The same addresses as the studio:service and studio:worker tasks in mise.toml.
-FUSEKI_PORT, RABBITMQ_PORT, SERVICE_PORT, WEB_PORT = 3130, 5673, 8090, 4175
+FUSEKI_PORT, RABBITMQ_PORT, SERVICE_PORT, WEB_PORT, ADDIN_PORT = 3130, 5673, 8090, 4175, 4176
 STREAM_PORT = 5553
 STUDIO_ENV = {
     "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{FUSEKI_PORT}",
@@ -96,7 +97,7 @@ PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 """
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
-ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "web")
+ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "addin", "web")
 
 
 class Stack:
@@ -216,6 +217,8 @@ class Stack:
 
     def up(self, docker: bool, dev: bool) -> None:
         if docker:
+            # The proxy serves the add-in's built files, so they are built before it starts.
+            run(["yarn", "workspace", "@lattice/word-authoring-addin", "run", "build"], self.root)
             run(["docker", "compose", "-f", str(self.compose), "up", "-d", "--build", "--wait"], self.root)
             self.run.mkdir(parents=True, exist_ok=True)
             (self.run / "docker").write_text(str(self.compose), encoding="utf-8", newline="\n")
@@ -238,12 +241,16 @@ class Stack:
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
+        if self.claim("addin", ADDIN_PORT):
+            self.spawn("addin", ["yarn", "workspace", "@lattice/word-authoring-addin", "run", "dev"])
+            self.wait_for("addin", ADDIN_PORT)
         url = f"http://127.0.0.1:{SERVICE_PORT}"
         if dev and self.claim("web", WEB_PORT):
             self.spawn("web", ["yarn", "workspace", "@lattice/config-studio", "run", "dev"])
             self.wait_for("web", WEB_PORT)
             url = f"http://127.0.0.1:{WEB_PORT}"
-        print(f"Configuration Studio: {url}. Logs in {self.run}. Stop it with `mise run studio:down`")
+        addin = "https://localhost:3443/addin/taskpane.html for Word" if docker else f"http://127.0.0.1:{ADDIN_PORT}/addin/harness.html"
+        print(f"Configuration Studio: {url}. Word add-in: {addin}. Logs in {self.run}. Stop it with `mise run studio:down`")
 
     def down(self) -> None:
         for name in reversed(ORDER):
@@ -256,7 +263,7 @@ class Stack:
             print("docker: Fuseki and RabbitMQ stopped")
 
     def status(self) -> None:
-        ports = {"fuseki": FUSEKI_PORT, "rabbitmq": RABBITMQ_PORT, "service": SERVICE_PORT, "web": WEB_PORT}
+        ports = {"fuseki": FUSEKI_PORT, "rabbitmq": RABBITMQ_PORT, "service": SERVICE_PORT, "addin": ADDIN_PORT, "web": WEB_PORT}
         for name in ORDER:
             pid = self.pid(name)
             port = ports.get(name)

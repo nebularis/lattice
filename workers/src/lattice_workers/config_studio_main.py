@@ -14,9 +14,10 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 from .config_studio_jobs import find_root
-from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore, declare_writes
+from .config_studio_worker import (
+    JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore, declare_topology, declare_writes,
+)
 from .fuseki_gsp import FusekiGraphStore
-from .wording_analysis_worker import declare_topology
 
 _RECONNECT_INTERVAL_SECONDS = 2
 

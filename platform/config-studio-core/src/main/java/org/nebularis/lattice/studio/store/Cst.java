@@ -56,6 +56,21 @@ public final class Cst {
     public static final Resource DocumentSample = r("DocumentSample");
     public static final Property templateKey = p("templateKey");
     public static final Property sampleKey = p("sampleKey");
+    public static final Property section = p("section");
+    public static final Property sectionKey = p("sectionKey");
+    public static final Property order = p("order");
+    public static final Property elementKind = p("elementKind");
+    public static final Property required = p("required");
+    public static final Property code = p("code");
+    public static final Property check = p("check");
+    public static final Property detectionKind = p("detectionKind");
+    public static final Property partIndex = p("partIndex");
+    public static final Property start = p("start");
+    public static final Property end = p("end");
+    public static final Property action = p("action");
+    public static final Property suggestedKey = p("suggestedKey");
+    public static final Property suggestedValueType = p("suggestedValueType");
+    public static final Property suggestedTarget = p("suggestedTarget");
 
     private Cst() {
     }

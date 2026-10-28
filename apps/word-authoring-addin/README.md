@@ -1,160 +1,40 @@
 <!-- SPDX-License-Identifier: MPL-2.0 -->
 
-# LATTICE Authoring (Word add-in, proof of concept)
+# LATTICE Authoring (Word add-in)
 
-A Word add-in for the word authoring proof of concept (ADR-A118): mark clauses, definitions,
-variables and defined-term references in a document, then read them as Logical English and
-review the proposed graph. A document lives in a workspace of the Configuration Studio, which
-stores it as [document markup](../../contracts/document/README.md) with its Wording graph and runs
-the analysis as a job of kind `analyse` (see [`contracts/config-studio`](../../contracts/config-studio/README.md)).
-The sections below that describe the earlier proof-of-concept service and its JSON API are
-out of date and are replaced as the studio's service lands.
-Not a platform contract. Its code, markup and manifest may change or be withdrawn without
-deprecation.
+A Word add-in that marks clauses, definitions, variables and defined-term references in a document, reads them as Logical English and shows the relations they propose (ADR-A118). It is a client of the Configuration Studio (ADR-A136). A document lives in a studio workspace, which stores it as [document markup](../../contracts/document/README.md) with the Wording graph the markup gives, reports on it, and analyses it as a job. Not a platform contract. Its code, markup and manifest may change or be withdrawn without deprecation.
 
-The add-in has a domain layer (WA8: OOXML parser/writer, tag codec, contract types and Ajv
-validation, HTTP client, `DocumentPort` seam), a task pane UI (WA9: `App.tsx` and five panels,
-`officePort.ts`/`fakePort.ts`, a Playwright harness), ribbon/right-click commands (WA9a, running
-in a shared JavaScript runtime with the task pane per decision WA-D13), and a compose stack
-(WA10: [`deployment/compose/authoring`](../../deployment/compose/authoring)) that runs the whole
-proof of concept together, behind one TLS proxy.
-
-## How the proof of concept fits together
-
-The POC spans four parts, each owning one concern and each with its own README for a deep dive:
+## How it fits together
 
 | Part | Concern | README |
 |---|---|---|
-| [`contracts/authoring`](../../contracts/authoring) | The JSON Schemas, templates and samples every other part validates against | (schemas only, no README) |
-| [`platform/authoring-service`](../../platform/authoring-service) | The Java HTTP API: maps a snapshot to RDF, detects markup opportunities, checks template conformance, tracks jobs | [README](../../platform/authoring-service/README.md) |
-| [`workers`](../../workers) (the `lattice_workers.wording_analysis_*` modules) | The Python worker: reads the Wording graph, matches it against sentence forms, produces a Logical English reading and a proposal/meaning graph | [README](../../workers/README.md) |
-| This add-in | The Word task pane and ribbon/right-click commands an author actually uses | this file |
-| [`deployment/compose/authoring`](../../deployment/compose/authoring) | Runs all of the above, plus Fuseki, RabbitMQ and a TLS proxy, as one demo stack | [README](../../deployment/compose/authoring/README.md) |
-
-### Architecture
-
-```mermaid
-flowchart LR
-    subgraph Client["Word or a browser"]
-        Pane["Task pane / harness<br/>(App.tsx)"]
-    end
-
-    subgraph Proxy["authoring-proxy (Caddy, TLS)"]
-        direction TB
-        Static["/addin/* → static files"]
-        ApiRoute["/api/* → reverse proxy"]
-    end
-
-    subgraph Service["authoring-service (Java / Javalin)"]
-        Api["AuthoringApi"]
-        DetTpl["ConstructDetector /<br/>ConformanceChecker"]
-        Mapper["WordingMapper"]
-    end
-
-    subgraph Worker["authoring-worker (Python)"]
-        Consumer["wording_analysis_worker"]
-        LE["wording_le<br/>(sentence-form matcher)"]
-    end
-
-    Fuseki[("Fuseki<br/>Wording / proposal / analysis graphs")]
-    MQ[("RabbitMQ<br/>wording-analysis-request / -result")]
-
-    Pane -- HTTPS --> Proxy
-    Static -. serves .-> Pane
-    ApiRoute --> Api
-    Api --> Mapper
-    Api --> DetTpl
-    Api <--> Fuseki
-    Api -- publish request --> MQ
-    MQ -- consume --> Consumer
-    Consumer --> LE
-    Consumer <--> Fuseki
-    Consumer -- publish result --> MQ
-    MQ -- consume --> Api
-```
-
-The service and the worker never call each other directly. They only share Fuseki (the RDF store)
-and RabbitMQ (the event bus). This is why either one can restart independently without losing
-data: everything that must survive a restart lives in Fuseki, never in a service's memory — see
-[`deployment/compose/authoring`'s README](../../deployment/compose/authoring/README.md) for how its
-end-to-end suite checks exactly that.
-
-### Request flow: marking up and analysing a document
+| This add-in | the Word task pane and the ribbon and right-click commands an author uses | this file |
+| [`packages/authoring-domain`](../../packages/authoring-domain) | the document model, the markup reader and writer, the tag codec and offsets, shared with the studio's browser code | its own |
+| [`contracts/document`](../../contracts/document/README.md) | the markup and its schemas | its own |
+| [`contracts/config-studio`](../../contracts/config-studio/README.md) | the studio's HTTP API: workspaces, documents, the report, templates, samples and jobs | its own |
+| [`platform/config-studio-authoring`](../../platform/config-studio-authoring) | in the studio's service: markup validated and mapped to Wording, templates, samples, and the report's shapes, template findings and detections | the studio's |
+| [`workers`](../../workers/README.md) | the `analyse` job: the sentence-form reading, the Logical English and the proposed relations | its own |
 
 ```mermaid
 sequenceDiagram
-    actor Author
     participant Pane as Task pane
-    participant Svc as authoring-service
-    participant Fuseki
-    participant MQ as RabbitMQ
-    participant Worker as authoring-worker
-
-    Author->>Pane: mark clauses, definitions, variables
-    Author->>Pane: click Analyse
-    Pane->>Svc: PUT /api/documents/{id}/snapshot
-    Svc->>Svc: map snapshot to a Wording RDF graph
-    Svc->>Fuseki: store the Wording graph
-    Svc->>Svc: detect placeholders and check template findings
-    Svc->>MQ: publish wording-analysis-request
-    Svc-->>Pane: 200 (validation, detections, job id)
-    Pane->>Svc: poll GET /api/jobs/{jobId}
-    MQ->>Worker: consume wording-analysis-request
-    Worker->>Fuseki: read the Wording graph
-    Worker->>Worker: match sentence forms,<br/>build the LE reading + proposal graph
-    Worker->>Fuseki: store the proposal graph
-    Worker->>MQ: publish wording-analysis-result
-    MQ->>Svc: consume wording-analysis-result
-    Svc->>Svc: check conformance against the template
-    Svc->>Fuseki: store the analysis (AnalysisView JSON, as a graph literal)
-    Pane->>Svc: GET .../analysis (once the job completes)
-    Svc-->>Pane: AnalysisView (elements, conformance, graph view)
-    Pane->>Author: Analyse, Logical English and Graph tabs render
+    participant Svc as Studio service
+    participant W as Store writers
+    participant Wk as Worker
+    Pane->>Svc: PUT …/documents/{doc}, markup, If-Match
+    Svc->>Svc: schema, kit to Wording
+    Svc->>W: save-document
+    W-->>Svc: revision
+    Svc-->>Pane: 204, ETag
+    Pane->>Svc: GET …/documents/{doc}/report
+    Svc-->>Pane: sh:ValidationReport, with detections
+    Pane->>Svc: POST …/jobs?kind=analyse&target={doc}
+    Svc->>Wk: job
+    Wk->>W: job-update with analysis.json and proposals.ttl
+    Pane->>Svc: GET /api/jobs/{job}, until it has finished
 ```
 
-### How the data is constructed
-
-Each stage changes the data's shape, and each shape is chosen for what reads or writes it: JSON at
-every HTTP boundary (so Ajv/`json-schema-validator` can check it against the schemas in
-`contracts/authoring`), RDF once it is inside Fuseki (so it can be queried directly with SPARQL,
-independent of either runtime), and JSON again for the one value the task pane actually renders.
-
-```mermaid
-flowchart TD
-    A["OOXML content controls<br/>(tag codec: lat:e:, lat:d:, lat:v:, lat:r:)"]
-    B["Parsed document model<br/>(sections → elements → parts)"]
-    C["DocumentSnapshot (JSON)<br/>validated against document-snapshot.schema.json"]
-    D["Wording RDF graph<br/>wrd: / wap: vocabulary"]
-    E["Detections<br/>(money, dates, placeholders, defined terms)"]
-    F["Template findings<br/>(unknown or missing sections)"]
-    G["Logical English reading +<br/>proposal/meaning RDF graph (ins: vocabulary)"]
-    H["Conformance findings<br/>(e.g. term-kind-not-allowed)"]
-    I["AnalysisView (JSON)"]
-    J["Analyse / Logical English / Graph tabs"]
-
-    A -->|parseBody| B
-    B -->|buildSnapshot| C
-    C -->|WordingMapper| D
-    D -->|ConstructDetector, in the same PUT| E
-    D -->|TemplateFindings, in the same PUT| F
-    D -->|the worker's sentence-form matcher| G
-    G -->|ConformanceChecker| H
-    E --> I
-    F --> I
-    G --> I
-    H --> I
-    I -->|rendered by| J
-```
-
-The `ins:` vocabulary (`https://www.nebularis.org/neuro-semantic/lattice/instrument#`) is the same
-one [`ontology/instrument`](../../ontology/instrument) defines: `Obligation`, `Prohibition`,
-`Permission`, `Exclusion`, `Power`, `Definition`, `Deeming`. The worker's proposal graph is a
-genuine (if deliberately narrow) instance of that ontology, not a POC-only shape — see
-[`docs/architecture/ontology-architecture.md`](../../docs/architecture/ontology-architecture.md)
-for what the full layer means. `wrd:` and `wap:` are POC-only vocabularies
-(`platform/authoring-service/src/main/resources/vocab/wording-provisional.ttl`) for the parts no
-substrate layer covers yet: which OOXML element a reading came from, which sentence form matched,
-and so on.
+The add-in builds the document model from Word's OOXML, writes it as markup and saves it to the workspace the author chose, keeping the workspace and the revision in the document's custom XML part. The report and the analysis are read as RDF, except the analysis view, a JSON artefact the worker writes.
 
 ## Modules (`src/`)
 
@@ -171,7 +51,7 @@ and so on.
 | `domain/mermaid.ts` | `toMermaid(graphView)`, a deterministic Mermaid `flowchart` renderer |
 | `domain/poll.ts` | `pollJob(read, options)`, until a studio job has succeeded or failed |
 | `domain/uuid.ts` | a dependency-free UUID v4 generator |
-| `api/client.ts` | `StudioClient`, `HttpStudioClient`, `ApiError`, and the Turtle readers for workspaces, templates, samples and jobs |
+| `api/client.ts` | `StudioClient`, `HttpStudioClient`, `ApiError`, and the Turtle readers for workspaces, templates, samples, jobs and the document report |
 | `word/port.ts` | the `DocumentPort` interface, `MarkResult`, `InlineMark`, `AuthoringMetadata` |
 | `word/officePort.ts` | `DocumentPort` over the real Word API |
 | `word/fakePort.ts` | `DocumentPort` over an in-memory model, for tests and the harness |
@@ -221,21 +101,11 @@ mise run test:authoring-addin
 `test:authoring-addin` additionally runs the Playwright suite (`e2e/`) against a real `msedge`
 channel and the harness, using fake/mocked API responses.
 
-`e2e-stack/` (plan WA10) is a second Playwright suite that runs against the real compose stack in
-[`deployment/compose/authoring`](../../deployment/compose/authoring) instead — the real service,
-worker, Fuseki and RabbitMQ, through the real Caddy proxy, no mocking. Run it with:
-
-```
-mise run check:authoring-stack
-```
-
-See [`deployment/compose/authoring/README.md`](../../deployment/compose/authoring/README.md) for
-what the stack is and how to browse it directly.
+There is no end-to-end suite against a live studio yet, which is recorded as technical debt.
 
 ## Load the add-in in Word
 
-The compose stack above serves the demo over `https://localhost:3443`, with a self-signed local CA
-(`mise run authoring:ca` to trust it). Start it first (`mise run authoring:up`), then pick one of
+Word loads add-ins over HTTPS only. `mise run studio:up -- --docker` serves the built add-in at `https://localhost:3443` through a proxy with a local CA (`mise run studio:ca` to trust it). Start it first, then pick one of
 these ways to load `manifest/manifest.xml` into a real Word client.
 
 ### Word on the web
@@ -284,8 +154,8 @@ cp apps/word-authoring-addin/manifest/manifest.xml \
 Word reads manifests from this `wef` folder. This is a copy, so repeat the `cp` command whenever
 the repository's manifest changes.
 
-Before loading the add-in, run `mise run authoring:ca` from the repository root. Import
-`.build/authoring/lattice-authoring-root.crt` into your login keychain using **Keychain Access**.
+Before loading the add-in, run `mise run studio:ca` from the repository root. Import
+`.build/config-studio/addin-root.crt` into your login keychain using **Keychain Access**.
 Open the imported certificate, expand **Trust**, and set **When using this certificate** to
 **Always Trust**. Only trust the CA exported by your own local stack.
 

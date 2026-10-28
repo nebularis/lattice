@@ -103,8 +103,8 @@ describe("markup", () => {
         { sectionKey: "empty", elements: [] },
       ],
       unmarked: [
-        { sectionKey: "s", text: "inside & out" },
-        { sectionKey: null, text: "outside <the> sections" },
+        { sectionKey: "s", text: "inside & out", position: 1 },
+        { sectionKey: null, text: "outside <the> sections", position: 2 },
       ],
     });
     const xml = writeMarkup(original);
@@ -112,6 +112,43 @@ describe("markup", () => {
     expect(xml).toContain("    <unmarked>outside &lt;the&gt; sections</unmarked>");
     expect(readMarkup(xml)).toEqual(original);
     expect(writeMarkup(readMarkup(xml))).toBe(xml);
+  });
+
+  it("keeps unmarked text between elements and between sections where it was", () => {
+    const clause = (n: number) => ({
+      elementId: `00000003-0000-4000-8000-00000000000${n}`,
+      kind: "clause" as const,
+      definedTerm: null,
+      parts: [{ kind: "literal" as const, text: `c${n}` }],
+    });
+    const original = doc({
+      sections: [
+        { sectionKey: "a", elements: [clause(1), clause(2)] },
+        { sectionKey: "b", elements: [clause(3)] },
+      ],
+      unmarked: [
+        { sectionKey: null, text: "before all", position: 0 },
+        { sectionKey: "a", text: "first", position: 0 },
+        { sectionKey: "a", text: "between", position: 1 },
+        { sectionKey: "a", text: "last", position: 2 },
+        { sectionKey: null, text: "between sections", position: 1 },
+        { sectionKey: null, text: "after all", position: 2 },
+      ],
+    });
+    const xml = writeMarkup(original);
+    const order = ["before all", "first", ">c1<", "between<", ">c2<", "last", "between sections", ">c3<", "after all"].map((needle) => xml.indexOf(needle));
+    expect(order).toEqual([...order].sort((x, y) => x - y));
+    expect(order).not.toContain(-1);
+    const read = readMarkup(xml);
+    expect(read.unmarked.slice().sort((x, y) => x.text.localeCompare(y.text))).toEqual(
+      original.unmarked.slice().sort((x, y) => x.text.localeCompare(y.text)),
+    );
+    expect(writeMarkup(read)).toBe(xml);
+  });
+
+  it("puts unmarked text with no position last", () => {
+    const xml = writeMarkup(doc({ sections: [{ sectionKey: "a", elements: [] }], unmarked: [{ sectionKey: "a", text: "t" }] }));
+    expect(readMarkup(xml).unmarked).toEqual([{ sectionKey: "a", text: "t", position: 0 }]);
   });
 
   it("reads character references, CDATA and single-quoted attributes, and refuses a DOCTYPE", () => {

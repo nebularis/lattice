@@ -466,7 +466,7 @@ def test_rc3_t15_tests_and_the_reader_are_not_scanned(tmp_path: Path) -> None:
 
 def test_rc3_t16_the_real_scan_lists_exactly_what_the_tools_build_and_the_reader_is_not_listed() -> None:
     scan = rc.bypass_scan(rc.load(ROOT))
-    assert scan.problems == [] and set(scan.found) == set(scan.known) and len(scan.known) == 12
+    assert scan.problems == [] and set(scan.found) == set(scan.known) and len(scan.known) == 11
     assert "tools/lattice_repo_catalogue.py" not in scan.known
     assert all(not rc._is_test(Path(p)) for p in scan.known)
 

@@ -16,7 +16,7 @@ export { loadSample, loadTemplate };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GOLDENS_DIR = path.join(__dirname, "../../../workers/tests/fixtures/wording_le");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
-const PREFIXES = `@prefix cst: <${CST}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .`;
+const PREFIXES = `@prefix cst: <${CST}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix sh: <http://www.w3.org/ns/shacl#> .`;
 
 export const WORKSPACE_ID = "0a1b2c3d-0000-4000-8000-000000000001";
 const JOB_ID = "0a1b2c3d-0000-4000-8000-0000000000aa";
@@ -52,7 +52,31 @@ function view(analysis: AnalysisView["analysis"], conformance: AnalysisView["con
   };
 }
 
+const DOC_NODE = "urn:lattice:studio:documents/doc/d/";
+
+/** A report as the studio gives it, from the results' Turtle bodies (each the properties of one result). */
+export function reportTurtle(results: string[]): string {
+  const names = results.map((_, index) => `<${DOC_NODE}report/result-${index + 1}>`);
+  return (
+    `<${DOC_NODE}report> a sh:ValidationReport ; sh:conforms true${names.map((name) => ` ; sh:result ${name}`).join("")} .\n` +
+    results.map((body, index) => `${names[index]} a sh:ValidationResult ; ${body} .`).join("\n")
+  );
+}
+
+export const UNMARKED_TEXT_RESULT = `sh:resultSeverity sh:Info ; sh:resultMessage "Unmarked text outside every section" ; cst:code "unmarked-text" ; cst:check "template" ; sh:focusNode <${DOC_NODE}wording>`;
+
+/** The result for an unmarked construct, as the detector reports it. */
+export function detectionResult(elementId: string, d: { kind: string; text: string; start: number; end: number; partIndex: number; action: string; valueType?: string; key?: string }): string {
+  return (
+    `sh:resultSeverity sh:Info ; sh:resultMessage "Unmarked ${d.kind}: ${d.text}" ; cst:code "detection" ; cst:check "detection" ; sh:focusNode <${DOC_NODE}element/${elementId}> ; ` +
+    `cst:detectionKind "${d.kind}" ; sh:value "${d.text}" ; cst:action "${d.action}" ; cst:partIndex ${d.partIndex} ; cst:start ${d.start} ; cst:end ${d.end}` +
+    (d.valueType ? ` ; cst:suggestedValueType "${d.valueType}" ; cst:suggestedKey "${d.key}"` : "")
+  );
+}
+
 export interface StudioMockOptions {
+  /** The report `GET .../report` gives, as Turtle. Default one template finding. */
+  report?: string;
   /** The status the PUT of a document answers with. Default 204. */
   putStatus?: number;
   /** The statuses `GET /api/jobs/{job}` answers with in turn, the last one repeating. Default succeeded. */
@@ -76,7 +100,7 @@ export async function mockStudio(page: Page, options: StudioMockOptions = {}): P
   let jobPolls = 0;
   let revision = 0;
   const analysis =
-    options.analysis ?? view(loadFacilityAnalysis(), [{ kind: "unmarked-text", severity: "warning", sectionKey: null, elementId: null, message: "Unmarked text outside every section" }]);
+    options.analysis ?? view(loadFacilityAnalysis(), []);
 
   await page.route("**/api/workspaces", (route) => {
     if (options.workspacesDown) return route.abort();
@@ -92,6 +116,9 @@ export async function mockStudio(page: Page, options: StudioMockOptions = {}): P
     return route.fulfill({ status: 200, contentType: "application/xml", body: readRepoFile(`contracts/document/samples/${id}.xml`) });
   });
 
+  await page.route("**/api/workspaces/*/documents/*/report", (route) =>
+    turtle(route, options.report ?? reportTurtle([UNMARKED_TEXT_RESULT]), 200, { ETag: `"${revision}"` }),
+  );
   await page.route("**/api/workspaces/*/documents/*", async (route) => {
     const request = route.request();
     if (request.method() !== "PUT") return turtle(route, `<urn:lattice:studio:ws:${WORKSPACE_ID}:document:d> cst:revision ${revision} .`, 200, { ETag: `"${revision}"` });

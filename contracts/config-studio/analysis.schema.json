@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/config-studio/analysis/0.1.0",
+  "title": "Configuration Studio: the analysis view, the analysis.json artefact of an analyse job",
+  "$ref": "#/$defs/Analysis",
+  "$defs": {
+    "Analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formsProfile",
+        "elements",
+        "leProgram",
+        "graphView"
+      ],
+      "properties": {
+        "formsProfile": {
+          "$ref": "#/$defs/FormsProfile"
+        },
+        "elements": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/ElementAnalysis"
+          }
+        },
+        "leProgram": {
+          "type": "string",
+          "maxLength": 200000
+        },
+        "graphView": {
+          "$ref": "#/$defs/GraphView"
+        }
+      }
+    },
+    "ElementAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elementId",
+        "objectId",
+        "sectionKey",
+        "kind",
+        "text",
+        "relationClass",
+        "basis",
+        "formId",
+        "leTemplate",
+        "leSentence",
+        "spans"
+      ],
+      "properties": {
+        "elementId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "objectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "sectionKey": {
+          "$ref": "#/$defs/SectionKey"
+        },
+        "kind": {
+          "$ref": "#/$defs/ElementKind"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "relationClass": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TermKind"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "form",
+            "keyword",
+            "none"
+          ]
+        },
+        "formId": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leTemplate": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leSentence": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "spans": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "$ref": "#/$defs/Span"
+          }
+        }
+      }
+    },
+    "ElementKind": {
+      "type": "string",
+      "enum": [
+        "clause",
+        "definition"
+      ]
+    },
+    "FormsProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profileId",
+        "version"
+      ],
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    },
+    "GraphEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "label"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "GraphNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "relation",
+            "element",
+            "role",
+            "variable"
+          ]
+        }
+      }
+    },
+    "GraphView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "maxItems": 4000,
+          "items": {
+            "$ref": "#/$defs/GraphEdge"
+          }
+        }
+      }
+    },
+    "SectionKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$"
+    },
+    "Span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end",
+        "role",
+        "partIndex"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "fixed",
+            "ignorable",
+            "slot-variable",
+            "slot-constant",
+            "slot-text",
+            "modal",
+            "connective",
+            "unmatched"
+          ]
+        },
+        "partIndex": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "TermKind": {
+      "type": "string",
+      "enum": [
+        "Obligation",
+        "Prohibition",
+        "Permission",
+        "Exclusion",
+        "Power",
+        "Definition",
+        "Deeming"
+      ]
+    },
+    "Uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

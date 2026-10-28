@@ -558,16 +558,6 @@ def test_the_release_is_one_data_quantum(built):
     assert {m.name for m in catalogue.release_members()} == substrate
 
 
-def test_a_broker_does_not_separate_the_authoring_service_from_its_worker(built):
-    """The finding the software view exists to make: in the authoring deployment the service and the
-    worker talk through RabbitMQ and share Fuseki, so they are one quantum."""
-    _, store = built
-    rows = _rows(store, """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        SELECT ?id WHERE { GRAPH ki:index { ?q ki:deployment "compose/authoring" ; ki:identifier ?id ;
-        ki:includes ?a , ?b . ?a rdfs:label "authoring-service" . ?b rdfs:label "authoring-worker" } }""")
-    assert len(rows) == 1
-
-
 def test_a_governed_quantum_exists(built):
     _, store = built
     rows = _rows(store, "SELECT ?id ?q WHERE { GRAPH ki:index { ?s ki:governs ?q ; ki:identifier ?id "

@@ -254,7 +254,7 @@ function parseSection(
         }
         const text = readRunText(child, warnings, `section ${sectionKey}`).trim();
         if (text.length > 0) {
-          unmarked.push({ sectionKey, text });
+          unmarked.push({ sectionKey, text, position: elements.length });
         }
         continue;
       }
@@ -296,7 +296,7 @@ export function parseBody(ooxml: string): ParsedDocument {
     if (child.localName === "p") {
       const text = readRunText(child, warnings, "document").trim();
       if (text.length > 0) {
-        unmarked.push({ sectionKey: null, text });
+        unmarked.push({ sectionKey: null, text, position: sections.length });
       }
     }
   }

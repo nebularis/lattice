@@ -133,6 +133,43 @@ describe("HttpStudioClient", () => {
     expect(header(calls[0], "Accept")).toBe("text/turtle");
   });
 
+  it("reads the report into validation results, template findings and detections", async () => {
+    const node = "urn:lattice:studio:documents/doc/d/";
+    const { client, calls } = fakeFetch({
+      "GET /api/workspaces/w1/documents/d/report": ttl(`
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        <${node}report> a sh:ValidationReport ; sh:conforms false ;
+          sh:result <${node}report/result-1> , <${node}report/result-2> , <${node}report/result-3> , <${node}report/result-4> .
+        <${node}report/result-1> a sh:ValidationResult ; sh:resultSeverity sh:Violation ; sh:resultMessage "bad" ;
+          cst:code "shape-x" ; cst:check "shacl" ; sh:focusNode <${node}element/e1> .
+        <${node}report/result-2> a sh:ValidationResult ; sh:resultSeverity sh:Warning ; sh:resultMessage "empty" ;
+          cst:code "required-section-empty" ; cst:check "template" ; sh:focusNode <${node}section/parties> .
+        <${node}report/result-3> a sh:ValidationResult ; sh:resultSeverity sh:Info ; sh:resultMessage "Unmarked money: GBP 5" ;
+          cst:code "detection" ; cst:check "detection" ; sh:focusNode <${node}element/e1> ; cst:detectionKind "money" ;
+          sh:value "GBP 5" ; cst:action "mark-variable" ; cst:partIndex 0 ; cst:start 4 ; cst:end 9 ;
+          cst:suggestedKey "amount" ; cst:suggestedValueType "money" .
+        <${node}report/result-4> a sh:ValidationResult ; sh:resultSeverity sh:Info ; sh:resultMessage "Unmarked term" ;
+          cst:code "detection" ; cst:check "detection" ; sh:focusNode <${node}element/e2> ; cst:detectionKind "defined-term" ;
+          sh:value "Agent" ; cst:action "mark-reference" ; cst:partIndex 0 ; cst:start 0 ; cst:end 5 ;
+          cst:suggestedTarget <${node}element/e1> .`),
+    });
+    const report = await client.getReport("w1", "d");
+    expect(calls[0].url).toBe("/api/workspaces/w1/documents/d/report");
+    expect(report.conforms).toBe(false);
+    expect(report.validation).toEqual([{ shapeId: "shape-x", severity: "violation", focusNode: `${node}element/e1`, elementId: "e1", message: "bad" }]);
+    expect(report.findings).toEqual([{ kind: "required-section-empty", severity: "warning", sectionKey: "parties", elementId: null, message: "empty" }]);
+    expect(report.detections).toEqual([
+      {
+        elementId: "e1", partIndex: 0, start: 4, end: 9, text: "GBP 5", kind: "money",
+        suggestion: { action: "mark-variable", valueType: "money", suggestedKey: "amount", targetElementId: null },
+      },
+      {
+        elementId: "e2", partIndex: 0, start: 0, end: 5, text: "Agent", kind: "defined-term",
+        suggestion: { action: "mark-reference", valueType: null, suggestedKey: null, targetElementId: "e1" },
+      },
+    ]);
+  });
+
   it("submits an analyse job, polls it, and reads the analysis and the proposals from its artefacts", async () => {
     const view = { documentId: "d1", revision: 2, analysis: { elements: [] }, conformance: [], proposalGraph: {} };
     const succeeded = job(

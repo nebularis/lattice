@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
-# Fuseki and RabbitMQ for the Configuration Studio (ADR-A136), on the ports the studio's mise
-# tasks use. The service, worker and browser code run on the host: `mise run studio:service`,
+# Fuseki, RabbitMQ and the Word add-in's HTTPS proxy for the Configuration Studio (ADR-A136), on the ports the
+# studio's mise tasks use. The service, worker and browser code run on the host: `mise run studio:service`,
 # `studio:worker` and `studio:web`. Workspaces are kept in the volume studio-data, a TDB2 database,
 # so `docker compose down` keeps them and `docker compose down -v` deletes them.
 services:
@@ -39,5 +39,19 @@ services:
       timeout: 3s
       retries: 20
 
+  # The Word add-in's built files over HTTPS, which Word needs, with /api passed to the service on the host. Its local CA
+  # signs the certificate, so trust the root `mise run studio:ca` copies out. `studio:up --docker` builds the add-in first.
+  addin-proxy:
+    image: caddy:2.10-alpine
+    ports:
+      - "127.0.0.1:3443:3443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../../apps/word-authoring-addin/dist:/srv/addin:ro
+      - addin-caddy-data:/data
+
 volumes:
   studio-data:
+  addin-caddy-data:

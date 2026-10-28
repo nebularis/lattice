@@ -8,12 +8,21 @@ import {
   CST,
   Graph,
   LABEL,
+  SH,
   readMarkup,
   writeMarkup,
   type AnalysisView,
   type AuthoringTemplate,
+  type Detection,
+  type DetectionKind,
+  type DocumentReport,
   type DocumentSnapshot,
   type ElementKind,
+  type Finding,
+  type FindingKind,
+  type Severity,
+  type SuggestionAction,
+  type ValidationResult,
   type SampleSummary,
   type TermKind,
   type ValueType,
@@ -51,6 +60,8 @@ export interface StudioClient {
   saveDocument(workspaceId: string, document: DocumentSnapshot, revision: number | null): Promise<number>;
   /** The document's graph, as Turtle. */
   getDocumentGraph(workspaceId: string, documentId: string): Promise<string>;
+  /** The report on the document as saved: validation results, template findings and detections. */
+  getReport(workspaceId: string, documentId: string): Promise<DocumentReport>;
   analyse(workspaceId: string, documentId: string, options?: PollOptions): Promise<AnalysisResult>;
 }
 
@@ -110,6 +121,61 @@ export function parseSamples(turtle: string): SampleSummary[] {
     .ofType(CST("DocumentSample"))
     .map((sample) => ({ sampleId: graph.value(sample, CST("sampleKey")) ?? "", title: graph.value(sample, LABEL) ?? "" }))
     .sort((a, b) => a.sampleId.localeCompare(b.sampleId));
+}
+
+const SEVERITIES: Record<string, Severity> = { Violation: "violation", Warning: "warning", Info: "info" };
+
+/** Reads a document's `sh:ValidationReport`, splitting its results by `cst:check`. */
+export function parseReport(turtle: string): DocumentReport {
+  const graph = Graph.parse(turtle);
+  const report = graph.ofType(SH("ValidationReport"))[0];
+  const validation: ValidationResult[] = [];
+  const findings: Finding[] = [];
+  const detections: Detection[] = [];
+  if (!report) return { conforms: true, validation, findings, detections };
+
+  const results = graph
+    .objects(report, SH("result"))
+    .map((result) => result.value)
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  for (const result of results) {
+    const text = (predicate: string): string | undefined => graph.value(result, predicate);
+    const severity = SEVERITIES[(text(SH("resultSeverity")) ?? "").slice(SH("").length)] ?? "info";
+    const message = text(SH("resultMessage")) ?? "";
+    const code = text(CST("code")) ?? "";
+    const focusNode = text(SH("focusNode")) ?? "";
+    const elementId = /\/element\/([^/]+)$/.exec(focusNode)?.[1] ?? null;
+    const check = text(CST("check"));
+    if (check === "shacl") {
+      validation.push({ shapeId: code, severity, focusNode, elementId, message });
+    } else if (check === "template") {
+      findings.push({
+        kind: code as FindingKind,
+        severity,
+        sectionKey: /\/section\/([^/]+)$/.exec(focusNode)?.[1] ?? null,
+        elementId,
+        message,
+      });
+    } else if (check === "detection" && elementId) {
+      const action = (text(CST("action")) ?? "none") as SuggestionAction;
+      const target = text(CST("suggestedTarget"));
+      detections.push({
+        elementId,
+        partIndex: Number(text(CST("partIndex"))),
+        start: Number(text(CST("start"))),
+        end: Number(text(CST("end"))),
+        text: text(SH("value")) ?? "",
+        kind: (text(CST("detectionKind")) ?? "placeholder") as DetectionKind,
+        suggestion: {
+          action,
+          valueType: (text(CST("suggestedValueType")) as ValueType | undefined) ?? null,
+          suggestedKey: text(CST("suggestedKey")) ?? null,
+          targetElementId: target ? (target.split("/").pop() ?? null) : null,
+        },
+      });
+    }
+  }
+  return { conforms: graph.value(report, SH("conforms")) !== "false", validation, findings, detections };
 }
 
 export interface JobState {
@@ -210,6 +276,11 @@ export class HttpStudioClient implements StudioClient {
   async getDocumentGraph(workspaceId: string, documentId: string): Promise<string> {
     const response = await this.request(this.documentPath(workspaceId, documentId), { headers: { Accept: TURTLE } });
     return response.text();
+  }
+
+  async getReport(workspaceId: string, documentId: string): Promise<DocumentReport> {
+    const response = await this.request(`${this.documentPath(workspaceId, documentId)}/report`, { headers: { Accept: TURTLE } });
+    return parseReport(await response.text());
   }
 
   async analyse(workspaceId: string, documentId: string, options: PollOptions = {}): Promise<AnalysisResult> {

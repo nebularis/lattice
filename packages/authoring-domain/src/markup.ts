@@ -6,9 +6,8 @@
 // inside one, and the reader keeps every character of it. Each run of text between marks is one
 // literal part.
 //
-// ponytail: the model keeps unmarked text apart from the elements, so the writer puts a section's
-// unmarked text after its elements and the document's unmarked text after its sections, and the
-// order of unmarked text among elements is not kept. Add a position to Unmarked if that matters.
+// Unmarked text keeps its position (Unmarked.position), so it is written where it was between
+// elements, and between sections for text outside them.
 
 import type { DocumentElement, DocumentSnapshot, Part, Section, Unmarked, ValueType, VariableDeclaration } from "./types";
 
@@ -63,11 +62,24 @@ function writeUnmarked(entry: Unmarked, indent: string): string {
   return `${indent}<unmarked>${escapeText(entry.text)}</unmarked>`;
 }
 
+/** Interleaves `unmarked` with `items` by position, text with no position or one past the end going last. */
+function interleave<T>(items: T[], unmarked: Unmarked[], write: (item: T) => string, writeText: (entry: Unmarked) => string): string[] {
+  const at = (entry: Unmarked): number => Math.min(entry.position ?? items.length, items.length);
+  const out: string[] = [];
+  for (let i = 0; i <= items.length; i++) {
+    out.push(...unmarked.filter((entry) => at(entry) === i).map(writeText));
+    if (i < items.length) out.push(write(items[i]));
+  }
+  return out;
+}
+
 function writeSection(section: Section, unmarked: Unmarked[]): string {
-  const children = [
-    ...section.elements.map((element) => writeElement(element, "      ")),
-    ...unmarked.map((entry) => writeUnmarked(entry, "      ")),
-  ];
+  const children = interleave(
+    section.elements,
+    unmarked,
+    (element) => writeElement(element, "      "),
+    (entry) => writeUnmarked(entry, "      "),
+  );
   const open = `<section key="${escapeAttribute(section.sectionKey)}">`;
   return children.length === 0 ? `    ${open}</section>` : `    ${open}\n${children.join("\n")}\n    </section>`;
 }
@@ -78,15 +90,16 @@ function writeVariable(variable: VariableDeclaration): string {
 
 /** The document as markup, valid against `contracts/document/document.rnc` where the model is. */
 export function writeMarkup(document: DocumentSnapshot): string {
-  const bodyChildren = [
-    ...document.sections.map((section) =>
+  const bodyChildren = interleave(
+    document.sections,
+    document.unmarked.filter((entry) => entry.sectionKey === null),
+    (section) =>
       writeSection(
         section,
         document.unmarked.filter((entry) => entry.sectionKey === section.sectionKey),
       ),
-    ),
-    ...document.unmarked.filter((entry) => entry.sectionKey === null).map((entry) => writeUnmarked(entry, "    ")),
-  ];
+    (entry) => writeUnmarked(entry, "    "),
+  );
   const meta = [
     `    <title>${escapeText(document.title)}</title>`,
     `    <template>${escapeText(document.templateId)}</template>`,
@@ -262,12 +275,12 @@ export function readMarkup(markup: string): DocumentSnapshot {
   const sections: Section[] = [];
   const unmarked: Unmarked[] = [];
   for (const child of elementsOf(body)) {
-    if (child.name === "unmarked") unmarked.push({ sectionKey: null, text: textOf(child) });
+    if (child.name === "unmarked") unmarked.push({ sectionKey: null, text: textOf(child), position: sections.length });
     else if (child.name === "section") {
       const sectionKey = attribute(child, "key");
       const elements: DocumentElement[] = [];
       for (const inner of elementsOf(child)) {
-        if (inner.name === "unmarked") unmarked.push({ sectionKey, text: textOf(inner) });
+        if (inner.name === "unmarked") unmarked.push({ sectionKey, text: textOf(inner), position: elements.length });
         else if (inner.name === "clause" || inner.name === "definition") elements.push(readElement(inner));
         else throw new Error(`invalid markup: <${inner.name}> inside <section>`);
       }

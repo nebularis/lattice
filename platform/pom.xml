@@ -12,7 +12,6 @@
     <module>release-integration</module>
     <module>surface-workflow</module>
     <module>reasoning-testkit</module>
-    <module>authoring-service</module>
     <module>config-studio-core</module>
     <module>config-studio-authoring</module>
     <module>config-studio-service</module>

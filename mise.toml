@@ -111,7 +111,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -134,14 +134,6 @@ run = "python -m unittest surface.test_surface mork_compilers.test_mork_compiler
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
-
-[tasks."check:authoring-contracts"]
-description = "Validate the word authoring POC contracts, templates, samples and fixtures"
-run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
-
-[tasks."check:authoring-worker"]
-description = "Test the word authoring POC worker (ADR-A114)"
-run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_wording_analysis_worker.py workers/tests/test_authoring_contracts.py -q"
 
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"
@@ -467,57 +459,16 @@ run = "mvn -q -f platform/pom.xml -pl reasoning-testkit -am verify"
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
 run = "python tools/reasoning_isolation_check.py"
 
-[tasks."check:authoring-service"]
-description = "Build and unit-test the word authoring POC service (ADR-A114)"
-run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
-
 [tasks."build:document-schema"]
-description = "Generate the document markup's XSD from its RELAX NG source with Trang (ADR-A137). The authoring service's tests fail while it is stale"
+description = "Generate the document markup's XSD from its RELAX NG source with Trang (ADR-A137). The tests of `config-studio-authoring` fail while it is stale"
 run = [
   "mvn -q -f platform/pom.xml dependency:copy -Dartifact=org.relaxng:trang:20241231 -DoutputDirectory={{config_root}}/platform/target/tools",
   "java -jar platform/target/tools/trang-20241231.jar -I rnc -O xsd contracts/document/document.rnc contracts/document/document.xsd",
 ]
 
-[tasks."check:authoring-service-it"]
-description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
-run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
-
-[tasks."build:authoring-fixtures"]
-description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
-run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
-
-[tasks."build:authoring"]
-description = "Build the POC service jar and add-in, and stage the image inputs"
-run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && yarn workspace @lattice/word-authoring-addin run build && python tools/authoring_stage.py"
-
-[tasks."authoring:up"]
-description = "Start the Word authoring POC stack and seed the samples"
-depends = ["build:authoring"]
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml up -d --build --wait"
-
-[tasks."authoring:down"]
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml down"
-
-[tasks."authoring:reset"]
-description = "Stop the POC stack and delete its data and local CA"
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml down -v"
-
-[tasks."authoring:ca"]
-description = "Copy the POC proxy's local root certificate to .build/authoring"
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml cp authoring-proxy:/data/caddy/pki/authorities/local/root.crt .build/authoring/lattice-authoring-root.crt"
-
-[tasks."check:authoring-tools"]
-description = "Test the word authoring POC staging script (ADR-A114)"
-run = "python -m pytest tools/test_authoring_stage.py -q"
-
-[tasks."check:authoring-stack"]
-description = "Start the POC stack and run its end-to-end suite"
-depends = ["authoring:up"]
-run = "yarn workspace @lattice/word-authoring-addin run test:stack"
-
 [tasks."check:authoring"]
-description = "All Word authoring POC checks that need no running stack"
-depends = ["check:authoring-contracts", "check:authoring-service", "check:authoring-worker", "check:authoring-addin", "test:authoring-addin", "check:authoring-tools"]
+description = "Every check of the Word add-in and the authoring domain package that needs no running stack"
+depends = ["check:authoring-addin", "test:authoring-addin"]
 
 [tasks."services:up"]
 description = "Start the reference platform services"
@@ -542,7 +493,7 @@ description = "Test the Configuration Studio: its staging, worker, service, and 
 depends = ["build:config-studio-assets", "check:authoring-domain"]
 run = [
   "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
-  "mvn -q -f platform/pom.xml -pl config-studio-service,config-studio-writer -am verify",
+  "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]
 
@@ -573,6 +524,10 @@ description = "Build and run the Configuration Studio's service on 127.0.0.1:809
 depends = ["build:config-studio-assets"]
 env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STUDIO_STATIC = "apps/config-studio/dist" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-service -am package -DskipTests && java -jar platform/config-studio-service/target/config-studio-service.jar"
+
+[tasks."studio:ca"]
+description = "Copy the Word add-in proxy's local root certificate to .build/config-studio, to trust it for https://localhost:3443"
+run = "docker compose -f deployment/compose/config-studio/docker-compose.yml cp addin-proxy:/data/caddy/pki/authorities/local/root.crt .build/config-studio/addin-root.crt"
 
 [tasks."studio:writer"]
 description = "Build and run the Configuration Studio's store writer against Fuseki's update service and RabbitMQ's writes super stream. Run several to spread the partitions"

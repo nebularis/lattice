@@ -11,7 +11,7 @@ import re
 import uuid
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
 from rdflib import Dataset, Graph, Literal, URIRef
 from rdflib.namespace import RDF
@@ -200,6 +200,23 @@ class WriterStore:
         }
         key = routing_key(workspace.group(1))
         self._publisher.publish(WRITES["superStream"], key, headers, dataset.serialize(format="nquads").encode("utf-8"))
+
+
+def declare_topology(channel: Any, topology: Mapping[str, Any]) -> None:
+    """Declares the exchanges, queues and bindings of `topology`. Idempotent."""
+    exchange = topology["exchange"]
+    dead_letter_exchange = topology["deadLetterExchange"]
+    channel.exchange_declare(exchange=exchange, exchange_type="topic", durable=True)
+    channel.exchange_declare(exchange=dead_letter_exchange, exchange_type="topic", durable=True)
+    for queue in topology["queues"]:
+        if queue["deadLetter"]:
+            channel.queue_declare(
+                queue=queue["name"], durable=True, arguments={"x-dead-letter-exchange": dead_letter_exchange}
+            )
+            channel.queue_bind(queue=queue["name"], exchange=exchange, routing_key=queue["routingKey"])
+        else:
+            channel.queue_declare(queue=queue["name"], durable=True)
+            channel.queue_bind(queue=queue["name"], exchange=dead_letter_exchange, routing_key=queue["routingKey"])
 
 
 def routing_key(workspace: str) -> str:

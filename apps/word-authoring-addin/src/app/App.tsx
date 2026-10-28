@@ -11,10 +11,13 @@ import type { JobStatus } from "../domain/poll";
 import type {
   AnalysisView,
   AuthoringTemplate,
+  Detection,
+  DocumentReport,
   SampleSummary,
   Section,
   ValueType,
 } from "@lattice/authoring-domain";
+import { occurrenceIndex } from "@lattice/authoring-domain";
 import { newUuid } from "../domain/uuid";
 import type { AuthoringMetadata, DocumentPort, InlineMark, MarkResult } from "../word/port";
 import { AnalysePanel } from "./AnalysePanel";
@@ -50,6 +53,7 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
   const [sections, setSections] = useState<Section[]>([]);
   const [markMessage, setMarkMessage] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
+  const [report, setReport] = useState<DocumentReport | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisView | null>(null);
   const [proposals, setProposals] = useState<string | null>(null);
   const [graphTurtle, setGraphTurtle] = useState<string | null>(null);
@@ -240,6 +244,7 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
       await port.writeMetadata(nextMetadata);
       setMetadata(nextMetadata);
       setJobStatus("queued");
+      setReport(await api.getReport(workspaceId, metadata.documentId));
       setAnalysis(null);
       setProposals(null);
 
@@ -252,6 +257,43 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
         setJobStatus("failed");
         throw e;
       }
+    } catch (e) {
+      setError(messageOf(e));
+    }
+  }
+
+  async function handleAccept(detection: Detection): Promise<void> {
+    if (!metadata) return;
+    try {
+      const element = sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === detection.elementId);
+      if (!element) return;
+      const elementText = element.parts.map((part) => part.text).join("");
+      const occurrence = occurrenceIndex(elementText, detection.start, detection.text);
+
+      if (detection.suggestion.action === "mark-variable" && detection.suggestion.suggestedKey && detection.suggestion.valueType) {
+        const variableKey = detection.suggestion.suggestedKey;
+        const valueType = detection.suggestion.valueType;
+        if (!metadata.variables.some((variable) => variable.variableKey === variableKey)) {
+          const nextMetadata: AuthoringMetadata = {
+            ...metadata,
+            variables: [...metadata.variables, { variableKey, label: detection.text, valueType }],
+          };
+          await port.writeMetadata(nextMetadata);
+          setMetadata(nextMetadata);
+        }
+        await port.markOccurrence(detection.elementId, detection.text, occurrence, {
+          kind: "variable",
+          variableKey,
+          label: detection.text,
+        });
+      } else if (detection.suggestion.action === "mark-reference" && detection.suggestion.targetElementId) {
+        await port.markOccurrence(detection.elementId, detection.text, occurrence, {
+          kind: "reference",
+          targetElementId: detection.suggestion.targetElementId,
+          term: detection.text,
+        });
+      }
+      await refreshModel();
     } catch (e) {
       setError(messageOf(e));
     }
@@ -345,7 +387,8 @@ export function App({ port, api, bridge, options }: AppProps): JSX.Element {
           canAnalyse={metadata !== null}
           onAnalyse={handleAnalyse}
           jobStatus={jobStatus}
-          findings={analysis?.conformance ?? null}
+          report={report}
+          onAccept={handleAccept}
         />
       )}
 

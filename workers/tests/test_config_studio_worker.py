@@ -311,7 +311,7 @@ def test_an_analysis_gives_the_analysis_view_and_the_proposals_of_its_document()
     job = URIRef(iri)
     store.graphs[iri].remove((job, CST.target, None))
     document = Graph()
-    document.parse(ROOT / "contracts" / "authoring" / "fixtures" / "wording" / "software-licence.nt", format="nt")
+    document.parse(ROOT / "contracts" / "xml" / "document-to-wording" / "1.0.0" / "expected" / "software-licence.nt", format="nt")
     store.graphs[f"{iri}:input"] = document
     ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     g = store.graphs[iri]

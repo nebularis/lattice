@@ -19,10 +19,10 @@ The text of a clause or a definition is read exactly, so a document keeps no ind
 
 ## The check
 
-The authoring service's tests check that `document.xsd` is Trang's output from `document.rnc`, and that the two schemas give the same verdict on every document here, the valid fixtures and the samples accepted and the invalid fixtures refused. A verdict on which they differ fails the check, which also keeps the RELAX NG within what XSD 1.0 can express.
+The tests of `platform/config-studio-authoring` check that `document.xsd` is Trang's output from `document.rnc`, and that the two schemas give the same verdict on every document here, the valid fixtures and the samples accepted and the invalid fixtures refused. A verdict on which they differ fails the check, which also keeps the RELAX NG within what XSD 1.0 can express.
 
 ```bash
-mise run check:authoring-service
+mise run check:config-studio
 ```
 
 What neither schema states, such as the number of sections a document may hold, the service limits where it receives a document.

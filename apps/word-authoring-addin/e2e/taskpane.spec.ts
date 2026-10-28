@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { analysisView, loadFacilityAnalysis, loadFacilityTurtle, loadSample, loadTemplate, mockStudio, textOffsetOf } from "./support";
+import { analysisView, detectionResult, loadFacilityAnalysis, loadFacilityTurtle, loadSample, loadTemplate, mockStudio, reportTurtle, textOffsetOf } from "./support";
 
 const FACILITY_ELEMENT_11 = "00000001-0000-4000-8000-000000000011";
 const FACILITY_ELEMENT_13 = "00000001-0000-4000-8000-000000000013";
@@ -152,6 +152,30 @@ test("S9-07: a second Analyse sends the revision it kept, and a 412 shows as a c
   await page.route("**/api/workspaces/*/documents/*", (route) => route.fulfill({ status: 412, body: "" }));
   await analyse.click();
   await expect(page.getByRole("alert")).toContainText("Conflict");
+});
+
+test("S9-14: Accept a detection marks the suggested variable", async ({ page }) => {
+  const sample = loadSample("facility-agreement");
+  const agent = textOffsetOf(sample, FACILITY_ELEMENT_13, "[Agent]");
+  const report = reportTurtle([
+    detectionResult(FACILITY_ELEMENT_13, { kind: "placeholder", text: "[Agent]", ...agent, partIndex: 1, action: "mark-variable", valueType: "party", key: "agent" }),
+  ]);
+  await mockStudio(page, { report });
+
+  await page.goto("harness.html");
+  await insertFacilitySample(page);
+  await tab(page, "Analyse").click();
+  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Analyse" }).click();
+  await expect(page.getByText("[Agent]")).toBeVisible();
+
+  await page.locator('section[aria-label="Analyse"]').getByRole("button", { name: "Accept" }).click();
+
+  const model = (await harnessModel(page)) as {
+    sections: { elements: { elementId: string; parts: { kind: string; variableKey?: string; text: string }[] }[] }[];
+  };
+  const element = model.sections.flatMap((section) => section.elements).find((candidate) => candidate.elementId === FACILITY_ELEMENT_13)!;
+  const variablePart = element.parts.find((part) => part.kind === "variable" && part.text === "[Agent]");
+  expect(variablePart?.variableKey).toBe("agent");
 });
 
 test("S9-08: Logical English tab shows the facility reading", async ({ page }) => {

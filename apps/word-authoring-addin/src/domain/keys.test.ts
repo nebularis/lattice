@@ -7,7 +7,7 @@ import type { ValueType } from "@lattice/authoring-domain";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../../..");
-const FIXTURE = path.join(REPO_ROOT, "contracts/authoring/fixtures/suggested-keys.json");
+const FIXTURE = path.join(REPO_ROOT, "contracts/document/fixtures/suggested-keys.json");
 
 interface Case {
   text: string;

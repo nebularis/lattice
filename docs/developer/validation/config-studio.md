@@ -343,6 +343,20 @@ Not run: amendments assembled or rendered, and the `assemble` job kind, which th
 
 Not run: the add-in against a live studio, Word itself, the old service's end-to-end stack, which now targets nothing, and Windows and Linux.
 
+## CS12d, rest, and CS12e: the document report, the proof of concept retired, one stack
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS12d-12 | the software licence with a section its template lacks, unmarked text in it, a date and a duration / `GET …/report` / an `sh:ValidationReport` with `unknown-section`, `unmarked-text` and the `date` and `duration` detections, the duration's text and suggested key, the same bytes on a repeat, and `404` for a document the workspace lacks | L1 | + − | pass, `DocumentsTest` |
+| CS12d-13 | the shared suggested-keys fixture, and a clause with a term, a variable, an amount, a date, a reference by number and a placeholder / the Java detector / every key as the fixture says, the kinds in order, the longer match winning, offsets into the element's text, and a definition not detecting its own term | L1 | + − | pass, `DetectorTest` |
+| CS12d-14 | the schema and kit tests moved into `config-studio-authoring`, with the kit's expected outputs beside the kit / run there / pass | L1 | + | pass, 9 tests in the module |
+| CS12d-15 | the add-in reading the report / its unit tests and harness / validation, template findings and detections shown, Accept marking a detection (S9-14), unmarked text kept in place through markup and through Word's OOXML | L1, L3 | + | pass, 21 domain, 65 unit and 15 harness tests |
+| CS12d-16 | the reading's tests on the kit's expected outputs and the property policy's graph kept as a worker fixture / `check:workers` / every sentence form still matched, and the analysis valid against `contracts/config-studio/analysis.schema.json` | L1 | + | pass, 119 tests |
+| CS12e-01 | the stack script / its tests / the add-in among the processes, on 4176 | L1 | + | pass, 5 tests |
+| CS12d-17 | the repository without the proof of concept's service, worker, contracts and stack / `check:config-studio`, `check:java`, `check:knowledge`, `check:catalogue` and the reference scan / pass, with the knowledge test of the removed compose file dropped, since `test_quanta.py` keeps its rule, and the scan's known list one shorter | L1 | + | pass, 64 service, 3 writer and 9 authoring module tests, 48 studio Python and 40 browser |
+
+Not run: `studio:up` with the add-in's development server, the Docker stack's HTTPS proxy, Word loading the add-in, the add-in against a live studio (TD-100), and Windows and Linux.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

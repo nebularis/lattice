@@ -22,6 +22,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.shacl.ShaclValidator;
+import org.apache.jena.shacl.Shapes;
+import org.apache.jena.shacl.validation.ReportEntry;
+import org.apache.jena.shacl.vocabulary.SHACLM;
+import java.util.List;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.w3c.dom.Element;
@@ -40,6 +46,7 @@ public final class Documents {
     private final Schema schema;
     private final DocumentToWording kit = new DocumentToWording();
     private final Model templates;
+    private final Shapes shapes;
 
     public Documents() {
         try {
@@ -49,6 +56,11 @@ public final class Documents {
             schema = factory.newSchema(resource("contracts/document/document.xsd"));
         } catch (SAXException e) {
             throw new IllegalStateException("the document schema does not load", e);
+        }
+        try (InputStream in = resource("shapes/wording-poc-shapes.ttl").openStream()) {
+            shapes = Shapes.parse(RDFParser.create().source(in).lang(Lang.TURTLE).toGraph());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
         // Read as a stream, since Jena cannot open a jar: URL, which the resource is once the module is packaged.
         try (InputStream in = resource("contracts/config-studio/document-templates.ttl").openStream()) {
@@ -98,6 +110,133 @@ public final class Documents {
         }
         graph.createResource(Graphs.documentNode(doc)).addProperty(Cst.markup, markup);
         return new Read(graph, title, template, 200, null);
+    }
+
+    /**
+     * The report on a saved document: its Wording graph against the shapes of the add-in's first service, its markup
+     * against its template, and what the detector finds unmarked, as one {@code sh:ValidationReport}. Results are in a
+     * fixed order and named under the document's node, so the same document gives the same report.
+     */
+    public Model report(String doc, String markup, Model wording) {
+        Markup structure;
+        try {
+            structure = Markup.of(builder().parse(new ByteArrayInputStream(markup.getBytes(StandardCharsets.UTF_8))).getDocumentElement());
+        } catch (SAXException | IOException e) {
+            throw new IllegalStateException("a stored document's markup does not parse", e);
+        }
+        String node = Graphs.documentNode(doc);
+        Report r = new Report(node);
+        for (ReportEntry entry : ShaclValidator.get().validate(shapes, wording.getGraph()).getEntries()) {
+            String source = entry.source() == null ? "" : entry.source().toString();
+            int at = source.lastIndexOf("shape-");
+            r.result(severity(entry.severity()), entry.message(), at < 0 ? "shacl" : source.substring(at + 6), "shacl",
+                entry.focusNode().isURI() ? entry.focusNode().getURI() : null);
+        }
+        templateFindings(r, structure, node);
+        for (Detector.Detection d : Detector.detect(structure)) {
+            Resource result = r.result(SHACLM.Info, "Unmarked " + d.kind() + ": " + d.text(), "detection", "detection", node + "element/" + d.elementId());
+            result.addProperty(Cst.detectionKind, d.kind()).addProperty(SHACLM.value, d.text()).addProperty(Cst.action, d.action())
+                .addLiteral(Cst.partIndex, (long) d.partIndex()).addLiteral(Cst.start, (long) d.start()).addLiteral(Cst.end, (long) d.end());
+            if (d.valueType() != null) {
+                result.addProperty(Cst.suggestedValueType, d.valueType()).addProperty(Cst.suggestedKey, d.key());
+            }
+            if (d.target() != null) {
+                result.addProperty(Cst.suggestedTarget, r.model.createResource(node + "element/" + d.target()));
+            }
+        }
+        return r.done();
+    }
+
+    /** Required sections left empty, sections the template does not name, elements a section does not allow, and unmarked text. */
+    private void templateFindings(Report r, Markup m, String node) {
+        Resource template = null;
+        String key = templateKeyOf(m);
+        for (Resource t : templates.listResourcesWithProperty(Cst.templateKey, key).toList()) {
+            if (t.hasProperty(RDF.type, Cst.DocumentTemplate)) {
+                template = t;
+            }
+        }
+        if (template == null) {
+            return;
+        }
+        List<Resource> sections = template.listProperties(Cst.section).mapWith(st -> st.getResource()).toList();
+        sections.sort(java.util.Comparator.comparingLong(s -> s.getProperty(Cst.order).getLong()));
+        java.util.Set<String> known = new java.util.HashSet<>();
+        for (Resource ts : sections) {
+            String sectionKey = ts.getProperty(Cst.sectionKey).getString();
+            String heading = ts.getProperty(RDFS.label).getString();
+            known.add(sectionKey);
+            Markup.Section found = m.sections().stream().filter(s -> s.key().equals(sectionKey)).findFirst().orElse(null);
+            if (ts.getProperty(Cst.required).getBoolean() && (found == null || found.items().isEmpty())) {
+                r.result(SHACLM.Warning, "The required section '" + heading + "' has no content.", "required-section-empty", "template", node + "section/" + sectionKey);
+            }
+            if (found == null) {
+                continue;
+            }
+            java.util.Set<String> kinds = new java.util.HashSet<>();
+            ts.listProperties(Cst.elementKind).forEachRemaining(st -> kinds.add(st.getString()));
+            int s = m.sections().indexOf(found) + 1;
+            for (int e = 0; e < found.items().size(); e++) {
+                Markup.Item item = found.items().get(e);
+                String kind = item.definition() ? "definition" : "clause";
+                if (!kinds.contains(kind)) {
+                    r.result(SHACLM.Warning, "Element " + s + "." + (e + 1) + " is a " + kind + ", which the section '" + heading + "' does not allow.",
+                        "element-kind-not-allowed", "template", node + "element/" + item.id());
+                }
+            }
+        }
+        for (Markup.Section s : m.sections()) {
+            if (!known.contains(s.key())) {
+                r.result(SHACLM.Warning, "The section '" + s.key() + "' is not in the " + template.getProperty(RDFS.label).getString() + " template.",
+                    "unknown-section", "template", node + "section/" + s.key());
+            }
+        }
+        for (String in : m.unmarkedIn()) {
+            r.result(SHACLM.Info, in == null ? "Text outside every section is not inside a marked element." : "Text in the section '" + in + "' is not inside a marked element.",
+                "unmarked-text", "template", in == null ? node + "wording" : node + "section/" + in);
+        }
+    }
+
+    private String templateKeyOf(Markup m) {
+        return m.templateKey();
+    }
+
+    private static Resource severity(org.apache.jena.shacl.validation.Severity s) {
+        if (s.equals(org.apache.jena.shacl.validation.Severity.Violation)) {
+            return SHACLM.Violation;
+        }
+        return s.equals(org.apache.jena.shacl.validation.Severity.Warning) ? SHACLM.Warning : SHACLM.Info;
+    }
+
+    /** A report under construction, its results numbered in the order they are added. */
+    private static final class Report {
+        final Model model = ModelFactory.createDefaultModel();
+        final Resource node;
+        final String prefix;
+        int count;
+        boolean conforms = true;
+
+        Report(String documentNode) {
+            prefix = documentNode + "report";
+            node = model.createResource(prefix).addProperty(RDF.type, SHACLM.ValidationReport);
+        }
+
+        Resource result(Resource severity, String message, String code, String check, String focus) {
+            Resource r = model.createResource(prefix + "/result-" + (++count)).addProperty(RDF.type, SHACLM.ValidationResult)
+                .addProperty(SHACLM.resultSeverity, severity).addProperty(SHACLM.resultMessage, message)
+                .addProperty(Cst.code, code).addProperty(Cst.check, check);
+            if (focus != null) {
+                r.addProperty(SHACLM.focusNode, model.createResource(focus));
+            }
+            node.addProperty(SHACLM.result, r);
+            conforms &= !severity.equals(SHACLM.Violation);
+            return r;
+        }
+
+        Model done() {
+            node.addLiteral(SHACLM.conforms, conforms);
+            return model;
+        }
     }
 
     /** Every document template, without the samples. */

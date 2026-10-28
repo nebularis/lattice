@@ -58,6 +58,30 @@ cst:revision a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:D
 cst:markup a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:string ;
     rdfs:comment "The document's markup as saved, so it is returned exactly, unmarked text included." .
 
+# --- a document's report -------------------------------------------------------
+
+# GET /api/workspaces/{ws}/documents/{doc}/report is an sh:ValidationReport whose results carry these, beside
+# sh:focusNode, sh:resultSeverity and sh:resultMessage.
+
+cst:check a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "Which check gave a result of a document's report: shacl, template or detection." .
+cst:detectionKind a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What a detection found: placeholder, money, percentage, date, duration, defined-term or cross-reference." .
+cst:partIndex a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "The index of the text part a detection was found in." .
+cst:start a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "Where a detection starts in its element's text, in UTF-16 code units." .
+cst:end a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "Where a detection ends in its element's text, in UTF-16 code units, exclusive." .
+cst:action a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What the add-in offers to do with a detection: mark-variable, mark-reference or none." .
+cst:suggestedKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The key suggested for a variable a detection would mark." .
+cst:suggestedValueType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The value type suggested for a variable a detection would mark." .
+cst:suggestedTarget a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:comment "The definition a use of its defined term would refer to." .
+
 cst:DocumentTemplate a owl:Class ;
     rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
 cst:templateKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;

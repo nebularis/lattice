@@ -7,11 +7,19 @@
   <dependencies>
     <dependency><groupId>org.nebularis.lattice</groupId><artifactId>config-studio-core</artifactId><version>${project.version}</version></dependency>
     <!-- XSLT 3.0 for the document-to-wording kit (ADR-A119). -->
+    <dependency><groupId>org.apache.jena</groupId><artifactId>jena-shacl</artifactId><version>6.2.0</version></dependency>
     <dependency><groupId>net.sf.saxon</groupId><artifactId>Saxon-HE</artifactId><version>12.5</version></dependency>
+    <!-- The document schema's check: Jing validates against the RELAX NG source and Trang generates the XSD from it. -->
+    <dependency>
+      <groupId>org.relaxng</groupId><artifactId>jing</artifactId><version>20241231</version><scope>test</scope>
+      <exclusions><exclusion><groupId>net.sf.saxon</groupId><artifactId>Saxon-HE</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.relaxng</groupId><artifactId>trang</artifactId><version>20241231</version><scope>test</scope></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build>
     <resources>
+      <resource><directory>src/main/resources</directory></resource>
       <resource>
         <directory>${project.basedir}/../../contracts</directory>
         <targetPath>contracts</targetPath>
