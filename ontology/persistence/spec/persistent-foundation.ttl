@@ -14,7 +14,7 @@
     dct:description """A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in tools/persistence turns that record into generated, portable SPARQL and identity minting recipes.
 
 Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional persistent-foundation document imports a layer.""" ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dal:PersistenceKeyed a owl:Class ;
     rdfs:comment "A naturally keyed thing whose natural keys Persistence keeps unique when they are written." ;

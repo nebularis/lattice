@@ -16,7 +16,7 @@
     owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.19.0> ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
     dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dct:creator a owl:AnnotationProperty .
 

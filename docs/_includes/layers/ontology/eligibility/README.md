@@ -31,7 +31,7 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | T. R. Watson |
 
 ## 3. Extraction Contract
 

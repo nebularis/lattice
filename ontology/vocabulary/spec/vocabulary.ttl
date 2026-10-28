@@ -19,7 +19,7 @@ vocab/ folders elsewhere in this repository hold small, mechanism-intrinsic enum
 Vocabulary builds on W3C SKOS rather than reinventing concept-scheme modelling, adding governed versioning of a scheme as a whole, a structural contract mechanism for binding a property to a scheme without either side knowing about the other in advance, and scoped, time-bounded bindings for where the scheme in use differs between contexts or changes over time.
 
 What Vocabulary does not do is resolve a fuzzy label to a concept - it defines what a valid binding looks like structurally, but has nothing to say about how one was arrived at.""" ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dct:creator a owl:AnnotationProperty .
 

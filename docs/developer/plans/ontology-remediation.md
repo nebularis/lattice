@@ -40,6 +40,8 @@ Out of scope: the review's §2.12 (platform authority outside the graph, TD-85),
 | 11 | no history rewrite in this unit | 2026-10-28 |
 | 12 | the namespaces: SPC moves under the lattice root as `.../lattice/spc#` with its version IRI under it, the store vocabulary `pat:` becomes a second document inside Persistence under its own root, the applied insurance root gains the lattice segment, MORK's http root stays, and the three-roots-per-module pattern is documented and left | 2026-10-28 |
 | 13 | the release bump at OR-19 is the maintainer's to run. The unit's last handoff reminds them | 2026-10-28 |
+| 14 | the bump happens once, at the end of the unit, not after each slice, so `check:ontology-versioning` reports the changed members unbumped until then | 2026-10-28 |
+| 15 | `dct:creator` names the organisation, `https://github.com/nebularis`, in every spec and vocab document (OR-Q13) | 2026-10-28 |
 
 ## Landing against the live branches
 
@@ -141,8 +143,8 @@ Answers go in the table and in the status record's history. The maintainer is wo
 | OR-Q9 | Canonicalisation | (a) RDFC-1.0 and SHA-256 everywhere, Persistence's digest vocabulary adopted, each layer naming its content triples. (b) per layer, each stating its own, with a mapping table | (a) | (a), 2026-10-28 |
 | OR-Q10 | Behaviour's allowance classes | (a) deprecate now with a shape warning, as `AcceptanceRecord` was. (b) wait for LG-3 and deprecate when Behaviour imports Ledger | (a) | (a), 2026-10-28 |
 | OR-Q11 | Capacity's release state | (a) withdraw from the release register until its source ontology exists and its examples pass. (b) mark pre-release in the register and the README | (a) | (a), 2026-10-28 |
-| OR-Q12 | Where `Law`, `OperationalProfile` and `Undetermined` live | (a) a law register and discharge vocabulary in Foundation, with each layer's laws as individuals, `OperationalProfile` in Foundation as the versioned conformance profile, and `Undetermined` as Foundation's one three-valued individual. (b) Quantification owns laws and the three-valued vocabulary, since it defines three-valued comparison, and Behaviour and Eligibility import it | open | |
-| OR-Q13 | The person and the handle in `dct:creator` | (a) keep, since the handle is the project's own remote. (b) replace with the project's name | maintainer's | |
+| OR-Q12 | Where `Law`, `OperationalProfile` and `Undetermined` live | (a) a law register and discharge vocabulary in Foundation, with each layer's laws as individuals, `OperationalProfile` in Foundation as the versioned conformance profile, and `Undetermined` as Foundation's one three-valued individual. (b) Quantification owns laws and the three-valued vocabulary, since it defines three-valued comparison, and Behaviour and Eligibility import it | open | deferred to the end of the unit, 2026-10-28 |
+| OR-Q13 | The person and the handle in `dct:creator` | (a) keep, since the handle is the project's own remote. (b) replace with the project's name | maintainer's | (b) `https://github.com/nebularis`, 2026-10-28 |
 | OR-Q14 | An estimated `validFrom` | (a) an `fnd:estimated` marker on the scope. (b) `validFrom` optional with a stated default, the earliest evidence. (c) both | (a) | (a), 2026-10-28 |
 | OR-Q15 | The epoch guard baseline is `dal:RowLevelGuardOnly`, which §5.6.8 discourages and the README keeps so that no existing deployment's generated operations change | (a) make `dal:DatasetLevelGuard` the baseline now, since no deployment exists, and drop the compatibility sentence and the baseline warning. (b) keep it, the warning being the witness of the baseline | (a) | (a), 2026-10-28 |
 | OR-Q16 | MORK's http namespace root | (a) rename with the others in OR-6, one breaking line. (b) keep, since MORK is standalone and its root is the project's own domain | (b) | (b), 2026-10-28 |

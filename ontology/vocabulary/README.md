@@ -31,7 +31,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | T. R. Watson |
 
 ## 3. Extraction Contract
 
