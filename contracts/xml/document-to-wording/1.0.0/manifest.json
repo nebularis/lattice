@@ -1,0 +1,17 @@
+{
+  "kit": "document-to-wording",
+  "version": "1.0.0",
+  "direction": "ingress",
+  "source": "hand-written",
+  "input": {
+    "namespace": "https://www.nebularis.org/neuro-semantic/lattice/document/1",
+    "schema": "../../../document/document.rnc"
+  },
+  "stylesheet": "document-to-wording.xsl",
+  "xslt": "3.0",
+  "parameters": {
+    "base": "the base IRI every instance IRI is minted under, ending with a slash",
+    "revision": "the document's revision, an integer from 1"
+  },
+  "output": "canonical sorted N-Triples, the document's Wording graph"
+}

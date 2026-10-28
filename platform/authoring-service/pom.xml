@@ -16,8 +16,16 @@
     <dependency><groupId>com.networknt</groupId><artifactId>json-schema-validator</artifactId><version>1.5.6</version></dependency>
     <dependency><groupId>com.rabbitmq</groupId><artifactId>amqp-client</artifactId><version>5.37.0</version></dependency>
     <dependency><groupId>io.helidon.webserver</groupId><artifactId>helidon-webserver</artifactId><version>4.5.6</version></dependency>
+    <!-- XSLT 3.0 for the document-to-wording kit (ADR-A119, ADR-A137). -->
+    <dependency><groupId>net.sf.saxon</groupId><artifactId>Saxon-HE</artifactId><version>12.5</version></dependency>
     <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-simple</artifactId><version>2.0.16</version><scope>runtime</scope></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+    <!-- The document schema's check: Jing validates against the RELAX NG source and Trang generates the XSD from it. -->
+    <dependency>
+      <groupId>org.relaxng</groupId><artifactId>jing</artifactId><version>20241231</version><scope>test</scope>
+      <exclusions><exclusion><groupId>net.sf.saxon</groupId><artifactId>Saxon-HE</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.relaxng</groupId><artifactId>trang</artifactId><version>20241231</version><scope>test</scope></dependency>
     <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers</artifactId><version>2.0.2</version><scope>test</scope></dependency>
   </dependencies>
   <build>
@@ -30,6 +38,8 @@
         <includes>
           <include>authoring/**/*.json</include>
           <include>events/wording-analysis-*.schema.json</include>
+          <include>document/document.xsd</include>
+          <include>xml/document-to-wording/**/*</include>
         </includes>
         <excludes>
           <exclude>authoring/fixtures/**</exclude>

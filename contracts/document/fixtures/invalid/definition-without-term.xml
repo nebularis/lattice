@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="https://www.nebularis.org/neuro-semantic/lattice/document/1" id="00000009-0000-4000-8000-000000000000">
+  <meta>
+    <title>Minimal</title>
+    <template>facility-agreement</template>
+  </meta>
+  <body>
+    <section key="commitment">
+      <definition id="00000009-0000-4000-8000-000000000001">“Borrower” means the company.</definition>
+    </section>
+  </body>
+</document>

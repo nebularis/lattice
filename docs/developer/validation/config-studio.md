@@ -301,6 +301,20 @@ Built by a sub-agent on its own branch, reviewed and merged.
 
 Not run: Windows and Linux, and a writer taking a partition over in the middle of a batch.
 
+## CS12c: the document markup's schemas and the document-to-wording kit
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS12c-01 | `document.rnc` / Trang, in the test and by `mise run build:document-schema` / the committed `document.xsd`, byte for byte | L1 | + | pass |
+| CS12c-02 | 2 valid fixtures, 2 samples and 9 invalid fixtures (a bad identifier, an empty title, a clause with a term, a definition without one, an upper-case key, an unknown value type, a variable's text on two lines, an unknown inline element, an empty reference) / validated by Jing against the RELAX NG and by the JDK against the XSD / each verdict as expected, the two schemas agreeing on all 13 | L1 | + − | pass |
+| CS12c-03 | the facility agreement and software licence samples as markup / the kit run by Saxon-HE 12.5 / the graph the Java mapper gives for the same documents, its committed fixtures, sorted and the same on a repeat | L1 | + | pass, 374 and 320 triples. The same output from Saxon's command line |
+| CS12c-04 | text with a quote, a backslash, a newline and a tab / the kit / N-Triples Jena parses back to the same text | L1 | + | pass |
+| CS12c-05 | a document declaring a DTD with an external entity / the kit / refused before the stylesheet runs | L1 | − | pass |
+| CS12c-06 | the authoring service's whole suite / `mise run check:authoring-service` / passes | L1 | + | pass, 92 tests |
+| CS12c-07 | Saxon-HE 12.5, Jing and Trang 20241231, xmlresolver 5.2.2, isorelax / OSV on 2026-10-28 / no advisory | L0 | + | pass. Jing's Saxon-HE 9.6 is excluded, as RELAX NG validation does not use it |
+
+Not run: the property policy sample, which stays a JSON snapshot until CS12d retires them, and the kit in the standalone sidecar process, which does not exist yet.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

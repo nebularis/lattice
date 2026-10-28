@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="https://www.nebularis.org/neuro-semantic/lattice/document/1" id="00000009-0000-4000-8000-000000000000">
+  <meta>
+    <title>Minimal</title>
+    <template>facility-agreement</template>
+    <variable key="margin" type="percentage">Margin</variable>
+  </meta>
+  <body>
+    <section key="commitment">
+      <definition id="00000009-0000-4000-8000-000000000001" term="Borrower">“Borrower” means the company named as such.</definition>
+      <clause id="00000009-0000-4000-8000-000000000002">The <ref target="00000009-0000-4000-8000-000000000001">Borrower</ref> shall pay a margin of <var key="margin">2.5%</var> a year.</clause>
+      <unmarked>Drafting note.</unmarked>
+    </section>
+    <unmarked>Signed for and on behalf of the parties.</unmarked>
+  </body>
+</document>

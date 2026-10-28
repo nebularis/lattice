@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="https://www.nebularis.org/neuro-semantic/lattice/document/1" id="00000001-0000-4000-8000-000000000000">
+  <meta>
+    <title>Facility Agreement (sample)</title>
+    <template>facility-agreement</template>
+    <variable key="facility-amount" type="money">Facility amount</variable>
+    <variable key="margin" type="percentage">Margin</variable>
+    <variable key="notice-period" type="duration">Notice period</variable>
+    <variable key="repayment-period" type="duration">Repayment period</variable>
+  </meta>
+  <body>
+    <section key="definitions">
+      <definition id="00000001-0000-4000-8000-000000000001" term="Borrower">“Borrower” means the company named as borrower in the schedule.</definition>
+      <definition id="00000001-0000-4000-8000-000000000002" term="Lender">“Lender” means each bank listed in Part 1 of the schedule.</definition>
+      <definition id="00000001-0000-4000-8000-000000000003" term="Loan">“Loan” means a loan made or to be made under the Facility.</definition>
+      <definition id="00000001-0000-4000-8000-000000000004" term="Facility">“Facility” means the term loan facility made available under this Agreement.</definition>
+      <definition id="00000001-0000-4000-8000-000000000005" term="Repayment Date">“Repayment Date” means the date falling <var key="repayment-period">five years</var> after the date of this Agreement.</definition>
+    </section>
+    <section key="commitment">
+      <clause id="00000001-0000-4000-8000-000000000006"><ref target="00000001-0000-4000-8000-000000000002">Lender</ref> shall make available to <ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> a term loan facility in an aggregate amount equal to <var key="facility-amount">GBP 10,000,000</var>.</clause>
+      <clause id="00000001-0000-4000-8000-000000000007"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> may cancel the whole or any part of the <ref target="00000001-0000-4000-8000-000000000004">Facility</ref> on not less than <var key="notice-period">five Business Days'</var> prior notice.</clause>
+    </section>
+    <section key="interest">
+      <clause id="00000001-0000-4000-8000-000000000008"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> shall pay interest on each <ref target="00000001-0000-4000-8000-000000000003">Loan</ref> at <var key="margin">2.5 per cent</var> per annum.</clause>
+      <clause id="00000001-0000-4000-8000-000000000009">Interest shall be calculated on the basis of a 365 day year.</clause>
+    </section>
+    <section key="repayment">
+      <clause id="00000001-0000-4000-8000-000000000010"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> shall repay each <ref target="00000001-0000-4000-8000-000000000003">Loan</ref> in full on the <ref target="00000001-0000-4000-8000-000000000005">Repayment Date</ref>.</clause>
+      <clause id="00000001-0000-4000-8000-000000000011"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> shall pay a prepayment fee of GBP 250 for each prepayment.</clause>
+    </section>
+    <section key="undertakings">
+      <clause id="00000001-0000-4000-8000-000000000012"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> shall not create any security over its assets.</clause>
+      <clause id="00000001-0000-4000-8000-000000000013"><ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> shall supply its annual financial statements to the [Agent] within 120 days of each financial year end.</clause>
+    </section>
+    <section key="events-of-default">
+      <clause id="00000001-0000-4000-8000-000000000014">If <ref target="00000001-0000-4000-8000-000000000001">Borrower</ref> does not pay any sum due under this Agreement, <ref target="00000001-0000-4000-8000-000000000002">Lender</ref> may declare all Loans immediately due.</clause>
+      <clause id="00000001-0000-4000-8000-000000000015">A Loan shall be deemed due on the date a demand is made.</clause>
+    </section>
+  </body>
+</document>

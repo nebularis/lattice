@@ -462,6 +462,13 @@ run = "python tools/reasoning_isolation_check.py"
 description = "Build and unit-test the word authoring POC service (ADR-A114)"
 run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
 
+[tasks."build:document-schema"]
+description = "Generate the document markup's XSD from its RELAX NG source with Trang (ADR-A137). The authoring service's tests fail while it is stale"
+run = [
+  "mvn -q -f platform/pom.xml dependency:copy -Dartifact=org.relaxng:trang:20241231 -DoutputDirectory={{config_root}}/platform/target/tools",
+  "java -jar platform/target/tools/trang-20241231.jar -I rnc -O xsd contracts/document/document.rnc contracts/document/document.xsd",
+]
+
 [tasks."check:authoring-service-it"]
 description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
 run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"

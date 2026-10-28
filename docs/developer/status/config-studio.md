@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, and decide BQ-2 of ADR-A138, how a language-model proposer reaches a model. ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended.
+**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended and BQ-2 as option C, a proposer worker first and an MCP server after it.
 
 ## Decisions taken alone, for ratification
 
@@ -90,6 +90,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, latest: the maintainer accepted ADR-A138 to ADR-A140 and decided BQ-1 and BQ-2. CS12c built: the RELAX NG schema with its generated XSD and a corpus both must agree on, the samples as markup, and the document-to-wording kit, which gives the Java mapper's fixtures exactly. CS12d is next.
 - 2026-10-28, CS17: the store writer is a deployable of its own, `config-studio-writer`, on a RabbitMQ super stream whose partitions spread across writer instances and fail over, with the shared code in `config-studio-core`, and the service and worker reading through a Fuseki service that cannot update. Verified natively, with two writers sharing and handing over partitions, and in Docker.
 - 2026-10-28, CS16: the maintainer accepted ADR-A136's second amendment, ratified CS-B23 to CS-B28 except CS-B24, which CS-Q9 reopens, and decided A to D. Writes are batched one request per batch (TSD-44), guarded in the update (PAT-21) and leave a receipt each (PRI-54), and the surface compiler refuses a promotion onto an undeclared authored property. The index review found PAT-55 stale and the writer to be PAT-18.
 - 2026-10-28, latest: CS13 to CS15 under the maintainer's delegation. Forms read shapes first (CS-Q7, by a sub-agent on its own branch, reviewed and merged). Partitioned store writers, the store on TDB2 in the user's data folder, job retention, export and import, and samples recorded on the workspace (CS-Q8), with ADR-A136's second amendment drafted. A facility agreement sample in every part (by a sub-agent, reviewed and merged). TSD-42 and TSD-43 recorded, MEC-88 and TD-97 to TD-99 added, PDD-13 closed into CS-Q8. The maintainer ruled on CS-D5, CS-D10, CS-D12, CS-B14 (stay on JDK 25), CB-Q4 (ODRL) and decided CS-Q8.
