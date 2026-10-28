@@ -269,6 +269,16 @@ On Windows a detached console process can receive no termination request, so aft
 
 ---
 
+## The MCP server
+
+The service is also an MCP server, at `http://127.0.0.1:8090/mcp` over the Streamable HTTP transport, as the [contract](../../contracts/config-studio/README.md#mcp) describes. An MCP host reads a workspace's clauses and proposes their stated meaning with its own model, and each proposal waits in the Meaning view for a person to decide. It needs nothing configured, since the host brings the model. To connect Claude Code, for example:
+
+```bash
+claude mcp add --transport http lattice-studio http://127.0.0.1:8090/mcp
+```
+
+A host that speaks MCP over stdio only reaches it through a bridge from stdio to Streamable HTTP. The server accepts requests from `localhost` origins only and, like the rest of the service, authenticates no one, so it is for a studio on the author's own machine.
+
 ## Health checks
 
 | Check | Command | A pass |

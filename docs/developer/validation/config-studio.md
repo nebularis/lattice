@@ -424,6 +424,21 @@ Not run: a language model behind a real provider's endpoint, which needs a deplo
 
 Not run: a regime in the live stack, since the builder sample states none, the diagram being checked against the fake's regime and in unit tests, and stepping a regime, which waits on a compiled path (BQ-1).
 
+## The MCP server, and bound meaning read only
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| MCP-01 | `initialize` asking 2025-06-18, and one asking an unknown version / answered / that version, then the latest, and a session id | L1 | + | pass, `McpTest` |
+| MCP-02 | a notification, a `GET`, a foreign origin, a localhost origin, an unknown method / sent / `202`, `405`, `403`, `200`, a JSON-RPC error | L1 | + − | pass |
+| MCP-03 | a workspace with a form, roles and the vocabulary / `list_clauses` and `read_clause` / the clause with its state, and the kinds, roles and activities a proposal may name | L1 | + | pass |
+| MCP-04 | a session from a named client / `propose` / a waiting proposal in the review configuration, never decided, with the client's name and version | L1 | + | pass |
+| MCP-05 | an undeclared role, missing arguments, an unknown workspace / `propose`, `list_clauses` / a tool refusal listing what is declared, invalid params, a tool refusal, and nothing saved | L1 | − | pass |
+| MCP-06 | `prompts/list` and `prompts/get` / answered / MTP's first layer | L1 | + | pass |
+| MCP-07 | the native stack, a session from `curl` / list, read and propose for 12.1 / the proposal saved through the writers and shown waiting in the Meaning view as by "assistant curl-check 1" | L5 | + | pass after three fixes: clauses sorted as text, unlabelled kinds shown as their local names, and roles drawn from the layers' vocabularies as well as the workspace |
+| MCP-08 | a stated term in the builder's editor / its fields / `ins:boundIn` shown read only with why | L1 | + | pass |
+
+Not run: a host other than `curl` connected to the live server, such as Claude Code, and a stdio host through a bridge.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

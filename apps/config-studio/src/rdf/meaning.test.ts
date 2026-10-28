@@ -238,10 +238,11 @@ describe("merging a propose job's proposals", () => {
 });
 
 describe("the builder's editor for stated meaning", () => {
-  it("offers no property of bound meaning, which only instantiation writes", () => {
+  it("shows the properties of bound meaning read only, with why, since only instantiation writes them", () => {
     const kind = kindOf(parts.meaning, M + "term-9-1", "meaning")!;
-    const offered = sectionsFor(kind, vocab).flatMap((s) => s.fields.map((f) => f.property));
-    expect(offered).not.toContain(INS("boundIn"));
-    expect(offered).not.toContain(INS("boundFrom"));
+    const fields = sectionsFor(kind, vocab).flatMap((s) => s.fields);
+    const boundIn = fields.find((f) => f.property === INS("boundIn"));
+    expect(boundIn?.readOnly).toMatch(/Instantiating an assembled wording writes it/);
+    expect(fields.find((f) => f.property === INS("alsoExpressedIn"))?.readOnly).toBeUndefined();
   });
 });

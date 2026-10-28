@@ -62,7 +62,7 @@ public final class StudioHttpServer implements AutoCloseable {
         try {
             String path = req.path().rawPath();
             ApiResponse response;
-            if (path.equals("/api") || path.startsWith("/api/")) {
+            if (path.equals("/api") || path.startsWith("/api/") || path.equals("/mcp")) {
                 response = api(req, method, path);
             } else {
                 response = staticFile(method, req.path().path());

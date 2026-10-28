@@ -69,6 +69,23 @@ A write is answered when its writer replies. Past 10 seconds the service looks f
 
 Every response carries `X-Content-Type-Options: nosniff`, and every `/api` response `Cache-Control: no-store`, except the vocabulary, which is revalidated by its `ETag`. No response carries `Access-Control-Allow-Origin`.
 
+## MCP
+
+The service is also a Model Context Protocol server, over MCP's Streamable HTTP transport at `POST /mcp` on the same address, so an MCP host proposes stated meaning with its own model and keys (ADR-A138 BQ-2). It answers JSON-RPC 2.0 requests with `application/json`, never a stream, a notification with `202`, `GET /mcp` with `405`, and a request whose `Origin` is not on `localhost` or `127.0.0.1` with `403`. `initialize` agrees the protocol version, `2025-11-25`, `2025-06-18` or `2025-03-26`, the latest when the client asks for another, and returns an `Mcp-Session-Id` that names the client in the proposals it makes. The server holds no model, calls none, and uses no sampling.
+
+| Tool | Arguments | Gives |
+|---|---|---|
+| `list_workspaces` | none | each workspace's id and label |
+| `list_clauses` | `workspace` | each text of the library's forms with its IRI, number, text, and whether it has stated meaning, a proposal waiting, or neither |
+| `read_clause` | `workspace`, `clause` | the clause's text, its stated meaning in plain words, and what a proposal may name: the relation kinds, the workspace's roles and the activities, each by label |
+| `propose` | `workspace`, `clause`, `kind`, `evidence`, and `role`, `counterRole` and `activity` where there are | a `cst:Proposal` waiting for review, saved to the review configuration as any save is, with `cst:proposer` `assistant` and `cst:proposerVersion` the client's name and version from `initialize`. A label the workspace does not declare refuses the call, with what it does declare |
+
+A proposal from MCP is decided in the studio like any other, and nothing the server does confirms one.
+
+| Prompt | Gives |
+|---|---|
+| `mtp-l0` | the first layer of MORK's teaching pack, MTP, from `ontology/mork/mtp/out/l0.txt` |
+
 ## Jobs
 
 The service has the job graph written (see Writes) and publishes the job's IRI. The message body is that IRI in UTF-8, `content_type` `text/plain`, persistent, routed with `lattice.studio.jobs` on exchange `lattice.studio`. The worker refuses, without requeuing, a body that is not `urn:lattice:studio:job:` followed by a lower-case UUID, and the broker dead-letters it.
@@ -107,7 +124,7 @@ A `cst:Assembly` in the assembly configuration names the form it draws from, wit
 
 ### Meaning and its review
 
-The meaning configuration holds stated meaning (ADR-A104, ADR-A138): stated terms, each an `ins:Term` and `ins:Template` with `ins:expressedIn` the clause of the library that states it, and the relations, qualifiers and regimes under them. Every template enters it through a proposal (ADR-A138 decision 4). A `cst:Proposal` in the review configuration names the clause it reads with `cst:span`, the templates it proposes with `cst:proposes`, its proposer with `cst:proposer` (`manual`, `sentence-forms` or `language-model`) and when with `cst:proposedAt`, and the reviewer's decision with `cst:decision` (`cst:Confirm`, `cst:Retarget`, `cst:Decline` or `cst:Defer`, ADR-A42) and `cst:decidedAt`. A proposal carries what it proposes as Turtle in `cst:payload`, so a template waiting for review is never in the meaning configuration, whose subjects the rule above sorts by namespace. Confirming writes the payload into the meaning configuration, retargeting writes it as corrected, and declining or deferring writes nothing. Manual entry is a proposal its author confirms at once. A validation of the meaning configuration checks it, beside the library and the other configurations, against Instrument's structural and constraint shapes, and one of the review configuration reports nothing.
+The meaning configuration holds stated meaning (ADR-A104, ADR-A138): stated terms, each an `ins:Term` and `ins:Template` with `ins:expressedIn` the clause of the library that states it, and the relations, qualifiers and regimes under them. Every template enters it through a proposal (ADR-A138 decision 4). A `cst:Proposal` in the review configuration names the clause it reads with `cst:span`, the templates it proposes with `cst:proposes`, its proposer with `cst:proposer` (`manual`, `sentence-forms`, `language-model` or `assistant`, an MCP host) and when with `cst:proposedAt`, and the reviewer's decision with `cst:decision` (`cst:Confirm`, `cst:Retarget`, `cst:Decline` or `cst:Defer`, ADR-A42) and `cst:decidedAt`. A proposal carries what it proposes as Turtle in `cst:payload`, so a template waiting for review is never in the meaning configuration, whose subjects the rule above sorts by namespace. Confirming writes the payload into the meaning configuration, retargeting writes it as corrected, and declining or deferring writes nothing. Manual entry is a proposal its author confirms at once. A validation of the meaning configuration checks it, beside the library and the other configurations, against Instrument's structural and constraint shapes, and one of the review configuration reports nothing.
 
 ### Proposers
 

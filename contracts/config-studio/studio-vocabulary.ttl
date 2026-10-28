@@ -127,7 +127,7 @@ cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for 
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
 cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, with a pack the deployment supplies." .
 cst:proposer a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
-    rdfs:comment "What made the proposal: manual, sentence-forms or language-model." .
+    rdfs:comment "What made the proposal: manual, sentence-forms, language-model, or assistant for an MCP host." .
 cst:proposedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:dateTime ;
     rdfs:comment "When the proposal was made." .
 cst:decision a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range cst:ReviewDecision ;

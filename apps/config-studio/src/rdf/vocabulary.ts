@@ -40,6 +40,8 @@ export interface Field {
   datatype?: string;
   lang?: string;
   options: Option[];
+  /** Shown but never written in the studio, with why, as for bound meaning in the builder. */
+  readOnly?: string;
 }
 
 interface Override {

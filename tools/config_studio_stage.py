@@ -108,6 +108,10 @@ def stage(root: Path, out: Path) -> None:
             if p != CST.part:
                 listing.add((sample, p, o))
     listing.serialize(out / "samples.ttl", format="turtle", encoding="utf-8")
+    # MORK's teaching pack's first layer, which the service's MCP server offers as a prompt.
+    (out / "prompts").mkdir(parents=True, exist_ok=True)
+    mtp = catalogue.root / catalogue.module("mork").directory("mtp") / "out" / "l0.txt"
+    (out / "prompts" / "mtp-l0.txt").write_text(mtp.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     print(f"staged {out.as_posix()}")
 
 

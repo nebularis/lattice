@@ -31,6 +31,14 @@ export interface FieldProps {
 export function FieldControl(props: FieldProps) {
   const { field, graph, node } = props;
   const values = graph.objects(node, field.property);
+  if (field.readOnly) {
+    return (
+      <div className="readonly-field">
+        {values.length === 0 ? <div className="unset">Not set.</div> : values.map((v) => <div key={v.id} className="mono small">{compact(v.value)}</div>)}
+        <div className="small muted" style={{ marginTop: 4 }}>{field.readOnly}</div>
+      </div>
+    );
+  }
   const set = (objects: Term[]) => props.edit((g) => g.edit((e) => e.setAll(node, field.property, objects)));
   switch (field.kind) {
     case "text":

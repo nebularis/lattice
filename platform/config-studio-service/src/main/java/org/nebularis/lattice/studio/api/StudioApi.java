@@ -62,6 +62,7 @@ public final class StudioApi {
     private final Path assets;
 
     private final Documents documents = new Documents();
+    private final StudioMcp mcp;
 
     public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
         this.store = store;
@@ -70,10 +71,14 @@ public final class StudioApi {
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
+        this.mcp = new StudioMcp(store, writes, clock, ids, assets);
     }
 
     public ApiResponse handle(ApiRequest req) {
         try {
+            if (req.path().equals("/mcp")) {
+                return secure(mcp.handle(req));
+            }
             return secure(negotiate(req, route(req)));
         } catch (RuntimeException e) {
             LOG.error("{} {} failed", req.method(), req.path(), e);

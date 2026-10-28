@@ -245,8 +245,9 @@ export const KINDS: Kind[] = [
 /** Kinds the studio never lists: path steps belong to their contract's read path, and a template is a marker beside the node's own kind. */
 const MANAGED = new Set([SRF("PathStep"), INS("Template")]);
 const PATH_PROPERTIES = new Set([SRF("readProperty"), SRF("hasPathStep")]);
-/** Bound meaning's properties. The builder writes stated meaning only, and binding is the instantiator's (ADR-A138 decision 2). */
+/** Bound meaning's properties, shown and never written: the builder writes stated meaning only, and binding is the instantiator's (ADR-A138 decision 2). */
 const BOUND_PROPERTIES = new Set([INS("boundIn"), INS("boundFrom"), INS("impliedBy")]);
+const BOUND_REASON = "Bound meaning. Instantiating an assembled wording writes it, never the builder, so it is shown here and not edited.";
 
 const KIND_BY_TYPE = new Map(KINDS.map((k) => [k.type, k]));
 
@@ -337,9 +338,10 @@ export function sectionsFor(kind: Kind, vocab: Vocabulary): ResolvedSection[] {
     ];
     const fields: Field[] = [];
     for (const [p, c] of ordered) {
-      if (placed.has(p) || PATH_PROPERTIES.has(p) || BOUND_PROPERTIES.has(p)) continue;
+      if (placed.has(p) || PATH_PROPERTIES.has(p)) continue;
       placed.add(p);
-      fields.push(vocab.field(p, c));
+      const field = vocab.field(p, c);
+      fields.push(BOUND_PROPERTIES.has(p) ? { ...field, readOnly: BOUND_REASON } : field);
     }
     return { title: section.title, special: section.special, fields };
   };
