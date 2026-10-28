@@ -82,6 +82,20 @@ cst:suggestedValueType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:ra
 cst:suggestedTarget a owl:ObjectProperty , owl:FunctionalProperty ;
     rdfs:comment "The definition a use of its defined term would refer to." .
 
+# --- assemblies ------------------------------------------------------------------
+
+cst:Assembly a owl:Class ;
+    rdfs:comment "What a drafter asks to be assembled from a form of the library: the form, the choices and the settings. An assemble job gives its assembled wording (ADR-A139)." .
+cst:assembles a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "The form, a wrd:Wording of the library, the assembly draws from." .
+cst:choice a owl:ObjectProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "An optional element, or a variant with no inclusion condition, the drafter chose." .
+cst:setting a owl:ObjectProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "A wrd:VariableValue the assembly sets, for a governing variable an inclusion condition reads or a variable the text shows." .
+cst:Assemble a cst:JobKind ; rdfs:comment "Assemble each cst:Assembly of the input under Wording's baseline model, giving its record and its document, or findings." .
+cst:Library a cst:Target ; rdfs:comment "The library configuration, Wording forms." .
+cst:AssemblyTarget a cst:Target ; rdfs:comment "The assembly configuration, a target of assemble jobs." .
+
 cst:DocumentTemplate a owl:Class ;
     rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
 cst:templateKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
@@ -139,7 +153,7 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
 cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .

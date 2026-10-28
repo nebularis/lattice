@@ -20,6 +20,9 @@ export const PARTS: Part[] = CONFIG_PARTS;
  * vocabulary's schemes and the quantification's ranges, and a surface population names a scheme
  * contract. */
 const DEPENDS: Record<Part, Part[]> = {
+  // A form's variables name a scheme contract and a value space, and its conditions are eligibility's.
+  library: ["vocabulary", "quantification", "eligibility"],
+  assembly: ["library"],
   vocabulary: [],
   quantification: [],
   eligibility: ["vocabulary", "quantification"],

@@ -135,7 +135,7 @@ export const api = {
     return response.headers.get("ETag") ?? revision;
   },
 
-  async submit(id: string, kind: "validate" | "compile", target: Target, config: Graph): Promise<string> {
+  async submit(id: string, kind: "validate" | "compile" | "assemble", target: Target, config: Graph): Promise<string> {
     const response = await request(`/api/workspaces/${id}/jobs?kind=${kind}&target=${target}`, {
       method: "POST",
       headers: { "Content-Type": TURTLE },

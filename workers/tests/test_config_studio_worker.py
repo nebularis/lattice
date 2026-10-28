@@ -33,9 +33,11 @@ class FakeStore:
             raise GraphNotFound(graph_iri)
         return Graph() + self.graphs[graph_iri]
 
-    def put_graph(self, graph_iri: str, graph: Graph) -> None:
+    def put_graph(self, graph_iri: str, graph: Graph, others=None) -> None:
         self.graphs[graph_iri] = Graph() + graph
         self.history.append((graph_iri, Graph() + graph))
+        for name, other in (others or {}).items():
+            self.graphs[name] = Graph() + other
 
 
 class FakeChannel:
@@ -330,3 +332,86 @@ def test_an_analysis_of_a_graph_holding_no_wording_fails():
     g = store.graphs[iri]
     assert g.value(URIRef(iri), CST.status) == CST.Failed
     assert "0 wordings" in str(g.value(URIRef(iri), CST.failureMessage))
+
+
+WORDING_EXAMPLES = CATALOGUE.module("wording").directory("examples")
+ASSEMBLY = """
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix f: <https://example.org/lattice/wording/facility-form/> .
+@prefix a: <https://example.org/assembly/> .
+a:facility a cst:Assembly ; cst:assembles f:form ; cst:choice f:cl-5-2b ; cst:setting a:lenders , a:jurisdictions .
+a:lenders a wrd:VariableValue ; wrd:forVariable f:gv-lender-count ; wrd:literalValue "{count}"^^xsd:decimal .
+a:jurisdictions a wrd:VariableValue ; wrd:forVariable f:var-jurisdictions ; wrd:value f:uk , f:ie .
+"""
+
+
+def _facility_form() -> Graph:
+    g = Graph().parse(ROOT / WORDING_EXAMPLES / "facility-form.ttl")
+    wrd = "https://www.nebularis.org/neuro-semantic/lattice/wording#"
+    for record in list(g.subjects(RDF.type, URIRef(wrd + "AssembledWording"))):
+        for value in list(g.objects(record, URIRef(wrd + "hasValue"))):
+            g.remove((value, None, None))
+        g.remove((record, None, None))
+    return g
+
+
+def _assemble(count: str) -> tuple[FakeStore, URIRef]:
+    store = FakeStore()
+    iri = submit(store, "assemble", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.AssemblyTarget))
+    store.graphs[f"{iri}:input"] = _facility_form() + Graph().parse(data=ASSEMBLY.replace("{count}", count), format="turtle")
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    return store, job
+
+
+def test_an_assembly_gives_its_record_and_document_and_writes_the_record():
+    store, job = _assemble("3")
+    g = store.graphs[str(job)]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    assert g.value(job, CST.conforms) == Literal(True)
+    found = artefacts(g, job)
+    assert set(found) == {"record.ttl", "document.xml"}
+    assert found["document.xml"][1].startswith("<") and "https://www.nebularis.org/neuro-semantic/lattice/document/1" in found["document.xml"][1]
+    record = store.graphs[f"{job}:record"]
+    wrd = "https://www.nebularis.org/neuro-semantic/lattice/wording#"
+    assert len(list(record.subjects(RDF.type, URIRef(wrd + "AssembledWording")))) == 1
+    assert all(str(s).startswith(f"{job}:record/") for s in record.subjects(RDF.type, URIRef(wrd + "AssembledWording")))
+
+
+def test_the_same_job_assembles_the_same_record():
+    first, job = _assemble("3")
+    again = FakeStore()
+    again.graphs = {k: Graph() + v for k, v in first.graphs.items() if not k.endswith(":record")}
+    again.graphs[str(job)] = Graph() + first.history[0][1]
+    again.graphs[str(job)].remove((job, CST.status, None))
+    again.graphs[str(job)].add((job, CST.status, CST.Queued))
+    ConfigStudioWorker(again, ROOT, _clock()).handle(str(job))
+    assert to_isomorphic(first.graphs[f"{job}:record"]) == to_isomorphic(again.graphs[f"{job}:record"])
+
+
+def test_an_assembly_without_its_settings_is_refused_with_no_record():
+    store = FakeStore()
+    iri = submit(store, "assemble", "persistence", None)
+    store.graphs[f"{iri}:input"] = _facility_form() + Graph().parse(data=ASSEMBLY.split("a:lenders a")[0].replace(" , a:jurisdictions", "").replace("cst:setting a:lenders", "cst:choice f:cl-5-2b"), format="turtle")
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(URIRef(iri), CST.conforms) == Literal(False)
+    assert results(g, URIRef(iri), SH.Violation)
+    assert f"{iri}:record" not in store.graphs
+
+
+def test_a_library_validates_each_form():
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.Library))
+    store.graphs[f"{iri}:input"] = _facility_form()
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    assert g.value(job, CST.conforms) == Literal(True), [str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Violation)]

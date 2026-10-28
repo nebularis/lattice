@@ -49,7 +49,7 @@ def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
     assert samples == [
         f"urn:lattice:studio:sample:{n}"
-        for n in ("employment", "facility", "lending", "lending-eligibility", "quantities", "saas", "vocabulary-bindings")
+        for n in ("builder", "employment", "facility", "lending", "lending-eligibility", "quantities", "saas", "vocabulary-bindings")
     ]
     assert not list(listing.objects(None, CST.part))
     lending = Graph().parse(staged / "samples" / "lending.ttl")

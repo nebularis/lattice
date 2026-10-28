@@ -24,15 +24,21 @@ import org.apache.jena.vocabulary.RDF;
 public final class Parts {
     private static final String LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/";
     private static final String SKOS = "http://www.w3.org/2004/02/skos/core#";
+    private static final String CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
     private static final Map<String, Predicate<Statement>> OWNERS = new LinkedHashMap<>();
 
     static {
+        // An assembly and the value records it sets come first, since a value record uses Wording's terms too.
+        OWNERS.put("assembly", s -> (s.getPredicate().equals(RDF.type)
+            && (isIri(s.getObject(), CST + "Assembly") || isIri(s.getObject(), LATTICE + "wording#VariableValue")))
+            || s.getPredicate().getURI().equals(CST + "assembles") || s.getPredicate().getURI().equals(LATTICE + "wording#forVariable"));
         OWNERS.put("persistence", uses(LATTICE + "persistence#"));
         OWNERS.put("surface", uses(LATTICE + "surface#"));
         OWNERS.put("eligibility", uses(LATTICE + "eligibility#"));
         OWNERS.put("quantification", uses(LATTICE + "quantification#"));
         OWNERS.put("vocabulary", uses(LATTICE + "vocabulary#").or(s -> s.getPredicate().getURI().equals(SKOS + "inScheme")
             || (s.getPredicate().equals(RDF.type) && (isIri(s.getObject(), SKOS + "Concept") || isIri(s.getObject(), SKOS + "ConceptScheme")))));
+        OWNERS.put("library", uses(LATTICE + "wording#"));
     }
 
     private Parts() {

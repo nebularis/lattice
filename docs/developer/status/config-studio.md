@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended and BQ-2 as option C, a proposer worker first and an MCP server after it.
+**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended and BQ-2 as option C, a proposer worker first and an MCP server after it. Rule on CS-B42 to CS-B47, the builder's first decisions.
 
 ## Decisions taken alone, for ratification
 
@@ -66,6 +66,12 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B39 | Fuseki serves one TDB2 database as two services, `studio`, which reads, and `studio-write`, which updates, from a configuration the stack writes and the compose file mounts, and a test keeps the two alike | least privilege for the service and the worker. Without authentication on Fuseki the separation holds by endpoint, not by credential |
 | CS-B40 | One writer thread per instance, and a deployment scales writers by instances. `LATTICE_STUDIO_WRITERS` is gone, and the sweep moved into the writer | TDB2 commits one write at a time (TSD-42), so threads in one instance add nothing, while instances add failover and spread checking |
 | CS-B41 | The writer logs a write it refuses and passes over it | a stream has no dead letters. The absent receipt records that the write did not apply |
+| CS-B42 | The library is a configuration part of Wording forms in Turtle, `library`, edited with the shape-driven forms like any other part, apart from the workspace's documents | the assembler reads inclusion modes, slots and conditions, which the markup does not carry. A document can be brought into the library later |
+| CS-B43 | An assembly is a `cst:Assembly` in the `assembly` part, naming its form with `cst:assembles`, its choices with `cst:choice` and its value records with `cst:setting`. A `wrd:VariableValue` belongs to the assembly part, though it uses Wording's terms | the settings and choices are what a drafter writes per assembly, and the form stays shared |
+| CS-B44 | An `assemble` job's records are written in its update, to the graph `urn:lattice:studio:job:{job}:record`, deleted with the job. The writer accepts that graph from an assemble job only, with Wording's, Foundation's, PROV's, RDF's and RDFS's terms only | ADR-A140 decision 4 asks for one write through the writers. A lasting record outside the job waits for what reads it, Instrument's binding in CB4 |
+| CS-B45 | A validation of the library runs the assembler's `check` on each form, and one of the assembly part reports nothing | Wording's laws for a form are the check. An assembly is checked when it is assembled |
+| CS-B46 | An assemble job assembles at its `cst:submittedAt` and mints under `urn:lattice:studio:job:{job}:record/{n}/`, so a rerun of the job gives the same record | law WA5, with time and identity as inputs (PRI-56) |
+| CS-B47 | The builder's sample is the Wording layer's facility form, read from its examples, with two assemblies of it in `contracts/config-studio/samples` | one form, never copied, and one assembly refused to show WA6 |
 
 ## Learnings
 
@@ -90,6 +96,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, latest: CB1 built. The `library` and `assembly` parts, the `assemble` job running the Wording assembler and writing its records with its update, library validation by Wording's laws, a builder sample over the Wording layer's facility form, and builder mode in the browser, with a Library outline and an Assembly view that assembles and shows the document. Decisions CS-B42 to CS-B47 wait for ratification.
 - 2026-10-28, latest: CS12d finished and CS12e built. The maintainer chose a report endpoint for what the proof of concept's service checked: `GET …/documents/{doc}/report` is an `sh:ValidationReport` of the Wording shapes, template conformance and detections, and the add-in shows it again, with Accept. Unmarked text keeps its place in the markup. The proof of concept's service, worker, JSON contracts, staging script, compose stack and end-to-end suite are removed, the last recorded as TD-100. `studio:up` starts the add-in's development server, and with `--docker` serves it over HTTPS for Word.
 - 2026-10-28, later: CS12d in part, with D1 to D6 decided by the maintainer. A workspace holds documents, saved as markup with `If-Match` through the new `save-document` and `delete-document` commands, mapped to Wording by the kit in the new `config-studio-authoring` module, exported and imported with the workspace, and analysed by the job kind `analyse`. The Word add-in speaks to the studio's API, with a markup reader and writer in `packages/authoring-domain`. The Wording assembler of ADR-A139 and ADR-A140, `tools/wording_assembler`, built with Wording's `wrd:AssemblyModel`, `wrd:assembledUnder` and law WA1, the release bump left to the merge.
 - 2026-10-28, latest: the maintainer accepted ADR-A138 to ADR-A140 and decided BQ-1 and BQ-2. CS12c built: the RELAX NG schema with its generated XSD and a corpus both must agree on, the samples as markup, and the document-to-wording kit, which gives the Java mapper's fixtures exactly. CS12d is next.

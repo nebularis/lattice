@@ -46,6 +46,7 @@ public final class Cst {
     public static final Property wrote = p("wrote");
     public static final Property receiptRevision = p("receiptRevision");
     public static final Resource Analyse = r("Analyse");
+    public static final Resource Assemble = r("Assemble");
     public static final Resource Document = r("Document");
     public static final Property document = p("document");
     public static final Property template = p("template");
@@ -82,6 +83,10 @@ public final class Cst {
 
     /** The job target naming a configuration graph, {@code cst:Surface} for "surface". */
     public static Resource target(String graph) {
+        // The assembly part's target would otherwise be cst:Assembly, the class of what it holds.
+        if (graph.equals("assembly")) {
+            return r("AssemblyTarget");
+        }
         return r(Character.toUpperCase(graph.charAt(0)) + graph.substring(1));
     }
 

@@ -59,6 +59,11 @@ public final class Graphs {
         return job(job) + ":input";
     }
 
+    /** The assembled wordings an assemble job gave, written with its result and deleted with it. */
+    public static String jobRecord(String job) {
+        return job(job) + ":record";
+    }
+
     /** The store's own receipts, of deletions whose workspace is gone with its graphs. */
     public static final String STORE_RECEIPTS = "urn:lattice:studio:receipts";
 

@@ -357,6 +357,24 @@ Not run: the add-in against a live studio, Word itself, the old service's end-to
 
 Not run: `studio:up` with the add-in's development server, the Docker stack's HTTPS proxy, Word loading the add-in, the add-in against a live studio (TD-100), and Windows and Linux.
 
+## CB1: builder mode, the library and assembly parts, and the assemble job
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CB1-04 | a form, an assembly and its value record in one graph / sorted into parts by the service and by the browser / the form in library, the assembly and the value record in assembly | L1 | + | pass, `AssemblyTest` and the browser's unit tests |
+| CB1-05 | both parts / saved under their own revisions, and an assembly saved as library / `204` each, `422` | L1 | + − | pass |
+| CB1-06 | an assemble job, and one naming the library / `POST …/jobs` / `202` with `cst:Assemble` and the assembly target, `400` | L1 | + − | pass |
+| CB1-07 | an assemble job's update with a record graph, a validation's with one, and one with a persistence term / sent to the writer / the record stored and deleted with the job, the other two refused | L1 | + − | pass |
+| CB1-08 | the facility form and an assembly setting three lenders and two jurisdictions / the worker runs the job / `Succeeded` and conforming, `record.ttl` and `document.xml` in the markup's namespace, and the record written under the job's record prefix | L1 | + | pass |
+| CB1-09 | the same job run again / the worker / the same record | L1 | + | pass |
+| CB1-10 | an assembly with no lender count / the worker / not conforming, a violation naming the governing variable, no record graph | L1 | − | pass |
+| CB1-11 | the library holding the facility form / a validation / conforming, the form checked against Wording's laws | L1 | + | pass |
+| CB1-12 | the builder sample / staged and assembled / one assembly gives its record and document, the other is refused as Undetermined | L1 | + − | pass |
+| CB1-13 | builder mode / the browser's unit tests and its Playwright test against the fake service / the outline ordered with slots, variants and modes, choices and settings written, an assembly run and its findings, document and record shown | L1, L3 | + | pass, 60 unit and 17 browser tests |
+| CB1-14 | every studio suite / `mise run check:config-studio` / pass | L1 | + | pass, with 52 studio Python tests |
+
+Not run: builder mode in a real browser against the live stack, so its layout is unchecked, and a form created from scratch, which builder mode does not offer yet.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

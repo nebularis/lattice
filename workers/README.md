@@ -50,6 +50,8 @@ The worker behind the Configuration Studio, a supported part of LATTICE (ADR-A13
 
 The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lattice.studio.jobs`.
 
+`config_studio_assembly.py` holds the contract builder's jobs (ADR-A138): `assemble_all`, which runs `tools/wording_assembler` on each `cst:Assembly` of an `assemble` job's input and gives the job's findings and artefacts and the records its update writes, and `validate_library`, which checks each form of the library against Wording's laws.
+
 | Module | Holds |
 |---|---|
 | `config_studio_jobs.py` | `run_job(...)`: the pure job logic, pySHACL validation and the persistence and surface compilers, run in process. Ontology files are found through the repository catalogue reader. Surface validation skips `constraints.ttl`, which pySHACL refuses (TD-11) |

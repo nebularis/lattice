@@ -346,6 +346,7 @@ public final class Writer {
                 String jobId = job.getURI().substring(Graphs.JOB_PREFIX.length());
                 graphs.add(Graphs.job(jobId));
                 graphs.add(Graphs.jobInput(jobId));
+                graphs.add(Graphs.jobRecord(jobId));
                 graphs.add(Graphs.jobReceipts(jobId));
                 jobs.put(jobId, Optional.empty());
             });
@@ -398,8 +399,10 @@ public final class Writer {
          */
         private Reply jobUpdate(int index, Command c) {
             String jobIri = Graphs.job(c.job());
-            if (!names(c).equals(Set.of(jobIri)) || !c.body().getDefaultModel().isEmpty()) {
-                return Reply.refused("a job's update carries its job graph only");
+            String recordIri = Graphs.jobRecord(c.job());
+            Set<String> names = names(c);
+            if (!(names.equals(Set.of(jobIri)) || names.equals(Set.of(jobIri, recordIri))) || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a job's update carries its job graph, and an assemble job's its record graph, only");
             }
             Optional<Model> found = job(c.job());
             if (found.isEmpty()) {
@@ -413,10 +416,25 @@ public final class Writer {
             if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
                 return Reply.refused("a job's update may change only its status and results");
             }
+            Model record = names.contains(recordIri) ? c.body().getNamedModel(recordIri) : null;
+            if (record != null) {
+                if (!existing.contains(existing.createResource(jobIri), Cst.kind, Cst.Assemble)) {
+                    return Reply.refused("only an assemble job's update carries a record graph");
+                }
+                String term = foreignTerm(record);
+                if (term != null) {
+                    return Reply.refused("a record graph holds a term that is not Wording's, PROV's or Foundation's: " + term);
+                }
+            }
             String receipts = Graphs.jobReceipts(c.job());
-            receipt(c, receipts, quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace()))), List.of(jobIri), null);
+            receipt(c, receipts, quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace()))),
+                record == null ? List.of(jobIri) : List.of(jobIri, recordIri), null);
             request.add(clear(jobIri, mine(c, receipts)));
             request.add(insert(jobIri, update, mine(c, receipts)));
+            if (record != null) {
+                request.add(clear(recordIri, mine(c, receipts)));
+                request.add(insert(recordIri, record, mine(c, receipts)));
+            }
             jobs.put(c.job(), Optional.of(update));
             return planned(index, c, Reply.ok(), Reply::notFound);
         }
@@ -431,7 +449,7 @@ public final class Writer {
             if (!existing.contains(existing.createResource(jobIri), Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())))) {
                 return Reply.refused("the job is not this workspace's");
             }
-            List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobReceipts(c.job()));
+            List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), Graphs.jobReceipts(c.job()));
             String receipts = Graphs.receipts(c.workspace());
             receipt(c, receipts, quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace()))), graphs, null);
             graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
@@ -586,6 +604,25 @@ public final class Writer {
         }
         String doc = Graphs.documentId(id, graph);
         return doc != null && ws.documents().containsKey(doc) ? "document" : null;
+    }
+
+    private static final Set<String> RECORD_NAMESPACES = Set.of(
+        "https://www.nebularis.org/neuro-semantic/lattice/wording#", "https://www.nebularis.org/neuro-semantic/lattice/foundation#",
+        "http://www.w3.org/ns/prov#", RDF.getURI(), RDFS.getURI());
+
+    /** A predicate, or a type, of {@code record} outside Wording, Foundation, PROV, RDF and RDFS, or null. */
+    private static String foreignTerm(Model record) {
+        for (Statement s : record.listStatements().toList()) {
+            String p = s.getPredicate().getURI();
+            if (RECORD_NAMESPACES.stream().noneMatch(p::startsWith)) {
+                return p;
+            }
+            if (s.getPredicate().equals(RDF.type) && s.getObject().isURIResource()
+                && RECORD_NAMESPACES.stream().noneMatch(s.getObject().asResource().getURI()::startsWith)) {
+                return s.getObject().asResource().getURI();
+            }
+        }
+        return null;
     }
 
     private static final Set<String> DOCUMENT_NAMESPACES = Set.of(

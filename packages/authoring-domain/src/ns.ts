@@ -16,6 +16,8 @@ export const PREFIXES: Record<string, string> = {
   voc: "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#",
   qnt: "https://www.nebularis.org/neuro-semantic/lattice/quantification#",
   elg: "https://www.nebularis.org/neuro-semantic/lattice/eligibility#",
+  wrd: "https://www.nebularis.org/neuro-semantic/lattice/wording#",
+  "wrd-voc": "https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#",
   exe: "https://www.nebularis.org/neuro-semantic/lattice/executable#",
   cst: "https://www.nebularis.org/neuro-semantic/lattice/config-studio#",
 };
@@ -33,6 +35,7 @@ export const VOC = ns(PREFIXES.voc);
 export const FND = ns(PREFIXES.fnd);
 export const QNT = ns(PREFIXES.qnt);
 export const ELG = ns(PREFIXES.elg);
+export const WRD = ns(PREFIXES.wrd);
 
 export const TYPE = RDF("type");
 export const LABEL = RDFS("label");

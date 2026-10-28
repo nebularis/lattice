@@ -3,7 +3,7 @@
 // sections and fields come from the vocabulary (rdf/editors.ts, rdf/vocabulary.ts).
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, Database, ListChecks, Plus, Ruler, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, Database, Library, ListChecks, Plus, Puzzle, Ruler, Sparkles, Trash2, X } from "lucide-react";
 import { KINDS, classOf, concerns, create, describe, kindOf, nameOf, sectionsFor, type Kind, type Special as SpecialKind } from "../rdf/editors";
 import { DAL, SRF, compact, type Graph } from "@lattice/authoring-domain";
 import { readPath, writePath, type Step } from "../rdf/path";
@@ -156,7 +156,7 @@ function AddNode({ part, kind, onClose }: { part: Part; kind: Kind; onClose: () 
   );
 }
 
-function NodeEditor({ part, node, focusField }: { part: Part; node: string; focusField?: string }) {
+export function NodeEditor({ part, node, focusField }: { part: Part; node: string; focusField?: string }) {
   const studio = useStudio();
   const { vocab, baseline, model } = studio;
   const graph = model.state.configs[part]!.current;
@@ -270,7 +270,19 @@ function Special({ kind, part, node }: { kind: SpecialKind; part: Part; node: st
   }
 }
 
-const PART_INFO: Record<Part, { title: string; tone: string; icon: (size: number) => React.ReactNode; empty: string }> = {
+export const PART_INFO: Record<Part, { title: string; tone: string; icon: (size: number) => React.ReactNode; empty: string }> = {
+  library: {
+    title: "Library",
+    tone: "baseline",
+    icon: (n) => <Library size={n} color="var(--baseline-c)" />,
+    empty: "A form is a wording whose elements say how each comes into a contract, and whose variables are the values a contract supplies.",
+  },
+  assembly: {
+    title: "Assemblies",
+    tone: "accent",
+    icon: (n) => <Puzzle size={n} color="var(--accent)" />,
+    empty: "An assembly names a form, the optional elements chosen and the values set. Assembling it gives the contract's wording.",
+  },
   vocabulary: {
     title: "Vocabulary",
     tone: "baseline",

@@ -50,3 +50,9 @@
              [ cst:fileName "facility-eligibility.ttl" ] ,
              [ cst:fileName "facility-persistence.ttl" ] ,
              [ cst:fileName "facility-surface.ttl" ] .
+
+<urn:lattice:studio:sample:builder> a cst:Sample ;
+    rdfs:label "Contract builder, a facility form" ;
+    rdfs:comment "The Wording layer's facility form in the library, with a variation slot, an optional clause and a clause included when the facility is syndicated, and two assemblies of it, one that assembles and one refused for a missing lender count." ;
+    cst:part [ cst:module "wording" ; cst:role "examples" ; cst:fileName "facility-form.ttl" ] ,
+             [ cst:fileName "builder-assemblies.ttl" ] .

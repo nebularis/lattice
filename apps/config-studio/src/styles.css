@@ -371,3 +371,22 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 .numberline { width: 100%; height: auto; display: block; margin: 6px 0 10px; overflow: visible; }
 .range-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
 .dot.ok { background: var(--ok); }
+
+/* Builder mode (ADR-A138) */
+.mode-switch { display: flex; gap: 2px; padding: 3px; margin: 0 2px 8px; background: var(--surface-2); border-radius: 9px; }
+.mode-switch button { all: unset; box-sizing: border-box; flex: 1; text-align: center; cursor: pointer; padding: 5px 8px; border-radius: 7px; font-weight: 550; color: var(--text-2); }
+.mode-switch button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.outline-row { gap: 8px; }
+.outline-id { min-width: 38px; color: var(--text-3); font-size: 12px; }
+.outline-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.outline-group { margin: 12px 14px 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); font-weight: 650; }
+.outline-condition { all: unset; cursor: pointer; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; background: var(--ok-2); color: var(--ok); }
+.choice-row { padding: 6px 0; cursor: pointer; }
+.link { all: unset; cursor: pointer; color: var(--accent-text); text-decoration: underline; font: 12px var(--mono); }
+.assembled { font-family: Georgia, "Times New Roman", serif; line-height: 1.55; max-width: 720px; }
+.assembled h4 { font: 650 17px/1.3 var(--sans, system-ui); margin: 0 0 10px; }
+.assembled h5 { font: 650 12px var(--sans, system-ui); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin: 14px 0 4px; }
+.assembled p { margin: 4px 0; }
+.assembled .clause-number { margin-right: 8px; font-variant-numeric: tabular-nums; }
+.doc-var { background: var(--warn-2); color: inherit; padding: 0 3px; border-radius: 3px; }
+.doc-ref { text-decoration: underline dotted; }

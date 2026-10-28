@@ -233,3 +233,132 @@ test("testing a profile's composed decision is marked as under construction", as
   await page.goto(`/#/w/${ws}/eligibility/${encodeURIComponent("https://example.org/lattice/eligibility/profile-a")}`);
   await expect(page.getByRole("note")).toContainText("Under construction");
 });
+
+const FORM = "https://example.org/lattice/wording/facility-form/";
+
+async function builderWorkspace(page: Page, fake: FakeService): Promise<string> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Contract builder/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  return [...fake.workspaces.keys()][0];
+}
+
+test("a builder sample is sorted into library, assembly and the layers a form reads", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await builderWorkspace(page, fake);
+  const w = fake.workspaces.get(ws)!;
+  expect(w.graphs.library).toContain("wrd:Wording");
+  expect(w.graphs.assembly).toContain("cst:Assembly");
+  expect(w.graphs.assembly).toContain("wrd:VariableValue");
+  expect(w.graphs.eligibility).toContain("elg:IntervalCondition");
+  expect(w.graphs.library).not.toContain("wrd:VariableValue");
+  expect(fake.saves.map((s) => [s.name, s.ifMatch]).sort()).toEqual([
+    ["assembly", '"0"'],
+    ["eligibility", '"0"'],
+    ["library", '"0"'],
+    ["quantification", '"0"'],
+    ["vocabulary", '"0"'],
+  ]);
+});
+
+test("the library is an outline of each form, and an element opens in the shape-driven editor", async ({ page }) => {
+  const fake = new FakeService();
+  await builderWorkspace(page, fake);
+  await page.getByRole("button", { name: "Builder" }).click();
+  await expect(page.getByRole("button", { name: "Builder" })).toHaveAttribute("aria-pressed", "true");
+  const tree = page.getByRole("tree", { name: "Library" });
+  // Order by rank key: sections 5, 9 and 12, and 5.1, 5.2, 5.3 within section 5.
+  const ids = await tree.locator(".outline-row .outline-id").allTextContents();
+  expect(ids.slice(0, 8)).toEqual(["5", "5.1", "5.2", "5.2A", "5.2B", "5.3", "9", "9.1"]);
+  await expect(tree.getByRole("treeitem", { name: /5\.2 .*Slot, 2 variants/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /5\.2B .*Variation/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /5\.1 .*Mandatory/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /5\.3 .*Optional/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /9\.1 .*Conditional.*When when syndicated/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /lender-count.*Governing/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /permitted-jurisdictions.*Embedded/ })).toBeVisible();
+
+  await tree.getByRole("treeitem", { name: /5\.3 / }).click();
+  await expect(page.getByRole("heading", { name: "5.3", level: 2 })).toBeVisible();
+  await expect(page.locator(".editor .iri")).toHaveText(FORM + "cl-5-3");
+  await expect(page.getByRole("treeitem", { name: /5\.3 / })).toHaveAttribute("aria-selected", "true");
+  // The same shared inspector shows the node's Turtle.
+  await expect(page.locator("aside").getByText("Read-only: edit through the forms.")).toBeVisible();
+});
+
+test("an assembly chooses options and sets values, and assembling shows the findings and the document", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await builderWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/assembly`);
+  const list = page.locator(".list");
+  await list.getByText("Syndicated, three lenders, UK and Ireland").click();
+
+  const choices = page.getByRole("region", { name: "Choices" });
+  await expect(choices.getByRole("checkbox")).toHaveCount(3);
+  await expect(choices.getByRole("checkbox", { name: /5\.2B/ })).toBeChecked();
+  await expect(choices.getByRole("checkbox", { name: /5\.2A/ })).not.toBeChecked();
+  await choices.getByRole("checkbox", { name: /5\.3/ }).check();
+
+  const values = page.getByRole("region", { name: "Values" });
+  await expect(values.getByLabel("lender-count")).toHaveValue(/^3(\.0)?$/);
+  await values.getByLabel("lender-count").fill("4");
+  await values.getByLabel("lender-count").press("Enter");
+  await expect(values.getByText("Written as xsd:decimal")).toBeVisible();
+  await expect(values.getByText("United Kingdom")).toBeVisible();
+
+  await page.getByRole("button", { name: "Assemble" }).click();
+  const outcome = page.getByRole("region", { name: "Assemble outcome" });
+  await expect(outcome.getByText("Refused")).toBeVisible();
+  const submitted = fake.submitted.find((s) => s.kind === "assemble")!;
+  expect(submitted.target).toBe("assembly");
+  // The edited assembly, unsaved, with the library and the conditions beside it.
+  expect(submitted.body).toContain("cst:choice");
+  expect(submitted.body).toContain("cst:choice ex:cl-5-2b, ex:cl-5-3");
+  expect(submitted.body).toMatch(/wrd:literalValue "4"\^\^xsd:decimal|wrd:literalValue 4\b/);
+  expect(submitted.body).toContain("wrd:Wording");
+  expect(submitted.body).toContain("elg:IntervalCondition");
+
+  // The refused assembly gives a finding with its stage, and a link to the variable it names.
+  const findings = outcome.getByRole("list", { name: "Findings" });
+  await expect(findings).toContainText("the value of lender-count is Undetermined");
+  await expect(findings.getByText("decide", { exact: true })).toBeVisible();
+  // The assembly that gave a record gives its document, readably, with the value shown.
+  const document = outcome.getByRole("region", { name: "Assembled Syndicated, three lenders, UK and Ireland" });
+  await expect(document.getByRole("heading", { name: "Syndicated, three lenders, UK and Ireland" })).toBeVisible();
+  await expect(document.getByRole("heading", { name: "Section 12" })).toBeVisible();
+  await expect(document.getByText("Each interest period is three months.")).toBeVisible();
+  await expect(document.locator("mark.doc-var")).toHaveText("United Kingdom, Ireland");
+  await expect(outcome.getByRole("region", { name: /Assembled No lender count/ })).toHaveCount(0);
+  await document.getByRole("button", { name: "View record" }).click();
+  await expect(document.locator(".code")).toContainText("wrd:AssembledWording");
+
+  await findings.getByRole("button", { name: /gv-lender-count/ }).click();
+  await expect(page).toHaveURL(new RegExp(`/library/${encodeURIComponent(FORM + "gv-lender-count")}`));
+  await expect(page.getByRole("treeitem", { name: /lender-count/ })).toHaveAttribute("aria-selected", "true");
+});
+
+test("a new assembly is written with a record per value, and saves to the assembly graph", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await builderWorkspace(page, fake);
+  await page.goto(`/#/w/${ws}/assembly`);
+  await page.locator(".list-head").getByRole("button", { name: "Add" }).click();
+  await expect(page.getByRole("heading", { name: "Assembly 3", level: 2 })).toBeVisible();
+  await expect(page.getByLabel("Form")).toHaveValue(FORM + "form");
+  const choices = page.getByRole("region", { name: "Choices" });
+  await choices.getByRole("checkbox", { name: /5\.2A/ }).check();
+  const values = page.getByRole("region", { name: "Values" });
+  await values.getByLabel("lender-count").fill("2");
+  await values.getByLabel("lender-count").press("Enter");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.getByRole("button", { name: "Saved" })).toBeDisabled();
+  const save = fake.saves.filter((s) => s.name === "assembly").pop()!;
+  expect(save.ifMatch).toBe('"1"');
+  expect(save.body).toContain("cst:assembles");
+  expect(save.body).toMatch(/wrd:literalValue "2"\^\^xsd:decimal|wrd:literalValue 2\b/);
+  expect(save.body).toContain("wrd:forVariable ex:gv-lender-count");
+  // A library save did not happen: only the assembly changed.
+  expect(fake.saves.filter((s) => s.name === "library")).toHaveLength(1);
+});

@@ -26,12 +26,13 @@ SAMPLE_PREFIX = "urn:lattice:studio:sample:"
 VOCABULARY = (
     ("persistence", "spec"), ("surface", "spec"), ("surface", "vocab"), ("foundation", "spec"), ("foundation", "vocab"), ("vocabulary", "spec"),
     ("quantification", "spec"), ("quantification", "vocab"), ("eligibility", "spec"), ("eligibility", "vocab"),
+    ("wording", "spec"), ("wording", "vocab"),
 )
 
 # The layers whose SHACL shapes place and constrain the forms' properties. The browser reads only
 # node shapes and property shapes, so only the triples below are staged. SHACL-SPARQL constraints,
 # messages and rules stay out.
-SHAPED = ("persistence", "surface", "foundation", "vocabulary", "quantification", "eligibility")
+SHAPED = ("persistence", "surface", "foundation", "vocabulary", "quantification", "eligibility", "wording")
 SHAPE_PREDICATES = frozenset(
     SH[n] for n in ("targetClass", "property", "path", "datatype", "class", "nodeKind", "in", "minCount", "maxCount", "name", "description")
 ) | {RDF.first, RDF.rest}

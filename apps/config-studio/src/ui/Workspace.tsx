@@ -2,7 +2,7 @@
 // The workspace shell: top bar, navigation, the view, the inspector and the problems drawer, all
 // sharing one selection, the route.
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronDown,
@@ -14,7 +14,9 @@ import {
   Hammer,
   Layers,
   LayoutDashboard,
+  Library,
   PanelRight,
+  Puzzle,
   Redo2,
   Save,
   Search,
@@ -25,12 +27,14 @@ import {
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
+import { assembliesOf, formsOf } from "../rdf/builder";
 import { compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
 import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "../state";
 import { BaselineView } from "./BaselineView";
 import { BuildView } from "./BuildView";
+import { AssemblyView, LibraryView, useAssembler } from "./BuilderView";
 import { ConfigView } from "./ConfigView";
 import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
 import { Overview } from "./Overview";
@@ -57,7 +61,10 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+const VIEWS = ["overview", "baseline", "library", "assembly", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+
+/** The views of builder mode (ADR-A138), which share the workspace's state, inspector and problems drawer with the rest. */
+const BUILDER_VIEWS: readonly string[] = ["library", "assembly"];
 
 const PART_NAV: { part: Part; label: string; icon: React.ReactNode }[] = [
   { part: "vocabulary", label: "Vocabulary", icon: <BookOpen size={16} /> },
@@ -70,8 +77,13 @@ type View = (typeof VIEWS)[number];
 
 export function Workspace({ id, route, vocab }: { id: string; route: string[]; vocab: Vocabulary }) {
   const model = useWorkspace(id, vocab);
+  const assembler = useAssembler(id, model);
   const { state } = model;
   const view: View = (VIEWS as readonly string[]).includes(route[0]) ? (route[0] as View) : "overview";
+  const builder = BUILDER_VIEWS.includes(view);
+  // The last view of each mode, so the switch returns to it.
+  const lastView = useRef({ configure: "overview", builder: "library" });
+  lastView.current[builder ? "builder" : "configure"] = view;
   const node = route[1];
   const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : "persistence";
   const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
@@ -184,20 +196,40 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
         </header>
 
         <nav className="nav" aria-label="Workspace">
-          <NavLink to="overview" view={view} id={id} icon={<LayoutDashboard size={16} />} label="Overview" />
-          <NavLink to="baseline" view={view} id={id} icon={<Shapes size={16} />} label="Baseline" count={baseline.classes.size} />
-          <div className="group">Configuration</div>
-          {PART_NAV.map((n) => (
-            <NavLink key={n.part} to={n.part} view={view} id={id} icon={n.icon} label={n.label} count={itemLists[n.part].length} issues={model.issues[n.part]} dirty={dirty[n.part]} />
-          ))}
-          <div className="group">Output</div>
-          <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
+          <div className="mode-switch" role="group" aria-label="Mode">
+            <button aria-pressed={!builder} onClick={() => go("w", id, lastView.current.configure)}>
+              Configure
+            </button>
+            <button aria-pressed={builder} onClick={() => go("w", id, lastView.current.builder)}>
+              Builder
+            </button>
+          </div>
+          {builder ? (
+            <>
+              <div className="group">Contract builder</div>
+              <NavLink to="library" view={view} id={id} icon={<Library size={16} />} label="Library" count={formsOf(model.world).length} issues={model.issues.library} dirty={dirty.library} />
+              <NavLink to="assembly" view={view} id={id} icon={<Puzzle size={16} />} label="Assemblies" count={assembliesOf(state.configs.assembly!.current).length} issues={model.issues.assembly} dirty={dirty.assembly} />
+            </>
+          ) : (
+            <>
+              <NavLink to="overview" view={view} id={id} icon={<LayoutDashboard size={16} />} label="Overview" />
+              <NavLink to="baseline" view={view} id={id} icon={<Shapes size={16} />} label="Baseline" count={baseline.classes.size} />
+              <div className="group">Configuration</div>
+              {PART_NAV.map((n) => (
+                <NavLink key={n.part} to={n.part} view={view} id={id} icon={n.icon} label={n.label} count={itemLists[n.part].length} issues={model.issues[n.part]} dirty={dirty[n.part]} />
+              ))}
+              <div className="group">Output</div>
+              <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
+            </>
+          )}
         </nav>
 
         <main className="main" id="main">
           {view === "overview" && <Overview />}
           {view === "baseline" && <BaselineView selected={node} />}
-          {editing && <ConfigView part={activePart} selected={node} field={route[2]} />}
+          {view === "library" && <LibraryView selected={node} field={route[2]} />}
+          {view === "assembly" && <AssemblyView selected={node} assembler={assembler} />}
+          {editing && !builder && <ConfigView part={activePart} selected={node} field={route[2]} />}
           {view === "build" && <BuildView />}
         </main>
 

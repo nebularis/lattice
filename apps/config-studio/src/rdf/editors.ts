@@ -4,7 +4,7 @@
 // by rdfs:domain is not the one an author wants, as for the dimensions of a dal:DataAccessProfile.
 // Any other dal: or srf: node gets one section of its type's own properties.
 
-import { COMMENT, CST, DAL, ELG, FND, Graph, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
+import { COMMENT, CST, DAL, ELG, FND, Graph, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, WRD, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
 import type { Baseline } from "./baseline";
 import type { Issue } from "./report";
 import type { Field, Vocabulary } from "./vocabulary";
@@ -55,6 +55,8 @@ const CONTRACT: Section = {
 };
 
 export const KINDS: Kind[] = [
+  // The contract builder's views draw these (ADR-A138). A form's elements are listed by their kinds, derived from the vocabulary.
+  { type: CST("Assembly"), part: "assembly", title: "Assembly", plural: "Assemblies", creatable: false },
   {
     type: DAL("DataAccessProfile"),
     part: "persistence",
@@ -246,7 +248,7 @@ const PATH_PROPERTIES = new Set([SRF("readProperty"), SRF("hasPathStep")]);
 
 const KIND_BY_TYPE = new Map(KINDS.map((k) => [k.type, k]));
 
-const OWN_NAMESPACE: Record<Part, string> = { persistence: DAL(""), surface: SRF(""), vocabulary: VOC(""), quantification: QNT(""), eligibility: ELG("") };
+const OWN_NAMESPACE: Record<Part, string> = { library: WRD(""), assembly: CST(""), persistence: DAL(""), surface: SRF(""), vocabulary: VOC(""), quantification: QNT(""), eligibility: ELG("") };
 
 export function kindOf(graph: Graph, node: Term | string, part: Part): Kind | undefined {
   const types = graph.types(node);
@@ -293,6 +295,8 @@ export function nameOf(graph: Graph, node: string): string {
     graph.value(node, QNT("spaceKey")) ??
     graph.value(node, SRF("contractKey")) ??
     graph.value(node, DAL("constraintId")) ??
+    graph.value(node, WRD("variableKey")) ??
+    graph.value(node, WRD("objectId")) ??
     sentence(humanise(localName(node)))
   );
 }

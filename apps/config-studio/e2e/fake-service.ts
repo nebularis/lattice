@@ -12,7 +12,7 @@ import { Parser } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
-const PARTS = ["vocabulary", "quantification", "eligibility", "persistence", "surface"];
+const PARTS = ["library", "assembly", "vocabulary", "quantification", "eligibility", "surface", "persistence"];
 const E = "https://example.org/lattice/eligibility/";
 const ELG = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#";
 const QNT = "https://www.nebularis.org/neuro-semantic/lattice/quantification#";
@@ -45,6 +45,45 @@ function layerResults(job: string, target: string, body: string): string {
     lines.push(`${job} cst:testResult ${node} . ${node} cst:question <${question}> ; cst:condition <${value(question, ELG + "forCondition")}> ; cst:decision cst:${decided}${expected ? ` ; cst:passed ${expected === decided}` : ""} .`);
   });
   return lines.join("\n") + "\n";
+}
+
+const A = "https://example.org/lattice/studio/assembly/";
+
+/** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
+ * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
+const RECORD = `@prefix wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#> .\n<urn:r> a wrd:AssembledWording .\n`;
+const DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="https://www.nebularis.org/neuro-semantic/lattice/document/1" id="00000000-0000-4000-8000-000000000001">
+  <meta><title>Syndicated, three lenders, UK and Ireland</title><template>form</template>
+    <variable key="permitted-jurisdictions" type="text">permitted-jurisdictions</variable></meta>
+  <body>
+    <section key="section-5">
+      <clause id="00000000-0000-4000-8000-000000000002">5.1 Interest accrues daily on each loan.</clause>
+      <clause id="00000000-0000-4000-8000-000000000003">5.2 Each interest period is three months.</clause>
+    </section>
+    <section key="section-12">
+      <clause id="00000000-0000-4000-8000-000000000004">12.1 The borrower may operate in <var key="permitted-jurisdictions">United Kingdom, Ireland</var></clause>
+    </section>
+  </body>
+</document>
+`;
+
+function assembleResults(job: string, body: string): { turtle: string; conforms: boolean } {
+  const quads = new Parser().parse(body);
+  const assemblies = quads.filter((q) => q.predicate.value === RDF_TYPE && q.object.value === CST + "Assembly").map((q) => q.subject.value).sort();
+  let conforms = true;
+  const lines: string[] = [];
+  for (const assembly of assemblies) {
+    if (assembly === A + "unsettled") {
+      conforms = false;
+      lines.push(`<urn:r> sh:result [ sh:resultSeverity sh:Violation ; sh:resultMessage "${assembly}: the value of lender-count is Undetermined" ; cst:code "decide" ; sh:focusNode <https://example.org/lattice/wording/facility-form/gv-lender-count> ] .`);
+      continue;
+    }
+    const artefact = (path: string, type: string, content: string) =>
+      `${job} cst:artefact [ cst:path "${path}" ; cst:mediaType "${type}" ; cst:group "${assembly}" ; cst:content ${JSON.stringify(content)} ] .`;
+    lines.push(artefact("record.ttl", "text/turtle", RECORD), artefact("document.xml", "application/xml", DOCUMENT));
+  }
+  return { turtle: lines.join("\n") + "\n", conforms };
 }
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
@@ -94,11 +133,16 @@ export class FakeService {
   private jobGraph(id: string): string {
     const job = this.jobs.get(id)!;
     const iri = `<urn:lattice:studio:job:${id}>`;
-    const head = `${iri} a cst:Job ; cst:kind cst:${job.kind === "validate" ? "Validate" : "Compile"} ; cst:target cst:${job.target === "surface" ? "Surface" : "Persistence"} ;
+    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : "Compile";
+    const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${job.target === "surface" ? "Surface" : job.target === "assembly" ? "AssemblyTarget" : "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
+    }
+    if (job.kind === "assemble") {
+      const result = assembleResults(iri, job.body);
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${result.conforms} ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${result.turtle}`;
     }
     if (job.target === "vocabulary" || job.target === "eligibility") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n${layerResults(iri, job.target, job.body)}`;
     const refused = job.body.includes("NoErasure");

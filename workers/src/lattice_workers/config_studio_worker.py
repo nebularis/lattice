@@ -11,7 +11,7 @@ import re
 import uuid
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable, Mapping, Protocol
+from typing import Any, Callable, Mapping, Optional, Protocol
 
 from rdflib import Dataset, Graph, Literal, URIRef
 from rdflib.namespace import RDF
@@ -49,8 +49,8 @@ class GraphStore(Protocol):
     def get_graph(self, graph_iri: str) -> Graph:
         """Read a named graph, raising `GraphNotFound` when it does not exist."""
 
-    def put_graph(self, graph_iri: str, graph: Graph) -> None:
-        """Write a named graph, replacing any prior content."""
+    def put_graph(self, graph_iri: str, graph: Graph, others: Optional[Mapping[str, Graph]] = None) -> None:
+        """Write a named graph, replacing any prior content, with any `others` in the same write."""
 
 
 def _time(value: str) -> Literal:
@@ -92,18 +92,37 @@ class ConfigStudioWorker:
 
         final = Graph() + running
         final.remove((job, CST.status, None))
+        self._record: Optional[Graph] = None
         try:
             final += self._run(job, graph)
             final.add((job, CST.status, CST.Succeeded))
         except Exception as error:  # the job could not run, which the author reads as a failure
+            self._record = None
             for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult):
                 final.remove((job, predicate, None))
             final.add((job, CST.status, CST.Failed))
             final.add((job, CST.failureMessage, Literal(str(error) or type(error).__name__)))
         final.add((job, CST.finishedAt, _time(self._clock())))
-        self._store.put_graph(job_iri, final)
+        if self._record is not None and len(self._record):
+            self._store.put_graph(job_iri, final, {f"{job_iri}:record": self._record})
+        else:
+            self._store.put_graph(job_iri, final)
 
     def _run(self, job: URIRef, graph: Graph) -> Graph:
+        from . import config_studio_assembly
+
+        input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
+        if graph.value(job, CST.kind) == CST.Assemble:
+            result, self._record = config_studio_assembly.assemble_all(job, input_("assembly"), str(graph.value(job, CST.submittedAt)))
+            return result
+        if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) == CST.Library:
+            return config_studio_assembly.validate_library(job, input_("library"))
+        if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) == CST.AssemblyTarget:
+            from .config_studio_jobs import _Result
+
+            nothing = _Result(job)
+            nothing.conforms(True)
+            return nothing.graph
         if graph.value(job, CST.kind) == CST.Analyse:
             document = self._read(graph, job, CST.configGraph, "document", allowed=lambda iri: iri == f"{job}:input")
             return analyse_document(job, document)
@@ -184,7 +203,7 @@ class WriterStore:
     def get_graph(self, graph_iri: str) -> Graph:
         return self._reader.get_graph(graph_iri)
 
-    def put_graph(self, graph_iri: str, graph: Graph) -> None:
+    def put_graph(self, graph_iri: str, graph: Graph, others: Optional[Mapping[str, Graph]] = None) -> None:
         job = _MESSAGE.fullmatch(graph_iri)
         workspace = _WORKSPACE.fullmatch(str(graph.value(URIRef(graph_iri), CST.workspace) or ""))
         if job is None or workspace is None:
@@ -193,6 +212,10 @@ class WriterStore:
         named = dataset.graph(URIRef(graph_iri))
         for triple in graph:
             named.add(triple)
+        for name, other in (others or {}).items():
+            added = dataset.graph(URIRef(name))
+            for triple in other:
+                added.add(triple)
         # The id names the command's receipt, so a publish repeated after a broker failure is applied once.
         headers = {
             "id": str(uuid.uuid4()), "sender": "worker", "command": "job-update",

@@ -2,14 +2,22 @@
 // Sorts an imported graph into the graphs a workspace keeps, by the terms each named subject uses:
 // its rdf:type or its predicates. The first part in PARTS whose namespace a subject uses takes it,
 // so an elg:Question that names a qnt:RangeSet stays with eligibility. A concept scheme or concept
-// goes to vocabulary. Everything else is baseline. A blank node goes wherever the subject that
+// goes to vocabulary. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, and any
+// other wrd: subject to library, after the rest. Everything else is baseline. A blank node goes wherever the subject that
 // refers to it went, so path steps written as blank nodes and RDF lists stay with their owner.
 
-import { Graph, PREFIXES, SKOS, TYPE, type Quad, type Term } from "@lattice/authoring-domain";
+import { CST, Graph, PREFIXES, SKOS, TYPE, WRD, type Quad, type Term } from "@lattice/authoring-domain";
 
-export type Part = "baseline" | "vocabulary" | "quantification" | "eligibility" | "surface" | "persistence";
+export type Part = "baseline" | "library" | "assembly" | "vocabulary" | "quantification" | "eligibility" | "surface" | "persistence";
+
+/** An assembly and the value records it sets come first, since a value record uses Wording's terms. */
+const assembly = (q: Quad) =>
+  q.predicate.value === CST("assembles") ||
+  q.predicate.value === WRD("forVariable") ||
+  (q.predicate.value === TYPE && (q.object.value === CST("Assembly") || q.object.value === WRD("VariableValue")));
 
 const OWNERS: [Part, (q: Quad) => boolean][] = [
+  ["assembly", assembly],
   ["persistence", uses(PREFIXES.dal)],
   ["surface", uses(PREFIXES.srf)],
   ["eligibility", uses(PREFIXES.elg)],
@@ -21,6 +29,8 @@ const OWNERS: [Part, (q: Quad) => boolean][] = [
       q.predicate.value === SKOS("inScheme") ||
       (q.predicate.value === TYPE && (q.object.value === SKOS("Concept") || q.object.value === SKOS("ConceptScheme"))),
   ],
+  // Any other wrd: subject is a form's, last, since a condition a form names is eligibility's.
+  ["library", uses(PREFIXES.wrd)],
 ];
 
 function uses(base: string): (q: Quad) => boolean {
@@ -50,11 +60,11 @@ export function split(graph: Graph): Record<Part, Graph> {
       }
     }
   }
-  const parts: Record<Part, Quad[]> = { baseline: [], vocabulary: [], quantification: [], eligibility: [], surface: [], persistence: [] };
+  const parts: Record<Part, Quad[]> = { baseline: [], library: [], assembly: [], vocabulary: [], quantification: [], eligibility: [], surface: [], persistence: [] };
   for (const q of graph.quads()) parts[owner.get(q.subject.id) ?? "baseline"].push(q);
   return Object.fromEntries(Object.entries(parts).map(([part, quads]) => [part, Graph.of(quads, graph.prefixes)])) as Record<Part, Graph>;
 }
 
-/** The configurations a workspace keeps beside its baseline, in the order the studio shows them. */
+/** The configurations a workspace keeps beside its baseline, in the order the service keeps them. */
 export type ConfigPart = Exclude<Part, "baseline">;
-export const CONFIG_PARTS: ConfigPart[] = ["vocabulary", "quantification", "eligibility", "persistence", "surface"];
+export const CONFIG_PARTS: ConfigPart[] = ["library", "assembly", "vocabulary", "quantification", "eligibility", "surface", "persistence"];

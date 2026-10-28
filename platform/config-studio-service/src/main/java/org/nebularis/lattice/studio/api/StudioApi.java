@@ -490,8 +490,10 @@ public final class StudioApi {
         if ("analyse".equals(kind)) {
             return submitAnalysis(id, target);
         }
-        if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))) {
-            return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", or compile, with target one of " + COMPILED);
+        if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
+            && !("assemble".equals(kind) && "assembly".equals(target))) {
+            return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
+                + ", assemble, with target assembly, or analyse, with target a document");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -558,6 +560,7 @@ public final class StudioApi {
         job.addProperty(Cst.kind, switch (kind) {
             case "validate" -> Cst.Validate;
             case "compile" -> Cst.Compile;
+            case "assemble" -> Cst.Assemble;
             default -> Cst.Analyse;
         });
         if (target != null) {
