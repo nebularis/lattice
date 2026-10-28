@@ -1,0 +1,1 @@
+Kinds: {kinds}. Roles: {roles}. Activities: {activities}. Schema: {schema}

@@ -4,9 +4,13 @@
 // the review of waiting proposals, and what a stated term reads. The review is one component, ProposalCard, which later
 // proposers share (ADR-A42).
 
-import { useMemo, useState } from "react";
-import { Check, Plus } from "lucide-react";
-import { Graph, INS, localName } from "@lattice/authoring-domain";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Check, Plus, Sparkles } from "lucide-react";
+import { Graph, INS, compact, localName } from "@lattice/authoring-domain";
+import { api, awaitJob } from "../api";
+import type { Issue } from "../rdf/report";
+import { PARTS } from "../state";
+import { SeverityIcon, Spinner } from "./kit";
 import { flatten, formsOf, outline, type OutlineNode } from "../rdf/builder";
 import {
   DECISIONS,
@@ -15,6 +19,7 @@ import {
   decide,
   isWaiting,
   lexiconOf,
+  mergeProposals,
   proposalsOf,
   propose,
   readsOf,
@@ -50,6 +55,92 @@ function useMeaning() {
 }
 type M = ReturnType<typeof useMeaning>;
 
+// ---- Proposers ---------------------------------------------------------------------------
+
+type Proposer = "sentence-forms" | "language-model";
+const PROPOSERS: { id: Proposer; label: string }[] = [
+  { id: "sentence-forms", label: "Sentence forms" },
+  { id: "language-model", label: "Language model" },
+];
+
+interface ProposeRun {
+  state: "running" | "done" | "failed";
+  proposer: Proposer;
+  added?: number;
+  issues?: Issue[];
+  message?: string;
+}
+
+/** Submits every configuration to a propose job and adds the proposals of its `review.ttl` to the review part as an unsaved
+ * edit. The job is kept, as the assemble job is, since its proposals are minted under it. */
+function usePropose(m: M) {
+  const [run, setRun] = useState<ProposeRun>();
+  const latest = useRef(m);
+  latest.current = m;
+  const id = m.studio.id;
+  const start = useCallback(
+    async (proposer: Proposer) => {
+      const { model } = latest.current;
+      let body = Graph.empty();
+      for (const p of PARTS) body = body.merge(model.state.configs[p]?.current ?? Graph.empty());
+      setRun({ state: "running", proposer });
+      try {
+        const job = await awaitJob(await api.submit(id, "propose", proposer, body));
+        if (job.status === "Failed") return setRun({ state: "failed", proposer, message: job.failure ?? "The propose job failed." });
+        const file = job.artefacts.find((a) => a.path === "review.ttl");
+        const current = latest.current.model.state.configs.review!.current;
+        const merged = mergeProposals(current, file ? Graph.parse(file.content) : Graph.empty());
+        if (merged.added > 0) latest.current.model.edit("review", (g) => mergeProposals(g, Graph.parse(file!.content)).review);
+        setRun({ state: "done", proposer, added: merged.added, issues: job.issues });
+      } catch (error) {
+        setRun({ state: "failed", proposer, message: error instanceof Error ? error.message : String(error) });
+      }
+    },
+    [id],
+  );
+  return { run, start };
+}
+
+function ProposeBar({ m }: { m: M }) {
+  const { studio } = m;
+  const { run, start } = usePropose(m);
+  const [proposer, setProposer] = useState<Proposer>("sentence-forms");
+  return (
+    <div style={{ marginTop: 10 }} aria-label="Propose" role="group">
+      <div className="row">
+        <label className="small muted" htmlFor="proposer">Proposer</label>
+        <select id="proposer" className="select grow" value={proposer} onChange={(e) => setProposer(e.target.value as Proposer)}>
+          {PROPOSERS.map((p) => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
+        <button className="btn sm primary" disabled={run?.state === "running"} onClick={() => void start(proposer)}>
+          {run?.state === "running" ? <Spinner /> : <Sparkles size={13} />} Propose
+        </button>
+      </div>
+      {run?.state === "failed" && (
+        <p className="small" style={{ color: "var(--bad)", margin: "8px 0 0" }} role="alert">The {run.proposer} proposer could not run: {run.message}</p>
+      )}
+      {run?.state === "done" && (
+        <div role="status" aria-label="Propose outcome" style={{ marginTop: 8 }}>
+          <div className="small">
+            {run.added} {run.added === 1 ? "proposal" : "proposals"} added from {run.proposer}.{run.added ? " Save to keep them." : ""}
+          </div>
+          {run.issues!.map((i, n) => (
+            <div key={n} className="row small" style={{ alignItems: "flex-start", marginTop: 4 }}>
+              <SeverityIcon severity={i.severity} />
+              <span className="grow">
+                {i.message}{" "}
+                {i.focus && <button className="link" onClick={() => studio.open("meaning", i.focus!)}>{compact(i.focus)}</button>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MeaningView({ selected, field }: { selected?: string; field?: string }) {
   const m = useMeaning();
   const { studio, meaning, clauses, proposals } = m;
@@ -69,6 +160,7 @@ export function MeaningView({ selected, field }: { selected?: string; field?: st
             <span className="small muted">{terms} {terms === 1 ? "term" : "terms"}</span>
             {waiting.length > 0 && <span className="chip warn">{waiting.length} waiting</span>}
           </div>
+          <ProposeBar m={m} />
         </div>
         {clauses.length === 0 && <div className="empty small">No clause in the library yet. Import a document or a sample that holds a Wording form.</div>}
         {clauses.map(({ form, node }) => {
@@ -375,6 +467,8 @@ function ProposalCard({ proposal: p, m }: { proposal: Proposal; m: M }) {
         <span className="small muted">{when(p.proposedAt)}</span>
       </div>
       {p.problem && <p className="small" style={{ color: "var(--bad)" }}>{p.problem}</p>}
+      {p.evidence && <p className="small" style={{ margin: "0 0 8px" }}>Evidence: <q>{p.evidence}</q></p>}
+      {p.proposerVersion && <p className="small muted" style={{ margin: "0 0 8px" }}>Proposer version: {p.proposerVersion}</p>}
       <ul style={{ margin: "0 0 10px", paddingLeft: 18 }} aria-label="Proposed templates">
         {lines.map((r) => (
           <li key={r.iri}>{say(r, lex)}</li>

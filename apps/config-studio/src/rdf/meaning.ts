@@ -155,6 +155,10 @@ export interface Proposal {
   span?: string;
   proposer: string;
   proposedAt?: string;
+  /** The words of the clause the proposal rests on. */
+  evidence?: string;
+  /** The proposer's version and, for a language model, its model and pack. */
+  proposerVersion?: string;
   decision?: Decision;
   decidedAt?: string;
   proposes: string[];
@@ -181,6 +185,8 @@ export function readProposal(review: Graph, node: string): Proposal {
     span: review.value(node, CST("span")),
     proposer: review.value(node, CST("proposer")) ?? "unknown",
     proposedAt: review.value(node, CST("proposedAt")),
+    evidence: review.value(node, CST("evidence")),
+    proposerVersion: review.value(node, CST("proposerVersion")),
     decision: decision ? (localName(decision) as Decision) : undefined,
     decidedAt: review.value(node, CST("decidedAt")),
     proposes: review.objects(node, CST("proposes")).map((o) => o.value),
@@ -198,6 +204,16 @@ export function proposalsOf(review: Graph): Proposal[] {
 }
 
 export const isWaiting = (p: Proposal) => p.decision === undefined;
+
+/** Adds the proposals of a propose job's `review.ttl` to the review configuration. A proposal already there, decided or
+ * waiting, is left as it is, so merging the same artefact twice changes nothing. Returns the graph and how many were added. */
+export function mergeProposals(review: Graph, incoming: Graph): { review: Graph; added: number } {
+  const fresh = incoming.ofType(CST("Proposal")).filter((p) => !review.has(p.value));
+  const subset = Graph.empty().edit((e) => {
+    for (const p of fresh) for (const q of incoming.quads(p)) e.add(q.subject, q.predicate.value, q.object);
+  });
+  return { review: review.merge(subset), added: fresh.length };
+}
 
 
 export interface Entry {

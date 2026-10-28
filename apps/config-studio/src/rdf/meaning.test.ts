@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CST, ELG, Graph, INS, QNT, XSD, literal } from "@lattice/authoring-domain";
-import { DECISIONS, activitiesOf, addRole, decide, isWaiting, lexiconOf, proposalsOf, propose, readsOf, relationKinds, relationsOf, rolesOf, say, termsFor, termsOf } from "./meaning";
+import { DECISIONS, activitiesOf, addRole, decide, isWaiting, lexiconOf, mergeProposals, proposalsOf, propose, readsOf, relationKinds, relationsOf, rolesOf, say, termsFor, termsOf } from "./meaning";
 import { split } from "./split";
 import { Vocabulary } from "./vocabulary";
 
@@ -215,5 +215,23 @@ describe("what a term reads", () => {
 
   it("reads nothing for a term with no relation", () => {
     expect(readsOf(parts.meaning, vocab, lex, M + "term-5-3")).toEqual({ roles: [], concepts: [], ranges: [], conditions: [] });
+  });
+});
+
+describe("merging a propose job's proposals", () => {
+  const review = parts.review;
+  const incoming = Graph.parse(`
+    @prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+    <urn:job:1:proposal/1> a cst:Proposal ; cst:span <${F}cl-12-1> ; cst:proposer "sentence-forms" ; cst:evidence "may operate" ; cst:proposerVersion "v1" ; cst:payload "" .
+  `);
+
+  it("adds a new proposal once, with its evidence and version, and leaves the existing ones as they were", () => {
+    const once = mergeProposals(review, incoming);
+    expect(once.added).toBe(1);
+    expect(proposalsOf(once.review).find((p) => p.iri === "urn:job:1:proposal/1")).toMatchObject({ evidence: "may operate", proposerVersion: "v1" });
+    for (const p of proposalsOf(review)) expect({ ...proposalsOf(once.review).find((q) => q.iri === p.iri), payload: 0 }).toEqual({ ...p, payload: 0 });
+    const twice = mergeProposals(once.review, incoming);
+    expect(twice.added).toBe(0);
+    expect(quadsOf(twice.review)).toEqual(quadsOf(once.review));
   });
 });

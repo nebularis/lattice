@@ -394,6 +394,21 @@ Not run: a form created from scratch, which builder mode does not offer yet. A m
 
 Not run: Retarget in the browser, covered by unit tests, and validation findings shown on a template's fields, which the fake service does not return.
 
+## CB3: proposers
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CB3-01 | a propose job naming the sentence-form proposer, and one naming an unknown proposer / `POST …/jobs` / `202` with `cst:Propose` and `cst:SentenceFormProposer`, `400` | L1 | + − | pass, `AssemblyTest` |
+| CB3-02 | the builder sample with its roles in the baseline / the sentence-form proposer / one waiting proposal, for 12.1, a Permission held by the Borrower, its evidence showing the variable by its key, and no candidate for 5.2A and 5.2B. Nothing for a clause with meaning or a proposal waiting | L1 | + − | pass. The roles were first missing, since the job read no baseline, which it now reads as a validation does |
+| CB3-03 | the same job twice / proposed / the same proposals | L1 | + | pass |
+| CB3-04 | no endpoint, model or pack configured / the language-model proposer / the job fails saying no language model is configured | L1 | − | pass |
+| CB3-05 | a local endpoint answering in a code fence, a test pack, a key / the language-model proposer / `POST /v1/chat/completions` with the bearer key, the model and the rendered pack, the reply checked against the schema, an undeclared activity dropped and said so in the evidence | L1 | + − | pass |
+| CB3-06 | the Propose control / the browser's unit tests and Playwright against the fake service / proposals merged once, findings linked to their clauses, the failure message shown, a proposal confirmed | L1, L3 | + | pass, 83 unit and 19 browser tests |
+| CB3-07 | the native stack with the builder sample / Propose with sentence forms, then with the language model, in the browser pane / "Borrower may" waiting for 12.1 with its evidence and proposer version, no candidate for 5.2A and 5.2B, and the language model's failure stated plainly | L5 | + − | pass after the baseline fix of CB3-02 |
+| CB3-08 | every suite / `check:config-studio`, `test:config-studio`, `check:workers`, `check:knowledge` / pass | L1 | + | pass, 71 service, 3 writer, 9 authoring, 59 studio Python, 130 worker and 83 knowledge tests |
+
+Not run: a language model behind a real provider's endpoint, which needs a deployment's pack and key, and the MCP server, the second stage of BQ-2.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

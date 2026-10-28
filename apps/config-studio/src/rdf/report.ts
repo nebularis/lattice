@@ -64,7 +64,7 @@ export interface TestResult {
 
 export interface Job {
   iri: string;
-  kind: "Validate" | "Compile" | "Assemble";
+  kind: "Validate" | "Compile" | "Assemble" | "Propose";
   target: "Persistence" | "Surface" | "Vocabulary" | "Quantification" | "Eligibility";
   status: JobStatus;
   submittedAt?: string;

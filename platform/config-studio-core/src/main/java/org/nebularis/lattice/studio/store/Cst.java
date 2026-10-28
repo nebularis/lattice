@@ -47,6 +47,9 @@ public final class Cst {
     public static final Property receiptRevision = p("receiptRevision");
     public static final Resource Analyse = r("Analyse");
     public static final Resource Assemble = r("Assemble");
+    public static final Resource Propose = r("Propose");
+    public static final Resource SentenceFormProposer = r("SentenceFormProposer");
+    public static final Resource LanguageModelProposer = r("LanguageModelProposer");
     public static final Resource Document = r("Document");
     public static final Property document = p("document");
     public static final Property template = p("template");

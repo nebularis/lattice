@@ -15,7 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8.0", "jsonschema>=4.23,<5"]
 authoring = ["rdflib>=7.1,<8"]
-studio = ["rdflib>=7.0,<8", "pyshacl>=0.26,<1"]
+studio = ["rdflib>=7.0,<8", "pyshacl>=0.26,<1", "jsonschema>=4.23,<5"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

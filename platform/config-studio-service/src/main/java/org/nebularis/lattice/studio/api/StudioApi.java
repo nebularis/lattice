@@ -47,6 +47,9 @@ public final class StudioApi {
     /** The configurations a job checks, and those of them that compile. */
     private static final List<String> TARGETS = GRAPH_NAMES.subList(1, GRAPH_NAMES.size());
     private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence");
+    /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
+    private static final Map<String, Resource> PROPOSERS = Map.of(
+        "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer);
 
     private static final String TRIG = "application/trig";
 
@@ -491,9 +494,10 @@ public final class StudioApi {
             return submitAnalysis(id, target);
         }
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
-            && !("assemble".equals(kind) && "assembly".equals(target))) {
+            && !("assemble".equals(kind) && "assembly".equals(target))
+            && !("propose".equals(kind) && PROPOSERS.containsKey(target))) {
             return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
-                + ", assemble, with target assembly, or analyse, with target a document");
+                + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet() + ", or analyse, with target a document");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -561,10 +565,11 @@ public final class StudioApi {
             case "validate" -> Cst.Validate;
             case "compile" -> Cst.Compile;
             case "assemble" -> Cst.Assemble;
+            case "propose" -> Cst.Propose;
             default -> Cst.Analyse;
         });
         if (target != null) {
-            job.addProperty(Cst.target, Cst.target(target));
+            job.addProperty(Cst.target, kind.equals("propose") ? PROPOSERS.get(target) : Cst.target(target));
         }
         job.addProperty(Cst.workspace, m.createResource(Graphs.workspace(ws)));
         job.addProperty(Cst.configGraph, m.createResource(input));

@@ -438,3 +438,37 @@ test("the meaning view reads each clause's stated meaning, edits a template, ent
   expect(confirmed.body).toMatch(/cst:decision cst:Confirm/);
   expect(confirmed.body).toContain("cst:decidedAt");
 });
+
+test("the propose control adds a proposer's proposals for review, and shows why a proposer could not run", async ({ page }) => {
+  const fake = new FakeService();
+  await builderWorkspace(page, fake);
+  await page.getByRole("button", { name: "Builder" }).click();
+  await page.getByRole("link", { name: /^Meaning/ }).click();
+  const tree = page.getByRole("tree", { name: "Meaning" });
+  const bar = page.getByRole("group", { name: "Propose" });
+
+  // The sentence-form proposer proposes a permission for 12.1 and finds nothing for 5.2A.
+  await bar.getByLabel("Proposer").selectOption({ label: "Sentence forms" });
+  await bar.getByRole("button", { name: "Propose" }).click();
+  const outcome = page.getByRole("status", { name: "Propose outcome" });
+  await expect(outcome.getByText("1 proposal added from sentence-forms")).toBeVisible();
+  await expect(outcome.getByText("No candidate for clause 5.2A")).toBeVisible();
+  const submitted = fake.submitted.find((s) => s.kind === "propose")!;
+  expect(submitted.target).toBe("sentence-forms");
+  expect(submitted.body).toContain("wrd:Wording");
+  await expect(tree.getByRole("treeitem", { name: /12\.1 .*Proposal waiting/ })).toBeVisible();
+
+  // The reviewer sees what the proposal rests on, and confirms it.
+  await tree.getByRole("treeitem", { name: /12\.1 / }).click();
+  const card = page.getByRole("region", { name: "Proposal by sentence-forms for 12.1" });
+  await expect(card.getByText("Borrower may Report Lender")).toBeVisible();
+  await expect(card.getByText("may operate in")).toBeVisible();
+  await expect(card.getByText("Proposer version: sentence-forms 1")).toBeVisible();
+  await card.getByRole("button", { name: "Confirm", exact: true }).click();
+  await expect(tree.getByRole("treeitem", { name: /12\.1 .*Borrower may Report Lender/ })).toBeVisible();
+
+  // A proposer that cannot run says why.
+  await bar.getByLabel("Proposer").selectOption({ label: "Language model" });
+  await bar.getByRole("button", { name: "Propose" }).click();
+  await expect(bar.getByText("no language model is configured")).toBeVisible();
+});

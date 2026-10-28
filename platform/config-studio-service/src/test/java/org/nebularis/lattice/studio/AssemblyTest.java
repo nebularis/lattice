@@ -73,6 +73,18 @@ class AssemblyTest {
     }
 
     @Test
+    void aProposeJobNamesItsProposer() {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=sentence-forms", LIBRARY);
+        assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));
+        String id = job.headers().get("Location").substring("/api/jobs/".length());
+        Model description = f.store.graph(Graphs.job(id));
+        Resource node = description.createResource(Graphs.job(id));
+        assertTrue(description.contains(node, Cst.kind, Cst.Propose));
+        assertTrue(description.contains(node, Cst.target, Cst.SentenceFormProposer));
+        assertEquals(400, f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=oracle", LIBRARY).status());
+    }
+
+    @Test
     void bothPartsAreSavedUnderTheirOwnRevisions() {
         assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/library", "\"0\"", LIBRARY).status());
         assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/assembly", "\"0\"", ASSEMBLY).status());

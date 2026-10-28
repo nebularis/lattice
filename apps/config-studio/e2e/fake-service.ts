@@ -48,7 +48,7 @@ function layerResults(job: string, target: string, body: string): string {
 }
 
 const A = "https://example.org/lattice/studio/assembly/";
-const TARGETS: Record<string, string> = { surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
+const TARGETS: Record<string, string> = { "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
  * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
@@ -69,6 +69,25 @@ const DOCUMENT = `<?xml version="1.0" encoding="UTF-8"?>
 </document>
 `;
 
+/** A sentence-form propose job proposes a permission for clause 12.1 and finds nothing for 5.2A. */
+function proposeResults(job: string): string {
+  const payload = `@prefix ins: <${INS}> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix f: <https://example.org/lattice/wording/facility-form/> .
+@prefix r: <https://example.org/lattice/studio/roles/> .
+@prefix m: <https://example.org/lattice/studio/meaning/> .
+m:term-12-1 a ins:Term , ins:Template ; ins:expressedIn f:cl-12-1 .
+m:permit-operate a ins:Permission , ins:Template ; ins:arisesUnder m:term-12-1 ; ins:holder r:Borrower ; ins:counterparty r:Lender ; ins:activity ins-voc:Report .
+`;
+  const p = `<${job.slice(1, -1)}:proposal/1>`;
+  const m = "<https://example.org/lattice/studio/meaning/";
+  return `${job} cst:artefact [ cst:path "review.ttl" ; cst:mediaType "text/turtle" ; cst:group "" ; cst:content ${JSON.stringify(
+    `@prefix cst: <${CST}> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n${p} a cst:Proposal ; cst:span <https://example.org/lattice/wording/facility-form/cl-12-1> ; cst:proposes ${m}term-12-1> , ${m}permit-operate> ; cst:proposer "sentence-forms" ; cst:proposerVersion "sentence-forms 1" ; cst:evidence "may operate in" ; cst:proposedAt "2026-10-28T12:00:00Z"^^xsd:dateTime ; cst:payload ${JSON.stringify(payload)} .\n`,
+  )} ] .
+<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No candidate for clause 5.2A" ; cst:code "propose" ; sh:focusNode <https://example.org/lattice/wording/facility-form/cl-5-2a> ] .
+`;
+}
+
 function assembleResults(job: string, body: string): { turtle: string; conforms: boolean } {
   const quads = new Parser().parse(body);
   const assemblies = quads.filter((q) => q.predicate.value === RDF_TYPE && q.object.value === CST + "Assembly").map((q) => q.subject.value).sort();
@@ -87,6 +106,7 @@ function assembleResults(job: string, body: string): { turtle: string; conforms:
   return { turtle: lines.join("\n") + "\n", conforms };
 }
 
+const INS = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 const PREFIX = `@prefix cst: <${CST}> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix sh: <http://www.w3.org/ns/shacl#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n`;
 
@@ -134,12 +154,16 @@ export class FakeService {
   private jobGraph(id: string): string {
     const job = this.jobs.get(id)!;
     const iri = `<urn:lattice:studio:job:${id}>`;
-    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : "Compile";
+    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : "Compile";
     const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
+    }
+    if (job.kind === "propose") {
+      if (job.target === "language-model") return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "no language model is configured" .\n`;
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${proposeResults(iri)}`;
     }
     if (job.kind === "assemble") {
       const result = assembleResults(iri, job.body);

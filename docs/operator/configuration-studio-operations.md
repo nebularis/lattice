@@ -81,6 +81,10 @@ Read by `config_studio_main.read_config`.
 | `LATTICE_FUSEKI_DATASET` | no | `studio` | The dataset name, which must be the service's |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | no | none | Basic authentication to Fuseki |
 | `LATTICE_ROOT` | no | found from the working directory | The repository root, where the worker reads the ontology files it validates against |
+| `LATTICE_PROPOSER_URL` | no | none | The base URL of a Chat Completions endpoint for the `language-model` proposer, to which `/chat/completions` is added. Unset, with the next two, fails every `propose` job for that proposer, saying no language model is configured. The `sentence-forms` proposer needs none of them |
+| `LATTICE_PROPOSER_MODEL` | no | none | The model the endpoint is asked for |
+| `LATTICE_PROPOSER_PACK` | no | none | The folder of the pack the prompt is rendered from, a `manifest.json` with its templates, as the [contract](../../contracts/config-studio/README.md#proposers) describes. The repository holds no clause-reading pack, so a deployment supplies its own |
+| `LATTICE_PROPOSER_KEY` | no | none | Sent as a bearer token. Keep it in the environment or a secret store, never in a file the repository tracks. It is never logged |
 
 ### Values the stack sets
 

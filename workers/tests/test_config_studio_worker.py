@@ -460,3 +460,115 @@ def test_a_template_naming_no_element_is_a_violation():
     g, job = _validate_meaning(sample)
     assert g.value(job, CST.conforms) == Literal(False)
     assert any("term-9-1" in str(g.value(r, SH.focusNode)) for r in results(g, job, SH.Violation))
+
+
+# ---- proposers (CB3) --------------------------------------------------------------------------------------------------
+
+
+def _propose(target, env=None) -> tuple[FakeStore, URIRef]:
+    import os
+    from unittest import mock
+
+    store = FakeStore()
+    iri = submit(store, "propose", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, target))
+    # The roles are in the baseline, as the browser splits the sample, and the input holds the configurations.
+    sample = _builder_sample()
+    roles = Graph()
+    pty = "https://www.nebularis.org/neuro-semantic/lattice/party#"
+    for role in sample.subjects(RDF.type, URIRef(pty + "Role")):
+        for triple in sample.triples((role, None, None)):
+            roles.add(triple)
+    store.graphs[f"{iri}:input"] = sample - roles
+    store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"] = roles
+    with mock.patch.dict(os.environ, env or {}, clear=False):
+        ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    return store, job
+
+
+def _review(store: FakeStore, job: URIRef) -> Graph:
+    found = artefacts(store.graphs[str(job)], job)
+    return Graph().parse(data=found["review.ttl"][1], format="turtle")
+
+
+def test_the_sentence_form_proposer_proposes_for_clauses_with_no_meaning_and_none_waiting():
+    store, job = _propose(CST.SentenceFormProposer)
+    g = store.graphs[str(job)]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    review = _review(store, job)
+    spans = {str(review.value(p, CST.span)).rsplit("/", 1)[-1] for p in review.subjects(RDF.type, CST.Proposal)}
+    assert not spans & {"cl-5-1", "cl-9-1", "cl-5-3"}, "a clause with meaning or a waiting proposal is not proposed for"
+    assert spans == {"cl-12-1"}, "the two interest-period variants read no relation"
+    assert {str(review.value(p, CST.evidence)) for p in review.subjects(RDF.type, CST.Proposal)} == {"The borrower may operate in {permitted-jurisdictions}"}
+    for p in review.subjects(RDF.type, CST.Proposal):
+        assert review.value(p, CST.decision) is None
+        assert str(review.value(p, CST.proposer)) == "sentence-forms"
+        payload = Graph().parse(data=str(review.value(p, CST.payload)), format="turtle")
+        ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
+        assert (None, URIRef(ins + "expressedIn"), review.value(p, CST.span)) in payload
+        assert (None, RDF.type, URIRef(ins + "Permission")) in payload
+        assert (None, URIRef(ins + "holder"), URIRef("https://example.org/lattice/studio/roles/Borrower")) in payload
+
+
+def test_the_same_proposals_come_from_the_same_job():
+    first, job = _propose(CST.SentenceFormProposer)
+    again, job2 = _propose(CST.SentenceFormProposer)
+    strip = lambda s, j: str(artefacts(s.graphs[str(j)], j)["review.ttl"][1]).replace(str(j), "JOB")
+    assert strip(first, job) == strip(again, job2)
+
+
+def test_a_language_model_proposer_without_configuration_fails_saying_so():
+    store, job = _propose(CST.LanguageModelProposer, {"LATTICE_PROPOSER_URL": "", "LATTICE_PROPOSER_MODEL": "", "LATTICE_PROPOSER_PACK": ""})
+    g = store.graphs[str(job)]
+    assert g.value(job, CST.status) == CST.Failed
+    assert "no language model is configured" in str(g.value(job, CST.failureMessage))
+
+
+def test_a_language_model_proposer_asks_its_endpoint_with_its_pack_and_keeps_only_declared_labels():
+    import http.server
+    import threading
+
+    asked = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            asked.append((self.path, self.headers.get("Authorization"), body))
+            clause = body["messages"][1]["content"].strip()
+            reply = {"candidates": [{"kind": "Permission", "role": "Borrower", "counterRole": "Lender", "activity": "Teleport",
+                                     "evidence": clause[:20]}]}
+            out = json.dumps({"choices": [{"message": {"content": "```json\n" + json.dumps(reply) + "\n```"}}]}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(out)))
+            self.end_headers()
+            self.wfile.write(out)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        store, job = _propose(CST.LanguageModelProposer, {
+            "LATTICE_PROPOSER_URL": f"http://127.0.0.1:{server.server_port}/v1", "LATTICE_PROPOSER_MODEL": "test-model",
+            "LATTICE_PROPOSER_PACK": str(Path(__file__).parent / "fixtures" / "proposer-pack"), "LATTICE_PROPOSER_KEY": "secret",
+        })
+    finally:
+        server.shutdown()
+    g = store.graphs[str(job)]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    assert asked and asked[0][0] == "/v1/chat/completions" and asked[0][1] == "Bearer secret"
+    assert asked[0][2]["model"] == "test-model" and "Borrower" in asked[0][2]["messages"][0]["content"]
+    review = _review(store, job)
+    proposals = list(review.subjects(RDF.type, CST.Proposal))
+    assert proposals
+    p = proposals[0]
+    assert "pack test-echo 0" in str(review.value(p, CST.proposerVersion))
+    assert "no activity 'Teleport' is declared" in str(review.value(p, CST.evidence))
+    payload = Graph().parse(data=str(review.value(p, CST.payload)), format="turtle")
+    ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
+    assert (None, URIRef(ins + "holder"), URIRef("https://example.org/lattice/studio/roles/Borrower")) in payload
+    assert not list(payload.objects(None, URIRef(ins + "activity")))

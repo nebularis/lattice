@@ -112,6 +112,24 @@ class ConfigStudioWorker:
         from . import config_studio_assembly
 
         input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
+        if graph.value(job, CST.kind) == CST.Propose:
+            import os
+
+            from . import config_studio_proposers as proposers
+            from .config_studio_jobs import _spec
+
+            target = graph.value(job, CST.target)
+            if target == CST.SentenceFormProposer:
+                proposer = proposers.SentenceFormProposer()
+            elif target == CST.LanguageModelProposer:
+                proposer = proposers.language_model_from_env(os.environ)
+            else:
+                raise ValueError(f"no proposer is named {target}")
+            spec = _spec(str(Path(self._root).resolve()), "meaning")
+            # Roles are the baseline's, so the job reads its baseline beside the configurations, as a validation does.
+            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+            config = input_("configuration") + baseline
+            return proposers.propose_all(job, config, spec, proposer, str(graph.value(job, CST.submittedAt)))
         if graph.value(job, CST.kind) == CST.Assemble:
             result, self._record = config_studio_assembly.assemble_all(job, input_("assembly"), str(graph.value(job, CST.submittedAt)))
             return result
