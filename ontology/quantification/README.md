@@ -1228,7 +1228,7 @@ qnt:spaceKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 qnt:spaceHash a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
-    rdfs:comment "The digest of a ValueSpace declaration's canonical content: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the space node and every triple reachable from it through qnt: properties, excluding qnt:spaceHash, fnd:hasIdentity, fnd:supersededBy and fnd:hasGovernanceState (ADR-A138)." ;
+    rdfs:comment "The digest of a ValueSpace declaration's canonical content: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the space node and every triple reachable from it through qnt: properties, excluding qnt:spaceHash, fnd:hasIdentity, fnd:supersededBy and fnd:hasGovernanceState (the substrate's digest rule, Persistence section 5.6)." ;
     fnd:utility "Records the hash of the canonical, meaning-bearing content of a ValueSpace declaration — not a hash of arbitrary RDF serialisation." .
 
 qnt:onSpace a owl:ObjectProperty, owl:FunctionalProperty ;
@@ -2206,7 +2206,7 @@ never names a class of a layer above it. Each consumer decides what its ranges a
 
 Quantification uses `fnd:Versioned` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
 
-**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which the layer's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. The content-hash contract is the substrate's canonicalisation (ADR-A138), and `qnt:spaceHash` names its content triples. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
+**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which the layer's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. The content-hash contract is the substrate's canonicalisation (the substrate's digest rule, Persistence section 5.6), and `qnt:spaceHash` names its content triples. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
 
 ### Vocabulary
 
@@ -2306,6 +2306,8 @@ What changed from the earlier draft, and why — kept here rather than only in a
 ---
 
 ## 17. Release Notes
+
+- **Next release** (additive). The laws are individuals `qnt:Q1` to `qnt:Q14`, `qnt:TruncatedDifference` is Q8's depletion operation, `qnt:ProportionNamesBaseRoleShape` checks Q13 for proportion spaces, Q14 states month arithmetic on positions, and `qnt:spaceHash` names its content and the substrate's digest rule (the substrate's digest rule, Persistence section 5.6). The empty `shapes/rules.ttl` and `shapes/structural.ttl` are gone.
 
 - **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.

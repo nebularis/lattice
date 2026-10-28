@@ -104,7 +104,7 @@ pty:Role a owl:Class ;
 pty:RoleOccupancy a owl:Class ;
     rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (ADR-A137), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (Foundation section 4), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -401,3 +401,7 @@ ex:delegation-1
 | `pty:delegatesTo` | Object property | not globally functional; cardinality 1 per `Delegation` |
 
 Six classes mutually disjoint (§6).
+
+## 11. Release notes
+
+- **Next release** (clarifying). An occupancy is filled by a new version that supersedes the unfilled one, never by an edit (Foundation section 4). The Quantification import the spec never used is dropped, and the three empty shape files are deleted with the `shapes` role, so Party's rules on shares and delegation are unchecked (TD-110).

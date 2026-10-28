@@ -253,7 +253,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Definition.** A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period.
 
-**Utility.** Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (ADR-A137).
+**Utility.** Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (Foundation section 4).
 
 **Subclass of.** `fnd:TemporallyScoped`
 
@@ -275,7 +275,7 @@ No binding here names a scope the other lacks, so precedence never arises. Had a
 
 **Definition.** The fact that a scheme binding ended at an instant.
 
-**Utility.** Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (ADR-A137).
+**Utility.** Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (Foundation section 4).
 
 **Subclass of.** `fnd:Evidenced`
 
@@ -626,7 +626,7 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 
 ## 12. Release Notes
 
-- **Next release** (additive). `voc:BindingClosure`, `voc:closesBinding` and `voc:closedAt`: a binding ends by a closure record and is never edited, which the resolver reads as the end of validity (ADR-A137). `voc:BindingClosureShape` checks the record.
+- **Next release** (additive). `voc:BindingClosure`, `voc:closesBinding` and `voc:closedAt`: a binding ends by a closure record and is never edited, which the resolver reads as the end of validity (Foundation section 4). `voc:BindingClosureShape` checks the record.
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 

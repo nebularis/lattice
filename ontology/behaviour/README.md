@@ -102,7 +102,7 @@ bhv:State a owl:Class ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty bhv:inStateSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 bhv:TransitionDefinition a owl:Class ;
-	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, ADR-A137)." ;
+	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, Foundation section 4)." ;
 	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -1519,6 +1519,7 @@ where only the highest enabled transition fires.
 
 ## 11. Release notes
 
+- **Next release** (additive). `bhv:hasTrigger`, `bhv:hasGuard` and `bhv:hasEffect` are `fnd:meaningBearing`, and a transition definition's parts are minted under it (Foundation section 4).
 - **Next release** (deprecations). `bhv:AllowanceAccount`, `bhv:AllowanceDefinition` and `bhv:availableBalance` are deprecated and reported by warning shapes: a balance is derived from Ledger's postings, never stored and overwritten ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). They are removed when Behaviour imports Ledger (LG-3).
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):

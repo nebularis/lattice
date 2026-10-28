@@ -163,7 +163,7 @@ elg:forProfile a owl:FunctionalProperty, owl:ObjectProperty ;
 
 elg:hasCondition a owl:ObjectProperty ;
     rdfs:comment "A condition an admission profile composes." ;
-    fnd:utility "An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4, ADR-A137)." ;
+    fnd:utility "An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4)." ;
     fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain elg:AdmissionProfile ;
     rdfs:range elg:Condition .

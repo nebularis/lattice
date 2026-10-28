@@ -7,7 +7,7 @@
 **Review:** [ontology-design-review.md](../review/ontology-design-review.md), the design review of 2026-10-28 whose findings this plan remediates
 **ADRs:** none yet. OR-1 adds an addendum to [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md). OR-6, OR-7, OR-9 and OR-15 each propose one
 **Status record:** [ontology-remediation.md](../status/ontology-remediation.md), created by OR-0
-**Status:** placed on `main` 2026-10-28 with the review and the first thirteen debt rows (OR-0), built autonomously at the maintainer's request, committed to `main`, never pushed or merged by the unit. Answered questions carry their date in the last section. The rest take the recommended option unless the maintainer says otherwise.
+**Status:** built on `main` 2026-10-28 through OR-18 in one autonomous session, committed slice by slice, never pushed or merged by the unit. What each slice left undone is in the status record. OR-Q12 and the release bump (OR-19) are the maintainer's. Answered questions carry their date in the last section. The rest take the recommended option unless the maintainer says otherwise.
 
 ## Scope
 
@@ -146,7 +146,7 @@ Answers go in the table and in the status record's history. The maintainer is wo
 | OR-Q12 | Where `Law`, `OperationalProfile` and `Undetermined` live | (a) a law register and discharge vocabulary in Foundation, with each layer's laws as individuals, `OperationalProfile` in Foundation as the versioned conformance profile, and `Undetermined` as Foundation's one three-valued individual. (b) Quantification owns laws and the three-valued vocabulary, since it defines three-valued comparison, and Behaviour and Eligibility import it | open | deferred to the end of the unit, 2026-10-28 |
 | OR-Q13 | The person and the handle in `dct:creator` | (a) keep, since the handle is the project's own remote. (b) replace with the project's name | maintainer's | (b) `https://github.com/nebularis`, 2026-10-28 |
 | OR-Q14 | An estimated `validFrom` | (a) an `fnd:estimated` marker on the scope. (b) `validFrom` optional with a stated default, the earliest evidence. (c) both | (a) | (a), 2026-10-28 |
-| OR-Q15 | The epoch guard baseline is `dal:RowLevelGuardOnly`, which §5.6.8 discourages and the README keeps so that no existing deployment's generated operations change | (a) make `dal:DatasetLevelGuard` the baseline now, since no deployment exists, and drop the compatibility sentence and the baseline warning. (b) keep it, the warning being the witness of the baseline | (a) | (a), 2026-10-28 |
+| OR-Q15 | The epoch guard baseline is `dal:RowLevelGuardOnly`, which §5.6.8 discourages and the README keeps so that no existing deployment's generated operations change | (a) make `dal:DatasetLevelGuard` the baseline now, since no deployment exists, and drop the compatibility sentence and the baseline warning. (b) keep it, the warning being the witness of the baseline | (a) | (a) chosen, then found blocked: the no-receipt builder families have no dataset-guard variant, so the baseline stays and TD-118 records the work (OR-10) |
 | OR-Q16 | MORK's http namespace root | (a) rename with the others in OR-6, one breaking line. (b) keep, since MORK is standalone and its root is the project's own domain | (b) | (b), 2026-10-28 |
 
 ## Index misses from this plan

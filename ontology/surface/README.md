@@ -202,7 +202,7 @@ Read paths tell the generator how to traverse from a carrier instance to the val
 
 Every contract names one `srf:SurfaceProfile`, and every generated artefact names the profile it was produced under. The profile is what lets two runs be compared at all:
 
-- **`generatorVersion`** and **`canonicalisationVersion`** pin the code and the canonical-form rules a profile's hashes depend on. Every hash in this layer is computed under one rule, the substrate's canonicalisation ([ADR-A138](../../docs/architecture/decisions/ADR-A138-one-canonicalisation.md)): RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the named content. An artefact hash is over emitted bytes instead, reproducible only under the same generator version.
+- **`generatorVersion`** and **`canonicalisationVersion`** pin the code and the canonical-form rules a profile's hashes depend on. Every hash in this layer is computed under one rule, the substrate's canonicalisation (the substrate's digest rule, Persistence section 5.6): RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the named content. An artefact hash is over emitted bytes instead, reproducible only under the same generator version.
 - **`entailmentRegime`** matters specifically for `DefinitionOnly` output — a definitional surface answers nothing until something evaluates it under the named regime (`NoEntailment`, `RDFSEntailment`, `OWL2ELEntailment`, or `OWL2DLEntailment`). Declare `NoEntailment` only where every form the profile's contracts use is `Materialised`.
 - **`symbolMode`** chooses between `PunnedSymbols` (the default — a symbol's provenance record shares its IRI with the minted term) and `WrappedSymbols` (a separate provenance individual linked by `srf:denotes`, for toolchains that reject an individual and a class sharing an IRI).
 - **`namingNormalisation`**, together with a contract's `srf:namingPolicy` (`LocalNameFromValue`, `QualifiedLocalName`, or `DigestLocalName`), decides how identifier fragments get minted (§8 has the exact concatenation rules). `LocalNameFromValue` is injective only while local names stay unique across the population — the moment two schemes bind one dimension, or two namespaces share a local name, that stops holding, and a collision is a hard failure rather than a warning. `DigestLocalName` is the escape hatch: injective for any population, at the cost of a human-unreadable identifier.
@@ -825,7 +825,7 @@ srf:generatorVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:canonicalisationVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
-	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under. The contract is the substrate's, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (ADR-A138), and the version names the rule that selects the content triples." .
+	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under. The contract is the substrate's, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (the substrate's digest rule, Persistence section 5.6), and the version names the rule that selects the content triples." .
 
 srf:namingPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:IndexContract ; rdfs:range xsd:string ;
@@ -855,7 +855,7 @@ srf:artefactHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:semanticContentHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The digest of the canonical, meaning-bearing inputs a generation run consumed: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the dataset whose graphs are the read set's inputs, each in a graph named by its entry (ADR-A138)." ;
+	rdfs:comment "The digest of the canonical, meaning-bearing inputs a generation run consumed: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the dataset whose graphs are the read set's inputs, each in a graph named by its entry (the substrate's digest rule, Persistence section 5.6)." ;
 	fnd:utility "Together with the profile identity, decides whether an existing surface may be reused rather than regenerated." .
 
 srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -864,7 +864,7 @@ srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
-	rdfs:comment "The digest of an input's canonical content at the time it was read: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the input's graph (ADR-A138)." .
+	rdfs:comment "The digest of an input's canonical content at the time it was read: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the input's graph (the substrate's digest rule, Persistence section 5.6)." .
 
 srf:resolvedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:dateTime ;
@@ -1732,3 +1732,7 @@ ex:index-1 a srf:IndexContract ;
 	srf:contractKey "example" ;
 	srf:indexForm srf:NominalClass .
 ```
+
+## 14. Release notes
+
+- **Next release** (clarifying). Every hash names its content triples and the substrate's digest rule, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (the substrate's digest rule, Persistence section 5.6), and the two promotion shapes say they check the structural condition of X5 and X6 rather than discharging them.

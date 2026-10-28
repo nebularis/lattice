@@ -29,7 +29,7 @@ skos:Concept owl:disjointWith voc:ConceptScheme .
 
 voc:BindingClosure a owl:Class ;
     rdfs:comment "The fact that a scheme binding ended at an instant." ;
-    fnd:utility "Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (ADR-A137)." ;
+    fnd:utility "Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (Foundation section 4)." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:closedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty voc:closesBinding ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:Evidenced .
 
 voc:BindingScope a owl:Class ;
@@ -43,7 +43,7 @@ voc:ConceptScheme a owl:Class ;
 
 voc:SchemeBinding a owl:Class ;
     rdfs:comment "A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period." ;
-    fnd:utility "Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (ADR-A137)." ;
+    fnd:utility "Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (Foundation section 4)." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:bindsScheme ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty voc:forContract ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:TemporallyScoped .
 
 voc:SchemeContract a owl:Class ;

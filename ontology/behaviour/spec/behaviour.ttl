@@ -31,7 +31,7 @@ bhv:State a owl:Class ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty bhv:inStateSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 bhv:TransitionDefinition a owl:Class ;
-	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, ADR-A137)." ;
+	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, Foundation section 4)." ;
 	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,

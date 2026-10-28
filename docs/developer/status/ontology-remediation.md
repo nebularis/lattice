@@ -24,7 +24,14 @@
 | OR-9 | built: ADR-A138, Surface, Quantification and MCN name their content and rule |
 | OR-12 | built: the allowance classes deprecated with warning shapes, TD-115 |
 | OR-18 | built: the Instrument README pruned by a subagent, 6,342 to 5,512 lines |
-| OR-7b, OR-10, OR-11, OR-13, OR-15, OR-16, OR-17, OR-19 | pending |
+| OR-7b | built: the closure record in Vocabulary with its resolver and shape, meaning-bearing edges in Behaviour and Eligibility, the versioned fill of an occupancy in Party, the governance state in Foundation. Ledger's definition is LG-2's (TD-102) |
+| OR-10 | built in part: the uniqueness and concurrency claims reworded, the closing patterns marked as not generated, the vacuous namespace comparison fixed. The dataset-level baseline was tried and reverted, TD-118 |
+| OR-11 | built: laws as individuals, Q8's operation, Q13's shape, Q14, Surface's X5 and X6 wording, SPC's three uniqueness shapes. Discharges of Q1 to Q8 remain (TD-116) |
+| OR-13 | built by a subagent: five rules, four named errors, vectors in both libraries and the anchors |
+| OR-15 | built in part: `check:owl-profile` with its baseline (TD-117). The placement of the three-way names waits on OR-Q12 |
+| OR-16 | built: Capacity withdrawn from release, its performance note routed through Persistence. The file rename waits for the bump |
+| OR-17 | built in part: Foundation's structural shapes, six empty files deleted, Eligibility's AllDifferent, Persistence's namespace comparison. Quantification's twelve obligations and the Wording and Vocabulary shape defects remain (TD-110) |
+| OR-19 | the release notes are written in every changed README. The bump and the tags are the maintainer's |
 
 ## History
 
@@ -35,3 +42,4 @@
 - 2026-10-28: OR-3 (with one Sonnet subagent on the mechanical part), OR-5 and OR-7a built and committed. Ran and passed: the commit hook on each commit, `check:published-decisions` (0 failures), `check:catalogue`, `check:site-sections`, the persistence reference-mode tests (22), `check:identifiers`, `check:knowledge`. Open for the maintainer: OR-Q12 and OR-Q13, the acronyms of the private source in five sketches and the legacy MORK pipeline, and ADR-A106 and a few other decisions that still link working documents.
 - 2026-10-28: the maintainer deferred OR-Q12 to the end of the unit, chose the organisation as creator (OR-Q13, applied in every spec and vocab document), and confirmed one bump at the end of the unit.
 - 2026-10-28: OR-6 (one Sonnet subagent on the store vocabulary), OR-8, OR-9, OR-12, OR-14 and OR-18 (a second subagent) built and committed. TD-101, TD-106, TD-107 and TD-109 close. The OR-7a refusal gained its witness.
+- 2026-10-28, end of the session: OR-7b, OR-10, OR-11, OR-13, OR-15, OR-16, OR-17 and OR-19's notes built. The dataset-level epoch baseline was reverted after it left the no-receipt builders without a template (TD-118). Open for the maintainer: OR-Q12, the release bump, ADR-A136 to ADR-A138 to accept, the acronyms of the private source still in five sketches and the legacy MORK pipeline, ADR-A106 and a few decisions linking working documents, the NFC question from OR-13, the applied exposure example's key schemes that fail Foundation's shape, and three applied modules needing a minor bump for their new root.

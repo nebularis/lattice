@@ -676,7 +676,7 @@ answers Undetermined.
 
 **Definition.** A condition an admission profile composes.
 
-**Utility.** An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4, ADR-A137).
+**Utility.** An admission profile's meaning depends on its conditions, so a condition is never edited: a changed condition is a new node, content-addressed or minted under the profile, and a condition shared between profiles is immutable (Foundation section 4).
 
 **Meaning bearing.** "true"^^xsd:boolean
 
@@ -1600,6 +1600,8 @@ end
 Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantification is a direct dependency because interval admissibility uses declared `qnt:Range` and `qnt:RangeSet` semantics.
 
 ## 12. Release Notes
+
+- **Next release** (additive). `elg:hasCondition` is `fnd:meaningBearing`, so a condition is never edited and a shared one is immutable (Foundation section 4), and the three decision values are `owl:AllDifferent`.
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
