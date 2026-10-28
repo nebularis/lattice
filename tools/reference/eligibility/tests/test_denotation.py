@@ -15,7 +15,14 @@ A small citrus/fruit hierarchy is used throughout:
 
 from __future__ import annotations
 
-from reference_eligibility.denotation import Scheme, decide_concept_match, decide_condition, decide_condition_with_reliance
+from reference_eligibility.denotation import (
+    Scheme,
+    decide_concept_match,
+    decide_condition,
+    decide_condition_with_reliance,
+    decide_set_comparison,
+    decide_set_comparison_with_reliance,
+)
 from reference_eligibility.kernel import DENIED, PERMITTED, UNDETERMINED
 
 FRUIT, CITRUS, ORANGE, LEMON, VEGETABLE = "fruit", "citrus", "orange", "lemon", "vegetable"
@@ -352,3 +359,128 @@ class TestReliance:
                 values, reading="SomeValue", negated=False, closed=False,
                 hierarchical=False, required={"physics"}, excluded=set())
             assert relied is False
+
+
+class TestL18SetComparison:
+    """A set comparison decides each tested value against the reference values, then reads the
+    outcomes as every value (Subset), some value (Intersects) or some value negated (Disjoint)."""
+
+    def decide(self, comparison, tested, reference, tc=False, rc=False, **rest):
+        return decide_set_comparison(
+            tested, set(reference), comparison=comparison, hierarchical=False,
+            tested_closed=tc, reference_closed=rc, **rest,
+        )
+
+    def test_subset_over_every_row_of_the_closure_table(self) -> None:
+        # C9b3a-13: tested a,b against reference a, with neither, one and both closures
+        rows = {
+            (False, False): UNDETERMINED, (True, False): UNDETERMINED,
+            (False, True): DENIED, (True, True): DENIED,
+        }
+        for (tc, rc), expected in rows.items():
+            assert self.decide("Subset", ["a", "b"], ["a"], tc, rc) is expected, (tc, rc)
+        # every tested value found: Permitted needs only the tested set closed
+        assert self.decide("Subset", ["a"], ["a", "b"], True, False) is PERMITTED
+        assert self.decide("Subset", ["a"], ["a", "b"], False, False) is UNDETERMINED
+        assert self.decide("Subset", ["a"], ["a", "b"], False, True) is UNDETERMINED
+
+    def test_intersects_over_every_row_of_the_closure_table(self) -> None:
+        # C9b3a-14
+        for tc in (False, True):
+            for rc in (False, True):
+                assert self.decide("Intersects", ["a", "b"], ["b"], tc, rc) is PERMITTED
+        assert self.decide("Intersects", ["a"], ["b"], True, True) is DENIED
+        assert self.decide("Intersects", ["a"], ["b"], True, False) is UNDETERMINED
+        assert self.decide("Intersects", ["a"], ["b"], False, True) is UNDETERMINED
+        assert self.decide("Intersects", ["a"], ["b"], False, False) is UNDETERMINED
+
+    def test_disjoint_is_intersects_negated(self) -> None:
+        # C9b3a-15
+        for tested in (["a"], ["b"], ["a", "b"], []):
+            for tc in (False, True):
+                for rc in (False, True):
+                    i = self.decide("Intersects", tested, ["b"], tc, rc)
+                    d = self.decide("Disjoint", tested, ["b"], tc, rc)
+                    assert d is {PERMITTED: DENIED, DENIED: PERMITTED, UNDETERMINED: UNDETERMINED}[i]
+
+    def test_an_empty_tested_set_is_read_as_l15_reads_it(self) -> None:
+        # C9b3a-16: under each comparison, closed and open, whatever the reference
+        for reference in ([], ["a"]):
+            assert self.decide("Subset", [], reference, True, False) is PERMITTED
+            assert self.decide("Subset", [], reference, False, True) is UNDETERMINED
+            assert self.decide("Intersects", [], reference, True, False) is DENIED
+            assert self.decide("Intersects", [], reference, False, True) is UNDETERMINED
+            assert self.decide("Disjoint", [], reference, True, False) is PERMITTED
+            assert self.decide("Disjoint", [], reference, False, False) is UNDETERMINED
+
+    def test_hierarchical_membership_walks_the_relation_within_the_scheme(self) -> None:
+        # C9b3a-17: paris is part of france, part of europe. canada is elsewhere.
+        part_of = Scheme.over(
+            {"europe", "france", "paris", "canada", "north-america"},
+            [("france", "europe"), ("paris", "france"), ("canada", "north-america")],
+        )
+
+        def decide(comparison, tested, reference, **rest):
+            return decide_set_comparison(
+                tested, set(reference), comparison=comparison, hierarchical=True, scheme=part_of,
+                tested_closed=True, reference_closed=True, **rest,
+            )
+
+        assert decide("Subset", ["paris"], ["europe"]) is PERMITTED
+        assert decide("Subset", ["paris"], ["france"]) is PERMITTED
+        assert decide("Subset", ["europe"], ["france"]) is DENIED  # above, not below
+        assert decide("Subset", ["paris", "canada"], ["europe"]) is DENIED
+        assert decide("Intersects", ["canada"], ["europe"]) is DENIED
+
+    def test_a_negated_subset_swaps_permitted_and_denied(self) -> None:
+        # C9b3a-18
+        assert self.decide("Subset", ["a"], ["a"], True, True, negated=True) is DENIED
+        assert self.decide("Subset", ["a"], ["b"], True, True, negated=True) is PERMITTED
+        assert self.decide("Subset", ["a"], ["b"], True, False, negated=True) is UNDETERMINED
+
+    def test_a_hierarchical_comparison_with_no_scheme_or_no_applicable_binding_is_undetermined(self) -> None:
+        # C9b3a-19
+        flat = Scheme(members=frozenset({"a"}), broader={})
+        kwargs = dict(comparison="Subset", hierarchical=True, tested_closed=True, reference_closed=True)
+        assert decide_set_comparison(["a"], {"a"}, scheme=None, **kwargs) is UNDETERMINED
+        assert decide_set_comparison(["a"], {"a"}, scheme=flat, unresolved=True, **kwargs) is UNDETERMINED
+        assert decide_set_comparison([], {"a"}, scheme=flat, unresolved=True, **kwargs) is UNDETERMINED
+        assert decide_set_comparison(["a"], {"a"}, scheme=flat, **kwargs) is PERMITTED
+
+    def test_reliance_names_the_closure_that_decided(self) -> None:
+        # C9b3a-20
+        def relied(comparison, tested, reference, tc, rc):
+            return decide_set_comparison_with_reliance(
+                tested, set(reference), comparison=comparison, hierarchical=False, tested_closed=tc, reference_closed=rc
+            )[1]
+
+        assert relied("Subset", ["a"], ["a"], True, True) == {"tested"}
+        assert relied("Subset", ["a"], ["b"], False, True) == {"reference"}
+        assert relied("Intersects", ["a"], ["a"], True, True) == frozenset()
+        assert relied("Intersects", ["a"], ["b"], True, True) == {"tested", "reference"}
+        assert relied("Intersects", [], ["b"], True, False) == {"tested"}
+        assert relied("Disjoint", ["a"], ["b"], True, True) == {"tested", "reference"}
+        assert relied("Subset", ["a"], ["b"], True, False) == frozenset()
+
+    def test_a_value_the_scheme_cannot_place_matches_nothing(self) -> None:
+        # C9b3a-47: members b and c, c part of b. x is outside the scheme and linked to both.
+        scheme = Scheme.over({"b", "c"}, [("c", "b"), ("c", "x"), ("x", "b")])
+        kwargs = dict(comparison="Subset", hierarchical=True, scheme=scheme, tested_closed=True, reference_closed=True)
+        assert decide_set_comparison(["c"], {"x"}, **kwargs) is DENIED  # a reference value outside matches nothing
+        assert decide_set_comparison(["x"], {"b"}, **kwargs) is UNDETERMINED  # a tested value outside is unplaced (L9)
+        assert decide_set_comparison(["c"], {"b"}, **kwargs) is PERMITTED
+
+    def test_over_a_scheme_with_no_hierarchy_only_an_equal_value_is_found(self) -> None:
+        # C9b3a-50: L14 for a comparison, zero links. b equals a reference value, c is another member, x is outside.
+        flat = Scheme.over({"b", "c"}, [])
+        for comparison in ("Subset", "Intersects", "Disjoint"):
+            for closed in (False, True):
+                kwargs = dict(comparison=comparison, hierarchical=True, scheme=flat, tested_closed=True, reference_closed=closed)
+                assert decide_set_comparison(["b"], {"b"}, **kwargs) is (DENIED if comparison == "Disjoint" else PERMITTED)
+                assert decide_set_comparison(["c"], {"b"}, **kwargs) is UNDETERMINED, (comparison, closed)
+                assert decide_set_comparison(["x"], {"b"}, **kwargs) is UNDETERMINED, (comparison, closed)
+        # with one link the same unfound member is Denied under a closed reference
+        linked = Scheme.over({"b", "c"}, [("c", "b")])
+        assert decide_set_comparison(
+            ["b"], {"c"}, comparison="Subset", hierarchical=True, scheme=linked, tested_closed=True, reference_closed=True
+        ) is DENIED

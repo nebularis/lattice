@@ -59,6 +59,10 @@
 	rdfs:subClassOf :ConditionPlan ;
 	rdfs:comment "A condition plan that evaluates whether a candidate range is contained by some member of a required range set (elg:IntervalContainment)." .
 
+:SetComparisonPlan a owl:Class ;
+	rdfs:subClassOf :ConditionPlan ;
+	rdfs:comment "A condition plan that relates the values one evidence binding reads from a subject to the values another reads from the same subject, by subset, intersection or disjointness (elg:SetComparison, elg:L18)." .
+
 :ConceptMatchPlan a owl:Class ;
 	rdfs:subClassOf :ConditionPlan ;
 	rdfs:comment "A condition plan that matches a candidate concept against required and excluded concepts (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch), per ADR-A87 and ADR-A89." .
@@ -233,6 +237,7 @@
 
 :ConditionPlan owl:disjointWith :ProfilePlan .
 :IntervalContainmentPlan owl:disjointWith :ConceptMatchPlan .
+:SetComparisonPlan owl:disjointWith :IntervalContainmentPlan, :ConceptMatchPlan .
 :SparqlArtefact owl:disjointWith :ShaclArtefact, :SwrlArtefact .
 :ShaclArtefact owl:disjointWith :SwrlArtefact .
 :OwlArtefact owl:disjointWith :SparqlArtefact, :ShaclArtefact, :SwrlArtefact .

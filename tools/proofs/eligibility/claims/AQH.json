@@ -1,7 +1,7 @@
 {
   "subject": "AQH",
   "statedAs": "Hierarchy.adequacy_* (5 lemmas, one scheme carrying kind and part links)",
-  "statementDigest": "sha256:c34f129f5fae105123854fa62a11cebce4a5db29915b137fd24c4e96acd31b53",
+  "statementDigest": "sha256:ff15cf4d62668bd92ddd0c2e16f8075a6f36b9af0ab5ea6c423de3b825e60507",
   "method": "Proof",
   "scope": "KindAndPartFixture",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

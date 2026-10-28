@@ -34,6 +34,7 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   SHACL, SWRL, OWL) ultimately reads (directly or via its "Expanded" form, ADR-A89), so an
   independent reference that imported it would be comparing `_expand` against itself: B2's
   differential tests would never be able to catch a mistake in `_expand` shared by every backend.
+- **`decide_set_comparison`** (L18) decides each tested value against the reference values (`decide_member`), then reads the outcomes as every value for Subset, some value for Intersects and some value negated for Disjoint, under the tested set's closure. `decide_set_comparison_with_reliance` also reports which closures decided. `TestSetComparisonSweep` runs 48 cases (three comparisons, both closures each, exact and hierarchical match, negated or not) against SPARQL and SHACL, builds the scheme from the graph's part-of links, and checks the compilers' `?closure` column against the reliance.
 - **Not implemented here**: `elg:IntervalContainment` (L4-L5, a different plan kind,
   `IntervalPlan`, not in track B1's scope per the plan), evidence-path reading from RDF, profile
   aggregation (`elg:AllRequired`/`elg:AnySufficient`, L6-L8). B1 decides a condition's outcome from

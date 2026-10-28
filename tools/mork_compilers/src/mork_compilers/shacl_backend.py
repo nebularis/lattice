@@ -31,6 +31,10 @@ the readiness shape and one determinacy shape every candidate violates, since L9
 leaves each Undetermined. The shapes match the plan's relation by never walking
 it: they enumerate the plan's expansion, which the IR computed over that relation.
 
+A set comparison (L18) gets the same two shapes wrapping its SPARQL decision, since its outcome
+reads two sets and a shape over one candidate cannot state it. The SPARQL backend and this one agree
+by construction, and the tests check that they do.
+
 A condition that reads several values or is negated (ADR-A103) gets two
 shapes wrapping its SPARQL decision instead, as profiles do: one reports an
 Undetermined subject, the other a Denied one.
@@ -49,7 +53,16 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, has_readings
+from .eligibility_ir import (
+    PERMITTED,
+    UNDETERMINED,
+    ConceptPlan,
+    IntervalPlan,
+    IRCompileError,
+    ProfilePlan,
+    SetComparisonPlan,
+    has_readings,
+)
 from .namespaces import ELG, EXE, MORK, SH
 from .sparql_backend import PREFIXES as QUERY_PREFIXES
 from .sparql_backend import applicable, condition_select, containment_expression, evidence_path, literal_readable, profile_select
@@ -298,12 +311,18 @@ def _compile_decided_shapes(plan: Union[IntervalPlan, ConceptPlan]) -> Graph:
         graph.bind(prefix, namespace)
     plan_node = mint(plan.condition, "execplan")
     mapping = mint(plan.condition, "shape-mapping")
-    kind = EXE.ConceptMatchPlan if isinstance(plan, ConceptPlan) else EXE.IntervalContainmentPlan
+    kind = (
+        EXE.SetComparisonPlan if isinstance(plan, SetComparisonPlan)
+        else EXE.ConceptMatchPlan if isinstance(plan, ConceptPlan) else EXE.IntervalContainmentPlan
+    )
     graph.add((plan_node, RDF.type, kind))
     graph.add((plan_node, EXE.implementsCondition, plan.condition))
     graph.add((plan_node, EXE.compiledFromMapping, mapping))
     graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
-    if plan.evidence is not None:
+    if isinstance(plan, SetComparisonPlan):
+        graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.tested.binding))
+        graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.reference.binding))
+    elif plan.evidence is not None:
         graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.evidence.binding))
     graph.add((mapping, RDF.type, MORK.DataMapping))
     graph.add((mapping, MORK.mappingFor, plan.condition))

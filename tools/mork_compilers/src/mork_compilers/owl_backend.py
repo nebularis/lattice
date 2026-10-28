@@ -59,6 +59,7 @@ from .eligibility_ir import (
     ProfilePlan,
     RequiredInterval,
     has_readings,
+    refuse_set_comparison,
     refuse_without_scheme,
 )
 from .namespaces import ELG, EXE, QNT
@@ -312,6 +313,11 @@ def compile_classes(*plans: Plan, disjoint_siblings: bool = False) -> Graph:
     """One OWL module holding every plan's classes, for plans bound to
     subjects through claimed single-valued paths."""
     for plan in plans:
+        refuse_set_comparison(
+            plan, "design-time class",
+            "OWL 2 DL cannot relate the values of two paths from one subject, since it has no way to say that every value of one "
+            "property chain of an individual is, or is not, a value of another",
+        )
         if has_readings(plan):
             raise IRCompileError(
                 f"{getattr(plan, 'profile', None) or plan.condition} reads several values or is negated (ADR-A103), "

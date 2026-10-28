@@ -1,7 +1,7 @@
 {
   "subject": "TH3",
   "statedAs": "Hierarchy.hier_decide_exclusion_denied",
-  "statementDigest": "sha256:e91bdc79e515818413dba14cf2001f1b543719a270e0376e0962ed5890927f13",
+  "statementDigest": "sha256:84c87564fe7bab85712813991233804078e30a44a41d0501874d2ecd9d0b63fc",
   "method": "Proof",
   "scope": "EveryHierarchyRelation",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
