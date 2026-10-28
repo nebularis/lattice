@@ -25,8 +25,8 @@ public final class RabbitJobBus implements JobBus {
     private final Connection connection;
     private final Channel channel;
 
-    public RabbitJobBus(String uri) {
-        this.connection = connect(uri);
+    public RabbitJobBus(Connection connection) {
+        this.connection = connection;
         try {
             this.channel = connection.createChannel();
             Topology.declare(channel);
@@ -36,7 +36,8 @@ public final class RabbitJobBus implements JobBus {
         }
     }
 
-    private static Connection connect(String uri) {
+    /** Connects, retrying for half a minute while the broker starts. */
+    public static Connection connect(String uri) {
         ConnectionFactory factory = new ConnectionFactory();
         try {
             factory.setUri(uri);

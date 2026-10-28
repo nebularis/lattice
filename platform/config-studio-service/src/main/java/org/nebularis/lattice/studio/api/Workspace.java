@@ -21,34 +21,42 @@ import org.nebularis.lattice.studio.store.Graphs;
  * graph has a revision, {@code cst:<name>Revision}, from 0 before its first save. A revision a
  * description lacks reads as 0, so a workspace made before a graph was added still opens.
  */
-record Workspace(String id, String label, Instant createdAt, Instant modifiedAt, Map<String, Long> revisions) {
+public record Workspace(String id, String label, Instant createdAt, Instant modifiedAt, Map<String, Long> revisions, String sample) {
 
     /** The baseline, then the configurations, in the order the contract lists them. */
-    static final List<String> GRAPHS = List.of("baseline", "vocabulary", "quantification", "eligibility", "surface", "persistence");
+    public static final String SAMPLE_PREFIX = "urn:lattice:studio:sample:";
 
-    static Workspace created(String id, String label, Instant at) {
+    public static final List<String> GRAPHS = List.of("baseline", "vocabulary", "quantification", "eligibility", "surface", "persistence");
+
+    /** {@code sample} is the id of the sample it was made from, or null. */
+    public static Workspace created(String id, String label, Instant at, String sample) {
         Map<String, Long> revisions = new LinkedHashMap<>();
         for (String name : GRAPHS) {
             revisions.put(name, name.equals("baseline") ? 1L : 0L);
         }
-        return new Workspace(id, label, at, at, Map.copyOf(revisions));
+        return new Workspace(id, label, at, at, Map.copyOf(revisions), sample);
     }
 
-    String baselineGraph() {
+    public String baselineGraph() {
         return Graphs.baseline(id, revision("baseline"));
     }
 
-    long revision(String name) {
+    public long revision(String name) {
         return revisions.getOrDefault(name, 0L);
     }
 
-    Workspace revised(String name, long revision, Instant at) {
+    public Workspace revised(String name, long revision, Instant at) {
         Map<String, Long> next = new LinkedHashMap<>(revisions);
         next.put(name, revision);
-        return new Workspace(id, label, createdAt, at, Map.copyOf(next));
+        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample);
     }
 
-    Model toModel() {
+    /** The same workspace under another id and label, as an import makes it. */
+    public Workspace as(String newId, String newLabel, Instant at) {
+        return new Workspace(newId, newLabel, createdAt, at, revisions, sample);
+    }
+
+    public Model toModel() {
         Model model = ModelFactory.createDefaultModel();
         Resource node = model.createResource(Graphs.workspace(id));
         node.addProperty(RDF.type, Cst.Workspace);
@@ -56,6 +64,9 @@ record Workspace(String id, String label, Instant createdAt, Instant modifiedAt,
         node.addProperty(Cst.createdAt, model.createTypedLiteral(createdAt.toString(), XSDDatatype.XSDdateTime));
         node.addProperty(Cst.modifiedAt, model.createTypedLiteral(modifiedAt.toString(), XSDDatatype.XSDdateTime));
         node.addProperty(Cst.baselineGraph, model.createResource(baselineGraph()));
+        if (sample != null) {
+            node.addProperty(Cst.fromSample, model.createResource(SAMPLE_PREFIX + sample));
+        }
         for (String name : GRAPHS) {
             node.addProperty(Cst.revision(name), model.createTypedLiteral(Long.toString(revision(name)), XSDDatatype.XSDinteger));
         }
@@ -63,7 +74,7 @@ record Workspace(String id, String label, Instant createdAt, Instant modifiedAt,
     }
 
     /** Reads a description, or null when the graph holds none or a malformed one. */
-    static Workspace from(String id, Model model) {
+    public static Workspace from(String id, Model model) {
         Resource node = model.createResource(Graphs.workspace(id));
         try {
             Map<String, Long> revisions = new LinkedHashMap<>();
@@ -74,8 +85,10 @@ record Workspace(String id, String label, Instant createdAt, Instant modifiedAt,
             if (revisions.get("baseline") < 1) {
                 return null;
             }
+            Statement from = node.getProperty(Cst.fromSample);
+            String sample = from == null ? null : from.getResource().getURI().substring(SAMPLE_PREFIX.length());
             return new Workspace(id, text(node, RDFS.label), Instant.parse(text(node, Cst.createdAt)),
-                Instant.parse(text(node, Cst.modifiedAt)), Map.copyOf(revisions));
+                Instant.parse(text(node, Cst.modifiedAt)), Map.copyOf(revisions), sample);
         } catch (RuntimeException e) {
             return null;
         }

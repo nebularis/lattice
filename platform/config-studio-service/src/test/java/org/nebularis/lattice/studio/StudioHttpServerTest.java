@@ -37,7 +37,7 @@ class StudioHttpServerTest {
         Files.writeString(site.resolve("index.html"), "<html>spa</html>");
         Files.writeString(site.resolve("app.js"), "console.log(1)");
         Files.writeString(dir.resolve("secret.txt"), "TOP-SECRET");
-        StudioApi api = new StudioApi(f.store, f.bus, Clock.systemUTC(), UUID::randomUUID, f.assets);
+        StudioApi api = new StudioApi(f.store, f.writes, f.bus, Clock.systemUTC(), UUID::randomUUID, f.assets);
         server = new StudioHttpServer(api, "127.0.0.1", 0, site);
         server.start();
         base = "http://127.0.0.1:" + server.port();

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
@@ -30,6 +29,9 @@ import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
+import org.nebularis.lattice.studio.writes.Command;
+import org.nebularis.lattice.studio.writes.Reply;
+import org.nebularis.lattice.studio.writes.Writes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,19 +45,19 @@ public final class StudioApi {
     private static final List<String> TARGETS = GRAPH_NAMES.subList(1, GRAPH_NAMES.size());
     private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence");
 
+    private static final String TRIG = "application/trig";
+
+    /** Reads only. Every write goes through {@code writes}, to the writer of its workspace. */
     private final StudioStore store;
+    private final Writes writes;
     private final JobBus bus;
     private final Clock clock;
     private final Supplier<UUID> ids;
     private final Path assets;
-    /**
-     * One lock per workspace, for the If-Match check and the update that follows it.
-     * ponytail: two service instances would race, so the studio runs one. Guard the revision inside the update to run more.
-     */
-    private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
 
-    public StudioApi(StudioStore store, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
+    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
         this.store = store;
+        this.writes = writes;
         this.bus = bus;
         this.clock = clock;
         this.ids = ids;
@@ -134,6 +136,9 @@ public final class StudioApi {
                     default -> notAllowed("GET, DELETE");
                 };
             }
+            if (s.length == 3 && s[2].equals("export")) {
+                return method.equals("GET") ? export(ws) : notAllowed("GET");
+            }
             if (s.length == 4 && s[2].equals("graphs") && GRAPH_NAMES.contains(s[3])) {
                 return switch (method) {
                     case "GET" -> getGraph(ws, s[3]);
@@ -193,6 +198,9 @@ public final class StudioApi {
     // --- workspaces ------------------------------------------------------------------------
 
     private ApiResponse createWorkspace(ApiRequest req) {
+        if (media(req).equals(TRIG)) {
+            return importWorkspace(req);
+        }
         ApiResponse bad = checkBody(req);
         if (bad != null) {
             return bad;
@@ -203,15 +211,79 @@ public final class StudioApi {
         } catch (IllegalArgumentException e) {
             return ApiResponse.text(400, "Slug is not percent-encoded UTF-8");
         }
+        String sample = query(req.query()).get("sample");
+        if (sample != null && (!SAMPLE_ID.matcher(sample).matches() || read("samples/" + sample + ".ttl") == null)) {
+            return ApiResponse.text(400, "sample names no staged sample");
+        }
         Model baseline = parse(req);
         if (baseline == null) {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
         String id = ids.get().toString();
         Instant now = now();
-        Workspace ws = Workspace.created(id, label, now);
-        store.write(List.of(), Map.of(Graphs.workspace(id), ws.toModel(), ws.baselineGraph(), baseline));
+        Reply reply = writes.send(Command.create(id, label, now, sample, baseline));
+        if (!reply.applied()) {
+            return refusal(reply);
+        }
+        Workspace ws = Workspace.created(id, label, now, sample);
         return ApiResponse.turtle(201, Turtle.write(ws.toModel())).with("Location", "/api/workspaces/" + id);
+    }
+
+    /** A workspace exported by {@link #export}, recreated under a new id. Its jobs are not exported, so none are imported. */
+    private ApiResponse importWorkspace(ApiRequest req) {
+        if (req.body() != null && req.body().length > MAX_BODY_BYTES) {
+            return tooLarge();
+        }
+        String label;
+        try {
+            label = req.header("slug") == null ? null : slug(req.header("slug"));
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.text(400, "Slug is not percent-encoded UTF-8");
+        }
+        org.apache.jena.query.Dataset graphs;
+        try {
+            graphs = Turtle.parseTrig(req.body() == null ? new byte[0] : req.body());
+        } catch (RiotException e) {
+            return ApiResponse.text(400, "the body does not parse as TriG");
+        }
+        String id = ids.get().toString();
+        ImportedWorkspace imported = ImportedWorkspace.of(graphs, id);
+        if (imported.problem() != null) {
+            return ApiResponse.text(422, imported.problem());
+        }
+        String name = label != null ? label : imported.label();
+        Reply reply = writes.send(Command.importing(id, now(), name, imported.graphs()));
+        if (!reply.applied()) {
+            return reply.status() == 400 ? ApiResponse.text(422, reply.message()) : refusal(reply);
+        }
+        Workspace ws = load(id);
+        return ApiResponse.turtle(201, Turtle.write(ws.toModel())).with("Location", "/api/workspaces/" + id);
+    }
+
+    /** Every graph of a workspace but its jobs, as TriG, to save to a file or to import elsewhere. */
+    private ApiResponse export(String id) {
+        Workspace ws = load(id);
+        if (ws == null) {
+            return notFound();
+        }
+        org.apache.jena.query.Dataset out = org.apache.jena.query.DatasetFactory.create();
+        out.addNamedModel(Graphs.workspace(id), ws.toModel());
+        for (long n = 1; n <= ws.revision("baseline"); n++) {
+            add(out, Graphs.baseline(id, n));
+        }
+        for (String name : TARGETS) {
+            add(out, Graphs.config(id, name));
+        }
+        String file = ws.label().replaceAll("[^A-Za-z0-9._-]+", "-").replaceAll("^-+|-+$", "");
+        return new ApiResponse(200, new LinkedHashMap<>(Map.of("Content-Type", TRIG + "; charset=utf-8",
+            "Content-Disposition", "attachment; filename=\"" + (file.isEmpty() ? "workspace" : file) + ".trig\"")), Turtle.writeTrig(out));
+    }
+
+    private void add(org.apache.jena.query.Dataset out, String graph) {
+        Model m = store.graph(graph);
+        if (!m.isEmpty()) {
+            out.addNamedModel(graph, m);
+        }
     }
 
     private ApiResponse describe(String id) {
@@ -219,23 +291,10 @@ public final class StudioApi {
         return ws == null ? notFound() : ApiResponse.turtle(200, Turtle.write(ws.toModel()));
     }
 
+    /** Deletes the workspace's graphs and its jobs. */
     private ApiResponse deleteWorkspace(String id) {
-        synchronized (lock(id)) {
-            Workspace ws = load(id);
-            if (ws == null) {
-                return notFound();
-            }
-            List<String> graphs = new java.util.ArrayList<>();
-            for (long n = 1; n <= ws.revision("baseline"); n++) {
-                graphs.add(Graphs.baseline(id, n));
-            }
-            for (String name : TARGETS) {
-                graphs.add(Graphs.config(id, name));
-            }
-            graphs.add(Graphs.workspace(id));
-            store.drop(graphs);
-            return ApiResponse.empty(204);
-        }
+        Reply reply = writes.send(Command.deleteWorkspace(id));
+        return reply.applied() ? ApiResponse.empty(204) : refusal(reply);
     }
 
     private ApiResponse getGraph(String id, String name) {
@@ -267,21 +326,36 @@ public final class StudioApi {
         if (!strangers.isEmpty()) {
             return ApiResponse.text(422, "the graph holds terms of another part: " + String.join(", ", strangers));
         }
-        synchronized (lock(id)) {
-            Workspace ws = load(id);
-            if (ws == null) {
-                return notFound();
-            }
-            if (!etag(ws.revision(name)).equals(ifMatch.trim())) {
-                return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(ws.revision(name)));
-            }
-            long next = ws.revision(name) + 1;
-            Workspace updated = ws.revised(name, next, now());
-            // The configuration and the revision move in one update request, so they never disagree.
-            String target = name.equals("baseline") ? updated.baselineGraph() : Graphs.config(id, name);
-            store.write(List.of(), Map.of(target, graph, Graphs.workspace(id), updated.toModel()));
-            return ApiResponse.empty(204).with("ETag", etag(next));
+        Long expect = revisionOf(ifMatch);
+        Reply reply = expect == null ? null : writes.send(Command.save(id, name, expect, now(), graph));
+        if (reply == null || reply.status() == 412) {
+            long current = reply == null ? load(id).revision(name) : reply.revision();
+            return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(current));
         }
+        return reply.applied() ? ApiResponse.empty(204).with("ETag", etag(reply.revision())) : refusal(reply);
+    }
+
+    /** The revision an If-Match of ours names, or null for any other value. */
+    private static Long revisionOf(String ifMatch) {
+        String v = ifMatch.trim();
+        if (v.length() < 3 || v.charAt(0) != '"' || v.charAt(v.length() - 1) != '"') {
+            return null;
+        }
+        try {
+            long n = Long.parseLong(v.substring(1, v.length() - 1));
+            return n < 0 ? null : n;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** A writer's refusal as the HTTP answer to the request that caused it. */
+    private static ApiResponse refusal(Reply reply) {
+        return switch (reply.status()) {
+            case 404 -> notFound();
+            case 503 -> ApiResponse.text(503, reply.message());
+            default -> ApiResponse.text(400, reply.message());
+        };
     }
 
     // --- jobs ------------------------------------------------------------------------------
@@ -308,7 +382,13 @@ public final class StudioApi {
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);
         Model description = jobDescription(jobIri, id, ws, kind, target, Graphs.jobInput(job));
-        store.write(List.of(), Map.of(jobIri, description, Graphs.jobInput(job), config));
+        org.apache.jena.query.Dataset graphs = org.apache.jena.query.DatasetFactory.create();
+        graphs.addNamedModel(jobIri, description);
+        graphs.addNamedModel(Graphs.jobInput(job), config);
+        Reply reply = writes.send(Command.submitJob(id, job, graphs));
+        if (!reply.applied()) {
+            return refusal(reply);
+        }
         try {
             bus.publish(jobIri);
         } catch (Exception e) {
@@ -319,7 +399,9 @@ public final class StudioApi {
             description.removeAll(description.createResource(jobIri), Cst.status, null);
             description.createResource(jobIri).addProperty(Cst.status, Cst.Failed)
                 .addProperty(Cst.failureMessage, "the job could not be handed to the worker: " + e.getClass().getSimpleName());
-            store.write(List.of(), Map.of(jobIri, description));
+            org.apache.jena.query.Dataset failed = org.apache.jena.query.DatasetFactory.create();
+            failed.addNamedModel(jobIri, description);
+            writes.send(Command.jobUpdate(id, job, failed));
         }
         return ApiResponse.turtle(202, Turtle.write(description)).with("Location", "/api/jobs/" + job);
     }
@@ -351,21 +433,20 @@ public final class StudioApi {
     }
 
     private ApiResponse deleteJob(String job) {
-        if (store.graph(Graphs.job(job)).isEmpty()) {
+        Model m = store.graph(Graphs.job(job));
+        org.apache.jena.rdf.model.Statement ws = m.createResource(Graphs.job(job)).getProperty(Cst.workspace);
+        if (ws == null || !ws.getObject().isURIResource()) {
             return notFound();
         }
-        store.drop(List.of(Graphs.job(job), Graphs.jobInput(job)));
-        return ApiResponse.empty(204);
+        String id = ws.getResource().getURI().substring(Graphs.WORKSPACE_PREFIX.length());
+        Reply reply = writes.send(Command.deleteJob(id, job));
+        return reply.applied() ? ApiResponse.empty(204) : refusal(reply);
     }
 
     // --- helpers ---------------------------------------------------------------------------
 
     private Workspace load(String id) {
         return Workspace.from(id, store.graph(Graphs.workspace(id)));
-    }
-
-    private Object lock(String id) {
-        return locks.computeIfAbsent(id, k -> new Object());
     }
 
     private Instant now() {

@@ -44,6 +44,14 @@ public final class StudioStore implements AutoCloseable {
           }
         }""";
 
+    private static final String JOBS_OF_QUERY = PREFIXES
+        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?job { ?job a cst:Job ; cst:workspace ?ws } }";
+    private static final String EXPIRED_JOBS_QUERY = PREFIXES + """
+        CONSTRUCT { ?job cst:workspace ?ws } WHERE {
+          GRAPH ?job { ?job a cst:Job ; cst:workspace ?ws ; cst:finishedAt ?finished }
+          FILTER (?finished < ?cutoff)
+        }""";
+
     private final RDFConnection connection;
 
     public StudioStore(RDFConnection connection) {
@@ -84,6 +92,20 @@ public final class StudioStore implements AutoCloseable {
     public Model compileJobs(String workspaceIri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(COMPILE_JOBS_QUERY);
         query.setIri("ws", workspaceIri);
+        return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}. */
+    public Model jobsOf(String workspaceIri) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(JOBS_OF_QUERY);
+        query.setIri("ws", workspaceIri);
+        return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The jobs that finished before {@code cutoff}, as {@code ?job cst:workspace ?ws}. */
+    public Model expiredJobs(java.time.Instant cutoff) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(EXPIRED_JOBS_QUERY);
+        query.setLiteral("cutoff", cutoff.toString(), org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime);
         return connection.queryConstruct(query.asQuery());
     }
 

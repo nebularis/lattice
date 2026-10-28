@@ -23,6 +23,8 @@ import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.jobs.RecordingJobBus;
 import org.nebularis.lattice.studio.store.StudioStore;
+import org.nebularis.lattice.studio.writes.DirectWrites;
+import org.nebularis.lattice.studio.writes.Writer;
 
 /** An in-memory store, a recording bus, a fixed clock and counting ids. */
 final class Fixture {
@@ -31,6 +33,7 @@ final class Fixture {
     static final String TURTLE = "text/turtle; charset=utf-8";
 
     final StudioStore store = StudioStore.inMemory();
+    final DirectWrites writes = new DirectWrites(new Writer(store));
     final RecordingJobBus bus = new RecordingJobBus();
     final Path assets;
     final StudioApi api;
@@ -43,7 +46,7 @@ final class Fixture {
     Fixture(Path assets, JobBus busOverride) {
         this.assets = assets;
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
-        this.api = new StudioApi(store, busOverride == null ? bus : busOverride, clock,
+        this.api = new StudioApi(store, writes, busOverride == null ? bus : busOverride, clock,
             () -> new UUID(0, counter.incrementAndGet()), assets);
     }
 

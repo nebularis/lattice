@@ -42,6 +42,8 @@ cst:eligibilityRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdf
 
 cst:createdAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
 cst:modifiedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cst:fromSample a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Sample ;
+    rdfs:comment "The sample a workspace was made from, when it was. The workspace is a copy, so a later change to the sample does not reach it." .
 
 cst:Graph a owl:Class ;
     rdfs:comment "A named graph of the studio's dataset." .

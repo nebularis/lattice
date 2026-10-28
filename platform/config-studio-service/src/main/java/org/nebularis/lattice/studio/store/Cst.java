@@ -17,6 +17,8 @@ public final class Cst {
     public static final Resource Surface = r("Surface");
     public static final Resource Queued = r("Queued");
     public static final Resource Failed = r("Failed");
+    public static final Resource Running = r("Running");
+    public static final Resource Succeeded = r("Succeeded");
 
     public static final Property baselineGraph = p("baselineGraph");
     public static final Property baselineRevision = p("baselineRevision");
@@ -33,6 +35,7 @@ public final class Cst {
     public static final Property startedAt = p("startedAt");
     public static final Property finishedAt = p("finishedAt");
     public static final Property failureMessage = p("failureMessage");
+    public static final Property fromSample = p("fromSample");
 
     private Cst() {
     }

@@ -78,6 +78,21 @@ final class Turtle {
         return write(model, RDFFormat.TURTLE_PRETTY);
     }
 
+    /** Parses a TriG document strictly, against the same fixed base as Turtle. */
+    static org.apache.jena.query.Dataset parseTrig(byte[] body) throws RiotException {
+        org.apache.jena.query.Dataset dataset = org.apache.jena.query.DatasetFactory.create();
+        RDFParser.create().source(new ByteArrayInputStream(body)).lang(Lang.TRIG)
+            .base("urn:lattice:studio:input:").strict(true).parse(dataset.asDatasetGraph());
+        return dataset;
+    }
+
+    static byte[] writeTrig(org.apache.jena.query.Dataset dataset) {
+        dataset.getPrefixMapping().setNsPrefixes(PREFIXES);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RDFWriter.source(dataset.asDatasetGraph()).format(RDFFormat.TRIG_PRETTY).output(out);
+        return out.toByteArray();
+    }
+
     /** Plain RDF/XML, one description per subject and no abbreviation, so an XSLT reads one regular shape. */
     static byte[] writeXml(Model model) {
         return write(model, RDFFormat.RDFXML_PLAIN);

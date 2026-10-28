@@ -12,5 +12,14 @@
       "routingKey": "#",
       "deadLetter": false
     }
-  ]
+  ],
+  "writes": {
+    "exchange": "lattice.studio.writes",
+    "type": "x-consistent-hash",
+    "queuePrefix": "lattice.studio.writes.",
+    "partitions": 8,
+    "bindingKey": "1",
+    "singleActiveConsumer": true,
+    "deadLetter": true
+  }
 }
