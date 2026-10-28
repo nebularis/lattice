@@ -427,3 +427,36 @@ def test_a_library_validated_beside_its_assemblies_reports_nothing_of_theirs():
     ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     g = store.graphs[iri]
     assert g.value(job, CST.conforms) == Literal(True), [str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Violation)]
+
+
+def _validate_meaning(input_graph: Graph) -> tuple[Graph, URIRef]:
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.Meaning))
+    store.graphs[f"{iri}:input"] = input_graph
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    return store.graphs[iri], job
+
+
+def _builder_sample() -> Graph:
+    g = Graph()
+    for part in ("builder-assemblies.ttl", "builder-meaning.ttl"):
+        g.parse(ROOT / CATALOGUE.area("contracts") / "config-studio" / "samples" / part)
+    return g + _facility_form()
+
+
+def test_stated_meaning_is_checked_with_instruments_shapes():
+    g, job = _validate_meaning(_builder_sample())
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    assert g.value(job, CST.conforms) == Literal(True), [str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Violation)]
+
+
+def test_a_template_naming_no_element_is_a_violation():
+    sample = _builder_sample()
+    ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
+    sample.remove((URIRef("https://example.org/lattice/studio/meaning/term-9-1"), URIRef(ins + "expressedIn"), None))
+    g, job = _validate_meaning(sample)
+    assert g.value(job, CST.conforms) == Literal(False)
+    assert any("term-9-1" in str(g.value(r, SH.focusNode)) for r in results(g, job, SH.Violation))

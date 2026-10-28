@@ -19,6 +19,7 @@ import {
   Puzzle,
   Redo2,
   Save,
+  Scale,
   Search,
   Shapes,
   Sparkles,
@@ -28,6 +29,7 @@ import {
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
 import { assembliesOf, formsOf } from "../rdf/builder";
+import { termsOf } from "../rdf/meaning";
 import { compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
@@ -35,6 +37,7 @@ import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "..
 import { BaselineView } from "./BaselineView";
 import { BuildView } from "./BuildView";
 import { AssemblyView, LibraryView, useAssembler } from "./BuilderView";
+import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
 import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
 import { Overview } from "./Overview";
@@ -61,12 +64,12 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "library", "assembly", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
 
 /** The views of builder mode (ADR-A138), which share the workspace's state, inspector and problems drawer with the rest. */
-const BUILDER_VIEWS: readonly string[] = ["library", "assembly"];
+const BUILDER_VIEWS: readonly string[] = ["library", "assembly", "meaning"];
 
-const PART_NAV: { part: Part; label: string; icon: React.ReactNode }[] = [
+const PART_NAV: { part: Exclude<Part, "review">; label: string; icon: React.ReactNode }[] = [
   { part: "vocabulary", label: "Vocabulary", icon: <BookOpen size={16} /> },
   { part: "quantification", label: "Quantification", icon: <Ruler size={16} /> },
   { part: "eligibility", label: "Eligibility", icon: <ListChecks size={16} /> },
@@ -150,7 +153,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
     items: itemLists,
     world: model.world,
     partOf: (n) => PARTS.find((p) => state.configs[p]!.current.has(n)),
-    open: (part, n, field) => go("w", id, part, ...(n ? [n] : []), ...(field ? [field] : [])),
+    // A proposal is reviewed in the meaning view.
+    open: (part, n, field) => go("w", id, part === "review" ? "meaning" : part, ...(n ? [n] : []), ...(field ? [field] : [])),
   };
   const config = state.configs[activePart]!;
   const editing = (PARTS as string[]).includes(view);
@@ -209,6 +213,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               <div className="group">Contract builder</div>
               <NavLink to="library" view={view} id={id} icon={<Library size={16} />} label="Library" count={formsOf(model.world).length} issues={model.issues.library} dirty={dirty.library} />
               <NavLink to="assembly" view={view} id={id} icon={<Puzzle size={16} />} label="Assemblies" count={assembliesOf(state.configs.assembly!.current).length} issues={model.issues.assembly} dirty={dirty.assembly} />
+              <NavLink to="meaning" view={view} id={id} icon={<Scale size={16} />} label="Meaning" count={termsOf(state.configs.meaning!.current).length} issues={model.issues.meaning} dirty={dirty.meaning || dirty.review} />
             </>
           ) : (
             <>
@@ -229,6 +234,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "baseline" && <BaselineView selected={node} />}
           {view === "library" && <LibraryView selected={node} field={route[2]} />}
           {view === "assembly" && <AssemblyView selected={node} assembler={assembler} />}
+          {view === "meaning" && <MeaningView selected={node} field={route[2]} />}
           {editing && !builder && <ConfigView part={activePart} selected={node} field={route[2]} />}
           {view === "build" && <BuildView />}
         </main>

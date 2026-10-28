@@ -32,6 +32,10 @@ public final class Parts {
         OWNERS.put("assembly", s -> (s.getPredicate().equals(RDF.type)
             && (isIri(s.getObject(), CST + "Assembly") || isIri(s.getObject(), LATTICE + "wording#VariableValue")))
             || s.getPredicate().getURI().equals(CST + "assembles") || s.getPredicate().getURI().equals(LATTICE + "wording#forVariable"));
+        // A proposal and its decision, then stated meaning: any subject using Instrument's terms (ADR-A138).
+        OWNERS.put("review", s -> (s.getPredicate().equals(RDF.type) && isIri(s.getObject(), CST + "Proposal"))
+            || s.getPredicate().getURI().equals(CST + "proposes"));
+        OWNERS.put("meaning", uses(LATTICE + "instrument#"));
         OWNERS.put("persistence", uses(LATTICE + "persistence#"));
         OWNERS.put("surface", uses(LATTICE + "surface#"));
         OWNERS.put("eligibility", uses(LATTICE + "eligibility#"));

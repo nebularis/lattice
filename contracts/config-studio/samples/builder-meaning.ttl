@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Stated meaning for clauses of the Wording layer's facility form, and the proposals it came through, for the contract
+# builder (ADR-A138). Clauses 5.1 and 9.1 were entered by hand and confirmed at once, so their templates are stated
+# meaning. Clause 5.3's was proposed by the sentence-form reader and waits for review, so its templates are only in its
+# proposal. Clause 12.1 has none yet.
+
+@prefix cst:     <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix ins:     <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix f:       <https://example.org/lattice/wording/facility-form/> .
+@prefix r:       <https://example.org/lattice/studio/roles/> .
+@prefix m:       <https://example.org/lattice/studio/meaning/> .
+@prefix p:       <https://example.org/lattice/studio/proposal/> .
+
+r:Borrower a pty:Role ; rdfs:label "Borrower" .
+r:Lender a pty:Role ; rdfs:label "Lender" .
+r:Agent a pty:Role ; rdfs:label "Agent" .
+m:term-5-1 a ins:Term , ins:Template ; ins:expressedIn f:cl-5-1 .
+m:pay-interest a ins:Obligation , ins:Template ; ins:arisesUnder m:term-5-1 ; ins:obligor r:Borrower ; ins:obligee r:Lender ; ins:activity ins-voc:Pay .
+m:term-9-1 a ins:Term , ins:Template ; ins:expressedIn f:cl-9-1 .
+m:act-for-lenders a ins:Obligation , ins:Template ; ins:arisesUnder m:term-9-1 ; ins:obligor r:Agent ; ins:obligee r:Lender ; ins:activity ins-voc:ProvideService .
+
+p:cl-5-1 a cst:Proposal ; cst:span f:cl-5-1 ; cst:proposes m:term-5-1 , m:pay-interest ;
+    cst:proposer "manual" ; cst:proposedAt "2026-10-28T10:00:00Z"^^xsd:dateTime ;
+    cst:decision cst:Confirm ; cst:decidedAt "2026-10-28T10:00:00Z"^^xsd:dateTime ;
+    cst:payload "@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .\n@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .\n@prefix f: <https://example.org/lattice/wording/facility-form/> .\n@prefix r: <https://example.org/lattice/studio/roles/> .\n@prefix m: <https://example.org/lattice/studio/meaning/> .\nm:term-5-1 a ins:Term , ins:Template ; ins:expressedIn f:cl-5-1 .\nm:pay-interest a ins:Obligation , ins:Template ; ins:arisesUnder m:term-5-1 ; ins:obligor r:Borrower ; ins:obligee r:Lender ; ins:activity ins-voc:Pay .\n" .
+
+p:cl-9-1 a cst:Proposal ; cst:span f:cl-9-1 ; cst:proposes m:term-9-1 , m:act-for-lenders ;
+    cst:proposer "manual" ; cst:proposedAt "2026-10-28T10:05:00Z"^^xsd:dateTime ;
+    cst:decision cst:Confirm ; cst:decidedAt "2026-10-28T10:05:00Z"^^xsd:dateTime ;
+    cst:payload "@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .\n@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .\n@prefix f: <https://example.org/lattice/wording/facility-form/> .\n@prefix r: <https://example.org/lattice/studio/roles/> .\n@prefix m: <https://example.org/lattice/studio/meaning/> .\nm:term-9-1 a ins:Term , ins:Template ; ins:expressedIn f:cl-9-1 .\nm:act-for-lenders a ins:Obligation , ins:Template ; ins:arisesUnder m:term-9-1 ; ins:obligor r:Agent ; ins:obligee r:Lender ; ins:activity ins-voc:ProvideService .\n" .
+
+p:cl-5-3 a cst:Proposal ; cst:span f:cl-5-3 ; cst:proposes m:term-5-3 , m:report-target ;
+    cst:proposer "sentence-forms" ; cst:proposedAt "2026-10-28T10:10:00Z"^^xsd:dateTime ;
+    cst:payload "@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .\n@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .\n@prefix f: <https://example.org/lattice/wording/facility-form/> .\n@prefix r: <https://example.org/lattice/studio/roles/> .\n@prefix m: <https://example.org/lattice/studio/meaning/> .\nm:term-5-3 a ins:Term , ins:Template ; ins:expressedIn f:cl-5-3 .\nm:report-target a ins:Obligation , ins:Template ; ins:arisesUnder m:term-5-3 ; ins:obligor r:Borrower ; ins:obligee r:Lender ; ins:activity ins-voc:Report .\n" .

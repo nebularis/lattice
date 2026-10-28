@@ -377,6 +377,23 @@ Not run: `studio:up` with the add-in's development server, the Docker stack's HT
 
 Not run: a form created from scratch, which builder mode does not offer yet. A mandatory section whose only clause is left out is assembled empty, as the form states, which is the form's design rather than the assembler's.
 
+## CB2: the meaning panel, manual entry, review and live validation
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CB2-01 | a stated term, a relation under it and a proposal / sorted into parts by the service and by the browser / the term and relation in meaning, the proposal in review | L1 | + | pass, `AssemblyTest` and the browser's unit tests |
+| CB2-02 | the builder sample's meaning with the facility form / a validation of meaning / conforming against Instrument's structural and constraint shapes | L1 | + | pass |
+| CB2-03 | the same with one stated term's `ins:expressedIn` removed / a validation / a violation on that term | L1 | − | pass |
+| CB2-04 | a clause's stated meaning / read in plain words / roles as roles, for example "Borrower must Pay Lender" | L1 | + | pass |
+| CB2-05 | a manual entry / made / a proposal by `manual` confirmed at once, with its payload parsing back to the meaning it wrote | L1 | + | pass |
+| CB2-06 | a waiting proposal / each of the four decisions / Confirm and Retarget write its payload and record the decision and time, Decline and Defer record only, and nothing reaches meaning before a decision | L1 | + − | pass. Retarget first held corrections in meaning before any decision, and now records the decision and opens the written templates for correction |
+| CB2-07 | a stated term / what it reads / its roles, concepts, ranges and conditions, derived and never stored | L1 | + | pass |
+| CB2-08 | the meaning flow against the fake service / the Playwright test / 5.1 read, 12.1 entered by hand, 5.3 confirmed | L3 | + | pass, 18 browser tests |
+| CB2-09 | the native stack with the builder sample / the Meaning view in the browser pane: confirm 5.3, enter a Permission for 12.1, save / 5.3 and 12.1 read as stated meaning, live validation reports that a permission excepts exactly one prohibition (law I8), and the saved review graph holds four confirmed proposals with their payloads | L5 | + − | pass, with times now shown in the reader's locale |
+| CB2-10 | every studio suite and the workers / `check:config-studio`, `test:config-studio`, `check:workers` / pass | L1 | + | pass, 82 unit, 18 browser, 55 studio Python and 126 worker tests |
+
+Not run: Retarget in the browser, covered by unit tests, and validation findings shown on a template's fields, which the fake service does not return.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

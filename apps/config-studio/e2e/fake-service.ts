@@ -12,7 +12,7 @@ import { Parser } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
-const PARTS = ["library", "assembly", "vocabulary", "quantification", "eligibility", "surface", "persistence"];
+const PARTS = ["library", "assembly", "meaning", "review", "vocabulary", "quantification", "eligibility", "surface", "persistence"];
 const E = "https://example.org/lattice/eligibility/";
 const ELG = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#";
 const QNT = "https://www.nebularis.org/neuro-semantic/lattice/quantification#";
@@ -48,6 +48,7 @@ function layerResults(job: string, target: string, body: string): string {
 }
 
 const A = "https://example.org/lattice/studio/assembly/";
+const TARGETS: Record<string, string> = { surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
  * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
@@ -134,7 +135,7 @@ export class FakeService {
     const job = this.jobs.get(id)!;
     const iri = `<urn:lattice:studio:job:${id}>`;
     const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : "Compile";
-    const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${job.target === "surface" ? "Surface" : job.target === "assembly" ? "AssemblyTarget" : "Persistence"} ;
+    const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
     if (!job.finished) {
       job.finished = true;

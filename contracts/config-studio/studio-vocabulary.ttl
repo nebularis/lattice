@@ -96,6 +96,34 @@ cst:Assemble a cst:JobKind ; rdfs:comment "Assemble each cst:Assembly of the inp
 cst:Library a cst:Target ; rdfs:comment "The library configuration, Wording forms." .
 cst:AssemblyTarget a cst:Target ; rdfs:comment "The assembly configuration, a target of assemble jobs." .
 
+# --- proposals and their review (ADR-A138, ADR-A42) --------------------------------
+
+cst:Proposal a owl:Class ;
+    rdfs:comment "Stated meaning proposed for a clause, with its provenance and the reviewer's decision. Only a confirmed or retargeted proposal's templates are in the meaning configuration." .
+cst:span a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ;
+    rdfs:comment "The element of the library whose text the proposal reads." .
+cst:proposes a owl:ObjectProperty ; rdfs:domain cst:Proposal ;
+    rdfs:comment "A template the proposal proposes: a stated term, or a relation, qualifier or regime under it." .
+cst:payload a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "The templates the proposal proposes, as Turtle, kept with it whatever is decided." .
+cst:proposer a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "What made the proposal: manual, sentence-forms or language-model." .
+cst:proposedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the proposal was made." .
+cst:decision a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range cst:ReviewDecision ;
+    rdfs:comment "The reviewer's decision, absent while the proposal waits." .
+cst:decidedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the decision was taken." .
+cst:ReviewDecision a owl:Class ;
+    rdfs:comment "One of the four decisions of ADR-A42 a reviewer takes on a proposal." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Confirm cst:Retarget cst:Decline cst:Defer ) ] .
+cst:Confirm a cst:ReviewDecision ; rdfs:comment "The proposal is right, and its templates are stated meaning." .
+cst:Retarget a cst:ReviewDecision ; rdfs:comment "The proposal is right once corrected, and its templates, as corrected, are stated meaning." .
+cst:Decline a cst:ReviewDecision ; rdfs:comment "The proposal is wrong, and its templates are not stated meaning." .
+cst:Defer a cst:ReviewDecision ; rdfs:comment "The proposal is set aside for later, and its templates are not stated meaning yet." .
+cst:Meaning a cst:Target ; rdfs:comment "The meaning configuration, stated meaning in ins:, validated with Instrument's shapes." .
+cst:Review a cst:Target ; rdfs:comment "The review configuration, proposals and their decisions." .
+
 cst:DocumentTemplate a owl:Class ;
     rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
 cst:templateKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;

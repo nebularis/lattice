@@ -59,6 +59,20 @@ class AssemblyTest {
     }
 
     @Test
+    void statedMeaningGoesToMeaningAndAProposalToReview() {
+        String ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
+        Model g = parse(PREFIXES + "@prefix ins: <" + ins + "> .\n"
+            + "ex:t a ins:Term , ins:Template ; ins:expressedIn ex:c1 .\n"
+            + "ex:o a ins:Obligation , ins:Template ; ins:arisesUnder ex:t .\n"
+            + "ex:p a cst:Proposal ; cst:span ex:c1 ; cst:proposes ex:t , ex:o ; cst:payload \"...\" .\n");
+        Map<String, String> byName = new java.util.HashMap<>();
+        Parts.owners(g).forEach((r, part) -> byName.put(r.getURI().substring("https://example.org/".length()), part));
+        assertEquals("meaning", byName.get("t"));
+        assertEquals("meaning", byName.get("o"));
+        assertEquals("review", byName.get("p"));
+    }
+
+    @Test
     void bothPartsAreSavedUnderTheirOwnRevisions() {
         assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/library", "\"0\"", LIBRARY).status());
         assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/assembly", "\"0\"", ASSEMBLY).status());

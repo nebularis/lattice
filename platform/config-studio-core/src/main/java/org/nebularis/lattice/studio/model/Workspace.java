@@ -33,8 +33,8 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
     /** The baseline, then the configurations, in the order the contract lists them. */
     public static final String SAMPLE_PREFIX = "urn:lattice:studio:sample:";
 
-    public static final List<String> GRAPHS = List.of("baseline", "library", "assembly", "vocabulary", "quantification", "eligibility", "surface",
-        "persistence");
+    public static final List<String> GRAPHS = List.of("baseline", "library", "assembly", "meaning", "review", "vocabulary", "quantification",
+        "eligibility", "surface", "persistence");
 
     /** {@code sample} is the id of the sample it was made from, or null. */
     public static Workspace created(String id, String label, Instant at, String sample) {

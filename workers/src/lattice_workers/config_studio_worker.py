@@ -32,7 +32,7 @@ _BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
     CST.Persistence: "persistence", CST.Surface: "surface", CST.Vocabulary: "vocabulary",
-    CST.Quantification: "quantification", CST.Eligibility: "eligibility",
+    CST.Quantification: "quantification", CST.Eligibility: "eligibility", CST.Meaning: "meaning",
 }
 # What the worker writes, so that a rerun starts from what the service wrote.
 _WORKER_PREDICATES = (
@@ -117,7 +117,7 @@ class ConfigStudioWorker:
             return result
         if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) == CST.Library:
             return config_studio_assembly.validate_library(job, input_("library"))
-        if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) == CST.AssemblyTarget:
+        if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) in (CST.AssemblyTarget, CST.Review):
             from .config_studio_jobs import _Result
 
             nothing = _Result(job)

@@ -23,6 +23,9 @@ const DEPENDS: Record<Part, Part[]> = {
   // A form's variables name a scheme contract and a value space, and its conditions are eligibility's.
   library: ["vocabulary", "quantification", "eligibility"],
   assembly: ["library"],
+  // Instrument's shapes read the clauses, the roles and the concepts a template names.
+  meaning: ["library", "vocabulary"],
+  review: [],
   vocabulary: [],
   quantification: [],
   eligibility: ["vocabulary", "quantification"],

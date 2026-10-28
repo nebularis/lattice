@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CST, ELG, Graph, QNT, SKOS, VOC, WRD, XSD } from "@lattice/authoring-domain";
+import { CST, ELG, Graph, INS, PTY, QNT, SKOS, VOC, WRD, XSD } from "@lattice/authoring-domain";
 import { addAssembly, assembliesOf, choicesMade, choicesOf, flatten, formsOf, outline, removeAssembly, setForm, settableOf, settingsMade, toggleChoice, writeSetting } from "./builder";
 import { CONFIG_PARTS, split } from "./split";
 
@@ -21,7 +21,7 @@ const parse = (ttl: string) => Graph.parse(prefixes + ttl);
 
 describe("the split rule for library and assembly", () => {
   it("keeps the configuration parts in the service's order", () => {
-    expect(CONFIG_PARTS).toEqual(["library", "assembly", "vocabulary", "quantification", "eligibility", "surface", "persistence"]);
+    expect(CONFIG_PARTS).toEqual(["library", "assembly", "meaning", "review", "vocabulary", "quantification", "eligibility", "surface", "persistence"]);
   });
 
   it("sorts the builder sample into library, assembly and the layers a form reads", () => {
@@ -40,6 +40,30 @@ describe("the split rule for library and assembly", () => {
     expect(parts.quantification.types(F + "count-space")).toContain(QNT("ValueSpace"));
     expect(parts.vocabulary.types(F + "uk")).toContain(SKOS("Concept"));
     expect(parts.vocabulary.types(F + "jurisdiction-contract")).toContain(VOC("SchemeContract"));
+    // The roles are the party layer's, so they stay with the baseline, and a proposal and its terms are meaning and review.
+    expect(parts.baseline.ofType(PTY("Role")).length).toBe(3);
+    expect(parts.baseline.quads().every((q) => q.subject.value.startsWith("https://example.org/lattice/studio/roles/"))).toBe(true);
+    expect(parts.meaning.types("https://example.org/lattice/studio/meaning/pay-interest")).toContain(INS("Obligation"));
+    expect(parts.review.ofType(CST("Proposal")).length).toBe(3);
+    expect(parts.review.has("https://example.org/lattice/studio/meaning/pay-interest")).toBe(false);
+  });
+
+  it("sends a proposal to review, and a subject using ins: terms to meaning, before the layers", () => {
+    const parts = split(
+      parse(`
+        @prefix ins: <${INS("")}> .
+        ex:p cst:proposes ex:t ; cst:payload "x" .
+        ex:typed a cst:Proposal .
+        ex:t a ins:Term , ins:Template ; ins:expressedIn ex:clause .
+        ex:r ins:arisesUnder ex:t .
+        ex:clause a wrd:Text .
+      `),
+    );
+    expect(parts.review.has("https://example.org/x/p")).toBe(true);
+    expect(parts.review.has("https://example.org/x/typed")).toBe(true);
+    expect(parts.meaning.has("https://example.org/x/t")).toBe(true);
+    expect(parts.meaning.has("https://example.org/x/r")).toBe(true);
+    expect(parts.library.has("https://example.org/x/clause")).toBe(true);
     expect(parts.baseline.size).toBe(0);
   });
 

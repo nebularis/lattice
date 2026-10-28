@@ -259,9 +259,15 @@ test("a builder sample is sorted into library, assembly and the layers a form re
     ["assembly", '"0"'],
     ["eligibility", '"0"'],
     ["library", '"0"'],
+    ["meaning", '"0"'],
     ["quantification", '"0"'],
+    ["review", '"0"'],
     ["vocabulary", '"0"'],
   ]);
+  // The roles are the party layer's, so they stay in the baseline.
+  expect(w.graphs.baseline).toContain("pty:Role");
+  expect(w.graphs.meaning).toContain("ins:Obligation");
+  expect(w.graphs.review).toContain("cst:Proposal");
 });
 
 test("the library is an outline of each form, and an element opens in the shape-driven editor", async ({ page }) => {
@@ -361,4 +367,74 @@ test("a new assembly is written with a record per value, and saves to the assemb
   expect(save.body).toContain("wrd:forVariable ex:gv-lender-count");
   // A library save did not happen: only the assembly changed.
   expect(fake.saves.filter((s) => s.name === "library")).toHaveLength(1);
+});
+
+test("the meaning view reads each clause's stated meaning, edits a template, enters meaning by hand and reviews a proposal", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await builderWorkspace(page, fake);
+  await page.getByRole("button", { name: "Builder" }).click();
+  await page.getByRole("link", { name: /^Meaning/ }).click();
+  const tree = page.getByRole("tree", { name: "Meaning" });
+
+  // 5.1 states an obligation, read in plain words with roles shown as roles. 12.1 has none, and 5.3 has a proposal waiting.
+  await expect(tree.getByRole("treeitem", { name: /5\.1 .*Borrower must Pay Lender/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /9\.1 .*Agent must Provide service Lender/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /12\.1 .*No stated meaning/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /5\.3 .*No stated meaning.*Proposal waiting/ })).toBeVisible();
+
+  // The clause shows its term, and what the term reads is derived from its templates.
+  await tree.getByRole("treeitem", { name: /5\.1 / }).click();
+  await expect(page.getByRole("heading", { name: "5.1", level: 2 })).toBeVisible();
+  const stated = page.getByRole("region", { name: "Stated meaning" });
+  await expect(stated.getByText("Borrower must Pay Lender")).toBeVisible();
+  const reads = page.getByRole("region", { name: /What the term reads/ });
+  await expect(reads.getByText("Borrower", { exact: true })).toBeVisible();
+  await expect(reads.getByText("Lender", { exact: true })).toBeVisible();
+  await expect(reads.getByText("Pay", { exact: true })).toBeVisible();
+
+  // A template opens in the shape-driven editor on the meaning part.
+  await stated.getByRole("button", { name: "Edit" }).click();
+  await expect(page.locator(".editor .iri").last()).toHaveText("https://example.org/lattice/studio/meaning/pay-interest");
+  await expect(page.getByRole("region", { name: "Properties" }).getByText("ins:obligor")).toBeVisible();
+  await page.getByRole("button", { name: /^Back to clause 5\.1/ }).click();
+
+  // Manual entry on 12.1 makes a proposal confirmed at once, and states the term the clause lacked.
+  await tree.getByRole("treeitem", { name: /12\.1 / }).click();
+  await expect(page.getByRole("heading", { name: "12.1", level: 2 })).toBeVisible();
+  const entry = page.getByRole("region", { name: "Manual entry" });
+  await entry.getByLabel("Relation kind").selectOption({ label: "Obligation" });
+  await entry.getByLabel("Obligor").selectOption({ label: "Borrower" });
+  await entry.getByLabel("Obligee").selectOption({ label: "Lender" });
+  await entry.getByLabel("Activity").selectOption({ label: "Report" });
+  await expect(entry.getByText("Borrower must Report Lender")).toBeVisible();
+  await entry.getByRole("button", { name: "Confirm entry" }).click();
+  await expect(tree.getByRole("treeitem", { name: /12\.1 .*Borrower must Report Lender/ })).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.getByRole("button", { name: "Saved" })).toBeDisabled();
+  const meaningSave = fake.saves.filter((s) => s.name === "meaning").pop()!;
+  const reviewSave = fake.saves.filter((s) => s.name === "review").pop()!;
+  expect(meaningSave.body).toContain("ins:expressedIn ex:cl-12-1");
+  expect(reviewSave.body).toContain('cst:proposer "manual"');
+  expect(reviewSave.body).toContain("cst:decision cst:Confirm");
+  expect(reviewSave.body).toContain("cst:span ex:cl-12-1");
+  expect(reviewSave.body).toContain("cst:payload");
+  // The live validation of the meaning part sent the library beside it, and the review part's answers no findings.
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "meaning").pop()?.body ?? "").toContain("wrd:Wording");
+  expect(fake.submitted.some((s) => s.kind === "validate" && s.target === "review")).toBe(true);
+
+  // 5.3 has a proposal waiting. Confirming it writes its payload into the meaning part.
+  await tree.getByRole("treeitem", { name: /5\.3 / }).click();
+  const card = page.getByRole("region", { name: "Proposal by sentence-forms for 5.3" });
+  await expect(card.getByText("Borrower must Report Lender")).toBeVisible();
+  await expect(card.getByRole("button")).toContainText(["Confirm", "Retarget", "Decline", "Defer"]);
+  await card.getByRole("button", { name: "Confirm", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Proposal by sentence-forms for 5.3" })).toHaveCount(0);
+  await expect(tree.getByRole("treeitem", { name: /5\.3 .*Borrower must Report Lender/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /5\.3 .*Proposal waiting/ })).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.getByRole("button", { name: "Saved" })).toBeDisabled();
+  expect(fake.workspaces.get(ws)!.graphs.meaning).toContain("m:term-5-3 a ins:Template, ins:Term");
+  const confirmed = fake.saves.filter((s) => s.name === "review").pop()!;
+  expect(confirmed.body).toMatch(/cst:decision cst:Confirm/);
+  expect(confirmed.body).toContain("cst:decidedAt");
 });

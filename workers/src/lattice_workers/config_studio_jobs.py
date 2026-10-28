@@ -81,6 +81,12 @@ _SPECS = {
         ("vocabulary", "spec", "*.ttl"), ("quantification", "spec", "*.ttl"), ("quantification", "vocab", "*.ttl"),
         ("eligibility", "spec", "*.ttl"), ("eligibility", "vocab", "*.ttl"),
     ],
+    # Stated meaning, checked with the layers Instrument imports, the library's forms coming in with the input.
+    "meaning": [("vocabulary", "spec", "*.ttl")] + [
+        (module, role, "*.ttl")
+        for module in ("foundation", "quantification", "party", "eligibility", "wording", "behaviour", "instrument")
+        for role in ("spec", "vocab")
+    ],
 }
 _SHAPES = {
     "persistence": [("persistence", "constraints.ttl")],
@@ -88,6 +94,7 @@ _SHAPES = {
     "vocabulary": [("vocabulary", "structural.ttl"), ("vocabulary", "constraints.ttl")],
     "quantification": [("quantification", "structural.ttl"), ("quantification", "constraints.ttl")],
     "eligibility": [("eligibility", "structural.ttl"), ("eligibility", "constraints.ttl")],
+    "meaning": [("instrument", "structural.ttl"), ("instrument", "constraints.ttl")],
 }
 TARGETS = tuple(_SPECS)
 
