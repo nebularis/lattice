@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A136: Set comparisons and aggregate bindings
+# ADR-A145: Set comparisons and aggregate bindings
 
 **Status:** Proposed
 **Date:** 2026-10-27

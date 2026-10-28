@@ -5,7 +5,7 @@
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** R. **Branch:** `ccs/c9b3a-set-comparisons`, examples first (ADR-A-C2), then the model, reference and proofs in one commit and the compilers in a second
 **Plan:** [CCS plan](../plans/computable-contract-substrate.md), "C9b3a in detail"
-**Decisions:** C9b3-Q2 (a′), C9b3a-Q1 (a), Q2 (c), Q3 (a) and Q4 (a), answered 2026-10-27. [ADR-A136](../../architecture/decisions/ADR-A136-set-comparisons-and-aggregate-bindings.md) (Proposed), [ADR-A103](../../architecture/decisions/ADR-A103-eligibility-set-readings.md), [ADR-A105](../../architecture/decisions/ADR-A105-closure-declarations.md), [ADR-A100](../../architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.md), [ADR-A90](../../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md)
+**Decisions:** C9b3-Q2 (a′), C9b3a-Q1 (a), Q2 (c), Q3 (a) and Q4 (a), answered 2026-10-27. [ADR-A145](../../architecture/decisions/ADR-A145-set-comparisons-and-aggregate-bindings.md) (Proposed), [ADR-A103](../../architecture/decisions/ADR-A103-eligibility-set-readings.md), [ADR-A105](../../architecture/decisions/ADR-A105-closure-declarations.md), [ADR-A100](../../architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.md), [ADR-A90](../../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md)
 
 ## Invariant
 
@@ -97,14 +97,14 @@ mise exec -- python -m pytest tools/test_eligibility_examples.py tools/mork_comp
 - `tools/mork_compilers/src/mork_compilers/sparql_backend.py`: the module docstring's cost statement (STD-020), `_comparison_core`, `_match`, `set_comparison_select`, and `_read_set`'s `comparison` mode
 - `tools/reference/eligibility/src/reference_eligibility/denotation.py`: `decide_member`, `decide_set_comparison`
 - `tools/proofs/eligibility/SetComparison.thy` and claims `TS1` to `TS10` and `ASC`. Adding definitions changes every claim's digest (gate rule E1.4), so the 22 earlier claim records carry a recomputed digest and no changed statement
-- `docs/architecture/decisions/ADR-A136-set-comparisons-and-aggregate-bindings.md` and `docs/developer/mechanisms.md` (MEC-86)
+- `docs/architecture/decisions/ADR-A145-set-comparisons-and-aggregate-bindings.md` and `docs/developer/mechanisms.md` (MEC-86)
 
 ## Deliberate non-coverage
 
 - **Versions.** None moves. `check:ontology-versioning` reports `UNBUMPED` for `Executable.ttl` and the release members, as expected until `release:prepare` runs at the merge (ADR-A129).
 - **Literal-valued sets** are refused by a shape on a value space and are not compared (Q3 (a)).
 - **Existence** is not stated by a comparison. A count over a binding states it once aggregate bindings are built, and no example or term for it is added here.
-- **Aggregate bindings** are decided in ADR-A136 and not built.
+- **Aggregate bindings** are decided in ADR-A145 and not built.
 - **Measured cost.** The query's cost is stated, not measured, on any engine.
 - **The reasoner tests** (`needs_reasoner`) are not relied on by any row.
 
@@ -117,7 +117,7 @@ mise exec -- python -m pytest tools/test_eligibility_examples.py tools/mork_comp
 - `elg:SetComparison`, `elg:comparison` with the closed class `elg:Comparison` (`elg:Subset`, `elg:Intersects`, `elg:Disjoint`), `elg:testedBinding`, `elg:referenceBinding`, L18, two shapes and the structural shapes, three examples and a release note.
 - The IR's `SetComparisonPlan`, the SPARQL and SHACL compilers, and OWL and SWRL refusals.
 - The reference `decide_set_comparison` and the Isabelle theory. Under hierarchical match a tested value outside the scheme is Undetermined with `exe:OutsideScheme` (L9), and over a scheme with no link a value not equal to a reference value is Undetermined with `exe:NoHierarchy` (L14), both as the maintainer ruled. A comparison's `?closure` and `?referenceClosure` are two IRI columns.
-- ADR-A136 (Proposed) and MEC-86.
+- ADR-A145 (Proposed) and MEC-86.
 
 **Decisions taken without the maintainer, for countersignature:**
 
