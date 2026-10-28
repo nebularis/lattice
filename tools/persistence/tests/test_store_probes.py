@@ -143,7 +143,12 @@ def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses
 # ---- P3 a correlated GRAPH ?g in an inner group -------------------------------------------------------------------------
 
 
-def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
+CONSTANT_G = "<urn:g:0>"
+COMPUTED_G = 'IRI(CONCAT("urn:g:", ENCODE_FOR_URI(STR("0")), ""))'
+"""How `?g` is bound in the probe's query. The compiler emits the computed form, from `$root` (`builders._Named`)."""
+
+
+def _p3_ratio(triples: int = 3000, graphs: int = 100, bound: str = CONSTANT_G) -> float:
     def timed(count: int) -> float:
         ds = engines.dataset()
         for i in range(count):
@@ -153,7 +158,7 @@ def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
         best = float("inf")
         for _ in range(3):
             start = time.perf_counter()
-            rows = ds.query("SELECT (COUNT(*) AS ?n) WHERE { BIND(<urn:g:0> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } } }")
+            rows = ds.query("SELECT (COUNT(*) AS ?n) WHERE { BIND(" + bound + " AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } } }")
             best = min(best, time.perf_counter() - start)
             assert int(list(rows)[0][0]) == triples
         return best
@@ -161,11 +166,33 @@ def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
     return timed(graphs) / timed(1)
 
 
-def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph():
-    """100 graphs of equal size, against 1. A store that evaluated the inner group before the join would take about 100
-    times as long. Both engines pass the binding in (the cost note of H2.3-Q2), so `compile` has no reason yet to choose
-    the caller-named graph for a store. The bound is wide, since the measure is a ratio of two timings of one machine."""
+def _oxigraph_scans_constant_graph_in_optional() -> bool:
+    """Whether the installed pyoxigraph reads every graph for a `GRAPH ?g` inside an `OPTIONAL` whose `?g` a `BIND` sets to a constant
+    (0.5.13 on, TSD-45). Imported here, since the rdflib runs need no Oxigraph."""
+    from lattice_testing_oxigraph import CONSTANT_GRAPH_INLINED_IN_OPTIONAL
+
+    return _current() == "oxigraph" and not CONSTANT_GRAPH_INLINED_IN_OPTIONAL
+
+
+def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph(request):
+    """100 graphs of equal size, against 1, with `?g` bound to a constant IRI. A store that evaluated the inner group before the join
+    would take about 100 times as long. rdflib and Oxigraph 0.5.11 and 0.5.12 pass the binding in (TSD-04, the cost note of H2.3-Q2).
+    Oxigraph 0.5.13 does not (TSD-45), so that case is a strict expected failure. It asserts the behaviour TSD-04 records, and when a
+    later release restores it the test passes, strict mode fails it, and the marker goes with a correction to TSD-45. The bound is
+    wide, since the measure is a ratio of two timings of one machine, and is unchanged. The compiler's `?g` is computed, which is
+    the next test."""
+    if _oxigraph_scans_constant_graph_in_optional():
+        request.applymarker(pytest.mark.xfail(strict=True, reason="TSD-45: Oxigraph 0.5.13 reads every graph for a constant-bound GRAPH ?g inside an OPTIONAL"))
     assert _p3_ratio() < 8
+
+
+def test_h2_4b_t4b_p3_a_computed_graph_variable_is_passed_into_an_optional_on_rdflib_and_never_on_oxigraph():
+    """The form the compiler emits, `BIND(IRI(CONCAT(…, ENCODE_FOR_URI(STR($root)), …)) AS ?g) … OPTIONAL { GRAPH ?g { … } }`
+    (`builders._Named`). rdflib reads one graph. Oxigraph reads every graph on 0.5.11, 0.5.12 and 0.5.13, so the default `query`
+    graph naming costs time in the size of the dataset there, and `graph_names="caller"` does not (TSD-45). The ratio is about 1 and
+    about 90 against the bound of 8."""
+    ratio = _p3_ratio(bound=COMPUTED_G)
+    assert (ratio < 8) is _pick(rdflib=True, oxigraph=False)
 
 
 # ---- P4 an unbound graph variable in a template ------------------------------------------------------------------------

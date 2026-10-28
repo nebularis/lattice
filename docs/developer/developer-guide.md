@@ -189,6 +189,8 @@ ordinary Turtle.
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |
 | [`tools/testing/oxigraph/`](../../tools/testing/oxigraph/README.md) | An in-memory Oxigraph engine for the persistence tests and benchmark (ADR-A125). Not a store SPI | `mise run check:persistence` (default engine), `mise run check:persistence-conformance` (every engine, on demand and before a merge) |
 | [`benchmark/persistence-composite-cost/`](../../benchmark/persistence-composite-cost/README.md) | The cost of a composite replace on rdflib and Oxigraph (ADR-A124, TD-42) | `mise run check:persistence-composite-cost` |
+| [`benchmark/persistence-graph-naming-cost/`](../../benchmark/persistence-graph-naming-cost/README.md) | What a `GRAPH ?g` inside an `OPTIONAL` costs, and what the generated named-graph replace costs under each graph naming, on rdflib and Oxigraph (ADR-A124, TSD-45, PDD-17) | `mise run check:persistence-graph-naming-cost` |
+| [`benchmark/persistence-graph-naming-cost-jvm/`](../../benchmark/persistence-graph-naming-cost-jvm/README.md) | The same measurements on Jena (in-memory and TDB2) and RDF4J, running the operations the Python benchmark renders (ADR-A124, TSD-45, PDD-17) | `mise run check:persistence-graph-naming-cost-jvm` |
 
 ### Formal-methods toolchains (`tools/`)
 

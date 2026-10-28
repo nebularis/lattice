@@ -105,5 +105,6 @@ WINGMAN
 # Generated benchmark reports (ADR-A124)
 benchmark/*/report.json
 benchmark/*/report.md
+benchmark/*/operations.json
 benchmark/*/sweep.json
 benchmark/*/sweep.md
