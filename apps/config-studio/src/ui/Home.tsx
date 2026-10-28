@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-// The workspace list, and the dialog that makes a workspace from a sample or uploaded Turtle.
+// The workspace list, and the dialog that makes a workspace from a sample, uploaded Turtle or an exported workspace.
 
 import { useEffect, useState } from "react";
-import { FilePlus2, FolderOpen, Layers, Trash2, Upload } from "lucide-react";
+import { Download, FilePlus2, FolderOpen, Layers, Trash2, Upload } from "lucide-react";
 import { api, type Sample, type WorkspaceSummary } from "../api";
 import { Baseline } from "../rdf/baseline";
 import { Graph, TurtleError } from "@lattice/authoring-domain";
@@ -68,6 +68,16 @@ export function Home() {
               <div className="row">
                 <FolderOpen size={18} color="var(--accent)" />
                 <h3 className="grow ellipsis">{w.label}</h3>
+                <a
+                  className="btn ghost icon sm"
+                  aria-label={`Export ${w.label}`}
+                  title="Export as a TriG file"
+                  href={api.exportUrl(w.id)}
+                  download
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Download size={14} />
+                </a>
                 <button
                   className="btn ghost icon sm"
                   aria-label={`Delete ${w.label}`}
@@ -81,6 +91,7 @@ export function Home() {
               </div>
               <div className="row small muted">Changed {ago(w.modifiedAt)}</div>
               <div className="row" style={{ flexWrap: "wrap" }}>
+                {w.sample && <span className="chip">from sample {w.sample}</span>}
                 <span className="chip baseline">baseline r{w.revisions.baseline}</span>
                 {CONFIG_PARTS.filter((p) => w.revisions[p] > 0).map((p) => (
                   <span key={p} className="chip">
@@ -137,6 +148,7 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
   };
 
   let preview: string | undefined;
+  const fromFiles = source === "upload" || source === "import";
   if (source === "upload" && files.length) {
     try {
       const parts = split(parsed());
@@ -151,9 +163,13 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(undefined);
     try {
+      if (source === "import") {
+        go("w", await api.importWorkspace(files[0].text, label.trim() || undefined));
+        return;
+      }
       const graph = source === "upload" ? parsed() : await api.sample(source);
       const parts = split(graph);
-      const id = await api.createWorkspace(label.trim() || "Untitled workspace", parts.baseline);
+      const id = await api.createWorkspace(label.trim() || "Untitled workspace", parts.baseline, source === "upload" ? undefined : source);
       for (const part of CONFIG_PARTS) {
         if (parts[part].size) await api.save(id, part, parts[part], '"0"');
       }
@@ -175,7 +191,7 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
           <button className="btn" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn primary" disabled={busy || (source === "upload" && !files.length)} onClick={() => void createIt()}>
+          <button className="btn primary" disabled={busy || (fromFiles && !files.length)} onClick={() => void createIt()}>
             {busy && <Spinner />} Create workspace
           </button>
         </>
@@ -204,13 +220,32 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
             <span className="desc">{s.comment}</span>
           </button>
         ))}
-        <button className="choice-card" aria-pressed={source === "upload"} onClick={() => setSource("upload")}>
+        <button
+          className="choice-card"
+          aria-pressed={source === "upload"}
+          onClick={() => {
+            setSource("upload");
+            setFiles([]);
+          }}
+        >
           <span className="title">Your own Turtle</span>
-          <span className="desc">Upload a baseline, and any configuration you already have. Each subject is sorted into baseline, persistence or surface by its terms.</span>
+          <span className="desc">Upload a baseline, and any configuration you already have. Each subject is sorted into the baseline or a configuration by its terms.</span>
+        </button>
+        <button
+          className="choice-card"
+          aria-pressed={source === "import"}
+          onClick={() => {
+            setSource("import");
+            setFiles([]);
+            setLabel("");
+          }}
+        >
+          <span className="title">An exported workspace</span>
+          <span className="desc">A .trig file a workspace was exported to, here or on another machine. It comes back with its revisions, as a new workspace.</span>
         </button>
       </div>
 
-      {source === "upload" && (
+      {fromFiles && (
         <div style={{ marginTop: 14 }}>
           <label
             className={`dropzone${over ? " over" : ""}`}
@@ -227,8 +262,16 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
             }}
           >
             <Upload size={20} />
-            <div style={{ marginTop: 6 }}>{files.length ? files.map((f) => f.name).join(", ") : "Drop .ttl files here, or click to choose"}</div>
-            <input type="file" accept=".ttl,text/turtle" multiple hidden onChange={(e) => e.target.files && void readFiles(e.target.files).then(setFiles)} />
+            <div style={{ marginTop: 6 }}>
+              {files.length ? files.map((f) => f.name).join(", ") : source === "import" ? "Drop a .trig file here, or click to choose" : "Drop .ttl files here, or click to choose"}
+            </div>
+            <input
+              type="file"
+              accept={source === "import" ? ".trig,application/trig" : ".ttl,text/turtle"}
+              multiple={source === "upload"}
+              hidden
+              onChange={(e) => e.target.files && void readFiles(e.target.files).then(setFiles)}
+            />
           </label>
           {preview && <p className="small muted">{preview}</p>}
         </div>

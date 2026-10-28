@@ -14,7 +14,7 @@ from rdflib.namespace import RDF, XSD
 
 from lattice_workers import config_studio_jobs as jobs
 from lattice_workers.config_studio_jobs import CST, SH
-from lattice_workers.config_studio_worker import ConfigStudioWorker, RabbitMqConfigStudioWorker
+from lattice_workers.config_studio_worker import ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore
 from lattice_workers.fuseki_gsp import GraphNotFound
 
 CATALOGUE = jobs.catalogue()
@@ -259,3 +259,37 @@ def test_topology_copy_equals_contract():
     contract = (ROOT / CATALOGUE.area("contracts") / "config-studio" / "amqp-topology.json").read_text(encoding="utf-8")
     assert packaged == contract
     assert json.loads(packaged)["queues"][0]["name"] == "lattice.studio.jobs"
+
+
+class FakePublisher:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, dict, bytes]] = []
+
+    def publish(self, exchange: str, routing_key: str, headers: dict, body: bytes) -> None:
+        self.sent.append((exchange, routing_key, headers, body))
+
+
+def test_a_job_graph_goes_to_its_workspace_writer_not_the_store():
+    from rdflib import Dataset
+
+    ws, job = str(uuid.uuid4()), str(uuid.uuid4())
+    iri = f"urn:lattice:studio:job:{job}"
+    graph = Graph()
+    graph.add((URIRef(iri), CST.workspace, URIRef(f"urn:lattice:studio:ws:{ws}")))
+    graph.add((URIRef(iri), CST.status, CST.Running))
+    reader, publisher = FakeStore(), FakePublisher()
+    WriterStore(reader, publisher).put_graph(iri, graph)
+    assert reader.history == []
+    exchange, key, headers, body = publisher.sent[0]
+    assert (exchange, key) == ("lattice.studio.writes", ws)
+    assert headers == {"command": "job-update", "workspace": ws, "job": job}
+    sent = Dataset().parse(data=body.decode("utf-8"), format="nquads")
+    assert to_isomorphic(sent.graph(URIRef(iri))) == to_isomorphic(graph)
+
+
+def test_a_graph_naming_no_workspace_is_never_sent():
+    iri = f"urn:lattice:studio:job:{uuid.uuid4()}"
+    publisher = FakePublisher()
+    with pytest.raises(ValueError):
+        WriterStore(FakeStore(), publisher).put_graph(iri, Graph())
+    assert publisher.sent == []

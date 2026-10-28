@@ -53,3 +53,12 @@ def test_a_port_another_process_holds_is_refused_before_anything_starts(tmp_path
             studio.claim("service", port)
         assert not (tmp_path / "service.pid").exists()
     assert studio.claim("service", port)
+
+
+def test_workspaces_live_in_the_platform_data_folder_unless_told_otherwise() -> None:
+    home = {"HOME": "/h", "USERPROFILE": "C:/Users/a"}
+    assert stack.data_dir({"LATTICE_STUDIO_DATA": "/x", **home}) == Path("/x")
+    assert stack.data_dir(home, "darwin") == Path("/h/Library/Application Support/LATTICE/studio")
+    assert stack.data_dir({**home, "LOCALAPPDATA": "C:/L"}, "win32") == Path("C:/L/LATTICE/studio")
+    assert stack.data_dir(home, "linux") == Path("/h/.local/share/lattice/studio")
+    assert stack.data_dir({**home, "XDG_DATA_HOME": "/d"}, "linux") == Path("/d/lattice/studio")

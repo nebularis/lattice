@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # Fuseki and RabbitMQ for the Configuration Studio (ADR-A136), on the ports the studio's mise
 # tasks use. The service, worker and browser code run on the host: `mise run studio:service`,
-# `studio:worker` and `studio:web`.
+# `studio:worker` and `studio:web`. Workspaces are kept in the volume studio-data, a TDB2 database,
+# so `docker compose down` keeps them and `docker compose down -v` deletes them.
 services:
   fuseki:
     build:
@@ -9,6 +10,8 @@ services:
       dockerfile: fuseki.Dockerfile
     ports:
       - "127.0.0.1:3130:3030"
+    volumes:
+      - studio-data:/data
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3030/$$/ping || exit 1"]
       interval: 5s
@@ -21,6 +24,9 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit loopback_users []"
+    volumes:
+      # The image's own plugins, and the consistent-hash exchange the store writers' partitions need.
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     ports:
       - "127.0.0.1:5673:5672"
       - "127.0.0.1:15673:15672"
@@ -29,3 +35,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+volumes:
+  studio-data:

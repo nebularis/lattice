@@ -14,7 +14,7 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 from .config_studio_jobs import find_root
-from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, RabbitMqConfigStudioWorker
+from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, WRITES, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore
 from .fuseki_gsp import FusekiGraphStore
 from .wording_analysis_worker import declare_topology
 
@@ -60,6 +60,18 @@ def _connect(uri: str) -> pika.BlockingConnection:
             time.sleep(_RECONNECT_INTERVAL_SECONDS)
 
 
+class _Publisher:
+    def __init__(self, channel: object) -> None:
+        self._channel = channel
+
+    def publish(self, exchange: str, routing_key: str, headers: dict, body: bytes) -> None:
+        # In confirm mode, basic_publish raises if the broker refuses or cannot route the message.
+        self._channel.basic_publish(
+            exchange=exchange, routing_key=routing_key, body=body, mandatory=True,
+            properties=pika.BasicProperties(content_type="application/n-quads", delivery_mode=2, headers=headers),
+        )
+
+
 def main() -> None:
     config = read_config(os.environ)
     connection = _connect(config.amqp_uri)
@@ -67,7 +79,13 @@ def main() -> None:
     declare_topology(channel, TOPOLOGY)
     channel.basic_qos(prefetch_count=1)
 
-    store = FusekiGraphStore(config.fuseki_url, config.fuseki_dataset, config.fuseki_user, config.fuseki_password)
+    channel.exchange_declare(exchange=WRITES["exchange"], exchange_type=WRITES["type"], durable=True)
+    # Writes go out on their own channel, in confirm mode, so a job is acknowledged only once its result is the broker's.
+    writes = connection.channel()
+    writes.confirm_delivery()
+
+    reader = FusekiGraphStore(config.fuseki_url, config.fuseki_dataset, config.fuseki_user, config.fuseki_password)
+    store = WriterStore(reader, _Publisher(writes))
     worker = RabbitMqConfigStudioWorker(ConfigStudioWorker(store, config.root, _clock))
 
     def _on_message(ch: object, method: object, properties: object, body: bytes) -> None:

@@ -1,6 +1,6 @@
 """Consumer and RabbitMQ adapter for Configuration Studio jobs (ADR-A136).
 
-Reads a job graph, marks it running, runs the job and writes the whole graph back with its final
+Reads a job graph, marks it running, runs the job and hands the whole graph back with its final
 status, per `contracts/config-studio/README.md`.
 """
 
@@ -12,7 +12,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from rdflib import Graph, Literal, URIRef
+from rdflib import Dataset, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from .config_studio_jobs import CST, run_job
@@ -132,6 +132,40 @@ class ConfigStudioWorker:
             if empty_if_missing:
                 return Graph()
             raise ValueError(f"{what} graph {iri} not found") from error
+
+
+_WORKSPACE = re.compile(rf"urn:lattice:studio:ws:({_UUID})")
+WRITES = TOPOLOGY["writes"]
+
+
+class Publisher(Protocol):
+    def publish(self, exchange: str, routing_key: str, headers: dict[str, Any], body: bytes) -> None:
+        """Publish persistently, returning once the broker has confirmed it."""
+
+
+class WriterStore:
+    """Reads from the store, and writes a job's graph through the writer of its workspace (ADR-A136, partitioned
+    writers): a `job-update` command on the consistent-hash exchange, keyed by the workspace's id, which the writer
+    checks and applies. The worker never writes the store itself."""
+
+    def __init__(self, reader: GraphStore, publisher: Publisher) -> None:
+        self._reader = reader
+        self._publisher = publisher
+
+    def get_graph(self, graph_iri: str) -> Graph:
+        return self._reader.get_graph(graph_iri)
+
+    def put_graph(self, graph_iri: str, graph: Graph) -> None:
+        job = _MESSAGE.fullmatch(graph_iri)
+        workspace = _WORKSPACE.fullmatch(str(graph.value(URIRef(graph_iri), CST.workspace) or ""))
+        if job is None or workspace is None:
+            raise ValueError(f"{graph_iri} is not a job graph naming its workspace")
+        dataset = Dataset()
+        named = dataset.graph(URIRef(graph_iri))
+        for triple in graph:
+            named.add(triple)
+        headers = {"command": "job-update", "workspace": workspace.group(1), "job": graph_iri.rsplit(":", 1)[1]}
+        self._publisher.publish(WRITES["exchange"], workspace.group(1), headers, dataset.serialize(format="nquads").encode("utf-8"))
 
 
 class RabbitMqConfigStudioWorker:

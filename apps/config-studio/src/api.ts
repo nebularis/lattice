@@ -41,6 +41,8 @@ export interface WorkspaceSummary {
   label: string;
   modifiedAt?: string;
   revisions: Record<GraphName, number>;
+  /** The id of the sample it was made from, if it was. */
+  sample?: string;
 }
 
 export interface Sample {
@@ -56,6 +58,7 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
     iri,
     label: graph.value(iri, LABEL) ?? "Untitled workspace",
     modifiedAt: graph.value(iri, CST("modifiedAt")),
+    sample: graph.value(iri, CST("fromSample"))?.replace("urn:lattice:studio:sample:", ""),
     revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
 }
@@ -90,13 +93,27 @@ export const api = {
     return summary(graph, `urn:lattice:studio:ws:${id}`);
   },
 
-  async createWorkspace(label: string, baseline: Graph): Promise<string> {
-    const response = await request("/api/workspaces", {
+  async createWorkspace(label: string, baseline: Graph, sample?: string): Promise<string> {
+    const query = sample ? `?sample=${encodeURIComponent(sample)}` : "";
+    const response = await request(`/api/workspaces${query}`, {
       method: "POST",
       headers: { "Content-Type": TURTLE, Slug: encodeURIComponent(label) },
       body: baseline.toTurtle(),
     });
     return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+  },
+
+  /** Recreates a workspace from a file `exportUrl` gave, under a new id. */
+  async importWorkspace(trig: string, label?: string): Promise<string> {
+    const headers: Record<string, string> = { "Content-Type": "application/trig" };
+    if (label) headers.Slug = encodeURIComponent(label);
+    const response = await request("/api/workspaces", { method: "POST", headers, body: trig });
+    return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+  },
+
+  /** Every graph of a workspace but its jobs, as a TriG file to download. */
+  exportUrl(id: string): string {
+    return `/api/workspaces/${id}/export`;
   },
 
   async deleteWorkspace(id: string): Promise<void> {

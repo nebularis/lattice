@@ -70,6 +70,10 @@ public final class Writer {
         if (named(c).hasNext()) {
             return Reply.refused("a creation carries the baseline alone, in the default graph");
         }
+        List<String> strangers = Parts.strangers(c.body().getDefaultModel(), "baseline", 5);
+        if (!strangers.isEmpty()) {
+            return Reply.refused("the baseline holds terms of another part: " + String.join(", ", strangers));
+        }
         if (load(c.workspace()) != null) {
             return Reply.refused("the workspace exists");
         }
@@ -224,7 +228,7 @@ public final class Writer {
             return Reply.refused("the job is not this workspace's");
         }
         Model update = c.body().getNamedModel(jobIri);
-        if (!serviceTriples(existing, jobIri).isIsomorphicWith(serviceTriples(update, jobIri))) {
+        if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
             return Reply.refused("a job's update may change only its status and results");
         }
         store.write(List.of(), Map.of(jobIri, update));
@@ -239,6 +243,26 @@ public final class Writer {
             }
         });
         return out;
+    }
+
+    /**
+     * The job node's own statements, compared by value: rdflib writes an {@code xsd:dateTime} that Jena wrote with
+     * {@code Z} back with {@code +00:00}, which is the same value under another lexical form.
+     */
+    private static boolean sameValues(Model a, Model b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (Statement s : a.listStatements().toList()) {
+            boolean found = false;
+            for (Statement o : b.listStatements(s.getSubject(), s.getPredicate(), (RDFNode) null).toList()) {
+                found |= o.getObject().asNode().sameValueAs(s.getObject().asNode());
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Reply deleteJob(Command c) {

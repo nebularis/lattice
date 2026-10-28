@@ -8,7 +8,8 @@
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
 pinned here, or with `--docker` from the compose file. It then builds and starts the service and
 the worker, and with `--dev` the browser code with hot reload. Each process writes its log and its
-process id under `.build/config-studio/run`, which `down` reads. Run it through mise, as
+process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
+TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
 `mise run studio:up`, so Java, Maven, Node, Python and Erlang are on the path.
 """
 
@@ -56,6 +57,9 @@ STUDIO_ENV = {
     "LATTICE_STUDIO_STATIC": "apps/config-studio/dist",
 }
 
+# RabbitMQ's plugins, so the writes exchange can be a consistent-hash exchange (ADR-A136, partitioned writers).
+RABBITMQ_PLUGINS = "[rabbitmq_consistent_hash_exchange].\n"
+
 # Stopped in reverse, so the worker and service go before the store and the broker.
 ORDER = ("fuseki", "rabbitmq", "service", "worker", "web")
 
@@ -69,6 +73,7 @@ class Stack:
         catalogue = lattice_repo_catalogue.load(root)
         self.compose = root / catalogue.area("deployment") / "compose" / "config-studio" / "docker-compose.yml"
         self.platform = root / catalogue.area("platform")
+        self.data = data_dir(os.environ)
 
     # --- processes -------------------------------------------------------------------------------
 
@@ -135,14 +140,21 @@ class Stack:
         jar = download(FUSEKI_URL, FUSEKI_SHA256, self.infra)
         base = self.infra / "fuseki-base"
         base.mkdir(parents=True, exist_ok=True)
-        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--mem", "--update", "/studio"], {"FUSEKI_BASE": str(base)})
+        store = self.data / "tdb2"
+        store.mkdir(parents=True, exist_ok=True)
+        print(f"fuseki: workspaces kept in {store}")
+        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--tdb2", "--loc", str(store), "--update", "/studio"], {"FUSEKI_BASE": str(base)})
 
     def rabbitmq_home(self) -> Path:
         return self.infra / f"rabbitmq_server-{RABBITMQ_VERSION}"
 
     def rabbitmq_env(self) -> Dict[str, str]:
         data = self.infra / "rabbitmq"
+        data.mkdir(parents=True, exist_ok=True)
+        plugins = data / "enabled_plugins"
+        plugins.write_text(RABBITMQ_PLUGINS)
         env = {
+            "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_MNESIA_BASE": str(data / "mnesia"), "RABBITMQ_LOG_BASE": str(data / "log"),
             "RABBITMQ_NODENAME": RABBITMQ_NODE, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(RABBITMQ_PORT), "RABBITMQ_DIST_PORT": str(RABBITMQ_PORT + 20000),
@@ -212,6 +224,20 @@ class Stack:
 
 # --- platform helpers ----------------------------------------------------------------------------
 
+def data_dir(env: Dict[str, str], platform: str = sys.platform) -> Path:
+    """Where the studio keeps its workspaces: `LATTICE_STUDIO_DATA` if set, otherwise the platform's
+    own folder for an application's data, so the workspaces survive `mise run clean` and a new
+    checkout."""
+    if env.get("LATTICE_STUDIO_DATA"):
+        return Path(env["LATTICE_STUDIO_DATA"])
+    home = Path(env.get("HOME") or env.get("USERPROFILE") or Path.home())
+    if platform == "win32":
+        return Path(env.get("LOCALAPPDATA") or home / "AppData" / "Local") / "LATTICE" / "studio"
+    if platform == "darwin":
+        return home / "Library" / "Application Support" / "LATTICE" / "studio"
+    return Path(env.get("XDG_DATA_HOME") or home / ".local" / "share") / "lattice" / "studio"
+
+
 def command(argv: List[str]) -> List[str]:
     """Resolves the program on the path, and runs a Windows batch file through cmd, which
     CreateProcess cannot run directly."""
@@ -254,8 +280,9 @@ def stop_tree(pid: int, grace: float = 60.0) -> None:
     grace period. On POSIX that is SIGTERM to its group, which runs a JVM's shutdown hooks and the
     worker's handler. Windows has no termination request a detached console process can receive,
     so there `taskkill /T /F` stops the tree at once: RabbitMQ has already been shut down by
-    `rabbitmqctl` by then, Fuseki holds an in-memory dataset, the service holds no state outside
-    the store, and a job the worker had not acknowledged is redelivered."""
+    `rabbitmqctl` by then, the service holds no state outside the store, and a job the worker had
+    not acknowledged is redelivered. TDB2 commits each update before Fuseki answers it, so a forced
+    stop loses no committed write, and the next open recovers the journal."""
     if WINDOWS:
         subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
         return

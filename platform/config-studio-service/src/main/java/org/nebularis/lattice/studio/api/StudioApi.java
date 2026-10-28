@@ -219,6 +219,10 @@ public final class StudioApi {
         if (baseline == null) {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
+        List<String> strangers = Parts.strangers(baseline, "baseline", 5);
+        if (!strangers.isEmpty()) {
+            return ApiResponse.text(422, "the baseline holds terms of another part: " + String.join(", ", strangers));
+        }
         String id = ids.get().toString();
         Instant now = now();
         Reply reply = writes.send(Command.create(id, label, now, sample, baseline));
