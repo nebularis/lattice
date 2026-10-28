@@ -1416,7 +1416,7 @@ srf:ExternalIndexDeferredShape a sh:NodeShape ;
 srf:CrosswalkRelationRequiredShape a sh:NodeShape ;
 	sh:targetClass srf:PromotionContract ;
 	sh:sparql [
-		sh:message "A crosswalk promotion names the mapping relation it traverses, and a non-crosswalk promotion names none. Discharges srf:X5." ;
+		sh:message "A crosswalk promotion names the mapping relation it traverses, and a non-crosswalk promotion names none. Checks the structural condition of srf:X5. The semantic law is discharged in its register, not by this shape." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
@@ -1452,7 +1452,7 @@ srf:DefinitionOnlyPromotionShape a sh:NodeShape ;
 srf:PromotionSignatureDisciplineShape a sh:NodeShape ;
 	sh:targetClass srf:PromotionContract ;
 	sh:sparql [
-		sh:message "A promotion onto a property outside the contract's target namespace reaches the authored signature: it must declare exact or crosswalk-exact fidelity and must be materialised rather than definitional. Discharges srf:X6." ;
+		sh:message "A promotion onto a property outside the contract's target namespace reaches the authored signature: it must declare exact or crosswalk-exact fidelity and must be materialised rather than definitional. Checks the structural condition of srf:X6. The semantic law is discharged in its register, not by this shape." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {

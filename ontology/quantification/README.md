@@ -1671,6 +1671,8 @@ qnt:Compare a qnt:OperationKind .
 qnt:Contains a qnt:OperationKind .
 qnt:Overlaps a qnt:OperationKind .
 qnt:Difference a qnt:OperationKind .
+qnt:TruncatedDifference a qnt:OperationKind ;
+    rdfs:comment "Difference floored at the space's zero lower bound, the depletion operation law Q8 names. On a space with no zero lower bound it is Difference." .
 qnt:Sum a qnt:OperationKind .
 qnt:Ratio a qnt:OperationKind .
 qnt:Minimum a qnt:OperationKind .
@@ -1887,6 +1889,26 @@ flowchart TB
 ## 10. Laws
 
 Restructured into three registers, per §4's design decision — a discharge's evidence shape depends on which register its law belongs to.
+
+Every law below is an individual in `spec/quantification.ttl`, `qnt:Q1` to `qnt:Q14`, each with its `qnt:lawRegister`, so a `qnt:LawDischarge` names the law it discharges rather than inventing one. The semantic laws Q1 to Q8 have no discharge recorded yet (TD-116). Q13 is checked for proportion spaces by `qnt:ProportionNamesBaseRoleShape`, and Q8's depletion operation is `qnt:TruncatedDifference`.
+
+```turtle-spec
+qnt:Q1 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Order coherence: every declared order kind has defined comparison semantics, with any indeterminate cases explicit." .
+qnt:Q2 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Bound coherence: open and closed endpoints behave consistently under containment and intersection, including for cyclic ranges." .
+qnt:Q3 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Range-set canonical form: regenerating a range set's normal form from the same input twice produces the same result." .
+qnt:Q4a a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet soundness: a value contained by the meet of two ranges is contained by both." .
+qnt:Q4b a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet completeness: a value contained by both ranges is contained by their meet." .
+qnt:Q5 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Overlap is screening-only: a semantics satisfying only Q4a is ScreeningRangeSemantics and never participates in meet-based enumeration." .
+qnt:Q6 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Conversion coherence: exact and defined conversions preserve comparison semantics, contextual conversions only within the recorded context." .
+qnt:Q7 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Operation admissibility: an operation is evaluated only where a matching capability signature exists." .
+qnt:Q8 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Zero-bounded closure: a space declaring a zero lower bound and truncated subtraction remains non-negative under permitted depletion operations." .
+qnt:Q9 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Recurrence determinism: independent recomputation of the same declaration and inputs produces identical bin keys." .
+qnt:Q10 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Unresolved non-coercion: every indeterminate path produces the declared reason, never a definite value." .
+qnt:Q11 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Ordering determinism: an OrderingBasis with a total component sequence orders the same input set the same way, independently of storage or evaluation order." .
+qnt:Q12 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Additive sums: a Sum capability whose operands and result are all on one space is declared only where that space is Extensive." .
+qnt:Q13 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Sums of like values: a sum is evaluated only over values in one unit, after permitted conversion, and of one base where the space names a baseRole." .
+qnt:Q14 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Month arithmetic: adding a month-denominated extent to a temporal position clamps the day to the last day of the target month." .
+```
 
 ### Semantic laws (`qnt:SemanticLaw`) — formal argument plus property tests
 

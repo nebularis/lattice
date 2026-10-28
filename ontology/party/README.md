@@ -104,7 +104,7 @@ pty:Role a owl:Class ;
 pty:RoleOccupancy a owl:Class ;
     rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (ADR-A137), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -361,9 +361,10 @@ A role designed in from the outset, unoccupied until later; and an accountable/p
 ex:third-party-occ a pty:RoleOccupancy ;
     pty:inRole pty:Obligee .
 
-# Later, a separate Effect (Behaviour's, not Party's) adds:
-#   ex:third-party-occ pty:occupiedBy ex:claimant-x .
-# together with evidence recording why.
+# Later, a separate Effect (Behaviour's, not Party's) writes a new version of the occupancy,
+#   ex:third-party-occ-2 a pty:RoleOccupancy ; fnd:hasIdentity ex:third-party-occ-id ; pty:inRole pty:Obligee ; pty:occupiedBy ex:claimant-x .
+#   ex:third-party-occ fnd:supersededBy ex:third-party-occ-2 .
+# together with evidence recording why. The unfilled version stays as the record that the slot was open.
 
 # Accountable/performing split — the sponsor remains accountable;
 # the CRO performs, under a delegation with its own evidence and period.

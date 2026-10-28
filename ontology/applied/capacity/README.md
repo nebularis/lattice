@@ -17,6 +17,8 @@ Capacity models networks of such resources, atop [`behaviour`](../../behaviour/)
 
 The design, its principles, and laws, are located in [the capacity domain analysis and design](../../../docs/architecture/capacity-domain-analysis-and-design.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
 
+**Status.** Withdrawn from release on 2026-10-28 and pre-release until its source ontology exists and its two non-insurance examples pass (its own acceptance condition). The tags at 0.17.0 stand as history, and nothing should pin them. The `_Version2` file names are renamed at the next version.
+
 ## 2. What is authored
 
 | Part | Namespace | File | State |

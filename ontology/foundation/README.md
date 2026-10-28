@@ -444,7 +444,7 @@ fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Governable ;
     rdfs:range fnd:GovernanceState ;
     rdfs:comment "The current governance status of a Governable thing." ;
-    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
+    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time. On a thing that is also versioned, a change of state is a new version, never an edit of the value on an existing version (ADR-A137). On an unversioned governable thing the value is replaced and the change evidenced." .
 ```
 
 #### `fnd:derivationKind`

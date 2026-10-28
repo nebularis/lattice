@@ -640,3 +640,19 @@ qnt:fromPosition a owl:ObjectProperty, owl:FunctionalProperty ;
 qnt:alternativeBound a owl:ObjectProperty, owl:SymmetricProperty ;
     rdfs:domain qnt:Bound ; rdfs:range qnt:Bound ;
     rdfs:comment "Another statement of the same limit in a different unit, sharing the bound's space, sense and closure. A candidate is compared with the statement in its own unit, never through a conversion (ADR-A95)." .
+
+qnt:Q1 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Order coherence: every declared order kind has defined comparison semantics, with any indeterminate cases explicit." .
+qnt:Q2 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Bound coherence: open and closed endpoints behave consistently under containment and intersection, including for cyclic ranges." .
+qnt:Q3 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Range-set canonical form: regenerating a range set's normal form from the same input twice produces the same result." .
+qnt:Q4a a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet soundness: a value contained by the meet of two ranges is contained by both." .
+qnt:Q4b a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet completeness: a value contained by both ranges is contained by their meet." .
+qnt:Q5 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Overlap is screening-only: a semantics satisfying only Q4a is ScreeningRangeSemantics and never participates in meet-based enumeration." .
+qnt:Q6 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Conversion coherence: exact and defined conversions preserve comparison semantics, contextual conversions only within the recorded context." .
+qnt:Q7 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Operation admissibility: an operation is evaluated only where a matching capability signature exists." .
+qnt:Q8 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Zero-bounded closure: a space declaring a zero lower bound and truncated subtraction remains non-negative under permitted depletion operations." .
+qnt:Q9 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Recurrence determinism: independent recomputation of the same declaration and inputs produces identical bin keys." .
+qnt:Q10 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Unresolved non-coercion: every indeterminate path produces the declared reason, never a definite value." .
+qnt:Q11 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Ordering determinism: an OrderingBasis with a total component sequence orders the same input set the same way, independently of storage or evaluation order." .
+qnt:Q12 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Additive sums: a Sum capability whose operands and result are all on one space is declared only where that space is Extensive." .
+qnt:Q13 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Sums of like values: a sum is evaluated only over values in one unit, after permitted conversion, and of one base where the space names a baseRole." .
+qnt:Q14 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Month arithmetic: adding a month-denominated extent to a temporal position clamps the day to the last day of the target month." .
