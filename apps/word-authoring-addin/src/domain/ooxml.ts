@@ -5,8 +5,8 @@
  * `writeTemplate` produce body XML; `writePackage` wraps it as a flat-OPC package suitable for
  * `insertOoxml`.
  */
-import { decode, encode, title, TAG_APPEARANCE, TAG_COLOUR, type TagKind } from "./tags";
-import type { DocumentElement, ElementKind, Part, Section, Unmarked } from "./types";
+import { decode, encode, title, TAG_APPEARANCE, TAG_COLOUR, type TagKind } from "@lattice/authoring-domain";
+import type { DocumentElement, ElementKind, Part, Section, Unmarked } from "@lattice/authoring-domain";
 import { newUuid } from "./uuid";
 import { escapeXml, parseXmlDocument } from "./xml";
 

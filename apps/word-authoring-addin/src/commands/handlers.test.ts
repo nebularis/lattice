@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { writePackage, writeSections, type WritableSection } from "../domain/ooxml";
 import { markResultMessage } from "../app/markMessages";
 import { UiBridge } from "../app/uiBridge";
-import type { AuthoringTemplate, DocumentSnapshot } from "../domain/types";
+import type { AuthoringTemplate, DocumentSnapshot } from "@lattice/authoring-domain";
 import { FakeWordPort } from "../word/fakePort";
 import type { DocumentPort, MarkResult } from "../word/port";
 import { createHandlers } from "./handlers";

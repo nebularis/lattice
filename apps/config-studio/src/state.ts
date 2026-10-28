@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { ApiError, Conflict, api, awaitJob, type WorkspaceSummary } from "./api";
 import { Baseline } from "./rdf/baseline";
 import { checkReferences } from "./rdf/editors";
-import { Graph } from "./rdf/graph";
+import { Graph } from "@lattice/authoring-domain";
 import { bySeverity, type Issue, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart } from "./rdf/split";
 import type { Vocabulary } from "./rdf/vocabulary";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DocumentElement, ValueType } from "../domain/types";
+import type { DocumentElement, ValueType } from "@lattice/authoring-domain";
 import type { ReferenceDraft, VariableDraft } from "./uiBridge";
 
 const VALUE_TYPES: ValueType[] = ["money", "percentage", "date", "duration", "number", "text", "party"];

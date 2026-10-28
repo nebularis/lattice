@@ -152,8 +152,13 @@ run = "mvn -f platform/pom.xml verify"
 [tasks."check:frontend"]
 run = "yarn check"
 
+[tasks."check:authoring-domain"]
+description = "Type-check and unit-test the authoring domain package shared by the add-in and the studio"
+run = "yarn workspace @lattice/authoring-domain run check"
+
 [tasks."check:authoring-addin"]
 description = "Type-check and unit-test the Word authoring add-in"
+depends = ["check:authoring-domain"]
 run = "yarn workspace @lattice/word-authoring-addin run check"
 
 [tasks."test:authoring-addin"]
@@ -518,7 +523,7 @@ run = "python tools/config_studio_stage.py"
 
 [tasks."check:config-studio"]
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
-depends = ["build:config-studio-assets"]
+depends = ["build:config-studio-assets", "check:authoring-domain"]
 run = [
   "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-service -am verify",

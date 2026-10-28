@@ -7,8 +7,7 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { Baseline } from "./baseline";
 import { KINDS, checkReferences, create, items, sectionsFor } from "./editors";
-import { Graph, iri, literal } from "./graph";
-import { CST, DAL, ELG, QNT, SH, SKOS, SRF, VOC } from "./ns";
+import { CST, DAL, ELG, Graph, QNT, SH, SKOS, SRF, VOC, iri, literal } from "@lattice/authoring-domain";
 import { readJob } from "./report";
 import { split } from "./split";
 import { readPath, writePath } from "./path";
@@ -125,31 +124,6 @@ describe("editing", () => {
     const a = create(Graph.empty(), kind(DAL("ClassScope")), "scope", ns);
     const b = create(a.graph, kind(DAL("ClassScope")), "scope", ns);
     expect(b.iri).not.toBe(a.iri);
-  });
-
-  it("replaces an RDF list without leaving its old cells behind, and removes a node with its references", () => {
-    const g = Graph.empty().edit((e) => {
-      e.add(ns + "k", DAL("appliesTo"), iri(ns + "s"));
-      e.add(ns + "s", DAL("targetClass"), iri(loan));
-    });
-    const once = g.edit((e) => e.setList(ns + "k", DAL("keyProperty"), [iri(ns + "a"), iri(ns + "b")]));
-    const twice = once.edit((e) => e.setList(ns + "k", DAL("keyProperty"), [iri(ns + "c")]));
-    expect(twice.size).toBe(g.size + 3);
-    const removed = twice.edit((e) => e.remove(ns + "s"));
-    expect(removed.has(ns + "s")).toBe(false);
-    expect(removed.value(ns + "k", DAL("appliesTo"))).toBeUndefined();
-  });
-
-  it("writes the same Turtle whatever order the triples were added in, with lists inline", () => {
-    const a = Graph.empty().edit((e) => {
-      e.add(ns + "x", DAL("constraintId"), literal("k"));
-      e.setList(ns + "x", DAL("keyProperty"), [iri(ns + "a")]);
-    });
-    const b = Graph.parse(a.toTurtle());
-    expect(b.toTurtle()).toBe(a.toTurtle());
-    expect(a.toTurtle()).toContain("dal:keyProperty (lending:a)");
-    expect(a.toTurtle()).not.toContain("@prefix rdf:");
-    expect(a.toTurtle()).toContain("@prefix dal:");
   });
 
   it("lists the lending sample's nodes by kind with a readable detail", () => {

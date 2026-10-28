@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ApiClient } from "../api/client";
 import { ApiError } from "../api/client";
 import { buildSnapshot } from "../domain/snapshot";
-import { occurrenceIndex } from "../domain/offsets";
+import { occurrenceIndex } from "@lattice/authoring-domain";
 import { parseBody, writePackage, writeSections, writeTemplate, type WritableSection } from "../domain/ooxml";
 import { pollJob } from "../domain/poll";
 import type {
@@ -21,7 +21,7 @@ import type {
   SnapshotAccepted,
   TemplateList,
   ValueType,
-} from "../domain/types";
+} from "@lattice/authoring-domain";
 import { newUuid } from "../domain/uuid";
 import type { AuthoringMetadata, DocumentPort, InlineMark, MarkResult } from "../word/port";
 import { AnalysePanel } from "./AnalysePanel";

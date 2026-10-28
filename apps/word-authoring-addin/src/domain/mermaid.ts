@@ -3,7 +3,7 @@
  * Deterministic: node aliases are assigned `n0`, `n1`, ... in the graph view's own (already
  * sorted) node order, so the same `GraphView` always renders identical text.
  */
-import type { GraphNodeKind, GraphView } from "./types";
+import type { GraphNodeKind, GraphView } from "@lattice/authoring-domain";
 
 const NODE_SHAPE: Record<GraphNodeKind, { open: string; close: string }> = {
   relation: { open: "[", close: "]" },

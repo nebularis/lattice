@@ -7,8 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Plus, X } from "lucide-react";
 import type { Baseline } from "../rdf/baseline";
 import { KINDS, create } from "../rdf/editors";
-import { Graph, iri, literal, typed, type Term } from "../rdf/graph";
-import { XSD, compact, localName } from "../rdf/ns";
+import { Graph, XSD, compact, iri, literal, localName, type Term, typed } from "@lattice/authoring-domain";
 import type { Field, Vocabulary } from "../rdf/vocabulary";
 import { useDismiss } from "./kit";
 

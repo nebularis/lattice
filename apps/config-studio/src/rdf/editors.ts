@@ -4,10 +4,9 @@
 // by rdfs:domain is not the one an author wants, as for the dimensions of a dal:DataAccessProfile.
 // Any other dal: or srf: node gets one section of its type's own properties.
 
-import { Graph, iri, literal, typed, type NamedNode, type Term } from "./graph";
+import { COMMENT, CST, DAL, ELG, FND, Graph, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
 import type { Baseline } from "./baseline";
 import type { Issue } from "./report";
-import { COMMENT, CST, DAL, ELG, FND, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, XSD, compact, humanise, localName, sentence } from "./ns";
 import type { Field, Vocabulary } from "./vocabulary";
 
 export type { ConfigPart as Part } from "./split";

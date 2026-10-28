@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseBody, writePackage, writeSections, type WritableSection } from "./ooxml";
 import { buildSnapshot } from "./snapshot";
-import type { AuthoringTemplate, DocumentSnapshot } from "./types";
+import type { AuthoringTemplate, DocumentSnapshot } from "@lattice/authoring-domain";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../../..");

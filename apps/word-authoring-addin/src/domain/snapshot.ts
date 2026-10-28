@@ -5,7 +5,7 @@
 import type { AuthoringMetadata } from "../word/port";
 import { validate } from "./schemas";
 import type { ParsedDocument } from "./ooxml";
-import type { DocumentSnapshot, VariableDeclaration } from "./types";
+import type { DocumentSnapshot, VariableDeclaration } from "@lattice/authoring-domain";
 
 export interface BuildSnapshotResult {
   snapshot: DocumentSnapshot;

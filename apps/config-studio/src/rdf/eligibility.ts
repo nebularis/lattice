@@ -4,8 +4,7 @@
 // resolution instant and scopes to decide it under (cst:resolutionTime, cst:resolutionScope). The
 // worker decides each with the condition's compiled query.
 
-import { Graph, iri, typed, type Term } from "./graph";
-import { CST, ELG, QNT, SKOS, TYPE, XSD } from "./ns";
+import { CST, ELG, Graph, QNT, SKOS, TYPE, XSD, iri, type Term, typed } from "@lattice/authoring-domain";
 import { mint } from "./editors";
 import { pointRangeSet, removeRange } from "./quantity";
 import type { Decision } from "./report";

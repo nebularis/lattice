@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { guessValueType, suggestKey } from "./keys";
-import type { ValueType } from "./types";
+import type { ValueType } from "@lattice/authoring-domain";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../../..");

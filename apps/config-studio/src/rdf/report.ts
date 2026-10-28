@@ -2,8 +2,7 @@
 // Reads a job graph (contracts/config-studio/README.md, "Jobs") into what the studio shows:
 // status, findings, artefacts and gaps.
 
-import { Graph, type Term } from "./graph";
-import { CST, SH, compact, localName } from "./ns";
+import { CST, Graph, SH, compact, localName, type Term } from "@lattice/authoring-domain";
 
 export type JobStatus = "Queued" | "Running" | "Succeeded" | "Failed";
 export type Severity = "Violation" | "Warning" | "Info";

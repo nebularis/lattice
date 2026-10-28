@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import mermaid from "mermaid";
 import { toMermaid } from "../domain/mermaid";
-import type { Analysis } from "../domain/types";
+import type { Analysis } from "@lattice/authoring-domain";
 
 mermaid.initialize({ securityLevel: "strict", startOnLoad: false });
 

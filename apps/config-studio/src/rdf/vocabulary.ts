@@ -4,8 +4,7 @@
 // individuals of a range class are its options. Only what the ontology cannot say is declared
 // here, in OVERRIDES.
 
-import { Graph, type Term } from "./graph";
-import { COMMENT, DAL, ELG, LABEL, OWL, QNT, RDF, RDFS, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, sentence } from "./ns";
+import { COMMENT, DAL, ELG, Graph, LABEL, OWL, QNT, RDF, RDFS, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, sentence, type Term } from "@lattice/authoring-domain";
 
 export type FieldKind =
   | "text"

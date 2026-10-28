@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, Database, Download, FileText, Hammer, ListChecks, Sparkles } from "lucide-react";
-import { Graph } from "../rdf/graph";
+import { Graph } from "@lattice/authoring-domain";
 import { api, jobId } from "../api";
 import { nodeFor } from "../rdf/editors";
 import type { Issue, Job } from "../rdf/report";

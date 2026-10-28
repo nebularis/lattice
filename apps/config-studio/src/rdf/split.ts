@@ -5,8 +5,7 @@
 // goes to vocabulary. Everything else is baseline. A blank node goes wherever the subject that
 // refers to it went, so path steps written as blank nodes and RDF lists stay with their owner.
 
-import { Graph, type Quad, type Term } from "./graph";
-import { PREFIXES, SKOS, TYPE } from "./ns";
+import { Graph, PREFIXES, SKOS, TYPE, type Quad, type Term } from "@lattice/authoring-domain";
 
 export type Part = "baseline" | "vocabulary" | "quantification" | "eligibility" | "surface" | "persistence";
 

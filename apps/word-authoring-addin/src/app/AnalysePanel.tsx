@@ -1,5 +1,5 @@
-import type { Detection, SnapshotAccepted, ValidationResult } from "../domain/types";
-import type { JobView } from "../domain/types";
+import type { Detection, SnapshotAccepted, ValidationResult } from "@lattice/authoring-domain";
+import type { JobView } from "@lattice/authoring-domain";
 
 export interface AnalysePanelProps {
   canAnalyse: boolean;

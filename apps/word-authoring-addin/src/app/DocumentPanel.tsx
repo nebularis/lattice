@@ -1,4 +1,4 @@
-import type { AuthoringTemplate, SampleList, TemplateList } from "../domain/types";
+import type { AuthoringTemplate, SampleList, TemplateList } from "@lattice/authoring-domain";
 
 export interface DocumentPanelProps {
   templates: TemplateList;

@@ -2,8 +2,7 @@
 // A surface contract's read path. One forward hop is written as srf:readProperty, anything else
 // as srf:hasPathStep nodes, and never both (srf:S1).
 
-import { Graph, iri, typed } from "./graph";
-import { SRF, TYPE, XSD } from "./ns";
+import { Graph, SRF, TYPE, XSD, iri, typed } from "@lattice/authoring-domain";
 
 export interface Step {
   property: string;

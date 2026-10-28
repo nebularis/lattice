@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, Database, ListChecks, Plus, Ruler, Sparkles, Trash2, X } from "lucide-react";
 import { KINDS, classOf, concerns, create, describe, kindOf, nameOf, sectionsFor, type Kind, type Special as SpecialKind } from "../rdf/editors";
-import { DAL, SRF, compact } from "../rdf/ns";
+import { DAL, SRF, compact, type Graph } from "@lattice/authoring-domain";
 import { readPath, writePath, type Step } from "../rdf/path";
 import type { Issue } from "../rdf/report";
 import type { Part } from "../state";
@@ -165,7 +165,7 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
   const issues = model.issues[part].filter((i) => concerns(graph, node, i));
   const placed = new Set(sections.flatMap((s) => s.fields.map((f) => f.property)));
   const loose = issues.filter((i) => !i.path || !placed.has(i.path));
-  const edit = (change: (g: import("../rdf/graph").Graph) => import("../rdf/graph").Graph) => model.edit(part, change);
+  const edit = (change: (g: Graph) => Graph) => model.edit(part, change);
   const context = graph.value(node, SRF("carrier")) ?? classOf(graph, node);
 
   useEffect(() => {

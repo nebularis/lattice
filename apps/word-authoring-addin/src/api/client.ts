@@ -13,7 +13,7 @@ import type {
   SnapshotAccepted,
   SnapshotSubmission,
   TemplateList,
-} from "../domain/types";
+} from "@lattice/authoring-domain";
 
 export class ApiError extends Error {
   readonly status: number;
