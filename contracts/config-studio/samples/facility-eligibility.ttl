@@ -1,0 +1,160 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The eligibility configuration of the facility agreement sample. A facility is admitted when its
+# borrower's sector and region are acceptable, and its amount and margin lie in their required
+# ranges. The sector and region conditions match concepts of the schemes the vocabulary
+# configuration resolves, and the amount and margin conditions contain a candidate in the range
+# sets the quantification configuration declares.
+#
+# Each condition names a resolution time after the sector handover, so its expansion shows the
+# 2027 edition. A question may name its own time and scope instead, and the table records what each
+# decides and the decision the author expects of it.
+#
+# | Question          | Resolves with           | Decision                                         |
+# |-------------------|-------------------------|--------------------------------------------------|
+# | food processing   | 2026 edition            | Permitted, below manufacturing                   |
+# | gambling          | 2026 edition            | Denied, in the scheme and not required           |
+# | gambling          | 2027 edition            | Undetermined, retired from the scheme            |
+# | renewables        | 2026 edition            | Undetermined, not yet in the scheme              |
+# | renewables        | 2027 edition            | Permitted, below energy                          |
+# | coal              | 2027 edition            | Denied, excluded                                 |
+# | energy            | 2027 edition            | Undetermined, above the excluded coal            |
+# | Germany           | scope EMEA              | Permitted, below Europe                          |
+# | Belarus           | scope EMEA              | Denied, excluded                                 |
+# | Canada            | scope Americas          | Undetermined, a flat list with no hierarchy      |
+# | United States     | scope Americas          | Permitted, named                                 |
+# | USD 75m           | none                    | Permitted, within the range                      |
+# | USD 400m          | none                    | Denied, above the range                          |
+# | GBP 60m           | none                    | Undetermined, the range has no statement in GBP  |
+# | margin 3.25%      | none                    | Permitted                                        |
+# | margin 8%         | none                    | Denied                                           |
+# | margin not priced | none                    | Undetermined, no candidate offered               |
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# --- conditions ----------------------------------------------------------------------------------
+
+ex:EligibleSector a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:SectorContract ;
+    elg:requiredConcept ex:Industrials , ex:Consumer , ex:Energy ;
+    elg:excludedConcept ex:Coal ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime .
+
+ex:EligibleRegion a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:RegionContract ;
+    elg:requiredConcept ex:Europe , ex:UnitedStates ;
+    elg:excludedConcept ex:Belarus ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeEmea .
+
+ex:EligibleAmount a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:RequiredAmount .
+
+ex:EligibleMargin a elg:IntervalCondition ;
+    elg:matchStrategy elg:IntervalContainment ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredRangeSet ex:RequiredMargin .
+
+ex:FacilityAdmission a elg:AdmissionProfile ;
+    elg:hasCondition ex:EligibleSector , ex:EligibleRegion , ex:EligibleAmount , ex:EligibleMargin ;
+    elg:compositionOperation elg:AllRequired ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeEmea .
+
+# --- sector questions, before and after the handover --------------------------------------------------
+
+ex:q-sector-food-2026 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:FoodProcessing ;
+    cst:resolutionTime "2026-06-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Permitted .
+
+ex:q-sector-gambling-2026 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Gambling ;
+    cst:resolutionTime "2026-06-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Denied .
+
+ex:q-sector-gambling-2027 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Gambling ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Undetermined .
+
+ex:q-sector-renewables-2026 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Renewables ;
+    cst:resolutionTime "2026-06-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Undetermined .
+
+ex:q-sector-renewables-2027 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Renewables ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Permitted .
+
+ex:q-sector-coal-2027 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Coal ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Denied .
+
+ex:q-sector-energy-2027 a elg:Question ;
+    elg:forCondition ex:EligibleSector ; elg:candidateConcept ex:Energy ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:expectedDecision elg:Undetermined .
+
+# --- region questions, each under a scope ------------------------------------------------------------
+
+ex:q-region-germany-emea a elg:Question ;
+    elg:forCondition ex:EligibleRegion ; elg:candidateConcept ex:Germany ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeEmea ;
+    cst:expectedDecision elg:Permitted .
+
+ex:q-region-belarus-emea a elg:Question ;
+    elg:forCondition ex:EligibleRegion ; elg:candidateConcept ex:Belarus ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeEmea ;
+    cst:expectedDecision elg:Denied .
+
+ex:q-region-canada-americas a elg:Question ;
+    elg:forCondition ex:EligibleRegion ; elg:candidateConcept ex:Canada ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeAmericas ;
+    cst:expectedDecision elg:Undetermined .
+
+ex:q-region-us-americas a elg:Question ;
+    elg:forCondition ex:EligibleRegion ; elg:candidateConcept ex:UnitedStates ;
+    cst:resolutionTime "2027-03-01T00:00:00Z"^^xsd:dateTime ;
+    cst:resolutionScope ex:ScopeAmericas ;
+    cst:expectedDecision elg:Permitted .
+
+# --- amount and margin questions ------------------------------------------------------------------
+
+ex:q-amount-75m a elg:Question ;
+    elg:forCondition ex:EligibleAmount ; elg:candidateRangeSet ex:Amount75m ;
+    cst:expectedDecision elg:Permitted .
+
+ex:q-amount-400m a elg:Question ;
+    elg:forCondition ex:EligibleAmount ; elg:candidateRangeSet ex:Amount400m ;
+    cst:expectedDecision elg:Denied .
+
+ex:q-amount-60m-gbp a elg:Question ;
+    elg:forCondition ex:EligibleAmount ; elg:candidateRangeSet ex:Amount60mGbp ;
+    cst:expectedDecision elg:Undetermined .
+
+ex:q-margin-3-25 a elg:Question ;
+    elg:forCondition ex:EligibleMargin ; elg:candidateRangeSet ex:Margin325 ;
+    cst:expectedDecision elg:Permitted .
+
+ex:q-margin-8 a elg:Question ;
+    elg:forCondition ex:EligibleMargin ; elg:candidateRangeSet ex:Margin800 ;
+    cst:expectedDecision elg:Denied .
+
+ex:q-margin-unpriced a elg:Question ;
+    elg:forCondition ex:EligibleMargin ;
+    cst:expectedDecision elg:Undetermined .

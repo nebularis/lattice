@@ -234,6 +234,20 @@ describe("the new parts", () => {
     expect(parts.baseline.size).toBe(0);
   });
 
+  it("sorts the facility agreement sample into all five configurations and a baseline", () => {
+    const parts = split(Graph.parse(read("samples/facility.ttl")));
+    const ex = "https://example.org/lending#";
+    expect(parts.vocabulary.types(ex + "SectorContract")).toContain(VOC("SchemeContract"));
+    expect(parts.vocabulary.types(ex + "FoodProcessing")).toContain(SKOS("Concept"));
+    expect(parts.quantification.types(ex + "RequiredAmount")).toContain(QNT("RangeSet"));
+    expect(parts.eligibility.types(ex + "EligibleSector")).toContain(ELG("Condition"));
+    expect(parts.eligibility.ofType(ELG("Question")).length).toBe(17);
+    expect(parts.persistence.types(ex + "BorrowerPrivacy")).toContain(DAL("PrivacyProfile"));
+    expect(parts.surface.types(ex + "drawdown-sector-promotion")).toContain(SRF("PromotionContract"));
+    expect(parts.baseline.types(ex + "FacilityShape")).toContain(SH("NodeShape"));
+    expect(parts.baseline.types(ex + "facility-1")).toContain(ex + "Facility");
+  });
+
   it("derives the fields of a condition and a binding, with references where a range has one individual", () => {
     expect(vocab.field(ELG("matchStrategy")).kind).toBe("choice");
     expect(vocab.field(ELG("constrainedByContract")).kind).toBe("reference");
