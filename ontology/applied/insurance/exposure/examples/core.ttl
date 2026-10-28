@@ -13,8 +13,8 @@
 # declared here (ex:GBP), because insurance/common's currencies arrive
 # with AIR-2.6, later in the trip.
 
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 @prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .

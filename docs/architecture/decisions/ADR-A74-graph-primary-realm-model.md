@@ -12,7 +12,7 @@
 
 `data-architecture.md` currently names three authoritative realms: semantic graph (Fuseki), operational state (PostgreSQL), and artifact bytes. PostgreSQL holds the lifecycle ledgers, the graph-family registry, MORK review snapshots and decisions, the governance ledger, and release provenance as authoritative relational rows, with the RDF store treated as a secondary projection target. This produces the unprotected dual writes catalogued in ADR-A48 (G-06) and a graph-family conflict rule (`data-architecture.md` §5.2) that exists only to compensate for identity not being structural (see ADR-A51).
 
-The Architecture Review's Addendum 1 proposes the inverse framing: everything that is meaning-bearing, or is governance/approval/decision/provenance about graph content, belongs in the RDF store, mapped onto Foundation's existing vocabulary (`fnd:Version`, `fnd:Evidence`, `fnd:GovernanceState`, `fnd:TemporalScope`). PostgreSQL is retained only as a coordination store for facts that are never authoritative by nature.
+The Architecture Review's Addendum 1 proposes the inverse framing: everything that is meaning-bearing, or is governance/approval/decision/provenance about graph content, belongs in the RDF store, mapped onto Foundation's existing vocabulary (`fnd:Versioned`, `fnd:Evidence`, `fnd:GovernanceState`, `fnd:TemporalScope`). PostgreSQL is retained only as a coordination store for facts that are never authoritative by nature.
 
 ## Decision
 

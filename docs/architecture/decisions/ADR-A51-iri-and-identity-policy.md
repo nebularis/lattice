@@ -29,7 +29,7 @@ A prior draft used one revision IRI for both "this content state" and "this writ
 | Kind | Form | Maps to | Mutability |
 |---|---|---|---|
 | Lineage IRI | `urn:lattice:{tenantId}:{scope}:{family}:{localName}` | `fnd:PersistentIdentity` | Stable forever |
-| Content revision IRI | `{lineageIri}/rev/{schemeVersion}-{contentHash}` | `fnd:Version` (a content state) | Immutable, content-addressed |
+| Content revision IRI | `{lineageIri}/rev/{schemeVersion}-{contentHash}` | `fnd:Versioned` (a content state) | Immutable, content-addressed |
 | Event/promotion IRI | `{lineageIri}/evt/e{epoch}/{seq}` | a `prov:Activity` (a thing that happened) | Immutable, append-only, chained by `prevRev` |
 | Current pointer | `pat:current` triple on the lineage's version row (normative); an optional materialised `{lineageIri}/current` graph is a projection, not the identity mechanism | — | Repointed by a single guarded write at promotion |
 

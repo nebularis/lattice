@@ -12,10 +12,10 @@ from __future__ import annotations
 import string
 from itertools import combinations
 
-from rdflib import RDF, RDFS, SKOS, Graph, URIRef
+from rdflib import RDF, RDFS, SKOS, Graph, Literal, URIRef
 
 from .functional import functional_value
-from .boundary import BY_IDENTITY, PINNED, MissingBoundaryShapeError, walk_ownership
+from .boundary import BY_IDENTITY, PINNED, REFERENCE, MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
 from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
 from .namespaces import DAL, FND, SH
@@ -24,8 +24,8 @@ from .scopes import Target
 
 
 def _is_versioned(graph: Graph, cls) -> bool:
-    """A subclass of ``fnd:Version`` by IRI in the loaded graphs. Foundation is not imported."""
-    return cls is not None and FND.Version in set(graph.transitive_objects(cls, RDFS.subClassOf))
+    """A subclass of ``fnd:Versioned`` by IRI in the loaded graphs. Foundation is not imported."""
+    return cls is not None and FND.Versioned in set(graph.transitive_objects(cls, RDFS.subClassOf))
 
 
 def _local(value) -> str | None:
@@ -54,7 +54,7 @@ def check_cross_axis(
     discipline = _local(_value(dimensions, "writeDiscipline"))
     appends = discipline in ("AppendVersions", "AppendRecords")
 
-    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Version, written by replace. Foundation is not
+    # H2.6c, VH-Q3 and H2.6c-Q4: a class the loaded graphs make a subclass of fnd:Versioned, written by replace. Foundation is not
     # imported, the class is found by its IRI. A replace deletes the version before it, which fnd:supersededBy and ADR-A67 keep.
     if discipline == "InPlace" and _is_versioned(graph, target.cls):
         diagnostics.append(
@@ -63,7 +63,7 @@ def check_cross_axis(
                 severity="WARNING",
                 target=str(target),
                 message=(
-                    "this target's class is a subclass of fnd:Version and dal:writeDiscipline is dal:InPlace, so every write "
+                    "this target's class is a subclass of fnd:Versioned and dal:writeDiscipline is dal:InPlace, so every write "
                     "replaces the version before it and deletes it. Declare dal:AppendVersions to keep each version, or "
                     "dal:InPlace deliberately for a working draft that is not cited (H2.6c, VH-Q3)."
                 ),
@@ -138,7 +138,7 @@ def check_cross_axis(
                 target=str(target),
                 message=(
                     f"dal:receiptModel dal:NoReceipt writes no receipt, and {target.cls} is "
-                    f"{'versioned (a subclass of fnd:Version)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
+                    f"{'versioned (a subclass of fnd:Versioned)' if _is_versioned(graph, target.cls) else 'a record class (dal:recordClass)'}, "
                     "whose instances are cited for what they said at a time. With no receipt nothing records when a write took effect or "
                     "which transaction made it. Use dal:ReceiptOnly, or dal:NoReceipt deliberately (H2.8c, D-9)."
                 ),
@@ -415,13 +415,26 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
             "Use dal:ByIdentity, or dal:Pinned on an edge to a versioned class.",
         )
     for edge in tree.edges:
+        # A meaning-bearing edge from a versioned class is owned or pinned, never by identity (Foundation §4, ADR-A137).
+        source_class = tree.root_class if edge.source_shape == tree.root_shape else graph.value(edge.source_shape, SH.targetClass)
+        if (edge.kind == REFERENCE and edge.reference_mode == BY_IDENTITY
+                and (edge.step.predicate, FND.meaningBearing, Literal(True)) in graph
+                and _is_versioned(graph, source_class)):
+            raise CrossAxisViolation(
+                "MeaningBearingEdgeByIdentity",
+                str(target),
+                f"the property shape for {edge.step.predicate} on {edge.source_shape} is a reference by identity, "
+                f"the predicate is fnd:meaningBearing and {source_class} is versioned, so editing the node at its end "
+                "would change what a past version meant. Own the edge (dal:Owned), or pin it (dal:referenceMode dal:Pinned) "
+                "to a version of its target.",
+            )
         # H2.6e-Q2: an edge pinned to a version needs a target that has versions. A value property has no target class.
         if edge.reference_mode == PINNED and not _is_versioned(graph, edge.target_class):
             raise CrossAxisViolation(
                 "PinnedReferenceToUnversionedClass",
                 str(target),
                 f"the property shape for {edge.step.predicate} on {edge.source_shape} is dal:Pinned, and its target class "
-                f"{edge.target_class} is not a subclass of fnd:Version, so there is no version to pin to. "
+                f"{edge.target_class} is not a subclass of fnd:Versioned, so there is no version to pin to. "
                 "Leave the edge dal:ByIdentity, or make the target class versioned.",
             )
     if composite and not tree.owned_edges():

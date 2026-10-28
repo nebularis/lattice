@@ -36,11 +36,11 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, XSD
 
-AEO = Namespace("https://www.nebularis.org/neuro-semantic/insurance/exposure#")
+AEO = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#")
 FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")
 QNT = Namespace("https://www.nebularis.org/neuro-semantic/lattice/quantification#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
-PRL = Namespace("https://www.nebularis.org/neuro-semantic/insurance/peril#")
+PRL = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#")
 
 DEFAULT_RUN = URIRef("urn:lattice:derivation-run:effective-characteristics")
 
@@ -134,7 +134,7 @@ def exposure_units(
 
 
 _COPY = """
-PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
 CONSTRUCT {{ ?cause aeo:{effective} ?value }}
 WHERE {{ ?cause a aeo:LossCause ; aeo:{recorded} ?value }}
 """
@@ -142,8 +142,8 @@ WHERE {{ ?cause a aeo:LossCause ; aeo:{recorded} ?value }}
 # A typical value is used only where nothing is recorded. The effective agency is single valued,
 # so a cause concept with several typical agencies leaves it empty and a check reads Undetermined.
 _DEFAULT = """
-PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
 PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 CONSTRUCT {{

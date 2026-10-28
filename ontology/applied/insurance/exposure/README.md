@@ -20,7 +20,7 @@ is the contract module's. The `core` region holds an exposure set's schedule, lo
 
 ```mermaid
 flowchart TB
-    ES["aeo:ExposureSet\n(fnd:Version, one schedule at an as-of date)"]
+    ES["aeo:ExposureSet\n(fnd:Versioned, one schedule at an as-of date)"]
     ES -->|aeo:hasLocation| L["aeo:Location"]
     ES -->|aeo:hasAsset| A["aeo:Asset"]
     ES -->|aeo:hasInterest| I["aeo:Interest"]
@@ -44,12 +44,12 @@ concepts it links. Imported in turn, eventually, by the contract module.
 ## 2. Namespace and prefixes
 
 ```turtle-spec
-@prefix aeo:  <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix cls:  <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
-@prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix icm:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
@@ -149,9 +149,9 @@ governance state on the earlier version. `examples/versions.ttl` shows both.
 
 | Class | Mixins | Key properties |
 |---|---|---|
-| `aeo:ExposureSet` | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:reportingUnit` (1, `qnt:Unit`) |
-| `aeo:Location` | `fnd:Version` | `aeo:address` (0..1), `aeo:geometry` (0..1, GeoSPARQL optional), `aeo:geoPrecision` (0..1), `aeo:territory` (1..\*) |
-| `aeo:Asset` | `fnd:Version` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional, a `aeo:LocationIdentity`) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
+| `aeo:ExposureSet` | `fnd:Versioned`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:reportingUnit` (1, `qnt:Unit`) |
+| `aeo:Location` | `fnd:Versioned` | `aeo:address` (0..1), `aeo:geometry` (0..1, GeoSPARQL optional), `aeo:geoPrecision` (0..1), `aeo:territory` (1..\*) |
+| `aeo:Asset` | `fnd:Versioned` | `aeo:assetClass` (1), `aeo:locatedAt` (0..1, functional, a `aeo:LocationIdentity`) xor `aeo:presence` (0..\*), `aeo:partOf` (asymmetric, irreflexive) |
 | `aeo:Interest` | `fnd:TemporallyScoped`, `fnd:Evidenced` | `aeo:interestHolder` (1, `pty:RoleOccupancy`), `aeo:interestIn` (1, `aeo:Asset`), `aeo:interestKind` (1), `aeo:extent` (0..1) |
 | `aeo:Valuation` | `fnd:Evidenced`, `fnd:TemporallyScoped` | `aeo:valueOf` (1, an `aeo:AssetIdentity` or `aeo:LocationIdentity`), `aeo:valueType` (1), `aeo:valuationBasis` (1), `aeo:valuationMethod` (0..1), `aeo:amount` xor (`aeo:rate` + `aeo:horizon`) |
 
@@ -161,16 +161,16 @@ so a location's loss history and zone designations follow its identity across
 schedule versions, not one snapshot.
 
 ```turtle-spec
-<https://www.nebularis.org/neuro-semantic/insurance/exposure>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.3.1> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 #################################################################
@@ -203,7 +203,7 @@ aeo:AssetIdentity a owl:Class ;
 #################################################################
 
 aeo:ExposureSet a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Governable , fnd:TemporallyScoped , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:reportingUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Exposure set"@en ;
     rdfs:comment "A versioned snapshot of one insured's schedule, as of a date." ;
@@ -244,7 +244,7 @@ aeo:hasValuation a owl:ObjectProperty ;
 #################################################################
 
 aeo:Location a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:label "Location"@en ;
     rdfs:comment "A place where exposure sits: a site, a building footprint, a pipeline segment, a port." ;
     fnd:utility "Subject: a location version. A version per change of address or geometry, one identity (aeo:LocationIdentity) across schedules, so loss history and zone designations follow it." .
@@ -347,7 +347,7 @@ aeo:controlShare a owl:ObjectProperty, owl:FunctionalProperty ;
 #################################################################
 
 aeo:Asset a owl:Class ;
-    rdfs:subClassOf fnd:Version ,
+    rdfs:subClassOf fnd:Versioned ,
         [ a owl:Restriction ; owl:onProperty aeo:assetClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:locatedAt ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
     rdfs:label "Asset"@en ;
@@ -1282,7 +1282,7 @@ aeo:RequirementIdentity a owl:Class ;
     fnd:utility "Give every aeo:CoverageRequirement version fnd:hasIdentity an individual of this class." .
 
 aeo:CoverageRequirement a owl:Class ;
-    rdfs:subClassOf fnd:Version , fnd:Evidenced ,
+    rdfs:subClassOf fnd:Versioned , fnd:Evidenced ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementSource ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requirementStrength ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty aeo:requiredMeasure ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -1555,31 +1555,31 @@ to these kinds by `skos:broadMatch`, since ISO 20275's own codes are per-jurisdi
 thousands.
 
 ```turtle-vocab
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab> .
 
-<https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/exposure-vocab/0.3.1> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/exposure/0.3.1> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.3.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.3.1> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.7.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
 
 #################################################################
@@ -4050,15 +4050,15 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 
 aeo:ExposureSetShape a sh:NodeShape ;
     sh:targetClass aeo:ExposureSet ;
     sh:sparql [
         sh:message "An exposure set needs exactly one identity, one reporting unit, one temporal scope and one governance state." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4077,7 +4077,7 @@ aeo:ExposureSetShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Every aeo:locatedAt of an asset the set lists must resolve to exactly one location the set lists, through fnd:hasIdentity." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4093,7 +4093,7 @@ aeo:ExposureSetShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Every aeo:valueOf of a valuation the set lists must resolve to exactly one asset or location the set lists, through fnd:hasIdentity." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4112,7 +4112,7 @@ aeo:LocationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location needs exactly one identity, and at least one territory." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4128,7 +4128,7 @@ aeo:LocationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location with a geometry needs a geographic precision." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:geometry ?g .
               FILTER NOT EXISTS { $this aeo:geoPrecision ?p }
@@ -4140,7 +4140,7 @@ aeo:AssetShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An asset needs exactly one identity and exactly one asset class." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4156,7 +4156,7 @@ aeo:AssetShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An asset must not have both aeo:locatedAt and aeo:presence." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:locatedAt ?l ; aeo:presence ?p .
             }
@@ -4164,7 +4164,7 @@ aeo:AssetShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An asset's aeo:locatedAt must name an aeo:LocationIdentity, not a location version." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:locatedAt ?l .
               FILTER NOT EXISTS { ?l a aeo:LocationIdentity }
@@ -4176,7 +4176,7 @@ aeo:InterestShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An interest needs exactly one holder, one asset and one kind." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?h) AS ?nh) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?k) AS ?nk) WHERE {
@@ -4195,7 +4195,7 @@ aeo:ValuationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A valuation needs exactly one aeo:valueOf, one value type and one valuation basis." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?v) AS ?nv) (COUNT(DISTINCT ?t) AS ?nt) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
@@ -4211,7 +4211,7 @@ aeo:ValuationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A valuation's aeo:valueOf must name an aeo:AssetIdentity or an aeo:LocationIdentity, not a version." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:valueOf ?v .
               FILTER NOT EXISTS { ?v a aeo:AssetIdentity }
@@ -4221,7 +4221,7 @@ aeo:ValuationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A valuation needs either exactly one aeo:amount, or exactly one aeo:rate with exactly one aeo:horizon, never both and never neither." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?h) AS ?nh) WHERE {
@@ -4242,7 +4242,7 @@ aeo:LegalEntityShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A legal entity may have at most one domicile and at most one legal form." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?f) AS ?nf) WHERE {
@@ -4264,7 +4264,7 @@ aeo:DocumentationShape a sh:NodeShape ;
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT DISTINCT $this WHERE {
               $this skos:inScheme ?scheme .
-              FILTER (STRSTARTS(STR(?scheme), "https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#"))
+              FILTER (STRSTARTS(STR(?scheme), "https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#"))
               # Checked with ?scheme bound. As a pattern of the group it is joined before $this
               # is known to be bound, which scans the schemes once per focus node.
               FILTER EXISTS { ?scheme a voc:ConceptScheme }
@@ -4281,7 +4281,7 @@ aeo:ZoneDesignationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A zone designation needs exactly one zone (through one of its six hazard-kind sub-properties), exactly one designation source, and a temporal scope." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4304,8 +4304,8 @@ aeo:ZoneInTerritoryShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A zone designation's zone must be in the scheme currently bound to its contract, where a deployment has bound one (a deployment binds a scheme per market, and a zone kind with no binding yet is not checked here)." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
@@ -4327,8 +4327,8 @@ aeo:SpatialJoinShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A zone designation whose source is aeo-voc:SpatialJoin must be a fnd:DerivedArtefact: it was computed from the location's geometry and a map, not read off a map directly." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               $this a aeo:ZoneDesignation ; aeo:designationSource aeo-voc:SpatialJoin .
@@ -4341,7 +4341,7 @@ aeo:PoolParticipationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A pool participation needs exactly one pool and at least one peril scope." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?s) AS ?ns) WHERE {
@@ -4359,7 +4359,7 @@ aeo:AssessmentShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment needs at least one subject, exactly one kind, at least one attribute value, and a temporal scope." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4380,8 +4380,8 @@ aeo:AttributeValueShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An attribute value needs exactly one value, held in the form (concept, quantity or literal) its attribute type declares." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:AttributeValue ; aeo:attributeType ?type .
               ?type aeo:valueForm ?form .
@@ -4403,7 +4403,7 @@ aeo:AttributeValueShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A quantity-valued attribute value's quantity must be on its attribute type's own value space." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this a aeo:AttributeValue ; aeo:attributeType ?type ; aeo:quantityValue ?qv .
@@ -4415,7 +4415,7 @@ aeo:AttributeValueShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A concept-valued attribute value's concept must be in the scheme currently bound to its attribute type's contract, where one is bound (an unbound, market-only contract is not checked here)." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
@@ -4428,7 +4428,7 @@ aeo:AttributeValueShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A literal-valued attribute value's literal must have its attribute type's own datatype." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this a aeo:AttributeValue ; aeo:attributeType ?type ; aeo:literalValue ?lv .
               ?type aeo:literalDatatype ?dt .
@@ -4441,7 +4441,7 @@ aeo:SingleValuedTypesShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment may hold at most one value per attribute type, unless the type is aeo:multiValued." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             SELECT $this WHERE {
               {
@@ -4459,8 +4459,8 @@ aeo:ScreeningShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An aeo-voc:SanctionsScreeningOutcome value is only allowed in an assessment of kind aeo-voc:ScreeningRun that is itself a fnd:DerivedArtefact." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:hasAttribute ?av .
@@ -4478,7 +4478,7 @@ aeo:DependencyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A dependency must have exactly one dependent, one provider and one dependency kind." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?k) AS ?nk) WHERE {
@@ -4497,7 +4497,7 @@ aeo:PerilMetricShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A peril metric must have at least one peril scope and exactly one subject, kind, perspective and value." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?u) AS ?nu) (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
@@ -4518,8 +4518,8 @@ aeo:ExceedanceMetricShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A metric of an exceedance or tail value-at-risk kind must state exactly one of a return period and an exceedance probability." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?r) AS ?nr) (COUNT(DISTINCT ?e) AS ?ne) WHERE {
@@ -4539,8 +4539,8 @@ aeo:HazardScoreShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A hazard score must state exactly one score space, and its value must be on that space." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this a aeo:PerilMetric ; aeo:metricKind aeo-voc:HazardScore .
@@ -4555,8 +4555,8 @@ aeo:ScenarioMetricShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A scenario-loss metric must name exactly one scenario." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?s) AS ?ns) WHERE {
@@ -4573,7 +4573,7 @@ aeo:ExposureUnitShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An exposure unit must have exactly one location, asset class and peril, and at most one value." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?l) AS ?nl) (COUNT(DISTINCT ?c) AS ?nc) (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?v) AS ?nv) WHERE {
@@ -4597,7 +4597,7 @@ aeo:LossExperienceShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A loss experience must have exactly one entity, one source and one temporal scope." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4617,7 +4617,7 @@ aeo:LossRecordShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A loss record must have exactly one date and one status, and at most one class of business." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?s) AS ?ns) (COUNT(DISTINCT ?c) AS ?nc) WHERE {
@@ -4636,7 +4636,7 @@ aeo:LossRecordCurrencyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Every money amount on a loss record must be in a currency unit, and all in the same one." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               {
@@ -4658,7 +4658,7 @@ aeo:IncurredShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Incurred must equal paid plus reserved when all three are present." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this aeo:paid/qnt:numericValue ?p ; aeo:reserved/qnt:numericValue ?r ; aeo:incurred/qnt:numericValue ?i .
@@ -4671,7 +4671,7 @@ aeo:LossCauseShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A loss cause must have exactly one peril and one position, and at most one agency and one effective agency." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?p) AS ?np) (COUNT(DISTINCT ?c) AS ?nc) (COUNT(DISTINCT ?a) AS ?na) (COUNT(DISTINCT ?e) AS ?ne) WHERE {
@@ -4691,7 +4691,7 @@ aeo:CoverageRequirementShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A coverage requirement must have exactly one identity, source and strength, and at least one required measure." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4712,8 +4712,8 @@ aeo:RequirementNoPremiumShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A coverage requirement must not constrain the premium: aeo-voc:Premium is for summary terms of an existing cover only." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this aeo:requiredMeasure/aeo:measure aeo-voc:Premium .
             }
@@ -4724,7 +4724,7 @@ aeo:MeasureConstraintShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A measure constraint must have exactly one measure and one bound." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?m) AS ?nm) (COUNT(DISTINCT ?b) AS ?nb) WHERE {
@@ -4742,7 +4742,7 @@ aeo:MeasureSpaceShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A measure constraint's bound must be on its measure's value space. A bound relative to a metric must be on a proportion space (a qnt:DerivedValueSpace) over that value space." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this aeo:measure ?m ; aeo:bound/qnt:onSpace ?bs .
@@ -4757,7 +4757,7 @@ aeo:ExistingCoverShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An existing cover must have exactly one cover relation and one temporal scope, and at most one trigger basis." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4778,7 +4778,7 @@ aeo:ExistingCoverEvidenceShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An existing cover with neither a reference to its contract nor a summary term says nothing about what it covers." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this a aeo:ExistingCover .
               FILTER NOT EXISTS { $this aeo:coverReference ?r }
@@ -4791,7 +4791,7 @@ aeo:TermSummaryShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A term summary must have exactly one measure and one value, and the value must be on the measure's value space." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               {
@@ -4811,7 +4811,7 @@ aeo:CoverHistoryEventShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A cover history event must have exactly one kind and one date." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 SELECT $this (COUNT(DISTINCT ?k) AS ?nk) (COUNT(DISTINCT ?d) AS ?nd) WHERE {
@@ -4829,7 +4829,7 @@ aeo:FinancialMetricShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A financial metric must have exactly one entity, kind and amount, and one temporal scope." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               {
@@ -4850,9 +4850,9 @@ aeo:FinancialMetricSpaceShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A headcount is a count, and every other financial metric is money." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
-            PREFIX icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
+            PREFIX icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this aeo:financialMetricKind ?k ; aeo:metricAmount/qnt:onSpace ?space .
@@ -4866,14 +4866,14 @@ aeo:FinancialMetricSpaceShape a sh:NodeShape ;
 # structural.ttl.
 
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
-@prefix aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
+@prefix aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 
 aeo:ControlRelationShape a sh:NodeShape ;
     sh:targetClass aeo:ControlRelation ;
     sh:sparql [
         sh:message "A control relation must not create a cycle through aeo:controller / aeo:controlled." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:controller ?a ; aeo:controlled ?b .
               ?b (^aeo:controller/aeo:controlled)+ ?a .
@@ -4893,9 +4893,9 @@ aeo:PerilCompletenessShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location exposed to a peril (through a pool participation's peril scope) should have a value, in some assessment of the location or of an asset located there, for each attribute type that peril or a broader cause concept names relevant." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this a aeo:Location ; aeo:poolParticipation ?pp .
@@ -4922,8 +4922,8 @@ aeo:GeoPrecisionForPerilShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A location exposed to a peril with a minimum geographic precision should be known at least that precisely (aeo:geoPrecision no coarser than the peril's minimum, by skos:notation rank)." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             SELECT $this WHERE {
@@ -4947,7 +4947,7 @@ aeo:DependencyCycleShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A cycle of dependencies is reported: a provider that depends, through other providers, on the dependent that depends on it." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:dependent ?a ; aeo:provider ?b .
               ?b (^aeo:dependent/aeo:provider)+ ?a .
@@ -4959,7 +4959,7 @@ aeo:MetricComparabilityShape a sh:NodeShape ;
     sh:sparql [
         sh:message "Peril metrics compared together must have equal peril scope, region scope and perspective." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               $this aeo:comparedMetric ?m1 .
               $this aeo:comparedMetric ?m2 .
@@ -4984,7 +4984,7 @@ aeo:UnitDerivationShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An exposure unit in a graph with no derivation run that produced it is reported: units are computed on demand, not asserted." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             PREFIX prov: <http://www.w3.org/ns/prov#>
             SELECT $this WHERE {
@@ -5002,7 +5002,7 @@ aeo:LossInPeriodShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A loss record's date must be within the temporal scope of the loss experience that lists it." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
             SELECT $this WHERE {
               ?exp aeo:hasLossRecord $this ; fnd:hasTemporalScope ?ts .
@@ -5018,7 +5018,7 @@ aeo:DefaultedAgencyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An effective agency that differs from every recorded agency needs a defaulted characteristic, and one with a recorded agency must have none." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 $this aeo:effectiveAgency ?e .
@@ -5036,7 +5036,7 @@ aeo:DefaultedMechanismShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An effective mechanism that differs from every recorded mechanism needs a defaulted characteristic, and a cause with a recorded mechanism must have none." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             SELECT $this WHERE {
               {
                 $this aeo:effectiveMechanism ?e .
@@ -5054,7 +5054,7 @@ aeo:RequirementScopeShape a sh:NodeShape ;
     sh:sparql [
         sh:message "A requirement's scope must be an admission profile whose conditions are bound to subject class aeo:ExposureUnit." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
             PREFIX elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
             SELECT $this WHERE {
               $this aeo:requirementScope ?profile .
@@ -5075,16 +5075,16 @@ is extracted on its own cadence, independent of the structural and constraint sh
 # protection survey is about.
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 
 aeo:ConstructionProtectionProfileShape a sh:NodeShape ;
     sh:targetClass aeo:Assessment ;
     sh:sparql [
         sh:message "An assessment of the construction and protection profile family must assess a location or an asset." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:assesses ?s .
               FILTER NOT EXISTS { ?s a aeo:Location }
@@ -5094,8 +5094,8 @@ aeo:ConstructionProtectionProfileShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment of the construction and protection profile family must have values for ConstructionClass, OccupancyClass, YearBuilt and Storeys." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection .
               {
@@ -5116,8 +5116,8 @@ aeo:ConstructionProtectionProfileOutsideFamilyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An attribute value on a construction and protection profile assessment is outside the Construction, Occupancy, Protection and External exposure families." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:ConstructionAndProtection ; aeo:hasAttribute ?av .
               ?av aeo:attributeType ?type .
@@ -5133,16 +5133,16 @@ aeo:ConstructionProtectionProfileOutsideFamilyShape a sh:NodeShape ;
 # legal entity, and carry only types from the Cyber posture family.
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
-@prefix aeo:     <https://www.nebularis.org/neuro-semantic/insurance/exposure#> .
-@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#> .
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 
 aeo:CyberPostureProfileShape a sh:NodeShape ;
     sh:targetClass aeo:Assessment ;
     sh:sparql [
         sh:message "An assessment of the cyber posture profile family must assess a legal entity." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:assesses ?s .
               FILTER NOT EXISTS { ?s a aeo:LegalEntity }
@@ -5151,8 +5151,8 @@ aeo:CyberPostureProfileShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An assessment of the cyber posture profile family must have values for MfaCoverage, BackupStrategy and EndpointDetectionAndResponse." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture .
               {
@@ -5171,8 +5171,8 @@ aeo:CyberPostureProfileOutsideFamilyShape a sh:NodeShape ;
     sh:sparql [
         sh:message "An attribute value on a cyber posture profile assessment is outside the Cyber posture family." ;
         sh:select """
-            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/insurance/exposure#>
-            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/insurance/exposure/vocab#>
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#>
             SELECT $this WHERE {
               $this a aeo:Assessment ; aeo:profileFamily aeo-voc:CyberPosture ; aeo:hasAttribute ?av .
               ?av aeo:attributeType ?type .
@@ -5237,6 +5237,8 @@ appetite requirement relative to equity, an expiring programme with summary term
 revenue by territory, with the output of `effective_characteristics` for its causes.
 
 ## 10. Release notes
+
+- **Next release** (breaking). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as ADR-A98 decision 6 states and the applied README's table now records. Data and imports under the old root need re-keying. A minor bump under ADR-A113 at the next release.
 
 | Version | Change |
 |---|---|

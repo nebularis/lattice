@@ -21,13 +21,13 @@
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
@@ -155,13 +155,13 @@ wrd:displayText a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:comment "The words a reference part shows, as the drafter wrote them: an inflected form or a variable's printed name. Subject: a text part with a reference. Value: a string, at most one. Without one, a renderer shows the target's own label." .
 
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
 	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract, that its wording relies on." ;
 	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .

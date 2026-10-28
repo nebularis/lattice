@@ -452,7 +452,7 @@ to columns, the remainder to a flexible store.
 
 | Construct | SQL |
 |---|---|
-| `fnd:Version`, `fnd:supersededBy` | a version table per versioned class with `(entity_id, version_no)` key, and a `current_*` view |
+| `fnd:Versioned`, `fnd:supersededBy` | a version table per versioned class with `(entity_id, version_no)` key, and a `current_*` view |
 | `fnd:TemporalScope` (validFrom, validTo) | `valid_period tstzrange NOT NULL`, with `EXCLUDE USING gist (entity_key WITH =, valid_period WITH &&)` so that validity periods for one identity cannot overlap (needs `btree_gist`). `WITHOUT OVERLAPS` keys in PostgreSQL 18 where available *(verify)* |
 | `fnd:hasGovernanceState` | a foreign key to the governance concept table |
 | `fnd:Evidence`, `fnd:assertedBy` | an evidence table, linked by M31 |

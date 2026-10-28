@@ -30,7 +30,7 @@ from persistence.compiler import CompileError, compile_targets, compile_to_graph
 
 from conftest import EXAMPLES_DIR
 
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 SH = "http://www.w3.org/ns/shacl#"
 DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
 EX = "https://example.org/lending#"

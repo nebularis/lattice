@@ -1,39 +1,40 @@
 {
   "digest": {
-    "encoding": "base64url",
+    "encoding": "base32",
     "function": "SHA-256",
-    "widthBits": 128
+    "widthBits": 160
   },
-  "iriTemplate": "urn:ex:tag:{digest}",
+  "iriTemplate": "urn:ex:sku:{digest}",
   "key": {
     "pipeline": {
-      "id": "NfkcTrimLowercase",
+      "id": "NfkcTrimUppercase",
       "steps": [
         "reject_unassigned",
+        "strip_format",
         "nfkc",
         "trim_white_space",
-        "lowercase_full",
+        "uppercase_full",
         "nfkc"
       ],
       "unicodeVersion": "16.0.0"
     },
     "properties": [
-      "https://example.org/lending#label"
+      "https://example.org/lending#sku"
     ],
-    "scopeProperty": "https://example.org/lending#tenant"
+    "scopeProperty": null
   },
-  "recipeDigest": "sha256:ee50837968e69c9b3341ccd79edb90c9cde975241da1763e14d61ed5a639e29f",
+  "recipeDigest": "sha256:b371788209398065d2085751da33f3ab61d2f0d99777a00925dcac18a4a0031b",
   "recipeFormat": "lattice-minting-recipe/1",
   "role": "EntityRole",
   "strategy": "DerivedHashIdentity",
   "target": {
-    "class": "https://example.org/lending#Tag",
+    "class": "https://example.org/lending#Product",
     "deployment": null
   },
   "tupleEncoding": "length-prefixed-utf8/1",
   "tuplePrefix": [
     "iri",
     "v1",
-    "tag"
+    "sku"
   ]
 }

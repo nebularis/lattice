@@ -255,7 +255,7 @@ Drafted in slice H2.6c for the maintainer to accept or change. It is decided at 
 3. **Which families.** A composite family, and a family with no boundary that declares a `dal:dataGraph`, under `dal:Optimistic`. Any other
    is refused with `AppendVersionsUnsupported`. A named-graph family, which would append one graph per version named from the version, is
    not built. A family that appends versions has no create, replace or tombstone.
-4. **`compile` warns `VersionedClassWrittenInPlace`** when a target class is a subclass of `fnd:Version` in the loaded graphs and its
+4. **`compile` warns `VersionedClassWrittenInPlace`** when a target class is a subclass of `fnd:Versioned` in the loaded graphs and its
    discipline is `dal:InPlace`.
 5. **`CompositeBoundaryReceiptConflict` does not apply to a family that appends versions or records,** where the history is in the data. It still refuses `dal:InPlace` with `dal:ReceiptOnly`.
 6. **The contract gains one operation kind,** `AppendVersion`. Its resources are the version row, the version (the aggregate resource, in

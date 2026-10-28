@@ -36,9 +36,9 @@ TUPLE_ENCODING = "length-prefixed-utf8/1"
 UNICODE_VERSION = "16.0.0"
 
 PIPELINE_STEPS = {
-    "NfkcTrimCasefold": ["reject_unassigned", "nfkc_casefold", "trim_white_space"],
-    "NfkcTrimUppercase": ["reject_unassigned", "nfkc", "trim_white_space", "uppercase_full", "nfkc"],
-    "NfkcTrimLowercase": ["reject_unassigned", "nfkc", "trim_white_space", "lowercase_full", "nfkc"],
+    "NfkcTrimCasefold": ["reject_unassigned", "strip_format", "nfkc_casefold", "trim_white_space"],
+    "NfkcTrimUppercase": ["reject_unassigned", "strip_format", "nfkc", "trim_white_space", "uppercase_full", "nfkc"],
+    "NfkcTrimLowercase": ["reject_unassigned", "strip_format", "nfkc", "trim_white_space", "lowercase_full", "nfkc"],
 }
 DIGEST_ENCODINGS = ("lowercase-hex", "base32", "base64url")
 

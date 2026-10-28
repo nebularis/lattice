@@ -895,7 +895,7 @@ constraint:= 'dt' IRI                                  sh:datatype
 Example:
 
 ```
-cs MS tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !.viol msg \"credit score out of range\""
+cs MS tg :Applicant pb [min N 700] pv [MappingAgent example-model-1 0.93 DRAFT] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1] !.viol msg \"credit score out of range\""
 ```
 
 decodes to a `sh:NodeShape` (`cs_gs1`) with `sh:targetClass ex:Applicant` and one `sh:property` (`cs_gs1_p1`) carrying `sh:path`, `sh:datatype`, `sh:minInclusive`, `sh:maxInclusive`, `sh:minCount`, `sh:maxCount`, `sh:severity` and `sh:message`. Property shapes are minted IRIs by default and blank nodes under `@opt bnode-shapes`.
@@ -1011,7 +1011,7 @@ Only OWL class expressions, RDF lists, SWRL atoms, R2RML term maps, `owl:Axiom` 
 
 ### 12.4 Canonical output
 
-The **canonical decoding** of a document is: the N-Triples serialisation of the decoded graph, one triple per line, sorted by the byte order of (subject, predicate, object) after blank-node labelling as in §12.3, with no trailing whitespace and a final newline. Hashes, diffs and cache keys SHOULD be computed over the canonical decoding rather than over the MCN text, since two MCN texts can denote the same graph (different line order, quoted versus bare literals, `M+MD` versus `MD`).
+The **canonical decoding** of a document is: the N-Triples serialisation of the decoded graph, one triple per line, sorted by the byte order of (subject, predicate, object) after blank-node labelling as in §12.3, with no trailing whitespace and a final newline. Hashes, diffs and cache keys SHOULD be computed over the canonical decoding rather than over the MCN text, since two MCN texts can denote the same graph (different line order, quoted versus bare literals, `M+MD` versus `MD`). This canonical decoding is a digest of an MCN document, reproducible by any conforming decoder. A digest of the graph itself, comparable with the rest of LATTICE, is the substrate's canonicalisation ([ADR-A138](decisions/ADR-A138-one-canonicalisation.md)), RDFC-1.0 over the decoded graph. The two coincide for a graph with no blank nodes, since both sort the same N-Triples, and differ only in how blank nodes are labelled.
 
 ---
 
@@ -1201,8 +1201,8 @@ The full encoding (1366 tokens against 2674 for the Turtle) decodes to a graph d
 i1 IN src "credit score at least 700" cf 0.93 op GreaterThanOrEqual cv 700 cd :creditScore
 i2 IS src "in US states" sty State sin Include sv :US ri i1
 %M MS md .prod mv 1.2
-cs_shape MS im i1 tg :Applicant pb [min N 700] pv [MappingAgent claude-opus-5 0.93 DRAFT pd 2026-09-19T10:00:00Z] tl :RangeTemplate se .viol gv .gA fi [PI] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1]"
-cs_rule MR im i1 tg [o :hasCreditScore] aj :US pb [threshold N 700] pv [MappingAgent claude-opus-5 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
+cs_shape MS im i1 tg :Applicant pb [min N 700] pv [MappingAgent example-model-1 0.93 DRAFT pd 2026-09-19T10:00:00Z] tl :RangeTemplate se .viol gv .gA fi [PI] gs "c :Applicant; :hasCreditScore dt xsd:integer >=700 <=850 [1..1]"
+cs_rule MR im i1 tg [o :hasCreditScore] aj :US pb [threshold N 700] pv [MappingAgent example-model-1 0.9 DRAFT pd 2026-09-19T10:00:00Z] gr "Applicant(?a)^hasCreditScore(?a,?s)^swrlb:greaterThanOrEqual(?s,700)->Eligible(?a)"
 v2 MS ss cs_shape ef 2026-10-01T00:00:00Z fi cs_shape_fi1 gv .gA tg :Applicant pb [min N 720] pv [reviewer _ _ APPROVED pd 2026-10-01T00:00:00Z] gs "c :Applicant; :hasCreditScore >=720"
 loanIri = 'http://ex.org/loan/'+$loanId
 ```
@@ -1212,7 +1212,7 @@ Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`s
 ### 16.4 A representation scheme and taxonomy (from the `Mork.ttl` examples)
 
 ```
-@b <http://www.nebularis.org/hyperthunk/Mapping#>
+@b <https://example.org/mapping#>
 %R Scheme_Rep_Contracts .json
 JS_Array_ContractingParties RY et JS_Elem_ContractingParties id contractingParties p contract.signatories.contractingParties ro DC_ContractingParties
 JS_Elem_ContractingParties RN id "" mp JS_Attr_FirstName,JS_Attr_LastName p "contract.signatories.contractingParties[n]" ro DC_ContractingParties_Party

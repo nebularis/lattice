@@ -168,7 +168,7 @@ legal relation. Declare one only where it gives useful design-time entailment, o
 shape already checks. Otherwise say the subject and value in the property's comment and let a shape
 check use.
 
-**"Versioned".** A class that is a member of `fnd:Version` is *versioned*: it supports versions,
+**"Versioned".** A class that is a member of `fnd:Versioned` is *versioned*: it supports versions,
 provenance and the rest. Call a node "a version" only when it is one specific version. The class is
 to be renamed `fnd:Versioned` (technical debt TD-20).
 

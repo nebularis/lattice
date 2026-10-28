@@ -11,7 +11,7 @@ from ``mork:generatesShapeDefinition`` on one ``mork:DataMapping``, which is
 what classifies that mapping as a ``mork:ShapeMapping`` by MORK's own
 inference rule.
 
-SHACL conformance is not itself an eligibility decision — MorkEnhancements.md
+SHACL conformance is not itself an eligibility decision — the MORK enhancements analysis
 makes this point explicitly. A conforming Question has passed both checks;
 a non-conforming one failed readiness, containment, or both, and a decision
 adapter (not built here) would still be needed to turn a validation report

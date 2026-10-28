@@ -94,7 +94,7 @@ Behaviour distinguishes four tiers:
 				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
 
 bhv:StateSpace a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "A declared state space." .
 
 bhv:State a owl:Class ;
@@ -102,7 +102,8 @@ bhv:State a owl:Class ;
 	rdfs:subClassOf [ a owl:Restriction ; owl:onProperty bhv:inStateSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 bhv:TransitionDefinition a owl:Class ;
-	rdfs:subClassOf fnd:Version,
+	rdfs:comment "A versioned definition of a transition. Its trigger, guard and effect definitions are its parts, minted under it and written and swept with it, never shared between definitions or edited in place, since which guard fired for a recorded execution depends on them (fnd:meaningBearing, Foundation section 4)." ;
+	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:fromState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:toState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:hasTrigger ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -115,17 +116,18 @@ bhv:GuardDefinition a owl:Class ; rdfs:comment "A declared eligibility or policy
 bhv:EffectDefinition a owl:Class ; rdfs:comment "A declared effect on a target, of one target kind." .
 
 bhv:AllowanceDefinition a owl:Class ;
-	rdfs:subClassOf fnd:Version,
+	owl:deprecated true ;
+	rdfs:subClassOf fnd:Versioned,
 		[ a owl:Restriction ; owl:onProperty bhv:allowanceSpace ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:absorptionPolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A declared allowance or quota model." .
+	rdfs:comment "A declared allowance or quota model. Deprecated 2026-10-28 with bhv:AllowanceAccount: an account definition is Ledger's (ADR-A131)." .
 
 bhv:SelectionPolicy a owl:Class .
 bhv:ActivationPolicy a owl:Class .
 bhv:TriggerKind a owl:Class .
 bhv:TargetKind a owl:Class .
 bhv:AbsorptionPolicy a owl:Class .
-bhv:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Version .
+bhv:OperationalProfile a owl:Class ; rdfs:subClassOf fnd:Versioned .
 bhv:EntryMode a owl:Class ; rdfs:comment "How a transition enters a composite state: by default, or by shallow or deep history (behaviour-vocab)." .
 bhv:TransitionType a owl:Class ; rdfs:comment "Whether a transition from a state to itself leaves and enters it again (External) or not (Internal) (behaviour-vocab)." .
 
@@ -157,9 +159,9 @@ bhv:transitionType a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "Whether a transition from a state to itself leaves and enters it again. Subject: a transition definition. Value: a transition type, at most one. Internal when absent and source equals target, External otherwise." ;
 	fnd:utility "Declare bhv:External only to restart what is anchored on entry, such as a notice period re-served. Internal is the default so that an effect-only reaction never restarts a period (nested states sketch §4.1)." .
 
-bhv:hasTrigger a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TriggerDefinition .
-bhv:hasGuard a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:GuardDefinition .
-bhv:hasEffect a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EffectDefinition .
+bhv:hasTrigger a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:TriggerDefinition ; fnd:meaningBearing true .
+bhv:hasGuard a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:GuardDefinition ; fnd:meaningBearing true .
+bhv:hasEffect a owl:ObjectProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:EffectDefinition ; fnd:meaningBearing true .
 bhv:triggerKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TriggerDefinition ; rdfs:range bhv:TriggerKind .
 bhv:selectionPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:SelectionPolicy .
 bhv:activationPolicy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:TransitionDefinition ; rdfs:range bhv:ActivationPolicy .
@@ -291,10 +293,11 @@ bhv:usesProfile a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:T
 bhv:StateOccupancy a owl:Class ; rdfs:subClassOf fnd:Evidenced, fnd:TemporallyScoped ; rdfs:comment "A current or hypothetical occupancy of a state." .
 
 bhv:AllowanceAccount a owl:Class ;
+	owl:deprecated true ;
 	rdfs:subClassOf fnd:Evidenced,
 		[ a owl:Restriction ; owl:onProperty bhv:tracksAllowance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty bhv:availableBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "A durable state record tracking allowance balance." .
+	rdfs:comment "A durable state record tracking allowance balance. Deprecated 2026-10-28: a stored balance overwritten in place, beside Ledger's derived balance (ADR-A131). Use a Ledger account once Behaviour imports Ledger (LG-3)." .
 
 bhv:occupiesState a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range bhv:State .
 
@@ -321,7 +324,7 @@ bhv:resumedFrom a owl:ObjectProperty, owl:FunctionalProperty ;
 bhv:isHypothetical a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:isCurrent a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain bhv:StateOccupancy ; rdfs:range xsd:boolean .
 bhv:tracksAllowance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range bhv:AllowanceDefinition .
-bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity .
+bhv:availableBalance a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain bhv:AllowanceAccount ; rdfs:range qnt:Quantity ; owl:deprecated true .
 ```
 
 ```turtle-spec
@@ -432,7 +435,7 @@ bhv:conditionSatisfied a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The deeming's condition, as it was satisfied. Subject: a deemed-fact record. Value: an Eligibility condition, at most one." .
 
 bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Version ;
+	rdfs:domain bhv:AcceptanceRecord ; rdfs:range fnd:Versioned ;
 	owl:deprecated true ;
 	rdfs:comment "The version accepted. Subject: an acceptance record. Value: a version, exactly one." ;
 	fnd:utility "Deprecated with bhv:AcceptanceRecord." .
@@ -450,9 +453,8 @@ bhv:accepted a owl:ObjectProperty, owl:FunctionalProperty ;
 ### 5.3 Nested states, history, and concurrent regimes
 
 Behaviour takes W3C SCXML as its reference for statecharts, without claiming conformance to it.
-The design and every departure are in the
-[nested states sketch](../../docs/developer/sketches/nested-states-and-history.md), and the
-decisions in ADR-A106's 2026-10-02 addendum. The worked state machines of §10 show each construct
+The design, every departure and the
+decisions are in ADR-A106's 2026-10-02 addendum. The worked state machines of §10 show each construct
 on a full record.
 
 ```mermaid
@@ -710,8 +712,8 @@ delivery gates of the first Eligibility and Behaviour build. The profile binds d
 `bhv:Proportional` stays unusable until the repository carries two non-domain motivating examples,
 an explicit proportional conservation law, and cross-profile conformance coverage. Reset edge cases
 are deferred for the same reason: they need explicit law statements and fixtures, not inferred
-behaviour. Proportional absorption is the merge rule of a parallel environment, which the
-[evaluation context](../../docs/developer/sketches/evaluation-context.md) sketch (§7) takes up.
+behaviour. Proportional absorption is the merge rule of a parallel environment, which a later
+design of the evaluation context takes up.
 
 State occupancy records distinguish hypothetical from current execution state through `bhv:isHypothetical` and `bhv:isCurrent`. A non-hypothetical subject may have at most one current occupancy in a given state space.
 
@@ -899,7 +901,7 @@ bhv:AcceptanceRecordSubjectShape a sh:NodeShape ;
 	sh:message "Only an acceptance record names a version accepted." .
 bhv:AcceptanceRecordShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
-	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
+	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Versioned ] ;
 	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .
 bhv:AcceptanceRecordDeprecatedShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
@@ -1510,12 +1512,15 @@ the internal transitions created none.
 **Proves:** under `AllMatches` every enabled internal transition fires, in descending priority,
 each guard reading what the one before it left, and the state change follows in the same pass. A
 guard reading the bundle as the pass found it would have sent no alert on activation 2. That
-reading is the parallel environment, which is deferred to the
-[evaluation context](../../docs/developer/sketches/evaluation-context.md) design. Either-or
+reading is the parallel environment, which is deferred to a later
+design of the evaluation context. Either-or
 consequences, such as "from the bundle, else from overage", are `bhv:PriorityOrdered` instead,
 where only the highest enabled transition fires.
 
 ## 11. Release notes
+
+- **Next release** (additive). `bhv:hasTrigger`, `bhv:hasGuard` and `bhv:hasEffect` are `fnd:meaningBearing`, and a transition definition's parts are minted under it (Foundation section 4).
+- **Next release** (deprecations). `bhv:AllowanceAccount`, `bhv:AllowanceDefinition` and `bhv:availableBalance` are deprecated and reported by warning shapes: a balance is derived from Ledger's postings, never stored and overwritten ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). They are removed when Behaviour imports Ledger (LG-3).
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 

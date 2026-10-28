@@ -2,9 +2,8 @@
 
 # Insurance Common (`icm:`)
 
-Literate specification for `insurance/common`, built by the
-[`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
-epic (AIR-1.2). Insurance scheme contracts shared by two or more of the applied insurance
+Literate specification for `insurance/common`, built with the
+applied insurance modules. Insurance scheme contracts shared by two or more of the applied insurance
 domain's modules ([ADR-A98](../../../../docs/architecture/decisions/ADR-A98-applied-layout-and-insurance-modules.md)
 decision 1, epic D7), and the liability role types of
 [ADR-A102](../../../../docs/architecture/decisions/ADR-A102-liability-direction-from-party-roles.md).
@@ -56,7 +55,7 @@ version IRI, and is imported in turn by `insurance/peril` and later applied insu
 ## 2. Namespace and prefixes
 
 ```turtle-spec
-@prefix icm:  <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix icm:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -91,9 +90,9 @@ vocab = ["vocab/common-vocab.ttl"]
 ## 4. The six shared classifications
 
 ```turtle-spec
-<https://www.nebularis.org/neuro-semantic/insurance/common>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/common>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> ;
     rdfs:label "Insurance domain shared contracts"@en ;
     rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
@@ -165,8 +164,8 @@ characteristic and companion axes ([ADR-A99](../../../../docs/architecture/decis
 without the full peril vocabulary, can depend on `common/` alone.
 
 ```turtle-vocab
-@prefix icm:     <https://www.nebularis.org/neuro-semantic/insurance/common#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix icm:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
@@ -174,12 +173,12 @@ without the full peril vocabulary, can depend on `common/` alone.
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/common/vocab> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab> .
 
-<https://www.nebularis.org/neuro-semantic/insurance/common/vocab>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -336,8 +335,8 @@ recorded as open in the Handoff for R to complete or confirm at verification, pe
 division of labour (S drafts, R checks the edition and completeness).
 
 ```turtle-vocab
-@prefix icm:     <https://www.nebularis.org/neuro-semantic/insurance/common#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix icm:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
@@ -592,6 +591,8 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
   published List One at verification and records the edition date here
 
 ## 10. Release notes
+
+- **Next release** (breaking). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as ADR-A98 decision 6 states and the applied README's table now records. Data and imports under the old root need re-keying. A minor bump under ADR-A113 at the next release.
 
 | Version | Change |
 |---|---|

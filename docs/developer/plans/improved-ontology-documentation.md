@@ -174,7 +174,7 @@ hidden block with both `output-file` forms, a hidden block containing `-->`, and
   `spec/vocabulary.ttl` is in Protégé's layout and differs by 8 and 13 triples.
 - **The scanner is not fence-aware.** `parse_blocks` knows only its own fence tags, and
   `check_formal_freshness.py` imports `parse_blocks` and `plan`.
-- **Definitions are written twice today and have drifted**, for example `fnd:Version`'s Utility paragraph and
+- **Definitions are written twice today and have drifted**, for example `fnd:Versioned`'s Utility paragraph and
   its `fnd:utility` string.
 - **Practice differs by layer.** Instrument checks 91 counts in SHACL with no OWL restriction, and
   Quantification asserts 50 in OWL with no shape.

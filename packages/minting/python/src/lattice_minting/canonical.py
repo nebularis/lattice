@@ -45,6 +45,16 @@ def encode(data: bytes, encoding: str) -> str:
 _UNRESERVED = frozenset(b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 
 
+def is_unreserved(value: str) -> bool:
+    """True for a non-empty value made only of RFC 3986 unreserved characters."""
+    return value != "" and all(b in _UNRESERVED for b in value.encode("utf-8"))
+
+
+def is_dot_segment(value: str) -> bool:
+    """True for exactly ``.`` or ``..``, which RFC 3986 §6.2.2.3 removes from a path."""
+    return value in (".", "..")
+
+
 def percent_encode(value: str) -> str:
     """§6.2: unreserved bytes kept, every other byte %XX in uppercase hex."""
     return "".join(chr(b) if b in _UNRESERVED else f"%{b:02X}" for b in value.encode("utf-8"))

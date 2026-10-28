@@ -120,3 +120,21 @@ def test_a_known_decision_resolves_to_its_canonical_filename_spelling():
     defined = identifiers.definitions(DECISION)
     assert defined[identifiers.normalise("ADR-A131")] == "ADR-A131"
     assert defined[identifiers.normalise("ADR-AC2")] == "ADR-A-C2"
+
+
+def test_or1_a_family_defining_one_identifier_twice_is_reported(tmp_path, monkeypatch):
+    """A merge of two branches that each numbered a row leaves one identifier on two rows. The
+    check names both sites, so first in wins is decidable from its output."""
+    (tmp_path / "r.md").write_text("| # | Debt |\n|---|---|\n| TD-7 | one |\n| TD-8 | two |\n| TD-7 | three |\n", encoding="utf-8")
+    debt = next(f for f in identifiers.FAMILIES if f.name == "technical-debt")
+    family = identifiers.Family(name="t", mention=debt.mention, definition="table-row", defines=("r.md",))
+    monkeypatch.setattr(identifiers, "ROOT", tmp_path)
+    found = identifiers.duplicates(family)
+    assert list(found) == ["TD7"]
+    assert [line for _, line, _ in found["TD7"]] == [3, 5]
+    assert identifiers.definitions(family) == {"TD7": "TD-7", "TD8": "TD-8"}
+
+
+def test_or1_the_corpus_defines_no_identifier_twice():
+    twice = {f.name: sorted(k for k in identifiers.duplicates(f)) for f in identifiers.FAMILIES}
+    assert not any(twice.values()), {k: v for k, v in twice.items() if v}

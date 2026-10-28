@@ -5,6 +5,7 @@
       "id": "NfkcTrimUppercase",
       "steps": [
         "reject_unassigned",
+        "strip_format",
         "nfkc",
         "trim_white_space",
         "uppercase_full",
@@ -18,7 +19,7 @@
     ],
     "scopeProperty": null
   },
-  "recipeDigest": "sha256:a0dbd1a701ab2b974bc7826ffdae3a8a40fc191e7ce53a7bf751e8a8cfd7a372",
+  "recipeDigest": "sha256:29c73e45a9782d895c99e4e6bae0780426c8cc904a0174510755a53a5186bddc",
   "recipeFormat": "lattice-minting-recipe/1",
   "role": "EntityRole",
   "strategy": "NaturalKeyIdentity",

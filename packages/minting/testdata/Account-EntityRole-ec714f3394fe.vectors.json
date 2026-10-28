@@ -11,6 +11,7 @@
             "id": "NfkcTrimCasefold",
             "steps": [
               "reject_unassigned",
+              "strip_format",
               "nfkc_casefold",
               "trim_white_space"
             ],
@@ -40,6 +41,7 @@
             "id": "NfkcTrimCasefold",
             "steps": [
               "reject_unassigned",
+              "strip_format",
               "nfkc_casefold",
               "trim_white_space"
             ],
@@ -63,7 +65,7 @@
       }
     ],
     "iriTemplate": "urn:account:{surrogate}",
-    "recipeDigest": "sha256:07378b36d6893d6877dcf8807bc536757f14204ff63af1091c90a9f6beb1d752",
+    "recipeDigest": "sha256:ec714f3394fe580a6fb9c7ac08f1221edbd1cc9f1c4951f8896494fd554941be",
     "recipeFormat": "lattice-minting-recipe/1",
     "role": "EntityRole",
     "strategy": "SurrogateClaimedIdentity",
@@ -117,6 +119,10 @@
               "output": "Sample-Value"
             },
             {
+              "step": "strip_format",
+              "output": "Sample-Value"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample-value"
             },
@@ -135,6 +141,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -258,6 +268,10 @@
               "output": "SAMPLE-value"
             },
             {
+              "step": "strip_format",
+              "output": "SAMPLE-value"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample-value"
             },
@@ -276,6 +290,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -399,6 +417,10 @@
               "output": "  Sample-Value\u3000\u00a0"
             },
             {
+              "step": "strip_format",
+              "output": "  Sample-Value\u3000\u00a0"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "  sample-value  "
             },
@@ -417,6 +439,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -540,6 +566,10 @@
               "output": "Sample-Value\u001f"
             },
             {
+              "step": "strip_format",
+              "output": "Sample-Value\u001f"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample-value\u001f"
             },
@@ -558,6 +588,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -681,6 +715,10 @@
               "output": "Cafe\u0301"
             },
             {
+              "step": "strip_format",
+              "output": "Cafe\u0301"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "caf\u00e9"
             },
@@ -699,6 +737,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -822,6 +864,10 @@
               "output": "Caf\u00e9"
             },
             {
+              "step": "strip_format",
+              "output": "Caf\u00e9"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "caf\u00e9"
             },
@@ -840,6 +886,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -963,6 +1013,10 @@
               "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
             },
             {
+              "step": "strip_format",
+              "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample"
             },
@@ -981,6 +1035,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1104,6 +1162,10 @@
               "output": "\ufb01le"
             },
             {
+              "step": "strip_format",
+              "output": "\ufb01le"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "file"
             },
@@ -1122,6 +1184,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1245,6 +1311,10 @@
               "output": "Sam\u200bple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample"
             },
@@ -1263,6 +1333,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1386,6 +1460,10 @@
               "output": "Sam\u00adple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample"
             },
@@ -1404,6 +1482,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1527,6 +1609,10 @@
               "output": "Sample\ufe0f"
             },
             {
+              "step": "strip_format",
+              "output": "Sample\ufe0f"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample"
             },
@@ -1545,6 +1631,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1668,6 +1758,10 @@
               "output": "Stra\u00dfe"
             },
             {
+              "step": "strip_format",
+              "output": "Stra\u00dfe"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "strasse"
             },
@@ -1686,6 +1780,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1809,6 +1907,10 @@
               "output": "\u039f\u0394\u039f\u03a3"
             },
             {
+              "step": "strip_format",
+              "output": "\u039f\u0394\u039f\u03a3"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "\u03bf\u03b4\u03bf\u03c3"
             },
@@ -1827,6 +1929,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -1950,6 +2056,10 @@
               "output": "\u0130stanbul"
             },
             {
+              "step": "strip_format",
+              "output": "\u0130stanbul"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "i\u0307stanbul"
             },
@@ -1968,6 +2078,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2091,6 +2205,10 @@
               "output": "\ud835\udc00bc"
             },
             {
+              "step": "strip_format",
+              "output": "\ud835\udc00bc"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "abc"
             },
@@ -2109,6 +2227,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2232,6 +2354,10 @@
               "output": "sample\ud83d\ude00"
             },
             {
+              "step": "strip_format",
+              "output": "sample\ud83d\ude00"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample\ud83d\ude00"
             },
@@ -2250,6 +2376,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2373,6 +2503,10 @@
               "output": "\u1c89"
             },
             {
+              "step": "strip_format",
+              "output": "\u1c89"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "\u1c8a"
             },
@@ -2391,6 +2525,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2514,6 +2652,10 @@
               "output": "a/b c%d?e#f"
             },
             {
+              "step": "strip_format",
+              "output": "a/b c%d?e#f"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "a/b c%d?e#f"
             },
@@ -2532,6 +2674,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2655,6 +2801,10 @@
               "output": "2:v13:x"
             },
             {
+              "step": "strip_format",
+              "output": "2:v13:x"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "2:v13:x"
             },
@@ -2673,6 +2823,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2796,6 +2950,10 @@
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
             {
+              "step": "strip_format",
+              "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
@@ -2814,6 +2972,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
               "output": "part-1"
             },
             {
@@ -2905,21 +3067,456 @@
         "urn:key:account-handle-unique:v1:bd4e928c4bd8496103dfd1e0055b1c5d",
         "urn:key:account-handle-unique:v2:LKOmf3JQ9dm9p0xqlNdHne5gDOcy4-9TYH1F8GvCmy0"
       ]
-    }
-  ],
-  "negative": [
+    },
     {
-      "id": "neg-default-ignorable-only",
-      "category": "default-ignorable-only",
+      "id": "key-20-format-arabic-number-sign",
+      "category": "format-arabic-number-sign",
       "inputs": {
         "randomHex": "00112233445566778899aabbccddeeff",
         "key": [
-          "\u200b\u00ad",
+          "Sample\u0600",
           "part-1"
         ]
       },
-      "error": "EmptyKeyComponent"
+      "trace": [
+        {
+          "step": "generate-surrogate",
+          "randomHex": "00112233445566778899aabbccddeeff",
+          "value": "00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "render",
+          "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "Sample\u0600",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\u0600"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "sample"
+            }
+          ],
+          "output": "sample"
+        },
+        {
+          "step": "normalize",
+          "component": 1,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "part-1",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
+              "output": "part-1"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "part-1"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "part-1"
+            }
+          ],
+          "output": "part-1"
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "account-handle-unique",
+            "",
+            "sample",
+            "part-1"
+          ],
+          "hex": "323a763132313a6163636f756e742d68616e646c652d756e69717565303a363a73616d706c65363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v1",
+          "hex": "298094dabe0ac8e3b25e3785fc53b527bafc7abafed4d54dda3b6a68d1fc8d72"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "lowercase-hex",
+          "value": "298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:account-handle-unique:v1:298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "tuple",
+          "claim": 1,
+          "components": [
+            "v2",
+            "account-handle-unique",
+            "",
+            "sample",
+            "part-1"
+          ],
+          "hex": "323a763232313a6163636f756e742d68616e646c652d756e69717565303a363a73616d706c65363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 1,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v2",
+          "hex": "b87eb7e111bf322fef269c11e84a25036322151aafeb3cf8dbac738d4b607289"
+        },
+        {
+          "step": "truncate",
+          "claim": 1,
+          "widthBits": 256,
+          "hex": "b87eb7e111bf322fef269c11e84a25036322151aafeb3cf8dbac738d4b607289"
+        },
+        {
+          "step": "encode",
+          "claim": 1,
+          "encoding": "base64url",
+          "value": "uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+        },
+        {
+          "step": "render",
+          "claim": 1,
+          "iri": "urn:key:account-handle-unique:v2:uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+        }
+      ],
+      "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff",
+      "claimIris": [
+        "urn:key:account-handle-unique:v1:298094dabe0ac8e3b25e3785fc53b527",
+        "urn:key:account-handle-unique:v2:uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+      ]
     },
+    {
+      "id": "key-21-format-tag-character",
+      "category": "format-tag-character",
+      "inputs": {
+        "randomHex": "00112233445566778899aabbccddeeff",
+        "key": [
+          "Sample\udb40\udc41",
+          "part-1"
+        ]
+      },
+      "trace": [
+        {
+          "step": "generate-surrogate",
+          "randomHex": "00112233445566778899aabbccddeeff",
+          "value": "00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "render",
+          "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "Sample\udb40\udc41",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\udb40\udc41"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "sample"
+            }
+          ],
+          "output": "sample"
+        },
+        {
+          "step": "normalize",
+          "component": 1,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "part-1",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
+              "output": "part-1"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "part-1"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "part-1"
+            }
+          ],
+          "output": "part-1"
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "account-handle-unique",
+            "",
+            "sample",
+            "part-1"
+          ],
+          "hex": "323a763132313a6163636f756e742d68616e646c652d756e69717565303a363a73616d706c65363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v1",
+          "hex": "298094dabe0ac8e3b25e3785fc53b527bafc7abafed4d54dda3b6a68d1fc8d72"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "lowercase-hex",
+          "value": "298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:account-handle-unique:v1:298094dabe0ac8e3b25e3785fc53b527"
+        },
+        {
+          "step": "tuple",
+          "claim": 1,
+          "components": [
+            "v2",
+            "account-handle-unique",
+            "",
+            "sample",
+            "part-1"
+          ],
+          "hex": "323a763232313a6163636f756e742d68616e646c652d756e69717565303a363a73616d706c65363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 1,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v2",
+          "hex": "b87eb7e111bf322fef269c11e84a25036322151aafeb3cf8dbac738d4b607289"
+        },
+        {
+          "step": "truncate",
+          "claim": 1,
+          "widthBits": 256,
+          "hex": "b87eb7e111bf322fef269c11e84a25036322151aafeb3cf8dbac738d4b607289"
+        },
+        {
+          "step": "encode",
+          "claim": 1,
+          "encoding": "base64url",
+          "value": "uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+        },
+        {
+          "step": "render",
+          "claim": 1,
+          "iri": "urn:key:account-handle-unique:v2:uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+        }
+      ],
+      "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff",
+      "claimIris": [
+        "urn:key:account-handle-unique:v1:298094dabe0ac8e3b25e3785fc53b527",
+        "urn:key:account-handle-unique:v2:uH634RG_Mi_vJpwR6EolA2MiFRqv6zz426xzjUtgcok"
+      ]
+    },
+    {
+      "id": "key-22-dots-are-not-a-segment",
+      "category": "dots-are-not-a-segment",
+      "inputs": {
+        "randomHex": "00112233445566778899aabbccddeeff",
+        "key": [
+          "...",
+          "part-1"
+        ]
+      },
+      "trace": [
+        {
+          "step": "generate-surrogate",
+          "randomHex": "00112233445566778899aabbccddeeff",
+          "value": "00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "render",
+          "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "...",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "..."
+            },
+            {
+              "step": "strip_format",
+              "output": "..."
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "..."
+            },
+            {
+              "step": "trim_white_space",
+              "output": "..."
+            }
+          ],
+          "output": "..."
+        },
+        {
+          "step": "normalize",
+          "component": 1,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "part-1",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "part-1"
+            },
+            {
+              "step": "strip_format",
+              "output": "part-1"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "part-1"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "part-1"
+            }
+          ],
+          "output": "part-1"
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "account-handle-unique",
+            "",
+            "...",
+            "part-1"
+          ],
+          "hex": "323a763132313a6163636f756e742d68616e646c652d756e69717565303a333a2e2e2e363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v1",
+          "hex": "5940ab7aab2df2aff6f562513251ee69b307d0caeb3dca91657cba60fc8d92e4"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "5940ab7aab2df2aff6f562513251ee69"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "lowercase-hex",
+          "value": "5940ab7aab2df2aff6f562513251ee69"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:account-handle-unique:v1:5940ab7aab2df2aff6f562513251ee69"
+        },
+        {
+          "step": "tuple",
+          "claim": 1,
+          "components": [
+            "v2",
+            "account-handle-unique",
+            "",
+            "...",
+            "part-1"
+          ],
+          "hex": "323a763232313a6163636f756e742d68616e646c652d756e69717565303a333a2e2e2e363a706172742d31"
+        },
+        {
+          "step": "mac",
+          "claim": 1,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-account-key-v2",
+          "hex": "ad1d66125749ef1da2fd0820d29137f0a48dda5687486021700d9d3fb11a2dcf"
+        },
+        {
+          "step": "truncate",
+          "claim": 1,
+          "widthBits": 256,
+          "hex": "ad1d66125749ef1da2fd0820d29137f0a48dda5687486021700d9d3fb11a2dcf"
+        },
+        {
+          "step": "encode",
+          "claim": 1,
+          "encoding": "base64url",
+          "value": "rR1mEldJ7x2i_Qgg0pE38KSN2laHSGAhcA2dP7EaLc8"
+        },
+        {
+          "step": "render",
+          "claim": 1,
+          "iri": "urn:key:account-handle-unique:v2:rR1mEldJ7x2i_Qgg0pE38KSN2laHSGAhcA2dP7EaLc8"
+        }
+      ],
+      "iri": "urn:account:00112233-4455-4677-8899-aabbccddeeff",
+      "claimIris": [
+        "urn:key:account-handle-unique:v1:5940ab7aab2df2aff6f562513251ee69",
+        "urn:key:account-handle-unique:v2:rR1mEldJ7x2i_Qgg0pE38KSN2laHSGAhcA2dP7EaLc8"
+      ]
+    }
+  ],
+  "negative": [
     {
       "id": "neg-empty",
       "category": "empty",
@@ -2955,6 +3552,30 @@
         ]
       },
       "error": "UnassignedCodePoint"
+    },
+    {
+      "id": "neg-format-only",
+      "category": "format-only",
+      "inputs": {
+        "randomHex": "00112233445566778899aabbccddeeff",
+        "key": [
+          "\u200b\u00ad",
+          "part-1"
+        ]
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-format-only-not-default-ignorable",
+      "category": "format-only-not-default-ignorable",
+      "inputs": {
+        "randomHex": "00112233445566778899aabbccddeeff",
+        "key": [
+          "\u0600\u0605",
+          "part-1"
+        ]
+      },
+      "error": "EmptyKeyComponent"
     },
     {
       "id": "neg-missing-component",

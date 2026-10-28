@@ -8,6 +8,7 @@
           "id": "NfkcTrimCasefold",
           "steps": [
             "reject_unassigned",
+            "strip_format",
             "nfkc_casefold",
             "trim_white_space"
           ],
@@ -30,7 +31,7 @@
     }
   ],
   "iriTemplate": "urn:person:{surrogate}",
-  "recipeDigest": "sha256:ea6fa49ff46d789e8b5d0e8491e2f5ab77a813437d253767d336f06e553519e7",
+  "recipeDigest": "sha256:6b0e838a9ebb3d75c7d473b6bbe1f243230cdf6e0c74148bba411cd438bb87a6",
   "recipeFormat": "lattice-minting-recipe/1",
   "role": "EntityRole",
   "strategy": "SurrogateClaimedIdentity",

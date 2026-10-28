@@ -106,7 +106,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -404,6 +404,10 @@ run = "python tools/ontology_version_check.py && python tools/ontology_releases.
 [tasks."build:ontology-releases"]
 description = "Add a row to docs/architecture/ontology-releases.md for each unreleased ontology version, and list the release tags a person must create (ADR-A86)"
 run = "python tools/ontology_releases.py write"
+
+[tasks."check:owl-profile"]
+description = "Check every ontology document against the structural part of the OWL 2 DL profile: reserved vocabulary redeclared, a class used as a predicate, an IRI of two property kinds, with tools/owl-profile-exceptions.txt as the baseline"
+run = "python tools/owl_profile.py && python -m pytest tools/test_owl_profile.py -q"
 
 [tasks."check:import-guard"]
 description = "Fail when a substrate layer imports or names a layer above it, or a sibling (ADR-A01 addendum, law B7)"

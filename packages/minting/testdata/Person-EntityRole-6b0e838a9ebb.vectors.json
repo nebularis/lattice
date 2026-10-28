@@ -11,6 +11,7 @@
             "id": "NfkcTrimCasefold",
             "steps": [
               "reject_unassigned",
+              "strip_format",
               "nfkc_casefold",
               "trim_white_space"
             ],
@@ -33,7 +34,7 @@
       }
     ],
     "iriTemplate": "urn:person:{surrogate}",
-    "recipeDigest": "sha256:ea6fa49ff46d789e8b5d0e8491e2f5ab77a813437d253767d336f06e553519e7",
+    "recipeDigest": "sha256:6b0e838a9ebb3d75c7d473b6bbe1f243230cdf6e0c74148bba411cd438bb87a6",
     "recipeFormat": "lattice-minting-recipe/1",
     "role": "EntityRole",
     "strategy": "SurrogateClaimedIdentity",
@@ -81,6 +82,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample-Value"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample-Value"
             },
             {
@@ -166,6 +171,10 @@
               "output": "SAMPLE-value"
             },
             {
+              "step": "strip_format",
+              "output": "SAMPLE-value"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample-value"
             },
@@ -245,6 +254,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "  Sample-Value\u3000\u00a0"
+            },
+            {
+              "step": "strip_format",
               "output": "  Sample-Value\u3000\u00a0"
             },
             {
@@ -330,6 +343,10 @@
               "output": "Sample-Value\u001f"
             },
             {
+              "step": "strip_format",
+              "output": "Sample-Value\u001f"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample-value\u001f"
             },
@@ -409,6 +426,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Cafe\u0301"
+            },
+            {
+              "step": "strip_format",
               "output": "Cafe\u0301"
             },
             {
@@ -494,6 +515,10 @@
               "output": "Caf\u00e9"
             },
             {
+              "step": "strip_format",
+              "output": "Caf\u00e9"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "caf\u00e9"
             },
@@ -573,6 +598,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
+            },
+            {
+              "step": "strip_format",
               "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
             },
             {
@@ -658,6 +687,10 @@
               "output": "\ufb01le"
             },
             {
+              "step": "strip_format",
+              "output": "\ufb01le"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "file"
             },
@@ -738,6 +771,10 @@
             {
               "step": "reject_unassigned",
               "output": "Sam\u200bple"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
             },
             {
               "step": "nfkc_casefold",
@@ -822,6 +859,10 @@
               "output": "Sam\u00adple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample"
             },
@@ -901,6 +942,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample\ufe0f"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample\ufe0f"
             },
             {
@@ -986,6 +1031,10 @@
               "output": "Stra\u00dfe"
             },
             {
+              "step": "strip_format",
+              "output": "Stra\u00dfe"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "strasse"
             },
@@ -1065,6 +1114,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u039f\u0394\u039f\u03a3"
+            },
+            {
+              "step": "strip_format",
               "output": "\u039f\u0394\u039f\u03a3"
             },
             {
@@ -1150,6 +1203,10 @@
               "output": "\u0130stanbul"
             },
             {
+              "step": "strip_format",
+              "output": "\u0130stanbul"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "i\u0307stanbul"
             },
@@ -1229,6 +1286,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\ud835\udc00bc"
+            },
+            {
+              "step": "strip_format",
               "output": "\ud835\udc00bc"
             },
             {
@@ -1314,6 +1375,10 @@
               "output": "sample\ud83d\ude00"
             },
             {
+              "step": "strip_format",
+              "output": "sample\ud83d\ude00"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "sample\ud83d\ude00"
             },
@@ -1393,6 +1458,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u1c89"
+            },
+            {
+              "step": "strip_format",
               "output": "\u1c89"
             },
             {
@@ -1478,6 +1547,10 @@
               "output": "a/b c%d?e#f"
             },
             {
+              "step": "strip_format",
+              "output": "a/b c%d?e#f"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "a/b c%d?e#f"
             },
@@ -1557,6 +1630,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "2:v13:x"
+            },
+            {
+              "step": "strip_format",
               "output": "2:v13:x"
             },
             {
@@ -1642,6 +1719,10 @@
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
             {
+              "step": "strip_format",
+              "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            },
+            {
               "step": "nfkc_casefold",
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
@@ -1692,21 +1773,267 @@
       "claimIris": [
         "urn:key:person-email:v1:DOFLQBVHCZYJRVYFFWZHIBFTLI"
       ]
-    }
-  ],
-  "negative": [
+    },
     {
-      "id": "neg-default-ignorable-only",
-      "category": "default-ignorable-only",
+      "id": "key-20-format-arabic-number-sign",
+      "category": "format-arabic-number-sign",
       "inputs": {
         "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
         "key": [
-          "\u200b\u00ad"
+          "Sample\u0600"
         ],
         "scope": "acme"
       },
-      "error": "EmptyKeyComponent"
+      "trace": [
+        {
+          "step": "validate-surrogate",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "render",
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "Sample\u0600",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\u0600"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "sample"
+            }
+          ],
+          "output": "sample"
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "person-email-unique",
+            "acme",
+            "sample"
+          ],
+          "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d65363a73616d706c65"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-key-v1",
+          "hex": "5b56d7c02f4016022d1df34b45a1ec0babcb0c9b02d97936bf1075980557b5ee"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "5b56d7c02f4016022d1df34b45a1ec0b"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "base32",
+          "value": "LNLNPQBPIALAELI56NFULIPMBM"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:person-email:v1:LNLNPQBPIALAELI56NFULIPMBM"
+        }
+      ],
+      "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+      "claimIris": [
+        "urn:key:person-email:v1:LNLNPQBPIALAELI56NFULIPMBM"
+      ]
     },
+    {
+      "id": "key-21-format-tag-character",
+      "category": "format-tag-character",
+      "inputs": {
+        "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+        "key": [
+          "Sample\udb40\udc41"
+        ],
+        "scope": "tenant-\u00df"
+      },
+      "trace": [
+        {
+          "step": "validate-surrogate",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "render",
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "Sample\udb40\udc41",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\udb40\udc41"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "sample"
+            }
+          ],
+          "output": "sample"
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "person-email-unique",
+            "tenant-\u00df",
+            "sample"
+          ],
+          "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565393a74656e616e742dc39f363a73616d706c65"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-key-v1",
+          "hex": "267d32efbeee239f96a00588f2c356029552426f54a8717c19e25092942c6e1b"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "267d32efbeee239f96a00588f2c35602"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "base32",
+          "value": "EZ6TF3565YRZ7FVAAWEPFQ2WAI"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:person-email:v1:EZ6TF3565YRZ7FVAAWEPFQ2WAI"
+        }
+      ],
+      "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+      "claimIris": [
+        "urn:key:person-email:v1:EZ6TF3565YRZ7FVAAWEPFQ2WAI"
+      ]
+    },
+    {
+      "id": "key-22-dots-are-not-a-segment",
+      "category": "dots-are-not-a-segment",
+      "inputs": {
+        "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+        "key": [
+          "..."
+        ],
+        "scope": "acme"
+      },
+      "trace": [
+        {
+          "step": "validate-surrogate",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "value": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "render",
+          "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+        },
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimCasefold",
+          "input": "...",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "..."
+            },
+            {
+              "step": "strip_format",
+              "output": "..."
+            },
+            {
+              "step": "nfkc_casefold",
+              "output": "..."
+            },
+            {
+              "step": "trim_white_space",
+              "output": "..."
+            }
+          ],
+          "output": "..."
+        },
+        {
+          "step": "tuple",
+          "claim": 0,
+          "components": [
+            "v1",
+            "person-email-unique",
+            "acme",
+            "..."
+          ],
+          "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d65333a2e2e2e"
+        },
+        {
+          "step": "mac",
+          "claim": 0,
+          "function": "HMAC-SHA-256",
+          "keyId": "example-key-v1",
+          "hex": "f5e53a9973a5fa8412635a8ca6150c2c0713de97ab2faff59ca558005adadc1c"
+        },
+        {
+          "step": "truncate",
+          "claim": 0,
+          "widthBits": 128,
+          "hex": "f5e53a9973a5fa8412635a8ca6150c2c"
+        },
+        {
+          "step": "encode",
+          "claim": 0,
+          "encoding": "base32",
+          "value": "6XSTVGLTUX5IIETDLKGKMFIMFQ"
+        },
+        {
+          "step": "render",
+          "claim": 0,
+          "iri": "urn:key:person-email:v1:6XSTVGLTUX5IIETDLKGKMFIMFQ"
+        }
+      ],
+      "iri": "urn:person:8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+      "claimIris": [
+        "urn:key:person-email:v1:6XSTVGLTUX5IIETDLKGKMFIMFQ"
+      ]
+    }
+  ],
+  "negative": [
     {
       "id": "neg-empty",
       "category": "empty",
@@ -1742,6 +2069,42 @@
         "scope": "acme"
       },
       "error": "UnassignedCodePoint"
+    },
+    {
+      "id": "neg-format-only",
+      "category": "format-only",
+      "inputs": {
+        "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+        "key": [
+          "\u200b\u00ad"
+        ],
+        "scope": "acme"
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-format-only-not-default-ignorable",
+      "category": "format-only-not-default-ignorable",
+      "inputs": {
+        "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+        "key": [
+          "\u0600\u0605"
+        ],
+        "scope": "acme"
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-empty-scope",
+      "category": "empty-scope",
+      "inputs": {
+        "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90",
+        "key": [
+          "Sample-Value"
+        ],
+        "scope": ""
+      },
+      "error": "EmptyScope"
     },
     {
       "id": "neg-missing-component",

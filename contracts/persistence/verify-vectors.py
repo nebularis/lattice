@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 XSD_LONG = "http://www.w3.org/2001/XMLSchema#long"
 XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
 FORBIDDEN_IRI = set('<>"{}|\\^`') | {chr(c) for c in range(0, 0x21)}

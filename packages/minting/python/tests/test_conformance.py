@@ -51,23 +51,22 @@ def test_anchor_recipes_equal_compiled_recipes(anchors):
     """The compiler reproduces every anchor recipe byte for byte (M1), so the
     generated vectors test the anchor recipes, plus four coverage recipes."""
     compiled = {load(p)["recipeDigest"] for p in RECIPE_FILES}
-    anchored = {s["recipe"]["recipeDigest"] for s in anchors["sets"]}
+    anchored = {s["recipe"]["recipeDigest"] for s in anchors["sets"] if "not compiled" not in s["description"]}
     assert anchored <= compiled
     assert len(compiled - anchored) == 4
 
 
-def test_default_ignorable_only_depends_on_pipeline():
-    by_pipeline = {}
+def test_every_pipeline_refuses_a_key_of_format_characters_only():
+    seen = set()
     for path in VECTOR_FILES:
         doc = load(path)
         key = doc["recipe"].get("key") or (doc["recipe"].get("claims") or [{}])[0].get("key")
         if key is None:
             continue
-        ids = {v["id"] for v in doc["positive"]} | {v["id"] for v in doc["negative"]}
-        by_pipeline.setdefault(key["pipeline"]["id"], set()).update(ids)
-    assert "neg-default-ignorable-only" in by_pipeline["NfkcTrimCasefold"]
-    assert "key-default-ignorable-only-survives" in by_pipeline["NfkcTrimUppercase"]
-    assert "key-default-ignorable-only-survives" in by_pipeline["NfkcTrimLowercase"]
+        negatives = {v["id"]: v["error"] for v in doc["negative"]}
+        assert negatives["neg-format-only"] == negatives["neg-format-only-not-default-ignorable"] == "EmptyKeyComponent"
+        seen.add(key["pipeline"]["id"])
+    assert seen == {"NfkcTrimCasefold", "NfkcTrimUppercase", "NfkcTrimLowercase"}
 
 
 def test_a_changed_expectation_is_reported(tmp_path):

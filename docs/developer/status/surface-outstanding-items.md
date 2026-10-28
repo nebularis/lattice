@@ -2,7 +2,7 @@
 
 # Surface Layer — Outstanding Items
 
-**Source:** Consolidated from `ontology/surface/docs/OUTSTANDING-ITEMS.md` (2026-09-18)  
+**Source:** Consolidated from the Surface layer's earlier outstanding items document (2026-09-18)  
 **Status:** Living reference document; all items tracked in [surface-mork-unified-projection.md](surface-mork-unified-projection.md)  
 **Last updated:** 2026-09-22
 
@@ -22,7 +22,7 @@ All items listed here are **deliberately not in shipped artefacts** — no READM
 
 **Rationale:** The design note stated conservativity (X1) unconditionally: a surface never extends source-signature consequence set. This holds for indexing (mints own terms) but NOT for promotion (restates values onto `srf:promotesTo`). When `srf:promotesTo` is an authored property, emitted triples are over the authored signature and indistinguishable from authored facts.
 
-**The MERIDIAN CSO→FBO case:** `fbo:hasLineOfBusiness` is authored, so `DimensionSourcing` is producing authored-signature A-box, not an index.
+**The private source case:** `fbo:hasLineOfBusiness` is authored, so `DimensionSourcing` is producing authored-signature A-box, not an index.
 
 **Solution implemented:**
 - `srf:signatureScope` on every `srf:GeneratedSurface` (values: `srf:LocalSignature` or `srf:SourceSignature`)
@@ -65,7 +65,7 @@ All items listed here are **deliberately not in shipped artefacts** — no READM
 
 **Design:** Every generated class is `rdfs:subClassOf srf:GeneratedClass`; every generated relation is `rdfs:subPropertyOf srf:generatedRelation`.
 
-**Why:** MERIDIAN's approach (asserting `owl:Class` with RDF properties, creating punning) causes OWL-API toolchain issues. Parentage avoids this.
+**Why:** the source's approach (asserting `owl:Class` with RDF properties, creating punning) causes OWL-API toolchain issues. Parentage avoids this.
 
 **Result:** Enumerating a surface inventory is a subclass query; no punning. Provenance lives on `srf:GeneratedSymbol` records in manifest.
 
@@ -242,7 +242,7 @@ See §1.3 above. Resolved by [ADR-A92](../../architecture/decisions/ADR-A92-deri
 
 ### 4.2 `elg:HierarchicalClosureRule` unscoped — ✅ Closed
 
-**Fix:** Removed from `ontology/eligibility/shapes/` per [eligibility-L9-replacement.md](../../../ontology/surface/docs/eligibility-L9-replacement.md).
+**Fix:** Removed from `ontology/eligibility/shapes/` per the Eligibility law L9 replacement, recorded in [the Surface-MORK status record](surface-mork-unified-projection.md).
 
 **Status:** No remaining reference in Eligibility layer.
 

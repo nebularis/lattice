@@ -3,7 +3,7 @@
 
 """
 Eligibility executable IR (ADR-A24; a scoped subset of the executable-
-semantics design in ``ontology/surface/docs/MorkEnhancements.md``).
+semantics design in the MORK enhancements analysis).
 
 Compiles an ``elg:IntervalCondition`` into a backend-neutral list of
 required intervals, so the SPARQL, SHACL, and SWRL backends in this package

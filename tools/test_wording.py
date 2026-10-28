@@ -614,7 +614,7 @@ def test_c8b_01_spec_version_ranges_and_display_text() -> None:
     assert spec.value(WRD.reliesOnEdition, RDFS.range) == WRD.LinkedDocument
     assert (WRD.displayText, RDF.type, OWL.DatatypeProperty) in spec
     for c in (WRD.DocumentObject, WRD.ExternalDocument):
-        assert (c, RDFS.subClassOf, FND.Version) in spec, c
+        assert (c, RDFS.subClassOf, FND.Versioned) in spec, c
 
 
 @pytest.mark.parametrize("path", sorted((LAYER / "examples").glob("*.ttl")) + [

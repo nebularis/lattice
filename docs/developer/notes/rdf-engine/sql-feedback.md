@@ -243,7 +243,7 @@ Note also that `sh:maxCount 1` gives an FD *per target class*. A property shared
 
   Which invariant does Party actually state? A single-occupant role would need `EXCLUDE (role_id WITH =, valid_period WITH &&)`.
 
-- **[Minor] Temporal model.** `fnd:Version` (a version table plus a `current_*` view) and `fnd:TemporalScope` (valid time) together imply a bitemporal model: transaction time from versions or history, valid time from ranges. The paper never says whether queries are bitemporal, or what "current" means when a newer version has a future validity period.
+- **[Minor] Temporal model.** `fnd:Versioned` (a version table plus a `current_*` view) and `fnd:TemporalScope` (valid time) together imply a bitemporal model: transaction time from versions or history, valid time from ranges. The paper never says whether queries are bitemporal, or what "current" means when a newer version has a future validity period.
 
 ### 4.6 Instrument, Wording, Surface and MORK (§8.6–§8.8)
 

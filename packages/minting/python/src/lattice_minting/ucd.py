@@ -53,6 +53,7 @@ def _mapping(name: str) -> dict[int, str]:
 
 
 ASSIGNED = _Ranges("assigned.txt")
+FORMAT = _Ranges("format.txt")
 WHITE_SPACE = _Ranges("white_space.txt")
 CASED = _Ranges("cased.txt")
 CASE_IGNORABLE = _Ranges("case_ignorable.txt")
@@ -74,6 +75,11 @@ def reject_unassigned(s: str) -> str:
         if ord(ch) not in ASSIGNED:
             raise MintError("UnassignedCodePoint", f"U+{ord(ch):04X} is unassigned in Unicode {VERSION}")
     return s
+
+
+def strip_format(s: str) -> str:
+    """Remove every code point with General_Category Cf (zero-width and other format characters)."""
+    return "".join(ch for ch in s if ord(ch) not in FORMAT)
 
 
 def nfc(s: str) -> str:
@@ -132,6 +138,7 @@ def lowercase_full(s: str) -> str:
 
 STEPS = {
     "reject_unassigned": reject_unassigned,
+    "strip_format": strip_format,
     "nfc": nfc,
     "nfkc": nfkc,
     "nfkc_casefold": nfkc_casefold,

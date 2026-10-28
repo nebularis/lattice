@@ -555,8 +555,8 @@ python -m mork_compilers --version
 ## See Also
 
 - [Surface Revision Lifecycle](surface-revision-lifecycle.md) — State machine for surface versions
-- [Phase 7 Status](../developer/status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) — Completion details
-- [Outstanding Items](../developer/status/surface-outstanding-items.md) — Known limitations and future work
+- [ADR-A27](../architecture/decisions/ADR-A27-invalidation-and-minimal-scope-regeneration-policy.md) — Invalidation and minimal-scope regeneration policy
+- [ADR-A21](../architecture/decisions/ADR-A21-signature-scope-composition-for-stacked-surfaces.md) — Stacking beyond depth 1, the main deferred limitation
 - `tools/surface/invalidation.py` — API reference
 
 ---

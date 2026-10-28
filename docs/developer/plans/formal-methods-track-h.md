@@ -1400,7 +1400,7 @@ it. Versioning is ignored on this branch (TD-64).
 | H2.6c-Q1 | the declaration | `dal:writeDiscipline` on the family's profile, one of `dal:InPlace` (the default, today's replace), `dal:AppendVersions` and `dal:AppendRecords` (FS-Q1 (b): in place with or without a patch log is one discipline, its receipt model says which) |
 | H2.6c-Q2 | which families may append versions | composite families, whose `dal:dataGraph` holds every version, and families with no boundary. A named-graph family appends versions as one graph per version, named from the version, which ADR-A51's content revision IRI already describes. The aggregate's own graph is never cleared |
 | H2.6c-Q3 | `AppendRecords` | the existing append form (`append-event`, H2.6b's batch), selected by the discipline. No new template |
-| H2.6c-Q4 | the warning | `VersionedClassWrittenInPlace`, when a target class is a subclass of `fnd:Version` by IRI in the profile's loaded graphs and its discipline is `dal:InPlace`. No import of Foundation |
+| H2.6c-Q4 | the warning | `VersionedClassWrittenInPlace`, when a target class is a subclass of `fnd:Versioned` by IRI in the profile's loaded graphs and its discipline is `dal:InPlace`. No import of Foundation |
 | H2.6c-Q5 | `CompositeBoundaryReceiptOnly` | relaxed for `AppendVersions` and `AppendRecords`, where the history is in the data (VH-Q5) |
 
 #### Steps

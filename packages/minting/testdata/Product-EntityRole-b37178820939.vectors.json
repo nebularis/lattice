@@ -13,6 +13,7 @@
         "id": "NfkcTrimUppercase",
         "steps": [
           "reject_unassigned",
+          "strip_format",
           "nfkc",
           "trim_white_space",
           "uppercase_full",
@@ -25,7 +26,7 @@
       ],
       "scopeProperty": null
     },
-    "recipeDigest": "sha256:38ce5a73f929a647583c587442c3d493afd79223d8162056acea43a75a403546",
+    "recipeDigest": "sha256:b371788209398065d2085751da33f3ab61d2f0d99777a00925dcac18a4a0031b",
     "recipeFormat": "lattice-minting-recipe/1",
     "role": "EntityRole",
     "strategy": "DerivedHashIdentity",
@@ -59,6 +60,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample-Value"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample-Value"
             },
             {
@@ -132,6 +137,10 @@
               "output": "SAMPLE-value"
             },
             {
+              "step": "strip_format",
+              "output": "SAMPLE-value"
+            },
+            {
               "step": "nfkc",
               "output": "SAMPLE-value"
             },
@@ -199,6 +208,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "  Sample-Value\u3000\u00a0"
+            },
+            {
+              "step": "strip_format",
               "output": "  Sample-Value\u3000\u00a0"
             },
             {
@@ -272,6 +285,10 @@
               "output": "Sample-Value\u001f"
             },
             {
+              "step": "strip_format",
+              "output": "Sample-Value\u001f"
+            },
+            {
               "step": "nfkc",
               "output": "Sample-Value\u001f"
             },
@@ -339,6 +356,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Cafe\u0301"
+            },
+            {
+              "step": "strip_format",
               "output": "Cafe\u0301"
             },
             {
@@ -412,6 +433,10 @@
               "output": "Caf\u00e9"
             },
             {
+              "step": "strip_format",
+              "output": "Caf\u00e9"
+            },
+            {
               "step": "nfkc",
               "output": "Caf\u00e9"
             },
@@ -479,6 +504,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
+            },
+            {
+              "step": "strip_format",
               "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
             },
             {
@@ -552,6 +581,10 @@
               "output": "\ufb01le"
             },
             {
+              "step": "strip_format",
+              "output": "\ufb01le"
+            },
+            {
               "step": "nfkc",
               "output": "file"
             },
@@ -622,23 +655,27 @@
               "output": "Sam\u200bple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc",
-              "output": "Sam\u200bple"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "Sam\u200bple"
+              "output": "Sample"
             },
             {
               "step": "uppercase_full",
-              "output": "SAM\u200bPLE"
+              "output": "SAMPLE"
             },
             {
               "step": "nfkc",
-              "output": "SAM\u200bPLE"
+              "output": "SAMPLE"
             }
           ],
-          "output": "SAM\u200bPLE"
+          "output": "SAMPLE"
         },
         {
           "step": "tuple",
@@ -646,31 +683,31 @@
             "iri",
             "v1",
             "sku",
-            "SAM\u200bPLE"
+            "SAMPLE"
           ],
-          "hex": "333a697269323a7631333a736b75393a53414de2808b504c45"
+          "hex": "333a697269323a7631333a736b75363a53414d504c45"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "51b0b8b9c15924eb19e7d8e6ffdf8b17ce997dc3638dcbc8ba3d2c0281333f4e"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bce8194255076043b5bc6730e3"
         },
         {
           "step": "truncate",
           "widthBits": 160,
-          "hex": "51b0b8b9c15924eb19e7d8e6ffdf8b17ce997dc3"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bc"
         },
         {
           "step": "encode",
           "encoding": "base32",
-          "value": "KGYLROOBLESOWGPH3DTP7X4LC7HJS7OD"
+          "value": "27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         },
         {
           "step": "render",
-          "iri": "urn:ex:sku:KGYLROOBLESOWGPH3DTP7X4LC7HJS7OD"
+          "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         }
       ],
-      "iri": "urn:ex:sku:KGYLROOBLESOWGPH3DTP7X4LC7HJS7OD"
+      "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
     },
     {
       "id": "key-09-default-ignorable-soft-hyphen",
@@ -692,23 +729,27 @@
               "output": "Sam\u00adple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc",
-              "output": "Sam\u00adple"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "Sam\u00adple"
+              "output": "Sample"
             },
             {
               "step": "uppercase_full",
-              "output": "SAM\u00adPLE"
+              "output": "SAMPLE"
             },
             {
               "step": "nfkc",
-              "output": "SAM\u00adPLE"
+              "output": "SAMPLE"
             }
           ],
-          "output": "SAM\u00adPLE"
+          "output": "SAMPLE"
         },
         {
           "step": "tuple",
@@ -716,31 +757,31 @@
             "iri",
             "v1",
             "sku",
-            "SAM\u00adPLE"
+            "SAMPLE"
           ],
-          "hex": "333a697269323a7631333a736b75383a53414dc2ad504c45"
+          "hex": "333a697269323a7631333a736b75363a53414d504c45"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "63b3e156edcc2a32ce951713ad7e9f8ffdaa7ee52caed7056d0e465dac7cc817"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bce8194255076043b5bc6730e3"
         },
         {
           "step": "truncate",
           "widthBits": 160,
-          "hex": "63b3e156edcc2a32ce951713ad7e9f8ffdaa7ee5"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bc"
         },
         {
           "step": "encode",
           "encoding": "base32",
-          "value": "MOZ6CVXNZQVDFTUVC4J227U7R762U7XF"
+          "value": "27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         },
         {
           "step": "render",
-          "iri": "urn:ex:sku:MOZ6CVXNZQVDFTUVC4J227U7R762U7XF"
+          "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         }
       ],
-      "iri": "urn:ex:sku:MOZ6CVXNZQVDFTUVC4J227U7R762U7XF"
+      "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
     },
     {
       "id": "key-10-default-ignorable-variation-selector",
@@ -759,6 +800,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample\ufe0f"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample\ufe0f"
             },
             {
@@ -832,6 +877,10 @@
               "output": "Stra\u00dfe"
             },
             {
+              "step": "strip_format",
+              "output": "Stra\u00dfe"
+            },
+            {
               "step": "nfkc",
               "output": "Stra\u00dfe"
             },
@@ -899,6 +948,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u039f\u0394\u039f\u03a3"
+            },
+            {
+              "step": "strip_format",
               "output": "\u039f\u0394\u039f\u03a3"
             },
             {
@@ -972,6 +1025,10 @@
               "output": "\u0130stanbul"
             },
             {
+              "step": "strip_format",
+              "output": "\u0130stanbul"
+            },
+            {
               "step": "nfkc",
               "output": "\u0130stanbul"
             },
@@ -1039,6 +1096,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\ud835\udc00bc"
+            },
+            {
+              "step": "strip_format",
               "output": "\ud835\udc00bc"
             },
             {
@@ -1112,6 +1173,10 @@
               "output": "sample\ud83d\ude00"
             },
             {
+              "step": "strip_format",
+              "output": "sample\ud83d\ude00"
+            },
+            {
               "step": "nfkc",
               "output": "sample\ud83d\ude00"
             },
@@ -1179,6 +1244,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u1c89"
+            },
+            {
+              "step": "strip_format",
               "output": "\u1c89"
             },
             {
@@ -1252,6 +1321,10 @@
               "output": "a/b c%d?e#f"
             },
             {
+              "step": "strip_format",
+              "output": "a/b c%d?e#f"
+            },
+            {
               "step": "nfkc",
               "output": "a/b c%d?e#f"
             },
@@ -1319,6 +1392,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "2:v13:x"
+            },
+            {
+              "step": "strip_format",
               "output": "2:v13:x"
             },
             {
@@ -1392,6 +1469,10 @@
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
             {
+              "step": "strip_format",
+              "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            },
+            {
               "step": "nfkc",
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
@@ -1443,11 +1524,11 @@
       "iri": "urn:ex:sku:QKOEX5JJI5FNRJRN6O2UIEMF5UAM7N2L"
     },
     {
-      "id": "key-default-ignorable-only-survives",
-      "category": "default-ignorable-only-survives-nfkc",
+      "id": "key-20-format-arabic-number-sign",
+      "category": "format-arabic-number-sign",
       "inputs": {
         "key": [
-          "\u200b\u00ad"
+          "Sample\u0600"
         ]
       },
       "trace": [
@@ -1455,30 +1536,34 @@
           "step": "normalize",
           "component": 0,
           "pipeline": "NfkcTrimUppercase",
-          "input": "\u200b\u00ad",
+          "input": "Sample\u0600",
           "after": [
             {
               "step": "reject_unassigned",
-              "output": "\u200b\u00ad"
+              "output": "Sample\u0600"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
             },
             {
               "step": "nfkc",
-              "output": "\u200b\u00ad"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "\u200b\u00ad"
+              "output": "Sample"
             },
             {
               "step": "uppercase_full",
-              "output": "\u200b\u00ad"
+              "output": "SAMPLE"
             },
             {
               "step": "nfkc",
-              "output": "\u200b\u00ad"
+              "output": "SAMPLE"
             }
           ],
-          "output": "\u200b\u00ad"
+          "output": "SAMPLE"
         },
         {
           "step": "tuple",
@@ -1486,31 +1571,179 @@
             "iri",
             "v1",
             "sku",
-            "\u200b\u00ad"
+            "SAMPLE"
           ],
-          "hex": "333a697269323a7631333a736b75353ae2808bc2ad"
+          "hex": "333a697269323a7631333a736b75363a53414d504c45"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "154dbb974813c649d272f3f108e2f24b3b6b796568ffa1784359c2487da285af"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bce8194255076043b5bc6730e3"
         },
         {
           "step": "truncate",
           "widthBits": 160,
-          "hex": "154dbb974813c649d272f3f108e2f24b3b6b7965"
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bc"
         },
         {
           "step": "encode",
           "encoding": "base32",
-          "value": "CVG3XF2ICPDETUTS6PYQRYXSJM5WW6LF"
+          "value": "27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         },
         {
           "step": "render",
-          "iri": "urn:ex:sku:CVG3XF2ICPDETUTS6PYQRYXSJM5WW6LF"
+          "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
         }
       ],
-      "iri": "urn:ex:sku:CVG3XF2ICPDETUTS6PYQRYXSJM5WW6LF"
+      "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
+    },
+    {
+      "id": "key-21-format-tag-character",
+      "category": "format-tag-character",
+      "inputs": {
+        "key": [
+          "Sample\udb40\udc41"
+        ]
+      },
+      "trace": [
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimUppercase",
+          "input": "Sample\udb40\udc41",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\udb40\udc41"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc",
+              "output": "Sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "Sample"
+            },
+            {
+              "step": "uppercase_full",
+              "output": "SAMPLE"
+            },
+            {
+              "step": "nfkc",
+              "output": "SAMPLE"
+            }
+          ],
+          "output": "SAMPLE"
+        },
+        {
+          "step": "tuple",
+          "components": [
+            "iri",
+            "v1",
+            "sku",
+            "SAMPLE"
+          ],
+          "hex": "333a697269323a7631333a736b75363a53414d504c45"
+        },
+        {
+          "step": "digest",
+          "function": "SHA-256",
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bce8194255076043b5bc6730e3"
+        },
+        {
+          "step": "truncate",
+          "widthBits": 160,
+          "hex": "d7f3ed66a83f04509ffc05e97e6173a9c669f2bc"
+        },
+        {
+          "step": "encode",
+          "encoding": "base32",
+          "value": "27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
+        },
+        {
+          "step": "render",
+          "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
+        }
+      ],
+      "iri": "urn:ex:sku:27Z62ZVIH4CFBH74AXUX4YLTVHDGT4V4"
+    },
+    {
+      "id": "key-22-dots-are-not-a-segment",
+      "category": "dots-are-not-a-segment",
+      "inputs": {
+        "key": [
+          "..."
+        ]
+      },
+      "trace": [
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimUppercase",
+          "input": "...",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "..."
+            },
+            {
+              "step": "strip_format",
+              "output": "..."
+            },
+            {
+              "step": "nfkc",
+              "output": "..."
+            },
+            {
+              "step": "trim_white_space",
+              "output": "..."
+            },
+            {
+              "step": "uppercase_full",
+              "output": "..."
+            },
+            {
+              "step": "nfkc",
+              "output": "..."
+            }
+          ],
+          "output": "..."
+        },
+        {
+          "step": "tuple",
+          "components": [
+            "iri",
+            "v1",
+            "sku",
+            "..."
+          ],
+          "hex": "333a697269323a7631333a736b75333a2e2e2e"
+        },
+        {
+          "step": "digest",
+          "function": "SHA-256",
+          "hex": "be7fb0e025e6a99021273f4d181fedc79dcd73ac2860b428015481d7d3fec519"
+        },
+        {
+          "step": "truncate",
+          "widthBits": 160,
+          "hex": "be7fb0e025e6a99021273f4d181fedc79dcd73ac"
+        },
+        {
+          "step": "encode",
+          "encoding": "base32",
+          "value": "XZ73BYBF42UZAIJHH5GRQH7NY6O4245M"
+        },
+        {
+          "step": "render",
+          "iri": "urn:ex:sku:XZ73BYBF42UZAIJHH5GRQH7NY6O4245M"
+        }
+      ],
+      "iri": "urn:ex:sku:XZ73BYBF42UZAIJHH5GRQH7NY6O4245M"
     }
   ],
   "negative": [
@@ -1543,6 +1776,26 @@
         ]
       },
       "error": "UnassignedCodePoint"
+    },
+    {
+      "id": "neg-format-only",
+      "category": "format-only",
+      "inputs": {
+        "key": [
+          "\u200b\u00ad"
+        ]
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-format-only-not-default-ignorable",
+      "category": "format-only-not-default-ignorable",
+      "inputs": {
+        "key": [
+          "\u0600\u0605"
+        ]
+      },
+      "error": "EmptyKeyComponent"
     },
     {
       "id": "neg-missing-component",

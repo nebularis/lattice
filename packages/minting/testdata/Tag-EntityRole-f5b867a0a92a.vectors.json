@@ -13,6 +13,7 @@
         "id": "NfkcTrimLowercase",
         "steps": [
           "reject_unassigned",
+          "strip_format",
           "nfkc",
           "trim_white_space",
           "lowercase_full",
@@ -25,7 +26,7 @@
       ],
       "scopeProperty": "https://example.org/lending#tenant"
     },
-    "recipeDigest": "sha256:ee50837968e69c9b3341ccd79edb90c9cde975241da1763e14d61ed5a639e29f",
+    "recipeDigest": "sha256:f5b867a0a92a08857e7dfc51652bc571cebcc45da88120d9ac2d73d778865a25",
     "recipeFormat": "lattice-minting-recipe/1",
     "role": "EntityRole",
     "strategy": "DerivedHashIdentity",
@@ -60,6 +61,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample-Value"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample-Value"
             },
             {
@@ -135,6 +140,10 @@
               "output": "SAMPLE-value"
             },
             {
+              "step": "strip_format",
+              "output": "SAMPLE-value"
+            },
+            {
               "step": "nfkc",
               "output": "SAMPLE-value"
             },
@@ -204,6 +213,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "  Sample-Value\u3000\u00a0"
+            },
+            {
+              "step": "strip_format",
               "output": "  Sample-Value\u3000\u00a0"
             },
             {
@@ -279,6 +292,10 @@
               "output": "Sample-Value\u001f"
             },
             {
+              "step": "strip_format",
+              "output": "Sample-Value\u001f"
+            },
+            {
               "step": "nfkc",
               "output": "Sample-Value\u001f"
             },
@@ -348,6 +365,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Cafe\u0301"
+            },
+            {
+              "step": "strip_format",
               "output": "Cafe\u0301"
             },
             {
@@ -423,6 +444,10 @@
               "output": "Caf\u00e9"
             },
             {
+              "step": "strip_format",
+              "output": "Caf\u00e9"
+            },
+            {
               "step": "nfkc",
               "output": "Caf\u00e9"
             },
@@ -492,6 +517,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
+            },
+            {
+              "step": "strip_format",
               "output": "\uff33\uff41\uff4d\uff50\uff4c\uff45"
             },
             {
@@ -567,6 +596,10 @@
               "output": "\ufb01le"
             },
             {
+              "step": "strip_format",
+              "output": "\ufb01le"
+            },
+            {
               "step": "nfkc",
               "output": "file"
             },
@@ -639,23 +672,27 @@
               "output": "Sam\u200bple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc",
-              "output": "Sam\u200bple"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "Sam\u200bple"
+              "output": "Sample"
             },
             {
               "step": "lowercase_full",
-              "output": "sam\u200bple"
+              "output": "sample"
             },
             {
               "step": "nfkc",
-              "output": "sam\u200bple"
+              "output": "sample"
             }
           ],
-          "output": "sam\u200bple"
+          "output": "sample"
         },
         {
           "step": "tuple",
@@ -664,31 +701,31 @@
             "v1",
             "tag",
             "acme",
-            "sam\u200bple"
+            "sample"
           ],
-          "hex": "333a697269323a7631333a746167343a61636d65393a73616de2808b706c65"
+          "hex": "333a697269323a7631333a746167343a61636d65363a73616d706c65"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "93bc2e88f40180213db4c34a3b36840aa7387f464d5f3c147e620217b661b90a"
+          "hex": "5aef9bdcfbd35a3528b27675344cb043edb33fe04478728c05665aa100cf0b3b"
         },
         {
           "step": "truncate",
           "widthBits": 128,
-          "hex": "93bc2e88f40180213db4c34a3b36840a"
+          "hex": "5aef9bdcfbd35a3528b27675344cb043"
         },
         {
           "step": "encode",
           "encoding": "base64url",
-          "value": "k7wuiPQBgCE9tMNKOzaECg"
+          "value": "Wu-b3PvTWjUosnZ1NEywQw"
         },
         {
           "step": "render",
-          "iri": "urn:ex:tag:k7wuiPQBgCE9tMNKOzaECg"
+          "iri": "urn:ex:tag:Wu-b3PvTWjUosnZ1NEywQw"
         }
       ],
-      "iri": "urn:ex:tag:k7wuiPQBgCE9tMNKOzaECg"
+      "iri": "urn:ex:tag:Wu-b3PvTWjUosnZ1NEywQw"
     },
     {
       "id": "key-09-default-ignorable-soft-hyphen",
@@ -711,23 +748,27 @@
               "output": "Sam\u00adple"
             },
             {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
               "step": "nfkc",
-              "output": "Sam\u00adple"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "Sam\u00adple"
+              "output": "Sample"
             },
             {
               "step": "lowercase_full",
-              "output": "sam\u00adple"
+              "output": "sample"
             },
             {
               "step": "nfkc",
-              "output": "sam\u00adple"
+              "output": "sample"
             }
           ],
-          "output": "sam\u00adple"
+          "output": "sample"
         },
         {
           "step": "tuple",
@@ -736,31 +777,31 @@
             "v1",
             "tag",
             "tenant-\u00df",
-            "sam\u00adple"
+            "sample"
           ],
-          "hex": "333a697269323a7631333a746167393a74656e616e742dc39f383a73616dc2ad706c65"
+          "hex": "333a697269323a7631333a746167393a74656e616e742dc39f363a73616d706c65"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "4693eaf49572e7edb6459a4fe266047426d166981400979edfc77bf6e10319a2"
+          "hex": "0f529f328b9e489447b4d1f0ec67a18841856382b6014770c66b753f10838199"
         },
         {
           "step": "truncate",
           "widthBits": 128,
-          "hex": "4693eaf49572e7edb6459a4fe2660474"
+          "hex": "0f529f328b9e489447b4d1f0ec67a188"
         },
         {
           "step": "encode",
           "encoding": "base64url",
-          "value": "RpPq9JVy5-22RZpP4mYEdA"
+          "value": "D1KfMoueSJRHtNHw7GehiA"
         },
         {
           "step": "render",
-          "iri": "urn:ex:tag:RpPq9JVy5-22RZpP4mYEdA"
+          "iri": "urn:ex:tag:D1KfMoueSJRHtNHw7GehiA"
         }
       ],
-      "iri": "urn:ex:tag:RpPq9JVy5-22RZpP4mYEdA"
+      "iri": "urn:ex:tag:D1KfMoueSJRHtNHw7GehiA"
     },
     {
       "id": "key-10-default-ignorable-variation-selector",
@@ -780,6 +821,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "Sample\ufe0f"
+            },
+            {
+              "step": "strip_format",
               "output": "Sample\ufe0f"
             },
             {
@@ -855,6 +900,10 @@
               "output": "Stra\u00dfe"
             },
             {
+              "step": "strip_format",
+              "output": "Stra\u00dfe"
+            },
+            {
               "step": "nfkc",
               "output": "Stra\u00dfe"
             },
@@ -924,6 +973,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u039f\u0394\u039f\u03a3"
+            },
+            {
+              "step": "strip_format",
               "output": "\u039f\u0394\u039f\u03a3"
             },
             {
@@ -999,6 +1052,10 @@
               "output": "\u0130stanbul"
             },
             {
+              "step": "strip_format",
+              "output": "\u0130stanbul"
+            },
+            {
               "step": "nfkc",
               "output": "\u0130stanbul"
             },
@@ -1068,6 +1125,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\ud835\udc00bc"
+            },
+            {
+              "step": "strip_format",
               "output": "\ud835\udc00bc"
             },
             {
@@ -1143,6 +1204,10 @@
               "output": "sample\ud83d\ude00"
             },
             {
+              "step": "strip_format",
+              "output": "sample\ud83d\ude00"
+            },
+            {
               "step": "nfkc",
               "output": "sample\ud83d\ude00"
             },
@@ -1212,6 +1277,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "\u1c89"
+            },
+            {
+              "step": "strip_format",
               "output": "\u1c89"
             },
             {
@@ -1287,6 +1356,10 @@
               "output": "a/b c%d?e#f"
             },
             {
+              "step": "strip_format",
+              "output": "a/b c%d?e#f"
+            },
+            {
               "step": "nfkc",
               "output": "a/b c%d?e#f"
             },
@@ -1356,6 +1429,10 @@
           "after": [
             {
               "step": "reject_unassigned",
+              "output": "2:v13:x"
+            },
+            {
+              "step": "strip_format",
               "output": "2:v13:x"
             },
             {
@@ -1431,6 +1508,10 @@
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
             {
+              "step": "strip_format",
+              "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            },
+            {
               "step": "nfkc",
               "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             },
@@ -1483,11 +1564,11 @@
       "iri": "urn:ex:tag:XttWIdMz5ufRLATQTzcGEQ"
     },
     {
-      "id": "key-default-ignorable-only-survives",
-      "category": "default-ignorable-only-survives-nfkc",
+      "id": "key-20-format-arabic-number-sign",
+      "category": "format-arabic-number-sign",
       "inputs": {
         "key": [
-          "\u200b\u00ad"
+          "Sample\u0600"
         ],
         "scope": "acme"
       },
@@ -1496,30 +1577,34 @@
           "step": "normalize",
           "component": 0,
           "pipeline": "NfkcTrimLowercase",
-          "input": "\u200b\u00ad",
+          "input": "Sample\u0600",
           "after": [
             {
               "step": "reject_unassigned",
-              "output": "\u200b\u00ad"
+              "output": "Sample\u0600"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
             },
             {
               "step": "nfkc",
-              "output": "\u200b\u00ad"
+              "output": "Sample"
             },
             {
               "step": "trim_white_space",
-              "output": "\u200b\u00ad"
+              "output": "Sample"
             },
             {
               "step": "lowercase_full",
-              "output": "\u200b\u00ad"
+              "output": "sample"
             },
             {
               "step": "nfkc",
-              "output": "\u200b\u00ad"
+              "output": "sample"
             }
           ],
-          "output": "\u200b\u00ad"
+          "output": "sample"
         },
         {
           "step": "tuple",
@@ -1528,31 +1613,183 @@
             "v1",
             "tag",
             "acme",
-            "\u200b\u00ad"
+            "sample"
           ],
-          "hex": "333a697269323a7631333a746167343a61636d65353ae2808bc2ad"
+          "hex": "333a697269323a7631333a746167343a61636d65363a73616d706c65"
         },
         {
           "step": "digest",
           "function": "SHA-256",
-          "hex": "3cd8a1104d2effea5818e944e2698481254a1b1125f36f2745605739888ce68c"
+          "hex": "5aef9bdcfbd35a3528b27675344cb043edb33fe04478728c05665aa100cf0b3b"
         },
         {
           "step": "truncate",
           "widthBits": 128,
-          "hex": "3cd8a1104d2effea5818e944e2698481"
+          "hex": "5aef9bdcfbd35a3528b27675344cb043"
         },
         {
           "step": "encode",
           "encoding": "base64url",
-          "value": "PNihEE0u_-pYGOlE4mmEgQ"
+          "value": "Wu-b3PvTWjUosnZ1NEywQw"
         },
         {
           "step": "render",
-          "iri": "urn:ex:tag:PNihEE0u_-pYGOlE4mmEgQ"
+          "iri": "urn:ex:tag:Wu-b3PvTWjUosnZ1NEywQw"
         }
       ],
-      "iri": "urn:ex:tag:PNihEE0u_-pYGOlE4mmEgQ"
+      "iri": "urn:ex:tag:Wu-b3PvTWjUosnZ1NEywQw"
+    },
+    {
+      "id": "key-21-format-tag-character",
+      "category": "format-tag-character",
+      "inputs": {
+        "key": [
+          "Sample\udb40\udc41"
+        ],
+        "scope": "tenant-\u00df"
+      },
+      "trace": [
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimLowercase",
+          "input": "Sample\udb40\udc41",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "Sample\udb40\udc41"
+            },
+            {
+              "step": "strip_format",
+              "output": "Sample"
+            },
+            {
+              "step": "nfkc",
+              "output": "Sample"
+            },
+            {
+              "step": "trim_white_space",
+              "output": "Sample"
+            },
+            {
+              "step": "lowercase_full",
+              "output": "sample"
+            },
+            {
+              "step": "nfkc",
+              "output": "sample"
+            }
+          ],
+          "output": "sample"
+        },
+        {
+          "step": "tuple",
+          "components": [
+            "iri",
+            "v1",
+            "tag",
+            "tenant-\u00df",
+            "sample"
+          ],
+          "hex": "333a697269323a7631333a746167393a74656e616e742dc39f363a73616d706c65"
+        },
+        {
+          "step": "digest",
+          "function": "SHA-256",
+          "hex": "0f529f328b9e489447b4d1f0ec67a18841856382b6014770c66b753f10838199"
+        },
+        {
+          "step": "truncate",
+          "widthBits": 128,
+          "hex": "0f529f328b9e489447b4d1f0ec67a188"
+        },
+        {
+          "step": "encode",
+          "encoding": "base64url",
+          "value": "D1KfMoueSJRHtNHw7GehiA"
+        },
+        {
+          "step": "render",
+          "iri": "urn:ex:tag:D1KfMoueSJRHtNHw7GehiA"
+        }
+      ],
+      "iri": "urn:ex:tag:D1KfMoueSJRHtNHw7GehiA"
+    },
+    {
+      "id": "key-22-dots-are-not-a-segment",
+      "category": "dots-are-not-a-segment",
+      "inputs": {
+        "key": [
+          "..."
+        ],
+        "scope": "acme"
+      },
+      "trace": [
+        {
+          "step": "normalize",
+          "component": 0,
+          "pipeline": "NfkcTrimLowercase",
+          "input": "...",
+          "after": [
+            {
+              "step": "reject_unassigned",
+              "output": "..."
+            },
+            {
+              "step": "strip_format",
+              "output": "..."
+            },
+            {
+              "step": "nfkc",
+              "output": "..."
+            },
+            {
+              "step": "trim_white_space",
+              "output": "..."
+            },
+            {
+              "step": "lowercase_full",
+              "output": "..."
+            },
+            {
+              "step": "nfkc",
+              "output": "..."
+            }
+          ],
+          "output": "..."
+        },
+        {
+          "step": "tuple",
+          "components": [
+            "iri",
+            "v1",
+            "tag",
+            "acme",
+            "..."
+          ],
+          "hex": "333a697269323a7631333a746167343a61636d65333a2e2e2e"
+        },
+        {
+          "step": "digest",
+          "function": "SHA-256",
+          "hex": "7897e49fe01be4359e0168779ec5497c82d02e9b1525a19323192e9c32b972d8"
+        },
+        {
+          "step": "truncate",
+          "widthBits": 128,
+          "hex": "7897e49fe01be4359e0168779ec5497c"
+        },
+        {
+          "step": "encode",
+          "encoding": "base64url",
+          "value": "eJfkn-Ab5DWeAWh3nsVJfA"
+        },
+        {
+          "step": "render",
+          "iri": "urn:ex:tag:eJfkn-Ab5DWeAWh3nsVJfA"
+        }
+      ],
+      "iri": "urn:ex:tag:eJfkn-Ab5DWeAWh3nsVJfA"
     }
   ],
   "negative": [
@@ -1588,6 +1825,39 @@
         "scope": "acme"
       },
       "error": "UnassignedCodePoint"
+    },
+    {
+      "id": "neg-format-only",
+      "category": "format-only",
+      "inputs": {
+        "key": [
+          "\u200b\u00ad"
+        ],
+        "scope": "acme"
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-format-only-not-default-ignorable",
+      "category": "format-only-not-default-ignorable",
+      "inputs": {
+        "key": [
+          "\u0600\u0605"
+        ],
+        "scope": "acme"
+      },
+      "error": "EmptyKeyComponent"
+    },
+    {
+      "id": "neg-empty-scope",
+      "category": "empty-scope",
+      "inputs": {
+        "key": [
+          "Sample-Value"
+        ],
+        "scope": ""
+      },
+      "error": "EmptyScope"
     },
     {
       "id": "neg-missing-component",

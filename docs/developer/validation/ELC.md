@@ -41,7 +41,7 @@ shapes report each declared in the wrong place. No graph in the repository names
 - **The migration check** escapes line breaks in a difference, so a changed SPARQL literal is one line of a
   reconciliation file. Before, a difference in a multi-line literal could not be reconciled.
 - **Docs.** ADR-A05 and ADR-A03 addenda, the glossary, `docs/book.html`'s sample, the MORK compilers README and
-  Surface's `MorkEnhancements.md` (§9.3 now records the retirement). ADR-A89 and ADR-A90 still say
+  the Surface-MORK plan's Phase 5 (§9.3 of the MORK enhancements analysis recorded the retirement). ADR-A89 and ADR-A90 still say
   `DimensionConsistent` is refused, which was true when they were decided, and are left as records.
 - **TD-55**, the migration check's whole-file blank node labelling.
 
@@ -57,7 +57,7 @@ shapes report each declared in the wrong place. No graph in the repository names
    operation in place of `DimensionConsistent`.
 4. **`AllRequired` and `AnySufficient` gain definitions**, the strong Kleene readings ADR-A89 states. Eleven
    individuals still have none (README §13).
-5. **The warranty carve-back is typed a profile**, which makes it versioned (`fnd:Version`), as every profile
+5. **The warranty carve-back is typed a profile**, which makes it versioned (`fnd:Versioned`), as every profile
    is. Nothing else in that example changed.
 6. **The reconciliations are against `82fc2b25`**, the commit before ELC. OD6's command against `dab1c790`
    with OD6's file no longer passes on this branch, since ELC changed the graphs after it. It passed at

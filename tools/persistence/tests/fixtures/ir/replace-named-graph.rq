@@ -1,4 +1,4 @@
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {

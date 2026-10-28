@@ -398,7 +398,7 @@ def _closure(g: Graph, node) -> Graph:
 ])
 def test_od3_t7_the_grammar_states_two_of_spcs_axioms_as_spc_does(subject: str, expression: str) -> None:
     spc = Graph().parse(ROOT / "ontology/spc/spec/spc.ttl")
-    ns = "http://example.org/spc#"
+    ns = "https://www.nebularis.org/neuro-semantic/lattice/spc#"
     term = lg.class_expression(expression, {"spc": ns, **lg.STANDARD_PREFIXES}, "test")
     ours = Graph().parse(data=f"@prefix spc: <{ns}> . @prefix owl: <http://www.w3.org/2002/07/owl#> . "
                               f"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . "
@@ -562,7 +562,7 @@ def test_od4_t7_the_grammar_states_eligibilitys_decision_shape_as_its_file_does(
 
 # ---- OD5: the generated regions ---------------------------------------------------------------------
 
-PROFILE = "#### `ex:Profile`\n\n**Definition.** A profile.\n\n**Subclass of.** `fnd:Version`"
+PROFILE = "#### `ex:Profile`\n\n**Definition.** A profile.\n\n**Subclass of.** `fnd:Versioned`"
 OBJECTS = ("#### `ex:forProfile`\n\n**Definition.** The profile.\n\n**Domain.** `ex:Decision`\n\n**Range.** `ex:Profile`\n\n"
            "**Characteristics.** functional\n\n#### `ex:relatesTo`\n\n**Definition.** Relates.")
 DATA = "#### `ex:code`\n\n**Definition.** A code.\n\n**Domain.** `ex:Decision`\n\n**Range.** `xsd:string`"
@@ -589,7 +589,7 @@ def test_od5_t1_the_axiom_index_summarises_every_term() -> None:
         "`ex:Profile`. Restrictions `ex:forProfile` exactly 1, `ex:hasQuestion` min 1 (OWL only), `ex:reliedOn` only "
         "`ex:Closure` (SHACL only), `ex:usesProfile` exactly 1 (SHACL only). |",
         "| `ex:Kind` | Class | Equivalent to `ex:A` or `ex:B`. |",
-        "| `ex:Profile` | Class | Subclass of `fnd:Version`. Disjoint with `ex:Decision`. |",
+        "| `ex:Profile` | Class | Subclass of `fnd:Versioned`. Disjoint with `ex:Decision`. |",
         "| `ex:forProfile` | Object property | Domain `ex:Decision`. Range `ex:Profile`. Functional. |",
         "| `ex:relatesTo` | Object property |  |",
         "| `ex:code` | Datatype property | Domain `ex:Decision`. Range `xsd:string`. |",
@@ -602,18 +602,18 @@ def test_od5_t2_the_class_diagram_draws_classes_subclassing_associations_and_lon
         "```mermaid", "classDiagram",
         "    class Decision {", "        code (xsd:string)", "        forProfile, exactly one",
         "        hasQuestion, at least one", "        reliedOn, only Closure", "        usesProfile, exactly one", "    }",
-        "    class Evidenced", "    class Kind", "    class Profile", "    class Thing", "    class Version",
+        "    class Evidenced", "    class Kind", "    class Profile", "    class Thing", "    class Versioned",
         "    Decision --> Profile : forProfile", "    Evidenced <|-- Decision", "    Thing <|-- Decision",
-        "    Version <|-- Profile",
+        "    Versioned <|-- Profile",
         '    class ObjectProperty_relatesTo["Object Property - relatesTo"]',
         "```",
     ])
 
 
 def test_od5_t3_two_classes_with_one_local_name_are_qualified_by_prefix() -> None:
-    clash = "#### `ex:Version`\n\n**Definition.** A version of ours.\n\n**Subclass of.** `fnd:Version`"
+    clash = "#### `ex:Versioned`\n\n**Definition.** A version of ours.\n\n**Subclass of.** `fnd:Versioned`"
     diagram = region(compile_readme(views_readme(clash)).readme, "class-diagram")
-    assert "fnd_Version <|-- ex_Version" in diagram
+    assert "fnd_Versioned <|-- ex_Versioned" in diagram
 
 
 def test_od5_t4_extraction_writes_the_regions_and_a_hand_edit_is_drift(tmp_path: Path, capsys) -> None:
@@ -739,8 +739,8 @@ def test_d59_t1_a_part_draws_its_classes_and_a_bare_box_for_what_they_point_to()
         assert bare in first.splitlines()
     assert "    Decision --> Profile : forProfile" in first and "Kind" not in first
     assert "ObjectProperty_relatesTo" not in first and "aboutProfile" not in first
-    assert "    class Profile" in second and "    Version <|-- Profile" in second and "    Profile --> Kind : linksKind" in second
-    assert "    class Version" in second.splitlines() and "Decision" not in second and "forProfile" not in second
+    assert "    class Profile" in second and "    Versioned <|-- Profile" in second and "    Profile --> Kind : linksKind" in second
+    assert "    class Versioned" in second.splitlines() and "Decision" not in second and "forProfile" not in second
 
 
 def test_d59_t2_a_property_with_no_domain_is_drawn_in_a_part_only_when_its_range_is_listed() -> None:

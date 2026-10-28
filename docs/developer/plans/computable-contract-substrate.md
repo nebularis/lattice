@@ -275,7 +275,7 @@ other document changes version.
 3. **Spec** (`spec/wording.ttl`, ontology IRI `https://www.nebularis.org/neuro-semantic/wording`,
    version IRI `…/lattice/wording/0.1.0`), from the sketch §4.1 and §4.2, with names from the
    sketch §3.2 mapping and definitions written fresh:
-   - `wrd:Wording` and `wrd:Element`, each `⊑ fnd:Version ⊓ fnd:Governable`, disjoint
+   - `wrd:Wording` and `wrd:Element`, each `⊑ fnd:Versioned ⊓ fnd:Governable`, disjoint
    - `wrd:directlyComprises` (irreflexive, asymmetric, domain `Wording ⊔ Element`, range `Element`)
      `⊑ wrd:comprises` (transitive, never asserted), with inverses
    - `wrd:rankKey` and `wrd:objectId` (functional data properties)
@@ -789,7 +789,7 @@ probe).
      `bhv:tookEffect`, `bhv:reasonNotTaken`), `bhv:DeterminationRecord` (`bhv:matter`,
      `bhv:determiner`, `bhv:determinedValue`), `bhv:DeemedFactRecord` (`bhv:deeming` with no
      range, `bhv:conditionSatisfied`, an `elg:Condition`), `bhv:AcceptanceRecord`
-     (`bhv:accepted`, a `fnd:Version`, `bhv:actor`)
+     (`bhv:accepted`, a `fnd:Versioned`, `bhv:actor`)
    - `bhv:fromStimulus` (any record to the `bhv:Stimulus` it came from) and `bhv:enteredBy` (an
      occupancy to the `bhv:TransitionExecution` that entered it)
    - every new property states subject and value in its comment
@@ -1068,7 +1068,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 2. **Spec** (`instrument` 0.8.0 → 0.9.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
    Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.4.0 and Behaviour
    configuration 0.11.0 (their versions after F1's cascade), never the runtime document.
-   - `ins:Instrument ⊑ fnd:Version`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
+   - `ins:Instrument ⊑ fnd:Versioned`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
    - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
      one element version), `ins:alsoExpressedIn`, `ins:boundIn` (bound term to one instrument
      version, terms only), `ins:boundFrom` (every bound node), `ins:impliedBy`
@@ -1102,7 +1102,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-04 | a relation under two terms, one under none, an obligation with two obligors, a continuing obligation without `ins:maintains`, an exclusion without `ins:excepts`, a permission excepting an obligation that is not a prohibition, a scope that is not a condition / shapes / each reported | L1 | − |
 | C6-05 | a node that is both an obligation and a power, both a continuing obligation and a prohibition / reasoner / inconsistent | L2 | − |
 | C6-06 | a permission whose holder is not the excepted prohibition's obligor, or whose activity differs, an exclusion of a power held by the power's holder / shapes / reported (I8) | L1 | − |
-| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Version`, a relation carrying `ins:boundIn` / shapes / each reported (I2) | L1 | − |
+| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Versioned`, a relation carrying `ins:boundIn` / shapes / each reported (I2) | L1 | − |
 | C6-08 | each named union / spec / named once, its members explicit subclasses | L1 | + |
 | C6-09 | every property / spec / comment states subject and value, no range names the runtime document or a higher layer | L1 | + |
 | C6-10 | the repository outside history documents / searched / no `ins:Element`, `ins:Provision`, `ins:fulfilledBy` or other retired term | L1 | + |
@@ -2418,7 +2418,7 @@ and a document it incorporates means, within it, what the incorporation says.
 
 **Setting the scene.**
 
-An instrument is versioned (`fnd:Version`). Each of its versions is expressed in exactly one assembled
+An instrument is versioned (`fnd:Versioned`). Each of its versions is expressed in exactly one assembled
 wording (law I1) and binds exactly the stated meaning of the element versions that wording includes
 (law I17). Its bound meaning is generated (C8). Nothing else about an instrument changes, because no
 term or relation is versioned (law I18).

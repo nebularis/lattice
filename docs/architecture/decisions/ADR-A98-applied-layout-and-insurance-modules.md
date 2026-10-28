@@ -11,7 +11,7 @@
 
 `ontology/applied/` holds two things. `capacity/` is designed as a cross-domain module that
 insurance, lending and other domains import, with no domain vocabulary and a promotion path into
-Behaviour ([architecture overview](../../../ontology/applied/capacity/docs/architecture-overview.md),
+Behaviour ([architecture overview](../capacity-domain-analysis-and-design.md),
 CP-9). `insurance/` holds one legacy contract module whose spec does not parse as Turtle, imports
 pre-LATTICE namespaces, and shares one `shapes/` directory and `.version` across everything in
 the domain. Nothing imports it.
@@ -53,7 +53,7 @@ importer.
    |---|---|---|
    | cross-domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/applied/<module>#` | per module |
    | `classification/` | as above | `cls:` |
-   | insurance `<module>` | `https://www.nebularis.org/neuro-semantic/insurance/<module>#` | per module |
+   | insurance `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#` | per module |
    | `insurance/common/` | as above | `icm:` |
    | `insurance/peril/` | as above | `prl:` |
    | `insurance/exposure/` | as above | `aeo:` |

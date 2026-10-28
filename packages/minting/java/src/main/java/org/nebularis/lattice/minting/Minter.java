@@ -121,6 +121,9 @@ public final class Minter {
             if (!(inputs.get("scope") instanceof String s)) {
                 throw new MintException(MintError.MissingKeyComponent, "the key's scope value is missing");
             }
+            if (s.isEmpty()) {
+                throw new MintException(MintError.EmptyScope, "the key's scope value is the empty string, which would encode as no scope");
+            }
             scope = List.of(s);
         }
         List<String> normalized = new ArrayList<>();
@@ -182,6 +185,12 @@ public final class Minter {
         return s;
     }
 
+    private static void noDotSegment(String value, String what) {
+        if (Canonical.isDotSegment(value)) {
+            throw new MintException(MintError.DotSegment, what + " '" + value + "' is a path dot segment that RFC 3986 normalization removes");
+        }
+    }
+
     private String uuid(Map<String, ?> inputs, List<Map<String, Object>> trace) {
         byte[] raw = inputs.get("randomHex") instanceof String h ? HexFormat.of().parseHex(h) : random.apply(16);
         String value = Canonical.uuid4From(raw);
@@ -206,6 +215,7 @@ public final class Minter {
                 KeyValues kv = key(map(r.get("key")), inputs, trace);
                 List<String> parts = new ArrayList<>();
                 for (String v : concat(kv.scope(), kv.normalized())) {
+                    noDotSegment(v, "key component");
                     parts.add(Canonical.percentEncode(v));
                 }
                 trace.add(entry("step", "percent-encode", "components", parts));
@@ -250,6 +260,11 @@ public final class Minter {
         if ("CallerSuppliedSurrogate".equals(sur.get("kind"))) {
             String pattern = (String) sur.get("pattern");
             value = match(pattern, inputs.get("surrogate"), "surrogate");
+            if (!Canonical.isUnreserved(value)) {
+                throw new MintException(MintError.UnsafeSurrogate,
+                        "surrogate '" + value + "' is empty or has a character outside RFC 3986's unreserved set");
+            }
+            noDotSegment(value, "surrogate");
             trace.add(entry("step", "validate-surrogate", "pattern", pattern, "value", value));
         } else {
             value = uuid(inputs, trace);
@@ -298,6 +313,7 @@ public final class Minter {
                 throw new MintException(MintError.PatternMismatch,
                         "namespace token " + inputs.get("namespaceToken") + " is not [A-Za-z0-9._~-]+");
             }
+            noDotSegment(token, "namespace token");
             namespace = token;
             trace.add(entry("step", "validate-token", "pattern", TOKEN_PATTERN, "value", namespace));
         }
@@ -316,6 +332,10 @@ public final class Minter {
             throw new MintException(MintError.PositionOutOfRange, name + " " + v + " is outside 0.." + MAX_POSITION);
         }
         String digits = Long.toString(((Number) v).longValue());
+        if (digits.length() > width) {
+            throw new MintException(MintError.PositionWidthOverflow,
+                    name + " " + digits + " needs " + digits.length() + " digits, more than its declared width " + width);
+        }
         return "0".repeat(Math.max(0, width - digits.length())) + digits;
     }
 

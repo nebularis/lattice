@@ -145,8 +145,13 @@ _NOT_EXISTS_NAMES_ITS_GRAPH = (
 )
 """The builders whose `NOT EXISTS` inside a `GRAPH` block gained a `GRAPH` of its own in H2.6g (TSD-34). Each is one version above where it was."""
 
+_WRITES_NO_STORE_VOCABULARY = ("cas-replace-value-guard", "payload-check", "unconditional-write")
+"""The builders whose text names no `pat:` term. Every other builder is one higher since the store vocabulary moved to the published
+`persistence-store` namespace (OR-6), which its text names in full."""
+
 BUILDER_VERSIONS: dict[str, int] = {
-    stem: {"append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2, "members": 2}.get(stem, 1) + (stem in _NOT_EXISTS_NAMES_ITS_GRAPH)
+    stem: {"append-event": 2, "append-version": 2, "cas-replace-named-graph": 2, "cas-replace-value-guard": 2, "members": 2}.get(stem, 1)
+    + (stem in _NOT_EXISTS_NAMES_ITS_GRAPH) + (stem not in _WRITES_NO_STORE_VOCABULARY)
     for stem in sorted(_STEM_KIND)
 }
 """The version of each builder, which any change to the text it renders must bump. A golden check
