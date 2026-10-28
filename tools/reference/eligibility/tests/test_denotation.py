@@ -461,3 +461,11 @@ class TestL18SetComparison:
         assert relied("Intersects", [], ["b"], True, False) == {"tested"}
         assert relied("Disjoint", ["a"], ["b"], True, True) == {"tested", "reference"}
         assert relied("Subset", ["a"], ["b"], True, False) == frozenset()
+
+    def test_a_value_the_scheme_cannot_place_matches_nothing(self) -> None:
+        # C9b3a-47: members b and c, c part of b. x is outside the scheme and linked to both.
+        scheme = Scheme.over({"b", "c"}, [("c", "b"), ("c", "x"), ("x", "b")])
+        kwargs = dict(comparison="Subset", hierarchical=True, scheme=scheme, tested_closed=True, reference_closed=True)
+        assert decide_set_comparison(["c"], {"x"}, **kwargs) is DENIED
+        assert decide_set_comparison(["x"], {"b"}, **kwargs) is DENIED
+        assert decide_set_comparison(["c"], {"b"}, **kwargs) is PERMITTED

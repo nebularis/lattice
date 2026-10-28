@@ -39,6 +39,11 @@ contract resolved to and the ADR-A87 decision for each of its members, the
   ``skos:broader`` when it names none (L9). A scheme contract whose bindings apply at no
   instant or in no scope compiles to a plan that answers Undetermined for every candidate
   (``exe:NoApplicableBinding``). Conflicting bindings are refused (ADR-A85).
+- A set comparison (``elg:SetComparison``, L18) compiles to a ``SetComparisonPlan`` holding its
+  comparison, match strategy, hierarchy relation and scheme, and the two bindings' evidence paths
+  with their closures. The comparison fixes the reading, so each path's closure is resolved as a
+  set reading would be (L17). Whatever ``elg:SetComparisonBindingsShape`` and the structural
+  shapes refuse is refused here with an ``IRCompileError``.
 - Profile aggregation (``elg:AllRequired``, ``elg:AnySufficient``) uses
   strong Kleene logic over the three outcomes (ADR-A89 item 5).
   Any other composition operation, for example one a downstream ontology
@@ -181,6 +186,46 @@ class ConceptPlan:
 
 
 CONCEPT_STRATEGIES = (ELG.ExactMatch, ELG.SetMembership, ELG.HierarchicalMatch)
+COMPARISONS = (ELG.Subset, ELG.Intersects, ELG.Disjoint)
+COMPARISON_STRATEGIES = (ELG.ExactMatch, ELG.HierarchicalMatch)
+
+
+@dataclass(frozen=True)
+class SetComparisonPlan:
+    """The executable IR for one ``elg:SetComparison`` (L18).
+
+    ``tested`` and ``reference`` are the two bindings' paths from one subject class. A tested
+    value is Permitted when it matches a reference value, equal under ``elg:ExactMatch`` and, under
+    ``elg:HierarchicalMatch``, a member of ``scheme`` at or below a reference value that is a member,
+    by ``relation``. It is Denied when it matches none and ``reference.closure`` is in force,
+    otherwise Undetermined. ``tested.closure`` licenses the reading of the outcomes. ``unresolved``
+    is set when the contract's bindings apply at no instant or in no scope, so ``scheme`` is ``None``
+    and every subject is Undetermined (L9, ``exe:NoApplicableBinding``)."""
+
+    condition: URIRef
+    comparison: URIRef
+    strategy: URIRef
+    tested: EvidencePath
+    reference: EvidencePath
+    source_nodes: Sequence[URIRef]
+    scheme: Optional[SchemeResolution] = None
+    relation: URIRef = SKOS.broader
+    unresolved: bool = False
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
+    negated: bool = False  # elg:negated (L16)
+
+    @property
+    def evidence(self) -> EvidencePath:
+        """The tested path, which fixes the plan's subject class as a bound condition's path does."""
+        return self.tested
+
+    @property
+    def hierarchical(self) -> bool:
+        return self.strategy == ELG.HierarchicalMatch
+
+    @property
+    def closures(self) -> Tuple[URIRef, ...]:
+        return tuple(c for c in (self.tested.closure, self.reference.closure) if c is not None)
 
 
 @dataclass(frozen=True)
@@ -195,7 +240,7 @@ class ProfilePlan:
 
     profile: URIRef
     aggregation: URIRef  # elg:AllRequired or elg:AnySufficient
-    conditions: Sequence[Union[IntervalPlan, ConceptPlan]]
+    conditions: Sequence[Union[IntervalPlan, ConceptPlan, "SetComparisonPlan"]]
 
     @property
     def subject_class(self) -> Optional[URIRef]:
@@ -243,7 +288,15 @@ def read_evidence(
         return None
     if len(bindings) > 1:
         raise IRCompileError(f"{condition} is bound by several elg:EvidenceBinding individuals: {bindings}")
-    binding = bindings[0]
+    return read_binding(graph, bindings[0], context)
+
+
+def read_binding(
+    graph: Graph, binding: URIRef, context: Optional["ResolutionContext"] = None, reading: Optional[URIRef] = None
+) -> EvidencePath:
+    """One ``elg:EvidenceBinding``'s path. ``reading`` overrides the binding's own, as a set
+    comparison fixes the reading of both its bindings (L18)."""
+    reading = reading if reading is not None else _reading(graph, binding)
     subject_class = graph.value(binding, ELG.subjectClass)
     if subject_class is None:
         raise IRCompileError(f"{binding} declares no elg:subjectClass")
@@ -263,8 +316,8 @@ def read_evidence(
         steps=tuple((prop, inverse) for _, prop, inverse in steps),
         space=graph.value(binding, ELG.readOnSpace),
         single_valued=graph.value(binding, ELG.singleValued) == Literal(True),
-        reading=_reading(graph, binding),
-        closure=_closure(graph, binding, _reading(graph, binding), context),
+        reading=reading,
+        closure=_closure(graph, binding, reading, context),
     )
 
 
@@ -321,11 +374,27 @@ def refuse_without_scheme(plan, backend: str) -> None:
         )
 
 
+def refuse_set_comparison(plan, backend: str, reason: str) -> None:
+    """Refuse a plan, or a profile holding a condition, that is a set comparison (ADR-A90)."""
+    for part in plan.conditions if isinstance(plan, ProfilePlan) else (plan,):
+        if isinstance(part, SetComparisonPlan):
+            raise IRCompileError(f"{part.condition} is a set comparison, which a {backend} cannot compile: {reason} (ADR-A90)")
+
+
+def closures_of(plan) -> Tuple[URIRef, ...]:
+    """The closures a condition plan may rely on: its path's, or both of a set comparison's."""
+    if isinstance(plan, SetComparisonPlan):
+        return plan.closures
+    return (plan.evidence.closure,) if plan.evidence is not None and plan.evidence.closure is not None else ()
+
+
 def has_readings(plan) -> bool:
     """Whether a plan, or any condition of a profile plan, reads several values
     or is negated (ADR-A103). The SWRL and OWL backends refuse such plans."""
     if isinstance(plan, ProfilePlan):
         return any(has_readings(condition) for condition in plan.conditions)
+    if isinstance(plan, SetComparisonPlan):
+        return True
     reading = plan.evidence.reading if plan.evidence is not None else ELG.SingleValue
     return plan.negated or reading != ELG.SingleValue
 
@@ -578,10 +647,94 @@ def compile_concept_condition(
     )
 
 
+def _single(graph: Graph, subject: URIRef, predicate: URIRef, what: str) -> URIRef:
+    found = sorted(graph.objects(subject, predicate), key=str)
+    if len(found) != 1:
+        raise IRCompileError(f"{subject} names {len(found)} {what}, and a set comparison names exactly one (L18)")
+    return found[0]
+
+
+def compile_set_comparison(
+    graph: Graph, condition: URIRef, context: Optional[ResolutionContext] = None
+) -> SetComparisonPlan:
+    """Compile one ``elg:SetComparison`` (L18). Refuses what its shapes refuse: not exactly one
+    comparison, tested binding or reference binding, the two bindings being one, a binding that
+    does not name the comparison or names another subject class, a binding that declares a value
+    reading or a value space, a binding of the comparison that is neither of its two, a match
+    strategy other than exact or hierarchical, and a required or excluded concept."""
+    if (condition, RDF.type, ELG.SetComparison) not in graph:
+        raise IRCompileError(f"{condition} is not an elg:SetComparison")
+    comparison = _single(graph, condition, ELG.comparison, "comparisons")
+    if comparison not in COMPARISONS:
+        raise IRCompileError(f"{condition} declares comparison {comparison}, which is none of {COMPARISONS}")
+    strategy = graph.value(condition, ELG.matchStrategy)
+    if strategy not in COMPARISON_STRATEGIES:
+        raise IRCompileError(
+            f"{condition} declares match strategy {strategy}; a set comparison matches by elg:ExactMatch "
+            f"or elg:HierarchicalMatch"
+        )
+    _refuse_wildcards(graph, condition)
+    if any(graph.objects(condition, ELG.requiredConcept)) or any(graph.objects(condition, ELG.excludedConcept)):
+        raise IRCompileError(f"{condition} names a required or excluded concept, and a set comparison's reference binding takes their place")
+    tested = _single(graph, condition, ELG.testedBinding, "tested bindings")
+    reference = _single(graph, condition, ELG.referenceBinding, "reference bindings")
+    if tested == reference:
+        raise IRCompileError(f"{condition}'s tested and reference bindings are one binding, {tested}")
+    bound = set(graph.subjects(ELG.bindsCondition, condition))
+    if bound != {tested, reference}:
+        raise IRCompileError(
+            f"{condition} is bound by {sorted(map(str, bound))}, and must be bound by exactly its tested and "
+            f"reference bindings (L18)"
+        )
+    for binding in (tested, reference):
+        if graph.value(binding, ELG.valueReading) is not None or graph.value(binding, ELG.readOnSpace) is not None:
+            raise IRCompileError(
+                f"{binding} declares a value reading or a value space, and a set comparison fixes the reading "
+                f"and compares IRIs only (L18)"
+            )
+    tested_path = read_binding(graph, tested, context, ELG.SomeValue)
+    reference_path = read_binding(graph, reference, context, ELG.SomeValue)
+    if tested_path.subject_class != reference_path.subject_class:
+        raise IRCompileError(f"{condition}'s two bindings name different subject classes, which must be one (L18)")
+
+    hierarchical = strategy == ELG.HierarchicalMatch
+    relation = hierarchy_relation(graph, condition) if hierarchical else SKOS.broader
+    scheme: Optional[SchemeResolution] = None
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
+    unresolved = False
+    if hierarchical:
+        scheme = _resolve_scheme(graph, condition, context)
+        unresolved = scheme is None
+        if scheme is not None:
+            ordering = _ordering(graph, scheme.scheme, relation)
+            _refuse_cycles(ordering, scheme.scheme, relation)
+            hierarchy = tuple((m, tuple(sorted(ordering[m], key=str))) for m in sorted(ordering, key=str))
+    resolution_nodes: Tuple[URIRef, ...] = ()
+    if scheme is not None:
+        resolution_nodes = (scheme.contract, scheme.scheme) + ((scheme.binding,) if scheme.binding else ())
+    elif unresolved:
+        resolution_nodes = (graph.value(condition, ELG.constrainedByContract),)
+    return SetComparisonPlan(
+        condition=condition,
+        comparison=comparison,
+        strategy=strategy,
+        tested=tested_path,
+        reference=reference_path,
+        source_nodes=tuple(dict.fromkeys((condition, tested, reference) + resolution_nodes)),
+        scheme=scheme,
+        relation=relation,
+        unresolved=unresolved,
+        hierarchy=hierarchy,
+        negated=_negated(graph, condition),
+    )
+
+
 def compile_any_condition(
     graph: Graph, condition: URIRef, context: Optional[ResolutionContext] = None
 ):
-    """An ``IntervalPlan`` or a ``ConceptPlan``, by the condition's match strategy."""
+    """An ``IntervalPlan``, a ``ConceptPlan`` or a ``SetComparisonPlan``, by the condition's class and match strategy."""
+    if (condition, RDF.type, ELG.SetComparison) in graph:
+        return compile_set_comparison(graph, condition, context)
     if graph.value(condition, ELG.matchStrategy) == ELG.IntervalContainment:
         return compile_condition(graph, condition)
     return compile_concept_condition(graph, condition, context)

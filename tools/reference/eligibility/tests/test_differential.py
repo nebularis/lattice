@@ -41,7 +41,7 @@ from mork_compilers.test_hierarchical_conditions import HEADER as HIER_HEADER
 from mork_compilers.test_hierarchical_conditions import graph as hier_graph
 from rdflib import RDF, Graph, URIRef
 
-from reference_eligibility.denotation import Scheme, decide_concept_match
+from reference_eligibility.denotation import Scheme, decide_concept_match, decide_set_comparison
 from reference_eligibility.kernel import DENIED, PERMITTED, UNDETERMINED
 
 DECISION_NAME = {PERMITTED: "Permitted", DENIED: "Denied", UNDETERMINED: "Undetermined"}
@@ -445,3 +445,87 @@ class TestHierarchyRelationSweep:
         rows = _relation_case(Graph().parse(_RELATION_EXAMPLE), HIER_EX["kind-of"], ("tumour",), ())
         assert rows["tumour-margin"]["reference"] == "Denied"
         assert rows["tumour-margin"]["sparql"] == "Permitted"
+
+
+class TestSetComparisonSweep:
+    """C9b3a-44: the reference's decide_set_comparison against SPARQL and SHACL for every comparison,
+    every closure combination, both match strategies and a negated condition, over five subjects."""
+
+    @staticmethod
+    def _scheme(data: Graph) -> Scheme:
+        """The reference's scheme, built from the graph's own part-of links and scheme members."""
+        from mork_compilers.test_set_comparisons import EX as CMP
+
+        members = frozenset(data.subjects(URIRef("http://www.w3.org/2004/02/skos/core#inScheme"), CMP.scheme))
+        return Scheme.over(members, [(s, o) for s, o in data.subject_objects(CMP["part-of"])])
+
+    def _case(self, comparison, tc, rc, hierarchical, negated):
+        from mork_compilers.eligibility_ir import compile_any_condition as compile_any
+        from mork_compilers.test_set_comparisons import EX as CMP
+        from mork_compilers.test_set_comparisons import SUBJECTS, fixture
+        from mork_compilers.test_set_readings import decisions, shacl
+        from mork_compilers.test_set_readings import sparql as run_sparql
+
+        data = fixture(comparison, tc, rc, negated=negated, hierarchical=hierarchical)
+        plan = compile_any(data, CMP.comparison)
+        scheme = self._scheme(data) if hierarchical else None
+        spark = decisions(run_sparql(plan, data))
+        validated = shacl(plan, data, [CMP[name] for name in SUBJECTS])
+        out = {}
+        for name, (tested, reference) in SUBJECTS.items():
+            decided = decide_set_comparison(
+                [CMP[v] for v in tested], {CMP[v] for v in reference}, comparison=comparison, hierarchical=hierarchical,
+                scheme=scheme, tested_closed=tc, reference_closed=rc, negated=negated,
+            )
+            out[name] = {"reference": DECISION_NAME[decided], "sparql": spark[name], "shacl": validated[name]}
+        return out
+
+    def test_reference_agrees_with_sparql_and_shacl_for_every_case(self) -> None:
+        cases = [
+            (comparison, tc, rc, hierarchical, negated)
+            for comparison in ("Subset", "Intersects", "Disjoint")
+            for tc in (False, True)
+            for rc in (False, True)
+            for hierarchical in (False, True)
+            for negated in (False, True)
+        ]
+        assert len(cases) == 48  # fixed, so a change is deliberate
+        for case in cases:
+            for name, decided in self._case(*case).items():
+                assert len(set(decided.values())) == 1, (case, name, decided)
+
+    def test_the_closure_column_is_the_closures_the_reference_relied_on(self) -> None:
+        from mork_compilers.eligibility_ir import compile_any_condition as compile_any
+        from mork_compilers.engines import run_query
+        from mork_compilers.test_set_comparisons import EX as CMP
+        from mork_compilers.test_set_comparisons import SUBJECTS, fixture, text_of
+
+        from reference_eligibility.denotation import decide_set_comparison_with_reliance
+
+        for comparison in ("Subset", "Intersects", "Disjoint"):
+            for tc in (False, True):
+                for rc in (False, True):
+                    data = fixture(comparison, tc, rc)
+                    rows = {str(r[0]).rsplit("/", 1)[1]: r.asdict() for r in run_query(data, text_of(compile_any(data, CMP.comparison)))}
+                    for name, (tested, reference) in SUBJECTS.items():
+                        _, relied = decide_set_comparison_with_reliance(
+                            [CMP[v] for v in tested], {CMP[v] for v in reference}, comparison=comparison,
+                            hierarchical=False, tested_closed=tc, reference_closed=rc,
+                        )
+                        named = {"tested": str(CMP["tested-closure"]), "reference": str(CMP["reference-closure"])}
+                        want = sorted(named[r] for r in relied)
+                        got = sorted(str(rows[name].get("closure", "")).split()) if rows[name].get("closure") else []
+                        assert got == want, (comparison, tc, rc, name, got, want)
+
+    def test_a_compiler_that_matches_exactly_under_hierarchical_match_is_caught(self, monkeypatch) -> None:
+        # C9b3a-45: the seeded fault, a hierarchical comparison compiled as an exact one
+        from mork_compilers import sparql_backend
+
+        real = sparql_backend._match
+        monkeypatch.setattr(
+            sparql_backend, "_match",
+            lambda plan: real(type("P", (), {"hierarchical": False, "reference": plan.reference})()),
+        )
+        rows = self._case("Subset", True, True, True, False)
+        assert rows["s-part"]["reference"] == "Permitted"
+        assert rows["s-part"]["sparql"] == "Denied"
