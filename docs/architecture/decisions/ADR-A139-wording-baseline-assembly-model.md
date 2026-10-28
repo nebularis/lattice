@@ -2,7 +2,7 @@
 
 # ADR-A139: Wording's baseline assembly model
 
-**Status:** Proposed
+**Status:** Accepted 2026-10-28
 **Date:** 2026-10-28
 **Related:** [ADR-A112](ADR-A112-wording-layer.md) (Wording), [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (an instrument version is expressed in one assembled wording), [ADR-A140](ADR-A140-wording-assembler-topology.md) (the assembler), [ADR-A138](ADR-A138-contract-builder.md) (the builder that drives it), [ADR-A92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) (derived artefacts and PROV), [ADR-A86](ADR-A86-ontology-semantic-versioning.md) (versioning)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0
@@ -56,4 +56,4 @@ flowchart LR
 
 ## Provenance
 
-**Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0, drafted 2026-10-28 from the assembly-interface sketch of the InsurML alignment, taking its domain-neutral parts. The builder's examples, a facility agreement and a software licence, are its cases.
+**Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0, drafted 2026-10-28 from the assembly-interface sketch of the InsurML alignment, taking its domain-neutral parts. The builder's examples, a facility agreement and a software licence, are its cases. The maintainer accepted it on 2026-10-28.

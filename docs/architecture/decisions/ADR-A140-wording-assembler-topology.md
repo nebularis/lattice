@@ -2,7 +2,7 @@
 
 # ADR-A140: Where the Wording assembler lives and how it runs
 
-**Status:** Proposed
+**Status:** Accepted 2026-10-28
 **Date:** 2026-10-28
 **Related:** [ADR-A139](ADR-A139-wording-baseline-assembly-model.md) (the model it implements), [ADR-A138](ADR-A138-contract-builder.md) (the builder that asks for it), [ADR-A136](ADR-A136-configuration-studio.md) (the studio's jobs and store writers), [ADR-A137](ADR-A137-document-markup-vocabulary.md) (the markup it renders), [ADR-A19](ADR-A19-staged-compiler-architecture-and-backend-fanout.md) (staged compilers), [ADR-A92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) (derived artefacts), [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (a reference toolchain in `tools/`), [ADR-A83](ADR-A83-test-only-reasoning-engine-isolation.md) (optional adapters), [ADR-A28](ADR-A28-parity-and-conformance-release-gate.md) (parity)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0
@@ -51,4 +51,4 @@ sequenceDiagram
 
 ## Provenance
 
-**Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0, drafted 2026-10-28 from §8 of the assembly-interface sketch of the InsurML alignment.
+**Unit:** [`config-studio`](../../developer/plans/config-studio.md), slice CB0, drafted 2026-10-28 from §8 of the assembly-interface sketch of the InsurML alignment. The maintainer accepted it on 2026-10-28.

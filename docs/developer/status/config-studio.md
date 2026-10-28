@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, and review the builder's ADRs, ADR-A138 to ADR-A140, Proposed, with BQ-1 and BQ-2.
+**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, and decide BQ-2 of ADR-A138, how a language-model proposer reaches a model. ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended.
 
 ## Decisions taken alone, for ratification
 

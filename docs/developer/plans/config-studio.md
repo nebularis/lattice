@@ -81,7 +81,7 @@ The builder brief's questions, answered 2026-10-28.
 | CB-Q4 | which rule languages CB5 imports | ODRL and Logical English, each behind a feature flag. The brief's "OBRL" was a typo for ODRL |
 | CB-Q5 | timing | a tag by the end of November 2026 carrying CB0 to CB2 and, from CB4, what each term reads. CB3's LLM proposer and the regime dry run follow if they slip |
 
-CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model, separated from the InsurML default the assembly-interface sketch records under IMA-D17, and the assembler's topology. Its examples are a facility agreement and a software licence. Drafted 2026-10-28 as ADR-A138 (the builder, with the proposer interface and review queue), ADR-A139 (Wording's baseline assembly model) and ADR-A140 (the assembler's topology), Proposed, with BQ-1 and BQ-2 open in ADR-A138. The brief's estimate of 6 to 8 hours for CB0 to CB4 is the low end, since the assembler is new substrate with strict laws.
+CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model, separated from the InsurML default the assembly-interface sketch records under IMA-D17, and the assembler's topology. Its examples are a facility agreement and a software licence. Drafted 2026-10-28 as ADR-A138 (the builder, with the proposer interface and review queue), ADR-A139 (Wording's baseline assembly model) and ADR-A140 (the assembler's topology), accepted 2026-10-28, with BQ-1 as recommended and BQ-2 reopened. The brief's estimate of 6 to 8 hours for CB0 to CB4 is the low end, since the assembler is new substrate with strict laws.
 
 ### Open questions
 

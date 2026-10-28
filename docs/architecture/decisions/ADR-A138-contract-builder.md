@@ -2,7 +2,7 @@
 
 # ADR-A138: The contract builder, a mode of the Configuration Studio
 
-**Status:** Proposed
+**Status:** Accepted 2026-10-28
 **Date:** 2026-10-28
 **Related:** [ADR-A136](ADR-A136-configuration-studio.md) (the studio the builder is a mode of), [ADR-A137](ADR-A137-document-markup-vocabulary.md) (documents as XML), [ADR-A139](ADR-A139-wording-baseline-assembly-model.md) (the assembly the builder drives), [ADR-A140](ADR-A140-wording-assembler-topology.md) (where assembly runs), [ADR-A104](ADR-A104-instrument-terms-and-legal-relations.md) (stated and bound meaning), [ADR-A112](ADR-A112-wording-layer.md) (Wording), [ADR-A42](ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) (review decisions), [ADR-A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) (the reference evaluator's scope)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md), slices CB0 to CB4 (CS11)
@@ -48,13 +48,13 @@ flowchart LR
 - A regime's dry run waits on a compiled path for triggers, which is compiler work outside this unit.
 - What a language-model proposer proposes depends on its pack and its model, and the review queue is the only way a proposal becomes meaning.
 
-## Questions for the maintainer
+## Questions
 
-| ID | Question | Recommendation |
+| ID | Question | Decided |
 |---|---|---|
-| BQ-1 | Stepping a regime in the dry run: compile triggers and regime transitions to SPARQL now, in `tools/mork_compilers`, or mark the regime dry run under construction | under construction for the November tag, and the compiler work as its own slice after it, since it is new compiler surface with its own laws |
-| BQ-2 | The language-model proposer's client: one adapter over an HTTP API configured by endpoint, model and key in the worker's environment, or none until a deployment writes one | one adapter, off by default, configured by environment, so the demonstration has a proposer and the repository holds no key |
+| BQ-1 | Stepping a regime in the dry run: compile triggers and regime transitions to SPARQL now, in `tools/mork_compilers`, or mark the regime dry run under construction | **decided 2026-10-28:** under construction for the November tag, and the compiler work as its own slice after it, since it is new compiler surface with its own laws |
+| BQ-2 | How a language-model proposer reaches a model, and what a deployment supplies to it | **open.** Reopened 2026-10-28 by the maintainer, who asks for a proposer worker that a deployment extends by what it supplies, over a standard contract, and whether a standard model API or the Model Context Protocol serves. Decision 5 holds whatever the answer, and the client is decided apart |
 
 ## Provenance
 
-**Unit:** [`config-studio`](../../developer/plans/config-studio.md) (plan, CS11 and the builder's questions CB-Q1 to CB-Q5), drafted 2026-10-28. The maintainer answered CB-Q1 to CB-Q5 on 2026-10-28, which decisions 1, 5, 7 and 8 record.
+**Unit:** [`config-studio`](../../developer/plans/config-studio.md) (plan, CS11 and the builder's questions CB-Q1 to CB-Q5), drafted 2026-10-28. The maintainer answered CB-Q1 to CB-Q5 on 2026-10-28, which decisions 1, 5, 7 and 8 record. The maintainer accepted it on 2026-10-28 with BQ-1 as recommended, and reopened BQ-2.

@@ -140,9 +140,9 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-135](ADR-A135-contract-first-wire-types.md) | Contract-first wire types | Proposed, 2026-10-26 |
 | [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Accepted 2026-10-28, amended 2026-10-28 |
 | [A-137](ADR-A137-document-markup-vocabulary.md) | A document markup vocabulary of LATTICE's own, in XML | Accepted 2026-10-28 |
-| [A-138](ADR-A138-contract-builder.md) | The contract builder, a mode of the Configuration Studio | Proposed |
-| [A-139](ADR-A139-wording-baseline-assembly-model.md) | Wording's baseline assembly model | Proposed |
-| [A-140](ADR-A140-wording-assembler-topology.md) | Where the Wording assembler lives and how it runs | Proposed |
+| [A-138](ADR-A138-contract-builder.md) | The contract builder, a mode of the Configuration Studio | Accepted 2026-10-28 |
+| [A-139](ADR-A139-wording-baseline-assembly-model.md) | Wording's baseline assembly model | Accepted 2026-10-28 |
+| [A-140](ADR-A140-wording-assembler-topology.md) | Where the Wording assembler lives and how it runs | Accepted 2026-10-28 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
