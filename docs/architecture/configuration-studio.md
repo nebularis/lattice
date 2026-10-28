@@ -46,7 +46,24 @@ flowchart LR
 
 ## Forms are read from the ontology
 
-The layers' specifications already say what a form needs. Each property has an `rdfs:domain`, an `rdfs:range` and an `rdfs:comment`, and each closed set of values is a class whose individuals are typed with it. The studio derives every field and option from the vocabulary it is served, and states only what an ontology cannot: how an editor groups classes into sections, and which properties pick a baseline term. When a layer adds a property or a value, the studio offers it without a change.
+The layers' specifications and shapes already say what a form needs. A class's SHACL shapes name its properties and constrain them, each property has an `rdfs:comment`, and each closed set of values is a class whose individuals are typed with it. The studio derives every field and option from the vocabulary and shapes it is served, and states only what an ontology cannot: how an editor groups classes into sections, and which properties pick a baseline term. When a layer adds a property, a constraint or a value, the studio offers it without a change.
+
+Shapes are read first, and `rdfs:domain` and `rdfs:range` only where no shape says anything. A node shape with `sh:targetClass C`, or a class that is itself a shape, places each property its `sh:property` shapes name by a plain IRI `sh:path` on C and on C's subclasses. Several shapes for one property merge conservatively, so the highest `sh:minCount` and the lowest `sh:maxCount` hold. A property no shape names is placed by its `rdfs:domain` as before, and a property a shape names without saying what it holds takes its control from its `rdfs:range`. For each class and property, a studio override beats the shape, and the shape beats the domain and range. The staging step adds only the node shapes and property shapes to the served vocabulary. SHACL-SPARQL constraints, messages and complex paths are not staged or read.
+
+| Shape constraint | Effect on the field |
+|---|---|
+| `sh:datatype xsd:integer`, `xsd:long`, `xsd:decimal` | number |
+| `sh:datatype xsd:boolean` | switch |
+| any other `sh:datatype` | text |
+| `sh:class` of a class with individuals in the vocabulary | a select, or chips when the property takes several values, each option with its comment |
+| `sh:class` of a class whose members the author creates, for example `dal:UniquenessConstraint` | a reference to a node of that type in the configuration, or a new one |
+| `sh:in` of IRIs | a select over the listed values |
+| `sh:nodeKind sh:IRI` | an IRI, unless the property's range gives a more specific control |
+| `sh:maxCount 1` | one value. A larger count means several, and no count leaves the ontology's own rule (`owl:FunctionalProperty`, and every `dal:` property) |
+| `sh:minCount` of 1 or more | marked required with an asterisk |
+| `sh:name`, `sh:description` | the label and comment, where the property has none |
+
+Without a shape, the range of the property picks the control.
 
 | Range of the property | Control |
 |---|---|
@@ -54,7 +71,7 @@ The layers' specifications already say what a form needs. Each property has an `
 | `xsd:integer`, `xsd:long`, `xsd:decimal` | number |
 | `xsd:boolean` | switch |
 | a class with individuals in the vocabulary | a select, or chips when the property is not functional, each option with its comment |
-| a class whose members the author creates, for example `dal:UniquenessConstraint` | a reference to a node of that type in the configuration, or a new one |
+| a class whose members the author creates | a reference to a node of that type in the configuration, or a new one |
 | a property listed as a baseline pick, for example `dal:targetClass` or `srf:carrier` | a picker over the baseline's classes or properties |
 
 The read path of a surface contract is the one control that is not generic. It starts at the carrier and offers, at each hop, the properties whose domain is the current class, and writes `srf:readProperty` for one hop and `srf:hasPathStep` for more, never both.

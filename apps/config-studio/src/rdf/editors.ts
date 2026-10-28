@@ -324,12 +324,15 @@ export interface ResolvedSection {
 export function sectionsFor(kind: Kind, vocab: Vocabulary): ResolvedSection[] {
   const placed = new Set<string>();
   const resolve = (section: Section): ResolvedSection => {
-    const ordered = [...(section.fields ?? []), ...(section.classes ?? []).flatMap((c) => vocab.propertiesOf(c))];
+    const ordered = [
+      ...(section.fields ?? []).map((p) => [p, kind.type] as const),
+      ...(section.classes ?? []).flatMap((c) => vocab.propertiesOf(c).map((p) => [p, c] as const)),
+    ];
     const fields: Field[] = [];
-    for (const p of ordered) {
+    for (const [p, c] of ordered) {
       if (placed.has(p) || PATH_PROPERTIES.has(p)) continue;
       placed.add(p);
-      fields.push(vocab.field(p));
+      fields.push(vocab.field(p, c));
     }
     return { title: section.title, special: section.special, fields };
   };

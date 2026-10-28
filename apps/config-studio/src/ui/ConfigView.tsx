@@ -217,6 +217,7 @@ function NodeEditor({ part, node, focusField }: { part: Part; node: string; focu
                     <div className="label">
                       <div className="name">
                         {f.label[0].toUpperCase() + f.label.slice(1)}
+                        {f.required && <abbr className="required" title="Required" aria-label="required" style={{ textDecoration: "none", marginLeft: 3 }}>*</abbr>}
                         {!f.single && <span className="chip" style={{ height: 18 }}>many</span>}
                       </div>
                       <div className="prop">{compact(f.property)}</div>

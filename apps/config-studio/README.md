@@ -28,7 +28,8 @@ The inspector shows the selected node's Turtle and the unsaved changes as a diff
 | Module | Holds |
 |---|---|
 | `src/rdf/graph.ts` | an immutable graph over an n3 store, its edits, and Turtle written in a fixed order |
-| `src/rdf/vocabulary.ts` | fields derived from `rdfs:domain` and `rdfs:range`, and the few properties whose range the ontology leaves open |
+| `src/rdf/vocabulary.ts` | fields derived from the layers' SHACL shapes first, then `rdfs:domain` and `rdfs:range`, and the few properties the ontology leaves open |
+| `src/rdf/shapes.ts` | the node shapes and property shapes that place and constrain a class's properties |
 | `src/rdf/editors.ts` | the node kinds, how an editor groups its sections, node creation, and the reference check |
 | `src/rdf/baseline.ts`, `split.ts`, `path.ts`, `report.ts` | the baseline's terms, sorting an import into the six graphs, the read path, and reading a job graph |
 | `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
