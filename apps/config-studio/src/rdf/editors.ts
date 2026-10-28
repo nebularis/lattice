@@ -421,7 +421,7 @@ export function checkReferences(graph: Graph, baseline: Baseline, vocab: Vocabul
     const field = vocab.field(q.predicate.value);
     const members = field.kind === "propertyList" ? ((graph.list(q.object) ?? []).filter((t) => t.termType === "NamedNode") as NamedNode[]) : [q.object as NamedNode];
     for (const m of members) {
-      if (known(m.value) || graph.has(m.value)) continue;
+      if (known(m.value) || graph.has(m.value) || mintedBy(world, q.subject.value, q.predicate.value, m.value)) continue;
       const name = compact(m.value, { ...graph.prefixes });
       if (field.kind === "class" || field.kind === "property" || field.kind === "propertyList") {
         issues.push({ severity: "Warning", message: `${name} is not declared in the baseline.`, focus: q.subject.value, path: q.predicate.value, source: "studio" });
@@ -431,6 +431,13 @@ export function checkReferences(graph: Graph, baseline: Baseline, vocab: Vocabul
     }
   }
   return issues;
+}
+
+/** A promotion onto a property in its contract's own target namespace mints that property when it compiles, so the
+ * baseline need not declare it. Outside that namespace the property is the consuming layer's, and must be. */
+function mintedBy(graph: Graph, contract: string, predicate: string, value: string): boolean {
+  const namespace = graph.value(contract, SRF("targetNamespace"));
+  return predicate === SRF("promotesTo") && namespace !== undefined && value.startsWith(namespace);
 }
 
 export function describe(vocab: Vocabulary, type: string): string {

@@ -3,7 +3,7 @@
 # Configuration Studio - Status
 
 **Unit ID:** `config-studio`
-**Status:** 🟡 CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, ADR-A136's second amendment (writers and the on-disk store) Proposed
+**Status:** 🟡 CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, and ADR-A136's second amendment (writers and the on-disk store) accepted the same day
 **Last updated:** 2026-10-28
 **Plan:** [config-studio.md](../plans/config-studio.md)
 **Sketch:** [config-studio.md](../sketches/config-studio.md)
@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** accept ADR-A136's second amendment, review CS13 to CS15 in the Validation Pack, and rule on CS-B23 to CS-B28. CS12c (the document schema) and CB0 (the builder's three ADRs) can start.
+**Next action, for the maintainer:** review CS13 to CS15 in the Validation Pack, and rule on CS-B23 to CS-B28. CS12c (the document schema) and CB0 (the builder's three ADRs) can start.
 
 ## Decisions taken alone, for ratification
 

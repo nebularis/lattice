@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Accepted 2026-10-28, with its addendum and amendment. A second amendment of 2026-10-28, on how the store is written and where it is kept, is Proposed
+**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -58,7 +58,7 @@ The studio keeps three more configurations, `vocabulary`, `quantification` and `
 
 The maintainer decided that the studio is to be supported, meaning developed and maintained with the ontologies and released with them once a release policy exists, and that this is an amendment to this record rather than a new one, since it is still Proposed. Decision 1 now says so, and the title no longer calls the studio a proof of concept. With it the `cst:` namespace drops `poc/` from its IRI, while no workspace is kept outside an in-memory store, so nothing needs migrating. Decision 3's HTTP server is Helidon SE's WebServer, since the JDK's `com.sun.net.httpserver` is a JDK module outside Java SE that another JVM need not ship. Decision 4 adds RDF/XML. Which software a release carries, and how it is versioned, is the release policy's own decision, beside ADR-A129. The other decisions stand.
 
-## Amendment, 2026-10-28: partitioned writers and an on-disk store (Proposed)
+## Amendment, 2026-10-28: partitioned writers and an on-disk store (Accepted 2026-10-28)
 
 The maintainer decided the design on 2026-10-28, after reopening how a job's status reaches the service (CS-D4). It changes decisions 4, 5 and 7, and the others stand.
 

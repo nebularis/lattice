@@ -141,11 +141,16 @@ describe("editing", () => {
       e.add(ns + "c", SRF("closureBasis"), iri("http://www.w3.org/2004/02/skos/core#broader"));
       e.add(ns + "c", DAL("onViolation"), iri(DAL("Reject")));
       e.add(ns + "v", FND("hasIdentity"), iri(ns + "an-identity-nobody-describes"));
+      e.add(ns + "promo", SRF("targetNamespace"), literal("https://example.org/exec#"));
+      e.add(ns + "promo", SRF("promotesTo"), iri("https://example.org/exec#minted"));
+      e.add(ns + "promo2", SRF("targetNamespace"), literal("https://example.org/exec#"));
+      e.add(ns + "promo2", SRF("promotesTo"), iri(ns + "AuthoredButMissing"));
     });
     const issues = checkReferences(g, baseline, vocab);
     expect(issues.map((i) => [i.severity, i.path])).toEqual([
       ["Warning", DAL("targetClass")],
       ["Warning", DAL("appliesTo")],
+      ["Warning", SRF("promotesTo")],
     ]);
   });
 });

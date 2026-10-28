@@ -237,6 +237,7 @@ to the store or where it is a matter of capacity.
 | [TSD-41](#tsd-41-a-group_concat-over-a-union-of-nested-aggregate-sub-selects-drops-one-groups-contribution-on-oxigraph) | `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects | not specified | keeps every contributing group's value | drops one group's value for one case found so far | Observed |
 | [TSD-42](#tsd-42-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
 | [TSD-43](#tsd-43-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
+| [TSD-44](#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput) | many small updates to one TDB2 dataset, one request each or batched | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
 
 ## 6. The findings
 
@@ -1479,6 +1480,29 @@ The read answered in 8 ms and 3 ms while the insert ran.
 **What it means for LATTICE.** A check that a graph round-tripped through rdflib is unchanged compares literals by value (Jena's `Node.sameValueAs`), as the studio's writer now does, never by term. An identity, a hash or a canonical form taken over such a literal must fix its lexical form first, or it differs between a graph written by Jena and the same graph after rdflib.
 
 **Reproduce it.** `Graph().parse(data='<urn:a> <urn:p> "2026-10-28T08:37:17Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .', format="turtle")`, then serialise it.
+
+### TSD-44. A small update on Fuseki TDB2 costs its commit, so batching updates is the lever for write throughput
+
+**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS (APFS), 2026-10-28, following TSD-42. Not read from Jena's source. Not measured on Linux or Windows, whose file systems sync differently.
+
+**Context.** TSD-42 showed that TDB2 applies one update at a time. Whether the cost of each is the work or the commit decides whether batching helps.
+
+**How we found it.** 200 updates shaped like a studio save, each dropping one graph and inserting 50 triples into it, sent four ways, twice, with the graphs dropped between runs.
+
+| Form | Run 1 | Run 2 | Per save |
+|---|---|---|---|
+| one request each, in sequence | 13.25 s | 13.75 s | 66 to 69 ms |
+| one request each, from 8 threads | 12.85 s | 12.72 s | 64 ms |
+| 10 requests of 20 operations | 0.80 s | 0.84 s | 4 ms |
+| 1 request of 200 operations | 0.18 s | 0.18 s | 0.9 ms |
+
+**What the store does.** Nearly all of a small update's cost is fixed per request, which Fuseki runs as one write transaction and TDB2 commits to disk, about 65 ms here. The operations inside a request cost under a millisecond each.
+
+**Why.** A Jena dataset's transactions are multiple readers and a single writer, which is why concurrent updates queue (TSD-42), and that is Jena's transaction model, not TDB2's alone, since Jena's in-memory dataset has it too. The fixed cost is TDB2's: a commit makes its journal durable before it answers. We infer this from the measurements, and did not read the source or measure the in-memory dataset.
+
+**What it means for LATTICE.** On TDB2, write throughput is about 15 transactions a second, however many writers send them. A writer that merges the updates waiting for it into one request multiplies that by the batch size, so batching, not more writers, is the lever. A batch shares one transaction, so it commits or fails as one.
+
+**Reproduce it.** The four forms above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
 
 ## 7. Corrections, and what they taught us
 
