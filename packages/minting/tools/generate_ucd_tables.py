@@ -8,6 +8,7 @@ and Python minters share their data byte for byte (ADR-A84 point 4,
 identity-minting-specification.md §3):
 
   assigned.txt        ranges of code points assigned in this version
+  format.txt          ranges with General_Category Cf (UnicodeData.txt)
   white_space.txt     ranges with the White_Space property (PropList.txt)
   nfkc_cf.txt         the NFKC_Casefold mapping (DerivedNormalizationProps.txt)
   upper.txt           full uppercase mappings that differ from the code point
@@ -104,6 +105,7 @@ def prop_set(data: bytes, prop: str) -> set[int]:
 
 def build(src: dict[str, bytes]) -> dict[str, str]:
     assigned: set[int] = set()
+    format_chars: set[int] = set()
     simple_upper: dict[int, int] = {}
     simple_lower: dict[int, int] = {}
     pending_first = None
@@ -117,6 +119,8 @@ def build(src: dict[str, bytes]) -> dict[str, str]:
             pending_first = None
             continue
         assigned.add(cp)
+        if f[2] == "Cf":
+            format_chars.add(cp)
         if f[12]:
             simple_upper[cp] = int(f[12], 16)
         if f[13]:
@@ -148,6 +152,7 @@ def build(src: dict[str, bytes]) -> dict[str, str]:
 
     tables = {
         "assigned.txt": to_ranges(assigned),
+        "format.txt": to_ranges(format_chars),
         "white_space.txt": to_ranges(prop_set(src["PropList.txt"], "White_Space")),
         "nfkc_cf.txt": nfkc_cf,
         "upper.txt": mapping(special_upper, simple_upper),
