@@ -40,6 +40,8 @@ release.
 
 ## The versioning unit
 
+This section and those after it govern the modules outside the release set, the applied modules and, since 0.19.0, MORK, SPC, Surface and Persistence. For a member of the substrate's release the section above replaces them, and a member document has no `.version` file.
+
 **One `owl:versionIRI` per `owl:Ontology` document.** `spec/<layer>.ttl` and
 `vocab/<layer>-vocab.ttl` are two independently versioned documents — a
 change to one never bumps the other. A layer's `shapes/` and `projection/`

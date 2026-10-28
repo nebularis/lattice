@@ -18,7 +18,7 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.7.0`) holds structure, text parts, references, document objects and variables
+This release (`0.19.0`) holds structure, text parts, references, document objects and variables
 (since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), textual
 amendments with the shapes for the layer's laws (since `0.3.0`), and references by identity, with
 editions and reliance for documents outside the wording (since `0.7.0`). Breaking changes are listed
