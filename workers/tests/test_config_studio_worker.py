@@ -415,3 +415,15 @@ def test_a_library_validates_each_form():
     g = store.graphs[iri]
     assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
     assert g.value(job, CST.conforms) == Literal(True), [str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Violation)]
+
+
+def test_a_library_validated_beside_its_assemblies_reports_nothing_of_theirs():
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.Library))
+    store.graphs[f"{iri}:input"] = _facility_form() + Graph().parse(data=ASSEMBLY.replace("{count}", "3"), format="turtle")
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(job, CST.conforms) == Literal(True), [str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Violation)]

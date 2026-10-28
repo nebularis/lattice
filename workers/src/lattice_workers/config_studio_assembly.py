@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional, Tuple
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import RDF, SH
+from rdflib.namespace import RDF, RDFS, SH
 
 from .config_studio_jobs import CST, _Result, catalogue
 
@@ -45,6 +45,8 @@ def validate_library(job: URIRef, library: Graph) -> Graph:
     assembler = _assembler()
     result = _Result(job)
     ok = True
+    # The input may carry the assemblies beside the library, whose value records belong to no assembled wording yet.
+    library = _library(library)
     for form in sorted((w for w in library.subjects(RDF.type, URIRef(WRD + "Wording")) if isinstance(w, URIRef)), key=str):
         if (form, RDF.type, URIRef(WRD + "AssembledWording")) in library:
             continue
@@ -94,7 +96,7 @@ def assemble_all(job: URIRef, config: Graph, submitted_at: str) -> Tuple[Graph, 
     for n, assembly in enumerate(assemblies, start=1):
         form = config.value(assembly, CST.assembles)
         if not isinstance(form, URIRef) or (form, RDF.type, URIRef(WRD + "Wording")) not in config:
-            result.finding(SH.Violation, f"{assembly}: names no form of the library with cst:assembles", "load", assembly)
+            result.finding(SH.Violation, f"{config.value(assembly, RDFS.label) or assembly}: names no form of the library with cst:assembles", "load", assembly)
             ok = False
             continue
         counts = {}
@@ -106,7 +108,7 @@ def assemble_all(job: URIRef, config: Graph, submitted_at: str) -> Tuple[Graph, 
         plan = assembler.plan(library, form)
         choices = [c for c in config.objects(assembly, CST.choice) if isinstance(c, URIRef)]
         outcome = assembler.assemble(plan, _settings(config, assembly), choices, at=at, mint=mint)
-        ok &= _copy_findings(result, outcome.findings, assembly) and outcome.ok
+        ok &= _copy_findings(result, outcome.findings, config.value(assembly, RDFS.label) or assembly) and outcome.ok
         if not outcome.ok or outcome.record is None:
             ok = False
             continue

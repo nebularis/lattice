@@ -183,7 +183,7 @@ function NewWorkspace({ onClose }: { onClose: () => void }) {
   return (
     <Modal
       title="New workspace"
-      subtitle="A workspace holds one baseline and the persistence and surface configuration authored against it."
+      subtitle="A workspace holds one baseline, the configuration authored against it, and the contract builder's library and assemblies."
       onClose={onClose}
       footer={
         <>

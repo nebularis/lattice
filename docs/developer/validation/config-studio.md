@@ -373,7 +373,9 @@ Not run: `studio:up` with the add-in's development server, the Docker stack's HT
 | CB1-13 | builder mode / the browser's unit tests and its Playwright test against the fake service / the outline ordered with slots, variants and modes, choices and settings written, an assembly run and its findings, document and record shown | L1, L3 | + | pass, 60 unit and 17 browser tests |
 | CB1-14 | every studio suite / `mise run check:config-studio` / pass | L1 | + | pass, with 52 studio Python tests |
 
-Not run: builder mode in a real browser against the live stack, so its layout is unchecked, and a form created from scratch, which builder mode does not offer yet.
+| CB1-15 | the native stack with a workspace from the builder sample / builder mode in the browser pane: the library outline, an element's editor, both assemblies, a new assembly with variant 5.2A, optional 5.3, one lender and France, then Assemble / the outline and editors as expected, two of three assembled, 9.1 left out where there is one lender, and the refusal named by its assembly's label | L5 | + − | pass after five fixes: the library's validation reported the assemblies' value records, a container showed "(no text)", the condition chip read "When when", the headline said Refused when some assembled, and the document card's title was squeezed. The studio's browser tests also shared port 4176 with the add-in's development server, and moved to 4177 |
+
+Not run: a form created from scratch, which builder mode does not offer yet. A mandatory section whose only clause is left out is assembled empty, as the form states, which is the form's design rather than the assembler's.
 
 ## Dependency upgrades, 2026-10-28
 

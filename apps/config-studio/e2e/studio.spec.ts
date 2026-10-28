@@ -277,7 +277,7 @@ test("the library is an outline of each form, and an element opens in the shape-
   await expect(tree.getByRole("treeitem", { name: /5\.2B .*Variation/ })).toBeVisible();
   await expect(tree.getByRole("treeitem", { name: /5\.1 .*Mandatory/ })).toBeVisible();
   await expect(tree.getByRole("treeitem", { name: /5\.3 .*Optional/ })).toBeVisible();
-  await expect(tree.getByRole("treeitem", { name: /9\.1 .*Conditional.*When when syndicated/ })).toBeVisible();
+  await expect(tree.getByRole("treeitem", { name: /9\.1 .*Conditional.*Condition: when syndicated/ })).toBeVisible();
   await expect(tree.getByRole("treeitem", { name: /lender-count.*Governing/ })).toBeVisible();
   await expect(tree.getByRole("treeitem", { name: /permitted-jurisdictions.*Embedded/ })).toBeVisible();
 
@@ -311,7 +311,7 @@ test("an assembly chooses options and sets values, and assembling shows the find
 
   await page.getByRole("button", { name: "Assemble" }).click();
   const outcome = page.getByRole("region", { name: "Assemble outcome" });
-  await expect(outcome.getByText("Refused")).toBeVisible();
+  await expect(outcome.getByText("1 of 2 assembled")).toBeVisible();
   const submitted = fake.submitted.find((s) => s.kind === "assemble")!;
   expect(submitted.target).toBe("assembly");
   // The edited assembly, unsaved, with the library and the conditions beside it.

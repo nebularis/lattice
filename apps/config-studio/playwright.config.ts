@@ -4,6 +4,6 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "../../.build/config-studio-test-results",
-  use: { baseURL: "http://127.0.0.1:4176", viewport: { width: 1600, height: 1000 } },
-  webServer: { command: "yarn vite --port 4176", port: 4176, reuseExistingServer: !process.env.CI },
+  use: { baseURL: "http://127.0.0.1:4177", viewport: { width: 1600, height: 1000 } },
+  webServer: { command: "yarn vite --port 4177 --strictPort", port: 4177, reuseExistingServer: !process.env.CI },
 });

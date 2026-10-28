@@ -139,7 +139,8 @@ function FormOutlineView({ form, selected }: { form: FormOutline; selected?: str
 
 function ElementRow({ node, depth, selected, open }: { node: OutlineNode; depth: number; selected?: string; open: (iri: string) => void }) {
   const studio = useStudio();
-  const shown = node.label ?? (node.text || "(no text)");
+  // An element with no label and no text of its own is a container: a variation slot, or a section of clauses.
+  const shown = node.label ?? (node.text || (node.slot ? "Variation slot" : node.children.length ? "Section" : "(no text)"));
   return (
     <>
       <div className="list-item outline-row" role="treeitem" aria-level={depth} aria-selected={node.iri === selected} onClick={() => open(node.iri)} style={{ paddingLeft: 14 + (depth - 1) * 18 }}>
@@ -154,13 +155,13 @@ function ElementRow({ node, depth, selected, open }: { node: OutlineNode; depth:
         {node.condition && (
           <button
             className="chip ok outline-condition"
-            title={`Included when ${node.condition.name}`}
+            title={`Included when its admission profile, ${node.condition.name}, admits it`}
             onClick={(e) => {
               e.stopPropagation();
               studio.open("eligibility", node.condition!.iri);
             }}
           >
-            When {node.condition.name}
+            Condition: {node.condition.name}
           </button>
         )}
       </div>
@@ -427,6 +428,7 @@ function Outcome({ run, stale }: { run: Run; stale: boolean }) {
     groups.set(a.group, entry);
   }
   const graph = studio.model.state.configs.assembly!.current;
+  const total = graph.ofType(CST("Assembly")).length;
   const link = (issue: Issue) => {
     const part = issue.focus ? studio.partOf(issue.focus) : undefined;
     if (part && issue.focus) studio.open(part, issue.focus);
@@ -435,7 +437,8 @@ function Outcome({ run, stale }: { run: Run; stale: boolean }) {
     <div className="editor" style={{ paddingTop: 0 }} aria-label="Assemble outcome" role="region">
       <div className="row" style={{ marginBottom: 10 }}>
         <h3 className="grow">Outcome</h3>
-        <Conforms ok={!!job.conforms} /> <strong>{job.conforms ? "Assembled" : "Refused"}</strong>
+        <Conforms ok={!!job.conforms} />{" "}
+        <strong>{job.conforms ? "Assembled" : groups.size ? `${groups.size} of ${total} assembled` : "Refused"}</strong>
         {stale && <span className="chip warn">Edited since</span>}
       </div>
       {job.issues.length > 0 && (
@@ -470,8 +473,8 @@ function AssembledCard({ name, files }: { name: string; files: { record?: string
   const doc = useMemo(() => (files.document ? readDocument(files.document) : undefined), [files.document]);
   return (
     <section className="card" style={{ marginBottom: 14, padding: 16 }} aria-label={`Assembled ${name}`}>
-      <div className="row" style={{ marginBottom: 10 }}>
-        <strong className="grow">{name}</strong>
+      <div className="row" style={{ marginBottom: 10, flexWrap: "wrap" }}>
+        <strong className="grow" style={{ minWidth: 200 }}>{name}</strong>
         {files.document && (
           <button className="btn sm" onClick={() => download("document.xml", files.document!, "application/xml")}>
             <Download size={13} /> document.xml

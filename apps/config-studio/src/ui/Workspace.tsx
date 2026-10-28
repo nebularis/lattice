@@ -367,7 +367,7 @@ function Problems({ open, toggle }: { open: boolean; toggle: () => void }) {
       </div>
       {open && (
         <ul>
-          {rows.length === 0 && <li className="issue muted">No problems in either configuration.</li>}
+          {rows.length === 0 && <li className="issue muted">No problems in any part of the workspace.</li>}
           {rows.map(({ part, issue }, i) => (
             <li key={i} className="issue" onClick={() => jump(part, issue)}>
               <span className="sev">
