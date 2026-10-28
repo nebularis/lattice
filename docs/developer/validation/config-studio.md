@@ -409,6 +409,21 @@ Not run: Retarget in the browser, covered by unit tests, and validation findings
 
 Not run: a language model behind a real provider's endpoint, which needs a deployment's pack and key, and the MCP server, the second stage of BQ-2.
 
+## CB4: the instrument view, regimes and the dry run
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CB4-01 | a dry-run job for meaning, and one for the library / `POST …/jobs` / `202` with `cst:DryRunJob`, `400` | L1 | + − | pass, `AssemblyTest` |
+| CB4-02 | clause 9.1's term, scoped by `more-than-one-lender`, with 3 lenders and with 1 / the worker's dry run / Permitted and Denied, by the condition's compiled SPARQL | L1 | + − | pass |
+| CB4-03 | no fact, and a fact for a condition the term does not read / a dry run / Undetermined with an information finding, and an information finding | L1 | − | pass |
+| CB4-04 | a regime built like the notice regime of Instrument's licence example / laid out / its states by kind, the initial state, each transition labelled by its trigger and relation, the gating under each state, an unreachable state after the rest | L1 | + | pass, 8 browser unit tests |
+| CB4-05 | the builder's editor on a stated term / its fields / no property of bound meaning | L1 | − | pass |
+| CB4-06 | the Instrument view against the fake service / the Playwright test / the term and its tiers, a regime diagram, a state edited, a dry run with and without a fact, the job deleted, nothing saved | L3 | + | pass, 20 browser tests |
+| CB4-07 | the native stack with the builder sample / the Instrument view in the browser pane, 9.1's dry run with 3 lenders and with 1 / what it reads (Agent, Lender, Provide service, at least two, more than one lender), Permitted then Denied by the real worker, the regime note, nothing saved | L5 | + − | pass after two fixes: the term's editor offered `ins:boundIn`, and the view's count in the navigation counted regimes rather than terms |
+| CB4-08 | every suite / `check:config-studio`, `test:config-studio`, `check:workers`, `check:knowledge` / pass | L1 | + | pass, 72 service, 3 writer, 9 authoring, 63 studio Python, 134 worker, 92 browser unit and 83 knowledge tests |
+
+Not run: a regime in the live stack, since the builder sample states none, the diagram being checked against the fake's regime and in unit tests, and stepping a regime, which waits on a compiled path (BQ-1).
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

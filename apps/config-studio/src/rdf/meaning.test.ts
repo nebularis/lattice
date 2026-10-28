@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CST, ELG, Graph, INS, QNT, XSD, literal } from "@lattice/authoring-domain";
 import { DECISIONS, activitiesOf, addRole, decide, isWaiting, lexiconOf, mergeProposals, proposalsOf, propose, readsOf, relationKinds, relationsOf, rolesOf, say, termsFor, termsOf } from "./meaning";
+import { kindOf, sectionsFor } from "./editors";
 import { split } from "./split";
 import { Vocabulary } from "./vocabulary";
 
@@ -233,5 +234,14 @@ describe("merging a propose job's proposals", () => {
     const twice = mergeProposals(once.review, incoming);
     expect(twice.added).toBe(0);
     expect(quadsOf(twice.review)).toEqual(quadsOf(once.review));
+  });
+});
+
+describe("the builder's editor for stated meaning", () => {
+  it("offers no property of bound meaning, which only instantiation writes", () => {
+    const kind = kindOf(parts.meaning, M + "term-9-1", "meaning")!;
+    const offered = sectionsFor(kind, vocab).flatMap((s) => s.fields.map((f) => f.property));
+    expect(offered).not.toContain(INS("boundIn"));
+    expect(offered).not.toContain(INS("boundFrom"));
   });
 });

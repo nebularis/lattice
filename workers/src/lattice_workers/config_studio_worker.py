@@ -112,6 +112,13 @@ class ConfigStudioWorker:
         from . import config_studio_assembly
 
         input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
+        if graph.value(job, CST.kind) == CST.DryRunJob:
+            from . import config_studio_dryrun
+            from .config_studio_jobs import _spec
+
+            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+            spec = _spec(str(Path(self._root).resolve()), "meaning")
+            return config_studio_dryrun.dry_run(job, input_("configuration") + baseline, spec, str(graph.value(job, CST.submittedAt)))
         if graph.value(job, CST.kind) == CST.Propose:
             import os
 

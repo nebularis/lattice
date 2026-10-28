@@ -73,6 +73,15 @@ class AssemblyTest {
     }
 
     @Test
+    void aDryRunJobIsQueuedForMeaningOnly() {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=meaning", LIBRARY);
+        assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));
+        String id = job.headers().get("Location").substring("/api/jobs/".length());
+        assertTrue(f.store.graph(Graphs.job(id)).contains(null, Cst.kind, Cst.DryRunJob));
+        assertEquals(400, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=library", LIBRARY).status());
+    }
+
+    @Test
     void aProposeJobNamesItsProposer() {
         ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=sentence-forms", LIBRARY);
         assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));

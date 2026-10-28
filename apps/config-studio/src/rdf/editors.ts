@@ -4,7 +4,7 @@
 // by rdfs:domain is not the one an author wants, as for the dimensions of a dal:DataAccessProfile.
 // Any other dal: or srf: node gets one section of its type's own properties.
 
-import { COMMENT, CST, DAL, ELG, FND, Graph, INS, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, WRD, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
+import { BHV, COMMENT, CST, DAL, ELG, FND, Graph, INS, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, WRD, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
 import type { Baseline } from "./baseline";
 import type { Issue } from "./report";
 import type { Field, Vocabulary } from "./vocabulary";
@@ -242,9 +242,11 @@ export const KINDS: Kind[] = [
   },
 ];
 
-/** Kinds the studio never lists: path steps belong to their contract's read path. */
-const MANAGED = new Set([SRF("PathStep")]);
+/** Kinds the studio never lists: path steps belong to their contract's read path, and a template is a marker beside the node's own kind. */
+const MANAGED = new Set([SRF("PathStep"), INS("Template")]);
 const PATH_PROPERTIES = new Set([SRF("readProperty"), SRF("hasPathStep")]);
+/** Bound meaning's properties. The builder writes stated meaning only, and binding is the instantiator's (ADR-A138 decision 2). */
+const BOUND_PROPERTIES = new Set([INS("boundIn"), INS("boundFrom"), INS("impliedBy")]);
 
 const KIND_BY_TYPE = new Map(KINDS.map((k) => [k.type, k]));
 
@@ -256,7 +258,8 @@ export function kindOf(graph: Graph, node: Term | string, part: Part): Kind | un
     const kind = KIND_BY_TYPE.get(t);
     if (kind) return kind;
   }
-  const own = types.find((t) => t.startsWith(OWN_NAMESPACE[part]) && !MANAGED.has(t));
+  // A regime state is Behaviour's, and stated meaning holds it beside the regime that owns it.
+  const own = types.find((t) => (t.startsWith(OWN_NAMESPACE[part]) || (part === "meaning" && t === BHV("State"))) && !MANAGED.has(t));
   return own ? { type: own, part, title: sentence(humanise(localName(own))), plural: sentence(humanise(localName(own))) + "s", creatable: false } : undefined;
 }
 
@@ -334,7 +337,7 @@ export function sectionsFor(kind: Kind, vocab: Vocabulary): ResolvedSection[] {
     ];
     const fields: Field[] = [];
     for (const [p, c] of ordered) {
-      if (placed.has(p) || PATH_PROPERTIES.has(p)) continue;
+      if (placed.has(p) || PATH_PROPERTIES.has(p) || BOUND_PROPERTIES.has(p)) continue;
       placed.add(p);
       fields.push(vocab.field(p, c));
     }

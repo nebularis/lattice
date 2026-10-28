@@ -48,6 +48,7 @@ public final class Cst {
     public static final Resource Analyse = r("Analyse");
     public static final Resource Assemble = r("Assemble");
     public static final Resource Propose = r("Propose");
+    public static final Resource DryRunJob = r("DryRunJob");
     public static final Resource SentenceFormProposer = r("SentenceFormProposer");
     public static final Resource LanguageModelProposer = r("LanguageModelProposer");
     public static final Resource Document = r("Document");

@@ -23,6 +23,7 @@ export const PREFIXES: Record<string, string> = {
   ins: "https://www.nebularis.org/neuro-semantic/lattice/instrument#",
   "ins-voc": "https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#",
   pty: "https://www.nebularis.org/neuro-semantic/lattice/party#",
+  bhv: "https://www.nebularis.org/neuro-semantic/lattice/behaviour#",
 };
 
 export const RDF = ns(PREFIXES.rdf);
@@ -42,6 +43,7 @@ export const WRD = ns(PREFIXES.wrd);
 export const INS = ns(PREFIXES.ins);
 export const INS_VOC = ns(PREFIXES["ins-voc"]);
 export const PTY = ns(PREFIXES.pty);
+export const BHV = ns(PREFIXES.bhv);
 
 export const TYPE = RDF("type");
 export const LABEL = RDFS("label");

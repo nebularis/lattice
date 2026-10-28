@@ -110,6 +110,19 @@ cst:evidence a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:P
     rdfs:comment "The words of the clause a proposer's candidate rests on." .
 cst:proposerVersion a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
     rdfs:comment "The proposer's version and, for a language model, its model and pack, as the provenance of the proposal." .
+cst:DryRun a owl:Class ;
+    rdfs:comment "A dry run's request: a stated term and sample facts, decided by its conditions' compiled SPARQL, never saved." .
+cst:term a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:DryRun ;
+    rdfs:comment "The stated term whose conditions the dry run decides." .
+cst:fact a owl:ObjectProperty ; rdfs:domain cst:DryRun ;
+    rdfs:comment "A sample fact for one condition." .
+cst:forCondition a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:comment "The condition a sample fact is for." .
+cst:number a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:decimal ;
+    rdfs:comment "A sample fact's number, for an interval condition." .
+cst:concept a owl:ObjectProperty ;
+    rdfs:comment "A sample fact's concept, for a concept condition." .
+cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts." .
 cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
 cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, with a pack the deployment supplies." .
@@ -188,7 +201,7 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
 cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .

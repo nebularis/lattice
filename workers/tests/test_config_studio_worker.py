@@ -572,3 +572,48 @@ def test_a_language_model_proposer_asks_its_endpoint_with_its_pack_and_keeps_onl
     ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
     assert (None, URIRef(ins + "holder"), URIRef("https://example.org/lattice/studio/roles/Borrower")) in payload
     assert not list(payload.objects(None, URIRef(ins + "activity")))
+
+
+# ---- dry run (CB4) -----------------------------------------------------------------------------------------------------
+
+F = "https://example.org/lattice/wording/facility-form/"
+
+
+def _dry_run(facts: str) -> tuple[Graph, URIRef]:
+    store = FakeStore()
+    iri = submit(store, "dry-run", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.Meaning))
+    store.graphs[iri].remove((job, CST.kind, None))
+    store.graphs[iri].add((job, CST.kind, CST.DryRunJob))
+    request = Graph().parse(data=f"""
+        @prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        <urn:x:run> a cst:DryRun ; cst:term <https://example.org/lattice/studio/meaning/term-9-1> {facts} .
+        """, format="turtle")
+    store.graphs[f"{iri}:input"] = _builder_sample() + request
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    return store.graphs[iri], job
+
+
+def _decisions(g: Graph, job: URIRef) -> dict:
+    return {str(g.value(r, CST.condition)).rsplit("/", 1)[-1]: str(g.value(r, CST.decision)).rsplit("#", 1)[-1] for r in g.objects(job, CST.testResult)}
+
+
+@pytest.mark.parametrize("count, decision", [("3", "Permitted"), ("1", "Denied")])
+def test_a_dry_run_decides_the_terms_condition_over_a_sample_number(count, decision):
+    g, job = _dry_run(f'; cst:fact [ cst:forCondition <{F}more-than-one-lender> ; cst:number "{count}"^^xsd:decimal ]')
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    assert _decisions(g, job) == {"more-than-one-lender": decision}
+
+
+def test_a_dry_run_without_a_fact_reads_undetermined_and_says_so():
+    g, job = _dry_run("")
+    assert _decisions(g, job) == {"more-than-one-lender": "Undetermined"}
+    assert any("No sample fact" in str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Info))
+
+
+def test_a_fact_for_a_condition_the_term_does_not_read_is_reported():
+    g, job = _dry_run(f'; cst:fact [ cst:forCondition <{F}elsewhere> ; cst:number "1"^^xsd:decimal ]')
+    assert any("does not read" in str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Info))

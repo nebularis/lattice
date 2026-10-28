@@ -24,19 +24,21 @@ import {
   Shapes,
   Sparkles,
   Undo2,
+  Workflow,
   X,
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
 import { assembliesOf, formsOf } from "../rdf/builder";
 import { termsOf } from "../rdf/meaning";
-import { compact, type Graph } from "@lattice/authoring-domain";
+import { INS, compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
 import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "../state";
 import { BaselineView } from "./BaselineView";
 import { BuildView } from "./BuildView";
 import { AssemblyView, LibraryView, useAssembler } from "./BuilderView";
+import { InstrumentView } from "./InstrumentView";
 import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
 import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
@@ -64,10 +66,10 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "instrument", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
 
 /** The views of builder mode (ADR-A138), which share the workspace's state, inspector and problems drawer with the rest. */
-const BUILDER_VIEWS: readonly string[] = ["library", "assembly", "meaning"];
+const BUILDER_VIEWS: readonly string[] = ["library", "assembly", "meaning", "instrument"];
 
 const PART_NAV: { part: Exclude<Part, "review">; label: string; icon: React.ReactNode }[] = [
   { part: "vocabulary", label: "Vocabulary", icon: <BookOpen size={16} /> },
@@ -88,7 +90,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const lastView = useRef({ configure: "overview", builder: "library" });
   lastView.current[builder ? "builder" : "configure"] = view;
   const node = route[1];
-  const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : "persistence";
+  const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : view === "instrument" ? "meaning" : "persistence";
   const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
@@ -214,6 +216,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               <NavLink to="library" view={view} id={id} icon={<Library size={16} />} label="Library" count={formsOf(model.world).length} issues={model.issues.library} dirty={dirty.library} />
               <NavLink to="assembly" view={view} id={id} icon={<Puzzle size={16} />} label="Assemblies" count={assembliesOf(state.configs.assembly!.current).length} issues={model.issues.assembly} dirty={dirty.assembly} />
               <NavLink to="meaning" view={view} id={id} icon={<Scale size={16} />} label="Meaning" count={termsOf(state.configs.meaning!.current).length} issues={model.issues.meaning} dirty={dirty.meaning || dirty.review} />
+              <NavLink to="instrument" view={view} id={id} icon={<Workflow size={16} />} label="Instrument" count={state.configs.meaning!.current.ofType(INS("Term")).length} />
             </>
           ) : (
             <>
@@ -235,6 +238,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "library" && <LibraryView selected={node} field={route[2]} />}
           {view === "assembly" && <AssemblyView selected={node} assembler={assembler} />}
           {view === "meaning" && <MeaningView selected={node} field={route[2]} />}
+          {view === "instrument" && <InstrumentView selected={node} field={route[2]} />}
           {editing && !builder && <ConfigView part={activePart} selected={node} field={route[2]} />}
           {view === "build" && <BuildView />}
         </main>

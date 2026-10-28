@@ -472,3 +472,51 @@ test("the propose control adds a proposer's proposals for review, and shows why 
   await bar.getByRole("button", { name: "Propose" }).click();
   await expect(bar.getByText("no language model is configured")).toBeVisible();
 });
+
+test("the instrument view shows terms in their tier and regimes as state machines, and dry-runs a term's conditions", async ({ page }) => {
+  const fake = new FakeService();
+  await builderWorkspace(page, fake);
+  await page.getByRole("button", { name: "Builder" }).click();
+  await page.getByRole("link", { name: /^Instrument/ }).click();
+  const tree = page.getByRole("tree", { name: "Instrument" });
+
+  // The stated tier holds 9.1's term with its relation, and the bound tier says why it is empty.
+  await expect(tree.getByRole("treeitem", { name: /9\.1 .*Agent must Provide service Lender/ })).toBeVisible();
+  await expect(tree.getByText("Bound meaning comes only from instantiating an assembled wording")).toBeVisible();
+
+  // The regime is drawn with its states, its initial state and a transition labelled by its trigger, and gates the obligation.
+  const regime = page.getByRole("region", { name: "Regime facility regime" });
+  await expect(regime.getByRole("button", { name: "State In force, initial" })).toBeVisible();
+  await expect(regime.getByRole("button", { name: "State Notice period" })).toBeVisible();
+  await expect(regime.getByRole("button", { name: "State Terminated" })).toBeVisible();
+  await expect(regime.getByRole("button", { name: "Transition: Breach of Agent must Provide service Lender" })).toBeVisible();
+  await expect(regime.getByRole("button", { name: "Transition: Expiry" })).toBeVisible();
+  await expect(regime.getByLabel("Gating in facility regime").getByRole("button", { name: "Agent must Provide service Lender" })).toBeVisible();
+
+  // A state opens in the shape-driven editor.
+  await regime.getByRole("button", { name: "State Notice period" }).click();
+  await expect(page.locator(".editor .iri")).toHaveText("https://example.org/lattice/studio/meaning/fr-notice");
+
+  // A term reads its condition, and a dry run decides it over the number given, then deletes the job.
+  await tree.getByRole("treeitem", { name: /9\.1 / }).click();
+  await expect(page.getByRole("region", { name: "What the term reads" }).getByText("more than one lender")).toBeVisible();
+  const dry = page.getByRole("region", { name: "Dry run" });
+  await expect(dry.getByRole("note")).toContainText("Stepping a regime over sample events is not available yet");
+  await dry.getByRole("button", { name: "Run" }).click();
+  const outcome = dry.getByRole("status", { name: "Dry run outcome" });
+  await expect(outcome.getByText("Undetermined")).toBeVisible();
+  await expect(outcome.getByText("No sample fact for more-than-one-lender")).toBeVisible();
+  await dry.getByLabel("Number for more than one lender").fill("3");
+  await dry.getByRole("button", { name: "Run" }).click();
+  await expect(outcome.getByText("Permitted")).toBeVisible();
+  const submitted = fake.submitted.filter((s) => s.kind === "dry-run");
+  expect(submitted.map((s) => s.target)).toEqual(["meaning", "meaning"]);
+  expect(submitted[1].body).toContain("cst:DryRun");
+  expect(submitted[1].body).toMatch(/cst:number\s+"3"\^\^xsd:decimal/);
+  expect(submitted[1].body).toContain("wrd:Wording");
+  const dryRuns = [...fake.jobs].filter(([, j]) => j.kind === "dry-run").map(([id]) => id);
+  expect(dryRuns).toHaveLength(2);
+  await expect.poll(() => dryRuns.every((id) => fake.deletedJobs.includes(id))).toBe(true);
+  // Nothing was saved into any part.
+  expect(fake.workspaces.get([...fake.workspaces.keys()][0])!.graphs.meaning).not.toContain("DryRun");
+});

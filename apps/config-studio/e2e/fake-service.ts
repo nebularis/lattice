@@ -48,6 +48,7 @@ function layerResults(job: string, target: string, body: string): string {
 }
 
 const A = "https://example.org/lattice/studio/assembly/";
+const E_BUILDER = "https://example.org/lattice/wording/facility-form/";
 const TARGETS: Record<string, string> = { "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
@@ -88,6 +89,37 @@ m:permit-operate a ins:Permission , ins:Template ; ins:arisesUnder m:term-12-1 ;
 `;
 }
 
+/** A small regime under clause 9.1's term, so the builder sample has one: in force, a notice period and terminated, with the
+ * obligation of 9.1 gated to the first state. */
+const REGIME = `
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ins-voc: <https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#> .
+@prefix bhv: <https://www.nebularis.org/neuro-semantic/lattice/behaviour#> .
+@prefix m: <https://example.org/lattice/studio/meaning/> .
+m:facility-regime a ins:Regime , bhv:StateSpace , ins:Template ; ins:arisesUnder m:term-9-1 ; bhv:initialState m:fr-in-force .
+m:fr-in-force a bhv:State ; bhv:inStateSpace m:facility-regime ; ins:stateKind ins-voc:InForce .
+m:fr-notice a bhv:State ; bhv:inStateSpace m:facility-regime ; ins:stateKind ins-voc:NoticePeriod .
+m:fr-terminated a bhv:State ; bhv:inStateSpace m:facility-regime ; ins:stateKind ins-voc:Terminated .
+m:fr-on-breach a ins:OnBreach , bhv:TriggerDefinition ; bhv:triggerKind bhv:DerivedTrigger ; ins:ofObligation m:act-for-lenders .
+m:fr-on-expiry a ins:OnExpiry , bhv:TriggerDefinition ; bhv:triggerKind bhv:ScheduledTrigger .
+m:fr-give a ins:RegimeTransition , bhv:TransitionDefinition ; bhv:fromState m:fr-in-force ; bhv:toState m:fr-notice ; bhv:hasTrigger m:fr-on-breach .
+m:fr-end a ins:RegimeTransition , bhv:TransitionDefinition ; bhv:fromState m:fr-notice ; bhv:toState m:fr-terminated ; bhv:hasTrigger m:fr-on-expiry .
+m:act-for-lenders ins:appliesInState m:fr-in-force .
+`;
+
+/** A dry-run job decides the interval condition from the one number it is given, Permitted above one lender, and reports as
+ * information a condition with no fact, which reads Undetermined, as the worker does. */
+function dryRunResults(job: string, body: string): string {
+  const quads = new Parser().parse(body);
+  const facts = quads.filter((q) => q.predicate.value === CST + "forCondition");
+  const condition = E_BUILDER + "more-than-one-lender";
+  const number = facts.map((f) => quads.find((q) => q.subject.value === f.subject.value && q.predicate.value === CST + "number")?.object.value).find((v) => v !== undefined);
+  const decision = number === undefined ? "Undetermined" : Number(number) > 1 ? "Permitted" : "Denied";
+  const node = `${job.slice(0, -1)}#t0>`;
+  const info = number === undefined ? `<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No sample fact for more-than-one-lender" ; cst:code "dry-run" ; sh:focusNode <${condition}> ] .\n` : "";
+  return `${job} cst:testResult ${node} . ${node} cst:condition <${condition}> ; cst:decision cst:${decision}${decision === "Undetermined" ? ' ; cst:diagnostic "no fact"' : ""} .\n${info}`;
+}
+
 function assembleResults(job: string, body: string): { turtle: string; conforms: boolean } {
   const quads = new Parser().parse(body);
   const assemblies = quads.filter((q) => q.predicate.value === RDF_TYPE && q.object.value === CST + "Assembly").map((q) => q.subject.value).sort();
@@ -126,6 +158,7 @@ export class FakeService {
   readonly workspaces = new Map<string, Workspace>();
   readonly jobs = new Map<string, { ws: string; kind: string; target: string; body: string; finished: boolean }>();
   readonly submitted: Submitted[] = [];
+  readonly deletedJobs: string[] = [];
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
   private next = 1;
 
@@ -154,13 +187,14 @@ export class FakeService {
   private jobGraph(id: string): string {
     const job = this.jobs.get(id)!;
     const iri = `<urn:lattice:studio:job:${id}>`;
-    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : "Compile";
+    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : job.kind === "dry-run" ? "DryRunJob" : "Compile";
     const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
     }
+    if (job.kind === "dry-run") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${dryRunResults(iri, job.body)}`;
     if (job.kind === "propose") {
       if (job.target === "language-model") return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "no language model is configured" .\n`;
       return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${proposeResults(iri)}`;
@@ -193,7 +227,7 @@ export class FakeService {
 
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
-    if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8"));
+    if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8") + (parts[1] === "builder" ? REGIME : ""));
     if (parts[0] === "workspaces" && parts.length === 1) {
       if (method === "POST") {
         const id = this.id();
@@ -236,7 +270,10 @@ export class FakeService {
     }
     if (parts[0] === "jobs") {
       if (!this.jobs.has(parts[1])) return route.fulfill({ status: 404, body: "not found" });
-      if (method === "DELETE") return route.fulfill({ status: 204 });
+      if (method === "DELETE") {
+        this.deletedJobs.push(parts[1]);
+        return route.fulfill({ status: 204 });
+      }
       return turtle(this.jobGraph(parts[1]));
     }
     return route.fulfill({ status: 404, body: "not found" });

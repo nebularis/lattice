@@ -495,9 +495,11 @@ public final class StudioApi {
         }
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
             && !("assemble".equals(kind) && "assembly".equals(target))
-            && !("propose".equals(kind) && PROPOSERS.containsKey(target))) {
+            && !("propose".equals(kind) && PROPOSERS.containsKey(target))
+            && !("dry-run".equals(kind) && "meaning".equals(target))) {
             return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
-                + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet() + ", or analyse, with target a document");
+                + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet()
+                + ", dry-run, with target meaning, or analyse, with target a document");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -566,6 +568,7 @@ public final class StudioApi {
             case "compile" -> Cst.Compile;
             case "assemble" -> Cst.Assemble;
             case "propose" -> Cst.Propose;
+            case "dry-run" -> Cst.DryRunJob;
             default -> Cst.Analyse;
         });
         if (target != null) {

@@ -39,7 +39,7 @@ const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
 const clauseName = (n: OutlineNode) => n.objectId ?? n.label ?? localName(n.iri);
 
 /** Everything the meaning view derives from the workspace, once per change. */
-function useMeaning() {
+export function useMeaning() {
   const studio = useStudio();
   const { model, world, vocab } = studio;
   const meaning = model.state.configs.meaning!.current;
@@ -53,7 +53,7 @@ function useMeaning() {
   const activities = useMemo(() => activitiesOf(world, vocab, lex), [world, vocab, lex]);
   return { studio, model, world, vocab, meaning, review, lex, clauses, proposals, kinds, roles, activities };
 }
-type M = ReturnType<typeof useMeaning>;
+export type M = ReturnType<typeof useMeaning>;
 
 // ---- Proposers ---------------------------------------------------------------------------
 
@@ -277,7 +277,7 @@ function ClausePane({ node, m }: { node: OutlineNode; m: M }) {
 
 // ---- What a term reads --------------------------------------------------------------------------
 
-function ReadsCard({ term, m }: { term: string; m: M }) {
+export function ReadsCard({ term, m }: { term: string; m: M }) {
   const reads = useMemo(() => readsOf(m.world, m.vocab, m.lex, term), [m.world, m.vocab, m.lex, term]);
   const rows: [string, { iri: string; label: string }[]][] = [
     ["Roles", reads.roles],
