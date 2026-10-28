@@ -78,7 +78,7 @@ class StudioHttpServerTest {
         assertEquals("\"1\"", baseline.headers().firstValue("ETag").orElseThrow());
         HttpResponse<String> saved = client.send(HttpRequest.newBuilder(URI.create(base + location + "/graphs/surface"))
             .header("Content-Type", "text/turtle").header("If-Match", "\"0\"")
-            .PUT(HttpRequest.BodyPublishers.ofString("<https://example.org/a> <https://example.org/p> 1 .")).build(), HttpResponse.BodyHandlers.ofString());
+            .PUT(HttpRequest.BodyPublishers.ofString("<https://example.org/a> <https://www.nebularis.org/neuro-semantic/lattice/surface#p> 1 .")).build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(204, saved.statusCode());
         assertEquals("\"1\"", saved.headers().firstValue("ETag").orElseThrow());
     }
@@ -110,19 +110,26 @@ class StudioHttpServerTest {
     }
 
     @Test
+    void headStatesTheLengthAndSendsNoBody() throws Exception {
+        String response = raw("HEAD", "/");
+        assertTrue(response.contains("Content-Length: 16"), response);
+        assertFalse(response.contains("spa"), response);
+    }
+
+    @Test
     void pathTraversalNeverEscapesTheStaticDirectory() throws Exception {
         for (String target : new String[] {"/../secret.txt", "/%2e%2e/secret.txt", "/..%2fsecret.txt", "/%2e%2e%2fsecret.txt",
             "/static/../../secret.txt", "/..\\secret.txt"}) {
-            String response = raw(target);
+            String response = raw("GET", target);
             assertFalse(response.contains("TOP-SECRET"), target);
         }
         assertFalse(get("/../secret.txt").body().contains("TOP-SECRET"));
     }
 
     /** Sends the request line as written, which an HTTP client would normalise. */
-    private String raw(String target) throws IOException {
+    private String raw(String method, String target) throws IOException {
         try (Socket socket = new Socket("127.0.0.1", server.port())) {
-            socket.getOutputStream().write(("GET " + target + " HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
+            socket.getOutputStream().write((method + " " + target + " HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
                 .getBytes(StandardCharsets.UTF_8));
             return new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         }

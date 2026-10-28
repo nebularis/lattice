@@ -40,7 +40,7 @@ Recorded 2026-10-27 at the maintainer's request, toward making the studio a supp
 
 | Slice | Delivers | Waits on |
 |---|---|---|
-| CS8 | the service on Helidon SE WebServer, replacing the JDK's HTTP server. The service also checks that a configuration graph holds only its own part's terms, which today only the browser checks (`split.ts`), as STD-279 requires | nothing |
+| CS8 | **done 2026-10-28.** The service on Helidon SE WebServer 4.5.6, replacing the JDK's HTTP server. Helidon 27 is compiled for Java 27 and the platform is on 25, so 4.5 until the platform moves. The service also checks that a configuration graph holds only its own part's terms, which today only the browser checks (`split.ts`), as STD-279 requires | nothing |
 | CS9 | the studio supported: ADR-A136 amended from a proof of concept to a supported component (CS-Q2), register entries (capability, mechanisms, patterns, the standards it follows), a published architecture and design document drawn from the sketch and the READMEs, an operations guide configuring every part, runbooks, and a review of every handler of both services against STD-279 | CS8, so the operations guide describes the server once |
 | CS10 | RDF/XML on the HTTP API by content negotiation, beside Turtle, for what a document means | nothing, CS-Q3 answered |
 | CS11 | the contract builder, CB0 to CB4 of the builder brief, including the studio's wording mode | the builder's own questions, CS9 and CS12c |

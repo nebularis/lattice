@@ -4,7 +4,7 @@
 
 The HTTP service of the Configuration Studio, a proof of concept ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)). It keeps workspaces and jobs as named graphs in a Jena dataset, serves them as Turtle, and publishes each job's IRI to RabbitMQ for the [worker](../../workers/README.md#configuration-studio-jobs-adr-a136). It never interprets `dal:` or `srf:`. Nothing outside the studio may depend on it. The routes, graphs and messages are in [contracts/config-studio/README.md](../../contracts/config-studio/README.md).
 
-The HTTP server is the JDK's `com.sun.net.httpserver` on virtual threads. The only dependencies are Jena (`jena-arq`, `jena-rdfconnection`) and the RabbitMQ client.
+The HTTP server is Helidon SE's WebServer 4.5, which runs each request on a virtual thread with its own NIO and no Netty. Helidon 27 needs Java 27, so the service moves to it when the platform does. The other dependencies are Jena (`jena-arq`, `jena-rdfconnection`) and the RabbitMQ client. The service validates everything it receives, as STD-279 requires, even where the browser has already: the body's size, type and syntax, every identifier in a path, the revision a save expects, and that a saved graph holds only its own part's subjects (`Parts`).
 
 ## Packages
 
@@ -14,8 +14,8 @@ All under `org.nebularis.lattice.studio`.
 |---|---|
 | `store` | `StudioStore` over Jena's `RDFConnection`, in memory or on Fuseki, the graph IRIs and the `cst:` terms |
 | `jobs` | `JobBus`, `RabbitJobBus`, the recording bus for tests and `Topology`, the declared exchange and queues |
-| `api` | `StudioApi`, every rule of the contract with no HTTP framework, and the Turtle reader and writer |
-| `http` | `StudioHttpServer`, which adapts the JDK server to `StudioApi`, serves the built SPA and adds the security headers |
+| `api` | `StudioApi`, every rule of the contract with no HTTP framework, `Parts`, which decides which part a subject belongs to, and the Turtle reader and writer |
+| `http` | `StudioHttpServer`, which adapts Helidon to `StudioApi`, serves the built SPA and adds the security headers |
 | `app` | `StudioConfig` and `StudioMain` |
 
 ## Environment
@@ -39,7 +39,7 @@ mise exec -- mvn -q -f platform/pom.xml -pl config-studio-service -am verify
 mise exec -- java -jar platform/config-studio-service/target/config-studio-service.jar --self-check
 ```
 
-The first stages the vocabulary and samples. The second builds and runs the 29 tests, in memory with no containers. The third serves one request in memory and exits 0. `mise run check:config-studio` runs these with the rest of the studio's tests.
+The first stages the vocabulary and samples. The second builds and runs the 34 tests, in memory with no containers. The third serves one request in memory and exits 0. `mise run check:config-studio` runs these with the rest of the studio's tests.
 
 ## Run it
 

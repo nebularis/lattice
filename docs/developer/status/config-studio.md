@@ -60,6 +60,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, later: CS8. The service on Helidon SE WebServer 4.5.6, since 27 needs Java 27, and a saved graph refused with `422` when it holds another part's subjects (STD-279). Verified with the unit tests, the shaded jar's self-check and the live stack.
 - 2026-10-28: the maintainer answered CS-Q2 (an amendment to ADR-A136 in CS9) and CS-Q5 (the document vocabulary's own ADR, both schema languages, and delegated the choice of source, which we made: RELAX NG compact as source, XSD generated). `amqp-client` raised to 5.37.0 in `authoring-service` and `platform-outbox`, and RabbitMQ images from 3.13 to 4.4 in the POC's and the platform's compose files and the POC's integration tests. `check:java` and `check:authoring-service-it` pass. CS8 is next.
 - 2026-10-27, latest: the maintainer decided CS-Q1 (Helidon), CS-Q3 and CS-Q4 (one deployable in steps, the document is XML and its meaning RDF, a shared domain package, one `studio:up`), and gave PRI-75 and STD-279. CS12 planned in steps CS12a to CS12e. CS8 is next.
 - 2026-10-27, later still: CS7, start and stop scripts for every platform, verified on macOS. Roadmap CS8 to CS13 added to the plan at the maintainer's request.

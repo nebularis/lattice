@@ -161,6 +161,21 @@ mise run test:config-studio
 
 Not run: Windows and Linux, and `--docker`, since Docker was not running. The Windows path is authored from the platform's documented behaviour.
 
+## CS8: Helidon and the service's own membership check
+
+`StudioHttpServerTest` and `StudioApiTest`, 34 cases in all, in `check:config-studio`, and the stack by hand.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS8-01 | the service on Helidon 4.5.6 / every HTTP test of CS2 and CS4 / passes unchanged: security headers, the Turtle round trip, no cross-origin response, static files and the SPA fallback, path traversal | L2 | +/− | pass |
+| CS8-02 | a HEAD request / sent raw / the file's `Content-Length` and no body. Found by hand: Helidon sends a HEAD response's body unless told otherwise | L2 | + | pass |
+| CS8-03 | a surface graph holding a baseline subject, a surface graph holding a `dal:` profile, a baseline holding a SKOS scheme / `PUT` / `422` naming the subject and its part, the stored graph and its revision unchanged | L1 | − | pass |
+| CS8-04 | an eligibility question naming a quantification range set, a SKOS `inScheme`, a plain triple, nested and orphan blank nodes / `Parts.owners` / the parts `split.ts` gives: eligibility, quantification, vocabulary, baseline, the referrer's part, baseline | L1 | + | pass |
+| CS8-05 | the shaded jar / `--self-check` / passes, its `META-INF/helidon/manifest` listing all 15 registry files of the Helidon jars | L3 | + | pass. A first build kept one jar's manifest only, fixed with an appending transformer |
+| CS8-06 | `studio:up` / `test:stack`, and a 6 MB body with and without a `Content-Length`, and `OPTIONS` / both browser tests pass, `413`, `413`, `405` | L5 | +/− | pass, macOS |
+
+Probe P5: with `Parts.strangers` replaced by an empty list, CS8-03 failed (`aGraphHoldingAnotherPartsTermsIs422AndLeavesTheGraphUnchanged`). Restored, 34 pass.
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).

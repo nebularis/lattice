@@ -239,6 +239,10 @@ public final class StudioApi {
         if (graph == null) {
             return ApiResponse.text(400, "the body is not valid Turtle");
         }
+        List<String> strangers = Parts.strangers(graph, name, 5);
+        if (!strangers.isEmpty()) {
+            return ApiResponse.text(422, "the graph holds terms of another part: " + String.join(", ", strangers));
+        }
         synchronized (lock(id)) {
             Workspace ws = load(id);
             if (ws == null) {

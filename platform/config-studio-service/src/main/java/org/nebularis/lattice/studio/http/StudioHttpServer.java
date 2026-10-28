@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.studio.http;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
+import io.helidon.webserver.WebServer;
+import io.helidon.webserver.http.ServerRequest;
+import io.helidon.webserver.http.ServerResponse;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import org.nebularis.lattice.studio.api.ApiRequest;
 import org.nebularis.lattice.studio.api.ApiResponse;
 import org.nebularis.lattice.studio.api.StudioApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Adapts the JDK's {@link HttpServer} to {@link StudioApi}, and serves the built SPA from one directory. */
+/**
+ * Adapts Helidon SE's {@link WebServer} to {@link StudioApi}, and serves the built SPA from one directory. Helidon runs
+ * each request on a virtual thread, so a handler may block on the store.
+ */
 public final class StudioHttpServer implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(StudioHttpServer.class);
     private static final String CSP =
@@ -28,7 +29,7 @@ public final class StudioHttpServer implements AutoCloseable {
         "css", "text/css; charset=utf-8", "svg", "image/svg+xml", "woff2", "font/woff2",
         "json", "application/json; charset=utf-8", "ico", "image/x-icon");
 
-    private final HttpServer server;
+    private final WebServer server;
     private final StudioApi api;
     private final Path staticRoot;
 
@@ -36,9 +37,7 @@ public final class StudioHttpServer implements AutoCloseable {
     public StudioHttpServer(StudioApi api, String bind, int port, Path staticDir) throws IOException {
         this.api = api;
         this.staticRoot = staticDir == null ? null : realPath(staticDir);
-        this.server = HttpServer.create(new InetSocketAddress(bind, port), 0);
-        this.server.createContext("/", this::handle);
-        this.server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        this.server = WebServer.builder().host(bind).port(port).routing(r -> r.any(this::handle)).build();
     }
 
     private static Path realPath(Path dir) throws IOException {
@@ -50,56 +49,49 @@ public final class StudioHttpServer implements AutoCloseable {
     }
 
     public int port() {
-        return server.getAddress().getPort();
+        return server.port();
     }
 
     @Override
     public void close() {
-        server.stop(0);
-        ((java.util.concurrent.ExecutorService) server.getExecutor()).shutdown();
+        server.stop();
     }
 
-    private void handle(HttpExchange exchange) throws IOException {
-        try (exchange) {
-            String path = exchange.getRequestURI().getRawPath();
+    private void handle(ServerRequest req, ServerResponse res) {
+        String method = req.prologue().method().text();
+        try {
+            String path = req.path().rawPath();
             ApiResponse response;
             if (path.equals("/api") || path.startsWith("/api/")) {
-                response = api(exchange, path);
+                response = api(req, method, path);
             } else {
-                response = staticFile(exchange.getRequestMethod(), exchange.getRequestURI().getPath());
+                response = staticFile(method, req.path().path());
             }
-            send(exchange, response);
-        } catch (RuntimeException e) {
+            send(res, method, response);
+        } catch (IOException | RuntimeException e) {
             LOG.error("request failed", e);
-            try {
-                exchange.sendResponseHeaders(500, -1);
-            } catch (IOException | RuntimeException ignored) {
-                // The response had already started.
+            if (!res.isSent()) {
+                res.status(500).send();
             }
         }
     }
 
-    private ApiResponse api(HttpExchange exchange, String path) throws IOException {
-        String method = exchange.getRequestMethod();
+    private ApiResponse api(ServerRequest req, String method, String path) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        req.headers().forEach(h -> headers.putIfAbsent(h.name().toLowerCase(Locale.ROOT), h.value()));
         byte[] body = new byte[0];
-        if (method.equals("POST") || method.equals("PUT")) {
-            String declared = exchange.getRequestHeaders().getFirst("Content-Length");
+        if ((method.equals("POST") || method.equals("PUT")) && req.content().hasEntity()) {
+            String declared = headers.get("content-length");
             if (declared != null && parseLength(declared) > StudioApi.MAX_BODY_BYTES) {
                 return StudioApi.tooLarge();
             }
             // One byte past the limit is enough to know the body is too large, and nothing more is read.
-            body = exchange.getRequestBody().readNBytes(StudioApi.MAX_BODY_BYTES + 1);
+            body = req.content().inputStream().readNBytes(StudioApi.MAX_BODY_BYTES + 1);
             if (body.length > StudioApi.MAX_BODY_BYTES) {
                 return StudioApi.tooLarge();
             }
         }
-        Map<String, String> headers = new HashMap<>();
-        exchange.getRequestHeaders().forEach((k, v) -> {
-            if (!v.isEmpty()) {
-                headers.put(k.toLowerCase(Locale.ROOT), v.get(0));
-            }
-        });
-        return api.handle(new ApiRequest(method, path, exchange.getRequestURI().getRawQuery(), headers, body));
+        return api.handle(new ApiRequest(method, path, req.query().rawValue(), headers, body));
     }
 
     private static long parseLength(String s) {
@@ -146,24 +138,22 @@ public final class StudioHttpServer implements AutoCloseable {
         }
     }
 
-    private void send(HttpExchange exchange, ApiResponse r) throws IOException {
-        var out = exchange.getResponseHeaders();
-        r.headers().forEach(out::set);
-        out.set("X-Content-Type-Options", "nosniff");
-        out.set("Referrer-Policy", "no-referrer");
-        String type = r.headers().getOrDefault("Content-Type", "");
-        if (type.startsWith("text/html")) {
-            out.set("Content-Security-Policy", CSP);
+    private static void send(ServerResponse res, String method, ApiResponse r) {
+        res.status(r.status());
+        r.headers().forEach(res::header);
+        res.header("X-Content-Type-Options", "nosniff");
+        res.header("Referrer-Policy", "no-referrer");
+        if (r.headers().getOrDefault("Content-Type", "").startsWith("text/html")) {
+            res.header("Content-Security-Policy", CSP);
         }
-        boolean head = exchange.getRequestMethod().equals("HEAD");
-        boolean noBody = r.body().length == 0 || r.status() == 204 || r.status() == 304;
-        if (noBody || head) {
-            exchange.sendResponseHeaders(r.status(), -1);
-            return;
-        }
-        exchange.sendResponseHeaders(r.status(), r.body().length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(r.body());
+        if (r.body().length == 0 || r.status() == 204 || r.status() == 304) {
+            res.send();
+        } else if (method.equals("HEAD")) {
+            // Helidon would send a HEAD response's body, so the length is stated and nothing sent.
+            res.contentLength(r.body().length);
+            res.send();
+        } else {
+            res.send(r.body());
         }
     }
 }
