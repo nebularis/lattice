@@ -410,8 +410,9 @@ export function classScopeFor(graph: Graph, classIri: string, namespace: string)
 
 /** References a SHACL run cannot see: a term a baseline picker names that the baseline does not
  * declare, and a reference to a node declared nowhere. Terms of a well-known or LATTICE namespace are
- * the vocabulary's, never the baseline's. An undeclared reference is a warning, since the
- * repository's own examples name identity nodes they do not describe. */
+ * the vocabulary's, never the baseline's. An undeclared reference is a warning, and a persistent
+ * identity is never one, since an identity is a name that nothing need describe, as in the
+ * repository's own examples. */
 export function checkReferences(graph: Graph, baseline: Baseline, vocab: Vocabulary, world: Graph = graph): Issue[] {
   const issues: Issue[] = [];
   const known = (t: string) => baseline.declares(t) || vocab.graph.has(t) || world.has(t) || Object.values(PREFIXES).some((base) => t.startsWith(base));
@@ -424,7 +425,7 @@ export function checkReferences(graph: Graph, baseline: Baseline, vocab: Vocabul
       const name = compact(m.value, { ...graph.prefixes });
       if (field.kind === "class" || field.kind === "property" || field.kind === "propertyList") {
         issues.push({ severity: "Warning", message: `${name} is not declared in the baseline.`, focus: q.subject.value, path: q.predicate.value, source: "studio" });
-      } else if (field.kind === "reference") {
+      } else if (field.kind === "reference" && field.range !== FND("PersistentIdentity")) {
         issues.push({ severity: "Warning", message: `Refers to ${name}, which is declared nowhere.`, focus: q.subject.value, path: q.predicate.value, source: "studio" });
       }
     }

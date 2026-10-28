@@ -9,7 +9,7 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 | File | Holds |
 |---|---|
 | `studio-vocabulary.ttl` | workspaces, samples, jobs, job status, artefacts and gaps |
-| `amqp-topology.json` | the exchange, the job queue and the dead-letter queue, declared identically by the service and the worker |
+| `amqp-topology.json` | the exchange, the job queue, the dead-letter queue, and the writes exchange with its partition queues, declared identically by the service and the worker |
 | `samples/samples.ttl` | the samples, each a list of repository files |
 | `samples/lending-baseline.ttl` | a baseline for the lending sample, which the persistence example it pairs with does not declare |
 | `samples/facility-baseline.ttl` | the facility agreement sample's baseline, which extends `lending-baseline.ttl` with a facility, lenders and drawdowns, the boundary shape of the facility and the carrier data |
@@ -19,13 +19,13 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 
 | Graph IRI | Written by | Holds |
 |---|---|---|
-| `urn:lattice:studio:ws:{ws}` | service | the `cst:Workspace` node, whose IRI is the graph's: `rdfs:label`, `cst:createdAt`, `cst:modifiedAt`, `cst:baselineGraph`, and `cst:{name}Revision` for each graph name below. A revision the description lacks reads as 0 |
-| `urn:lattice:studio:ws:{ws}:baseline:{n}` | service, once | baseline revision n, from 1 |
-| `urn:lattice:studio:ws:{ws}:{name}` | service | the saved configuration `{name}`: `vocabulary` (`voc:` and `skos:`), `quantification` (`qnt:`), `eligibility` (`elg:`), `persistence` (`dal:`) or `surface` (`srf:`) |
-| `urn:lattice:studio:job:{job}` | service, then worker | the `cst:Job` node, whose IRI is the graph's |
-| `urn:lattice:studio:job:{job}:input` | service, once | the configuration as submitted |
+| `urn:lattice:studio:ws:{ws}` | writer | the `cst:Workspace` node, whose IRI is the graph's: `rdfs:label`, `cst:createdAt`, `cst:modifiedAt`, `cst:baselineGraph`, `cst:fromSample` when it was made from a sample, and `cst:{name}Revision` for each graph name below. A revision the description lacks reads as 0 |
+| `urn:lattice:studio:ws:{ws}:baseline:{n}` | writer, once | baseline revision n, from 1 |
+| `urn:lattice:studio:ws:{ws}:{name}` | writer | the saved configuration `{name}`: `vocabulary` (`voc:` and `skos:`), `quantification` (`qnt:`), `eligibility` (`elg:`), `persistence` (`dal:`) or `surface` (`srf:`) |
+| `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job` node, whose IRI is the graph's |
+| `urn:lattice:studio:job:{job}:input` | writer, once | the configuration as submitted |
 
-`{ws}` and `{job}` are lower-case UUIDs.
+`{ws}` and `{job}` are lower-case UUIDs. Only the writers write these graphs (see Writes). The service and the worker read them from the store.
 
 ## HTTP
 
@@ -38,9 +38,11 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |
 | `GET /api/samples/{id}` | | `200`, the sample's files merged into one graph |
 | `GET /api/workspaces` | | `200`, every workspace's description |
-| `POST /api/workspaces` | the baseline. `Slug` header, percent-encoded UTF-8, is the label | `201`, `Location: /api/workspaces/{ws}`, the description |
+| `POST /api/workspaces[?sample={id}]` | the baseline. `Slug` header, percent-encoded UTF-8, is the label. `sample` names the staged sample it was made from, which the description records | `201`, `Location: /api/workspaces/{ws}`, the description. `400` for a sample that is not staged, `422` for a baseline holding a subject of another part, by the rule of `PUT` below |
+| `POST /api/workspaces` with `Content-Type: application/trig` | a file `GET …/export` wrote, here or elsewhere. `Slug`, when given, replaces its label | `201`, as above, a new workspace with the export's graphs and revisions. `422` for TriG that is not one workspace's export, or a graph holding another part's subject |
 | `GET /api/workspaces/{ws}` | | `200`, the description |
-| `DELETE /api/workspaces/{ws}` | | `204`. Drops the description, every baseline revision and both configurations |
+| `DELETE /api/workspaces/{ws}` | | `204`. Drops the description, every baseline revision, the configurations and the workspace's jobs |
+| `GET /api/workspaces/{ws}/export` | | `200`, `application/trig`, `Content-Disposition: attachment`, every graph of the workspace but its jobs |
 | `GET /api/workspaces/{ws}/graphs/{name}` | `name` is `baseline` or a configuration's name | `200`, the graph, `ETag: "{revision}"` |
 | `PUT /api/workspaces/{ws}/graphs/{name}` | the new graph. `If-Match: "{revision}"` is required | `204`, `ETag` of the new revision. `428` without `If-Match`, `412` when it is not the current revision, `422` when a subject belongs to another part by the rule the browser's import uses (a named subject belongs to the first of persistence, surface, eligibility, quantification and vocabulary whose namespace its type or predicates use, a SKOS concept or scheme to vocabulary, anything else to the baseline, and a blank node to the subject that refers to it). A baseline is written as a new revision graph |
 | `POST /api/workspaces/{ws}/jobs?kind={validate,compile}&target={name}` | the configuration to check, which need not be saved, and the other configurations beside it as context | `202`, `Location: /api/jobs/{job}`, the job graph. `400` for another kind or target. Every configuration validates. `eligibility`, `persistence` and `surface` compile |
@@ -48,11 +50,13 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | `GET /api/jobs/{job}` | | `200`, the job graph |
 | `DELETE /api/jobs/{job}` | | `204`. Drops the job graph and its input graph |
 
+A write that no store writer answers within 10 seconds is `503`, and is dropped rather than applied later.
+
 Every response carries `X-Content-Type-Options: nosniff`, and every `/api` response `Cache-Control: no-store`, except the vocabulary, which is revalidated by its `ETag`. No response carries `Access-Control-Allow-Origin`.
 
 ## Jobs
 
-The service writes the job graph and publishes the job's IRI. The message body is that IRI in UTF-8, `content_type` `text/plain`, persistent, routed with `lattice.studio.jobs` on exchange `lattice.studio`. The worker refuses, without requeuing, a body that is not `urn:lattice:studio:job:` followed by a lower-case UUID, and the broker dead-letters it.
+The service has the job graph written (see Writes) and publishes the job's IRI. The message body is that IRI in UTF-8, `content_type` `text/plain`, persistent, routed with `lattice.studio.jobs` on exchange `lattice.studio`. The worker refuses, without requeuing, a body that is not `urn:lattice:studio:job:` followed by a lower-case UUID, and the broker dead-letters it.
 
 As written by the service:
 
@@ -67,7 +71,7 @@ As written by the service:
     cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .
 ```
 
-The worker replaces the whole job graph twice, keeping every triple above but `cst:status`. When it starts, it sets `cst:status cst:Running` and adds `cst:startedAt`. When it ends, it sets `cst:Succeeded` or `cst:Failed` and adds `cst:finishedAt`, and then:
+The worker replaces the whole job graph twice, each time as a `job-update` to the job's workspace's writer, keeping every triple above but `cst:status`. When it starts, it sets `cst:status cst:Running` and adds `cst:startedAt`. When it ends, it sets `cst:Succeeded` or `cst:Failed` and adds `cst:finishedAt`, and then:
 
 - for `cst:Failed`, `cst:failureMessage`, saying why the job could not run, for example a missing input graph. A configuration that does not validate or compile is not a failure.
 - for `cst:Succeeded`, `cst:conforms`, and `cst:report` naming an `sh:ValidationReport` in the same graph. Its `sh:result`s are pySHACL's for a validation. For a compilation they are the compiler's refusal, an `sh:Violation`, and its warnings, each `sh:Warning`, each with `cst:code` the compiler's name for it, `sh:resultMessage`, and `sh:focusNode` where the compiler names a node.
@@ -81,3 +85,24 @@ The worker replaces the whole job graph twice, keeping every triple above but `c
 The configuration a job checks is its input graph. The worker reads a missing baseline graph as empty, since the store keeps no empty graph, and fails a job whose input graph is missing.
 
 Running a job twice gives the same graph but for its times, so a redelivered message is harmless.
+
+## Writes
+
+Every write to the store is a command to the writer of its workspace (ADR-A136, amendment on partitioned writers). A command is published to exchange `lattice.studio.writes`, of type `x-consistent-hash` (RabbitMQ's `rabbitmq_consistent_hash_exchange` plugin), with the workspace's id as its routing key. The exchange routes it to one of the 8 queues `lattice.studio.writes.0` to `.7`, each bound with weight `1`, durable, dead-lettering to `lattice.studio.dlx`, and with a single active consumer, so one writer applies a workspace's commands in order. The number of partitions is fixed here, since changing it moves workspaces between queues.
+
+A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent.
+
+| `command` | Other headers | Body | Sent by |
+|---|---|---|---|
+| `create` | `workspace`, `label`, `at`, `sample` when made from one | the baseline, in the default graph | service |
+| `save` | `workspace`, `part`, `expect` (the revision `If-Match` named, a number), `at` | the graph, in the default graph | service |
+| `import` | `workspace` (the new id), `label`, `at` | every graph of the export, already named under the new id | service |
+| `delete-workspace` | `workspace` | none | service |
+| `submit-job` | `workspace`, `job` | the job graph and its input graph, named | service |
+| `job-update` | `workspace`, `job` | the job graph, named | worker, or the service when the job could not be published |
+| `delete-job` | `workspace`, `job` | none | service, and its sweep of jobs finished longer ago than the retention |
+
+`workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service sets `reply_to` to `amq.rabbitmq.reply-to`, a `correlation_id`, and an `expiration` of its 10-second wait, and the writer answers with headers alone: `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
+
+The writer checks every command, whatever its sender checked: the ids, that a command carries only the graphs its kind may, part membership by the rule of `PUT`, that a job names its workspace, its own input, the workspace's baseline and `cst:Queued`, and that a `job-update` changes nothing on the job node but `cst:status`, `cst:startedAt`, `cst:finishedAt`, `cst:failureMessage`, `cst:conforms`, `cst:report`, `cst:artefact`, `cst:gap`, `cst:resolution`, `cst:expansion` and `cst:testResult`, compared by value. A `job-update` for a deleted job is dropped. A refused command is dead-lettered.
+

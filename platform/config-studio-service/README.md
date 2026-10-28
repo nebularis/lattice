@@ -12,9 +12,10 @@ All under `org.nebularis.lattice.studio`.
 
 | Package | Holds |
 |---|---|
-| `store` | `StudioStore` over Jena's `RDFConnection`, in memory or on Fuseki, the graph IRIs and the `cst:` terms |
+| `store` | `StudioStore` over Jena's `RDFConnection`, in memory or on Fuseki, the graph IRIs and the `cst:` terms. The API only reads through it |
+| `writes` | every write to the store: `Command`, `Codec` (AMQP headers and N-Quads), `Writer`, which checks and applies a command, `DirectWrites` in process, `RabbitWrites`, which publishes to the consistent-hash exchange and waits on direct reply-to, `WriterPool`, the writers over the partition queues, and `Sweeper`, which deletes finished jobs past the retention |
 | `jobs` | `JobBus`, `RabbitJobBus`, the recording bus for tests and `Topology`, the declared exchange and queues |
-| `api` | `StudioApi`, every rule of the contract with no HTTP framework, `Parts`, which decides which part a subject belongs to, and the Turtle reader and writer |
+| `api` | `StudioApi`, every rule of the contract with no HTTP framework, `Parts`, which decides which part a subject belongs to, `ImportedWorkspace`, which renames an export under a new id, and the RDF readers and writers |
 | `http` | `StudioHttpServer`, which adapts Helidon to `StudioApi`, serves the built SPA and adds the security headers |
 | `app` | `StudioConfig` and `StudioMain` |
 
@@ -29,7 +30,9 @@ All under `org.nebularis.lattice.studio`.
 | `LATTICE_FUSEKI_URL` | none | Fuseki base URL. Absent means an in-memory dataset |
 | `LATTICE_FUSEKI_DATASET` | `studio` | dataset name |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | none | basic authentication |
-| `LATTICE_AMQP_URI` | none | RabbitMQ URI. Absent means jobs are recorded, never delivered, and stay `cst:Queued` |
+| `LATTICE_AMQP_URI` | none | RabbitMQ URI. Absent means jobs are recorded, never delivered, and stay `cst:Queued`, and writes go to one in-process writer |
+| `LATTICE_STUDIO_WRITERS` | `1` | store writers this instance runs over the 8 partitions, 1 to 8, or 0 for none |
+| `LATTICE_STUDIO_JOB_RETENTION_DAYS` | `30` | days a finished job is kept before the hourly sweep deletes it |
 
 ## Build and test
 
@@ -39,13 +42,13 @@ mise exec -- mvn -q -f platform/pom.xml -pl config-studio-service -am verify
 mise exec -- java -jar platform/config-studio-service/target/config-studio-service.jar --self-check
 ```
 
-The first stages the vocabulary and samples. The second builds and runs the 40 tests, in memory with no containers. The third serves one request in memory and exits 0. `mise run check:config-studio` runs these with the rest of the studio's tests.
+The first stages the vocabulary and samples. The second builds and runs the 50 tests, in memory with no containers. The third serves one request in memory and exits 0. `mise run check:config-studio` runs these with the rest of the studio's tests.
 
 ## Run it
 
-`mise run studio:up` starts the whole stack in the background on every platform, and `mise run studio:down` stops it. `up` downloads Fuseki and RabbitMQ once into `.build/config-studio/infra`, refusing either unless its SHA-256 is the one `tools/config_studio_stack.py` pins, then builds and starts the service and the worker and serves the studio on <http://127.0.0.1:8090>. `mise run studio:up -- --docker` runs Fuseki and RabbitMQ with the compose file instead, and `-- --dev` adds the browser code with hot reload on <http://127.0.0.1:4175>. `mise run studio:status` shows what is running. Logs and process ids are in `.build/config-studio/run`.
+`mise run studio:up` starts the whole stack in the background on every platform, and `mise run studio:down` stops it. `up` downloads Fuseki and RabbitMQ once into `.build/config-studio/infra`, refusing either unless its SHA-256 is the one `tools/config_studio_stack.py` pins, then builds and starts the service and the worker and serves the studio on <http://127.0.0.1:8090>. Workspaces are kept in TDB2 under the user's data folder, or `LATTICE_STUDIO_DATA`, and survive a restart. `mise run studio:up -- --docker` runs Fuseki and RabbitMQ with the compose file instead, and `-- --dev` adds the browser code with hot reload on <http://127.0.0.1:4175>. `mise run studio:status` shows what is running. Logs and process ids are in `.build/config-studio/run`.
 
-`down` stops each process through its own shutdown. RabbitMQ is stopped with `rabbitmqctl shutdown`, which waits for the node to stop its applications and its metadata store. Fuseki, the service, the worker and the dev server get a termination request (SIGTERM) and up to a minute to stop: the service's shutdown hook closes its HTTP server, AMQP connection and store, and the worker finishes the job in hand and closes its connection. Windows has no termination request a detached console process can receive, so there the last four are stopped at once, which loses nothing: Fuseki holds an in-memory dataset, the service holds no state outside the store, and a job the worker had not acknowledged is redelivered.
+`down` stops each process through its own shutdown. RabbitMQ is stopped with `rabbitmqctl shutdown`, which waits for the node to stop its applications and its metadata store. Fuseki, the service, the worker and the dev server get a termination request (SIGTERM) and up to a minute to stop: the service's shutdown hook closes its HTTP server, AMQP connection and store, and the worker finishes the job in hand and closes its connection. Windows has no termination request a detached console process can receive, so there the last four are stopped at once, which loses nothing: TDB2 commits each update before Fuseki answers and recovers on the next start, the service holds no state outside the store, and a job the worker had not acknowledged is redelivered.
 
 To run each part in its own terminal instead, as below.
 

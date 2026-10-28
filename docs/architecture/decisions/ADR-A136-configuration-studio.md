@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Accepted 2026-10-28, with its addendum and amendment. How a job's status reaches the service, in decisions 4 and 5, is reopened (see Provenance)
+**Status:** Accepted 2026-10-28, with its addendum and amendment. A second amendment of 2026-10-28, on how the store is written and where it is kept, is Proposed
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -48,7 +48,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md) (plan), [sketch](../../developer/sketches/config-studio.md), slices CS0 to CS4.
 
-Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's request. The decisions taken alone are CS-D1 to CS-D9 in the [status record](../../developer/status/config-studio.md). The maintainer accepted it, with the addendum and the amendment, on 2026-10-28, and ratified CS-D1 to CS-D3, CS-D8, CS-D9, CS-D11, CS-D13 and CS-D14, with CS-D6 and CS-D7 superseded by the amendment. CS-D4, a job's status written by the worker into the job graph and read from the store, is reopened as PDD-13 in the [pending design decisions](../../developer/pending-design-decisions.md), since every poll and every worker write meets in the store, and we have no model of concurrent writes there, nor yet the usage patterns to build one from. The studio keeps it as built until PDD-13 is decided. CS-D5, CS-D10 and CS-D12 wait on the maintainer's questions.
+Drafted on 2026-10-27 by the unit, built autonomously at the maintainer's request. The decisions taken alone are CS-D1 to CS-D9 in the [status record](../../developer/status/config-studio.md). The maintainer accepted it, with the addendum and the amendment, on 2026-10-28, and ratified CS-D1 to CS-D3, CS-D8, CS-D9, CS-D11, CS-D13 and CS-D14, with CS-D6 and CS-D7 superseded by the amendment. CS-D4, a job's status written by the worker into the job graph and read from the store, is reopened as PDD-13 in the [pending design decisions](../../developer/pending-design-decisions.md), since every poll and every worker write meets in the store, and we have no model of concurrent writes there, nor yet the usage patterns to build one from. The maintainer decided it the same day as the second amendment records. CS-D5 (as forms that read SHACL shapes first, then `rdfs:domain` and `rdfs:range`), CS-D10 and CS-D12 were ratified the same day.
 
 ## Addendum, 2026-10-27: vocabulary, quantification and eligibility (Accepted 2026-10-28)
 
@@ -57,4 +57,20 @@ The studio keeps three more configurations, `vocabulary`, `quantification` and `
 ## Amendment, 2026-10-28: a supported component (Accepted 2026-10-28)
 
 The maintainer decided that the studio is to be supported, meaning developed and maintained with the ontologies and released with them once a release policy exists, and that this is an amendment to this record rather than a new one, since it is still Proposed. Decision 1 now says so, and the title no longer calls the studio a proof of concept. With it the `cst:` namespace drops `poc/` from its IRI, while no workspace is kept outside an in-memory store, so nothing needs migrating. Decision 3's HTTP server is Helidon SE's WebServer, since the JDK's `com.sun.net.httpserver` is a JDK module outside Java SE that another JVM need not ship. Decision 4 adds RDF/XML. Which software a release carries, and how it is versioned, is the release policy's own decision, beside ADR-A129. The other decisions stand.
+
+## Amendment, 2026-10-28: partitioned writers and an on-disk store (Proposed)
+
+The maintainer decided the design on 2026-10-28, after reopening how a job's status reaches the service (CS-D4). It changes decisions 4, 5 and 7, and the others stand.
+
+1. **One writer per workspace at a time.** The service and the worker never write the store. Each write is a command, keyed by its workspace's id, published to a consistent-hash exchange that routes it to one of a fixed number of partition queues. Each queue has a single active consumer, so the writes of one workspace, its jobs included, are applied in order by one writer, which needs no lock to guard a revision. A deployment sets how many writers it runs, from one to the number of partitions. A second instance's writers stand by and take over a partition whose writer goes away.
+2. **A save still answers at once.** The service waits for the writer's reply on RabbitMQ's direct reply-to, so the browser sees `204`, `412` or `422` as before. A write no writer applied in time expires rather than being applied after the caller was told it failed, and the caller gets `503`.
+3. **The worker sends its result, never writes it.** A job's status, report and artefacts go to the job's workspace's writer as a `job-update`. The writer refuses an update that changes anything on the job but its status and results, compared by value, and drops an update for a job deleted meanwhile.
+4. **The writer checks what it receives,** whatever its sender checked (PRI-75, STD-279): the ids, the graphs a command may carry, part membership, and a job's references.
+5. **On disk.** Fuseki keeps the studio's dataset in TDB2, in the user's data folder or a folder a deployment names, so workspaces outlive the application. Jobs are kept there too, and finished jobs are deleted after a retention a deployment sets, 30 days by default.
+6. **Samples are copied.** A workspace made from a sample is a copy that records which sample it came from, so nothing is loaded at start and a later change to a sample does not reach it.
+7. **Export and import.** A workspace exports as one TriG file of every graph but its jobs, and imports under a new id with its revisions, so it can be kept, shared and moved independently of the store's format.
+
+**Rejected.** Writers handed messages in turn, which would let two writers hold one workspace's graphs at once. A writer per workspace, whose number grows with use. Jobs in memory beside an on-disk store, which the maintainer declined so past results can be read again. Samples loaded at start as read-only workspaces.
+
+**Consequences.** A save costs a broker round trip more than it did. TDB2 applies one update at a time per dataset (TSD-42), so more writers do not write faster on one dataset, and more throughput needs a dataset per group of partitions. A delete leaves space TDB2 reclaims only by compaction. Any client of the broker can send a command, so the broker is as trusted as the store.
 

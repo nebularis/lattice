@@ -176,7 +176,7 @@ class Stack:
 
     def up(self, docker: bool, dev: bool) -> None:
         if docker:
-            run(["docker", "compose", "-f", str(self.compose), "up", "-d", "--wait"], self.root)
+            run(["docker", "compose", "-f", str(self.compose), "up", "-d", "--build", "--wait"], self.root)
             self.run.mkdir(parents=True, exist_ok=True)
             (self.run / "docker").write_text(str(self.compose))
         else:

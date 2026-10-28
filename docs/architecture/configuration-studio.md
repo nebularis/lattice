@@ -14,33 +14,42 @@ flowchart LR
     subgraph Service["config-studio-service (Java, Helidon, Jena)"]
         API["HTTP API, Turtle or RDF/XML"]
     end
-    subgraph Store["Fuseki dataset studio"]
+    subgraph Store["Fuseki dataset studio, TDB2 on disk"]
         WS["workspace graphs"]
         JOB["job graphs"]
     end
     MQ["RabbitMQ queue lattice.studio.jobs"]
+    WX["RabbitMQ exchange lattice.studio.writes, one queue per partition"]
+    WR["store writers, in the service"]
     subgraph Worker["Python worker"]
         V["validate: pySHACL and the layers' tools"]
         C["compile: tools/persistence, tools/surface"]
     end
     SPA -- "RDF over HTTP" --> API
-    API -- "SPARQL Update, Graph Store Protocol" --> Store
+    API -- "read" --> Store
+    API -- "write, keyed by workspace" --> WX
     API -- "job IRI" --> MQ
     MQ -- "job IRI" --> Worker
-    Worker -- "read inputs, write result" --> Store
+    Worker -- "read inputs" --> Store
+    Worker -- "job-update, keyed by workspace" --> WX
+    WX --> WR
+    WR -- "SPARQL Update" --> Store
 ```
 
 | Component | Owns | Never does |
 |---|---|---|
 | browser application | the editors, derived from the vocabularies it is served, and the sorting of an imported graph into a workspace's parts | interpret a finding or compile |
-| service | HTTP, the store, revisions, and the publication of jobs | interpret `dal:`, `srf:` or the other layers' terms |
+| service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store but through a writer |
+| store writer | every write to the store for the workspaces of its partitions, one at a time, and the revision guard | apply a command it has not checked |
 | worker | validation and compilation, with the engines `mise run check` uses | take a path, a command or a graph of its own choosing from a message |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
-| RabbitMQ | delivery of job IRIs to the worker | carry a job's content |
+| RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their workspace | carry a job's content to the worker |
 
 **Java owns HTTP and storage, Python owns meaning.** Validation and compilation run where pySHACL and the repository's compilers are, so the studio answers as `mise run check` would. A validation of persistence configuration also compiles it, because the `dal:` shapes target the dimension classes and do not see a `dal:DataAccessProfile` that declares several dimensions at once.
 
-**The store is the only state.** The service keeps no registry. A workspace's revisions are triples in its own graph, and a job's status is read from the job's graph, which the worker writes (PRI-52).
+**The store is the only state.** The service keeps no registry. A workspace's revisions are triples in its own graph, and a job's status is read from the job's graph, which the worker's updates write (PRI-52). The store is a TDB2 database on disk, in the user's data folder, so workspaces and the results of past jobs outlive the application. A finished job is deleted after a retention, 30 days unless a deployment sets another.
+
+**One writer per workspace.** The service and the worker never write the store. Each write is a command published to a consistent-hash exchange, keyed by its workspace's id, which routes it to one of eight partition queues. Each queue has a single active consumer, so one writer applies a workspace's writes in order, and a revision it reads cannot change before its own update. A deployment runs from one writer to eight, and a second instance's writers stand by for the partitions of one that stops. The service waits for the writer's reply, so a save still answers the browser at once.
 
 **A job message is a job IRI and nothing else.** The worker reads the job graph, which names its input graphs by reference ([ADR-A30](decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)). A job's input graph is written once under its IRI, and each baseline revision is a new graph, so a job's inputs never change under it.
 
@@ -82,13 +91,15 @@ A workspace is a baseline and the five configurations authored against it. Each 
 
 | Graph IRI | Written by | Holds |
 |---|---|---|
-| `urn:lattice:studio:ws:{ws}` | service | the `cst:Workspace`, its label, its current baseline graph and each configuration's revision |
-| `urn:lattice:studio:ws:{ws}:baseline:{n}` | service, once | baseline revision n |
-| `urn:lattice:studio:ws:{ws}:{part}` | service | the saved configuration of one part: `vocabulary`, `quantification`, `eligibility`, `persistence` or `surface` |
-| `urn:lattice:studio:job:{job}` | service, then the worker | the `cst:Job`, its references, status, report and artefacts |
-| `urn:lattice:studio:job:{job}:input` | service, once | the configurations as submitted |
+| `urn:lattice:studio:ws:{ws}` | writer | the `cst:Workspace`, its label, its current baseline graph, each configuration's revision, and the sample it was copied from, if any |
+| `urn:lattice:studio:ws:{ws}:baseline:{n}` | writer, once | baseline revision n |
+| `urn:lattice:studio:ws:{ws}:{part}` | writer | the saved configuration of one part: `vocabulary`, `quantification`, `eligibility`, `persistence` or `surface` |
+| `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job`, its references, status, report and artefacts |
+| `urn:lattice:studio:job:{job}:input` | writer, once | the configurations as submitted |
 
-A save carries the revision it expects in `If-Match`. The service compares it with the stored revision and, in one SPARQL Update request, replaces the configuration and moves its revision, so the two never disagree ([optimistic concurrency](optimistic-concurrency-in-rdf.md)). The comparison and the update run under a lock per workspace, so the studio runs one service instance.
+A save carries the revision it expects in `If-Match`. The workspace's writer compares it with the stored revision and, in one SPARQL Update request, replaces the configuration and moves its revision, so the two never disagree ([optimistic concurrency](optimistic-concurrency-in-rdf.md)). The writer is the only one writing that workspace, so the comparison needs no lock, and several service instances may share one store.
+
+A sample is copied into a new workspace that records which sample it came from, so a later change to the sample does not reach it. A workspace exports as one TriG file of every graph but its jobs, and imports, here or elsewhere, as a new workspace with its revisions.
 
 **Which part a subject belongs to** is decided by one rule, which the browser applies when it sorts an imported graph and the service applies again to every graph it saves. A named subject belongs to the first of persistence, surface, eligibility, quantification and vocabulary whose namespace its `rdf:type` or its predicates use, a SKOS concept or scheme belongs to vocabulary, anything else to the baseline, and a blank node to the subject that refers to it. So an eligibility question that names a quantification range set stays with eligibility.
 
@@ -102,13 +113,13 @@ sequenceDiagram
     participant Q as RabbitMQ
     participant W as Worker
     UI->>S: POST /api/workspaces/{ws}/jobs?kind=validate&target=persistence
-    S->>F: write the input graph and the job graph, status Queued
+    S->>F: submit-job to the workspace's writer, which writes the input and the job graph, status Queued
     S->>Q: publish the job IRI
     S-->>UI: 202, Location /api/jobs/{job}
     Q->>W: job IRI
     W->>F: read the job, its input and its baseline
     W->>W: the layer's shapes, and its compiler where it has one
-    W->>F: write the job graph, Succeeded, with an sh:ValidationReport
+    W->>F: job-update to the writer, which writes the job graph, Succeeded, with an sh:ValidationReport
     loop until finished
         UI->>S: GET /api/jobs/{job}
         S-->>UI: the job graph
@@ -132,9 +143,10 @@ Each component validates what it receives, whatever its client has checked, sinc
 |---|---|
 | service | the body's size (5 MiB), media type and syntax, that an RDF/XML body declares no DTD, that a saved graph holds only its own part's subjects, every identifier in a path, the slug, the job's kind and target, and the revision a save expects |
 | worker | that a message is a studio job IRI, that the job names a known kind and target, and that it names only its own input graph and a workspace baseline |
+| store writer | that a command names a workspace and a job by their ids, carries only the graphs its kind may, holds only its part's subjects, and that a job's update changes nothing but its status and results, compared by value |
 | browser | what an author types, so a finding appears before a save, never in place of the service's checks |
 
-The service has no authentication. It binds to the loopback address, and a write needs `Content-Type` Turtle or RDF/XML, or a `DELETE`, none of which a page of another origin can send without a preflight that the service never answers. Every graph and update is built with Jena's typed API, never by joining strings (PRI-55). Static files are served from one directory with a normalised path check. Responses carry `nosniff`, `no-store` for the API, and a `default-src 'self'` content security policy. The worker runs one fixed operation per job kind and takes no path or command from a message ([ADR-A35](decisions/ADR-A35-trusted-surface-worker-execution-boundary.md)). So the studio is a tool for one author on one machine. A shared deployment needs authentication first.
+The service has no authentication. It binds to the loopback address, and a write needs `Content-Type` Turtle or RDF/XML, or a `DELETE`, none of which a page of another origin can send without a preflight that the service never answers. Every graph and update is built with Jena's typed API, never by joining strings (PRI-55). Static files are served from one directory with a normalised path check. Responses carry `nosniff`, `no-store` for the API, and a `default-src 'self'` content security policy. The worker runs one fixed operation per job kind and takes no path or command from a message ([ADR-A35](decisions/ADR-A35-trusted-surface-worker-execution-boundary.md)). Any client of the broker can send a write, so the broker is as trusted as the store, and it listens on the loopback address too. So the studio is a tool for one author on one machine. A shared deployment needs authentication first.
 
 ## Costs
 
@@ -143,9 +155,9 @@ The service has no authentication. It binds to the loopback address, and a write
 | open a workspace | one read each of the workspace, the baseline, the configurations and the vocabulary, which is cached by its ETag | the baseline and its configuration, typically under 2,000 triples |
 | an edit | none | a copy of the browser's store, under 1 ms for 2,000 triples |
 | a validation | one submission, a few polls and one deletion. The worker makes three reads and one write | two graphs written and dropped |
-| a save | one write and one SPARQL Update | the configuration graph |
+| a save | one request, one command to the writer and its reply, a read of the revision and one SPARQL Update | the configuration graph, twice: to the broker and to the store |
 
-Validation dominates, at about a second on a laptop. A burst of typing yields one job, because edits are debounced and the browser keeps at most one validation in flight per graph. A response in RDF/XML is rewritten from Turtle, which costs about 60 ms for the 640 KB vocabulary against 3 ms as Turtle.
+Validation dominates, at about a second on a laptop. A burst of typing yields one job, because edits are debounced and the browser keeps at most one validation in flight per graph. TDB2 applies one update at a time per dataset, so more writers do not write faster on one dataset ([TSD-42](triple-store-discovery.md#tsd-42-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them)). They keep a busy workspace from delaying others and check commands in parallel, and a read never waits for a write. A response in RDF/XML is rewritten from Turtle, which costs about 60 ms for the 640 KB vocabulary against 3 ms as Turtle.
 
 ## Decisions
 

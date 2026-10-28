@@ -3,7 +3,7 @@
 # Configuration Studio - Status
 
 **Unit ID:** `config-studio`
-**Status:** 🟡 CS0 to CS10, CS12a and CS12b built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28. CS-D4 reopened as PDD-13, and CS-D5, CS-D10, CS-D12 and CS-B14 wait on the maintainer
+**Status:** 🟡 CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, ADR-A136's second amendment (writers and the on-disk store) Proposed
 **Last updated:** 2026-10-28
 **Plan:** [config-studio.md](../plans/config-studio.md)
 **Sketch:** [config-studio.md](../sketches/config-studio.md)
@@ -15,11 +15,11 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** review the Validation Pack, run `mise run check:config-studio`, `mise run test:config-studio` and `mise run check:authoring`, try the studio with `mise run studio:up`, answer CS-Q6 (JDK 27, for CS-B14) and CS-Q7 (forms for properties with no domain, for CS-D5), and rule on CS-D10 and CS-D12 once explained. CS12c and CB0 can start.
+**Next action, for the maintainer:** accept ADR-A136's second amendment, review CS13 to CS15 in the Validation Pack, and rule on CS-B23 to CS-B28. CS12c (the document schema) and CB0 (the builder's three ADRs) can start.
 
 ## Decisions taken alone, for ratification
 
-**Ruled 2026-10-28.** Ratified: CS-D1 to CS-D3, CS-D8, CS-D9, CS-D11, CS-D13, CS-D14 and CS-B15 to CS-B22. Superseded by the ADR-A136 amendment: CS-D6 (Helidon) and CS-D7 (supported). Reopened: CS-D4, as [PDD-13](../pending-design-decisions.md), kept as built until it is decided. Waiting: CS-D5 on CS-Q7, CS-D10 and CS-D12 on the maintainer's review, and CS-B14 on CS-Q6.
+**Ruled 2026-10-28.** Ratified: CS-D1 to CS-D3, CS-D5 as amended by CS-Q7 (shapes first, then domain and range), CS-D8 to CS-D14, and CS-B14 to CS-B22. Superseded by the ADR-A136 amendment: CS-D6 (Helidon) and CS-D7 (supported). Reopened, then decided as CS-Q8: CS-D4, which ADR-A136's second amendment replaces with partitioned writers.
 
 CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-taken-alone-for-ratification), and CS-D10 to CS-D14 in [sketch §8](../sketches/config-studio.md#8-vocabulary-quantification-and-eligibility-added-2026-10-27). Further decisions made while building:
 
@@ -47,6 +47,12 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B20 | The authoring service moves to Jena 6.2.0 and Jackson 2.22.4 within CS12a | together with the move off Javalin, it clears every advisory OSV knew in both services on 2026-10-28, which closes TD-95 |
 | CS-B21 | `studio:up` refuses a service or dev-server port another process holds, and no longer empties `loopback_users` for the downloaded RabbitMQ | the runbook's author found `up` reporting success while the service failed to bind, and the native node binds to loopback, so `guest` needs no exception |
 | CS-B22 | The package `packages/authoring-domain` takes the add-in's `types.ts` and the studio's `ns.ts` whole | `graph.ts` needs `ns.ts`, and splitting either would leave a second file of the same kind. The JSON-contract types in `types.ts` go when the contracts are retired in CS12d |
+| CS-B23 | The writers' partition count is 8, fixed in `amqp-topology.json`, and a deployment sets the number of writers, 1 by default, from `LATTICE_STUDIO_WRITERS` | the consistent-hash exchange binds a fixed set of queues, and changing their number moves workspaces between them, so it is a contract. The writer count is the pool size the maintainer asked to configure |
+| CS-B24 | The writers run inside the service process, and a service without a broker writes through one in-process writer | one deployable (CS-Q4). The in-process writer behaves as one partition's writer, so tests and a broker-less run keep the same rules |
+| CS-B25 | A command is AMQP headers and an N-Quads body, and a reply is headers alone. A write the writer did not answer in 10 s expires and answers `503` | N-Quads is line-based RDF both runtimes write without a library choice, and an expired write is never applied after the author was told it failed |
+| CS-B26 | The writer compares a job update with the stored job by value, not by term | rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` (TSD-43), which a term comparison read as tampering, found running the live stack |
+| CS-B27 | Finished jobs are swept hourly after 30 days (`LATTICE_STUDIO_JOB_RETENTION_DAYS`), and the browser still deletes a validation job once it has read it, keeping compile jobs | jobs on disk keep compile history, which the build view lists, while a validation runs on every pause in typing and would fill the store |
+| CS-B28 | A creation and an import refuse a baseline that holds another part's subjects, as a save does (`422`), and a workspace's identity references are no longer warned about as undeclared | the writer must check a creation like any write (STD-279). An identity is a name nothing need describe, as the repository's examples show, so the warning was noise on every sample |
 
 ## Learnings
 
@@ -71,6 +77,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-28, latest: CS13 to CS15 under the maintainer's delegation. Forms read shapes first (CS-Q7, by a sub-agent on its own branch, reviewed and merged). Partitioned store writers, the store on TDB2 in the user's data folder, job retention, export and import, and samples recorded on the workspace (CS-Q8), with ADR-A136's second amendment drafted. A facility agreement sample in every part (by a sub-agent, reviewed and merged). TSD-42 and TSD-43 recorded, MEC-88 and TD-97 to TD-99 added, PDD-13 closed into CS-Q8. The maintainer ruled on CS-D5, CS-D10, CS-D12, CS-B14 (stay on JDK 25), CB-Q4 (ODRL) and decided CS-Q8.
 - 2026-10-28, ratification: the maintainer accepted ADR-A136 as amended and ADR-A137 with DM-Q1 to DM-Q3 as recommended, ruled on the decisions as recorded above, and answered the builder's questions (CB-Q1 to CB-Q5 in the plan). CS-D4 reopened as PDD-13. CS-Q6 and CS-Q7 raised.
 - 2026-10-28, latest: CS9, CS12a and CS12b, under the maintainer's delegation. ADR-A136 amended to make the studio supported, the `cst:` namespace renamed, a published architecture document, an operations guide and a runbook, register entries (CAP-86 updated, MEC-84 to MEC-87, PAT-55), the STD-279 review of both services with the worker's gap fixed, the authoring service on Helidon with Jena 6 and Jackson 2.22 (TD-95 closed), the shared package, and the stack's port check. Two sub-agents wrote CS12b and the operator documents on their own branches, which we reviewed and merged.
 - 2026-10-28, later still: CS10. RDF/XML beside Turtle by content negotiation, chosen in one place, and accepted in bodies, with a DTD refused.

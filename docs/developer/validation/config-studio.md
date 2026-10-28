@@ -232,6 +232,42 @@ Built by a sub-agent on its own branch, reviewed and merged.
 | CS12b-01 | the document model, tag codec, offsets and graph model moved to `packages/authoring-domain` / every suite / the totals unchanged: studio 23 plus 2 moved, add-in 59 plus 10 moved, the package 12 | L1 | + | pass |
 | CS12b-02 | both apps importing the package / `check:authoring-addin`, `test:authoring-addin`, both production builds / pass, 59 unit and 13 harness tests | L1, L3 | + | pass |
 
+## CS13: forms from shapes first
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS13-01 | the layers' node and property shapes staged into `vocabulary.ttl`, with SHACL-SPARQL stripped / `tools/test_config_studio_stage.py` / shapes present, constraints absent | L1 | + | pass. The file grew from 269,825 to 313,440 bytes |
+| CS13-02 | a property placed by a shape with no domain, `sh:in` choices, `sh:maxCount 1`, `sh:minCount` as required, inheritance and the precedence override, shape, domain / `vocabulary.test.ts` / each as stated | L1 | + − | pass, 10 tests, one over the staged vocabulary (`qnt:onSpace` on `qnt:Range`) |
+| CS13-03 | the studio's forms before and after / a count per layer / no field lost | L1 | + | pass. Counts unchanged in all five layers, which already had domains. Shapes add required markers and single values |
+| CS13-04 | the browser suites / `mise run check:config-studio`, `mise run test:config-studio` / pass | L2, L3 | + | pass, 40 unit tests and 13 browser tests |
+
+## CS14: partitioned store writers and the on-disk store
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS14-01 | a command / encoded as headers and N-Quads and decoded / the same command, and a malformed one decodes to nothing | L1 | + − | pass, `WritesTest` |
+| CS14-02 | the writer / a save with a stale revision, a save to an unknown workspace, a bad id, an unknown part, another part's subject, a repeated creation, a sample id with a path / `412`, `404`, then `400` for each refusal | L1 | + − | pass |
+| CS14-03 | a job update / changing the status, rewriting a dateTime from `Z` to `+00:00`, pointing the job at another graph, naming another workspace, after the job was deleted / applied, applied, refused, refused, dropped | L1 | + − | pass |
+| CS14-04 | export, then import with a new label / the copy has its own id, the label, the revisions and the configuration, and the original is untouched. TriG of two workspaces, a stray graph, a default graph, no description, and syntax errors are refused | L1 | + − | pass |
+| CS14-05 | a workspace from a sample, and a sample that is not staged or has a path in it / `cst:fromSample` recorded, `400` | L1 | + − | pass |
+| CS14-06 | jobs finished 57 and 1 days ago, a 30-day retention / a sweep / deletes one | L1 | + | pass |
+| CS14-07 | the worker's `WriterStore` / a job graph / published to `lattice.studio.writes` keyed by the workspace with a `job-update` header and the graph as N-Quads, the store untouched. A graph naming no workspace is never sent | L1 | + − | pass, 24 worker tests |
+| CS14-08 | `data_dir` / each platform and `LATTICE_STUDIO_DATA` / the folders the operations guide names | L1 | + | pass, 4 stack tests |
+| CS14-09 | the native stack on TDB2 in a scratch data folder / create, save, a stale save, a validation, export, import, delete, `studio:down` and `studio:up` / `201`, `204`, `412`, `cst:Succeeded`, `200`, `201`, `204`, and the workspaces still there after the restart | L5 | + − | pass. The first run found CS-B26 (rdflib's dateTime) and a curl of a whole sample into a baseline, now `422` (CS-B28) |
+| CS14-10 | the Docker stack / the same, then `docker compose restart fuseki` / the workspace answers `200` after the restart, and RabbitMQ lists `rabbitmq_consistent_hash_exchange` among its plugins | L5 | + | pass. The first runs found the compose file had never run: the Fuseki jar was unreadable, `--loc` needed its folder, and Fuseki needs a writable base. Fixed, and `up --docker` now rebuilds |
+| CS14-11 | probe P6, eight concurrent 20,000-triple inserts and a read during a 200,000-triple insert on Fuseki TDB2 / timed / concurrent no faster than sequential, the read not blocked | L5 | + | 0.94 and 1.06 of sequential, reads in 3 and 8 ms. TSD-42 |
+| CS14-12 | the service suite / `mise run check:config-studio` / pass | L1 | + | pass, 50 Java tests |
+
+## CS15: the facility agreement sample
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| CS15-01 | the sample's files / sorted by the Python port of `split.ts` and by `split.ts` itself / each subject in its intended part | L1 | + | pass |
+| CS15-02 | each part / validated by the worker / no violation. The resolution table has its 11 expected rows, one Unresolved and one Conflict on purpose. All 17 questions decide as expected, and a wrong expectation fails with `TestFailed` | L1 | + − | pass, 10 tests in `test_config_studio_facility_sample.py` |
+| CS15-03 | eligibility, persistence and surface / compiled / the expected artefacts, and personal data with `NoErasure` refused | L1 | + − | pass |
+| CS15-04 | the live studio / the sample opened from the new-workspace dialog / created through the writer, 0 violations, 2 warnings | L5 | + | pass. The warnings are surface's `ConstraintsNotRun` (TD-11) and a promotion's target property the baseline does not declare, as in the repository's surface examples. 10 warnings that identity references were undeclared were removed (CS-B28) |
+| CS15-05 | the whole worker suite / `mise run check:workers` / pass | L1 | + | pass, 167 tests |
+
 ## Dependency upgrades, 2026-10-28
 
 Not a slice of the studio, recorded here because the studio's audit found them (TD-95).
@@ -254,8 +290,9 @@ Not run: the platform's compose file, whose RabbitMQ no test starts.
 
 ## Deliberate non-coverage
 
-- The compose file was authored and not run, since Docker was not running. CS4-01 ran the same versions started by hand.
-- `RabbitJobBus` and the Fuseki store have no automated integration test, only CS4-01. A Testcontainers suite like `check:authoring-service-it` would cover them.
+- The compose file ran end to end for the first time in CS14-10.
+- `RabbitJobBus`, `RabbitWrites`, `WriterPool` and the Fuseki store have no automated integration test, only the live runs CS4-01, CS14-09 and CS14-10. A Testcontainers suite like `check:authoring-service-it` would cover them, and a second service instance taking over a partition has not been tried.
+- Windows and Linux were not run for CS13 to CS15, including the data folders CS14-08 tests by path only.
 - The worker's `main` and its reconnect loop are exercised only by CS4-01.
 - Surface's `shapes/constraints.ttl` is not run (TD-11), and every surface validation says so as a warning.
 - Accessibility was checked by role-based selectors in CS3 and CS6 and by hand, not by an audit tool.

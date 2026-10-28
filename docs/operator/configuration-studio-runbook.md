@@ -278,20 +278,29 @@ A job that fails is final. The worker does not retry it. Resubmit from the brows
 | `412` | The save named a revision, in `If-Match`, that is no longer current. The workspace was saved from another tab, window or session since this one loaded it | Reload the graph, re-apply the change, and save. The response's `ETag` names the current revision. A graph with a subject of another part gets `422` even when its revision is also stale |
 | `413` | The body is over 5 MiB | Split the configuration, or remove data that does not belong in it. The limit is fixed |
 | `415` | The `Content-Type` is not `text/turtle` or `application/rdf+xml` | A browser fault when it comes from the application. Report it. From a script, set the header |
-| `422` | A saved graph holds a subject that belongs to another part by the rule the browser's import uses. The text names up to five | Move that subject to the part it belongs to, or remove it |
+| `422` | A saved graph, a new workspace's baseline or an import holds a subject that belongs to another part by the rule the browser's import uses. The text names up to five. For an import, the file may also not be one workspace's export | Move that subject to the part it belongs to, or remove it. Import only a file the studio exported |
+| `503` | No store writer answered within 10 seconds. The write was dropped, not applied | `mise run studio:status`. RabbitMQ or the service's writers are down, or Fuseki is unreachable and the writer is retrying (`service.log` says `a write could not be applied`). Fix that, then save again |
 | `428` | The save had no `If-Match` header | A browser fault when it comes from the application. From a script, send the revision's `ETag` in `If-Match` |
 | `500` | An unexpected error in the service. The response says only `internal error` | The cause is in `service.log`. Collect it (Scenario 10) |
 | A gateway error from the dev server, or a network error | In the dev server, the service is down or has not finished starting. With the built application, the service itself is unreachable | `mise run studio:status`. Start or restart the service |
 
 ---
 
-## Scenario 9: Workspaces are lost after a restart
+## Scenario 9: Workspaces are missing after a restart
 
-**Symptom.** After `studio:down` and `studio:up`, or a restart of Fuseki alone, the workspace list is empty, a workspace the browser had open answers `404`, and saved jobs are gone.
+**Symptom.** After `studio:down` and `studio:up` the workspace list is empty or holds other workspaces than before.
 
-**Diagnosis.** Fuseki's dataset is in memory (`--mem`). Stopping Fuseki, for any reason, empties it, and nothing is written to disk. A persistent dataset is planned work, not yet built. If the service was started without `LATTICE_FUSEKI_URL`, it holds an in-memory dataset of its own and loses it when it exits, and the worker, which needs Fuseki, cannot read its jobs.
+**Diagnosis.** Workspaces are kept in the data folder (operations guide, Where things live), so a restart keeps them. They are missing when this start uses another folder than the last: `LATTICE_STUDIO_DATA` was set for one and not the other, the stack ran with `--docker` once and natively once (the volume `studio-data` and the data folder are separate stores), or `docker compose down -v` deleted the volume. A service started without `LATTICE_FUSEKI_URL` holds an in-memory dataset of its own and loses it on exit.
 
-**Remedy.** There is no recovery of lost workspaces. To avoid it, keep the configuration as Turtle files in the repository, upload it to a new workspace, and download or copy the edited graphs out of the browser before stopping Fuseki. After a restart, create the workspace again from the sample or the uploaded files. Restarting only the service, the worker or RabbitMQ does not lose workspaces. The queue's persistent messages survive a RabbitMQ restart, while their jobs live in Fuseki.
+**Remedy.** Start the stack the way it ran before, with the same `LATTICE_STUDIO_DATA` and the same mode. To move workspaces between stores, export each from the browser and import it into the other. Fuseki logs the folder it opened, `fuseki: workspaces kept in …`, at each `up`.
+
+## Scenario 9a: A store writer refuses writes
+
+**Symptom.** Saves answer `400` or `503`, or a job stays `cst:Running`, and `service.log` says `refused a write`, with messages in `lattice.studio.dead`.
+
+**Diagnosis.** A writer refuses a command it cannot check: a job update that changes the job's references, a graph holding another part's subjects, or a message that is not a command. A job stays running when its final update was refused. A command that is not the service's or the worker's means some other client of the broker sent it.
+
+**Remedy.** Read the refusal's reason in `service.log`. A refused job update is a fault in the worker. Report it with both logs (Scenario 11). Submitting the job again runs it anew.
 
 ---
 
@@ -301,12 +310,13 @@ Use the smallest reset that fits.
 
 | Reset | Commands |
 |---|---|
-| Restart, losing the workspaces | `mise run studio:down` then `mise run studio:up` |
+| Restart, keeping the workspaces | `mise run studio:down` then `mise run studio:up` |
+| Delete every workspace | `mise run studio:down`, then delete the data folder (operations guide, Where things live), then `mise run studio:up` |
 | Clear the job queue only | `mise exec -- $RMQ/rabbitmqctl -n studio@localhost purge_queue lattice.studio.jobs`, and the same for `lattice.studio.dead` |
 | Reset RabbitMQ only | `mise run studio:down`, then `rm -rf .build/config-studio/infra/rabbitmq`, then `mise run studio:up`. The node starts with empty data |
-| Reset everything, keeping the downloads | `mise run studio:down`, then `rm -rf .build/config-studio/run .build/config-studio/infra/rabbitmq .build/config-studio/infra/fuseki-base`, then `mise run studio:up` |
-| Reset everything, downloads too | `mise run studio:down`, then `rm -rf .build/config-studio`, then `mise run studio:up`. This downloads about 80 MB again and rebuilds the staged assets |
-| Docker | `mise run studio:down`, which runs `docker compose down`. The compose file declares no volumes, so Fuseki and RabbitMQ start empty on the next `up --docker` |
+| Reset the stack, keeping the downloads and the workspaces | `mise run studio:down`, then `rm -rf .build/config-studio/run .build/config-studio/infra/rabbitmq .build/config-studio/infra/fuseki-base`, then `mise run studio:up` |
+| Reset the stack, downloads too, keeping the workspaces | `mise run studio:down`, then `rm -rf .build/config-studio`, then `mise run studio:up`. This downloads about 80 MB again and rebuilds the staged assets |
+| Docker | `mise run studio:down`, which runs `docker compose down` and keeps the volume `studio-data`. To delete the workspaces too, run `docker compose -f deployment/compose/config-studio/docker-compose.yml down -v` |
 
 On Windows, delete the directories with `Remove-Item -Recurse -Force`. Always run `studio:down` first. Deleting `.build/config-studio/run` while the stack runs leaves processes the script no longer knows, which then hold their ports (Scenario 1). `mise run clean` removes `.build/config-studio` among other build output.
 

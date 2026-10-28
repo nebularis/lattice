@@ -17,7 +17,7 @@ The Configuration Studio is a browser application for authoring and checking con
 | Browser application | React, built with Vite ([README](../../apps/config-studio/README.md)) | The authoring views. Served by the service once built, or by a hot-reload dev server | `127.0.0.1:4175` for the dev server only |
 | Service | Java on Helidon SE with Apache Jena ([README](../../platform/config-studio-service/README.md)) | The HTTP API under `/api`, workspaces and jobs as named graphs, the built browser application, and publishing each job to RabbitMQ | `127.0.0.1:8090` |
 | Worker | Python, `lattice_workers.config_studio_main` ([README](../../workers/README.md#configuration-studio-jobs-adr-a136)) | Consumes jobs, validates or compiles the configuration with each layer's own engine, and writes the result back | nothing |
-| Fuseki | Apache Jena Fuseki ([version pinned below](#download-pins)) | The graph store. One dataset, `studio`, in memory | `127.0.0.1:3130` |
+| Fuseki | Apache Jena Fuseki ([version pinned below](#download-pins)) | The graph store. One dataset, `studio`, in TDB2 on disk | `127.0.0.1:3130` |
 | RabbitMQ | RabbitMQ on Erlang | Carries job messages from the service to the worker | `127.0.0.1:5673` (AMQP), `127.0.0.1:25673` (Erlang distribution) |
 
 The data contracts between them are in [contracts/config-studio](../../contracts/config-studio/README.md).
@@ -61,10 +61,12 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset.
 | `LATTICE_STUDIO_BIND` | `127.0.0.1` | Bind address. Leave it |
 | `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory `mise run build:config-studio-assets` fills with `vocabulary.ttl`, `samples.ttl` and `samples/`. A relative path is relative to the directory the service starts in, the repository root |
 | `LATTICE_STUDIO_STATIC` | none | The built browser application, served for any path outside `/api`. The stack sets it to `apps/config-studio/dist`. Without it the service answers `404` outside `/api` |
-| `LATTICE_FUSEKI_URL` | none | Fuseki's base URL. Unset means an in-memory dataset inside the service, with a warning in the log |
+| `LATTICE_FUSEKI_URL` | none | Fuseki's base URL. Unset means an in-memory dataset inside the service, lost on exit, with a warning in the log |
 | `LATTICE_FUSEKI_DATASET` | `studio` | The dataset name |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | none | Basic authentication to Fuseki. The stack's Fuseki has none |
-| `LATTICE_AMQP_URI` | none | RabbitMQ's URI. Unset means jobs are recorded but never delivered, and stay `cst:Queued`, with a warning in the log |
+| `LATTICE_AMQP_URI` | none | RabbitMQ's URI. Unset means jobs are recorded but never delivered, and stay `cst:Queued`, with a warning in the log, and the service writes through one writer of its own |
+| `LATTICE_STUDIO_WRITERS` | `1` | How many store writers this instance runs over the 8 partitions, from 1 to 8, or `0` to run none and rely on another instance's. Ignored without `LATTICE_AMQP_URI` |
+| `LATTICE_STUDIO_JOB_RETENTION_DAYS` | `30` | How long a finished job is kept before the hourly sweep deletes it. At least 1 |
 
 ### Worker
 
@@ -89,13 +91,23 @@ Read by `config_studio_main.read_config`.
 | `LATTICE_AMQP_URI` | `amqp://guest:guest@127.0.0.1:5673/%2F` |
 | `LATTICE_STUDIO_STATIC` | `apps/config-studio/dist` (the service only) |
 
+`studio:up` also reads `LATTICE_STUDIO_DATA`, the folder for the store (see [Where things live](#where-things-live)).
+
 The AMQP URI holds RabbitMQ's `guest` password. That is acceptable only because the broker is local and `guest` is its default. Do not put a real credential in it.
 
 ---
 
 ## Where things live
 
-Everything the stack writes is under `.build/config-studio`, which git ignores. Deleting that directory resets the stack (see the runbook).
+The workspaces are kept in the data folder, outside the checkout, so they survive `mise run clean`, a new checkout and a removed worktree. Everything else the stack writes is under `.build/config-studio`, which git ignores. Deleting that directory resets the stack but keeps the workspaces (see the runbook).
+
+| Platform | Data folder, unless `LATTICE_STUDIO_DATA` names another |
+|---|---|
+| macOS | `~/Library/Application Support/LATTICE/studio` |
+| Windows | `%LOCALAPPDATA%\LATTICE\studio` |
+| Linux | `$XDG_DATA_HOME/lattice/studio`, or `~/.local/share/lattice/studio` |
+
+The store is `tdb2/` in that folder. With `up --docker` it is the volume `studio-data` instead.
 
 | Path | Holds |
 |---|---|
@@ -105,6 +117,7 @@ Everything the stack writes is under `.build/config-studio`, which git ignores. 
 | `.build/config-studio/infra/` | The downloads and what they unpack to |
 | `.build/config-studio/infra/jena-fuseki-server-{version}.jar` | The Fuseki release |
 | `.build/config-studio/infra/fuseki-base/` | Fuseki's `FUSEKI_BASE` (its working files and logging configuration). The dataset is not stored here |
+| `.build/config-studio/infra/rabbitmq/enabled_plugins` | The plugins RabbitMQ enables, written on each start: the consistent-hash exchange |
 | `.build/config-studio/infra/rabbitmq-server-*` and `rabbitmq_server-{version}/` | The RabbitMQ archive and its unpacked release |
 | `.build/config-studio/infra/rabbitmq/mnesia/` | RabbitMQ's data directory (`RABBITMQ_MNESIA_BASE`), holding the node's metadata and any persistent messages |
 | `.build/config-studio/infra/rabbitmq/log/` | RabbitMQ's own logs (`RABBITMQ_LOG_BASE`), apart from `run/rabbitmq.log` |
@@ -118,19 +131,19 @@ The service and the worker log to standard output, so their only log is `run/ser
 
 ## Fuseki
 
-Started as `java -jar jena-fuseki-server-{version}.jar --localhost --port 3130 --mem --update /studio`.
+Started as `java -jar jena-fuseki-server-{version}.jar --localhost --port 3130 --tdb2 --loc {data folder}/tdb2 --update /studio`.
 
 | Setting | Effect |
 |---|---|
-| `--mem` | The dataset is in memory. **Stopping Fuseki loses every workspace and job.** There is no persistence and no backup |
+| `--tdb2 --loc` | The dataset is a TDB2 database in the data folder. Each update is committed before Fuseki answers it, so stopping Fuseki loses no saved work, and the next start recovers any update cut off |
 | `--update` | The dataset accepts updates. Without it the service could not save |
 | `/studio` | The dataset name. It matches `LATTICE_FUSEKI_DATASET` |
 | `--localhost` | Fuseki listens on the loopback address only |
 | `FUSEKI_BASE` | `.build/config-studio/infra/fuseki-base` |
 
-The Docker setup builds the same server from `deployment/compose/config-studio/fuseki.Dockerfile` on `eclipse-temurin:25-jre-alpine`, pinned by the same checksum, listening on `3030` in the container, published at `127.0.0.1:3130`, and also in memory.
+The Docker setup builds the same server from `deployment/compose/config-studio/fuseki.Dockerfile` on `eclipse-temurin:25-jre-alpine`, pinned by the same checksum, listening on `3030` in the container, published at `127.0.0.1:3130`, with the database in `/data`, the volume `studio-data`. `docker compose down` keeps the volume, and `docker compose down -v` deletes every workspace.
 
-Because the dataset is in memory, a restart of Fuseki alone, while the service and the worker keep running, empties the studio. The browser then shows `404` for the workspace it had open. Export anything worth keeping from the browser before stopping Fuseki.
+TDB2 serves reads while a write runs, and applies one write at a time per dataset. A deleted workspace or job frees no disk space until the database is compacted, which the studio does not do yet. To back up, export each workspace from the browser, or copy the data folder while Fuseki is stopped. To start afresh, stop the stack and delete the data folder.
 
 ---
 
@@ -146,9 +159,10 @@ Started from the generic Unix release (the Windows release on Windows) through i
 | `RABBITMQ_DIST_PORT` | `25673` | Not the default `25672` |
 | `RABBITMQ_MNESIA_BASE` | `.build/config-studio/infra/rabbitmq/mnesia` | Data stays in the checkout |
 | `RABBITMQ_LOG_BASE` | `.build/config-studio/infra/rabbitmq/log` | Logs stay in the checkout |
+| `RABBITMQ_ENABLED_PLUGINS_FILE` | `.build/config-studio/infra/rabbitmq/enabled_plugins` | Enables `rabbitmq_consistent_hash_exchange`, which the writes exchange needs. Without it the service and the worker cannot declare the exchange and stop at start |
 | `ERLANG_HOME` | the parent of the directory holding `erl` | RabbitMQ's scripts find Erlang from it. The stack derives it from `erl` on the path, and stops with "RabbitMQ needs Erlang" if there is none |
 
-RabbitMQ runs on the Erlang mise installs, so start it through `mise`. The user is the default `guest` with password `guest`, in virtual host `/` (written `%2F` in the URI). The Docker setup runs `rabbitmq:4.4-management-alpine` with `guest`/`guest` set explicitly, and publishes the AMQP port at `127.0.0.1:5673` and the management interface at `127.0.0.1:15673`.
+RabbitMQ runs on the Erlang mise installs, so start it through `mise`. The user is the default `guest` with password `guest`, in virtual host `/` (written `%2F` in the URI). The Docker setup runs `rabbitmq:4.4-management-alpine` with `guest`/`guest` set explicitly, and publishes the AMQP port at `127.0.0.1:5673` and the management interface at `127.0.0.1:15673`. It mounts `deployment/compose/config-studio/enabled_plugins`, which keeps the image's own plugins and adds the consistent-hash exchange.
 
 ### Topology
 
@@ -160,14 +174,18 @@ Declared identically, and idempotently, by the service when it connects and by t
 | Exchange | `lattice.studio.dlx` | topic, durable. The dead-letter exchange |
 | Queue | `lattice.studio.jobs` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs`. Dead-letters to `lattice.studio.dlx` |
 | Queue | `lattice.studio.dead` | durable. Bound to `lattice.studio.dlx` with key `#` |
+| Exchange | `lattice.studio.writes` | `x-consistent-hash`, durable. A write's routing key is its workspace's id |
+| Queues | `lattice.studio.writes.0` to `.7` | durable, single active consumer, bound with weight `1`, dead-lettering to `lattice.studio.dlx`. One per partition |
 
-A message is the job's IRI (`urn:lattice:studio:job:` and a lower-case UUID) in UTF-8, persistent, published with a broker confirm and a five-second timeout. The worker consumes with manual acknowledgement and one message in flight at a time (`prefetch_count=1`), and acknowledges only after it has written the final job graph.
+A message is the job's IRI (`urn:lattice:studio:job:` and a lower-case UUID) in UTF-8, persistent, published with a broker confirm and a five-second timeout. The worker consumes with manual acknowledgement and one message in flight at a time (`prefetch_count=1`), and acknowledges only after the broker has confirmed the final job graph's `job-update`. The writer that applies it is the service's.
 
 | Worker outcome | Broker action |
 |---|---|
 | Job run, whatever its result | Acknowledged |
 | Message that is not a job IRI, or names a job graph that does not exist | Rejected without requeue, so it moves to `lattice.studio.dead` |
 | Any other error, such as Fuseki being unreachable | Rejected with requeue, and the worker stops with the error |
+
+A store writer consumes its partitions with manual acknowledgement, one message at a time each. It acknowledges a write it applied or that found nothing (a deleted job), rejects without requeue a write it refuses, which moves to `lattice.studio.dead` with a warning in the service's log, and requeues after a second a write the store could not take. The service waits 10 seconds for a writer's reply, answers `503` past that, and the write expires unapplied.
 
 A job that fails because its configuration did not validate or compile is not an error. It is a `cst:Succeeded` job whose report says so. A `cst:Failed` job is one that could not run, such as a missing input graph.
 
@@ -237,7 +255,7 @@ mise run studio:down
 | Fuseki, service, worker, dev server | `SIGTERM` to the process group, then up to 60 seconds, then `SIGKILL` if it is still running (a message says so) | The service's shutdown hook closes its HTTP server, its AMQP connection and its store. The worker finishes the job in hand and then stops consuming, so no job is left half written. A JVM runs its shutdown hooks on `SIGTERM` |
 | Docker | `docker compose down --timeout 60`, when `up --docker` was used | The containers stop through Docker's own stop, with a minute before it kills |
 
-On Windows a detached console process can receive no termination request, so after `rabbitmqctl shutdown` has stopped RabbitMQ the script ends the process tree at once with `taskkill /T /F`. That loses nothing. Fuseki's dataset is in memory and would be lost on any stop. The service keeps no state outside the store. A job the worker had not acknowledged is redelivered, and running a job twice gives the same graph but for its times.
+On Windows a detached console process can receive no termination request, so after `rabbitmqctl shutdown` has stopped RabbitMQ the script ends the process tree at once with `taskkill /T /F`. That loses nothing. TDB2 commits each update before Fuseki answers it, and recovers on the next start. The service keeps no state outside the store, and a write a writer had not acknowledged is redelivered. A job the worker had not acknowledged is redelivered, and running a job twice gives the same graph but for its times.
 
 `down` removes a pid file whose process has gone and says nothing for it. A part that was never started here is skipped.
 

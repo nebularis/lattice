@@ -45,6 +45,9 @@ Recorded 2026-10-27 at the maintainer's request, toward making the studio a supp
 | CS10 | **done 2026-10-28.** RDF/XML on the HTTP API by content negotiation, beside Turtle, for what a document means | nothing, CS-Q3 answered |
 | CS11 | the contract builder, CB0 to CB4 of the builder brief, including the studio's wording mode | CS12c. The builder's questions are answered below |
 | CS12 | the Word authoring proof of concept unified with the studio, in the steps below | CS8 for CS12a |
+| CS13 | **done 2026-10-28.** Forms read SHACL shapes first, then `rdfs:domain` and `rdfs:range` (CS-Q7), with the layers' node and property shapes staged into the served vocabulary and a required marker | CS-Q7 |
+| CS14 | **done 2026-10-28.** Partitioned store writers, the store on disk in TDB2, job retention, samples recorded on the workspace, and export and import as TriG (CS-Q8) | CS-Q8 |
+| CS15 | **done 2026-10-28.** A facility agreement sample in every part over one baseline, the parts referring to one another, with deliberate resolution and decision cases | nothing |
 
 ### CS12, unifying the Word authoring proof of concept
 
@@ -73,7 +76,7 @@ The builder brief's questions, answered 2026-10-28.
 | CB-Q1 | a mode of the studio, or an app of its own | a mode of the studio, sharing its graph model, inspector, problems drawer and jobs, and `packages/authoring-domain` with the Word add-in |
 | CB-Q2 | how far "see how a term would be applied" goes before instantiation | what each term reads, and a dry run on sample facts of its eligibility conditions and of one regime's triggers. No preview instantiation, which would be bound meaning arriving early. Eligibility runs through the compiled SPARQL, as the studio's tests do, and never the reference evaluator (ADR-A-FM3). Stepping a regime has no compiled path yet, so CB0 decides whether that is compiler work or is marked under construction |
 | CB-Q3 | an LLM proposer in LATTICE | a public proposer interface, with manual entry as its trivial proposer, and an LLM proposer whose only pack in the repository is MTP, any other being loaded from outside it. Every proposal carries its span, its template and its provenance, and goes through one review queue (Confirm, Retarget, Decline, Defer) |
-| CB-Q4 | which rule languages CB5 imports | LegalRuleML and Logical English, each behind a feature flag. The brief's "OBRL" was a typo |
+| CB-Q4 | which rule languages CB5 imports | ODRL and Logical English, each behind a feature flag. The brief's "OBRL" was a typo for ODRL |
 | CB-Q5 | timing | a tag by the end of November 2026 carrying CB0 to CB2 and, from CB4, what each term reads. CB3's LLM proposer and the regime dry run follow if they slip |
 
 CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model, separated from the InsurML default the assembly-interface sketch records under IMA-D17, and the assembler's topology. Its examples are a facility agreement and a software licence. The brief's estimate of 6 to 8 hours for CB0 to CB4 is the low end, since the assembler is new substrate with strict laws.
@@ -87,8 +90,9 @@ CB0 is three ADRs rather than one: the builder, Wording's neutral assembly model
 | CS-Q3 | which XML is wanted. **Answered 2026-10-27:** both, by the wire rule above. RDF/XML for meaning (CS10), and a document XML vocabulary for documents (CS12c) |
 | CS-Q4 | the service, wire and shared code for CS12. **Decided 2026-10-27:** one deployable reached in steps, the wire rule, the shared domain package, one `studio:up` |
 | CS-Q5 | for CS12c, the schema language of the document vocabulary (XSD or RELAX NG), and which ADR defines the vocabulary. **Answered 2026-10-28:** an ADR of its own. Both schema languages, **decided 2026-10-28** under the maintainer's delegation: RELAX NG compact syntax is the source we write and review, and XSD 1.0 is generated from it with Trang, for the tools that expect XSD (the JDK's validator, Word's schema library, schema-aware XSLT). A check validates a corpus of valid and invalid fixtures against both and fails where their verdicts differ, which also keeps the RELAX NG within what XSD can express. RELAX NG is the source because it is the shorter and more readable of the two, composes by pattern, and is what LegalRuleML treats as normative, and XSD because our consumers' tools validate with it |
-| CS-Q6 | whether the platform moves from JDK 25 to 27, so the services can take Helidon 27 (CS-B14). Raised 2026-10-28 by the maintainer, who is willing to move. JDK 27 is not a long-term support release and is superseded by 28 in March 2027, and ADR-A84 and the toolchain unit fix the minting libraries and the repository on JDK 25 |
-| CS-Q7 | how a form places a property with no `rdfs:domain` (CS-D5). Raised 2026-10-28. The studio's five layers give 374 of their 394 properties a domain, and `OVERRIDES` covers the rest it needs. Instrument, which the builder edits, gives 17 of 76, and its SHACL shapes name 54 of the other 59 |
+| CS-Q6 | whether the platform moves from JDK 25 to 27, so the services can take Helidon 27 (CS-B14). **Decided 2026-10-28:** the platform stays on JDK 25 and Helidon 4.5, and moves when Helidon supports the next long-term JDK, 29 |
+| CS-Q7 | how a form places a property with no `rdfs:domain` (CS-D5). **Decided 2026-10-28:** forms read SHACL shapes first and fall back to `rdfs:domain` and `rdfs:range` where no shape names a property. Built as CS13 |
+| CS-Q8 | how a job's status reaches the service without contention on the store (formerly CS-D4, then PDD-13), and whether the store is kept on disk. **Decided 2026-10-28:** one store writer per workspace through a consistent-hash exchange and partition queues with a single active consumer, a pool of writers sized per deployment, TDB2 on disk in the user's data folder, jobs on disk with a retention, samples copied on demand, and export and import as TriG. Recorded in ADR-A136's second amendment of 2026-10-28 (Proposed). Built as CS14 |
 
 ## Planned validation
 

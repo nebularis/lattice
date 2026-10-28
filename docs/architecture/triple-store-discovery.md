@@ -235,6 +235,8 @@ to the store or where it is a matter of capacity.
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
 | [TSD-41](#tsd-41-a-group_concat-over-a-union-of-nested-aggregate-sub-selects-drops-one-groups-contribution-on-oxigraph) | `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects | not specified | keeps every contributing group's value | drops one group's value for one case found so far | Observed |
+| [TSD-42](#tsd-42-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
+| [TSD-43](#tsd-43-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
 
 ## 6. The findings
 
@@ -1442,6 +1444,41 @@ Every other field of every row (`record`, `decision`) agrees between the two eng
 **What it means for LATTICE.** `check:mork-compilers` keeps rdflib as its default engine (see `mork_compilers/engines.py`'s own docstring), where it has always run and where this divergence does not arise: flipping the default here, as skill `lattice-testing`'s usual practice asks (STD-153), would have turned this one passing test into a failing one for a reason this unit does not fix. `check:mork-compilers-conformance` runs Oxigraph explicitly, on demand and before a merge, specifically so this kind of divergence stays visible rather than hidden by never trying the other engine. TD-91 records the compiler-level gap this finding exposes (a generated query whose correctness depends on which engine runs it). STD-274 generalises the lesson: prove conformance before trusting a new default.
 
 **Reproduce it.** `MORK_SPARQL_ENGINE=oxigraph mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures -q`, or `mise run check:mork-compilers-conformance`, which runs the whole suite on Oxigraph.
+
+### TSD-42. Fuseki on TDB2 applies concurrent updates one at a time, and a read does not wait for them
+
+**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS, 2026-10-28, choosing how many store writers the Configuration Studio runs. Not read from Jena's source, though Jena documents TDB2's transactions as multiple readers and a single writer.
+
+**Context.** The studio routes every write through one writer per partition of workspaces (ADR-A136, amendment of 2026-10-28), and the number of writers is a setting. Whether more writers write faster depends on whether the store runs their updates in parallel.
+
+**How we found it.** Eight `INSERT DATA` requests of 20,000 triples each, into eight graphs of one dataset, sent one after another and then all at once from eight threads, twice, with the graphs dropped between runs. Then one read (`ASK`) sent while a 200,000-triple insert ran.
+
+| Run | Sequential | Concurrent | Ratio |
+|---|---|---|---|
+| 1 | 3.09 s | 2.91 s | 0.94 |
+| 2 | 2.66 s | 2.82 s | 1.06 |
+
+The read answered in 8 ms and 3 ms while the insert ran.
+
+**What the store does.** Concurrent updates to one dataset take as long as the same updates in sequence, so they are applied one at a time. A read is not blocked by a write in progress, which is what a reader working on the last committed state gives.
+
+**What it means for LATTICE.** On one TDB2 dataset, more writers do not write faster. They keep a busy workspace from delaying the others in the queue, and they parallelise what a writer does before its update, such as parsing and checking. Write throughput beyond one writer needs a dataset per group of partitions. Reads need no coordination with the writers.
+
+**Reproduce it.** The requests above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
+
+### TSD-43. rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` when it parses
+
+**Evidence:** Observed on rdflib 7.6.0, 2026-10-28, when the studio's writer compared a job graph the worker sent back with the one the service wrote. Not tested on Oxigraph.
+
+**Context.** The service writes `cst:submittedAt "2026-10-28T08:37:17Z"^^xsd:dateTime`. The worker reads the job graph with rdflib and sends it back with its status. The writer refused the update as a change to the service's statements, which it was not.
+
+**How we found it.** Comparing the statements of the job node in the store and in the worker's message, term by term. Every statement was the same except the time, which came back as `"2026-10-28T08:37:17+00:00"`.
+
+**What the store does.** rdflib normalises the lexical form of an `xsd:dateTime` when it parses one, so a graph read and written by rdflib holds a different term with the same value. A comparison by term, such as Jena's isomorphism, sees a change.
+
+**What it means for LATTICE.** A check that a graph round-tripped through rdflib is unchanged compares literals by value (Jena's `Node.sameValueAs`), as the studio's writer now does, never by term. An identity, a hash or a canonical form taken over such a literal must fix its lexical form first, or it differs between a graph written by Jena and the same graph after rdflib.
+
+**Reproduce it.** `Graph().parse(data='<urn:a> <urn:p> "2026-10-28T08:37:17Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .', format="turtle")`, then serialise it.
 
 ## 7. Corrections, and what they taught us
 

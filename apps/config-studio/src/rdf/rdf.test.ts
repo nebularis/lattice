@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { Baseline } from "./baseline";
 import { KINDS, checkReferences, create, items, sectionsFor } from "./editors";
-import { CST, DAL, ELG, Graph, QNT, SH, SKOS, SRF, VOC, iri, literal } from "@lattice/authoring-domain";
+import { CST, DAL, ELG, FND, Graph, QNT, SH, SKOS, SRF, VOC, iri, literal } from "@lattice/authoring-domain";
 import { readJob } from "./report";
 import { split } from "./split";
 import { readPath, writePath } from "./path";
@@ -140,6 +140,7 @@ describe("editing", () => {
       e.add(ns + "p", DAL("appliesTo"), iri(ns + "Nowhere"));
       e.add(ns + "c", SRF("closureBasis"), iri("http://www.w3.org/2004/02/skos/core#broader"));
       e.add(ns + "c", DAL("onViolation"), iri(DAL("Reject")));
+      e.add(ns + "v", FND("hasIdentity"), iri(ns + "an-identity-nobody-describes"));
     });
     const issues = checkReferences(g, baseline, vocab);
     expect(issues.map((i) => [i.severity, i.path])).toEqual([
