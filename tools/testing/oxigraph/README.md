@@ -30,7 +30,7 @@ test asserts, the test reads a flag instead of the version number. Each flag is 
 |---|---|---|---|
 | `SNAPSHOT_UPDATES` | 0.5.12 | a `DELETE`/`INSERT WHERE` removes every deletion before it adds any insertion | [TSD-01](../../../docs/architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied) |
 | `LEFT_GROUPED_ARITHMETIC` | 0.5.12 | `a - b + c` and `a / b / c` are grouped from the left | [TSD-17](../../../docs/architecture/triple-store-discovery.md#tsd-17-a-chain-of-additions-and-subtractions) |
-| `CONSTANT_GRAPH_INLINED_IN_OPTIONAL` | below 0.5.13 | a `GRAPH ?g` inside an `OPTIONAL`, with `?g` bound to a constant IRI by the enclosing group, reads only that graph. A computed `?g` is read as every graph on all three versions | [TSD-45](../../../docs/architecture/triple-store-discovery.md) |
+| `CONSTANT_GRAPH_INLINED_IN_OPTIONAL` | below 0.5.13 | a `GRAPH ?g` inside an `OPTIONAL`, with `?g` bound to a constant IRI by the enclosing group, reads only that graph. A computed `?g` is read as every graph on all three versions | [TSD-42](../../../docs/architecture/triple-store-discovery.md) |
 
 ## Install and run
 

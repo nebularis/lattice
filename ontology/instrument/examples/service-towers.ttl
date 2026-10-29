@@ -243,6 +243,26 @@ ex:customer-occ a pty:RoleOccupancy ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
     pty:inRole ex:Customer ; pty:occupiedBy ex:harbourside .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:harbourside-wording-identity a fnd:PersistentIdentity .
+ex:customer-occ-identity a fnd:PersistentIdentity .
+ex:provider-occ-identity a fnd:PersistentIdentity .
+ex:harbourside-identity a fnd:PersistentIdentity .
+ex:general-identity a fnd:PersistentIdentity .
+ex:tower-a-identity a fnd:PersistentIdentity .
+ex:tower-b-identity a fnd:PersistentIdentity .
+ex:tower-b-dr-identity a fnd:PersistentIdentity .
+ex:tower-c-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:cl-5-2-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:cl-a-1-identity a fnd:PersistentIdentity .
+ex:cl-b-1-identity a fnd:PersistentIdentity .
+ex:cl-b2-1-identity a fnd:PersistentIdentity .
+ex:cl-c-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # | Stated term | Sections | Bound term(s) | Why |

@@ -34,5 +34,4 @@ ADR-A76
 
 # Defined on the ledger branch docs/placement-vehicles-structure, whose rows took these numbers before
 # the index remediation took 281 to 283 on main. Remove both entries when that branch merges.
-STD-279
 STD-280

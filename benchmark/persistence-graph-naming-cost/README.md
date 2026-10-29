@@ -2,7 +2,7 @@
 
 # Graph naming cost
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures what a `GRAPH ?g` inside an `OPTIONAL` costs on rdflib and Oxigraph, and what that makes the generated named-graph replace cost under each graph naming of the persistence compiler. The finding it supports is [TSD-45](../../docs/architecture/triple-store-discovery.md), and the decision it informs is PDD-17 in the pending design decisions register.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures what a `GRAPH ?g` inside an `OPTIONAL` costs on rdflib and Oxigraph, and what that makes the generated named-graph replace cost under each graph naming of the persistence compiler. The finding it supports is [TSD-42](../../docs/architecture/triple-store-discovery.md), and the decision it informs is PDD-17 in the pending design decisions register.
 
 ## What it measures
 
@@ -30,7 +30,7 @@ It is never a dependency of `check`. The task installs the Oxigraph test-support
 
 ## Another Oxigraph version
 
-The task runs the version the checkout has. TSD-45 compares 0.5.11, 0.5.12 and 0.5.13. To repeat that, make a scratch environment per version with `mise exec -- python -m venv <dir>`, install `pyoxigraph==<version>`, `rdflib` and `pytest` into it with `<dir>/bin/python -m pip install`, and run `PYTHONPATH=tools/persistence/src:packages/persistence/python/src:tools/testing/oxigraph/src mise exec -- <dir>/bin/python benchmark/persistence-graph-naming-cost/check.py` from the repository root. Never install another version into the checkout's own `.venv`.
+The task runs the version the checkout has. TSD-42 compares 0.5.11, 0.5.12 and 0.5.13. To repeat that, make a scratch environment per version with `mise exec -- python -m venv <dir>`, install `pyoxigraph==<version>`, `rdflib` and `pytest` into it with `<dir>/bin/python -m pip install`, and run `PYTHONPATH=tools/persistence/src:packages/persistence/python/src:tools/testing/oxigraph/src mise exec -- <dir>/bin/python benchmark/persistence-graph-naming-cost/check.py` from the repository root. Never install another version into the checkout's own `.venv`.
 
 | File | Role |
 |---|---|

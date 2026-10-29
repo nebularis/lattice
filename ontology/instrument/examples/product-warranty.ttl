@@ -181,3 +181,16 @@ ex:misuse-exclusion a ins:Exclusion ;
     ins:counterparty ex:owner-occ ;
     ins:excepts ex:repair ;
     ins:scope ex:misuse-not-defect .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:k2-55017-wording-identity a fnd:PersistentIdentity .
+ex:manufacturer-occ-identity a fnd:PersistentIdentity .
+ex:owner-occ-identity a fnd:PersistentIdentity .
+ex:k2-55017-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:misuse-not-defect fnd:hasIdentity ex:misuse-not-defect-identity .
+ex:misuse-not-defect-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

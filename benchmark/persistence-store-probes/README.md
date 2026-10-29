@@ -2,7 +2,7 @@
 
 # Store probes: a graph variable bound outside an OPTIONAL
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md), for the store finding [TSD-42](../../docs/architecture/triple-store-discovery.md#tsd-42-a-graph-variable-bound-outside-an-optional-makes-oxigraph-0513-read-every-graph) and the open question TSD-Q22. It replaces probe P3 of `tools/persistence/tests/test_store_probes.py`, a timing assertion that `check:persistence` no longer carries.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md), for the store finding [TSD-42](../../docs/architecture/triple-store-discovery.md#tsd-42-oxigraph-reads-every-graph-for-a-graph-g-whose-g-is-bound-outside-a-computed-name-on-every-version-and-a-constant-one-inside-an-optional-from-0513) and the open question TSD-Q22. It replaces probe P3 of `tools/persistence/tests/test_store_probes.py`, a timing assertion that `check:persistence` no longer carries.
 
 The named-graph replace's sweep reads one root's graph, with the graph IRI bound outside a left join. Whether an engine passes that binding into the `GRAPH ?g` pattern decides if the sweep reads one graph or every graph in the store. Four forms count the 3,000 triples of one graph.
 

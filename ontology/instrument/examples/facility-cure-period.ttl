@@ -287,3 +287,33 @@ ex:accelerate a ins:Power ;
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-22-1 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-1 .
 ex:term-22-2 a ins:Term ; ins:boundIn ex:kestrel-v1 ; ins:boundFrom tmpl:term-22-2 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:kestrel-wording-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:lender-occ-identity a fnd:PersistentIdentity .
+tmpl:cured fnd:hasIdentity tmpl:cured-identity .
+tmpl:cured-identity a fnd:PersistentIdentity .
+tmpl:enter-cure-period fnd:hasIdentity tmpl:enter-cure-period-identity .
+tmpl:enter-cure-period-identity a fnd:PersistentIdentity .
+tmpl:enter-default fnd:hasIdentity tmpl:enter-default-identity .
+tmpl:enter-default-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-begins fnd:hasIdentity tmpl:force-majeure-begins-identity .
+tmpl:force-majeure-begins-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-ends fnd:hasIdentity tmpl:force-majeure-ends-identity .
+tmpl:force-majeure-ends-identity a fnd:PersistentIdentity .
+ex:kestrel-identity a fnd:PersistentIdentity .
+ex:sec-22-identity a fnd:PersistentIdentity .
+ex:sec-23-identity a fnd:PersistentIdentity .
+ex:sec-7-identity a fnd:PersistentIdentity .
+tmpl:default-regime-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-regime-identity a fnd:PersistentIdentity .
+ex:cl-22-1-identity a fnd:PersistentIdentity .
+ex:cl-22-2-identity a fnd:PersistentIdentity .
+ex:cl-23-1-identity a fnd:PersistentIdentity .
+ex:cl-7-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:duration-space fnd:hasIdentity ex:duration-space-identity .
+ex:duration-space-identity a fnd:PersistentIdentity .
+ex:leverage-space fnd:hasIdentity ex:leverage-space-identity .
+ex:leverage-space-identity a fnd:PersistentIdentity .

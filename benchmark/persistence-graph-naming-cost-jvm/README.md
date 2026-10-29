@@ -2,7 +2,7 @@
 
 # Graph naming cost on Jena and RDF4J
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/persistence-graph-naming-cost](../persistence-graph-naming-cost/README.md) on Jena (an in-memory dataset and an in-memory TDB2 store) and on RDF4J's `MemoryStore`, so that the cost of a `GRAPH ?g` inside an `OPTIONAL` and of the generated named-graph replace is known beyond rdflib and Oxigraph. The finding it supports is [TSD-45](../../docs/architecture/triple-store-discovery.md), and the decision it informs is PDD-17 in the pending design decisions register.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/persistence-graph-naming-cost](../persistence-graph-naming-cost/README.md) on Jena (an in-memory dataset and an in-memory TDB2 store) and on RDF4J's `MemoryStore`, so that the cost of a `GRAPH ?g` inside an `OPTIONAL` and of the generated named-graph replace is known beyond rdflib and Oxigraph. The finding it supports is [TSD-42](../../docs/architecture/triple-store-discovery.md), and the decision it informs is PDD-17 in the pending design decisions register.
 
 ## How it runs
 

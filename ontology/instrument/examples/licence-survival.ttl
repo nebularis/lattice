@@ -268,3 +268,26 @@ ex:indemnify a ins:Obligation ;
     ins:obligor ex:licensor-occ ; ins:obligee ex:licensee-occ ;
     ins:activity ins-voc:Indemnify ;
     ins:arisesOn tmpl:on-claim .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:quarry-wording-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+tmpl:give-notice fnd:hasIdentity tmpl:give-notice-identity .
+tmpl:give-notice-identity a fnd:PersistentIdentity .
+tmpl:notice-runs-out fnd:hasIdentity tmpl:notice-runs-out-identity .
+tmpl:notice-runs-out-identity a fnd:PersistentIdentity .
+ex:quarry-identity a fnd:PersistentIdentity .
+ex:sec-11-identity a fnd:PersistentIdentity .
+ex:sec-13-identity a fnd:PersistentIdentity .
+ex:sec-14-identity a fnd:PersistentIdentity .
+tmpl:notice-regime-identity a fnd:PersistentIdentity .
+ex:cl-11-1-identity a fnd:PersistentIdentity .
+ex:cl-11-4-identity a fnd:PersistentIdentity .
+ex:cl-13-1-identity a fnd:PersistentIdentity .
+ex:cl-14-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .

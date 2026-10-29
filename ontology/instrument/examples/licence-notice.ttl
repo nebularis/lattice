@@ -246,3 +246,27 @@ ex:sublicensing-excluded a ins:Exclusion ;
     ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
     ins:excepts ex:grant-sublicences ;
     ins:appliesInState tmpl:notice-period .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:fernwood-wording-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+tmpl:give-notice fnd:hasIdentity tmpl:give-notice-identity .
+tmpl:give-notice-identity a fnd:PersistentIdentity .
+tmpl:notice-runs-out fnd:hasIdentity tmpl:notice-runs-out-identity .
+tmpl:notice-runs-out-identity a fnd:PersistentIdentity .
+tmpl:terminate-during-notice fnd:hasIdentity tmpl:terminate-during-notice-identity .
+tmpl:terminate-during-notice-identity a fnd:PersistentIdentity .
+tmpl:terminate-from-in-force fnd:hasIdentity tmpl:terminate-from-in-force-identity .
+tmpl:terminate-from-in-force-identity a fnd:PersistentIdentity .
+ex:fernwood-identity a fnd:PersistentIdentity .
+ex:sec-11-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+tmpl:notice-regime-identity a fnd:PersistentIdentity .
+ex:cl-11-1-identity a fnd:PersistentIdentity .
+ex:cl-11-2-identity a fnd:PersistentIdentity .
+ex:cl-11-3-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:duration-space fnd:hasIdentity ex:duration-space-identity .
+ex:duration-space-identity a fnd:PersistentIdentity .

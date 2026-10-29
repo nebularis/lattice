@@ -168,3 +168,25 @@ ex:v-lender-count a wrd:VariableValue ;
 ex:v-jurisdictions a wrd:VariableValue ;
     wrd:forVariable ex:var-jurisdictions ;
     wrd:value ex:uk , ex:ie , ex:fr .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:acme-facility-identity a fnd:PersistentIdentity .
+ex:slot-5-2-identity a fnd:PersistentIdentity .
+ex:sec-12-identity a fnd:PersistentIdentity .
+ex:sec-5-identity a fnd:PersistentIdentity .
+ex:sec-9-identity a fnd:PersistentIdentity .
+ex:when-syndicated fnd:hasIdentity ex:when-syndicated-identity .
+ex:when-syndicated-identity a fnd:PersistentIdentity .
+ex:cl-12-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:cl-5-2a-identity a fnd:PersistentIdentity .
+ex:cl-5-2b-identity a fnd:PersistentIdentity .
+ex:cl-5-3-identity a fnd:PersistentIdentity .
+ex:cl-9-1-identity a fnd:PersistentIdentity .
+ex:var-jurisdictions-identity a fnd:PersistentIdentity .
+ex:jurisdiction-contract-identity a fnd:PersistentIdentity .
+ex:jurisdictions-identity a fnd:PersistentIdentity .
+ex:gv-lender-count-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:count-space fnd:hasIdentity ex:count-space-identity .
+ex:count-space-identity a fnd:PersistentIdentity .

@@ -61,7 +61,7 @@ def _p1_kept(rows: str) -> bool:
 
 
 def _optional_graph_ratio(bound: str, triples: int = 3000, graphs: int = 100) -> float:
-    """The best of three timings of a ``GRAPH ?g`` inside an ``OPTIONAL``, over ``graphs`` graphs against one (TSD-04, TSD-45)."""
+    """The best of three timings of a ``GRAPH ?g`` inside an ``OPTIONAL``, over ``graphs`` graphs against one (TSD-04, TSD-42)."""
     import time
 
     def timed(count: int) -> float:
@@ -83,7 +83,7 @@ def _optional_graph_ratio(bound: str, triples: int = 3000, graphs: int = 100) ->
 
 def test_ox_t6_each_version_flag_says_what_the_installed_pyoxigraph_does():
     """The flags are read from the version number. This holds them to the behaviour, so a later release that changes either again fails here
-    and the triple-store record is revisited (TSD-01, TSD-17, TSD-45)."""
+    and the triple-store record is revisited (TSD-01, TSD-17, TSD-42)."""
     from lattice_testing_oxigraph import CONSTANT_GRAPH_INLINED_IN_OPTIONAL, LEFT_GROUPED_ARITHMETIC, SNAPSHOT_UPDATES, VERSION
 
     assert len(VERSION) == 3 and all(isinstance(n, int) for n in VERSION)
@@ -93,4 +93,4 @@ def test_ox_t6_each_version_flag_says_what_the_installed_pyoxigraph_does():
     assert (value == 9) is LEFT_GROUPED_ARITHMETIC
     constant = _optional_graph_ratio("<urn:g:0>") < 8
     assert constant is CONSTANT_GRAPH_INLINED_IN_OPTIONAL
-    assert _optional_graph_ratio('IRI(CONCAT("urn:g:", ENCODE_FOR_URI(STR("0")), ""))') > 8, "a computed ?g was passed into the OPTIONAL, TSD-45 needs revisiting"
+    assert _optional_graph_ratio('IRI(CONCAT("urn:g:", ENCODE_FOR_URI(STR("0")), ""))') > 8, "a computed ?g was passed into the OPTIONAL, TSD-42 needs revisiting"

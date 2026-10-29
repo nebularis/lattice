@@ -276,3 +276,27 @@ ex:require-resumption a ins:Power ;
 # A term whose only content is a regime is bound too, as every stated term is
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-14-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-14-1 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:halden-wording-identity a fnd:PersistentIdentity .
+ex:buyer-occ-identity a fnd:PersistentIdentity .
+ex:supplier-occ-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-begins fnd:hasIdentity tmpl:force-majeure-begins-identity .
+tmpl:force-majeure-begins-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-ends fnd:hasIdentity tmpl:force-majeure-ends-identity .
+tmpl:force-majeure-ends-identity a fnd:PersistentIdentity .
+tmpl:resume-deliveries fnd:hasIdentity tmpl:resume-deliveries-identity .
+tmpl:resume-deliveries-identity a fnd:PersistentIdentity .
+tmpl:suspend-deliveries fnd:hasIdentity tmpl:suspend-deliveries-identity .
+tmpl:suspend-deliveries-identity a fnd:PersistentIdentity .
+ex:halden-identity a fnd:PersistentIdentity .
+ex:sec-14-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-8-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-regime-identity a fnd:PersistentIdentity .
+tmpl:suspension-regime-identity a fnd:PersistentIdentity .
+ex:cl-14-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-8-1-identity a fnd:PersistentIdentity .
+ex:cl-8-2-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

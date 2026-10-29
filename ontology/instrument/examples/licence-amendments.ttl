@@ -316,6 +316,36 @@ ex:ending-licensee a ins:Assent ; ins:assentBy ex:licensee-occ ; ins:assentTo ex
 
 ex:licence-v2 fnd:supersededBy ex:licence-v3 .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:wording-identity a fnd:PersistentIdentity .
+ex:guarantor-occ-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+ex:end fnd:hasIdentity ex:end-identity .
+ex:end-identity a fnd:PersistentIdentity .
+tmpl:lapse fnd:hasIdentity tmpl:lapse-identity .
+tmpl:lapse-identity a fnd:PersistentIdentity .
+tmpl:take-effect fnd:hasIdentity tmpl:take-effect-identity .
+tmpl:take-effect-identity a fnd:PersistentIdentity .
+ex:licence-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-5-identity a fnd:PersistentIdentity .
+ex:end-regime-identity a fnd:PersistentIdentity .
+tmpl:formation-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-1-2-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:ending-para-1-identity a fnd:PersistentIdentity .
+ex:release-para-1-identity a fnd:PersistentIdentity .
+ex:licence-dates-identity a fnd:PersistentIdentity .
+ex:ending-letter-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:release-letter-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # Each version binds the stated meaning of exactly the elements its wording

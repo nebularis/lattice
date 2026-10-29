@@ -226,6 +226,16 @@ ex:loss-c ex:at ex:unit-9 ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-20T13:00:00Z"^^xsd:dateTime ] ;
     fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-21T10:00:00Z"^^xsd:dateTime ] .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:wording-identity a fnd:PersistentIdentity .
+ex:insured-occ-identity a fnd:PersistentIdentity .
+ex:insurer-occ-identity a fnd:PersistentIdentity .
+ex:policy-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:endorsement-1-para-1-identity a fnd:PersistentIdentity .
+ex:endorsement-1-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 
 ex:v1-term-2-1 a ins:Term ; ins:boundIn ex:policy-v1 ; ins:boundFrom ex:term-2-1-v1 .

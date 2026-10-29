@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""What a `GRAPH ?g` inside an `OPTIONAL` costs on rdflib and Oxigraph, and what that makes the generated named-graph replace cost (ADR-A124, TSD-04, TSD-45).
+"""What a `GRAPH ?g` inside an `OPTIONAL` costs on rdflib and Oxigraph, and what that makes the generated named-graph replace cost (ADR-A124, TSD-04, TSD-42).
 
 Two measurements.
 

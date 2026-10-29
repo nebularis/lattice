@@ -228,3 +228,22 @@ ex:termination-excluded a ins:Exclusion ;
 # A term whose only content is a regime is bound too, as every stated term is
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-20-1 a ins:Term ; ins:boundIn ex:larkspur-v1 ; ins:boundFrom tmpl:term-20-1 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:larkspur-wording-identity a fnd:PersistentIdentity .
+ex:customer-occ-identity a fnd:PersistentIdentity .
+ex:provider-occ-identity a fnd:PersistentIdentity .
+tmpl:raise-dispute fnd:hasIdentity tmpl:raise-dispute-identity .
+tmpl:raise-dispute-identity a fnd:PersistentIdentity .
+tmpl:settle-dispute fnd:hasIdentity tmpl:settle-dispute-identity .
+tmpl:settle-dispute-identity a fnd:PersistentIdentity .
+ex:larkspur-identity a fnd:PersistentIdentity .
+ex:sec-16-identity a fnd:PersistentIdentity .
+ex:sec-20-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+tmpl:dispute-regime-identity a fnd:PersistentIdentity .
+ex:cl-16-1-identity a fnd:PersistentIdentity .
+ex:cl-16-2-identity a fnd:PersistentIdentity .
+ex:cl-20-1-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

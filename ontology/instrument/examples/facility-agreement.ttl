@@ -311,3 +311,22 @@ ex:accelerate a ins:Power ;
     ins:holder ex:lenders ;
     ins:counterparty ex:borrower-occ ;
     ins:activity ins-voc:DeclareDue .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:cl-10-1-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:cl-7-1-identity a fnd:PersistentIdentity .
+ex:cl-8-1-identity a fnd:PersistentIdentity .
+ex:lenders-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:lender-1-occ-identity a fnd:PersistentIdentity .
+ex:lender-2-occ-identity a fnd:PersistentIdentity .
+ex:trustee-occ-identity a fnd:PersistentIdentity .
+ex:leverage-space fnd:hasIdentity ex:leverage-space-identity .
+ex:leverage-space-identity a fnd:PersistentIdentity .
+ex:acme-wording-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:sec-10-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:sec-7-identity a fnd:PersistentIdentity .
+ex:sec-8-identity a fnd:PersistentIdentity .

@@ -226,3 +226,28 @@ ex:provide-services a ins:Obligation ;
 # A term whose only content is a regime is bound too, as every stated term is
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-2-1 a ins:Term ; ins:boundIn ex:kittiwake-v1 ; ins:boundFrom tmpl:term-2-1 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:kittiwake-wording-identity a fnd:PersistentIdentity .
+ex:customer-occ-identity a fnd:PersistentIdentity .
+ex:provider-occ-identity a fnd:PersistentIdentity .
+tmpl:close-window fnd:hasIdentity tmpl:close-window-identity .
+tmpl:close-window-identity a fnd:PersistentIdentity .
+tmpl:elect-not-to-renew fnd:hasIdentity tmpl:elect-not-to-renew-identity .
+tmpl:elect-not-to-renew-identity a fnd:PersistentIdentity .
+tmpl:expire fnd:hasIdentity tmpl:expire-identity .
+tmpl:expire-identity a fnd:PersistentIdentity .
+tmpl:renew fnd:hasIdentity tmpl:renew-identity .
+tmpl:renew-identity a fnd:PersistentIdentity .
+ex:kittiwake-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+tmpl:election-regime-identity a fnd:PersistentIdentity .
+tmpl:period-regime-identity a fnd:PersistentIdentity .
+tmpl:window-region-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-2-2-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .

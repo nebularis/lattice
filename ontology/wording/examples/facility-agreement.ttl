@@ -154,3 +154,18 @@ ex:document-kinds a voc:ConceptScheme ;
 ex:repayment-schedule a skos:Concept ;
     skos:prefLabel "Repayment schedule"@en ;
     skos:inScheme ex:document-kinds .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:annex-1-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:cl-4-2-identity a fnd:PersistentIdentity .
+ex:def-borrower-identity a fnd:PersistentIdentity .
+ex:var-margin-identity a fnd:PersistentIdentity .
+ex:document-kinds-identity a fnd:PersistentIdentity .
+ex:repayment-plan-identity a fnd:PersistentIdentity .
+ex:facility-wording-identity a fnd:PersistentIdentity .
+ex:annex-1-ref-identity a fnd:PersistentIdentity .
+ex:annual-rate-space fnd:hasIdentity ex:annual-rate-space-identity .
+ex:annual-rate-space-identity a fnd:PersistentIdentity .

@@ -124,3 +124,10 @@ ex:assent-larchmont a ins:Assent ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-02-20T16:00:00Z"^^xsd:dateTime ] ;
     fnd:hasEvidence [ a fnd:Evidence ;
         fnd:recordedAt "2028-02-21T08:30:00Z"^^xsd:dateTime ; fnd:assertedBy ex:agent-desk ] .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:larchmont-occ-identity a fnd:PersistentIdentity .
+ex:northgate-occ-identity a fnd:PersistentIdentity .
+ex:tidewater-occ-identity a fnd:PersistentIdentity .
+ex:acme-identity a fnd:PersistentIdentity .

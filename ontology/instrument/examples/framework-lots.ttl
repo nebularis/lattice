@@ -450,6 +450,50 @@ ex:calloff-0057-v1 a ins:Instrument ;
     ins:party ex:authority-occ , ex:birch-occ , ex:cedar-occ ;
     ins:boundUnder ex:award-lot-3 .                   # its section is Lot 3 (I15)
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:calloff-0042-wording-identity a fnd:PersistentIdentity .
+ex:calloff-0057-wording-identity a fnd:PersistentIdentity .
+ex:framework-wording-identity a fnd:PersistentIdentity .
+ex:ash-occ-identity a fnd:PersistentIdentity .
+ex:authority-occ-identity a fnd:PersistentIdentity .
+ex:birch-occ-identity a fnd:PersistentIdentity .
+ex:cedar-occ-identity a fnd:PersistentIdentity .
+ex:dogwood-occ-identity a fnd:PersistentIdentity .
+ex:lot-3-suppliers-identity a fnd:PersistentIdentity .
+tmpl:withdraw fnd:hasIdentity tmpl:withdraw-identity .
+tmpl:withdraw-identity a fnd:PersistentIdentity .
+ex:calloff-0042-identity a fnd:PersistentIdentity .
+ex:calloff-0057-identity a fnd:PersistentIdentity .
+ex:framework-identity a fnd:PersistentIdentity .
+ex:lot-1-identity a fnd:PersistentIdentity .
+ex:lot-2-identity a fnd:PersistentIdentity .
+ex:lot-3-identity a fnd:PersistentIdentity .
+ex:lot-4-identity a fnd:PersistentIdentity .
+ex:part-1-identity a fnd:PersistentIdentity .
+ex:part-2-identity a fnd:PersistentIdentity .
+ex:sch-1-identity a fnd:PersistentIdentity .
+tmpl:lot-4-regime-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-3-2-identity a fnd:PersistentIdentity .
+ex:cl-l1-1-identity a fnd:PersistentIdentity .
+ex:cl-l2-1-identity a fnd:PersistentIdentity .
+ex:cl-l3-1-identity a fnd:PersistentIdentity .
+ex:cl-l4-1-identity a fnd:PersistentIdentity .
+ex:cl-l4-2-identity a fnd:PersistentIdentity .
+ex:cl-l4-3-identity a fnd:PersistentIdentity .
+ex:order-form-identity a fnd:PersistentIdentity .
+ex:row-s1-1-identity a fnd:PersistentIdentity .
+ex:row-s1-2-identity a fnd:PersistentIdentity .
+ex:row-s1-3-identity a fnd:PersistentIdentity .
+ex:row-s1-4-identity a fnd:PersistentIdentity .
+ex:var-s1-1-supplier-identity a fnd:PersistentIdentity .
+ex:var-s1-2-supplier-identity a fnd:PersistentIdentity .
+ex:var-s1-3-supplier-identity a fnd:PersistentIdentity .
+ex:var-s1-4-supplier-identity a fnd:PersistentIdentity .
+ex:calloff-form-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # Built on demand from the form and the instance, and cached as need
