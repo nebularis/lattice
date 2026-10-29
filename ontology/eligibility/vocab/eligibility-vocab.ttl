@@ -152,3 +152,10 @@ elg:L18 a elg:Law ;
 
 # The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
 [ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .
+
+# The five reference profiles are published terms, versioned by the layer's release (Foundation section 4).
+elg:E1 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E2 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E3 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E4 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E5 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .

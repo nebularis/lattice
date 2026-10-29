@@ -96,7 +96,9 @@ shapes = ["shapes/constraints.ttl", "shapes/structural.ttl"]
 
 **Four focused mixins.** An earlier pass considered a single `fnd:Governed` class carrying all four capabilities at once. This was rejected as it would force every class adopting any one capability to adopt all four, which overclaims, whereas independent, non-disjoint mixins let a downstream class pick exactly what it needs.
 
-**A meaning-bearing edge from a versioned thing is owned or pinned.** A versioned thing's past versions are only reproducible if what they point at cannot change under them. So an object property whose object is part of its subject's meaning is marked `fnd:meaningBearing true`, and the thing at its end is itself versioned, content-addressed, or minted under the subject so that it is written and swept with it. A reference by identity to a mutable node is the defect: editing the node rewrites every past judgement made with the subject. The mark is read twice. `shapes/constraints.ttl` warns on data where such an edge leads to a node that is neither versioned nor minted under the subject, and a Persistence profile refuses to compile such an edge as a reference by identity, so it is either owned by the subject's aggregate or pinned to one version of its target (ADR-A142).
+**A meaning-bearing edge from a versioned thing is owned or pinned.** A versioned thing's past versions are only reproducible if what they point at cannot change under them. So an object property whose object is part of its subject's meaning is marked `fnd:meaningBearing true`, and the thing at its end is itself versioned, content-addressed, or minted under the subject so that it is written and swept with it. A reference by identity to a mutable node is the defect: editing the node rewrites every past judgement made with the subject. The mark is read twice. `shapes/constraints.ttl` warns on data where such an edge leads to a node that is neither versioned, minted under the subject nor a published term, and a Persistence profile refuses to compile such an edge as a reference by identity, so it is either owned by the subject's aggregate or pinned to one version of its target (ADR-A142).
+
+**A published term is versioned by its release.** An individual that an ontology document declares, such as a layer's reference profile, a published state space or a scheme contract, is a public vocabulary term. Its identity is its IRI and its versions are the releases of the ontology that declares it, so it carries no `fnd:hasIdentity` chain of its own, and it says which ontology that is with `rdfs:isDefinedBy`. `fnd:VersionedShape` exempts a term so marked, and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe, since a release changes every published term at once and nothing edits one in a store. An example is not a published term. It shows the data an adopter copies into a store and then edits, so the rules hold on it. An adopter who copies a published term into a store to edit it drops the mark and mints an identity ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)).
 
 **`GovernanceState` is open at the OWL level, closed in SHACL.** OWL's open-world assumption sees us push closed-world constraints into `shapes/constraints.ttl` via `sh:in` restrictions over named individuals. The class exists here so the property `fnd:hasGovernanceState` has somewhere to range over; the enumeration itself is a different layer's concern, per the established `spec/` vs `vocab/` vs `shapes/` architectural boundary.
 
@@ -132,12 +134,12 @@ fnd:meaningBearing a owl:AnnotationProperty ;
 
 **Definition.** An individual representing a specific, identified state of some persistent thing.
 
-**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`.
+**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`. A published term of a versioned class, one an ontology document declares and marks `rdfs:isDefinedBy` that ontology, carries no identity of its own. Its identity is its IRI and its versions are the ontology's releases (§4).
 
 ```turtle-spec
 fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy. A published term of a versioned class, one an ontology document declares and marks rdfs:isDefinedBy that ontology, carries no identity of its own: its identity is its IRI and its versions are the ontology's releases (section 4)." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -857,12 +859,13 @@ fnd:MeaningBearingEdgeShape a sh:NodeShape ;
     sh:targetSubjectsOf fnd:hasIdentity ;
     sh:severity sh:Warning ;
     sh:sparql [
-        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned nor minted under it, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned, minted under it nor a published term, so editing {?o} changes what a past version of {$this} meant." ;
         sh:select """
             SELECT $this ?p ?o WHERE {
                 $this ?p ?o .
                 ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
                 FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER NOT EXISTS { ?o <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?ontology }
                 FILTER (!STRSTARTS(STR(?o), STR($this)))
             }
         """
@@ -877,14 +880,16 @@ The structural shapes, in `shapes/structural.ttl`, check the cardinalities the O
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 fnd:VersionedShape a sh:NodeShape ;
     sh:targetClass fnd:Versioned ;
-    sh:property [
-        sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ;
-        sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity."
-    ] .
+    sh:or (
+        [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ]
+        [ sh:path rdfs:isDefinedBy ; sh:minCount 1 ; sh:nodeKind sh:IRI ]
+    ) ;
+    sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity, unless it is a published term, rdfs:isDefinedBy the ontology that declares it, whose identity is its IRI and whose versions are that ontology's releases." .
 
 fnd:EvidenceShape a sh:NodeShape ;
     sh:targetClass fnd:Evidence ;
@@ -914,7 +919,7 @@ fnd:GovernableShape a sh:NodeShape ;
 
 `fnd:SupersessionAcyclicShape` walks the chain from each of its members, so a chain of n versions costs n walks of at most n steps, the pattern Ledger uses for `ldg:partOf`. `fnd:TemporalScopeShape` is plain SHACL over every scope.
 
-`fnd:MeaningBearingEdgeShape` runs one query per versioned focus node over its outgoing edges, joined to the `fnd:meaningBearing` annotations, so the adopter's ontology is in the data graph when it runs, as for the key shapes. It warns rather than fails, since a content-addressed object that is neither versioned nor minted under the subject is a legitimate case the data cannot distinguish. The compile-time refusal in Persistence is the exact check (§4).
+`fnd:MeaningBearingEdgeShape` runs one query per versioned focus node over its outgoing edges, joined to the `fnd:meaningBearing` annotations, so the adopter's ontology is in the data graph when it runs, as for the key shapes. It warns rather than fails, since a content-addressed object that is neither versioned nor minted under the subject is a legitimate case the data cannot distinguish. A published term at the edge's end is exempt by its `rdfs:isDefinedBy` mark, since its ontology's release changes it with every other term at once (§4). The compile-time refusal in Persistence is the exact check (§4).
 
 ### 8.8 Worked example and related documents
 
@@ -1010,6 +1015,7 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 ## 13. Release notes
 
 - **Next release** (additive). `fnd:estimatedStart` on a temporal scope, validity periods stated half-open with zoned instants and checked by `fnd:TemporalScopeShape`, `fnd:SupersessionAcyclicShape`, and `fnd:meaningBearing` with `fnd:MeaningBearingEdgeShape` ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)).
+- **Next release** (additive). A published term of a versioned class, `rdfs:isDefinedBy` the ontology that declares it, carries no identity of its own. `fnd:VersionedShape` exempts it and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)).
 - **Next release** (breaking, [ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in the same release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)).
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.

@@ -3132,6 +3132,7 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Activity scheme contract"@en ;
@@ -3139,12 +3140,14 @@ ins-voc:ActivityContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:Activities .
 
 ins-voc:LocationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:LocationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
 
 ins-voc:EncodingStatuses a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:EncodingStatuses-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Encoding statuses"@en ;
@@ -3155,12 +3158,14 @@ ins-voc:NoMeaning a skos:Concept ; skos:inScheme ins-voc:EncodingStatuses ;
 	skos:definition "Reviewed, and binding nobody: a note for information, guidance, an example."@en .
 
 ins-voc:TermClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Term classification scheme contract"@en ;
 	voc:constrainsProperty ins:classification .
 
 ins-voc:Activities a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:Activities-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline activities"@en ;
@@ -3247,6 +3252,7 @@ The state kinds:
 
 ```turtle-vocab
 ins-voc:StateKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "State kind scheme contract"@en ;
@@ -3254,6 +3260,7 @@ ins-voc:StateKindContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:StateKinds .
 
 ins-voc:StateKinds a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKinds-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline state kinds"@en ;
@@ -3297,6 +3304,7 @@ The context roles, and the instrument as a whole:
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 ins-voc:ContextRoles a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ContextRoles-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Instrument context roles"@en ;

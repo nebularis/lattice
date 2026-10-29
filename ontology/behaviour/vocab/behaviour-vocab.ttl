@@ -49,8 +49,8 @@ bhv:External a bhv:TransitionType ;
 bhv:Sequential a bhv:AbsorptionPolicy .
 bhv:Proportional a bhv:AbsorptionPolicy .
 
-bhv:B-P1 a bhv:OperationalProfile ; rdfs:comment "Direct transition-evaluation profile" .
-bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluation profile" .
+bhv:B-P1 a bhv:OperationalProfile ; rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ; rdfs:comment "Direct transition-evaluation profile" .
+bhv:B-P2 a bhv:OperationalProfile ; rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ; rdfs:comment "Sequential allowance-evaluation profile" .
 
 # ---- The occasion state space: a fixed core, refined by sub-states ----------
 # Its transitions are the runtime evaluator's, derived from the legal
@@ -61,6 +61,7 @@ bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluatio
 # from, so reinstatement is deep history into it (C11a-Q1).
 
 bhv:OccasionStates a bhv:StateSpace ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ;
 	fnd:hasIdentity bhv:OccasionStates-identity ;
 	bhv:initialState bhv:Live ;
 	rdfs:label "Occasion states"@en ;
@@ -83,6 +84,7 @@ bhv:Suspended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
 	rdfs:comment "The relation is suspended for the case. Entered from bhv:Live. Reinstatement enters bhv:Live by deep history, resuming the state, and any refinement of it, the suspension interrupted (law B5). The evaluator's." .
 
 bhv:LiveStates a bhv:StateSpace ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ;
 	fnd:hasIdentity bhv:LiveStates-identity ;
 	bhv:regionOf bhv:Live ;
 	bhv:initialState bhv:Pending ;
