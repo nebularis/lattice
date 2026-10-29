@@ -38,7 +38,7 @@ The rest of this review details each point, then gives a suggested amended polic
 | **Alias for "current"** | Separating "which revision is live" from revision identity is correct. It keeps the only mutable state in one pointer, which the guide can then protect with CAS (§30.1). |
 | **Minting strategy taxonomy with a risk column** | Explicit and teachable. The "surrogate is never idempotent" warning is exactly the K4 failure mode the guide calls "the one that bites in production." |
 | **No PII in IRIs** | Correct and important. IRIs are copied into logs, dumps, URLs, caches and third-party systems, and cannot practically be erased. |
-| **No versions in entity IRIs** | Correct for entities and lineages ("Cool URIs don't change"). Versioning belongs in `fnd:Version` nodes. |
+| **No versions in entity IRIs** | Correct for entities and lineages ("Cool URIs don't change"). Versioning belongs in `fnd:Versioned` nodes. |
 | **Surrogate use requires declaration (G9)** | Good governance. It forces the "will re-ingestion converge?" question at plan-review time. |
 | **Validator and grammar tests before any dataset (P0.3.7)** | Correct sequencing. Identity mistakes are the most expensive kind to fix later. |
 
@@ -165,13 +165,13 @@ Relatedly, the mitigation "add a source-system discriminator" prevents cross-sou
 
 A content-addressed revision identifies **a content state, not an event**. If a graph goes A → B → A (a revert), the third registration yields the *existing* revision IRI for A.
 
-If `fnd:Version` nodes are chained with `fnd:supersededBy`, you get A supersededBy B, and B supersededBy A: a cycle. Any "latest version" or "history" traversal loops or gives nonsense. The alias `/current` repointing back to A is fine; the version graph is not.
+If `fnd:Versioned` nodes are chained with `fnd:supersededBy`, you get A supersededBy B, and B supersededBy A: a cycle. Any "latest version" or "history" traversal loops or gives nonsense. The alias `/current` repointing back to A is fine, the version graph is not.
 
 The guide's receipts (`urn:rev:{aggregate}/{seq}`) are **event**-identified, which is the other half of the model.
 
 **Recommendation:** Make the distinction explicit.
 
-- **Revision IRI** is *content* identity (`fnd:Version`, a snapshot).
+- **Revision IRI** is *content* identity (`fnd:Versioned`, a snapshot).
 - **Promotion or receipt IRI** is *event* identity (e.g., `pat:Revision`, or a `prov:Activity`).
 - History (`supersededBy`, `prevRev`) chains *events*, and each event points at a content revision.
 
@@ -268,7 +268,7 @@ The "reified span / extraction candidate" surrogate case may also be better mode
 | OWL 2 ontology IRI / version IRI | ✅ Strong alignment | Lineage maps to ontology IRI and revision to version IRI. Rule 2 must allow version-bearing version IRIs (F-4). Define how in-graph `owl:Ontology` headers relate to the registry's revision IRI (F-14 self-reference). |
 | `owl:imports` resolution | ⚠ Needs a catalog | URNs don't resolve; ship XML catalogs or a resolver (F-13). |
 | Types are asserted or inferred, can be many, and can change | ⚠ Conflict | `{class}` in IRIs (F-10). |
-| Punning and graph-name semantics | ✅ Compatible | Using a revision IRI as both a graph name and a `fnd:Version` individual is fine. RDF 1.1 leaves graph-name denotation open, and OWL 2 DL tolerates it. Document the convention. |
+| Punning and graph-name semantics | ✅ Compatible | Using a revision IRI as both a graph name and a `fnd:Versioned` individual is fine. RDF 1.1 leaves graph-name denotation open, and OWL 2 DL tolerates it. Document the convention. |
 | Named graphs have no aliasing | ⚠ Gap | Alias mechanism undefined (F-11). |
 | Linked Data / Cool URIs / dereferenceability | ◑ Partial | "Never change" and "no versions in entity IRIs" are aligned. URNs and environment rewriting are not. Acceptable for internal-only identity; decide on public identity (F-13). |
 | Skolemization (RDF 1.1 §3.5) | ⚠ Gap | Not specified (F-16). |
@@ -349,7 +349,7 @@ You asked for pros and cons of the material generally, so here is a condensed as
 | Kind | Form | Denotes |
 |---|---|---|
 | Lineage | `urn:lattice:{tenantId}:{scope}:{family}:{localName}` | `fnd:PersistentIdentity` (allocated via a P1 claim, with owner) |
-| Content revision | `{lineage}/rev/{schemeVer}-{hash128}` | `fnd:Version` (content state; hash covers canonical content with the self-IRI placeholdered, plus `profileVersion`; full hash verified on re-registration) |
+| Content revision | `{lineage}/rev/{schemeVer}-{hash128}` | `fnd:Versioned` (content state, hash covers canonical content with the self-IRI placeholdered, plus `profileVersion`, full hash verified on re-registration) |
 | Promotion or receipt | `{lineage}/evt/e{epoch}/{seq:019}` | event; chained by `prevRev`; points at a content revision |
 | Current | `pat:current` pointer on the version row (normative); optional materialized `…/current` projection | — |
 

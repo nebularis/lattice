@@ -275,7 +275,7 @@ other document changes version.
 3. **Spec** (`spec/wording.ttl`, ontology IRI `https://www.nebularis.org/neuro-semantic/wording`,
    version IRI `…/lattice/wording/0.1.0`), from the sketch §4.1 and §4.2, with names from the
    sketch §3.2 mapping and definitions written fresh:
-   - `wrd:Wording` and `wrd:Element`, each `⊑ fnd:Version ⊓ fnd:Governable`, disjoint
+   - `wrd:Wording` and `wrd:Element`, each `⊑ fnd:Versioned ⊓ fnd:Governable`, disjoint
    - `wrd:directlyComprises` (irreflexive, asymmetric, domain `Wording ⊔ Element`, range `Element`)
      `⊑ wrd:comprises` (transitive, never asserted), with inverses
    - `wrd:rankKey` and `wrd:objectId` (functional data properties)
@@ -789,7 +789,7 @@ probe).
      `bhv:tookEffect`, `bhv:reasonNotTaken`), `bhv:DeterminationRecord` (`bhv:matter`,
      `bhv:determiner`, `bhv:determinedValue`), `bhv:DeemedFactRecord` (`bhv:deeming` with no
      range, `bhv:conditionSatisfied`, an `elg:Condition`), `bhv:AcceptanceRecord`
-     (`bhv:accepted`, a `fnd:Version`, `bhv:actor`)
+     (`bhv:accepted`, a `fnd:Versioned`, `bhv:actor`)
    - `bhv:fromStimulus` (any record to the `bhv:Stimulus` it came from) and `bhv:enteredBy` (an
      occupancy to the `bhv:TransitionExecution` that entered it)
    - every new property states subject and value in its comment
@@ -1068,7 +1068,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 2. **Spec** (`instrument` 0.8.0 → 0.9.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
    Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.4.0 and Behaviour
    configuration 0.11.0 (their versions after F1's cascade), never the runtime document.
-   - `ins:Instrument ⊑ fnd:Version`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
+   - `ins:Instrument ⊑ fnd:Versioned`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
    - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
      one element version), `ins:alsoExpressedIn`, `ins:boundIn` (bound term to one instrument
      version, terms only), `ins:boundFrom` (every bound node), `ins:impliedBy`
@@ -1102,7 +1102,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-04 | a relation under two terms, one under none, an obligation with two obligors, a continuing obligation without `ins:maintains`, an exclusion without `ins:excepts`, a permission excepting an obligation that is not a prohibition, a scope that is not a condition / shapes / each reported | L1 | − |
 | C6-05 | a node that is both an obligation and a power, both a continuing obligation and a prohibition / reasoner / inconsistent | L2 | − |
 | C6-06 | a permission whose holder is not the excepted prohibition's obligor, or whose activity differs, an exclusion of a power held by the power's holder / shapes / reported (I8) | L1 | − |
-| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Version`, a relation carrying `ins:boundIn` / shapes / each reported (I2) | L1 | − |
+| C6-07 | under C6-Q1 (b): a stated term in two element versions, a bound term in two instrument versions, a bound term from two stated terms or from none and not implied, a relation typed `fnd:Versioned`, a relation carrying `ins:boundIn` / shapes / each reported (I2) | L1 | − |
 | C6-08 | each named union / spec / named once, its members explicit subclasses | L1 | + |
 | C6-09 | every property / spec / comment states subject and value, no range names the runtime document or a higher layer | L1 | + |
 | C6-10 | the repository outside history documents / searched / no `ins:Element`, `ins:Provision`, `ins:fulfilledBy` or other retired term | L1 | + |
@@ -2418,7 +2418,7 @@ and a document it incorporates means, within it, what the incorporation says.
 
 **Setting the scene.**
 
-An instrument is versioned (`fnd:Version`). Each of its versions is expressed in exactly one assembled
+An instrument is versioned (`fnd:Versioned`). Each of its versions is expressed in exactly one assembled
 wording (law I1) and binds exactly the stated meaning of the element versions that wording includes
 (law I17). Its bound meaning is generated (C8). Nothing else about an instrument changes, because no
 term or relation is versioned (law I18).
@@ -4236,6 +4236,236 @@ A compiled decision names its closures. `build:mtp` and `check:mtp` pass. `check
 example and the trial placeholder, supersession by a late fact, conclusive and single-purpose
 deemings, business days, the deemed-fact record's link, and the closure's binding to the store (all
 HQ-6b). Set comparisons over closures (C9b3).
+
+#### C9b3 in detail
+
+**Machine:** R. **Branch:** created by the maintainer from `main` once this brief is answered, one per sub-slice (C9b3-Q1), each in its own worktree under `~/work/lattice-wt/`.
+**Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and its decision 2, ADR-A103 and its addendum, ADR-A105 and its addendum, ADR-A100, ADR-A89, ADR-A91, ADR-A129 (one release, bumped once at merge), C9b0-Q2 (the no-applicable-binding case), C9b2-Q1 and Q2 (additivity, base roles), NRS NQ-4 (S2 with C9b3).
+**Placement:** substrate semantics, laws, proofs and compilers, all open. The examples come from lending, bonds, licensing and trials.
+
+**Invariant:** a condition may relate two sets reached from one subject, and may read an aggregate of a measure over a set, without Eligibility counting or summing. What it states decides only what the records prove, and completeness is licensed by a closure on each set whose completeness an outcome needs. A sum is read only over an extensive measure, in one unit and on one base. Hierarchical matching walks the ordering relation the condition names, never a relation of another kind.
+
+**Setting the scene.** Facts checked against `main` (2026-10-27):
+
+- **One set per binding.** An `elg:EvidenceBinding` reads the values one path reaches from a subject, `elg:SomeValue` or `elg:EveryValue` combines their per-value decisions (L15), and a closure licenses completeness (L17). A per-value decision compares a value with concepts the condition names statically (`elg:requiredConcept`). Nothing lets a value be compared with a second set read from the same subject, so "every member of the universe has consented" cannot be stated (consent sketch §2.3).
+- **No aggregate.** Nothing reads a sum or a share. Quantification has `qnt:Sum` with law Q12 (a sum within one space needs it Extensive) and Q13 (mixed units or bases with no conversion are Undetermined), and base roles (C9b2). Who checks that an aggregate's measure may be summed was left to Eligibility's shapes in this slice.
+- **Hierarchical matching follows every `skos:broader`.** The compilers hard-code it (`eligibility_ir.py`, the SPARQL backend's `skos:broader*`). The peril scheme asserts every kind link (`prl:broaderGeneric`) and part link (`prl:broaderPartitive`) as plain `skos:broader` too, so a condition requiring "a kind of tropical cyclone" admits storm surge, which is part of one. L9 speaks of "the bound scheme's ordering relation" and never names which.
+- **A binding that does not apply at the resolution time is refused.** `_resolve_scheme` raises on `NoApplicableBindingError` (C9b0-Q2 left it so for this slice to change). The OWL and SWRL backends have no guard for a hierarchical plan with no scheme.
+- **The profile union is engine-dependent.** HQ-6a.2's `?closures`, a `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects, drops a record's contribution on Oxigraph (TSD-41, TD-92). Aggregate bindings add more aggregation to generated SPARQL, and STD-153 makes Oxigraph the default engine for a test that runs generated SPARQL.
+- **Versions move once, at merge** (ADR-A129). No sub-slice bumps or re-pins. `check:ontology-versioning` reports `UNBUMPED` on the branch, as expected.
+
+```mermaid
+flowchart LR
+    S["subject, for example a proposal"]
+    U["set A: the universe<br/>proposal to power to holder word to members"]
+    C["set B: the consenters<br/>proposal to consents to members"]
+    M["measure per member<br/>member to commitment"]
+    S --> U
+    S --> C
+    U -. "today: no way to compare A with B" .-> C
+    U -. "today: no way to sum a measure over A" .-> M
+```
+
+**Questions, with each option's consequences:**
+
+**C9b3-Q1. How the slice splits.** Its parts touch Eligibility's model, its reference semantics and proofs, and the compilers, and would pass the lifecycle rule's size limit of about 15 tests several times over, so it splits.
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (1) by construct, each with its model and compilers: C9b3a set comparisons, C9b3b aggregate bindings, C9b3c hierarchical traversal and the no-applicable-binding case | each sub-slice shows one construct end to end, as reviewers read it. Each touches the model, the reference and the compilers, three modules, which the size rule tolerates only for small sub-slices | none |
+| (2) by layer, as HQ-6a did: C9b3a the model, reference and proofs for all three constructs, C9b3b the compilers for all three | two large sub-slices, each over 15 cases. The compilers' sub-slice merges after a model whose outcomes no compiler yet produces | none |
+| (3) by construct and layer: six sub-slices | each within the size rule, but six branches and six merges, and three of them only state outcomes | none |
+
+KISS: (1) keeps each construct's meaning and its compilation in one review, and the hierarchical part is small. **Leaning (1),** in the order C9b3c (the smallest, and it fixes a live mismatch), C9b3a, C9b3b, since aggregate bindings read sets the way set comparisons do.
+
+**C9b3-Q2. How a set comparison is stated.** The sketch names three comparisons, `elg:Subset`, `elg:Intersects` and `elg:Disjoint`. Each can be stated as a new condition kind, or by letting a per-value decision compare a value with a second set, so that the existing readings do the quantifying.
+
+```mermaid
+flowchart TB
+    subgraph OptA["(a) a set-comparison condition"]
+        A1["elg:SetComparison<br/>comparison: Subset"]
+        A2["left binding: the universe"]
+        A3["right binding: the consenters"]
+        A1 --> A2
+        A1 --> A3
+    end
+    subgraph OptB["(b) membership in a second set, read by L15"]
+        B1["condition: value is a member of set B"]
+        B2["binding: the universe<br/>valueReading EveryValue"]
+        B3["second binding: the consenters<br/>elg:memberOf"]
+        B2 --> B1
+        B1 --> B3
+    end
+```
+
+| | Subset (A in B) | Intersects | Disjoint |
+|---|---|---|---|
+| under (b) | the universe read every value, each value "a member of the consenters" | read some value | read some value, negated (L16) |
+| Permitted | every member of A found in B, and A closed | a member of A found in B | A closed, and no member of A in B, with B closed |
+| Denied | a member of A not in B, with B closed | A closed, and no member of A in B, with B closed | a member of A found in B |
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) a condition kind `elg:SetComparison` naming two bindings and one of three comparison individuals | three new truth tables and their laws, proved afresh. Readings and closures reappear inside the comparison, so L15 and L17 are restated a second time | per subject, one existence test into B per value of A |
+| (b) a per-value decision "is a member of the values another binding reaches from the same subject" (`elg:memberOf`, naming a second binding), with the three comparisons as the readings above | one property and one law: a value is Permitted when found in B, Denied when not found and B is closed, otherwise Undetermined. L15, L16 and L17 do the rest, already proved. Two closures, one per set, each licensing what its own set's completeness decides | the same, one existence test into B per value of A |
+
+Reality: "every member has consented" quantifies over the members, and asks of each whether it is among the consenters, which is (b)'s shape. The sketch's three names survive as names for the readings, in documentation and examples, with no new individuals unless a query answers differently (the design standard). **Leaning (b).**
+
+**C9b3-Q3. How an aggregate binding is stated.** The sketch's `elg:AggregateBinding` reads a measure over a set, optionally relative to a second set, and offers the result to an interval condition. Two choices are open.
+
+*The measure.* (i) A path from each member to its quantity, made of `elg:EvidenceStep`s, which the compilers can follow. (ii) A word, with no range, which an Instrument layer resolves, as `elg:licensedBy` names a source. Eligibility cannot import Instrument, so under (ii) no Eligibility compiler can read the value. **Leaning (i),** with C9b4's measure words stating the path their value is found by.
+
+*The sets and their closures.* An aggregate needs each set's completeness for different outcomes: a share above a threshold is proved by the consenters recorded, once the universe is complete, but proving it below needs the consenters complete too.
+
+```mermaid
+flowchart LR
+    AG["elg:AggregateBinding<br/>aggregation qnt:Sum"]
+    OV["over: a binding<br/>the consenters, its own closure"]
+    RT["relativeTo: a binding<br/>the universe, its own closure"]
+    ME["measure: steps<br/>member to commitment"]
+    IC["elg:IntervalCondition<br/>above two thirds"]
+    AG --> OV
+    AG --> RT
+    AG --> ME
+    AG --> IC
+```
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (x) the aggregate names two existing evidence bindings, each with its own reading and closure | reuses L15 and L17 per set. A new law states which outcome needs which closure: above a lower bound needs the universe closed, below an upper bound needs both closed | per subject, one grouped sum per set, and a missing weight or mixed units makes the result Undetermined (Q13) |
+| (y) the aggregate carries its own steps and one closure for both sets | one closure cannot say that the universe register is complete while the consents are not, which is the usual case before the window closes | as (x) |
+
+**Leaning (x).** A shape on the aggregate checks Q12: the measure's space (`elg:readOnSpace`) declares `qnt:additivity qnt:Extensive`.
+
+**C9b3-Q4. Where hierarchical matching's relation is named (S2).**
+
+| Option | Design overheads | Runtime overheads |
+|---|---|---|
+| (a) the condition names the relation it walks (`elg:hierarchyRelation`, a sub-property of `skos:broader`, `skos:broader` when absent) | one property, read where the question is asked. Two conditions over one scheme may ask "a kind of" and "a part of" separately, as the law and the drafting do | the walk follows one named property instead of `skos:broader`. Same order |
+| (b) the scheme contract names its ordering relation, in Vocabulary | L9's "the bound scheme's ordering relation" read literally. A scheme with kind and part links must choose one for every condition, so "a part of" cannot be asked | same |
+| (c) the scheme binding names it, per scope | as (b), varied by scope and time | same |
+
+A thesaurus states both relations, and which one a clause relies on is the clause's question: "any peril of the kind windstorm" walks kind links, "any damage forming part of the event" walks part links. **Leaning (a),** with L9 restated to say the relation is the condition's, defaulting to `skos:broader`, and L14's hierarchy precondition read over that relation.
+
+**C9b3-Q5. TD-92, the engine-dependent profile union.** Aggregate bindings put more aggregation into generated SPARQL, and the profile union may be the first of a family. (a) Bisect TSD-41 and fix the template in C9b3b, before aggregates build on it. (b) Leave it to a MORK compilers task and write aggregates to avoid the shape. **Leaning (a):** the cause is unknown, so avoiding "the shape" cannot be done reliably until it is found, and C9b3b runs the conformance task on both engines before merge anyway.
+
+**Answers (2026-10-27):**
+
+- **Q1 (1),** by construct, in the order C9b3c, C9b3a, C9b3b.
+- **Q2 (a′), a set-comparison condition whose meaning is membership.** `elg:SetComparison` names two evidence bindings and one of three comparison individuals, Subset, Intersects and Disjoint. One reduction law gives each its meaning: Subset(A, B) is every value over A of "a member of B", Intersects some value, Disjoint some value negated. Membership in B is a per-value decision, Permitted when found in B under the comparison's match strategy, Denied when not found and B is closed, otherwise Undetermined, and it is used only inside a comparison, so each meaning has one form. The comparison is where intent is named for a shape to check, and where a rule for an empty universe is stated if drafting needs one. The readings' proofs are reused through one reduction lemma per comparison, since `every_value` and `some_value` take any list of per-value outcomes.
+- **Q3 a path, and (x).** The measure is a path of `elg:EvidenceStep`s. The aggregate names two existing evidence bindings, each with its own reading and closure: above a lower bound needs the universe closed, below an upper bound needs both closed.
+- **Q4 (a).** The condition names the relation it walks, a sub-property of `skos:broader`, `skos:broader` when absent. L9 and L14 are restated over the named relation. A closed set of strategies aligned to ISO 25964's generic and partitive relations was weighed and not taken, since it would make Eligibility know one thesaurus standard's relations.
+- **Q5 (a),** TSD-41 is bisected and the template fixed in C9b3b. The debt row is retired from the register, since this plan now holds it.
+- **The two kinds of deferral** are named in Eligibility's README with no class or marker, since no query or check answers differently by them (STD-013, STD-295).
+
+**Decided by precedent, not asked:**
+
+- a hierarchical condition whose binding does not apply at the resolution time compiles to a plan that answers Undetermined for every candidate, with a new diagnostic in MORK's Executable ontology, and the OWL and SWRL backends refuse a hierarchical plan with no scheme (C9b0-Q2)
+- the two kinds of deferral are named in Eligibility's README, with no new class, since no query answers differently because of one: an evidence or aggregate binding is an evaluation-time deferral, and Instrument's `ins:valueFrom` the binding-time one (skill `lattice-ontology-authoring`, "Name the deferral")
+- Eligibility never counts or sums in its own documents. The compilers' generated SPARQL computes, as it does for readings (layers state, code executes)
+- each new law gets its reference semantics, its Isabelle statement and proof, and differential tests where the harness covers bound conditions (the formal-freshness gate, the formal-methods plan's C9b3 row)
+- every new term follows ADR-A126's layout in Eligibility's README, and the README, its examples and shapes name no slice, question or debt identifier (skill `lattice-publication-hygiene`)
+- every test that runs generated SPARQL opts in to both engines (STD-173), and each sub-slice runs `check:mork-compilers-conformance` before its merge
+- no version moves on a branch. `mise run release:prepare` moves the release once, before each merge (ADR-A129)
+- examples first in each sub-slice, from lending (Majority Lenders over a facility's commitments), bonds (an Extraordinary Resolution's quorum), licensing and trials, never ranking one domain first
+
+**Planned validation, by sub-slice under C9b3-Q1 (1):**
+
+- **C9b3c, hierarchy:** a condition walking kind links rejects a part link the old walk admitted. The default stays `skos:broader`. L9 and L14 over a named relation, in the reference and the theory. A no-applicable-binding plan answers Undetermined with its diagnostic. OWL and SWRL refuse a schemeless hierarchical plan. Both engines.
+- **C9b3a, set comparisons:** each comparison at its Permitted, Denied and Undetermined rows, with neither, one and both closures. Membership law in the reference and the theory, the existing readings' proofs reused. SPARQL and SHACL agree. Both engines.
+- **C9b3b, aggregate bindings:** a share above and below a threshold with each set's closure present or absent, a missing weight, mixed units, the Q12 shape over an intensive space, TD-92's fix on both engines, and the aggregate law in the reference and the theory. The profile read set's three aggregates over `?decision`, which is unbound when a containment test errors: the multi-store unit's probes (2026-10-27) show the dependence is the query's on rdflib, Oxigraph and Jena alike, so C9b3b decides between coalescing it, which counts the row as no outcome, and guarding the test with a numeric check so the value is Undetermined with a diagnostic (STD-279's third meaning, the leaning). A count over a binding (`qnt:Count`, no measure) read by an interval condition from 1, the existence requirement C9b3a-Q2 settles, and from N for a quorum by number.
+
+#### C9b3a in detail
+
+**Machine:** R. **Branch:** `ccs/c9b3a-set-comparisons`, from `ccs-trunk` once `main` holds the multi-store conformance unit and `ccs-trunk` has taken `main` in, so its tests run on rdflib, Oxigraph and Jena.
+**Decisions:** C9b3-Q2 (a′) and the answers of 2026-10-27, ADR-A103 (readings), ADR-A105 (closures), ADR-A100 and its 2026-10-27 addendum (the hierarchy relation), ADR-A90 (what the OWL backend refuses), ADR-A89 (the IR), STD-279.
+**Placement:** substrate semantics, laws, proofs and compilers, all open.
+
+**Invariant:** a set comparison relates the values two bindings read from one subject, by one of three comparisons whose meaning is the per-value membership decision read by L15. It counts nothing. What it decides follows only from the records and from each set's own closure.
+
+**Setting the scene.** What C9b3a builds on, on `ccs-trunk` (2026-10-27):
+
+- **A binding binds one condition.** An `elg:EvidenceBinding` names its condition (`elg:bindsCondition`), its subject class and its path of `elg:EvidenceStep`s, and may name a reading and a closure (MEC-29, MEC-31). A set comparison reads two sets from one subject, so it is the first condition bound by two bindings, and the comparison must say which is which.
+- **A per-value decision compares a value with concepts the condition names.** Under (a′) the comparison's second set takes the place of the required concepts, read per subject from data, with one difference: a static list is complete, a set read from records is complete only under its closure.
+- **L15 already reads the empty set.** Under a closure, every value over no value is Permitted and some value over no value is Denied. So "every member has consented" with no members is Permitted.
+- **The hierarchy relation is the condition's** (C9b3c). A comparison under hierarchical match finds a value in the second set when it stands at or below one of its members by that relation, for example a distribution territory that is part of a licensed one.
+- **The compilers' outcome counts follow STD-279's second meaning,** a condition with no outcome adding nothing to a count.
+
+```mermaid
+flowchart LR
+    S["subject<br/>ex:licence-7"]
+    BA["binding: tested values<br/>path to distribution territories<br/>closure: the distribution schedule"]
+    BB["binding: reference values<br/>path to licensed territories<br/>closure: the grant"]
+    C["elg:SetComparison<br/>comparison elg:Subset<br/>matchStrategy HierarchicalMatch<br/>hierarchyRelation part-of"]
+    S --> BA
+    S --> BB
+    BA -- "tested" --> C
+    BB -- "reference" --> C
+```
+
+```mermaid
+flowchart TB
+    A["each value a of the tested set"] --> M{"a found in the reference set,<br/>under the match strategy?"}
+    M -- "yes" --> P["Permitted"]
+    M -- "no, and the reference set is closed" --> D["Denied"]
+    M -- "no, reference set open" --> U["Undetermined"]
+    P --> R["combine by the comparison<br/>Subset: every value<br/>Intersects: some value<br/>Disjoint: some value, negated<br/>tested set's closure licenses the reading (L15, L17)"]
+    D --> R
+    U --> R
+```
+
+**Questions, with each option's consequences:**
+
+**C9b3a-Q1. What the two sets are called.** The design standard refers by name, never by position, so "left" and "right" are out.
+
+| Option | Design | Runtime |
+|---|---|---|
+| (a) `elg:testedBinding` and `elg:referenceBinding`, on the comparison | says what each set does in every comparison: each value of the tested set is looked for in the reference set. Reads correctly for Subset ("every tested value is in the reference set") and for Intersects and Disjoint | none |
+| (b) `elg:bindsCondition` from both bindings, with a role on each binding (`elg:setRole elg:Tested`) | keeps "a binding binds one condition" uniform, but adds a role to every binding that only comparisons read, and two triples where (a) has one | none |
+| (c) names from the law, `elg:subset` and `elg:superset` | read well for Subset only, and wrongly for Intersects and Disjoint | none |
+
+**Leaning (a).** Both bindings still name the comparison with `elg:bindsCondition`, and a shape requires the comparison's two links to name two of its own bindings.
+
+**C9b3a-Q2. An empty tested set.** "Each Subsidiary has guaranteed" is drafted to hold when there are none, and L15 already gives that under a closure. Some drafting needs at least one, for example a written resolution "signed by all holders", where an empty register is a defect, not consent.
+
+| Option | Design | Runtime |
+|---|---|---|
+| (a) L15's reading stands. A requirement of at least one member is a second condition in the profile, `elg:Intersects` of the tested set with itself, which is Permitted exactly when it has a member and, under its closure, Denied when it has none | no new term. Drafting that needs a member says so, as it does in law | one more existence test per subject where used |
+| (b) a flag on the comparison, `elg:requiresMember true`, making a closed empty tested set Denied | one term and one law, and a reading that differs from L15's for the same set | none |
+
+**Leaning (a).** The self-intersection is shown in an example, so it is found.
+
+**C9b3a-Q3. Values that are literals.** A set read by a path may end at a literal, for example dates. RDF term equality and SPARQL value equality differ for literals (`"1"^^xsd:int` and `"01"^^xsd:int`), and the engines differ on value equality (TSD-18).
+
+| Option | Design | Runtime |
+|---|---|---|
+| (a) IRIs only. A shape refuses a comparison whose binding reads on a value space (`elg:readOnSpace`) | the comparison compares things, parties, concepts, territories, which is every case in the sketch. Literals wait for a need | none |
+| (b) literals by value equality, on the binding's space | needs the space's equality and a decision per engine on numeric and date equality | `=` per pair, engine-dependent |
+
+**Leaning (a),** recorded as a deferral in the README's open issues.
+
+**C9b3a-Q4. The ADR.** The plan gives C9b3 its own ADR. (a) One ADR, ADR-A145, "Set comparisons and aggregate bindings", drafted Proposed in C9b3a with both decisions already taken (C9b3-Q2 (a′), C9b3-Q3 (x)), and C9b3b adding its implementation note. (b) One ADR per sub-slice. **Leaning (a):** the two share the reading of a set from a subject and its closure, and one record says it once.
+
+**Answers (2026-10-27):**
+
+- **Q1 (a),** `elg:testedBinding` and `elg:referenceBinding`.
+- **Q2 (c), accepted by the maintainer 2026-10-27.** The maintainer declined (a), since it makes drafting state existence as a set operation, and a flag. The lead's proposal, (c), takes existence as the count it is in drafting: "not fewer than one holder", like any quorum, is an aggregate condition, `qnt:Count` over the tested binding read by an interval condition from 1, built with aggregate bindings in C9b3b. A comparison keeps L15's reading of an empty set, which "each Subsidiary" needs, and C9b3a adds no term for existence. C9b3a adds no existence term, and C9b3b admits `qnt:Count` as an aggregation, with no measure path, so a quorum by number of members is an interval condition over the count.
+- **Q3 (a),** IRIs only for now.
+- **Q4 (a),** ADR-A145, drafted Proposed in C9b3a.
+
+**Decided by precedent, not asked:**
+
+- `elg:SetComparison` is an `elg:Condition` with a match strategy (`elg:ExactMatch` or `elg:HierarchicalMatch`, with its hierarchy relation) and one `elg:comparison` from a closed set, `elg:Subset`, `elg:Intersects` and `elg:Disjoint`. It names no required or excluded concept, since the reference set takes their place
+- a new law, L18, gives the membership decision and reduces each comparison to L15's readings. The comparison fixes the reading, so its bindings declare none, and a shape refuses one that does. Negation (L16) and profiles apply to a comparison as to any condition. Both bindings name the same subject class, by shape
+- the tested set's closure licenses the reading (L17), and the reference set's closure licenses a value's Denied. Each binding names its own closure, as MEC-31 has it
+- the OWL and SWRL backends refuse a comparison. OWL 2 DL cannot say "every value of one path is a value of another from the same subject", since a role inclusion holds for every subject, and SWRL cannot test absence (ADR-A90's precedent for what a backend refuses)
+- the SPARQL and SHACL backends compile it. Per subject, one `EXISTS` into the reference set per tested value, from the bound subject (STD-033), and the outcome counts by STD-279's second meaning. Its cost, stated in the module per STD-020, is the sum over subjects of the tested set's size times one indexed lookup
+- the reference semantics gains the membership decision and the reduction, with differential tests. Isabelle proves the reduction, that under exact match Intersects and Disjoint answer the same whichever set is tested (symmetry, which hierarchical match does not have, since "at or below" has a direction), and an adequacy fixture per comparison. Claims are recorded through the gate
+- the term is defined once in §6 under ADR-A126's layout, the overview regenerates, and a "next release" note classifies each change. No version moves on the branch
+- examples first, from licensing (distribution territories a subset of licensed ones, under part-of), trials (concomitant medications disjoint from prohibited ones), bonds (every holder on the record date among the consenting holders, and the self-intersection requiring a holder), with no domain ranked first
+- tests run on every engine's conformance task, the registers gain a mechanism entry, and the index is asked before each choice, with misses reported
+
+**Planned validation:** each comparison at its Permitted, Denied and Undetermined outcomes with neither, one and both sets closed, the empty tested set under each comparison, the self-intersection, hierarchical membership under part-of, a negated Subset, a comparison in a profile, a binding that declares a reading refused, mismatched subject classes refused, a literal-valued binding refused, OWL and SWRL refusing, SPARQL and SHACL agreeing, the reduction and symmetry proved, and the reference agreeing with the compilers. About 20 tests across the model, the compilers and the reference, three modules, which is over the sizing rule, as C9b3c was. One branch with the model, reference and proofs committed before the compilers, so a review can take them in two parts.
 
 ### Tranche E: evaluation
 

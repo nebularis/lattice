@@ -170,7 +170,7 @@ bhv:AcceptanceRecordSubjectShape a sh:NodeShape ;
 	sh:message "Only an acceptance record names a version accepted." .
 bhv:AcceptanceRecordShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;
-	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Version ] ;
+	sh:property [ sh:path bhv:accepted ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:Versioned ] ;
 	sh:property [ sh:path bhv:actor ; sh:minCount 1 ] .
 bhv:AcceptanceRecordDeprecatedShape a sh:NodeShape ;
 	sh:targetClass bhv:AcceptanceRecord ;

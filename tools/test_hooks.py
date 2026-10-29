@@ -242,3 +242,14 @@ def test_gh3_10_writing_blocks_at_a_commit_and_wrapping_warns(repo: Path) -> Non
     assert outcomes["wrapping"].messages[0].startswith("README.md: 2 hard-wrapped line(s), from line 4")
     merge = hooks.Change(repo, change.files, True)
     assert {o.check: o.severity for o in hooks.evaluate(merge, registry, set())}["writing"] == hooks.WARN
+
+
+def test_or1_01_a_register_or_decision_change_runs_the_identifier_check() -> None:
+    assert "identifiers" in names_for("docs/developer/standards.md")
+    assert "identifiers" in names_for("docs/architecture/decisions/ADR-A133-git-hooks.md")
+    assert "identifiers" not in names_for("ontology/party/README.md")
+
+
+def test_or1_02_post_merge_rebuilds_the_index_and_never_fails(repo: Path, capsys) -> None:
+    assert hooks.run(repo, "post-merge") == 0
+    assert "post-merge" in capsys.readouterr().out

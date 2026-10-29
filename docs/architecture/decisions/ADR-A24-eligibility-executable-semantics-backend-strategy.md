@@ -7,11 +7,11 @@
 **Supersedes:** none
 **Related:** ADR-A23 (MORK compiler family completion policy), ADR-A07 (Eligibility authoring direction), ADR-A03 (condition taxonomy), ADR-A04 (interval overlap law split)
 **Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
-**Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
+**Source plan:** the Surface-MORK Unified Projection Program plan
 
 ## Context
 
-Eligibility conditions — interval containment, compatibility operations — are declarative and have no executable form today. `ontology/surface/docs/MorkEnhancements.md`'s worked credit-score example shows a `mork:RuleMapping` sketch generating a SWRL rule, but also states plainly that OWL reasoning alone cannot compute interval containment, and that SPARQL, SHACL, and SWRL backends need to agree on the same semantics rather than each encoding it separately.
+Eligibility conditions — interval containment, compatibility operations — are declarative and have no executable form today. The MORK enhancements analysis's worked credit-score example shows a `mork:RuleMapping` sketch generating a SWRL rule, but also states plainly that OWL reasoning alone cannot compute interval containment, and that SPARQL, SHACL, and SWRL backends need to agree on the same semantics rather than each encoding it separately.
 
 ## Decision
 

@@ -61,7 +61,7 @@ valid invalid, inconsistent, or differently entailed, whatever the semantic vers
 
 **Status:** Accepted 2026-10-26, proposed the same day.
 
-Nothing in the substrate imports MORK, SPC, Surface or Persistence, so the shared number released each of them whenever any substrate layer changed, and moved its version when nothing it depends on had. The number hid which releases changed a standalone module.
+**Narrows decisions 1, 2 and 3.** Nothing in the substrate imports MORK, SPC, Surface or Persistence, so the shared number released each of them whenever any substrate layer changed, and moved its version when nothing it depends on had. The number hid which releases changed a standalone module.
 
 1. **The release is the substrate's.** `[conventions.release]` lists the kind `substrate` alone. Decisions 1 to 3 hold for the layers of ADR-A01's order and no longer for MORK, SPC, Surface or Persistence.
 2. **Each standalone module is released on its own,** as the applied modules are under decision 4. Its documents keep their own version IRIs under ADR-A86, its shape directory has a `.version` file, and the release register lists each of them. Each import of a substrate layer names the substrate release it was built against.

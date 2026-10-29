@@ -50,7 +50,7 @@ The ontology header, with the version every importer pins (ADR-A86):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 ```
 
@@ -87,7 +87,7 @@ imports = []
 
 [module.extract]
 spec = ["spec/foundation.ttl"]
-shapes = ["shapes/constraints.ttl"]
+shapes = ["shapes/constraints.ttl", "shapes/structural.ttl"]
 ```
 
 ## 4. Design Decisions
@@ -95,6 +95,10 @@ shapes = ["shapes/constraints.ttl"]
 **Alignment with PROV-O.** Evidence is modelled as a subclass of `prov:Entity`, and `fnd:assertedBy` as a sub-property of `prov:wasAttributedTo`. Temporal scoping is *not* aligned with OWL-Time's `time:Instant`/`time:Interval` apparatus, since that would require modelling `validFrom`/`validTo` as individuals rather than plain `xsd:dateTime` literals. This is a considered asymmetry, not an oversight, and it's reversible later if temporal reasoning requirements grow.
 
 **Four focused mixins.** An earlier pass considered a single `fnd:Governed` class carrying all four capabilities at once. This was rejected as it would force every class adopting any one capability to adopt all four, which overclaims, whereas independent, non-disjoint mixins let a downstream class pick exactly what it needs.
+
+**A meaning-bearing edge from a versioned thing is owned or pinned.** A versioned thing's past versions are only reproducible if what they point at cannot change under them. So an object property whose object is part of its subject's meaning is marked `fnd:meaningBearing true`, and the thing at its end is itself versioned, content-addressed, or minted under the subject so that it is written and swept with it. A reference by identity to a mutable node is the defect: editing the node rewrites every past judgement made with the subject. The mark is read twice. `shapes/constraints.ttl` warns on data where such an edge leads to a node that is neither versioned, minted under the subject nor a published term, and a Persistence profile refuses to compile such an edge as a reference by identity, so it is either owned by the subject's aggregate or pinned to one version of its target (ADR-A142).
+
+**A published term is versioned by its release.** An individual that an ontology document declares, such as a layer's reference profile, a published state space or a scheme contract, is a public vocabulary term. Its identity is its IRI and its versions are the releases of the ontology that declares it, so it carries no `fnd:hasIdentity` chain of its own, and it says which ontology that is with `rdfs:isDefinedBy`. `fnd:VersionedShape` exempts a term so marked, and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe, since a release changes every published term at once and nothing edits one in a store. An example is not a published term. It shows the data an adopter copies into a store and then edits, so the rules hold on it. An adopter who copies a published term into a store to edit it drops the mark and mints an identity ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)).
 
 **`GovernanceState` is open at the OWL level, closed in SHACL.** OWL's open-world assumption sees us push closed-world constraints into `shapes/constraints.ttl` via `sh:in` restrictions over named individuals. The class exists here so the property `fnd:hasGovernanceState` has somewhere to range over; the enumeration itself is a different layer's concern, per the established `spec/` vs `vocab/` vs `shapes/` architectural boundary.
 
@@ -111,18 +115,31 @@ fnd:utility a owl:AnnotationProperty ;
     rdfs:comment "A concise explanation of what a term is for and how to use it." .
 ```
 
+#### `fnd:meaningBearing`
+
+**Definition.** Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was.
+
+**Utility.** Set it to `true` on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant: a profile's conditions, a definition's rules, a binding's scheme. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity (§4).
+
+```turtle-spec
+fnd:meaningBearing a owl:AnnotationProperty ;
+    rdfs:comment "Marks an object property whose object is part of its subject's meaning, so a judgement reproduced from a version of the subject depends on the object as it was." ;
+    fnd:utility "Set it to true on a property of a versioned class when editing the thing at its end would change what a past version of the subject meant. The object is then versioned, content-addressed, or minted under the subject. A Persistence configuration treats such an edge as owned or pins it to a version, and refuses it by identity." ;
+    rdfs:range xsd:boolean .
+```
+
 ## 6. Classes
 
-#### `fnd:Version`
+#### `fnd:Versioned`
 
 **Definition.** An individual representing a specific, identified state of some persistent thing.
 
-**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`.
+**Utility.** A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves, each carrying identity via `hasIdentity`, and successive versions linking through `supersededBy`. A published term of a versioned class, one an ontology document declares and marks `rdfs:isDefinedBy` that ontology, carries no identity of its own. Its identity is its IRI and its versions are the ontology's releases (§4).
 
 ```turtle-spec
-fnd:Version a owl:Class ;
+fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a Version-bearing class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy. A published term of a versioned class, one an ontology document declares and marks rdfs:isDefinedBy that ontology, carries no identity of its own: its identity is its IRI and its versions are the ontology's releases (section 4)." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;
@@ -200,13 +217,13 @@ fnd:TemporallyScoped a owl:Class ;
 
 #### `fnd:TemporalScope`
 
-**Definition.** A validity period: a start, and an optional end.
+**Definition.** A validity period: a start, included, and an optional end, excluded, both with a timezone.
 
 **Utility.** A validity period with a start (`validFrom`) and an optional end (`validTo`). If something becomes valid, lapses, and later becomes valid again, model that as a new `Version` with its own new `TemporalScope`.
 
 ```turtle-spec
 fnd:TemporalScope a owl:Class ;
-    rdfs:comment "A validity period: a start, and an optional end." ;
+    rdfs:comment "A validity period: a start, included, and an optional end, excluded, both with a timezone." ;
     fnd:utility "A validity period with a start and an optional end. If something becomes valid, lapses, and later becomes valid again, model that as a new Version with its own new TemporalScope rather than adding a second window here." ;
     rdfs:subClassOf [
         a owl:Restriction ;
@@ -286,7 +303,7 @@ fnd:DerivationKind a owl:Class ;
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( fnd:Version fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
+    owl:members ( fnd:Versioned fnd:PersistentIdentity fnd:Evidence fnd:TemporalScope fnd:GovernanceState fnd:DerivationKind fnd:Key fnd:KeyScheme ) .
 
 fnd:Evidenced owl:disjointWith fnd:Evidence .
 fnd:TemporallyScoped owl:disjointWith fnd:TemporalScope .
@@ -305,7 +322,7 @@ fnd:Governable owl:disjointWith fnd:GovernanceState .
 
 ```turtle-spec
 fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:domain fnd:Version ;
+    rdfs:domain fnd:Versioned ;
     rdfs:range fnd:PersistentIdentity ;
     owl:inverseOf fnd:hasVersion ;
     rdfs:comment "A Version's persistent identity." ;
@@ -313,7 +330,7 @@ fnd:hasIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
 
 fnd:hasVersion a owl:ObjectProperty ;
     rdfs:domain fnd:PersistentIdentity ;
-    rdfs:range fnd:Version ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "A PersistentIdentity's versions." ;
     fnd:utility "Points a PersistentIdentity at all of its versions. Typically populated by querying rather than asserted directly, since it's the inverse of hasIdentity." .
 ```
@@ -322,12 +339,12 @@ fnd:hasVersion a owl:ObjectProperty ;
 
 **Definition.** Direct succession between two versions of the same identity.
 
-**Utility.** Points one version at the version that directly replaced it. Set this when you create a new version to supersede an old one. To find the latest version, follow this property repeatedly until none points onward.
+**Utility.** Points one version at the version that directly replaced it. Set this when you create a new version to supersede an old one. The chain is acyclic, which shapes/constraints.ttl checks, so following it ends at the latest version, the one with no successor. A chain of versions is one thing's states. It is not a content revision of the identity guide, which names immutable bytes by their digest, and not an owl:versionIRI, which names a release of a specification
 
 ```turtle-spec
 fnd:supersededBy a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
-    rdfs:domain fnd:Version ;
-    rdfs:range fnd:Version ;
+    rdfs:domain fnd:Versioned ;
+    rdfs:range fnd:Versioned ;
     rdfs:comment "Direct succession between two versions of the same identity." ;
     fnd:utility "Points one version at the version that directly replaced it. Set this when creating a new version to supersede an old one. Records immediate succession only — to find the latest in a chain, follow this property repeatedly rather than expecting a single hop." .
 ```
@@ -396,22 +413,28 @@ fnd:hasTemporalScope a owl:ObjectProperty, owl:FunctionalProperty ;
 
 #### `fnd:validFrom` / `fnd:validTo`
 
-**Definition.** The start (required) and end (optional) of a validity period.
+**Definition.** The start (required, included) and end (optional, excluded) of a validity period, and whether the start is an estimate.
 
-**Utility.** `validFrom` is the required start point for a validity period. If the exact start is unknown, use the best available estimate. `validTo` remains optional for open-ended validity.
+**Utility.** A validity period is half-open: `validFrom` is in it and `validTo` is not, so a period ending at an instant and one starting at it do not overlap. A period whose ends coincide is empty, which records a state that was entered and left at one instant. Both carry a timezone, since a comparison of a zoned and an unzoned `xsd:dateTime` is undefined and a judgement as of a date must come out the same on every engine. `validFrom` is required. Where the start is an estimate rather than a recorded fact, say so with `fnd:estimatedStart true`, so a judgement made as of a date inside the period can be told from one resting on a recorded start. `validTo` is optional for open-ended validity. `shapes/constraints.ttl` checks the datatypes, the timezones and the order.
 
 ```turtle-spec
 fnd:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The start of a validity period." ;
-    fnd:utility "The point at which a validity period begins. Always required — use the best available estimate if you don't know a precise start." .
+    fnd:utility "The point at which a validity period begins, included in it. Always required, with a timezone. Where it is an estimate rather than a recorded fact, set estimatedStart true." .
 
 fnd:validTo a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:TemporalScope ;
     rdfs:range xsd:dateTime ;
     rdfs:comment "The end of a validity period, if it has one." ;
-    fnd:utility "Optional and capped at one — an open-ended scope simply omits this rather than needing a sentinel value." .
+    fnd:utility "Optional and capped at one, excluded from the period, with a timezone. An open-ended scope omits it rather than using a sentinel value." .
+
+fnd:estimatedStart a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain fnd:TemporalScope ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when validFrom is an estimate rather than a recorded fact." ;
+    fnd:utility "Set it when the start of a validity period is the best available estimate. A judgement made as of a date inside an estimated period rests on the estimate, and a reader can tell." .
 ```
 
 #### `fnd:hasGovernanceState`
@@ -423,7 +446,7 @@ fnd:hasGovernanceState a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain fnd:Governable ;
     rdfs:range fnd:GovernanceState ;
     rdfs:comment "The current governance status of a Governable thing." ;
-    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time and update it as review status changes." .
+    fnd:utility "Points a Governable thing at its current governance status. Keep one current value at a time. On a thing that is also versioned, a change of state is a new version, never an edit of the value on an existing version (ADR-A142). On an unversioned governable thing the value is replaced and the change evidenced." .
 ```
 
 #### `fnd:derivationKind`
@@ -687,6 +710,37 @@ uniqueness check has two severities:
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
+fnd:TemporalScopeShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporalScope ;
+    sh:targetObjectsOf fnd:hasTemporalScope ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validFrom is one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validTo ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validTo is at most one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:lessThanOrEquals fnd:validTo ;
+        sh:message "A validity period is half-open: validFrom is not after validTo. Equal ends make an empty period, a state entered and left at one instant."
+    ] ;
+    sh:property [
+        sh:path fnd:estimatedStart ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "estimatedStart is at most one boolean."
+    ] .
+
+fnd:SupersessionAcyclicShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:supersededBy ;
+    sh:sparql [
+        sh:message "{$this} supersedes itself through a chain of fnd:supersededBy, so the chain has no latest version." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy>+ $this .
+            }
+        """
+    ] .
+
 fnd:KeyShape a sh:NodeShape ;
     sh:targetClass fnd:Key ;
     sh:targetSubjectsOf fnd:keyValue , fnd:keyScheme ;
@@ -800,10 +854,72 @@ fnd:MergedNaturalKeyShape a sh:NodeShape ;
             }
         """
     ] .
+
+fnd:MeaningBearingEdgeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:hasIdentity ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned, minted under it nor a published term, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:select """
+            SELECT $this ?p ?o WHERE {
+                $this ?p ?o .
+                ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
+                FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER NOT EXISTS { ?o <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?ontology }
+                FILTER (!STRSTARTS(STR(?o), STR($this)))
+            }
+        """
+    ] .
 ```
 
 The shapes match subclasses through `rdfs:subClassOf*` in the data graph, so validate data
 together with the adopter's ontology. A pair is reported from both sides, once per member.
+
+The structural shapes, in `shapes/structural.ttl`, check the cardinalities the OWL restrictions above state, for an adopter validating data without a reasoner. They were empty until 2026-10-28, and Vocabulary restated them for its own classes meanwhile.
+
+```turtle-shapes
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+fnd:VersionedShape a sh:NodeShape ;
+    sh:targetClass fnd:Versioned ;
+    sh:or (
+        [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ]
+        [ sh:path rdfs:isDefinedBy ; sh:minCount 1 ; sh:nodeKind sh:IRI ]
+    ) ;
+    sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity, unless it is a published term, rdfs:isDefinedBy the ontology that declares it, whose identity is its IRI and whose versions are that ontology's releases." .
+
+fnd:EvidenceShape a sh:NodeShape ;
+    sh:targetClass fnd:Evidence ;
+    sh:property [
+        sh:path [ sh:alternativePath ( fnd:supports [ sh:inversePath fnd:hasEvidence ] ) ] ; sh:minCount 1 ;
+        sh:message "Evidence supports at least one thing, stated as fnd:supports or from the thing by fnd:hasEvidence."
+    ] ;
+    sh:property [
+        sh:path fnd:recordedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+        sh:message "Evidence states exactly when it was recorded."
+    ] .
+
+fnd:TemporallyScopedShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporallyScoped ;
+    sh:property [
+        sh:path fnd:hasTemporalScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:TemporalScope ;
+        sh:message "A temporally scoped thing has exactly one fnd:hasTemporalScope."
+    ] .
+
+fnd:GovernableShape a sh:NodeShape ;
+    sh:targetClass fnd:Governable ;
+    sh:property [
+        sh:path fnd:hasGovernanceState ; sh:maxCount 1 ; sh:class fnd:GovernanceState ;
+        sh:message "A governable thing has at most one current fnd:hasGovernanceState."
+    ] .
+```
+
+`fnd:SupersessionAcyclicShape` walks the chain from each of its members, so a chain of n versions costs n walks of at most n steps, the pattern Ledger uses for `ldg:partOf`. `fnd:TemporalScopeShape` is plain SHACL over every scope.
+
+`fnd:MeaningBearingEdgeShape` runs one query per versioned focus node over its outgoing edges, joined to the `fnd:meaningBearing` annotations, so the adopter's ontology is in the data graph when it runs, as for the key shapes. It warns rather than fails, since a content-addressed object that is neither versioned nor minted under the subject is a legitimate case the data cannot distinguish. A published term at the edge's end is exempt by its `rdfs:isDefinedBy` mark, since its ontology's release changes it with every other term at once (§4). The compile-time refusal in Persistence is the exact check (§4).
 
 ### 8.8 Worked example and related documents
 
@@ -832,7 +948,7 @@ Illustration only — `ins:Obligation` isn't defined here; it belongs to Instrum
 
 ```turtle-example
 # Illustrative only — ins: is not part of Foundation's own namespace.
-ins:Obligation rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped .
+ins:Obligation rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped .
 
 ex:ob1
     a ins:Obligation ;
@@ -855,7 +971,7 @@ ex:ob1
 | Term | Kind | Key characteristics |
 |---|---|---|
 | `fnd:utility` | Annotation property | — |
-| `fnd:Version` | Class (mixin) | `hasIdentity` cardinality 1 |
+| `fnd:Versioned` | Class (mixin) | `hasIdentity` cardinality 1 |
 | `fnd:PersistentIdentity` | Class | `hasVersion` min 1 |
 | `fnd:Evidenced` | Class (mixin) | — |
 | `fnd:Evidence` | Class | subClassOf `prov:Entity`; `supports` min 1; `recordedAt` cardinality 1 |
@@ -898,7 +1014,10 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
-- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in this release.
+  - may invalidate ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)). `fnd:meaningBearing` with `fnd:MeaningBearingEdgeShape`, `fnd:TemporalScopeShape` checking validity periods stated half-open with zoned instants, and `fnd:SupersessionAcyclicShape`. `fnd:estimatedStart` on a temporal scope.
+  - no effect ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)). A published term of a versioned class, `rdfs:isDefinedBy` the ontology that declares it, carries no identity of its own. `fnd:VersionedShape` exempts it and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
 - **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,
@@ -907,3 +1026,5 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
   `KeyScheme` join the disjoint classes. The first shapes in `shapes/constraints.ttl`, and this
   document is again the source of `spec/foundation.ttl` (the ontology header is now a block in §2).
   Every importer re-pins in the same release.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

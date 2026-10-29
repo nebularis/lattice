@@ -23,9 +23,7 @@ From release 0.18.0, the substrate layers are released together, as one set with
 - **One number**, the repository catalogue's `[conventions.release]` version. Every member document's version IRI
   ends with it, every import of a member names it, and member shape and projection directories have no
   `.version` file.
-- **A change anywhere is a new release.** `mise run release:prepare -- <X.Y.Z>` moves every member reference, in
-  the Turtle and in the literate READMEs, to the new number, and regenerates the XML catalogs and the release
-  register. Then write the release notes, run the checks and commit. The maintainer tags `ontologies-vX.Y.Z`.
+- **A change anywhere is a new release.** `mise run release:prepare -- <X.Y.Z>` moves every member reference, in the Turtle and in the literate READMEs, to the new number, and regenerates the XML catalogs and the release register. Then rename each changed member's `Unreleased` release-note lead to the number, run the checks and commit. The maintainer tags `ontologies-vX.Y.Z`.
 - **What the number means.** Semantic versioning applies to the set, and ADR-A113's major-zero rule with it.
 - **Release notes class each change** by its effect on a graph valid under the previous release:
 
@@ -35,10 +33,14 @@ From release 0.18.0, the substrate layers are released together, as one set with
   | may invalidate | a new restriction, shape, disjointness, key or domain | the rule, so an adopter can validate first |
   | changes meaning | a renamed or removed term, a changed law | a migration, once an adopter holds production data |
 
+- **Release notes take one form.** A layer's README ends with a "Release Notes" section, newest release first. A release is one bullet, `- **X.Y.Z**.`, and each change in it is one sub-bullet that opens with its class from the table above, *changes meaning*, *may invalidate* or *no effect*, cites its ADR where it has one, then says what changed and what an adopter must do. A change made before its number is assigned goes under `- **Unreleased**.`, which the cut renames to the number, so no note ever names a release that has not happened. A layer with no change of its own in a release writes nothing for it, since the register records which documents each release holds, and the section closes with the sentence that points at the register. A note says what changed, never which slice changed it. A module outside the set, and an applied module, keeps the same form under its own number.
+
 The rest of this document governs the standalone modules, the applied modules and the examples, which keep their own versions and pin a
 release.
 
 ## The versioning unit
+
+This section and those after it govern the modules outside the release set, the applied modules and, since 0.19.0, MORK, SPC, Surface and Persistence. For a member of the substrate's release the section above replaces them, and a member document has no `.version` file.
 
 **One `owl:versionIRI` per `owl:Ontology` document.** `spec/<layer>.ttl` and
 `vocab/<layer>-vocab.ttl` are two independently versioned documents — a
@@ -90,10 +92,7 @@ stable ([ADR-A113](decisions/ADR-A113-breaking-changes-at-major-version-zero.md)
 
 - A change the table above classes as **MAJOR** takes a **MINOR** bump instead, for an ontology
   document, a `shapes/` directory or a `projection/` directory alike.
-- The change is marked breaking in the ADR that authorises it, and in a **Release notes** section
-  of the layer's README, one line per breaking version:
-  `- 0.8.0 (breaking): bhv:targetsElement replaced by bhv:targets. ADR-A106.`
-  The layer's first breaking change creates the section. The release register is unchanged.
+- The change is marked breaking in the ADR that authorises it, and in the **Release Notes** section of the layer's README as a change classed *changes meaning* that cites the ADR, in the form the release section above states, for example `- changes meaning (ADR-A106). bhv:targetsElement is replaced by bhv:targets.` under the release's bullet. The release register is unchanged.
 - An importer re-pinned to a breaking `0.x` version takes a MINOR bump by the rule above, and is
   marked breaking where its own consumers are affected.
 
@@ -187,7 +186,7 @@ table:
 | `mork/spec/Executable.ttl` | `lattice/executable/0.0.1` | `lattice/executable/0.2.0` (base already correct) |
 | `mork/spec/Mork.ttl` | *(no `owl:versionIRI` at all)* | `http://www.nebularis.org/ontologies/Mork/0.2.0` — first assignment, in MORK's own pre-existing namespace family, not migrated to `lattice/` |
 | `spc/spec/spc.ttl` | *(no `owl:versionIRI` at all)* | `http://example.org/spc/0.2.0` — first assignment, in SPC's current (pre-ADR-A62-harmonisation) namespace |
-| `applied/capacity/.../applied_capacity_execution_spec_capx_Version2.ttl` | `lattice/applied/capacity/execution/0.0.1` | `lattice/applied/capacity/execution/0.2.0` (base already correct) |
+| `applied/capacity/.../capacity-execution.ttl` | `lattice/applied/capacity/execution/0.0.1` | `lattice/applied/capacity/execution/0.2.0` (base already correct) |
 | `applied/insurance/spec/structure/contract.ttl` | `owl:versionIRI` `insurance/contract/0.1.1` **and** `owl:versionInfo "3.5.1"` (disagreeing) | `owl:versionIRI` `insurance/contract/0.2.0`; `owl:priorVersion` updated to `0.1.1`; `owl:versionInfo` dropped — `owl:versionIRI` is now the single authoritative signal. Namespace family (`insurance/`, outside `lattice/`) deliberately left as-is; see the open question below. |
 
 Every `owl:imports` statement anywhere in `ontology/` that named one of the
@@ -200,9 +199,9 @@ references, used by several of its example/test fixtures, were deliberately
 left unversioned — see the checklist's step 2.
 
 **Answered, per ADR-A98 decision 6:** `applied/insurance/contract.ttl`'s namespace family
-(`neuro-semantic/insurance/...`, outside the `lattice/` tree every other in-scope document uses)
+(`neuro-semantic/lattice/insurance/...`, outside the `lattice/` tree every other in-scope document uses)
 was deliberate applied-layer independence, not an oversight. Every insurance module uses the same
-`neuro-semantic/insurance/<module>` family; only cross-domain applied modules use the
+`neuro-semantic/lattice/insurance/<module>` family, only cross-domain applied modules use the
 `neuro-semantic/lattice/applied/<module>` family. The legacy contract document itself was dropped
 by `applied-insurance-reference` (epic decision D1, AIR-1.1).
 

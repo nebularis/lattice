@@ -26,17 +26,19 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.19.0> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.19.0> |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.20.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> |
+| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.20.0> | none |
 
 | Prefix | Namespace |
 |---|---|
 | `dal:` | <https://www.nebularis.org/neuro-semantic/lattice/persistence#> |
 | `fnd:` | <https://www.nebularis.org/neuro-semantic/lattice/foundation#> |
+| `pat:` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> |
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 
@@ -45,6 +47,7 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 - `spec/persistent-foundation.ttl` has its own row in section 2's header table. It imports Foundation and
   `spec/persistence.ttl`, and the two spec documents share one version. The terms of section 6 that belong to it sit in
   `output-file` regions ([literate specifications](../../docs/architecture/literate-specifications.md)).
+- `spec/persistence-store.ttl` has its own row in section 2's header table and imports nothing. Its terms are the `turtle-spec` blocks of section 5.16, and it shares the other spec documents' version.
 - The two hidden blocks of section 7 generate `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl`, each
   naming its file. Section 6 states no OWL restriction, so no `shapes/structural.ttl` is generated.
 - Extraction rewrites the class diagram (section 4) and the Axiom Index (6.7), which are never edited by hand.
@@ -64,7 +67,7 @@ roles = ["docs", "examples", "shapes", "spec", "test"]
 imports = ["foundation"]
 
 [module.extract]
-spec = ["spec/persistence.ttl", "spec/persistent-foundation.ttl"]
+spec = ["spec/persistence.ttl", "spec/persistent-foundation.ttl", "spec/persistence-store.ttl"]
 shapes = ["shapes/constraints.ttl", "shapes/persistent-foundation.ttl"]
 ```
 
@@ -111,8 +114,8 @@ flowchart TB
 
 **This ontology targets classes, graphs and shapes by IRI reference only.** It imports nothing from
 Foundation, Vocabulary, Quantification, Party, Eligibility, Wording, Behaviour or Instrument, and none
-of them imports it. It has no place in the layer order of
-[ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers):
+of them imports it. It has no place in the layer order the
+[repository catalogue](../../repository-catalogue.md) records:
 it sits beside Surface and MORK as a cross-cutting substrate. An adopter's domain ontology never needs
 to know that Persistence exists, and a configuration can be added, changed or removed without touching
 it (ADR-A78). The one exception is optional: `persistent-foundation` (§5.11) imports Foundation, so that
@@ -1142,9 +1145,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 
 "None" means the absence is itself meaningful and checked where it matters: an undeclared privacy
 profile means "this scope declares no privacy stance", not "this scope is public data". The epoch
-guard's baseline is the discouraged row-level guard, kept so that no existing deployment's generated
-SPARQL changed when the dimension was introduced, and it raises its warning whether it was declared
-or defaulted.
+guard's baseline is the discouraged row-level guard, and it raises its warning whether it was declared or defaulted. Making the dataset-level guard the baseline was tried on 2026-10-28 and found to need a dataset-guard variant of every builder family, which the no-receipt families lack (TD-118), so until they exist a family that wants the recommended guard declares it.
 
 **Two authoring conveniences.**
 
@@ -1280,9 +1281,10 @@ ex:OpinionShape a sh:NodeShape ; sh:targetClass ex:Opinion ;
 
 | Refused or warned | When |
 |---|---|
-| `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Version` (by IRI, with no import), or it has no target class, or it is a value property |
+| `PinnedReferenceToUnversionedClass` (refusal) | an edge is `dal:Pinned` and its target class is not a subclass of `fnd:Versioned` (by IRI, with no import), or it has no target class, or it is a value property |
 | `ReferenceModeUnknown` (refusal) | the value is neither individual |
 | `EvidenceEdgeByIdentity` (warning) | the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or a record class, its target class is versioned, and the edge is by identity |
+| `MeaningBearingEdgeByIdentity` (refusal) | an edge is `dal:Reference` by identity, its predicate is `fnd:meaningBearing true` in the loaded ontology, and the shape's class is versioned. Own the edge, or pin it to a version of its target (Foundation §4) |
 
 **Record classes.** A class whose instances are records, cited for what they said at a time, need not be modelled as `fnd:Evidence`. A
 profile names it with `dal:recordClass`, and its subclasses, as the configuration asserts them, are records too. The warning above reads
@@ -1327,7 +1329,7 @@ write's boundary, and the same shape can keep serving the adopter's own validati
 
 | Strategy | Means | Use when |
 |---|---|---|
-| `dal:ProvidedConcurrency` (baseline) | rely on the store. The compiler generates an unconditional write | no concurrent writers, or a store that serialises them |
+| `dal:ProvidedConcurrency` (baseline) | rely on the environment: the store serialises writes to an aggregate, or the application around it does. The compiler generates an unconditional write and solves no race itself, so the lost update of §5.1 is the environment's to prevent | no concurrent writers, or a store or application that serialises them |
 | `dal:Optimistic` | the guarded compare-and-set of §5.3 | read-modify-write by concurrent writers on a store that detects write conflicts |
 | `dal:AppendOnly` | the append form of §5.3: the store allocates the next position | event streams and decision records |
 | `dal:LockingConcurrency` | a marker that mutual exclusion lives outside the store (an external lock, a single writer per partition) | the store's isolation is too weak or unknown. No guard is generated |
@@ -1610,6 +1612,8 @@ flowchart TB
     classDef txn fill:#d6eaf8,stroke:#2874a6,color:#000
     classDef history fill:#fff3cd,stroke:#b7950b,color:#000
 ```
+
+P3, P5 and P6 are described, not generated. A deployment that needs one builds it beside the generated operations, and the compiled profile does not claim it.
 
 **P0, the key as the identity.** If an entity's IRI is derived from its key, a second insert of the same
 thing is a no-op and uniqueness is structural. It suits only keys that are immutable and not personal
@@ -1896,7 +1900,7 @@ from other facts and never stored here. The first version is written at seq 0 on
 A caller restates only what changed. A member the new version does not restate is shared by reference, so the payload holds the
 new version's own triples and a pointer to each unchanged member. A node a new version points at must already be in the data graph.
 
-**Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Version`, by IRI in the loaded graphs
+**Warned.** `compile` warns `VersionedClassWrittenInPlace` when a target class is a subclass of `fnd:Versioned`, by IRI in the loaded graphs
 with no import of Foundation, and the discipline is `dal:InPlace`. A replace deletes the version before it, which the chain of `pat:previousVersion`
 keeps. Declare `dal:AppendVersions`, or `dal:InPlace` deliberately for a working draft that nothing cites.
 
@@ -2140,7 +2144,7 @@ profile nodes, which node-local shapes cannot see.
 store-local epoch, the row-level epoch guard, a weak ETag with compare-and-set, no global read where
 a dataset tier is declared, an advisory contiguity check, sorted acquisition with a single guarded
 update, declared shard counts not yet honoured, mixed receipt models in one graph family, a
-profile scoped to a bare class from another namespace, and a subclass of `fnd:Version` written in place.
+profile scoped to a bare class from another namespace, and a subclass of `fnd:Versioned` written in place.
 
 ### 5.11 Keys: `persistent-foundation`
 
@@ -2151,8 +2155,7 @@ A natural key identifies one thing, and something has to keep it that way. An ad
 reasoner alone takes `fnd:MergedOnNaturalKey`, and OWL merges any two things sharing one. **LATTICE
 recommends Persistence instead, for any deployment that writes keyed data**: `owl:hasKey` merges on
 any collision, including a mistaken one, and nothing in OWL can undo a merge or say why it happened.
-Persistence refuses the second claim when it is written, and reports, quarantines or records for
-review anything written around it.
+Persistence refuses the second claim when the store's isolation lets the write see the first (§5.6.6), and otherwise reports, quarantines or records for review what was written around it.
 
 `persistent-foundation` is how. It is optional, and it is Persistence's only document that imports a
 layer: `spec/persistent-foundation.ttl` imports Foundation and this ontology, both at this README's version, so the `dal:`
@@ -2590,7 +2593,7 @@ flowchart TB
 
 Each event carries its type, its receipt (`pat:revision`), its position within the batch (`pat:opSeq`) and its time, which are the four triples of the picture. `test_append_events.py` holds that a three-row append steps the sequence once and writes one receipt, one claim and three events (`test_h2_6b_t1`), and that the result is the same under every hash seed on rdflib (`test_h2_6b_t2`).
 
-**Append of a version.** A family that appends versions writes no replace and no tombstone. [`examples/write-discipline-composite-append-versions.ttl`](examples/write-discipline-composite-append-versions.ttl) declares a quote as a `fnd:Version`, and `append-version` adds a new version beside the old one. The caller writes only the new version's own triples, and a member it does not restate is reached by reference.
+**Append of a version.** A family that appends versions writes no replace and no tombstone. [`examples/write-discipline-composite-append-versions.ttl`](examples/write-discipline-composite-append-versions.ttl) declares a quote as a `fnd:Versioned`, and `append-version` adds a new version beside the old one. The caller writes only the new version's own triples, and a member it does not restate is reached by reference.
 
 ```mermaid
 flowchart TB
@@ -3126,6 +3129,197 @@ flowchart LR
 | [ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md), [ADR-A79](../../docs/architecture/decisions/ADR-A79-persistence-compiler-toolchain.md), [ADR-A80](../../docs/architecture/decisions/ADR-A80-housekeeping-component-boundary.md) | the governing decisions |
 | [ADR-A114](../../docs/architecture/decisions/ADR-A114-external-and-natural-keys.md) | external and natural keys, which Persistence enforces for adopters who choose it |
 | [ADR-A122](../../docs/architecture/decisions/ADR-A122-aggregate-ownership.md), [ADR-A123](../../docs/architecture/decisions/ADR-A123-typed-operation-ir.md), [ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md) | aggregate ownership, the contract of a generated operation, and the caller library |
+
+### 5.16 The store vocabulary, `persistence-store`
+
+`spec/persistence-store.ttl` publishes the vocabulary that the generated operations write into a deployment's stores. It names the receipts, version rows, transaction claims, key claims, quarantine rows and dataset nodes of the patterns the compiler emits (§5.2, §5.3), under the `pat:` prefix. An adopter never authors these terms, a generated operation writes them, and an adopter's own shapes and queries read them. The document imports nothing and carries no axiom beyond the class hierarchy, domains and ranges that the generated operations rely on. Data stored under the earlier, illustrative `example.org` namespace is stored under different IRIs and is migrated by rewriting them.
+
+<!-- start: {"output-file": "spec/persistence-store.ttl"} -->
+
+The classes.
+
+```turtle-spec
+pat:KeyClaim a owl:Class ;
+    rdfs:comment "A deterministic node for one normalised key value under one constraint. At most one owner." .
+
+pat:Revision a owl:Class ;
+    rdfs:comment "A receipt for one successful write to one target (aggregate or stream). Append-only. Chained by pat:prevRev." .
+
+pat:VersionRow a owl:Class ;
+    rdfs:comment "An aggregate or stream graph IRI in its role as the subject of a version row. Asserted once, when the row is created, so shapes can target rows without also targeting receipts." .
+
+pat:Deletion a owl:Class ;
+    rdfs:subClassOf pat:Revision ;
+    rdfs:comment "A revision that emptied the target's payload and tombstoned its version row." .
+```
+
+The terms of a version row, whose subject is the aggregate or stream graph IRI and which lives in a meta shard.
+
+```turtle-spec
+pat:epoch a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Dataset generation. On the dataset node it is the current epoch, and the only value writes guard on. On a receipt it is the dataset epoch the write was made under. On a version row it is the epoch of the row's last write, rebased on the next write after a bump. Bumped on restore, rebuild, migration and re-key." .
+
+pat:seq a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Dense per-target sequence, allocated inside the writing transaction. Exactly one value per version row. Continues across epoch bumps and tombstones, and never restarts." .
+
+pat:head a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The latest revision of this target. Exactly one value." .
+
+pat:current a owl:ObjectProperty ;
+    rdfs:comment "Snapshot-per-revision model only: the sealed payload graph that is the current state." .
+
+pat:deleted a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Tombstone. Present and true when the target's payload has been deleted. The row and its counter survive." .
+
+pat:fence a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Fencing token from an external lease. Writes with an older token fail the guard." .
+
+pat:lockedBy a owl:ObjectProperty ;
+    rdfs:comment "Editorial lease holder." .
+
+pat:lockExpires a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Editorial lease expiry." .
+```
+
+The terms of a receipt, whose subject is a revision IRI derived from the target, the epoch and the sequence, and which lives in a log bucket.
+
+```turtle-spec
+pat:target a owl:ObjectProperty ;
+    rdfs:comment "The aggregate or stream graph this revision wrote." .
+
+pat:opSeq a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Client-supplied ordinal of an event within its revision. The store cannot mint it. Authoritative on the event. Also valid, as a denormalised convenience, directly on the pat:Revision itself, but only when that revision covers exactly one event. A multi-event revision has no single representative opSeq and must omit it at the revision level, carrying it only on each event." .
+
+pat:prevRev a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The previous revision of the same target, as an IRI. Because revision IRIs are deterministic from the aggregate, the epoch and the sequence, two colliding writers produce two txn claims on the same revision subject, not two revisions sharing one prevRev. A fork is detected on pat:txn cardinality, not on shared prevRev values." .
+
+pat:txn a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The client transaction id that produced this revision. Also the subject of a claim in the txn graph." .
+
+pat:hlc a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Hybrid logical clock, {physicalMillis:013}:{logical:04}:{node}. Sparse, globally comparable." .
+
+pat:recordedAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Transaction time. Audit only, never an order key. Compare fnd:recordedAt." .
+
+pat:occurredAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Valid time, when the family declares valid time. On the revision, the default valid time for the whole commit. Compare fnd:validFrom. A domain event may carry its own occurredAt when its valid time differs from the revision's, for example a backfill or a multi-event commit whose events did not all occur at once, which then takes precedence for that event." .
+
+pat:actor a owl:ObjectProperty ;
+    rdfs:comment "The principal responsible for the write." .
+
+pat:cause a owl:ObjectProperty ;
+    rdfs:comment "The decision record that authorised this write. Required on deletions." .
+
+pat:hash a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Optional tamper-evidence: H(prevHash ‖ canonicalised change)." .
+
+pat:asserts a owl:ObjectProperty ;
+    rdfs:comment "Patch-log model: the graph of triples this revision added." .
+
+pat:retracts a owl:ObjectProperty ;
+    rdfs:comment "Patch-log model: the graph of triples this revision removed." .
+```
+
+The terms of an event, which lives in a bucketed event graph, and of the versions that the append-version operations write.
+
+```turtle-spec
+pat:revision a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The revision that wrote this event." .
+
+pat:currentVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version row: the version written last for this identity, the one a read resolves to. Rewritten by every append of a version, and absent before the first." .
+
+pat:previousVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version: the version of the same identity that was current when this one was written. Links the chain of versions, which a version of a family that states its members as changes is read back along. The domain's own supersession term, for example fnd:supersededBy, is asserted under the domain's rule and never by the write." .
+
+pat:addsMember a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member the version adds to those of the version before it." .
+
+pat:dropsMember a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member of the version before it that this version does not have. A member dropped by a version is out of every version from it on until a later one adds it again." .
+
+pat:checkpoint a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True on a version that lists every member, under the domain's membership property, the first version and every dal:checkpointEvery versions after it, so that a read of members never follows a chain back further than the nearest checkpoint." .
+```
+
+The terms of a transaction claim, whose subject is the transaction id and which lives in the transaction graph.
+
+```turtle-spec
+pat:rev a owl:ObjectProperty ;
+    rdfs:range pat:Revision ;
+    rdfs:comment "The revision this transaction id produced. Exactly one. Its presence, with a matching pat:requestDigest, is the write's outcome." .
+
+pat:requestDigest a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Lower-case hex SHA-256 of enc([operationKind, target, expected, *sorted canonical N-Triples of the skolemized payload and events]). Distinguishes a replay of the same request from a different request reusing the txn id." .
+```
+
+The terms of a key claim, whose subject is derived from the constraint, the scheme version and the keyed hash of the key value, and which lives in the key graph.
+
+```turtle-spec
+pat:constraint a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The uniqueness constraint id this claim belongs to." .
+
+pat:claimedBy a owl:ObjectProperty ;
+    rdfs:comment "The entity that owns this key value. At most one. Released only by its owner, or on the owner's behalf by erasure." .
+
+pat:retiredBy a owl:ObjectProperty ;
+    rdfs:comment "The former owner that retired this claim. Tombstone. The node is kept, unless the family's erasure policy deletes it." .
+
+pat:retiredAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Audit only." .
+
+pat:quarantinedOwner a owl:ObjectProperty ;
+    rdfs:comment "In the quarantine graph, on a claim: an owner of a duplicated claim that the quarantine operation recorded. The claim itself is not touched." .
+
+pat:quarantinedAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "In the quarantine graph, on a claim: when the operation recorded the owner. Audit only." .
+
+pat:counter a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Sentinel counter on a key shard node. Rewritten by every claim in the shard to materialise a write conflict." .
+```
+
+The terms of the dataset node, which lives in the dataset graph.
+
+```turtle-spec
+pat:orderModel a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The dataset's order model, for example per-stream-dense+hlc-global." .
+
+pat:stableWatermark a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Only for sparse tiers that commit before they publish: the highest fully committed dataset-wide position, as {epoch:019}:{position:019}, where position is a store-native feed offset or a single writer's global counter. Never a per-target pat:seq value, which has no single dataset-wide instance to report." .
+
+pat:retentionLowWaterMark a owl:DatatypeProperty ;
+    rdfs:range xsd:long ;
+    rdfs:comment "Per-target, in the retention graph: the lowest pat:seq guaranteed still retained. Every receipt below it has been pruned. Absent means 1. Advanced by the retention job before it drops a bucket, and read by the gap-scan audit." .
+
+pat:etag a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Deprecated. An ETag is always derived from the epoch and the sequence, never stored, so a shape forbids this term on a version row with sh:maxCount 0." .
+```
+
+<!-- end -->
 
 ## 6. Description Logic Encoding
 
@@ -4433,7 +4627,7 @@ the tag.
 #### `dal:writeDiscipline`
 
 **Definition.** How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a
-target class is a subclass of fnd:Version (by IRI, with no import) and the discipline is dal:InPlace.
+target class is a subclass of fnd:Versioned (by IRI, with no import) and the discipline is dal:InPlace.
 
 **Domain.** `dal:WriteDisciplineProfile`
 
@@ -5093,7 +5287,7 @@ The individuals of `dal:ReferenceMode`.
 | Individual | Type | Definition |
 |---|---|---|
 | `dal:ByIdentity` | `dal:ReferenceMode` | The default. The edge names the target's persistent identity, and the version in force is read from the identity's own record, so a new version of the target needs no change to the node that refers to it. |
-| `dal:Pinned` | `dal:ReferenceMode` | The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Version (by IRI, with no import), since there is then no version to name. |
+| `dal:Pinned` | `dal:ReferenceMode` | The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Versioned (by IRI, with no import), since there is then no version to name. |
 
 The individuals of `dal:ConcurrencyStrategy`.
 
@@ -6227,8 +6421,8 @@ dal:SharedClassProfileWarningShape
               FILTER NOT EXISTS { $this dal:appliesTo [ a ?otherKind ] .
                                   FILTER (?otherKind != dal:ClassScope) }
               FILTER NOT EXISTS { $this dal:acknowledgedSharedClassOverride true }
-              BIND(STRBEFORE(STR($this), "#") AS ?thisNamespace)
-              BIND(STRBEFORE(STR(?cls), "#") AS ?clsNamespace)
+              BIND(REPLACE(STR($this), "[^/#]+$", "") AS ?thisNamespace)
+              BIND(REPLACE(STR(?cls), "[^/#]+$", "") AS ?clsNamespace)
               FILTER(?thisNamespace != ?clsNamespace)
             }""" ] .
 
@@ -7341,16 +7535,17 @@ Not applicable.
 
 The configuration vocabulary, `spec/persistence.ttl`, imports nothing. None of Foundation, Vocabulary, Quantification,
 Party, Eligibility, Wording, Behaviour or Instrument imports it, and it has no place in the layer order of
-[ontology-architecture.md](../../docs/architecture/ontology-architecture.md#the-lattice-layers). It targets classes,
+the [repository catalogue](../../repository-catalogue.md). It targets classes,
 graphs and shapes by IRI reference only (ADR-A78).
 
-Only `spec/persistent-foundation.ttl` imports a layer. It imports Foundation and `spec/persistence.ttl`, at this README's
+`spec/persistence-store.ttl` imports nothing. Only `spec/persistent-foundation.ttl` imports a layer. It imports Foundation and `spec/persistence.ttl`, at this README's
 version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
-Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
-
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - changes meaning. The store vocabulary, the `pat:` terms that the generated operations write into receipts, version rows, transaction claims and key claims, moves from the illustrative `example.org` namespace to the published `persistence-store` document, `spec/persistence-store.ttl`, with the namespace `https://www.nebularis.org/neuro-semantic/lattice/persistence-store#`. Data written under the old IRIs is stored under different IRIs and must be rewritten.
 - 0.19.0. Every document takes the release's number.
   - The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and both shapes files from
     sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and the ontology node of
@@ -7413,6 +7608,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - `persistence` 0.2.1 and `persistence-shapes` 0.1.0, the first versions in the register ([ADR-A78](../../docs/architecture/decisions/ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md)). Scopes, a profile for each
   dimension, uniqueness constraints with claim schemes, identity minting, epochs, privacy, capability specifications and the
   compiled profile, with 33 shapes that validate a configuration (no effect).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
 ## 13. Open Issues
 

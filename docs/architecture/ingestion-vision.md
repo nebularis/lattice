@@ -26,7 +26,7 @@ route from the document's text to that meaning.
 Two facts shape the route:
 
 - **Machine extraction works.** Frontier LLMs, given a rich applied ontology, have turned whole
-  contracts into OWL of high quality. The MERIDIAN contract ontologies are the reference case.
+  contracts into OWL of high quality. A private set of contract ontologies is the reference case.
 - **Whole-document extraction does not scale.** One such extraction cost about USD 300 per
   contract on a frontier model. Most of that cost is structural: the document is resent with
   every call, the model re-derives terms it has already resolved, and it spends tokens on

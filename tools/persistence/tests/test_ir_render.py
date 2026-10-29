@@ -367,7 +367,7 @@ def test_h2_1_t22_an_adversarial_iri_is_refused_or_stays_an_iri(seed):
 
 
 def test_h2_1_t26_a_literal_that_looks_like_an_iri_is_rendered_unchanged():
-    value = "<https://example.org/lattice/patterns#seq>"
+    value = "<https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq>"
     op = Operation.build(
         "label", (Param("root", Kind.IRI),), Group(()),
         insert=(GraphBlock(META, (Triple(ParamRef("root"), P("label"), Const(Literal.encode(value))),)),),

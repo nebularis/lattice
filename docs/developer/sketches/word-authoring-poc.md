@@ -168,7 +168,7 @@ for what the sketch leaves unnamed. Nothing is added under `ontology/`, so no ve
 | position | `wrd:rankKey`, and `wrd:objectId` derived from position | §4.1, W7 |
 | tree | `wrd:directlyComprises` | §4.1 |
 
-The gaps are listed for C3. Element versions (`fnd:Version`) are not modelled: each revision is its
+The gaps are listed for C3. Element versions (`fnd:Versioned`) are not modelled: each revision is its
 own named graph.
 
 ### 4.1.1 Deferred: adopt the published Wording ontology

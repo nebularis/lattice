@@ -5,7 +5,9 @@ description: How to change a LATTICE ontology and model well in it. Use when edi
 
 # Authoring LATTICE ontologies
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
+This skill's tasks are the ones that need the declared terms, which `find` searches only with `--kind term`. Before declaring a class or property, ask `mise run graph:ask -- find <what the term would mean> --kind term`, and declare nothing the answer already holds. Ask it again to learn what an existing term means and what restricts it, its domain, range, functional or at most one value, since that is stated on the line under its row. Ask for the rules that govern the change separately, with no `--kind term`, because terms ranked with the entries push the rules out of the top five.
 
 ## Changing an ontology document
 
@@ -95,17 +97,8 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
    locates the current document to the new version, and keep a test that asserts history, a release
    row or a release note. Leave alone `docs/architecture/ontology-releases.md` (generated),
    `tools/test_ontology_releases.py` and `tools/fixtures/import_guard/`.
-6. **Regenerate and record.** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`,
-   which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for the
-   release, and one per new applied version. The tags are the maintainer's (skill
-   `lattice-lifecycle`). Write the release notes in the "Release notes" section of each changed
-   README, classing every release change by its effect on a graph valid under the previous release:
-   no effect, may invalidate, or changes meaning (ADR-A129).
-7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
-   `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`,
-   `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp`
-   rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If
-   Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
+6. **Regenerate and record.** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`, which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for the release, and one per new applied version. The tags are the maintainer's (skill `lattice-lifecycle`). Rename each changed README's `- **Unreleased**.` release-note lead to the new number, and check that every sub-bullet under it opens with its class, *changes meaning*, *may invalidate* or *no effect* (ADR-A129), the form the versioning policy states. A change is written under `Unreleased` when it is made, on its branch, never first at the merge. Its note may cite the Proposed decision it rests on while on the branch, and that decision is accepted before the merge, since a migrated README cites only published decisions (skill `lattice-publication-hygiene`).
+7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`, `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`, `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp` rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
 8. **Check the code under test is this checkout's** (skill `lattice-toolchain`).
 
 ## Modelling from reality
@@ -166,7 +159,7 @@ legal relation. Declare one only where it gives useful design-time entailment, o
 shape already checks. Otherwise say the subject and value in the property's comment and let a shape
 check use.
 
-**"Versioned".** A class that is a member of `fnd:Version` is *versioned*: it supports versions,
+**"Versioned".** A class that is a member of `fnd:Versioned` is *versioned*: it supports versions,
 provenance and the rest. Call a node "a version" only when it is one specific version. The class is
 to be renamed `fnd:Versioned` (technical debt TD-20).
 
@@ -177,12 +170,7 @@ what explains the mechanism best. Headings, captions and table columns name the 
 an example comes from ("Lending", "A guarantee"), and never rank one domain's examples before or
 after another's.
 
-**No market words as technical terms.** A word with a market meaning reads as that meaning to an
-insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is
-**instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md` and
-`ontology/applied/insurance/` first. "Bound" stays where it is technical ("bound meaning",
-`ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the
-process-calculus term and stays.
+**No market words as technical terms.** A word with a market meaning reads as that meaning to an insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is **instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md`, `ontology/applied/insurance/` and `find <its meaning> --kind term` first. "Bound" stays where it is technical ("bound meaning", `ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the process-calculus term and stays.
 
 **A "Formalisation" section names no tool.** Title it "Formalisation". Say what the type means, not
 the ADR, the generation mechanism or past evaluations, which are recorded where they were decided.

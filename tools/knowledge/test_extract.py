@@ -355,13 +355,18 @@ def test_every_table_in_a_register_is_a_data_table():
     rdfs:comment of the T-Box property it maps to, written once. A register that explains its own
     columns does so in a second table, whose first column is not an identifier, so that is what
     fails. The first register written carried one, and every later register would have repeated it."""
-    registers = {
-        path
-        for family in identifiers.FAMILIES
-        if family.definition == "table-row"
-        for pattern in family.defines
-        for path in identifiers.ROOT.glob(pattern)
-    }
+    def files(definition):
+        return {
+            path
+            for family in identifiers.FAMILIES
+            if family.definition == definition
+            for pattern in family.defines
+            for path in identifiers.ROOT.glob(pattern)
+        }
+
+    # A document whose headings define entries, such as the store-discovery record, holds a register
+    # table among its other tables, so only files that are registers and nothing else are held to it.
+    registers = files("table-row") - files("heading")
     assert len(registers) >= 6
     offenders = []
     for path in sorted(registers):
@@ -460,10 +465,50 @@ def test_read_returns_the_bounded_text_of_a_pointer(built):
     _, store = built
     pieces = ask.read_ranges(store, "MEC-01")
     assert pieces and all(text.strip() for _, text in pieces)
-    path = pieces[0][0].rsplit(":", 1)[0]
+    path = pieces[0][0].removeprefix("row ").rsplit(":", 1)[0]
     whole = (extract.ROOT / path).read_text(encoding="utf-8").count("\n")
     assert sum(text.count("\n") + 1 for _, text in pieces) < whole
 
+
+@pytest.mark.parametrize("identifier", ["CAP-64", "STD-153"])
+def test_read_prints_the_register_row_before_what_its_pointer_names(built, identifier):
+    import ask
+
+    _, store = built
+    pieces = ask.read_ranges(store, identifier)
+    where, text = pieces[0]
+    assert where.startswith("row docs/developer/") and text.startswith(f"| {identifier} |")
+    assert len(pieces) > 1 and all(w.startswith("pointed-at ") for w, _ in pieces[1:])
+
+
+
+def test_an_open_store_question_is_a_discovery_with_its_row(built):
+    """The discovery record's open questions are rows of its own table, read like a register's."""
+    import ask
+
+    _, store = built
+    rows = list(store.query(f"SELECT ?k ?s WHERE {{ GRAPH ?g {{ <{extract.KI}node/TSDQ1> a ?k ; <{extract.KI}status> ?s }} }}"))
+    assert [(r["k"].value, r["s"].value) for r in rows] == [(extract.KI + "Discovery", extract.KI + "Open")]
+    where, text = ask.read_ranges(store, "TSD-Q1")[0]
+    assert where.startswith("row docs/architecture/triple-store-discovery.md:") and text.startswith("| TSD-Q1 |")
+
+
+def test_an_answered_store_question_names_its_finding_and_is_labelled_not_hidden(built):
+    """A question answered in full keeps its row, with status Answered and a link to the finding."""
+    import ask
+
+    _, store = built
+    q = f"<{extract.KI}node/TSDQ20>"
+    rows = list(store.query(f"SELECT ?s ?f WHERE {{ GRAPH ?g {{ {q} <{extract.KI}status> ?s ; <{extract.KI}answeredBy> ?f }} }}"))
+    assert [(r["s"].value, r["f"].value) for r in rows] == [(extract.KI + "Answered", extract.KI + "node/TSD41")]
+    # find filters on kind, phase and audience only, so an answered question stays a candidate.
+    assert any(r["id"] == "TSD-Q20" for r in ask.rows_of(store.query(ask.CANDIDATES)))
+
+
+def test_a_ratified_cell_is_read_by_its_leading_word(built):
+    """A tail after the yes or no, such as "added 2026-10-27", is for the reader and costs no status."""
+    out, _ = built
+    assert not [p for p in out.problems if "has Ratified" in p]
 
 def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monkeypatch):
     """The maintainer's requirement: when a document changes, the index must pick up the new line
@@ -677,7 +722,7 @@ SECTIONED = [
 
 def test_each_numbered_decision_and_addendum_is_a_section_with_its_own_range():
     """A decision's claim covers only the opening of its Decision section, so a later rule is found
-    through a section of its own (TD-93). Numbers outside the Decision section and inside a code
+    through a section of its own (ADR-A134 decision 29). Numbers outside the Decision section and inside a code
     block are not decisions, and an addendum runs through its own subheadings."""
     found = extract.decision_sections(SECTIONED)
     assert [(s, e) for _, s, e in found] == [(12, 17), (19, 19), (25, 33)]
@@ -709,3 +754,213 @@ def test_a_section_is_an_auxiliary_node_and_never_an_entry(tmp_path, monkeypatch
     }
     entries = {q.subject for q in out.quads if q.predicate == extract.ki("identifier")}
     assert entries == {parent} and not entries & set(sections)
+
+
+# Signposts beside an answer (ADR-A134 decisions 28 to 31).
+
+QUESTIONS = [
+    "# A plan", "",
+    "**LG-Q1. Which word names an account?** Account, since it has no market meaning.", "",
+    "- **C6-Q1. Where term ownership is built.** The plan puts it in C8.", "  It is continued here.", "",
+    "- **C3-Q1.** Wording ships a baseline scheme. Deployments add more.", "",
+    "| ID | Question | Options | Answer |", "|---|---|---|---|",
+    "| **LG-Q7** | Amounts per key | (a) derived. (b) authored | **Answered 2026-10-21, as leaned:** (a), now MEC-5. A child must name its key. |",
+    "| LG-Q8 | A draw in another unit | (a) refused | leaning (a) |",
+    "| PV-D3 | a decision point, not a question | x | y |",
+]
+
+
+def test_a_question_is_read_from_its_lead_or_its_row():
+    """Three lead forms and the table row the plans already use. A lead's paragraph runs to the next
+    blank line, and a question is answered when its text says so, with the date that follows."""
+    found = {q.identifier: q for q in identifiers.questions_in(QUESTIONS)}
+    assert sorted(found) == ["C3-Q1", "C6-Q1", "LG-Q1", "LG-Q7", "LG-Q8"], "a decision point is not a question"
+    assert found["LG-Q1"].question == "Which word names an account?" and found["LG-Q1"].answer.startswith("Account")
+    assert (found["C6-Q1"].start, found["C6-Q1"].end) == (5, 6) and found["C6-Q1"].answer.endswith("continued here.")
+    assert found["C3-Q1"].question == "Wording ships a baseline scheme." and found["C3-Q1"].answer == "Deployments add more."
+    assert found["LG-Q7"].question == "Amounts per key" and found["LG-Q7"].answered and found["LG-Q7"].answered_on == "2026-10-21"
+    assert not found["LG-Q8"].answered and found["LG-Q8"].answer == "leaning (a)"
+
+
+def _questions(tmp_path, monkeypatch, lines, today):
+    plan = tmp_path / "docs/developer/plans/a.md"
+    plan.parent.mkdir(parents=True)
+    plan.write_text("\n".join(lines), encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    monkeypatch.setattr(identifiers, "question_documents", lambda family: [plan])
+    out = extract.Extract()
+    extract.questions(out, today=today)
+    return out
+
+
+def test_a_question_is_an_entry_and_a_promotion_answers_it(tmp_path, monkeypatch):
+    """A question node carries its kind, status, claim and pointer. 'now MEC-5' in its answer makes
+    MEC-5 answer it, so the rule and the question that decided it reach each other."""
+    import datetime as dt
+    out = _questions(tmp_path, monkeypatch, QUESTIONS, dt.date(2026, 10, 28))
+    q7 = extract.node("LG-Q7")
+    facts = {(q.predicate.value.rsplit("#", 1)[-1], str(q.object.value)) for q in out.quads if q.subject == q7}
+    assert ("status", KI + "Answered") in facts and ("pointer", "docs/developer/plans/a.md:12-12") in facts
+    claim = next(v for p, v in facts if p == "claim")
+    assert claim.startswith("Amounts per key Answered 2026-10-21") and "**" not in claim
+    assert any(q.subject == extract.node("MEC-5") and q.predicate == extract.ki("answers") and q.object == q7 for q in out.quads)
+    assert out.counts["question:open"] == 4 and out.counts["question:answered"] == 1
+
+
+def test_an_unpromoted_rule_in_an_answer_is_reported_after_thirty_days(tmp_path, monkeypatch):
+    """Reported, never failed: a durable rule decided in a plan, with no entry to carry it."""
+    import datetime as dt
+    rows = ["| ID | Q | A |", "|---|---|---|", "| LG-Q9 | Shared parent | Answered 2026-09-01: the parent must be unkeyed |"]
+    late = _questions(tmp_path, monkeypatch, rows, dt.date(2026, 10, 28))
+    assert any("LG-Q9" in f and "names no entry it was promoted to" in f for f in late.findings)
+    assert not late.problems
+    soon = extract.Extract()
+    extract.questions(soon, today=dt.date(2026, 9, 20))
+    assert not soon.findings
+
+
+def test_every_question_of_the_plans_and_sketches_is_an_entry(built):
+    """The real corpus. LG-Q7, the question whose answer an agent missed, is an answered entry that
+    points at its row in the ledger plan."""
+    out, store = built
+    assert out.counts["question:open"] + out.counts["question:answered"] > 300
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?status ?pointer WHERE {{ GRAPH ki:index {{
+        ?n a ki:Question ; ki:identifier "LG-Q7" ; ki:status ?status ; ki:pointer ?pointer }} }}""")
+    assert len(rows) == 1 and str(rows[0]["status"].value).endswith("#Answered")
+    assert str(rows[0]["pointer"].value).startswith("docs/developer/plans/ledger.md:")
+
+
+SUPERSEDING = [
+    "# ADR-A997: Superseding", "", "**Status:** Accepted", "", "## Decision", "",
+    "**1. A first rule.** Text.", "", "**2. A second rule.** Text.", "", "**3. A third rule.** Text.", "",
+    "## Addendum, 2026-10-12: later", "", "**Reverses decision 2. ** not a lead", "",
+    "**Reverses decision 2.** **Narrows decisions 1 and 3.** The second no longer holds.", "",
+    "**4. A fourth rule.** Text.", "",
+    "## Addendum, 2026-10-13: later still", "", "**Narrows decision 4.** **Reverses decision 9.** Text.", "",
+    "Quoted, `**Reverses decision 1.**` is an example and no lead.", "",
+    "## Provenance", "text",
+]
+
+
+def test_an_addendum_lead_supersedes_or_narrows_numbered_decisions(tmp_path, monkeypatch):
+    """A bold-paragraph decision is a section too. A lead reverses or narrows the Decision section's
+    item of that number, or else the one addendum that numbers it, and a number naming nothing is
+    reported rather than guessed."""
+    decision = tmp_path / "docs/architecture/decisions/ADR-A997-superseding.md"
+    decision.parent.mkdir(parents=True)
+    decision.write_text("\n".join(SUPERSEDING), encoding="utf-8")
+    monkeypatch.setattr(extract, "ROOT", tmp_path)
+    monkeypatch.setattr(extract, "tracked", lambda *patterns: [decision])
+    out = extract.Extract()
+    extract.decisions(out)
+    base = extract.node("ADR-A997").value
+    edges = {(q.subject.value.removeprefix(base), q.predicate.value.rsplit("#", 1)[-1], q.object.value.removeprefix(base))
+             for q in out.quads if q.predicate.value.endswith(("#supersededBy", "#narrowedBy"))}
+    assert edges == {
+        ("/section-2", "supersededBy", "/section-4"), ("/section-1", "narrowedBy", "/section-4"),
+        ("/section-3", "narrowedBy", "/section-4"), ("/section-4", "narrowedBy", "/section-5"),
+    }, "decision 4 is numbered only in the first addendum, so that addendum is its section"
+    assert [p for p in out.problems if "Reverses decision 9" in p], out.problems
+
+
+def test_a_superseded_decision_names_its_successor(built):
+    """The Status line names the live decision, and every Superseded decision in the corpus has one."""
+    out, store = built
+    assert not [p for p in out.problems if "names no successor" in p]
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?id WHERE {{ GRAPH ki:index {{
+        ?a ki:identifier "ADR-A51" ; ki:supersededBy ?b . ?b ki:identifier ?id }} }}""")
+    assert [str(r["id"].value) for r in rows] == ["ADR-A82"]
+
+
+def test_every_supersession_lead_names_a_numbered_decision(built):
+    """ADR-A134's ranking addendum reverses decision 8, so that section carries the edge."""
+    out, store = built
+    assert not [p for p in out.problems if "names no numbered decision" in p]
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?from ?to WHERE {{ GRAPH ki:index {{
+        ?s ki:sectionOf ?d ; ki:supersededBy ?a ; ki:pointer ?from . ?a ki:pointer ?to .
+        ?d ki:identifier "ADR-A134" }} }}""")
+    assert len(rows) == 3, "decisions 8, 9 and 12"
+
+
+def test_the_signpost_columns_are_read_and_checked(tmp_path, monkeypatch):
+    """Does not cover is text of at most 120 characters, Distinguished from names entries, and Bears
+    on names entries and declared terms by the CURIE their layer writes."""
+    monkeypatch.setattr(extract, "_PREFIXES", {"ldg": "https://example.org/ledger#"})
+    out = _register(
+        tmp_path, monkeypatch, "| ID | Claim | Does not cover | Distinguished from | Bears on |",
+        f"| MEC-1 | **A claim.** | {'x' * 121} | MEC-2 | STD-3, ldg:keyDimension, zz:nothing |",
+    )
+    facts = {(q.predicate.value.rsplit("#", 1)[-1], str(q.object.value)) for q in out.quads}
+    assert ("distinguishedFrom", KI + "node/MEC2") in facts and ("bearsOn", KI + "node/STD3") in facts
+    assert ("bearsOn", KI + "term/ledger.keyDimension") in facts
+    assert any("Does not cover of 121 characters" in p for p in out.problems)
+    assert any("'zz:nothing', whose prefix no ontology document declares" in p for p in out.problems)
+
+
+def test_a_signpost_to_nothing_is_reported(tmp_path):
+    store = ox.Store(str(tmp_path / "s"))
+    g = extract.INDEX_GRAPH
+    a = extract.node("MEC-1")
+    store.extend([
+        ox.Quad(a, extract.ki("identifier"), ox.Literal("MEC-1"), g),
+        ox.Quad(a, extract.ki("bearsOn"), extract.node("MEC-404"), g),
+        ox.Quad(a, extract.ki("distinguishedFrom"), a, g),
+    ])
+    out = extract.Extract()
+    extract.dangling(store, out)
+    assert out.problems == ["MEC-1 has bearsOn MEC404, which names no entry or declared term"]
+
+
+def test_every_signpost_in_the_corpus_names_something(built):
+    out, _ = built
+    assert not [p for p in out.problems if "names no entry or declared term" in p or "Does not cover of" in p
+                or "whose prefix no ontology document declares" in p]
+
+
+# Measured 2026-10-28 when the check was written, and recorded as TD-119. Remove an entry when its
+# pointer names the section that states it, and never add one.
+KNOWN_WHOLE_FILE = frozenset({
+    "CAP-52", "MEC-31", "MEC-55", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
+    "MEC-74", "MEC-75", "PRI-04", "PRI-05", "PRI-08", "PRI-12",
+})
+
+
+def test_no_new_entry_points_at_the_whole_of_a_long_file(built):
+    """A pointer to a whole register or a long document hands the reader everything, as read STD-280
+    once printed the whole pending-decisions register. read refuses one, and this fails on a new
+    one. A quantum's pointer is its module's README by derivation, so it is not an authored pointer."""
+    import ask
+
+    _, store = built
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?id ?pointer WHERE {{ GRAPH ki:index {{
+        ?n ki:identifier ?id ; ki:pointer ?pointer FILTER NOT EXISTS {{ ?n a ki:Quantum }} }} }}""")
+    whole = {str(r["id"].value) for r in rows for part in str(r["pointer"].value).split(",") if ask.whole_file(part)}
+    assert not whole - KNOWN_WHOLE_FILE, sorted(whole - KNOWN_WHOLE_FILE)
+    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline and TD-119: {sorted(KNOWN_WHOLE_FILE - whole)}"
+
+
+def test_a_declared_term_carries_a_claim_from_its_own_document(built):
+    """The fact L1 lost was in the term's definition. Its claim states it, with the restrictions, so
+    find ranks it by meaning and the row says what it is."""
+    _, store = built
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?claim WHERE {{ GRAPH ki:terms {{
+        ?t ki:identifier "https://www.nebularis.org/neuro-semantic/lattice/ledger#keyDimension" ; ki:claim ?claim }} }}""")
+    claim = str(rows[0]["claim"].value)
+    assert claim.startswith("key Dimension. The dimension that derives one account per key value.")
+    assert "functional" in claim and "at most 1" in claim
+
+
+# Measured 2026-10-28 when the check was written, and recorded as TD-100. Remove an entry when its
+# claim is cut to the limit, and never add one.
+KNOWN_LONG_CLAIMS = frozenset({
+    "TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296",
+})
+
+
+def test_no_new_claim_is_longer_than_the_limit(built):
+    """A claim over the limit is cut, and the part cut is where a boundary is usually written, so
+    the reader acts on half a rule (ADR-A134 decisions 3 and 28)."""
+    out, _ = built
+    long = {p.split(": ")[1].split()[0] for p in out.problems if "which is cut at" in p}
+    assert not long - KNOWN_LONG_CLAIMS, sorted(long - KNOWN_LONG_CLAIMS)
+    assert not KNOWN_LONG_CLAIMS - long, f"shortened, so remove from the baseline and TD-100: {sorted(KNOWN_LONG_CLAIMS - long)}"

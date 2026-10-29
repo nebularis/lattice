@@ -33,6 +33,7 @@ public final class Ucd {
     private static final int FINAL_SIGMA = 0x03C2;
 
     static final Ranges ASSIGNED = ranges("assigned.txt");
+    static final Ranges FORMAT = ranges("format.txt");
     static final Ranges WHITE_SPACE = ranges("white_space.txt");
     static final Ranges CASED = ranges("cased.txt");
     static final Ranges CASE_IGNORABLE = ranges("case_ignorable.txt");
@@ -42,6 +43,7 @@ public final class Ucd {
 
     private static final Map<String, UnaryOperator<String>> STEPS = Map.of(
             "reject_unassigned", Ucd::rejectUnassigned,
+            "strip_format", Ucd::stripFormat,
             "nfc", Ucd::nfc,
             "nfkc", Ucd::nfkc,
             "nfkc_casefold", Ucd::nfkcCasefold,
@@ -137,6 +139,13 @@ public final class Ucd {
             throw new MintException(MintError.UnassignedCodePoint, String.format("U+%04X is unassigned in Unicode %s", cp, VERSION));
         });
         return s;
+    }
+
+    /** Removes every code point with General_Category Cf (zero-width and other format characters). */
+    public static String stripFormat(String s) {
+        StringBuilder sb = new StringBuilder();
+        s.codePoints().filter(cp -> !FORMAT.contains(cp)).forEach(sb::appendCodePoint);
+        return sb.toString();
     }
 
     public static String nfc(String s) {

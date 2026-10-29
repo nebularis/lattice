@@ -82,15 +82,14 @@ LITERAL_DIMENSIONS = frozenset(
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
 # one of these when no scope matches a target.
 #
-# ``epochGuardScope`` defaults to ``RowLevelGuardOnly`` deliberately: this
-# is the shape every existing template already generated before Slice 1 of
-# persistence-compiler-iri-sync, so declaring it as the explicit baseline
-# changes no existing deployment's generated SPARQL. It is the shape
-# ``dal:RowLevelGuardOnlyWarningShape`` calls discouraged, and this
-# baseline default is not exempt from that warning: see
-# ``validator.check_cross_axis``'s epoch-guard-scope row, which fires
-# whether the value came from an explicit ``dal:EpochProfile`` or from
-# this default, so the discouraged shape is never generated silently.
+# ``epochGuardScope`` defaults to ``RowLevelGuardOnly``, the shape
+# ``dal:RowLevelGuardOnlyWarningShape`` calls discouraged, and the baseline
+# default is not exempt from that warning: ``validator.check_cross_axis``'s
+# epoch-guard-scope row fires whether the value was declared or defaulted,
+# so the discouraged shape is never generated silently. The ontology
+# remediation of 2026-10-28 (OR-10) tried the dataset-level guard as the
+# baseline and found that the no-receipt builder families have no
+# dataset-guard variant, so the default stays until they do (TD-118).
 BASELINE_DEFAULTS: dict[str, str] = {
     "aggregateBoundary": "NamedGraphBoundary",
     "concurrencyProfile": "ProvidedConcurrency",

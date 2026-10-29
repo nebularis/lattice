@@ -26,8 +26,8 @@ RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 MODULE = ROOT / "ontology" / "applied" / "insurance" / "peril"
 VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
 
-PRL = Namespace("https://www.nebularis.org/neuro-semantic/insurance/peril#")
-PRLV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#")
+PRL = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#")
+PRLV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -126,14 +126,14 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
         "http://www.w3.org/2004/02/skos/core",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/quantification/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/insurance/peril/0.7.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0",
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0",
     }
 
 
@@ -283,7 +283,7 @@ def test_threshold_basis_concept_without_defining_threshold_is_rejected():
 
 def test_air22_01_spec_imports_common_and_every_import_resolves():
     spec = _spec()
-    assert "https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0" in {
+    assert "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0" in {
         str(o) for o in spec.objects(None, OWL.imports)
     }
 
@@ -291,7 +291,7 @@ def test_air22_01_spec_imports_common_and_every_import_resolves():
 # ---- AIR22-02: four sub-property axioms, onset/definitionBasis specialise nothing --------------
 
 
-ICM = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common#")
+ICM = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common#")
 
 
 def test_air22_02_four_characteristics_specialise_common_and_two_do_not():
@@ -366,7 +366,7 @@ def test_air22_05_four_contracts_bound_and_conform_to_vocabulary_shapes():
     shapes = _graph(VOCAB_SHAPES / "structural.ttl", VOCAB_SHAPES / "constraints.ttl")
     conforms, _, report = validate(data, shacl_graph=shapes, advanced=True, inference="none", allow_warnings=True)
     assert conforms, report
-    ICMV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common/vocab#")
+    ICMV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#")
     VOCB = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
     bindings = {
         ICMV.AgencyContract: PRLV.AgencyScheme,

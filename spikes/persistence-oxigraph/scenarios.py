@@ -21,7 +21,7 @@ from oxigraph_backend import OxigraphBackend, iri, literal, XSD
 import pyoxigraph as ox
 
 EX = "https://example.org/lending#"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 
 
 def generated_update(fixture: Path, template: str) -> str:

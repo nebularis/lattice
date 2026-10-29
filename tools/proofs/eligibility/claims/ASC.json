@@ -1,0 +1,13 @@
+{
+  "subject": "ASC",
+  "statedAs": "SetComparison.adequacy_* (16 lemmas, one territory fixture, exact and hierarchical match, closed and open)",
+  "statementDigest": "sha256:3c72deea7b06ac7246449c412db600cff552eb8db44d57017aecb72748725655",
+  "method": "Proof",
+  "scope": "TerritoryFixture",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

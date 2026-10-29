@@ -27,9 +27,8 @@ The ontology header, stated here so the extracted document carries it.
 
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-        <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> .
 ```
 
 ## 3. How to Read This Document
@@ -42,7 +41,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md)
 ```toml repository-catalogue
 [module]
 kind = "substrate"
-roles = ["projection", "shapes", "spec", "vocab"]
+roles = ["projection", "spec", "vocab"]
 imports = ["foundation", "vocabulary", "quantification"]
 
 [module.extract]
@@ -103,9 +102,9 @@ pty:Role a owl:Class ;
 
 ```turtle-spec
 pty:RoleOccupancy a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (Foundation section 4), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -121,7 +120,7 @@ pty:RoleOccupancy a owl:Class ;
 
 ```turtle-spec
 pty:ParticipationGroup a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
     fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [
@@ -362,9 +361,10 @@ A role designed in from the outset, unoccupied until later; and an accountable/p
 ex:third-party-occ a pty:RoleOccupancy ;
     pty:inRole pty:Obligee .
 
-# Later, a separate Effect (Behaviour's, not Party's) adds:
-#   ex:third-party-occ pty:occupiedBy ex:claimant-x .
-# together with evidence recording why.
+# Later, a separate Effect (Behaviour's, not Party's) writes a new version of the occupancy,
+#   ex:third-party-occ-2 a pty:RoleOccupancy ; fnd:hasIdentity ex:third-party-occ-id ; pty:inRole pty:Obligee ; pty:occupiedBy ex:claimant-x .
+#   ex:third-party-occ fnd:supersededBy ex:third-party-occ-2 .
+# together with evidence recording why. The unfilled version stays as the record that the slot was open.
 
 # Accountable/performing split — the sponsor remains accountable;
 # the CRO performs, under a delegation with its own evidence and period.
@@ -384,8 +384,8 @@ ex:delegation-1
 |---|---|---|
 | `pty:Actor` | Class | bare, no mixins |
 | `pty:Role` | Class | bare; open at T-box, closed via `vocab/party-vocab.ttl` |
-| `pty:RoleOccupancy` | Class | `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`; `inRole` cardinality 1 |
-| `pty:ParticipationGroup` | Class | `fnd:Version`, `fnd:Evidenced`; `hasCompositionRule` at most 1; `hasParticipant` min 1 |
+| `pty:RoleOccupancy` | Class | `fnd:Versioned`, `fnd:Evidenced`, `fnd:TemporallyScoped`, `inRole` cardinality 1 |
+| `pty:ParticipationGroup` | Class | `fnd:Versioned`, `fnd:Evidenced`, `hasCompositionRule` at most 1, `hasParticipant` min 1 |
 | `pty:CompositionRule` | Class | open at T-box, closed via `vocab/party-vocab.ttl` |
 | `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf` each cardinality 1 |
 | `pty:Delegation` | Class | `fnd:Evidenced`, `fnd:TemporallyScoped`; `delegatesFrom`, `delegatesTo` each cardinality 1 |
@@ -401,3 +401,10 @@ ex:delegation-1
 | `pty:delegatesTo` | Object property | not globally functional; cardinality 1 per `Delegation` |
 
 Six classes mutually disjoint (§6).
+
+## 11. Release notes
+
+- **0.20.0**.
+  - no effect. An occupancy is filled by a new version that supersedes the unfilled one, never by an edit (Foundation section 4). The Quantification import the spec never used is dropped, and the three empty shape files are deleted with the `shapes` role, so Party's rules on shares and delegation are unchecked (TD-110).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

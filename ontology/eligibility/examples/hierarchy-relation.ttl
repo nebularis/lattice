@@ -1,0 +1,100 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lattice/eligibility/> .
+
+# Two kinds of ordering link, each a sub-property of skos:broader. A scheme asserts every link of
+# either kind as skos:broader too, so a plain SKOS consumer still sees one hierarchy.
+ex:kind-of rdfs:subPropertyOf skos:broader ;
+    skos:prefLabel "is a kind of"@en .
+ex:part-of rdfs:subPropertyOf skos:broader ;
+    skos:prefLabel "is part of"@en .
+
+# A diagnosis scheme carrying both relations.
+ex:diagnoses a voc:ConceptScheme ;
+    fnd:hasIdentity ex:diagnoses-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Diagnosis scheme"@en .
+
+ex:diagnosis-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:diagnosis-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:hasDiagnosis ;
+    voc:boundScheme ex:diagnoses .
+
+ex:tumour a skos:Concept ; skos:prefLabel "Tumour"@en ; skos:inScheme ex:diagnoses .
+ex:carcinoma a skos:Concept ; skos:prefLabel "Carcinoma"@en ; skos:inScheme ex:diagnoses ;
+    ex:kind-of ex:tumour ; skos:broader ex:tumour .
+ex:lung-carcinoma a skos:Concept ; skos:prefLabel "Lung carcinoma"@en ; skos:inScheme ex:diagnoses ;
+    ex:kind-of ex:carcinoma ; skos:broader ex:carcinoma .
+ex:tumour-margin a skos:Concept ; skos:prefLabel "Tumour margin"@en ; skos:inScheme ex:diagnoses ;
+    ex:part-of ex:tumour ; skos:broader ex:tumour .
+
+# "A kind of tumour" walks kind links. A tumour margin is part of a tumour, never a kind of one.
+ex:kind-of-tumour a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:diagnosis-contract ;
+    elg:hierarchyRelation ex:kind-of ;
+    elg:requiredConcept ex:tumour .
+
+# "Part of a tumour" walks part links over the same scheme.
+ex:part-of-tumour a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:diagnosis-contract ;
+    elg:hierarchyRelation ex:part-of ;
+    elg:requiredConcept ex:tumour .
+
+# A condition that names no relation walks skos:broader, so it admits both.
+ex:any-link-to-tumour a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:diagnosis-contract ;
+    elg:requiredConcept ex:tumour .
+
+# A territory scheme whose licence reaches any territory that is part of Europe.
+ex:territories a voc:ConceptScheme ;
+    fnd:hasIdentity ex:territories-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Territory scheme"@en .
+
+ex:territory-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:territory-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty ex:licensedIn ;
+    voc:boundScheme ex:territories .
+
+ex:europe a skos:Concept ; skos:prefLabel "Europe"@en ; skos:inScheme ex:territories .
+ex:country-a a skos:Concept ; skos:prefLabel "Country A"@en ; skos:inScheme ex:territories ;
+    ex:part-of ex:europe ; skos:broader ex:europe .
+ex:city-in-country-a a skos:Concept ; skos:prefLabel "City in Country A"@en ; skos:inScheme ex:territories ;
+    ex:part-of ex:country-a ; skos:broader ex:country-a .
+ex:overseas-region a skos:Concept ; skos:prefLabel "Overseas region"@en ; skos:inScheme ex:territories .
+
+ex:licensed-territory a elg:Condition ;
+    elg:matchStrategy elg:HierarchicalMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:constrainedByContract ex:territory-contract ;
+    elg:hierarchyRelation ex:part-of ;
+    elg:requiredConcept ex:europe .
+
+ex:licence-profile a elg:AdmissionProfile ;
+    elg:hasCondition ex:licensed-territory ;
+    elg:compositionOperation elg:AllRequired .
+
+ex:city-question a elg:Question ;
+    elg:forCondition ex:licensed-territory ;
+    elg:candidateConcept ex:city-in-country-a .
+
+ex:city-decision a elg:EligibilityDecision ;
+    elg:forProfile ex:licence-profile ;
+    elg:hasQuestion ex:city-question ;
+    elg:usesOperationalProfile ex:reference-profile ;
+    elg:decisionValue elg:Permitted .
+
+ex:reference-profile a elg:OperationalProfile .

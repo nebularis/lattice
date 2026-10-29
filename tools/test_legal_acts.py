@@ -256,7 +256,7 @@ def test_c9b1_10_on_exercise_is_a_derived_trigger() -> None:
         for trigger in g.subjects(RDF.type, INS.OnExercise):
             assert set(g.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}, (path.name, trigger)
     g = _graph(EXAMPLES / "licence-notice.ttl")
-    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/on-notice-given")
+    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/give-notice-on-notice-given")
     g.set((trigger, BHV.triggerKind, BHV.ExternalStimulus))
     assert any(f == str(trigger) and "bhv:DerivedTrigger, fixed" in m for f, m in _results(g))
 
@@ -307,7 +307,7 @@ def test_c9b1_13_an_acceptance_record_is_deprecated_with_a_warning() -> None:
     assert (BHV.AcceptanceRecord, OWL.deprecated, Literal(True)) in runtime
     record = ("@prefix bhv: <" + str(BHV) + "> .\n@prefix fnd: <" + str(FND) + "> .\n"
               "@prefix pty: <" + LATTICE + "party#> .\n@prefix ex: <https://example.org/r/> .\n"
-              "ex:v a fnd:Version . ex:p a pty:RoleOccupancy . "
+              "ex:v a fnd:Versioned . ex:p a pty:RoleOccupancy . "
               "ex:accept a bhv:AcceptanceRecord ; bhv:accepted ex:v ; bhv:actor ex:p .")
     found = _bhv_results(Graph().parse(data=record, format="turtle"))
     assert [(s, f.rsplit("/", 1)[-1]) for s, f, m in found] == [("Warning", "accept")]

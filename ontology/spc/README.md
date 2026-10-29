@@ -25,8 +25,8 @@ The ontology currently covers:
 The current SPC ontology still uses a provisional namespace, unlike the harmonised LATTICE namespaces used by the other layers. That provisional state is part of the current source and is reproduced exactly here so extraction stays faithful to `spec/spc.ttl`.
 
 ```turtle-spec
-@prefix : <http://example.org/spc#> .
-@prefix spc: <http://example.org/spc#> .
+@prefix : <https://www.nebularis.org/neuro-semantic/lattice/spc#> .
+@prefix spc: <https://www.nebularis.org/neuro-semantic/lattice/spc#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -83,8 +83,8 @@ The ontology header states the layer scope and the intended modelling split betw
 # Ontology header
 #################################################################
 
-spc:Ontology a owl:Ontology ;
-  owl:versionIRI <http://example.org/spc/0.19.0> ;
+<https://www.nebularis.org/neuro-semantic/lattice/spc> a owl:Ontology ;
+  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/spc/0.20.0> ;
   rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, behaviours, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
   rdfs:comment "Design principles: structural layer in OWL 2 DL; domain layer (refinement predicates) in tractable fragment (EL++); use of keys for intra-parent uniqueness (branch/label), property chains for participant extraction, qualified cardinality for structural exactness." ;
   rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing behaviour in SPC corresponds to expanding knowledge in DL." .
@@ -263,7 +263,7 @@ spc:ReceiveBehaviour a owl:Class ;
   rdfs:comment "Receive from source; multi-branch structure with label-variable-body triples; at least one branch." .
 
 spc:ReceiveBranch a owl:Class ;
-  rdfs:comment "Branch element of a receive behaviour; includes label, bound variable, and branch body. Parent link used to enforce label uniqueness via hasKey." .
+  rdfs:comment "Branch element of a receive behaviour; includes label, bound variable, and branch body. Parent link used for label uniqueness, which owl:hasKey states and shapes/constraints.ttl refuses. owl:hasKey infers that two branches with one parent and label are one individual, it refuses nothing." .
 
 spc:DoBehaviour a owl:Class ;
   rdfs:subClassOf spc:Behaviour ;
@@ -361,7 +361,7 @@ spc:ReceiveBehaviour rdfs:subClassOf
 
 # Key: uniquely identify branches within a receive behaviour by (parent,label)
 spc:ReceiveBranch owl:hasKey ( spc:hasBranchParent spc:hasBranchLabel ) ;
-  rdfs:comment "Key constraint: within a single ReceiveBehaviour, branch labels must be unique. Enforced via hasKey on (parent,label)." .
+  rdfs:comment "Key constraint: within a single ReceiveBehaviour, branch labels must be unique. Stated by owl:hasKey on (parent, label), which infers sameness rather than refusing a duplicate. shapes/constraints.ttl refuses two branches with one parent and label." .
 
 # Do behaviour roles
 spc:hasInternalFunction a owl:ObjectProperty ;
@@ -529,7 +529,7 @@ spc:hasSenderRole rdfs:subPropertyOf spc:hasParticipant .
 spc:hasReceiverRole rdfs:subPropertyOf spc:hasParticipant .
 
 spc:MessageOption a owl:Class ;
-  rdfs:comment "Branch option in communication global type: (label, payload sort, continuation global type). Parent link used for label uniqueness via hasKey." .
+  rdfs:comment "Branch option in communication global type: (label, payload sort, continuation global type). Parent link used for label uniqueness, which owl:hasKey states and a shape refuses." .
 
 spc:hasMessageOption a owl:ObjectProperty ;
   rdfs:domain spc:CommunicationGlobalType ;
@@ -555,7 +555,7 @@ spc:hasOptionParent a owl:ObjectProperty ;
   rdfs:domain spc:MessageOption ;
   rdfs:range spc:CommunicationGlobalType ;
   owl:inverseOf spc:hasMessageOption ;
-  rdfs:comment "Parent communication global type; used for label uniqueness via hasKey." .
+  rdfs:comment "Parent communication global type, used for label uniqueness, which owl:hasKey states and a shape refuses." .
 
 # CommunicationGlobalType constraints: sender/receiver functional; ≥1 option
 spc:CommunicationGlobalType rdfs:subClassOf
@@ -1403,3 +1403,10 @@ spc/
 ├── ontology/examples/
 └── test/
 ```
+
+## Release notes
+
+- **0.20.0**.
+  - changes meaning ([ADR-A62](../../docs/architecture/decisions/ADR-A62-spc-namespace-harmonisation.md)). The ontology IRI, namespace and version IRI move from the `example.org` placeholder to `https://www.nebularis.org/neuro-semantic/lattice/spc`. Anything that imported SPC at an earlier tag re-keys.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

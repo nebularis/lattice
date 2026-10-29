@@ -20,19 +20,19 @@ proposes what persistence should do with history. It decides nothing.
 
 ## 2. The scene, checked against the source on 2026-10-14
 
-1. **Foundation versions things.** `fnd:Version` is a mixin. The individual is the version, carries one `fnd:hasIdentity`, and is followed
+1. **Foundation versions things.** `fnd:Versioned` is a mixin. The individual is the version, carries one `fnd:hasIdentity`, and is followed
    by its successor through `fnd:supersededBy`. A version is never edited (the architecture skill's "identity and versions" principle).
 2. **Wording references by identity, and the root fixes the version** (ADR-A112 addendum, points 1 and 2). A clause names the identity of
    what it mentions, and the assembled wording's `wrd:includes` lists the versions in force. The property-endorsement example reuses the
    unchanged `ex:sec-2` in `wording-v2` and adds only `cl-2-1-v2`.
 3. **Behaviour versions its configuration and never its runtime records.** State spaces, transitions and operational profiles are
-   `fnd:Version` subclasses. Runtime records are immutable individuals, evidenced and temporally scoped, and "records are never reopened"
+   `fnd:Versioned` subclasses. Runtime records are immutable individuals, evidenced and temporally scoped, and "records are never reopened"
    (nested-states sketch §4). A state occupancy names its subject's persistent identity, "so the state outlives a new version" (ADR-A106
    decision 5). An allowance account is one functional balance per record, and the ordered-draws example writes a new account record per
    change, chained by `prov:wasDerivedFrom`, with no shared identity.
 4. **ADR-A67 forbids in-place correction of runtime data.** A correction is a new version superseding the old, which stays queryable.
    Transaction time is stated per assertion graph.
-5. **Persistence knows nothing of versions.** Nothing under `ontology/persistence` names `fnd:Version`, and the ontology imports nothing. A
+5. **Persistence knows nothing of versions.** Nothing under `ontology/persistence` names `fnd:Versioned`, and the ontology imports nothing. A
    write to a composite aggregate sweeps the owned closure and writes the caller's new state (README §7.1). The receipt models record history
    beside the data: receipt only, patch log, snapshot (README §7.4). The validator requires a patch log for every composite family.
 6. **So the two conflict.** If a versioned node is inside an owned closure, a replace that writes its new version deletes the old one,
@@ -147,8 +147,8 @@ flowchart LR
 
 | Option | Says | Consequences |
 |---|---|---|
-| (a) read `fnd:Version` membership by IRI from the adopter's ontology, with no import, as a boundary shape names domain properties by IRI | the compiler checks `rdfs:subClassOf* fnd:Version` offline | no new import. Couples the compiler to one Foundation IRI, and does nothing for an adopter who versions without Foundation |
-| (b) **a persistence declaration**, for example a write mode `dal:AppendVersions` on the family, with a shape that warns when a `fnd:Version` class is written by replace | the adopter states it, persistence stays import-free | domain-neutral and framework-like. The warning catches the conflict of §2 point 6 |
+| (a) read `fnd:Versioned` membership by IRI from the adopter's ontology, with no import, as a boundary shape names domain properties by IRI | the compiler checks `rdfs:subClassOf* fnd:Versioned` offline | no new import. Couples the compiler to one Foundation IRI, and does nothing for an adopter who versions without Foundation |
+| (b) **a persistence declaration**, for example a write mode `dal:AppendVersions` on the family, with a shape that warns when a `fnd:Versioned` class is written by replace | the adopter states it, persistence stays import-free | domain-neutral and framework-like. The warning catches the conflict of §2 point 6 |
 | (c) persistence imports Foundation | the ontology reasons about versions directly | an edge in the layer order, so an ADR (ADR-A01) |
 
 ### 5.4 The write for a versioned family (VH-Q4)
@@ -195,7 +195,7 @@ The maintainer suspects Behaviour's different approach has a reason, to be resea
 
 | Behaviour holds | How | Reading |
 |---|---|---|
-| configuration: state spaces, transitions, profiles | `fnd:Version` | things that change by being edited and restated, so versions |
+| configuration: state spaces, transitions, profiles | `fnd:Versioned` | things that change by being edited and restated, so versions |
 | runtime records: occupancies, executions, findings | immutable individuals, never reopened, temporally scoped and evidenced | each is an occurrence, not a state of a continuant, so nothing to version |
 | occasion occupancies | derived artefacts, `prov:wasDerivedFrom` their read set (law B1) | derived, so provenance, not succession |
 | allowance accounts | a new record per change, `prov:wasDerivedFrom` the last and the execution, no shared identity | the odd one out: a balance is a state of a continuant, the account |
@@ -256,7 +256,7 @@ IRI before it is stored.
 |---|---|---|
 | (a) **keep the three disciplines, and key the balance** | state the disciplines in Behaviour's README. A balance record is a `fnd:DerivedArtefact`, names its account's owner (a persistent identity) and its position, and keeps its read set in `prov:wasDerivedFrom`. Current is the record at the greatest position | matches the evaluation-context sketch and B3. About 2 more triples a record (owner, position). Each draw writes one record, append-only, so persistence writes it as a record-append family. A breaking change to Behaviour (ADR-A113), smaller if EC-Q2 decides it |
 | (b) the balance becomes versions of an account identity | `fnd:hasIdentity` and `fnd:supersededBy` per record | loses the cross-account read set unless `prov:wasDerivedFrom` is kept too. Treats a computed value as authored, against the modelling rule. Within one pass, succession repeats the micro-position order |
-| (c) both | allowed, since `fnd:Version` and `fnd:DerivedArtefact` are not disjoint | succession duplicates the position order at 2 triples a record, and invites a reader to edit a computed value as a version |
+| (c) both | allowed, since `fnd:Versioned` and `fnd:DerivedArtefact` are not disjoint | succession duplicates the position order at 2 triples a record, and invites a reader to edit a computed value as a version |
 
 **Leaning (a)**, revised by §6.4. Behaviour is right to differ: what persistence calls "versioning" is one of three disciplines, and the
 sketch's §5 should be read as "a versioned family" for the first, "a record family" for the other two. Finding 4 is input to EC-Q2, not a
@@ -277,11 +277,11 @@ design decisions and the debt register.
 | the balance at a position as a function of the previous one and the pass | evaluation-context §8, §9. [Reference evaluator](reference-evaluator.md) laws RE2 (a pass commits whole) and RE4 | sketched. RE2 and RE4 are conformance laws for formal-methods tracks B and E |
 | repairing Behaviour's allowance contract: effect, application, definition, account | the [capacity design](../../architecture/capacity-domain-analysis-and-design.md) §12, Phase 0, whose exit criterion is "one unambiguous Behaviour contract for consuming a declared allowance and updating a tracked balance" | no unit. Capacity's source ontology (`cap:`) is designed, not authored, and AIR does not author it before Phase 5 |
 | a capacity resource as the persistent thing a balance belongs to | `cap:CapacityResource`, linked by `cap:hasCapacityAccount` to "the balance record" | designed, not authored |
-| a current balance for the hot path | `capx:ExecutableBalance`, one per resource (`capx:balanceRef` is functional), updated in place with its own `capx:balanceVersion` token and `capx:lastUpdatedAt` ([ADR-A-CAP1](../../architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile_Version2.md), Proposed) | authored, 0.10.0, a projection materialised from the source |
+| a current balance for the hot path | `capx:ExecutableBalance`, one per resource (`capx:balanceRef` is functional), updated in place with its own `capx:balanceVersion` token and `capx:lastUpdatedAt` ([ADR-A-CAP1](../../architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile.md), Proposed) | authored, 0.10.0, a projection materialised from the source |
 | an instance stores only what differs, generated nodes shared by content address | CCS C7c D1 to D5, decided. CCS C16b builds the sharing, its cache and invalidation (TD-19) | planned, required before CCS closes |
 | a record that cites exactly the data it saw | AIR-6.1: `sbm:Submission` is versioned and cites an exposure set *version*, "so an insurer's quote always refers to the data it saw". `sbm:InformationGap` is a derived artefact | briefed, in AIR's current trip |
 | the quote and its firming, placements split across policies | CCS HQ-1 (a proposal arriving as data, without words), HQ-7 (several instruments covering portions of one order), AIR-6.1's `sbm:Approach` with status `Quoted`, insurml-alignment Phase 5 (placement records) | held questions and later phases. `NegotiationThread` appears only in the workload note |
-| `fnd:Version` renamed `fnd:Versioned` | TD-20, "a Foundation maintenance unit, planned with its full cascade" | unplanned |
+| `fnd:Versioned` renamed `fnd:Versioned` | TD-20, "a Foundation maintenance unit, planned with its full cascade" | unplanned |
 | the engine that writes Behaviour's runtime records | the platform's [phase 3 plan](../plans/phase-3-plan.md): the behaviour engine loads configuration and writes stimuli, executions, occupancies and records | rolling-wave placeholder |
 
 ```mermaid
@@ -326,7 +326,7 @@ flowchart LR
    pins a version: the assembled wording pins its elements, and AIR-6.1's submission pins its exposure set. So the rule is "by identity
    inside content, pinned at the root and wherever a record is evidence of what was seen".
 6. **CCS C16b is where "point, do not copy" is already decided** for generated meaning (TD-19). VH-Q2 should cite it rather than restate it.
-7. **TD-20 and VH-Q3 touch the same term.** A Foundation unit renaming `fnd:Version` is the natural moment for any change VH-Q3 makes
+7. **TD-20 and VH-Q3 touch the same term.** A Foundation unit renaming `fnd:Versioned` is the natural moment for any change VH-Q3 makes
    that touches Foundation, and the reason VH-Q3 leans away from importing Foundation into persistence.
 
 ### 6.3 What this changes for persistence
@@ -380,7 +380,7 @@ market (Open CBAA, through Instrument's `ins:boundUnder` and powers) and placeme
 | a programme, its tower and layers, as the placing record states them | the AIR contract module (Phase 5) and AIR-6.1's submission | not modelled. Phase 5 is deferred |
 | a negotiation as an append-only sequence of moves | legal acts (Instrument) and records (Behaviour), with state evaluated from them | the pieces exist. PDD-09 |
 | facts never edited, corrections as new versions | `fnd:Evidence`, Behaviour's records, ADR-A67's corrections as new versions, persistence's receipts and request digests | built in parts |
-| versions, valid time and transaction time | `fnd:Version` with `fnd:supersededBy`, `fnd:TemporalScope` for valid time, persistence for transaction time, a current pointer (VH-Q4) | built, VH-Q4 open |
+| versions, valid time and transaction time | `fnd:Versioned` with `fnd:supersededBy`, `fnd:TemporalScope` for valid time, persistence for transaction time, a current pointer (VH-Q4) | built, VH-Q4 open |
 | one content stated once | content-addressed element versions (ADR-A51, C7c D2) | built |
 | a change in business terms | `wrd:Amendment`'s operations and `ins:Amendment`, which record the change in the words and its legal effect | built (C5, C9a) |
 | a set versioned with its members | AIR's exposure module, with members shared across versions (TD-49) | built on the AIR branch, TD-49 to fix |
@@ -509,7 +509,7 @@ three plan clauses and four values, and takes effect on the first of the month. 
 the assignment ends, about 6,000 events a year. The customer asks two things later, what the plan said when seat 51 was refused in month 3,
 and how many seats were free on 30 September.
 
-**Terms.** `ins:Instrument` (a `fnd:Version`), `wrd:AssembledWording` with `wrd:includes`, `ins:Amendment`, `ins:Assent`, `bhv:AllowanceAccount`
+**Terms.** `ins:Instrument` (a `fnd:Versioned`), `wrd:AssembledWording` with `wrd:includes`, `ins:Amendment`, `ins:Assent`, `bhv:AllowanceAccount`
 and `bhv:TransitionExecution` exist. Proposed and not yet existing are the owner and position on a balance record, the typing of a balance as
 `fnd:DerivedArtefact` (§6.1 finding 4), the write mode `dal:AppendVersions` (§5.3) and the version row's current pointer (§5.4).
 
@@ -920,7 +920,7 @@ within their read set when a late record arrives, and keep both the valid time a
    applied layer is a modelling question outside persistence.
 4. VH-Q4's current pointer means latest authored. A family must not read it as in force. A shape or a name should say so.
 5. Records are never reopened, so an activation's end is derived and a correction of a wrong date has no succession link. ADR-A67 says a
-   correction is a new version, and records are not `fnd:Version`. Needs an answer, possibly `prov:wasRevisionOf`.
+   correction is a new version, and records are not `fnd:Versioned`. Needs an answer, possibly `prov:wasRevisionOf`.
 6. At issue, a draft in one family becomes an instrument version in another. Who mints the order's persistent identity, and whether the
    draft's identity continues, is not stated (FS-Q3 (a) splits the family but not the identity).
 7. No class for a delivery exists. `bhv:AcceptanceRecord` is deprecated in favour of `ins:Assent`, so E3 uses `ins:Assent` and a

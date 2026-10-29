@@ -12,5 +12,9 @@ public enum MintError {
     MissingSecret,
     PatternMismatch,
     PositionOutOfRange,
-    CanonicalizerNotDeclared
+    CanonicalizerNotDeclared,
+    DotSegment,
+    EmptyScope,
+    UnsafeSurrogate,
+    PositionWidthOverflow
 }

@@ -13,10 +13,10 @@
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -25,7 +25,7 @@ srf:SurfaceContract a owl:Class ;
 	rdfs:comment "A governed declaration that a relationship reachable from a carrier may be restated locally in a declared form." ;
 	fnd:utility "Author one whenever a question about a carrier must be answerable without traversing the path that establishes the answer. Give it a carrier, a read path, a realisation mode, a stable contract key, a target namespace for minted symbols, and a surface profile. Use PromotionContract to restate a value as a direct assertion and IndexContract to restate it as a retrievable symbol." ;
 	rdfs:subClassOf
-		fnd:Version ,
+		fnd:Versioned ,
 		fnd:Governable ,
 		[ a owl:Restriction ; owl:onProperty srf:carrier ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:contractKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -99,7 +99,7 @@ srf:RangePartitionPopulation a owl:Class ;
 	fnd:utility "Declared and not yet permitted. Until a partition law is stated, use a DirectProperty index form for quantified dimensions." .
 
 srf:SurfaceProfile a owl:Class ;
-	rdfs:subClassOf fnd:Version ,
+	rdfs:subClassOf fnd:Versioned ,
 		[ a owl:Restriction ; owl:onProperty srf:generatorVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:canonicalisationVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:entailmentRegime ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -335,7 +335,7 @@ srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:resolvedBindingScope a owl:ObjectProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:BindingScope ;
 	rdfs:comment "A scope that was active when a BoundSchemeSource read-set entry's scheme was resolved." ;
-	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md)." .
+	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable." .
 
 srf:resolvedBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:SchemeBinding ;
@@ -408,7 +408,7 @@ srf:generatorVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:canonicalisationVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
-	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under." .
+	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under. The contract is the substrate's, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (the substrate's digest rule, Persistence section 5.6), and the version names the rule that selects the content triples." .
 
 srf:namingPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:IndexContract ; rdfs:range xsd:string ;
@@ -433,12 +433,12 @@ srf:producedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:artefactHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of a generation run's emitted content." ;
+	rdfs:comment "The SHA-256, lowercase hex, of a generation run's emitted bytes as the generator version the profile binds serialised them." ;
 	fnd:utility "Compare across runs to establish that regeneration was deterministic. A change here with no change in the read set or profile is a generator defect." .
 
 srf:semanticContentHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of the canonical, meaning-bearing inputs a generation run consumed." ;
+	rdfs:comment "The digest of the canonical, meaning-bearing inputs a generation run consumed: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the dataset whose graphs are the read set's inputs, each in a graph named by its entry (the substrate's digest rule, Persistence section 5.6)." ;
 	fnd:utility "Together with the profile identity, decides whether an existing surface may be reused rather than regenerated." .
 
 srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -447,7 +447,7 @@ srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of an input's canonical content at the time it was read." .
+	rdfs:comment "The digest of an input's canonical content at the time it was read: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the input's graph (the substrate's digest rule, Persistence section 5.6)." .
 
 srf:resolvedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:dateTime ;

@@ -7,7 +7,7 @@ MORK-to-SPARQL compiler for Eligibility interval conditions (ADR-A23, ADR-A24).
 Generates one parameterised SPARQL ``SELECT`` per condition plan, answering
 the three-valued question ADR-A24 requires — ``Permitted``, ``Denied``, or
 ``Undetermined`` — never a silent ``Denied`` for missing evidence. The query
-is written as a ``mork:QueryTemplate``, which MorkEnhancements.md recommends
+is written as a ``mork:QueryTemplate``, which the MORK enhancements analysis recommends
 as the first target and which ``ontology/mork/spec/Mork.ttl`` already models
 (``queryText``, ``queryLanguage``, ``paramBinding``). It is not attached to a
 ``mork:DataMapping``: ``QueryTemplate`` is ``rdfs:subClassOf skos:Concept``
@@ -35,13 +35,51 @@ Concept plans (ADR-A89) follow the ADR-A87 decision table: a question with no
 ``elg:candidateConcept``, or more than one, is Undetermined. An excluded
 candidate is Denied (L10), a required one Permitted, and any other Denied.
 Where the plan resolved a scheme, a candidate outside it is Undetermined, and
-hierarchical match walks ``skos:broader`` at query time (the "QueryTime" form
-of ADR-A89 item 3). The walk does not check that intermediate concepts belong
-to the scheme. The plan's own expansion does, and the two agree on any scheme
-whose members are broader only than other members. Over a scheme whose members
-have no broader member (L14, ADR-A100), no walk happens: the named concepts
-decide by equality and every other member is Undetermined with
-``exe:NoHierarchy``.
+hierarchical match walks the plan's hierarchy relation at query time (the
+"QueryTime" form of ADR-A89 item 3), ``elg:hierarchyRelation`` or ``skos:broader``
+when the condition names none (L9). The walk does not check that intermediate
+concepts belong to the scheme. The plan's own expansion does, and the two agree on
+any scheme whose members are above only other members by that relation. Over a
+scheme in which no member has a link of the relation to another member (L14,
+ADR-A100), no walk happens: the named concepts decide by equality and every other
+member is Undetermined with ``exe:NoHierarchy``. A plan whose contract's bindings
+apply at no instant (``plan.unresolved``) answers Undetermined for every row, with
+``exe:NoApplicableBinding``, and runs no walk.
+
+Set comparisons (L18) decide each value the tested binding reaches from a subject by whether the
+reference binding's path, started from the same bound subject (STD-033), reaches a match: the
+value itself under exact match, and under hierarchical match a reference value that is a member of the
+resolved scheme and stands above it by the constant relation, also a member. The per-value row is
+``Permitted`` when found, ``Denied`` when not found and the reference binding names a closure in force,
+and otherwise ``Undetermined`` with ``exe:NoClosureLicence``, whose definition (an outcome that needs the
+records to be complete, with no closure licensing it) is the reason. ``?decision`` is bound on every row, a
+subject with no tested value having one row of ``Undetermined`` with ``exe:MissingCandidate``. The rows are
+read by ``_read_set`` with ``elg:EveryValue`` for Subset and ``elg:SomeValue`` for Intersects and Disjoint,
+under the tested binding's closure, and Disjoint then goes through ``_negate``. A comparison's ``?closure``
+is the tested binding's closure, bound when completeness of the tested set decided, and its
+``?referenceClosure`` the reference binding's, bound when a Denied value decided. Both stay IRIs. Under
+hierarchical match (L18) a tested value outside the scheme is ``Undetermined`` with ``exe:OutsideScheme``, and
+over a scheme in which no member has a link of the relation a value that is not equal to a reference value is
+``Undetermined`` with ``exe:NoHierarchy`` whatever the closure (L14). A plan whose contract's bindings apply at
+no instant answers Undetermined for every subject, with ``exe:NoApplicableBinding``.
+
+**Cost of a set comparison (STD-020).** One tested-path walk per subject, then one existence test into the
+reference path per tested value, each started from the bound subject, so the work is the sum over subjects of
+tested values times one lookup. Hierarchical match adds a constant-property-path test between two bound ends
+inside that lookup. The two closures and the strong Kleene read add no join. Measured on no engine yet.
+
+**Cost (STD-020).** The relation is a constant IRI of the plan, so each walk is a
+property path over one predicate, never a variable predicate, and a scheme that
+carries other relations costs nothing extra. Per decided candidate (one question,
+one bound subject, or one value under a set reading) the query runs at most three
+path tests: ``<r>*`` upwards from the candidate to a required concept, the same to
+an excluded concept, and ``<r>+`` from an excluded concept down to the candidate,
+each bounded by the candidate's ancestors or descendants by ``<r>``. Naming the
+relation never costs more than the ``skos:broader`` walk it replaces and costs less
+where a scheme states other links as ``skos:broader`` too. The shape is the one
+the module's other concept queries have, one grouped sub-select per condition and
+no join between conditions. Measured on neither engine yet: the first measurement
+should use the largest scheme an applied module carries.
 """
 
 from __future__ import annotations
@@ -52,7 +90,16 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import ConceptPlan, EvidencePath, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval
+from .eligibility_ir import (
+    ConceptPlan,
+    EvidencePath,
+    IntervalPlan,
+    IRCompileError,
+    ProfilePlan,
+    RequiredInterval,
+    SetComparisonPlan,
+    closures_of,
+)
 from .namespaces import ELG, EXE, MORK, QNT
 
 PREFIXES = (
@@ -184,13 +231,15 @@ def _flat_decision(plan: ConceptPlan) -> str:
 
 
 def _hierarchical_decision(plan: ConceptPlan) -> str:
+    relation = f"<{plan.relation}>"
+
     def below(concepts: Sequence[URIRef]) -> str:
-        return f"EXISTS {{ ?candidate skos:broader* ?target . FILTER (?target IN ({_in_list(concepts)})) }}"
+        return f"EXISTS {{ ?candidate {relation}* ?target . FILTER (?target IN ({_in_list(concepts)})) }}"
 
     admitted = below(plan.required) if plan.required else "true"
     if not plan.excluded:
         return f'IF({admitted}, "Permitted", "Denied")'
-    above = f"EXISTS {{ ?target skos:broader+ ?candidate . FILTER (?target IN ({_in_list(plan.excluded)})) }}"
+    above = f"EXISTS {{ ?target {relation}+ ?candidate . FILTER (?target IN ({_in_list(plan.excluded)})) }}"
     return (
         f'IF({below(plan.excluded)}, "Denied", '
         f'IF({admitted}, IF({above}, "Undetermined", "Permitted"), "Denied"))'
@@ -221,22 +270,25 @@ def concept_select(plan: ConceptPlan, carry: str = "", key: str = "?question") -
 def _concept_core(plan: ConceptPlan, carry: str, key: str, per_value: bool) -> str:
     """The per-candidate decision. With ``per_value``, one row per value the
     binding's path reaches, each decided as a single candidate (L15)."""
-    if plan.hierarchical and plan.scheme is None:
+    if plan.hierarchical and plan.scheme is None and not plan.unresolved:
         raise IRCompileError(f"{plan.condition} matches hierarchically with no resolved scheme (L9)")
-    if plan.no_hierarchy:
-        decision = _no_hierarchy_decision(plan)
+    if plan.unresolved:
+        decision, diagnostic = '"Undetermined"', f"<{EXE.NoApplicableBinding}>"
     else:
-        decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
-    reason = EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion
-    determined = f'IF(?decision = "Undetermined", <{reason}>, ?none)'
-    if plan.scheme is not None:
-        membership = f"EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}"
-        decision = f'IF({membership}, {decision}, "Undetermined")'
-        determined = f"IF({membership}, {determined}, <{EXE.OutsideScheme}>)"
-    diagnostic = (
-        f"IF(?candidates = 0, <{EXE.MissingCandidate}>, "
-        f"IF(?candidates > 1, <{EXE.SeveralCandidates}>, {determined}))"
-    )
+        if plan.no_hierarchy:
+            decision = _no_hierarchy_decision(plan)
+        else:
+            decision = _hierarchical_decision(plan) if plan.hierarchical else _flat_decision(plan)
+        reason = EXE.NoHierarchy if plan.no_hierarchy else EXE.AboveExclusion
+        determined = f'IF(?decision = "Undetermined", <{reason}>, ?none)'
+        if plan.scheme is not None:
+            membership = f"EXISTS {{ ?candidate skos:inScheme <{plan.scheme.scheme}> }}"
+            decision = f'IF({membership}, {decision}, "Undetermined")'
+            determined = f"IF({membership}, {determined}, <{EXE.OutsideScheme}>)"
+        diagnostic = (
+            f"IF(?candidates = 0, <{EXE.MissingCandidate}>, "
+            f"IF(?candidates > 1, <{EXE.SeveralCandidates}>, {determined}))"
+        )
     if plan.evidence is None:
         source = (
             f"      {key} elg:forCondition <{plan.condition}> .\n"
@@ -274,23 +326,38 @@ def _finish(plan: Union[IntervalPlan, ConceptPlan], carry: str, key: str, core) 
     return select
 
 
-def _read_set(reading: URIRef, closure, carry: str, key: str, per_value: str) -> str:
+def _read_set(
+    reading: URIRef, closure, carry: str, key: str, per_value: str, reference_closure=None, comparison: bool = False
+) -> str:
     """Strong Kleene over the per-value decisions of one subject (L15), deciding on completeness
     only under ``closure`` (L17). A subject with no value has one per-value row, Undetermined with
     exe:MissingCandidate, which counts as no value, not as an undetermined one. Under a closure,
     some value is Denied when no value is Permitted or undetermined, and every value Permitted when
     none is Denied or undetermined, so the empty case decides. Without one those outcomes are
     Undetermined, reporting an undetermined value's diagnostic, else exe:MissingCandidate for no
-    value, else exe:NoClosureLicence. ``?closure`` names the closure when it decided."""
+    value, else exe:NoClosureLicence. ``?closure`` names the closure when it decided.
+
+    A set comparison passes ``comparison`` and the reference binding's closure too (L18). ``?closure`` is
+    still the tested binding's closure, an IRI bound when completeness of the tested set decided, and
+    ``?referenceClosure`` the reference binding's, an IRI bound when a Denied value decided, which only a
+    closed reference set gives."""
     closed = "true" if closure is not None else "false"
     undetermined = "(?undetermined - ?missing)"
     if reading == ELG.SomeValue:
         decide = f'IF(?permitted > 0, "Permitted", IF({closed} && {undetermined} = 0, "Denied", "Undetermined"))'
         relied = '?decision = "Denied"'
+        by_value = '?decision = "Denied" && ?denied > 0'
     else:
         decide = f'IF(?denied > 0, "Denied", IF({closed} && {undetermined} = 0, "Permitted", "Undetermined"))'
         relied = '?decision = "Permitted"'
-    reliance = f"  BIND(IF({relied}, <{closure}>, ?none) AS ?closure)\n" if closure is not None else ""
+        by_value = '?decision = "Denied"'
+    if closure is not None:
+        reliance = f"  BIND(IF({relied}, <{closure}>, ?none) AS ?closure)\n"
+    else:
+        reliance = ""
+    if comparison and reference_closure is not None:
+        reliance += f"  BIND(IF({by_value}, <{reference_closure}>, ?none) AS ?referenceClosure)\n"
+    columns = " ?closure ?referenceClosure" if comparison else " ?closure"
 
     def count(outcome: str) -> str:
         return f'(SUM(IF(?decision = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
@@ -300,7 +367,7 @@ def _read_set(reading: URIRef, closure, carry: str, key: str, per_value: str) ->
         " AS ?missing)"
     )
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic{columns} WHERE {{\n"
         "  {\n"
         f"    SELECT {carry}{key} {count('Permitted')} {count('Denied')} {count('Undetermined')} {missing}\n"
         '      (MAX(IF(?decision = "Undetermined", COALESCE(STR(?diagnostic), ""), "")) AS ?reason) WHERE {\n'
@@ -315,12 +382,14 @@ def _read_set(reading: URIRef, closure, carry: str, key: str, per_value: str) ->
     )
 
 
-def _negate(carry: str, key: str, select: str) -> str:
-    """Swap Permitted and Denied, keeping Undetermined and its diagnostic (L16)."""
+def _negate(carry: str, key: str, select: str, comparison: bool = False) -> str:
+    """Swap Permitted and Denied, keeping Undetermined and its diagnostic (L16). A set comparison's
+    ``?referenceClosure`` is kept too."""
+    columns = " ?closure ?referenceClosure" if comparison else " ?closure"
     return (
-        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
+        f"SELECT {carry}{key} ?decision ?diagnostic{columns} WHERE {{\n"
         "  {\n"
-        f"    SELECT {carry}{key} (?decision AS ?raw) ?diagnostic ?closure WHERE {{\n"
+        f"    SELECT {carry}{key} (?decision AS ?raw) ?diagnostic{columns} WHERE {{\n"
         "      {\n" + select + "      }\n"
         "    }\n"
         "  }\n"
@@ -329,7 +398,83 @@ def _negate(carry: str, key: str, select: str) -> str:
     )
 
 
-def condition_select(plan: Union[IntervalPlan, ConceptPlan], carry: str = "", key: str = "?question") -> str:
+def _match(plan: SetComparisonPlan) -> str:
+    """The existence test for one tested value, ``?offered``, among the reference values (L18). The
+    reference path starts from the bound subject (STD-033)."""
+    path = evidence_path(plan.reference)
+    if not plan.hierarchical:
+        return f"EXISTS {{ {{key}} {path} ?offered }}"
+    scheme = plan.scheme.scheme
+    return (
+        f"EXISTS {{ {{key}} {path} ?reference . ?offered <{plan.relation}>* ?reference . "
+        f"?offered skos:inScheme <{scheme}> . ?reference skos:inScheme <{scheme}> }}"
+    )
+
+
+def _comparison_core(plan: SetComparisonPlan, carry: str, key: str) -> str:
+    """One row per value the tested path reaches from each subject, decided against the reference
+    values (L18), and one Undetermined row with ``exe:MissingCandidate`` for a subject that reaches none."""
+    reference_closed = plan.reference.closure is not None
+    found = _match(plan).replace("{key}", key)
+    closed = "true" if reference_closed else "false"
+    if plan.hierarchical and plan.no_hierarchy:
+        # L14: no member has a link of the relation, so only an equal value is found and any other member is undetermined
+        not_found, why = '"Undetermined"', f"<{EXE.NoHierarchy}>"
+    else:
+        not_found, why = f'IF({closed}, "Denied", "Undetermined")', f"IF({closed}, ?none, <{EXE.NoClosureLicence}>)"
+    placed = ""
+    decision = f'IF(?found, "Permitted", {not_found})'
+    diagnostic = f"IF(?found, ?none, {why})"
+    if plan.hierarchical:
+        # a tested value outside the scheme cannot be placed, as a single candidate cannot (L9)
+        placed = f"  BIND(IF(?candidates = 0, true, EXISTS {{ ?offered skos:inScheme <{plan.scheme.scheme}> }}) AS ?placed)\n"
+        decision = f'IF(?placed, {decision}, "Undetermined")'
+        diagnostic = f"IF(?placed, {diagnostic}, <{EXE.OutsideScheme}>)"
+    return (
+        f"SELECT {carry}{key} ?decision ?diagnostic ?closure WHERE {{\n"
+        "  {\n"
+        f"    SELECT {carry}{key} ?offered (COUNT(DISTINCT ?offered) AS ?candidates) WHERE {{\n"
+        f"      {_subjects(plan.tested, key)}\n"
+        f"      OPTIONAL {{ {key} {evidence_path(plan.tested)} ?offered }}\n"
+        "    }\n"
+        f"    GROUP BY {carry}{key} ?offered\n"
+        "  }\n"
+        f"{placed}"
+        f"  BIND(IF(?candidates = 0, false, {found}) AS ?found)\n"
+        f'  BIND(IF(?candidates = 0, "Undetermined", {decision}) AS ?decision)\n'
+        f"  BIND(IF(?candidates = 0, <{EXE.MissingCandidate}>, {diagnostic}) AS ?diagnostic)\n"
+        "}\n"
+    )
+
+
+def set_comparison_select(plan: SetComparisonPlan, carry: str = "", key: str = "?question") -> str:
+    """The SELECT block, without prefixes, projecting ``key`` ?decision ?diagnostic ?closure
+    ?referenceClosure for a set comparison (L18). Subset reads the per-value decisions as every value, Intersects as some
+    value and Disjoint as some value negated (L16), under the tested binding's closure. The
+    condition's own ``elg:negated`` is applied last."""
+    if plan.unresolved:
+        select = (
+            f"SELECT {carry}{key} ?decision ?diagnostic ?closure ?referenceClosure WHERE {{\n"
+            f"  {_subjects(plan.tested, key)}\n"
+            '  BIND("Undetermined" AS ?decision)\n'
+            f"  BIND(<{EXE.NoApplicableBinding}> AS ?diagnostic)\n"
+            "}\n"
+        )
+    else:
+        reading = ELG.EveryValue if plan.comparison == ELG.Subset else ELG.SomeValue
+        select = _read_set(
+            reading, plan.tested.closure, carry, key, _comparison_core(plan, carry, key), plan.reference.closure, comparison=True
+        )
+    if plan.comparison == ELG.Disjoint:
+        select = _negate(carry, key, select, comparison=True)
+    if plan.negated:
+        select = _negate(carry, key, select, comparison=True)
+    return select
+
+
+def condition_select(plan: Union[IntervalPlan, ConceptPlan, SetComparisonPlan], carry: str = "", key: str = "?question") -> str:
+    if isinstance(plan, SetComparisonPlan):
+        return set_comparison_select(plan, carry, key)
     select = concept_select if isinstance(plan, ConceptPlan) else interval_select
     return select(plan, carry, key)
 
@@ -349,7 +494,23 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
 
     ``record`` names the record variable. A SHACL-SPARQL constraint passes
     ``$this``, which SHACL then requires every nested SELECT to project, so it
-    is carried through each condition block as well."""
+    is carried through each condition block as well.
+
+    ``?closures`` is built from one ``SUM`` flag per distinct closure the conditions name, in IRI
+    order, and not from a ``GROUP_CONCAT`` over the rows' ``?closure``. A record's rows leave
+    ``?closure`` unbound for each condition that did not rely on a closure, and an aggregate over an
+    expression that errors on any row of its group is an error under SPARQL 1.1 §18.5.1, for
+    ``GROUP_CONCAT``, ``SUM`` and ``AVG`` (``MIN`` is unbound, and ``MAX`` is open, TSD-43). Oxigraph follows that and
+    returns no value for the group, and rdflib skips the row, so the two engines disagreed (TSD-41). A condition that
+    relied on no closure contributes nothing to a closure's flag, so each flag gives the unbound value the neutral
+    element of ``SUM`` (STD-279, the second meaning).
+
+    Cost (STD-020). The outer group holds one row per condition for each record, so ``c`` rows. It
+    gains ``k`` accumulators, ``k`` being the number of distinct closures the conditions name, at
+    most ``c`` and in practice 0 or 1, and no join, sub-select or ``UNION`` branch, so the nested
+    condition blocks, which dominate the query, are unchanged. That is ``c * k`` additions per
+    record on either engine, and the string is built once per record from ``k`` terms. Not measured
+    against the old form on a large graph, so any speed claim is a hypothesis (STD-176, TSD-41)."""
     if plan.subject_class is not None:
         key, carry = record, ""
         records = f"{record} a/rdfs:subClassOf* <{plan.subject_class}> ."
@@ -370,12 +531,22 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
     def count(outcome: str) -> str:
         return f'(SUM(IF(COALESCE(?outcome, "") = "{outcome}", 1, 0)) AS ?{outcome.lower()})'
 
+    closures = sorted({str(closure) for c in plan.conditions for closure in closures_of(c)})
+    # a set comparison binds ?closure to its tested closure and ?referenceClosure to its reference closure, so a flag tests both
+    flags = " ".join(
+        f'(SUM(IF(COALESCE(STR(?relied), "") = "{closure}" || COALESCE(STR(?reliedReference), "") = "{closure}", 1, 0))'
+        f" AS ?relied{i})"
+        for i, closure in enumerate(closures)
+    )
+    names = ", ".join(f'IF(?relied{i} > 0, " {closure}", "")' for i, closure in enumerate(closures))
+    listed = f"SUBSTR(CONCAT({names}), 2)" if closures else '""'
+
     return (
         f"SELECT {record} ?decision ?diagnostic ?closures WHERE {{\n"
         "  {\n"
         f"    SELECT {record} {count('Permitted')} {count('Denied')} {count('Undetermined')}\n"
         "      (COUNT(DISTINCT ?condition) AS ?answered) (MAX(COALESCE(STR(?reason), '')) AS ?conditionDiagnostic)\n"
-        '      (GROUP_CONCAT(DISTINCT STR(?relied); separator=" ") AS ?closureList) WHERE {\n'
+        f"      {flags} WHERE {{\n"
         f"      {records}\n"
         "      OPTIONAL {\n"
         f"{link}"
@@ -385,6 +556,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         "        BIND(?decision AS ?outcome)\n"
         "        BIND(?diagnostic AS ?reason)\n"
         "        BIND(?closure AS ?relied)\n"
+        "        BIND(?referenceClosure AS ?reliedReference)\n"
         "      }\n"
         "    }\n"
         f"    GROUP BY {record}\n"
@@ -392,6 +564,7 @@ def profile_select(plan: ProfilePlan, record: str = "?record") -> str:
         f"  BIND({len(plan.conditions)} - ?answered AS ?missing)\n"
         f"  BIND({_aggregate(plan)} AS ?decision)\n"
         f'  BIND(IF(?decision != "Undetermined", ?none, IF(?missing > 0, <{EXE.MissingCandidate}>, IRI(?conditionDiagnostic))) AS ?diagnostic)\n'
+        f"  BIND({listed} AS ?closureList)\n"
         '  BIND(IF(?closureList = "", ?none, ?closureList) AS ?closures)\n'
         "}\n"
     )
@@ -422,7 +595,7 @@ def _compile_profile_template(plan: ProfilePlan) -> Graph:
     return graph
 
 
-def compile_query_template(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) -> Graph:
+def compile_query_template(plan: Union[IntervalPlan, ConceptPlan, SetComparisonPlan, ProfilePlan]) -> Graph:
     """Emit the ``mork:QueryTemplate`` and its executable-plan provenance."""
     if isinstance(plan, ProfilePlan):
         return _compile_profile_template(plan)
@@ -436,7 +609,10 @@ def compile_query_template(plan: Union[IntervalPlan, ConceptPlan, ProfilePlan]) 
     graph.add((plan_node, EXE.implementsCondition, plan.condition))
     graph.add((plan_node, EXE.producesArtefact, template))
     graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
-    if isinstance(plan, ConceptPlan):
+    if isinstance(plan, SetComparisonPlan):
+        graph.add((plan_node, RDF.type, EXE.SetComparisonPlan))
+        provenance, text = EXE.derivedFromVocabularyNode, PREFIXES + set_comparison_select(plan)
+    elif isinstance(plan, ConceptPlan):
         graph.add((plan_node, RDF.type, EXE.ConceptMatchPlan))
         provenance, text = EXE.derivedFromVocabularyNode, render_concept_query(plan)
     else:

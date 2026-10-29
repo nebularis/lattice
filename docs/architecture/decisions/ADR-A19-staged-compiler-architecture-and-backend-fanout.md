@@ -7,11 +7,11 @@
 **Supersedes:** none
 **Related:** ADR-A18 (Surface-to-MORK lowering boundary), ADR-A23 (MORK compiler family completion policy)
 **Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
-**Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md)
+**Source plan:** the Surface-MORK Unified Projection Program plan
 
 ## Context
 
-`ontology/surface/docs/MorkEnhancements.md` shows the compiler side has lagged the vocabulary side: MORK already models `ShapeMapping`, `RuleMapping`, and `QueryTemplate` generatively, but `tools/mork/src/mork2rml.py` identifies `ShapeMapping` and `RuleMapping` only to skip them, because it targets RML alone. Adding SPARQL, SHACL, SWRL, and native-IR compilers without a shared pipeline risks four separate readings of the same mapping graph, each free to diverge in normalisation, parameter resolution, or determinism guarantees.
+The MORK enhancements analysis shows the compiler side has lagged the vocabulary side: MORK already models `ShapeMapping`, `RuleMapping`, and `QueryTemplate` generatively, but `tools/mork/src/mork2rml.py` identifies `ShapeMapping` and `RuleMapping` only to skip them, because it targets RML alone. Adding SPARQL, SHACL, SWRL, and native-IR compilers without a shared pipeline risks four separate readings of the same mapping graph, each free to diverge in normalisation, parameter resolution, or determinism guarantees.
 
 ## Decision
 

@@ -382,7 +382,7 @@ def test_h2_6f_t19_a_full_membership_declaration_changes_nothing_and_an_interval
 def test_h2_6f_t20_the_members_query_is_a_read_of_the_data_graph_with_one_result_column_and_no_write():
     operation = build("members", {"dataGraph": CONTEXT["dataGraph"]})
     c = contract_of(operation)
-    assert c.kind is OperationKind.MEMBERS_READ and c.kind.value == "MembersRead" and c.version == 3  # 3 since H2.8c (TD-68)
+    assert c.kind is OperationKind.MEMBERS_READ and c.kind.value == "MembersRead" and c.version == 4  # 3 since H2.8c (TD-68), 4 since the store vocabulary moved to its published namespace (OR-6)
     assert {a.mode for a in c.accesses} <= {"WholeAggregateRead", "AbsenceRead", "ScanRead", "PointRead"}
     assert {a.resource for a in c.accesses} == {"Aggregate"}
     assert [(p.name, p.kind, p.required) for p in c.parameters] == [("membershipProperty", "Iri", True), ("version", "Iri", True)]

@@ -24,7 +24,7 @@
 #
 # | Construct                                       | Where                                   |
 # |-------------------------------------------------|-----------------------------------------|
-# | expiry at a date the wording defines            | tmpl:on-expiry-date, ins:at ex:expiry-date |
+# | expiry at a date the wording defines            | tmpl:expire-on-expiry-date, ins:at ex:expiry-date |
 # | ending as entering a state                      | tmpl:expired, tmpl:terminated, ins:ends |
 # | a power exercisable only in a window            | tmpl:break, ins:window ex:break-window  |
 # | a recurrence with a due date on each period's first day | tmpl:pay-rent, ex:on-the-day     |
@@ -220,27 +220,27 @@ tmpl:terminated a bhv:State ;
     bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:Terminated ;
     ins:ends ins-voc:TheInstrument .
 
-tmpl:on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:expire-on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:expiry-date .
-tmpl:on-break a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-break-notice-on-break a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:break .
-tmpl:on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:break-takes-effect-on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:break-date .
 
 tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:expired ;
-    bhv:hasTrigger tmpl:on-expiry-date ;
+    bhv:hasTrigger tmpl:expire-on-expiry-date ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:give-break-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:break-notice ;
-    bhv:hasTrigger tmpl:on-break ;
+    bhv:hasTrigger tmpl:give-break-notice-on-break ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:break-takes-effect a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:break-notice ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-break-date ;
+    bhv:hasTrigger tmpl:break-takes-effect-on-break-date ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The lease of Unit 4 =====================================================
@@ -298,3 +298,32 @@ ex:repay-deposit a ins:Obligation ;
 # A term whose only content is a regime is bound too, as every stated term is
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-2-1 a ins:Term ; ins:boundIn ex:unit-4-v1 ; ins:boundFrom tmpl:term-2-1 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:unit-4-wording-identity a fnd:PersistentIdentity .
+ex:landlord-occ-identity a fnd:PersistentIdentity .
+ex:tenant-occ-identity a fnd:PersistentIdentity .
+tmpl:break-takes-effect fnd:hasIdentity tmpl:break-takes-effect-identity .
+tmpl:break-takes-effect-identity a fnd:PersistentIdentity .
+tmpl:expire fnd:hasIdentity tmpl:expire-identity .
+tmpl:expire-identity a fnd:PersistentIdentity .
+tmpl:give-break-notice fnd:hasIdentity tmpl:give-break-notice-identity .
+tmpl:give-break-notice-identity a fnd:PersistentIdentity .
+ex:quarter-days fnd:hasIdentity ex:quarter-days-identity .
+ex:quarter-days-identity a fnd:PersistentIdentity .
+ex:unit-4-identity a fnd:PersistentIdentity .
+ex:sec-12-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-9-identity a fnd:PersistentIdentity .
+tmpl:lease-regime-identity a fnd:PersistentIdentity .
+ex:cl-12-1-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-9-1-identity a fnd:PersistentIdentity .
+ex:lease-dates-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .

@@ -97,7 +97,7 @@ word is used in law and in the market:
 
 So the proposal is **Wording** (`wrd:`) for the lower layer, **Instrument** (`ins:`) for the
 meaning, and **computable contract** for the composition. The choice is CC-D1. The prefix `ctr:` is
-avoided in any case: MERIDIAN CSO and the term-parameters sketch (A-101) already use it.
+avoided in any case: a private contract ontology and the term-parameters sketch (A-101) already use it.
 
 ---
 
@@ -188,7 +188,7 @@ L17).
 | `stm:breachTreatment` | Instrument | `ins:classification` on a term, bound in insurance to the breach-treatment scheme |
 | `stm:ParameterBinding`, `ParameterKind`, `fromVariable`, `scopeSubject`, `scopeStep`, `scopeStrategy` | Instrument | `ins:ParameterBinding` and its properties (§5.9) |
 | `stm:EncodingStatus`, `encodingStatus` | Instrument | `ins:encodingStatus` on a wording element |
-| `agr:AgreementIdentity`, `agr:AgreementVersion` | Instrument | `ins:Instrument` (a `fnd:Version` with a persistent identity), expressed in an assembled `wrd:Wording` |
+| `agr:AgreementIdentity`, `agr:AgreementVersion` | Instrument | `ins:Instrument` (a `fnd:Versioned` with a persistent identity), expressed in an assembled `wrd:Wording` |
 | `agr:includes`, `agr:VariableValue`, `hasVariableValue`, `forVariable`, `value`, `literalValue` | Wording | the assembled wording's resolved inclusions and values (§4.5) |
 | `agr:hasOccupancy`, `agr:insurers` | Instrument | `ins:party` |
 | `agr:Amendment` (`amends`, `resultsIn`, `agreedOn`, `operationalFrom`, `materiality`) | Instrument | `ins:Amendment`, with the Foundation gap Open CBAA recorded (integration spec §4.1) closed here, not in Foundation |
@@ -210,10 +210,10 @@ closes with D23. L15 is fixed by ADR-A106.
 ### 4.1 Structure
 
 ```text
-wrd:Wording          ⊑ fnd:Version ⊓ fnd:Governable      the root of a wording tree: a policy
+wrd:Wording          ⊑ fnd:Versioned ⊓ fnd:Governable      the root of a wording tree: a policy
                                                          wording, an agreement, a form, an endorsement
                                                          issued as its own document
-wrd:Element          ⊑ fnd:Version ⊓ fnd:Governable      a nestable part: section, clause, schedule,
+wrd:Element          ⊑ fnd:Versioned ⊓ fnd:Governable      a nestable part: section, clause, schedule,
                                                          module, endorsement, annex, table row
 wrd:directlyComprises  (Wording ⊔ Element) → Element     asserted edge, irreflexive, asymmetric
 wrd:comprises          transitive super-property         never asserted
@@ -386,7 +386,7 @@ wrd:VariableValue      wrd:forVariable (exactly one), wrd:value or wrd:literalVa
 ```
 
 An assembled wording is immutable once the instrument it expresses takes effect. A later version
-is a new assembled wording, a `fnd:Version` of the same identity.
+is a new assembled wording, a `fnd:Versioned` of the same identity.
 
 Assembly reads the library once, at design time, and records what it chose. A mandatory element is
 always included, a variation slot contributes exactly one variant (W3), an optional element is
@@ -467,7 +467,7 @@ the same, and both amendments are recorded.
 ### 5.1 Instrument and term
 
 ```text
-ins:Instrument   ⊑ fnd:Version          a legal instrument: contract, policy, agreement, deed, licence,
+ins:Instrument   ⊑ fnd:Versioned          a legal instrument: contract, policy, agreement, deed, licence,
                                         protocol. Its identity persists across versions
   ins:expressedIn        → wrd:Wording   the assembled wording that states it
   ins:party              → pty:RoleOccupancy ⊔ pty:ParticipationGroup
@@ -839,7 +839,7 @@ flowchart TB
         WA["ex:wa-1<br/>a wrd:Amendment<br/>operation StrikeAndSubstitute<br/>struckText 30 days<br/>substitutedText 60 days"]
         WA -- "amendsElement" --> CL
         WA -- "expressedIn" --> EN
-        W2 -- "fnd:Version of the same identity as" --> W1
+        W2 -- "fnd:Versioned of the same identity as" --> W1
     end
     IA -- "textChanges" --> WA
     I1 -- "expressedIn" --> W1
@@ -1029,9 +1029,9 @@ the same way.
 In Lloyd's usage the parts of a contract are **sections**, with a determined meaning, as in the MRC.
 Binding authorities have sections too, and sections may or may not have terms that interact across
 them. A section is modelled as a part of one instrument, not as an instrument of its own. The
-"contract of contracts" (master and child contracts, as MERIDIAN's placement notes sketch) is
+"contract of contracts" (master and child contracts, as private placement notes sketch) is
 deliberately not introduced here, so that the later applied broking and carrier models can choose
-that abstraction freely (CC-D11). MERIDIAN's own notes keep per-section scoping within one contract as
+that abstraction freely (CC-D11). those notes keep per-section scoping within one contract as
 the less disruptive pattern for cross-layer single contracts.
 
 ```text
@@ -1717,7 +1717,7 @@ flowchart LR
     style HAPPENED fill:#bcdee1
 ```
 
-`pty:RoleOccupancy` is a temporally scoped `fnd:Version`, so filling the role is a new version
+`pty:RoleOccupancy` is a temporally scoped `fnd:Versioned`, so filling the role is a new version
 with `pty:occupiedBy` and a valid time, superseding the unfilled one. Who held the role, and from
 when, is bitemporal by construction (law I11 fixes the occasion's parties at arising).
 

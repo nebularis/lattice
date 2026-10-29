@@ -8,13 +8,13 @@ Literate specification for the Lattice Instrument Ontology layer.
 
 ## 1. Purpose and Scope
 
-This ontological substrate allows a user to state what legally binding outcomes an agreement binds its parties to. An instrument is expressed in an assembled wording (linking back to the `wording` ontology). Its clauses give rise to terms, and its terms to the five legal relations: what a party must do, must not do, may do despite a prohibition, need not do, and can do to change another's position. Each can be written and checked as structured data.
+This ontological substrate allows a user to state what legally binding outcomes an agreement binds its parties to. An instrument is expressed in an assembled wording (linking back to the `wording` ontology). Its clauses give rise to terms, and its terms to its legal relations: what a party must do, must not do, may do despite a prohibition, need not do, and can do to change another's position. Each can be written and checked as structured data.
 
 ### 1.1 Dependencies 
 
 Instrument imports Foundation, Vocabulary, Quantification, Party, Eligibility, Wording and Behaviour's configuration document. It never imports Behaviour's runtime document, which itself imports only Behaviour's configuration, so Instrument meets no runtime record. Instrument is two documents in one namespace. The main document, `spec/instrument.ttl`, holds stated and bound meaning. The acts document, `spec/instrument-acts.ttl`, imports it and holds the legal acts the parties did (§6.4), so a consumer that only states meaning never imports an act. Nothing outside Instrument imports either, and in LATTICE only examples and tests read the acts document ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md), [ADR-A106](../../docs/architecture/decisions/ADR-A106-behaviour-configuration-runtime-occasions-and-records.md)).
 
-This version (0.16.0, CCS slice C9b1) holds the instrument, its terms in two tiers, the five relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
+This version (0.19.0, CCS slice C9b1) holds the instrument, its terms in two tiers, the legal relations, their parties and their content (C6), the legal triggers, the regimes they move, and the gating of relations by a regime's state (C7a), terms in time, namely due ranges, windows, recurrences, ending and survival (C7b), what terms are and whom they bind: definitions, deemings and classification, sections, and parties resolved through the case (C7c), and values in stated meaning, which text is expected to mean something, and the generation of bound meaning (C8). It is pinned to Wording 0.7.0, whose references name identities (C8b), adds amendments, assents and taking effect (C9a, §6.3, §14.8), and the legal acts tier: proposals, declarations and exercises, in their own document (C9b1, §6.4). Later slices add, in order:
 
 | Slice | Adds |
 |---|---|
@@ -45,21 +45,21 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.20.0> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
 
 ## 3. Extraction Contract
 
-This README is the source of three kinds of file. `tools/literate_extract.py` concatenates every ` ```turtle-spec ` block into `spec/instrument.ttl`, except §6.4's, which open with `# @output-file "spec/instrument-acts.ttl"` and generate the acts document, which takes §2's prefixes (ADR-A120). The two share one version. It concatenates every ` ```turtle-vocab ` block into `vocab/instrument-vocab.ttl`, and writes the three ` ```turtle-shapes ` blocks, in order, to
+This README is the source of the spec, vocab and shapes files. `tools/literate_extract.py` concatenates every ` ```turtle-spec ` block into `spec/instrument.ttl`, except §6.4's, which open with `# @output-file "spec/instrument-acts.ttl"` and generate the acts document, which takes §2's prefixes (ADR-A120). The two share one version. It concatenates every ` ```turtle-vocab ` block into `vocab/instrument-vocab.ttl`, and writes the ` ```turtle-shapes ` blocks, in order, to
 `shapes/structural.ttl`, `shapes/constraints.ttl` and `shapes/single-expression.ttl`. A ` ```turtle-example ` block is illustration only.
 
 ```bash
@@ -83,11 +83,11 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expr
 
 ## 4. Terminology
 
-A lawyer reads words such as "term", "obligation", "exclusion" and "power" as terms of the art developed over millennia of law making, with centuries of meaning behind them. By contrast, a software engineer reads terms like "relation", "template" and "variable", in the context of computing. The naming convention for this layer attempts to adopt the terms a contract lawyer would recognise. This section defines, for every class and property, where its name comes from and why it was chosen over the alternatives. Historical naming conventions and adjustment decisions are recorded in the [CCS sketch](../../docs/developer/sketches/computable-contract-substrate.md) §1.1 and §2, CC-D1 and ADR-A104.
+This section defines each class and property by the legal term it borrows and the words it rejects. Names follow what a contract lawyer would recognise, not what a software engineer would. Historical naming decisions are in [ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md).
 
 ### 4.1 Contract
 
-The word "contract" can refer to any one of three things: words on a page, the rights and duties those words create, and a whole agreement resulting from the other two meanings:
+"Contract" can mean words on a page, the rights and duties those words create, or the whole agreement made of both.
 
 | Word | Its meaning in law and financial markets | In LATTICE |
 |---|---|---|
@@ -107,69 +107,19 @@ flowchart LR
 
 ### 4.2 Classes
 
-#### 4.2.1 **`ins:Instrument`.** 
+#### 4.2.1 **`ins:Instrument`.**
 
-Has the same meaning as the legal sense above: one version of the legal instrument, expressed in one assembled wording. Distinct from *contract* (which would name the whole), *agreement* (one kind of instrument, and a deed or a licence is not always considered one), or *document*.
+One version of a legal instrument, expressed in one assembled wording (law I1). It is operative, because executing it changes the parties' legal positions, as a lease, a guarantee, a licence or a facility agreement does. Distinct from *contract* (the whole), *agreement* (one kind of instrument) and *document*.
 
-A document codifies an *instrument* when it is **operative**: executing it changes the parties' legal positions. For example, a lease grants a tenancy, a guarantee makes the guarantor answerable for another's debt, a licence permits what would otherwise be forbidden, or a facility agreement commits lenders to lend.
-
-An instrument changes over time, by amendment, variation, or restatement, and remains the same instrument. LATTICE models this longevity with Foundation's versioning capability: each `ins:Instrument` is one **version**, and every version of one instrument shares one `fnd:PersistentIdentity`. The persistent identity carries the instrument's keys, such as an agreement number (Foundation §8), and any runtime state, such as which regime it is in (ADR-A106). A version represents what was agreed at a point in time: it is expressed in exactly one assembled wording (law I1), and its bound terms belong to it.
-
-`ins:Instrument` acts as an aggregate for the purposes of versioning. Terms and relations are treated as part of their owning clause or instrument version, and change only when it does (law I18). That constaint ensures there is only one answer to "what did the parties agree on 1 March": the instrument version in force on 1 March, its wording, and its bound terms.
-
-```mermaid
-flowchart LR
-    ID["persistent identity<br/>the agreement itself<br/>keys, runtime state"]
-    V1["instrument version 1<br/>signed 1 January"]
-    V2["instrument version 2<br/>after an amendment, 1 July"]
-    W1["assembled wording 1"]
-    W2["assembled wording 2"]
-    V1 -- "hasIdentity" --> ID
-    V2 -- "hasIdentity" --> ID
-    V1 -- "supersededBy" --> V2
-    V1 -- "expressedIn" --> W1
-    V2 -- "expressedIn" --> W2
-```
+An instrument changes by amendment, variation or restatement and remains the same instrument. Each `ins:Instrument` is one **version** (Foundation's versioning), and every version of one instrument shares one `fnd:PersistentIdentity`, which carries the instrument's keys, such as an agreement number (Foundation §8), and its runtime state, such as which regime it is in (ADR-A106). The instrument is an aggregate for versioning, so its terms and relations change only when it does (law I18). There is then one answer to what the parties agreed on a given day, the version in force that day, its wording and its bound terms.
 
 #### 4.2.2 **`ins:Term`.**
 
-In contract law, a "term" is a provision the parties are bound by: "the terms of the agreement", "an implied term", "terms and conditions". A term may be *express*, stated in the words, or *implied*, by statute, custom, the course of dealing between the parties or a judgment. "Term" has a second sense, of duration ("the term of the lease", "a five-year term"), which LATTICE handles with Foundation's `TemporalScope`. Note that `ins:Term` means only the provision and not the duration.
+A provision the parties are bound by, as in "the terms of the agreement" or "an implied term". It is *express* when a clause states it and *implied* when statute, custom, the course of dealing, the facts or a court's judgment supply it. An implied term has no clause and so no stated meaning, and its bound term names its source (`ins:impliedBy`). The other sense of "term", a duration, is Foundation's `TemporalScope` and not `ins:Term`. Words rejected for this class are in §4.6.
 
-The following similar, but distinct terminology, is provided for reference here.
+A term is not a clause. A clause is a piece of text and a term is what the parties are bound by. One clause may state several terms, and one term may need several clauses, in which case it is expressed in the element that contains them (law I2).
 
-- **A Provision**, which means both a clause and what a clause provides, and was retired from the ontology for that duplication 
-- **A Clause**, which is a piece of text, wording's element type
-- **A Condition**, which in contracts has three senses: a heading ("General Conditions"), a class of term
-  whose breach lets the other side terminate (a condition, as against a warranty), and a contingency
-  ("subject to the following condition"). Contingencies are `elg:Condition`, and the class of a term
-  is its classification (§15.4). No `ins:` class is named Condition
-- **A Norm** or **A Statement**, which are words of legal theory that a contract lawyer would not use for a
-  provision
-  
-**Express and implied terms.** Most terms are *express*: the parties wrote them, and a clause states
-each one. Some terms bind the parties although no clause states them. They are *implied*:
-
-- **by statute**: many legal systems imply into a sale of goods a term that the goods are of
-  satisfactory quality and fit for their purpose, whatever the contract says
-- **by custom**: a usage so settled in a trade that the parties are taken to have agreed it
-- **by the course of dealing**: terms the same parties have always used in their past contracts
-- **in fact**: a term so obvious, or so necessary to make the contract work, that it goes without saying
-- **by a court**: a judgment that holds a term implied in a kind of contract binds later contracts of
-  that kind, for example a duty on a party whose approval a contract requires not to withhold it
-  arbitrarily
-
-An express term is a stated term, expressed in a clause. An implied term has no clause to express it, so it has no stated meaning. Its bound term names its source instead (`ins:impliedBy`). 
-
-**A term is not a clause.** A clause is a piece of text. A term is what the parties are bound by.
-They usually line up one to one, but not always:
-
-- one clause may state several terms: "The Supplier shall deliver the goods by 1 March, and shall
-  pack them for sea transport" is two provisions in one sentence
-- one term may need several clauses to state it, when a definition, the main clause and a schedule
-  together make one provision. Its stated term is then expressed in the element that contains
-  them, such as their section (law I2 requires it to map to exactly one wording element version)
-
-Since a term gives rise to relations, and in a well-modelled contract it is common for one term to give rise to more than one (§22.1, clause 8.1), it has been modelled as an independent node. The law treats a term as a unit, and several things attach to the whole provision rather than to any one relation under it:
+Several things attach to the term as a whole and not to any one relation under it.
 
 | Attaches to the term | Meaning | Slice |
 |---|---|---|
@@ -179,75 +129,28 @@ Since a term gives rise to relations, and in a well-modelled contract it is comm
 | sections it applies within | for an instrument divided into sections, which ones the provision governs | C7c |
 | precedence | which provision prevails when two conflict | NRS N10 |
 
-```mermaid
-flowchart TB
-    T["ins:Term<br/>a provision the parties are bound by"]
-    R1["a relation"] -- "arisesUnder" --> T
-    R2["another relation"] -- "arisesUnder" --> T
-    Q["a qualifier, such as a limit"] -- "arisesUnder" --> T
-    D["a definition or deeming"] -- "arisesUnder" --> T
-    T -- "classification, survival, sections" --> P["properties of the whole provision"]
-    T -- "expressedIn (express term)" --> C["a clause version"]
-    T -- "impliedBy (implied term)" --> S["a statute, custom, course of dealing or judgment"]
-```
-
 #### 4.2.3 **`ins:Template`.**
 
-Drafters reuse text, and the word *template* comes from that practice. Two kinds of clause matter here:
+The stated form of a meaning, fixed by the words and waiting for the parties and values of a particular contract. A standard clause is drafted once and used in many contracts, a bespoke clause is drafted for one. Both name roles and variables, such as "the Borrower" and "{margin}", so every clause has a **stated meaning** that is instantiated per contract into **bound meaning** (§5.2).
 
-- a **standard clause** (also *model clause* or clause *template*) is drafted once, in general words,
-  and included in many contracts. For example the form clause "The Borrower shall repay each loan to the
-  Lenders", might appear in every facility that a lender signs
-- a **bespoke clause** is drafted for one contract only: a clause negotiated for Acme's facility and
-  no other, such as "The Borrower shall keep its head office in Leeds"
-
-Both kinds have a meaning in their own words, and those words name roles and variables, rather than the parties of a particular contract: "the Borrower", "the Lenders", "{margin}". LATTICE calls this the clause's **stated meaning**, and each node of it a **template**: meaning fixed by the words, waiting for the parties and values of a particular contract. When a contract includes the clause, its template is instantiated with that contract's parties and values, which gives the contract's **bound meaning** (§5.2).
-
-A standard clause's template is instantiated for every contract that includes the clause. A bespoke clause's template is instantiated for one contract only. It is still a template, so every clause works the same way, whether it is used once or a thousand times: its meaning is stated once and instantiated per contract.
-
-```mermaid
-flowchart LR
-    subgraph STANDARD["A standard clause: drafted once, used in many contracts"]
-        SC["clause 6.1<br/>The Borrower shall repay<br/>each loan to the Lenders"] -- "states" --> ST["template<br/>Borrower must repay Lenders"]
-    end
-    subgraph BESPOKE["A bespoke clause: drafted for one contract"]
-        BC["clause 12.4, Acme only<br/>The Borrower shall keep<br/>its head office in Leeds"] -- "states" --> BT["template<br/>Borrower must keep its head office"]
-    end
-    ST -- "instantiated for" --> A["Acme's facility<br/>Acme must repay its lenders<br/>Acme must keep its head office"]
-    ST -- "instantiated for" --> B["Brightline's facility<br/>Brightline must repay its lenders"]
-    ST -- "instantiated for" --> C["Corvid's facility<br/>Corvid must repay its lenders"]
-    BT -- "instantiated for" --> A
-    style STANDARD fill:#BBDEFB
-    style BESPOKE fill:#BBDEFB
-```
-
-`ins:Template` is a mixin rather than a class of its own, because terms, relations and qualifiers each have a stated form: a stated term is both an `ins:Term` and an `ins:Template`. A regime is always a template: it is stated once by its clause and never instantiated (§11.1).
+`ins:Template` is a mixin and not a class of its own, since terms, relations and qualifiers each have a stated form. A stated term is both an `ins:Term` and an `ins:Template`. A regime is always a template, stated by its clause and never instantiated (§11.1).
 
 #### 4.2.4 **`ins:LegalRelation`.**
 
-In jurisprudence a *legal relation* (or *jural relation*) is a bond the law recognises between two persons concerning some conduct: one owes, the other can claim. The phrase is Hohfeld's (§4.4), and every relation in this layer has his shape: two ends and an act. The name is not to be confused with a "relation" in RDF and OWL terminology, which names a property axiom. Similar but distinct terms include:
+A bond the law recognises between two persons concerning some conduct, also called a *jural relation*, in Hohfeld's sense (§4.4). The name is not the RDF and OWL sense of a relation as a property axiom. Words rejected for this class are in §4.6.
 
-- **A Right**, which Hohfeld showed covers four different things (a claim, a liberty, a power, and an
-  immunity).
-- **A Duty**, which names only one end of an obligation
-- **A Rule** or **A Norm**, which suggest a general law rather than a bond between named parties
+Whatever its kind, a legal relation has the same parts.
 
-Whatever its kind, a legal relation in this layer will have the same parts:
-
-- **two ends**: the party bound or exposed, and the party who benefits or acts. An obligation has an
-  obligor and obligees, the other kinds, a holder and counterparties
-- **an act**: what the relation is about, its `ins:activity`, such as repaying, enrolling or
-  terminating
-- **a scope**: the cases it applies to, as an Eligibility condition (`ins:scope`)
-- **a term**: the provision it arises under, and belongs to (`ins:arisesUnder`)
-- **when it exists**: what makes it arise, and what ends it, where its words say so
-  (`ins:arisesOn`, `ins:endsOn`, below)
-- **when it applies**: the situations it is confined to, where its words say so
-  (`ins:appliesInState`, §4.2.13)
+- **two ends**, the party bound or exposed and the party who benefits or acts. An obligation has an obligor and obligees, the other kinds a holder and counterparties
+- **an act**, what the relation is about (`ins:activity`)
+- **a scope**, the cases it applies to, as an Eligibility condition (`ins:scope`)
+- **a term**, the provision it arises under and belongs to (`ins:arisesUnder`)
+- **when it exists**, what makes it arise and what ends it, where its words say so (`ins:arisesOn`, `ins:endsOn`)
+- **when it applies**, the situations it is confined to, where its words say so (`ins:appliesInState`, §4.2.13)
 
 A relation is always between parties. "The goods must be delivered" becomes an obligation of the supplier, owed to the buyer, to deliver.
 
-**Choosing a kind:** Contract wording signals the kind of a relation by its verbs, but the test is what the provision does to the parties' positions:
+**Choosing a kind.** Contract wording signals the kind by its verbs, but the test is what the provision does to the parties' positions.
 
 ```mermaid
 ---
@@ -278,192 +181,50 @@ flowchart LR
     Q5 -- "yes" --> PO
 ```
 
-The four kinds are disjoint: nothing is both an obligation and a power. A clause that seems to be
-both, such as "the Tenant may terminate by giving notice, and shall give notice in writing", is two
-relations under one term: a power to terminate, and an obligation about the form of notice.
+The kinds are disjoint. A clause that seems to be two kinds, such as "the Tenant may terminate by giving notice, and shall give notice in writing", is two relations under one term, a power to terminate and an obligation about the form of notice.
 
-##### 4.2.4.1 **Arising: when a relation comes into existence.** 
+##### 4.2.4.1 **Arising: when a relation comes into existence.**
 
-In law, a right or a duty *arises*, or comes into existence, when the facts that bring it into existence occur. The contract or rule that creates it names those facts. "If the Supplier fails to deliver, the Buyer may terminate" gives the buyer a power that arises when the supplier fails to deliver. Hohfeld called such facts *operative facts*, the facts that, under a rule or a contract, create, change, or end a legal relation. He distinguished them from *evidential facts*, which prove them. Giving notice, failing to pay, issuing an invoice, and leverage passing a threshold are all operative facts. Contract English uses "arise" in two senses, which this layer keeps apart.
-
-```mermaid
-flowchart LR
-    subgraph SOURCE["Its source: which provision?"]
-        T["term 16.1<br/>If the Provider fails to meet<br/>clause 4.1, the Customer<br/>may end this agreement"]
-    end
-    subgraph MOMENT["Its moment: from when?"]
-        F["an operative fact<br/>the Provider fails to meet<br/>clause 4.1 in March"]
-    end
-    R["the Customer's power<br/>to end the agreement"]
-    R -- "arisesUnder" --> T
-    R -- "arisesOnBreachOf<br/>the service obligation" --> F
-    style SOURCE fill:#BBDEFB
-    style MOMENT fill:#bcdee1
-```
+A right or a duty *arises* when the facts that bring it into existence occur. Hohfeld called these *operative facts*, the facts that under a rule or a contract create, change or end a legal relation, as against *evidential facts*, which prove them. Contract English uses "arise" in two senses, which this layer keeps apart.
 
 | Sense | Contract English | Answers | In this layer |
 |---|---|---|---|
 | its **source** | "any obligation arising under this agreement", "liabilities arising under clause 9" | which provision creates it? | `ins:arisesUnder` exactly one term, fixed by the words |
 | its **moment** | "a right to terminate arises if the Supplier fails to deliver", "the duty to pay arises on the issue of each invoice" | from when does it exist? | `ins:arisesOn` a legal trigger (§4.2.15), or the short forms `ins:arisesOnBreachOf` and `ins:arisesOnExerciseOf`. Optional |
 
-A relation whose words name no operative fact exists from the moment its instrument takes effect. **Arising is not falling due.** "The Borrower shall repay each loan on its maturity date" binds the borrower from signing, although nothing is payable until maturity, in the way that a debt *accrues* before it is *payable*. The relation's due range (C7b) states when performance is owed.
+A relation whose words name no operative fact exists from the moment its instrument takes effect. A relation whose words name one exists only once that fact occurs, and then for the case in which it occurred. The fact is a breach, an exercise, an act or a condition. A primary duty and the relations arising on its breach form a *breach chain*, which may fan out so that one failure gives a remedy, a fee and a power to terminate together.
 
-```mermaid
-gantt
-    dateFormat YYYY-MM-DD
-    axisFormat %Y
-    section The facility
-    signed, takes effect          :milestone, m1, 2027-01-04, 0d
-    the duty to repay exists      :active, a1, 2027-01-04, 2031-12-31
-    section Repayment
-    not yet payable               :n1, 2027-01-04, 2031-12-01
-    due on the maturity date      :crit, d1, 2031-12-01, 2031-12-31
-```
+**Arising is not falling due.** "The Borrower shall repay each loan on its maturity date" binds the borrower from signing, although nothing is payable until maturity, as a debt *accrues* before it is *payable*. The relation's due range (C7b) states when performance is owed.
 
-A relation whose words name an operative fact exists only once that fact occurs, and then for the
-case in which it occurred. The fact is of one of four kinds.
+**Ending.** `ins:endsOn` names the operative facts on which a relation ends. A relation with none ends with its instrument. C7b adds the termination of whole terms and survival after termination. Ending is final for the case concerned, and a recurring relation recurs as a new occasion.
 
-- **A breach.** "If the Supplier fails to deliver, the Buyer may terminate" is a power arising on
-  breach of the duty to deliver. "The Borrower shall pay default interest on any overdue sum" is an
-  obligation arising on breach of the duty to pay. A primary duty and the relations arising on its
-  breach form a *breach chain*. A chain may fan out, so that one failure gives a remedy, a fee and a
-  power to terminate together.
-- **An exercise.** "On acceleration, the Borrower shall repay all loans at once" is an obligation
-  arising on exercise of the power to accelerate.
-- **An act.** "On the issue of each invoice, the Customer shall pay it." Issuing an invoice
-  exercises no power and breaches nothing.
-- **A condition.** "If leverage exceeds 3.5 to 1, the Borrower shall deliver a remediation plan."
+**Occasions.** For each case a relation applies to, Behaviour keeps an *occasion*, the relation applied to that case, with its own state. *Pending* means the relation applies to the case but has not yet arisen, and *Arisen* means it exists and is live. A breach of one occasion is itself an operative fact, so an `ins:OnBreach` of it may make another relation arise, which is how a breach chain runs. A monthly duty has twelve occasions a year, each with its own state.
 
-In this breach chain from a supply agreement, one failure to deliver gives rise to three relations.
-
-```mermaid
-flowchart LR
-    D["deliver<br/>ins:Obligation<br/>the primary duty"]
-    C["pay a price reduction<br/>ins:Obligation"]
-    E["source elsewhere<br/>at the Supplier's cost<br/>ins:Power"]
-    T["terminate<br/>ins:Power"]
-    C -- "arisesOnBreachOf" --> D
-    E -- "arisesOnBreachOf" --> D
-    T -- "arisesOnBreachOf" --> D
-```
-
-**Ending.** `ins:endsOn` names the operative facts on which a relation ends, as in "the Supplier's
-duty of exclusivity ends if the Buyer fails to meet its minimum order" or "the Lender's power to
-accelerate ends once the Event of Default is waived". A relation with none ends with its
-instrument. C7b adds the termination of whole terms, and survival after termination. Ending is
-final for the case concerned, and an ended occasion stays ended. A recurring relation, such as a
-monthly service, recurs as a new occasion.
-
-**What happens at runtime.** For each case a relation applies to, Behaviour keeps an *occasion*,
-the relation applied to that case, with its own state. Arising and ending move the occasion through
-Behaviour's core occasion states, which the runtime evaluator derives from records (C12).
-
-```mermaid
-stateDiagram-v2
-    state "Live" as Live {
-        state "Pending" as Pending
-        state "Arisen" as Arisen
-        [*] --> Pending
-        Pending --> Arisen : an arising trigger fires, or at once if there is none
-    }
-    state "Performed" as Performed
-    state "Breached" as Breached
-    state "Ended" as Ended
-    [*] --> Live
-    Live --> Ended : an ending trigger fires
-    Arisen --> Performed : performance
-    Arisen --> Breached : no performance when due, or a forbidden act done
-```
-
-*Pending* means that the relation applies to the case but has not yet arisen. *Arisen* means that
-it exists and is live. A breach of one occasion is itself an operative fact, so an `ins:OnBreach` of
-it may make another relation arise. This is how a breach chain runs. A relation has one occasion
-per case, so a monthly duty has twelve occasions a year, each with its own state.
-
-```mermaid
-flowchart TB
-    R["provide the service<br/>ins:Obligation, one relation"]
-    R --> J["January's occasion<br/>Performed"]
-    R --> F["February's occasion<br/>Performed"]
-    R --> M["March's occasion<br/>Breached"]
-    R --> A["April's occasion<br/>Arisen, not yet due"]
-    M -- "an OnBreach of it" --> P["the Customer's power to end<br/>arises for March's breach"]
-```
-
-Arising and ending determine *whether* a relation exists. Whether an existing relation applies
-*now*, in the instrument's current situation, is a separate question, which regimes answer
-(§4.2.13).
+Arising and ending determine whether a relation exists. Whether an existing relation applies now, in the instrument's current situation, is answered by regimes (§4.2.13).
 
 #### 4.2.5 **`ins:Obligation`.**
 
-From Roman law's *obligatio*, which Justinian's Institutes define as a bond of law (*vinculum iuris*) binding a person to perform something: the bond between the *obligor*, who owes, and the *obligee*, who is owed. It is what "shall" and "must" create in a contract. Once again we can contrast this with *Duty* (one end of the bond), and *Covenant* (a promise in a deed, and in finance a particular kind of undertaking).
+The bond (Roman *obligatio*, *vinculum iuris*) between an obligor who owes and obligees who are owed, which "shall" and "must" create. It is an *achievement* obligation, met by doing something. Distinct from *duty* (one end of the bond) and *covenant* (a promise in a deed, and in finance a particular undertaking).
 
-An obligation is one bond with two ends. The *duty* is the obligor's end, and the *claim* is the
-obligee's: the right to have the act performed, and to a remedy if it is not. They are not two
-facts to keep in step, but one fact seen from two sides (§4.4).
-
-**What an obligation states:**
-
-- **who owes**: exactly one obligor. Where several parties owe together, the obligor is a
-  participation group, and the group's composition rule says how they owe: each for its own share
-  (several), or each for the whole (joint and several) (§4.2, `ins:RelationParty`)
-- **to whom**: one or more obligees, who need not be parties to the instrument. A beneficiary named
-  in a contract is an obligee who signed nothing (§6.1)
-- **what**: the act owed, `ins:activity`: repay, deliver, report, repair
-- **in which cases**: its scope, where it applies only to some
-- **by when**: its due range, such as "within 30 days of each invoice" (C7b)
-- **what counts as performance**: `ins:fulfilledWhen`, where performance is more than the act being
-  done. Without it, performance is an act of the activity, for the case, by the obligor or someone
-  the obligor delegated to (Party's `pty:Delegation`)
-
-**Examples across domains:** the borrower shall repay each loan, the tenant shall pay rent
-quarterly, the investigator shall report each serious adverse event within 24 hours, the
-manufacturer shall repair a product that fails, the employer shall pay salary monthly.
-
-An obligation of this kind is an *achievement* obligation in deontic logic: it is met by doing
-something. Its counterpart, an obligation met by keeping something true, is the continuing
-obligation below.
+The *duty* is the obligor's end and the *claim* is the obligee's. They are one fact seen from two sides (§4.4). An obligation names exactly one obligor, which is a participation group where several owe together (§4.2.12), and one or more obligees, who need not be parties to the instrument (§6.1). It names the act owed (`ins:activity`), its scope, its due range (C7b) and, where performance is more than the act being done, `ins:fulfilledWhen`. Without that, performance is an act of the activity, for the case, by the obligor or someone the obligor delegated to (`pty:Delegation`).
 
 #### 4.2.6 **`ins:ContinuingObligation`.**
 
-English contract law speaks of a *continuing* obligation: one that must be kept for a period rather than performed once. "The Borrower shall ensure that leverage does not exceed 3.0 to 1", holds on every day the facility is in force.
+A *maintenance* obligation, one that must hold throughout a period and is never discharged by a single act, as in "the Borrower shall ensure that leverage does not exceed 3.0 to 1". Deontic logic separates it from an *achievement* obligation, which is met once the act is done and breached only when its deadline passes without it.
 
-Deontic logic, the logic of obligation and permission, draws the same line more sharply. It distinguishes two ways an obligation can be met.
+The two are checked in opposite ways.
 
-- **An achievement obligation** requires that something be *brought about* at least once, usually by a deadline: "the Borrower shall repay the loan by 31 December". This is fulfilled the moment the act is done and asks nothing more thereafter. It is breached only when the deadline passes and the act has not happened.
-- **A maintenance obligation** requires that something *hold throughout* a period: "the Borrower shall ensure that leverage does not exceed 3.0 to 1". It is never discharged by a single act. It is fulfilled only if the state holds at every moment of the period, and it is breached at any moment it does not. This is a common type of obligation in insurance contracts that define subjectivities, which are requirements set by an insurer that a policyholder must meet in order to activate or maintain coverage. 
+- **Breach of a maintenance obligation is a positive fact,** found by reading the state at a point in time.
+- **Breach of an achievement obligation is an absence,** found only by establishing that the act did not happen before the deadline. That needs a record of what happened and a closed view of it, which an open-world reasoner cannot assume (C12, C13).
+- **Their content differs.** An achievement obligation names `ins:activity` and a due range. A maintenance obligation names `ins:maintains`, an Eligibility condition tested against the case at each point.
 
-The difference matters for a computable model, because the two are checked in opposite ways:
-
-- **Breach of a maintenance obligation is a positive fact.** It is found by looking at the state at a point in time. If leverage was 3.4 on 30 June, the covenant was breached on 30 June. That is evidence a rule can read directly.
-- **Breach of an achievement obligation is an absence.** It is found only by establishing that the act did *not* happen before the deadline. That needs a record of what happened and a closed view of it, which an open-world reasoner cannot assume. This is why later slices handle the two differently when deriving breach (C12, C13).
-- **Their content differs.** An achievement obligation names an act and a time to do it by: `ins:activity`, and a due range from C7b. A maintenance obligation names a state to keep: `ins:maintains`, an Eligibility condition such as "leverage ≤ 3.0", tested against the case at each point.
-
-The literature refines achievement obligations further:
-
-- **Preemptive or not.** Can the act be done early, before the obligation arises, and still count? Paying an invoice before it is issued is the usual example.
-- **Perdurant or not.** Does the obligation survive its own breach? A late payment is still owed after the due date has passed.
-
-These distinctions belong to arising and due (C7b), and C6 does not model them yet.
-
-So LATTICE maps the two kinds onto two classes:
-
-- `ins:Obligation` is the achievement case: an act, owed, and later due.
-- `ins:ContinuingObligation` is the maintenance case, with the state it keeps in `ins:maintains`.
-
-Other continuing obligations across domains: the tenant shall keep the premises in good repair,
-the licensee shall keep the source code confidential while it holds a copy, the supplier shall
-maintain the certifications listed in the schedule, the employer shall maintain a safe place of
-work.
+`ins:Obligation` is the achievement case and `ins:ContinuingObligation` the maintenance case. The literature also asks whether an act done early still counts (*preemptive*) and whether an obligation survives its own breach (*perdurant*). These belong to arising and due (C7b), and C6 does not model them.
 
 #### 4.2.7 **`ins:Prohibition`.**
 
-What "shall not" and "must not" create: an obligation not to do something. In deontic logic F p, "p is forbidden", is defined as O ¬p, "not-p is obligatory", which is why `ins:Prohibition` is a kind of `ins:Obligation`. A market's *negative covenant* and *negative pledge* are examples of prohibitions.
+What "shall not" and "must not" create, an obligation not to do something. In deontic logic F p, "p is forbidden", is O ¬p, "not-p is obligatory", so `ins:Prohibition` is a kind of `ins:Obligation`. A market's *negative covenant* and *negative pledge* are prohibitions.
 
-In deontic logic a prohibition is a maintenance obligation, in negative form. "The Borrower shall not create any security" creates an obligation to keep *not creating security* true throughout the period the instrument remains in force. Unlike a covenant on a state, though, its breach is an act. Creating security on March 3rd breaches it on March 3rd, again a positive fact.
-
-That is why `ins:Prohibition` is not an `ins:ContinuingObligation`, and the T-Box declares the two
-disjoint. Both hold throughout a period, but they say different things:
+A prohibition holds throughout a period like a maintenance obligation, but its breach is an act and not a state failing. The T-Box therefore declares it disjoint from `ins:ContinuingObligation`.
 
 | | `ins:ContinuingObligation` | `ins:Prohibition` |
 |---|---|---|
@@ -472,164 +233,44 @@ disjoint. Both hold throughout a period, but they say different things:
 | what breaches it | the state failing to hold at a moment | the act being done |
 | how it is excepted | an exclusion for some period or case | a permission for some cases |
 
-**Scope makes a prohibition precise.** Few prohibitions forbid an act everywhere. "The Employee
-shall not work for a competitor within 50 miles for six months after leaving" forbids working for a
-competitor only within that scope: the act is `Work for competitor`, and the place and period are
-its scope. Keeping the act plain and the circumstances in the scope lets a permission except part
-of the same act (below).
-
-**Examples across domains:** a negative pledge (shall not create security), a non-compete (shall not
-work for a competitor), a confidentiality clause (shall not disclose confidential information), a
-restriction on assignment (shall not assign this licence), a trial's eligibility rule (shall not
-enrol a participant who fails the criteria).
+Few prohibitions forbid an act everywhere, so the act stays plain and the circumstances go in the scope ("not work for a competitor", scope within 50 miles for six months). That lets a permission except part of the same act.
 
 #### 4.2.8 **`ins:Permission`.**
 
-A *permission* in the strong sense of deontic logic: a positive licence to do what a prohibition would otherwise forbid. Contracts write it as an exception: "Clause 8.1 does not apply to any lien arising by operation of law", "Permitted Security", "the Sponsor may waive". A permission always excepts a prohibition. Weak permission, the mere absence of a prohibition, needs no node and has none. *Liberty* and *Privilege*, Hohfeld's words, are not suitable here, since "privilege" has other legal senses (legal professional privilege).
+A *strong* permission, a positive licence to do what a prohibition would otherwise forbid, written as an exception such as "Clause 8.1 does not apply to any lien arising by operation of law". It always excepts exactly one prohibition (`ins:excepts`) and takes effect within its own scope, so the act is forbidden where the prohibition's scope holds unless the permission's scope holds too. *Liberty* and *privilege* are rejected, since "privilege" has other legal senses. The name is shared with the Eligibility decision value `elg:Permitted`, which is a different thing, and both carry a comment saying so.
 
-The name is shared with the Eligibility decision value `elg:Permitted`, which is a different thing entirely, with both carrying a comment saying as much.
+*Weak* permission, an act permitted because nothing forbids it, has no node. It is an absence, and an open-world model cannot record an absence, since the graph may lack a prohibition that exists. A strong permission is written in the wording and is a fact like any other.
 
-**Strong and weak permission.** deontic logic distinguishes two senses of "permitted":
-
-- **weak permission**: an act is permitted because nothing forbids it. Nothing in a lease forbids
-  the tenant from painting the walls, so painting them is permitted in the weak sense
-- **strong permission**: an act is permitted because a provision says so, usually as an exception
-  to something that would otherwise forbid it. "The Tenant shall not alter the premises, except
-  that the Tenant may decorate the interior" gives a strong permission to decorate
-
-Only strong permission is a node in this layer. Weak permission is the absence of a prohibition,
-and an absence is not a fact an open-world model can record: there may be a prohibition the graph
-does not hold. A strong permission is written in the wording, so it is a fact like any other.
-
-**How a permission works.** A permission always excepts exactly one prohibition (`ins:excepts`),
-and takes effect within its own scope. The act is forbidden where the prohibition's scope holds,
-unless the permission's scope holds too:
-
-```mermaid
-flowchart LR
-    PR["prohibition<br/>shall not create security<br/>scope: any asset"]
-    PE["permission<br/>may create security<br/>scope: a lien arising by law"]
-    RES["effect: security is forbidden,<br/>except a lien arising by law"]
-    PE -- "excepts" --> PR
-    PR --> RES
-    PE --> RES
-```
-
-Law I8 ties a permission to the prohibition it excepts:
-
-- its **holder** is the prohibition's **obligor**: only the party who is forbidden can be freed
-- its **activity** is the prohibition's activity: it permits the same act, in fewer cases
-
-A permission that broke either rule would free someone who was never bound, or permit an act that
-was never forbidden. The shapes report both.
-
-**Examples across domains:** permitted security under a negative pledge, a sponsor's written waiver
-of an eligibility criterion, consent to assign a licence, a landlord's permission to sublet part of
-the premises.
+Law I8 ties a permission to the prohibition it excepts. Its holder is the prohibition's obligor, since only the party forbidden can be freed. Its activity is the prohibition's activity, so it permits the same act in fewer cases. The shapes report a breach of either.
 
 #### 4.2.9 **`ins:Exclusion`.**
 
-An *exclusion clause* or *exemption clause*: "the Manufacturer shall not be liable for", "Clause 2.1 does not apply to damage caused by misuse", "is not obliged to". It frees its holder from an obligation within its scope, or protects its holder from a power: "the Licensor may not end the licence once the perpetual fee is paid", which is an *immunity*. Distinct from *Exemption* (also a tax and regulatory word), *Immunity* (only the second kind), *Waiver* (an act of giving up a right, not a term).
+An *exclusion* or *exemption clause*, such as "the Manufacturer shall not be liable for" or "Clause 2.1 does not apply to damage caused by misuse". It has two forms according to what it excepts.
 
-An exclusion has two forms, according to what it excepts:
+- **Excepting an obligation,** it is a *liberty not to act*. Within its scope the obligor need not perform, and its holder is the obligation's obligor (law I8).
+- **Excepting a power,** it is an *immunity*. Within its scope the power cannot be exercised against its holder, who is the power's counterparty (law I8). "The Licensor may not end the licence once the perpetual fee is paid" is an example.
 
-```mermaid
----
-config:
-  layout: elk
----
-flowchart TB
-    subgraph OBL["Excepting an obligation: a liberty not to act"]
-        RE["obligation<br/>Manufacturer shall repair"]
-        EX1["exclusion<br/>need not repair<br/>scope: misuse"]
-        EX1 -- "excepts" --> RE
-        H1["holder: the Manufacturer,<br/>the obligation's obligor"] --- EX1
-    end
-    subgraph POW["Excepting a power: an immunity"]
-        PO["power<br/>Licensor may terminate<br/>for convenience"]
-        EX2["exclusion<br/>cannot be terminated<br/>scope: perpetual fee paid"]
-        EX2 -- "excepts" --> PO
-        H2["holder: the Licensee,<br/>the power's counterparty"] --- EX2
-    end
-```
+Distinct from *exemption* (also a tax and regulatory word), *immunity* (only the second form) and *waiver* (an act of giving up a right, not a term).
 
-- **Excepting an obligation**, the exclusion is a *liberty not to act*: within its scope the obligor
-  need not perform. Its holder is the obligation's obligor, the party who would otherwise be bound
-  (law I8). A product warranty that does not cover misuse, a supplier who need not deliver on public
-  holidays, an employee who need not work on rest days.
-- **Excepting a power**, the exclusion is an *immunity*: within its scope the power cannot be
-  exercised against its holder. Its holder is the power's counterparty, the party who would
-  otherwise be exposed (law I8). A perpetual licence that cannot be ended for convenience, a lease
-  that the landlord cannot end early while the rent is paid.
+Exclusion and Permission are separate classes because they free from duties in opposite directions. A permission frees from a duty not to act, so its holder may act. An exclusion frees from a duty to act, so its holder need not act, or from exposure to a power, so its holder cannot be made subject to it. Contract English uses different words for them ("may", "need not", "shall not be liable") and a reader of the data should see the same distinction.
 
-**Why Exclusion and Permission are separate classes.** Both are Hohfeldian privileges, and both are
-exceptions. They differ in the direction of the duty they free from: a permission frees from a duty
-*not* to act, so its holder *may* act. An exclusion frees from a duty *to* act, so its holder *need
-not* act, or from exposure to a power, so its holder *cannot be made* subject to it. Contract
-English uses different words for them ("may", "need not", "shall not be liable"), and a reader of
-the data should see the same distinction.
-
-**Carve-backs.** Exclusions are often narrowed by a carve-back: "Clause 2.1 does not apply to damage
-caused by misuse, unless the failure was caused by a manufacturing defect". The carve-back belongs
-in the exclusion's scope, as a negated member of the scope's condition (§9, §22.3), not as a second
-relation.
+A *carve-back* narrows an exclusion, as in "unless the failure was caused by a manufacturing defect". It belongs in the exclusion's scope as a negated member of the scope's condition (§9, §22.3), not as a second relation.
 
 #### 4.2.10 **`ins:Power`.**
 
-Hohfeld's *power*: the ability, by one's own act, to change someone else's legal position. Contracts write it as "may" with an effect: "the Lenders may by notice declare all loans due", "may terminate", "may accept". "May" is a permission if it only frees the holder, and a power if it changes someone else's relations. Distinct from *Right* ("right to terminate" is a power, but "right" covers four things), *Option* (one kind of power), *Authority* (an agent's power, which an applied ontology may specialise from `ins:Power`).
+Hohfeld's *power*, the ability by one's own act to change someone else's legal position, written as "may" with an effect such as "the Lenders may by notice declare all loans due". Distinct from *right* (covers four things), *option* (one kind of power) and *authority* (an agent's power, which an applied ontology may specialise from `ins:Power`).
 
-**Power and permission, side by side.** "The Tenant may decorate the interior" and "the Tenant may
-terminate the lease on six months' notice" both say "may", but they do different things. After the
-tenant decorates, nobody's rights have changed: the act was simply allowed. After the tenant gives
-notice, the lease ends in six months, and with it the tenant's duty to pay rent and the landlord's
-duty to give possession. The first is a permission. The second is a power, because exercising it
-has a legal effect on someone else.
+"May" is a permission if it only frees the holder and a power if it changes someone else's relations. After a tenant decorates, nobody's rights have changed. After a tenant gives notice, the lease ends and with it the tenant's duty to pay rent, so the second is a power.
 
-**What exercising a power does.** The act that exercises a power is its `ins:activity`. Its effect is
-on the counterparty's legal position, in one of three ways:
-
-```mermaid
-flowchart LR
-    P["power<br/>the holder's act"]
-    P -- "ends relations" --> E["terminate a lease,<br/>end a site's participation"]
-    P -- "creates relations" --> C["accept an offer,<br/>exercise an option,<br/>make a call-off order"]
-    P -- "changes relations" --> X["accelerate a loan,<br/>extend a deadline,<br/>appoint a replacement agent"]
-```
-
-Legal triggers say what a power's exercise does: an `ins:OnExercise` moves a regime, such as
-a licence into its notice period, and a relation may arise or end on the exercise (§10). An
-instrument made by exercising a power, such as an order under a framework agreement, records the
-power it was made under (C9).
-
-**When a power can be exercised.** A power is often limited: to its scope, to a regime's state
-("only while an event of default is continuing", `ins:appliesInState`, §11.3), or by a consent rule where a group holds it ("by lenders
-holding two thirds of the commitments", C9). The counterparty's end of a power is Hohfeld's
-*liability*, a word this layer never uses (§4.6). An exclusion of the power gives the counterparty
-an *immunity* (above).
+The act that exercises a power is its `ins:activity`. Its effect ends, creates or changes the counterparty's relations, and legal triggers carry it. An `ins:OnExercise` moves a regime, and a relation may arise or end on the exercise (§10). An instrument made by exercising a power records the power it was made under (C9). A power is limited by its scope, by a regime's state (`ins:appliesInState`, §11.3), or by a consent rule where a group holds it (C9). The counterparty's end of a power is Hohfeld's *liability*, a word this layer never uses (§4.6). An exclusion of the power gives the counterparty an immunity.
 
 #### 4.2.11 **`ins:Qualifier`.**
 
-A limit, level, retention, or any other thing that qualifies a term or a relation: it says how much, not what.
-
-A qualifier never creates a relation of its own. It bounds one that already exists:
-
-- a cap: "the Licensor's aggregate liability under this agreement shall not exceed the fees paid in
-  the previous twelve months" qualifies the licensor's obligations to pay damages
-- a minimum: "the Buyer shall order at least 1,000 units in each quarter" qualifies the obligation
-  to order
-- a threshold: a covenant that bites only above a certain level of borrowing
-- a level of performance: "with an availability of at least 99.9% in each month"
-
-A qualifier arises under exactly one term, like a relation, and qualifies exactly one term or
-relation (`ins:qualifies`). It is its own node because amounts are rarely just numbers: they have a
-unit and currency, a period they reset over, and a basis, such as per claim or in the aggregate.
-That structure is defined with contract amounts (C8), and C6 declares only the class and its links.
+A limit, level, retention or other thing that says how much and not what. It never creates a relation, and bounds a term or relation that already exists, as a cap, a minimum, a threshold or a level of performance does. It arises under exactly one term and qualifies exactly one term or relation (`ins:qualifies`). It is its own node because amounts have a unit and currency, a period they reset over, and a basis such as per claim or in the aggregate. That structure is defined with contract amounts (C8), and C6 declares only the class and its links.
 
 #### 4.2.12 **`ins:RelationParty`.**
 
-A *party* is an entity (e.g., person or organisation) bound by or benefiting from an instrument. This union of types, names what may stand at the end of a relation: a role occupancy (a party filling a role for a period, Party layer), a participation group (several parties acting together), or, in stated meaning only, a role. "Party" alone would read as a person, and sit beside the property `ins:party` (C6-Q4).
-
-The three members come from the Party layer, and each answers a different question:
+A union of the types that may stand at the end of a relation. "Party" alone would read as a person and would sit beside the property `ins:party` (C6-Q4). Its members come from the Party layer.
 
 | Member | Answers | Example |
 |---|---|---|
@@ -637,133 +278,29 @@ The three members come from the Party layer, and each answers a different questi
 | `pty:RoleOccupancy` | who fills it, from when? | Acme Holdings plc as Borrower, from 1 January |
 | `pty:ParticipationGroup` | which several parties, acting how? | the lenders, each for its own share |
 
-A **role** is a capacity, independent of who fills it. Stated meaning names roles, because a
-clause's words do: "the Borrower" means whoever is the borrower under each contract the clause is
-used in (law I13). A **role occupancy** is one party filling one role, for a period. Bound meaning
-names occupancies, because a contract's parties are particular entities. An occupancy may exist
-before anyone fills it, a *contingent* occupancy, for a party that depends on the case (§8).
+A **role** is a capacity independent of who fills it. Stated meaning names roles, because a clause's words do (law I13). A **role occupancy** is one party filling one role for a period. Bound meaning names occupancies, because a contract's parties are particular entities. An occupancy may exist before anyone fills it, a *contingent* occupancy, for a party that depends on the case (§8). A **participation group** is several occupancies standing at one end of a relation, with a composition rule. *Several* means each owes or is owed only its own share. *Joint and several* means each is liable for the whole and the creditor may pursue any one.
 
-A **participation group** is several occupancies standing at one end of a relation together, with a
-composition rule that says how they stand there:
-
-- **several**: each is owed, or owes, only its own share. Two lenders lending 60% and 40% are each
-  owed repayment of their own part only
-- **joint and several**: each is liable for the whole, and the creditor may pursue any one of them.
-  Two tenants who sign one lease are often jointly and severally liable for the whole rent
-
-**Party to the instrument, and party to a relation.** These differ. `ins:party` lists who is party to
-the instrument: who signed it. The ends of a relation name whoever the relation binds or benefits,
-who may include persons who signed nothing: a beneficiary for whose benefit a promise was made, or
-a regulator given a power of inspection. That is why `ins:party` is authored, and never derived from
-the relations' parties (§6.1).
-
-```mermaid
----
-config:
-  layout: elk
----
-flowchart TB
-    IN["ins:Instrument"]
-    A["Acme, as Borrower<br/>a party"]
-    B["the lenders<br/>a group of parties"]
-    T["a trustee<br/>not a party"]
-    O["an obligation<br/>owed by Acme"]
-    IN -- "party" --> A
-    IN -- "party" --> B
-    O -- "obligor" --> A
-    O -- "obligee" --> B
-    O -- "obligee" --> T
-```
+A party to the instrument and a party to a relation differ. `ins:party` lists who signed. The ends of a relation name whoever it binds or benefits, who may have signed nothing, such as a beneficiary or a regulator given a power of inspection. That is why `ins:party` is authored and never derived from the relations' parties (§6.1).
 
 #### 4.2.13 **`ins:Regime`.**
 
-In legal terminology, a regime is a body of rules that applies to a specific situation, or for a specific period of time, for example an insolvency regime, or "the regime that applies during the notice period", and so on. It is synonymous with *dispensation*, in its older sense of an order of things that holds for a period. In this substrate, a *regime* is modelled as a set of states an instrument can be in, along with rules that can be used to move it between states. Some examples include a notice regime (in force, notice period, terminated), suspension regime (in force, suspended), or event-of-default regime (performing, cure period, defaulted).
+A body of rules that applies to a specific situation or period, such as an insolvency regime or the regime that applies during a notice period. Here it is a set of states an instrument can be in, with transitions that move it between them. Examples are a notice regime (in force, notice period, terminated), a suspension regime (in force, suspended) and an event-of-default regime (performing, cure period, defaulted). It is synonymous with *dispensation* in its older sense.
 
-Arising and ending (§4.2.4) describe events that happen once. A relation comes into existence, later ends, and does not return. Contracts also describe *situations* that an instrument enters and leaves, sometimes more than once, and that change what applies under the contract while they last. For example:
-
-- while notice of termination is running
-- while deliveries are suspended
-- while an event of default is continuing
-- while a force majeure event prevents performance
-
-A regime models one such family of situations. Its states are the situations, and its transitions are the operative facts that move the instrument from one to the next.
+Arising and ending happen once, since a relation comes into existence, later ends and does not return. A regime models situations that an instrument enters and leaves, sometimes more than once, and that change what applies while they last, such as a notice of termination running, deliveries suspended or a force majeure event preventing performance. Its states are the situations and its transitions are the operative facts that move the instrument between them. A regime is stated once by its clause and has no bound form (§11.1), and its kinds are period, switching and threshold (§11.2).
 
 ##### 4.2.13.1 **Where an instrument's regimes come from.**
 
-A regime arises under the term of the clause that describes the situation (`ins:arisesUnder`), as a relation does. A licence's termination clause, for example, states its notice regime. An instrument has a regime only if its wording includes the clause that states it. A licence with no termination on notice has no notice regime, and nothing in it can depend on a notice period. An instrument may therefore have no regimes or several, each independent of the others. A clause may state a regime together with relations, as the licence's clause 11.1 states both the power to end on notice and the notice regime its exercise starts. A clause may also state a regime alone, as a force majeure clause does.
+A regime arises under the term of the clause that describes the situation (`ins:arisesUnder`), as a relation does. An instrument has a regime only if its wording includes that clause, so it may have none or several, each independent of the others. A clause may state a regime together with relations or alone, as a force majeure clause does.
 
-```mermaid
-flowchart LR
-    subgraph WORDING["The licence's assembled wording"]
-        C41["clause 4.1<br/>sub-licensing"]
-        C111["clause 11.1<br/>termination on notice"]
-        C113["clause 11.3<br/>no sub-licensing during notice"]
-        C141["clause 14.1<br/>force majeure"]
-    end
-    P41["power to grant sub-licences"]
-    P111["power to end on notice"]
-    NR["notice regime"]
-    X113["sub-licensing excluded<br/>gated by the notice period"]
-    FR["force majeure regime"]
-    C41 -- "states" --> P41
-    C111 -- "states" --> P111
-    C111 -- "states" --> NR
-    C113 -- "states" --> X113
-    C141 -- "states" --> FR
-    X113 -. "appliesInState" .-> NR
-    style WORDING fill:#BBDEFB
-```
-
-A licence on a form without clause 14.1 would have one regime, not two.
-
-**An instrument is always in exactly one state of each of its regimes.** The instrument enters each regime's initial state (`bhv:initialState`) when it takes effect. After that it moves only along the regime's transitions, each on a legal trigger.
-
-Each regime runs independently, so being in a notice period says nothing about force majeure. The instrument's position is not part of what was agreed. It is a runtime record, a Behaviour *state occupancy* for the instrument's persistent identity, which begins when the instrument enters the state and ends when a transition leaves it (§11.1). The diagram shows one licence over a year, with illustrative dates.
-
-```mermaid
-gantt
-    dateFormat YYYY-MM-DD
-    axisFormat %b
-    section Notice regime
-    in force                :a1, 2027-01-01, 2027-06-01
-    notice period           :active, a2, 2027-06-01, 2027-08-30
-    terminated              :done, a3, 2027-08-30, 2027-12-31
-    section Force majeure regime
-    unaffected              :b1, 2027-01-01, 2027-07-05
-    affected                :crit, b2, 2027-07-05, 2027-07-26
-    unaffected              :b3, 2027-07-26, 2027-12-31
-```
+An instrument is always in exactly one state of each of its regimes. It enters each regime's initial state (`bhv:initialState`) when it takes effect and then moves only along the regime's transitions, each on a legal trigger. Its position is a runtime record, a Behaviour *state occupancy* for its persistent identity (§11.1), and not part of what was agreed.
 
 ##### 4.2.13.2 **Gating: relations that apply only in a situation.**
 
-Most relations apply whenever they exist. Some apply only under specific circumstances, and their clauses say so, for example: "during the notice period, the Licensee may not grant sub-licences", or "while an Event of Default is continuing, the Lender may declare the Loan due", or "the Supplier is relieved of clause 3.1 while a force majeure event prevents it from performing". 
+Most relations apply whenever they exist. A relation whose clause confines it to a situation, as in "during the notice period, the Licensee may not grant sub-licences", names the states it applies in (`ins:appliesInState`). Those states are its **gate**. While the instrument is in one of them the gate is open and the relation applies, and otherwise the gate is closed and the relation still exists but does not apply. A relation's regimes are those its named states belong to. Most relations name no state and have no gate. A gate is fixed by the clause's words, like a scope.
 
-Such a relation names the states it applies in (`ins:appliesInState`). Those states are its *gate*. While the instrument is in one of them, the gate is open and the relation applies. Otherwise the gate is closed, and the relation, though it still exists, does not apply. The diagram shows the licence again, with the exclusion of sub-licensing and the power it excepts beneath the notice regime.
+Three questions about one relation at one moment have separate answers.
 
-```mermaid
-gantt
-    dateFormat YYYY-MM-DD
-    axisFormat %b
-    section Notice regime
-    in force                       :a1, 2027-01-01, 2027-06-01
-    notice period                  :active, a2, 2027-06-01, 2027-08-30
-    terminated                     :done, a3, 2027-08-30, 2027-12-31
-    section Sub-licensing excluded
-    exists, gate closed            :x1, 2027-01-01, 2027-06-01
-    exists, gate open, applies     :crit, x2, 2027-06-01, 2027-08-30
-    section Power to sub-license
-    exists, exercisable            :p1, 2027-01-01, 2027-06-01
-    exists, excluded               :crit, p2, 2027-06-01, 2027-08-30
-```
-
-The exclusion exists all along and applies only while its gate is open. While it applies, the power it excepts cannot be exercised. When the licence terminates, both end with it.
-
-**A relation's regimes** are those its named states belong to. They are its instrument's, stated by
-the relation's own clause or another. Most relations name no state, so have no gate and no regimes. Like its scope, a relation's gate is fixed by its clause's words.
-
-Three questions about one relation at one moment have separate answers, from separate parts of the model. The table answers them for the licence's exclusion of the power to grant sub-licences (§22.5).
-
-| Question | Answered by | For the exclusion |
+| Question | Answered by | For the exclusion of sub-licensing (§22.5) |
 |---|---|---|
 | Does it exist? | arising and ending (`ins:arisesOn`, `ins:endsOn`, §4.2.4) | from signing, since its clause names no operative fact, until the licence ends |
 | Does it apply now? | its gate (`ins:appliesInState`), read against the instrument's regimes | only while the licence is in its notice period |
@@ -771,138 +308,21 @@ Three questions about one relation at one moment have separate answers, from sep
 
 For an obligation, its occasion's state answers a fourth question, whether it is due, performed or breached for a case (§4.2.4, C7b, C12). The questions are asked in order, and a relation takes effect for a case only when every answer is yes.
 
-```mermaid
-flowchart LR
-    Q1{"Does it exist?<br/>arisen, not ended"}
-    Q2{"Does it apply now?<br/>its gate is open"}
-    Q3{"Does it apply<br/>to this case?<br/>its scope"}
-    Y["it takes effect<br/>for the case"]
-    N["it has no effect<br/>for the case"]
-    Q1 -- "yes" --> Q2
-    Q2 -- "yes" --> Q3
-    Q3 -- "yes" --> Y
-    Q1 -- "no" --> N
-    Q2 -- "no" --> N
-    Q3 -- "no" --> N
-```
+**Why a gate, and not arising and ending.** "During the notice period, the Licensee may not grant sub-licences" could be read as an exclusion that arises when notice is given and ends when the licence terminates. For a regime that only moves forward the two readings agree. They differ in three ways.
 
-**Why a gate, and not arising and ending.** "During the notice period, the Licensee may not grant sub-licences" could also be read as an exclusion that arises when notice is given and ends when the licence terminates. For a regime that only moves forward, the two readings agree. They differ in three ways.
+- **Situations recur.** A supply agreement can be suspended, reinstated and suspended again. Ending is final, so a relation that ended on suspension would not return on reinstatement, while a gate opens and closes each time the instrument enters and leaves the state. A suspension is therefore a state and not an ending.
+- **Situations are shared.** Several relations often depend on one situation. With a gate the situation is stated once in its regime and each relation names the state. With arising and ending each relation restates the facts that start and stop the situation, and nothing keeps them in step.
+- **Situations are not cases.** A scope states which cases a relation covers, and design-time comparisons read it, for example to ask whether version 2 of a licence widens the licensee's powers. A gate states when the relation applies and only the runtime reads it. Keeping the two apart stops the serving of notice from looking like an amendment (DP6, §11.5).
 
-- **Situations recur.** A supply agreement can be suspended, reinstated and suspended again. Ending is final, so a relation that ended on suspension would not return on reinstatement. A gate opens and closes each time the instrument enters and leaves the state. A suspension is therefore a state and not an ending, because it can be reinstated.
-
-  ```mermaid
-  gantt
-      dateFormat YYYY-MM-DD
-      axisFormat %b
-      section Suspension regime
-      in force                      :s1, 2027-01-01, 2027-03-01
-      suspended                     :crit, s2, 2027-03-01, 2027-04-01
-      in force                      :s3, 2027-04-01, 2027-08-01
-      suspended                     :crit, s4, 2027-08-01, 2027-09-01
-      in force                      :s5, 2027-09-01, 2027-12-31
-      section Duty to deliver, gated
-      applies                       :active, g1, 2027-01-01, 2027-03-01
-      applies                       :active, g2, 2027-04-01, 2027-08-01
-      applies                       :active, g3, 2027-09-01, 2027-12-31
-      section Duty to deliver, ended on suspension
-      exists                        :active, e1, 2027-01-01, 2027-03-01
-      ended for good                :done, e2, 2027-03-01, 2027-12-31
-  ```
-- **Situations are shared.** Several relations often depend on one situation. During a notice
-  period, for example, a licensee may lose its power to sub-license and gain a duty to help migrate
-  its users. With a gate, the situation is stated once, in its regime, and each relation names the
-  state. With arising and
-  ending, each relation would restate the facts that start and stop the situation, and nothing
-  would keep them in step.
-
-  ```mermaid
-  flowchart LR
-      subgraph GATE["With a gate: the situation stated once"]
-          NP["notice period"]
-          X1["sub-licensing excluded"] -- "appliesInState" --> NP
-          X2["help migrate users"] -- "appliesInState" --> NP
-      end
-      subgraph ARISE["With arising and ending: restated per relation"]
-          Y1["sub-licensing excluded"] -- "arisesOn" --> N1["notice given"]
-          Y1 -- "endsOn" --> E1["licence ends"]
-          Y2["help migrate users"] -- "arisesOn" --> N2["notice given"]
-          Y2 -- "endsOn" --> E2["licence ends"]
-      end
-      style GATE fill:#BBDEFB
-  ```
-- **Situations are not cases.** A relation's scope states which cases it covers, and design-time
-  comparisons read it, for example to ask whether version 2 of the licence widens the licensee's
-  powers. A gate states when the relation applies, and only the runtime reads it. Keeping the two
-  apart stops the serving of notice from looking like an amendment (DP6, §11.5).
-
-**Several regimes on one relation.** A relation may name states of more than one regime. The states
-of one regime are alternatives, so the relation applies in any of them. Across regimes the
-conditions combine, so the relation applies only when every one of them is in a named state. The
-supply agreement's duty to deliver names *in force* from its suspension regime and *unaffected*
-from its force majeure regime. It applies only when deliveries are not suspended and no force
-majeure continues (§11.3).
-
-**Regimes for each occasion.** Some situations belong to one occasion of a relation rather than to
-the instrument. One month's service failure may be disputed while the others are not. A
-*per-occasion* regime (`bhv:perOccasionOf` a relation) runs once for each occasion of that
-relation, from when the occasion exists. A relation gated by its state must identify the occasion
-it concerns, and does so through arising. An exclusion that arises on breach of the service
-obligation reads the dispute regime of the breached occasion (§11.4). Here arising and regimes meet
-most directly.
-
-```mermaid
-flowchart TB
-    S["provide the service<br/>one relation"]
-    S --> F["February's occasion<br/>Performed"]
-    S --> M["March's occasion<br/>Breached"]
-    S --> A["April's occasion<br/>Breached"]
-    M --> MD["March's dispute regime<br/>disputed"]
-    A --> AD["April's dispute regime<br/>undisputed"]
-    XM["termination excluded<br/>for March's breach: applies"] -- "reads" --> MD
-    XA["termination excluded<br/>for April's breach: does not apply"] -- "reads" --> AD
-```
-
-The customer may end the agreement for April's failure, which the provider has not disputed, and
-not for March's, which it has.
-
-**One operative fact, several effects.** The legal triggers that make relations arise and end also
-move regimes (§4.2.15), so one fact can have several effects. When the licensor gives notice under
-clause 11.1, that exercise of its power moves the licence's notice regime into the notice period.
-This opens the gate on the exclusion of sub-licensing, and starts the 90 days after which the
-licence terminates.
-
-```mermaid
-flowchart LR
-    F["an operative fact<br/>the licensor gives notice"]
-    T["a legal trigger<br/>ins:OnExercise of the power<br/>to end on notice"]
-    R["the notice regime<br/>moves to the notice period"]
-    G["the exclusion's gate opens<br/>sub-licensing excluded"]
-    X["the 90 days start<br/>then: terminated"]
-    A["a relation arises<br/>whose ins:arisesOn names the trigger"]
-    F --> T
-    T --> R
-    R --> G
-    R --> X
-    T -. "where a relation's words say so" .-> A
-```
-
-**Kinds of regime.** Regimes are of three kinds (§11.2).
-
-| Kind | Examples | Shape |
-|---|---|---|
-| **period** | notice, cure, probation, garden leave, run-off | entered on a trigger, left at a duration from entry or on an end trigger, whichever comes first |
-| **switching** | suspension and reinstatement, force majeure | states switched back and forth by triggers |
-| **threshold** | a usage cap, an aggregate limit exhausted | states defined by ranges of a measured value, entered as the value crosses into each |
-
-**A regime is stated once.** Unlike a relation, a regime has no bound form. Its clause states its states and transitions once, and every instrument that includes the clause shares them. Each instrument's progress through them is held at runtime against its persistent identity (§11.1). An instrument's regimes are therefore the stated regimes of the clauses in its wording, and its positions in them are its occupancies.
+A relation may name states of more than one regime. The states of one regime are alternatives and the conditions across regimes combine (§11.3). A *per-occasion* regime (`bhv:perOccasionOf` a relation) runs once for each occasion of that relation, and a relation gated by its state identifies the occasion through arising (§11.4). One operative fact can have several effects, because the legal triggers that make relations arise and end also move regimes (§4.2.15).
 
 #### 4.2.14 **`ins:RegimeTransition`.**
 
-A move between two states of a regime on a legal trigger, as in "on the expiry of the notice period, this licence terminates" or "if the Borrower remedies the breach within the cure period, the Event of Default does not occur". It is a `bhv:TransitionDefinition` whose engine settings are fixed. A regime takes one transition at a time (`bhv:SingleMatch`), and takes it at once (`bhv:ImmediateActivation`), because a contract's words never say that two outcomes compete, or that a change waits for someone to run it. Distinct from *event*, what happened, which the runtime records, and *amendment*, a change of the words (C9).
+A move between two states of a regime on a legal trigger, as in "on the expiry of the notice period, this licence terminates". It is a `bhv:TransitionDefinition` whose engine settings are fixed. A regime takes one transition at a time (`bhv:SingleMatch`) and takes it at once (`bhv:ImmediateActivation`), because a contract's words never say that two outcomes compete or that a change waits for someone to run it. Distinct from *event*, what happened, which the runtime records, and *amendment*, a change of the words (C9).
 
 #### 4.2.15 **The legal triggers: `ins:OnExercise`, `ins:OnBreach`, `ins:OnAct`, `ins:OnCondition`, `ins:OnExpiry`, `ins:OnEntry`.**
 
-A *trigger* is what makes something happen, written in contracts as "on", "upon", "if", "when" or "following". The six legal triggers are the six kinds of fact on which a contract's words make a consequence turn.
+A *trigger* is what makes something happen, written in contracts as "on", "upon", "if", "when" or "following". The legal triggers are the kinds of fact on which a contract's words make a consequence turn.
 
 | Trigger | Contract English | Fires on | Behaviour's kind |
 |---|---|---|---|
@@ -913,130 +333,55 @@ A *trigger* is what makes something happen, written in contracts as "on", "upon"
 | `ins:OnExpiry` | "on the expiry of 90 days", "within 30 Business Days", "on the Expiry Date" | the end of a period counted from entering a state (`ins:after`), or a time (`ins:at`) | scheduled, known in advance |
 | `ins:OnEntry` | "on termination", "on the expiry of this Agreement", "upon the commencement of the run-off period" | the subject entering a state (`ins:ofState`) | derived |
 
-The names follow drafting's "on" with the event, as in "on termination" and "on expiry". *Exercise* and *breach* are the law's words for a power used and an obligation not performed. *Expiry* is its word for a period coming to an end, as in "the expiry of the notice period". *Act* is the plain word, as in deontic logic, for what a party does. *Entry*, for `ins:OnEntry`, is the plain word for coming into a state, so "on termination" is the entry into a terminated state. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6, here only the trigger's Eligibility condition), and *deadline*, a due range (§13).
+The names follow drafting's "on" with the event. *Exercise* and *breach* are the law's words for a power used and an obligation not performed, *expiry* for a period ending, *act* the plain word for what a party does, and *entry* the plain word for coming into a state, so "on termination" is entry into a terminated state. Distinct from *event* (what happened, not what an instrument waits for), *condition* in its other senses (§4.6, here only the trigger's Eligibility condition) and *deadline*, a due range (§13).
 
-Five of the triggers also determine when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4). One vocabulary therefore governs both relations and regimes. What moves a licence into its notice period is the same kind of fact as what gives a customer a power to terminate, and what ends a licence is the same kind of fact as what makes its "on termination" duties arise. `ins:OnExpiry` moves only regimes, because it counts from entering a state, and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (§13).
-
-```mermaid
-flowchart LR
-    T["a legal trigger"]
-    T -- "moves" --> R["a regime<br/>between its states"]
-    T -- "makes arise, or end<br/>(not an expiry)" --> L["a legal relation"]
-    R -- "its states gate" --> L
-```
+Every trigger except `ins:OnExpiry` also determines when a relation arises or ends (`ins:arisesOn`, `ins:endsOn`, §4.2.4), so one vocabulary governs both relations and regimes. `ins:OnExpiry` moves only regimes, because it counts from entering a state and a relation has no state to enter. A relation's own periods, such as a duty due within 30 days of arising, are due ranges (§13).
 
 #### 4.2.16 **`ins:Survival`.**
 
-*Survival* is contract English for a term continuing to operate after its instrument has ended, as
-in "this clause survives termination" or "the confidentiality obligations continue for five years
-after termination". A survival says for how long, whether for a period, until a condition comes to hold, or
-without limit (§14.4). Distinct from *accrued rights*, which persist after termination without any
-clause saying so, and from *renewal*, which continues the whole instrument.
+Contract English for a term continuing to operate after its instrument has ended, as in "this clause survives termination". A survival says for how long, whether for a period, until a condition comes to hold, or without limit (§14.4). Distinct from *accrued rights*, which persist after termination without any clause saying so, and from *renewal*, which continues the whole instrument.
 
 #### 4.2.17 **`ins:Definition`.**
 
-A *definition* is how a contract gives a word its meaning: "'Obligors' means the Borrower and each
-Guarantor". The word is the *defined term*, often capitalised, and its meaning holds wherever the
-words use it, within the parts the definition applies to. "Defined term" is not used for the node,
-since `ins:Term` is a provision: the node is the definition, and what it defines is the *word*
-(§15.1).
+How a contract gives a word its meaning, as in "'Obligors' means the Borrower and each Guarantor". The word is the *defined term*, and its meaning holds wherever the words use it, within the parts the definition applies to. "Defined term" is not used for the node, since `ins:Term` is a provision. The node is the definition and what it defines is the *word* (§15.1).
 
 #### 4.2.18 **`ins:Deeming`.**
 
-To *deem* is to take something to hold whether or not it does: "deemed received", "deemed to have
-been made on the date of the first claim". A deeming is *conclusive* when no proof displaces it and
-*rebuttable* when it holds until shown otherwise. *Relation back* deems a later fact to have
-happened earlier, usually *for the purposes of* named clauses only (§15.2). Distinct from a
-*presumption*, which the law, not the contract, supplies.
+To *deem* is to take something to hold whether or not it does, as in "deemed received". A deeming is *conclusive* when no proof displaces it and *rebuttable* when it holds until shown otherwise. *Relation back* deems a later fact to have happened earlier, usually for the purposes of named clauses only (§15.2). Distinct from a *presumption*, which the law and not the contract supplies.
 
 #### 4.2.19 **`ins:Sectioning`.**
 
-A *section* is a part of an instrument with a meaning of its own: its own parties, authority, words
-or terms. Markets call it many things: a *lot* in a framework, a *tower* in outsourcing, a *coverage
-section* in a package policy, a *tranche* in a facility, a *column* of a binding authority's
-schedule, an *agreement segment* in the CBAA. A *sectioning clause* divides an instrument into
-sections and says that what each contains applies only within it. Wording's element type Section is
-a heading's type, and does not by itself make a section in law (§16.1).
+A *sectioning clause* divides an instrument into *sections*, parts with a meaning of their own such as their own parties, authority, words or terms, and says that what each contains applies only within it. Markets call a section a *lot*, a *tower*, a *coverage section*, a *tranche*, a *column* of a binding authority's schedule or an *agreement segment* in the CBAA. Wording's element type Section is a heading's type and does not by itself make a section in law (§16.1).
 
 #### 4.2.20 **`ins:PartyResolution`.**
 
-"Any Insured Person against whom a claim is made", "the Participant in whom the adverse event
-occurred": a party the words describe but do not name, known only when each case arises. A
-*resolution* is how it is found from the case (§17.2). The word avoids *binding*, which here means
-instantiating a template, and *evidence binding*, Eligibility's, which feeds a value to a condition.
+How a party the words describe but do not name, such as "any Insured Person against whom a claim is made", is found from the case once it arises (§17.2). The word avoids *binding*, which here means instantiating a template, and *evidence binding*, Eligibility's, which feeds a value to a condition.
 
-Two kinds of term create no relation. An *interpretation clause* says how the words are read ("a
-reference to a person includes its successors"). A *status declaration* says what a party is ("the
-Seller is an independent contractor"). Both are terms with nothing arising under them (§15.3).
+Two kinds of term create no relation. An *interpretation clause* says how the words are read ("a reference to a person includes its successors") and a *status declaration* says what a party is ("the Seller is an independent contractor"). Both are terms with nothing arising under them (§15.3).
 
 #### 4.2.21 **Placeholders and encoding status.**
 
-A *placeholder* stands in stated meaning where a value will go, the blank in "within [10] Business
-Days". The word is the drafter's, not computing's: a form's blanks are its placeholders. It is a node
-of the slot's own kind with `ins:valueFrom` (§18.1). *Encoding status* records the one reviewed
-exception to the convention that a leaf of text means something: `ins-voc:NoMeaning`, for text that
-binds nobody (§18.5).
+A *placeholder* stands in stated meaning where a value will go, the blank in "within [10] Business Days". The word is the drafter's and not computing's. It is a node of the slot's own kind with `ins:valueFrom` (§18.1). *Encoding status* records the one reviewed exception to the convention that a leaf of text means something, `ins-voc:NoMeaning`, for text that binds nobody (§18.5).
 
 ### 4.3 Properties
 
-The properties fall into seven groups: those that tie meaning to text and to its owner, those that name a relation's parties, those that state a relation's content, a party's details for one instrument, those of triggers, regimes and gating, those of time and ending, and those of words, sections and whom terms bind.
+Properties are grouped by what they tie together. Where the table at the end of this section gives a property's origin, the entries here state only the rule it follows.
 
 #### Text and ownership: `ins:expressedIn`, `ins:alsoExpressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:impliedBy`, `ins:arisesUnder`
 
-These six properties are how every computable node reaches the words that create it (§5.1).
+These properties are how every computable node reaches the words that create it (§5.1).
 
-- **`ins:expressedIn`** comes from the law's *express* terms, terms the words state: "the terms
-  expressed in this agreement". A stated term is expressed in exactly one clause version, which owns
-  it. An instrument version is expressed in exactly one assembled wording, the text its parties
-  signed. One property serves both, because both say "these are the words that state this".
-- **`ins:alsoExpressedIn`** carries the same stated term into a second element: the French text of a
-  bilingual agreement, or a consolidated copy that restates amended clauses. The term still has one
-  owner, its `ins:expressedIn`. A deployment that never does this can load the optional
-  `single-expression.ttl` to refuse it (ADR-A96).
-- **`ins:boundIn`** and **`ins:boundFrom`** borrow computing's *bound variable*. A template's roles and
-  variables are free, waiting for values. Instantiating it for one contract binds them to that
-  contract's parties and values. The result is bound meaning: each bound term is part of exactly one
-  instrument version (`ins:boundIn`), and each bound node points at the stated node it was
-  instantiated from (`ins:boundFrom`), so its derivation is always traceable. `ins:boundFrom` is a
-  sub-property of PROV's `prov:wasDerivedFrom`, the W3C provenance vocabulary's word for exactly
-  this. The phrase also echoes the law's "the parties are bound by its terms".
-- **`ins:impliedBy`** takes the place of `ins:boundFrom` for an implied term (§4.2, `ins:Term`): a
-  term no clause states has no template to be instantiated from, so it names the statute, custom,
-  course of dealing or judgment that implies it.
-- **`ins:arisesUnder`** is contract English: "any obligation arising under this agreement", "any
-  dispute arising under this licence". A relation, definition, deeming or qualifier arises under the
-  term that creates it, and belongs to it. Only the term carries `ins:expressedIn` or `ins:boundIn`,
-  so a relation reaches its clause or its instrument through its term, never directly.
-
-```mermaid
----
-config:
-  layout: elk
----
-flowchart LR
-    BR["bound relation"] -- "arisesUnder" --> BT["bound term"]
-    BT -- "boundIn" --> IN["instrument version"]
-    BT -- "boundFrom" --> ST["stated term"]
-    BR -- "boundFrom" --> SR["stated relation"]
-    SR -- "arisesUnder" --> ST
-    ST -- "expressedIn" --> CL["clause version"]
-    ST -. "alsoExpressedIn" .-> TR["the clause in French"]
-    IT["implied term"] -- "boundIn" --> IN
-    IT -- "impliedBy" --> SRC["a statute"]
-```
+- **`ins:expressedIn`** is the one property for both a stated term, expressed in exactly one clause version that owns it, and an instrument version, expressed in exactly one assembled wording.
+- **`ins:alsoExpressedIn`** carries the same stated term into a second element, such as the French text of a bilingual agreement. The term keeps one owner, its `ins:expressedIn`, and the optional `single-expression.ttl` refuses a second (ADR-A96).
+- **`ins:boundIn`** and **`ins:boundFrom`** borrow computing's *bound variable*. Each bound term is part of exactly one instrument version (`ins:boundIn`), and each bound node points at the stated node it was instantiated from (`ins:boundFrom`, a sub-property of `prov:wasDerivedFrom`), so its derivation is traceable.
+- **`ins:impliedBy`** takes the place of `ins:boundFrom` for an implied term, which has no template to be instantiated from.
+- **`ins:arisesUnder`** puts a relation, definition, deeming or qualifier under the term that creates it. Only the term carries `ins:expressedIn` or `ins:boundIn`, so a relation reaches its clause or instrument through its term and never directly.
 
 #### A relation's parties: `ins:party`, `ins:obligor`, `ins:obligee`, `ins:holder`, `ins:counterparty`
 
-- **`ins:party`** is "the parties to this agreement": who is party to the instrument, as authored.
-  It is not the same as who stands at the ends of the relations (§4.2, `ins:RelationParty`).
-- **`ins:obligor`** and **`ins:obligee`** are civil law's names for the two ends of an *obligatio*:
-  the one who owes and the one owed. They are used for every obligation, continuing obligation and
-  prohibition.
-- **`ins:holder`** and **`ins:counterparty`** name the two ends of the other three kinds. *Holder* is
-  how the law speaks of a power or a right: "the holder of the power", "the holder of the option".
-  *Counterparty* is finance's word for the other side of an arrangement. Hohfeld named the far end
-  of each kind (no-right, liability, disability), but those words are never used: "liability" in
-  particular has settled senses of its own, such as a liability to pay.
+- **`ins:party`** is who is party to the instrument, as authored, and not who stands at the ends of the relations (§4.2.12).
+- **`ins:obligor`** and **`ins:obligee`** are used for every obligation, continuing obligation and prohibition.
+- **`ins:holder`** and **`ins:counterparty`** name the two ends of the other three kinds. Hohfeld's names for the far end (no-right, liability, disability) are never used, and "liability" in particular has settled senses such as a liability to pay.
 
 | Kind | The bound or freed end | The other end |
 |---|---|---|
@@ -1047,152 +392,49 @@ flowchart LR
 
 #### A relation's content: `ins:activity`, `ins:scope`, `ins:maintains`, `ins:fulfilledWhen`, `ins:excepts`, `ins:qualifies`
 
-- **`ins:activity`** is deontic logic's *action*: the act a relation is about. It names the act
-  plainly, without its circumstances: `Repay`, `Enrol`, `Terminate`. An activity is a concept from a
-  scheme bound to `ins-voc:ActivityContract`, so a deployment can use its own list of acts (§19). The same property names the act an `ins:OnAct`
-  trigger waits for (§10), so a trigger on an act of repaying names the same concept as the duty to
-  repay.
-- **`ins:scope`** is "the scope of the exclusion", "within the scope of this clause": the cases a
-  relation applies to. It is an Eligibility condition, so the same machinery that decides whether
-  a case is admissible decides whether a relation applies to it. Keeping circumstances in the scope
-  rather than the activity is what lets a permission except part of a prohibition: both have the
-  activity `Enrol`, and their scopes say where enrolment is forbidden and where it is allowed.
-- **`ins:maintains`** is deontic logic's *maintenance* obligation (§4.2,
-  `ins:ContinuingObligation`): the state a continuing obligation keeps holding, as a condition.
-- **`ins:fulfilledWhen`** is the *fulfilment* or *performance* of an obligation: the test that says
-  it was performed. It is needed only when performance is more than the act being done, such as a
-  report that must be accepted, not merely sent.
-- **`ins:excepts`** comes from "except", "save that", "does not apply to": an *exception* names what
-  it takes effect against. A permission excepts a prohibition, and an exclusion an obligation or a
-  power.
-- **`ins:qualifies`** links a qualifier to the term or relation whose amount it bounds. A bound
-  qualifier spanning sections qualifies every bound relation generated from the stated one (§16.5).
+- **`ins:activity`** names the act plainly, without its circumstances, as a concept from a scheme bound to `ins-voc:ActivityContract` so a deployment can use its own list of acts (§19). The same property names the act an `ins:OnAct` trigger waits for (§10).
+- **`ins:scope`** is an Eligibility condition, so the machinery that decides whether a case is admissible decides whether a relation applies to it. Circumstances go in the scope and not the activity, which is what lets a permission except part of a prohibition. Both have the activity `Enrol`, and their scopes say where enrolment is forbidden and where it is allowed.
+- **`ins:maintains`** is the state a continuing obligation keeps holding, as a condition.
+- **`ins:fulfilledWhen`** is the test of performance, needed only when performance is more than the act being done, such as a report that must be accepted and not merely sent.
+- **`ins:excepts`** names what an exception takes effect against. A permission excepts a prohibition, and an exclusion an obligation or a power.
+- **`ins:qualifies`** links a qualifier to the term or relation whose amount it bounds. A bound qualifier spanning sections qualifies every bound relation generated from the stated one (§16.5).
 
 #### A party's details for one instrument: `ins:noticeAddress`, `ins:operatesAt`
 
-Instruments state where each party takes notices and where it operates, and these are details of
-the party *for this instrument*, so they sit on the role occupancy rather than on the party itself
-(S97). The same company may give one notice address in its lease and another in its loan.
-
-- **`ins:noticeAddress`** comes from the notices clause: "notices shall be given at the address set
-  out above". It is the address as written, a string. It never identifies the party, whose identity
-  is its keys (Foundation §8).
-- **`ins:operatesAt`** is "operates at", "carries on business at": a place the party operates at
-  under this instrument, as a concept from the deployment's own territory or site scheme, bound to
-  `ins-voc:LocationContract`.
+These are details of the party for this instrument, so they sit on the role occupancy and not on the party (S97). The same company may give one notice address in its lease and another in its loan. `ins:noticeAddress` is the address as written, a string, and never identifies the party, whose identity is its keys (Foundation §8). `ins:operatesAt` is a concept from the deployment's own territory or site scheme, bound to `ins-voc:LocationContract`.
 
 #### Triggers, regimes and gating: `ins:ofPower`, `ins:ofObligation`, `ins:by`, `ins:condition`, `ins:after`, `ins:tolledIn`, `ins:stateKind`, `ins:appliesInState`, `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn`
 
-- **`ins:ofPower`** and **`ins:ofObligation`** come from "the exercise *of* the power" and "a breach
-  *of* clause 4.1". They name the relation whose exercise or breach a trigger watches. In a regime they
-  name the stated relation, and match the exercise or breach of every bound relation instantiated
-  from it (§11.1).
-- **`ins:by`** comes from "notice given *by* the Licensor". It names a party whose act an
-  `ins:OnAct` waits for.
-  Without it, an act of that kind by any party fires the trigger.
-- **`ins:condition`** is the Eligibility condition an `ins:OnCondition` waits for. The trigger fires
-  when the condition comes to hold.
-- **`ins:after`** comes from "*after* 90 days". It is the length of an `ins:OnExpiry` period, a
-  Quantification quantity in a unit of time, counted from entering the state the transition leaves. A unit whose
-  length depends on a calendar, such as a business day, is a `qnt:CalendarUnit` (ADR-A94).
-- **`ins:tolledIn`** comes from *tolling*, the law's word for stopping a period from running. A
-  limitation period is *tolled*, and a *tolling agreement* stops time running between the parties.
-  English drafting says "time shall not run while ...", or writes a "stop the clock" provision.
-  `ins:tolledIn` names the states during which an expiry period does not run, as in "the cure
-  period does not run while a force majeure event continues". *Suspended* is not used, because
-  Behaviour's core occasion state `bhv:Suspended` has that name, and *paused* is not legal English.
-- **`ins:stateKind`** classifies a regime's state, for example as a notice period or a cure period,
-  with a concept from a scheme bound to `ins-voc:StateKindContract`. It serves readers and reports,
-  so that two instruments' notice periods can be found together although each clause states its
-  own states. The evaluator never reads it, and a state that no reader needs to classify has none.
-- **`ins:appliesInState`** comes from "this clause applies only while ..." and "during the notice
-  period the Licensee may not ...". A relation applies only while its regimes are in the states it
-  names, so the state *gates* a relation that otherwise exists (§11.3).
-- **`ins:arisesOn`** and **`ins:endsOn`** come from "the obligation arises on ..." and "this licence
-  ends on ...". They name the legal trigger on which a relation arises or ends. Several values are
-  alternatives.
-- **`ins:arisesOnBreachOf`** and **`ins:arisesOnExerciseOf`** are short forms of `ins:arisesOn` with
-  an `ins:OnBreach` or an `ins:OnExercise`. "If the Provider fails to meet clause 4.1, the Customer
-  may end this agreement" is a power arising on breach of the service obligation. A breach chain,
-  from a primary duty to the consequences of its breach, is written with them.
-
-```mermaid
----
-config:
-  layout: elk
----
-flowchart LR
-    OE["ins:OnExercise"] -- "ofPower" --> PW["ins:Power"]
-    OB["ins:OnBreach"] -- "ofObligation" --> OG["ins:Obligation"]
-    OA["ins:OnAct"] -- "activity" --> AC["skos:Concept"]
-    OA -- "by" --> PA["a party"]
-    OC["ins:OnCondition"] -- "condition" --> EC["elg:Condition"]
-    OX["ins:OnExpiry"] -- "after" --> QT["qnt:Quantity"]
-    OX -- "tolledIn" --> TS["bhv:State<br/>of another state space"]
-    LR["ins:LegalRelation"] -- "appliesInState" --> ST["bhv:State<br/>of an ins:Regime"]
-    LR -- "arisesOn, endsOn" --> TG["a legal trigger"]
-    LR -- "arisesOnBreachOf" --> OG
-    LR -- "arisesOnExerciseOf" --> PW
-    ST -- "stateKind" --> SK["skos:Concept"]
-```
+- **`ins:ofPower`** and **`ins:ofObligation`** name the relation whose exercise or breach a trigger watches. In a regime they name the stated relation and match the exercise or breach of every bound relation instantiated from it (§11.1).
+- **`ins:by`** names a party whose act an `ins:OnAct` waits for. Without it an act of that kind by any party fires the trigger.
+- **`ins:condition`** is the Eligibility condition an `ins:OnCondition` waits for, and the trigger fires when it comes to hold.
+- **`ins:after`** is the length of an `ins:OnExpiry` period, a Quantification quantity in a unit of time, counted from entering the state the transition leaves. A unit whose length depends on a calendar, such as a business day, is a `qnt:CalendarUnit` (ADR-A94).
+- **`ins:tolledIn`** names the states during which an expiry period does not run, from *tolling*, the law's word for stopping a period. *Suspended* is not used because Behaviour's core occasion state `bhv:Suspended` has that name, and *paused* is not legal English.
+- **`ins:stateKind`** classifies a regime's state with a concept from a scheme bound to `ins-voc:StateKindContract`, so that two instruments' notice periods can be found together although each clause states its own states. It serves readers and reports, the evaluator never reads it, and a state no reader needs to classify has none.
+- **`ins:appliesInState`** names the states that gate a relation that otherwise exists (§11.3).
+- **`ins:arisesOn`** and **`ins:endsOn`** name the legal trigger on which a relation arises or ends. Several values are alternatives.
+- **`ins:arisesOnBreachOf`** and **`ins:arisesOnExerciseOf`** are short forms of `ins:arisesOn` with an `ins:OnBreach` or an `ins:OnExercise`, and a breach chain is written with them.
 
 #### Time and ending: `ins:due`, `ins:recurrence`, `ins:window`, `ins:dueTolledIn`, `ins:at`, `ins:ofState`, `ins:ends`, `ins:survives`, `ins:survivalPeriod`, `ins:survivesUntil`
 
-- **`ins:due`** comes from *falling due*, the moment performance can first be demanded. It names the
-  obligation's due range, anchored at a named time (§13.2).
-- **`ins:recurrence`** comes from "each month" and "each Quarter Day". A recurring obligation has one
-  occasion for each period (§13.4).
-- **`ins:window`** is the time in which a power may be exercised or a permission used, as in an
-  option period or a break window. A power not exercised in its window *lapses* (§13.3).
-- **`ins:dueTolledIn`** extends tolling (`ins:tolledIn`) to a due range, as in "time for payment is
-  extended by any period of force majeure" (§13.5).
-- **`ins:at`** comes from "on the Expiry Date". It is the time at which an expiry falls, where
-  `ins:after` is a length counted from entering a state.
-- **`ins:ofState`** names the state whose entry an `ins:OnEntry` waits for. "On termination" waits
-  for the entry into *terminated*.
-- **`ins:ends`** comes from "this Agreement ends" and "the Lease shall end". It names what entering a
-  state ends, the instrument or named terms (§14.2).
-- **`ins:survives`**, **`ins:survivalPeriod`** and **`ins:survivesUntil`** come from "this clause
-  survives termination", "for five years after termination", "until all claims are settled"
-  (§14.4).
-
-```mermaid
----
-config:
-  layout: elk
----
-flowchart LR
-    OG["ins:Obligation"] -- "due" --> R["qnt:Range"]
-    OG -- "recurrence" --> RC["qnt:Recurrence"]
-    OG -- "dueTolledIn" --> ST["bhv:State"]
-    PW["ins:Power, ins:Permission"] -- "window" --> R
-    R -- "relativeToAnchor, anchorValue" --> CV["qnt:ContextValue<br/>a role"]
-    RC -- "anchor" --> CV
-    OX["ins:OnExpiry"] -- "at" --> CV
-    OE["ins:OnEntry"] -- "ofState" --> ES["bhv:State<br/>an ending state"]
-    ES -- "ends" --> EN["the instrument,<br/>or stated terms"]
-    TM["ins:Term"] -- "survives" --> SV["ins:Survival"]
-    SV -- "survivalPeriod" --> QT["qnt:Quantity"]
-    SV -- "survivesUntil" --> EC["elg:Condition"]
-```
+- **`ins:due`** names the obligation's due range, anchored at a named time (§13.2).
+- **`ins:recurrence`** gives a recurring obligation one occasion for each period (§13.4).
+- **`ins:window`** is the time in which a power may be exercised or a permission used, and a power not exercised in its window *lapses* (§13.3).
+- **`ins:dueTolledIn`** extends tolling (`ins:tolledIn`) to a due range (§13.5).
+- **`ins:at`** is the time at which an expiry falls, where `ins:after` is a length counted from entering a state.
+- **`ins:ofState`** names the state whose entry an `ins:OnEntry` waits for.
+- **`ins:ends`** names what entering a state ends, the instrument or named terms (§14.2).
+- **`ins:survives`**, **`ins:survivalPeriod`** and **`ins:survivesUntil`** state how long a term continues after its instrument ends (§14.4).
 
 #### Words, sections and whom terms bind
 
-- **`ins:defines`** and **`ins:means`** are a definition's two halves, as the words put them:
-  "'X' means Y". **`ins:actingRule`** is the "jointly and severally" a definition adds when its word
-  means several parties, and **`ins:prevailsOver`** the "shall prevail" between two definitions.
-- **`ins:deems`**, **`ins:when`**, **`ins:conclusive`** and **`ins:forPurposeOf`** follow the
-  words of a deeming: "is deemed", "if", "conclusively", "for the purposes of".
+- **`ins:defines`** and **`ins:means`** are a definition's two halves, as the words put them, "'X' means Y". **`ins:actingRule`** is the "jointly and severally" a definition adds when its word means several parties, and **`ins:prevailsOver`** the "shall prevail" between two definitions.
+- **`ins:deems`**, **`ins:when`**, **`ins:conclusive`** and **`ins:forPurposeOf`** follow the words of a deeming, "is deemed", "if", "conclusively", "for the purposes of".
 - **`ins:classification`** is the class a term is said to be in, such as a condition.
-- **`ins:section`** names what a sectioning clause divides the instrument into, and
-  **`ins:appliesWithin`** and **`ins:notWithin`** what a term's words place it in or exclude it
-  from. **`ins:boundWithin`** is binding's record of the sections a generated bound term covers,
-  after `ins:boundIn`.
-- **`ins:boundUnder`** is "awarded under", "bound under": the power an instrument was made under.
-- **`ins:resolvedBy`** and the resolution's **`ins:resolvesFrom`**, **`ins:resolutionStep`** and
-  **`ins:resolutionFilter`** say how a party the words describe is found from the case.
-- **`ins:valueFrom`** says where a placeholder's value comes from, a variable or a value word. A chain
-  of words must not loop (§18.4). **`ins:encodingStatus`** marks text reviewed as binding nobody.
+- **`ins:section`** names what a sectioning clause divides the instrument into, and **`ins:appliesWithin`** and **`ins:notWithin`** what a term's words place it in or exclude it from. **`ins:boundWithin`** is binding's record of the sections a generated bound term covers, after `ins:boundIn`.
+- **`ins:boundUnder`** is the power an instrument was made under.
+- **`ins:resolvedBy`** and the resolution's **`ins:resolvesFrom`**, **`ins:resolutionStep`** and **`ins:resolutionFilter`** say how a party the words describe is found from the case.
+- **`ins:valueFrom`** says where a placeholder's value comes from, a variable or a value word, and a chain of words must not loop (§18.4). **`ins:encodingStatus`** marks text reviewed as binding nobody.
 
 #### At a glance
 
@@ -1256,7 +498,7 @@ flowchart LR
 
 ### 4.4 Hohfeld's legal relations
 
-Wesley Newcomb Hohfeld, an American legal theorist, showed that the word "right" in judges' reasoning covered four different things, and that confusing them produced bad decisions. He proposed eight fundamental conceptions, arranged as four pairs of **correlatives**: the two ends of one relation between two people. Whenever one person has the first, the other has the second.
+Wesley Newcomb Hohfeld showed that the word "right" in judges' reasoning covered four different things. He proposed eight fundamental conceptions, arranged as four pairs of **correlatives**, the two ends of one relation between two people. Whenever one person has the first, the other has the second.
 
 | One party has | The other party has | Means | In this layer |
 |---|---|---|---|
@@ -1265,48 +507,16 @@ Wesley Newcomb Hohfeld, an American legal theorist, showed that the word "right"
 | a **power** | a **liability** | A can, by an act, change B's legal position | `ins:Power`: holder and counterparty |
 | an **immunity** | a **disability** | B cannot change A's legal position | `ins:Exclusion` excepting a `ins:Power` |
 
-```mermaid
-flowchart LR
-    subgraph FIRST["First order: what a party must or may do"]
-        CL["claim"] ---|"correlative"| DU["duty"]
-        PV["privilege"] ---|"correlative"| NR["no-right"]
-    end
-    subgraph SECOND["Second order: who can change the first order"]
-        PW["power"] ---|"correlative"| LI["liability"]
-        IM["immunity"] ---|"correlative"| DI["disability"]
-    end
-    OB["ins:Obligation"] -.- DU
-    PE["ins:Permission<br/>ins:Exclusion of an obligation"] -.- PV
-    PO["ins:Power"] -.- PW
-    EX["ins:Exclusion of a power"] -.- IM
-```
+- **Correlatives are one node.** A duty and its claim are the two ends of one `ins:Obligation`, so nothing has to keep them consistent.
+- **No word is overloaded.** "Right to be paid" is the obligee's end of an obligation, "right to terminate" is a power and "right to use" is a permission.
+- **Privileges are exceptions.** Hohfeld defines a privilege as the absence of a duty to the contrary. Contracts create one by excepting a duty, which is what `ins:excepts` records.
+- **First and second order.** Claims, duties and privileges say what parties must and may do now. Powers and immunities say who can change that, and Instrument's legal triggers and regimes carry the changes (§10, §11).
 
-Why this matters for a computable model:
-
-- **Correlatives are one node.** A duty and its claim are the two ends of one `ins:Obligation`, the
-  obligor's end and the obligee's. Nothing has to keep a duty and a claim consistent, because they
-  are the same fact seen from two sides.
-- **No word is overloaded.** "Right to be paid" is the obligee's end of an obligation, "right to
-  terminate" is a power, "right to use" is a permission. Each lands on its own class.
-- **Privileges are exceptions.** Hohfeld defines a privilege as the absence of a duty to the
-  contrary. Contracts create one by excepting a duty, which is exactly what `ins:excepts` records: a
-  permission excepts a prohibition, an exclusion excepts an obligation or a power.
-- **First and second order.** Claims, duties and privileges say what parties must and may do now.
-  Powers and immunities say who can change that: a power to terminate ends obligations, a power of
-  acceptance creates them. Instrument's legal triggers and regimes carry the changes (§10, §11).
-
-Contract English names the privileges differently depending on the duty they are against, so the
-T-Box does too: a privilege against a duty not to act is a **permission**, a privilege against a
-duty to act is an **exclusion**, and an immunity, a privilege against a power, is also an
-**exclusion**.
-
-The same classes meet **deontic logic**, the logic of obligation and permission: O ("obligatory")
-is `ins:Obligation`, F ("forbidden", O ¬) is `ins:Prohibition`, and P ("permitted") is
-`ins:Permission`, in its strong sense, as an exception.
+Contract English names privileges differently depending on the duty they are against, so the T-Box does too. A privilege against a duty not to act is a **permission**, a privilege against a duty to act is an **exclusion**, and an immunity is also an **exclusion**. In deontic logic O ("obligatory") is `ins:Obligation`, F ("forbidden", O ¬) is `ins:Prohibition` and P ("permitted") is `ins:Permission` in its strong sense.
 
 ### 4.5 One modal verb per class
 
-Each class can be read with one modal verb, so a sentence rendered from data can be consistently made:
+Each class reads with one modal verb, so a sentence rendered from data is consistent.
 
 | Class | Reads as |
 |---|---|
@@ -1317,24 +527,6 @@ Each class can be read with one modal verb, so a sentence rendered from data can
 | `ins:Exclusion` | *the holder **need not** {the obligation's activity}*, or *{the power} **cannot be exercised** against the holder* |
 | `ins:Power` | *the holder **may** {activity}, which changes the counterparty's position* |
 
-```mermaid
-flowchart TB
-    subgraph WORDS["What the wording says"]
-        SH["shall, must"]
-        SE["shall ensure"]
-        SN["shall not, must not"]
-        DN["does not apply to, save that, permitted"]
-        NL["shall not be liable, not obliged"]
-        MN["may by notice, may terminate, may accept"]
-    end
-    SH --> OB["ins:Obligation"]
-    SE --> CO["ins:ContinuingObligation"]
-    SN --> PR["ins:Prohibition"]
-    DN --> PE["ins:Permission"]
-    NL --> EX["ins:Exclusion"]
-    MN --> PO["ins:Power"]
-```
-
 ### 4.6 Words this layer does not use
 
 | Word | Why not |
@@ -1342,19 +534,19 @@ flowchart TB
 | Right | covers four Hohfeldian things. Each has its own class |
 | Duty, Claim | one end of an obligation each |
 | Liability | has settled senses of its own, such as a liability to pay, so a reader would misread it. The far end of a power is `ins:counterparty` |
-| Condition | three senses in contracts (§4.2) |
+| Condition | has three senses in contracts, a heading ("General Conditions"), a class of term whose breach lets the other side terminate (a condition as against a warranty), and a contingency ("subject to the following condition"). Contingencies are `elg:Condition` and the class of a term is its classification (§15.4). No `ins:` class is named Condition |
 | Provision | both a clause and what it provides |
 | Clause, Section, Schedule | parts of a document, so Wording's element types |
 | Contract | the whole of wording and instrument |
-| Norm, Statement | legal theory, not contract English |
-| Lifecycle | not used in the T-Box (CC-D8). An instrument may be in several regimes at once, each named for what it is (§4.2, `ins:Regime`) |
+| Rule, Norm, Statement | legal theory, not contract English. A rule or norm suggests a general law and not a bond between named parties |
+| Lifecycle | not used in the T-Box (CC-D8). An instrument may be in several regimes at once, each named for what it is (§4.2.13) |
 | Status | one value, where an instrument may be in several regimes at once. A regime's state is a `bhv:State` |
 | Suspended, paused (of a period) | a period that stops running is *tolled* (`ins:tolledIn`). `bhv:Suspended` is Behaviour's core occasion state |
 | Event (for a trigger) | names what happened, which the runtime records. What an instrument waits for is a legal trigger |
 | Term (for a duration) | contract English uses "the Term" for an instrument's duration, which collides with `ins:Term`, a provision. This layer writes *duration*, and the instrument's states say whether it is in force (§4.7) |
 | Deadline | a due range (§13.2), which may have a lower bound as well as an upper one |
 | Basis | reserved for the unit an amount applies on (contract amounts) |
-| Binder | a term of art in some domains, with a meaning of its own. What turns stated meaning into bound meaning is **instantiation** |
+| The noun for what turns stated meaning into bound meaning | a term of art in some domains, with a meaning of its own. The act is **instantiation** and the actor an **instantiator** |
 
 ### 4.7 Time and ending in contract law
 
@@ -1375,16 +567,6 @@ Contracts speak about time and ending with words of art, and this layer keeps th
 | **long-stop date** | the date by which conditions must be met, failing which the instrument ends | an expiry from a conditional state (§14.7) |
 | **lapse** | an offer or option ending unused at the end of its time | a window that has closed (§13.3) |
 | **rescission**, **frustration** | setting aside from the start, and discharge by impossibility | not modelled (§14.1) |
-
-```mermaid
-flowchart LR
-    C["commencement<br/>inception"] --> F["in force<br/>obligations arise,<br/>fall due, are performed"]
-    F --> E["expiry<br/>by effluxion of time"]
-    F --> T["termination<br/>on notice, for breach,<br/>on an event"]
-    E --> A["after the end<br/>accrued rights persist,<br/>surviving terms continue,<br/>termination duties arise"]
-    T --> A
-    F -. "renewal" .-> F
-```
 
 ## 5. Model Overview
 
@@ -1523,7 +705,7 @@ The whole layer, with the law each link enforces:
 
 ```mermaid
 flowchart LR
-    IN["ins:Instrument<br/>a fnd:Version"]
+    IN["ins:Instrument<br/>a fnd:Versioned"]
     AW["wrd:AssembledWording"]
     EL["wrd:Element<br/>a clause version"]
     ST["stated ins:Term<br/>a ins:Template"]
@@ -1547,7 +729,7 @@ excepts.
 
 ### 5.6 The relation classes
 
-The four kinds of legal relation, and the two kinds of obligation (§7):
+The kinds of legal relation, and the kinds of obligation (§7):
 
 ```mermaid
 flowchart TB
@@ -1618,7 +800,7 @@ the relations' parties, because a relation may name a beneficiary or a regulator
 
 ```turtle-spec
 ins:Instrument a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "A legal instrument: a contract, policy, agreement, deed, licence or protocol. The only version in this layer." ;
 	fnd:utility "Subject: one version of an instrument. Expressed in exactly one assembled wording (ins:expressedIn, law I1). Its persistent identity carries its keys and its runtime state. Its terms are bound in it (ins:boundIn)." .
 
@@ -1791,7 +973,7 @@ application's concern, outside this layer.
 ```turtle-spec
 ins:Amendment a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "The legal effect of a change to an instrument, from one version to the next." ;
 	fnd:utility "Subject: an amendment. Names the version it amends (ins:amends) and the one it produces (ins:resultsIn), and the documents it is stated in (ins:statedIn). Its fnd:hasTemporalScope is when it takes effect, which may precede its recording and its agreement, and its fnd:hasEvidence when it was recorded. Agreed when the assents it needs exist (§6.3)." .
 
@@ -1898,8 +1080,8 @@ flowchart TB
 # @output-file "spec/instrument-acts.ttl"
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> .
 ```
 
 ```turtle-spec
@@ -1908,7 +1090,7 @@ flowchart TB
 
 ins:LegalAct a owl:Class ;
 	rdfs:subClassOf prov:Activity , fnd:TemporallyScoped , fnd:Evidenced ;
-	owl:disjointWith fnd:Version ;
+	owl:disjointWith fnd:Versioned ;
 	rdfs:comment "An act of a party that an instrument makes something turn on: a declaration of will, a proposal, or the exercise of a power." ;
 	fnd:utility "Subject: a legal act. Its fnd:hasTemporalScope is when it was done, and its fnd:hasEvidence when that became known. Names who did it (ins:actBy or a sub-property), and optionally its case (ins:forCase) and the acts it relies on (ins:pursuantTo). Whether it had effect is evaluated, never stated (§6.4)." .
 
@@ -2003,7 +1185,7 @@ ins:forCase a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ## 7. Legal Relations
 
-Five classes, each arising under exactly one term ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
+Each relation class arises under exactly one term ([ADR-A104](../../docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md)
 decision 3). Permission and Exclusion are both Hohfeldian privileges: a liberty to act despite a
 duty not to, and a liberty not to act despite a duty to, or an immunity against a power. Contract
 English names them differently, and so does the T-Box.
@@ -2071,7 +1253,7 @@ ins:excepts a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ## 8. Parties
 
-The four party properties range over one union, named once ([C6-Q4](../../docs/developer/plans/computable-contract-substrate.md)):
+The party properties range over one union, named once:
 a role occupancy, a participation group, or, on stated meaning only, a role (law I13).
 
 - A **group** is the obligee of a several duty (each lender for its share) or the holder of a
@@ -2233,9 +1415,9 @@ ins:qualifies a owl:ObjectProperty ;
 [] a owl:AllDisjointClasses ;
 	owl:members ( ins:Instrument ins:Term ins:LegalRelation ins:Qualifier ins:Definition ins:Deeming ins:Sectioning ins:PartyResolution ) .
 
-ins:Term owl:disjointWith fnd:Version .
-ins:LegalRelation owl:disjointWith fnd:Version .
-ins:Qualifier owl:disjointWith fnd:Version .
+ins:Term owl:disjointWith fnd:Versioned .
+ins:LegalRelation owl:disjointWith fnd:Versioned .
+ins:Qualifier owl:disjointWith fnd:Versioned .
 ins:Template owl:disjointWith ins:Instrument .
 ```
 
@@ -2551,7 +1733,7 @@ Eligibility decision, not a regime. A regime exists where something switches ove
 
 ### 11.3 Gating
 
-A relation's `ins:appliesInState` values are its **gate**, evaluated by four rules (nested states
+A relation's `ins:appliesInState` values are its **gate**, evaluated by these rules (nested states
 sketch §6.2).
 
 1. the values are grouped by the top-level regime their states belong to
@@ -2698,13 +1880,13 @@ tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-notice-on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:hasTrigger tmpl:give-notice-on-notice-given ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 ```
 
@@ -2728,11 +1910,11 @@ tmpl:notice-regime a ins:Regime , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given ins:ofPower tmpl:end-on-notice .
+tmpl:give-notice-on-notice-given ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given .
+    bhv:hasTrigger tmpl:give-notice-on-notice-given .
 ```
 
 The axioms that make this work are on the Instrument classes and properties (§10, §11).
@@ -2817,7 +1999,7 @@ Instrument's for each trigger's kind, on the graph the engine reads.
 
 A contract states times relative to dates that lie in the future when it is signed, some of which depend on events that may never happen: "within 24 hours of becoming aware of the loss", "within 10 Business Days after the end of each month", "not less than six months before the Break Date".
 
-Each is stated once, and resolves to a different date for each instrument and each occasion. This section describes how a clause names such a time, and how an obligation's due range, a power's window and a recurrence are built on it (the [terms in time sketch](../../docs/developer/sketches/terms-in-time.md) Part A, [ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)).
+Each is stated once, and resolves to a different date for each instrument and each occasion. This section describes how a clause names such a time, and how an obligation's due range, a power's window and a recurrence are built on it ([ADR-A115](../../docs/architecture/decisions/ADR-A115-quantification-context-values.md)).
 
 ### 13.1 An anchor and its offsets
 
@@ -3438,7 +2620,7 @@ ins:forPurposeOf a owl:ObjectProperty ;
 
 ### 15.3 Terms with no relation
 
-Two kinds of term create nothing at all in this layer.
+Some terms create nothing at all in this layer.
 
 - An **interpretation clause** says how the words are read: "a reference to a person includes its
   successors in title". It governs reading, not anyone's conduct (S71).
@@ -3467,8 +2649,8 @@ ins:classification a owl:ObjectProperty ;
 	rdfs:comment "A class a term belongs to, such as a condition or a warranty." ;
 	fnd:utility "Subject: a stated term. Value: a concept from the scheme bound to ins-voc:TermClassificationContract, any number. Read for each instrument through the bound term's ins:boundFrom. Never evaluated: a breach's effect is stated as relations (law I12)." .
 
-ins:Definition owl:disjointWith fnd:Version .
-ins:Deeming owl:disjointWith fnd:Version .
+ins:Definition owl:disjointWith fnd:Versioned .
+ins:Deeming owl:disjointWith fnd:Versioned .
 ```
 
 ## 16. Sections
@@ -3523,7 +2705,7 @@ defined "for Section B2" adds to whatever else defines it there unless one defin
 An instance stores only what differs from its form: the instrument and its identity and keys, its
 parties, the values its words take (C8), the elements its assembled wording includes,
 `ins:boundUnder`, and records filling a contingent party. Stated meaning belongs to element
-versions, which are content-addressed (ADR-A51), so a wording seen before brings its stated meaning
+versions, which are versioned things with a persistent identity (Wording names no content digest, and ADR-A82 replaced ADR-A51's content addressing), so a wording seen before is recognised by its identity and version and brings its stated meaning
 with it and is never restated. Only changed, endorsed or novel elements add any. For that to hold,
 **stated meaning is context-free**: a stated term never names another element's version, and a
 scope or an ending names a section's persistent identity, resolved within the assembled wording's
@@ -3780,7 +2962,7 @@ Nothing new is stored at any tier. Each tier holds what resolution reads:
 
 | Tier | What exists | The placeholder resolves to | Checked |
 |---|---|---|---|
-| library element | an element version and its stated meaning, matched on its hash (ADR-A51), and the variable it declares or refers to, each with a persistent identity | nothing: it names the variable's identity, never a version (§16.3) | it names one variable identity, or one defined word |
+| library element | an element version and its stated meaning, matched on its identity and version (ADR-A82), and the variable it declares or refers to, each with a persistent identity | nothing: it names the variable's identity, never a version (§16.3) | it names one variable identity, or one defined word |
 | template, a form: complete text, no data | element versions composed into one wording, each declaring its variables | the variable version of that identity the template declares, so a clause reused under another schedule keeps its stated meaning | the template declares every variable its stated meaning names |
 | instance: an assembled wording with its values, and its instrument | `wrd:includes` the element versions, `wrd:hasValue` the values, each `wrd:forVariable` a variable version. Variables are declarations, never included (Wording's law W5) | the value whose variable version has that identity, through `wrd:populatedFrom` where one variable takes another's. A table field's variable has one value per entry (`wrd:forEntry`), and an entry may be a section or a party | a variable with no value: the default is used, or the node is not generated and the instantiator reports it. Two values for versions of one identity: reported |
 
@@ -3831,10 +3013,7 @@ as 7.2's ceiling in `facility-parameters.ttl` does: "the loans outstanding never
 Commitment". Entered values only: computed amounts, bases and `ins:computedBy` wait for the contract
 amounts work. **Date words** wait for held design question HQ-4.
 
-**A chain of words and variables must not loop.** A word means a placeholder that takes its value
-from another word, which may take its value from a third, and a variable may take another variable's
-value (`wrd:populatedFrom`). If the chain returns to where it started, nothing in it can ever have a
-value. Three forms of the same fault:
+**A chain of words and variables must not loop.** A word means a placeholder that takes its value from another word, which may take its value from a third, and a variable may take another variable's value (`wrd:populatedFrom`). If the chain returns to where it started, nothing in it can ever have a value. Forms of the same fault:
 
 | Form | Example | Hops |
 |---|---|---|
@@ -3949,10 +3128,11 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Activity scheme contract"@en ;
@@ -3960,12 +3140,14 @@ ins-voc:ActivityContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:Activities .
 
 ins-voc:LocationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:LocationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
 
 ins-voc:EncodingStatuses a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:EncodingStatuses-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Encoding statuses"@en ;
@@ -3976,12 +3158,14 @@ ins-voc:NoMeaning a skos:Concept ; skos:inScheme ins-voc:EncodingStatuses ;
 	skos:definition "Reviewed, and binding nobody: a note for information, guidance, an example."@en .
 
 ins-voc:TermClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Term classification scheme contract"@en ;
 	voc:constrainsProperty ins:classification .
 
 ins-voc:Activities a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:Activities-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline activities"@en ;
@@ -4068,6 +3252,7 @@ The state kinds:
 
 ```turtle-vocab
 ins-voc:StateKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "State kind scheme contract"@en ;
@@ -4075,6 +3260,7 @@ ins-voc:StateKindContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:StateKinds .
 
 ins-voc:StateKinds a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKinds-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline state kinds"@en ;
@@ -4118,6 +3304,7 @@ The context roles, and the instrument as a whole:
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 ins-voc:ContextRoles a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ContextRoles-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Instrument context roles"@en ;
@@ -4222,7 +3409,7 @@ ins:LegalRelationShape a sh:NodeShape ;
 		sh:path ins:activity ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
 		sh:message "A relation has at most one activity, a concept."
 	] ;
-	sh:not [ sh:class fnd:Version ] ;
+	sh:not [ sh:class fnd:Versioned ] ;
 	sh:message "A relation is never a version: it changes only with its owner (law I18)." .
 
 ins:RelationTierShape a sh:NodeShape ;
@@ -5641,7 +4828,7 @@ ins:SingleExpressionShape a sh:NodeShape ;
 
 ## 21. Laws
 
-| Law | Statement | Register in 0.15.0 |
+| Law | Statement | Register in 0.19.0 |
 |---|---|---|
 | I1 | An instrument version is expressed in exactly one assembled wording | `ins:InstrumentShape` |
 | I2 | A stated term is part of exactly one element version. A bound term is part of exactly one instrument version, bound from exactly one stated term or implied by a source. A relation belongs to its term | `ins:TermShape`, `ins:LegalRelationShape`, `ins:RelationTierShape` |
@@ -5657,7 +4844,7 @@ ins:SingleExpressionShape a sh:NodeShape ;
 | I16 | Definitions of one word that apply within one section combine by union, unless one prevails, and every overlap is reported. Conflicting acting rules are a violation | `ins:DefinitionOverlapShape` (warning, on generated meaning), `ins:FormDefinitionOverlapShape` (warning, on the form), `ins:ActingRuleConflictShape` |
 | I17 | An instrument version binds exactly the stated meaning of the elements its wording includes: nothing from text it does not include, all the stated meaning of what it does, and every included leaf of text either means something or is marked as binding nobody | `ins:BoundFromIncludedShape`, `ins:StatedMeaningBoundShape`, `ins:CoverageShape` (warning) |
 | I9 | A due range, a window and a recurrence are anchored at a named time, never at evaluation time | `ins:DueShape`, `ins:WindowShape`, `ins:RecurrenceShape` |
-| I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Version`, `ins:LegalRelationShape` |
+| I18 | No term or relation is a version: meaning changes only with its owner | disjointness with `fnd:Versioned`, `ins:LegalRelationShape` |
 | B4 (Behaviour's) | Every Instrument specialisation of a Behaviour term carries the Behaviour type in the graph the engine reads | `ins:RegimeTypeShape`, `ins:RegimeTransitionTypeShape`, `ins:LegalTriggerTypeShape` |
 
 C7c's other design-time rules are registered without a law number. They are that stated meaning is
@@ -6242,7 +5429,6 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
-- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change to the
   vocabulary. The example `property-endorsement.ttl` gains a new version of the section holding the replaced clause,
   `ex:sec-2-v2`, which the second assembled wording includes, following Wording 0.19.0's shared values.
@@ -6275,16 +5461,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   identities, with no other change. `instrument-vocab` 0.14.0 re-pinned with it. Shapes unchanged
   (0.6.0)
 
-- 0.13.0 (additive, CCS C8, ADR-A104 and its 2026-10-06 addendum "values in stated meaning"): new:
-  `ins:valueFrom` for placeholders, taking a value from a variable or a value word, and
-  `ins:encodingStatus`. `instrument-vocab` 0.13.0 adds the closed scheme `ins-voc:EncodingStatuses`
-  with its one value `ins-voc:NoMeaning`. Shapes 0.6.0 (breaking: an instrument that leaves an
-  included stated term unbound no longer conforms, law I17): a placeholder's source, cycles of words and
-  of variables, concept words in Eligibility's concept slots and a word's meaning suiting its slot,
-  bound meaning naming values only, law I17 (nothing bound from text not included, all included
-  stated meaning bound, and coverage as a warning), and C7c's open checks on the form: overlapping
-  definitions (a warning) and every word resolving in each section its term applies within. The
-  reference binder, `tools/instrument_binder.py`, generates one instrument's bound meaning
+- 0.13.0 (additive, CCS C8, ADR-A104 and its 2026-10-06 addendum "values in stated meaning"): new: `ins:valueFrom` for placeholders, taking a value from a variable or a value word, and `ins:encodingStatus`. `instrument-vocab` 0.13.0 adds the closed scheme `ins-voc:EncodingStatuses` with its one value `ins-voc:NoMeaning`. Shapes 0.6.0 (breaking: an instrument that leaves an included stated term unbound no longer conforms, law I17): a placeholder's source, cycles of words and of variables, concept words in Eligibility's concept slots and a word's meaning suiting its slot, bound meaning naming values only, law I17 (nothing bound from text not included, all included stated meaning bound, and coverage as a warning), and C7c's open checks on the form: overlapping definitions (a warning) and every word resolving in each section its term applies within. The reference instantiator, `tools/instrument_binder.py`, generates one instrument's bound meaning
 
 - 0.12.0 (breaking, CCS C7c, ADR-A104 and its 2026-10-06 addendum): new: definitions
   (`ins:Definition`, `ins:defines`, `ins:means`, `ins:actingRule`, `ins:prevailsOver`), deemings
@@ -6340,3 +5517,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   Instrument now imports Party.
 - 0.8.0: re-pinned to Foundation 0.4.0 and the layers re-pinned with it, with no other change (CCS
   F1, ADR-A114).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

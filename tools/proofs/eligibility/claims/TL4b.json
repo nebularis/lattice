@@ -1,7 +1,7 @@
 {
   "subject": "TL4b",
   "statedAs": "Eligibility.some_value_set_invariant/every_value_set_invariant",
-  "statementDigest": "sha256:f4d161137d1022394afd68aa57fc79a7dfcf622b07e84a7d35b2e9a7d23b5d22",
+  "statementDigest": "sha256:9cd8f720da3b5700d9b02cf6897c39d97b4d839ae3f0317b279cbdc319895839",
   "method": "Proof",
   "scope": "EveryEqualSetPair",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",

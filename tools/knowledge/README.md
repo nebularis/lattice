@@ -16,7 +16,7 @@ Markdown stays the source of truth. Everything here derives from it and holds no
 | `facets.py` | generates the facet schemes, Activity, Quality and Technology, as SKOS Turtle in `.build/knowledge/facets.ttl` from the [facet register](../../docs/developer/facets.md) on every build, never committed (see [Facets](#facets)) |
 | `extract.py` | derives the index from the tracked documents into an Oxigraph store under `.build/`, never committed |
 | `embed.py` | ranks entries by meaning: the pinned model, fetched into `.build/knowledge/model/` on first build, and the vectors beside the store, re-embedding only changed text |
-| `ask.py` | the query surface. `find`, `read`, `node`, `reaches`, `exists` and `sparql`, with the miss log of questions answered weakly or not at all |
+| `ask.py` | the query surface. `find`, `read`, `node`, `reaches`, `exists` and `sparql`, with the miss log of questions answered weakly or not at all, the ask log of every `find` and `read`, and `gap` and `misses` over both |
 
 ## Tasks
 
@@ -25,7 +25,10 @@ mise run check:identifiers            # fail on an identifier mentioned but defi
 mise run check:knowledge              # fail on a T-Box term or a derived node that breaks ADR-A134
 mise run build:knowledge              # derive the index into .build/knowledge, about two seconds once the model is fetched
 mise run graph:ask -- find tracking a balance drawn down and restored --kind mechanism  # ask it a question
-mise run graph:ask -- read MEC-56     # read the section an entry points at
+mise run graph:ask -- read MEC-56     # read the section an entry points at, with its fields and neighbours first
+mise run graph:ask -- gap "MEC-56 does not cover a keyed child" MEC-56 ontology/ledger/README.md:120  # record what reading found
+mise run graph:ask -- misses --near   # the weak answers, the near ones and the gaps recorded, less those now answered
+mise run graph:ask -- close MEC-56    # close the gaps on an entry whose signpost is now written
 ```
 
 Three reports, none of which fails:
@@ -40,11 +43,29 @@ mise exec -- python tools/knowledge/identifiers.py --rehomed     # register entr
 
 `find` filters exactly on kind, phase and audience, ranks what remains by how close an entry's name, claim and problem shape are in meaning to the question, and raises an entry by 0.02 for each of activity, quality and technology that matches the question's. A facet value matches up and down its broader chain, so a mismatch hides nothing and a tag written before the scheme grew still counts. A phase matches along its broader chain too, so `--phase production` also finds rules tagged runtime, which bind in every environment, and `--phase runtime` finds those tagged testing, benchmarking or production (decision 27). The model is `BAAI/bge-small-en-v1.5` (MIT licence), run from its ONNX export by onnxruntime, at the revision and SHA-256 pinned in `embed.py` ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), decisions 20 to 23). The first build downloads 130 MB from Hugging Face. Where that is blocked, the build notes why and `find` says it cannot rank, and the other questions still work.
 
+Besides the register entries and the decisions, `find` ranks three other kinds of node ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), decisions 29 to 31). Each numbered decision and each addendum of a decision file is embedded as a section of that decision, which is scored by the best of its sections and points at that section when it wins. Each question a plan or a sketch raises is an entry of kind `question`, and `--exclude question` leaves them out of an answer they crowd. Each declared ontology term, a class, a property, a scheme concept, or an individual declared outside the examples and the tests, has a claim the term summary derives from its label, its comment and its restrictions, and `find` ranks the terms only when `--kind` names `term`. Ask for them to learn what a class or property means, whether one exists for a concept before declaring one, or what restricts it. Never mix them into a question about a design, a rule, a decision or what the project already has, since ranked with the entries they pushed the answers out of the top five, hit@5 0.79 against 0.93.
+
+**What a row says beside its claim.** A flags column marks `!` an entry that states a case it does not cover, `~` a decision or section that was superseded, reversed or narrowed, `TD` an entry an open debt bears on, and `?` a Proposed entry. When `find` shows eight rows or fewer, the line under each holds the whole claim and names each of these: the uncovered case, the successor or the addendum, and the debt. A superseded decision is kept, marked, and loses 0.01, so its successor ranks above it at equal meaning. `read <ID>` prints the entry's fields that `find` does not show and every entry linked to it by a declared edge, in either direction, before the text, and refuses a pointer that names the whole of a file over 200 lines.
+
+**The logs.** Every `find` and `read` is appended to `.build/knowledge/asks.log` with its best score and what it showed, and `gap` appends what an agent found by reading, with the entry and the line. `misses` lists the weak answers and the gaps, and `misses --near` adds the questions answered from 0.69 to under 0.74, where a confident and incomplete answer lives. The logs are pruned as gaps close: `misses` first asks each logged weak or near question again and removes those now answered at 0.74 or above, and `close <ID>` removes the gaps on an entry and the lines of the question asked just before each.
+
 A weak answer is advice to look further. The agent then reads the documents as it would without the index, and an answer found there that no register entry holds is a register gap, reported to the maintainer.
 
 ## Registers
 
 A register is a Markdown table whose column headers map to properties of [`knowledge.ttl`](knowledge.ttl). The mapping is the `COLUMNS` dict in `extract.py`, and a column's meaning is that property's `rdfs:comment`, written nowhere else. A row's claim is its bolded lead sentence of at most 200 characters. A header that is neither mapped nor on the unmapped list, and a value outside a controlled column's set, are reported rather than stored or dropped.
+
+**Signposts.** Three columns carry what sits at an entry's edge ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) decision 28), filled forward, as an entry is written or a reader is found to have confused it. They stand last in their tables, and a row may leave them out, so only a row that carries one changes. A claim over 200 characters is reported, since it is cut where a boundary is usually written. A claim whose rule has a neighbour it could be read against names its boundary in its first sentence, and its Distinguished from column names that neighbour (STD-281).
+
+| Column | Registers | Holds | Checked |
+|---|---|---|---|
+| Does not cover | standards, principles, patterns, mechanisms | the case the entry does not decide, in at most 120 characters, embedded with the claim | its length |
+| Distinguished from | standards, principles, patterns, mechanisms | the entries a reader confuses this one with, symmetric | each names an entry |
+| Bears on | technical debt, pending decisions, capabilities, and a store finding's `**Bears on:**` line | the entries, and the declared terms by the CURIE their layer writes, that the row qualifies | each names an entry or a declared term |
+
+**Questions.** A plan or a sketch raises a question by a bold lead, `**LG-Q7. <question>**` or `- **LG-Q7.** <text>`, or by a table row whose first cell is its identifier. The lead's paragraph or the row is its pointer, and it is answered when its text says Answered, with the date after the word. A plan's definition wins over a sketch's. `now <ID>` in an answer makes that entry answer the question, and an answered question whose answer says must, never or only and names no such entry is reported by the build 30 days after its answer (STD-283). A question raised anywhere else is counted by `check:identifiers` and never failed.
+
+**Supersession.** A decision's Status line, `Superseded by ADR-Ann`, gives it its successor, and the build reports a Superseded decision that names none. An addendum that reverses or narrows numbered decisions of its file opens with a bold lead, `**Reverses decision 8.**` or `**Narrows decisions 3 and 6.**` (STD-282). The number names the Decision section's item, or else the one addendum that numbers it, and a number naming neither is reported.
 
 ## Facets
 

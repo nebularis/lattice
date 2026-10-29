@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+fnd:VersionedShape a sh:NodeShape ;
+    sh:targetClass fnd:Versioned ;
+    sh:or (
+        [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ]
+        [ sh:path rdfs:isDefinedBy ; sh:minCount 1 ; sh:nodeKind sh:IRI ]
+    ) ;
+    sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity, unless it is a published term, rdfs:isDefinedBy the ontology that declares it, whose identity is its IRI and whose versions are that ontology's releases." .
+
+fnd:EvidenceShape a sh:NodeShape ;
+    sh:targetClass fnd:Evidence ;
+    sh:property [
+        sh:path [ sh:alternativePath ( fnd:supports [ sh:inversePath fnd:hasEvidence ] ) ] ; sh:minCount 1 ;
+        sh:message "Evidence supports at least one thing, stated as fnd:supports or from the thing by fnd:hasEvidence."
+    ] ;
+    sh:property [
+        sh:path fnd:recordedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+        sh:message "Evidence states exactly when it was recorded."
+    ] .
+
+fnd:TemporallyScopedShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporallyScoped ;
+    sh:property [
+        sh:path fnd:hasTemporalScope ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:TemporalScope ;
+        sh:message "A temporally scoped thing has exactly one fnd:hasTemporalScope."
+    ] .
+
+fnd:GovernableShape a sh:NodeShape ;
+    sh:targetClass fnd:Governable ;
+    sh:property [
+        sh:path fnd:hasGovernanceState ; sh:maxCount 1 ; sh:class fnd:GovernanceState ;
+        sh:message "A governable thing has at most one current fnd:hasGovernanceState."
+    ] .

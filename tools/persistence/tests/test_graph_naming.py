@@ -26,7 +26,7 @@ from conftest import EXAMPLES_DIR
 
 EX = "https://example.org/lending#"
 DAL = "https://www.nebularis.org/neuro-semantic/lattice/persistence#"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 PROFILE = URIRef(EX + "LoanApplicationStrongProfile")
 
 

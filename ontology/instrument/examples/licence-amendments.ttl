@@ -128,19 +128,19 @@ tmpl:lapsed a bhv:State ;
     ins:ends ins-voc:TheInstrument .
 
 # No ins:by: the trigger reads every ins:party of the version.
-tmpl:on-signed a ins:OnAcceptance , bhv:TriggerDefinition ;
+tmpl:take-effect-on-signed a ins:OnAcceptance , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger .
-tmpl:on-long-stop a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:lapse-on-long-stop a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:long-stop-date .
 
 tmpl:take-effect a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:conditional ; bhv:toState tmpl:in-force ;
-    bhv:hasTrigger tmpl:on-signed ;
+    bhv:hasTrigger tmpl:take-effect-on-signed ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:lapse a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:conditional ; bhv:toState tmpl:lapsed ;
-    bhv:hasTrigger tmpl:on-long-stop ;
+    bhv:hasTrigger tmpl:lapse-on-long-stop ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 tmpl:term-3-1 a ins:Term , ins:Template ; ins:expressedIn ex:cl-3-1 .
@@ -287,12 +287,12 @@ ex:until-end a bhv:State ;
 ex:ended a bhv:State ;
     bhv:inStateSpace ex:end-regime ; ins:stateKind ins-voc:Expired ;
     ins:ends ins-voc:TheInstrument .
-ex:on-end-date a ins:OnExpiry , bhv:TriggerDefinition ;
+ex:end-on-end-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:end-date .
 ex:end a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState ex:until-end ; bhv:toState ex:ended ;
-    bhv:hasTrigger ex:on-end-date ;
+    bhv:hasTrigger ex:end-on-end-date ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 ex:licence-v3 a ins:Instrument ;
@@ -315,6 +315,41 @@ ex:ending-licensee a ins:Assent ; ins:assentBy ex:licensee-occ ; ins:assentTo ex
     fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-10-25T10:00:00Z"^^xsd:dateTime ] .
 
 ex:licence-v2 fnd:supersededBy ex:licence-v3 .
+
+# Each role occupancy holds from before the first act in this example.
+ex:licensor-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] .
+ex:licensee-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] .
+ex:guarantor-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:wording-identity a fnd:PersistentIdentity .
+ex:guarantor-occ-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+ex:end fnd:hasIdentity ex:end-identity .
+ex:end-identity a fnd:PersistentIdentity .
+tmpl:lapse fnd:hasIdentity tmpl:lapse-identity .
+tmpl:lapse-identity a fnd:PersistentIdentity .
+tmpl:take-effect fnd:hasIdentity tmpl:take-effect-identity .
+tmpl:take-effect-identity a fnd:PersistentIdentity .
+ex:licence-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-5-identity a fnd:PersistentIdentity .
+ex:end-regime-identity a fnd:PersistentIdentity .
+tmpl:formation-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-1-2-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:ending-para-1-identity a fnd:PersistentIdentity .
+ex:release-para-1-identity a fnd:PersistentIdentity .
+ex:licence-dates-identity a fnd:PersistentIdentity .
+ex:ending-letter-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:release-letter-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #

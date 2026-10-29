@@ -3,16 +3,15 @@
 # Classification (`cls:`)
 
 Cross-domain classification properties (ADR-A98 decision 1, epic D8): territory, asset class and
-industry. Built by the [`applied-insurance-reference`](../../../docs/developer/plans/applied-insurance-reference.md)
-epic (AIR-1.2), because insurance is its first consumer, but the module carries no insurance
+industry. Built with the applied insurance modules, because insurance is its first consumer, but the module carries no insurance
 vocabulary: any domain may use or specialise it.
 
 ## Files and namespaces (ADR-A98 decision 6)
 
 | File | Content | Namespace | Prefix | Version IRI |
 |---|---|---|---|---|
-| `spec/classification.ttl` | `cls:territory`, `cls:assetClass`, `cls:industry` | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification#` | `cls:` | `…/lattice/applied/classification/0.1.0` |
-| `vocab/classification-vocab.ttl` | one `voc:SchemeContract` per property, no bound scheme | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#` | `cls-voc:` | `…/lattice/applied/classification-vocab/0.1.0` |
+| `spec/classification.ttl` | `cls:territory`, `cls:assetClass`, `cls:industry` | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification#` | `cls:` | `…/lattice/applied/classification/0.5.0` |
+| `vocab/classification-vocab.ttl` | one `voc:SchemeContract` per property, no bound scheme | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#` | `cls-voc:` | `…/lattice/applied/classification-vocab/0.5.0` |
 
 ## The three contracts
 
@@ -53,3 +52,10 @@ The module's entry in the [repository catalogue](../../../repository-catalogue.m
 kind = "applied"
 roles = ["spec", "vocab"]
 ```
+
+## Release notes
+
+- **0.5.0**.
+  - changes meaning ([ADR-A141](../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys. No change of its own.
+
+Earlier versions are listed in the [ontology release register](../../../docs/architecture/ontology-releases.md).

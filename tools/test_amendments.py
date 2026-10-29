@@ -106,7 +106,7 @@ def test_c9a_01_spec_terms() -> None:
     for term in ("Amendment", "amends", "resultsIn", "affectsExisting", "statedIn", "Assent",
                  "assentBy", "assentTo", "begins", "OnAcceptance"):
         assert terms.value(INS[term], FND.utility) is not None, term
-    assert (INS.Amendment, OWL.disjointWith, FND.Version) in spec
+    assert (INS.Amendment, OWL.disjointWith, FND.Versioned) in spec
     assert (INS_VOC.Conditional, None, None) in _graph(VOCAB)
 
 
@@ -201,7 +201,7 @@ def test_c9a_08_affecting_existing_occasions_needs_continuity() -> None:
 def test_c9a_09_formation_regime() -> None:
     g = _example("licence-amendments")
     assert (LIC_FORM["in-force"], INS.begins, INS_VOC.TheInstrument) in g
-    assert g.value(LIC_FORM["on-signed"], INS.by) is None                              # every ins:party
+    assert g.value(LIC_FORM["take-effect-on-signed"], INS.by) is None                              # every ins:party
     g.add((LIC_FORM["conditional"], INS.begins, INS_VOC.TheInstrument))
     assert any("at most one may" in m for _, m in _results(g))
     g = _example("licence-amendments")

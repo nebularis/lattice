@@ -5,7 +5,7 @@ description: How work is run in LATTICE and projects built on it. Use when start
 
 # The LATTICE development lifecycle
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities delivery, planning-and-estimation, release-and-versioning, acceptance, regression-testing, continuous-integration, technical-debt-management, architecture-decision-making and documentation, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 The always-on rules are in `AGENTS.md`. This skill is the procedure behind them. Paths are relative
 to the LATTICE repository, browsable at <https://github.com/nebularis/lattice>.
@@ -113,7 +113,7 @@ justification in its Validation Pack, countersigned at the gate.
   maintainer commits them. The model phase follows.
 - **Pause before commit.** The agent builds and verifies, writes the Validation Pack's handoff and
   results, updates the status record, and stops. The maintainer commits.
-- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all (`mise run graph:ask -- misses`), say which entry, facet value or relation would have answered each, and add any answer the fallback found to its register in the same change (STD-272).
+- **Report on the knowledge index at every handoff.** List the questions it answered weakly or not at all, the near answers and the gaps recorded while reading (`mise run graph:ask -- misses --near`). Say which entry, facet value, column or edge would have carried each, such as a Does not cover cell, a Distinguished from or Bears on id, or an addendum's Reverses lead, and add any answer the fallback found to its register in the same change (STD-272). A gap is recorded with `graph:ask -- gap` when it is found, not remembered at the end, and closed with `graph:ask -- close <ID>` in the change that writes its signpost.
 - **Executing a whole plan autonomously.** The request is the go-ahead to author every slice, but do
   not ratify ADRs, record each open design decision in the status record rather than choosing
   silently, and never report a check as passed that could not run.
@@ -137,19 +137,13 @@ justification in its Validation Pack, countersigned at the gate.
   `check:ontology-versioning` to report a pending bump for a branch's own new release-member
   content until the actual merge-time bump — that is the correct state of a branch mid-flight, not
   a defect to work around.
-- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning,
-  the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED`
-  is expected there. The release moves once, by `mise run release:prepare`, before the merge into
-  `main`, and the tag follows the merge.
-- **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or
-  `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
-  `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them
-  once the change is merged. Repeat it in every handoff until the tags exist.
+- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning, the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED` is expected there. The branch writes each change's release note when it makes the change, under `- **Unreleased**.` in the layer's README, classed as the versioning policy says (STD-293). The release moves once, by `mise run release:prepare`, before the merge into `main`, and the tag follows the merge.
+- **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them once the change is merged. Repeat it in every handoff until the tags exist.
 - **Conformance before a merge.** Before a branch is merged into `main`, every conformance task of a suite the branch touched runs
   and passes, for example `mise run check:persistence-conformance`, which runs the generated SPARQL on every engine we have. They are
   not part of `check` (skill `lattice-testing`), so the handoff that asks for the merge lists each one with its result, or says it
   was not run and why. A failure on one engine is recorded in the triple-store record and is fixed or accepted before the merge.
-- **The merge gate.** A merge into `main` runs the hooks' merge checks, published decisions over the whole tree and ontology versioning among them (ADR-A133). Before merging on GitHub, where no local hook runs, run `mise run hooks:merge`. No hook ever blocks a push, so a branch always reaches the maintainer for review.
+- **The merge gate.** A merge into `main` runs the hooks' merge checks, published decisions over the whole tree and ontology versioning among them (ADR-A133). Before merging on GitHub, where no local hook runs, run `mise run hooks:merge`. No hook ever blocks a push, so a branch always reaches the maintainer for review. A README migrated to the ADR-A126 layout may cite only a published decision (ADR-A127), and the published-decisions check fails the merge on a citation of a Proposed one, so the handoff before a merge lists every Proposed decision such a README cites under 🔴 PLAN FIRST, for the maintainer to accept first (PDD-16).
 - Never merge, push or tag without the maintainer's go-ahead.
 
 ## Reporting

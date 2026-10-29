@@ -4,8 +4,7 @@
 
 Literate specification for the reference peril vocabulary, LATTICE's applied insurance domain's
 default peril scheme ([ADR-A99](../../../../docs/architecture/decisions/ADR-A99-reference-vocabularies-and-peril-structure.md)),
-built by the [`applied-insurance-reference`](../../../../docs/developer/plans/applied-insurance-reference.md)
-epic, Phase 2. See ADR-A99 and the [peril vocabulary sketch](../../../../docs/developer/sketches/peril-vocabulary.md)
+built with the applied insurance modules. See ADR-A99
 for the design this module implements.
 
 ## 1. Purpose and scope
@@ -54,8 +53,8 @@ flowchart TB
 
 | File | Content | Namespace | Prefix | Version IRI |
 |---|---|---|---|---|
-| `spec/peril.ttl` | the `prl:` properties and datatypes only. No scheme, no concept | `https://www.nebularis.org/neuro-semantic/insurance/peril#` | `prl:` | `…/insurance/peril/0.5.0` |
-| `vocab/peril-vocab.ttl` | the eight reference schemes, and the cause scheme's members | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#` | `prl-voc:` | `…/insurance/peril-vocab/0.5.0` |
+| `spec/peril.ttl` | the `prl:` properties and datatypes only. No scheme, no concept | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#` | `prl:` | `…/insurance/peril/0.5.0` |
+| `vocab/peril-vocab.ttl` | the eight reference schemes, and the cause scheme's members | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#` | `prl-voc:` | `…/insurance/peril-vocab/0.5.0` |
 | `vocab/peril-intensity.ttl` | the intensity measure scheme, its `qnt:ValueSpace`s, and cause concepts' thresholds, intensity links and customary windows | as above | `prl-voc:` | `…/insurance/peril-vocab/0.5.0` (shares `peril-vocab.ttl`'s version, ADR-A120 addendum) |
 | `vocab/peril-collections.ttl` | reference collections | as above | `prl-voc:` | AIR-2.5 |
 | `crosswalk/*.ttl` | reviewed crosswalks from external code systems | — | — | AIR-3.4 |
@@ -67,9 +66,9 @@ Sketches and this README write concept and scheme IRIs as `prl:` for brevity (fo
 ## 3. Namespace and prefixes
 
 ```turtle-spec
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
 @prefix iso-thes: <http://purl.org/iso25964/skos-thes#> .
-@prefix icm:     <https://www.nebularis.org/neuro-semantic/insurance/common#> .
+@prefix icm:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
@@ -140,15 +139,15 @@ Six more properties link a cause concept to its typical characteristics, each a 
 scheme (§7, §8):
 
 ```turtle-spec
-<https://www.nebularis.org/neuro-semantic/insurance/peril>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/peril>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril/0.7.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
-    rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99 and docs/developer/sketches/peril-vocabulary.md." ;
+    rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common/0.8.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are
@@ -335,23 +334,23 @@ by `skos:editorialNote "Reference edition published by LATTICE. Not a market sta
 | `prl-voc:HarmSubjectScheme` | what is typically harmed |
 
 ```turtle-vocab
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab> .
 
-<https://www.nebularis.org/neuro-semantic/insurance/peril/vocab>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -1002,10 +1001,8 @@ prl-voc:HarmSubjectScheme skos:hasTopConcept prl-voc:Property , prl-voc:Persons 
 
 ## 5.4 The cause scheme (AIR-2.3, AIR-2.4)
 
-287 reference peril concepts in eight families, each region its own README section. See the
-[peril vocabulary sketch](../../../../docs/developer/sketches/peril-vocabulary.md) §5 for the
-full tables these regions implement, and the phase 2 plan's AIR-2.3/AIR-2.4 briefs for the
-inheritance, mechanism and definition rules.
+287 reference peril concepts in eight families, each region its own README section. ADR-A99 states the
+inheritance, mechanism and definition rules these regions follow.
 
 ### Cause: N (natural hazards)
 
@@ -3972,21 +3969,21 @@ authority to cite, and its note says so.
 
 ```turtle-vocab
 # @output-file "vocab/peril-intensity.ttl"
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
-@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/insurance/common/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
+@prefix icm-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/insurance/peril/intensity> .
+@base <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity> .
 
-<https://www.nebularis.org/neuro-semantic/insurance/peril/intensity>
+<https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/insurance/peril-intensity/0.7.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/insurance/peril-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/insurance/common-vocab/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
 
 prl-voc:IntensityMeasureScheme a voc:ConceptScheme ;
     fnd:hasIdentity prl-voc:IntensityMeasureScheme-identity ;
@@ -4465,8 +4462,8 @@ so it is not LATTICE's and is not built.
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 
 prl:LabelAndDefinitionShape
     a sh:NodeShape ;
@@ -4474,8 +4471,8 @@ prl:LabelAndDefinitionShape
     sh:sparql [
         sh:message "A concept in a reference peril scheme needs exactly one skos:prefLabel and exactly one skos:definition, each tagged @en (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme ?scheme .
@@ -4496,8 +4493,8 @@ prl:CharacteristicsShape
     sh:sparql [
         sh:message "A cause concept needs at least one prl:typicalAgency (in the agency scheme), exactly one prl:onset (in the onset scheme), exactly one prl:definitionBasis (in the definition-basis scheme), and at most one prl:accumulationClass (in the accumulation-class scheme) (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
@@ -4520,8 +4517,8 @@ prl:CharacteristicsShape
 
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
-@prefix prl:     <https://www.nebularis.org/neuro-semantic/insurance/peril#> .
-@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#> .
+@prefix prl:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#> .
+@prefix prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 
 prl:DocumentationShape
     a sh:NodeShape ;
@@ -4529,7 +4526,7 @@ prl:DocumentationShape
     sh:sparql [
         sh:message "A concept in a reference peril scheme needs at least one skos:note in @en, naming the published standards, scales or sources it follows, and where it departs from them (AIR-2.0 documentation rule, §7)." ;
         sh:select """
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme ?scheme .
@@ -4549,8 +4546,8 @@ prl:ReferenceCodeShape
     sh:sparql [
         sh:message "A cause concept needs exactly one skos:notation typed prl:ReferenceCode, unique among cause concepts, equal to its primary parent's code plus one '.'-separated segment, or to its family letter if it is a top concept (ADR-A99 §10, sketch §5)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
@@ -4562,8 +4559,8 @@ prl:ReferenceCodeShape
     sh:sparql [
         sh:message "A cause concept's reference code must be unique among cause concepts (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
@@ -4580,8 +4577,8 @@ prl:ReferenceCodeShape
     sh:sparql [
         sh:message "A non-top cause concept's reference code must equal its primary parent's code plus exactly one '.'-separated segment (ADR-A99 §10, sketch §5)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
@@ -4600,8 +4597,8 @@ prl:ReferenceCodeShape
     sh:sparql [
         sh:message "A top concept of the cause scheme's reference code must be exactly its family letter (N, T, E, H, P, C, F or L) (ADR-A99 §10, sketch §5)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme ; skos:notation ?code .
@@ -4618,8 +4615,8 @@ prl:PrimaryParentShape
     sh:sparql [
         sh:message "A cause concept that is not a top concept of prl-voc:CauseScheme needs exactly one value across prl:broaderGeneric and prl:broaderPartitive together (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               $this skos:inScheme prl-voc:CauseScheme .
@@ -4632,8 +4629,8 @@ prl:PrimaryParentShape
     sh:sparql [
         sh:message "A cause concept with more skos:broader values than its primary (broaderGeneric/broaderPartitive) values needs a skos:editorialNote explaining the extra one (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               # Two independent counts, one sub-query each. Each anchors $this and makes
@@ -4662,7 +4659,7 @@ prl:MaterialisedBroaderShape
     sh:sparql [
         sh:message "Every prl:broaderGeneric or prl:broaderPartitive link must also appear as skos:broader, so a plain SKOS consumer sees it (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               { $this prl:broaderGeneric ?p } UNION { $this prl:broaderPartitive ?p }
@@ -4676,7 +4673,7 @@ prl:AssociativeIntegrityShape
     sh:sparql [
         sh:message "skos:related, prl:overlaps and prl:canTrigger must never link two concepts where one is skos:broader+ of the other, in either direction (ADR-A99 §10)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             SELECT $this WHERE {
               {
@@ -4706,8 +4703,8 @@ prl:ThresholdDefinitionShape
     sh:sparql [
         sh:message "A concept whose prl:definitionBasis is prl-voc:Threshold needs a prl:definingThreshold (ADR-A99 §10, PV6)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
-            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
+            PREFIX prl-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#>
             SELECT $this WHERE {
               $this prl:definitionBasis prl-voc:Threshold .
               FILTER NOT EXISTS { $this prl:definingThreshold ?t }
@@ -4716,7 +4713,7 @@ prl:ThresholdDefinitionShape
     sh:sparql [
         sh:message "A prl:definingThreshold's qnt:onSpace must be the prl:measuredOn space of one of the concept's prl:intensityMeasure concepts (AIR-2.6)." ;
         sh:select """
-            PREFIX prl: <https://www.nebularis.org/neuro-semantic/insurance/peril#>
+            PREFIX prl: <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#>
             PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
             SELECT $this WHERE {
               $this prl:definingThreshold ?threshold .
@@ -4796,11 +4793,16 @@ upstream changes (substrate track S1, S2). Neither blocks this module's first re
 
 ## 11. Release notes
 
+- **0.8.0**.
+  - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - changes meaning (ADR-A98 decision 6, under ADR-A113). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as the applied README's table records. Data and imports under the old root re-key.
+
 | Version | Change |
 |---|---|
-| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-2.1: the `prl:` properties, kind/part/trigger/overlap/characteristic links, the eight reference schemes, the well-formedness shapes |
 | `0.4.0` | re-pinned by the computable-contract-substrate unit's Foundation and Quantification cascades (no content change). AIR-2.0 (this slice) converts the module to a literate README and adds `prl:DocumentationShape` to `shapes/constraints.ttl`, bumping the shapes `.version` to `0.2.0` only |
 | `0.5.0` | AIR-2.2: imports `insurance/common`, specialises four characteristic properties as its sub-properties, fills the characteristic and companion scheme regions |
 | shapes `0.3.1` | the duplicate-code and parent-code queries of `prl:ReferenceCodeShape` read the same rows by looking a notation up before testing the scheme, instead of joining every cause concept once per focus node. About seventeen times faster on the reference scheme, with no change to what a graph experiences |
 | `0.7.0` | spec, vocab and intensity re-pinned to the substrate release 0.19.0 and `insurance/common` 0.8.0, with no content change |
+
+Earlier versions are listed in the [ontology release register](../../../../docs/architecture/ontology-releases.md).

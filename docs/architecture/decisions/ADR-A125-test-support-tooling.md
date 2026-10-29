@@ -2,7 +2,7 @@
 
 # ADR-A125: Test-support tooling under `tools/testing/`
 
-**Status:** Accepted, 2026-10-12, with an addendum accepted 2026-10-21
+**Status:** Accepted, 2026-10-12, with addenda accepted 2026-10-21 and 2026-10-27
 **Date:** 2026-10-12
 **Supersedes:** none
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md),
@@ -53,7 +53,7 @@ reads back quads. It is used by tests and by benchmarks, and by nothing else. No
 
 ## Addendum, 2026-10-21: Oxigraph is the default engine, conformance runs before a merge, and mem_check (accepted 2026-10-21)
 
-Decided and accepted by the maintainer on 2026-10-21, as the later decision that decision 4 allows.
+**Narrows decision 4.** Decided and accepted by the maintainer on 2026-10-21, as the later decision that decision 4 allows.
 
 1. **The persistence tests run their generated SPARQL on Oxigraph by default.** `check:persistence` needs
    `tools/testing/oxigraph` and runs each engine test once, on Oxigraph. rdflib stays the library the compiler and pySHACL are
@@ -72,3 +72,11 @@ Decided and accepted by the maintainer on 2026-10-21, as the later decision that
 Decision 4's last sentence is amended: the default `check` needs `tools/testing/oxigraph` and `tools/testing/mem_check` for the
 persistence tests. `mise run bootstrap` installs both, and a check task that finds one missing stops and names the task that installs
 it, instead of installing it on every run or skipping its cases. Applying the same split to the other suites is a slice of its own, ordered by their expected memory use.
+
+## Addendum, 2026-10-27: Jena joins the conformance runs
+
+Proposed by us and accepted by the maintainer 2026-10-27.
+
+1. **A second engine kit.** Apache Jena ARQ, the third engine the 2026-10-21 addendum foresaw, runs as `platform/sparql-testkit`, a Maven module serving an in-memory dataset over standard input and output, as `platform/reasoning-testkit` serves its reasoners (ADR-A83). `tools/testing/jena` drives it from Python with the methods of `tools/testing/oxigraph`. It needs no JVM bridge, so ADR-A83's isolation holds, and `check:reasoning-isolation` refuses a dependency on any test kit outside `test` scope.
+2. **Engine probes have a package of their own.** `tools/testing/sparql_probes` holds probes of how engines behave that are about no one tool, with the expected result per engine, run on rdflib, Oxigraph and Jena by `check:sparql-probes-conformance`.
+3. **One command for every engine.** `check:conformance` runs every conformance task in turn before a merge into `main`. No `check` default changes, and Jena adds nothing to `check`, as decision 2 of the 2026-10-21 addendum says.

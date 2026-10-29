@@ -37,8 +37,8 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> |
-| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.19.0> |
+| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.20.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> |
+| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.20.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.20.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -50,7 +50,7 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Identifier | Role | Display name |
 |---|---|---|
-| <https://github.com/hyperthunk> | creator | T. R. Watson |
+| <https://github.com/nebularis> | creator | Nebularis |
 
 ## 3. Extraction Contract
 

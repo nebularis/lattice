@@ -11,7 +11,7 @@ from ``mork:generatesShapeDefinition`` on one ``mork:DataMapping``, which is
 what classifies that mapping as a ``mork:ShapeMapping`` by MORK's own
 inference rule.
 
-SHACL conformance is not itself an eligibility decision — MorkEnhancements.md
+SHACL conformance is not itself an eligibility decision — the MORK enhancements analysis
 makes this point explicitly. A conforming Question has passed both checks;
 a non-conforming one failed readiness, containment, or both, and a decision
 adapter (not built here) would still be needed to turn a validation report
@@ -25,6 +25,15 @@ the resolved scheme, or above an exclusion). Admission reports one whose
 candidate is not admitted. Read in that order, the first shape to report a
 question gives its outcome (Undetermined, Undetermined, Denied), and a
 question no shape reports is Permitted.
+
+A plan whose contract's bindings apply at no instant (``plan.unresolved``) gets
+the readiness shape and one determinacy shape every candidate violates, since L9
+leaves each Undetermined. The shapes match the plan's relation by never walking
+it: they enumerate the plan's expansion, which the IR computed over that relation.
+
+A set comparison (L18) gets the same two shapes wrapping its SPARQL decision, since its outcome
+reads two sets and a shape over one candidate cannot state it. The SPARQL backend and this one agree
+by construction, and the tests check that they do.
 
 A condition that reads several values or is negated (ADR-A103) gets two
 shapes wrapping its SPARQL decision instead, as profiles do: one reports an
@@ -44,7 +53,16 @@ from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
 
 from .common import mint
-from .eligibility_ir import PERMITTED, UNDETERMINED, ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, has_readings
+from .eligibility_ir import (
+    PERMITTED,
+    UNDETERMINED,
+    ConceptPlan,
+    IntervalPlan,
+    IRCompileError,
+    ProfilePlan,
+    SetComparisonPlan,
+    has_readings,
+)
 from .namespaces import ELG, EXE, MORK, SH
 from .sparql_backend import PREFIXES as QUERY_PREFIXES
 from .sparql_backend import applicable, condition_select, containment_expression, evidence_path, literal_readable, profile_select
@@ -100,9 +118,10 @@ def render_readiness_select(plan: IntervalPlan) -> str:
 def concept_sets(plan: ConceptPlan) -> Tuple[List[URIRef], List[URIRef]]:
     """(admitted, undetermined) concepts. Without a resolved scheme the plan
     admits its required concepts less its exclusions and leaves none undetermined.
-    A hierarchical plan always has one: L9 makes it Undetermined for every
-    candidate without one, and the IR refuses to compile it."""
-    if plan.hierarchical and plan.scheme is None:
+    A hierarchical plan always has one unless it is unresolved: L9 makes it
+    Undetermined for every candidate without one, and the IR compiles that case as
+    ``plan.unresolved``, which :func:`render_concept_selects` answers on its own."""
+    if plan.hierarchical and plan.scheme is None and not plan.unresolved:
         raise IRCompileError(f"{plan.condition} matches hierarchically with no resolved scheme (L9)")
     if plan.scheme is None:
         return [c for c in plan.required if c not in plan.excluded], []
@@ -148,7 +167,19 @@ def _readiness(plan: Union[IntervalPlan, ConceptPlan]) -> Tuple[str, str, str]:
 
 
 def render_concept_selects(plan: ConceptPlan) -> List[Tuple[str, str, str]]:
-    """(role, message, select) for each concept shape, in reading order."""
+    """(role, message, select) for each concept shape, in reading order.
+    An unresolved plan has one determinacy shape that every focus node violates,
+    so every candidate is Undetermined (``exe:NoApplicableBinding``, L9)."""
+    if plan.unresolved:
+        anchor, _, _ = _source(plan)
+        return [
+            _readiness(plan),
+            (
+                "determinacy",
+                f"The condition's scheme contract has no binding that applies, so there is no scheme to decide against ({EXE.NoApplicableBinding}).",
+                PREFIXES + "SELECT $this WHERE {\n" + anchor + "  $this a ?type .\n}\n",
+            ),
+        ]
     admitted, undetermined = concept_sets(plan)
     selects = [_readiness(plan)]
     undecided = []
@@ -280,12 +311,18 @@ def _compile_decided_shapes(plan: Union[IntervalPlan, ConceptPlan]) -> Graph:
         graph.bind(prefix, namespace)
     plan_node = mint(plan.condition, "execplan")
     mapping = mint(plan.condition, "shape-mapping")
-    kind = EXE.ConceptMatchPlan if isinstance(plan, ConceptPlan) else EXE.IntervalContainmentPlan
+    kind = (
+        EXE.SetComparisonPlan if isinstance(plan, SetComparisonPlan)
+        else EXE.ConceptMatchPlan if isinstance(plan, ConceptPlan) else EXE.IntervalContainmentPlan
+    )
     graph.add((plan_node, RDF.type, kind))
     graph.add((plan_node, EXE.implementsCondition, plan.condition))
     graph.add((plan_node, EXE.compiledFromMapping, mapping))
     graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.condition))
-    if plan.evidence is not None:
+    if isinstance(plan, SetComparisonPlan):
+        graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.tested.binding))
+        graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.reference.binding))
+    elif plan.evidence is not None:
         graph.add((plan_node, EXE.derivedFromEligibilityNode, plan.evidence.binding))
     graph.add((mapping, RDF.type, MORK.DataMapping))
     graph.add((mapping, MORK.mappingFor, plan.condition))

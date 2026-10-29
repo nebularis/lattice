@@ -18,7 +18,7 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.7.0`) holds structure, text parts, references, document objects and variables
+This release (`0.19.0`) holds structure, text parts, references, document objects and variables
 (since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), textual
 amendments with the shapes for the layer's laws (since `0.3.0`), and references by identity, with
 editions and reliance for documents outside the wording (since `0.7.0`). Breaking changes are listed
@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -115,13 +115,13 @@ The equivalence assertion on `WordingNode` also says something the reduntant sub
 
 ```turtle-spec
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
@@ -310,13 +310,13 @@ Law W8 checks that every reference finds exactly one version, or exactly one rel
 
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
 	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract, that its wording relies on." ;
 	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
@@ -432,7 +432,6 @@ take its value from a variable or from a defined word whose own value comes from
 loop may pass through words and variables alike. Instrument's shapes report each hop of such a loop,
 and its reference instantiator reports the whole loop in order, with the clause stating each hop
 (Instrument README §18.4).
-
 
 ### 5.10 Tables
 
@@ -693,10 +692,11 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Element type scheme contract"@en ;
@@ -704,18 +704,21 @@ wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	voc:boundScheme wrd-voc:ElementTypes .
 
 wrd-voc:ClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Classification scheme contract"@en ;
 	voc:constrainsProperty wrd:classification .
 
 wrd-voc:DocumentKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:DocumentKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Document kind scheme contract"@en ;
 	voc:constrainsProperty wrd:documentKind .
 
 wrd-voc:ElementTypes a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypes-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline element types"@en ;
@@ -1561,7 +1564,7 @@ wrd:AmendmentOperationShape a sh:NodeShape ;
 
 ## 9. How-to
 
-**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Version` with an identity
+**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Versioned` with an identity
 and a governance state, joined by `wrd:directlyComprises` and ordered by rank key. Give each element
 its inclusion mode. For alternatives, add a `wrd:VariationSlot` carrying the shared number, with its
 variants under `wrd:hasVariant`. For a conditional part, give it `wrd:includedWhen` an admission
@@ -1601,7 +1604,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b, the ADR-A112 addendum "references by
   identity"): `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` name a persistent
   identity, never a version, resolved within the wording holding the reference. Document objects and
-  external documents are editions, `fnd:Version`s. New: `wrd:reliesOnEdition` (static) and
+  external documents are editions, `fnd:Versioned`s. New: `wrd:reliesOnEdition` (static) and
   `wrd:reliesAsAmended` (ambulatory) from a wording to a document outside it, and `wrd:displayText`.
   Shapes 0.4.0 (breaking): a reference names an identity, display text only on a reference part,
   reliances, and law W8, which reports a reference that finds no version, or two, or no reliance.
@@ -1612,10 +1615,11 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
   candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
   wording holds. The same reports as before, from about half the work on the slot queries and W8.
-- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
   longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled
   wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes
   (changes meaning, since a reasoner no longer merges two records that share a value). The shapes follow, accepting a value
   in several assembled wordings (no effect). New example `shared-values.ttl`.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

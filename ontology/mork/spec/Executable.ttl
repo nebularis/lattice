@@ -12,8 +12,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # Executable semantics IR for MORK's SPARQL/SHACL/SWRL backend compilers
-# (ADR-A23, ADR-A24; a scoped subset of the design in
-# ontology/surface/docs/MorkEnhancements.md — see ontology/mork/docs/eligibility-executable-
+# (ADR-A23, ADR-A24; a scoped subset of the design they record — see ontology/mork/docs/eligibility-executable-
 # compiler.md for exactly what was carried over and what was deliberately
 # left out). Sits alongside ontology/mork/spec/Mork.ttl rather than inside it, for
 # the same reason Surface sits outside the substrate dependency order
@@ -34,10 +33,10 @@
 
 <https://www.nebularis.org/neuro-semantic/lattice/executable>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.19.0> ;
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.20.0> ;
 	owl:imports <http://www.nebularis.org/ontologies/Mork> ,
 		<http://www.w3.org/ns/prov-o-20130430> ,
-		<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+		<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
 
 #################################################################
 #    Classes
@@ -58,6 +57,10 @@
 :IntervalContainmentPlan a owl:Class ;
 	rdfs:subClassOf :ConditionPlan ;
 	rdfs:comment "A condition plan that evaluates whether a candidate range is contained by some member of a required range set (elg:IntervalContainment)." .
+
+:SetComparisonPlan a owl:Class ;
+	rdfs:subClassOf :ConditionPlan ;
+	rdfs:comment "A condition plan that relates the values one evidence binding reads from a subject to the values another reads from the same subject, by subset, intersection or disjointness (elg:SetComparison, elg:L18)." .
 
 :ConceptMatchPlan a owl:Class ;
 	rdfs:subClassOf :ConditionPlan ;
@@ -106,7 +109,10 @@
 	rdfs:comment "Under hierarchical match, the candidate stands strictly above an excluded concept (elg:L11)." .
 
 :NoHierarchy a :Diagnostic ;
-	rdfs:comment "Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+	rdfs:comment "Under hierarchical match, no member of the resolved scheme has a link of the condition's hierarchy relation to another member, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+
+:NoApplicableBinding a :Diagnostic ;
+	rdfs:comment "The condition's scheme contract has bindings, and none applies at the resolution time or in the active scopes, with no bound scheme as a fallback, so there is no scheme to decide the candidate against (ADR-A85, elg:L9)." .
 
 :ValueSpaceMismatch a :Diagnostic ;
 	rdfs:comment "The value an evidence binding reaches is not read on the condition's value space." .
@@ -230,6 +236,7 @@
 
 :ConditionPlan owl:disjointWith :ProfilePlan .
 :IntervalContainmentPlan owl:disjointWith :ConceptMatchPlan .
+:SetComparisonPlan owl:disjointWith :IntervalContainmentPlan, :ConceptMatchPlan .
 :SparqlArtefact owl:disjointWith :ShaclArtefact, :SwrlArtefact .
 :ShaclArtefact owl:disjointWith :SwrlArtefact .
 :OwlArtefact owl:disjointWith :SparqlArtefact, :ShaclArtefact, :SwrlArtefact .

@@ -4,7 +4,7 @@
 
 **Unit ID:** `ledger`
 **Status:** 🚧 LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
-**Last updated:** 2026-10-28
+**Last updated:** 2026-10-29
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/ledger-lg-0.md), [LG-1](../validation/ledger-lg-1.md)
 
@@ -27,6 +27,8 @@ Since then the work has been design rather than build, and it has answered the w
 **Measured** in [ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) and [ledger-store-comparison](../../../benchmark/ledger-store-comparison/README.md), with CAP-84 and CAP-85 ratified and reviewed in [the benchmark review](../review/ledger-benchmarks-cap-84-cap-85-review.md). The partition removes the scan floor and the read goes flat, 0.40 to 0.54 ms over a hundredfold history where one graph grows to 217.53 ms (MS-Q1 a). The shape replicates on Jena TDB2, so it is a property of naming the graphs rather than of one engine. The partition can be fine: 13,082 graphs with no read ceiling, so **storage bounds the partition, not the engine** (MS-Q9 a).
 
 **One measured result runs against the design and is unexplained.** On TDB2 the partition makes writing cost 1.32 s against 0.63 s at 20,000 events, where on Oxigraph the two were within noise. Checkpoints are most of the extra quads. Anything write-heavy leaning on the partition should measure this first.
+
+**Merged main at `0fb8170b`, release 0.20.0, on 2026-10-29.** Two of the ledger's rows moved first, since main's rows of the same number are earlier (ADR-A133 addendum). STD-279 became STD-294 and TD-94 became TD-126. Four of main's rows moved the other way, since the ledger's are the earlier ones, STD-276 to STD-278 of 2026-10-27 10:53 against the computable contract substrate's of 16:34, and TD-93 of 11:23 against 16:34. Main's "name the deferral", "facts, meaning and findings apart" and "a place for implied terms" became STD-295 to STD-297, with their citations in ADR-A145, the substrate's plan and status, TD-100 and `test_extract.py`, and main's "the technical debt register carries no facets" became TD-129. The knowledge index code was taken from main whole, which carries the section mechanism this branch built as decision 29 of ADR-A134, so the branch's ADR-A134 addendum of 2026-10-27 was dropped and its measurement is recorded here instead, 430 numbered items and 68 addenda gave 498 sections, and ADR-A122 came back at 0.82 pointing at its decision 8 where before it was not returned. TD-92 was paid on main by ADR-A145, so its row and this branch's citation of it in the discovery record are gone. The three guidance bullets this branch added to `AGENTS.md`, on reading output in full, asking the index before searching, and asking for the reason, were re-applied over main's text. `tools/knowledge/identifier-exceptions.txt` no longer lists STD-280.
 
 ## What is open
 

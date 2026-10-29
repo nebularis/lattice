@@ -109,7 +109,7 @@ Phase 2, the model, 2026-10-04:
   - §12 and the B4 finding below.
   - The default in `ins:arisesOn`'s comment: a relation with no arising trigger has arisen once
     its instrument takes effect. C6's relations read that way, but no decision states it.
-  - `ins:Regime ⊑ bhv:StateSpace ⊑ fnd:Version`, so a regime is a Foundation version through
+  - `ins:Regime ⊑ bhv:StateSpace ⊑ fnd:Versioned`, so a regime is a Foundation version through
     Behaviour, while ADR-A104 decision 2 says only `ins:Instrument` is a version in this layer.
     Nothing breaks: `ins:Template` is disjoint only with `ins:Instrument`, and every example is
     consistent. What a new clause version does to a regime's identity, and to the occupancies of

@@ -58,9 +58,9 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Word
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> .
 ```
 
 ## 3. How to Read This Document
@@ -718,7 +718,7 @@ qnt:ValueSpace a owl:Class ;
     rdfs:comment "A governed declaration of a space in which values may be represented, ordered, bounded, compared, and used by declared operations." ;
     fnd:utility "Declare a ValueSpace whenever values need a stated home — how they're ordered, whether they require units, and which operations are valid. Set densityKind so range-set normalisation knows what 'adjacent' means for this space, and cycleLength if the space is cyclically ordered." ;
     rdfs:subClassOf
-        fnd:Version ,
+        fnd:Versioned ,
         fnd:Governable ,
         [ a owl:Restriction ; owl:onProperty qnt:spaceKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:orderKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -761,7 +761,6 @@ cardinality, which an open world reads as a number not yet known, and the layer 
 quantity with its number for each instance. Where the value comes from a defined word, the chain of
 words and variables must not loop back to where it started: such a loop is a violation, which
 Instrument reports hop by hop (Instrument README §18.4).
-
 
 ### `qnt:OrdinalValue`
 
@@ -947,7 +946,7 @@ qnt:UnitContract a owl:Class ;
     rdfs:comment "A declaration governing whether values in a ValueSpace require units, which unit family applies, and how conversion, precision, and rounding are governed." ;
     fnd:utility "Declare whether a ValueSpace requires units, which unit family is permitted, and which unit is canonical. Set precisionPolicy and roundingPolicy where a comparison's exactness depends on them — the substrate ships no unit, precision, or rounding individuals." ;
     rdfs:subClassOf
-        fnd:Version ,
+        fnd:Versioned ,
         [ a owl:Restriction ; owl:onProperty qnt:requiresUnit ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
         [ a owl:Restriction ; owl:onProperty qnt:unitFamily ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
 ```
@@ -968,7 +967,7 @@ qnt:UnitFamily a owl:Class ;
     fnd:utility "Use to group units a ValueSpace permits and whose conversion rules are declared together." .
 
 qnt:Conversion a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared transformation between two units in a UnitFamily." ;
     fnd:utility "State how a value in one unit becomes comparable with a value in another. Give it a conversionFactor for the linear case, or a conversionFunction for anything else — never leave the transformation itself undeclared. Contextual conversions additionally need a ConversionContext at evaluation time." ;
     rdfs:subClassOf
@@ -977,7 +976,7 @@ qnt:Conversion a owl:Class ;
         [ a owl:Restriction ; owl:onProperty qnt:conversionKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 qnt:ConversionFunction a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A registered, versioned, deterministic function transforming values between two units." ;
     fnd:utility "Register one of these when a conversion is not a simple factor — declare its signature and determinism claim, and attach conformance evidence via fnd:hasEvidence. Reference it from every Conversion that uses it, rather than restating the transformation per conversion." .
 ```
@@ -1037,7 +1036,7 @@ qnt:Calendar a owl:Class ;
 
 ```turtle-spec
 qnt:OperationCapability a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared permission and signature for applying one operation to values in specified ValueSpaces." ;
     fnd:utility "Declare which operations a ValueSpace permits, their operand spaces, and their result space. For Contains or Overlaps, also set rangeSemanticsKind and participatesInMeet — a consumer doing meet-based enumeration needs to know directly whether this capability is safe to use for it, not re-derive it from the operation kind." ;
     rdfs:subClassOf
@@ -1072,7 +1071,7 @@ qnt:OperationOperand a owl:Class ;
 
 ```turtle-spec
 qnt:Recurrence a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Governable ;
+    rdfs:subClassOf fnd:Versioned, fnd:Governable ;
     rdfs:comment "A governed declaration of a deterministic generator of canonically identified ranges over a compatible extent space." ;
     fnd:utility "Use for repeated periods. Declare an anchor, a period whose space is extent-compatible with the anchor's position space, a binContiguity and boundaryDerivation policy, and a binKeyStrategy — so independently executed processes identify the same generated bin. Set validRange if the recurrence has a bounded domain." ;
     rdfs:subClassOf
@@ -1104,7 +1103,7 @@ qnt:RecurrenceBin a owl:Class ;
 
 ```turtle-spec
 qnt:OrderingBasis a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declaration of deterministic ordering using an ordered sequence of components and an unresolved-order policy." ;
     fnd:utility "Use where a process must order occurrences deterministically and a single position can't establish it alone. Add one OrderingComponent per criterion, in priority order, and state what happens when an ordering value is unresolved." ;
     rdfs:subClassOf
@@ -1146,7 +1145,7 @@ qnt:Comparison a owl:Class ;
 
 ```turtle-spec
 qnt:OperationalProfile a owl:Class ;
-    rdfs:subClassOf fnd:Version ;
+    rdfs:subClassOf fnd:Versioned ;
     rdfs:comment "A declared implementation strategy and configuration under which a Quantification operation is evaluated." ;
     fnd:utility "Identifies the realisation strategy that produced a result — a SPARQL query set, SHACL package, reasoner configuration, materialisation job, external projection, or compiled evaluator — together with its version. Every persisted Comparison names one." .
 
@@ -1228,7 +1227,7 @@ qnt:spaceKey a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 qnt:spaceHash a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain qnt:ValueSpace ; rdfs:range xsd:string ;
-    rdfs:comment "The canonical semantic hash of a ValueSpace declaration." ;
+    rdfs:comment "The digest of a ValueSpace declaration's canonical content: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the space node and every triple reachable from it through qnt: properties, excluding qnt:spaceHash, fnd:hasIdentity, fnd:supersededBy and fnd:hasGovernanceState (the substrate's digest rule, Persistence section 5.6)." ;
     fnd:utility "Records the hash of the canonical, meaning-bearing content of a ValueSpace declaration — not a hash of arbitrary RDF serialisation." .
 
 qnt:onSpace a owl:ObjectProperty, owl:FunctionalProperty ;
@@ -1671,6 +1670,8 @@ qnt:Compare a qnt:OperationKind .
 qnt:Contains a qnt:OperationKind .
 qnt:Overlaps a qnt:OperationKind .
 qnt:Difference a qnt:OperationKind .
+qnt:TruncatedDifference a qnt:OperationKind ;
+    rdfs:comment "Difference floored at the space's zero lower bound, the depletion operation law Q8 names. On a space with no zero lower bound it is Difference." .
 qnt:Sum a qnt:OperationKind .
 qnt:Ratio a qnt:OperationKind .
 qnt:Minimum a qnt:OperationKind .
@@ -1774,6 +1775,7 @@ The role contract (ADR-A115), for context values and a proportion's base. It bin
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 qnt:ContextRoleContract a voc:SchemeContract ;
+    rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/quantification> ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;
@@ -1888,6 +1890,26 @@ flowchart TB
 
 Restructured into three registers, per §4's design decision — a discharge's evidence shape depends on which register its law belongs to.
 
+Every law below is an individual in `spec/quantification.ttl`, `qnt:Q1` to `qnt:Q14`, each with its `qnt:lawRegister`, so a `qnt:LawDischarge` names the law it discharges rather than inventing one. The semantic laws Q1 to Q8 have no discharge recorded yet (TD-116). Q13 is checked for proportion spaces by `qnt:ProportionNamesBaseRoleShape`, and Q8's depletion operation is `qnt:TruncatedDifference`.
+
+```turtle-spec
+qnt:Q1 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Order coherence: every declared order kind has defined comparison semantics, with any indeterminate cases explicit." .
+qnt:Q2 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Bound coherence: open and closed endpoints behave consistently under containment and intersection, including for cyclic ranges." .
+qnt:Q3 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Range-set canonical form: regenerating a range set's normal form from the same input twice produces the same result." .
+qnt:Q4a a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet soundness: a value contained by the meet of two ranges is contained by both." .
+qnt:Q4b a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Containment meet completeness: a value contained by both ranges is contained by their meet." .
+qnt:Q5 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Overlap is screening-only: a semantics satisfying only Q4a is ScreeningRangeSemantics and never participates in meet-based enumeration." .
+qnt:Q6 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Conversion coherence: exact and defined conversions preserve comparison semantics, contextual conversions only within the recorded context." .
+qnt:Q7 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Operation admissibility: an operation is evaluated only where a matching capability signature exists." .
+qnt:Q8 a qnt:Law ; qnt:lawRegister qnt:SemanticLaw ; rdfs:comment "Zero-bounded closure: a space declaring a zero lower bound and truncated subtraction remains non-negative under permitted depletion operations." .
+qnt:Q9 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Recurrence determinism: independent recomputation of the same declaration and inputs produces identical bin keys." .
+qnt:Q10 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Unresolved non-coercion: every indeterminate path produces the declared reason, never a definite value." .
+qnt:Q11 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Ordering determinism: an OrderingBasis with a total component sequence orders the same input set the same way, independently of storage or evaluation order." .
+qnt:Q12 a qnt:Law ; qnt:lawRegister qnt:StaticConstraint ; rdfs:comment "Additive sums: a Sum capability whose operands and result are all on one space is declared only where that space is Extensive." .
+qnt:Q13 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Sums of like values: a sum is evaluated only over values in one unit, after permitted conversion, and of one base where the space names a baseRole." .
+qnt:Q14 a qnt:Law ; qnt:lawRegister qnt:RuntimeConformance ; rdfs:comment "Month arithmetic: adding a month-denominated extent to a temporal position clamps the day to the last day of the target month." .
+```
+
 ### Semantic laws (`qnt:SemanticLaw`) — formal argument plus property tests
 
 | ID | Law | Consequence if violated |
@@ -1918,6 +1940,7 @@ Restructured into three registers, per §4's design decision — a discharge's e
 | **Q10** | Unresolved non-coercion — every indeterminate path (insufficient granularity, unresolved value, missing conversion context, incomparability) produces the declared reason, never a definite result invented to fill the gap. |
 | **Q11** | Ordering determinism — an OrderingBasis with a total component sequence produces the same order for the same input set and unresolved-order policy, independently of storage order or evaluation time. |
 | **Q13** | Sums of like values — a sum is evaluated only over values in one unit, after any conversion §9.6 permits with its context at the reference time, and of one base, where the space names a `baseRole`. Otherwise it is `Undetermined` with `ConversionContextAbsent` or `MixedBases`, never a total of unlike values (§9.9). |
+| **Q14** | Month arithmetic — adding a month-denominated extent to a temporal position clamps the day to the last day of the target month, as a monthly recurrence does for an anchor on the 31st (§6), so 31 January plus one month is the last day of February on every implementation, and two months the last day of March. |
 
 ### Gate prerequisites
 
@@ -2008,6 +2031,20 @@ Checked over the relevant union graph and stated operational profile. They do no
 @prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+qnt:ProportionNamesBaseRoleShape
+    a sh:NodeShape ;
+    sh:targetClass qnt:DerivedValueSpace ;
+    sh:sparql [
+        sh:message "A proportion space, whose numerator and denominator are one space, names its baseRole, or shares of different wholes add silently (law Q13)." ;
+        sh:select """
+            PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+            SELECT $this WHERE {
+                $this qnt:numeratorSpace ?space ; qnt:denominatorSpace ?space .
+                FILTER NOT EXISTS { $this qnt:baseRole ?role }
+            }
+        """
+    ] .
 
 qnt:RangeShape
     a sh:NodeShape ;
@@ -2167,9 +2204,9 @@ never names a class of a layer above it. Each consumer decides what its ranges a
 
 ### Foundation
 
-Quantification uses `fnd:Version` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
+Quantification uses `fnd:Versioned` for declarations whose meaning changes over time, `fnd:Governable` for declarations needing review before operational use, `fnd:Evidenced` for unresolved values, conversion contexts, comparisons, conversion functions, and law discharges, and `fnd:TemporallyScoped` for conversion contexts.
 
-**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which this document's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. A content-hash contract is not part of it: Surface's read-set hashes remain the only implemented one. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
+**Foundation provides** `fnd:DerivedArtefact`, `fnd:DerivationRun` and `fnd:DerivationKind` since ADR-A92, which the layer's derived records (`RecurrenceBin`, materialised range sets, projection records) can subclass. The content-hash contract is the substrate's canonicalisation (the substrate's digest rule, Persistence section 5.6), and `qnt:spaceHash` names its content triples. Foundation also needs ordered-collection support or an equivalent canonical-ordering convention, and temporal scoping capable of representing a position known only to a declared granularity.
 
 ### Vocabulary
 
@@ -2270,7 +2307,8 @@ What changed from the earlier draft, and why — kept here rather than only in a
 
 ## 17. Release Notes
 
-- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
+- **0.20.0**.
+  - may invalidate ([ADR-A143](../../docs/architecture/decisions/ADR-A143-one-canonicalisation.md)). The laws are individuals `qnt:Q1` to `qnt:Q14`, `qnt:TruncatedDifference` is Q8's depletion operation, `qnt:ProportionNamesBaseRoleShape` requires a proportion space to name its base role (Q13), Q14 states month arithmetic on positions, and `qnt:spaceHash` names its content and the substrate's digest rule. The empty `shapes/rules.ttl` and `shapes/structural.ttl` are gone.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** The shapes and projection directories no longer carry a `.version` of their own. No other change.
 - **0.8.0** (additive, CCS C9b2): `qnt:additivity`, with `qnt:Extensive` and `qnt:Intensive` in
@@ -2284,3 +2322,5 @@ What changed from the earlier draft, and why — kept here rather than only in a
   `qnt:upperOffsetBy` on `qnt:AnchorBinding`. Shapes 0.2.0 (additive): a context value's role and
   space, and an anchor binding's offsets in one form. This README became the literate source of
   the spec, vocab and shapes, with no change to their graphs. Every importer is re-pinned.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

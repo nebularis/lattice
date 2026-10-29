@@ -3,19 +3,22 @@
 
 """Which engine runs a compiled query's SPARQL (python-test-melting TM11).
 
-Every backend test calls :func:`run_query` in place of ``graph.query(text)``. **rdflib stays the
-default here**, unlike the skill's usual default (ADR-A125, Oxigraph): building this module's
-conformance task found a real divergence between the two engines on one of this suite's own
-generated queries (TSD-41), a record whose closure a deeply nested ``UNION``/``GROUP_CONCAT``
-aggregation drops on Oxigraph but keeps on rdflib. Flipping the default would turn a passing test
-into a failing one for a reason this unit does not fix, so `check:mork-compilers` keeps running on
-rdflib exactly as it always has, and `check:mork-compilers-conformance` is the one that runs
-Oxigraph, to keep the divergence visible rather than hidden. ``MORK_SPARQL_ENGINE`` names one of
-``REGISTRY``, read once at import, so each task sets it, since these tests are ``unittest.TestCase``
-methods with no per-test engine parametrisation.
+Every backend test calls :func:`run_query` in place of ``graph.query(text)``. Oxigraph is the
+default (ADR-A125, STD-153) since 2026-10-27, once the whole suite, the reasoner tests included,
+had passed on both engines (STD-274). Building this module's conformance task had found one real
+disagreement between the two engines on this suite's own generated queries (TSD-41): an aggregate
+over an expression that errors on some row of its group is an error on Oxigraph and a skipped row
+on rdflib, and the profile query no longer depends on it. `check:mork-compilers-conformance` runs
+rdflib, on demand and before a merge, to keep any further divergence visible. ``MORK_SPARQL_ENGINE``
+names one of ``REGISTRY``, read once at import, so each task sets it, since these tests are
+``unittest.TestCase`` methods with no per-test engine parametrisation. :func:`run_query` takes an
+``engine`` for a test of one engine's behaviour.
 
 On rdflib, :func:`run_query` returns ``graph.query(text)`` unchanged: every existing call site's
 ``row.question``-style attribute access already works, since rdflib's own result rows support it.
+
+On Jena ARQ (a conformance engine only, never a default), the graph is loaded into a disposable dataset of the test kit
+behind ``tools/testing/jena`` and the rows come back as rdflib terms through :func:`_run_jena`.
 
 On Oxigraph, the graph's triples are loaded once into a disposable in-memory store, queried through
 ``pyoxigraph`` directly, and each solution's pyoxigraph terms are converted back to the matching
@@ -32,8 +35,8 @@ import pyoxigraph as ox
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
-REGISTRY = ("rdflib", "oxigraph")
-DEFAULT = "rdflib"
+REGISTRY = ("rdflib", "oxigraph", "jena")
+DEFAULT = "oxigraph"
 
 
 def _selected() -> str:
@@ -87,11 +90,28 @@ class _Row:
         return {name: value for name, value in self._bindings.items() if value is not None}
 
 
-def run_query(graph: Graph, text: str) -> list:
-    """``text`` run against ``graph`` on :data:`ENGINE`, as a list of rows with rdflib terms,
-    readable the same way whichever engine ran it."""
-    if ENGINE == "rdflib":
+def _run_jena(graph: Graph, text: str) -> list:
+    """The same query on Apache Jena ARQ through ``lattice_testing_jena`` (ADR-A125), which already speaks rdflib terms. The
+    import is here so the other engines need neither the package nor a JVM."""
+    from lattice_testing_jena import JenaStore
+
+    with JenaStore() as store:
+        store.load(graph.serialize(format="nt"))
+        variables, solutions = store.solutions(text)
+    return [_Row(variables, [solution.get(name) for name in variables]) for solution in solutions]
+
+
+def run_query(graph: Graph, text: str, engine: str | None = None) -> list:
+    """``text`` run against ``graph`` on ``engine``, :data:`ENGINE` when none is named, as a list of
+    rows with rdflib terms, readable the same way whichever engine ran it. A test of one engine's
+    own behaviour names it, so it holds under either task (STD-153)."""
+    engine = engine or ENGINE
+    if engine not in REGISTRY:
+        raise ValueError(f"{engine!r} is not one of the engines we have, {REGISTRY}")
+    if engine == "rdflib":
         return list(graph.query(text))
+    if engine == "jena":
+        return _run_jena(graph, text)
     store = ox.Store()
     store.load(input=graph.serialize(format="nt").encode("utf-8"), format=ox.RdfFormat.N_TRIPLES)
     solutions = store.query(text)

@@ -580,11 +580,12 @@ def test_c5_new_versions_have_release_rows() -> None:
 REUSED = Namespace("https://example.org/lattice/wording/reused-clause/")
 INSTRUMENT_EXAMPLES = ROOT / "ontology" / "instrument" / "examples"
 MODEL_FILES = [ROOT / "ontology" / p for p in (
-    "foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+    "foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
     "eligibility/spec/eligibility.ttl", "wording/spec/wording.ttl", "wording/vocab/wording-vocab.ttl")]
 SHAPE_FILES = [ROOT / "ontology" / layer / "shapes" / f"{kind}.ttl"
                for layer in ("foundation", "vocabulary", "quantification", "eligibility", "wording")
-               for kind in ("structural", "constraints")]
+               for kind in ("structural", "constraints")
+               if (ROOT / "ontology" / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification ships no empty shapes file (TD-110)
 
 
 def _c8b_violations(data: Graph) -> list[tuple[str, str]]:
@@ -614,7 +615,7 @@ def test_c8b_01_spec_version_ranges_and_display_text() -> None:
     assert spec.value(WRD.reliesOnEdition, RDFS.range) == WRD.LinkedDocument
     assert (WRD.displayText, RDF.type, OWL.DatatypeProperty) in spec
     for c in (WRD.DocumentObject, WRD.ExternalDocument):
-        assert (c, RDFS.subClassOf, FND.Version) in spec, c
+        assert (c, RDFS.subClassOf, FND.Versioned) in spec, c
 
 
 @pytest.mark.parametrize("path", sorted((LAYER / "examples").glob("*.ttl")) + [

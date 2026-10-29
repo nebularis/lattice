@@ -106,7 +106,7 @@ time, and every file it left alone was left alone).
   `owl:versionIRI` is now that document's sole authoritative version signal;
   its `owl:priorVersion` was updated to point at `0.1.1` (its immediate
   predecessor) rather than removed.
-- **`applied/insurance/contract.ttl`'s namespace family** (`neuro-semantic/insurance/...`,
+- **`applied/insurance/contract.ttl`'s namespace family** (`neuro-semantic/lattice/insurance/...`,
   outside `lattice/`) was left exactly as it was, per the plan's explicit
   non-coverage — only its version number and its two disagreeing version
   signals were touched.

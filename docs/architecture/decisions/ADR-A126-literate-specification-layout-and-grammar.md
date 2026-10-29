@@ -21,7 +21,7 @@ A layer's `README.md` is its authoritative specification, and its Turtle is extr
 document order. Three problems have grown with the layers.
 
 - **Facts are written more than once, and the copies drift.** A term's Definition and Utility are written
-  in prose and again as `rdfs:comment` and `fnd:utility` strings in its block, and for `fnd:Version` the two
+  in prose and again as `rdfs:comment` and `fnd:utility` strings in its block, and for `fnd:Versioned` the two
   already read differently. Vocabulary states `voc:ConceptScheme`'s superclass `skos:ConceptScheme` in an
   alignment block, in a Utility paragraph and in an axiom index row, and not in the class's own block.
 - **Practice differs by layer.** READMEs order and name their sections differently. Instrument checks 91
@@ -131,7 +131,7 @@ state.
 
 ## Addendum 2026-10-21 (accepted 2026-10-21)
 
-Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
+**Narrows decisions 3, 6, 7 and 8.** Persistence is the first module whose class diagram is too large to read, about 15,000 px wide, and it
 needed an individual stated across two places. Three changes follow. None alters a generated file of a module
 that does not use them.
 
@@ -151,6 +151,10 @@ that does not use them.
    hold. The extractor already accepted this, and the conventions document now says so.
 
 Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are unchanged.
+
+## Addendum 2026-10-29 (proposed 2026-10-29)
+
+Rule 11 is amended. Every release in which the layer changed has an entry, not every released version, since the release register records which documents each release holds. The entry's form is the versioning policy's: one bullet per release, newest first, one sub-bullet per change opening with its ADR-A129 class, and `Unreleased` for a change whose number is not yet assigned. Two units had written pending notes as "Next release", a phrase that in English names the release after the current one, in two styles and in two places in one list, which the 0.20.0 cut made visible.
 
 ## Provenance
 

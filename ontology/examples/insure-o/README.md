@@ -18,14 +18,7 @@ The package exercises the shared substrate across:
 
 ## Explicit exclusions
 
-This package explicitly excludes:
-
-- Risk Capital Vehicles / Tower constructs
-- ContractTowerBinding and tower linkage mechanics
-- Claims-handling / CHO extension ideas
-- CAT modelling
-- Negotiation, procurement, and quotation workflows
-- Named source-product constructs or acronyms from the source estate
+This package excludes constructs the public substrate does not define.
 
 ## Namespace
 

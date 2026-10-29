@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- NB: This module has been produced using GenAI -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.nebularis.lattice.benchmark</groupId>
+  <artifactId>persistence-graph-naming-cost-jvm</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+  <name>Graph naming cost on Jena and RDF4J</name>
+  <description>What a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace, cost on Jena and RDF4J (ADR-A124, TSD-42).</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jena.version>5.1.0</jena.version>
+    <rdf4j.version>6.1.0</rdf4j.version>
+    <graphnaming.heap>4g</graphnaming.heap>
+    <graphnaming.operations>../persistence-graph-naming-cost/operations.json</graphnaming.operations>
+    <graphnaming.report>report.md</graphnaming.report>
+    <graphnaming.max>1000000</graphnaming.max>
+    <graphnaming.quick>0</graphnaming.quick>
+    <exec.mainClass>org.nebularis.lattice.benchmark.graphnaming.GraphNamingCost</exec.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb2</artifactId>
+      <version>${jena.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.rdf4j</groupId>
+      <artifactId>rdf4j-repository-sail</artifactId>
+      <version>${rdf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.rdf4j</groupId>
+      <artifactId>rdf4j-sail-memory</artifactId>
+      <version>${rdf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.rdf4j</groupId>
+      <artifactId>rdf4j-queryparser-sparql</artifactId>
+      <version>${rdf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>2.0.16</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Xmx512m</argument>
+            <argument>-Dgraphnaming.heap=${graphnaming.heap}</argument>
+            <argument>-Dgraphnaming.operations=${graphnaming.operations}</argument>
+            <argument>-Dgraphnaming.report=${graphnaming.report}</argument>
+            <argument>-Dgraphnaming.max=${graphnaming.max}</argument>
+            <argument>-Dgraphnaming.quick=${graphnaming.quick}</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>${exec.mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

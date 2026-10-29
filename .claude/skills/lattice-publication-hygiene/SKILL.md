@@ -5,7 +5,7 @@ description: What may and may not be published from LATTICE and projects built o
 
 # Publication hygiene
 
-Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. This skill's tasks span the activities documentation, licensing-and-ip, secrets-management and privacy-engineering, with the qualities confidentiality and privacy, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities documentation, licensing-and-ip, secrets-management and privacy-engineering, with the qualities confidentiality and privacy, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 LATTICE's repository is public, and so is everything it publishes. Anything committed stays in its
 history, so the time to catch a problem is before the commit.
@@ -44,6 +44,7 @@ section (ADR-A127 decision 4, ADR-A126 decision 11).
 - **Say what instead.** State the fact the identifier stood for. A term not yet specified is "not yet
   specified". A rule decided in an ADR cites the ADR. A modelling choice is stated as the choice, with
   its reason. A release note says what changed, never which slice changed it.
+- **A migrated README cites only published decisions** (ADR-A127). The published-decisions check reports such a citation in a README not yet migrated and fails one in a README migrated to the ADR-A126 layout, which blocks a merge into `main`. On a branch a release note may cite the Proposed decision its change rests on, and before the merge the maintainer accepts that decision, or the note cites the published text that states the rule instead (PDD-16).
 - **Working documents keep them.** Sketches, plans, status records, review requests, Validation Packs,
   the developer index, commit messages and agent memory use delivery identifiers freely, since that is
   what they are for.

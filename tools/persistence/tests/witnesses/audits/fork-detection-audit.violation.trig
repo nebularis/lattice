@@ -3,7 +3,7 @@
 # Witness for fork-detection-audit. Two writers won a CAS from one version, so
 # two txn claims name the same revision. Graph IRIs are the compiler's own
 # (urn:g:txn for the baseline example), so a change to them fails this witness.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:txn> {
   <urn:txn:a> pat:rev <urn:rev:1> .

@@ -8,9 +8,8 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-        <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> .
 
 pty:Actor a owl:Class ;
     rdfs:comment "A real-world party — a person, an organisation, or any other agent capable of occupying a role." ;
@@ -21,9 +20,9 @@ pty:Role a owl:Class ;
     fnd:utility "A capacity that a RoleOccupancy is filling, independent of which actor fills it. Use role individuals such as Obligor, Obligee, Accountable, Performing, or Guarantor to type occupancies appropriately." .
 
 pty:RoleOccupancy a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (Foundation section 4), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -31,7 +30,7 @@ pty:RoleOccupancy a owl:Class ;
     ] .
 
 pty:ParticipationGroup a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
     fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [

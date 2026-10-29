@@ -10,8 +10,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/vocabulary> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ;
-    owl:imports <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ;
+    owl:imports <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ;
     dct:description """Vocabulary provides a governed mechanism by which external, domain-specific concept schemes get bound into every other layer's concept-valued properties without those layers' own specifications ever naming a domain concept directly.
 
 vocab/ folders elsewhere in this repository hold small, mechanism-intrinsic enumerations (trigger kind, role type). Actual business vocabularies — product codes, jurisdiction lists, currency schemes, etc — are supplied entirely by whoever builds on LATTICE, and never appear in this repository at all.
@@ -19,13 +19,18 @@ vocab/ folders elsewhere in this repository hold small, mechanism-intrinsic enum
 Vocabulary builds on W3C SKOS rather than reinventing concept-scheme modelling, adding governed versioning of a scheme as a whole, a structural contract mechanism for binding a property to a scheme without either side knowing about the other in advance, and scoped, time-bounded bindings for where the scheme in use differs between contexts or changes over time.
 
 What Vocabulary does not do is resolve a fuzzy label to a concept - it defines what a valid binding looks like structurally, but has nothing to say about how one was arrived at.""" ;
-    dct:creator <https://github.com/hyperthunk> .
+    dct:creator <https://github.com/nebularis> .
 
 dct:creator a owl:AnnotationProperty .
 
 dct:description a owl:AnnotationProperty .
 
 skos:Concept owl:disjointWith voc:ConceptScheme .
+
+voc:BindingClosure a owl:Class ;
+    rdfs:comment "The fact that a scheme binding ended at an instant." ;
+    fnd:utility "Write one to end a binding instead of editing its validity. Set closesBinding to the binding and closedAt to the zoned instant it ended, which is excluded from the binding's validity. Resolution reads a binding's earliest closure as the end of its validity, so a binding is never edited and a past resolution stays reproducible (Foundation section 4)." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:closedAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty voc:closesBinding ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:Evidenced .
 
 voc:BindingScope a owl:Class ;
     rdfs:comment "A declared context within which a scheme binding applies." ;
@@ -34,17 +39,17 @@ voc:BindingScope a owl:Class ;
 voc:ConceptScheme a owl:Class ;
     rdfs:comment "A published, identified, governed collection of concepts." ;
     fnd:utility "A published, versioned, governed collection of concepts. Use fnd:hasIdentity and fnd:supersededBy to track successive editions of the same scheme over time, and fnd:hasGovernanceState to record its review status." ;
-    rdfs:subClassOf fnd:Governable, fnd:Version, skos:ConceptScheme .
+    rdfs:subClassOf fnd:Governable, fnd:Versioned, skos:ConceptScheme .
 
 voc:SchemeBinding a owl:Class ;
     rdfs:comment "A statement that a scheme contract is satisfied by a specific concept scheme, within zero or more named scopes, for a stated period." ;
-    fnd:utility "Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, end this binding's validity and add a new one rather than editing it." ;
+    fnd:utility "Author one of these when a contract's scheme differs between contexts or must change over time. Set forContract, bindsScheme (a specific scheme edition), bindingScope for each scope it applies within (none means everywhere), and a temporal scope. To change the scheme in use, write a voc:BindingClosure naming this binding and the instant it ended, and a new binding, rather than editing it. A binding is never edited (Foundation section 4)." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:bindsScheme ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty voc:forContract ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:TemporallyScoped .
 
 voc:SchemeContract a owl:Class ;
     rdfs:comment "A declared requirement binding a property, defined in some other layer, to concepts drawn from a conformant scheme." ;
     fnd:utility "Author one of these when a property should take concept values but you don't yet know which scheme those concepts will come from. Set constrainsProperty to name the property, requiresGovernanceState if needed, and leave boundScheme empty until an implementation supplies one." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:constrainsProperty ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], fnd:Governable, fnd:Version .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty voc:constrainsProperty ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], fnd:Governable, fnd:Versioned .
 
 voc:bindingScope a owl:ObjectProperty ;
     rdfs:comment "A scope within which a scheme binding applies." ;
@@ -63,6 +68,16 @@ voc:boundScheme a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "Points a SchemeContract at the concrete scheme that satisfies it, once one has been chosen. Leave this unset until an implementation supplies a scheme." ;
     rdfs:domain voc:SchemeContract ;
     rdfs:range voc:ConceptScheme .
+
+voc:closedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The zoned instant at which a binding ended, excluded from its validity." ;
+    rdfs:domain voc:BindingClosure ;
+    rdfs:range xsd:dateTime .
+
+voc:closesBinding a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The binding a closure ends." ;
+    rdfs:domain voc:BindingClosure ;
+    rdfs:range voc:SchemeBinding .
 
 voc:constrainsProperty a owl:ObjectProperty ;
     rdfs:comment "The property, declared in another layer, that this contract governs." ;
