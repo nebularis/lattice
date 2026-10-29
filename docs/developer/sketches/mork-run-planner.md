@@ -75,7 +75,7 @@ Measured 2026-10-29 on the maintainer's laptop, with the catalogue fixture's map
 
 The peak grows by about 35 KB a record, about 1.9 KB for each source or output triple. About 15 KB a record is the rdflib graph the source arrives in, before the run starts. The rest is the copies the runner makes: the source serialised and canonicalised to skolemise it, the store, each mapping's output graph, the set of every triple written and the rdflib graph returned. Time grows by about 0.38 ms a record.
 
-With options A and B built, the 32,000-record run peaked at 1,102 MB in memory and at 955 MB streamed to a sink, in 6.8 s. The run's own share fell from about 740 MB to 426 MB, and the source's rdflib graph is now the largest part, which the direct load below removes.
+With options A and B built and the source loaded by Oxigraph from its file, with no rdflib graph on the way, benchmark `check:mork-rdf-run-cost` measured, on 2026-10-29: 10,000 records peaking at 425 MB in memory and 339 MB streamed, and 100,000 records at 1,447 MB and 1,514 MB, in 43 s and 23 s. At 100,000 records the peak is set before any query runs, by skolemising: a plain load of the same file peaks at 558 MB, and canonicalising its 100,000 blank nodes with RDFC-1.0 at 1,699 MB. So the 10⁶ tier needs about 15 GB, not the 35 GB the first estimate gave, and the next lever is option G.
 
 Before them, extrapolated linearly, which the checks' `GROUP BY` may not be:
 
@@ -96,6 +96,7 @@ Each is independent, and they are listed cheapest first. The figures are estimat
 | C. Share a scan | RDFizer's grouping by source, Morph-KGC's partitions | evaluate a chain of frames once for every construct that shares it (§6.1) | unchanged | the chain's work is done once, not once per construct | to measure |
 | D. Hash a lexical lookup | RDFizer's PJTT | for a `mork:LexicalComparison` lookup, write each reference value's `STR()` to a key once, then join on the key | one key per reference value | from N × M comparisons to N + M, for example 2.5 million to 10,250 for 10,000 values and 250 codes | later, if a lexical lookup over a large scheme is real |
 | E. Partition the source | Morph-KGC, `rml-pipeline`'s chunks | run stratum 0 per partition of the root classes, the partitions independent | bounded by the largest partition | parallel across partitions | on the roadmap, after PDD-06 |
+| G. Skolemise without full canonicalisation | none of them, since RML engines never skolemise | label a blank node from its position, the named node and predicates that reach it and its own triples, and fall back to RDFC-1.0 only where two blank nodes cannot be told apart, such as two authors both named Anon | about 1.1 GB less at 10⁵ blank nodes | less, canonicalisation being the dearest step | to design. It must give the same labels as RDFC-1.0 does or be recorded as a decision, since labels are identities |
 | F. An engine of our own | `rml-pipeline` | compile the IR of PDD-06 to a physical plan executed in process, with interned ids and cache-sized tuples | the lowest | the highest, and a second evaluator to keep equal to the SPARQL one | on the roadmap, after PDD-06 |
 
 A further saving needs no option. A source given as N-Triples can be loaded into the store directly, skipping the rdflib graph that holds about 40% of the peak today.

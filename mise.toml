@@ -296,6 +296,11 @@ run = "python benchmark/ledger-posting-cost/sweep.py"
 description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
 run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"
 
+[tasks."check:mork-rdf-run-cost"]
+description = "Measure a MORK run's peak memory and time on the catalogue mapping over 10,000 and 100,000 synthetic records, kept in memory and streamed to a sink (ADR-A124, MP-Q1). Run on demand, not part of check. Fails on a wrong count, never on time or memory. MORK_RUN_COST_QUICK=1 runs 2,000 records, MORK_RUN_COST_LARGE=1 adds 1,000,000, which needs about 15 GB"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m pytest benchmark/mork-rdf-run-cost -q -p no:cacheprovider && python benchmark/mork-rdf-run-cost/check.py"
+
 [tasks."check:ledger-posting-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph. Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"

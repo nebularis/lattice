@@ -390,7 +390,9 @@ The declared entities are the coverage list. A node of a class the mapping graph
 
 `run(compiled, source, reference)` runs the queries on Oxigraph, the repository's default engine for generated SPARQL (STD-153):
 
-1. **Skolemise.** The source is canonicalised with RDFC-1.0 and each blank node becomes `urn:mork-rdf:skolem:` and its canonical label. So `STR()` of every focus node is defined, and the same source always gives the same IRIs, whatever order its triples arrive in. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
+The source and the reference data may each be an Oxigraph dataset, an RDF file Oxigraph parses by its extension, or an rdflib graph, which is serialised once to reach Oxigraph and is the slowest. Oxigraph holds the triples from then on.
+
+1. **Skolemise.** A source with a blank node is canonicalised with RDFC-1.0 and each blank node becomes `urn:mork-rdf:skolem:` and its canonical label. So `STR()` of every focus node is defined, and the same source always gives the same IRIs, whatever order its triples arrive in. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
 2. **Load.** The skolemised source goes in the default graph, and the reference graph in `urn:mork-rdf:reference`.
 3. **Run each stratum.** Stratum 0 holds every query that reads only the source and the reference graph, and stratum n+1 every query that reads what a stratum-n mapping made. Within a stratum each construct runs, and its triples are kept in a graph named by the mapping's IRI, added to the store once the stratum is done, so no query reads its own stratum's output. Each check runs in its mapping's stratum, and each closure collects its members.
 4. **Return.** The checks' rows as findings, and, when no sink was given, the instance triples and the T-Box triples with each closure's axiom.
@@ -407,7 +409,7 @@ A mapping's output enters the store only when a query of a later stratum reads i
 | `NTriplesSink(abox, tbox=None)` | writes N-Triples lines as they arrive, the T-Box to its own stream when one is given. Standard output keeps the runner's contract to a stream of lines, for a listener that publishes them to a broker |
 | any object with `write(query, triples)` and `close()` | whatever a deployment needs, for example a bounded queue to another process |
 
-On the catalogue's mapping over 32,000 synthetic records, the peak was 1,269 MB before outputs were released by count, 1,102 MB after, and 955 MB streamed to a sink, the run's time falling from 12.3 s to 6.8 s. Most of what remains is the rdflib graph the source arrives in.
+Benchmark `mise run check:mork-rdf-run-cost` measures a run's peak memory and time at 10,000 and 100,000 records. At 100,000 the peak is about 1.5 GB in either mode, set while the source's blank nodes are canonicalised, and streaming halves the time, from 43 s to 23 s.
 
 The queries are SPARQL 1.1 with nothing engine-specific. The tests run the same constructs on rdflib and compare (§16), and a deployment can run them in Fuseki with the same dataset layout.
 

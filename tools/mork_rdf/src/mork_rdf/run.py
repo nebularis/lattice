@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from typing import Iterable, Optional, Protocol, TextIO
+from pathlib import Path
+from typing import Iterable, Iterator, Optional, Protocol, TextIO, Union
 
 import pyoxigraph as ox
 from rdflib import Graph
@@ -68,25 +69,42 @@ class RunResult:
     tbox: Optional[Graph] = None   # the classes, properties and axioms the mappings create (README §7.6)
 
 
-def _quads(g: Graph, graph_name) -> list[ox.Quad]:
-    return [ox.Quad(t.subject, t.predicate, t.object, graph_name) for t in ox.parse(g.serialize(format="nt"), format=ox.RdfFormat.N_TRIPLES)]
+Source = Union[Graph, ox.Dataset, Path]
 
 
-def skolemise(g: Graph) -> list[ox.Triple]:
-    """The graph with each blank node replaced by an IRI from its RDFC-1.0 canonical label, so the same source always
-    gives the same IRIs, and a mapping can read a blank node's identity with STR()."""
-    dataset = ox.Dataset(ox.Quad(t.subject, t.predicate, t.object) for t in ox.parse(g.serialize(format="nt"), format=ox.RdfFormat.N_TRIPLES))
-    dataset.canonicalize(ox.CanonicalizationAlgorithm.RDFC_1_0)
+def _triples(source: Source) -> Iterator[ox.Triple]:
+    """The triples of a source given as an Oxigraph dataset, an RDF file Oxigraph parses by its extension, or an rdflib
+    graph, which is serialised once to reach Oxigraph and is the slowest of the three."""
+    if isinstance(source, ox.Dataset):
+        return (ox.Triple(q.subject, q.predicate, q.object) for q in source)
+    if isinstance(source, Path):
+        return (ox.Triple(q.subject, q.predicate, q.object) for q in ox.parse(path=str(source)))
+    return iter(ox.parse(source.serialize(format="nt"), format=ox.RdfFormat.N_TRIPLES))
+
+
+def _quads(source: Source, graph_name) -> Iterator[ox.Quad]:
+    return (ox.Quad(t.subject, t.predicate, t.object, graph_name) for t in _triples(source))
+
+
+def skolemise(source: Source) -> Iterable[ox.Triple]:
+    """The source with each blank node replaced by an IRI from its RDFC-1.0 canonical label, so the same source always
+    gives the same IRIs, and a mapping can read a blank node's identity with STR(). A source with no blank node is
+    already canonical, so it is not canonicalised."""
+    # Built straight from the parser, so the triples are held once, by Oxigraph, never as a list of Python objects.
+    dataset = ox.Dataset(ox.Quad(t.subject, t.predicate, t.object) for t in _triples(source))
+    if any(isinstance(q.subject, ox.BlankNode) or isinstance(q.object, ox.BlankNode) for q in dataset):
+        dataset.canonicalize(ox.CanonicalizationAlgorithm.RDFC_1_0)
 
     def term(t):
         return ox.NamedNode(SKOLEM + t.value) if isinstance(t, ox.BlankNode) else t
 
-    return [ox.Triple(term(q.subject), q.predicate, term(q.object)) for q in dataset]
+    return (ox.Triple(term(q.subject), q.predicate, term(q.object)) for q in dataset)
 
 
-def run(compiled: CompiledMapping, source: Graph, reference: Optional[Graph] = None, sink: Optional[Sink] = None) -> RunResult:
-    """Runs every query. With no sink the triples are kept in memory and returned. With a sink they go to it, and the
-    result holds only the findings."""
+def run(compiled: CompiledMapping, source: Source, reference: Optional[Source] = None, sink: Optional[Sink] = None) -> RunResult:
+    """Runs every query. The source and the reference data may each be an Oxigraph dataset, an RDF file or an rdflib
+    graph. With no sink the triples are kept in memory and returned. With a sink they go to it, and the result holds only
+    the findings."""
     store = ox.Store()
     store.extend(ox.Quad(t.subject, t.predicate, t.object, ox.DefaultGraph()) for t in skolemise(source))
     if reference is not None:
