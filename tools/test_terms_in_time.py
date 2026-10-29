@@ -137,7 +137,7 @@ def test_c7b_02_quantification_example_conforms() -> None:
     # Quantification's own model: with Instrument's vocab beside it, its role binding and Instrument's
     # would conflict on one contract (held design question HQ-4).
     data = _graph(QLAYER / "examples" / "context-anchor.ttl")
-    model = _graph(*[ONTOLOGY / p for p in LOWER[:4]])
+    model = _graph(*[ONTOLOGY / p for p in LOWER[:5]])  # Foundation and its vocabulary, Vocabulary, and Quantification and its vocabulary
     _, report, _ = validate(model + data, shacl_graph=EVERY_SHAPE, inference="none", advanced=True)
     assert not list(report.subjects(SH.resultSeverity, SH.Violation))
 
@@ -264,9 +264,9 @@ def test_c7b_17_nothing_still_imports_quantification_0_6_0() -> None:
 # ---- C7b-18, C7b-19: expiry, entry and implicit survival --------------------
 
 @pytest.mark.parametrize("add, remove, focus, message", [
-    ("tmpl:on-expiry-date ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue \"1\"^^xsd:decimal ; qnt:inUnit ex:day ] .",
-     (), "/on-expiry-date", "exactly one of a length"),
-    ("", ((LE["on-expiry-date"], INS.at, LE_EX["expiry-date"]),), "/on-expiry-date", "exactly one of a length"),
+    ("tmpl:expire-on-expiry-date ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue \"1\"^^xsd:decimal ; qnt:inUnit ex:day ] .",
+     (), "/expire-on-expiry-date", "exactly one of a length"),
+    ("", ((LE["expire-on-expiry-date"], INS.at, LE_EX["expiry-date"]),), "/expire-on-expiry-date", "exactly one of a length"),
     ("", ((LE["on-expired"], INS.ofState, LE["expired"]),), "/on-expired", "exactly one state"),
 ])
 def test_c7b_18_expiry_and_entry_shapes(add: str, remove: tuple, focus: str, message: str) -> None:

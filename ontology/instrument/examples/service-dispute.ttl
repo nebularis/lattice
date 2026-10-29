@@ -156,21 +156,21 @@ tmpl:disputed a bhv:State ;
 tmpl:dispute-over a bhv:State ;
     bhv:inStateSpace tmpl:dispute-regime .
 
-tmpl:on-dispute a ins:OnAct , bhv:TriggerDefinition ;
+tmpl:raise-dispute-on-dispute a ins:OnAct , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ExternalStimulus ;
     ins:activity ins-voc:Dispute ;                    # the same property a relation uses (C7a-Q2)
     ins:by ex:Provider .
-tmpl:on-settlement a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:settle-dispute-on-settlement a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:dispute-settled .
 
 tmpl:raise-dispute a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:undisputed ; bhv:toState tmpl:disputed ;
-    bhv:hasTrigger tmpl:on-dispute ;
+    bhv:hasTrigger tmpl:raise-dispute-on-dispute ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:settle-dispute a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:disputed ; bhv:toState tmpl:dispute-over ;
-    bhv:hasTrigger tmpl:on-settlement ;
+    bhv:hasTrigger tmpl:settle-dispute-on-settlement ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The agreement with Larkspur ============================================

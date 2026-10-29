@@ -198,21 +198,21 @@ tmpl:terminated a bhv:State ;
     bhv:inStateSpace tmpl:notice-regime ; ins:stateKind ins-voc:Terminated ;
     ins:ends ins-voc:TheInstrument .
 
-tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-notice-on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
-tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:notice-runs-out-on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
                 qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:hasTrigger tmpl:give-notice-on-notice-given ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:notice-runs-out a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-notice-expiry ;
+    bhv:hasTrigger tmpl:notice-runs-out-on-notice-expiry ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The licence for Quarry Analytics ========================================

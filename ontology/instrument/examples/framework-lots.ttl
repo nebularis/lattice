@@ -334,12 +334,12 @@ tmpl:lot-4-open a bhv:State ;
 tmpl:lot-4-withdrawn a bhv:State ;
     bhv:inStateSpace tmpl:lot-4-regime ; ins:stateKind ins-voc:Terminated ;
     ins:ends ex:lot-4-identity .                      # a section, not the instrument
-tmpl:on-withdrawal a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:withdraw-on-withdrawal a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:withdraw-lot-4 .
 tmpl:withdraw a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:lot-4-open ; bhv:toState tmpl:lot-4-withdrawn ;
-    bhv:hasTrigger tmpl:on-withdrawal ;
+    bhv:hasTrigger tmpl:withdraw-on-withdrawal ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # Placeholder: a scope stated, not yet evaluable (C13).

@@ -1880,13 +1880,13 @@ tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-notice-on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:hasTrigger tmpl:give-notice-on-notice-given ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 ```
 
@@ -1910,11 +1910,11 @@ tmpl:notice-regime a ins:Regime , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given ins:ofPower tmpl:end-on-notice .
+tmpl:give-notice-on-notice-given ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given .
+    bhv:hasTrigger tmpl:give-notice-on-notice-given .
 ```
 
 The axioms that make this work are on the Instrument classes and properties (§10, §11).

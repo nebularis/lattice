@@ -326,14 +326,7 @@ sequenceDiagram
 
 ### 5.4 The mechanism types
 
-Seven classes carry no properties of their own, and each is a closed set of named individuals (6.4), never
-an open class a reader could extend without a new decision. `elg:MatchStrategy`,
-`elg:WildcardSemantics` and `elg:CompositionOperation` are the three mechanisms of §5.1.
-`elg:OperationalProfile` is versioned (`fnd:Versioned`), since a deployment's profiles are subject to change
-control. The five reference profiles E1 to E5 are published terms, versioned by the layer's release (Foundation section 4). Each names one reference conformance profile that the differential
-test harness (`tools/reference/eligibility/`) checks a compiler backend against, one per mechanism
-combination worth testing in isolation. `elg:Law` and `elg:LawRegister` classify the laws by how each is
-discharged (§5.8).
+Seven classes carry no properties of their own, and each is a closed set of named individuals (6.4), never an open class a reader could extend without a new decision. `elg:MatchStrategy`, `elg:WildcardSemantics` and `elg:CompositionOperation` are the three mechanisms of §5.1. `elg:OperationalProfile` is versioned (`fnd:Versioned`), since a deployment's profiles are subject to change control. The five reference profiles E1 to E5 are published terms, versioned by the layer's release (Foundation section 4). Each names one reference conformance profile that the differential test harness (`tools/reference/eligibility/`) checks a compiler backend against, one per mechanism combination worth testing in isolation. `elg:Law` and `elg:LawRegister` classify the laws by how each is discharged (§5.8).
 
 `elg:WildcardSemantics`'s three individuals govern a `WildcardCondition`. `NoWildcard` rules it out,
 `SingleDimensionWildcard` lets the condition stand in for one dimension of a multi-dimension match, and

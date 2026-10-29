@@ -32,7 +32,7 @@
 # | Construct                                       | Where                                   |
 # |-------------------------------------------------|-----------------------------------------|
 # | renewal as an external self-transition          | tmpl:renew                              |
-# | expiry at the end of a period, chosen by a guard | tmpl:expire, tmpl:if-not-renewing      |
+# | expiry at the end of a period, chosen by a guard | tmpl:expire, tmpl:expire-if-not-renewing      |
 # | a notice window as a region of the period       | tmpl:window-region, tmpl:notice-open    |
 # | a power gated by the open part of the period    | tmpl:decline-renewal                    |
 # | ending as entering a state                      | tmpl:expired, ins:ends                  |
@@ -129,22 +129,26 @@ tmpl:expired a bhv:State ;
     bhv:inStateSpace tmpl:period-regime ; ins:stateKind ins-voc:Expired ;
     ins:ends ins-voc:TheInstrument .
 
-tmpl:on-year-end a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:renew-on-year-end a ins:OnExpiry , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:ScheduledTrigger ;
+    ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
+                qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:year ] .
+tmpl:expire-on-year-end a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
                 qnt:numericValue "1"^^xsd:decimal ; qnt:inUnit ex:year ] .
 
-tmpl:if-renewing a bhv:GuardDefinition ; bhv:excludesState tmpl:not-renewing .
-tmpl:if-not-renewing a bhv:GuardDefinition ; bhv:requiresState tmpl:not-renewing .
+tmpl:renew-if-renewing a bhv:GuardDefinition ; bhv:excludesState tmpl:not-renewing .
+tmpl:expire-if-not-renewing a bhv:GuardDefinition ; bhv:requiresState tmpl:not-renewing .
 
 tmpl:renew a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:current-period ; bhv:toState tmpl:current-period ;
     bhv:transitionType bhv:External ;                 # re-entered: the year and the window restart
-    bhv:hasTrigger tmpl:on-year-end ; bhv:hasGuard tmpl:if-renewing ;
+    bhv:hasTrigger tmpl:renew-on-year-end ; bhv:hasGuard tmpl:renew-if-renewing ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:current-period ; bhv:toState tmpl:expired ;
-    bhv:hasTrigger tmpl:on-year-end ; bhv:hasGuard tmpl:if-not-renewing ;
+    bhv:hasTrigger tmpl:expire-on-year-end ; bhv:hasGuard tmpl:expire-if-not-renewing ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # The notice window: a region of the current period, restarted on each renewal.
@@ -155,13 +159,13 @@ tmpl:window-region a bhv:StateSpace ;
 tmpl:notice-open a bhv:State ; bhv:inStateSpace tmpl:window-region .
 tmpl:notice-closed a bhv:State ; bhv:inStateSpace tmpl:window-region .
 
-tmpl:on-window-close a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:close-window-on-window-close a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ;
                 qnt:numericValue "6"^^xsd:decimal ; qnt:inUnit ex:month ] .
 tmpl:close-window a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:notice-open ; bhv:toState tmpl:notice-closed ;
-    bhv:hasTrigger tmpl:on-window-close ;
+    bhv:hasTrigger tmpl:close-window-on-window-close ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== Stated meaning: the election regime =====================================
@@ -174,12 +178,12 @@ tmpl:election-regime a ins:Regime , bhv:StateSpace , ins:Template ;
 tmpl:renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
 tmpl:not-renewing a bhv:State ; bhv:inStateSpace tmpl:election-regime .
 
-tmpl:on-non-renewal a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:elect-not-to-renew-on-non-renewal a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:decline-renewal .
 tmpl:elect-not-to-renew a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:renewing ; bhv:toState tmpl:not-renewing ;
-    bhv:hasTrigger tmpl:on-non-renewal ;
+    bhv:hasTrigger tmpl:elect-not-to-renew-on-non-renewal ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The agreement with Kittiwake ============================================

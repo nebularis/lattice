@@ -211,6 +211,12 @@ ex:approve-stated a ins:Power , ins:Template ;
     ins:holder ex:Reinsurer ; ins:counterparty ex:Reinsured ;
     ins:activity ins-voc:Approve .
 
+# Each role occupancy holds from before the first act in this example.
+ex:insurer-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:insured-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:reinsured-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:reinsurer-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+
 # Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
 ex:policy-wording-identity a fnd:PersistentIdentity .
 ex:reinsurance-wording-identity a fnd:PersistentIdentity .

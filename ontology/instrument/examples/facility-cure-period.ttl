@@ -29,7 +29,7 @@
 # | Construct                                       | Where                                   |
 # |-------------------------------------------------|-----------------------------------------|
 # | a regime entered and left on conditions         | ins:OnCondition, ex:leverage-exceeded, ex:leverage-ok |
-# | an expiry in a calendar unit (ADR-A94)          | tmpl:on-cure-expiry, ins:after, ex:business-day |
+# | an expiry in a calendar unit (ADR-A94)          | tmpl:enter-default-on-cure-expiry, ins:after, ex:business-day |
 # | a period tolled by another regime's state       | ins:tolledIn tmpl:affected               |
 # | a power gated by a state                        | ex:accelerate, ins:appliesInState tmpl:default |
 # | one condition read by an obligation and a trigger | ex:leverage-ok: what 7.1 maintains, and what ends the cure period |
@@ -186,13 +186,13 @@ tmpl:cure-period a bhv:State ;
 tmpl:default a bhv:State ;
     bhv:inStateSpace tmpl:default-regime ; ins:stateKind ins-voc:Default .
 
-tmpl:on-leverage-exceeded a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:enter-cure-period-on-leverage-exceeded a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:leverage-exceeded .
-tmpl:on-leverage-restored a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:cured-on-leverage-restored a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:leverage-ok .
-tmpl:on-cure-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:enter-default-on-cure-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:duration-space ;
                 qnt:numericValue "30"^^xsd:decimal ; qnt:inUnit ex:business-day ] ;
@@ -200,15 +200,15 @@ tmpl:on-cure-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
 
 tmpl:enter-cure-period a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:performing ; bhv:toState tmpl:cure-period ;
-    bhv:hasTrigger tmpl:on-leverage-exceeded ;
+    bhv:hasTrigger tmpl:enter-cure-period-on-leverage-exceeded ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:cured a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:cure-period ; bhv:toState tmpl:performing ;
-    bhv:hasTrigger tmpl:on-leverage-restored ;
+    bhv:hasTrigger tmpl:cured-on-leverage-restored ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:enter-default a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:cure-period ; bhv:toState tmpl:default ;
-    bhv:hasTrigger tmpl:on-cure-expiry ;
+    bhv:hasTrigger tmpl:enter-default-on-cure-expiry ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== Stated meaning: the force majeure regime ===============================
@@ -224,20 +224,20 @@ tmpl:unaffected a bhv:State ;
 tmpl:affected a bhv:State ;
     bhv:inStateSpace tmpl:force-majeure-regime ; ins:stateKind ins-voc:ForceMajeure .
 
-tmpl:on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-begins-on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-prevents .
-tmpl:on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-ends-on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-ended .
 
 tmpl:force-majeure-begins a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:unaffected ; bhv:toState tmpl:affected ;
-    bhv:hasTrigger tmpl:on-force-majeure ;
+    bhv:hasTrigger tmpl:force-majeure-begins-on-force-majeure ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:force-majeure-ends a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:affected ; bhv:toState tmpl:unaffected ;
-    bhv:hasTrigger tmpl:on-force-majeure-ended ;
+    bhv:hasTrigger tmpl:force-majeure-ends-on-force-majeure-ended ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The facility for Kestrel ===============================================

@@ -173,20 +173,20 @@ tmpl:in-force a bhv:State ;
 tmpl:suspended a bhv:State ;
     bhv:inStateSpace tmpl:suspension-regime ; ins:stateKind ins-voc:Suspended .
 
-tmpl:on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:suspend-deliveries-on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:suspend .
-tmpl:on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:resume-deliveries-on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:require-resumption .
 
 tmpl:suspend-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:suspended ;
-    bhv:hasTrigger tmpl:on-suspension ;
+    bhv:hasTrigger tmpl:suspend-deliveries-on-suspension ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:resume-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:suspended ; bhv:toState tmpl:in-force ;
-    bhv:hasTrigger tmpl:on-resumption ;
+    bhv:hasTrigger tmpl:resume-deliveries-on-resumption ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== Stated meaning: the force majeure regime ===============================
@@ -205,20 +205,20 @@ tmpl:unaffected a bhv:State ;
 tmpl:affected a bhv:State ;
     bhv:inStateSpace tmpl:force-majeure-regime ; ins:stateKind ins-voc:ForceMajeure .
 
-tmpl:on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-begins-on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-prevents .
-tmpl:on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-ends-on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-ended .
 
 tmpl:force-majeure-begins a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:unaffected ; bhv:toState tmpl:affected ;
-    bhv:hasTrigger tmpl:on-force-majeure ;
+    bhv:hasTrigger tmpl:force-majeure-begins-on-force-majeure ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:force-majeure-ends a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:affected ; bhv:toState tmpl:unaffected ;
-    bhv:hasTrigger tmpl:on-force-majeure-ended ;
+    bhv:hasTrigger tmpl:force-majeure-ends-on-force-majeure-ended ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The agreement between Brightwater and Halden ===========================

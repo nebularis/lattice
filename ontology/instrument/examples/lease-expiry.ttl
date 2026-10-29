@@ -24,7 +24,7 @@
 #
 # | Construct                                       | Where                                   |
 # |-------------------------------------------------|-----------------------------------------|
-# | expiry at a date the wording defines            | tmpl:on-expiry-date, ins:at ex:expiry-date |
+# | expiry at a date the wording defines            | tmpl:expire-on-expiry-date, ins:at ex:expiry-date |
 # | ending as entering a state                      | tmpl:expired, tmpl:terminated, ins:ends |
 # | a power exercisable only in a window            | tmpl:break, ins:window ex:break-window  |
 # | a recurrence with a due date on each period's first day | tmpl:pay-rent, ex:on-the-day     |
@@ -220,27 +220,27 @@ tmpl:terminated a bhv:State ;
     bhv:inStateSpace tmpl:lease-regime ; ins:stateKind ins-voc:Terminated ;
     ins:ends ins-voc:TheInstrument .
 
-tmpl:on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:expire-on-expiry-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:expiry-date .
-tmpl:on-break a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-break-notice-on-break a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:break .
-tmpl:on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:break-takes-effect-on-break-date a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:at ex:break-date .
 
 tmpl:expire a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:expired ;
-    bhv:hasTrigger tmpl:on-expiry-date ;
+    bhv:hasTrigger tmpl:expire-on-expiry-date ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:give-break-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:break-notice ;
-    bhv:hasTrigger tmpl:on-break ;
+    bhv:hasTrigger tmpl:give-break-notice-on-break ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:break-takes-effect a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:break-notice ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-break-date ;
+    bhv:hasTrigger tmpl:break-takes-effect-on-break-date ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The lease of Unit 4 =====================================================
