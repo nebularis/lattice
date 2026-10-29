@@ -4,7 +4,7 @@
 from .compile import compile_scheme, digest
 from .layer import MorkLayer, load
 from .model import COMPILER, CompiledMapping, CompiledQuery, CompileError, Finding, Severity
-from .run import RunResult, run, skolemise
+from .run import GraphSink, NTriplesSink, RunResult, Sink, run, skolemise
 
-__all__ = ["COMPILER", "CompiledMapping", "CompiledQuery", "CompileError", "Finding", "MorkLayer", "RunResult", "Severity",
+__all__ = ["COMPILER", "CompiledMapping", "CompiledQuery", "CompileError", "Finding", "MorkLayer", "RunResult", "Severity", "Sink", "GraphSink", "NTriplesSink",
            "compile_scheme", "digest", "load", "run", "skolemise"]

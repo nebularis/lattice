@@ -493,3 +493,33 @@ def test_the_uncertain_mappings_example_types_each_hypothesis_with_classes_that_
     assert subclass == {(":Bird", ":Oviparous"), (":Bird", "zoo:Animal"), (":Monotreme", ":Oviparous"), (":Monotreme", "zoo:Mammal"),
                         (":Oviparous", "http://www.w3.org/2002/07/owl#Thing"), (":Eggs", "http://www.w3.org/2002/07/owl#Thing")}
     assert (":eggSize", "domain", ":Oviparous") in tbox
+
+
+# --- sinks (§12.1) ---------------------------------------------------------------------------------------------------
+
+def _streamed(compiled, source, reference=None):
+    import io
+    from mork_rdf import NTriplesSink
+    abox, tbox = io.StringIO(), io.StringIO()
+    result = run(compiled, source, reference, sink=NTriplesSink(abox, tbox))
+    parse_nt = lambda text: Graph().parse(data=text, format="nt")
+    return result, parse_nt(abox.getvalue()), parse_nt(tbox.getvalue())
+
+
+def test_a_streamed_run_writes_what_a_run_in_memory_returns(compiled, result):
+    streamed, abox, tbox = _streamed(compiled, parse("catalogue-source.ttl"), parse("catalogue-reference.ttl"))
+    assert streamed.graph is None and streamed.findings == result.findings
+    assert set(abox) == set(result.graph) and set(tbox) == set(result.tbox)
+
+
+def test_a_streamed_run_still_reads_an_earlier_stratum():
+    """The species classes are kept in the store for the lookup that reads them, though they also went to the sink."""
+    from rdflib.compare import isomorphic
+    compiled, out = species("""mm:Animal a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:AC ; mork:conceptName "animal" ;
+        mork:exactTBoxMatch tgt:Animal ; mork:referenceDataMapping mm:AnimalSpecies .
+        mm:AnimalSpecies a mork:Lookup ; mork:mappingScheme mm:S ; mork:exactRBoxMatch rdf:type ;
+        mork:exactTBoxMatch mm:Yield_Species ; mork:dataRef "src:species" ; mork:dataInline "" .
+        mm:Knows a mork:DataMapping ; mork:mappingScheme mm:S ; mork:broadRBoxCategoryMatch owl:topObjectProperty ;
+        mork:conceptName "#knows" ; mork:assertsPropertyDomains mm:Yield_Species , tgt:A .""")
+    streamed, abox, tbox = _streamed(compiled, Graph().parse(data=SPECIES_SOURCE, format="turtle"))
+    assert set(abox) == set(out.graph) and isomorphic(tbox, out.tbox) and streamed.findings == out.findings

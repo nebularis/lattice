@@ -393,7 +393,21 @@ The declared entities are the coverage list. A node of a class the mapping graph
 1. **Skolemise.** The source is canonicalised with RDFC-1.0 and each blank node becomes `urn:mork-rdf:skolem:` and its canonical label. So `STR()` of every focus node is defined, and the same source always gives the same IRIs, whatever order its triples arrive in. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
 2. **Load.** The skolemised source goes in the default graph, and the reference graph in `urn:mork-rdf:reference`.
 3. **Run each stratum.** Stratum 0 holds every query that reads only the source and the reference graph, and stratum n+1 every query that reads what a stratum-n mapping made. Within a stratum each construct runs, and its triples are kept in a graph named by the mapping's IRI, added to the store once the stratum is done, so no query reads its own stratum's output. Each check runs in its mapping's stratum, and each closure collects its members.
-4. **Return.** The instance triples, the T-Box triples with each closure's axiom, and the checks' rows as findings.
+4. **Return.** The checks' rows as findings, and, when no sink was given, the instance triples and the T-Box triples with each closure's axiom.
+
+A mapping's output enters the store only when a query of a later stratum reads it, and leaves it when the last such query has run, so the store holds no more than the strata still to run need. The input and the mapping reconstruct any intermediate step, so nothing else is kept for traceability.
+
+### 12.1 Sinks
+
+`run(compiled, source, reference, sink=...)` hands each construct's and closure's triples to a sink as the store yields them, with the query, so a sink knows the mapping and whether the triples are instance data or T-Box. A triple two queries write reaches the sink twice, which a store's set semantics absorbs.
+
+| Sink | Does |
+|---|---|
+| none given | keeps the triples in memory and returns them as two rdflib graphs, as the studio and the tests use |
+| `NTriplesSink(abox, tbox=None)` | writes N-Triples lines as they arrive, the T-Box to its own stream when one is given. Standard output keeps the runner's contract to a stream of lines, for a listener that publishes them to a broker |
+| any object with `write(query, triples)` and `close()` | whatever a deployment needs, for example a bounded queue to another process |
+
+On the catalogue's mapping over 32,000 synthetic records, the peak was 1,269 MB before outputs were released by count, 1,102 MB after, and 955 MB streamed to a sink, the run's time falling from 12.3 s to 6.8 s. Most of what remains is the rdflib graph the source arrives in.
 
 The queries are SPARQL 1.1 with nothing engine-specific. The tests run the same constructs on rdflib and compare (§16), and a deployment can run them in Fuseki with the same dataset layout.
 
@@ -465,6 +479,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Lookup comparisons.** A string and an integer code against an integer reference value, under each comparison and the lexical fallback.
 - **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
+- **Sinks.** A run streamed to N-Triples writes what a run in memory returns, on the catalogue and on a stratified run whose lookup reads an earlier stratum's classes.
 - **MORK's examples.** `ontology/mork/examples/Zoo/PropertyGeneration.ttl` and `UncertainMappings.ttl` compile to the classes, properties, axioms and typed individuals their notes describe.
 
 ## 17. Decisions for ratification
