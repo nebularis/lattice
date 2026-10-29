@@ -617,3 +617,83 @@ def test_a_dry_run_without_a_fact_reads_undetermined_and_says_so():
 def test_a_fact_for_a_condition_the_term_does_not_read_is_reported():
     g, job = _dry_run(f'; cst:fact [ cst:forCondition <{F}elsewhere> ; cst:number "1"^^xsd:decimal ]')
     assert any("does not read" in str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Info))
+
+
+# ---- the ODRL proposer (CB5a) -----------------------------------------------------------------------------------------
+
+ODRL_SAMPLE = ROOT / "contracts" / "config-studio" / "odrl" / "software-licence.odrl.jsonld"
+INS_NS = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
+
+
+def _import(content: str, media: str = "application/ld+json", profile: str = "http://www.w3.org/ns/odrl/2/", clause=None):
+    from rdflib.namespace import DCTERMS
+
+    store = FakeStore()
+    iri = submit(store, "propose", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.OdrlProposer))
+    doc = URIRef(f"{iri}:document")
+    source = Graph()
+    source.add((doc, RDF.type, CST.ImportDocument))
+    source.add((doc, CST.documentContent, Literal(content)))
+    source.add((doc, CST.documentMediaType, Literal(media)))
+    source.add((doc, DCTERMS.conformsTo, URIRef(profile)))
+    if clause is not None:
+        source.add((doc, CST.importInto, URIRef(clause)))
+    store.graphs[f"{iri}:input"] = source
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    return store.graphs[iri], job
+
+
+def _parts(g: Graph, job: URIRef) -> dict[str, Graph]:
+    return {path: Graph().parse(data=content, format="turtle") for path, (_, content, _) in artefacts(g, job).items()}
+
+
+def test_an_odrl_policy_gives_a_proposal_for_each_rule_and_the_prohibition_its_permission_excepts():
+    g, job = _import(ODRL_SAMPLE.read_text())
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    parts = _parts(g, job)
+    assert set(parts) == {"review.ttl", "eligibility.ttl", "baseline.ttl", "vocabulary.ttl", "library.ttl"}
+    review, library = parts["review.ttl"], parts["library.ttl"]
+    proposals = list(review.subjects(RDF.type, CST.Proposal))
+    assert len(proposals) == 4, "a permission, the prohibition it excepts, a prohibition and an obligation"
+    kinds = set()
+    for p in proposals:
+        payload = Graph().parse(data=str(review.value(p, CST.payload)), format="turtle")
+        assert {str(o) for o in payload.objects(None, RDF.type)} <= {INS_NS + k for k in ("Term", "Template", "Permission", "Prohibition", "Obligation", "OnAct")}
+        assert (review.value(p, CST.span), RDF.type, URIRef("https://www.nebularis.org/neuro-semantic/lattice/wording#Text")) in library
+        kinds |= {str(o).rsplit("#", 1)[-1] for o in payload.objects(None, RDF.type)}
+        if (None, URIRef(INS_NS + "excepts"), None) in payload:
+            assert (None, URIRef(INS_NS + "arisesOn"), None) in payload, "the permission arises on the act of its duty"
+    assert {"Permission", "Prohibition", "Obligation"} <= kinds
+    assert len(set(parts["baseline.ttl"].subjects())) == 2, "one role for each party"
+    reported = {str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Warning)}
+    assert any("2030-01-01" in m for m in reported), "the date's literal is reported, for the reviewer to complete"
+
+
+def test_an_odrl_import_into_a_picked_clause_proposes_every_term_on_it():
+    clause = "https://example.org/lattice/studio/library/cl-1"
+    g, job = _import(ODRL_SAMPLE.read_text(), clause=clause)
+    parts = _parts(g, job)
+    assert "library.ttl" not in parts
+    assert {str(o) for o in parts["review.ttl"].objects(None, CST.span)} == {clause}
+
+
+@pytest.mark.parametrize("change, message", [
+    (dict(profile="http://example.org/other"), "not ODRL 2.2"),
+    (dict(media="application/xml"), "not application/xml"),
+    (dict(content=ODRL_SAMPLE.read_text().replace("http://www.w3.org/ns/odrl.jsonld", "https://example.org/context.jsonld")), "remote context"),
+])
+def test_an_odrl_import_refuses_a_document_that_does_not_say_it_is_odrl(change, message):
+    arguments = dict(content=ODRL_SAMPLE.read_text())
+    arguments.update(change)
+    g, job = _import(**arguments)
+    assert g.value(job, CST.status) == CST.Failed and message in str(g.value(job, CST.failureMessage))
+
+
+def test_the_same_policy_gives_the_same_proposals():
+    first, job = _import(ODRL_SAMPLE.read_text())
+    again, job2 = _import(ODRL_SAMPLE.read_text())
+    strip = lambda g, j: artefacts(g, j)["review.ttl"][1].replace(str(j), "JOB")
+    assert strip(first, job) == strip(again, job2)

@@ -126,6 +126,16 @@ class ConfigStudioWorker:
             from .config_studio_jobs import _spec
 
             target = graph.value(job, CST.target)
+            if target == CST.OdrlProposer:
+                from . import config_studio_odrl
+
+                spec = _spec(str(Path(self._root).resolve()), "meaning")
+                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+                config = input_("configuration") + baseline
+                documents = sorted(config.subjects(RDF.type, CST.ImportDocument), key=str)
+                if len(documents) != 1:
+                    raise ValueError(f"an ODRL import reads exactly one cst:ImportDocument, and the input holds {len(documents)}")
+                return config_studio_odrl.propose_odrl(job, config, spec, documents[0], str(graph.value(job, CST.submittedAt)))
             if target == CST.SentenceFormProposer:
                 proposer = proposers.SentenceFormProposer()
             elif target == CST.LanguageModelProposer:

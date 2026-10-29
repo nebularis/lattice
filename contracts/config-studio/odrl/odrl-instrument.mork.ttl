@@ -1,0 +1,277 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# The MORK mapping scheme from an ODRL 2.2 policy to the stated meaning the contract builder proposes (ADR-A144).
+# It is compiled to SPARQL by tools/mork_rdf and run by the studio's `propose` job with target `odrl`. Each rule of a
+# policy becomes a stated term with one relation, and every node it writes is a proposal waiting for review.
+#
+#   permission  -> ins:Permission, holder the assignee, counterparty the assigner, excepting an implied prohibition of
+#                  the same act on the same asset, which the owner's exclusive rights imply. A duty on the permission
+#                  is what the permission arises on (ins:OnAct), since ODRL requires it done first.
+#   prohibition -> ins:Prohibition, obligor the assignee, obligee the assigner. A remedy is an obligation arising on
+#                  the prohibition's breach.
+#   obligation  -> ins:Obligation, obligor the assignee, obligee the assigner. A consequence is an obligation arising
+#                  on the duty's breach.
+#   every rule  -> its activity is its ODRL action, and its scope a profile requiring the target asset and each
+#                  constraint, the constraint's operator choosing the condition's kind.
+#
+# A rule names its parties, asset and action itself or inherits them from its policy, so each path reads both.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix om:   <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#> .
+
+om:Scheme a mork:MappingScheme ;
+    rdfs:label "ODRL 2.2 policy to stated meaning" ;
+    mork:compilationMode mork:ReviewMode ;
+    sh:declare [ sh:prefix "odrl" ; sh:namespace "http://www.w3.org/ns/odrl/2/"^^xsd:anyURI ] ,
+               [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] ,
+               [ sh:prefix "vcard" ; sh:namespace "http://www.w3.org/2006/vcard/ns#"^^xsd:anyURI ] ,
+               [ sh:prefix "foaf" ; sh:namespace "http://xmlns.com/foaf/0.1/"^^xsd:anyURI ] ,
+               [ sh:prefix "schema" ; sh:namespace "http://schema.org/"^^xsd:anyURI ] .
+
+# ==== The source: ODRL as RDF ========================================================================================
+
+om:Odrl a mork:RepresentationScheme ; mork:format mork:RDF ; rdfs:label "ODRL 2.2" .
+odrl:Policy a mork:Entity . odrl:Set a mork:Entity . odrl:Offer a mork:Entity . odrl:Agreement a mork:Entity .
+
+om:PolicyConcept a mork:DataConcept ; skos:inScheme om:Odrl ;
+    mork:representedAs odrl:Policy , odrl:Set , odrl:Offer , odrl:Agreement .
+om:PermissionConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:permission" .
+om:ProhibitionConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:prohibition" .
+om:ObligationConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:obligation" .
+om:DutyConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:duty" .
+om:RemedyConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:remedy" .
+om:ConsequenceConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:consequence" .
+om:ConstraintConcept a mork:DataConcept ; skos:inScheme om:Odrl ; mork:path "odrl:constraint" .
+# A rule's parties, read from the rule or inherited from its policy.
+om:AssigneeConcept a mork:DataConcept ; skos:inScheme om:Odrl ;
+    mork:path "odrl:assignee|^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:assignee" .
+om:AssignerConcept a mork:DataConcept ; skos:inScheme om:Odrl ;
+    mork:path "odrl:assigner|^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:assigner" .
+# A duty's parties, read from the duty, from the rule it belongs to, or from that rule's policy.
+om:DutyAssigneeConcept a mork:DataConcept ; skos:inScheme om:Odrl ;
+    mork:path "odrl:assignee|^(odrl:duty|odrl:remedy|odrl:consequence)/odrl:assignee|^(odrl:duty|odrl:remedy|odrl:consequence)/^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:assignee" .
+om:DutyAssignerConcept a mork:DataConcept ; skos:inScheme om:Odrl ;
+    mork:path "odrl:assigner|^(odrl:duty|odrl:remedy|odrl:consequence)/odrl:assigner|^(odrl:duty|odrl:remedy|odrl:consequence)/^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:assigner" .
+
+# The source of every implied prohibition: the owner's exclusive rights in its asset, against which a licence is a defence.
+om:ExclusiveRights a skos:Concept ;
+    rdfs:label "the exclusive rights of the asset's owner, against which a permission is a licence" .
+
+# ==== Templates the rules share ======================================================================================
+
+# A party's role, named from the party, labelled with the party's name where the source gives one.
+om:Role_T a mork:Datum ; mork:mappingScheme om:Scheme ;
+    mork:exactTBoxMatch pty:Role ; mork:conceptName "role" .
+om:Role_T_Label a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Role_T ;
+    mork:exactRBoxMatch rdfs:label ; mork:dataRef "vcard:fn|foaf:name|schema:name|rdfs:label" .
+
+# A rule's activity, its ODRL action.
+om:Activity_T a mork:DataMapping ; mork:mappingScheme om:Scheme ;
+    mork:exactRBoxMatch ins:activity ;
+    mork:dataRef "odrl:action|^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:action" .
+
+# A rule's scope: a profile requiring the rule's asset and each of its constraints.
+om:Scope_T a mork:Datum ; mork:mappingScheme om:Scheme ;
+    mork:exactTBoxMatch elg:AdmissionProfile ; mork:inverseRBoxMatch ins:scope ; mork:conceptName "scope" .
+om:Scope_T_Operation a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Scope_T ;
+    mork:exactRBoxMatch elg:compositionOperation ; mork:exactABoxMatch elg:AllRequired .
+om:Scope_T_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Scope_T ;
+    mork:exactRBoxMatch elg:conditionKey ; mork:dataInline "odrl-rule-scope" .
+
+om:Asset a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Scope_T ;
+    mork:exactTBoxMatch elg:ExactCondition ; mork:inverseRBoxMatch elg:hasCondition ; mork:conceptName "asset-condition" .
+om:Asset_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Asset ;
+    mork:exactRBoxMatch elg:conditionKey ; mork:dataInline "odrl-target" .
+om:Asset_Strategy a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Asset ;
+    mork:exactRBoxMatch elg:matchStrategy ; mork:exactABoxMatch elg:ExactMatch .
+om:Asset_Wildcard a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Asset ;
+    mork:exactRBoxMatch elg:wildcardSemantics ; mork:exactABoxMatch elg:NoWildcard .
+om:Asset_Required a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Asset ;
+    mork:exactRBoxMatch elg:requiredConcept ;
+    mork:dataRef "odrl:target|^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:target" .
+
+# A constraint, whose operator chooses its kind and its match strategy. An operator with no row
+# is reported (UnmappedValue), and its condition is left for the reviewer to complete. The comparisons need a range
+# set, which is left for the reviewer too, since a mapping cannot yet apply to constraints of some operators only.
+om:Constraint a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Scope_T ;
+    mork:mappingFor om:ConstraintConcept ;
+    mork:exactTBoxMatch elg:Condition ; mork:inverseRBoxMatch elg:hasCondition ; mork:conceptName "constraint" .
+om:Constraint_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch elg:conditionKey ; mork:dataInline "odrl-constraint" .
+om:Constraint_Wildcard a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch elg:wildcardSemantics ; mork:exactABoxMatch elg:NoWildcard .
+om:Constraint_Required a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch elg:requiredConcept ; mork:dataRef "odrl:rightOperand" .
+
+om:Constraint_Kind a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch rdf:type ; mork:dataRef "odrl:operator" .
+om:Constraint_Strategy a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch elg:matchStrategy ; mork:dataRef "odrl:operator" .
+
+# The operators' rows: ODRL's operator, and the condition kind and match strategy it takes.
+om:Kind_eq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:eq ; mork:exactABoxMatch elg:ExactCondition .
+om:Kind_isAnyOf a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:isAnyOf ; mork:exactABoxMatch elg:SetMembershipCondition .
+om:Kind_isA a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:isA ; mork:exactABoxMatch elg:Condition .
+om:Kind_isPartOf a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:isPartOf ; mork:exactABoxMatch elg:Condition .
+om:Kind_lt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:lt ; mork:exactABoxMatch elg:IntervalCondition .
+om:Kind_lteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:lteq ; mork:exactABoxMatch elg:IntervalCondition .
+om:Kind_gt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:gt ; mork:exactABoxMatch elg:IntervalCondition .
+om:Kind_gteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:gteq ; mork:exactABoxMatch elg:IntervalCondition .
+om:Strategy_eq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:eq ; mork:exactABoxMatch elg:ExactMatch .
+om:Strategy_isAnyOf a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:isAnyOf ; mork:exactABoxMatch elg:SetMembership .
+om:Strategy_isA a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:isA ; mork:exactABoxMatch elg:HierarchicalMatch .
+om:Strategy_isPartOf a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:isPartOf ; mork:exactABoxMatch elg:HierarchicalMatch .
+om:Strategy_lt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:lt ; mork:exactABoxMatch elg:IntervalContainment .
+om:Strategy_lteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:lteq ; mork:exactABoxMatch elg:IntervalContainment .
+om:Strategy_gt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:gt ; mork:exactABoxMatch elg:IntervalContainment .
+om:Strategy_gteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:gteq ; mork:exactABoxMatch elg:IntervalContainment .
+
+# ==== The policy and its rules =======================================================================================
+
+# The policy writes nothing of its own. Its rules are the terms.
+om:Policy a mork:Datum ; mork:mappingScheme om:Scheme ; mork:mappingFor om:PolicyConcept ; mork:conceptName "policy" .
+
+# --- a permission ---------------------------------------------------------------------------------------------------
+
+om:Permission a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Policy ;
+    mork:mappingFor om:PermissionConcept ;
+    mork:exactTBoxMatch ins:Term , ins:Template ; mork:conceptName "term" .
+om:Permission_Relation a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission ;
+    mork:exactTBoxMatch ins:Permission , ins:Template ; mork:exactRBoxMatch ins:arisesUnder ; mork:conceptName "relation" .
+om:Permission_Holder a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssigneeConcept ; mork:inverseRBoxMatch ins:holder .
+om:Permission_Counterparty a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssignerConcept ; mork:inverseRBoxMatch ins:counterparty .
+om:Permission_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:templateMapping om:Activity_T .
+om:Permission_Scope a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:templateMapping om:Scope_T .
+
+# The prohibition the permission excepts, which the law implies: the same act, on the same asset, between the same
+# parties. Its name is its asset, action and parties, so every permission of the same act shares it.
+om:Implied a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:exactTBoxMatch ins:Prohibition , ins:Template ; mork:inverseRBoxMatch ins:excepts ;
+    mork:conceptNameTemplate "implied-prohibition/${odrl:target|^odrl:permission/odrl:target}/${odrl:action|^odrl:permission/odrl:action}/${odrl:assignee|^odrl:permission/odrl:assignee}/${odrl:assigner|^odrl:permission/odrl:assigner}" .
+om:Implied_Term a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied ;
+    mork:exactTBoxMatch ins:Term , ins:Template ; mork:inverseRBoxMatch ins:arisesUnder ;
+    mork:conceptNameTemplate "implied-term/${odrl:target|^odrl:permission/odrl:target}/${odrl:action|^odrl:permission/odrl:action}/${odrl:assignee|^odrl:permission/odrl:assignee}/${odrl:assigner|^odrl:permission/odrl:assigner}" .
+om:Implied_Source a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Term ;
+    mork:exactRBoxMatch ins:impliedBy ; mork:exactABoxMatch om:ExclusiveRights .
+om:Implied_Obligor a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssigneeConcept ; mork:inverseRBoxMatch ins:obligor .
+om:Implied_Obligee a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssignerConcept ; mork:inverseRBoxMatch ins:obligee .
+om:Implied_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied ;
+    mork:templateMapping om:Activity_T .
+
+# Its scope is the asset alone, the act forbidden wherever the permission does not reach.
+om:Implied_Scope a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied ;
+    mork:exactTBoxMatch elg:AdmissionProfile ; mork:inverseRBoxMatch ins:scope ;
+    mork:conceptNameTemplate "implied-scope/${odrl:target|^odrl:permission/odrl:target}/${odrl:action|^odrl:permission/odrl:action}/${odrl:assignee|^odrl:permission/odrl:assignee}/${odrl:assigner|^odrl:permission/odrl:assigner}" .
+om:Implied_Scope_Operation a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Scope ;
+    mork:exactRBoxMatch elg:compositionOperation ; mork:exactABoxMatch elg:AllRequired .
+om:Implied_Scope_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Scope ;
+    mork:exactRBoxMatch elg:conditionKey ; mork:dataInline "odrl-implied-scope" .
+om:Implied_Asset a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Scope ;
+    mork:exactTBoxMatch elg:ExactCondition ; mork:inverseRBoxMatch elg:hasCondition ;
+    mork:conceptNameTemplate "implied-asset/${odrl:target|^odrl:permission/odrl:target}" .
+om:Implied_Asset_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Asset ;
+    mork:exactRBoxMatch elg:conditionKey ; mork:dataInline "odrl-target" .
+om:Implied_Asset_Strategy a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Asset ;
+    mork:exactRBoxMatch elg:matchStrategy ; mork:exactABoxMatch elg:ExactMatch .
+om:Implied_Asset_Wildcard a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Asset ;
+    mork:exactRBoxMatch elg:wildcardSemantics ; mork:exactABoxMatch elg:NoWildcard .
+om:Implied_Asset_Required a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Implied_Asset ;
+    mork:exactRBoxMatch elg:requiredConcept ; mork:dataRef "odrl:target|^odrl:permission/odrl:target" .
+
+# A duty on the permission is what the permission arises on: the act the duty names, by its party.
+om:Duty a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Permission_Relation ;
+    mork:mappingFor om:DutyConcept ;
+    mork:exactTBoxMatch ins:OnAct ; mork:inverseRBoxMatch ins:arisesOn ; mork:conceptName "on-act" .
+om:Duty_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Duty ;
+    mork:exactRBoxMatch ins:activity ; mork:dataRef "odrl:action" .
+om:Duty_By a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Duty ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:DutyAssigneeConcept ; mork:inverseRBoxMatch ins:by .
+
+# --- a prohibition --------------------------------------------------------------------------------------------------
+
+om:Prohibition a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Policy ;
+    mork:mappingFor om:ProhibitionConcept ;
+    mork:exactTBoxMatch ins:Term , ins:Template ; mork:conceptName "term" .
+om:Prohibition_Relation a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition ;
+    mork:exactTBoxMatch ins:Prohibition , ins:Template ; mork:exactRBoxMatch ins:arisesUnder ; mork:conceptName "relation" .
+om:Prohibition_Obligor a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssigneeConcept ; mork:inverseRBoxMatch ins:obligor .
+om:Prohibition_Obligee a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssignerConcept ; mork:inverseRBoxMatch ins:obligee .
+om:Prohibition_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition_Relation ;
+    mork:templateMapping om:Activity_T .
+om:Prohibition_Scope a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition_Relation ;
+    mork:templateMapping om:Scope_T .
+
+# A remedy is an obligation arising on the prohibition's breach, under the prohibition's term.
+om:Remedy a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Prohibition_Relation ;
+    mork:mappingFor om:RemedyConcept ;
+    mork:exactTBoxMatch ins:Obligation , ins:Template ; mork:exactRBoxMatch ins:arisesOnBreachOf ; mork:conceptName "remedy" .
+om:Remedy_Term a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Remedy ;
+    mork:exactRBoxMatch ins:arisesUnder ; mork:exactABoxMatch om:Prohibition .
+om:Remedy_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Remedy ;
+    mork:exactRBoxMatch ins:activity ; mork:dataRef "odrl:action" .
+om:Remedy_Obligor a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Remedy ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:DutyAssigneeConcept ; mork:inverseRBoxMatch ins:obligor .
+om:Remedy_Obligee a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Remedy ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:DutyAssignerConcept ; mork:inverseRBoxMatch ins:obligee .
+
+# --- an obligation --------------------------------------------------------------------------------------------------
+
+om:Obligation a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Policy ;
+    mork:mappingFor om:ObligationConcept ;
+    mork:exactTBoxMatch ins:Term , ins:Template ; mork:conceptName "term" .
+om:Obligation_Relation a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation ;
+    mork:exactTBoxMatch ins:Obligation , ins:Template ; mork:exactRBoxMatch ins:arisesUnder ; mork:conceptName "relation" .
+om:Obligation_Obligor a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssigneeConcept ; mork:inverseRBoxMatch ins:obligor .
+om:Obligation_Obligee a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation_Relation ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:AssignerConcept ; mork:inverseRBoxMatch ins:obligee .
+om:Obligation_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation_Relation ;
+    mork:templateMapping om:Activity_T .
+om:Obligation_Scope a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation_Relation ;
+    mork:templateMapping om:Scope_T .
+
+# A consequence is an obligation arising on the duty's breach, under the duty's term.
+om:Consequence a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Obligation_Relation ;
+    mork:mappingFor om:ConsequenceConcept ;
+    mork:exactTBoxMatch ins:Obligation , ins:Template ; mork:exactRBoxMatch ins:arisesOnBreachOf ; mork:conceptName "consequence" .
+om:Consequence_Term a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Consequence ;
+    mork:exactRBoxMatch ins:arisesUnder ; mork:exactABoxMatch om:Obligation .
+om:Consequence_Activity a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Consequence ;
+    mork:exactRBoxMatch ins:activity ; mork:dataRef "odrl:action" .
+om:Consequence_Obligor a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Consequence ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:DutyAssigneeConcept ; mork:inverseRBoxMatch ins:obligor .
+om:Consequence_Obligee a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Consequence ;
+    mork:templateMapping om:Role_T ; mork:mappingFor om:DutyAssignerConcept ; mork:inverseRBoxMatch ins:obligee .

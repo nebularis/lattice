@@ -134,6 +134,25 @@ A `propose` job reads every clause of the library's forms that has no stated ter
 |---|---|---|
 | `sentence-forms` | the relation the worker's sentence-form reader classifies the clause as, and the roles and activities whose labels the clause's text names, in their order | nothing |
 | `language-model` | a model's reply, over the Chat Completions wire format, to a prompt rendered from a pack, checked against [`proposal-candidates.schema.json`](proposal-candidates.schema.json). The repository holds no clause-reading pack. A deployment supplies one, a folder with a `manifest.json` naming its `name`, `version`, `system` and `prompt` template files and its `temperature`, whose templates may name `{clause}`, `{roles}`, `{activities}`, `{kinds}` and `{schema}` | the worker's environment: `LATTICE_PROPOSER_URL` (the endpoint's base, to which `/chat/completions` is added), `LATTICE_PROPOSER_MODEL`, `LATTICE_PROPOSER_PACK` (the pack's folder) and `LATTICE_PROPOSER_KEY` (sent as a bearer token, never logged). Without the first three the job fails, saying no language model is configured |
+| `odrl` | one ODRL 2.2 policy in the job's input, through the studio's MORK mapping scheme, giving a proposal for each rule rather than for each clause (see Importing an ODRL policy) | `LATTICE_STUDIO_FEATURES` naming `odrl`, on the service |
+
+### Importing an ODRL policy
+
+`POST /api/workspaces/{ws}/jobs?kind=propose&target=odrl` imports one ODRL 2.2 policy as proposals (ADR-A144). The service offers it only when the deployment's `LATTICE_STUDIO_FEATURES`, a comma-separated list, names `odrl`, and answers `404` otherwise. The request body holds the configurations and one `cst:ImportDocument`, carrying the policy as received: `cst:documentContent` its text, `cst:documentMediaType` the media type it came with (`application/ld+json`, `text/turtle` or `application/n-triples`), `dct:conformsTo` the profile it says it is, which must be ODRL 2.2's namespace `http://www.w3.org/ns/odrl/2/`, and optionally `cst:importInto` a clause of the library to propose every term on. The browser takes the media type from how the author supplied the file, and the profile from what the author confirms, never from the content (STD-292).
+
+The worker reads JSON-LD with the ODRL context bundled in [`odrl/odrl.jsonld`](odrl/odrl.jsonld) and fetches no remote context, compiles the mapping scheme [`odrl/odrl-instrument.mork.ttl`](odrl/odrl-instrument.mork.ttl) with `tools/mork_rdf`, and runs it over the policy. Each rule becomes one stated term, its relation, and what arises under it:
+
+| ODRL | Stated meaning |
+|---|---|
+| a permission | an `ins:Permission`, its holder the assignee and its counterparty the assigner, excepting an `ins:Prohibition` of the same act on the same asset between the same parties, under a term `ins:impliedBy` the owner's exclusive rights and proposed on the permission's clause |
+| a duty on a permission | what the permission arises on, an `ins:OnAct` of the duty's action by its party |
+| a prohibition, and its remedy | an `ins:Prohibition`, and an `ins:Obligation` arising on its breach under the same term |
+| an obligation, and its consequence | an `ins:Obligation`, and an `ins:Obligation` arising on its breach under the same term |
+| a rule's party | a `pty:Role` for each party, labelled with the party's name |
+| a rule's action | its `ins:activity`, a concept of a scheme of ODRL's actions bound to `ins-voc:ActivityContract`, `skos:broader` following ODRL's `includedIn` |
+| a rule's target and constraints | its `ins:scope`, an `elg:AdmissionProfile` requiring the asset and each constraint, the operator choosing the condition's kind: `eq` exact, `isAnyOf` set membership, `isA` and `isPartOf` hierarchical, and `lt`, `lteq`, `gt` and `gteq` an interval whose range set the reviewer completes. Any other operator, and a literal where a concept is needed, is reported as a warning for the reviewer to complete |
+
+The job's artefacts are one for each configuration the proposals add to, named by `cst:group`, which the browser adds to that configuration for the author to save: `review.ttl` (the proposals, each payload holding only `ins:` subjects), `eligibility.ttl` (the profiles and conditions), `baseline.ttl` (the roles), `vocabulary.ttl` (the assets and actions as concepts, and the scheme binding) and, when no clause was picked, `library.ttl` (a form with one clause for each term, its text the rule in plain words). A policy that is not ODRL 2.2, a media type the worker does not read, and a JSON-LD context other than ODRL's own fail the job, saying why.
 
 ### Dry run
 
