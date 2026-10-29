@@ -83,6 +83,18 @@ mork:CompilationMode a owl:Class ;
     rdfs:label "compilation mode" ;
     rdfs:comment "Which of draft, review, or production compilation a MappingScheme's compilationMode names. Named individuals are DraftMode, ReviewMode, and ProductionMode." .
 
+mork:CompileFinding a owl:Class ;
+    rdfs:label "compile finding" ;
+    rdfs:comment "One thing a compiler found while compiling a mapping scheme, with its code, its severity and the mapping it is about." .
+
+mork:CompiledMapping a owl:Class ;
+    rdfs:label "compiled mapping" ;
+    rdfs:comment "A mapping scheme as a compiler compiled it, at one instant, against one base, with its queries, its findings and its mappings' effective confidences. It is named by the digest of its compiled text, so one compilation always has one name, and is typed prov:Entity beside this class." .
+
+mork:CompiledQuery a owl:Class ;
+    rdfs:label "compiled query" ;
+    rdfs:comment "One query of a compiled mapping, a CONSTRUCT that writes a mapping's triples, a check SELECT that reports where it could not, or a closure SELECT that gathers the members of a class combination once the mappings that create them have run." .
+
 mork:Composition a owl:Class ;
     rdfs:label "composition" ;
     rdfs:comment "Is used to represent a compositional association between two Representation elements. This carries the semantics that the object in a subject-predicate-object triple, should not be present in an object graph without the presence of a corresponding element representing the subject." ;
@@ -158,6 +170,10 @@ mork:Entity a owl:Class ;
     rdfs:comment "Is used to denote an entity in a representation scheme. An Entity will usually be marked with its identity in some originating representation scheme using the identifier datatype property." ;
     rdfs:subClassOf mork:IdentifiableElement .
 
+mork:ErrorFinding a mork:FindingSeverity, owl:NamedIndividual ;
+    rdfs:label "error finding" ;
+    rdfs:comment "A mapping not compiled. In production mode any error refuses the compilation." .
+
 mork:ExclusionIntent a owl:Class ;
     rdfs:label "exclusion intent" ;
     rdfs:comment "An intent node representing an exclusion (e.g., 'exclude nation-state attacks')." ;
@@ -166,6 +182,10 @@ mork:ExclusionIntent a owl:Class ;
 mork:ExistentialRestriction a mork:AxiomForm, owl:NamedIndividual ;
     rdfs:label "existential restriction" ;
     rdfs:comment "Each domain class D is a subclass of the restriction that some value of the property is in the range R, D ⊑ ∃p.R, so every member of D has such a value." .
+
+mork:FindingSeverity a owl:Class ;
+    rdfs:label "finding severity" ;
+    rdfs:comment "How severe a compile finding is. Named individuals are ErrorFinding, WarningFinding and InfoFinding." .
 
 mork:GenerativeMapping a owl:Class ;
     rdfs:label "generative mapping" ;
@@ -193,6 +213,14 @@ mork:InclusionIntent a owl:Class ;
 mork:IndexedMapping a owl:Class ;
     rdfs:comment "A data mapping that occurs at a position in a collection of mappings, which mork:mappingIndex records." ;
     rdfs:subClassOf mork:DataMapping .
+
+mork:InfoFinding a mork:FindingSeverity, owl:NamedIndividual ;
+    rdfs:label "info finding" ;
+    rdfs:comment "Nothing lost, for example a mapping left to another backend." .
+
+mork:InstanceOutput a mork:OutputBox, owl:NamedIndividual ;
+    rdfs:label "instance output" ;
+    rdfs:comment "The instance data a compiled query writes, its target graph." .
 
 mork:IntentNode a owl:Class ;
     rdfs:label "intent node" ;
@@ -278,6 +306,10 @@ mork:OrderedCollection a owl:Class ;
     rdfs:comment "A Collection whose items are ordered, that is a collection for which mork:orderedItems is true." ;
     rdfs:subClassOf mork:Collection ;
     owl:equivalentClass [ a owl:Restriction ; owl:onProperty mork:orderedItems ; owl:hasValue "true"^^xsd:boolean ] .
+
+mork:OutputBox a owl:Class ;
+    rdfs:label "output box" ;
+    rdfs:comment "Which output a compiled query writes to. Named individuals are InstanceOutput and TerminologyOutput." .
 
 mork:OwlAxiom a owl:Class ;
     rdfs:label "owl axiom" ;
@@ -440,6 +472,10 @@ mork:TermComparison a mork:LookupComparison, owl:NamedIndividual ;
     rdfs:label "term comparison" ;
     rdfs:comment "The value read matches only the same RDF term, with no cast. A value whose datatype differs from the reference data's is reported unresolved, which the author has chosen." .
 
+mork:TerminologyOutput a mork:OutputBox, owl:NamedIndividual ;
+    rdfs:label "terminology output" ;
+    rdfs:comment "The classes, properties and axioms a compiled query writes, its T-Box graph." .
+
 mork:TransformMapping a owl:Class ;
     rdfs:label "transform mapping" ;
     rdfs:comment "A generative mapping that, when compiled, produces an RML/R2RML triples map as a first-class RDF graph object (an rr:TriplesMap individual with structured subject map, predicate-object maps, and logical source).\n\nClassification as TransformMapping is inferred from the presence of the generatesTransformDefinition property pointing to an rr:TriplesMap individual, following the same definitional pattern as ShapeMapping (≡ DataMapping ⊓ ∃generatesShapeDefinition.sh:Shape) and RuleMapping (≡ DataMapping ⊓ ∃generatesRuleDefinition.swrl:Imp).\n\nThe generated triples map is structured RDF — not a serialised mapping file. Its internal structure (logical source, subject map, predicate-object maps, referencing object maps and join conditions) is fully traversable and queryable within the RDF graph."^^xsd:string ;
@@ -470,6 +506,10 @@ mork:UnorderedCollection a owl:Class ;
     rdfs:comment "A Collection whose items are not ordered, that is a collection for which mork:orderedItems is false." ;
     rdfs:subClassOf mork:Collection ;
     owl:equivalentClass [ a owl:Restriction ; owl:onProperty mork:orderedItems ; owl:hasValue "false"^^xsd:boolean ] .
+
+mork:WarningFinding a mork:FindingSeverity, owl:NamedIndividual ;
+    rdfs:label "warning finding" ;
+    rdfs:comment "Something compiled that a reviewer should know about, for example a broad match." .
 
 mork:WeightedMatch a owl:Class ;
     rdfs:label "weighted match" ;
@@ -576,6 +616,12 @@ mork:broaderMapping a owl:ObjectProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( mork:DataMapping [ a owl:Class ; owl:intersectionOf ( skos:OrderedCollection [ a owl:Restriction ; owl:onProperty skos:member ; owl:someValuesFrom mork:DataMapping ] ) ] ) ] ;
     rdfs:range mork:DataMapping .
 
+mork:checkCode a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "check code" ;
+    rdfs:comment "The finding code each row of a check query reports." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range xsd:string .
+
 mork:classCombination a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:label "class combination" ;
     rdfs:comment "How the classes a mapping names with assertsPropertyDomains, or with assertsPropertyRanges, are combined when there are several. Unset is equivalent to UnionOfClasses." ;
@@ -587,6 +633,21 @@ mork:closeMapping a owl:ObjectProperty ;
     rdfs:comment "used to link two mappings that are sufficiently similar that they can be used interchangeably in some applications." ;
     rdfs:subPropertyOf mork:relatedMapping .
 
+mork:closureAxiom a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "closure axiom" ;
+    rdfs:comment "The axiom a closure query writes, rdfs:domain or rdfs:range, named by the property that states it." ;
+    rdfs:domain mork:CompiledQuery .
+
+mork:closureCombination a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "closure combination" ;
+    rdfs:comment "How a closure query combines its members, owl:unionOf or owl:intersectionOf, named by the property that states it." ;
+    rdfs:domain mork:CompiledQuery .
+
+mork:closureProperty a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "closure property" ;
+    rdfs:comment "The property a closure query writes an axiom about." ;
+    rdfs:domain mork:CompiledQuery .
+
 mork:collectionElementScalarValue a owl:DatatypeProperty ;
     rdfs:comment "A placeholder super-property of the datatype properties generated to hold the range of individuals of Attribute and ScalarValueElement." ;
     skos:scopeNote "Not for external use. This datatype property is used as a placeholder super-property for generated owl:DataTypeProperty axioms which are used to hold the rdfs/xsd range for individuals in the Attribute and ScalarValueElement classes.\n\nThis specific property is exclusively used to manage Objectification."^^xsd:string ;
@@ -597,6 +658,29 @@ mork:compilationMode a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The compilation mode a MappingScheme's member mappings are compiled under: DraftMode, ReviewMode, or ProductionMode (Foundations §5.10b). Unset is equivalent to DraftMode. Only ProductionMode brings the governance-state and version-identity SHACL gate (mork:GenerativeMappingProductionGovernanceShape) into force for that scheme's mappings. A mapping compiled under DraftMode or ReviewMode is unaffected by it." ;
     rdfs:domain mork:MappingScheme ;
     rdfs:range mork:CompilationMode .
+
+mork:compiledBase a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "compiled base" ;
+    rdfs:comment "The namespace under which a compiled mapping mints IRIs." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range xsd:anyURI .
+
+mork:compiledFrom a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "compiled from" ;
+    rdfs:comment "The mapping node a compiled query comes from." ;
+    rdfs:domain mork:CompiledQuery .
+
+mork:compiledInMode a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "compiled in mode" ;
+    rdfs:comment "The compilation mode a compiled mapping was compiled under." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range mork:CompilationMode .
+
+mork:compiler a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "compiler" ;
+    rdfs:comment "The compiler and its version that made a compiled mapping." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range xsd:string .
 
 mork:compositeBroader a owl:ObjectProperty ;
     rdfs:label "composite broader" ;
@@ -682,6 +766,10 @@ mork:conceptShortNameTemplate a owl:DatatypeProperty ;
     rdfs:comment "A template for the short name of the concept a mapping creates." ;
     rdfs:subPropertyOf mork:conceptNameTemplate .
 
+mork:confidenceOf a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "confidence of" ;
+    rdfs:comment "The mapping node an effective confidence entry is for." .
+
 mork:constraintDimension a owl:ObjectProperty ;
     rdfs:label "constraint dimension" ;
     rdfs:comment "References a concept identifying the measured dimension a quantitative constraint applies to. The concept resides in an external scheme." ;
@@ -717,6 +805,12 @@ mork:constraintVersion a owl:DatatypeProperty ;
     rdfs:comment "Version identifier for a ConstraintScheme." ;
     rdfs:domain mork:ConstraintScheme ;
     rdfs:range xsd:string .
+
+mork:contextPath a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "context path" ;
+    rdfs:comment "The list of mapping nodes from a compiled query's root to the mapping it comes from, which is the chain of contexts its WHERE clause follows." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range rdf:List .
 
 mork:data a owl:DatatypeProperty ;
     rdfs:comment "The data a mapping reads or carries. Its sub-properties say where the data is, and what it is." ;
@@ -766,6 +860,11 @@ mork:digraphOf a owl:ObjectProperty ;
     rdfs:subPropertyOf skos:narrowMatch ;
     rdfs:domain mork:Digraph .
 
+mork:effectiveConfidence a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "effective confidence" ;
+    rdfs:comment "A mapping's effective confidence, from 0 to 1, its own weighting times the least of its children's." ;
+    rdfs:range xsd:double .
+
 mork:effectiveFrom a owl:DatatypeProperty ;
     rdfs:label "effective from" ;
     rdfs:comment "The date/time from which a mapping, constraint, or targeting specification becomes effective." ;
@@ -814,6 +913,35 @@ mork:externalPropertyValue a owl:DatatypeProperty ;
     skos:scopeNote "Not for external use. This datatype property is used as a placeholder super-property for generated owl:DataTypeProperty axioms which are used to hold the rdfs/xsd range for individuals in the Attribute class." ;
     rdfs:subPropertyOf owl:topDataProperty .
 
+mork:findingAbout a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "finding about" ;
+    rdfs:comment "The mapping node a compile finding is about." ;
+    rdfs:domain mork:CompileFinding .
+
+mork:findingCode a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "finding code" ;
+    rdfs:comment "The code of a compile finding, from the compiler's list of findings." ;
+    rdfs:domain mork:CompileFinding ;
+    rdfs:range xsd:string .
+
+mork:findingIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "finding index" ;
+    rdfs:comment "A compile finding's position among its compiled mapping's findings." ;
+    rdfs:domain mork:CompileFinding ;
+    rdfs:range xsd:integer .
+
+mork:findingMessage a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "finding message" ;
+    rdfs:comment "What a compile finding says, for a reviewer." ;
+    rdfs:domain mork:CompileFinding ;
+    rdfs:range xsd:string .
+
+mork:findingSeverity a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "finding severity" ;
+    rdfs:comment "The severity of a compile finding." ;
+    rdfs:domain mork:CompileFinding ;
+    rdfs:range mork:FindingSeverity .
+
 mork:format a owl:ObjectProperty ;
     rdfs:label "has format" ;
     rdfs:comment "denotes the SerializationFormat used by a RepresentationScheme" ;
@@ -851,6 +979,18 @@ mork:hasBinding a owl:ObjectProperty ;
     rdfs:domain mork:InterpolationExpression ;
     rdfs:range mork:TemplateBinding .
 
+mork:hasCompileFinding a owl:ObjectProperty ;
+    rdfs:label "has compile finding" ;
+    rdfs:comment "A finding of a compiled mapping." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range mork:CompileFinding .
+
+mork:hasCompiledQuery a owl:ObjectProperty ;
+    rdfs:label "has compiled query" ;
+    rdfs:comment "A query of a compiled mapping." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range mork:CompiledQuery .
+
 mork:hasConcept a owl:ObjectProperty ;
     rdfs:label "has concept" ;
     rdfs:comment "Denotes the membership of a skos:Concept in a skos:ConceptScheme. This property is the inverse of skos:inScheme" ;
@@ -862,6 +1002,11 @@ mork:hasConstraintProvenance a owl:ObjectProperty ;
     rdfs:comment "Links a ShapeMapping to its provenance record (origin, review chain, lifecycle metadata)." ;
     rdfs:domain mork:ShapeMapping ;
     rdfs:range mork:ConstraintProvenance .
+
+mork:hasEffectiveConfidence a owl:ObjectProperty ;
+    rdfs:label "has effective confidence" ;
+    rdfs:comment "An entry of a compiled mapping that records one mapping's effective confidence." ;
+    rdfs:domain mork:CompiledMapping .
 
 mork:hasIntentConfidence a owl:DatatypeProperty ;
     rdfs:label "has intent confidence" ;
@@ -1076,6 +1221,12 @@ mork:lookupSource a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain mork:LookupExpression ;
     rdfs:range mork:TemplateExpression .
 
+mork:mappingDigest a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "mapping digest" ;
+    rdfs:comment "The SHA-256 of the mapping graph's RDFC-1.0 canonical N-Quads, in lowercase hex, that a compiled mapping was compiled from." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range xsd:string .
+
 mork:mappingFor a owl:ObjectProperty ;
     rdfs:label "is mapping for" ;
     rdfs:comment "Indicates the Representation or DataConcept for which a DataMapping applies. This property is the inverse of hasMapping." ;
@@ -1175,6 +1326,12 @@ mork:orderedItems a owl:DatatypeProperty ;
     rdfs:comment "Whether the items of a Collection are ordered." ;
     rdfs:subPropertyOf mork:itemsConstrained .
 
+mork:outputBox a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "output box" ;
+    rdfs:comment "Whether a compiled query writes instance data or terminology." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range mork:OutputBox .
+
 mork:paramBinding a owl:ObjectProperty ;
     rdfs:label "param binding" ;
     rdfs:comment "Links a QueryTemplate to one of its parameter bindings." ;
@@ -1262,6 +1419,18 @@ mork:provenanceCreator a owl:DatatypeProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( mork:ConstraintProvenance mork:RuleProvenance mork:ProjectionProvenance ) ] ;
     rdfs:range xsd:string .
 
+mork:queryIndex a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "query index" ;
+    rdfs:comment "A compiled query's position in its compiled mapping, the order the queries run in within a stratum." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range xsd:integer .
+
+mork:queryKind a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "query kind" ;
+    rdfs:comment "Whether a compiled query is a construct, a check or a closure." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range xsd:string .
+
 mork:queryLanguage a owl:DatatypeProperty ;
     rdfs:label "query language" ;
     rdfs:comment "The query language of a QueryTemplate. Values: SPARQL, Cypher." ;
@@ -1273,6 +1442,17 @@ mork:queryText a owl:DatatypeProperty ;
     rdfs:comment "The serialised query template text with parameter placeholders." ;
     rdfs:domain mork:QueryTemplate ;
     rdfs:range xsd:string .
+
+mork:readAt a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "read at" ;
+    rdfs:comment "The instant at which a compiled mapping read the mappings in force, given by its caller and never read from a clock." ;
+    rdfs:domain mork:CompiledMapping ;
+    rdfs:range xsd:dateTime .
+
+mork:readsOutputOf a owl:ObjectProperty ;
+    rdfs:label "reads output of" ;
+    rdfs:comment "A mapping whose output a compiled query reads, so that the query runs in a later stratum than that mapping's queries." ;
+    rdfs:domain mork:CompiledQuery .
 
 mork:reference a owl:DatatypeProperty ;
     rdfs:comment "A reference to a representation element within its scheme." ;
@@ -1375,6 +1555,12 @@ mork:softPrecedes a owl:ObjectProperty, owl:TransitiveProperty ;
     skos:scopeNote "Acyclic, checked by mork:SoftPrecedenceAcyclicityShape independently of :precedes." ;
     rdfs:domain mork:DataMapping ;
     rdfs:range mork:DataMapping .
+
+mork:stratum a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "stratum" ;
+    rdfs:comment "The step of a run a compiled query belongs to, after every stratum whose output it reads." ;
+    rdfs:domain mork:CompiledQuery ;
+    rdfs:range xsd:integer .
 
 mork:structuralMatch a owl:ObjectProperty ;
     rdfs:label "is structural match with" ;

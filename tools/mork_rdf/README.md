@@ -397,7 +397,7 @@ The declared entities are the coverage list. A node of a class the mapping graph
 | each finding | `mork:CompileFinding` | `mork:findingIndex`, `mork:findingCode`, `mork:findingSeverity` (`mork:ErrorFinding`, `mork:WarningFinding` or `mork:InfoFinding`), `mork:findingMessage`, `mork:findingAbout` the mapping |
 | each confidence | none | `mork:confidenceOf` the mapping, `mork:effectiveConfidence` |
 
-The description uses SHACL's executables for the text, so a SHACL-AF processor can read a query, and none of `mork:TransformMapping`'s properties, since `mork:generatesTransformDefinition` would classify the compiled mapping as one. Its MORK terms are proposed with this compiler and wait for ratification (MR-22), and later the IR of SPARQL's algebra can attach to the same query nodes.
+The description uses SHACL's executables for the text, so a SHACL-AF processor can read a query, and none of `mork:TransformMapping`'s properties, since `mork:generatesTransformDefinition` would classify the compiled mapping as one. Its MORK terms are in MORK's specification (MR-22), and later the IR of SPARQL's algebra can attach to the same query nodes.
 
 ## 12. Running
 
@@ -499,7 +499,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 
 ## 17. Decisions for ratification
 
-Taken while building, under the maintainer's direction to compile rather than interpret and to cover more of MORK than exact matches.
+Taken while building, under the maintainer's direction to compile rather than interpret and to cover more of MORK than exact matches. The maintainer ratified MR-1 to MR-22 on 2026-10-29.
 
 | ID | Decision | Why |
 |---|---|---|
@@ -524,7 +524,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-19 | The run is stratified by what each query reads, and each mapping's output is kept in a graph named by its IRI (decided 2026-10-29) | a combination over classes made from data can be written only at the closure of the DAG, by design of `mork:dependentMapping` |
 | MR-20 | Domain and range axioms for created properties only, in the form and combination the author names, global by default, into a T-Box graph returned apart (MR-Q4, decided 2026-10-29) | the author chooses global or local scope, and axioms never change another vocabulary |
 | MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
-| MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29, the terms proposed) | a deployment keeps and reads it as data, and the same compilation always has the same name |
+| MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29) | a deployment keeps and reads it as data, and the same compilation always has the same name |
 
 ## 18. Open questions
 
@@ -535,7 +535,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-Q3 | Should a source node that matches no root be reportable? | decided 2026-10-29, yes, as `Uncovered` (§10.3, MR-16) |
 | MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | decided 2026-10-29, yes, in a form and combination the author chooses (§7.6, MR-20) |
 | MR-Q5 | Should `mork2rml` and this compiler share one reader? | decided 2026-10-29, yes, on the roadmap for when `mork2rml` moves to W3C RML (§19) |
-| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now. Built as §11.1, its terms proposed (MR-22) |
+| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now. Built as §11.1 (MR-22) |
 
 ## 19. Relation to mork2rml, and what comes next
 

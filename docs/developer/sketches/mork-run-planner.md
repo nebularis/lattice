@@ -3,7 +3,7 @@
 # A planner for running MORK mappings — Sketch
 
 **Unit ID:** `mork-run-planner`
-**Status:** Sketch. Options A and B, MP-Q1 and MP-Q2 ruled 2026-10-29, MP-Q3 proposed. It follows a study of SDM-RDFizer and of the maintainer's paused `rml-pipeline`, and asks what of theirs a MORK run should take.
+**Status:** Sketch. Options A and B built, MP-Q1 to MP-Q3 ruled 2026-10-29, option G to design. It follows a study of SDM-RDFizer and of the maintainer's paused `rml-pipeline`, and asks what of theirs a MORK run should take.
 **Date:** 2026-10-29
 **Bears on:** [`tools/mork_rdf`](../../../tools/mork_rdf/README.md) §12 and §14, PDD-06 (a SPARQL IR), ADR-A124 (benchmarks measure and never fail on time), ADR-A128 (efficient queries).
 
@@ -125,7 +125,7 @@ A broker client inside the runner is not proposed. The listener keeps the runner
 |---|---|---|
 | MP-Q1 | Is a benchmark of `mork_rdf` on synthetic sources of 10⁴, 10⁵ and 10⁶ records, measuring peak memory and time per stratum, the first step? | yes, 2026-10-29. By §5 the 10⁴ and 10⁵ tiers fit a laptop, and the 10⁶ tier needs about 35 GB before options A and B and the direct load, so it is opt-in, for a cloud run |
 | MP-Q2 | Should the output graph of a mapping that no later stratum reads be kept for traceability anyway? | no, 2026-10-29. The input and the mapping reconstruct every intermediate step, so the construct's mapping in `text()` is enough. Keeping the input is the deployment's choice, and LATTICE takes no position on it |
-| MP-Q3 | Where does the planner belong? | proposed in §9, for the maintainer |
+| MP-Q3 | Where does the planner belong? | as §9 proposes, ratified 2026-10-29: the logical plan with the shared MORK reader, the SPARQL rewrites with PDD-06's IR, the sink as egress |
 
 ## 9. Where the planner belongs
 

@@ -825,6 +825,53 @@ flowchart LR
 
 It does not compile generative mappings, `mork:egressProjection`, `mork:templateClassMapping`, or an abstract `mork:propertyMappingAssertions` used directly. Mapping properties that carry no meaning for instance data, such as `mork:siblingMapping`, are kept in the graph for reviewers and change no query.
 
+`mork_rdf` can describe what it compiled as RDF, so a deployment keeps a compiled mapping beside its mapping graph, under version control or in its graph store, and another component reads what will run. A `mork:CompiledMapping` names its scheme with `prov:wasDerivedFrom`, records the mapping graph's digest, the instant it read the mappings at, its base and its mode, and holds a `mork:CompiledQuery` for each query, a `mork:CompileFinding` for each finding and an entry for each mapping's effective confidence. A query's text is a SHACL-AF executable's `sh:construct` or `sh:select`, and it records the mapping it comes from, its path through the DAG, its stratum, whether it writes instance data or terminology, and the mappings whose output it reads. The description is named by the digest of the compiled text, and none of `mork:TransformMapping`'s properties describe it, since `mork:generatesTransformDefinition` would classify it as a transform mapping.
+
+<!-- start: {"generated": "class-diagram", "part": "Compiled mappings", "classes": ["mork:CompiledMapping", "mork:CompiledQuery", "mork:CompileFinding", "mork:OutputBox", "mork:FindingSeverity"]} -->
+
+**Compiled mappings**
+
+```mermaid
+classDiagram
+    direction LR
+    class CompilationMode
+    class CompileFinding {
+        findingAbout
+        findingCode (xsd:string)
+        findingIndex (xsd:integer)
+        findingMessage (xsd:string)
+    }
+    class CompiledMapping {
+        compiledBase (xsd:anyURI)
+        compiler (xsd:string)
+        hasEffectiveConfidence
+        mappingDigest (xsd:string)
+        readAt (xsd:dateTime)
+    }
+    class CompiledQuery {
+        checkCode (xsd:string)
+        closureAxiom
+        closureCombination
+        closureProperty
+        compiledFrom
+        queryIndex (xsd:integer)
+        queryKind (xsd:string)
+        readsOutputOf
+        stratum (xsd:integer)
+    }
+    class FindingSeverity
+    class List
+    class OutputBox
+    CompileFinding --> FindingSeverity : findingSeverity
+    CompiledMapping --> CompilationMode : compiledInMode
+    CompiledMapping --> CompileFinding : hasCompileFinding
+    CompiledMapping --> CompiledQuery : hasCompiledQuery
+    CompiledQuery --> List : contextPath
+    CompiledQuery --> OutputBox : outputBox
+```
+
+<!-- end -->
+
 **`tools/mork_compilers`, the SHACL, SWRL, OWL and SPARQL backends.** These compile Eligibility conditions and profiles through the executable IR of 5.13, and they do not read mapping graphs. They write their results in MORK's vocabulary. The SHACL backend attaches the shapes it generates to a data mapping with `mork:generatesShapeDefinition`, which is what classifies that mapping as a shape mapping. The SWRL backend writes each rule as a structured `swrl:Imp` under `mork:generatesRuleDefinition`, with `mork:swrlCompactSyntax` as a readable annotation. The SPARQL backend writes a `mork:QueryTemplate`. The OWL backend turns bound conditions and profiles into design-time classes in an `exe:OwlArtefact`, and a reasoner used only in tests answers the `exe:DesignTimeCheck` questions. SWRL is restricted to positive, monotonic inference, so its rules never derive a denial from the absence of a fact and never derive an undetermined outcome. See the [package README](../../tools/mork_compilers/README.md).
 
 The compilers agree on the points that make a compiled artefact trustworthy.
@@ -948,6 +995,36 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 **Label.** collection element
 
 **Subclass of.** `mork:Membership`
+
+#### `mork:CompiledMapping`
+
+**Definition.** A mapping scheme as a compiler compiled it, at one instant, against one base, with its queries, its findings and its mappings' effective confidences. It is named by the digest of its compiled text, so one compilation always has one name, and is typed prov:Entity beside this class.
+
+**Label.** compiled mapping
+
+#### `mork:CompiledQuery`
+
+**Definition.** One query of a compiled mapping, a CONSTRUCT that writes a mapping's triples, a check SELECT that reports where it could not, or a closure SELECT that gathers the members of a class combination once the mappings that create them have run.
+
+**Label.** compiled query
+
+#### `mork:CompileFinding`
+
+**Definition.** One thing a compiler found while compiling a mapping scheme, with its code, its severity and the mapping it is about.
+
+**Label.** compile finding
+
+#### `mork:OutputBox`
+
+**Definition.** Which output a compiled query writes to. Named individuals are InstanceOutput and TerminologyOutput.
+
+**Label.** output box
+
+#### `mork:FindingSeverity`
+
+**Definition.** How severe a compile finding is. Named individuals are ErrorFinding, WarningFinding and InfoFinding.
+
+**Label.** finding severity
 
 #### `mork:CompilationMode`
 
@@ -1765,6 +1842,148 @@ The object properties of MORK first, then those of Executable.
 **Label.** has close mapping
 
 **Subproperty of.** `mork:relatedMapping`
+
+#### `mork:compiledInMode`
+
+**Definition.** The compilation mode a compiled mapping was compiled under.
+
+**Label.** compiled in mode
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `mork:CompilationMode`
+
+**Characteristics.** functional
+
+#### `mork:hasCompiledQuery`
+
+**Definition.** A query of a compiled mapping.
+
+**Label.** has compiled query
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `mork:CompiledQuery`
+
+#### `mork:compiledFrom`
+
+**Definition.** The mapping node a compiled query comes from.
+
+**Label.** compiled from
+
+**Domain.** `mork:CompiledQuery`
+
+**Characteristics.** functional
+
+#### `mork:contextPath`
+
+**Definition.** The list of mapping nodes from a compiled query's root to the mapping it comes from, which is the chain of contexts its WHERE clause follows.
+
+**Label.** context path
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `rdf:List`
+
+**Characteristics.** functional
+
+#### `mork:outputBox`
+
+**Definition.** Whether a compiled query writes instance data or terminology.
+
+**Label.** output box
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `mork:OutputBox`
+
+**Characteristics.** functional
+
+#### `mork:readsOutputOf`
+
+**Definition.** A mapping whose output a compiled query reads, so that the query runs in a later stratum than that mapping's queries.
+
+**Label.** reads output of
+
+**Domain.** `mork:CompiledQuery`
+
+#### `mork:closureProperty`
+
+**Definition.** The property a closure query writes an axiom about.
+
+**Label.** closure property
+
+**Domain.** `mork:CompiledQuery`
+
+**Characteristics.** functional
+
+#### `mork:closureAxiom`
+
+**Definition.** The axiom a closure query writes, rdfs:domain or rdfs:range, named by the property that states it.
+
+**Label.** closure axiom
+
+**Domain.** `mork:CompiledQuery`
+
+**Characteristics.** functional
+
+#### `mork:closureCombination`
+
+**Definition.** How a closure query combines its members, owl:unionOf or owl:intersectionOf, named by the property that states it.
+
+**Label.** closure combination
+
+**Domain.** `mork:CompiledQuery`
+
+**Characteristics.** functional
+
+#### `mork:hasCompileFinding`
+
+**Definition.** A finding of a compiled mapping.
+
+**Label.** has compile finding
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `mork:CompileFinding`
+
+#### `mork:findingSeverity`
+
+**Definition.** The severity of a compile finding.
+
+**Label.** finding severity
+
+**Domain.** `mork:CompileFinding`
+
+**Range.** `mork:FindingSeverity`
+
+**Characteristics.** functional
+
+#### `mork:findingAbout`
+
+**Definition.** The mapping node a compile finding is about.
+
+**Label.** finding about
+
+**Domain.** `mork:CompileFinding`
+
+**Characteristics.** functional
+
+#### `mork:hasEffectiveConfidence`
+
+**Definition.** An entry of a compiled mapping that records one mapping's effective confidence.
+
+**Label.** has effective confidence
+
+**Domain.** `mork:CompiledMapping`
+
+#### `mork:confidenceOf`
+
+**Definition.** The mapping node an effective confidence entry is for.
+
+**Label.** confidence of
+
+**Characteristics.** functional
 
 #### `mork:compilationMode`
 
@@ -3408,6 +3627,148 @@ The datatype properties of MORK first, then those of Executable.
 
 **Subproperty of.** `mork:itemsConstrained`
 
+#### `mork:mappingDigest`
+
+**Definition.** The SHA-256 of the mapping graph's RDFC-1.0 canonical N-Quads, in lowercase hex, that a compiled mapping was compiled from.
+
+**Label.** mapping digest
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:readAt`
+
+**Definition.** The instant at which a compiled mapping read the mappings in force, given by its caller and never read from a clock.
+
+**Label.** read at
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `xsd:dateTime`
+
+**Characteristics.** functional
+
+#### `mork:compiledBase`
+
+**Definition.** The namespace under which a compiled mapping mints IRIs.
+
+**Label.** compiled base
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `xsd:anyURI`
+
+**Characteristics.** functional
+
+#### `mork:compiler`
+
+**Definition.** The compiler and its version that made a compiled mapping.
+
+**Label.** compiler
+
+**Domain.** `mork:CompiledMapping`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:queryIndex`
+
+**Definition.** A compiled query's position in its compiled mapping, the order the queries run in within a stratum.
+
+**Label.** query index
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:queryKind`
+
+**Definition.** Whether a compiled query is a construct, a check or a closure.
+
+**Label.** query kind
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:stratum`
+
+**Definition.** The step of a run a compiled query belongs to, after every stratum whose output it reads.
+
+**Label.** stratum
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:checkCode`
+
+**Definition.** The finding code each row of a check query reports.
+
+**Label.** check code
+
+**Domain.** `mork:CompiledQuery`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:findingIndex`
+
+**Definition.** A compile finding's position among its compiled mapping's findings.
+
+**Label.** finding index
+
+**Domain.** `mork:CompileFinding`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:findingCode`
+
+**Definition.** The code of a compile finding, from the compiler's list of findings.
+
+**Label.** finding code
+
+**Domain.** `mork:CompileFinding`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:findingMessage`
+
+**Definition.** What a compile finding says, for a reviewer.
+
+**Label.** finding message
+
+**Domain.** `mork:CompileFinding`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:effectiveConfidence`
+
+**Definition.** A mapping's effective confidence, from 0 to 1, its own weighting times the least of its children's.
+
+**Label.** effective confidence
+
+**Range.** `xsd:double`
+
+**Characteristics.** functional
+
 #### `mork:weighting`
 
 **Definition.** confidence score out of 100
@@ -3478,6 +3839,11 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 | `mork:IntersectionOfClasses` | `mork:ClassCombination`, `owl:NamedIndividual` | intersection of classes | Several classes are combined with owl:intersectionOf. |
 | `mork:UnionOfClasses` | `mork:ClassCombination`, `owl:NamedIndividual` | union of classes | Several classes are combined with owl:unionOf. The default. |
 | `mork:DraftMode` | `mork:CompilationMode`, `owl:NamedIndividual` | draft mode | Governance state and version identity are not required on member mappings. The default where compilationMode is unset. |
+| `mork:InstanceOutput` | `mork:OutputBox`, `owl:NamedIndividual` | instance output | The instance data a compiled query writes, its target graph. |
+| `mork:TerminologyOutput` | `mork:OutputBox`, `owl:NamedIndividual` | terminology output | The classes, properties and axioms a compiled query writes, its T-Box graph. |
+| `mork:ErrorFinding` | `mork:FindingSeverity`, `owl:NamedIndividual` | error finding | A mapping not compiled. In production mode any error refuses the compilation. |
+| `mork:WarningFinding` | `mork:FindingSeverity`, `owl:NamedIndividual` | warning finding | Something compiled that a reviewer should know about, for example a broad match. |
+| `mork:InfoFinding` | `mork:FindingSeverity`, `owl:NamedIndividual` | info finding | Nothing lost, for example a mapping left to another backend. |
 | `mork:ProductionMode` | `mork:CompilationMode`, `owl:NamedIndividual` | production mode | Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles. It is enforced by mork:GenerativeMappingProductionGovernanceShape. |
 | `mork:ReviewMode` | `mork:CompilationMode`, `owl:NamedIndividual` | review mode | Governance state and version identity are recommended but not enforced by mork:GenerativeMappingProductionGovernanceShape on member mappings. |
 | `mork:CastComparison` | `mork:LookupComparison`, `owl:NamedIndividual` | cast comparison | The value read is cast to the lookupDatatype, then matched as the same RDF term, which an index can serve. Without a lookupDatatype it is compared as LexicalComparison is. An IRI is matched as it is. The default. |
@@ -4322,6 +4688,9 @@ The Axiom Index is generated from this section.
 | `mork:Collection` | Class | Subclass of `mork:Composition`. Disjoint with `mork:Chaining`. |
 | `mork:CollectionElement` | Class | Subclass of `mork:Membership`. |
 | `mork:CompilationMode` | Class |  |
+| `mork:CompileFinding` | Class |  |
+| `mork:CompiledMapping` | Class |  |
+| `mork:CompiledQuery` | Class |  |
 | `mork:Composition` | Class | Subclass of `mork:Association`. |
 | `mork:ConcatExpression` | Class | Subclass of `mork:concatLeft` some `mork:TemplateExpression`, `mork:concatRight` some `mork:TemplateExpression`, `mork:TemplateExpression`. |
 | `mork:ConstraintProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
@@ -4334,6 +4703,7 @@ The Axiom Index is generated from this section.
 | `mork:Digraph` | Class | Subclass of `mork:digraphMatch` some `mork:OwlAxiom`, `skos:Concept`. |
 | `mork:Entity` | Class | Subclass of `mork:IdentifiableElement`. Disjoint with `mork:Association`. |
 | `mork:ExclusionIntent` | Class | Subclass of `mork:IntentNode`. |
+| `mork:FindingSeverity` | Class |  |
 | `mork:GenerativeMapping` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`, `mork:DataMapping`. |
 | `mork:Hypothesis` | Class | Subclass of `mork:DataMapping`. |
 | `mork:IdentifiableElement` | Class | Subclass of `mork:Representation` and (`mork:identifier` some `xsd:string`), `mork:Representation`. |
@@ -4353,6 +4723,7 @@ The Axiom Index is generated from this section.
 | `mork:Objectification` | Class | Subclass of `mork:DataConcept`. Equivalent to (`mork:broadConceptRole` min 1 `skos:Concept`) and (`mork:narrowConceptRole` min 1 `skos:Concept`). |
 | `mork:OntologicalScheme` | Class | Subclass of `skos:ConceptScheme`. |
 | `mork:OrderedCollection` | Class | Subclass of `mork:Collection`. Equivalent to `mork:orderedItems` value "true"^^xsd:boolean. Disjoint with `mork:SetListing`, `mork:UnorderedCollection`. |
+| `mork:OutputBox` | Class |  |
 | `mork:OwlAxiom` | Class | Equivalent to `skos:Concept` and (`skos:inScheme` some `mork:OntologicalScheme`). |
 | `mork:OwlClass` | Class | Subclass of `mork:OwlAxiom`. |
 | `mork:OwlDataProperty` | Class | Subclass of `mork:OwlAxiom`. |
@@ -4423,7 +4794,12 @@ The Axiom Index is generated from this section.
 | `mork:broaderMapping` | Object property | Domain `mork:DataMapping` or (`skos:OrderedCollection` and (`skos:member` some `mork:DataMapping`)). Range `mork:DataMapping`. Inverse of `mork:narrowerMapping`. Subproperty of `mork:relatedMapping`. |
 | `mork:classCombination` | Object property | Range `mork:ClassCombination`. Functional. |
 | `mork:closeMapping` | Object property | Subproperty of `mork:relatedMapping`. |
+| `mork:closureAxiom` | Object property | Domain `mork:CompiledQuery`. Functional. |
+| `mork:closureCombination` | Object property | Domain `mork:CompiledQuery`. Functional. |
+| `mork:closureProperty` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:compilationMode` | Object property | Domain `mork:MappingScheme`. Range `mork:CompilationMode`. Functional. |
+| `mork:compiledFrom` | Object property | Domain `mork:CompiledQuery`. Functional. |
+| `mork:compiledInMode` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompilationMode`. Functional. |
 | `mork:compositeBroader` | Object property | Inverse of `mork:compositeNarrower`. Subproperty of `mork:associativeBroader`. |
 | `mork:compositeBroaderMapping` | Object property | Inverse of `mork:compositeNarrowerMapping`. Subproperty of `mork:broaderMapping`. |
 | `mork:compositeBroaderTemplate` | Object property | Inverse of `mork:compositeNarrowerTemplate`. Subproperty of `mork:compositeBroaderMapping`. |
@@ -4434,8 +4810,10 @@ The Axiom Index is generated from this section.
 | `mork:concatRight` | Object property | Domain `mork:ConcatExpression`. Range `mork:TemplateExpression`. Functional. |
 | `mork:concatenation` | Object property | Subproperty of `mork:placeholderMapping`. |
 | `mork:conceptScheme` | Object property | Range `mork:TaxonomyScheme`. Subproperty of `skos:inScheme`. |
+| `mork:confidenceOf` | Object property | Functional. |
 | `mork:constraintDimension` | Object property | Domain `mork:QuantitativeConstraint`. Range `skos:Concept`. |
 | `mork:constraintUnit` | Object property | Domain `mork:QuantitativeConstraint`. Range `skos:Concept`. |
+| `mork:contextPath` | Object property | Domain `mork:CompiledQuery`. Range `rdf:List`. Functional. |
 | `mork:deferredMapping` | Object property | Symmetric. Subproperty of `mork:relatedMapping`. |
 | `mork:dependentMapping` | Object property | Subproperty of `mork:deferredMapping`. |
 | `mork:dependsOnMapping` | Object property | Domain `mork:GenerativeMapping`. Range `mork:DataMapping`. |
@@ -4447,14 +4825,19 @@ The Axiom Index is generated from this section.
 | `mork:exactMapping` | Object property | Subproperty of `mork:closeMapping`. |
 | `mork:exactRBoxMatch` | Object property | Subproperty of `mork:intransitiveExactMatch`. |
 | `mork:exactTBoxMatch` | Object property | Subproperty of `mork:intransitiveExactMatch`. |
+| `mork:findingAbout` | Object property | Domain `mork:CompileFinding`. Functional. |
+| `mork:findingSeverity` | Object property | Domain `mork:CompileFinding`. Range `mork:FindingSeverity`. Functional. |
 | `mork:format` | Object property | Domain `mork:RepresentationScheme`. Range `mork:SerializationFormat`. Subproperty of `owl:topObjectProperty`. |
 | `mork:generatesClassDefinition` | Object property | Domain `mork:ProjectionMapping`. Range `mork:OwlClass`. |
 | `mork:generatesRuleDefinition` | Object property | Domain `mork:RuleMapping`. Range `swrl:Imp`. |
 | `mork:generatesShapeDefinition` | Object property | Domain `mork:ShapeMapping`. Range `sh:Shape`. |
 | `mork:generatesTransformDefinition` | Object property | Domain `mork:TransformMapping`. Range `rr:TriplesMap`. |
 | `mork:hasBinding` | Object property | Domain `mork:InterpolationExpression`. Range `mork:TemplateBinding`. |
+| `mork:hasCompileFinding` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompileFinding`. |
+| `mork:hasCompiledQuery` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompiledQuery`. |
 | `mork:hasConcept` | Object property | Inverse of `skos:inScheme`. Subproperty of `owl:topObjectProperty`. |
 | `mork:hasConstraintProvenance` | Object property | Domain `mork:ShapeMapping`. Range `mork:ConstraintProvenance`. |
+| `mork:hasEffectiveConfidence` | Object property | Domain `mork:CompiledMapping`. |
 | `mork:hasMapping` | Object property | Domain (`mork:conceptScheme` some `mork:TaxonomyScheme`) or (`mork:representationScheme` some `mork:RepresentationScheme`). Range `mork:mappingScheme` some `mork:MappingScheme`. Inverse of `mork:mappingFor`. Subproperty of `skos:relatedMatch`. |
 | `mork:hasParameterBinding` | Object property | Domain `mork:GenerativeMapping`. Range `mork:ParameterBinding`. |
 | `mork:hasProjectionProvenance` | Object property | Domain `mork:ProjectionMapping`. Range `mork:ProjectionProvenance`. |
@@ -4491,6 +4874,7 @@ The Axiom Index is generated from this section.
 | `mork:narrowTBoxCategoryMatch` | Object property | Subproperty of `mork:narrowCategoryMatch`. |
 | `mork:narrowerMapping` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping` or (`skos:OrderedCollection` and (`skos:member` some `mork:DataConcept`)). Subproperty of `mork:relatedMapping`. |
 | `mork:ontologicalScheme` | Object property | Range `mork:OntologicalScheme`. Subproperty of `skos:inScheme`. |
+| `mork:outputBox` | Object property | Domain `mork:CompiledQuery`. Range `mork:OutputBox`. Functional. |
 | `mork:paramBinding` | Object property | Domain `mork:QueryTemplate`. Range `mork:ParameterBinding`. |
 | `mork:partialMatch` | Object property | Subproperty of `skos:mappingRelation`. |
 | `mork:pathMatch` | Object property | Subproperty of `skos:mappingRelation`. |
@@ -4499,6 +4883,7 @@ The Axiom Index is generated from this section.
 | `mork:possibleMatch` | Object property | Subproperty of `skos:mappingRelation`. |
 | `mork:precedes` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping`. Transitive. |
 | `mork:propertyMappingAssertions` | Object property | Subproperty of `owl:topObjectProperty`. |
+| `mork:readsOutputOf` | Object property | Domain `mork:CompiledQuery`. |
 | `mork:referenceDataMapping` | Object property | Range `mork:dataRef` some `xsd:string`. Subproperty of `mork:templateMapping`. |
 | `mork:referenceDataPath` | Object property | Subproperty of `mork:pathMatch`. |
 | `mork:refinesIntent` | Object property | Domain `mork:IntentNode`. Range `mork:IntentNode`. Transitive. |
@@ -4522,7 +4907,10 @@ The Axiom Index is generated from this section.
 | `mork:yieldConcept` | Object property | Subproperty of `owl:topObjectProperty`. |
 | `exe:checkHolds` | Datatype property | Domain `exe:DesignTimeCheck`. Range `xsd:boolean`. Functional. |
 | `exe:siblingsDisjoint` | Datatype property | Domain `exe:OwlArtefact`. Range `xsd:boolean`. Functional. |
+| `mork:checkCode` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:string`. Functional. |
 | `mork:collectionElementScalarValue` | Datatype property | Subproperty of `owl:topDataProperty`. |
+| `mork:compiledBase` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:anyURI`. Functional. |
+| `mork:compiler` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:string`. Functional. |
 | `mork:conceptFQNameTemplate` | Datatype property | Subproperty of `mork:conceptNameTemplate`. |
 | `mork:conceptIRI` | Datatype property | Range `xsd:anyURI`. Subproperty of `mork:conceptName`. |
 | `mork:conceptId` | Datatype property | Domain `skos:Concept`. Range `xsd:string`. Functional. Subproperty of `mork:identifier`, `skos:notation`. |
@@ -4537,9 +4925,13 @@ The Axiom Index is generated from this section.
 | `mork:dataInline` | Datatype property | Subproperty of `mork:data`. |
 | `mork:dataRef` | Datatype property | Functional. Subproperty of `mork:data`. |
 | `mork:deprecationReason` | Datatype property | Domain `mork:DataMapping`. Range `xsd:string`. |
+| `mork:effectiveConfidence` | Datatype property | Range `xsd:double`. Functional. |
 | `mork:effectiveFrom` | Datatype property | Range `xsd:dateTime`. |
 | `mork:effectiveUntil` | Datatype property | Range `xsd:dateTime`. |
 | `mork:externalPropertyValue` | Datatype property | Subproperty of `owl:topDataProperty`. |
+| `mork:findingCode` | Datatype property | Domain `mork:CompileFinding`. Range `xsd:string`. Functional. |
+| `mork:findingIndex` | Datatype property | Domain `mork:CompileFinding`. Range `xsd:integer`. Functional. |
+| `mork:findingMessage` | Datatype property | Domain `mork:CompileFinding`. Range `xsd:string`. Functional. |
 | `mork:hasIntentConfidence` | Datatype property | Domain `mork:IntentNode`. Range `xsd:decimal`. |
 | `mork:hasNaturalLanguageSource` | Datatype property | Domain `mork:IntentNode`. Range `xsd:string`. |
 | `mork:identifier` | Datatype property | Subproperty of `owl:topDataProperty`. |
@@ -4554,6 +4946,7 @@ The Axiom Index is generated from this section.
 | `mork:jurisdiction` | Datatype property | Range `xsd:string`. |
 | `mork:llmConfidence` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:decimal`. |
 | `mork:llmModelId` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
+| `mork:mappingDigest` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:string`. Functional. |
 | `mork:mappingIndex` | Datatype property | Subproperty of `owl:topDataProperty`. |
 | `mork:mappingRecommendation` | Datatype property | Range `xsd:string`. Functional. Subproperty of `mork:data`. |
 | `mork:mappingVersion` | Datatype property | Domain `mork:MappingScheme`. Range `xsd:string`. |
@@ -4566,13 +4959,17 @@ The Axiom Index is generated from this section.
 | `mork:placeholderName` | Datatype property | Domain `mork:TemplateBinding`. Range `xsd:string`. Functional. |
 | `mork:provenanceCreated` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:dateTime`. |
 | `mork:provenanceCreator` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
+| `mork:queryIndex` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:integer`. Functional. |
+| `mork:queryKind` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:string`. Functional. |
 | `mork:queryLanguage` | Datatype property | Domain `mork:QueryTemplate`. Range `xsd:string`. |
 | `mork:queryText` | Datatype property | Domain `mork:QueryTemplate`. Range `xsd:string`. |
+| `mork:readAt` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:dateTime`. Functional. |
 | `mork:reference` | Datatype property | Subproperty of `mork:identifier`. |
 | `mork:referenceIdentifier` | Datatype property | Domain `mork:NormativeReferenceItent`. Range `xsd:string`. |
 | `mork:reviewStatus` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
 | `mork:scopeInclusion` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
 | `mork:scopeType` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
+| `mork:stratum` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:integer`. Functional. |
 | `mork:swrlText` | Datatype property | Domain `mork:RuleMapping`. Range `xsd:string`. |
 | `mork:targetsOntology` | Datatype property | Domain `mork:RuleMapping`. Range `xsd:anyURI`. |
 | `mork:template` | Datatype property | Subproperty of `owl:topDataProperty`. |
@@ -4599,8 +4996,11 @@ The Axiom Index is generated from this section.
 | `mork:DeferredObjectPropertyDefinition` | Individual | Type `mork:OwlObjectProperty`, `owl:NamedIndividual`. |
 | `mork:DefiningRestriction` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
 | `mork:DraftMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
+| `mork:ErrorFinding` | Individual | Type `mork:FindingSeverity`, `owl:NamedIndividual`. |
 | `mork:ExistentialRestriction` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
 | `mork:GlobalAxioms` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
+| `mork:InfoFinding` | Individual | Type `mork:FindingSeverity`, `owl:NamedIndividual`. |
+| `mork:InstanceOutput` | Individual | Type `mork:OutputBox`, `owl:NamedIndividual`. |
 | `mork:IntersectionOfClasses` | Individual | Type `mork:ClassCombination`, `owl:NamedIndividual`. |
 | `mork:JSON` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
 | `mork:LexicalComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
@@ -4610,8 +5010,10 @@ The Axiom Index is generated from this section.
 | `mork:RDF` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
 | `mork:ReviewMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
 | `mork:TermComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
+| `mork:TerminologyOutput` | Individual | Type `mork:OutputBox`, `owl:NamedIndividual`. |
 | `mork:UnionOfClasses` | Individual | Type `mork:ClassCombination`, `owl:NamedIndividual`. |
 | `mork:UniversalRestriction` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
+| `mork:WarningFinding` | Individual | Type `mork:FindingSeverity`, `owl:NamedIndividual`. |
 | `mork:XML` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
 | `mork:YAML` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
 
@@ -4783,7 +5185,7 @@ Not applicable.
 ## 12. Release Notes
 
 - **Next release** (additive). The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way (no effect).
-- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect).
+- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect).
 - **Next release.** `mork:GenerativeMapping` is a subclass of `fnd:Versioned`, where it was a subclass of `fnd:Version`, which Foundation reserves for one specific version (changes meaning).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
