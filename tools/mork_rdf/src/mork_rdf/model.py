@@ -43,9 +43,13 @@ class CompiledQuery:
 
     mapping: str        # the mapping node the query comes from
     path: tuple[str, ...]  # the mapping nodes from the root to it, a template's child appearing under each instance
-    kind: str           # "construct" or "check"
+    kind: str           # "construct", "check", or "closure", a SELECT of the members of a class combination
     code: Optional[str]  # for a check, the finding code each row reports
     text: str
+    box: str = "abox"   # "abox" for instance data, "tbox" for the classes, properties and axioms a mapping creates
+    reads: tuple[str, ...] = ()  # the mappings whose output the query reads, which run in earlier strata
+    stratum: int = 0    # the step of the run the query belongs to, after every stratum it reads (README §12)
+    head: Optional[tuple[str, str, str]] = None  # for a closure, the property, rdfs:domain or rdfs:range, and the combination
 
 
 @dataclass(frozen=True)
@@ -69,6 +73,14 @@ class CompiledMapping:
         return tuple(q for q in self.queries if q.kind == "check")
 
     @property
+    def closures(self) -> tuple[CompiledQuery, ...]:
+        return tuple(q for q in self.queries if q.kind == "closure")
+
+    @property
+    def strata(self) -> int:
+        return 1 + max((q.stratum for q in self.queries), default=0)
+
+    @property
     def errors(self) -> tuple[Finding, ...]:
         return tuple(f for f in self.findings if f.severity is Severity.ERROR)
 
@@ -79,7 +91,11 @@ class CompiledMapping:
             f"# mapping graph sha256:{self.mapping_digest}",
         ]
         for query in self.queries:
-            lines += ["", f"# {query.kind}{' ' + query.code if query.code else ''} for <{query.mapping}>", "# via " + " > ".join(f"<{p}>" for p in query.path), query.text]
+            lines += ["", f"# {query.kind}{' ' + query.code if query.code else ''} for <{query.mapping}>, {query.box}, stratum {query.stratum}",
+                      "# via " + " > ".join(f"<{p}>" for p in query.path)]
+            lines += ["# reads the output of " + ", ".join(f"<{r}>" for r in query.reads)] if query.reads else []
+            lines += [f"# writes <{query.head[0]}> <{query.head[1]}> the <{query.head[2]}> of the members"] if query.head else []
+            lines.append(query.text)
         return "\n".join(lines) + "\n"
 
     @property

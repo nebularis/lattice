@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-from rdflib import Dataset, Graph, Literal, URIRef
+from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from mork_rdf import CompileError, Severity, compile_scheme, run
 from mork_rdf import paths
@@ -104,7 +104,7 @@ def test_every_construct_maps_what_its_mapping_says(result):
     assert not objects(g, tract, "genre") and not objects(g, tract, "medium")
     assert objects(g, TGT + "SF", "shelf") == {"3"}                     # a lookup as the whole identity
     created = URIRef(BASE + "CatalogueItem")
-    assert (created, URIRef("http://www.w3.org/2000/01/rdf-schema#subClassOf"), URIRef(TGT + "Work")) in g
+    assert (created, URIRef("http://www.w3.org/2000/01/rdf-schema#subClassOf"), URIRef(TGT + "Work")) in result.tbox
     assert (URIRef(dune), URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), created) in g
 
 
@@ -112,6 +112,7 @@ def test_the_compiler_says_what_it_left_out(compiled):
     found = {(f.code, f.mapping.rsplit("#", 1)[-1], f.severity) for f in compiled.findings}
     assert found == {
         ("BroadMatch", "Map_Ebook", Severity.WARNING),
+        ("LookupLexical", "Map_Genre", Severity.INFO),
         ("NotInForce", "Map_Retired", Severity.INFO),
         ("Superseded", "Map_StatusV1", Severity.INFO),
         ("Uncertain", "Map_Maybe", Severity.ERROR),
@@ -180,7 +181,7 @@ def test_the_queries_mean_the_same_on_rdflib(compiled, result):
     for query in compiled.constructs:
         for triple in dataset.query(query.text):
             out.add(triple)
-    assert set(out) == set(result.graph) and any(str(s).startswith(BASE + "agent/") for s in out.subjects())
+    assert set(out) == set(result.graph) | set(result.tbox) and any(str(s).startswith(BASE + "agent/") for s in out.subjects())
 
 
 # --- time, governance and confidence (§9) ----------------------------------------------------------------------------
@@ -216,6 +217,7 @@ def test_time_is_an_input_with_a_timezone(mapping):
 HEAD = f"""@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix mm: <{MM}> . @prefix src: <{SRC}> . @prefix tgt: <{TGT}> .
 mm:S a mork:MappingScheme ; sh:declare [ sh:prefix "src" ; sh:namespace "{SRC}"^^xsd:anyURI ] .
 src:Thing a mork:Entity . mm:C a mork:DataConcept ; mork:representedAs src:Thing .
@@ -234,8 +236,6 @@ def refusals(body: str, vocabulary: Graph | None = None) -> set:
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"ex:p\" .", ("BadPath", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p .", ("NoValue", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" .", ("NoParent", "A")),
-    ("mm:Two a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:C .\n"
-     "mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root , mm:Two ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" .", ("SeveralParents", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:intransitiveExactMatch tgt:unknown ; mork:dataRef \"src:p\" .", ("StratumUnknown", "A")),
     ("mm:A a mork:Lookup ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p .", ("LookupIncomplete", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:placeholderMapping mm:X .", ("PlaceholderForm", "A")),
@@ -243,7 +243,8 @@ def refusals(body: str, vocabulary: Graph | None = None) -> set:
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:dataRef \"src:p\" .", ("Unclassified", "A")),
     ("mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:exactTBoxMatch tgt:Other .", ("NoIterator", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:precedes mm:B . mm:B mork:mappingScheme mm:S ; mork:precedes mm:A .", ("MorkShape", "A")),
-    ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:assertsPropertyRanges tgt:X .", ("NotCompiled", "A")),
+    ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:assertsPropertyRanges tgt:X .", ("AxiomsOnExistingProperty", "A")),
+    ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:propertyMappingAssertions tgt:X .", ("NotCompiled", "A")),
     ("mm:A a mork:Lookup ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:exactTBoxMatch tgt:G ; mork:dataRef \"src:p\" ; mork:dataInline \"fixed\" .", ("LookupInline", "A")),
 ])
 def test_a_mapping_the_compiler_cannot_honour_is_refused_by_name(body, expected):
@@ -313,3 +314,182 @@ def test_a_mapping_whose_source_is_another_format_is_left_to_its_backend():
         mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:J ; mork:exactTBoxMatch tgt:Other .""", format="turtle")
     compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
     assert ("OtherBackend", MM + "A") in {(f.code, f.mapping) for f in compiled.findings} and not compiled.errors
+
+
+# --- lookup comparisons (§7.3) ---------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("choice, matched, unresolved, lexical", [
+    ("", 2, set(), True),                                                          # cast, with no datatype to cast to
+    ("mork:lookupDatatype xsd:integer", 2, set(), False),                          # cast, the default
+    ("mork:lookupComparison mork:LexicalComparison", 2, set(), False),
+    ("mork:lookupComparison mork:TermComparison", 1, {"7"}, False),               # the string is not the integer
+])
+def test_a_lookup_compares_as_its_author_chose(choice, matched, unresolved, lexical):
+    g = Graph().parse(data=HEAD + f"""mm:Code a mork:Lookup ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ;
+        mork:exactRBoxMatch tgt:code ; mork:exactTBoxMatch tgt:Code ; mork:referenceDataPath tgt:number ;
+        mork:dataRef "src:code" {'; ' + choice if choice else ''} .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert (("LookupLexical", MM + "Code") in {(f.code, f.mapping) for f in compiled.findings}) == lexical
+    source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> ; <{SRC}code> \"7\" . <{REC}y> a <{SRC}Thing> ; <{SRC}code> 7 .", format="turtle")
+    out = run(compiled, source, Graph().parse(data=f"<{TGT}Seven> a <{TGT}Code> ; <{TGT}number> 7 .", format="turtle"))
+    assert len(list(out.graph.subject_objects(URIRef(TGT + "code")))) == matched
+    assert {f.value for f in out.findings if f.code == "LookupUnresolved"} == unresolved
+
+
+# --- deferred contexts (§7.5) ----------------------------------------------------------------------------------------
+
+SPECIES = HEAD + """src:Species a mork:Entity . mm:SC a mork:DataConcept ; mork:representedAs src:Species .
+src:Animal a mork:Entity . mm:AC a mork:DataConcept ; mork:representedAs src:Animal .
+mm:GenSpecies a mork:DataMapping ; mork:mappingScheme mm:S ; mork:mappingFor mm:SC ; mork:broadTBoxCategoryMatch tgt:Animal ;
+    mork:conceptNameTemplate "${src:name}" .
+mm:Yield_Species a mork:DeferredContext ; mork:mappingScheme mm:S ; mork:yieldConcept mm:GenSpecies .
+"""
+SPECIES_SOURCE = f"""<{REC}s1> a <{SRC}Species> ; <{SRC}name> "Falcon" . <{REC}s2> a <{SRC}Species> ; <{SRC}name> "Owl" .
+<{REC}a7> a <{SRC}Animal> ; <{SRC}species> "Falcon" . <{REC}a8> a <{SRC}Animal> ; <{SRC}species> "Dodo" .
+<{REC}t> a <{SRC}Thing> ."""
+TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+
+
+def species(body: str):
+    compiled = compile_scheme(Graph().parse(data=SPECIES + body, format="turtle"), MM + "S", base=BASE, at=AT)
+    return compiled, run(compiled, Graph().parse(data=SPECIES_SOURCE, format="turtle"))
+
+
+def test_a_class_named_from_data_types_a_node_made_from_the_same_record():
+    """The datum reads the creation's name template over its own focus node, the common case."""
+    compiled, out = species("mm:Specimen a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:SC ; mork:conceptName \"specimen\" ; "
+                            "mork:dataRef \"src:name\" ; mork:exactTBoxMatch mm:Yield_Species .")
+    assert not compiled.errors
+    assert (URIRef(BASE + "Falcon"), URIRef("http://www.w3.org/2000/01/rdf-schema#subClassOf"), URIRef(TGT + "Animal")) in out.tbox
+    assert (URIRef(BASE + "specimen/Falcon"), TYPE, URIRef(BASE + "Falcon")) in out.graph
+
+
+def test_a_class_named_from_other_records_is_found_by_a_lookup_over_what_its_mapping_made():
+    """Animal records name their species by text, so a lookup matches that text with the classes the species
+    creation made, which the run has kept since an earlier stratum."""
+    compiled, out = species("""mm:Animal a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:AC ; mork:conceptName "animal" ;
+        mork:exactTBoxMatch tgt:Animal ; mork:referenceDataMapping mm:AnimalSpecies .
+        mm:AnimalSpecies a mork:Lookup ; mork:mappingScheme mm:S ; mork:exactRBoxMatch rdf:type ;
+        mork:exactTBoxMatch mm:Yield_Species ; mork:dataRef "src:species" ; mork:dataInline "" .""")
+    assert not compiled.errors and compiled.strata == 2
+    falcon = next(s for s in out.graph.subjects(TYPE, URIRef(BASE + "Falcon")))
+    assert (falcon, TYPE, URIRef(TGT + "Animal")) in out.graph
+    assert {(f.code, f.value) for f in out.findings} == {("LookupUnresolved", "Dodo")}
+
+
+def test_a_deferred_context_yields_the_name_it_gives():
+    compiled, out = species("""mm:Yield_Bird a mork:DeferredContext ; mork:mappingScheme mm:S ; mork:conceptName "#Bird" ;
+        mork:yieldConcept mork:DeferredConceptIRI .
+        mm:Item a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:C ; mork:conceptName "item" ;
+        mork:exactTBoxMatch mm:Yield_Bird , tgt:Thing .""")
+    assert not compiled.errors
+    assert {o for o in out.graph.objects(None, TYPE)} == {URIRef(BASE + "Bird"), URIRef(TGT + "Thing")}
+
+
+# --- domain and range axioms (§7.6) ----------------------------------------------------------------------------------
+
+def _class_expression(g: Graph, node) -> object:
+    """A class, or (combination, members) for an owl:unionOf or owl:intersectionOf."""
+    from rdflib.collection import Collection
+    from rdflib.namespace import OWL
+    for combination in (OWL.unionOf, OWL.intersectionOf):
+        items = g.value(node, combination)
+        if items is not None:
+            return (str(combination).rsplit("#", 1)[-1], frozenset(str(m) for m in Collection(g, items)))
+    return str(node)
+
+
+def axioms(body: str):
+    compiled, out = species("mm:Knows a mork:DataMapping ; mork:mappingScheme mm:S ; mork:broadRBoxCategoryMatch owl:topObjectProperty ; "
+                            "mork:conceptName \"#knows\" ; " + body + " .")
+    assert not compiled.errors, compiled.errors
+    knows = URIRef(BASE + "knows")
+    from rdflib.namespace import OWL, RDFS
+    found = set()
+    for axiom in (RDFS.domain, RDFS.range):
+        found |= {(axiom.rsplit("#", 1)[-1], _class_expression(out.tbox, o)) for o in out.tbox.objects(knows, axiom)}
+    for restriction in out.tbox.subjects(OWL.onProperty, knows):
+        for relation in (RDFS.subClassOf, OWL.equivalentClass):
+            for subject in out.tbox.subjects(relation, restriction):
+                for kind in (OWL.allValuesFrom, OWL.someValuesFrom):
+                    filler = out.tbox.value(restriction, kind)
+                    if filler is not None:
+                        found.add((relation.rsplit("#", 1)[-1], _class_expression(out.tbox, subject), kind.rsplit("#", 1)[-1], _class_expression(out.tbox, filler)))
+    assert (knows, RDFS.subPropertyOf, OWL.topObjectProperty) in out.tbox
+    return found
+
+
+A, B, C = (TGT + n for n in "ABC")
+
+
+@pytest.mark.parametrize("body, expected", [
+    ("mork:assertsPropertyDomains tgt:A , tgt:B ; mork:assertsPropertyRanges tgt:C",
+     {("domain", ("unionOf", frozenset({A, B}))), ("range", C)}),
+    ("mork:assertsPropertyDomains tgt:A , tgt:B ; mork:classCombination mork:IntersectionOfClasses",
+     {("domain", ("intersectionOf", frozenset({A, B})))}),
+    ("mork:assertsPropertyDomains tgt:A , tgt:B ; mork:assertsPropertyRanges tgt:C ; mork:axiomForm mork:UniversalRestriction",
+     {("subClassOf", A, "allValuesFrom", C), ("subClassOf", B, "allValuesFrom", C)}),
+    ("mork:assertsPropertyDomains tgt:A ; mork:axiomForm mork:ExistentialRestriction , mork:GlobalAxioms",
+     {("subClassOf", A, "someValuesFrom", "http://www.w3.org/2002/07/owl#Thing"), ("domain", A)}),
+    ("mork:assertsPropertyDomains tgt:A , tgt:B ; mork:assertsPropertyRanges tgt:C ; mork:axiomForm mork:DefiningRestriction",
+     {("equivalentClass", ("unionOf", frozenset({A, B})), "someValuesFrom", C)}),
+    # classes made from data: combined at the closure, or restricted one by one
+    ("mork:assertsPropertyDomains mm:Yield_Species , tgt:A", {("domain", ("unionOf", frozenset({A, BASE + "Falcon", BASE + "Owl"})))}),
+    ("mork:assertsPropertyDomains mm:Yield_Species ; mork:assertsPropertyRanges tgt:C ; mork:axiomForm mork:UniversalRestriction",
+     {("subClassOf", BASE + "Falcon", "allValuesFrom", C), ("subClassOf", BASE + "Owl", "allValuesFrom", C)}),
+])
+def test_a_created_property_gets_the_axioms_its_mapping_asks_for(body, expected):
+    assert axioms(body) == expected
+
+
+def test_a_restriction_whose_range_is_made_from_data_is_refused():
+    compiled, _ = species("mm:Knows a mork:DataMapping ; mork:mappingScheme mm:S ; mork:broadRBoxCategoryMatch owl:topObjectProperty ; "
+                          "mork:conceptName \"#knows\" ; mork:assertsPropertyDomains tgt:A ; mork:assertsPropertyRanges mm:Yield_Species ; "
+                          "mork:axiomForm mork:UniversalRestriction .")
+    assert ("RangeFromData", MM + "Knows") in {(f.code, f.mapping) for f in compiled.errors}
+
+
+# --- MORK's own examples (README §16) --------------------------------------------------------------------------------
+
+def _example(name: str):
+    import lattice_repo_catalogue as reader
+    catalogue = reader.load()
+    return catalogue.root / catalogue.module("mork").directory("examples") / name
+
+
+ZOO = "http://www.nebularis.org/ontologies/Zoo#"
+OUT = "http://example.org/zoo#"
+
+
+def zoo(name: str, scheme: str):
+    g = Graph().parse(_example(name))
+    compiled = compile_scheme(g, scheme, base=OUT, at=AT, target_vocabulary=Graph().parse(_example("Zoo/Zoo.ttl")))
+    out = run(compiled, Graph())
+    pairs = lambda graph: {(str(s).replace(OUT, ":").replace(ZOO, "zoo:"), str(p).rsplit("#", 1)[-1], str(o).replace(OUT, ":").replace(ZOO, "zoo:"))
+                           for s, p, o in graph if not isinstance(o, BNode) and not isinstance(s, BNode)}
+    return compiled, pairs(out.graph), pairs(out.tbox)
+
+
+def test_the_property_generation_example_creates_what_its_notes_say():
+    compiled, abox, tbox = zoo("Zoo/PropertyGeneration.ttl", "http://www.nebularis.org/ontologies/Zoo/PropertyGeneration#Mappings")
+    assert not compiled.errors, compiled.errors
+    assert abox == {(":Owl", "type", ":Species"), (":Owl", "isSpeciesOf", ":Bird"), (":Bird", "type", "zoo:Animal")}
+    assert tbox == {(":Species", "type", "http://www.w3.org/2002/07/owl#Class"), (":Species", "subClassOf", "http://www.w3.org/2002/07/owl#Thing"),
+                    (":isSpeciesOf", "subPropertyOf", "http://www.w3.org/2002/07/owl#topObjectProperty"),
+                    (":isSpeciesOf", "domain", ":Species"), (":isSpeciesOf", "range", "zoo:Animal")}
+
+
+def test_the_uncertain_mappings_example_types_each_hypothesis_with_classes_that_do_not_exist_yet():
+    compiled, abox, tbox = zoo("Zoo/UncertainMappings.ttl", "http://www.nebularis.org/ontologies/UncertainMappings#Mappings")
+    assert {(f.code, f.mapping.rsplit("#", 1)[-1]) for f in compiled.errors} == {
+        ("Uncertain", "Map_EggSize"), ("Uncertain", "Map_Eggs"), ("Uncertain", "Map_Falcon"), ("Uncertain", "Map_Platypus"),
+    }
+    assert abox == {
+        (":Falcon", "type", ":Bird"), (":Falcon", "type", ":Oviparous"), (":Falcon", "type", ":Pet"),
+        (":Platypus", "type", ":Monotreme"), (":Platypus", "type", ":Oviparous"), (":Platypus", "type", ":Pet"),
+        (":Falcon", "laysEggs", "true"), (":Platypus", "laysEggs", "true"),  # one assertion beneath two parents
+    }
+    subclass = {(s, o) for s, p, o in tbox if p == "subClassOf"}
+    assert subclass == {(":Bird", ":Oviparous"), (":Bird", "zoo:Animal"), (":Monotreme", ":Oviparous"), (":Monotreme", "zoo:Mammal"),
+                        (":Oviparous", "http://www.w3.org/2002/07/owl#Thing"), (":Eggs", "http://www.w3.org/2002/07/owl#Thing")}
+    assert (":eggSize", "domain", ":Oviparous") in tbox

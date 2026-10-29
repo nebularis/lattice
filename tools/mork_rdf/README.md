@@ -120,8 +120,11 @@ Each mapping node in force is classified by the case analysis of the MORK founda
 |---|---|---|
 | lookup (Case 6) | `a mork:Lookup`, or `mork:referenceDataPath` | the R-Box property, its value the reference node whose `referenceDataPath` value equals the source value (§7.3) |
 | contextual datum (Case 4) | `mork:broaderApplicative`, or a deferred class, a parent and an R-Box match with no value | a target node per focus node, typed, and glued to its parent's target node by the R-Box match |
-| datum (Case 2) | `a mork:Datum`, or `mork:deferredMapping` | a target node per focus node, typed with the class it defers to |
-| class creation (Case 1a) | `mork:broadTBoxCategoryMatch` | a new class, `rdfs:subClassOf` the broad match |
+| assertion from a datum | `a mork:Datum` with an R-Box match, a value, a parent and no T-Box match | the value on the parent's target node, as an assertion writes it |
+| datum (Case 2) | `a mork:Datum`, or `mork:deferredMapping` | a target node per focus node, typed with each `mork:exactTBoxMatch`, or the class it defers to (§7.5) |
+| class creation (Case 1a) | `mork:broadTBoxCategoryMatch` | a new class in the T-Box, `rdfs:subClassOf` each broad match |
+| property creation | a broad R-Box match, no parent, no value and no children | a new property in the T-Box, `rdfs:subPropertyOf` the broad match, with its domain and range axioms (§7.6) |
+| deferred context | `a mork:DeferredContext` with no match of its own | nothing. It names what a mapping yields, for others to refer to (§7.5) |
 | class reference (Case 1b) | `mork:exactTBoxMatch` and no R-Box match | nothing. It names a class a datum defers to |
 | assertion (Case 3) | an R-Box match and a parent | the property on the parent's target node, its value from §7 |
 | correspondence | an A-Box match and a parent assertion | nothing alone. It is one row of its parent's table (§7.2) |
@@ -134,9 +137,9 @@ The R-Box match is `mork:exactRBoxMatch` (subject to value), `mork:inverseRBoxMa
 
 ### 5.2 The DAG
 
-A node's parent is the node that lists it with `mork:compositeNarrowerMapping`, or that it names with `mork:compositeBroaderMapping` or `mork:broaderApplicative`. Declaring the same edge both ways is allowed and counts once. A node with more than one parent is refused (`SeveralParents`), since its context would be ambiguous. A node whose parent is not compiled is dropped with a warning (`ParentNotCompiled`). The DAG is acyclic by MORK's shapes (§4.3).
+A node's parent is the node that lists it with `mork:compositeNarrowerMapping`, or that it names with `mork:compositeBroaderMapping` or `mork:broaderApplicative`. Declaring the same edge both ways is allowed and counts once. A node beneath several parents is compiled once in each parent's context, so each path from a root is a context of its own, as MORK's example of one `laysEggs` assertion beneath two species shows. A node none of whose parents is compiled is dropped with a warning (`ParentNotCompiled`). The DAG is acyclic by MORK's shapes (§4.3).
 
-The ordering properties (`mork:precedes`, `mork:softPrecedes`, `mork:resolvesIdentityFor` as an ordering) need nothing more, because the queries are independent and each reads only the source. The order of execution matters to RML, where a parent triples map must exist before a child references it, and not here.
+The ordering properties (`mork:precedes`, `mork:softPrecedes`, `mork:deferredMapping`, `mork:dependentMapping`) need nothing more of a query that reads only the source, since its result does not depend on when it runs. A query that reads what another mapping made does depend on it, and runs in a later stratum (§12). The compiler derives the strata from what each query reads, so a dependency the author declares and one the reading implies are kept alike.
 
 ### 5.3 Frames: how a query's WHERE is built
 
@@ -211,7 +214,17 @@ The lookup matches the source value in one of three ways, as `mork:referenceData
 
 Any other `mork:dataInline` on the lookup is refused (`LookupInline`), because a constant needs no lookup.
 
-The reference nodes are read only from the reference graph, which the runner keeps in its own named graph (§12), so source data cannot answer a lookup by declaring its own codes (§13). The match compares the two values' lexical forms with `STR()`, so a plain string matches a typed code. A value no reference node matches is not asserted (`LookupUnresolved`), and a value several match is asserted with each and reported (`LookupAmbiguous`).
+The reference nodes are read only from the reference graph, which the runner keeps in its own named graph (§12), so source data cannot answer a lookup by declaring its own codes (§13). When the lookup's `mork:exactTBoxMatch` yields the outcome of another mapping (§7.5), the reference nodes are instead what that mapping made in an earlier stratum, read from the graph the runner keeps for it.
+
+`mork:lookupComparison` says how the source value and the reference value are compared (MR-Q2):
+
+| Comparison | The match | Cost |
+|---|---|---|
+| `mork:CastComparison`, the default | the source value is cast to `mork:lookupDatatype` with `STRDT`, then joined as the same RDF term. An IRI is joined as it is | one index probe per source value |
+| `mork:LexicalComparison` | the lexical forms are equal, `STR(a) = STR(b)`, whatever the datatypes | every source value against every reference value, so 10,000 against 250 codes is 2.5 million comparisons |
+| `mork:TermComparison` | the same RDF term with no cast, so a string never matches an integer and is reported unresolved, as the author chose | one index probe |
+
+Name the reference data's own datatype. Oxigraph joins any integer-derived types alike and rdflib does not, and both join numbers by value, so `"007"` cast to `xsd:integer` finds 7 (TSD-45). A cast comparison with no `mork:lookupDatatype` falls back to the lexical comparison, reported as info (`LookupLexical`), since the compiler never sees the reference data and cannot guess its type. A match on the reference node's name always compares text. A value no reference node matches is not asserted (`LookupUnresolved`), and a value several match is asserted with each and reported (`LookupAmbiguous`).
 
 ### 7.4 Template expressions
 
@@ -226,6 +239,41 @@ MORK's template expression algebra (Foundations §3.9) compiles to SPARQL string
 | `mork:LookupExpression`, `lookupScheme`, `lookupProperty`, `lookupSource` | `STR(?concept)`, for the concept of the scheme whose property equals the source expression |
 
 An expression missing an operand, a binding or a placeholder's binding is refused (`ExpressionIncomplete`), and a node that is not an expression (`ExpressionUnknown`).
+
+### 7.5 Deferred references
+
+A mapping may refer to something another mapping creates, before it exists, through MORK's deferred references. Wherever a T-Box, R-Box or A-Box match, or an axiom's domain or range, names one, the compiler resolves it as follows:
+
+| The match names | It stands for |
+|---|---|
+| `mork:DeferredConceptIRI` | the IRI the mapping's own `mork:conceptName`, `mork:individualName` or `mork:individualIRI` gives |
+| `mork:DeferredClassDefinition` | the class created by the mapping that `mork:deferredMapping` names |
+| a `mork:DeferredContext` that yields `mork:DeferredConceptIRI` | the IRI the context's own name gives, or its name template evaluated over the referring mapping's focus node |
+| a `mork:DeferredContext` that yields a mapping, or that a mapping yields to | the outcome of that mapping |
+| a mapping | its outcome |
+
+The outcome of a mapping on the referrer's chain of contexts is that mapping's target node. The outcome of a named class or property creation is its IRI. The outcome of a class creation whose name template reads source data is evaluated over the referrer's own focus node, which gives the same class when the referrer's record carries the same values, the common case of a record that makes both a class and a member of it. When the referrer's record names the class some other way, a lookup whose `mork:exactTBoxMatch` yields the creation finds the class among those it made (§7.3), for example an animal record naming its species by text. Any other outcome off the chain is refused (`DeferredOutcome`), since nothing states the join to it.
+
+A name is resolved as `mork:conceptName` is everywhere: `#name` under the base, a prefixed name the scheme declares, or an absolute IRI.
+
+### 7.6 Domain and range axioms
+
+A mapping that creates a property with a broad R-Box match may ask for its domain and range with `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` (MR-Q4). On a mapping whose R-Box match names an existing property they are refused (`AxiomsOnExistingProperty`), since an axiom about another vocabulary's property would change that vocabulary.
+
+`mork:axiomForm` names the form, and may be given more than once:
+
+| Form | Writes, for domains D and ranges R |
+|---|---|
+| `mork:GlobalAxioms`, the default | `p rdfs:domain D` and `p rdfs:range R` |
+| `mork:UniversalRestriction` | `D ⊑ ∀p.R` |
+| `mork:ExistentialRestriction` | `D ⊑ ∃p.R`, so every member of D has such a value |
+| `mork:DefiningRestriction` | `D ≡ ∃p.R`, so anything with such a value is classified into D |
+
+Under OWL's open-world semantics every form entails and none constrains. Whether data observes a domain or range is a closed-world question, which a `mork:ShapeMapping` answers. A restriction with no range has `owl:Thing` as its filler, and one with no domain is refused (`NoDomain`).
+
+Several domains, or several ranges, are combined by `mork:classCombination`, `mork:UnionOfClasses` by default or `mork:IntersectionOfClasses`. A union of subjects of a subclass restriction is written as one restriction per class, since `(D1 ⊔ D2) ⊑ X` holds exactly when each `Di ⊑ X` does.
+
+A domain or range that yields classes created from data is known only once those creations have run. A global axiom over them is written at the closure of the DAG: a `closure` query selects the members once the creations' strata are done, and the runner writes the one class, or the combination as an OWL list in IRI order. A subclass restriction over them is written once per created class in a later stratum. A restriction whose range, or whose combined subject, is made from data is refused (`RangeFromData`, `CombinationFromData`) until a closure that writes restrictions is needed.
 
 ## 8. Templates
 
@@ -273,12 +321,13 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `Evidence` | info | a hypothesis or weighted match with no target |
 | `PlaceholderForm` | error | the placeholder forms that predate template expressions |
 | `NotCompiled` | error | a property this backend does not compile (§10.2) |
-| `SeveralParents` | error | more than one parent |
 | `BadPath` | error | a path that does not parse or names an undeclared prefix |
 | `StratumUnknown` | error | a generic match the target vocabulary does not type |
 | `NarrowMatch` | error | a narrow match in any stratum |
 | `LookupIncomplete` | error | a lookup missing its R-Box match, reference class or source |
 | `LookupInline` | error | a lookup whose own `mork:dataInline` is a constant, not `""` |
+| `LookupLexical` | info | a lookup compared lexically, since a cast comparison has no datatype or the match is on a name |
+| `LookupComparisonUnknown` | error | a `mork:lookupComparison` that names no comparison |
 | `NoGluingProperty` | error | a contextual datum with no R-Box match to join it to its parent |
 | `NoParent` | error | an assertion with no parent |
 | `NoValue` | error | an assertion with nowhere to take its value from |
@@ -287,7 +336,12 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `NoIterator` | error | a root datum that names no source class |
 | `RootPathIgnored` | warning | a root's concept has a `mork:path` |
 | `ExpressionIncomplete`, `ExpressionUnknown` | error | a template expression that cannot be compiled |
-| `TemplatedClassAsType` | error | a datum typed with a class that a creation makes from data, so no one class types it |
+| `DeferredOutcome` | error | a deferred reference to the outcome of a mapping that is off the chain and no named creation (§7.5) |
+| `DeferredUnresolved`, `DeferredTemplate` | error | a deferred reference that yields nothing, or a name template with no focus node to read |
+| `DeferredCycle` | error | mappings that read each other's output, so no stratum order exists |
+| `AxiomsOnExistingProperty` | error | domain or range axioms on a property the mapping does not create |
+| `AxiomFormUnknown`, `NoDomain` | error | an axiom form that names no form, or a restriction with no domain |
+| `RangeFromData`, `CombinationFromData` | error | a restriction over classes made from data that would need a combination at the closure (§7.6) |
 | `NoName` | error | a broad R-Box match with no name for the property it creates |
 | `BroadMatch` | warning | a broad match, compiled |
 | `ParentNotCompiled` | warning | the parent was not compiled |
@@ -297,9 +351,10 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 
 Some of MORK's vocabulary is about something other than moving instance data, and is not this backend's to compile. A mapping that uses one of the first group is refused rather than compiled without it, because the property would change what it writes:
 
-- **Refused (`NotCompiled`).** `mork:propertyMappingAssertions`, `assertsPropertyDomains` and `assertsPropertyRanges`, which write property axioms. `mork:egressProjection`, which describes the reverse direction.
+- **Refused (`NotCompiled`).** `mork:propertyMappingAssertions`, the abstract superproperty of the axiom properties, used directly. `mork:egressProjection`, which describes the reverse direction.
 - **Another backend's (`OtherBackend`).** Generative mappings (`ShapeMapping`, `RuleMapping`, `TransformMapping`, `ProjectionMapping`), their query templates, targeting, jurisdictions, scopes and constraints.
 - **Read for nothing.** The relations between mappings that carry no meaning for instance data (`mork:siblingMapping`, `closeMapping`, `exactMapping`, `relatedMapping`), review annotations and provenance, and the intent layer. They are kept in the mapping graph for reviewers and change no query.
+- **Not yet read.** `mork:templateClassMapping`, which names an OWL class whose axioms are a template for a created class's. A class creation that names one is compiled without those axioms, which is a gap, not a choice.
 
 ### 10.3 Run time
 
@@ -323,7 +378,7 @@ The declared entities are the coverage list. A node of a class the mapping graph
 
 | Field | Holds |
 |---|---|
-| `queries` | each a `CompiledQuery` with the mapping it comes from, its path through the DAG, its kind (`construct` or `check`), a check's code, and its text |
+| `queries` | each a `CompiledQuery` with the mapping it comes from, its path through the DAG, its kind (`construct`, `check` or `closure`), a check's code, its text, its box (`abox` for instance data, `tbox` for created classes, properties and axioms), the mappings whose output it reads, its stratum, and a closure's head |
 | `findings` | the compile-time findings, sorted |
 | `confidence` | each compiled mapping's effective confidence |
 | `mapping_digest` | SHA-256 of the mapping graph's RDFC-1.0 canonical N-Quads, in lowercase hex (ADR-A143) |
@@ -337,8 +392,8 @@ The declared entities are the coverage list. A node of a class the mapping graph
 
 1. **Skolemise.** The source is canonicalised with RDFC-1.0 and each blank node becomes `urn:mork-rdf:skolem:` and its canonical label. So `STR()` of every focus node is defined, and the same source always gives the same IRIs, whatever order its triples arrive in. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
 2. **Load.** The skolemised source goes in the default graph, and the reference graph in `urn:mork-rdf:reference`.
-3. **Construct.** Every construct runs, and the result is the union of their triples.
-4. **Check.** Every check runs, and its rows become findings.
+3. **Run each stratum.** Stratum 0 holds every query that reads only the source and the reference graph, and stratum n+1 every query that reads what a stratum-n mapping made. Within a stratum each construct runs, and its triples are kept in a graph named by the mapping's IRI, added to the store once the stratum is done, so no query reads its own stratum's output. Each check runs in its mapping's stratum, and each closure collects its members.
+4. **Return.** The instance triples, the T-Box triples with each closure's axiom, and the checks' rows as findings.
 
 The queries are SPARQL 1.1 with nothing engine-specific. The tests run the same constructs on rdflib and compare (§16), and a deployment can run them in Fuseki with the same dataset layout.
 
@@ -407,6 +462,10 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Engines.** The constructs give the same triples on rdflib as on Oxigraph.
 - **Time and governance.** In 2025 the superseded mapping is in force. A confidence floor drops a mapping and its descendants. A production scheme with an error does not compile. `at` without a timezone is refused.
 - **Refusals.** One small graph per refusal code, each refused by name, and the run-time checks for term kinds, an ambiguous lookup and a source that tries to answer its own lookup.
+- **Lookup comparisons.** A string and an integer code against an integer reference value, under each comparison and the lexical fallback.
+- **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
+- **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
+- **MORK's examples.** `ontology/mork/examples/Zoo/PropertyGeneration.ttl` and `UncertainMappings.ttl` compile to the classes, properties, axioms and typed individuals their notes describe.
 
 ## 17. Decisions for ratification
 
@@ -423,22 +482,27 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-7 | Classification follows `mork2rml`'s order, and a node that fits no case is an error, with no pass-through | both backends read a graph alike, and a guess is not a mapping |
 | MR-8 | Narrow matches are refused, broad matches compile with a warning, uncertain and possible matches never compile | a narrow match over-claims, and a broad one loses detail but claims nothing false |
 | MR-9 | Blank nodes are skolemised from the source's RDFC-1.0 canonical form before running | `STR()` of a blank node is undefined, and canonical labels make the target IRIs stable |
-| MR-10 | Lookups read only a separate reference graph and compare lexical forms | a source cannot forge a code, and a plain string matches a typed code |
+| MR-10 | Lookups read only a separate reference graph, or what an earlier mapping made | a source cannot forge a code. How values compare is MR-17 |
 | MR-11 | Default identity is the base, the concept name or the mapping's local name, and the SHA-256 of the focus node's IRI | stable, collision-resistant and free of the source's own IRIs |
 | MR-12 | A reference inside an IRI template is encoded, one that is the whole identity is not | as RML treats a template and a column |
 | MR-13 | Properties that would change what a mapping writes, which this backend does not compile, refuse the mapping (`NotCompiled`) | ignoring them would compile something other than the mapping says |
 | MR-15 | `mork:referenceDataMapping` names a lookup child, and a lookup matches on a predicate, the reference node's `mork:dataInline` or, with `dataInline ""`, its name (§7.3) | as the property's definition and MORK's example say |
 | MR-16 | Declared `mork:Entity` classes that no compiled root iterates are reported per source node (`Uncovered`, MR-Q3, decided 2026-10-29) | coverage is visible without a list outside the mapping graph |
 | MR-14 | Oxigraph runs the queries, and rdflib must agree | STD-153, and the queries are portable SPARQL 1.1 |
+| MR-17 | A lookup compares by casting to `mork:lookupDatatype` and joining terms by default, and the author may choose lexical or exact-term comparison (MR-Q2, decided 2026-10-29) | an indexed join scales to large reference schemes, and the author keeps the choice where data is untidy |
+| MR-18 | Deferred references resolve as §7.5 says, a name template from a class creation is evaluated over the referrer's focus, and an outcome off the chain is reached with a lookup (decided 2026-10-29) | as MORK's annotations and examples use them, covering the common case and the general join |
+| MR-19 | The run is stratified by what each query reads, and each mapping's output is kept in a graph named by its IRI (decided 2026-10-29) | a combination over classes made from data can be written only at the closure of the DAG, by design of `mork:dependentMapping` |
+| MR-20 | Domain and range axioms for created properties only, in the form and combination the author names, global by default, into a T-Box graph returned apart (MR-Q4, decided 2026-10-29) | the author chooses global or local scope, and axioms never change another vocabulary |
+| MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
 
 ## 18. Open questions
 
 | ID | Question | Where it stands |
 |---|---|---|
 | MR-Q1 | Should MORK gain `mork:RDF` as a `mork:SerializationFormat`? | decided 2026-10-29, yes. Added to MORK's specification, and read by the compiler (§4.2) |
-| MR-Q2 | Should a lookup offer an exact-term comparison beside lexical equality, for large reference schemes? | open |
+| MR-Q2 | Should a lookup offer an exact-term comparison beside lexical equality, for large reference schemes? | decided 2026-10-29, cast then exact by default, lexical or exact without the cast on request (§7.3, MR-17) |
 | MR-Q3 | Should a source node that matches no root be reportable? | decided 2026-10-29, yes, as `Uncovered` (§10.3, MR-16) |
-| MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | decided 2026-10-29, yes, since MORK is meant to create T-Box axioms on demand. Still refused (`NotCompiled`) until the design is settled |
+| MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | decided 2026-10-29, yes, in a form and combination the author chooses (§7.6, MR-20) |
 | MR-Q5 | Should `mork2rml` and this compiler share one reader? | decided 2026-10-29, yes, on the roadmap for when `mork2rml` moves to W3C RML (§19) |
 | MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now, because deployments keep mapping graphs under version control or in their graph store and other components can read it. The vocabulary is to be settled |
 

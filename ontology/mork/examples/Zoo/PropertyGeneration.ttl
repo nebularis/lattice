@@ -21,6 +21,7 @@
 # and establishing relationships between species and animals.
 
 :Map_OwlTypes rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:mappingScheme :Mappings ;
     # nb: the conceptName refers to a generated class in the target ontology
     mork:individualName "#Owl" ;
     mork:weighting 85 ;
@@ -30,6 +31,7 @@
     mork:mappingNote "Define a new class 'Bird' in the target ontology." .
 
 :Map_Gen_Species_Class rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:mappingScheme :Mappings ;
     # we use a #<conceptName> when the generated IRI should be prefixed with the base IRI of the output ontology
     # we can also use another prefix to change this, e.g., "zoo:species"
     mork:conceptName "#Species" ; 
@@ -37,29 +39,36 @@
     skos:mappingNote "Owl and Platypus are both types of species of Animal." .
 
 :Map_Yield_Species rdf:type owl:NamedIndividual , mork:DeferredContext ;
+    mork:mappingScheme :Mappings ;
     mork:conceptName "#Species" ;
     mork:yieldConcept mork:DeferredConceptIRI ;
     mork:mappingNote "Yields the axiom <BaseIRI>#Species at processing time." .
 
 :Map_Gen_Bird rdf:type owl:NamedIndividual , mork:Datum ;
+    mork:mappingScheme :Mappings ;
     mork:individualName "#Bird" ;
     mork:exactTBoxMatch zoo:Animal . # make a new type of animal called Bird
 
 :Map_Yield_Bird rdf:type owl:NamedIndividual , mork:DeferredContext ;
+    mork:mappingScheme :Mappings ;
     mork:conceptName "#Bird" ;
     mork:yieldConcept mork:DeferredConceptIRI ;  # this is a deferred class definition, #Bird
     mork:mappingNote "Yields the axiom <BaseIRI>#Bird at processing time." .
     
 :Map_Owl_SpeciesOf_Bird rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:mappingScheme :Mappings ;
     # mapping context is the output of :Map_Owl_Hypothesis
     mork:conceptName "#isSpeciesOf" ;
     mork:exactRBoxMatch mork:DeferredConceptIRI ;
     mork:exactABoxMatch :Map_Yield_Bird ;
-    mork:mappingNote "Establishes the relationship `Facon isSpeciesOf Bird`" .
+    mork:mappingNote "Establishes the relationship `Owl isSpeciesOf Bird`" .
 
 :Map_Gen_IsSpeciesOf rdf:type owl:NamedIndividual , mork:DataMapping ;
+    mork:mappingScheme :Mappings ;
     mork:conceptName "#isSpeciesOf" ;
     mork:broadRBoxCategoryMatch owl:topObjectProperty ;
     mork:assertsPropertyDomains :Map_Yield_Species ;
     mork:assertsPropertyRanges zoo:Animal ;
     mork:mappingNote "Establishes a relationship between Species and Animal" .
+
+:Mappings rdf:type owl:NamedIndividual , mork:MappingScheme .

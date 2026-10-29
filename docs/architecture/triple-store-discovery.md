@@ -1506,6 +1506,26 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** The four forms above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
 
+### TSD-45. A cast lookup key joins a stored integer by value on both stores, and Oxigraph joins `xsd:long` with `xsd:integer` too
+
+**Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-10-29, with the probe below. Not read from either engine's source.
+
+**Context.** A MORK lookup's default comparison casts the source value with `STRDT` to the reference data's datatype and joins the result as a term, so an index can serve it (`tools/mork_rdf` README §7.3). Whether the join is by term or by value decides what the author must name as that datatype.
+
+**What the store does.** Two reference triples, `<urn:a> <urn:n> "7"^^xsd:integer` and `<urn:b> <urn:n> "7"^^xsd:long`, and a pattern `?s <urn:n> ?c` after `BIND (STRDT(text, datatype) AS ?c)`.
+
+| Cast | Oxigraph matches | rdflib matches |
+|---|---|---|
+| `"7"` to `xsd:integer` | a, b | a |
+| `"007"` to `xsd:integer` | a, b | a |
+| `"7"` to `xsd:long` | a, b | b |
+
+**Why.** Not read. Oxigraph stores every integer-derived literal as an `xsd:integer` value (TSD-07), so a cast to either type joins both. rdflib joins two literals of one numeric datatype by value, so `"007"` finds 7, and keeps the derived types apart.
+
+**What it means for LATTICE.** A cast lookup must name the reference data's own datatype in `mork:lookupDatatype`. Oxigraph forgives naming a sibling integer type and rdflib does not, so the rdflib run in the mork_rdf tests is the stricter one. Leading zeros never stop a numeric cast lookup from matching on either store.
+
+**Reproduce it.** The two triples above, and `SELECT ?s WHERE { BIND (STRDT("007", xsd:integer) AS ?c) ?s <urn:n> ?c }` with each cast, on each store.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)

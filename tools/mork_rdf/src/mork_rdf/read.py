@@ -25,6 +25,8 @@ class Kind(Enum):
     CORRESPONDENCE = "correspondence"  # one source individual to one target individual, a row of its parent's table
     CLASS_REFERENCE = "class"          # names an existing class, and writes nothing (Case 1b)
     CLASS_CREATION = "new-class"       # a new class beneath a broader one (Case 1a)
+    PROPERTY_CREATION = "new-property"  # a new property beneath a broader one, with its domain and range axioms
+    CONTEXT = "context"                # a deferred context, which names what another mapping yields and writes nothing
 
 
 @dataclass(frozen=True)
@@ -41,7 +43,7 @@ class Spec:
     node: URIRef
     kind: Kind
     strata: Strata
-    parent: Optional[URIRef] = None
+    parents: tuple[URIRef, ...] = ()        # a DAG node may sit beneath several parents, compiled in each context
     children: tuple[URIRef, ...] = ()
     sources: tuple[URIRef, ...] = ()        # source classes a root iterates, or the source individual of a correspondence
     data_ref: Optional[paths.Path] = None   # a path from the focus node
@@ -55,6 +57,18 @@ class Spec:
     lookup_path: Optional[URIRef] = None    # mork:referenceDataPath, the predicate a Lookup matches on
     weighting: Optional[int] = None
     template: Optional[URIRef] = None       # the template this node instantiates, already merged in
+    types: tuple[URIRef, ...] = ()          # every mork:exactTBoxMatch, which may name deferred contexts
+    broader: tuple[URIRef, ...] = ()        # every mork:broadTBoxCategoryMatch
+    comparison: URIRef = MORK.CastComparison  # mork:lookupComparison
+    lookup_datatype: Optional[URIRef] = None
+    domains: tuple[URIRef, ...] = ()        # mork:assertsPropertyDomains
+    ranges: tuple[URIRef, ...] = ()         # mork:assertsPropertyRanges
+    axiom_forms: tuple[URIRef, ...] = ()    # mork:axiomForm, GlobalAxioms when unset
+    combination: URIRef = MORK.UnionOfClasses
+
+    @property
+    def parent(self) -> Optional[URIRef]:
+        return self.parents[0] if self.parents else None
 
 
 @dataclass
@@ -75,8 +89,7 @@ _POSSIBLE = (MORK.possibleMatch, MORK.lexicalMatch, MORK.semanticMatch, MORK.str
              MORK.pathMatch, MORK.missingOrUnrelatedMatch, MORK.digraphMatch)
 _PLACEHOLDER = (MORK.placeholderMapping, MORK.concatenation, MORK.interpolationComponent)
 # Properties that change what a mapping writes, which this backend does not compile (README §10.2).
-_UNSUPPORTED = (MORK.propertyMappingAssertions, MORK.assertsPropertyDomains, MORK.assertsPropertyRanges,
-                MORK.egressProjection)
+_UNSUPPORTED = (MORK.egressProjection,)
 _GENERATIVE = (MORK.GenerativeMapping, MORK.ShapeMapping, MORK.RuleMapping, MORK.TransformMapping, MORK.ProjectionMapping)
 _MAPPING_TYPES = (MORK.DataMapping, MORK.Datum, MORK.Lookup, MORK.IndexedMapping, MORK.WeightedMatch, MORK.UncertainMapping,
                   MORK.Hypothesis, MORK.DeferredContext) + _GENERATIVE
@@ -91,6 +104,10 @@ def _one(g: Graph, s, p) -> Optional[object]:
 def _iri(g: Graph, s, p) -> Optional[URIRef]:
     value = _one(g, s, p)
     return value if isinstance(value, URIRef) else None
+
+
+def _iris(g: Graph, s, p) -> tuple[URIRef, ...]:
+    return tuple(sorted((o for o in g.objects(s, p) if isinstance(o, URIRef)), key=str))
 
 
 def _text(g: Graph, s, p) -> Optional[str]:
@@ -224,6 +241,10 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             candidates.append(node)
 
     # --- the DAG's parent edges (§5.2) -----------------------------------------------------------------------------
+    for node in candidates:
+        if _one(g, node, MORK.propertyMappingAssertions) is not None:
+            findings.append(Finding("NotCompiled", str(node), "mork:propertyMappingAssertions is abstract. Name the axioms with mork:assertsPropertyDomains or mork:assertsPropertyRanges"))
+    candidates = [n for n in candidates if _one(g, n, MORK.propertyMappingAssertions) is None]
     present = set(candidates)
     parents: dict[URIRef, set] = {n: set() for n in candidates}
     for node in candidates:
@@ -240,9 +261,6 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
 
     specs: dict[URIRef, Spec] = {}
     for node in candidates:
-        if len(parents[node]) > 1:
-            findings.append(Finding("SeveralParents", str(node), "names more than one parent mapping: " + ", ".join(sorted(str(p) for p in parents[node]))))
-            continue
         data_ref_text = _text(g, node, MORK.dataRef)
         try:
             data_ref = paths.parse(data_ref_text, declared) if data_ref_text is not None else None
@@ -254,13 +272,13 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             node=node,
             kind=Kind.DATUM,  # classified below, once templates are merged
             strata=_strata(g, node, target_vocabulary, findings),
-            parent=next(iter(parents[node]), None),
+            parents=tuple(sorted(parents[node], key=str)),
             children=tuple(sorted((c for c in candidates if node in parents[c]), key=str)),
             sources=_sources(g, node),
             data_ref=data_ref,
             data_ref_text=data_ref_text,
             data_inline=_one(g, node, MORK.dataInline) if isinstance(_one(g, node, MORK.dataInline), Literal) else None,
-            concept_name=_text(g, node, MORK.conceptName),
+            concept_name=_text(g, node, MORK.conceptName) or _text(g, node, MORK.individualName),
             name_template=_text(g, node, MORK.conceptFQNameTemplate) or _text(g, node, MORK.conceptNameTemplate),
             individual_iri=URIRef(v) if (v := _text(g, node, MORK.individualIRI)) else None,
             identity=_identity(g, node),
@@ -268,6 +286,14 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             lookup_path=_iri(g, node, MORK.referenceDataPath),
             weighting=int(weighting) if isinstance(weighting, Literal) else None,
             template=_iri(g, node, MORK.templateMapping),
+            types=_iris(g, node, MORK.exactTBoxMatch),
+            broader=_iris(g, node, MORK.broadTBoxCategoryMatch),
+            comparison=_iri(g, node, MORK.lookupComparison) or MORK.CastComparison,
+            lookup_datatype=_iri(g, node, MORK.lookupDatatype),
+            domains=_iris(g, node, MORK.assertsPropertyDomains),
+            ranges=_iris(g, node, MORK.assertsPropertyRanges),
+            axiom_forms=_iris(g, node, MORK.axiomForm) or (MORK.GlobalAxioms,),
+            combination=_iri(g, node, MORK.classCombination) or MORK.UnionOfClasses,
         )
 
     # --- templates (§8) ----------------------------------------------------------------------------------------------
@@ -276,7 +302,7 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             specs[node] = _merge(g, spec, specs[spec.template], specs)
 
     # --- classification (§5.1) ---------------------------------------------------------------------------------------
-    abstract = {t for t in templates if t in specs and not specs[t].sources and specs[t].parent is None}
+    abstract = {t for t in templates if t in specs and not specs[t].sources and not specs[t].parents}
     for node in list(specs):
         spec = specs[node]
         if node in abstract:
@@ -300,8 +326,8 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
     while changed:
         changed = False
         for node, spec in list(specs.items()):
-            if spec.parent is not None and spec.parent not in specs:
-                findings.append(Finding("ParentNotCompiled", str(node), f"its parent {spec.parent.n3()} is not compiled", Severity.WARNING))
+            if spec.parents and not any(p in specs for p in spec.parents):
+                findings.append(Finding("ParentNotCompiled", str(node), "no parent of it is compiled: " + ", ".join(p.n3() for p in spec.parents), Severity.WARNING))
                 del specs[node]
                 changed = True
 
@@ -336,6 +362,11 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         deferred=pick(instance.deferred, template.deferred),
         lookup_path=pick(instance.lookup_path, template.lookup_path),
         weighting=pick(instance.weighting, template.weighting),
+        types=pick(instance.types, template.types),
+        broader=pick(instance.broader, template.broader),
+        lookup_datatype=pick(instance.lookup_datatype, template.lookup_datatype),
+        domains=pick(instance.domains, template.domains),
+        ranges=pick(instance.ranges, template.ranges),
     )
 
 
@@ -354,17 +385,26 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
         if spec.lookup_path is None and spec.data_inline is not None and str(spec.data_inline) != "":
             return Kind.LOOKUP, Finding("LookupInline", node, "a lookup's own mork:dataInline may only be \"\", which matches on the reference individual's name")
         return Kind.LOOKUP, None
+    if (spec.domains or spec.ranges) and set(s.rbox) - {"broad"}:
+        return Kind.ASSERTION, Finding("AxiomsOnExistingProperty", node, "domain and range axioms are made only for a property the mapping creates with a broad R-Box match, never for an existing one")
+    if (spec.node, RDF.type, MORK.DeferredContext) in g and not (s.tbox or s.rbox or s.abox):
+        return Kind.CONTEXT, None
     applicative = _iri(g, spec.node, MORK.broaderApplicative)
     if applicative is not None or (spec.deferred is not None and spec.parent is not None and rbox is not None and not has_value):
         if rbox is None:
             return Kind.CONTEXTUAL, Finding("NoGluingProperty", node, "a contextual mapping names the property that joins it to its parent with an R-Box match")
         return Kind.CONTEXTUAL, None
+    if rbox is not None and has_value and not s.tbox and spec.deferred is None and spec.parent is not None:
+        # A datum whose value is a literal or an existing individual is that value on its parent, not a new node.
+        return Kind.ASSERTION, None
     if spec.deferred is not None or (spec.node, RDF.type, MORK.Datum) in g:
         return Kind.DATUM, None
     if "broad" in s.tbox:
         return Kind.CLASS_CREATION, None
     if "exact" in s.tbox and rbox is None:
         return Kind.CLASS_REFERENCE, None
+    if rbox is not None and set(s.rbox) == {"broad"} and spec.parent is None and not has_value and not spec.children:
+        return Kind.PROPERTY_CREATION, None
     if rbox is not None:
         if spec.parent is None:
             return Kind.ASSERTION, Finding("NoParent", node, "a property assertion is made on its parent's target node, and this mapping has no parent")
@@ -400,21 +440,50 @@ def effective_confidence(specs: dict) -> dict:
     return out
 
 
-def class_of(g: Graph, spec: Spec, specs: dict) -> Optional[URIRef]:
-    """The class a datum's target nodes are typed with: its own exact T-Box match, else that of the mapping it defers
-    to, resolving a `mork:DeferredContext` through the mapping that yields it."""
-    if "exact" in spec.strata.tbox:
-        return spec.strata.tbox["exact"]
-    target = spec.deferred
-    if target is not None and (target, RDF.type, MORK.DeferredContext) in g:
-        target = next((s for s in g.subjects(MORK.yieldConcept, target) if s in specs), target)
-    if target is not None and target in specs:
-        deferred = specs[target]
-        if deferred.kind is Kind.CLASS_CREATION:
-            return URIRef("urn:mork-rdf:created")  # resolved to the created class by the compiler
-        return deferred.strata.tbox.get("exact") or deferred.strata.tbox.get("broad")
+@dataclass(frozen=True)
+class Yielded:
+    """What a deferred reference stands for (README §7.5): a name the referrer's base resolves, a name template
+    evaluated over the referrer's focus, or the outcome of another mapping."""
+
+    name: Optional[str] = None       # a constant name or IRI, as mork:conceptName or mork:individualIRI gives it
+    template: Optional[str] = None   # a name template
+    outcome: Optional[URIRef] = None  # the mapping whose outcome is yielded
+
+
+def _named(spec: Spec) -> Optional[Yielded]:
+    if spec.individual_iri is not None:
+        return Yielded(name=str(spec.individual_iri))
+    if spec.name_template:
+        return Yielded(template=spec.name_template)
+    if spec.concept_name:
+        return Yielded(name=spec.concept_name)
     return None
 
 
+def resolve(g: Graph, term: URIRef, own: Spec, specs: dict) -> Optional[Yielded]:
+    """A deferred reference in a match, or None when `term` is an ordinary term of the target vocabulary.
+
+    `mork:DeferredConceptIRI` names what `own` itself names, and `mork:DeferredClassDefinition` the class created by the
+    mapping `own` defers to. A `mork:DeferredContext` yields the IRI its own name gives when it yields
+    `mork:DeferredConceptIRI`, else the outcome of the mapping it yields or that yields it. A mapping named directly
+    stands for its outcome."""
+    if term == MORK.DeferredConceptIRI:
+        return _named(own) or Yielded()
+    if term == MORK.DeferredClassDefinition:
+        return Yielded(outcome=own.deferred) if own.deferred is not None else Yielded()
+    if (term, RDF.type, MORK.DeferredContext) not in g:
+        return Yielded(outcome=term) if term in specs and specs[term].kind is not Kind.CONTEXT else None
+    yielded = _iri(g, term, MORK.yieldConcept)
+    if yielded in (MORK.DeferredConceptIRI, MORK.DeferredClassDefinition):
+        context = specs.get(term)
+        if context is not None and (named := _named(context)) is not None:
+            return named
+        name = _text(g, term, MORK.conceptName) or _text(g, term, MORK.individualName)
+        return Yielded(name=name) if name else Yielded()
+    if yielded is not None:
+        return Yielded(outcome=yielded)
+    return Yielded(outcome=next((m for m in sorted(g.subjects(MORK.yieldConcept, term), key=str) if m in specs), None))
+
+
 def iter_roots(specs: dict) -> Iterable[Spec]:
-    return (specs[n] for n in sorted(specs, key=str) if specs[n].parent is None)
+    return (specs[n] for n in sorted(specs, key=str) if not specs[n].parents)

@@ -8,7 +8,7 @@ from a parsed path or an RDF term, never from a mapping's text (PRI-55)."""
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -18,7 +18,7 @@ from rdflib.namespace import OWL, RDF, RDFS
 
 from . import paths
 from .model import (MORK, REFERENCE_GRAPH, SKOS, CompiledMapping, CompiledQuery, CompileError, Finding, Severity, local)
-from .read import Kind, Reading, Spec, class_of, effective_confidence, iter_roots, read
+from .read import Kind, Reading, Spec, Yielded, _named, effective_confidence, iter_roots, read, resolve
 
 _PLACEHOLDER = re.compile(r"\$\{([^}]+)\}|\{\$([^}]+)\}")
 
@@ -63,14 +63,73 @@ class _Compiler:
 
     # --- identity (§6) -----------------------------------------------------------------------------------------------
 
+    def named_iri(self, name: str) -> str:
+        """The IRI a name gives: `#name` under the base, a prefixed name the scheme declares, an absolute IRI as it is,
+        and any other name under the base."""
+        if name.startswith("#"):
+            return self.base + name[1:]
+        prefix, _, rest = name.partition(":")
+        if rest and prefix in self.r.prefixes:
+            return self.r.prefixes[prefix] + rest
+        if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", name):
+            return name
+        return self.base + name
+
     def created_iri(self, spec: Spec) -> Optional[str]:
         """The constant IRI a class or property creation names, from `mork:individualIRI` or `mork:conceptName`."""
         if spec.individual_iri is not None:
             return str(spec.individual_iri)
         if spec.concept_name:
-            name = spec.concept_name[1:] if spec.concept_name.startswith("#") else spec.concept_name
-            return self.base + name
+            return self.named_iri(spec.concept_name)
         return None
+
+    # --- deferred references (§7.5) ----------------------------------------------------------------------------------
+
+    def term_for(self, term: URIRef, own: Spec, chain: list, patterns: list) -> str:
+        """The SPARQL term a match stands for where `own` is compiled in `chain`. A deferred reference resolves to a
+        constant IRI, to a name template evaluated over the focus (its patterns appended to `patterns`), or to the
+        target of the mapping on the chain whose outcome it yields."""
+        found = resolve(self.g, term, own, self.r.specs)
+        if found is None:
+            return _term(term)
+        return self._yielded(found, term, own, chain, patterns)
+
+    def _yielded(self, found: Yielded, term: URIRef, own: Spec, chain: list, patterns: list) -> str:
+        if found.name:
+            return _term(self.named_iri(found.name))
+        if found.template:
+            if not chain:
+                raise _Refusal("DeferredTemplate", f"{term.n3()} yields a name template, which needs a focus node to read, and {own.node.n3()} has none")
+            var = self.var("named")
+            patterns.append(f"BIND (IRI({self._name_template(found.template, chain[-1].focus, patterns, [])}) AS {var})")
+            return var
+        if found.outcome is not None:
+            for frame in reversed(chain):
+                if frame.spec.node == found.outcome:
+                    return frame.target
+            m = self.r.specs.get(found.outcome)
+            if m is not None and m.kind is Kind.CLASS_REFERENCE:
+                return self.term_for(m.strata.tbox["exact"], m, chain, patterns)
+            if m is not None and (m.kind in (Kind.CLASS_CREATION, Kind.PROPERTY_CREATION, Kind.CONTEXT)
+                                  or m.individual_iri is not None or (m.concept_name or "").startswith("#")):
+                named = _named(m)
+                if named is not None:
+                    return self._yielded(named, term, own, chain, patterns)
+            raise _Refusal("DeferredOutcome", f"{term.n3()} yields the outcome of {found.outcome.n3()}, which is not on this mapping's context chain and is no named creation. Join to it with a lookup")
+        raise _Refusal("DeferredUnresolved", f"{term.n3()} yields nothing: name it with mork:conceptName or yield a mapping with mork:yieldConcept")
+
+    def outputs(self, values: tuple, own: Spec) -> tuple[list[str], list[URIRef]]:
+        """The classes `values` name for an axiom: constant terms, and the class creations whose classes are made from
+        data, which are known only once those mappings have run."""
+        constants, created = [], []
+        for value in values:
+            found = resolve(self.g, value, own, self.r.specs)
+            m = self.r.specs.get(found.outcome) if found is not None and found.outcome is not None else None
+            if m is not None and m.kind is Kind.CLASS_CREATION and self.created_iri(m) is None:
+                created.append(m.node)
+            else:
+                constants.append(self.term_for(value, own, [], []))
+        return sorted(set(constants)), sorted(set(created), key=str)
 
     def expression(self, node, focus: str, patterns: list, refs: list, in_iri: bool) -> str:
         """A template expression as a SPARQL string expression (Foundations §3.9), its patterns appended to `patterns`."""
@@ -136,7 +195,7 @@ class _Compiler:
             frame.target = _term(spec.individual_iri)
             return
         if "exact" in spec.strata.abox or "broad" in spec.strata.abox:
-            frame.target = _term(spec.strata.abox.get("exact") or spec.strata.abox.get("broad"))
+            frame.target = self.term_for(spec.strata.abox.get("exact") or spec.strata.abox.get("broad"), spec, [frame], frame.identity)
             return
         target = self.var("t")
         if spec.identity is not None:
@@ -145,7 +204,7 @@ class _Compiler:
             whole = any((spec.identity, RDF.type, k) in self.g for k in (MORK.RefExpression, MORK.LookupExpression))
             expression = self.expression(spec.identity, frame.focus, frame.identity, frame.identity_refs, not whole)
         elif spec.name_template:
-            expression = self._name_template(spec.name_template, frame)
+            expression = self._name_template(spec.name_template, frame.focus, frame.identity, frame.identity_refs)
         elif spec.concept_name and spec.concept_name.startswith("#"):
             frame.target = _term(self.base + spec.concept_name[1:])
             return
@@ -159,12 +218,12 @@ class _Compiler:
         frame.identity.append(f"BIND (IRI({expression}) AS {target})")
         frame.target = target
 
-    def _name_template(self, template: str, frame: _Frame) -> str:
+    def _name_template(self, template: str, focus: str, patterns: list, refs: list) -> str:
         pieces, at = [_string(self.base)], 0
         for match in _PLACEHOLDER.finditer(template):
             if match.start() > at:
                 pieces.append(_string(template[at:match.start()]))
-            pieces.append(self._ref(match.group(1) or match.group(2), frame.focus, frame.identity, frame.identity_refs, True))
+            pieces.append(self._ref(match.group(1) or match.group(2), focus, patterns, refs, True))
             at = match.end()
         if at < len(template):
             pieces.append(_string(template[at:]))
@@ -175,9 +234,13 @@ class _Compiler:
     def root_frame(self, spec: Spec) -> _Frame:
         focus = self.var("f")
         sources = [s for s in spec.sources]
-        if not sources:
-            raise _Refusal("NoIterator", "a root datum names the source classes it iterates with mork:mappingFor and mork:representedAs")
         frame = _Frame(spec, focus, "")
+        if not sources:
+            # A root that names one individual is made once, from nothing in the source.
+            self.identity(spec, frame)
+            if frame.target.startswith("?") or frame.identity:
+                raise _Refusal("NoIterator", "a root datum names the source classes it iterates with mork:mappingFor and mork:representedAs")
+            return frame
         if len(sources) == 1:
             frame.match.append(f"{focus} {_term(RDF.type)} {_term(sources[0])} .")
         else:
@@ -220,18 +283,29 @@ class _Compiler:
         spec = chain[-1].spec
         self.queries.append(CompiledQuery(str(spec.node), tuple(str(f.spec.node) for f in chain), kind, code, text))
 
-    def construct(self, chain: list[_Frame], template: list[str], extra: list | None = None, node: Optional[Spec] = None) -> None:
+    def construct(self, chain: list[_Frame], template: list[str], extra: list | None = None, node: Optional[Spec] = None,
+                  box: str = "abox", reads: tuple = ()) -> None:
         body = " ".join(template)
         query = f"{self.prologue}CONSTRUCT {{ {body} }}\nWHERE {{\n  {self.where(chain, extra)}\n}}"
-        if node is not None and node is not chain[-1].spec:
-            self.queries.append(CompiledQuery(str(node.node), tuple(str(f.spec.node) for f in chain) + (str(node.node),), "construct", None, query))
-        else:
-            self.emit(chain, "construct", query)
+        mapping = node or chain[-1].spec
+        path = tuple(str(f.spec.node) for f in chain) + ((str(node.node),) if node is not None and node is not chain[-1].spec else ())
+        self.queries.append(CompiledQuery(str(mapping.node), path, "construct", None, query, box, tuple(str(r) for r in reads)))
 
-    def check(self, chain: list[_Frame], code: str, select: str, where: str, tail: str = "", node: Optional[Spec] = None) -> None:
+    def tbox(self, spec: Spec, template: str, where: str = "", reads: tuple = (), kind: str = "construct",
+             head: Optional[tuple] = None) -> None:
+        """A query that writes T-Box triples, once, or once per row of `where`."""
+        text = (f"{self.prologue}SELECT DISTINCT ?member\nWHERE {{\n  {where}\n}}\nORDER BY ?member" if kind == "closure"
+                else f"{self.prologue}CONSTRUCT {{ {template} }}\nWHERE {{ {where} }}")
+        query = CompiledQuery(str(spec.node), (str(spec.node),), kind, None, text, "tbox", tuple(str(r) for r in reads), head=head)
+        if query not in self.queries:
+            self.queries.append(query)
+
+    def check(self, chain: list[_Frame], code: str, select: str, where: str, tail: str = "", node: Optional[Spec] = None,
+              reads: tuple = ()) -> None:
         query = f"{self.prologue}SELECT DISTINCT {select}\nWHERE {{\n  {where}\n}}{tail}"
         mapping = node or chain[-1].spec
-        self.queries.append(CompiledQuery(str(mapping.node), tuple(str(f.spec.node) for f in chain) + ((str(node.node),) if node is not None and node is not chain[-1].spec else ()), "check", code, query))
+        self.queries.append(CompiledQuery(str(mapping.node), tuple(str(f.spec.node) for f in chain) + ((str(node.node),) if node is not None and node is not chain[-1].spec else ()), "check", code, query,
+                                          reads=tuple(str(r) for r in reads)))
 
     # --- the walk ----------------------------------------------------------------------------------------------------
 
@@ -243,7 +317,9 @@ class _Compiler:
             try:
                 if spec.kind is Kind.CLASS_CREATION:
                     self.class_creation(spec)
-                elif spec.kind is Kind.CLASS_REFERENCE:
+                elif spec.kind is Kind.PROPERTY_CREATION:
+                    self._property(spec)
+                elif spec.kind in (Kind.CLASS_REFERENCE, Kind.CONTEXT):
                     continue
                 elif spec.kind is Kind.DATUM:
                     frame = self.root_frame(spec)
@@ -255,11 +331,35 @@ class _Compiler:
             except _Refusal as refusal:
                 self.findings.append(Finding(refusal.code, str(spec.node), refusal.message))
         self.coverage()
+        self.stratify()
+
+    def stratify(self) -> None:
+        """Each query's stratum: 0 when it reads only the source and reference data, else one more than the last
+        stratum of any mapping whose output it reads. A cycle of reads cannot be ordered and refuses the mapping."""
+        level: dict[str, int] = {}
+
+        def of(mapping: str, seen: tuple) -> int:
+            if mapping in seen:
+                raise _Refusal("DeferredCycle", "the mappings read each other's output: " + " > ".join(f"<{m}>" for m in seen + (mapping,)))
+            if mapping not in level:
+                reads = {r for q in self.queries if q.mapping == mapping for r in q.reads}
+                level[mapping] = 1 + max(of(r, seen + (mapping,)) for r in reads) if reads else 0
+            return level[mapping]
+
+        out = []
+        for q in self.queries:
+            try:
+                stratum = 1 + max(of(r, (q.mapping,)) for r in q.reads) if q.reads else 0
+            except _Refusal as refusal:
+                self.findings.append(Finding(refusal.code, q.mapping, refusal.message))
+                continue
+            out.append(replace(q, stratum=stratum))
+        self.queries = sorted(out, key=lambda q: q.stratum)  # stable, so each stratum keeps the walk's order
 
     def coverage(self) -> None:
         """A check naming each source node typed with a declared `mork:Entity` that no compiled root iterates, because
         its root is absent, dropped or refused (§10.3)."""
-        iterated = {s for spec in iter_roots(self.r.specs) if spec.kind is Kind.DATUM for s in spec.sources}
+        iterated = {s for spec in iter_roots(self.r.specs) if spec.kind in (Kind.DATUM, Kind.CLASS_CREATION) for s in spec.sources}
         uncovered = sorted((e for e in self.g.subjects(RDF.type, MORK.Entity) if isinstance(e, URIRef) and e not in iterated), key=str)
         if uncovered:
             text = (f"{self.prologue}SELECT DISTINCT ?focus ?value\nWHERE {{\n  VALUES ?value {{ {' '.join(_term(e) for e in uncovered)} }}\n"
@@ -267,29 +367,30 @@ class _Compiler:
             self.queries.append(CompiledQuery(str(self.r.scheme), (str(self.r.scheme),), "check", "Uncovered", text))
 
     def class_creation(self, spec: Spec) -> None:
-        broad = spec.strata.tbox["broad"]
         iri = self.created_iri(spec)
         if iri is not None:
-            text = f"{self.prologue}CONSTRUCT {{ {_term(iri)} {_term(RDF.type)} {_term(OWL.Class)} ; {_term(RDFS.subClassOf)} {_term(broad)} . }}\nWHERE {{ }}"
-            self.queries.append(CompiledQuery(str(spec.node), (str(spec.node),), "construct", None, text))
+            broader = [self.term_for(b, spec, [], []) for b in spec.broader]
+            self.tbox(spec, f"{_term(iri)} {_term(RDF.type)} {_term(OWL.Class)} ; {_term(RDFS.subClassOf)} {', '.join(broader)} .")
             return
         frame = self.root_frame(spec)
-        self.construct([frame], [f"{frame.target} {_term(RDF.type)} {_term(OWL.Class)} ; {_term(RDFS.subClassOf)} {_term(broad)} ."])
-        self.findings.append(Finding("BroadMatch", str(spec.node), f"creates classes beneath {broad.n3()} from the source's values", Severity.WARNING))
+        extra: list = []
+        broader = [self.term_for(b, spec, [frame], extra) for b in spec.broader]
+        self.construct([frame], [f"{frame.target} {_term(RDF.type)} {_term(OWL.Class)} ; {_term(RDFS.subClassOf)} {', '.join(broader)} ."], extra, box="tbox")
+        self.findings.append(Finding("BroadMatch", str(spec.node), f"creates classes beneath {', '.join(b.n3() for b in spec.broader)} from the source's values", Severity.WARNING))
 
     def datum(self, chain: list[_Frame]) -> None:
         frame = chain[-1]
         spec = frame.spec
         template = []
-        cls = class_of(self.g, spec, self.r.specs)
-        if cls == URIRef("urn:mork-rdf:created"):
-            created = self.r.specs[spec.deferred]
-            iri = self.created_iri(created)
-            if iri is None:
-                raise _Refusal("TemplatedClassAsType", f"defers to {created.node.n3()}, which creates classes from data, so no one class types its nodes")
-            cls = URIRef(iri)
-        if cls is not None:
-            template.append(f"{frame.target} {_term(RDF.type)} {_term(cls)} .")
+        for typing in spec.types or ((spec.deferred,) if spec.deferred is not None else ()):
+            patterns: list = []
+            cls = self.term_for(typing, spec, chain, patterns)
+            if patterns:
+                # A class named from data types the node in a query of its own, so a focus node without the value
+                # the name reads is still made, untyped by that class.
+                self.construct(chain, [f"{frame.target} {_term(RDF.type)} {cls} ."], patterns)
+            else:
+                template.append(f"{frame.target} {_term(RDF.type)} {cls} .")
         if len(chain) > 1:
             glue = spec.strata.rbox.get("exact") or spec.strata.rbox.get("inverse") or spec.strata.rbox.get("broad")
             if glue is not None:
@@ -328,13 +429,65 @@ class _Compiler:
             if iri is None:
                 raise _Refusal("NoName", "a broad R-Box match creates a property, which needs mork:conceptName or mork:individualIRI")
             broad = spec.strata.rbox["broad"]
-            text = f"{self.prologue}CONSTRUCT {{ {_term(iri)} {_term(RDFS.subPropertyOf)} {_term(broad)} . }}\nWHERE {{ }}"
-            created = CompiledQuery(str(spec.node), (str(spec.node),), "construct", None, text)
-            if created not in self.queries:
-                self.queries.append(created)
+            if not any(q.mapping == str(spec.node) and q.box == "tbox" for q in self.queries):
+                self.tbox(spec, f"{_term(iri)} {_term(RDFS.subPropertyOf)} {self.term_for(broad, spec, [], [])} .")
+                self.axioms(spec, _term(iri))
                 self.findings.append(Finding("BroadMatch", str(spec.node), f"asserts a new property beneath {broad.n3()}", Severity.WARNING))
             return _term(iri)
-        return _term(spec.strata.rbox.get("exact") or spec.strata.rbox.get("inverse"))
+        return self.term_for(spec.strata.rbox.get("exact") or spec.strata.rbox.get("inverse"), spec, [], [])
+
+    def axioms(self, spec: Spec, prop: str) -> None:
+        """The domain and range axioms a created property's mapping asks for, in each `mork:axiomForm` it names
+        (README §7.6). Classes created from data are known only after their creations run, so an axiom over them is
+        written in a later stratum: a global axiom combining them at the closure, a restriction once per class."""
+        if not spec.domains and not spec.ranges:
+            return
+        combination = OWL.unionOf if spec.combination == MORK.UnionOfClasses else OWL.intersectionOf
+
+        def combined(terms: list[str]) -> str:
+            return terms[0] if len(terms) == 1 else f"[ {_term(combination)} ( {' '.join(terms)} ) ]"
+
+        domains, domain_data = self.outputs(spec.domains, spec)
+        ranges, range_data = self.outputs(spec.ranges, spec)
+
+        def member_query(constants: list[str], created: list[URIRef]) -> str:
+            parts = ([f"{{ VALUES ?member {{ {' '.join(constants)} }} }}"] if constants else [])
+            parts += [f"{{ GRAPH {_term(m)} {{ ?member {_term(RDF.type)} {_term(OWL.Class)} }} }}" for m in created]
+            return " UNION ".join(parts)
+
+        for form in spec.axiom_forms:
+            if form == MORK.GlobalAxioms:
+                for axiom, constants, created in ((RDFS.domain, domains, domain_data), (RDFS.range, ranges, range_data)):
+                    if created:
+                        self.tbox(spec, "", member_query(constants, created), tuple(created), "closure", (prop.strip("<>"), str(axiom), str(combination)))
+                    elif constants:
+                        self.tbox(spec, f"{prop} {_term(axiom)} {combined(constants)} .")
+                continue
+            restriction = {MORK.UniversalRestriction: OWL.allValuesFrom}.get(form, OWL.someValuesFrom)
+            relation = OWL.equivalentClass if form == MORK.DefiningRestriction else RDFS.subClassOf
+            if form not in (MORK.UniversalRestriction, MORK.ExistentialRestriction, MORK.DefiningRestriction):
+                self.findings.append(Finding("AxiomFormUnknown", str(spec.node), f"{form.n3()} is not an axiom form"))
+                continue
+            if range_data:
+                self.findings.append(Finding("RangeFromData", str(spec.node), "a restriction's range is a class combination, and these classes are made from data. Use mork:GlobalAxioms"))
+                continue
+            if not domains and not domain_data:
+                self.findings.append(Finding("NoDomain", str(spec.node), f"{form.n3()} restricts the domain classes, and the mapping names none"))
+                continue
+            filler = combined(ranges) if ranges else _term(OWL.Thing)
+            body = f"{_term(relation)} [ {_term(RDF.type)} {_term(OWL.Restriction)} ; {_term(OWL.onProperty)} {prop} ; {_term(restriction)} {filler} ] ."
+            if combination == OWL.unionOf and form != MORK.DefiningRestriction:
+                # (D1 ⊔ D2) ⊑ R holds exactly when D1 ⊑ R and D2 ⊑ R, so each class is restricted on its own.
+                for d in domains:
+                    self.tbox(spec, f"{d} {body}")
+                for m in domain_data:
+                    self.tbox(spec, f"?member {body}", f"GRAPH {_term(m)} {{ ?member {_term(RDF.type)} {_term(OWL.Class)} }}", (m,))
+            elif domain_data:
+                # ponytail: a combined subject over classes made from data needs the closure to write a restriction, not
+                # only a list. Add a restriction head to the closure when an author needs it.
+                self.findings.append(Finding("CombinationFromData", str(spec.node), f"{form.n3()} over a combination of classes made from data is not compiled. Use mork:UnionOfClasses with a subclass restriction, or mork:GlobalAxioms"))
+            else:
+                self.tbox(spec, f"{combined(domains)} {body}")
 
     def _kind_check(self, chain: list[_Frame], spec: Spec, prop_iri: Optional[URIRef], value: str, patterns: list) -> None:
         if prop_iri is None:
@@ -375,32 +528,61 @@ class _Compiler:
         elif spec.data_inline is not None:
             value = _term(spec.data_inline)
         else:
-            value = _term(spec.strata.abox.get("exact") or spec.strata.abox.get("broad"))
+            value = self.term_for(spec.strata.abox.get("exact") or spec.strata.abox.get("broad"), spec, chain, patterns)
             if "broad" in spec.strata.abox and "exact" not in spec.strata.abox:
                 self.findings.append(Finding("BroadMatch", str(spec.node), "asserts a broader individual than the source names", Severity.WARNING))
         triple = f"{value} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {value} ."
         self.construct(chain, [triple], patterns, node=spec)
 
     def lookup(self, chain: list[_Frame], spec: Spec) -> None:
+        """A property whose value is the reference node matching the value `mork:dataRef` reads (README §7.3). The
+        reference nodes are the reference data's, or the output of an earlier mapping when the T-Box match yields one."""
         parent = chain[-1]
         prop = self._property(spec)
         inverse = "inverse" in spec.strata.rbox and "exact" not in spec.strata.rbox
         key, found, code = self.var("key"), self.var("found"), self.var("code")
-        follow = f"{parent.focus} {paths.write(spec.data_ref)} {key} ."
-        typed = f"{found} {_term(RDF.type)} {_term(spec.strata.tbox['exact'])} ."
-        if spec.lookup_path is None and spec.data_inline is not None:
-            # dataInline "" matches on the reference individual's name, its IRI after the last / or #
-            match = f"GRAPH <{REFERENCE_GRAPH}> {{ {typed} }} FILTER (REPLACE(STR({found}), \"^.*[/#]\", \"\") = STR({key}))"
+        follow = [f"{parent.focus} {paths.write(spec.data_ref)} {key} ."]
+        reference = spec.strata.tbox["exact"]
+        yielded = resolve(self.g, reference, spec, self.r.specs)
+        reads: tuple = ()
+        if yielded is not None and yielded.outcome is not None and not any(f.spec.node == yielded.outcome for f in chain) \
+                and (m := self.r.specs.get(yielded.outcome)) is not None and m.kind in (Kind.CLASS_CREATION, Kind.DATUM, Kind.CONTEXTUAL) \
+                and not (m.kind is Kind.CLASS_CREATION and self.created_iri(m) is not None):
+            # The nodes an earlier mapping made, which the run keeps in a graph named for that mapping (README §12).
+            graph, typed, reads = _term(m.node), f"{found} {_term(RDF.type)} {self.var('any')} .", (m.node,)
         else:
-            # on the predicate mork:referenceDataPath names, or else on the reference individual's own mork:dataInline
-            predicate = spec.lookup_path if spec.lookup_path is not None else MORK.dataInline
-            match = f"GRAPH <{REFERENCE_GRAPH}> {{ {found} {_term(predicate)} {code} . {typed} }} FILTER (STR({code}) = STR({key}))"
+            graph, typed = f"<{REFERENCE_GRAPH}>", f"{found} {_term(RDF.type)} {self.term_for(reference, spec, [], [])} ."
+        name = spec.lookup_path is None and spec.data_inline is not None
+        comparison = spec.comparison
+        if name:
+            if comparison != MORK.LexicalComparison and (spec.node, MORK.lookupComparison, None) in self.g:
+                self.findings.append(Finding("LookupLexical", str(spec.node), "compared lexically, since a match on the reference node's name compares text", Severity.INFO))
+            comparison = MORK.LexicalComparison
+        elif comparison == MORK.CastComparison and spec.lookup_datatype is None:
+            self.findings.append(Finding("LookupLexical", str(spec.node), "compared lexically, since no mork:lookupDatatype names the type to cast to", Severity.INFO))
+            comparison = MORK.LexicalComparison
+        if name:
+            # dataInline "" matches on the reference node's name, its IRI after the last / or #
+            match = f"GRAPH {graph} {{ {typed} }} FILTER (REPLACE(STR({found}), \"^.*[/#]\", \"\") = STR({key}))"
+        else:
+            # on the predicate mork:referenceDataPath names, or else on the reference node's own mork:dataInline
+            predicate = _term(spec.lookup_path if spec.lookup_path is not None else MORK.dataInline)
+            if comparison == MORK.LexicalComparison:
+                match = f"GRAPH {graph} {{ {found} {predicate} {code} . {typed} }} FILTER (STR({code}) = STR({key}))"
+            elif comparison == MORK.TermComparison:
+                match = f"GRAPH {graph} {{ {found} {predicate} {key} . {typed} }}"
+            elif comparison == MORK.CastComparison:
+                cast = self.var("cast")
+                follow.append(f"BIND (IF(isIRI({key}), {key}, STRDT(STR({key}), {_term(spec.lookup_datatype)})) AS {cast})")
+                match = f"GRAPH {graph} {{ {found} {predicate} {cast} . {typed} }}"
+            else:
+                raise _Refusal("LookupComparisonUnknown", f"{comparison.n3()} is not a lookup comparison")
         triple = f"{found} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {found} ."
-        self.construct(chain, [triple], [follow, match], node=spec)
+        self.construct(chain, [triple], follow + [match], node=spec, reads=reads)
         self.check(chain, "LookupUnresolved", f"({parent.focus} AS ?focus) ({key} AS ?value)",
-                   self.where(chain, [follow, f"FILTER NOT EXISTS {{ {match} }}"]), node=spec)
-        self.check(chain, "LookupAmbiguous", f"({parent.focus} AS ?focus) ({key} AS ?value)", self.where(chain, [follow, match]),
-                   f"\nGROUP BY {parent.focus} {key}\nHAVING (COUNT(DISTINCT {found}) > 1)", node=spec)
+                   self.where(chain, follow + [f"FILTER NOT EXISTS {{ {match} }}"]), node=spec, reads=reads)
+        self.check(chain, "LookupAmbiguous", f"({parent.focus} AS ?focus) ({key} AS ?value)", self.where(chain, follow + [match]),
+                   f"\nGROUP BY {parent.focus} {key}\nHAVING (COUNT(DISTINCT {found}) > 1)", node=spec, reads=reads)
 
 
 class _Refusal(Exception):

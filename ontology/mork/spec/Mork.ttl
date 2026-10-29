@@ -1656,6 +1656,39 @@ This datatype property can be used in one of two ways:
                 skos:definition "Version identifier for a MappingScheme." .
 
 
+###  http://www.nebularis.org/ontologies/Mork#axiomForm
+:axiomForm rdf:type owl:ObjectProperty ;
+           rdfs:range :AxiomForm ;
+           rdfs:label "axiom form" ;
+           skos:definition "The form of the T-Box axioms a mapping's assertsPropertyDomains and assertsPropertyRanges produce. It may be given more than once, and each form named is produced. Unset is equivalent to GlobalAxioms." ;
+           skos:scopeNote "Under OWL's open-world semantics every form entails and none constrains. A closed-world check that data observes a domain or range is a shape, produced by a ShapeMapping. The forms differ in scope: a global axiom holds for every use of the property, a restriction only for the members of the domain classes." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#classCombination
+:classCombination rdf:type owl:ObjectProperty ,
+                           owl:FunctionalProperty ;
+                  rdfs:range :ClassCombination ;
+                  rdfs:label "class combination" ;
+                  skos:definition "How the classes a mapping names with assertsPropertyDomains, or with assertsPropertyRanges, are combined when there are several. Unset is equivalent to UnionOfClasses." ;
+                  skos:scopeNote "A combination over classes created from source data is known only once the mappings that create them have run. It is produced at the closure of the mapping DAG, after every mapping it depends on." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lookupComparison
+:lookupComparison rdf:type owl:ObjectProperty ,
+                           owl:FunctionalProperty ;
+                  rdfs:range :LookupComparison ;
+                  rdfs:label "lookup comparison" ;
+                  skos:definition "How a Lookup compares the value its dataRef reads with the value of the reference data it matches on. Unset is equivalent to CastComparison." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#lookupDatatype
+:lookupDatatype rdf:type owl:ObjectProperty ,
+                         owl:FunctionalProperty ;
+                rdfs:range rdfs:Datatype ;
+                rdfs:label "lookup datatype" ;
+                skos:definition "The datatype of the reference data a Lookup matches on, to which a CastComparison casts the value its dataRef reads." .
+
+
 ###  http://www.nebularis.org/ontologies/Mork#compilationMode
 :compilationMode rdf:type owl:ObjectProperty ,
                           owl:FunctionalProperty ;
@@ -2104,6 +2137,24 @@ The equivalence class definition means any individual that has a deferredMapping
 :CompilationMode rdf:type owl:Class ;
                  rdfs:label "compilation mode" ;
                  skos:definition "Which of draft, review, or production compilation a MappingScheme's compilationMode names (ADR-A22). Named individuals are DraftMode, ReviewMode, and ProductionMode." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#AxiomForm
+:AxiomForm rdf:type owl:Class ;
+           rdfs:label "axiom form" ;
+           skos:definition "Which form of T-Box axiom axiomForm names. Named individuals are GlobalAxioms, UniversalRestriction, ExistentialRestriction and DefiningRestriction." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ClassCombination
+:ClassCombination rdf:type owl:Class ;
+                  rdfs:label "class combination" ;
+                  skos:definition "Which combination of several classes classCombination names. Named individuals are UnionOfClasses and IntersectionOfClasses." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#LookupComparison
+:LookupComparison rdf:type owl:Class ;
+                  rdfs:label "lookup comparison" ;
+                  skos:definition "Which comparison lookupComparison names. Named individuals are CastComparison, LexicalComparison and TermComparison." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#Membership
@@ -2736,6 +2787,69 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
                          :CompilationMode ;
                 rdfs:label "production mode" ;
                 skos:definition "Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles; enforced by mork:GenerativeMappingProductionGovernanceShape (ADR-A22)." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#CastComparison
+:CastComparison rdf:type owl:NamedIndividual ,
+                         :LookupComparison ;
+                rdfs:label "cast comparison" ;
+                skos:definition "The value read is cast to the lookupDatatype, then matched as the same RDF term, which an index can serve. Without a lookupDatatype it is compared as LexicalComparison is. An IRI is matched as it is. The default." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#LexicalComparison
+:LexicalComparison rdf:type owl:NamedIndividual ,
+                            :LookupComparison ;
+                   rdfs:label "lexical comparison" ;
+                   skos:definition "The value read and the reference value match when their lexical forms are equal, whatever their datatypes. No index can serve it, so each value read is compared with each reference value." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#TermComparison
+:TermComparison rdf:type owl:NamedIndividual ,
+                         :LookupComparison ;
+                rdfs:label "term comparison" ;
+                skos:definition "The value read matches only the same RDF term, with no cast. A value whose datatype differs from the reference data's is reported unresolved, which the author has chosen." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#GlobalAxioms
+:GlobalAxioms rdf:type owl:NamedIndividual ,
+                       :AxiomForm ;
+              rdfs:label "global axioms" ;
+              skos:definition "The property's rdfs:domain and rdfs:range, which hold for every use of it. The default." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#UniversalRestriction
+:UniversalRestriction rdf:type owl:NamedIndividual ,
+                               :AxiomForm ;
+                      rdfs:label "universal restriction" ;
+                      skos:definition "Each domain class D is a subclass of the restriction that every value of the property is in the range R, D ⊑ ∀p.R. It holds only for members of D." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#ExistentialRestriction
+:ExistentialRestriction rdf:type owl:NamedIndividual ,
+                                 :AxiomForm ;
+                        rdfs:label "existential restriction" ;
+                        skos:definition "Each domain class D is a subclass of the restriction that some value of the property is in the range R, D ⊑ ∃p.R, so every member of D has such a value." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#DefiningRestriction
+:DefiningRestriction rdf:type owl:NamedIndividual ,
+                              :AxiomForm ;
+                     rdfs:label "defining restriction" ;
+                     skos:definition "Each domain class D is equivalent to the restriction that some value of the property is in the range R, D ≡ ∃p.R, so anything with such a value is classified as a member of D." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#UnionOfClasses
+:UnionOfClasses rdf:type owl:NamedIndividual ,
+                         :ClassCombination ;
+                rdfs:label "union of classes" ;
+                skos:definition "Several classes are combined with owl:unionOf. The default." .
+
+
+###  http://www.nebularis.org/ontologies/Mork#IntersectionOfClasses
+:IntersectionOfClasses rdf:type owl:NamedIndividual ,
+                                :ClassCombination ;
+                       rdfs:label "intersection of classes" ;
+                       skos:definition "Several classes are combined with owl:intersectionOf." .
 
 
 ###  http://www.nebularis.org/ontologies/Mork#OwlNothing

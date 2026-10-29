@@ -45,6 +45,7 @@ Is it complete? **Almost.** The documentation is complete and every review is cl
 | `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M3 of M0–M4 done: [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
 | `toolchain-jdk25-python314` (JDK 25 LTS, Python 3.14, Unicode 16.0) | ✅ Complete: [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) | — | — |
 | `identity-minting-shared-core` (one Rust minting engine, WebAssembly-hosted in each runtime) | 🅿️ [Sketch](sketches/identity-minting-shared-core.md), deferred | `persistence-compiler-iri-sync` is now complete (2026-09-25); this sketch can be revisited. M2 and M3 proceed with native libraries meanwhile | none — the thing it was waiting on is done |
+| `mork-run-planner` (bounding a MORK run's memory, from SDM-RDFizer's planning and string pooling) | 🅿️ [Sketch](sketches/mork-run-planner.md), 2026-10-29 | MP-Q1 to MP-Q3, and a benchmark before any option is built | PDD-06 for options E and F |
 
 ## 1. RDF/SPARQL Implementation Patterns and Persistence Compiler
 

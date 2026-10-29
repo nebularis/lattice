@@ -85,7 +85,7 @@
 [ rdf:type owl:Axiom ;
    owl:annotatedSource :Map_Falcon ;
    owl:annotatedProperty mork:hypothesisMapping ;
-   owl:annotatedTarget mork:Map_Falcon_Hypothesis ;
+   owl:annotatedTarget :Map_Falcon_Hypothesis ;
    mork:mappingNote "Hypothesise the creation of several new types/classes to support the Falcon concept."
  ] .
 
@@ -103,7 +103,7 @@
 [ rdf:type owl:Axiom ;
    owl:annotatedSource :Map_Falcon_Hypothesis ;
    owl:annotatedProperty mork:deferredMapping ;
-   owl:annotatedTarget mork:Map_Gen_Bird_Class ;
+   owl:annotatedTarget :Map_Gen_Bird_Class ;
    mork:mappingNote "Falcon is a bird, birds lay eggs, however birds are not reptiles. Recommend defining a new class 'Bird' in the target ontology, and then defining 'Falcon' as an individual of the class."
  ] .
 
@@ -120,7 +120,7 @@
                                   mork:DataMapping ;
                          mork:mappingScheme :Mappings ;
                          mork:broadTBoxCategoryMatch :Map_Yield_Oviparous ,
-                                                     zoo:Mamal ;
+                                                     zoo:Mammal ;
                          mork:conceptName "#Monotreme" ;
                          mork:mappingNote "Create a class 'Monotreme' in the output ontology." .
 
@@ -163,7 +163,7 @@
 [ rdf:type owl:Axiom ;
    owl:annotatedSource :Map_Platypus ;
    owl:annotatedProperty mork:hypothesisMapping ;
-   owl:annotatedTarget mork:Map_Platypus_Hypothesis ;
+   owl:annotatedTarget :Map_Platypus_Hypothesis ;
    mork:mappingNote "Recommendation requires creation of several new types/classes."
  ] .
 
