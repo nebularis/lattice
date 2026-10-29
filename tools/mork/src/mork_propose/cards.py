@@ -6,6 +6,7 @@ stored, so it cannot drift from the graph it is read from."""
 from __future__ import annotations
 
 import functools
+import re
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
@@ -36,7 +37,8 @@ class Card:
 
 def _first_sentence(text: str, limit: int = 160) -> str:
     text = " ".join(text.split())
-    end = text.find(". ")
+    # A sentence ends at a full stop and a space, but not after an abbreviation such as "e.g." or "i.e.".
+    end = next((m.start() for m in re.finditer(r"\. ", text) if not re.search(r"(?:\b(?:e\.g|i\.e|cf|etc|viz|no|vs))$", text[: m.start()], re.I)), -1)
     text = text if end < 0 else text[: end + 1]
     return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
 
