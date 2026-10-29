@@ -1,0 +1,16 @@
+{
+ "decoded": false,
+ "triples": 0,
+ "schemes": [],
+ "findings": [
+  {
+   "stage": "decode",
+   "severity": "error",
+   "code": "core-code-does-not-accept-a-positional",
+   "about": "line 16",
+   "message": "line 16: code 'sh:declare' does not accept a positional inline node\n    %M MS md .draft sh:declare [#d1 sh:prefix \"odrl\" sh:namespace \"http://www.w3.org/ns/odrl/2/\"^xsd:anyURI]"
+  }
+ ],
+ "errors": 1,
+ "output_triples": null
+}

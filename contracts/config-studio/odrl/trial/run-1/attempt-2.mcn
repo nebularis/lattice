@@ -1,0 +1,24 @@
+@b <https://example.org/lattice/odrl/mapping#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+@t ins
+%R Src fm mork:RDF
+odrl:Agreement RE
+odrl:Set RE
+odrl:Offer RE
+%X
+C_Policy C cs MS rs Src ra odrl:Agreement,odrl:Set,odrl:Offer
+C_Permission C cs MS p odrl:permission
+C_Prohibition C cs MS p odrl:prohibition
+C_Same C cs MS
+Pfx_odrl rdfs:Resource sh:prefix "odrl" sh:namespace "http://www.w3.org/ns/odrl/2/"^xsd:anyURI
+%M MS md .draft sh:declare Pfx_odrl
+Map_Policy MD f C_Policy xt :Instrument cn Map_TermPermission,Map_TermProhibition
+Map_TermPermission MD f C_Permission xt :Term,:Template cn Map_RelPermission
+Map_RelPermission MD f C_Same xt :Permission xr :arisesUnder cn Map_ActPermission
+Map_ActPermission xr :activity r odrl:action
+Map_TermProhibition MD f C_Prohibition xt :Term,:Template cn Map_RelProhibition
+Map_RelProhibition MD f C_Same xt :Prohibition xr :arisesUnder cn Map_ActProhibition
+Map_ActProhibition xr :activity r odrl:action

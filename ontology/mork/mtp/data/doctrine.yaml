@@ -5,17 +5,23 @@ invariants:
   - Emit code, reference, and minted identifiers in their typed positions.
   - Keep resident pack order before retrieved context.
   - Treat generated mappings as provenance-bearing evidence.
+  - For an RDF source, give the representation scheme the format mork:RDF, name the source classes a concept stands for with mork:representedAs, and write paths as SPARQL property paths whose prefixes the mapping scheme declares with sh:declare.
+  - A child mapping glued to its parent with an exact R-Box match writes the child's node as subject and the parent's as object. Glued with an inverse R-Box match it writes the parent's node as subject.
+  - Name an individual the target vocabulary declares, such as a bound's sense or a match strategy, with an A-Box match, never with a minted node.
 decision_ladder:
   - Identify the mapping family.
   - Identify the source representation.
   - Identify the target ontology term.
   - Select the minimum valid MCN structure.
   - Lint and validate before proposing output.
-  - Record uncertainty as a note, not weighting.
+  - Record confidence in a mapping as mork:weighting out of 100, and why it is uncertain as a note. Never record doubt about the notation as weighting.
+  - Share structure several mappings repeat with mork:templateMapping, and confine a mapping to some source nodes with mork:appliesWhen and a SHACL node shape, whose sh:in or sh:hasValue test the focus node itself and whose property shapes test its values.
 minimal_pairs:
   - DataMapping versus Datum
   - WeightedMatch versus UncertainMapping
   - Reference position versus minting position
+  - Exact R-Box glue versus inverse R-Box glue
+  - A guard on a datum versus a guard on an assertion
 anchors: []
 covers: []
 deferrals: ["*"]

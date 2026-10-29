@@ -78,11 +78,28 @@ def cards(g: Graph, within: Optional[Iterable[str]] = None) -> list[Card]:
                            if isinstance(o, URIRef) and o not in (OWL.NamedIndividual, SKOS.Concept)]
             label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
             out[s] = Card(s, curie(s), kind, label, _first_sentence(_one(g, s, _DEFINITIONS) or ""), tuple(places))
+    # An individual a vocabulary types only with one of its classes, such as qnt:Upper a qnt:BoundSense.
+    classes = {c for c in g.subjects(RDF.type, OWL.Class)} | {c for c in g.subjects(RDF.type, RDFS.Class)}
+    for s, cls in g.subject_objects(RDF.type):
+        if isinstance(s, URIRef) and s not in out and cls in classes and (not spaces or str(s).startswith(spaces)):
+            label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            types = tuple(f"type {curie(o)}" for o in sorted(g.objects(s, RDF.type), key=str) if o in classes)
+            out[s] = Card(s, curie(s), "individual", label, _first_sentence(_one(g, s, _DEFINITIONS) or ""), types)
     return sorted((c for c in out.values() if c is not None), key=lambda c: c.curie)
 
 
+def namespaces(entries: list[Card]) -> list[str]:
+    """The prefix of each CURIE the cards use, with its namespace, so a proposal can declare them."""
+    seen = {}
+    for c in entries:
+        prefix, _, local = c.curie.partition(":")
+        if local and not c.curie.startswith("<"):
+            seen.setdefault(prefix, str(c.iri)[: len(str(c.iri)) - len(local)])
+    return [f"# prefix {p}: <{ns}>" for p, ns in sorted(seen.items())]
+
+
 def render(title: str, entries: list[Card]) -> str:
-    return "\n".join([f"# {title}", "# curie | kind | label | definition | placement", *(c.line() for c in entries)]) + "\n"
+    return "\n".join([f"# {title}", *namespaces(entries), "# curie | kind | label | definition | placement", *(c.line() for c in entries)]) + "\n"
 
 
 @functools.lru_cache(maxsize=None)
@@ -91,17 +108,29 @@ def _layer_graph(module: str) -> Graph:
 
     catalogue = reader.load()
     g = Graph()
-    for path in sorted((catalogue.root / catalogue.module(module).directory("spec")).glob("*.ttl")):
-        g.parse(path, format="turtle")
+    entry = catalogue.module(module)
+    for role in ("spec", "vocab"):
+        try:
+            folder = catalogue.root / entry.directory(role)
+        except (KeyError, ValueError):
+            continue  # a module with no vocab directory
+        for path in sorted(folder.glob("*.ttl")):
+            g.parse(path, format="turtle")
     return g
 
 
 def layer_card(module: str) -> list[Card]:
-    """The cards of one LATTICE module's specification, its own terms only."""
+    """The cards of one LATTICE module's specification and vocabulary, its own terms only, its individuals among them."""
     g = _layer_graph(module)
-    own = {str(o) for o in g.subjects(RDF.type, OWL.Ontology)}
-    namespaces = {ns for _, ns in g.namespace_manager.namespaces() if any(str(ns).startswith(o.rstrip("#/")) for o in own)}
-    return cards(g, namespaces or None)
+    # A module's own namespaces are those of the terms it declares, which a reference to another layer's term is not.
+    w3c = ("http://www.w3.org/", "http://purl.org/dc/", "http://xmlns.com/")
+    declared = set()
+    for kind in (OWL.Class, OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty, RDF.Property, OWL.NamedIndividual):
+        for t in g.subjects(RDF.type, kind):
+            if isinstance(t, URIRef) and not str(t).startswith(w3c):
+                text = str(t)
+                declared.add(text[: max(text.rfind("#"), text.rfind("/")) + 1])
+    return cards(g, declared or None)
 
 
 def source_card(g: Graph, within: Optional[Iterable[str]] = None) -> list[Card]:

@@ -1,0 +1,903 @@
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/lattice/odrl/mapping#Hyp_Logical> a mork:Hypothesis,
+        owl:NamedIndividual ;
+    mork:mappingNote "odrl:and, or, xone, andSequence logical constraints have no counterpart in the cards other than a profile's composition operation, whose individuals are not on the cards. Not mapped." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Hyp_Policy> a mork:Hypothesis,
+        owl:NamedIndividual ;
+    mork:mappingNote "Policy kind (Set, Offer, Agreement) and odrl:profile are not carried. Unsure whether ins:classification or a version fits." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Hyp_Refinement> a mork:Hypothesis,
+        owl:NamedIndividual ;
+    mork:mappingNote "odrl:refinement on actions and parties would narrow the activity. Not mapped, unsure whether an Eligibility condition on the activity or a qualifier fits." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Hyp_SetOps> a mork:Hypothesis,
+        owl:NamedIndividual ;
+    mork:mappingNote "odrl:isAllOf, hasPart, isPartOf and a literal right operand under eq have no clear Eligibility strategy. Not mapped, and a literal under eq would need a Quantity value." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<urn:mork-propose:run:run-1:review/1> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Consequence_Activity" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Act> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/10> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Permission_Counterparty" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Counterparty> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/11> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Bound_T_Value_Number> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Bound_T_Value_Number, to numericValue" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Excl> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/12> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Permission_Holder" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Holder> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/13> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Lower> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/14> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Bound_T_Value_Number" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Num> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/15> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Consequence_Obligee" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Obligee> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/16> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Consequence_Obligor" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Obligor> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/17> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Policy> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Policy, to " ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Policy> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/18> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Range> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/19> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_RangeSet> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/2> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Binding> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/20> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Consequence> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Consequence writes Obligation, Template, arisesOnBreachOf" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Conseq> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/21> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Duty> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Duty, to OnAct, arisesOn" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Duty> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/22> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Obligation> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Obligation, to Template, Term" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Oblig> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/23> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Permission> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Permission, to Template, Term" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Perm> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/24> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Prohibition> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Prohibition, to Template, Term" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Prohib> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/25> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Remedy> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Remedy writes Obligation, Template, arisesOnBreachOf" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Rel_Remedy> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/26> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Constraint_Required" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Req> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/27> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Scope> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/28> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Step> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/29> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Asset> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Asset, to ExactCondition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_StepIdx> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/3> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_BoundValue> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/30> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_StepProp> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/31> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "as the pack's Asset_Required" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_TargetConcept> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/32> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/33> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Trigger> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/34> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Duty> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Duty, to OnAct, arisesOn" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_TriggerAct> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/35> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Rejected ;
+    mork:reviewNote "the pack maps nothing from this source" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_Upper> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/4> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Constraint> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Constraint writes Condition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondAny> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/5> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Constraint> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Constraint writes Condition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondEq> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/6> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Constraint> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Constraint writes Condition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondInterval> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/7> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Constraint> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Constraint writes Condition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondNeq> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/8> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Constraint> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack's Constraint writes Condition, hasCondition" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondNone> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+<urn:mork-propose:run:run-1:review/9> a mork:MappingReview,
+        prov:Activity ;
+    mork:correctedBy <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Asset_Required> ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the pack maps this source with Asset_Required, to requiredConcept" ;
+    mork:reviewOf <https://example.org/lattice/odrl/mapping#Map_CondTarget> ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme> .
+
+odrl:Agreement a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Assertion a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Offer a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Policy a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Privacy a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Request a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Set a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+odrl:Ticket a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <https://example.org/lattice/odrl/mapping#Src> .
+
+<https://example.org/lattice/odrl/mapping#C_Policy> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:representedAs odrl:Agreement,
+        odrl:Assertion,
+        odrl:Offer,
+        odrl:Policy,
+        odrl:Privacy,
+        odrl:Request,
+        odrl:Set,
+        odrl:Ticket .
+
+<https://example.org/lattice/odrl/mapping#Cn_Conseq> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:consequence" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Duty> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:duty" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Oblig> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:obligation" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Perm> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:permission" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Prohib> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:prohibition" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Remedy> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:remedy" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Target> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:target|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:target" .
+
+<https://example.org/lattice/odrl/mapping#Map_Policy> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Rel_Oblig>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Perm>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Prohib> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Instrument> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Policy> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Pfx_odrl> a rdfs:Resource,
+        owl:NamedIndividual ;
+    sh:namespace "http://www.w3.org/ns/odrl/2/"^^xsd:anyURI ;
+    sh:prefix "odrl" .
+
+<https://example.org/lattice/odrl/mapping#Shape_Any> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Any_p1>,
+        <https://example.org/lattice/odrl/mapping#Shape_Any_p2> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Any_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:in ( odrl:isAnyOf odrl:isA ) ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_Any_p2> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path odrl:rightOperand .
+
+<https://example.org/lattice/odrl/mapping#Shape_Eq> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Eq_p1>,
+        <https://example.org/lattice/odrl/mapping#Shape_Eq_p2> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Eq_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:hasValue odrl:eq ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_Eq_p2> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path odrl:rightOperand .
+
+<https://example.org/lattice/odrl/mapping#Shape_Interval> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Interval_p1>,
+        <https://example.org/lattice/odrl/mapping#Shape_Interval_p2> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Interval_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:in ( odrl:lt odrl:lteq odrl:gt odrl:gteq ) ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_Interval_p2> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:Literal ;
+    sh:path odrl:rightOperand .
+
+<https://example.org/lattice/odrl/mapping#Shape_Lower> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Lower_p1> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Lower_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:in ( odrl:gt odrl:gteq ) ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_Neq> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Neq_p1>,
+        <https://example.org/lattice/odrl/mapping#Shape_Neq_p2> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Neq_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:hasValue odrl:neq ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_Neq_p2> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path odrl:rightOperand .
+
+<https://example.org/lattice/odrl/mapping#Shape_None> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_None_p1>,
+        <https://example.org/lattice/odrl/mapping#Shape_None_p2> .
+
+<https://example.org/lattice/odrl/mapping#Shape_None_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:hasValue odrl:isNoneOf ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Shape_None_p2> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path odrl:rightOperand .
+
+<https://example.org/lattice/odrl/mapping#Shape_Upper> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/odrl/mapping#Shape_Upper_p1> .
+
+<https://example.org/lattice/odrl/mapping#Shape_Upper_p1> a owl:NamedIndividual,
+        sh:PropertyShape ;
+    sh:in ( odrl:lt odrl:lteq ) ;
+    sh:minCount 1 ;
+    sh:path odrl:operator .
+
+<https://example.org/lattice/odrl/mapping#Cn_Assignee> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:assignee|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assignee" .
+
+<https://example.org/lattice/odrl/mapping#Cn_Assigner> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:assigner|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assigner" .
+
+<https://example.org/lattice/odrl/mapping#Map_CondAny> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Any> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Binding>,
+        <https://example.org/lattice/odrl/mapping#Map_Req> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#SetMembershipCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Constraint> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_CondEq> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Eq> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Binding>,
+        <https://example.org/lattice/odrl/mapping#Map_Req> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#ExactCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Constraint> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_CondInterval> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Interval> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Binding>,
+        <https://example.org/lattice/odrl/mapping#Map_RangeSet> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#IntervalCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Constraint> ;
+    mork:mappingNote "Bound closure (lt versus lteq) and the value space are not stated, as the cards name no closure or space individual." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:weighting 60 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_CondNeq> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Neq> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Binding>,
+        <https://example.org/lattice/odrl/mapping#Map_Excl> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#ExactCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Constraint> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_CondNone> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_None> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Binding>,
+        <https://example.org/lattice/odrl/mapping#Map_Excl> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#SetMembershipCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Constraint> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_CondTarget> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_TargetConcept> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#ExactCondition> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#hasCondition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Target> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Counterparty> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/party#Role> ;
+    mork:individualIRI "https://example.org/lattice/odrl/role#Assigner" ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#counterparty> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Assigner> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Holder> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/party#Role> ;
+    mork:individualIRI "https://example.org/lattice/odrl/role#Assignee" ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#holder> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Assignee> ;
+    mork:mappingNote "On stated meaning a relation party may be a role, so the assignee becomes a function role and the concrete party is not carried." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:weighting 75 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Lower> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Lower> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_BoundValue> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#Bound> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#lowerBound> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Num> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:rightOperand" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#numericValue> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Range> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Lower>,
+        <https://example.org/lattice/odrl/mapping#Map_Upper> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#Range> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#hasRange> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_RangeSet> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Range> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#RangeSet> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#requiredRangeSet> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Duty> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligee>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligor>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Conseq>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term>,
+        <https://example.org/lattice/odrl/mapping#Map_Trigger> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Duty> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Oblig> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligee>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligor>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Conseq>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Oblig> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Perm> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Counterparty>,
+        <https://example.org/lattice/odrl/mapping#Map_Holder>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Duty>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Perm> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Prohib> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligee>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligor>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Remedy>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Prohibition> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Prohib> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Remedy> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligee>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligor>,
+        <https://example.org/lattice/odrl/mapping#Map_Rel_Conseq>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesOnBreachOf> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Remedy> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Step> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_StepIdx>,
+        <https://example.org/lattice/odrl/mapping#Map_StepProp> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#EvidenceStep> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#evidenceStep> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_StepIdx> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataInline 0 ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#stepIndex> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_StepProp> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:leftOperand" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#stepProperty> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_TargetConcept> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:target?" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#requiredConcept> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Trigger> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_TriggerAct> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#OnAct> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesOn> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingNote "A duty of a permission falls due when the permitted action is performed. OnAct with the permission action is the closest legal trigger." ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:weighting 70 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_TriggerAct> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "^odrl:duty/odrl:action" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Upper> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/odrl/mapping#Shape_Upper> ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_BoundValue> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#Bound> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#upperBound> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_BoundValue> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Num> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#Quantity> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/quantification#boundValue> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Excl> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:rightOperand" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#excludedConcept> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Req> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:rightOperand" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#requiredConcept> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Rel_Conseq> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Act>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligee>,
+        <https://example.org/lattice/odrl/mapping#Map_Obligor>,
+        <https://example.org/lattice/odrl/mapping#Map_Scope>,
+        <https://example.org/lattice/odrl/mapping#Map_Term> ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesOnBreachOf> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Conseq> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Cn_Constraint> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    mork:path "odrl:constraint" .
+
+<https://example.org/lattice/odrl/mapping#Map_Binding> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_Step> ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#bindsCondition> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#EvidenceBinding> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/party#Role> ;
+    mork:individualIRI "https://example.org/lattice/odrl/role#Assigner" ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligee> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Assigner> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/party#Role> ;
+    mork:individualIRI "https://example.org/lattice/odrl/role#Assignee" ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligor> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#Cn_Assignee> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Act> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:dataRef "odrl:action" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Scope> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeNarrowerMapping <https://example.org/lattice/odrl/mapping#Map_CondAny>,
+        <https://example.org/lattice/odrl/mapping#Map_CondEq>,
+        <https://example.org/lattice/odrl/mapping#Map_CondInterval>,
+        <https://example.org/lattice/odrl/mapping#Map_CondNeq>,
+        <https://example.org/lattice/odrl/mapping#Map_CondNone>,
+        <https://example.org/lattice/odrl/mapping#Map_CondTarget> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/eligibility#AdmissionProfile> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#scope> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Map_Term> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:mappingFor <https://example.org/lattice/odrl/mapping#C_Same> ;
+    mork:mappingScheme <https://example.org/lattice/odrl/mapping#MS> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:run-1> .
+
+<https://example.org/lattice/odrl/mapping#Src> a mork:RepresentationScheme,
+        owl:NamedIndividual ;
+    mork:format mork:RDF .
+
+<https://example.org/lattice/odrl/mapping#C_Same> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/odrl/mapping#MS> .
+
+<urn:mork-propose:run:run-1> a mork:ProposalRun,
+        prov:Activity ;
+    mork:proposerModel "Claude Sonnet 5.5" ;
+    mork:teachingPackVersion "MTP, mork_propose" ;
+    prov:endedAtTime "2026-10-29T00:00:00+00:00"^^xsd:dateTime .
+
+<https://example.org/lattice/odrl/mapping#MS> a mork:MappingScheme,
+        owl:NamedIndividual ;
+    mork:compilationMode mork:DraftMode ;
+    sh:declare <https://example.org/lattice/odrl/mapping#Pfx_odrl> .
+

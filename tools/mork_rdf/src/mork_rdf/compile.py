@@ -344,6 +344,8 @@ class _Compiler:
                     raise _Refusal("NoParent", f"a {spec.kind.value} mapping needs a parent")
             except _Refusal as refusal:
                 self.findings.append(Finding(refusal.code, str(spec.node), refusal.message))
+            except paths.PathError as error:
+                self.findings.append(Finding("BadIRI", str(spec.node), str(error)))
         self.coverage()
         self.stratify()
 
@@ -461,6 +463,8 @@ class _Compiler:
                 self.class_creation(spec)
         except _Refusal as refusal:
             self.findings.append(Finding(refusal.code, str(spec.node), refusal.message))
+        except paths.PathError as error:
+            self.findings.append(Finding("BadIRI", str(spec.node), str(error)))
 
     def _property(self, spec: Spec) -> str:
         """The property a mapping asserts, creating a subproperty for a broad R-Box match."""

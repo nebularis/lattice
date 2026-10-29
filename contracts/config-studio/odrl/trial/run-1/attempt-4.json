@@ -1,0 +1,29 @@
+{
+ "decoded": true,
+ "triples": 251,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/odrl/mapping#MS",
+   "queries": 67,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "warning",
+   "code": "RootPathIgnored",
+   "about": "https://example.org/lattice/odrl/mapping#Map_Role_Assignee",
+   "message": "a root iterates its source classes, so its concept's mork:path is not read"
+  },
+  {
+   "stage": "compile",
+   "severity": "warning",
+   "code": "RootPathIgnored",
+   "about": "https://example.org/lattice/odrl/mapping#Map_Role_Assigner",
+   "message": "a root iterates its source classes, so its concept's mork:path is not read"
+  }
+ ],
+ "errors": 0,
+ "output_triples": 56
+}

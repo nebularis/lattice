@@ -248,6 +248,7 @@ def refusals(body: str, vocabulary: Graph | None = None) -> set:
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:assertsPropertyRanges tgt:X .", ("AxiomsOnExistingProperty", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:propertyMappingAssertions tgt:X .", ("NotCompiled", "A")),
     ("mm:A a mork:Lookup ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:exactTBoxMatch tgt:G ; mork:dataRef \"src:p\" ; mork:dataInline \"fixed\" .", ("LookupInline", "A")),
+    ("mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactTBoxMatch tgt:Other ; mork:individualIRI \"Role_A\" .", ("BadIRI", "A")),
 ])
 def test_a_mapping_the_compiler_cannot_honour_is_refused_by_name(body, expected):
     assert expected in refusals(body)

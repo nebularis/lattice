@@ -1,0 +1,584 @@
+{
+ "run": "run-1",
+ "scheme": "https://example.org/lattice/odrl/mapping#MS",
+ "mappings": {
+  "accepted": 8,
+  "corrected": 16,
+  "rejected": 11,
+  "deferred": 0,
+  "total": 35,
+  "accepted_share": 0.229
+ },
+ "output": {
+  "precision": 0.288,
+  "recall": 0.2,
+  "missing": [
+   [
+    "[AdmissionProfile]",
+    "compositionOperation",
+    "AllRequired"
+   ],
+   [
+    "[AdmissionProfile]",
+    "conditionKey",
+    "odrl-implied-scope"
+   ],
+   [
+    "[AdmissionProfile]",
+    "conditionKey",
+    "odrl-rule-scope"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[Condition ExactCondition]"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[Condition IntervalCondition]"
+   ],
+   [
+    "[Bound]",
+    "boundClosure",
+    "Open"
+   ],
+   [
+    "[Bound]",
+    "boundSense",
+    "Upper"
+   ],
+   [
+    "[Bound]",
+    "onSpace",
+    "[ValueSpace]"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "conditionKey",
+    "odrl-constraint"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "matchStrategy",
+    "ExactMatch"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "requiredConcept",
+    "https://example.org/lattice/odrl/site/leeds"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "type",
+    "Condition"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "type",
+    "ExactCondition"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "conditionKey",
+    "odrl-constraint"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "matchStrategy",
+    "IntervalContainment"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "requiredRangeSet",
+    "[RangeSet]"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "type",
+    "Condition"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "type",
+    "IntervalCondition"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[ExactCondition]",
+    "conditionKey",
+    "odrl-target"
+   ],
+   [
+    "[ExactCondition]",
+    "matchStrategy",
+    "ExactMatch"
+   ],
+   [
+    "[ExactCondition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[Obligation Template]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/compensate"
+   ],
+   [
+    "[Obligation Template]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/inform"
+   ],
+   [
+    "[Obligation Template]",
+    "arisesOnBreachOf",
+    "[Prohibition Template]"
+   ],
+   [
+    "[Obligation Template]",
+    "arisesUnder",
+    "[Template Term]"
+   ],
+   [
+    "[Obligation Template]",
+    "obligee",
+    "[Role]"
+   ],
+   [
+    "[Obligation Template]",
+    "obligor",
+    "[Role]"
+   ],
+   [
+    "[Obligation Template]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[Obligation Template]",
+    "type",
+    "Obligation"
+   ],
+   [
+    "[Obligation Template]",
+    "type",
+    "Template"
+   ],
+   [
+    "[OnAct]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/compensate"
+   ],
+   [
+    "[OnAct]",
+    "by",
+    "[Role]"
+   ],
+   [
+    "[Permission Template]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/use"
+   ],
+   [
+    "[Permission Template]",
+    "arisesOn",
+    "[OnAct]"
+   ],
+   [
+    "[Permission Template]",
+    "arisesUnder",
+    "[Template Term]"
+   ],
+   [
+    "[Permission Template]",
+    "counterparty",
+    "[Role]"
+   ],
+   [
+    "[Permission Template]",
+    "excepts",
+    "[Prohibition Template]"
+   ],
+   [
+    "[Permission Template]",
+    "holder",
+    "[Role]"
+   ]
+  ],
+  "extra": [
+   [
+    "Assignee",
+    "type",
+    "Role"
+   ],
+   [
+    "Assigner",
+    "type",
+    "Role"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[IntervalCondition]"
+   ],
+   [
+    "[EvidenceBinding]",
+    "bindsCondition",
+    "[ExactCondition]"
+   ],
+   [
+    "[EvidenceBinding]",
+    "bindsCondition",
+    "[IntervalCondition]"
+   ],
+   [
+    "[EvidenceBinding]",
+    "evidenceStep",
+    "[EvidenceStep]"
+   ],
+   [
+    "[EvidenceBinding]",
+    "type",
+    "EvidenceBinding"
+   ],
+   [
+    "[EvidenceStep]",
+    "stepIndex",
+    "0"
+   ],
+   [
+    "[EvidenceStep]",
+    "stepProperty",
+    "http://www.w3.org/ns/odrl/2/dateTime"
+   ],
+   [
+    "[EvidenceStep]",
+    "stepProperty",
+    "http://www.w3.org/ns/odrl/2/spatial"
+   ],
+   [
+    "[EvidenceStep]",
+    "type",
+    "EvidenceStep"
+   ],
+   [
+    "[ExactCondition]",
+    "requiredConcept",
+    "https://example.org/lattice/odrl/site/leeds"
+   ],
+   [
+    "[Instrument]",
+    "type",
+    "Instrument"
+   ],
+   [
+    "[IntervalCondition]",
+    "requiredRangeSet",
+    "[RangeSet]"
+   ],
+   [
+    "[IntervalCondition]",
+    "type",
+    "IntervalCondition"
+   ],
+   [
+    "[Obligation]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/compensate"
+   ],
+   [
+    "[Obligation]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/inform"
+   ],
+   [
+    "[Obligation]",
+    "arisesOn",
+    "[OnAct]"
+   ],
+   [
+    "[Obligation]",
+    "arisesOnBreachOf",
+    "[Prohibition]"
+   ],
+   [
+    "[Obligation]",
+    "arisesUnder",
+    "[Template Term]"
+   ],
+   [
+    "[Obligation]",
+    "obligee",
+    "Assigner"
+   ],
+   [
+    "[Obligation]",
+    "obligor",
+    "Assignee"
+   ],
+   [
+    "[Obligation]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[Obligation]",
+    "type",
+    "Obligation"
+   ],
+   [
+    "[OnAct]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/use"
+   ],
+   [
+    "[Permission]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/use"
+   ],
+   [
+    "[Permission]",
+    "arisesUnder",
+    "[Template Term]"
+   ],
+   [
+    "[Permission]",
+    "counterparty",
+    "Assigner"
+   ],
+   [
+    "[Permission]",
+    "holder",
+    "Assignee"
+   ],
+   [
+    "[Permission]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[Permission]",
+    "type",
+    "Permission"
+   ],
+   [
+    "[Prohibition]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/distribute"
+   ],
+   [
+    "[Prohibition]",
+    "arisesUnder",
+    "[Template Term]"
+   ],
+   [
+    "[Prohibition]",
+    "obligee",
+    "Assigner"
+   ],
+   [
+    "[Prohibition]",
+    "obligor",
+    "Assignee"
+   ],
+   [
+    "[Prohibition]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[Prohibition]",
+    "type",
+    "Prohibition"
+   ]
+  ],
+  "proposal_triples": 85,
+  "pack_triples": 119
+ },
+ "decisions": [
+  {
+   "mapping": "Map_Act",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Map_Binding",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_BoundValue",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_CondAny",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Map_CondEq",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Map_CondInterval",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Map_CondNeq",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Map_CondNone",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Map_CondTarget",
+   "decision": "corrected",
+   "note": "the pack maps this source with Asset_Required, to requiredConcept"
+  },
+  {
+   "mapping": "Map_Counterparty",
+   "decision": "accepted",
+   "note": "as the pack's Permission_Counterparty"
+  },
+  {
+   "mapping": "Map_Excl",
+   "decision": "corrected",
+   "note": "the pack maps this source with Bound_T_Value_Number, to numericValue"
+  },
+  {
+   "mapping": "Map_Holder",
+   "decision": "accepted",
+   "note": "as the pack's Permission_Holder"
+  },
+  {
+   "mapping": "Map_Lower",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_Num",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Value_Number"
+  },
+  {
+   "mapping": "Map_Obligee",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Obligee"
+  },
+  {
+   "mapping": "Map_Obligor",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Obligor"
+  },
+  {
+   "mapping": "Map_Policy",
+   "decision": "corrected",
+   "note": "the pack maps this source with Policy, to "
+  },
+  {
+   "mapping": "Map_Range",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_RangeSet",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_Rel_Conseq",
+   "decision": "corrected",
+   "note": "the pack's Consequence writes Obligation, Template, arisesOnBreachOf"
+  },
+  {
+   "mapping": "Map_Rel_Duty",
+   "decision": "corrected",
+   "note": "the pack maps this source with Duty, to OnAct, arisesOn"
+  },
+  {
+   "mapping": "Map_Rel_Oblig",
+   "decision": "corrected",
+   "note": "the pack maps this source with Obligation, to Template, Term"
+  },
+  {
+   "mapping": "Map_Rel_Perm",
+   "decision": "corrected",
+   "note": "the pack maps this source with Permission, to Template, Term"
+  },
+  {
+   "mapping": "Map_Rel_Prohib",
+   "decision": "corrected",
+   "note": "the pack maps this source with Prohibition, to Template, Term"
+  },
+  {
+   "mapping": "Map_Rel_Remedy",
+   "decision": "corrected",
+   "note": "the pack's Remedy writes Obligation, Template, arisesOnBreachOf"
+  },
+  {
+   "mapping": "Map_Req",
+   "decision": "accepted",
+   "note": "as the pack's Constraint_Required"
+  },
+  {
+   "mapping": "Map_Scope",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_Step",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_StepIdx",
+   "decision": "corrected",
+   "note": "the pack maps this source with Asset, to ExactCondition, hasCondition"
+  },
+  {
+   "mapping": "Map_StepProp",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_TargetConcept",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Required"
+  },
+  {
+   "mapping": "Map_Term",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_Trigger",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  },
+  {
+   "mapping": "Map_TriggerAct",
+   "decision": "corrected",
+   "note": "the pack maps this source with Duty, to OnAct, arisesOn"
+  },
+  {
+   "mapping": "Map_Upper",
+   "decision": "rejected",
+   "note": "the pack maps nothing from this source"
+  }
+ ]
+}

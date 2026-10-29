@@ -361,6 +361,7 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `DeferredCycle` | error | mappings that read each other's output, so no stratum order exists |
 | `AxiomsOnExistingProperty` | error | domain or range axioms on a property the mapping does not create |
 | `AxiomFormUnknown`, `NoDomain` | error | an axiom form that names no form, or a restriction with no domain |
+| `BadIRI` | error | an IRI a mapping names, such as its `mork:individualIRI`, that is not absolute |
 | `GuardUnsupported` | error | a guard using SHACL the compiler cannot compile (§7.7) |
 | `RangeFromData`, `CombinationFromData` | error | a restriction over classes made from data that would need a combination at the closure (§7.6) |
 | `NoName` | error | a broad R-Box match with no name for the property it creates |

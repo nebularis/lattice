@@ -1,0 +1,105 @@
+@b <https://example.org/lattice/odrl/mapping#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+@p qnt=<https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+@t ins
+%R Src fm mork:RDF
+odrl:Agreement RE
+odrl:Assertion RE
+odrl:Offer RE
+odrl:Policy RE
+odrl:Privacy RE
+odrl:Request RE
+odrl:Set RE
+odrl:Ticket RE
+%X
+Shape_Eq SH sh:property Shape_Eq_p1,Shape_Eq_p2
+Shape_Eq_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:hasValue odrl:eq
+Shape_Eq_p2 SP sh:path odrl:rightOperand sh:minCount "1"^xsd:integer sh:nodeKind sh:IRI
+Shape_Neq SH sh:property Shape_Neq_p1,Shape_Neq_p2
+Shape_Neq_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:hasValue odrl:neq
+Shape_Neq_p2 SP sh:path odrl:rightOperand sh:minCount "1"^xsd:integer sh:nodeKind sh:IRI
+Shape_Any SH sh:property Shape_Any_p1,Shape_Any_p2
+Shape_Any_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:in _:Shape_Any_l1
+!T _:Shape_Any_l1 rdf:first odrl:isAnyOf
+!T _:Shape_Any_l1 rdf:rest _:Shape_Any_l2
+!T _:Shape_Any_l2 rdf:first odrl:isA
+!T _:Shape_Any_l2 rdf:rest rdf:nil
+Shape_Any_p2 SP sh:path odrl:rightOperand sh:minCount "1"^xsd:integer sh:nodeKind sh:IRI
+Shape_None SH sh:property Shape_None_p1,Shape_None_p2
+Shape_None_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:hasValue odrl:isNoneOf
+Shape_None_p2 SP sh:path odrl:rightOperand sh:minCount "1"^xsd:integer sh:nodeKind sh:IRI
+Shape_Interval SH sh:property Shape_Interval_p1,Shape_Interval_p2
+Shape_Interval_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:in _:Shape_Interval_l1
+!T _:Shape_Interval_l1 rdf:first odrl:lt
+!T _:Shape_Interval_l1 rdf:rest _:Shape_Interval_l2
+!T _:Shape_Interval_l2 rdf:first odrl:lteq
+!T _:Shape_Interval_l2 rdf:rest _:Shape_Interval_l3
+!T _:Shape_Interval_l3 rdf:first odrl:gt
+!T _:Shape_Interval_l3 rdf:rest _:Shape_Interval_l4
+!T _:Shape_Interval_l4 rdf:first odrl:gteq
+!T _:Shape_Interval_l4 rdf:rest rdf:nil
+Shape_Interval_p2 SP sh:path odrl:rightOperand sh:minCount "1"^xsd:integer sh:nodeKind sh:Literal
+Shape_Upper SH sh:property Shape_Upper_p1
+Shape_Upper_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:in _:Shape_Upper_l1
+!T _:Shape_Upper_l1 rdf:first odrl:lt
+!T _:Shape_Upper_l1 rdf:rest _:Shape_Upper_l2
+!T _:Shape_Upper_l2 rdf:first odrl:lteq
+!T _:Shape_Upper_l2 rdf:rest rdf:nil
+Shape_Lower SH sh:property Shape_Lower_p1
+Shape_Lower_p1 SP sh:path odrl:operator sh:minCount "1"^xsd:integer sh:in _:Shape_Lower_l1
+!T _:Shape_Lower_l1 rdf:first odrl:gt
+!T _:Shape_Lower_l1 rdf:rest _:Shape_Lower_l2
+!T _:Shape_Lower_l2 rdf:first odrl:gteq
+!T _:Shape_Lower_l2 rdf:rest rdf:nil
+C_Policy C cs MS ra odrl:Agreement,odrl:Assertion,odrl:Offer,odrl:Policy,odrl:Privacy,odrl:Request,odrl:Set,odrl:Ticket
+Cn_Perm C cs MS p odrl:permission
+Cn_Prohib C cs MS p odrl:prohibition
+Cn_Oblig C cs MS p odrl:obligation
+Cn_Duty C cs MS p odrl:duty
+Cn_Remedy C cs MS p odrl:remedy
+Cn_Conseq C cs MS p odrl:consequence
+C_Same C cs MS
+Cn_Assignee C cs MS p "odrl:assignee|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assignee"
+Cn_Assigner C cs MS p "odrl:assigner|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assigner"
+Cn_Target C cs MS p "odrl:target|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:target"
+Cn_Constraint C cs MS p odrl:constraint
+Pfx_odrl rdfs:Resource sh:prefix "odrl" sh:namespace "http://www.w3.org/ns/odrl/2/"^xsd:anyURI
+%M MS md .draft sh:declare Pfx_odrl
+Map_Policy MD f C_Policy xt :Instrument cn Map_Rel_Perm,Map_Rel_Prohib,Map_Rel_Oblig
+Map_Term MD f C_Same xt :Term,:Template xi :arisesUnder
+Map_Act xr :activity r odrl:action
+Map_Holder MD f Cn_Assignee xt pty:Role ii "https://example.org/lattice/odrl/role#Assignee" xi :holder
+Map_Counterparty MD f Cn_Assigner xt pty:Role ii "https://example.org/lattice/odrl/role#Assigner" xi :counterparty
+Map_Obligor MD f Cn_Assignee xt pty:Role ii "https://example.org/lattice/odrl/role#Assignee" xi :obligor
+Map_Obligee MD f Cn_Assigner xt pty:Role ii "https://example.org/lattice/odrl/role#Assigner" xi :obligee
+Map_Scope MD f C_Same xt elg:AdmissionProfile xi :scope cn Map_CondTarget,Map_CondEq,Map_CondNeq,Map_CondAny,Map_CondNone,Map_CondInterval
+Map_CondTarget MD f Cn_Target xt elg:ExactCondition xi elg:hasCondition cn Map_TargetConcept
+Map_TargetConcept xr elg:requiredConcept r "odrl:target?"
+Map_Rel_Perm MD f Cn_Perm xt :Permission cn Map_Term,Map_Act,Map_Holder,Map_Counterparty,Map_Scope,Map_Rel_Duty
+Map_Rel_Prohib MD f Cn_Prohib xt :Prohibition cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Remedy
+Map_Rel_Oblig MD f Cn_Oblig xt :Obligation cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Duty MD f Cn_Duty xt :Obligation cn Map_Trigger,Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Remedy MD f Cn_Remedy xt :Obligation xr :arisesOnBreachOf cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Conseq MD f Cn_Conseq xt :Obligation xr :arisesOnBreachOf cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope
+Map_Trigger MD f C_Same xt :OnAct xi :arisesOn w 70 cn Map_TriggerAct
+Map_TriggerAct xr :activity r "^odrl:duty/odrl:action"
+Map_CondEq MD f Cn_Constraint xt elg:ExactCondition xi elg:hasCondition mork:appliesWhen Shape_Eq cn Map_Req,Map_Binding
+Map_CondNeq MD f Cn_Constraint xt elg:ExactCondition xi elg:hasCondition mork:appliesWhen Shape_Neq cn Map_Excl,Map_Binding
+Map_CondAny MD f Cn_Constraint xt elg:SetMembershipCondition xi elg:hasCondition mork:appliesWhen Shape_Any cn Map_Req,Map_Binding
+Map_CondNone MD f Cn_Constraint xt elg:SetMembershipCondition xi elg:hasCondition mork:appliesWhen Shape_None cn Map_Excl,Map_Binding
+Map_CondInterval MD f Cn_Constraint xt elg:IntervalCondition xi elg:hasCondition mork:appliesWhen Shape_Interval w 60 cn Map_RangeSet,Map_Binding
+Map_Req xr elg:requiredConcept r odrl:rightOperand
+Map_Excl xr elg:excludedConcept r odrl:rightOperand
+Map_Binding MD f C_Same xt elg:EvidenceBinding xr elg:bindsCondition cn Map_Step
+Map_Step MD f C_Same xt elg:EvidenceStep xi elg:evidenceStep cn Map_StepProp,Map_StepIdx
+Map_StepProp xr elg:stepProperty r odrl:leftOperand
+Map_StepIdx xr elg:stepIndex v 0
+Map_RangeSet MD f C_Same xt qnt:RangeSet xi elg:requiredRangeSet cn Map_Range
+Map_Range MD f C_Same xt qnt:Range xi qnt:hasRange cn Map_Upper,Map_Lower
+Map_Upper MD f C_Same xt qnt:Bound xi qnt:upperBound mork:appliesWhen Shape_Upper cn Map_BoundValue
+Map_Lower MD f C_Same xt qnt:Bound xi qnt:lowerBound mork:appliesWhen Shape_Lower cn Map_BoundValue
+Map_BoundValue MD f C_Same xt qnt:Quantity xi qnt:boundValue cn Map_Num
+Map_Num xr qnt:numericValue r odrl:rightOperand
