@@ -183,6 +183,11 @@ description = "Run one MORK mapping proposal tool from the command line, as the 
 env = { PYTHONPATH = "{{config_root}}/tools" }
 run = "python -m mork_propose.cli"
 
+[tasks."mork:propose-trial"]
+description = "Score a mapping proposal run against a reference pack and record it, with the pack's review of each mapping, in a proposal history: mise run mork:propose-trial -- <run folder> --pack <pack> --pack-scheme <IRI> --history <file> [--sample <file>]"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.trial"
+
 [tasks."mork:propose-mcp"]
 description = "Serve the MORK mapping proposal tools over MCP on standard input and output, for an agent such as Claude Desktop: the teaching pack and codebook, cards of LATTICE's layers and of a source vocabulary, candidate target terms, and the check of a proposal in MCN"
 raw = true  # an MCP host speaks over the task's own standard input and output
