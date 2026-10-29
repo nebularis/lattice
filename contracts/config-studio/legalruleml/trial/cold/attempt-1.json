@@ -1,0 +1,16 @@
+{
+ "decoded": false,
+ "triples": 0,
+ "schemes": [],
+ "findings": [
+  {
+   "stage": "decode",
+   "severity": "error",
+   "code": "core-code-does-not-accept-a-positional",
+   "about": "line 9",
+   "message": "line 9: code 'sh:declare' does not accept a positional inline node\n    %R Scheme_LRML fm mork:RDF sh:declare [sh:prefix \"lrmlmm\" sh:namespace \"http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#\"^xsd:anyURI]"
+  }
+ ],
+ "errors": 1,
+ "output_triples": null
+}

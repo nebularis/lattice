@@ -1,0 +1,58 @@
+@b <http://example.org/lrml-mapping#>
+@p lrmlmm=<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#>
+@p voc=<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p bhv=<https://www.nebularis.org/neuro-semantic/lattice/behaviour#>
+@o <http://example.org/lrml-mapping>
+%R Scheme_LRML fm mork:RDF sh:declare [sh:PrefixDeclaration sh:prefix "lrmlmm" sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"^xsd:anyURI]
+lrmlmm:PrescriptiveStatement RE
+lrmlmm:Obligation RE
+lrmlmm:Prohibition RE
+lrmlmm:Permission RE
+lrmlmm:Right RE
+lrmlmm:Role RE
+lrmlmm:Agent RE
+lrmlmm:Reparation RE
+lrmlmm:PenaltyStatement RE
+lrmlmm:Violation RE
+lrmlmm:Compliance RE
+lrmlmm:TemporalCharacteristic RE
+%X
+C_Statement C cs MS rs Scheme_LRML ra lrmlmm:PrescriptiveStatement
+C_Obligation C cs MS rs Scheme_LRML ra lrmlmm:Obligation
+C_Prohibition C cs MS rs Scheme_LRML ra lrmlmm:Prohibition
+C_Permission C cs MS rs Scheme_LRML ra lrmlmm:Permission
+C_Right C cs MS rs Scheme_LRML ra lrmlmm:Right
+C_Role C cs MS rs Scheme_LRML ra lrmlmm:Role
+C_Reparation C cs MS rs Scheme_LRML ra lrmlmm:Reparation
+C_Penalty C cs MS rs Scheme_LRML ra lrmlmm:PenaltyStatement
+C_Violation C cs MS rs Scheme_LRML ra lrmlmm:Violation
+C_ObBearer C cs MS rs Scheme_LRML p lrmlmm:Bearer
+C_ProBearer C cs MS rs Scheme_LRML p lrmlmm:Bearer
+C_PerBearer C cs MS rs Scheme_LRML p lrmlmm:Bearer
+C_ObAux C cs MS rs Scheme_LRML p lrmlmm:AuxiliaryParty
+C_PerAux C cs MS rs Scheme_LRML p lrmlmm:AuxiliaryParty
+C_Filler C cs MS rs Scheme_LRML p lrmlmm:filledBy
+C_Compliance C cs MS rs Scheme_LRML ra lrmlmm:Compliance
+C_Temporal C cs MS rs Scheme_LRML ra lrmlmm:TemporalCharacteristic
+C_AppliesPenalty C cs MS rs Scheme_LRML p lrmlmm:appliesPenalty
+%M MS sh:declare [sh:PrefixDeclaration sh:prefix "lrmlmm" sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"^xsd:anyURI]
+Map_Statement M+MD f C_Statement xt ins:Term w 60 n "A prescriptive statement is a provision the parties are bound by."
+Map_Obligation M+MD f C_Obligation xt ins:Obligation w 90 n "Same meaning."
+Map_Prohibition M+MD f C_Prohibition xt ins:Prohibition w 90 n "Same meaning."
+Map_Permission M+MD f C_Permission xt ins:Permission w 85 n "Same meaning."
+Map_Right M+MD f C_Right xt ins:Permission w 50 n "A right is a permission with obligations on others, only the permission half is mapped."
+Map_Role M+MD f C_Role xt pty:RoleOccupancy w 55 n "A LegalRuleML role filled by an actor is an occupancy."
+Map_ObBearer M+MD cb Map_Obligation xi ins:obligor f C_ObBearer xt pty:RoleOccupancy w 85
+Map_ProBearer M+MD cb Map_Prohibition xi ins:obligor f C_ProBearer xt pty:RoleOccupancy w 85
+Map_PerBearer M+MD cb Map_Permission xi ins:holder f C_PerBearer xt pty:RoleOccupancy w 85
+Map_ObAux M+MD cb Map_Obligation xi ins:obligee f C_ObAux xt pty:RoleOccupancy w 70
+Map_PerAux M+MD cb Map_Permission xi ins:counterparty f C_PerAux xt pty:RoleOccupancy w 70
+Map_Filler M+MD cb Map_Role xi pty:occupiedBy f C_Filler xt pty:Actor w 65
+Map_Reparation M+MD f C_Reparation xt ins:OnBreach w 55 n "A reparation links a penalty to a violated rule, which is what an OnBreach trigger is."
+Map_Penalty M+MD cb Map_Reparation xr ins:arisesOn f C_Penalty xt ins:Term w 55 n "The penalty arises on breach."
+Map_Violation M+MD f C_Violation xa bhv:Breached w 55 n "A violation indicates an obligation or prohibition was breached, the state a relation is in for a case."
+Map_Compliance M+MD f C_Compliance xa bhv:Performed w 55 n "Compliance indicates an obligation fulfilled or a prohibition not violated."
+Map_InForce M+MD f C_Temporal xt fnd:TemporalScope w 35 mork:appliesWhen [sh:NodeShape sh:property [sh:PropertyShape sh:path lrmlmm:forStatus sh:hasValue voc:InForce]] n "Only a characteristic that qualifies in-force status gives a validity period."

@@ -70,7 +70,10 @@ def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[d
         if compiled_out is not None:
             compiled_out.append(compiled)
         for f in compiled.findings:
-            result.findings.append(("validate" if f.code == "MorkShape" else "compile", f.severity.value, f.code, f.mapping, f.message))
+            # An uncertain mapping is never compiled, which in a proposal is what it is for: a question a reviewer
+            # answers. So the check reports it for review and never counts it an error.
+            severity = "review" if f.code == "Uncertain" else f.severity.value
+            result.findings.append(("validate" if f.code == "MorkShape" else "compile", severity, f.code, f.mapping, f.message))
         if sample is not None:
             ran = run(compiled, sample)
             result.output = (result.output or Graph()) + ran.graph + ran.tbox

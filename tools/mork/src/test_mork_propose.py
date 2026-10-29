@@ -121,3 +121,11 @@ def test_the_pipeline_compiles_an_rdf_scheme_with_mork_rdf_and_refuses_what_the_
         mm:S a mork:MappingScheme . mm:A mork:mappingScheme mm:S ; mork:precedes mm:B . mm:B mork:mappingScheme mm:S ; mork:precedes mm:A ."""
     validated = asyncio.run(nodes.validate({"mapping_turtle": cycle, "iteration_count": 0}))
     assert not validated["validation_passed"]
+
+
+def test_an_uncertain_mapping_in_a_proposal_waits_for_review_and_is_no_error():
+    mcn = (ROOT / "ontology" / "mork" / "mtp" / "data" / "cassettes" / "C-UNCERTAIN.yaml")
+    text = yaml.safe_load(mcn.read_text())["mcn"]
+    checked = json.loads(check_mapping(text))
+    reviews = [f for f in checked["findings"] if f["code"] == "Uncertain"]
+    assert reviews and all(f["severity"] == "review" for f in reviews)

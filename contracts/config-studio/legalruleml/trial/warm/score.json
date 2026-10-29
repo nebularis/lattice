@@ -1,0 +1,157 @@
+{
+ "run": "warm",
+ "check_rounds": 3,
+ "mappings": {
+  "accepted": 16,
+  "corrected": 3,
+  "rejected": 3,
+  "deferred": 6,
+  "total": 28,
+  "accepted_share": 0.571
+ },
+ "unreviewed": [
+  "Role_T"
+ ],
+ "decisions": [
+  {
+   "mapping": "Authority",
+   "decision": "deferred",
+   "note": "who issues a rule is provenance of the wording, not stated meaning. Needs a design"
+  },
+  {
+   "mapping": "Jurisdiction",
+   "decision": "deferred",
+   "note": "LATTICE has no jurisdiction term. A concept of a jurisdiction scheme bound by vocabulary may be right. Needs a design"
+  },
+  {
+   "mapping": "Obligation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Obligation_Obligee",
+   "decision": "accepted",
+   "note": "the auxiliary party is not stated to be the one owed, so a reviewer of each import checks it"
+  },
+  {
+   "mapping": "Obligation_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Obligation_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Permission",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Permission_Counterparty",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Permission_Holder",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Permission_Relation",
+   "decision": "accepted",
+   "note": "an ins:Permission must except a prohibition (law I8), which the proposal does not state"
+  },
+  {
+   "mapping": "Prohibition",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Prohibition_Obligee",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Prohibition_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Prohibition_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Reference",
+   "decision": "rejected",
+   "note": "a legal reference cites a source. fnd:Key identifies a LATTICE thing"
+  },
+  {
+   "mapping": "Reference_Value",
+   "decision": "rejected",
+   "note": "follows the reference"
+  },
+  {
+   "mapping": "Reparation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Reparation_Breach",
+   "decision": "deferred",
+   "note": "the breached relation is inside the statement's RuleML content, which the RDFS metamodel does not reach"
+  },
+  {
+   "mapping": "Reparation_Penalty",
+   "decision": "rejected",
+   "note": "ins:expressedIn names the clause of the library a term is stated in, never a penalty"
+  },
+  {
+   "mapping": "Reparation_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Right",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Right_Counterparty",
+   "decision": "corrected",
+   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+  },
+  {
+   "mapping": "Right_Holder",
+   "decision": "corrected",
+   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+  },
+  {
+   "mapping": "Right_Relation",
+   "decision": "corrected",
+   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+  },
+  {
+   "mapping": "Role_T_Label",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Temporal",
+   "decision": "deferred",
+   "note": "as the cold run's InForce"
+  },
+  {
+   "mapping": "Temporal_From",
+   "decision": "deferred",
+   "note": "as the cold run's InForce"
+  },
+  {
+   "mapping": "Temporal_To",
+   "decision": "deferred",
+   "note": "as the cold run's InForce"
+  }
+ ]
+}

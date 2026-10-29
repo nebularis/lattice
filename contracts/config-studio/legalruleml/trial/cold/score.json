@@ -1,0 +1,100 @@
+{
+ "run": "cold",
+ "check_rounds": 6,
+ "mappings": {
+  "accepted": 4,
+  "corrected": 9,
+  "rejected": 2,
+  "deferred": 2,
+  "total": 17,
+  "accepted_share": 0.235
+ },
+ "unreviewed": [],
+ "decisions": [
+  {
+   "mapping": "Map_Compliance",
+   "decision": "rejected",
+   "note": "Behaviour's occasion states are runtime records, never stated meaning"
+  },
+  {
+   "mapping": "Map_Filler",
+   "decision": "deferred",
+   "note": "who fills a role is bound meaning, supplied when a contract is bound, not by an import of stated meaning"
+  },
+  {
+   "mapping": "Map_InForce",
+   "decision": "deferred",
+   "note": "when a provision applies is arising, ending, survival or a regime's state in Instrument. fnd:TemporalScope dates versions. Needs a design"
+  },
+  {
+   "mapping": "Map_ObAux",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_ObBearer",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_Obligation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Map_Penalty",
+   "decision": "corrected",
+   "note": "a penalty is a relation, such as an ins:Obligation, arising on the breach under its own term, as an ODRL remedy is"
+  },
+  {
+   "mapping": "Map_PerAux",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_PerBearer",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_Permission",
+   "decision": "accepted",
+   "note": "an ins:Permission must except a prohibition (law I8), which the proposal does not state"
+  },
+  {
+   "mapping": "Map_ProBearer",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_Prohibition",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Map_Reparation",
+   "decision": "accepted",
+   "note": "a reparation's penalty arises on a breach, an ins:OnBreach"
+  },
+  {
+   "mapping": "Map_Right",
+   "decision": "corrected",
+   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+  },
+  {
+   "mapping": "Map_Role",
+   "decision": "corrected",
+   "note": "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)"
+  },
+  {
+   "mapping": "Map_Statement",
+   "decision": "corrected",
+   "note": "a stated term is ins:Term and ins:Template"
+  },
+  {
+   "mapping": "Map_Violation",
+   "decision": "rejected",
+   "note": "Behaviour's occasion states are runtime records, never stated meaning"
+  }
+ ]
+}

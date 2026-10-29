@@ -1,0 +1,14 @@
+{
+ "decoded": true,
+ "triples": 254,
+ "schemes": [
+  {
+   "scheme": "http://example.org/lrml-mapping#MS",
+   "queries": 16,
+   "strata": 1
+  }
+ ],
+ "findings": [],
+ "errors": 0,
+ "output_triples": null
+}
