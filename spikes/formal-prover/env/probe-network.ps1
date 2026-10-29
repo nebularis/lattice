@@ -3,12 +3,21 @@
 # large files during the general toolchain-feasibility spike. A body containing the proxy's
 # block notice counts as blocked. Narrowed from that spike's wider probe to what track D's image
 # and native routes actually use.
+#
+# A source is probed by the file the install will fetch, never by the directory holding it.
+# Probing the directory reported Isabelle reachable while the pinned installer returned 404,
+# because a mirror that carries only the current release still serves its index. The Isabelle
+# target comes from env-common.ps1, the same variable install-isabelle.ps1 downloads.
 param([int] $TimeoutSec = 60)
+
+. (Join-Path $PSScriptRoot 'env-common.ps1')
+# env-common.ps1 sets Stop. A probe reports a dead source as a row rather than aborting the run.
+$ErrorActionPreference = 'Continue'
 
 $targets = [ordered]@{
     'opam releases (GitHub API)'  = 'https://api.github.com/repos/ocaml/opam/releases/latest'
     'Rocq opam repository'        = 'https://rocq-prover.org/opam/released/repo'
-    'Isabelle Cambridge mirror'   = 'https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/'
+    'Isabelle pinned installer'   = $FmxIsabelleUrl
     'Docker Hub registry'         = 'https://registry-1.docker.io/v2/'
 }
 

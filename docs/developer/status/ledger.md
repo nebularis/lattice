@@ -3,8 +3,8 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** 🚧 LG-0 and LG-1 built and verified, not yet committed. LG-2 not started.
-**Last updated:** 2026-10-22
+**Status:** 🚧 LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
+**Last updated:** 2026-10-29
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/ledger-lg-0.md), [LG-1](../validation/ledger-lg-1.md)
 
@@ -12,43 +12,43 @@
 
 ## Is this unit complete?
 
-**No.** LG-0 (examples first) and LG-1 (the configuration document) are built and verified. LG-2
-(runtime document) is briefed in the plan but not started. LG-3 (Behaviour's migration), LG-4
-(allocation) and LG-5 (benchmark) are not briefed.
+**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-5 (benchmark) is part built, ahead of the LG-2 it depends on. LG-2 (runtime document) is briefed in the plan, unblocked, and not started. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
 
 ## Current state
 
-**2026-10-22.** Built on `docs/placement-vehicles-structure`, not on the dedicated
-`ledger/lg-0-examples` branch the plan names: for this session, the maintainer asked that every
-slice land as commits on the current branch, so one bundle carries the whole session to machine R.
-Machine S, working autonomously a slice at a time with a pause for the maintainer to review between
-each (credit budget).
+**2026-10-27.** Everything the 2026-10-22 entry below listed as blocking is done. The release tags exist, ADR-A131 was published 2026-10-26, `check:published-decisions` passes, and the `bootstrap` failure that stopped LG0-01 being machine-run is gone. That entry is kept as the record of how LG-0 and LG-1 were built, and is no longer the current state.
 
-Ten files written under `ontology/ledger/examples/`, one per row of LG-0's table: `licence-seats.ttl`,
-`revolving-facility.ttl`, `research-grant.ttl`, `authority-aggregate.ttl`, `insurance-aggregate.ttl`,
-and the five refusals (`refusal-cycle.ttl`, `refusal-unit.ttl`, `refusal-overdraw.ttl`,
-`refusal-proportional-unrounded.ttl`, `refusal-intensive-unit.ttl`). Full detail, including what
-passed, what is hand-checked only, and two points for the maintainer (a gap in `fnd:Identified`, since resolved, and
-a modelling choice in the reinstatement example), is in the [LG-0 Validation Pack](../validation/ledger-lg-0.md)'s
-Handoff section.
+Since then the work has been design rather than build, and it has answered the whole runtime question set.
 
-**Blocker met, not this unit's to fix:** `mise run bootstrap` fails in this environment with an HTTP
-403 from the configured package mirror while installing build dependencies, so `rdflib` is not
-available and LG0-01 (parse every example) could not be machine-run. Per `lattice-toolchain`, handed
-to the maintainer rather than retried.
+**The runtime model, decided 2026-10-27 by the maintainer** (history sketch §7). A posting carries a running balance along the recorded ordering, with checkpoints at closings (LF-Q17 b). Two orderings, recorded and effective (LF-Q11). Post at the drawn account only and derive ancestors, with declared exceptions for purpose-counting accounts (LF-Q18 c). An account instance gains a minted IRI, **reversing ADR-A131 decision 4** (LF-Q19 a). Closing recurrence sits on the account definition (LF-Q20 a). A speculative pass goes in a droppable named graph (LF-Q21 a). A maximum magnitude per value space, in Quantification (LF-Q22 a).
 
-**Gap found, cross-cutting:** the plan's vocabulary tables for Ledger (`ldg:AccountDefinition`,
-`ldg:Grant`) and for Ensemble (`ens:Membership`, `ens:Relation`, `ens:Endpoint`) and the
-instrument-relations sketch (`ins:InstrumentRelation`) all declare terms `⊑ fnd:Identified`, a class
-that does not yet exist in `ontology/foundation`.
+**The storage shape, decided and measured.** A graph per account partition per closing period, where the partitioned unit is the account's book for one period and is itself an aggregate root, so the graph IRI template keeps one slot and whole-graph replace keeps its meaning ([ADR-A13](../../architecture/decisions/ADR-A13-dataset-graph-role-model.md) addendum, STD-276, MS-Q2). A role is declared once per graph family rather than per graph. The checkpoint IRI derives from the account and the close position (MS-Q8 d, TSD-36). A checkpoint is written only where the balance moved, with a carry-forward (MS-Q6 a). A sealed book is registrable and its content hash is the archive digest ([ADR-A34](../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md) addendum), which closed the digest question the multi-store sketch §5.3 left open. §5.2 of the history sketch now carries all of this.
 
-**Resolved 2026-10-23:** the maintainer decided to drop `fnd:Identified` everywhere rather than add a class to Foundation. A named node already has a stable identity, its IRI. Account definitions, grants, memberships and endpoints are parts of their owners, plain classes as `ins:Term` and `bhv:AllowanceDefinition` are, and `ens:Relation` is only `fnd:TemporallyScoped`. The plans, the relations sketch, Ledger's README and six examples were corrected the same day.
+**Measured** in [ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) and [ledger-store-comparison](../../../benchmark/ledger-store-comparison/README.md), with CAP-84 and CAP-85 ratified and reviewed in [the benchmark review](../review/ledger-benchmarks-cap-84-cap-85-review.md). The partition removes the scan floor and the read goes flat, 0.40 to 0.54 ms over a hundredfold history where one graph grows to 217.53 ms (MS-Q1 a). The shape replicates on Jena TDB2, so it is a property of naming the graphs rather than of one engine. The partition can be fine: 13,082 graphs with no read ceiling, so **storage bounds the partition, not the engine** (MS-Q9 a).
 
-**Next action:** the maintainer reviews LG-0 and LG-1 (see below), publishes ADR-A131 (and ideally
-ADR-A01's 2026-10-19 addendum), and creates the pending release tags. If accepted, LG-2 (runtime
-document) is next, per the plan.
+**One measured result runs against the design and is unexplained.** On TDB2 the partition makes writing cost 1.32 s against 0.63 s at 20,000 events, where on Oxigraph the two were within noise. Checkpoints are most of the extra quads. Anything write-heavy leaning on the partition should measure this first.
+
+**Merged main at `0fb8170b`, release 0.20.0, on 2026-10-29.** Two of the ledger's rows moved first, since main's rows of the same number are earlier (ADR-A133 addendum). STD-279 became STD-294 and TD-94 became TD-126. Four of main's rows moved the other way, since the ledger's are the earlier ones, STD-276 to STD-278 of 2026-10-27 10:53 against the computable contract substrate's of 16:34, and TD-93 of 11:23 against 16:34. Main's "name the deferral", "facts, meaning and findings apart" and "a place for implied terms" became STD-295 to STD-297, with their citations in ADR-A145, the substrate's plan and status, TD-100 and `test_extract.py`, and main's "the technical debt register carries no facets" became TD-129. The knowledge index code was taken from main whole, which carries the section mechanism this branch built as decision 29 of ADR-A134, so the branch's ADR-A134 addendum of 2026-10-27 was dropped and its measurement is recorded here instead, 430 numbered items and 68 addenda gave 498 sections, and ADR-A122 came back at 0.82 pointing at its decision 8 where before it was not returned. TD-92 was paid on main by ADR-A145, so its row and this branch's citation of it in the discovery record are gone. The three guidance bullets this branch added to `AGENTS.md`, on reading output in full, asking the index before searching, and asking for the reason, were re-applied over main's text. `tools/knowledge/identifier-exceptions.txt` no longer lists STD-280.
+
+## What is open
+
+| | What | Owner |
+|---|---|---|
+| PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. `ldg:resetRecurrence` is renamed, since nothing resets | LG-2 and LG-3 to build |
+| TD-97, TD-98 | `licence-seats.ttl` models the reset the decision removes, and `ldg:keyDimension`'s OWL range is narrower than its prose and its shape. Both wait on the slice that implements PDD-15 rather than preceding it | LG-2 and LG-3 |
+| the restatement read's partition | PDD-15's claim that an old period's later books hold only stragglers holds where the partition root is the keyed instance, which the benchmark does not yet partition by. The next measurement, not a blocker | benchmark |
+| MS-Q4 | **answered (a)**, with no persistence addendum owed. A scratch dataset is a dataset, so the restore is an ordinary whole-dataset one of a small dataset and `dal:EpochProfile` needs no change | closed |
+| MS-Q11 and LF-Q21 | **both answered**, and they never competed. Evaluation before commitment is a lifecycle boundary LATTICE does not implement, and a droppable graph governs evaluation against committed record | closed |
+| PDD-12 | **closed**, on a position-derived name for a period's unit, measured flat across a change of recurrence | closed |
+| PDD-14 | **closed**, on STD-278. The correctness-path read is the flat one, since an effective position selects the account and that account's balance now decides the amount | closed |
+| PDD-08 | **split**, not owned. Combinators to a Quantification slice before C7b, the log's grain into LG-2, a Datalog backend to PDD-13 | split |
+| MS-Q3, MS-Q5, MS-Q7, MS-Q10 | **all answered (a)**, 2026-10-27. MS-Q3 gained the rule that a retention declaration states a horizon for a registration too, never shorter than its book's | persistence |
+
+**Next action:** LG-2, briefed against PDD-15's derived period key rather than the reset it replaces, with LG-3 following for Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and now waits on LG-2 rather than on an open question.
 
 ## 2026-10-22, LG-1 built and verified
+
+**Historical.** Kept as the record of how LG-1 was built. Its two 🔴 items are both discharged: the release tags exist and `check:published-decisions` passes, since ADR-A131 was published 2026-10-26. Read it for what was done, not for what is outstanding.
 
 Built on `docs/placement-vehicles-structure`, same session convention as LG-0 (one branch, one
 bundle). Full detail in the [LG-1 Validation Pack](../validation/ledger-lg-1.md)'s Handoff and

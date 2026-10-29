@@ -4356,7 +4356,7 @@ A thesaurus states both relations, and which one a clause relies on is the claus
 - **Q3 a path, and (x).** The measure is a path of `elg:EvidenceStep`s. The aggregate names two existing evidence bindings, each with its own reading and closure: above a lower bound needs the universe closed, below an upper bound needs both closed.
 - **Q4 (a).** The condition names the relation it walks, a sub-property of `skos:broader`, `skos:broader` when absent. L9 and L14 are restated over the named relation. A closed set of strategies aligned to ISO 25964's generic and partitive relations was weighed and not taken, since it would make Eligibility know one thesaurus standard's relations.
 - **Q5 (a),** TSD-41 is bisected and the template fixed in C9b3b. The debt row is retired from the register, since this plan now holds it.
-- **The two kinds of deferral** are named in Eligibility's README with no class or marker, since no query or check answers differently by them (STD-013, STD-276).
+- **The two kinds of deferral** are named in Eligibility's README with no class or marker, since no query or check answers differently by them (STD-013, STD-295).
 
 **Decided by precedent, not asked:**
 

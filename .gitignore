@@ -108,3 +108,7 @@ benchmark/*/report.md
 benchmark/*/operations.json
 benchmark/*/sweep.json
 benchmark/*/sweep.md
+benchmark/*/cross_family.json
+benchmark/*/cross_family.md
+benchmark/*/late_posting.json
+benchmark/*/late_posting.md
