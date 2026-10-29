@@ -386,6 +386,19 @@ The declared entities are the coverage list. A node of a class the mapping graph
 
 `text()` is the artefact a reviewer reads, every query headed by the mapping it comes from and its path, and `digest` is the SHA-256 of that text. A compiled mapping is a pure function of the mapping graph, `at`, `base`, the target vocabulary, MORK's shapes and the compiler's version, so a cache keyed by the mapping digest, those inputs and the compiler version never goes stale. The same graph in any triple order gives the same text, which the tests check (PRI-58).
 
+### 11.1 The compiled mapping as RDF
+
+`to_rdf(compiled)` describes a compiled mapping as RDF, in a named graph of its own, so a deployment keeps it beside its mapping graph, under version control or in its graph store, and another component can read what will run (MR-Q6). `from_rdf(graph)` reads it back as the same `CompiledMapping`, which runs as the original does. The node and the graph are named `urn:mork-rdf:compiled:` and the compiled text's digest, so one compilation always has one name, and a description whose queries were changed is refused, since it would be a different compilation.
+
+| Node | Typed | Carries |
+|---|---|---|
+| the compilation | `mork:CompiledMapping`, `prov:Entity` | `prov:wasDerivedFrom` its scheme, `mork:mappingDigest`, `mork:readAt`, `mork:compiledBase`, `mork:compiledInMode`, `mork:compiler`, and its queries, findings and effective confidences |
+| each query | `mork:CompiledQuery`, and `sh:SPARQLConstructExecutable` or `sh:SPARQLSelectExecutable` | its text as `sh:construct` or `sh:select`, `mork:queryIndex`, `mork:queryKind`, `mork:compiledFrom` the mapping, `mork:contextPath` the list of mappings from its root, `mork:stratum`, `mork:outputBox` (`mork:InstanceOutput` or `mork:TerminologyOutput`), `mork:readsOutputOf`, a check's `mork:checkCode`, and a closure's `mork:closureProperty`, `mork:closureAxiom` and `mork:closureCombination` |
+| each finding | `mork:CompileFinding` | `mork:findingIndex`, `mork:findingCode`, `mork:findingSeverity` (`mork:ErrorFinding`, `mork:WarningFinding` or `mork:InfoFinding`), `mork:findingMessage`, `mork:findingAbout` the mapping |
+| each confidence | none | `mork:confidenceOf` the mapping, `mork:effectiveConfidence` |
+
+The description uses SHACL's executables for the text, so a SHACL-AF processor can read a query, and none of `mork:TransformMapping`'s properties, since `mork:generatesTransformDefinition` would classify the compiled mapping as one. Its MORK terms are proposed with this compiler and wait for ratification (MR-22), and later the IR of SPARQL's algebra can attach to the same query nodes.
+
 ## 12. Running
 
 `run(compiled, source, reference)` runs the queries on Oxigraph, the repository's default engine for generated SPARQL (STD-153):
@@ -511,6 +524,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-19 | The run is stratified by what each query reads, and each mapping's output is kept in a graph named by its IRI (decided 2026-10-29) | a combination over classes made from data can be written only at the closure of the DAG, by design of `mork:dependentMapping` |
 | MR-20 | Domain and range axioms for created properties only, in the form and combination the author names, global by default, into a T-Box graph returned apart (MR-Q4, decided 2026-10-29) | the author chooses global or local scope, and axioms never change another vocabulary |
 | MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
+| MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29, the terms proposed) | a deployment keeps and reads it as data, and the same compilation always has the same name |
 
 ## 18. Open questions
 
@@ -521,7 +535,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-Q3 | Should a source node that matches no root be reportable? | decided 2026-10-29, yes, as `Uncovered` (§10.3, MR-16) |
 | MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | decided 2026-10-29, yes, in a form and combination the author chooses (§7.6, MR-20) |
 | MR-Q5 | Should `mork2rml` and this compiler share one reader? | decided 2026-10-29, yes, on the roadmap for when `mork2rml` moves to W3C RML (§19) |
-| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now, because deployments keep mapping graphs under version control or in their graph store and other components can read it. The vocabulary is to be settled |
+| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now. Built as §11.1, its terms proposed (MR-22) |
 
 ## 19. Relation to mork2rml, and what comes next
 

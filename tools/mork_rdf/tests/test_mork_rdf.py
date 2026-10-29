@@ -523,3 +523,29 @@ def test_a_streamed_run_still_reads_an_earlier_stratum():
         mork:conceptName "#knows" ; mork:assertsPropertyDomains mm:Yield_Species , tgt:A .""")
     streamed, abox, tbox = _streamed(compiled, Graph().parse(data=SPECIES_SOURCE, format="turtle"))
     assert set(abox) == set(out.graph) and isomorphic(tbox, out.tbox) and streamed.findings == out.findings
+
+
+# --- the compiled mapping as RDF (§11.1) -----------------------------------------------------------------------------
+
+def test_a_compiled_mapping_described_in_rdf_reads_back_as_the_same_compilation(compiled):
+    from mork_rdf import from_rdf, to_rdf
+    g = to_rdf(compiled)
+    again = from_rdf(Graph().parse(data=g.serialize(format="turtle"), format="turtle"))
+    assert again == compiled and str(g.identifier).endswith(compiled.digest)
+
+
+def test_a_stratified_compilation_keeps_its_strata_reads_and_closures_in_rdf():
+    from mork_rdf import from_rdf, to_rdf
+    compiled, _ = species("""mm:Knows a mork:DataMapping ; mork:mappingScheme mm:S ; mork:broadRBoxCategoryMatch owl:topObjectProperty ;
+        mork:conceptName "#knows" ; mork:assertsPropertyDomains mm:Yield_Species , tgt:A .""")
+    assert compiled.closures and from_rdf(to_rdf(compiled)) == compiled
+
+
+def test_a_description_whose_query_was_changed_is_refused(compiled):
+    from mork_rdf import from_rdf, to_rdf
+    from mork_rdf.model import SH
+    g = to_rdf(compiled)
+    query, text = next(g.subject_objects(SH.construct))
+    g.set((query, SH.construct, Literal(str(text) + " ")))
+    with pytest.raises(ValueError):
+        from_rdf(g)
