@@ -26,4 +26,4 @@ py-modules = ["mcn_decoder", "mcn_codebook"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["mork_communities*", "mtp*", "mcn*"]
+include = ["mork_communities*", "mtp*", "mcn*", "mork_propose*"]

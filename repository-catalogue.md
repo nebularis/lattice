@@ -217,7 +217,7 @@ be absent.
 [[tools]]
 name = "mork"
 path = "tools/mork"
-import-names = ["mork_communities", "mtp", "mcn"]
+import-names = ["mork_communities", "mtp", "mcn", "mork_propose"]
 reaches = ["ontology/mork"]
 
 [[tools]]

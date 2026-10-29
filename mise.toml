@@ -178,6 +178,12 @@ depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
 
+[tasks."mork:propose-mcp"]
+description = "Serve the MORK mapping proposal tools over MCP on standard input and output, for an agent such as Claude Desktop: the teaching pack and codebook, cards of LATTICE's layers and of a source vocabulary, candidate target terms, and the check of a proposal in MCN"
+raw = true  # an MCP host speaks over the task's own standard input and output
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.server"
+
 [tasks."check:mork"]
 description = "Run the MORK tooling's tests under tools/mork/src, the compiler agent's among them"
 run = "python -m pytest tools/mork/src -q"

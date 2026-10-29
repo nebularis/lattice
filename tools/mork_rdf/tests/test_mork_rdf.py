@@ -757,3 +757,12 @@ def test_a_node_no_guarded_sibling_admits_is_reported():
     out = run(compiled, source)
     assert {(f.code, f.focus) for f in out.findings} == {("Unguarded", REC + "i3")}
     assert len(set(out.graph.subjects(RDF_TYPE, None))) == 3  # the root and the two admitted items
+
+
+def test_a_concept_placed_by_mork_representation_scheme_in_another_format_is_left_to_its_backend():
+    """MCN places a concept in its representation scheme with mork:representationScheme, not skos:inScheme."""
+    g = Graph().parse(data=HEAD + """mm:Json a mork:RepresentationScheme ; mork:format mork:JSON .
+        mm:J a mork:DataConcept ; mork:representationScheme mm:Json .
+        mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:J ; mork:dataRef "loanId" ; mork:exactTBoxMatch tgt:Other .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert ("OtherBackend", MM + "A") in {(f.code, f.mapping) for f in compiled.findings} and not compiled.errors

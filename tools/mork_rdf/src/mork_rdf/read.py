@@ -222,12 +222,15 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
 
     # --- excluded outright (§10) -----------------------------------------------------------------------------------
     candidates = []
+    elsewhere: set = set()
     for node in in_force:
         if any((node, RDF.type, t) in g for t in _GENERATIVE):
             findings.append(Finding("OtherBackend", str(node), "a generative mapping, compiled by the SHACL, SWRL, projection or RML backend", Severity.INFO))
-        elif (formats := sorted({f for c in g.objects(node, MORK.mappingFor) for sc in g.objects(c, SKOS.inScheme)
+        elif (formats := sorted({f for c in g.objects(node, MORK.mappingFor)
+                                 for sc in list(g.objects(c, SKOS.inScheme)) + list(g.objects(c, MORK.representationScheme))
                                  for f in g.objects(sc, MORK["format"])} - {MORK.RDF}, key=str)):
             findings.append(Finding("OtherBackend", str(node), f"its source is {', '.join(local(f) for f in formats)}, not RDF", Severity.INFO))
+            elsewhere.add(node)
         elif (node, RDF.type, MORK.UncertainMapping) in g or _one(g, node, MORK.incompleteMapping) == Literal(True):
             findings.append(Finding("Uncertain", str(node), "an uncertain or incomplete mapping is a question for review, never compiled"))
         elif any(_one(g, node, p) is not None for p in _PLACEHOLDER):
@@ -240,6 +243,22 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             findings.append(Finding("Evidence", str(node), "a hypothesis or weighted match is evidence for review, and writes nothing", Severity.INFO))
         else:
             candidates.append(node)
+
+    # A mapping beneath one left to another format's backend reads the same source, so it is left there too.
+    def beneath(node) -> bool:
+        above = set(g.objects(node, MORK.compositeBroaderMapping)) | set(g.objects(node, MORK.broaderApplicative))
+        above |= set(g.subjects(MORK.compositeNarrowerMapping, node)) | set(g.subjects(MORK.referenceDataMapping, node))
+        return bool(above & elsewhere)
+
+    changed = True
+    while changed:
+        changed = False
+        for node in list(candidates):
+            if beneath(node):
+                findings.append(Finding("OtherBackend", str(node), "it is beneath a mapping whose source is not RDF", Severity.INFO))
+                elsewhere.add(node)
+                candidates.remove(node)
+                changed = True
 
     # --- the DAG's parent edges (§5.2) -----------------------------------------------------------------------------
     for node in candidates:
