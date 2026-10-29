@@ -161,6 +161,12 @@ ins:obligor a owl:ObjectProperty ;
 	rdfs:comment "The party who must perform an obligation." ;
 	fnd:utility "Subject: an obligation. Value: exactly one party: a role on stated meaning, an occupancy or group on bound meaning." .
 
+ins:ClaimHolder a owl:Class ;
+	owl:equivalentClass [ a owl:Restriction ; owl:onProperty [ owl:inverseOf ins:obligee ] ; owl:someValuesFrom ins:Obligation ] ;
+	rdfs:label "claim holder" ;
+	rdfs:comment "Whatever stands at the obligee end of some obligation, which holds Hohfeld's claim, the sense of right that a duty owed to it answers." ;
+	fnd:utility "Classified, never asserted: a role, occupancy or group is a claim holder when an obligation names it as obligee. It names the claim end where a source vocabulary calls it a right, which Instrument never does, since the word covers four relations (§4.4)." .
+
 ins:obligee a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;
 	rdfs:range ins:RelationParty ;

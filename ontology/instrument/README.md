@@ -508,7 +508,7 @@ Wesley Newcomb Hohfeld showed that the word "right" in judges' reasoning covered
 | an **immunity** | a **disability** | B cannot change A's legal position | `ins:Exclusion` excepting a `ins:Power` |
 
 - **Correlatives are one node.** A duty and its claim are the two ends of one `ins:Obligation`, so nothing has to keep them consistent.
-- **No word is overloaded.** "Right to be paid" is the obligee's end of an obligation, "right to terminate" is a power and "right to use" is a permission.
+- **No word is overloaded.** "Right to be paid" is the obligee's end of an obligation, "right to terminate" is a power and "right to use" is a permission. Whatever stands at that end is classified as an `ins:ClaimHolder`, which is equivalent to being the obligee of some obligation and is never asserted. A source that calls something a right may mean several of these at once. LegalRuleML's right, for example, gives its bearer a permission and implies obligations or prohibitions owed to the bearer, which are two relations under one term.
 - **Privileges are exceptions.** Hohfeld defines a privilege as the absence of a duty to the contrary. Contracts create one by excepting a duty, which is what `ins:excepts` records.
 - **First and second order.** Claims, duties and privileges say what parties must and may do now. Powers and immunities say who can change that, and Instrument's legal triggers and regimes carry the changes (§10, §11).
 
@@ -1317,6 +1317,12 @@ ins:obligor a owl:ObjectProperty ;
 	rdfs:range ins:RelationParty ;
 	rdfs:comment "The party who must perform an obligation." ;
 	fnd:utility "Subject: an obligation. Value: exactly one party: a role on stated meaning, an occupancy or group on bound meaning." .
+
+ins:ClaimHolder a owl:Class ;
+	owl:equivalentClass [ a owl:Restriction ; owl:onProperty [ owl:inverseOf ins:obligee ] ; owl:someValuesFrom ins:Obligation ] ;
+	rdfs:label "claim holder" ;
+	rdfs:comment "Whatever stands at the obligee end of some obligation, which holds Hohfeld's claim, the sense of right that a duty owed to it answers." ;
+	fnd:utility "Classified, never asserted: a role, occupancy or group is a claim holder when an obligation names it as obligee. It names the claim end where a source vocabulary calls it a right, which Instrument never does, since the word covers four relations (§4.4)." .
 
 ins:obligee a owl:ObjectProperty ;
 	rdfs:domain ins:Obligation ;

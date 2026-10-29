@@ -8,6 +8,9 @@ invariants:
   - For an RDF source, give the representation scheme the format mork:RDF, name the source classes a concept stands for with mork:representedAs, and write paths as SPARQL property paths whose prefixes the mapping scheme declares with sh:declare.
   - A child mapping glued to its parent with an exact R-Box match writes the child's node as subject and the parent's as object. Glued with an inverse R-Box match it writes the parent's node as subject.
   - Name an individual the target vocabulary declares, such as a bound's sense or a match strategy, with an A-Box match, never with a minted node.
+  - LATTICE never uses the word right, which covers four Hohfeld relations. A claim is the obligee end of an ins:Obligation (its holder an ins:ClaimHolder), a liberty an ins:Permission, a power an ins:Power, an immunity an ins:Exclusion of a power. A source's right may be several at once, each its own relation under one term.
+  - An ins:Permission always excepts a prohibition (law I8). A licence's permission excepts the prohibition its owner's exclusive rights imply, so a mapping that creates a permission also states, or names, the prohibition it excepts.
+  - Stated meaning names roles (pty:Role), never role occupancies, and every stated term is both ins:Term and ins:Template, with its relations under it by ins:arisesUnder.
 decision_ladder:
   - Identify the mapping family.
   - Identify the source representation.
@@ -22,6 +25,8 @@ minimal_pairs:
   - Reference position versus minting position
   - Exact R-Box glue versus inverse R-Box glue
   - A guard on a datum versus a guard on an assertion
+  - A source's right versus an ins:Permission
+  - A pty:Role versus a pty:RoleOccupancy
 anchors: []
 covers: []
 deferrals: ["*"]
