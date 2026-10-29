@@ -289,7 +289,12 @@ Nothing is built in this unit. CCS took N1, N2, N4, N5 and the Behaviour part of
 | Eligibility compiler | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) | implemented, awaiting validation in a networked environment | validation |
 | Governance surfaces | [plan](plans/governance-surfaces-integration.md), [status](status/governance-surfaces.md) | fixture-backed UI shells | backend integration, three slices |
 | Housekeeping first cut | [RDF/SPARQL phase plan](plans/rdf-sparql-patterns-phase-plan.md) slice 3 | not started | scheduling. ADR-A80 accepted |
-| MORK shared reader | `tools/mork_rdf/README.md` §19, TD-124 | not started. `mork_rdf` (on `claude/config-authoring-studio`) and `mork2rml` read MORK separately | once `mork2rml` moves to W3C RML, one reader for both backends |
+| MORK shared reader | `tools/mork_rdf/README.md` §19, TD-124 | not started. `mork_rdf` (on `claude/config-authoring-studio`) and `mork2rml` read MORK separately | once `mork2rml` moves to W3C RML, one reader for both backends, which also holds the logical run plan ([sketch](sketches/mork-run-planner.md) §9) |
+| MORK run planner | [sketch](sketches/mork-run-planner.md) | options A and B agreed, MP-Q3 proposed | the benchmark (MP-Q1), then release by count and a pluggable sink |
+| MORK runtime of our own | [sketch](sketches/mork-run-planner.md) options E and F | not started, low priority | PDD-06's SPARQL IR first. A partitioned and possibly native runtime, `Flux.IO` a candidate base |
+| MORK transform backends | none yet | not started | generating a transform, such as XSLT or JOLT, or an ingress endpoint for JSON and XML that writes to the graph SPI, from a mapping graph, run by an existing engine as RML output is |
+| MORK studio module | none yet | not started, after the MORK compiler | a mapping editor in the studio, placed as an ETL tool: a schema or data on the left, the pipeline of mappings drawn on the right, compilation to each backend, a step function that simulates a payload through the mappings, and `propose`, which asks a language model for mappings with MCN and MTP, hypotheses to accept or reject and uncertain mappings to complete by hand |
+| MORK proposals by an agent | none yet | not started, after the studio module | the studio's MORK proposals offered to Claude Desktop through the studio's MCP server, first tried on the ODRL mapping scheme with a sub-agent given MCN and MTP, and MTP refined from what it gets right and wrong |
 | Policy mapping spike | `spikes/policy-mapping/` on `spikes/pol-map` | spike, two commits | the maintainer's decision whether to keep it |
 
 ## 6. The platform programme

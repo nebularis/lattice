@@ -3,7 +3,7 @@
 # A planner for running MORK mappings — Sketch
 
 **Unit ID:** `mork-run-planner`
-**Status:** Sketch. Nothing here is decided. It follows a study of SDM-RDFizer and of the maintainer's paused `rml-pipeline`, and asks what of theirs a MORK run should take.
+**Status:** Sketch. Options A and B, MP-Q1 and MP-Q2 ruled 2026-10-29, MP-Q3 proposed. It follows a study of SDM-RDFizer and of the maintainer's paused `rml-pipeline`, and asks what of theirs a MORK run should take.
 **Date:** 2026-10-29
 **Bears on:** [`tools/mork_rdf`](../../../tools/mork_rdf/README.md) §12 and §14, PDD-06 (a SPARQL IR), ADR-A124 (benchmarks measure and never fail on time), ADR-A128 (efficient queries).
 
@@ -63,27 +63,73 @@ Its own list of what is outstanding includes releasing strings and ids, which is
 
 Two consequences. First, string pooling is a store's job while we run on a store. We believe Oxigraph encodes terms to ids in its storage, but we have not read it (TSD-Q5 is near this), so a planner should not rebuild it until a measurement shows the runner's own copies are the cost. Second, the plan's main lever moves from "which order frees memory soonest" to "which graphs can be dropped, and which queries can share a scan".
 
-## 5. Options
+## 5. What a run costs now
 
-Each is independent, and they are listed cheapest first. The figures are estimates for a source of N focus nodes, Q queries and an output of T triples, to be measured by a benchmark under ADR-A124 before any is built.
+Measured 2026-10-29 on the maintainer's laptop, with the catalogue fixture's mapping (`tools/mork_rdf/tests/fixtures`) over synthetic book records of ten source triples each, one process per size, peak resident memory from `getrusage`.
 
-| Option | Takes from | What it does | Space | Time |
-|---|---|---|---|---|
-| A. Release by count | RDFizer's PTT counts | count, per mapping, the queries of later strata that read its graph, and drop the graph when the count reaches zero | peak falls from every mapping's output to the outputs some later stratum still needs | none |
-| B. Stream the output | RDFizer's file output | write each stratum's triples to a sink as they come, and keep in the store only what a later stratum reads | the runner's set, O(T) Python objects, goes | none, and the first triples arrive before the run ends |
-| C. Share a scan | RDFizer's grouping by source, Morph-KGC's partitions | merge the constructs that share a chain of frames into one CONSTRUCT with several template triples | unchanged | Q scans of the root class become one per distinct chain. MR-5 accepted the repetition, and this repays it |
-| D. Hash a lexical lookup | RDFizer's PJTT | for a `mork:LexicalComparison` lookup, write each reference value's `STR()` to a key once, then join on the key | one key per reference value | from N × M comparisons to N + M, for example 2.5 million to 10,250 for 10,000 values and 250 codes |
-| E. Partition the source | Morph-KGC, `rml-pipeline`'s chunks | run stratum 0 per partition of the root classes, the partitions independent | bounded by the largest partition | parallel across partitions, at the cost of a dependency analysis like `groupByDependencies` |
-| F. An engine of our own | `rml-pipeline` | compile the IR of PDD-06 to a physical plan executed in process, with interned ids and cache-sized tuples | the lowest | the highest, and a second evaluator to keep equal to the SPARQL one |
+| Records | Source triples | Output triples | Before the run | Peak | Run time |
+|---|---|---|---|---|---|
+| 2,000 | 20,000 | 18,000 | 77 MB | 207 MB | 0.6 s |
+| 8,000 | 80,000 | 72,000 | 163 MB | 509 MB | 2.6 s |
+| 32,000 | 320,000 | 288,000 | 529 MB | 1,269 MB | 12.3 s |
 
-## 6. A recommendation, to be tested
+The peak grows by about 35 KB a record, about 1.9 KB for each source or output triple. About 15 KB a record is the rdflib graph the source arrives in, before the run starts. The rest is the copies the runner makes: the source serialised and canonicalised to skolemise it, the store, each mapping's output graph, the set of every triple written and the rdflib graph returned. Time grows by about 0.38 ms a record.
 
-A and B first, since they change the runner only and every query keeps its meaning. C next, once the benchmark shows the repeated scans cost. D when a lexical lookup over a large scheme is real, which MR-Q2's default comparison makes rarer. E and F wait for PDD-06's IR, because a plan that merges and partitions queries is a rewrite of the algebra, and doing it on text would repeat the work.
+Extrapolated linearly, which the checks' `GROUP BY` may not be:
 
-## 7. Questions for the maintainer
+| Records | Peak | Run time |
+|---|---|---|
+| 10⁴ | 0.4 GB | 4 s |
+| 10⁵ | 3.6 GB | 40 s |
+| 10⁶ | 35 GB | 7 min |
 
-| ID | Question |
-|---|---|
-| MP-Q1 | Is a benchmark of `mork_rdf` on a synthetic source of 10⁴, 10⁵ and 10⁶ records, measuring peak memory and time per stratum, the first step? |
-| MP-Q2 | Should the output graph of a mapping that no later stratum reads be kept for traceability anyway, or is the CONSTRUCT's mapping, in `text()`, enough? |
-| MP-Q3 | Does the planner belong to `tools/mork_rdf`, or to the unit that builds PDD-06's IR, so that the persistence compiler's queries share it? |
+## 6. Options
+
+Each is independent, and they are listed cheapest first. The figures are estimates for a source of N focus nodes, Q queries and an output of T triples, to be measured by the benchmark of §8 before any is built.
+
+| Option | Takes from | What it does | Space | Time | Ruling |
+|---|---|---|---|---|---|
+| A. Release by count | RDFizer's PTT counts | count, per mapping, the queries of later strata that read its graph, and drop the graph when the count reaches zero | peak falls from every mapping's output to the outputs some later stratum still needs | none | agreed 2026-10-29 |
+| B. Stream to a sink | RDFizer's file output | hand each construct's triples to a sink as the store yields them, and keep in the store only the graphs a later stratum reads | the set of every triple written and the returned graph go, about half of what the run adds today | none, and the first triples reach the sink before the run ends | agreed 2026-10-29, with a pluggable sink (§7) |
+| C. Share a scan | RDFizer's grouping by source, Morph-KGC's partitions | evaluate a chain of frames once for every construct that shares it (§6.1) | unchanged | the chain's work is done once, not once per construct | to measure |
+| D. Hash a lexical lookup | RDFizer's PJTT | for a `mork:LexicalComparison` lookup, write each reference value's `STR()` to a key once, then join on the key | one key per reference value | from N × M comparisons to N + M, for example 2.5 million to 10,250 for 10,000 values and 250 codes | later, if a lexical lookup over a large scheme is real |
+| E. Partition the source | Morph-KGC, `rml-pipeline`'s chunks | run stratum 0 per partition of the root classes, the partitions independent | bounded by the largest partition | parallel across partitions | on the roadmap, after PDD-06 |
+| F. An engine of our own | `rml-pipeline` | compile the IR of PDD-06 to a physical plan executed in process, with interned ids and cache-sized tuples | the lowest | the highest, and a second evaluator to keep equal to the SPARQL one | on the roadmap, after PDD-06 |
+
+A further saving needs no option. A source given as N-Triples can be loaded into the store directly, skipping the rdflib graph that holds about 40% of the peak today.
+
+### 6.1 What sharing a scan buys
+
+Today each construct beneath a root repeats the root's chain: the type scan, the identity's paths and the `BIND` that forms the target IRI. A root with k constructs beneath it does that work k times. Sharing the scan does it once, so the time a run spends forming targets falls by up to (k − 1)/k, and the rest, each construct's own patterns, is unchanged. The catalogue's item has eight constructs beneath one chain, so if the chain is about half of each query's work, the run's time would fall by about 40%. That is a hypothesis for the benchmark.
+
+How the constructs are merged decides whether it pays. Making each construct's own patterns `OPTIONAL` beside the chain multiplies rows when two of them are multi-valued, two authors and three titles giving six rows, so the work rises. Writing them as one join of the chain with a `UNION` of their own patterns gives each its own rows, evaluates the chain once, and keeps a group to two operands (STD-027). Merging also removes a query's fixed cost, its parse and plan, which matters most for many small mappings. Space is unchanged, because the store holds the same graphs.
+
+## 7. A pluggable sink
+
+A run hands each construct's triples, with its stratum and mapping, to a sink, and the sink decides where they go. The runner keeps a stratum's output in its working store only while a later stratum reads it (option A), and never reads from the sink, so the sink never has to be queryable.
+
+- **In memory**, an rdflib graph, which is what the studio and the tests use today.
+- **N-Triples to a file or standard output**, written as the triples arrive. Standard output keeps the runner's contract to a stream of lines, so a separate listener can read it and publish to a broker such as RabbitMQ, for a consumer that loads the triples into Jena or another store.
+- **A queue** with a bound, for a sink in another process, so a slow consumer slows the run instead of filling memory.
+
+A broker client inside the runner is not proposed. The listener keeps the runner free of a dependency each deployment would choose differently.
+
+`Flux.IO`, the maintainer's F# library that `rml-pipeline` was to be built on, has the shape a streaming runner needs: stages typed as sources, transforms, accumulators, branches, merges and sinks, envelopes that carry a sequence number, trace context and a cost in bytes, batches with windows, and effect handles over several concurrency backends. Its own notes leave backpressure, cancellation and a non-blocking scheduler to do. It belongs with option F, if a runtime of our own is ever built.
+
+## 8. Rulings and answers
+
+| ID | Question | Ruling |
+|---|---|---|
+| MP-Q1 | Is a benchmark of `mork_rdf` on synthetic sources of 10⁴, 10⁵ and 10⁶ records, measuring peak memory and time per stratum, the first step? | yes, 2026-10-29. By §5 the 10⁴ and 10⁵ tiers fit a laptop, and the 10⁶ tier needs about 35 GB before options A and B and the direct load, so it is opt-in, for a cloud run |
+| MP-Q2 | Should the output graph of a mapping that no later stratum reads be kept for traceability anyway? | no, 2026-10-29. The input and the mapping reconstruct every intermediate step, so the construct's mapping in `text()` is enough. Keeping the input is the deployment's choice, and LATTICE takes no position on it |
+| MP-Q3 | Where does the planner belong? | proposed in §9, for the maintainer |
+
+## 9. Where the planner belongs
+
+Planning a mapping graph has three parts, and only the middle one depends on the backend.
+
+1. **The logical plan** says which mappings read which others' outcomes, the strata that follow, and when each output can be released. It is a property of MORK's DAG, `mork:deferredMapping`, `mork:dependentMapping` and the deferred references, and every backend needs it: the SPARQL runner, `mork2rml`, and a later backend that generates a transform such as XSLT or JOLT, or an endpoint that consumes JSON or XML and writes to the graph SPI. It belongs with the shared MORK reader (MR-Q5, TD-124).
+2. **The physical plan** is the backend's own. For SPARQL it is rewrites of queries, such as sharing a scan, which are rewrites of PDD-06's algebra and can live with that IR, beside the persistence compiler's. For RML the engine plans its own joins, partitions and deduplication, as SDM-RDFizer does, so `mork2rml` should emit triples maps in the logical plan's order and leave the rest to the engine. For a generated transform it is the order of its templates.
+3. **The sink** is egress. The plan hands batches to it and never reads them back (§7).
+
+So putting the planner in PDD-06's unit would couple MORK's ingress semantics to the persistence compiler, whose queries are writes governed by persistence profiles. Putting the logical plan in the MORK reader, and only the SPARQL rewrites in the IR's unit, keeps ingress and egress apart. The one dependency left is that a SPARQL backend's rewrites are written against the IR.
