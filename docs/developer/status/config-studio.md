@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action, for the maintainer:** accept ADR-A136's third amendment (the writers deployed apart on a super stream), review CS17 in the Validation Pack, rule on CS-B35 to CS-B41, ADR-A138 to ADR-A140 were accepted 2026-10-28, with BQ-1 as recommended and BQ-2 as option C, a proposer worker first and an MCP server after it.
+**Next action, for the maintainer:** review the MORK RDF compiler's design in [`tools/mork_rdf/README.md`](../../../tools/mork_rdf/README.md) and rule on its decisions MR-1 to MR-14 (§17) and on CS-B61 to CS-B65. CB5a continues with the ODRL mapping scheme and the import job once the compiler's design is agreed.
 
 ## Decisions taken alone, for ratification
 
@@ -89,6 +89,7 @@ CS-D1 to CS-D9 are in [sketch §6](../sketches/config-studio.md#6-decisions-take
 | CS-B62 | The MCP server is the studio's service itself, at `POST /mcp` over Streamable HTTP, answering whole JSON responses and opening no stream, with four tools and MTP's first layer as a prompt, written with Jena's JSON and no new dependency | BQ-2 puts it on the studio. Its proposals are saves through the writers like any other, and a person decides each |
 | CS-B63 | An MCP proposal names only the relation kinds and activities the served vocabulary declares and the roles the workspace itself declares, a refusal listing what is declared, and its `cst:proposerVersion` is the client's name and version from `initialize` | the model corrects itself from the refusal, and the reviewer sees which host proposed |
 | CS-B64 | The server accepts requests from `localhost` origins only and authenticates no one, as the service does | MCP's guidance against DNS rebinding, for a studio on the author's machine |
+| CS-B65 | CB5 imports ODRL through a MORK mapping scheme compiled to SPARQL CONSTRUCT by a new compiler, `tools/mork_rdf`, which covers MORK's data mappings rather than exact matches alone and refuses by name what it does not compile. Its own decisions are MR-1 to MR-14 in its README | the maintainer chose compiling over interpreting on 2026-10-29, and asked for a compiler we maintain, not a partial one. LegalRuleML stays deferred, with the RML route recorded in the runtime pipeline sketch §13 |
 
 ## Learnings
 
@@ -113,6 +114,7 @@ The index answered the architecture questions well (CAP-52, CAP-80, ADR-A38, ADR
 
 ## History
 
+- 2026-10-29, latest: CB5 begun. The maintainer chose ODRL over LegalRuleML and compiling MORK to SPARQL over interpreting it. Built `tools/mork_rdf`, the RDF-to-RDF backend of MORK's compiler family, with its design in its README, 41 tests, and STD-292 for how a payload declares itself. LegalRuleML's RML route is recorded in its sketch. Register gaps closed: CAP-99, MEC-92, MEC-93 and PRI-76. Decisions CS-B65 and MR-1 to MR-14 wait for ratification.
 - 2026-10-28, latest: `main` merged at `1ebed385`, after it renumbered the rows that collided with this branch. We broke the date ties by the commit timestamps of the rows' first commits, since the identifier check prints dates only and `main`'s squash hides its own times, which the pre-squash history on `fml/isabelle-layers` gives. This branch's TD-100 became TD-121. The fixes for `main`'s hardening are in the Validation Pack (MG-01 to MG-06). MEC-84 to MEC-86, STD-279 and TD-94 renumber when `main` next brings `ccs-trunk`, whose rows came first, and the next free ADR number is kept for CB5.
 - 2026-10-28, latest: bound meaning's properties shown read only at the maintainer's request, and the MCP server of BQ-2's second stage built on the service: four tools and MTP as a prompt, checked over a live session whose proposal waited in the Meaning view. Decisions CS-B61 to CS-B64 wait for ratification.
 - 2026-10-28, latest: CB4 built. The Instrument view in builder mode, with terms in their two tiers, regimes as state machines with their gating, and the dry run of a stated term's conditions over sample facts by their compiled SPARQL, checked live in the browser pane. CB0 to CB4 are done, what the November tag is to carry (CB-Q5). Decisions CS-B57 to CS-B60 were ratified by the maintainer on 2026-10-28.

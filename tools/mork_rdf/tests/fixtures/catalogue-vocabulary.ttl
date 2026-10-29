@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix tgt: <http://example.org/tgt#> .
+
+tgt:Work a owl:Class .
+tgt:Agent a owl:Class .
+tgt:title a owl:DatatypeProperty .
+tgt:status a owl:DatatypeProperty .
+tgt:year a owl:DatatypeProperty .
+tgt:name a owl:DatatypeProperty .
+tgt:shelf a owl:DatatypeProperty .
+tgt:medium a owl:ObjectProperty .
+tgt:genre a owl:ObjectProperty .
+tgt:creator a owl:ObjectProperty .

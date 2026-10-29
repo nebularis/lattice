@@ -439,6 +439,22 @@ Not run: a regime in the live stack, since the builder sample states none, the d
 
 Not run: a host other than `curl` connected to the live server, such as Claude Code, and a stdio host through a bridge.
 
+## CB5, part: the MORK RDF-to-RDF compiler
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| MR-01 | a property path in each SPARQL 1.1 form, and six that are not paths / parsed and written back / each form writes back to itself, and each non-path is refused, an injection attempt among them | L1 | + − | pass |
+| MR-02 | the catalogue mapping and its four records / compiled at 2026-10-29 and run / every construct maps what its mapping says, four compile findings and three check rows exactly | L1 | + − | pass |
+| MR-03 | the mapping graph and the source each in three shuffled orders / compiled and run / the same text, digest, triples and findings (PRI-58) | L1 | + | pass |
+| MR-04 | the compiled constructs / run on rdflib and on Oxigraph / the same triples | L1 | + | pass |
+| MR-05 | the catalogue at 2025-06-01, with a confidence floor of 0.85, in production mode, and with `at` lacking a timezone / compiled / the superseded mapping in force, the mapping and its descendants dropped, `CompileError` naming `Uncertain`, and a refusal | L1 | + − | pass |
+| MR-06 | one small graph per refusal code / compiled / each refused by name | L1 | − | pass, 13 codes |
+| MR-07 | a literal for an object property, an ambiguous lookup, and a source declaring its own lookup codes / run / `TermKind`, `LookupAmbiguous` with both matches asserted, and `LookupUnresolved` with nothing asserted | L1 | − | pass |
+
+`mise run check:mork-rdf` ran 41 tests and passed. `check:catalogue`, `check:knowledge` and the identifier test passed with the new package and register entries.
+
+Not run: the compiled queries in Fuseki, and any measurement of their cost (README §14).
+
 ## Merging `main`, 2026-10-28
 
 `main` at `1ebed385`, after it renumbered its colliding identifiers (ADR-A141 to ADR-A143, TD-119, TD-120, CAP-98). Five text conflicts, resolved by keeping both sides. The studio's TD-100 became TD-121, since `main`'s row came first.

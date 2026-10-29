@@ -268,6 +268,11 @@ reaches = ["ontology/vocabulary"]
 name = "wording_assembler"
 path = "tools/wording_assembler"
 import-names = ["wording_assembler"]
+
+[[tools]]
+name = "mork_rdf"
+path = "tools/mork_rdf"
+import-names = ["mork_rdf"]
 ```
 
 ## Documentation areas

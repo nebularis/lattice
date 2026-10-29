@@ -163,3 +163,4 @@ other rule languages: N3, N7, N9 and N10 to N13. D1, D4 and D5 are open.
   validation log. D6 overtaken. NQ-1 to NQ-4 raised for the maintainer
 - 2026-10-10: NQ-1 to NQ-4 answered as leaned. NRS keeps the rule-language integration work. N1 and N2 move to CCS, N6 and N8 are absorbed by CCS C12 and C13, and S2 pairs with CCS C9b3
 - 2026-10-12: CCS moved closures over a period from HQ-6a to HQ-6b (HQ6a-Q4). N8's dependency follows them to HQ-6b
+- 2026-10-29: the contract builder's CB5 (config-studio) takes N12's import half for ODRL only, as proposals for review, through a MORK mapping scheme compiled to SPARQL by `tools/mork_rdf`. The maintainer's choice of CB5 is the trigger for that half. Export, interchange and the conformance measurement stay here (N7, N12), and LegalRuleML's RML route is recorded in the runtime pipeline sketch §13

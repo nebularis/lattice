@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The catalogue's records. dune-2 has no ISBN, the horror pamphlet's genre and the audiobook's format are unknown.
+
+@prefix src: <http://example.org/src#> .
+@prefix ex:  <http://example.org/records/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:dune a src:Book ;
+    src:isbn "978-0441013593" ; src:title "Dune" ; src:format src:Paperback ; src:genre "SF" ;
+    src:published "1965"^^xsd:gYear ; src:subtitle "A novel" ; src:shelfmark "823 HER" ;
+    src:author [ src:name "Frank Herbert" ] .
+
+ex:dune-2 a src:Book ; src:title "Dune Messiah" ; src:format src:Hardback .
+
+ex:tract a src:Pamphlet ;
+    src:isbn "978-1" ; src:title "On Ghosts" ; src:format src:Audiobook ; src:genre "HOR" ;
+    src:author [ src:name "Anon" ] , [ src:name "Anon" ] .
+
+ex:ebook a src:Book ; src:isbn "978-2" ; src:title "Snow Crash" ; src:format src:Ebook ; src:genre "SF" .
+
+ex:shelf-3 a src:Shelf ; src:code "SF" ; src:number 3 .
