@@ -63,7 +63,7 @@ public final class StudioMain {
     }
 
     private static StudioHttpServer serve(StudioConfig config, StudioStore store, Writes writes, JobBus bus) throws Exception {
-        StudioApi api = new StudioApi(store, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets());
+        StudioApi api = new StudioApi(store, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features());
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
         return server;
@@ -71,7 +71,7 @@ public final class StudioMain {
 
     private static boolean selfCheck() throws Exception {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
-            "studio", null, null, null);
+            "studio", null, null, null, java.util.Set.of());
         try (StudioStore store = StudioStore.inMemory();
              StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(

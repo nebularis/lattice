@@ -45,10 +45,14 @@ final class Fixture {
     }
 
     Fixture(Path assets, JobBus busOverride) {
+        this(assets, busOverride, java.util.Set.of());
+    }
+
+    Fixture(Path assets, JobBus busOverride, java.util.Set<String> features) {
         this.assets = assets;
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
         this.api = new StudioApi(store, writes, busOverride == null ? bus : busOverride, clock,
-            () -> new UUID(0, counter.incrementAndGet()), assets);
+            () -> new UUID(0, counter.incrementAndGet()), assets, features);
     }
 
     /**

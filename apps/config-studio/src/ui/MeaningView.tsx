@@ -4,7 +4,7 @@
 // the review of waiting proposals, and what a stated term reads. The review is one component, ProposalCard, which later
 // proposers share (ADR-A42).
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Plus, Sparkles } from "lucide-react";
 import { Graph, INS, compact, localName } from "@lattice/authoring-domain";
 import { api, awaitJob } from "../api";
@@ -31,6 +31,7 @@ import {
   type Decision,
   type Proposal,
 } from "../rdf/meaning";
+import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { NodeEditor, PART_INFO } from "./ConfigView";
 import { useStudio } from "./Workspace";
 
@@ -101,7 +102,108 @@ function usePropose(m: M) {
   return { run, start };
 }
 
+interface ImportRun {
+  state: "running" | "done" | "failed";
+  added?: number;
+  issues?: Issue[];
+  message?: string;
+  /** Artefacts that are not an unsaved edit, such as the baseline's roles. */
+  unapplied?: string[];
+}
+
+/** Submits an ODRL policy with the configurations and adds the job's artefacts to the configurations they belong to. The
+ * baseline is saved at once, never an unsaved edit, so its roles are reported for the author to add there. */
+function useImportOdrl(m: M) {
+  const [run, setRun] = useState<ImportRun>();
+  const latest = useRef(m);
+  latest.current = m;
+  const id = m.studio.id;
+  const start = useCallback(
+    async (file: File, confirmed: boolean, into?: string) => {
+      const { model } = latest.current;
+      const mediaType = mediaTypeOf(file.name);
+      if (!mediaType) return setRun({ state: "failed", message: "The file must be .jsonld, .json, .ttl or .nt." });
+      setRun({ state: "running" });
+      try {
+        let body = importDocument(id, await file.text(), mediaType, confirmed, into);
+        for (const p of PARTS) body = body.merge(model.state.configs[p]?.current ?? Graph.empty());
+        const job = await awaitJob(await api.submit(id, "propose", "odrl", body));
+        if (job.status === "Failed") return setRun({ state: "failed", message: job.failure ?? "The import failed." });
+        const current = Object.fromEntries(PARTS.map((p) => [p, latest.current.model.state.configs[p]?.current]));
+        const applied = applyArtefacts(job.artefacts, current);
+        for (const [part, graph] of Object.entries(applied.edits) as [typeof PARTS[number], Graph][]) latest.current.model.edit(part, () => graph);
+        setRun({ state: "done", added: applied.added, issues: job.issues, unapplied: applied.unapplied.map((a) => a.path) });
+      } catch (error) {
+        setRun({ state: "failed", message: error instanceof Error ? error.message : String(error) });
+      }
+    },
+    [id],
+  );
+  return { run, start };
+}
+
+function ImportOdrl({ m }: { m: M }) {
+  const { studio } = m;
+  const { run, start } = useImportOdrl(m);
+  const [file, setFile] = useState<File>();
+  const [confirmed, setConfirmed] = useState(false);
+  const [into, setInto] = useState("");
+  return (
+    <div style={{ marginTop: 10 }} aria-label="Import ODRL policy" role="group">
+      <div className="row">
+        <label className="small muted" htmlFor="odrl-file">Import ODRL policy</label>
+        <input id="odrl-file" type="file" className="grow" accept=".jsonld,.json,.ttl,.nt" onChange={(e) => setFile(e.target.files?.[0])} />
+      </div>
+      <div className="row" style={{ marginTop: 6 }}>
+        <label className="small">
+          <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} /> This file is an ODRL 2.2 policy
+        </label>
+      </div>
+      <div className="row" style={{ marginTop: 6 }}>
+        <label className="small muted" htmlFor="odrl-into">Clause</label>
+        <select id="odrl-into" className="select grow" value={into} onChange={(e) => setInto(e.target.value)}>
+          <option value="">Generate a form</option>
+          {m.clauses.map(({ node }) => (
+            <option key={node.iri} value={node.iri}>{clauseName(node)}</option>
+          ))}
+        </select>
+        <button className="btn sm primary" disabled={!file || !confirmed || run?.state === "running"} onClick={() => void start(file!, confirmed, into || undefined)}>
+          {run?.state === "running" ? <Spinner /> : <Sparkles size={13} />} Import
+        </button>
+      </div>
+      {run?.state === "failed" && (
+        <p className="small" style={{ color: "var(--bad)", margin: "8px 0 0" }} role="alert">The ODRL import could not run: {run.message}</p>
+      )}
+      {run?.state === "done" && (
+        <div role="status" aria-label="Import outcome" style={{ marginTop: 8 }}>
+          <div className="small">
+            {run.added} {run.added === 1 ? "proposal" : "proposals"} added from the policy. Save each changed part to keep them.
+          </div>
+          {run.unapplied!.length > 0 && (
+            <div className="small" style={{ marginTop: 4 }}>
+              {run.unapplied!.join(", ")} was not added, since the baseline saves at once. Its roles must be added in the Baseline view.
+            </div>
+          )}
+          {run.issues!.map((i, n) => (
+            <div key={n} className="row small" style={{ alignItems: "flex-start", marginTop: 4 }}>
+              <SeverityIcon severity={i.severity} />
+              <span className="grow">
+                {i.message}{" "}
+                {i.focus && <button className="link" onClick={() => studio.open("meaning", i.focus!)}>{compact(i.focus)}</button>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProposeBar({ m }: { m: M }) {
+  const [features, setFeatures] = useState<string[]>([]);
+  useEffect(() => {
+    void api.features().then(setFeatures);
+  }, []);
   const { studio } = m;
   const { run, start } = usePropose(m);
   const [proposer, setProposer] = useState<Proposer>("sentence-forms");
@@ -137,6 +239,7 @@ function ProposeBar({ m }: { m: M }) {
           ))}
         </div>
       )}
+      {features.includes("odrl") && <ImportOdrl m={m} />}
     </div>
   );
 }

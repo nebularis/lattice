@@ -37,6 +37,7 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | Method and path | Request | Response |
 |---|---|---|
 | `GET /api/health` | | `200`, `text/plain`, `ok` |
+| `GET /api/features` | | `200`, `application/json`, `{"features": [...]}`, the optional features the deployment turned on with `LATTICE_STUDIO_FEATURES`, such as `odrl` |
 | `GET /api/vocabulary` | | `200`, the `dal:`, `srf:`, `fnd:` and `voc:` specifications and vocabularies merged, with an `ETag`. `304` for a matching `If-None-Match` |
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |
 | `GET /api/samples/{id}` | | `200`, the sample's files merged into one graph |

@@ -16,9 +16,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -49,7 +51,7 @@ public final class StudioApi {
     private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence");
     /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
     private static final Map<String, Resource> PROPOSERS = Map.of(
-        "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer);
+        "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer, "odrl", Cst.OdrlProposer);
 
     private static final String TRIG = "application/trig";
 
@@ -60,11 +62,19 @@ public final class StudioApi {
     private final Clock clock;
     private final Supplier<UUID> ids;
     private final Path assets;
+    /** The optional features the deployment turned on, from {@code LATTICE_STUDIO_FEATURES}. */
+    private final Set<String> features;
 
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
 
     public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
+        this(store, writes, bus, clock, ids, assets, Set.of());
+    }
+
+    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
+                     Set<String> features) {
+        this.features = Set.copyOf(features);
         this.store = store;
         this.writes = writes;
         this.bus = bus;
@@ -123,6 +133,9 @@ public final class StudioApi {
         String method = req.method();
         if (s.length == 1 && s[0].equals("health")) {
             return method.equals("GET") ? ApiResponse.text(200, "ok") : notAllowed("GET");
+        }
+        if (s.length == 1 && s[0].equals("features")) {
+            return method.equals("GET") ? features() : notAllowed("GET");
         }
         if (s.length == 1 && s[0].equals("vocabulary")) {
             return method.equals("GET") ? vocabulary(req) : notAllowed("GET");
@@ -205,6 +218,12 @@ public final class StudioApi {
     }
 
     // --- static assets ---------------------------------------------------------------------
+
+    private ApiResponse features() {
+        String json = features.stream().sorted().map(f -> "\"" + f + "\"").collect(Collectors.joining(","));
+        return new ApiResponse(200, Map.of("Content-Type", "application/json"),
+            ("{\"features\":[" + json + "]}").getBytes(StandardCharsets.UTF_8));
+    }
 
     private ApiResponse vocabulary(ApiRequest req) {
         byte[] bytes = read("vocabulary.ttl");
@@ -498,6 +517,9 @@ public final class StudioApi {
         if ("analyse".equals(kind)) {
             return submitAnalysis(id, target);
         }
+        if ("propose".equals(kind) && "odrl".equals(target) && !features.contains("odrl")) {
+            return notFound();
+        }
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
             && !("assemble".equals(kind) && "assembly".equals(target))
             && !("propose".equals(kind) && PROPOSERS.containsKey(target))
@@ -517,6 +539,14 @@ public final class StudioApi {
         Model config = parse(req);
         if (config == null) {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
+        }
+        if ("odrl".equals(target)) {
+            // Each component validates what it receives (PRI-75, STD-279).
+            List<Resource> documents = config.listSubjectsWithProperty(RDF.type, Cst.ImportDocument).toList();
+            if (documents.size() != 1 || !documents.get(0).hasProperty(Cst.documentContent)
+                || !documents.get(0).hasProperty(Cst.documentMediaType)) {
+                return ApiResponse.text(422, "an odrl import needs exactly one cst:ImportDocument with a cst:documentContent and a cst:documentMediaType");
+            }
         }
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);

@@ -120,6 +120,16 @@ export const api = {
     await request(`/api/workspaces/${id}`, { method: "DELETE" });
   },
 
+  /** The optional features the deployment turned on. An old service without the endpoint has none. */
+  async features(): Promise<string[]> {
+    try {
+      const response = await fetch("/api/features");
+      return response.ok ? ((await response.json()) as { features?: string[] }).features ?? [] : [];
+    } catch {
+      return [];
+    }
+  },
+
   async graph(id: string, name: GraphName): Promise<{ graph: Graph; revision: string }> {
     const { graph, etag } = await turtle(`/api/workspaces/${id}/graphs/${name}`);
     return { graph, revision: etag ?? '"0"' };
@@ -135,7 +145,7 @@ export const api = {
     return response.headers.get("ETag") ?? revision;
   },
 
-  async submit(id: string, kind: "validate" | "compile" | "assemble" | "propose" | "dry-run", target: Target | "sentence-forms" | "language-model", config: Graph): Promise<string> {
+  async submit(id: string, kind: "validate" | "compile" | "assemble" | "propose" | "dry-run", target: Target | "sentence-forms" | "language-model" | "odrl", config: Graph): Promise<string> {
     const response = await request(`/api/workspaces/${id}/jobs?kind=${kind}&target=${target}`, {
       method: "POST",
       headers: { "Content-Type": TURTLE },

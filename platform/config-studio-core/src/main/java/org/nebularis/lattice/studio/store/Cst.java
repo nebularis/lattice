@@ -51,6 +51,10 @@ public final class Cst {
     public static final Resource DryRunJob = r("DryRunJob");
     public static final Resource SentenceFormProposer = r("SentenceFormProposer");
     public static final Resource LanguageModelProposer = r("LanguageModelProposer");
+    public static final Resource OdrlProposer = r("OdrlProposer");
+    public static final Resource ImportDocument = r("ImportDocument");
+    public static final Property documentContent = p("documentContent");
+    public static final Property documentMediaType = p("documentMediaType");
     public static final Resource Document = r("Document");
     public static final Property document = p("document");
     public static final Property template = p("template");
