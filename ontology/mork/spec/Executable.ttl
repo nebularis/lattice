@@ -1,235 +1,225 @@
-@prefix : <https://www.nebularis.org/neuro-semantic/lattice/executable#> .
-@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
 @prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix exe: <https://www.nebularis.org/neuro-semantic/lattice/executable#> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@base <https://www.nebularis.org/neuro-semantic/lattice/executable#> .
 
-# SPDX-License-Identifier: MPL-2.0
-#
-# Executable semantics IR for MORK's SPARQL/SHACL/SWRL backend compilers
-# (ADR-A23, ADR-A24; a scoped subset of the design they record — see ontology/mork/docs/eligibility-executable-
-# compiler.md for exactly what was carried over and what was deliberately
-# left out). Sits alongside ontology/mork/spec/Mork.ttl rather than inside it, for
-# the same reason Surface sits outside the substrate dependency order
-# (ADR-A01): it names elg: and qnt: terms by punning, not by import, so
-# that adding this compiler layer never requires Eligibility or
-# Quantification to import anything from MORK or vice versa.
-#
-# Not implemented here, and deliberately absent from this vocabulary rather
-# than declared and unused: a "native" backend (no definition of one exists
-# anywhere in this repository), and runtime result tracking
-# (exe:EvaluationRun, exe:ConditionResult in the design note's own terms) —
-# this vocabulary describes compiled artefacts, not what running them
-# produced. The diagnostic codes below name the reasons a compiled artefact
-# can return for Undetermined (ADR-A89 item 6), so they describe the
-# artefact's outputs, not a record of a run. The one exception is
-# exe:DesignTimeCheck, a reasoner's answer about generated OWL classes
-# (ADR-A90 item 6), which concerns declarations, not data.
+<https://www.nebularis.org/neuro-semantic/lattice/executable> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.19.0> ;
+    owl:imports <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
+    dct:description """MORK states a mapping between a source and a target ontology as data. A mapping is a node in a graph that says which source element corresponds to which target element, in which stratum of the target (its classes, its properties or its individuals), how closely, how confidently and under what governance. Mappings compose into a directed acyclic graph, so that the order in which they must run is derived and never written down.
 
-<https://www.nebularis.org/neuro-semantic/lattice/executable>
-	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.19.0> ;
-	owl:imports <http://www.nebularis.org/ontologies/Mork> ,
-		<http://www.w3.org/ns/prov-o-20130430> ,
-		<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+A compiler reads the mapping graph and writes executable artefacts, such as RML mappings, SPARQL queries, SHACL shapes and SWRL rules. A language model may propose the graph, and a validator and a person then check it before anything compiles. The module also holds Executable, the vocabulary for the plans, artefacts and diagnostics that MORK's Eligibility backends produce.""" ;
+    dct:creator <https://github.com/nebularis> .
 
-#################################################################
-#    Classes
-#################################################################
+dct:creator a owl:AnnotationProperty .
 
-:ExecutablePlan a owl:Class ;
-	rdfs:comment "A deterministic, implementation-neutral executable representation compiled from an Eligibility declaration." ;
-	skos:definition "The common superclass of every compiled plan this vocabulary describes. Never asserted directly; every plan is one of its subclasses." .
+dct:description a owl:AnnotationProperty .
 
-:ConditionPlan a owl:Class ;
-	rdfs:subClassOf :ExecutablePlan ;
-	rdfs:comment "An executable plan for one elg:Condition." .
+exe:AboveExclusion a exe:Diagnostic ;
+    rdfs:comment "Under hierarchical match, the candidate stands strictly above an excluded concept (elg:L11)." .
 
-:ProfilePlan a owl:Class ;
-	rdfs:subClassOf :ExecutablePlan ;
-	rdfs:comment "An executable plan for one elg:AdmissionProfile, aggregating its condition plans by strong Kleene logic (ADR-A89 item 5)." .
+exe:ConceptMatchPlan a owl:Class ;
+    rdfs:comment "A condition plan that matches a candidate concept against required and excluded concepts (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch), per ADR-A87." ;
+    rdfs:subClassOf exe:ConditionPlan .
 
-:IntervalContainmentPlan a owl:Class ;
-	rdfs:subClassOf :ConditionPlan ;
-	rdfs:comment "A condition plan that evaluates whether a candidate range is contained by some member of a required range set (elg:IntervalContainment)." .
+exe:ConditionPlan a owl:Class ;
+    rdfs:comment "An executable plan for one elg:Condition." ;
+    rdfs:subClassOf exe:ExecutablePlan ;
+    owl:disjointWith exe:ProfilePlan .
 
-:ConceptMatchPlan a owl:Class ;
-	rdfs:subClassOf :ConditionPlan ;
-	rdfs:comment "A condition plan that matches a candidate concept against required and excluded concepts (elg:ExactMatch, elg:SetMembership, elg:HierarchicalMatch), per ADR-A87 and ADR-A89." .
+exe:DesignTimeCheck a owl:Class ;
+    rdfs:comment "A reasoner's answer to one question about the classes of an exe:OwlArtefact, run through the test-only reasoning harness (ADR-A90 item 6)." ;
+    rdfs:subClassOf prov:Entity .
 
-:GeneratedArtefact a owl:Class ;
-	rdfs:comment "A compiler output: a SPARQL query template, a SHACL shape, a SWRL rule, or an OWL module." .
+exe:Diagnostic a owl:Class ;
+    rdfs:comment "The reason a compiled artefact gives for an Undetermined outcome. A closed set of named individuals." .
 
-:SparqlArtefact a owl:Class ; rdfs:subClassOf :GeneratedArtefact ;
-	rdfs:comment "A mork:QueryTemplate generated by the SPARQL backend." .
+exe:ExecutablePlan a owl:Class ;
+    rdfs:comment "A deterministic, implementation-neutral executable representation compiled from an Eligibility declaration." ;
+    rdfs:subClassOf prov:Entity .
 
-:ShaclArtefact a owl:Class ; rdfs:subClassOf :GeneratedArtefact ;
-	rdfs:comment "A sh:NodeShape generated by the SHACL backend." .
+exe:GeneratedArtefact a owl:Class ;
+    rdfs:comment "A compiler output: a SPARQL query template, a SHACL shape, a SWRL rule, or an OWL module." ;
+    rdfs:subClassOf prov:Entity .
 
-:SwrlArtefact a owl:Class ; rdfs:subClassOf :GeneratedArtefact ;
-	rdfs:comment "A swrl:Imp generated by the SWRL backend." .
+exe:IntervalContainmentPlan a owl:Class ;
+    rdfs:comment "A condition plan that evaluates whether a candidate range is contained by some member of a required range set (elg:IntervalContainment)." ;
+    rdfs:subClassOf exe:ConditionPlan ;
+    owl:disjointWith exe:ConceptMatchPlan .
 
-:OwlArtefact a owl:Class ; rdfs:subClassOf :GeneratedArtefact ;
-	rdfs:comment "A module of design-time OWL classes generated by the OWL backend: one class per condition and profile, and the hierarchy classes they use (ADR-A90)." .
+exe:MissingCandidate a exe:Diagnostic ;
+    rdfs:comment "The question offers no candidate." .
 
-:DesignTimeCheck a owl:Class ;
-	rdfs:comment "A reasoner's answer to one question about the classes of an exe:OwlArtefact, run through the test-only reasoning harness (ADR-A83, ADR-A90 item 6)." .
+exe:NoBoundInUnit a exe:Diagnostic ;
+    rdfs:comment "No required interval is stated in the candidate's unit, and no conversion is attempted (qnt:NoBoundInUnit)." .
 
-:SubsumptionCheck a owl:Class ; rdfs:subClassOf :DesignTimeCheck ;
-	rdfs:comment "Whether the checked class is subsumed by the class it is checked against: a revised profile admits no one the earlier one did not." .
+exe:NoClosureLicence a exe:Diagnostic ;
+    rdfs:comment "The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source." .
 
-:SatisfiabilityCheck a owl:Class ; rdfs:subClassOf :DesignTimeCheck ;
-	rdfs:comment "Whether the checked class can have any instance." .
+exe:NoHierarchy a exe:Diagnostic ;
+    rdfs:comment "Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
 
-:OverlapCheck a owl:Class ; rdfs:subClassOf :DesignTimeCheck ;
-	rdfs:comment "Whether the intersection of the checked class and the class it is checked against can have any instance." .
+exe:OutsideScheme a exe:Diagnostic ;
+    rdfs:comment "The candidate concept is not a member of the scheme the condition's contract resolved to." .
 
-:Diagnostic a owl:Class ;
-	rdfs:comment "The reason a compiled artefact gives for an Undetermined outcome (ADR-A24, ADR-A89 item 6). A closed set of named individuals." .
+exe:OverlapCheck a owl:Class ;
+    rdfs:comment "Whether the intersection of the checked class and the class it is checked against can have any instance." ;
+    rdfs:subClassOf exe:DesignTimeCheck .
 
-:MissingCandidate a :Diagnostic ;
-	rdfs:comment "The question offers no candidate." .
+exe:OwlArtefact a owl:Class ;
+    rdfs:comment "A module of design-time OWL classes generated by the OWL backend: one class per condition and profile, and the hierarchy classes they use (ADR-A90)." ;
+    rdfs:subClassOf exe:GeneratedArtefact ;
+    owl:disjointWith exe:ShaclArtefact, exe:SparqlArtefact, exe:SwrlArtefact .
 
-:SeveralCandidates a :Diagnostic ;
-	rdfs:comment "The question offers more than one candidate concept, and no reading of several is defined." .
+exe:ProfilePlan a owl:Class ;
+    rdfs:comment "An executable plan for one elg:AdmissionProfile, aggregating its condition plans by strong Kleene logic." ;
+    rdfs:subClassOf exe:ExecutablePlan .
 
-:OutsideScheme a :Diagnostic ;
-	rdfs:comment "The candidate concept is not a member of the scheme the condition's contract resolved to." .
+exe:RefusedOperation a exe:Diagnostic ;
+    rdfs:comment "A profile's composition operation has no evaluable definition here, for example one a downstream ontology adds (ADR-A05)." .
 
-:AboveExclusion a :Diagnostic ;
-	rdfs:comment "Under hierarchical match, the candidate stands strictly above an excluded concept (elg:L11)." .
+exe:SatisfiabilityCheck a owl:Class ;
+    rdfs:comment "Whether the checked class can have any instance." ;
+    rdfs:subClassOf exe:DesignTimeCheck .
 
-:NoHierarchy a :Diagnostic ;
-	rdfs:comment "Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+exe:SeveralCandidates a exe:Diagnostic ;
+    rdfs:comment "The question offers more than one candidate concept, and no reading of several is defined." .
 
-:ValueSpaceMismatch a :Diagnostic ;
-	rdfs:comment "The value an evidence binding reaches is not read on the condition's value space." .
+exe:ShaclArtefact a owl:Class ;
+    rdfs:comment "A sh:NodeShape generated by the SHACL backend." ;
+    rdfs:subClassOf exe:GeneratedArtefact ;
+    owl:disjointWith exe:SwrlArtefact .
 
-:NoBoundInUnit a :Diagnostic ;
-	rdfs:comment "No required interval is stated in the candidate's unit, and no conversion is attempted (qnt:NoBoundInUnit, ADR-A95)." .
+exe:SparqlArtefact a owl:Class ;
+    rdfs:comment "A mork:QueryTemplate generated by the SPARQL backend." ;
+    rdfs:subClassOf exe:GeneratedArtefact ;
+    owl:disjointWith exe:ShaclArtefact, exe:SwrlArtefact .
 
-:RefusedOperation a :Diagnostic ;
-	rdfs:comment "A profile's composition operation has no evaluable definition here, for example one a downstream ontology adds (ADR-A05)." .
+exe:SubsumptionCheck a owl:Class ;
+    rdfs:comment "Whether the checked class is subsumed by the class it is checked against: a revised profile admits no one the earlier one did not." ;
+    rdfs:subClassOf exe:DesignTimeCheck .
 
-:NoClosureLicence a :Diagnostic ;
-	rdfs:comment "The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source." .
+exe:SwrlArtefact a owl:Class ;
+    rdfs:comment "A swrl:Imp generated by the SWRL backend." ;
+    rdfs:subClassOf exe:GeneratedArtefact .
 
-#################################################################
-#    Object properties
-#################################################################
+exe:ValueSpaceMismatch a exe:Diagnostic ;
+    rdfs:comment "The value an evidence binding reaches is not read on the condition's value space." .
 
-:admittedBy a owl:ObjectProperty ;
-	rdfs:range elg:Condition ;
-	rdfs:comment "A concept the condition permits, enumerated at compile time from its expansion so that a SWRL rule derives Permitted from a positive fact (ADR-A89 item 4)." .
+exe:admittedBy a owl:ObjectProperty ;
+    rdfs:comment "A concept the condition permits, enumerated at compile time from its expansion so that a SWRL rule derives Permitted from a positive fact." ;
+    rdfs:range elg:Condition .
 
-:deniedBy a owl:ObjectProperty ;
-	rdfs:range elg:Condition ;
-	rdfs:comment "A concept the condition denies, enumerated at compile time so that a SWRL rule derives Denied from a positive fact, never from absence (ADR-A89 item 4)." .
+exe:againstClass a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The subsuming class of a subsumption check, or the other class of an overlap check." ;
+    rdfs:domain exe:DesignTimeCheck .
 
-:implementsCondition a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :ConditionPlan ; rdfs:range elg:Condition ;
-	rdfs:comment "The Eligibility condition a condition plan compiles." .
+exe:checkHolds a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether the question a design-time check asks was answered yes." ;
+    rdfs:domain exe:DesignTimeCheck ;
+    rdfs:range xsd:boolean .
 
-:implementsProfile a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :ProfilePlan ; rdfs:range elg:AdmissionProfile ;
-	rdfs:comment "The Eligibility profile a profile plan compiles." .
+exe:checkedClass a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The class a design-time check asks about." ;
+    rdfs:domain exe:DesignTimeCheck .
 
-:hasConditionPlan a owl:ObjectProperty ;
-	rdfs:domain :ProfilePlan ; rdfs:range :ConditionPlan ;
-	rdfs:comment "One of a profile plan's constituent condition plans." .
+exe:checkedModule a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The OWL artefact whose classes a design-time check was run on." ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain exe:DesignTimeCheck ;
+    rdfs:range exe:OwlArtefact .
 
-:usesCompositionOperation a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :ProfilePlan ; rdfs:range elg:CompositionOperation ;
-	rdfs:comment "How a profile plan aggregates its condition plans' outcomes (elg:AllRequired or elg:AnySufficient)." .
+exe:compiledFromMapping a owl:ObjectProperty ;
+    rdfs:comment "The MORK mapping an executable plan was compiled alongside, where one was minted (the SHACL and SWRL backends mint one, and the SPARQL backend does not, since mork:QueryTemplate has no mapping-linking property in ontology/mork/spec/Mork.ttl today)." ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain exe:ExecutablePlan ;
+    rdfs:range mork:DataMapping .
 
-:compiledFromMapping a owl:ObjectProperty ;
-	rdfs:domain :ExecutablePlan ; rdfs:range mork:DataMapping ;
-	rdfs:comment "The MORK mapping an executable plan was compiled alongside, where one was minted (the SHACL and SWRL backends mint one; the SPARQL backend does not, since mork:QueryTemplate has no mapping-linking property in ontology/mork/spec/Mork.ttl today)." .
+exe:deniedBy a owl:ObjectProperty ;
+    rdfs:comment "A concept the condition denies, enumerated at compile time so that a SWRL rule derives Denied from a positive fact, never from absence." ;
+    rdfs:range elg:Condition .
 
-:producesArtefact a owl:ObjectProperty ;
-	rdfs:domain :ExecutablePlan ; rdfs:range :GeneratedArtefact ;
-	rdfs:comment "An artefact an executable plan's compilation produced." .
+exe:deniedUnder a owl:ObjectProperty ;
+    rdfs:comment "A subject reached through an elg:EvidenceBinding that a SWRL rule derived the condition denies, from a positive fact (ADR-A91)." ;
+    rdfs:range elg:Condition .
 
-:derivedFromEligibilityNode a owl:ObjectProperty ;
-	rdfs:domain :ExecutablePlan ;
-	rdfs:comment "Direct provenance link from an executable plan to an Eligibility declaration node it was compiled from." .
+exe:derivedFromEligibilityNode a owl:ObjectProperty ;
+    rdfs:comment "Direct provenance link from an executable plan to an Eligibility declaration node it was compiled from." ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain exe:ExecutablePlan .
 
-:derivedFromQuantificationNode a owl:ObjectProperty ;
-	rdfs:domain :ExecutablePlan ;
-	rdfs:comment "Direct provenance link from an executable plan to a Quantification node (qnt:RangeSet, qnt:Range, qnt:Bound, qnt:Value, qnt:ValueSpace) it was compiled from." .
+exe:derivedFromQuantificationNode a owl:ObjectProperty ;
+    rdfs:comment "Direct provenance link from an executable plan to a Quantification node (qnt:RangeSet, qnt:Range, qnt:Bound, qnt:Value, qnt:ValueSpace) it was compiled from." ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain exe:ExecutablePlan .
 
-:derivedFromVocabularyNode a owl:ObjectProperty ;
-	rdfs:domain :ExecutablePlan ;
-	rdfs:comment "Direct provenance link from an executable plan to a concept, concept scheme or scheme contract it was compiled from." .
+exe:derivedFromVocabularyNode a owl:ObjectProperty ;
+    rdfs:comment "Direct provenance link from an executable plan to a concept, concept scheme or scheme contract it was compiled from." ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:domain exe:ExecutablePlan .
 
-:impliesDecision a owl:ObjectProperty ;
-	rdfs:domain elg:Question ; rdfs:range elg:Decision ;
-	rdfs:comment "A positive, monotonic classification a SWRL rule derived for a Question." ;
-	skos:scopeNote "Introduced because elg:decisionValue's domain is elg:EligibilityDecision, not elg:Question — a SWRL rule derives a fact about the Question already in scope, not a newly minted EligibilityDecision individual (open-world reasoning gives SWRL no way to mint one safely). tools/mork_compilers/swrl_backend.py derives elg:Permitted, and elg:Denied only from an exe:deniedBy fact enumerated at compile time (ADR-A89 item 4). Deriving either from the absence of a fact, or deriving elg:Undetermined, would violate ADR-A24's positive-only restriction." .
+exe:hasConditionPlan a owl:ObjectProperty ;
+    rdfs:comment "One of a profile plan's constituent condition plans." ;
+    rdfs:domain exe:ProfilePlan ;
+    rdfs:range exe:ConditionPlan .
 
-:permittedUnder a owl:ObjectProperty ;
-	rdfs:range elg:Condition ;
-	rdfs:comment "A subject reached through an elg:EvidenceBinding that a SWRL rule derived the condition permits (ADR-A91). Names the condition, since one subject is evaluated by several." .
+exe:implementsCondition a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The Eligibility condition a condition plan compiles." ;
+    rdfs:domain exe:ConditionPlan ;
+    rdfs:range elg:Condition .
 
-:deniedUnder a owl:ObjectProperty ;
-	rdfs:range elg:Condition ;
-	rdfs:comment "A subject reached through an elg:EvidenceBinding that a SWRL rule derived the condition denies, from a positive fact (ADR-A91)." .
+exe:implementsProfile a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The Eligibility profile a profile plan compiles." ;
+    rdfs:domain exe:ProfilePlan ;
+    rdfs:range elg:AdmissionProfile .
 
-:owlProfile a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :OwlArtefact ;
-	rdfs:comment "The OWL 2 profile the module's axioms fall within, named by its W3C profile IRI (http://www.w3.org/ns/owl-profile/EL or .../DL), per ADR-A90 item 7." .
+exe:impliesDecision a owl:ObjectProperty ;
+    rdfs:comment "A positive, monotonic classification a SWRL rule derived for a Question." ;
+    skos:scopeNote "Introduced because elg:decisionValue's domain is elg:EligibilityDecision, not elg:Question — a SWRL rule derives a fact about the Question already in scope, not a newly minted EligibilityDecision individual (open-world reasoning gives SWRL no way to mint one safely). tools/mork_compilers/swrl_backend.py derives elg:Permitted, and elg:Denied only from an exe:deniedBy fact enumerated at compile time. Deriving either from the absence of a fact, or deriving elg:Undetermined, would violate the positive-only restriction of the SWRL backend." ;
+    rdfs:domain elg:Question ;
+    rdfs:range elg:Decision .
 
-:siblingsDisjoint a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain :OwlArtefact ; rdfs:range xsd:boolean ;
-	rdfs:comment "Whether the module declares the hierarchy classes of sibling concepts disjoint, a caller option (ADR-A90 item 3)." .
+exe:impliesProfileDecision a owl:ObjectProperty ;
+    rdfs:comment "A positive, monotonic profile outcome a SWRL rule derived for an elg:EligibilityDecision record from its questions' exe:impliesDecision facts, or for a bound subject from its exe:permittedUnder and exe:deniedUnder facts (ADR-A91)." ;
+    skos:scopeNote "Separate from elg:decisionValue, which is functional: a record that already asserts a value would otherwise be forced to equate two decision individuals." ;
+    rdfs:range elg:Decision .
 
-:checkedModule a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :DesignTimeCheck ; rdfs:range :OwlArtefact .
+exe:owlProfile a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The OWL 2 profile the module's axioms fall within, named by its W3C profile IRI (http://www.w3.org/ns/owl-profile/EL or .../DL), per ADR-A90 item 7." ;
+    rdfs:domain exe:OwlArtefact .
 
-:checkedClass a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :DesignTimeCheck .
+exe:permittedUnder a owl:ObjectProperty ;
+    rdfs:comment "A subject reached through an elg:EvidenceBinding that a SWRL rule derived the condition permits (ADR-A91). Names the condition, since one subject is evaluated by several." ;
+    rdfs:range elg:Condition .
 
-:againstClass a owl:ObjectProperty, owl:FunctionalProperty ;
-	rdfs:domain :DesignTimeCheck ;
-	rdfs:comment "The subsuming class of a subsumption check, or the other class of an overlap check." .
+exe:producesArtefact a owl:ObjectProperty ;
+    rdfs:comment "An artefact an executable plan's compilation produced." ;
+    rdfs:domain exe:ExecutablePlan ;
+    rdfs:range exe:GeneratedArtefact .
 
-:checkHolds a owl:DatatypeProperty, owl:FunctionalProperty ;
-	rdfs:domain :DesignTimeCheck ; rdfs:range xsd:boolean .
+exe:siblingsDisjoint a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether the module declares the hierarchy classes of sibling concepts disjoint, a caller option (ADR-A90 item 3)." ;
+    rdfs:domain exe:OwlArtefact ;
+    rdfs:range xsd:boolean .
 
-:impliesProfileDecision a owl:ObjectProperty ;
-	rdfs:range elg:Decision ;
-	rdfs:comment "A positive, monotonic profile outcome a SWRL rule derived for an elg:EligibilityDecision record from its questions' exe:impliesDecision facts, or for a bound subject from its exe:permittedUnder and exe:deniedUnder facts (ADR-A89 item 5, ADR-A91)." ;
-	skos:scopeNote "Separate from elg:decisionValue, which is functional: a record that already asserts a value would otherwise be forced to equate two decision individuals." .
+exe:usesCompositionOperation a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "How a profile plan aggregates its condition plans' outcomes (elg:AllRequired or elg:AnySufficient)." ;
+    rdfs:domain exe:ProfilePlan ;
+    rdfs:range elg:CompositionOperation .
 
-#################################################################
-#    PROV-O alignment (ADR-A92)
-#################################################################
-# Direct, with no Foundation import. PROV-O declares no functional or
-# inverse-functional property, so this adds none. It does make every node a
-# plan derives from a prov:Entity, and PROV-O declares prov:Entity disjoint
-# with prov:Activity.
+[ a owl:AllDisjointClasses ; owl:members ( exe:SubsumptionCheck exe:SatisfiabilityCheck exe:OverlapCheck ) ] .
 
-:ExecutablePlan rdfs:subClassOf prov:Entity .
-:GeneratedArtefact rdfs:subClassOf prov:Entity .
-:DesignTimeCheck rdfs:subClassOf prov:Entity .
-:checkedModule rdfs:subPropertyOf prov:wasDerivedFrom .
-:derivedFromEligibilityNode rdfs:subPropertyOf prov:wasDerivedFrom .
-:derivedFromQuantificationNode rdfs:subPropertyOf prov:wasDerivedFrom .
-:derivedFromVocabularyNode rdfs:subPropertyOf prov:wasDerivedFrom .
-:compiledFromMapping rdfs:subPropertyOf prov:wasDerivedFrom .
-
-#################################################################
-#    Disjointness
-#################################################################
-
-:ConditionPlan owl:disjointWith :ProfilePlan .
-:IntervalContainmentPlan owl:disjointWith :ConceptMatchPlan .
-:SparqlArtefact owl:disjointWith :ShaclArtefact, :SwrlArtefact .
-:ShaclArtefact owl:disjointWith :SwrlArtefact .
-:OwlArtefact owl:disjointWith :SparqlArtefact, :ShaclArtefact, :SwrlArtefact .
-[] a owl:AllDisjointClasses ; owl:members ( :SubsumptionCheck :SatisfiabilityCheck :OverlapCheck ) .
+exe:ExecutablePlan skos:definition "The common superclass of every compiled plan this vocabulary describes. Never asserted directly; every plan is one of its subclasses." .
