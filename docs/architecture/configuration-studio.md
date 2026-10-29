@@ -138,6 +138,8 @@ A vocabulary validation also resolves every scheme contract for every time segme
 
 Every body is RDF: Turtle by default, or RDF/XML, which an XSLT can read, when the request's `Accept` ranks it higher or its `Content-Type` names it. RDF/XML is written plain, one description per subject. The routes, graphs, messages and every status code are in the [contract](../../contracts/config-studio/README.md).
 
+A payload says what it is in the protocol, never by its content (STD-292). Its media type is in `Content-Type`, and the profile it conforms to, where one applies, is an IRI in `Content-Profile`, following W3C Content Negotiation by Profile, or in a `Link` with `rel="profile"` (RFC 6906), or in the media type's own `profile` parameter, as JSON-LD's. The receiver records the profile as `dct:conformsTo`, refuses a declaration inside the payload that disagrees with the header, and records the bytes received with `Content-Digest` (RFC 9530). A response follows `Accept` and `Accept-Profile`.
+
 ## Security
 
 Each component validates what it receives, whatever its client has checked, since it cannot know the input was not forged or altered on the way (PRI-75).
