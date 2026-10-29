@@ -94,7 +94,7 @@ def test_a_review_recorded_is_the_mapping_s_latest_decision_and_a_lesson(tmp_pat
     history.save()
     again = History(tmp_path / "history.ttl")
     assert again.decisions()[mappings[0]][0] == URIRef("http://www.nebularis.org/ontologies/Mork#Accepted")
-    assert len(again.lessons(Graph())) == 1
+    assert len(again.lessons()) == 1
 
 
 def test_a_run_s_patterns_do_not_depend_on_minted_names():

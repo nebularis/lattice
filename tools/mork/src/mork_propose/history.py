@@ -126,14 +126,20 @@ class History:
                 latest[mapping] = (decision, when, g.value(review, MORK.correctedBy), str(g.value(review, MORK.reviewNote) or ""))
         return {m: (d, c, n) for m, (d, _, c, n) in latest.items()}
 
-    def lessons(self, sources: Graph) -> list[str]:
-        """What the next proposer is told, one line for each reviewed mapping: the source term, the decision, the target
-        terms accepted or refused, and the reviewer's note. `sources` labels the source terms."""
+    def lessons(self, reference: Optional[Graph] = None) -> list[str]:
+        """What the next proposer is told, one line for each reviewed mapping: the mapping, the decision, the target terms
+        it kept, the terms it proposed where they were corrected, and the reviewer's note. A correction's terms are read
+        from `reference`, the pack that made it, where they are not in the history."""
         out = []
+        world = self.graph + reference if reference is not None else self.graph
+        terms = lambda node: sorted({world.namespace_manager.normalizeUri(o) if isinstance(o, URIRef) else str(o)
+                                     for p in (MORK.exactTBoxMatch, MORK.exactRBoxMatch, MORK.inverseRBoxMatch, MORK.exactABoxMatch)
+                                     for o in world.objects(node, p)})
         for mapping, (decision, corrected, note) in sorted(self.decisions().items(), key=lambda kv: str(kv[0])):
             kept = corrected if decision == MORK.Corrected and corrected is not None else mapping
-            targets = sorted({str(o) for p in (MORK.exactTBoxMatch, MORK.exactRBoxMatch, MORK.inverseRBoxMatch, MORK.exactABoxMatch)
-                              for o in self.graph.objects(kept, p)})
+            targets = terms(kept)
+            if decision == MORK.Corrected:
+                note = f"proposed {', '.join(terms(mapping)) or 'none'}. {note}"
             what = str(decision).rsplit("#", 1)[-1].lower()
             out.append(f"{str(mapping).rsplit('#', 1)[-1]} | {what} | {', '.join(targets) or 'none'} | {note}")
         return out
