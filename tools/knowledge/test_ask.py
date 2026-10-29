@@ -222,6 +222,23 @@ def test_read_refuses_a_pointer_to_a_whole_long_file(tmp_path, monkeypatch, caps
     assert ask.whole_file("short.md:1-10") is None
 
 
+def test_read_prints_an_entry_with_a_register_row_and_a_pointer(tmp_path, monkeypatch, capsys):
+    """An entry with its defining register row and a pointer, as every register entry has, prints
+    both under their labels, rather than reading the label as a path."""
+    monkeypatch.setattr(ask, "ROOT", tmp_path)
+    monkeypatch.setattr(ask, "ASK_LOG", tmp_path / "asks.log")
+    (tmp_path / "register.md").write_text("| MEC-1 | a row |", encoding="utf-8")
+    (tmp_path / "short.md").write_text("\n".join(f"line {n}" for n in range(1, 11)), encoding="utf-8")
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a mechanism")
+    fact(store, "MEC-1", "row", "register.md:1-1")
+    fact(store, "MEC-1", "pointer", "short.md:2-3")
+    ask.read(store, "MEC-1")
+    out = capsys.readouterr().out
+    assert "== row register.md:1-1\n| MEC-1 | a row |" in out
+    assert "== pointed-at short.md:2-3\nline 2\nline 3" in out
+
+
 def test_every_find_and_read_is_logged_with_its_best_score(isolated, capsys):
     store = ox.Store()
     entry(store, "MEC-1", "Mechanism", "a ledger account")

@@ -579,8 +579,10 @@ def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
 
 
 def whole_file(where: str) -> int | None:
-    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None."""
-    path, start, end = anchors.parse_range(where)
+    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None.
+
+    ``where`` is a label from read_ranges, so the row and pointed-at prefixes are dropped first."""
+    path, start, end = anchors.parse_range(where.removeprefix("row ").removeprefix("pointed-at "))
     total = len((ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines())
     return total if start == 1 and end in (None, total) and total > WHOLE_FILE else None
 
