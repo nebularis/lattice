@@ -2,7 +2,7 @@
 
 # LegalRuleML proposal trial
 
-Whether an earlier, reviewed mapping helps a language model propose a new one, as MORK expects (MORK README §5.18). Two Sonnet agents proposed a MORK scheme from the LegalRuleML metamodel to LATTICE with the same proposal tools, goal and rules, on 2026-10-29. Only the warm run was given the ODRL history: the approved ODRL pack and the lessons drawn from the ODRL trial's review ([`odrl-lessons.txt`](odrl-lessons.txt)). LegalRuleML has no reference pack, so each correspondence was reviewed by hand against Instrument's model, pending the maintainer's sign-off, and the reviews are in [`history.ttl`](history.ttl).
+Whether an earlier, reviewed mapping helps a language model propose a new one, as MORK expects (MORK README §5.18). Two Sonnet agents proposed a MORK scheme from the LegalRuleML metamodel to LATTICE with the same proposal tools, goal and rules, on 2026-10-29. Only the warm run was given the ODRL history: the approved ODRL pack and the lessons drawn from the ODRL trial's review ([`odrl-lessons.txt`](odrl-lessons.txt)). LegalRuleML has no reference pack, so each correspondence was reviewed by hand against Instrument's model, and the maintainer signed the reviews off as recorded on 2026-10-29. They are in [`history.ttl`](history.ttl).
 
 | | Cold | Warm |
 |---|---|---|

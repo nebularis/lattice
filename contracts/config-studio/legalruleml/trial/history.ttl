@@ -24,7 +24,7 @@
     mork:reviewNote "Behaviour's occasion states are runtime records, never stated meaning" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Compliance> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/10> a mork:MappingReview,
         prov:Activity ;
@@ -32,7 +32,7 @@
     mork:reviewNote "an ins:Permission must except a prohibition (law I8), which the proposal does not state" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Permission> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/11> a mork:MappingReview,
         prov:Activity ;
@@ -40,14 +40,14 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_ProBearer> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/12> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Prohibition> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/13> a mork:MappingReview,
         prov:Activity ;
@@ -55,7 +55,7 @@
     mork:reviewNote "a reparation's penalty arises on a breach, an ins:OnBreach" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Reparation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/14> a mork:MappingReview,
         prov:Activity ;
@@ -63,7 +63,7 @@
     mork:reviewNote "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Right> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/15> a mork:MappingReview,
         prov:Activity ;
@@ -71,7 +71,7 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Role> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/16> a mork:MappingReview,
         prov:Activity ;
@@ -79,7 +79,7 @@
     mork:reviewNote "a stated term is ins:Term and ins:Template" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Statement> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/17> a mork:MappingReview,
         prov:Activity ;
@@ -87,7 +87,7 @@
     mork:reviewNote "Behaviour's occasion states are runtime records, never stated meaning" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Violation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/2> a mork:MappingReview,
         prov:Activity ;
@@ -95,7 +95,7 @@
     mork:reviewNote "who fills a role is bound meaning, supplied when a contract is bound, not by an import of stated meaning" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Filler> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/3> a mork:MappingReview,
         prov:Activity ;
@@ -103,7 +103,7 @@
     mork:reviewNote "when a provision applies is arising, ending, survival or a regime's state in Instrument. fnd:TemporalScope dates versions. Needs a design" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_InForce> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/4> a mork:MappingReview,
         prov:Activity ;
@@ -111,7 +111,7 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_ObAux> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/5> a mork:MappingReview,
         prov:Activity ;
@@ -119,14 +119,14 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_ObBearer> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/6> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Obligation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/7> a mork:MappingReview,
         prov:Activity ;
@@ -134,7 +134,7 @@
     mork:reviewNote "a penalty is a relation, such as an ins:Obligation, arising on the breach under its own term, as an ODRL remedy is" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_Penalty> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/8> a mork:MappingReview,
         prov:Activity ;
@@ -142,7 +142,7 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_PerAux> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-cold:review/9> a mork:MappingReview,
         prov:Activity ;
@@ -150,7 +150,7 @@
     mork:reviewNote "stated meaning names roles, never occupancies, which binding supplies (Instrument law I13)" ;
     mork:reviewOf <http://example.org/lrml-mapping#Map_PerBearer> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/1> a mork:MappingReview,
         prov:Activity ;
@@ -158,7 +158,7 @@
     mork:reviewNote "who issues a rule is provenance of the wording, not stated meaning. Needs a design" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Authority> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/10> a mork:MappingReview,
         prov:Activity ;
@@ -166,35 +166,35 @@
     mork:reviewNote "an ins:Permission must except a prohibition (law I8), which the proposal does not state" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Permission_Relation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/11> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Prohibition> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/12> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Prohibition_Obligee> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/13> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Prohibition_Obligor> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/14> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Prohibition_Relation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/15> a mork:MappingReview,
         prov:Activity ;
@@ -202,7 +202,7 @@
     mork:reviewNote "a legal reference cites a source. fnd:Key identifies a LATTICE thing" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reference> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/16> a mork:MappingReview,
         prov:Activity ;
@@ -210,14 +210,14 @@
     mork:reviewNote "follows the reference" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reference_Value> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/17> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reparation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/18> a mork:MappingReview,
         prov:Activity ;
@@ -225,7 +225,7 @@
     mork:reviewNote "the breached relation is inside the statement's RuleML content, which the RDFS metamodel does not reach" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reparation_Breach> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/19> a mork:MappingReview,
         prov:Activity ;
@@ -233,7 +233,7 @@
     mork:reviewNote "ins:expressedIn names the clause of the library a term is stated in, never a penalty" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reparation_Penalty> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/2> a mork:MappingReview,
         prov:Activity ;
@@ -241,21 +241,21 @@
     mork:reviewNote "LATTICE has no jurisdiction term. A concept of a jurisdiction scheme bound by vocabulary may be right. Needs a design" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Jurisdiction> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/20> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Reparation_Relation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/21> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/22> a mork:MappingReview,
         prov:Activity ;
@@ -263,7 +263,7 @@
     mork:reviewNote "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Counterparty> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/23> a mork:MappingReview,
         prov:Activity ;
@@ -271,7 +271,7 @@
     mork:reviewNote "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Holder> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/24> a mork:MappingReview,
         prov:Activity ;
@@ -279,14 +279,14 @@
     mork:reviewNote "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/25> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T_Label> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/26> a mork:MappingReview,
         prov:Activity ;
@@ -294,7 +294,7 @@
     mork:reviewNote "as the cold run's InForce" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Temporal> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/27> a mork:MappingReview,
         prov:Activity ;
@@ -302,7 +302,7 @@
     mork:reviewNote "as the cold run's InForce" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Temporal_From> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/28> a mork:MappingReview,
         prov:Activity ;
@@ -310,14 +310,14 @@
     mork:reviewNote "as the cold run's InForce" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Temporal_To> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/3> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Obligation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/4> a mork:MappingReview,
         prov:Activity ;
@@ -325,42 +325,42 @@
     mork:reviewNote "the auxiliary party is not stated to be the one owed, so a reviewer of each import checks it" ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Obligation_Obligee> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/5> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Obligation_Obligor> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/6> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Obligation_Relation> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/7> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Permission> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/8> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Permission_Counterparty> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <urn:mork-propose:run:legalruleml-warm:review/9> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Accepted ;
     mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Permission_Holder> ;
     prov:endedAtTime "2026-10-29T18:00:00+00:00"^^xsd:dateTime ;
-    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer-pending-sign-off> .
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
 <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Authority> a mork:Entity,
         owl:NamedIndividual .
@@ -1107,3 +1107,5 @@
         owl:NamedIndividual ;
     sh:declare <http://example.org/lrml-mapping#MS_sh:declare1> .
 
+
+<urn:lattice:reviewer:agent-for-the-maintainer> <http://www.w3.org/2000/01/rdf-schema#comment> "An agent reviewing for the maintainer, whose reviews of the LegalRuleML trial the maintainer signed off as recorded on 2026-10-29." .
