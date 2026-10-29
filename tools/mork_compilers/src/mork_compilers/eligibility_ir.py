@@ -35,6 +35,15 @@ contract resolved to and the ADR-A87 decision for each of its members, the
   final section. That is a separate, not-yet-decided architectural layer
   and is deliberately not implemented here — see
   ``ontology/mork/docs/eligibility-executable-compiler.md`` for why.
+- A hierarchical condition walks the relation it names with ``elg:hierarchyRelation``,
+  ``skos:broader`` when it names none (L9). A scheme contract whose bindings apply at no
+  instant or in no scope compiles to a plan that answers Undetermined for every candidate
+  (``exe:NoApplicableBinding``). Conflicting bindings are refused (ADR-A85).
+- A set comparison (``elg:SetComparison``, L18) compiles to a ``SetComparisonPlan`` holding its
+  comparison, match strategy, hierarchy relation and scheme, and the two bindings' evidence paths
+  with their closures. The comparison fixes the reading, so each path's closure is resolved as a
+  set reading would be (L17). Whatever ``elg:SetComparisonBindingsShape`` and the structural
+  shapes refuse is refused here with an ``IRCompileError``.
 - Profile aggregation (``elg:AllRequired``, ``elg:AnySufficient``) uses
   strong Kleene logic over the three outcomes (ADR-A89 item 5).
   Any other composition operation, for example one a downstream ontology
@@ -52,7 +61,7 @@ from datetime import datetime
 from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
 
 from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import RDF, SKOS
+from rdflib.namespace import RDF, RDFS, SKOS
 from vocabulary import BindingConflictError, NoApplicableBindingError, resolve
 
 from .namespaces import ELG, FND, QNT, VOC
@@ -142,7 +151,14 @@ class ConceptPlan:
     ``scheme`` and ``expansion`` are set when the decision table needs the
     bound scheme. ``expansion`` pairs every member of the resolved scheme
     with its decision, sorted by concept. ``hierarchy`` pairs every member
-    with its broader members, both sorted.
+    with the members above it by ``relation``, both sorted.
+
+    ``relation`` is the property a hierarchical condition walks, its
+    ``elg:hierarchyRelation`` or ``skos:broader`` when it names none (L9). It is
+    read from the graph exactly, never widened to its sub-properties.
+    ``unresolved`` is set when the condition needs its scheme and the contract's
+    bindings apply at no instant or in no scope: ``scheme`` is then ``None``
+    and every candidate is Undetermined (L9, ``exe:NoApplicableBinding``).
     """
 
     condition: URIRef
@@ -155,6 +171,8 @@ class ConceptPlan:
     evidence: Optional[EvidencePath] = None
     negated: bool = False  # elg:negated (ADR-A103, L16)
     hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
+    relation: URIRef = SKOS.broader
+    unresolved: bool = False
 
     @property
     def hierarchical(self) -> bool:
@@ -163,11 +181,59 @@ class ConceptPlan:
     @property
     def no_hierarchy(self) -> bool:
         """Hierarchical match over a resolved scheme in which no member has a
-        broader member (L14, ADR-A100)."""
+        link of ``relation`` to another member (L14, ADR-A100)."""
         return self.hierarchical and self.scheme is not None and not any(above for _, above in self.hierarchy)
 
 
 CONCEPT_STRATEGIES = (ELG.ExactMatch, ELG.SetMembership, ELG.HierarchicalMatch)
+COMPARISONS = (ELG.Subset, ELG.Intersects, ELG.Disjoint)
+COMPARISON_STRATEGIES = (ELG.ExactMatch, ELG.HierarchicalMatch)
+
+
+@dataclass(frozen=True)
+class SetComparisonPlan:
+    """The executable IR for one ``elg:SetComparison`` (L18).
+
+    ``tested`` and ``reference`` are the two bindings' paths from one subject class. A tested
+    value is Permitted when it matches a reference value, equal under ``elg:ExactMatch`` and, under
+    ``elg:HierarchicalMatch``, a member of ``scheme`` at or below a reference value that is a member,
+    by ``relation``. It is Denied when it matches none and ``reference.closure`` is in force,
+    otherwise Undetermined. A tested value outside ``scheme`` is Undetermined (``exe:OutsideScheme``), and
+    when ``no_hierarchy`` a value that is not equal to a reference value is Undetermined
+    (``exe:NoHierarchy``) whatever the closure (L14). ``tested.closure`` licenses the reading of the outcomes. ``unresolved``
+    is set when the contract's bindings apply at no instant or in no scope, so ``scheme`` is ``None``
+    and every subject is Undetermined (L9, ``exe:NoApplicableBinding``)."""
+
+    condition: URIRef
+    comparison: URIRef
+    strategy: URIRef
+    tested: EvidencePath
+    reference: EvidencePath
+    source_nodes: Sequence[URIRef]
+    scheme: Optional[SchemeResolution] = None
+    relation: URIRef = SKOS.broader
+    unresolved: bool = False
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
+    negated: bool = False  # elg:negated (L16)
+
+    @property
+    def evidence(self) -> EvidencePath:
+        """The tested path, which fixes the plan's subject class as a bound condition's path does."""
+        return self.tested
+
+    @property
+    def hierarchical(self) -> bool:
+        return self.strategy == ELG.HierarchicalMatch
+
+    @property
+    def no_hierarchy(self) -> bool:
+        """Hierarchical match over a resolved scheme in which no member has a link of ``relation`` to
+        another member: L14 applies to the reference values as it does to required concepts (L18)."""
+        return self.hierarchical and self.scheme is not None and not any(above for _, above in self.hierarchy)
+
+    @property
+    def closures(self) -> Tuple[URIRef, ...]:
+        return tuple(c for c in (self.tested.closure, self.reference.closure) if c is not None)
 
 
 @dataclass(frozen=True)
@@ -182,7 +248,7 @@ class ProfilePlan:
 
     profile: URIRef
     aggregation: URIRef  # elg:AllRequired or elg:AnySufficient
-    conditions: Sequence[Union[IntervalPlan, ConceptPlan]]
+    conditions: Sequence[Union[IntervalPlan, ConceptPlan, "SetComparisonPlan"]]
 
     @property
     def subject_class(self) -> Optional[URIRef]:
@@ -230,7 +296,15 @@ def read_evidence(
         return None
     if len(bindings) > 1:
         raise IRCompileError(f"{condition} is bound by several elg:EvidenceBinding individuals: {bindings}")
-    binding = bindings[0]
+    return read_binding(graph, bindings[0], context)
+
+
+def read_binding(
+    graph: Graph, binding: URIRef, context: Optional["ResolutionContext"] = None, reading: Optional[URIRef] = None
+) -> EvidencePath:
+    """One ``elg:EvidenceBinding``'s path. ``reading`` overrides the binding's own, as a set
+    comparison fixes the reading of both its bindings (L18)."""
+    reading = reading if reading is not None else _reading(graph, binding)
     subject_class = graph.value(binding, ELG.subjectClass)
     if subject_class is None:
         raise IRCompileError(f"{binding} declares no elg:subjectClass")
@@ -250,8 +324,8 @@ def read_evidence(
         steps=tuple((prop, inverse) for _, prop, inverse in steps),
         space=graph.value(binding, ELG.readOnSpace),
         single_valued=graph.value(binding, ELG.singleValued) == Literal(True),
-        reading=_reading(graph, binding),
-        closure=_closure(graph, binding, _reading(graph, binding), context),
+        reading=reading,
+        closure=_closure(graph, binding, reading, context),
     )
 
 
@@ -298,11 +372,37 @@ def _negated(graph: Graph, condition: URIRef) -> bool:
     return graph.value(condition, ELG.negated) == Literal(True)
 
 
+def refuse_without_scheme(plan, backend: str) -> None:
+    """Refuse a concept plan that has no scheme to decide against, for a backend that cannot
+    state Undetermined (L9): an unresolved plan, or a hierarchical one with no scheme."""
+    if isinstance(plan, ConceptPlan) and (plan.unresolved or (plan.hierarchical and plan.scheme is None)):
+        raise IRCompileError(
+            f"{plan.condition} has no resolved scheme, so every candidate is Undetermined (L9), "
+            f"which a {backend} cannot express"
+        )
+
+
+def refuse_set_comparison(plan, backend: str, reason: str) -> None:
+    """Refuse a plan, or a profile holding a condition, that is a set comparison (ADR-A90)."""
+    for part in plan.conditions if isinstance(plan, ProfilePlan) else (plan,):
+        if isinstance(part, SetComparisonPlan):
+            raise IRCompileError(f"{part.condition} is a set comparison, which a {backend} cannot compile: {reason} (ADR-A90)")
+
+
+def closures_of(plan) -> Tuple[URIRef, ...]:
+    """The closures a condition plan may rely on: its path's, or both of a set comparison's."""
+    if isinstance(plan, SetComparisonPlan):
+        return plan.closures
+    return (plan.evidence.closure,) if plan.evidence is not None and plan.evidence.closure is not None else ()
+
+
 def has_readings(plan) -> bool:
     """Whether a plan, or any condition of a profile plan, reads several values
     or is negated (ADR-A103). The SWRL and OWL backends refuse such plans."""
     if isinstance(plan, ProfilePlan):
         return any(has_readings(condition) for condition in plan.conditions)
+    if isinstance(plan, SetComparisonPlan):
+        return True
     reading = plan.evidence.reading if plan.evidence is not None else ELG.SingleValue
     return plan.negated or reading != ELG.SingleValue
 
@@ -385,7 +485,11 @@ def _refuse_wildcards(graph: Graph, condition: URIRef) -> None:
 
 def _resolve_scheme(
     graph: Graph, condition: URIRef, context: Optional[ResolutionContext]
-) -> SchemeResolution:
+) -> Optional[SchemeResolution]:
+    """The scheme the condition's contract resolves to, or ``None`` when its
+    bindings apply at no instant or in no scope and no scheme is bound as a
+    fallback. A condition that needs its scheme then answers Undetermined for
+    every candidate (L9). Conflicting bindings are refused (ADR-A85)."""
     contract = graph.value(condition, ELG.constrainedByContract)
     if contract is None:
         raise IRCompileError(
@@ -399,7 +503,9 @@ def _resolve_scheme(
             )
         try:
             resolution = resolve(graph, contract, context.scope, context.at)
-        except (BindingConflictError, NoApplicableBindingError) as error:
+        except NoApplicableBindingError:
+            return None
+        except BindingConflictError as error:
             raise IRCompileError(str(error)) from error
         return SchemeResolution(
             contract=contract,
@@ -414,11 +520,30 @@ def _resolve_scheme(
     return SchemeResolution(contract=contract, scheme=scheme, binding=None, at=None, scope=())
 
 
-def _ordering(graph: Graph, scheme: URIRef) -> Dict[URIRef, Set[URIRef]]:
-    """Each member of ``scheme`` mapped to its broader concepts within the scheme."""
+def hierarchy_relation(graph: Graph, condition: URIRef) -> URIRef:
+    """The relation a hierarchical condition walks (L9): its ``elg:hierarchyRelation``,
+    ``skos:broader`` when it names none. A relation that is neither ``skos:broader`` nor
+    declared a sub-property of it in ``graph`` is refused, as ``elg:HierarchyRelationShape``
+    reports it."""
+    named = sorted(graph.objects(condition, ELG.hierarchyRelation), key=str)
+    if not named:
+        return SKOS.broader
+    if len(named) > 1:
+        raise IRCompileError(f"{condition} names several hierarchy relations: {named}")
+    relation = named[0]
+    if relation != SKOS.broader and SKOS.broader not in set(graph.transitive_objects(relation, RDFS.subPropertyOf)):
+        raise IRCompileError(
+            f"{condition} names hierarchy relation {relation}, which is neither skos:broader nor "
+            f"declared a sub-property of it (L9)"
+        )
+    return relation
+
+
+def _ordering(graph: Graph, scheme: URIRef, relation: URIRef = SKOS.broader) -> Dict[URIRef, Set[URIRef]]:
+    """Each member of ``scheme`` mapped to the members above it by ``relation``."""
     members = set(graph.subjects(SKOS.inScheme, scheme))
     return {
-        member: {broader for broader in graph.objects(member, SKOS.broader) if broader in members}
+        member: {broader for broader in graph.objects(member, relation) if broader in members}
         for member in members
     }
 
@@ -435,12 +560,12 @@ def _ancestors(ordering: Dict[URIRef, Set[URIRef]], concept: URIRef) -> Set[URIR
     return found
 
 
-def _refuse_cycles(ordering: Dict[URIRef, Set[URIRef]], scheme: URIRef) -> None:
+def _refuse_cycles(ordering: Dict[URIRef, Set[URIRef]], scheme: URIRef, relation: URIRef) -> None:
     for member in ordering:
         if any(member in _ancestors(ordering, broader) for broader in ordering[member]):
             raise IRCompileError(
-                f"{scheme} has a cycle through {member}; hierarchical match has no truth "
-                f"condition under it (L9)"
+                f"{scheme} has a cycle of {relation} through {member}; hierarchical match has no "
+                f"truth condition under it (L9)"
             )
 
 
@@ -495,19 +620,25 @@ def compile_concept_condition(
         raise IRCompileError(f"{condition} declares neither elg:requiredConcept nor elg:excludedConcept")
 
     hierarchical = strategy == ELG.HierarchicalMatch
+    relation = hierarchy_relation(graph, condition) if hierarchical else SKOS.broader
     scheme: Optional[SchemeResolution] = None
+    unresolved = False
     expansion: Tuple[Tuple[URIRef, str], ...] = ()
     hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
     if hierarchical or not required:
         scheme = _resolve_scheme(graph, condition, context)
-        ordering = _ordering(graph, scheme.scheme)
-        _refuse_cycles(ordering, scheme.scheme)
-        expansion = _expand(ordering, hierarchical, required, excluded)
-        hierarchy = tuple((m, tuple(sorted(ordering[m], key=str))) for m in sorted(ordering, key=str))
+        unresolved = scheme is None
+        if scheme is not None:
+            ordering = _ordering(graph, scheme.scheme, relation)
+            _refuse_cycles(ordering, scheme.scheme, relation)
+            expansion = _expand(ordering, hierarchical, required, excluded)
+            hierarchy = tuple((m, tuple(sorted(ordering[m], key=str))) for m in sorted(ordering, key=str))
 
     resolution_nodes: Tuple[URIRef, ...] = ()
     if scheme is not None:
         resolution_nodes = (scheme.contract, scheme.scheme) + ((scheme.binding,) if scheme.binding else ())
+    elif unresolved:
+        resolution_nodes = (graph.value(condition, ELG.constrainedByContract),)
     return ConceptPlan(
         condition=condition,
         strategy=strategy,
@@ -519,13 +650,99 @@ def compile_concept_condition(
         evidence=read_evidence(graph, condition, context),
         hierarchy=hierarchy,
         negated=_negated(graph, condition),
+        relation=relation,
+        unresolved=unresolved,
+    )
+
+
+def _single(graph: Graph, subject: URIRef, predicate: URIRef, what: str) -> URIRef:
+    found = sorted(graph.objects(subject, predicate), key=str)
+    if len(found) != 1:
+        raise IRCompileError(f"{subject} names {len(found)} {what}, and a set comparison names exactly one (L18)")
+    return found[0]
+
+
+def compile_set_comparison(
+    graph: Graph, condition: URIRef, context: Optional[ResolutionContext] = None
+) -> SetComparisonPlan:
+    """Compile one ``elg:SetComparison`` (L18). Refuses what its shapes refuse: not exactly one
+    comparison, tested binding or reference binding, the two bindings being one, a binding that
+    does not name the comparison or names another subject class, a binding that declares a value
+    reading or a value space, a binding of the comparison that is neither of its two, a match
+    strategy other than exact or hierarchical, and a required or excluded concept."""
+    if (condition, RDF.type, ELG.SetComparison) not in graph:
+        raise IRCompileError(f"{condition} is not an elg:SetComparison")
+    comparison = _single(graph, condition, ELG.comparison, "comparisons")
+    if comparison not in COMPARISONS:
+        raise IRCompileError(f"{condition} declares comparison {comparison}, which is none of {COMPARISONS}")
+    strategy = graph.value(condition, ELG.matchStrategy)
+    if strategy not in COMPARISON_STRATEGIES:
+        raise IRCompileError(
+            f"{condition} declares match strategy {strategy}; a set comparison matches by elg:ExactMatch "
+            f"or elg:HierarchicalMatch"
+        )
+    _refuse_wildcards(graph, condition)
+    if any(graph.objects(condition, ELG.requiredConcept)) or any(graph.objects(condition, ELG.excludedConcept)):
+        raise IRCompileError(f"{condition} names a required or excluded concept, and a set comparison's reference binding takes their place")
+    tested = _single(graph, condition, ELG.testedBinding, "tested bindings")
+    reference = _single(graph, condition, ELG.referenceBinding, "reference bindings")
+    if tested == reference:
+        raise IRCompileError(f"{condition}'s tested and reference bindings are one binding, {tested}")
+    bound = set(graph.subjects(ELG.bindsCondition, condition))
+    if bound != {tested, reference}:
+        raise IRCompileError(
+            f"{condition} is bound by {sorted(map(str, bound))}, and must be bound by exactly its tested and "
+            f"reference bindings (L18)"
+        )
+    for binding in (tested, reference):
+        if graph.value(binding, ELG.valueReading) is not None or graph.value(binding, ELG.readOnSpace) is not None:
+            raise IRCompileError(
+                f"{binding} declares a value reading or a value space, and a set comparison fixes the reading "
+                f"and compares IRIs only (L18)"
+            )
+    tested_path = read_binding(graph, tested, context, ELG.SomeValue)
+    reference_path = read_binding(graph, reference, context, ELG.SomeValue)
+    if tested_path.subject_class != reference_path.subject_class:
+        raise IRCompileError(f"{condition}'s two bindings name different subject classes, which must be one (L18)")
+
+    hierarchical = strategy == ELG.HierarchicalMatch
+    relation = hierarchy_relation(graph, condition) if hierarchical else SKOS.broader
+    scheme: Optional[SchemeResolution] = None
+    hierarchy: Tuple[Tuple[URIRef, Tuple[URIRef, ...]], ...] = ()
+    unresolved = False
+    if hierarchical:
+        scheme = _resolve_scheme(graph, condition, context)
+        unresolved = scheme is None
+        if scheme is not None:
+            ordering = _ordering(graph, scheme.scheme, relation)
+            _refuse_cycles(ordering, scheme.scheme, relation)
+            hierarchy = tuple((m, tuple(sorted(ordering[m], key=str))) for m in sorted(ordering, key=str))
+    resolution_nodes: Tuple[URIRef, ...] = ()
+    if scheme is not None:
+        resolution_nodes = (scheme.contract, scheme.scheme) + ((scheme.binding,) if scheme.binding else ())
+    elif unresolved:
+        resolution_nodes = (graph.value(condition, ELG.constrainedByContract),)
+    return SetComparisonPlan(
+        condition=condition,
+        comparison=comparison,
+        strategy=strategy,
+        tested=tested_path,
+        reference=reference_path,
+        source_nodes=tuple(dict.fromkeys((condition, tested, reference) + resolution_nodes)),
+        scheme=scheme,
+        relation=relation,
+        unresolved=unresolved,
+        hierarchy=hierarchy,
+        negated=_negated(graph, condition),
     )
 
 
 def compile_any_condition(
     graph: Graph, condition: URIRef, context: Optional[ResolutionContext] = None
 ):
-    """An ``IntervalPlan`` or a ``ConceptPlan``, by the condition's match strategy."""
+    """An ``IntervalPlan``, a ``ConceptPlan`` or a ``SetComparisonPlan``, by the condition's class and match strategy."""
+    if (condition, RDF.type, ELG.SetComparison) in graph:
+        return compile_set_comparison(graph, condition, context)
     if graph.value(condition, ELG.matchStrategy) == ELG.IntervalContainment:
         return compile_condition(graph, condition)
     return compile_concept_condition(graph, condition, context)

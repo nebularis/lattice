@@ -1,8 +1,11 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A142: A meaning-bearing edge from a versioned thing is owned or pinned
 
-**Status:** Proposed 2026-10-28
+**Status:** Published, 2026-10-29. Accepted 2026-10-29.
 **Date:** 2026-10-28
 **Related:** [ADR-A122](ADR-A122-aggregate-ownership.md) (a classified boundary shape, and references by identity or pinned), [ADR-A131](ADR-A131-ledger-layer.md) (an account definition folded into every balance), [ADR-A85](ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) (scheme bindings)
 **Described in:** [Foundation](../../../ontology/foundation/README.md) §4 and §5, [Persistence](../../../ontology/persistence/README.md) §5.6.1

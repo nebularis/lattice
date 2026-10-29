@@ -137,10 +137,12 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-131](ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | Accepted |
 | [A-133](ADR-A133-git-hooks.md) | Git hooks check what a change touches, never block a push, and gate the merge into `main` | Proposed, 2026-10-23 |
 | [A-134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) | A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by | Accepted, 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
-| [A-141](ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Proposed, 2026-10-28 |
-| [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Proposed, 2026-10-28 |
-| [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Proposed, 2026-10-28 |
-| [A-146](ADR-A146-published-terms-versioned-by-release.md) | A published term is versioned by its release, so it carries no identity chain of its own | Proposed, 2026-10-29 |
+| [A-135](ADR-A135-contract-first-wire-types.md) | Contract-first wire types | Proposed, 2026-10-26 |
+| [A-141](ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Published, 2026-10-29 |
+| [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Published, 2026-10-29 |
+| [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Published, 2026-10-29 |
+| [A-145](ADR-A145-set-comparisons-and-aggregate-bindings.md) | Set comparisons and aggregate bindings | Published, 2026-10-29 |
+| [A-146](ADR-A146-published-terms-versioned-by-release.md) | A published term is versioned by its release, so it carries no identity chain of its own | Published, 2026-10-29 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

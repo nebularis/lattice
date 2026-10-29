@@ -650,6 +650,14 @@ However, most users interact with MORK at one of three levels:
 
 ---
 
+## Release notes
+
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - no effect. Executable.ttl gains SetComparisonPlan, a condition plan relating the values two evidence bindings read from one subject, and the NoApplicableBinding diagnostic.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
+
 ## Repository catalogue entry
 
 The module's entry in the [repository catalogue](../../repository-catalogue.md)

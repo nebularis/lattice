@@ -163,15 +163,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.3.1> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.4.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
 
 #################################################################
 #    Identity classes. Each versioned class below has
@@ -1574,13 +1574,13 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.3.1> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.3.1> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.4.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.4.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.4.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.5.0> .
 
 #################################################################
 #    Reference schemes, each the unscoped fallback
@@ -5238,11 +5238,13 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 ## 10. Release notes
 
-- **Next release** (breaking). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as ADR-A98 decision 6 states and the applied README's table now records. Data and imports under the old root need re-keying. A minor bump under ADR-A113 at the next release.
+- **0.4.0**.
+  - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - no effect. Annotation and comment text no longer names delivery identifiers, and no axiom or shape changes.
+  - changes meaning (ADR-A98 decision 6, under ADR-A113). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as the applied README's table records. Data and imports under the old root re-key.
 
 | Version | Change |
 |---|---|
-| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Annotation and comment text no longer names delivery identifiers, and no axiom or shape changes |
 | `0.1.0` | Exposure set, location, legal entity, control relations, asset, interest, valuation. Seven scheme contracts, nine programme roles. Literate from the start |
 | `0.1.0` | Exposure set membership, zone designations, pool participations, assessments and attribute values are no longer inverse functional, and `aeo:MembershipShape` is withdrawn. Unchanged members are shared across exposure set versions by identity, as this README always stated. Corrects `0.1.0` before it is released, so no version bump. Example `versions.ttl` added |
 | `0.1.0` | Dependencies, peril metrics, metric comparisons and exposure units, with the dependency kind, substitutability, metric kind, perspective, calculation method and model option schemes, the schedule group and scenario contracts, and the output share, return period and exceedance probability spaces. `aeo:perilScope` loses its domain (it had `aeo:PoolParticipation`, which a metric's use would have contradicted). Nine shapes |
@@ -5252,3 +5254,5 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 | shapes `0.2.0` | Identity shapes: an asset's `aeo:locatedAt` names an `aeo:LocationIdentity`, a valuation's `aeo:valueOf` an identity, and each identity an asset or a valuation the set lists names resolves, through `fnd:hasIdentity`, to exactly one location or asset the set lists (may invalidate) |
 | `0.3.0` | both documents re-pinned to the substrate release 0.19.0 with the identity change above, and to `insurance/common` 0.8.0, `insurance/peril-vocab` 0.7.0 and `applied/classification-vocab` 0.4.0 |
 | `0.3.1` (spec and vocab) | the annotations on the membership, designation, participation, assessment and loss properties no longer cite a working record. The vocabulary re-pinned to the specification `0.3.1`. No change to any axiom or shape |
+
+Earlier versions are listed in the [ontology release register](../../../../docs/architecture/ontology-releases.md).

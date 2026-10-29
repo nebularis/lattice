@@ -126,14 +126,14 @@ def test_spec_and_vocab_parse_and_import_the_pinned_versions():
         "http://www.w3.org/2004/02/skos/core",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/quantification/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.7.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0",
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0",
     }
 
 
@@ -283,7 +283,7 @@ def test_threshold_basis_concept_without_defining_threshold_is_rejected():
 
 def test_air22_01_spec_imports_common_and_every_import_resolves():
     spec = _spec()
-    assert "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0" in {
+    assert "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0" in {
         str(o) for o in spec.objects(None, OWL.imports)
     }
 

@@ -24,7 +24,7 @@ in ``decide_condition`` below -- a different reason for the same absence here.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import AbstractSet, Hashable, Mapping, Optional, Sequence, Tuple
+from typing import AbstractSet, FrozenSet, Hashable, Iterable, Mapping, Optional, Sequence, Tuple
 
 from .kernel import DENIED, PERMITTED, UNDETERMINED, Decision, every_value, neg3, some_value
 
@@ -33,11 +33,25 @@ Concept = Hashable
 
 @dataclass(frozen=True)
 class Scheme:
-    """A concept scheme's membership and its ``skos:broader`` ordering,
-    restricted to members (L9's "within the bound scheme")."""
+    """A concept scheme's membership and its ordering by one hierarchy relation,
+    restricted to members (L9's "within the bound scheme"). The relation is the
+    condition's own, ``elg:hierarchyRelation`` or ``skos:broader``: ``broader`` holds
+    only the links of that relation, so every law below is stated over whichever
+    relation the caller chose, and none reads a link of another."""
 
     members: AbstractSet[Concept]
     broader: Mapping[Concept, AbstractSet[Concept]]
+
+    @classmethod
+    def over(cls, members: AbstractSet[Concept], links: Iterable[Tuple[Concept, Concept]]) -> "Scheme":
+        """The scheme whose ordering is ``links``, pairs of (narrower, broader) of the
+        condition's hierarchy relation. A pair with an end outside ``members`` is dropped
+        (L9's restriction to the bound scheme)."""
+        above: dict = {member: set() for member in members}
+        for narrower, broader in links:
+            if narrower in members and broader in members:
+                above[narrower].add(broader)
+        return cls(members=frozenset(members), broader={m: frozenset(b) for m, b in above.items()})
 
     def ancestors(self, concept: Concept) -> frozenset:
         """``concept`` and everything above it, reflexive-transitive (L9).
@@ -54,9 +68,9 @@ class Scheme:
         return frozenset(found)
 
     def has_hierarchy(self) -> bool:
-        """True when at least one member has a broader member within the
-        scheme (L14's own condition, negated: this is false exactly when L14
-        applies)."""
+        """True when at least one member has a link of the condition's hierarchy
+        relation to another member (L14's own condition, negated: this is false
+        exactly when L14 applies)."""
         return any(self.broader.get(member) for member in self.members)
 
 
@@ -67,12 +81,16 @@ def decide_concept_match(
     required: AbstractSet[Concept],
     excluded: AbstractSet[Concept],
     scheme: Optional[Scheme] = None,
+    unresolved: bool = False,
 ) -> Decision:
     """The single-candidate decision for ``elg:ExactMatch``, ``elg:SetMembership``
     or ``elg:HierarchicalMatch`` (ADR-A87's decision table), laws L9-L12 and
     L14. ``scheme`` is required when ``hierarchical`` is true, or when the
     condition declares exclusions only (no required concept) -- the two
     cases the law register's own decision table needs the bound scheme for.
+    ``unresolved`` says the condition's contract has bindings and none of them
+    applies at the resolution time, which differs from a condition bound to no
+    contract at all.
     """
 
     # L9: the closure is "restricted to that scheme's members" -- a candidate
@@ -93,6 +111,15 @@ def decide_concept_match(
     # every hierarchical candidate fell through to the unmatched-required
     # branch below and was wrongly Denied.
     if hierarchical and scheme is None:
+        return UNDETERMINED
+
+    # L12: a condition with exclusions only admits every member of its bound
+    # scheme. When its contract's bindings resolve to no scheme there are no
+    # members to admit, and the empty scheme that could have resolved leaves
+    # every candidate Undetermined, so no other answer holds under every
+    # resolution, an excluded candidate included (Resolution.thy, TR4). A
+    # condition bound to no contract keeps its open reading below.
+    if not required and unresolved:
         return UNDETERMINED
 
     def matches(concept: Concept) -> bool:
@@ -219,3 +246,114 @@ def decide_condition_with_reliance(
         raise ValueError(f"unknown value reading {reading!r}")
 
     return (neg3(decision) if negated else decision), relied
+
+
+SUBSET, INTERSECTS, DISJOINT = "Subset", "Intersects", "Disjoint"
+
+
+def _found(
+    value: Concept, reference: AbstractSet[Concept], *, hierarchical: bool, scheme: Optional[Scheme]
+) -> bool:
+    """Whether ``value`` matches a reference value (L18): equal under exact match, and under
+    hierarchical match a member of the scheme at or below a reference value that is a member,
+    by the condition's hierarchy relation (L9)."""
+    if not hierarchical:
+        return value in reference
+    return (
+        scheme is not None
+        and value in scheme.members
+        and any(r in scheme.members and r in scheme.ancestors(value) for r in reference)
+    )
+
+
+def decide_member(
+    value: Concept,
+    reference: AbstractSet[Concept],
+    *,
+    hierarchical: bool,
+    scheme: Optional[Scheme],
+    reference_closed: bool,
+) -> Decision:
+    """One tested value's decision (L18): Permitted when found among the reference values, Denied
+    when found in none and the reference binding names a closure in force, otherwise Undetermined.
+    Under hierarchical match a value outside the scheme is Undetermined, as a single candidate is
+    (L9), and over a scheme in which no member has a link of the relation a value that is not found
+    is Undetermined whatever the closure (L14)."""
+    if hierarchical and scheme is not None and value not in scheme.members:
+        return UNDETERMINED
+    if _found(value, reference, hierarchical=hierarchical, scheme=scheme):
+        return PERMITTED
+    if hierarchical and scheme is not None and not scheme.has_hierarchy():
+        return UNDETERMINED
+    return DENIED if reference_closed else UNDETERMINED
+
+
+def decide_set_comparison_with_reliance(
+    tested: Sequence[Concept],
+    reference: AbstractSet[Concept],
+    *,
+    comparison: str,
+    hierarchical: bool,
+    scheme: Optional[Scheme] = None,
+    tested_closed: bool = False,
+    reference_closed: bool = False,
+    negated: bool = False,
+    unresolved: bool = False,
+) -> Tuple[Decision, FrozenSet[str]]:
+    """L18: ``decide_set_comparison``'s decision, and which closures it relied on, a subset of
+    ``{"tested", "reference"}``.
+
+    The tested set's closure is relied on when completeness of the tested set decided: Subset
+    Permitted, or Intersects Denied. The reference set's closure is relied on when a value was
+    Denied and that decided (a Denied value needs a closed reference set and a scheme with a hierarchy): Subset Denied, or Intersects Denied with a tested value. Disjoint
+    relies on what Intersects relied on (L16)."""
+    if unresolved or (hierarchical and scheme is None):
+        return UNDETERMINED, frozenset()  # L9: there is no scheme to decide a value against
+    outcomes = [
+        decide_member(v, reference, hierarchical=hierarchical, scheme=scheme, reference_closed=reference_closed)
+        for v in tested
+    ]
+    if comparison == SUBSET:
+        decision = every_value(tested_closed, outcomes)
+        relied = {"tested"} if tested_closed and decision is PERMITTED else set()
+        if decision is DENIED:
+            relied.add("reference")
+    elif comparison in (INTERSECTS, DISJOINT):
+        decision = some_value(tested_closed, outcomes)
+        relied = {"tested"} if tested_closed and decision is DENIED else set()
+        if decision is DENIED and outcomes:
+            relied.add("reference")
+        if comparison == DISJOINT:
+            decision = neg3(decision)
+    else:
+        raise ValueError(f"unknown comparison {comparison!r}")
+    return (neg3(decision) if negated else decision), frozenset(relied)
+
+
+def decide_set_comparison(
+    tested: Sequence[Concept],
+    reference: AbstractSet[Concept],
+    *,
+    comparison: str,
+    hierarchical: bool,
+    scheme: Optional[Scheme] = None,
+    tested_closed: bool = False,
+    reference_closed: bool = False,
+    negated: bool = False,
+    unresolved: bool = False,
+) -> Decision:
+    """L18, with L15 to L17 and L9: each tested value is decided against the reference values
+    (``decide_member``), and the outcomes are read as every value under Subset, some value under
+    Intersects, and some value negated under Disjoint, the tested set's closure licensing the
+    reading. ``negated`` is the condition's own ``elg:negated`` (L16)."""
+    return decide_set_comparison_with_reliance(
+        tested,
+        reference,
+        comparison=comparison,
+        hierarchical=hierarchical,
+        scheme=scheme,
+        tested_closed=tested_closed,
+        reference_closed=reference_closed,
+        negated=negated,
+        unresolved=unresolved,
+    )[0]

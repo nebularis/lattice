@@ -13,4 +13,5 @@ tools/phase8_conformance.py | builds the conformance suite's paths under test/ a
 tools/proofs/check.py | names the prover driver under spikes/
 tools/reasoning_isolation_check.py | names the reasoning harness's pom under platform/
 tools/repository_topology_check.py | names the topology manifest and the ADR directory under docs/
+tools/testing/jena/src/lattice_testing_jena/__init__.py | finds the Jena harness jar under platform/ from the working directory, the way the reader finds the root, since an installed test-support package cannot import tools/
 tools/validation_replay.py | puts tools/ on the replay's PYTHONPATH

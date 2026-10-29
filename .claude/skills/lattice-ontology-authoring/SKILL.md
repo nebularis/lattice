@@ -97,17 +97,8 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
    locates the current document to the new version, and keep a test that asserts history, a release
    row or a release note. Leave alone `docs/architecture/ontology-releases.md` (generated),
    `tools/test_ontology_releases.py` and `tools/fixtures/import_guard/`.
-6. **Regenerate and record.** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`,
-   which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for the
-   release, and one per new applied version. The tags are the maintainer's (skill
-   `lattice-lifecycle`). Write the release notes in the "Release notes" section of each changed
-   README, classing every release change by its effect on a graph valid under the previous release:
-   no effect, may invalidate, or changes meaning (ADR-A129).
-7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
-   `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`,
-   `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp`
-   rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If
-   Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
+6. **Regenerate and record.** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`, which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for the release, and one per new applied version. The tags are the maintainer's (skill `lattice-lifecycle`). Rename each changed README's `- **Unreleased**.` release-note lead to the new number, and check that every sub-bullet under it opens with its class, *changes meaning*, *may invalidate* or *no effect* (ADR-A129), the form the versioning policy states. A change is written under `Unreleased` when it is made, on its branch, never first at the merge. Its note may cite the Proposed decision it rests on while on the branch, and that decision is accepted before the merge, since a migrated README cites only published decisions (skill `lattice-publication-hygiene`).
+7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`, `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`, `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp` rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
 8. **Check the code under test is this checkout's** (skill `lattice-toolchain`).
 
 ## Modelling from reality

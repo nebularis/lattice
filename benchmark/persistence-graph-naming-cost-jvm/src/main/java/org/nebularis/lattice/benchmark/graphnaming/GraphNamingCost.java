@@ -44,7 +44,7 @@ import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 /**
- * What a {@code GRAPH ?g} inside an {@code OPTIONAL}, and the generated named-graph replace, cost on Jena and RDF4J (ADR-A124, TSD-45).
+ * What a {@code GRAPH ?g} inside an {@code OPTIONAL}, and the generated named-graph replace, cost on Jena and RDF4J (ADR-A124, TSD-42).
  *
  * <p>The forms, the rendered operations and the checks come from {@code benchmark/persistence-graph-naming-cost/check.py --emit}, so every store runs the same
  * SPARQL text the compiler generates. <b>A wrong result fails the run. Time never does.</b>

@@ -206,6 +206,25 @@ ex:customer-occ a pty:RoleOccupancy ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] ;
     pty:inRole ex:Customer ; pty:occupiedBy ex:northgate .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:northgate-wording-identity a fnd:PersistentIdentity .
+ex:customer-occ-identity a fnd:PersistentIdentity .
+ex:provider-occ-identity a fnd:PersistentIdentity .
+ex:northgate-identity a fnd:PersistentIdentity .
+ex:schedule-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-3-2-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:cl-s-1-identity a fnd:PersistentIdentity .
+ex:var-territories-identity a fnd:PersistentIdentity .
+ex:territory-contract-identity a fnd:PersistentIdentity .
+ex:territories-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # "Territory" resolves to North and Midlands, so the scope is generated anew

@@ -11,8 +11,8 @@
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;

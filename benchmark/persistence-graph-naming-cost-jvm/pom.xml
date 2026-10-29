@@ -11,7 +11,7 @@
   <version>0.1.0</version>
   <packaging>jar</packaging>
   <name>Graph naming cost on Jena and RDF4J</name>
-  <description>What a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace, cost on Jena and RDF4J (ADR-A124, TSD-45).</description>
+  <description>What a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace, cost on Jena and RDF4J (ADR-A124, TSD-42).</description>
 
   <properties>
     <maven.compiler.release>25</maven.compiler.release>

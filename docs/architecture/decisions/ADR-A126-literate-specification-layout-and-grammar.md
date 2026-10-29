@@ -152,6 +152,10 @@ that does not use them.
 
 Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are unchanged.
 
+## Addendum 2026-10-29 (proposed 2026-10-29)
+
+Rule 11 is amended. Every release in which the layer changed has an entry, not every released version, since the release register records which documents each release holds. The entry's form is the versioning policy's: one bullet per release, newest first, one sub-bullet per change opening with its ADR-A129 class, and `Unreleased` for a change whose number is not yet assigned. Two units had written pending notes as "Next release", a phrase that in English names the release after the current one, in two styles and in two places in one list, which the 0.20.0 cut made visible.
+
 ## Provenance
 
 **Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)

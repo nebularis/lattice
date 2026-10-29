@@ -21,7 +21,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> |
+| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -626,11 +626,8 @@ Vocabulary imports Foundation, for identity, versions, governance and temporal s
 
 ## 12. Release Notes
 
-- **Next release** (additive). `voc:BindingClosure`, `voc:closesBinding` and `voc:closedAt`: a binding ends by a closure record and is never edited, which the resolver reads as the end of validity (Foundation section 4). `voc:BindingClosureShape` checks the record.
-
-Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
-
-- Next release. Re-pinned: a new substrate layer joins the release. No other change.
+- **0.20.0**.
+  - no effect ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)). `voc:BindingClosure`, `voc:closesBinding` and `voc:closedAt`. A binding ends by a closure record and is never edited, which the resolver reads as the end of validity (Foundation section 4), and `voc:BindingClosureShape` checks the record.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). The README
@@ -644,6 +641,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - `vocabulary` 0.2.0, the first version under the versioning policy. Scoped, time-bounded scheme bindings:
   `voc:SchemeBinding`, `voc:BindingScope`, `voc:forContract`, `voc:bindsScheme`, `voc:bindingScope` and
   `voc:resolvedUnder` (ADR-A85). Shapes 0.1.0: the structural shapes, and the constraints of the resolution law.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
 ## 13. Open Issues
 

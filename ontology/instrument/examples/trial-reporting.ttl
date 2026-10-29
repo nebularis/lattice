@@ -251,3 +251,26 @@ ex:pay-fees a ins:Obligation ;
     ins:boundFrom tmpl:pay-fees ; ins:arisesUnder ex:term-10-1 ;
     ins:obligor ex:sponsor-occ ; ins:obligee ex:site-occ ;
     ins:activity ins-voc:Pay .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:site-207-wording-identity a fnd:PersistentIdentity .
+ex:investigator-occ-identity a fnd:PersistentIdentity .
+ex:site-occ-identity a fnd:PersistentIdentity .
+ex:sponsor-occ-identity a fnd:PersistentIdentity .
+ex:each-month fnd:hasIdentity ex:each-month-identity .
+ex:each-month-identity a fnd:PersistentIdentity .
+ex:each-quarter fnd:hasIdentity ex:each-quarter-identity .
+ex:each-quarter-identity a fnd:PersistentIdentity .
+ex:site-207-identity a fnd:PersistentIdentity .
+ex:sec-10-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:sec-8-identity a fnd:PersistentIdentity .
+ex:cl-10-1-identity a fnd:PersistentIdentity .
+ex:cl-6-3-identity a fnd:PersistentIdentity .
+ex:cl-8-1-identity a fnd:PersistentIdentity .
+ex:cl-8-2-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .

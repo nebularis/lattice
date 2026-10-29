@@ -85,7 +85,7 @@ The knowledge index ranks the project's decisions, mechanisms, capabilities, pat
 
 Every piece of text, in documents, code comments, commit messages and replies:
 
-- do not put newlines in markdown text for formatting. Modern editors can word-wrap long lines. Newlines should be used to create space between paragraphs: don't assume a line length and enforce it with newlines.
+- do not put newlines in markdown text for formatting. Modern editors can word-wrap long lines. Newlines should be used to create space between paragraphs: don't assume a line length and enforce it with newlines. When you edit a hard-wrapped paragraph or list entry, join it onto one line in the same edit, since the wrapping check reports a file's wrapped lines whichever edit touched it.
 - no semicolons. Use periods or commas
 - colons sparingly, never to join two clauses or to lead into an explanation. A colon may introduce
   a list, a table or a quotation

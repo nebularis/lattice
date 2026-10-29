@@ -40,7 +40,7 @@ LEFT_GROUPED_ARITHMETIC: bool = VERSION >= (0, 5, 12)
 CONSTANT_GRAPH_INLINED_IN_OPTIONAL: bool = VERSION < (0, 5, 13)
 """Whether a ``GRAPH ?g`` inside an ``OPTIONAL``, where an enclosing group binds ``?g`` to a constant IRI, reads only that graph. 0.5.11 and
 0.5.12 do, and 0.5.13 reads every graph. A ``?g`` computed by an expression, such as the compiler's, is never passed in, on any of the
-three (TSD-45)."""
+three (TSD-42)."""
 
 
 def iri(value: str) -> ox.NamedNode:

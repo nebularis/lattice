@@ -46,6 +46,11 @@ include:
   - ADR-A129-one-release-for-the-substrate.md
   - ADR-A131-ledger-layer.md
   - ADR-A132-persistence-caller-library.md
+  - ADR-A141-versioned-mixin-rename.md
+  - ADR-A142-meaning-bearing-edges.md
+  - ADR-A143-one-canonicalisation.md
+  - ADR-A145-set-comparisons-and-aggregate-bindings.md
+  - ADR-A146-published-terms-versioned-by-release.md
   - ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md
   - ADR-A79-persistence-compiler-toolchain.md
   - ADR-A80-housekeeping-component-boundary.md

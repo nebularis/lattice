@@ -163,9 +163,9 @@ def test_h2_4a_t6_a_path_that_may_match_no_steps_reaches_the_root_itself_and_an_
     g.add((URIRef("urn:c"), URIRef("urn:on"), URIRef("urn:a")))
     reached = _select(ds, "SELECT ?s WHERE { GRAPH <urn:g> { <urn:r> (<urn:owns>|^<urn:on>)* ?s } }")
     assert reached == {("urn:r",), ("urn:a",), ("urn:c",)}  # the root, a forward step, and an inverse step from a
-    # a term that is in no triple of the graph. rdflib matches it with itself and Oxigraph 0.5.11 does not (FMH-H2-4b)
+    # a term that is in no triple of the graph. rdflib and Jena match it with itself and Oxigraph does not (FMH-H2-4b, TSD-08, TSD-51)
     absent = _select(ds, "SELECT ?s WHERE { GRAPH <urn:g> { <urn:lonely> (<urn:owns>)* ?s } }")
-    assert absent == ({("urn:lonely",)} if engines.CURRENT == "rdflib" else set())
+    assert absent == ({("urn:lonely",)} if engines.CURRENT in ("rdflib", "jena") else set())
 
 
 @engines.each_engine_and_guards

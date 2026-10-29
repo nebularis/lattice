@@ -10,8 +10,8 @@ vocabulary: any domain may use or specialise it.
 
 | File | Content | Namespace | Prefix | Version IRI |
 |---|---|---|---|---|
-| `spec/classification.ttl` | `cls:territory`, `cls:assetClass`, `cls:industry` | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification#` | `cls:` | `…/lattice/applied/classification/0.1.0` |
-| `vocab/classification-vocab.ttl` | one `voc:SchemeContract` per property, no bound scheme | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#` | `cls-voc:` | `…/lattice/applied/classification-vocab/0.1.0` |
+| `spec/classification.ttl` | `cls:territory`, `cls:assetClass`, `cls:industry` | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification#` | `cls:` | `…/lattice/applied/classification/0.5.0` |
+| `vocab/classification-vocab.ttl` | one `voc:SchemeContract` per property, no bound scheme | `https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#` | `cls-voc:` | `…/lattice/applied/classification-vocab/0.5.0` |
 
 ## The three contracts
 
@@ -52,3 +52,10 @@ The module's entry in the [repository catalogue](../../../repository-catalogue.m
 kind = "applied"
 roles = ["spec", "vocab"]
 ```
+
+## Release notes
+
+- **0.5.0**.
+  - changes meaning ([ADR-A141](../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys. No change of its own.
+
+Earlier versions are listed in the [ontology release register](../../../docs/architecture/ontology-releases.md).

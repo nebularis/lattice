@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# A written resolution of bondholders passes when every holder on the record
+# date has consented, and a quorum test asks whether any holder has. The
+# holders on the record date are fixed by the trustee's register on that date,
+# so that binding names a closure (ADR-A105). The consents are still arriving
+# before the window closes, so the consenting holders are an open set: a
+# holder not found among them has not yet consented, which is not a refusal.
+#
+# All holders consented is a subset of the consenting holders. Some holder
+# consented is an intersection with them. Each comparison has its own two
+# bindings, since a binding supplies candidates to one condition.
+#
+# | Bond   | Holders | Consents | All consented | Some consented |
+# |--------|---------|----------|---------------|----------------|
+# | bond-1 | h1, h2  | h1, h2, h3 | Permitted   | Permitted      |
+# | bond-2 | h1, h2  | h1       | Undetermined  | Permitted      |
+# | bond-3 | h1, h2  | none     | Undetermined  | Undetermined   |
+# | bond-4 | none    | h1       | Permitted     | Denied         |
+#
+# bond-4 has no holders on the record date, so every holder has consented and
+# no holder has. A requirement that there be at least one holder is a count,
+# not a comparison.
+
+@prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/lattice/eligibility/resolution/> .
+
+# The applied ontology's own terms.
+ex:Bond a owl:Class .
+ex:Holder a owl:Class .
+ex:heldBy a owl:ObjectProperty .
+ex:consentedBy a owl:ObjectProperty .
+
+# The closure over the record-date register. Its source is the trust deed.
+ex:register-clause rdfs:label "Trust deed 12.3: the trustee's register on the record date lists every holder" .
+ex:register-closure a elg:Closure ; elg:licensedBy ex:register-clause .
+
+# All holders consented.
+ex:all-consented a elg:SetComparison ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:comparison elg:Subset ;
+    elg:testedBinding ex:all-holders-binding ;
+    elg:referenceBinding ex:all-consents-binding .
+
+ex:all-holders-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:all-consented ;
+    elg:subjectClass ex:Bond ;
+    elg:closedUnder ex:register-closure ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:heldBy ; elg:stepDirection elg:Forward ] .
+
+ex:all-consents-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:all-consented ;
+    elg:subjectClass ex:Bond ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:consentedBy ; elg:stepDirection elg:Forward ] .
+
+# Some holder consented.
+ex:some-consented a elg:SetComparison ;
+    elg:matchStrategy elg:ExactMatch ;
+    elg:wildcardSemantics elg:NoWildcard ;
+    elg:comparison elg:Intersects ;
+    elg:testedBinding ex:some-holders-binding ;
+    elg:referenceBinding ex:some-consents-binding .
+
+ex:some-holders-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:some-consented ;
+    elg:subjectClass ex:Bond ;
+    elg:closedUnder ex:register-closure ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:heldBy ; elg:stepDirection elg:Forward ] .
+
+ex:some-consents-binding a elg:EvidenceBinding ;
+    elg:bindsCondition ex:some-consented ;
+    elg:subjectClass ex:Bond ;
+    elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:consentedBy ; elg:stepDirection elg:Forward ] .
+
+# The applied ontology's data.
+ex:h1 a ex:Holder .
+ex:h2 a ex:Holder .
+ex:h3 a ex:Holder .
+ex:bond-1 a ex:Bond ; ex:heldBy ex:h1 , ex:h2 ; ex:consentedBy ex:h1 , ex:h2 , ex:h3 .
+ex:bond-2 a ex:Bond ; ex:heldBy ex:h1 , ex:h2 ; ex:consentedBy ex:h1 .
+ex:bond-3 a ex:Bond ; ex:heldBy ex:h1 , ex:h2 .
+ex:bond-4 a ex:Bond ; ex:consentedBy ex:h1 .

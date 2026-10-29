@@ -33,7 +33,7 @@ BHV = Namespace(LATTICE + "behaviour#")
 LAYER = ROOT / "ontology" / "instrument"
 SPEC, VOCAB = LAYER / "spec" / "instrument.ttl", LAYER / "vocab" / "instrument-vocab.ttl"
 EXAMPLES = sorted((LAYER / "examples").glob("*.ttl"))
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "party/spec/party.ttl", "party/vocab/party-vocab.ttl", "eligibility/spec/eligibility.ttl",
          "eligibility/vocab/eligibility-vocab.ttl", "wording/spec/wording.ttl", "wording/vocab/wording-vocab.ttl",
          "behaviour/spec/behaviour.ttl", "foundation/examples/keys.ttl"]

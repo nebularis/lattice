@@ -334,3 +334,40 @@ ex:v2-person-data   a wrd:VariableValue ; wrd:forVariable ex:var-person ; wrd:fo
 ex:v2-role-data     a wrd:VariableValue ; wrd:forVariable ex:var-role   ; wrd:forEntry ex:entry-data   ; wrd:literalValue "Data manager" .
 ex:v2-visit-window a wrd:VariableValue ; wrd:forVariable ex:var-visit-window ; wrd:literalValue "7"^^xsd:decimal .
 ex:v2-study-arms   a wrd:VariableValue ; wrd:forVariable ex:gv-study-arms ; wrd:literalValue "2"^^xsd:decimal .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:gcp-regulation-identity a fnd:PersistentIdentity .
+ex:protocol-trial-7-identity a fnd:PersistentIdentity .
+ex:schedule-1-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:field-person-identity a fnd:PersistentIdentity .
+ex:field-role-identity a fnd:PersistentIdentity .
+ex:field-screening-identity a fnd:PersistentIdentity .
+ex:field-week-12-identity a fnd:PersistentIdentity .
+ex:field-week-24-identity a fnd:PersistentIdentity .
+ex:field-week-4-identity a fnd:PersistentIdentity .
+ex:amendment-1-para-1-identity a fnd:PersistentIdentity .
+ex:cl-6-2-identity a fnd:PersistentIdentity .
+ex:cl-6-3-identity a fnd:PersistentIdentity .
+ex:schedule-1-intro-identity a fnd:PersistentIdentity .
+ex:responsibilities-identity a fnd:PersistentIdentity .
+ex:soa-identity a fnd:PersistentIdentity .
+ex:var-person-identity a fnd:PersistentIdentity .
+ex:var-role-identity a fnd:PersistentIdentity .
+ex:var-screening-identity a fnd:PersistentIdentity .
+ex:var-visit-window-identity a fnd:PersistentIdentity .
+ex:var-week-12-identity a fnd:PersistentIdentity .
+ex:var-week-24-identity a fnd:PersistentIdentity .
+ex:var-week-4-identity a fnd:PersistentIdentity .
+ex:entry-data-identity a fnd:PersistentIdentity .
+ex:entry-safety-identity a fnd:PersistentIdentity .
+ex:sponsor-classes-identity a fnd:PersistentIdentity .
+ex:gv-study-arms-identity a fnd:PersistentIdentity .
+ex:amendment-1-identity a fnd:PersistentIdentity .
+ex:protocol-wording-identity a fnd:PersistentIdentity .
+ex:count-space fnd:hasIdentity ex:count-space-identity .
+ex:count-space-identity a fnd:PersistentIdentity .
+ex:days-space fnd:hasIdentity ex:days-space-identity .
+ex:days-space-identity a fnd:PersistentIdentity .
+ex:millilitre-space fnd:hasIdentity ex:millilitre-space-identity .
+ex:millilitre-space-identity a fnd:PersistentIdentity .

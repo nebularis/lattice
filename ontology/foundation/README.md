@@ -50,7 +50,7 @@ The ontology header, with the version every importer pins (ADR-A86):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 ```
 
@@ -1014,9 +1014,10 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
 
 ## 13. Release notes
 
-- **Next release** (additive). `fnd:estimatedStart` on a temporal scope, validity periods stated half-open with zoned instants and checked by `fnd:TemporalScopeShape`, `fnd:SupersessionAcyclicShape`, and `fnd:meaningBearing` with `fnd:MeaningBearingEdgeShape` ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)).
-- **Next release** (additive). A published term of a versioned class, `rdfs:isDefinedBy` the ontology that declares it, carries no identity of its own. `fnd:VersionedShape` exempts it and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)).
-- **Next release** (breaking, [ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in the same release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)).
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md), under [ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)). `fnd:Version` is renamed `fnd:Versioned`, with no alias, so a class "is versioned" as Foundation's other mixins read. Every importer re-pins in this release.
+  - may invalidate ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)). `fnd:meaningBearing` with `fnd:MeaningBearingEdgeShape`, `fnd:TemporalScopeShape` checking validity periods stated half-open with zoned instants, and `fnd:SupersessionAcyclicShape`. `fnd:estimatedStart` on a temporal scope.
+  - no effect ([ADR-A146](../../docs/architecture/decisions/ADR-A146-published-terms-versioned-by-release.md)). A published term of a versioned class, `rdfs:isDefinedBy` the ontology that declares it, carries no identity of its own. `fnd:VersionedShape` exempts it and `fnd:MeaningBearingEdgeShape` treats an edge to one as safe.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** No other change.
 - **0.4.0** (additive, CCS F1, ADR-A114). Keys: `fnd:Key`, `fnd:KeyScheme`, `fnd:keyValue`,
@@ -1025,3 +1026,5 @@ Eight classes mutually disjoint (`Version`, `PersistentIdentity`, `Evidence`, `T
   `KeyScheme` join the disjoint classes. The first shapes in `shapes/constraints.ttl`, and this
   document is again the source of `spec/foundation.ttl` (the ontology header is now a block in §2).
   Every importer re-pins in the same release.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

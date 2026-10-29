@@ -18,10 +18,12 @@ from .eligibility_ir import (
     IRCompileError,
     ProfilePlan,
     RequiredInterval,
+    SetComparisonPlan,
     compile_any_condition,
     compile_concept_condition,
     compile_condition,
     compile_profile,
+    compile_set_comparison,
 )
 from .owl_backend import compile_classes
 from .shacl_backend import compile_shapes
@@ -37,11 +39,13 @@ __all__ = [
     "IRCompileError",
     "ProfilePlan",
     "RequiredInterval",
+    "SetComparisonPlan",
     "compile_any_condition",
     "compile_classes",
     "compile_concept_condition",
     "compile_condition",
     "compile_profile",
+    "compile_set_comparison",
     "compile_query_template",
     "compile_rules",
     "compile_shapes",

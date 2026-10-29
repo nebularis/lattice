@@ -208,6 +208,15 @@ FAMILIES: tuple[Family, ...] = (
         note="what a triple store actually does, found by probing it. An entry is never removed, "
         "so an unresolved mention is rot",
     ),
+    Family(
+        name="store-question",
+        mention=re.compile(r"\b(TSD-Q\d+)\b"),
+        definition="table-row",
+        defines=((ARCHITECTURE / "triple-store-discovery.md").as_posix(),),
+        removable=True,
+        note="a question the store-discovery record holds open, in its open questions table. A row "
+        "may be removed once a finding answers it, so an unresolved mention is reported, never failed",
+    ),
     # Inventoried only. Their definition rules come from the corpus sweep that seeds the knowledge
     # index, and each family moves up as its rule is written.
     Family(

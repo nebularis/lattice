@@ -208,6 +208,11 @@ ki:claim
     rdfs:label "claim" ;
     rdfs:comment "One sentence, at most 200 characters, extracted from the bolded lead sentence of the Markdown entry and never authored twice (ADR-A134 decision 3). It is what an agent reads to decide whether to open the document." .
 
+ki:row
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "row" ;
+    rdfs:comment "The register row that defines the entry, as a repository-relative path with a single line number. The pointer is where the full entry is and may be elsewhere, so `graph:ask -- read` prints the row first and the pointed-at text after it." .
+
 ki:pointer
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "pointer" ;
@@ -293,6 +298,11 @@ ki:answers
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Question ;
     rdfs:label "answers" ;
     rdfs:comment "From the entry a question's answer was promoted to, a standard, mechanism or decision, to the question, read from the lead's 'now <ID>'. Earns its place from the query for a question's answer, and from the report of answered questions whose rule-shaped answer was never promoted (ADR-A134 decision 30)." .
+
+ki:answeredBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Discovery ; rdfs:range ki:Discovery ;
+    rdfs:label "answered by" ;
+    rdfs:comment "Read from the 'Answered by' column of the store-discovery record's open questions: the finding that answers the question in full, which makes the question's status Answered. A finding that answers in part is named in the row's next step and leaves the question Open." .
 
 ki:waitsOn
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;

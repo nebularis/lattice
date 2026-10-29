@@ -23,7 +23,7 @@ elg:ClosureShape a sh:NodeShape ;
 
 elg:ConditionShape a sh:NodeShape ;
     sh:targetClass elg:Condition ;
-    sh:property [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+    sh:property [ sh:path elg:hierarchyRelation ; sh:maxCount 1 ], [ sh:path elg:negated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
 
 elg:EligibilityDecisionShape a sh:NodeShape ;
     sh:targetClass elg:EligibilityDecision ;
@@ -36,3 +36,7 @@ elg:EvidenceBindingShape a sh:NodeShape ;
 elg:EvidenceStepShape a sh:NodeShape ;
     sh:targetClass elg:EvidenceStep ;
     sh:property [ sh:path elg:stepDirection ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Forward elg:Inverse ) ], [ sh:path elg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path elg:stepProperty ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+elg:SetComparisonShape a sh:NodeShape ;
+    sh:targetClass elg:SetComparison ;
+    sh:property [ sh:path elg:comparison ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( elg:Subset elg:Intersects elg:Disjoint ) ; sh:message "A set comparison declares exactly one comparison (L18)." ], [ sh:path elg:excludedConcept ; sh:maxCount 0 ; sh:message "A set comparison names no excluded concept, since its reference binding supplies the values (L18)." ], [ sh:path elg:matchStrategy ; sh:in ( elg:ExactMatch elg:HierarchicalMatch ) ; sh:message "A set comparison matches by ExactMatch or HierarchicalMatch (L18)." ], [ sh:path elg:referenceBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A set comparison names exactly one reference binding (L18)." ], [ sh:path elg:requiredConcept ; sh:maxCount 0 ; sh:message "A set comparison names no required concept, since its reference binding supplies the values (L18)." ], [ sh:path elg:testedBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A set comparison names exactly one tested binding (L18)." ] .
