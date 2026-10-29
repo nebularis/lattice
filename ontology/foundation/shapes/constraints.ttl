@@ -153,12 +153,13 @@ fnd:MeaningBearingEdgeShape a sh:NodeShape ;
     sh:targetSubjectsOf fnd:hasIdentity ;
     sh:severity sh:Warning ;
     sh:sparql [
-        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned nor minted under it, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned, minted under it nor a published term, so editing {?o} changes what a past version of {$this} meant." ;
         sh:select """
             SELECT $this ?p ?o WHERE {
                 $this ?p ?o .
                 ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
                 FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER NOT EXISTS { ?o <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?ontology }
                 FILTER (!STRSTARTS(STR(?o), STR($this)))
             }
         """

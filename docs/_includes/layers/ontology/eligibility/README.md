@@ -311,8 +311,8 @@ sequenceDiagram
 Seven classes carry no properties of their own, and each is a closed set of named individuals (6.4), never
 an open class a reader could extend without a new decision. `elg:MatchStrategy`,
 `elg:WildcardSemantics` and `elg:CompositionOperation` are the three mechanisms of §5.1.
-`elg:OperationalProfile` is versioned (`fnd:Versioned`), since the five reference profiles E1 to E5 are
-themselves subject to change control. Each names one reference conformance profile that the differential
+`elg:OperationalProfile` is versioned (`fnd:Versioned`), since a deployment's profiles are subject to change
+control. The five reference profiles E1 to E5 are published terms, versioned by the layer's release (Foundation section 4). Each names one reference conformance profile that the differential
 test harness (`tools/reference/eligibility/`) checks a compiler backend against, one per mechanism
 combination worth testing in isolation. `elg:Law` and `elg:LawRegister` classify the laws by how each is
 discharged (§5.8).
@@ -1098,6 +1098,13 @@ elg:L17 a elg:Law ;
 
 # The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
 [ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .
+
+# The five reference profiles are published terms, versioned by the layer's release (Foundation section 4).
+elg:E1 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E2 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E3 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E4 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E5 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
 ```
 
 ### 6.7 Axiom Index

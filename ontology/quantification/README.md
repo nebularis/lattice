@@ -1776,6 +1776,7 @@ The role contract (ADR-A115), for context values and a proportion's base. It bin
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 qnt:ContextRoleContract a voc:SchemeContract ;
+    rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/quantification> ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;

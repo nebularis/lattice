@@ -697,6 +697,7 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Element type scheme contract"@en ;
@@ -704,18 +705,21 @@ wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	voc:boundScheme wrd-voc:ElementTypes .
 
 wrd-voc:ClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Classification scheme contract"@en ;
 	voc:constrainsProperty wrd:classification .
 
 wrd-voc:DocumentKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:DocumentKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Document kind scheme contract"@en ;
 	voc:constrainsProperty wrd:documentKind .
 
 wrd-voc:ElementTypes a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypes-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline element types"@en ;
