@@ -2,12 +2,12 @@
  "run": "warm",
  "check_rounds": 3,
  "mappings": {
-  "accepted": 16,
-  "corrected": 3,
+  "accepted": 19,
+  "corrected": 0,
   "rejected": 3,
   "deferred": 6,
   "total": 28,
-  "accepted_share": 0.571
+  "accepted_share": 0.679
  },
  "unreviewed": [
   "Role_T"
@@ -120,18 +120,18 @@
   },
   {
    "mapping": "Right_Counterparty",
-   "decision": "corrected",
-   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+   "decision": "accepted",
+   "note": "the auxiliary party is the permission's counterparty, and the obligor of the relation owed to the bearer"
   },
   {
    "mapping": "Right_Holder",
-   "decision": "corrected",
-   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+   "decision": "accepted",
+   "note": "the bearer holds the right's permission"
   },
   {
    "mapping": "Right_Relation",
-   "decision": "corrected",
-   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+   "decision": "accepted",
+   "note": "the permission half of the right. The obligation or prohibition owed to the bearer is missing. a LegalRuleML right gives the bearer a permission and implies obligations or prohibitions on the auxiliary party (its definition), so it is two relations under one term: an ins:Permission held by the bearer, and an ins:Obligation or ins:Prohibition owed to the bearer by the auxiliary party"
   },
   {
    "mapping": "Role_T_Label",
@@ -153,5 +153,6 @@
    "decision": "deferred",
    "note": "as the cold run's InForce"
   }
- ]
+ ],
+ "amended": "2026-10-29: the right's reviews, after reading LegalRuleML's definition of Right"
 }

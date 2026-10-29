@@ -18,6 +18,38 @@
     mork:path "lrmlmm:appliesPenalty" ;
     mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
 
+<urn:mork-propose:run:legalruleml-amended:review/1> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "the permission is the right half, and the obligation or prohibition owed to the bearer is missing. a LegalRuleML right gives the bearer a permission and implies obligations or prohibitions on the auxiliary party (its definition), so it is two relations under one term: an ins:Permission held by the bearer, and an ins:Obligation or ins:Prohibition owed to the bearer by the auxiliary party" ;
+    mork:reviewOf <http://example.org/lrml-mapping#Map_Right> ;
+    prov:endedAtTime "2026-10-29T20:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-amended:review/2> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "the permission half of the right. The obligation or prohibition owed to the bearer is missing. a LegalRuleML right gives the bearer a permission and implies obligations or prohibitions on the auxiliary party (its definition), so it is two relations under one term: an ins:Permission held by the bearer, and an ins:Obligation or ins:Prohibition owed to the bearer by the auxiliary party" ;
+    mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
+    prov:endedAtTime "2026-10-29T20:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-amended:review/3> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "the bearer holds the right's permission" ;
+    mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Holder> ;
+    prov:endedAtTime "2026-10-29T20:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-amended:review/4> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "the auxiliary party is the permission's counterparty, and the obligor of the relation owed to the bearer" ;
+    mork:reviewOf <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Counterparty> ;
+    prov:endedAtTime "2026-10-29T20:00:00+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
 <urn:mork-propose:run:legalruleml-cold:review/1> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Rejected ;
@@ -606,16 +638,6 @@
     mork:weighting 85 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold> .
 
-<http://example.org/lrml-mapping#Map_Right> a mork:DataMapping,
-        mork:Datum,
-        owl:NamedIndividual ;
-    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission> ;
-    mork:mappingFor <http://example.org/lrml-mapping#C_Right> ;
-    mork:mappingNote "A right is a permission with obligations on others, only the permission half is mapped." ;
-    mork:mappingScheme <http://example.org/lrml-mapping#MS> ;
-    mork:weighting 50 ;
-    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold> .
-
 <http://example.org/lrml-mapping#Map_Statement> a mork:DataMapping,
         mork:Datum,
         owl:NamedIndividual ;
@@ -798,26 +820,6 @@
     mork:conceptScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Concepts> ;
     mork:representedAs <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Right> .
 
-<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Counterparty> a mork:Datum,
-        owl:NamedIndividual ;
-    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
-    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#counterparty> ;
-    mork:mappingFor <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#AuxiliaryConcept> ;
-    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
-    mork:templateMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> ;
-    mork:weighting 65 ;
-    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
-
-<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Holder> a mork:Datum,
-        owl:NamedIndividual ;
-    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
-    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#holder> ;
-    mork:mappingFor <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#BearerConcept> ;
-    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
-    mork:templateMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> ;
-    mork:weighting 80 ;
-    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
-
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T_Label> a mork:DataMapping,
         owl:NamedIndividual ;
     mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> ;
@@ -899,6 +901,16 @@
     mork:weighting 55 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold> .
 
+<http://example.org/lrml-mapping#Map_Right> a mork:DataMapping,
+        mork:Datum,
+        owl:NamedIndividual ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission> ;
+    mork:mappingFor <http://example.org/lrml-mapping#C_Right> ;
+    mork:mappingNote "A right is a permission with obligations on others, only the permission half is mapped." ;
+    mork:mappingScheme <http://example.org/lrml-mapping#MS> ;
+    mork:weighting 50 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold> .
+
 <http://example.org/lrml-mapping#Map_Role> a mork:DataMapping,
         mork:Datum,
         owl:NamedIndividual ;
@@ -968,6 +980,26 @@
     mork:weighting 70 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
+<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Counterparty> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#counterparty> ;
+    mork:mappingFor <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#AuxiliaryConcept> ;
+    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
+    mork:templateMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> ;
+    mork:weighting 65 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Holder> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#holder> ;
+    mork:mappingFor <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#BearerConcept> ;
+    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
+    mork:templateMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> ;
+    mork:weighting 80 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
+
 <http://example.org/lrml-mapping#Map_Obligation> a mork:DataMapping,
         mork:Datum,
         owl:NamedIndividual ;
@@ -1033,18 +1065,6 @@
     mork:weighting 45 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
-<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> a mork:Datum,
-        owl:NamedIndividual ;
-    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right> ;
-    mork:conceptName "relation" ;
-    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
-    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission>,
-        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
-    mork:mappingNote "A Right is a permission that implies obligations or prohibitions on the auxiliary parties, which this mapping does not state." ;
-    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
-    mork:weighting 60 ;
-    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
-
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Temporal> a mork:Datum,
         owl:NamedIndividual ;
     mork:conceptName "temporal-scope" ;
@@ -1063,6 +1083,18 @@
         owl:NamedIndividual ;
     mork:conceptScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Concepts> ;
     mork:path "lrmlmm:Bearer" .
+
+<https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Right> ;
+    mork:conceptName "relation" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:mappingNote "A Right is a permission that implies obligations or prohibitions on the auxiliary parties, which this mapping does not state." ;
+    mork:mappingScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme> ;
+    mork:weighting 60 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> a mork:Datum,
         owl:NamedIndividual ;
@@ -1107,5 +1139,5 @@
         owl:NamedIndividual ;
     sh:declare <http://example.org/lrml-mapping#MS_sh:declare1> .
 
+<urn:lattice:reviewer:agent-for-the-maintainer> rdfs:comment "An agent reviewing for the maintainer, whose reviews of the LegalRuleML trial the maintainer signed off as recorded on 2026-10-29." .
 
-<urn:lattice:reviewer:agent-for-the-maintainer> <http://www.w3.org/2000/01/rdf-schema#comment> "An agent reviewing for the maintainer, whose reviews of the LegalRuleML trial the maintainer signed off as recorded on 2026-10-29." .

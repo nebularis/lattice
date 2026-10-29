@@ -8,12 +8,12 @@ Whether an earlier, reviewed mapping helps a language model propose a new one, a
 |---|---|---|
 | check rounds to a clean check | 6 | 3 |
 | correspondences reviewed | 17 | 28 |
-| accepted | 4 (24%) | 16 (57%) |
-| corrected | 9 | 3 |
+| accepted | 4 (24%) | 19 (68%) |
+| corrected | 9 | 0 |
 | rejected | 2 | 3 |
 | deferred | 2 | 6 |
 
-The warm run took the ODRL pack's shape, a term and a template with a relation under it and roles for its parties, which is where the cold run went most wrong: it named role occupancies, which stated meaning never names, and terms without the template they are. Both runs made a LegalRuleML right a permission, where Instrument makes it the claim end of an obligation, so neither transferred that. The warm run proposed more and deferred more, mapping temporal characteristics, authorities and jurisdictions that LATTICE has no settled term for.
+The warm run took the ODRL pack's shape, a term and a template with a relation under it and roles for its parties, which is where the cold run went most wrong: it named role occupancies, which stated meaning never names, and terms without the template they are. Both runs made a LegalRuleML right a permission, which is half of it: its definition gives the bearer a permission and implies obligations or prohibitions on the auxiliary party, so in Instrument it is two relations under one term, and neither run stated the relation owed to the bearer. The first review called the permission wrong, from Instrument's sense of a right as a claim, and was amended on reading LegalRuleML's definition. The history keeps both reviews, the later one deciding. The warm run proposed more and deferred more, mapping temporal characteristics, authorities and jurisdictions that LATTICE has no settled term for.
 
 The result is consistent with MORK's expectation, and does not yet show it. There is one run of each, the review was not blind to which run was which, and the approved pack as a worked example likely did more than the lessons, which the warm agent said transferred little beyond what not to do. A test of the lessons alone, and several runs of each, would separate them.
 

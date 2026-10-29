@@ -79,7 +79,7 @@
   {
    "mapping": "Map_Right",
    "decision": "corrected",
-   "note": "a LegalRuleML right is the claim end of an obligation (Instrument 4.2.5): an ins:Obligation whose obligee is the bearer and whose obligor the auxiliary party"
+   "note": "the permission is the right half, and the obligation or prohibition owed to the bearer is missing. a LegalRuleML right gives the bearer a permission and implies obligations or prohibitions on the auxiliary party (its definition), so it is two relations under one term: an ins:Permission held by the bearer, and an ins:Obligation or ins:Prohibition owed to the bearer by the auxiliary party"
   },
   {
    "mapping": "Map_Role",
@@ -96,5 +96,6 @@
    "decision": "rejected",
    "note": "Behaviour's occasion states are runtime records, never stated meaning"
   }
- ]
+ ],
+ "amended": "2026-10-29: the right's reviews, after reading LegalRuleML's definition of Right"
 }
