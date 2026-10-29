@@ -126,6 +126,30 @@ def _closure(meaning: Graph, start, stop: set) -> Graph:
     return out
 
 
+def _match_roles(out: Graph, config: Graph, result: _Result) -> Graph:
+    """The mapping's output with each party's role replaced by the workspace's role of the same label, case aside, where
+    one exists, so an import reuses the roles a workspace already declares. Unmatched roles stay for the baseline."""
+    declared = {}
+    for role in sorted(config.subjects(RDF.type, PTY.Role), key=str):
+        for label in config.objects(role, RDFS.label):
+            declared.setdefault(str(label).casefold(), role)
+    rename = {}
+    for role in sorted(out.subjects(RDF.type, PTY.Role), key=str):
+        label = out.value(role, RDFS.label)
+        match = declared.get(str(label).casefold()) if label is not None else None
+        if match is not None:
+            rename[role] = match
+            result.finding(SH.Info, f"the party {label} is the workspace's role {match}", "odrl", match)
+    if not rename:
+        return out
+    matched = Graph()
+    for s_, p, o in out:
+        if s_ in rename:
+            continue  # the workspace already states the role
+        matched.add((s_, p, rename.get(o, o)))
+    return matched
+
+
 def propose_odrl(job: URIRef, config: Graph, spec: Graph, document: URIRef, submitted_at: str) -> Graph:
     """The job's result: its findings, and its artefacts, one for each configuration the proposals add to."""
     from mork_rdf import compile_scheme, run
@@ -150,7 +174,7 @@ def propose_odrl(job: URIRef, config: Graph, spec: Graph, document: URIRef, subm
         what = {"UnmappedValue": "an ODRL operator the mapping has no condition for, so complete the condition by hand",
                 "TermKind": "a value of the wrong kind, such as a literal where a concept is needed, so complete the condition by hand"}.get(f.code, f.code)
         result.finding(SH.Warning, f"{what}: {f.value}", "odrl", URIRef(f.focus) if f.focus else None)
-    out = ran.graph
+    out = _match_roles(ran.graph, config, result)
 
     meaning, eligibility, baseline = _by_namespace(out, str(INS)), _by_namespace(out, ELG_NS), _by_namespace(out, str(PTY))
     terms = sorted(meaning.subjects(RDF.type, INS.Term), key=str)

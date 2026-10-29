@@ -697,3 +697,31 @@ def test_the_same_policy_gives_the_same_proposals():
     again, job2 = _import(ODRL_SAMPLE.read_text())
     strip = lambda g, j: artefacts(g, j)["review.ttl"][1].replace(str(j), "JOB")
     assert strip(first, job) == strip(again, job2)
+
+
+def test_an_odrl_party_named_as_a_workspace_role_reuses_that_role():
+    from rdflib.namespace import DCTERMS, RDFS
+    pty = "https://www.nebularis.org/neuro-semantic/lattice/party#"
+    store = FakeStore()
+    iri = submit(store, "propose", "persistence", None)
+    job = URIRef(iri)
+    store.graphs[iri].remove((job, CST.target, None))
+    store.graphs[iri].add((job, CST.target, CST.OdrlProposer))
+    doc = URIRef(f"{iri}:document")
+    source = Graph()
+    for p, o in ((RDF.type, CST.ImportDocument), (CST.documentContent, Literal(ODRL_SAMPLE.read_text())),
+                 (CST.documentMediaType, Literal("application/ld+json")), (DCTERMS.conformsTo, URIRef("http://www.w3.org/ns/odrl/2/"))):
+        source.add((doc, p, o))
+    store.graphs[f"{iri}:input"] = source
+    licensee = URIRef("https://example.org/lattice/studio/roles/Licensee")
+    baseline = Graph()
+    baseline.add((licensee, RDF.type, URIRef(pty + "Role")))
+    baseline.add((licensee, RDFS.label, Literal("fernwood analytics ltd")))
+    store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"] = baseline
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
+    parts = _parts(g, job)
+    assert len(set(parts["baseline.ttl"].subjects())) == 1, "only the licensor's role is new"
+    payloads = [Graph().parse(data=str(o), format="turtle") for o in parts["review.ttl"].objects(None, CST.payload)]
+    assert any((None, URIRef(INS_NS + "holder"), licensee) in p for p in payloads)

@@ -107,12 +107,15 @@ interface ImportRun {
   added?: number;
   issues?: Issue[];
   message?: string;
-  /** Artefacts that are not an unsaved edit, such as the baseline's roles. */
-  unapplied?: string[];
+  /** The roles of parties that match no workspace role, which the author saves to the baseline deliberately, since the
+   * baseline saves at once and is never an unsaved edit. */
+  roles?: Graph;
+  rolesSaved?: boolean;
 }
 
 /** Submits an ODRL policy with the configurations and adds the job's artefacts to the configurations they belong to. The
- * baseline is saved at once, never an unsaved edit, so its roles are reported for the author to add there. */
+ * worker reuses each workspace role a party's name matches. The rest come back for the baseline, which saves at once, so the
+ * author saves them with a button of their own. */
 function useImportOdrl(m: M) {
   const [run, setRun] = useState<ImportRun>();
   const latest = useRef(m);
@@ -132,19 +135,31 @@ function useImportOdrl(m: M) {
         const current = Object.fromEntries(PARTS.map((p) => [p, latest.current.model.state.configs[p]?.current]));
         const applied = applyArtefacts(job.artefacts, current);
         for (const [part, graph] of Object.entries(applied.edits) as [typeof PARTS[number], Graph][]) latest.current.model.edit(part, () => graph);
-        setRun({ state: "done", added: applied.added, issues: job.issues, unapplied: applied.unapplied.map((a) => a.path) });
+        const roles = applied.unapplied.filter((a) => a.group === "baseline").reduce((g, a) => g.merge(Graph.parse(a.content)), Graph.empty());
+        setRun({ state: "done", added: applied.added, issues: job.issues, roles });
       } catch (error) {
         setRun({ state: "failed", message: error instanceof Error ? error.message : String(error) });
       }
     },
     [id],
   );
-  return { run, start };
+  const saveRoles = useCallback(async () => {
+    const roles = run?.roles;
+    const baseline = latest.current.model.state.baseline?.graph;
+    if (!roles || !baseline) return;
+    try {
+      await latest.current.model.replaceBaseline(baseline.merge(roles));
+      setRun((r) => r && { ...r, rolesSaved: true });
+    } catch (error) {
+      setRun((r) => r && { ...r, state: "failed", message: error instanceof Error ? error.message : String(error) });
+    }
+  }, [run]);
+  return { run, start, saveRoles };
 }
 
 function ImportOdrl({ m }: { m: M }) {
   const { studio } = m;
-  const { run, start } = useImportOdrl(m);
+  const { run, start, saveRoles } = useImportOdrl(m);
   const [file, setFile] = useState<File>();
   const [confirmed, setConfirmed] = useState(false);
   const [into, setInto] = useState("");
@@ -179,9 +194,16 @@ function ImportOdrl({ m }: { m: M }) {
           <div className="small">
             {run.added} {run.added === 1 ? "proposal" : "proposals"} added from the policy. Save each changed part to keep them.
           </div>
-          {run.unapplied!.length > 0 && (
-            <div className="small" style={{ marginTop: 4 }}>
-              {run.unapplied!.join(", ")} was not added, since the baseline saves at once. Its roles must be added in the Baseline view.
+          {run.roles && run.roles.size > 0 && (
+            <div className="row small" style={{ marginTop: 4 }}>
+              <span className="grow">
+                {run.rolesSaved
+                  ? "The new roles are saved to the baseline."
+                  : "Some parties match no role of the workspace. The proposals name new roles for them, which the baseline must hold."}
+              </span>
+              {!run.rolesSaved && (
+                <button className="btn sm" onClick={() => void saveRoles()}>Save the new roles to the baseline</button>
+              )}
             </div>
           )}
           {run.issues!.map((i, n) => (
