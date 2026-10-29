@@ -527,6 +527,12 @@ mork:appliesInJurisdiction a owl:ObjectProperty ;
     rdfs:domain mork:GenerativeMapping ;
     rdfs:range skos:Concept .
 
+mork:appliesWhen a owl:ObjectProperty ;
+    rdfs:label "applies when" ;
+    rdfs:comment "A SHACL node shape the nodes a mapping applies to must conform to. The mapping, and the mappings beneath it in its context, apply only to the nodes its path reaches that conform to the shape." ;
+    skos:scopeNote "A guard tests the source, never the target. Several guarded mappings on one path divide its nodes among them, and a node no guard admits is mapped by none." ;
+    rdfs:range sh:NodeShape .
+
 mork:assertsPropertyDomains a owl:ObjectProperty ;
     rdfs:label "asserts property domains" ;
     rdfs:comment "Used to indicate that a mapping to an object property should provide assertions about the domain(s) of that property. Intended for use with deferred mappings (i.e., where the axiom to which the domain property shall refer does not exist at the time the mapping is defined)." ;

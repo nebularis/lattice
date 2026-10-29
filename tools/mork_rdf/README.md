@@ -100,6 +100,8 @@ A root concept's `mork:path` is not read, since a root iterates its classes, and
 
 The mapping graph is validated against MORK's shapes, with MORK's and Foundation's specifications as the ontology, before anything is read (each component validates what it receives, PRI-75). The shapes refuse a cycle in `mork:precedes` and the properties it derives from, a governance state outside Foundation's four, and, in production mode, a generative mapping still in draft (MEC-75). A violation is an error finding (`MorkShape`), and a warning a warning. A caller outside the repository passes the shapes as a `MorkLayer`.
 
+The shapes read the mapping graph under RDFS, so pySHACL would close the mapping graph and both specifications on every compile, which was nearly all of a compile's time. The specifications never change, so the compiler closes them once and keeps the closure, and adds for each mapping graph only what its own triples entail against it: each superproperty's triples, the types each domain and range gives, and each type's superclasses. A mapping graph that states schema of its own, such as `rdfs:subClassOf`, takes the full closure, since its consequences reach the specification's. A test holds the two to the same findings on every mapping graph the suite has. A compile's validation fell from 0.33 s to 0.05 s, and the suite from 15 s to 5 s.
+
 ### 4.4 Options
 
 | Option | Meaning |
@@ -275,6 +277,24 @@ Several domains, or several ranges, are combined by `mork:classCombination`, `mo
 
 A domain or range that yields classes created from data is known only once those creations have run. A global axiom over them is written at the closure of the DAG: a `closure` query selects the members once the creations' strata are done, and the runner writes the one class, or the combination as an OWL list in IRI order. A subclass restriction over them is written once per created class in a later stratum. A restriction whose range, or whose combined subject, is made from data is refused (`RangeFromData`, `CombinationFromData`) until a closure that writes restrictions is needed.
 
+### 7.7 Guards
+
+`mork:appliesWhen` names a SHACL node shape a mapping's focus node must conform to: a datum's own focus node, or, for an assertion or a lookup, the parent's focus node it asserts on. The guard is a `FILTER` on that frame, so every query beneath the mapping inherits it. A guard on a root that names one individual is refused, since there is no focus node to test.
+
+| Shape | Compiled to |
+|---|---|
+| a property shape's `sh:path` | one property, or the `sh:inversePath` of one |
+| `sh:minCount 1`, `sh:maxCount 0`, `sh:maxCount 1` | `EXISTS`, `NOT EXISTS`, and `NOT EXISTS` two distinct values |
+| `sh:hasValue` | on a property shape the path having the value, on a node shape the node being it, by `sameTerm` |
+| `sh:in`, `sh:class`, `sh:datatype`, `sh:nodeKind` | each value meeting it, so a node with no value conforms, as in SHACL. `sh:in` compares by RDF term, never by value, and `sh:class` reads `rdf:type/rdfs:subClassOf*` in the source |
+| `sh:not`, `sh:and`, `sh:or` | `!`, `&&` and `\|\|` of the inner shapes |
+
+Any other SHACL feature, such as `sh:pattern`, a sequence path or a count beyond one, refuses the mapping (`GuardUnsupported`), since a guard compiled in part would admit nodes the shape does not. Names, messages and severities are ignored. The guard runs on the skolemised source (§12), so `sh:nodeKind sh:BlankNode` matches nothing.
+
+Guarded siblings on one path divide its nodes. When two or more datums share a path and all are guarded, a check names each node none of them admits (`Unguarded`).
+
+The tests take pySHACL as the oracle. For each of fifteen shapes over one fixture graph, one validation targets every node and the compiled guard runs over the same graph, and the two must agree node for node.
+
 ## 8. Templates
 
 An instantiation (`mork:templateMapping`) is merged with its template before classification, by Definition 3.7's first strategy: the instantiation's own values first, the template's where it gives none. Its children are its own, followed by the template's children that none of its own children correlates with through `mork:templateBinding`. Each of the template's children is compiled under every instantiation, in that instantiation's context, and a query's `path` names the instantiation, so a reviewer sees which one it came from.
@@ -341,6 +361,7 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `DeferredCycle` | error | mappings that read each other's output, so no stratum order exists |
 | `AxiomsOnExistingProperty` | error | domain or range axioms on a property the mapping does not create |
 | `AxiomFormUnknown`, `NoDomain` | error | an axiom form that names no form, or a restriction with no domain |
+| `GuardUnsupported` | error | a guard using SHACL the compiler cannot compile (§7.7) |
 | `RangeFromData`, `CombinationFromData` | error | a restriction over classes made from data that would need a combination at the closure (§7.6) |
 | `NoName` | error | a broad R-Box match with no name for the property it creates |
 | `BroadMatch` | warning | a broad match, compiled |
@@ -368,6 +389,7 @@ Each check is a `SELECT` that the compiler emits beside the constructs, and the 
 | `LookupUnresolved` | a lookup | no reference node matches |
 | `LookupAmbiguous` | a lookup | several match, and each was asserted |
 | `TermKind` | an assertion whose property the target vocabulary types | a literal for an object property, or an IRI for a datatype property |
+| `Unguarded` | guarded datums sharing a path | a node of the path that no guard admits |
 | `Uncovered` | the scheme, when a declared `mork:Entity` has no compiled root iterating it | a source node of that class, from which nothing was made |
 
 The declared entities are the coverage list. A node of a class the mapping graph does not declare is not reported, because a node reached along a path, such as a book's author, need not be declared, and a check over every typed node would report each of them.
@@ -514,6 +536,8 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Lookup comparisons.** A string and an integer code against an integer reference value, under each comparison and the lexical fallback.
 - **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
+- **Guards.** Each of fifteen shapes admits exactly the nodes pySHACL says conform, an unsupported feature refuses its mapping, guarded siblings divide their path, and a node no guard admits is reported.
+- **Validation.** Validating against the closed specification finds what full inference finds, on five mapping graphs, one of which breaks a shape.
 - **The skolem rule.** The vectors give exactly their expected triples, one name is re-derived by hand from §12.2, names do not depend on the triples' order, survive an unrelated addition and change with their own description, identical siblings stay two, and each irregular component is reported.
 - **Sinks.** A run streamed to N-Triples writes what a run in memory returns, on the catalogue and on a stratified run whose lookup reads an earlier stratum's classes.
 - **MORK's examples.** `ontology/mork/examples/Zoo/PropertyGeneration.ttl` and `UncertainMappings.ttl` compile to the classes, properties, axioms and typed individuals their notes describe.
@@ -547,6 +571,8 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
 | MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29) | a deployment keeps and reads it as data, and the same compilation always has the same name |
 | MR-23 | Blank nodes are named by the skolem rule of §12.2, version 1, the source-local deterministic pattern for tree nodes and component-scoped canonical labels for the rest (ADR-A146, Proposed) | identities that survive unrelated changes to a source, which whole-source canonical labels do not |
+| MR-24 | A guard is a SHACL node shape named by `mork:appliesWhen`, compiled for a closed subset of SHACL with pySHACL as the oracle, and refused beyond it (decided 2026-10-29) | a guard tests the source's shape, which SHACL is the standard for, and no expression language is added to MORK |
+| MR-25 | MORK's specification is closed under RDFS once, and each mapping graph's own entailments are added to it for validation, unless it states schema (2026-10-29) | the closure was nearly all of a compile's time, and the findings are the same |
 
 ## 18. Open questions
 

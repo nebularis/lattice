@@ -19,7 +19,7 @@ Rules already written in ODRL, the W3C's policy language, describe permissions, 
 4. **A permission excepts an implied prohibition.** In licence law a licence is a defence against the owner's exclusive rights, so each permission excepts a prohibition of the same act on the same asset between the same parties, under a term implied by those rights and proposed on the permission's clause. The prohibition's scope is the asset alone.
 5. **A duty on a permission is what the permission arises on,** an act of the duty's action by its party, since ODRL requires the duty done before the permission is used. No separate obligation is written.
 6. **A remedy or a consequence is an obligation arising on the breach** of its prohibition or duty, under the same term.
-7. **Constraints are the scope.** A rule's scope is a profile requiring the asset and each constraint, the operator choosing the condition's kind: equality exact, `isAnyOf` set membership, `isA` and `isPartOf` hierarchical, the comparisons an interval. A comparison's range set, any other operator, and a literal where a concept is needed are reported for the reviewer to complete.
+7. **Constraints are the scope.** A rule's scope is a profile requiring the asset and each constraint, the operator choosing the condition's kind: equality exact, `isAnyOf` set membership, `isA` and `isPartOf` hierarchical, the comparisons an interval. `neq` is a negated exact condition, and a comparison's range set is built from its operands. Any other operator, and a literal where a concept is needed, are reported for the reviewer to complete.
 8. **Actions are the activity scheme.** ODRL's own action concepts form a scheme bound to Instrument's activity contract, ODRL's `includedIn` giving `skos:broader`.
 9. **Every policy type imports,** a Set, an Offer or an Agreement alike, as proposals.
 10. **The clause is the author's choice,** one picked from the library, else a generated form with one clause for each term, its text the rule in plain words.
@@ -30,7 +30,7 @@ Rules already written in ODRL, the W3C's policy language, describe permissions, 
 
 - A reviewer sees ODRL's rules as stated meaning in Instrument's terms, with the implied prohibitions that make the permissions coherent, and decides each one.
 - The mapping writes into several configurations, so the job returns one artefact for each, and the browser adds each to its part.
-- A comparison constraint gets an interval condition whose range set the reviewer writes. MORK cannot yet make a mapping apply to some source values only, which building the range set from the constraint would need. Whether MORK gains such a guard is an open question for its maintainers.
+- A comparison constraint becomes an interval condition with its range set, and `neq` a negated exact condition, through MORK's guards (`mork:appliesWhen`), which confine a mapping to the constraints whose operator takes it.
 - When a rule and its policy both name a party, both become roles, since a property path cannot say that the rule's own party wins. The reviewer removes the policy's.
 - Other ODRL constructs, refinements of actions, assets and parties, policy inheritance from `inheritFrom`, conflict strategies and asset and party collections, are not mapped yet, and a policy that uses them imports without them.
 

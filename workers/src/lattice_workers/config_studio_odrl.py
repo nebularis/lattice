@@ -9,7 +9,7 @@ the mapping scheme, and no other remote context is fetched.
 
 The mapping writes into several configurations, as the studio sorts subjects by namespace, so the job returns one
 artefact for each part it adds to: the proposals for review, their conditions for eligibility, their roles for the
-baseline, the concepts they name for vocabulary, and, when no clause was picked, a form for the library with one clause
+baseline, the ranges of their comparisons for quantification, the concepts they name for vocabulary, and, when no clause was picked, a form for the library with one clause
 for each term."""
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from .config_studio_proposers import FND, INS, INS_VOC, PTY, VOC, WRD
 ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
 ELG_NS = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#"
 ELG = Namespace(ELG_NS)
+QNT_NS = "https://www.nebularis.org/neuro-semantic/lattice/quantification#"
 WRD_VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#")
 OM = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#")
 SCHEME = OM.Scheme
@@ -177,6 +178,7 @@ def propose_odrl(job: URIRef, config: Graph, spec: Graph, document: URIRef, subm
     out = _match_roles(ran.graph, config, result)
 
     meaning, eligibility, baseline = _by_namespace(out, str(INS)), _by_namespace(out, ELG_NS), _by_namespace(out, str(PTY))
+    quantification = _by_namespace(out, QNT_NS)
     terms = sorted(meaning.subjects(RDF.type, INS.Term), key=str)
     relations = {t: sorted(meaning.subjects(INS.arisesUnder, t), key=str) for t in terms}
     owned = {r for rs in relations.values() for r in rs} | set(terms)
@@ -269,7 +271,7 @@ def propose_odrl(job: URIRef, config: Graph, spec: Graph, document: URIRef, subm
         review.add((proposal, CST.evidence, Literal(evidence)))
         review.add((proposal, CST.payload, Literal(payload.serialize(format="turtle"))))
 
-    for path, graph, group in (("review.ttl", review, "review"), ("eligibility.ttl", eligibility, "eligibility"),
+    for path, graph, group in (("review.ttl", review, "review"), ("eligibility.ttl", eligibility, "eligibility"), ("quantification.ttl", quantification, "quantification"),
                                ("baseline.ttl", baseline, "baseline"), ("vocabulary.ttl", vocab, "vocabulary"),
                                ("library.ttl", library, "library")):
         if len(graph):

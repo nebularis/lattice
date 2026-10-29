@@ -654,7 +654,7 @@ def test_an_odrl_policy_gives_a_proposal_for_each_rule_and_the_prohibition_its_p
     g, job = _import(ODRL_SAMPLE.read_text())
     assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
     parts = _parts(g, job)
-    assert set(parts) == {"review.ttl", "eligibility.ttl", "baseline.ttl", "vocabulary.ttl", "library.ttl"}
+    assert set(parts) == {"review.ttl", "eligibility.ttl", "quantification.ttl", "baseline.ttl", "vocabulary.ttl", "library.ttl"}
     review, library = parts["review.ttl"], parts["library.ttl"]
     proposals = list(review.subjects(RDF.type, CST.Proposal))
     assert len(proposals) == 4, "a permission, the prohibition it excepts, a prohibition and an obligation"
@@ -668,8 +668,12 @@ def test_an_odrl_policy_gives_a_proposal_for_each_rule_and_the_prohibition_its_p
             assert (None, URIRef(INS_NS + "arisesOn"), None) in payload, "the permission arises on the act of its duty"
     assert {"Permission", "Prohibition", "Obligation"} <= kinds
     assert len(set(parts["baseline.ttl"].subjects())) == 2, "one role for each party"
-    reported = {str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Warning)}
-    assert any("2030-01-01" in m for m in reported), "the date's literal is reported, for the reviewer to complete"
+    qnt = "https://www.nebularis.org/neuro-semantic/lattice/quantification#"
+    bounds = parts["quantification.ttl"]
+    bound = next(bounds.subjects(RDF.type, URIRef(qnt + "Bound")))
+    assert (bound, URIRef(qnt + "boundSense"), URIRef(qnt + "Upper")) in bounds and (bound, URIRef(qnt + "boundClosure"), URIRef(qnt + "Open")) in bounds
+    assert str(bounds.value(bounds.value(bound, URIRef(qnt + "boundValue")), URIRef(qnt + "numericValue"))) == "2030-01-01"
+    assert not results(g, job, SH.Warning), "the guards leave nothing for the reviewer to complete in the sample"
 
 
 def test_an_odrl_import_into_a_picked_clause_proposes_every_term_on_it():

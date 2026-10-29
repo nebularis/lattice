@@ -911,7 +911,24 @@ The MORK Teaching Pack (MTP) is the material from which a model learns to write 
 
 The build extracts logical facts and fingerprints from the ontology, verifies the codebook's coverage, reads curated data, measures the example corpus, validates the example cassettes, and writes a manifest of digests. The curated data is `ontology/mork/mtp/data/`, and the generated and committed output is `ontology/mork/mtp/out/`, which the build owns. A change to `spec/Mork.ttl` therefore changes the fingerprints the pack pins, and `mise run check:mtp` fails until the pack is rebuilt with `mise run build:mtp` ([overview](../../docs/architecture/mork-teaching-pack.md)).
 
-### 5.17 Cross references
+### 5.17 Guards
+
+A mapping applies to every node its path reaches. A guard confines it to the nodes that conform to a SHACL node shape, named with `mork:appliesWhen`, so a mapping can apply to some values of a source and another mapping to others. The mapping applies to a node, and the mappings beneath it apply in its context, only when the node conforms to the shape. A guard tests the source's shape, which is what SHACL describes, so MORK states it in SHACL and adds no expression language of its own.
+
+For example, ODRL states a comparison as a constraint whose operator is `lt`, `lteq`, `gt` or `gteq`, and only those constraints become a range of values:
+
+```turtle-example
+om:Comparison a mork:Datum ;
+    mork:compositeBroaderMapping om:Scope ;
+    mork:mappingFor om:ConstraintConcept ;
+    mork:appliesWhen [ a sh:NodeShape ;
+        sh:property [ sh:path odrl:operator ; sh:in ( odrl:lt odrl:lteq odrl:gt odrl:gteq ) ] ] ;
+    mork:exactTBoxMatch elg:IntervalCondition .
+```
+
+A compiler compiles a guard to a test it can prove means what the shape means. `tools/mork_rdf` compiles the constraint components `sh:hasValue`, `sh:in`, `sh:class`, `sh:datatype`, `sh:nodeKind`, `sh:minCount`, `sh:maxCount`, `sh:not`, `sh:and` and `sh:or`, over a property shape's `sh:path` or the node itself, and refuses any other by name. Its tests check that a node passes a compiled guard exactly when pySHACL says the node conforms to the shape. A backend that cannot express a guard refuses the guarded mapping, never compiling it unguarded.
+
+### 5.18 Cross references
 
 - The foundations MORK relies on, Foundation's governance states, versions and supersession, are in [Foundation](../foundation/README.md).
 - Eligibility, whose conditions the Executable vocabulary describes plans for, is in [Eligibility](../eligibility/README.md).
@@ -1672,6 +1689,16 @@ The object properties of MORK first, then those of Executable.
 **Domain.** `mork:GenerativeMapping`
 
 **Range.** `skos:Concept`
+
+#### `mork:appliesWhen`
+
+**Definition.** A SHACL node shape the nodes a mapping applies to must conform to. The mapping, and the mappings beneath it in its context, apply only to the nodes its path reaches that conform to the shape.
+
+**Label.** applies when
+
+**Range.** `sh:NodeShape`
+
+**Scope note.** A guard tests the source, never the target. Several guarded mappings on one path divide its nodes among them, and a node no guard admits is mapped by none.
 
 #### `mork:assertsPropertyDomains`
 
@@ -4778,6 +4805,7 @@ The Axiom Index is generated from this section.
 | `exe:producesArtefact` | Object property | Domain `exe:ExecutablePlan`. Range `exe:GeneratedArtefact`. |
 | `exe:usesCompositionOperation` | Object property | Domain `exe:ProfilePlan`. Range `elg:CompositionOperation`. Functional. |
 | `mork:appliesInJurisdiction` | Object property | Domain `mork:GenerativeMapping`. Range `skos:Concept`. |
+| `mork:appliesWhen` | Object property | Range `sh:NodeShape`. |
 | `mork:assertsPropertyDomains` | Object property | Subproperty of `mork:propertyMappingAssertions`. |
 | `mork:assertsPropertyRanges` | Object property | Subproperty of `mork:propertyMappingAssertions`. |
 | `mork:associativeBroader` | Object property | Inverse of `mork:associativeNarrower`. Subproperty of `skos:broader`. |
@@ -5185,7 +5213,7 @@ Not applicable.
 ## 12. Release Notes
 
 - **Next release** (additive). The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way (no effect).
-- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect).
+- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect). New: `mork:appliesWhen`, a SHACL node shape that confines a mapping to the nodes conforming to it (no effect on a mapping that names none).
 - **Next release.** `mork:GenerativeMapping` is a subclass of `fnd:Versioned`, where it was a subclass of `fnd:Version`, which Foundation reserves for one specific version (changes meaning).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

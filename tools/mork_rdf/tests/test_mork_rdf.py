@@ -13,6 +13,8 @@ from rdflib import BNode, Dataset, Graph, Literal, URIRef
 from mork_rdf import CompileError, Severity, compile_scheme, run
 from mork_rdf import paths
 from mork_rdf.model import REFERENCE_GRAPH
+from rdflib.namespace import SH as SH_NS
+RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SCHEME = "http://example.org/mapping#Catalogue"
@@ -617,3 +619,141 @@ def test_a_run_reports_the_blank_nodes_named_by_their_component():
     source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> . _:a <{SRC}knows> _:b . _:b <{SRC}knows> _:a .", format="turtle")
     found = [f for f in run(compiled, source).findings if f.code == "SkolemCanonical"]
     assert len(found) == 1 and found[0].value == "2" and found[0].severity is Severity.WARNING
+
+
+# --- validation before compiling (§4.3) ------------------------------------------------------------------------------
+
+def _shape_graphs():
+    yield "catalogue", parse("catalogue-mapping.ttl")
+    yield "property generation", Graph().parse(_example("Zoo/PropertyGeneration.ttl"))
+    yield "uncertain mappings", Graph().parse(_example("Zoo/UncertainMappings.ttl"))
+    import lattice_repo_catalogue as reader
+    cat = reader.load()
+    yield "odrl", Graph().parse(cat.root / cat.area("contracts") / "config-studio" / "odrl" / "odrl-instrument.mork.ttl")
+    yield "a precedence cycle", Graph().parse(data=HEAD + "mm:A mork:mappingScheme mm:S ; mork:precedes mm:B . mm:B mork:mappingScheme mm:S ; mork:precedes mm:A .", format="turtle")
+
+
+@pytest.mark.parametrize("name, g", list(_shape_graphs()), ids=lambda x: x if isinstance(x, str) else "")
+def test_validating_against_the_closed_specification_finds_what_full_inference_finds(name, g):
+    """The compiler closes MORK's specification once and entails only the mapping graph's own triples, which must find
+    exactly what pySHACL's RDFS inference over the mapping and the whole specification finds."""
+    import pyshacl
+    from mork_rdf.layer import entail, load, validate
+
+    layer = load()
+    assert entail(g, layer) is not None or name == "uncertain mappings", "only a graph stating schema takes the full closure"
+    conforms, report, _ = pyshacl.validate(g, shacl_graph=layer.shapes, ont_graph=layer.spec, inference="rdfs", advanced=True, allow_warnings=True)
+    full = set()
+    if not conforms:
+        from rdflib.namespace import SH
+        for result in report.subjects(SH.resultSeverity, None):
+            full.add((str(report.value(result, SH.focusNode)), str(report.value(result, SH.resultMessage)), str(report.value(result, SH.resultSeverity))))
+    fast = {(f.mapping, f.message, {"error": str(SH_NS.Violation), "warning": str(SH_NS.Warning), "info": str(SH_NS.Info)}[f.severity.value]) for f in validate(g, layer)}
+    assert fast == full
+    assert name != "a precedence cycle" or fast, "the cycle breaks a shape, so the comparison is not vacuous"
+
+
+# --- guards (§7.7) ---------------------------------------------------------------------------------------------------
+
+GUARD_DATA = f"""@prefix src: <{SRC}> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+src:Sub <http://www.w3.org/2000/01/rdf-schema#subClassOf> src:Kind .
+src:n1 a src:Thing ; src:op src:lt ; src:value 1 ; src:tag src:red .
+src:n2 a src:Thing ; src:op src:eq ; src:value "1"^^xsd:integer , "01"^^xsd:integer ; src:tag src:red , src:blue .
+src:n3 a src:Thing ; src:value "x" .
+src:n4 a src:Thing ; src:op src:lteq ; src:tag src:green ; src:kind src:k1 .
+src:n5 a src:Thing ; src:op src:lt , src:gt ; src:value 7 .
+src:k1 a src:Sub . src:k2 a src:Other .
+src:n6 a src:Thing ; src:kind src:k2 ; src:tag "red" .
+src:pointer src:points src:n4 .
+"""
+GUARD_SHAPES = {
+    "in, no value conforms": "sh:property [ sh:path src:op ; sh:in ( src:lt src:lteq ) ]",
+    "in, required": "sh:property [ sh:path src:op ; sh:minCount 1 ; sh:in ( src:lt src:lteq ) ]",
+    "has value on a path": "sh:property [ sh:path src:tag ; sh:hasValue src:red ]",
+    "at most one": "sh:property [ sh:path src:value ; sh:maxCount 1 ]",
+    "none": "sh:property [ sh:path src:op ; sh:maxCount 0 ]",
+    "class through a subclass": "sh:property [ sh:path src:kind ; sh:class src:Kind ]",
+    "datatype": "sh:property [ sh:path src:value ; sh:datatype xsd:integer ]",
+    "node kind": "sh:property [ sh:path src:tag ; sh:nodeKind sh:IRI ]",
+    "the node itself": "sh:in ( src:n1 src:n3 )",
+    "the node's own value": "sh:hasValue src:n2",
+    "a literal by term": "sh:property [ sh:path src:value ; sh:in ( 1 ) ]",
+    "not": "sh:not [ sh:property [ sh:path src:tag ; sh:hasValue src:red ] ]",
+    "and": "sh:and ( [ sh:property [ sh:path src:op ; sh:minCount 1 ] ] [ sh:property [ sh:path src:value ; sh:maxCount 1 ] ] )",
+    "or": "sh:or ( [ sh:property [ sh:path src:op ; sh:hasValue src:eq ] ] [ sh:property [ sh:path src:kind ; sh:minCount 1 ] ] )",
+    "an inverse path": "sh:property [ sh:path [ sh:inversePath src:points ] ; sh:minCount 1 ]",
+}
+SHAPE_HEAD = f"@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix src: <{SRC}> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
+
+
+@pytest.fixture(scope="module")
+def guard_data() -> Graph:
+    return Graph().parse(data=GUARD_DATA, format="turtle")
+
+
+@pytest.mark.parametrize("name", list(GUARD_SHAPES))
+def test_a_compiled_guard_admits_exactly_the_nodes_that_conform_to_its_shape(name, guard_data):
+    """pySHACL is the oracle: one validation of every node against the shape, and the compiled guard run over the same
+    graph, must agree node for node."""
+    import pyoxigraph as ox
+    import pyshacl
+    from mork_rdf.compile import _term
+    from mork_rdf.guards import compile_guard
+
+    shapes = Graph().parse(data=SHAPE_HEAD + f"src:Guard a sh:NodeShape ; {GUARD_SHAPES[name]} .", format="turtle")
+    things = set(guard_data.subjects(RDF_TYPE, URIRef(SRC + "Thing")))
+    targeted = Graph() + shapes  # a guard names no target, since its mapping gives the focus, so the oracle adds one
+    targeted.add((URIRef(SRC + "Guard"), SH_NS.targetClass, URIRef(SRC + "Thing")))
+    _, report, _ = pyshacl.validate(guard_data, shacl_graph=targeted, inference="none", advanced=False)
+    failing = {report.value(r, SH_NS.focusNode) for r in report.subjects(RDF_TYPE, SH_NS.ValidationResult)}
+    counter = iter(range(10_000))
+    expression = compile_guard(shapes, URIRef(SRC + "Guard"), "?f", _term, lambda stem: f"?{stem}{next(counter)}")
+    store = ox.Store()
+    store.load(guard_data.serialize(format="nt").encode(), ox.RdfFormat.N_TRIPLES)
+    admitted = {URIRef(row["f"].value) for row in store.query(f"SELECT ?f WHERE {{ ?f a <{SRC}Thing> FILTER ({expression}) }}")}
+    assert admitted == things - failing
+
+
+@pytest.mark.parametrize("shape, said", [
+    ("sh:property [ sh:path src:op ; sh:pattern \"^l\" ]", "shacl#pattern"),
+    ("sh:property [ sh:path src:op ; sh:minCount 2 ]", "0 or 1"),
+    ("sh:property [ sh:path ( src:op src:value ) ; sh:minCount 1 ]", "sh:path"),
+])
+def test_a_guard_the_compiler_cannot_compile_refuses_its_mapping(shape, said):
+    g = Graph().parse(data=HEAD + SHAPE_HEAD.split(" . ", 1)[0] + " .\n" + f"""mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ;
+        mork:exactTBoxMatch tgt:Other ; mork:appliesWhen [ a sh:NodeShape ; {shape} ] .""", format="turtle")
+    refused = [f for f in compile_scheme(g, MM + "S", base=BASE, at=AT).errors if f.code == "GuardUnsupported"]
+    assert refused and said in refused[0].message
+
+
+def test_guarded_siblings_divide_the_nodes_of_their_path():
+    g = Graph().parse(data=HEAD + SHAPE_HEAD.split(" . ", 1)[0] + " .\n" + """
+        mm:Low a mork:DataMapping ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ;
+            mork:exactRBoxMatch tgt:low ; mork:dataRef "src:value" ;
+            mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path src:op ; sh:minCount 1 ; sh:in ( src:lt ) ] ] .
+        mm:High a mork:DataMapping ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ;
+            mork:exactRBoxMatch tgt:high ; mork:dataRef "src:value" ;
+            mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path src:op ; sh:minCount 1 ; sh:in ( src:gt ) ] ] .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert not compiled.errors
+    source = Graph().parse(data=f"<{REC}a> a <{SRC}Thing> ; <{SRC}op> <{SRC}lt> ; <{SRC}value> 1 . <{REC}b> a <{SRC}Thing> ; <{SRC}op> <{SRC}gt> ; <{SRC}value> 9 .", format="turtle")
+    out = run(compiled, source).graph
+    assert {(str(p).rsplit("#", 1)[-1], str(o)) for _, p, o in out if str(p).startswith(TGT)} == {("low", "1"), ("high", "9")}
+
+
+def test_a_node_no_guarded_sibling_admits_is_reported():
+    g = Graph().parse(data=HEAD + SHAPE_HEAD.split(" . ", 1)[0] + " .\n" + """
+        mm:Item a mork:DataConcept ; mork:path "src:item" .
+        mm:Lt a mork:Datum ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:mappingFor mm:Item ;
+            mork:exactTBoxMatch tgt:Low ; mork:inverseRBoxMatch tgt:has ;
+            mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path src:op ; sh:minCount 1 ; sh:in ( src:lt ) ] ] .
+        mm:Gt a mork:Datum ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:mappingFor mm:Item ;
+            mork:exactTBoxMatch tgt:High ; mork:inverseRBoxMatch tgt:has ;
+            mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path src:op ; sh:minCount 1 ; sh:in ( src:gt ) ] ] .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert not compiled.errors
+    source = Graph().parse(data=f"""<{REC}t> a <{SRC}Thing> ; <{SRC}item> <{REC}i1> , <{REC}i2> , <{REC}i3> .
+        <{REC}i1> <{SRC}op> <{SRC}lt> . <{REC}i2> <{SRC}op> <{SRC}gt> . <{REC}i3> <{SRC}op> <{SRC}eq> .""", format="turtle")
+    out = run(compiled, source)
+    assert {(f.code, f.focus) for f in out.findings} == {("Unguarded", REC + "i3")}
+    assert len(set(out.graph.subjects(RDF_TYPE, None))) == 3  # the root and the two admitted items

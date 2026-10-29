@@ -181,6 +181,7 @@ def _message(code: Optional[str]) -> str:
         "LookupUnresolved": "no reference node matches the value, so the property was not asserted",
         "LookupAmbiguous": "several reference nodes match the value, and each was asserted",
         "TermKind": "the value's kind, an IRI or a literal, is not what the target property takes",
+        "Unguarded": "no guard of the mappings that share this node's path admits it, so none of them mapped it",
         "SkolemCanonical": "these blank nodes are in a cycle, shared, or reached from no named node, so they are named by their component's canonical labels, which change whenever the component does",
         "Uncovered": "the node's class is a declared source entity that no compiled root iterates, so nothing was made from it",
     }.get(code or "", "a check reported this focus node")

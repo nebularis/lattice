@@ -17,6 +17,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
 from . import paths
+from .guards import GuardError, compile_guard
 from .model import (MORK, REFERENCE_GRAPH, SKOS, CompiledMapping, CompiledQuery, CompileError, Finding, Severity, local)
 from .read import Kind, Reading, Spec, Yielded, _named, effective_confidence, iter_roots, read, resolve
 
@@ -117,6 +118,15 @@ class _Compiler:
                     return self._yielded(named, term, own, chain, patterns)
             raise _Refusal("DeferredOutcome", f"{term.n3()} yields the outcome of {found.outcome.n3()}, which is not on this mapping's context chain and is no named creation. Join to it with a lookup")
         raise _Refusal("DeferredUnresolved", f"{term.n3()} yields nothing: name it with mork:conceptName or yield a mapping with mork:yieldConcept")
+
+    def guard(self, spec: Spec, focus: str) -> list[str]:
+        """The filter a mapping's guard puts on its focus node (§7.7), none when it has no guard."""
+        if spec.guard is None:
+            return []
+        try:
+            return [f"FILTER ({compile_guard(self.g, spec.guard, focus, _term, self.var)})"]
+        except GuardError as error:
+            raise _Refusal("GuardUnsupported", str(error)) from error
 
     def outputs(self, values: tuple, own: Spec) -> tuple[list[str], list[URIRef]]:
         """The classes `values` name for an axiom: constant terms, and the class creations whose classes are made from
@@ -237,6 +247,8 @@ class _Compiler:
         frame = _Frame(spec, focus, "")
         if not sources:
             # A root that names one individual is made once, from nothing in the source.
+            if spec.guard is not None:
+                raise _Refusal("GuardUnsupported", "a guard tests a focus node, and a root that names one individual has none")
             self.identity(spec, frame)
             if frame.target.startswith("?") or frame.identity:
                 raise _Refusal("NoIterator", "a root datum names the source classes it iterates with mork:mappingFor and mork:representedAs")
@@ -247,6 +259,7 @@ class _Compiler:
             kind = self.var("source")
             frame.match.append(f"VALUES {kind} {{ {' '.join(_term(s) for s in sources)} }}")
             frame.match.append(f"{focus} {_term(RDF.type)} {kind} .")
+        frame.match += self.guard(spec, focus)
         for concept in self.g.objects(spec.node, MORK.mappingFor):
             if next(iter(self.g.objects(concept, MORK.path)), None) is not None:
                 self.findings.append(Finding("RootPathIgnored", str(spec.node), "a root iterates its source classes, so its concept's mork:path is not read", Severity.WARNING))
@@ -264,6 +277,7 @@ class _Compiler:
                 raise _Refusal("BadPath", str(error)) from error
             frame.focus = self.var("f")
             frame.match.append(f"{parent.focus} {paths.write(path)} {frame.focus} .")
+        frame.match += self.guard(spec, frame.focus)
         self.identity(spec, frame)
         return frame
 
@@ -408,6 +422,32 @@ class _Compiler:
             if child not in self.r.specs:
                 continue
             self.child(chain, self.r.specs[child])
+        self.unguarded(chain, spec)
+
+    def unguarded(self, chain: list[_Frame], spec: Spec) -> None:
+        """A check naming each node that guarded siblings on one path share and that no guard of theirs admits, since such
+        siblings divide their path's nodes, and a node none of them takes is mapped by none (§7.7)."""
+        def path_of(child: Spec) -> Optional[str]:
+            return next((str(p) for c in sorted(self.g.objects(child.node, MORK.mappingFor), key=str) for p in self.g.objects(c, MORK.path)), None)
+
+        groups: dict = {}
+        for child in (self.r.specs[c] for c in spec.children if c in self.r.specs):
+            if child.kind in (Kind.DATUM, Kind.CONTEXTUAL):
+                groups.setdefault(path_of(child), []).append(child)
+        for path_text, siblings in sorted(groups.items(), key=lambda kv: str(kv[0])):
+            if len(siblings) < 2 or any(s_.guard is None for s_ in siblings):
+                continue
+            parent = chain[-1]
+            focus, patterns = parent.focus, []
+            if path_text is not None:
+                focus = self.var("f")
+                patterns.append(f"{parent.focus} {paths.write(paths.parse(path_text, self.r.prefixes))} {focus} .")
+            try:
+                tests = [compile_guard(self.g, s_.guard, focus, _term, self.var) for s_ in siblings]
+            except GuardError:
+                continue  # each sibling's own refusal says why
+            patterns.append(f"FILTER (!({' || '.join(f'({t})' for t in tests)}))")
+            self.check(chain, "Unguarded", f"({focus} AS ?focus)", self.where(chain, patterns))
 
     def child(self, chain: list[_Frame], spec: Spec) -> None:
         try:
@@ -502,6 +542,7 @@ class _Compiler:
         prop = self._property(spec)
         prop_iri = spec.strata.rbox.get("exact") or spec.strata.rbox.get("inverse")
         inverse = "inverse" in spec.strata.rbox and "exact" not in spec.strata.rbox
+        guarded = self.guard(spec, parent.focus)
         rows = []
         for child in spec.children:
             corr = self.r.specs.get(child)
@@ -510,7 +551,7 @@ class _Compiler:
                 rows += [(source, target) for source in corr.sources]
                 if "broad" in corr.strata.abox and "exact" not in corr.strata.abox:
                     self.findings.append(Finding("BroadMatch", str(corr.node), f"maps to the broader individual {target.n3()}", Severity.WARNING))
-        patterns: list[str] = []
+        patterns: list[str] = list(guarded)
         if spec.data_ref is not None:
             raw = self.var("v")
             patterns.append(f"{parent.focus} {paths.write(spec.data_ref)} {raw} .")
@@ -519,7 +560,7 @@ class _Compiler:
                 value = self.var("mapped")
                 table = " ".join(f"({_term(s)} {_term(t)})" for s, t in sorted(rows, key=lambda r: (str(r[0]), str(r[1]))))
                 patterns.append(f"VALUES ({raw} {value}) {{ {table} }}")
-                where = self.where(chain, [f"{parent.focus} {paths.write(spec.data_ref)} {raw} .", f"FILTER ({raw} NOT IN ({', '.join(_term(s) for s, _ in sorted(rows, key=lambda r: str(r[0])))}))"])
+                where = self.where(chain, guarded + [f"{parent.focus} {paths.write(spec.data_ref)} {raw} .", f"FILTER ({raw} NOT IN ({', '.join(_term(s) for s, _ in sorted(rows, key=lambda r: str(r[0])))}))"])
                 self.check(chain, "UnmappedValue", f"({parent.focus} AS ?focus) ({raw} AS ?value)", where, node=spec)
             else:
                 self._kind_check(chain, spec, prop_iri, raw, list(patterns))
@@ -541,7 +582,7 @@ class _Compiler:
         prop = self._property(spec)
         inverse = "inverse" in spec.strata.rbox and "exact" not in spec.strata.rbox
         key, found, code = self.var("key"), self.var("found"), self.var("code")
-        follow = [f"{parent.focus} {paths.write(spec.data_ref)} {key} ."]
+        follow = self.guard(spec, parent.focus) + [f"{parent.focus} {paths.write(spec.data_ref)} {key} ."]
         reference = spec.strata.tbox["exact"]
         yielded = resolve(self.g, reference, spec, self.r.specs)
         reads: tuple = ()

@@ -26,6 +26,7 @@
 @prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
 @prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
 @prefix elg:  <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix om:   <https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#> .
 
 om:Scheme a mork:MappingScheme ;
@@ -99,9 +100,9 @@ om:Asset_Required a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compo
     mork:exactRBoxMatch elg:requiredConcept ;
     mork:dataRef "odrl:target|^(odrl:permission|odrl:prohibition|odrl:obligation)/odrl:target" .
 
-# A constraint, whose operator chooses its kind and its match strategy. An operator with no row
-# is reported (UnmappedValue), and its condition is left for the reviewer to complete. The comparisons need a range
-# set, which is left for the reviewer too, since a mapping cannot yet apply to constraints of some operators only.
+# A constraint, whose operator chooses its kind and its match strategy. An operator with no row is reported
+# (UnmappedValue), and its condition is left for the reviewer to complete. Guards (mork:appliesWhen) confine what only
+# some operators take: a required concept to the concept operators, negation to neq, and a range set to the comparisons.
 om:Constraint a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Scope_T ;
     mork:mappingFor om:ConstraintConcept ;
     mork:exactTBoxMatch elg:Condition ; mork:inverseRBoxMatch elg:hasCondition ; mork:conceptName "constraint" .
@@ -110,7 +111,65 @@ om:Constraint_Key a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compo
 om:Constraint_Wildcard a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
     mork:exactRBoxMatch elg:wildcardSemantics ; mork:exactABoxMatch elg:NoWildcard .
 om:Constraint_Required a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
-    mork:exactRBoxMatch elg:requiredConcept ; mork:dataRef "odrl:rightOperand" .
+    mork:exactRBoxMatch elg:requiredConcept ; mork:dataRef "odrl:rightOperand" ; mork:appliesWhen om:ConceptOperator .
+om:Constraint_Negated a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactRBoxMatch elg:negated ; mork:dataInline true ; mork:appliesWhen om:NotEqual .
+
+# The guards, each a SHACL node shape over the constraint.
+om:ConceptOperator a sh:NodeShape ;
+    sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:eq odrl:neq odrl:isA odrl:isPartOf odrl:isAnyOf ) ] .
+om:NotEqual a sh:NodeShape ; sh:property [ sh:path odrl:operator ; sh:hasValue odrl:neq ] .
+om:Comparison a sh:NodeShape ;
+    sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:lt odrl:lteq odrl:gt odrl:gteq ) ] .
+om:UpperComparison a sh:NodeShape ; sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:lt odrl:lteq ) ] .
+om:LowerComparison a sh:NodeShape ; sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:gt odrl:gteq ) ] .
+
+# A comparison's range set: one range on the left operand's value space, bounded above by lt and lteq or below by gt
+# and gteq at the right operand, open for lt and gt and closed for lteq and gteq.
+om:RangeSet a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
+    mork:exactTBoxMatch qnt:RangeSet ; mork:inverseRBoxMatch elg:requiredRangeSet ; mork:conceptName "range-set" ;
+    mork:appliesWhen om:Comparison .
+om:RangeSet_Space a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:RangeSet ;
+    mork:templateMapping om:Space_T ; mork:inverseRBoxMatch qnt:onSpace .
+om:Range a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:RangeSet ;
+    mork:exactTBoxMatch qnt:Range ; mork:inverseRBoxMatch qnt:hasRange ; mork:conceptName "range" .
+om:Range_Space a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Range ;
+    mork:templateMapping om:Space_T ; mork:inverseRBoxMatch qnt:onSpace .
+om:Upper a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Range ;
+    mork:templateMapping om:Bound_T ; mork:inverseRBoxMatch qnt:upperBound ; mork:appliesWhen om:UpperComparison .
+om:Upper_Sense a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Upper ;
+    mork:exactRBoxMatch qnt:boundSense ; mork:exactABoxMatch qnt:Upper .
+om:Lower a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Range ;
+    mork:templateMapping om:Bound_T ; mork:inverseRBoxMatch qnt:lowerBound ; mork:appliesWhen om:LowerComparison .
+om:Lower_Sense a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Lower ;
+    mork:exactRBoxMatch qnt:boundSense ; mork:exactABoxMatch qnt:Lower .
+
+# The left operand's value space, one for each operand, totally ordered.
+om:Space_T a mork:Datum ; mork:mappingScheme om:Scheme ;
+    mork:exactTBoxMatch qnt:ValueSpace ; mork:conceptNameTemplate "space/${odrl:leftOperand}" .
+om:Space_T_Order a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Space_T ;
+    mork:exactRBoxMatch qnt:orderKind ; mork:exactABoxMatch qnt:TotalOrder .
+
+# A bound at the right operand, on the left operand's space, its closure from the operator.
+om:Bound_T a mork:Datum ; mork:mappingScheme om:Scheme ; mork:exactTBoxMatch qnt:Bound ; mork:conceptName "bound" .
+om:Bound_T_Space a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T ;
+    mork:templateMapping om:Space_T ; mork:inverseRBoxMatch qnt:onSpace .
+om:Bound_T_Value a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T ;
+    mork:exactTBoxMatch qnt:Quantity ; mork:inverseRBoxMatch qnt:boundValue ; mork:conceptName "value" .
+om:Bound_T_Value_Space a mork:Datum ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Value ;
+    mork:templateMapping om:Space_T ; mork:inverseRBoxMatch qnt:onSpace .
+om:Bound_T_Value_Number a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Value ;
+    mork:exactRBoxMatch qnt:numericValue ; mork:dataRef "odrl:rightOperand" .
+om:Bound_T_Closure a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T ;
+    mork:exactRBoxMatch qnt:boundClosure ; mork:dataRef "odrl:operator" .
+om:Closure_lt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Closure ;
+    mork:mappingFor odrl:lt ; mork:exactABoxMatch qnt:Open .
+om:Closure_lteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Closure ;
+    mork:mappingFor odrl:lteq ; mork:exactABoxMatch qnt:Closed .
+om:Closure_gt a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Closure ;
+    mork:mappingFor odrl:gt ; mork:exactABoxMatch qnt:Open .
+om:Closure_gteq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Bound_T_Closure ;
+    mork:mappingFor odrl:gteq ; mork:exactABoxMatch qnt:Closed .
 
 om:Constraint_Kind a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint ;
     mork:exactRBoxMatch rdf:type ; mork:dataRef "odrl:operator" .
@@ -118,6 +177,10 @@ om:Constraint_Strategy a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:
     mork:exactRBoxMatch elg:matchStrategy ; mork:dataRef "odrl:operator" .
 
 # The operators' rows: ODRL's operator, and the condition kind and match strategy it takes.
+om:Kind_neq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
+    mork:mappingFor odrl:neq ; mork:exactABoxMatch elg:ExactCondition .
+om:Strategy_neq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Strategy ;
+    mork:mappingFor odrl:neq ; mork:exactABoxMatch elg:ExactMatch .
 om:Kind_eq a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;
     mork:mappingFor odrl:eq ; mork:exactABoxMatch elg:ExactCondition .
 om:Kind_isAnyOf a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Constraint_Kind ;

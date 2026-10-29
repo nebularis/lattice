@@ -65,6 +65,7 @@ class Spec:
     ranges: tuple[URIRef, ...] = ()         # mork:assertsPropertyRanges
     axiom_forms: tuple[URIRef, ...] = ()    # mork:axiomForm, GlobalAxioms when unset
     combination: URIRef = MORK.UnionOfClasses
+    guard: Optional[object] = None          # mork:appliesWhen, a SHACL node shape its focus nodes conform to (§7.7)
 
     @property
     def parent(self) -> Optional[URIRef]:
@@ -294,6 +295,7 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             ranges=_iris(g, node, MORK.assertsPropertyRanges),
             axiom_forms=_iris(g, node, MORK.axiomForm) or (MORK.GlobalAxioms,),
             combination=_iri(g, node, MORK.classCombination) or MORK.UnionOfClasses,
+            guard=_one(g, node, MORK.appliesWhen),
         )
 
     # --- templates (§8) ----------------------------------------------------------------------------------------------
@@ -367,6 +369,7 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         lookup_datatype=pick(instance.lookup_datatype, template.lookup_datatype),
         domains=pick(instance.domains, template.domains),
         ranges=pick(instance.ranges, template.ranges),
+        guard=pick(instance.guard, template.guard),
     )
 
 
