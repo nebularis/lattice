@@ -28,6 +28,10 @@ dct:creator a owl:AnnotationProperty .
 
 dct:description a owl:AnnotationProperty .
 
+mork:Accepted a mork:ReviewDecision, owl:NamedIndividual ;
+    rdfs:label "accepted" ;
+    rdfs:comment "The proposed mapping is right as proposed." .
+
 mork:AnonymousElement a owl:Class ;
     rdfs:label "anonymous entity" ;
     rdfs:comment "Used to describe the Representation of an Entity that has no identifier, e.g., that is defined anonymously, such as an object within an array." ;
@@ -79,6 +83,18 @@ mork:CollectionElement a owl:Class ;
     rdfs:comment "Used to describe the membership of elements within a collection." ;
     rdfs:subClassOf mork:Membership .
 
+mork:CommunityMatch a owl:Class ;
+    rdfs:label "community match" ;
+    rdfs:comment "The best-matching semantic community for the concepts observed in one section, with its score and confidence." .
+
+mork:CommunityMembership a owl:Class ;
+    rdfs:label "community membership" ;
+    rdfs:comment "A concept's membership of a semantic community, with its weight in it." .
+
+mork:CommunityScheme a owl:Class ;
+    rdfs:label "community scheme" ;
+    rdfs:comment "One discovery of semantic communities, over the section observations it was discovered from, with the algorithm and resolution it used." .
+
 mork:CompilationMode a owl:Class ;
     rdfs:label "compilation mode" ;
     rdfs:comment "Which of draft, review, or production compilation a MappingScheme's compilationMode names. Named individuals are DraftMode, ReviewMode, and ProductionMode." .
@@ -115,6 +131,14 @@ mork:ConstraintScheme a owl:Class ;
     rdfs:comment "A container for a coherent set of SHACL shapes, versionable and scoped to a jurisdiction and effective period." ;
     rdfs:subClassOf skos:ConceptScheme .
 
+mork:Corrected a mork:ReviewDecision, owl:NamedIndividual ;
+    rdfs:label "corrected" ;
+    rdfs:comment "The proposed mapping is replaced by the mapping the review names with correctedBy." .
+
+mork:DAGTemplate a owl:Class ;
+    rdfs:label "DAG template" ;
+    rdfs:comment "A shape of mapping DAG, a root class and its property projections, that a community's mappings have taken often enough to map a new section of it without a language model." .
+
 mork:DataConcept a owl:Class ;
     rdfs:label "data concept" ;
     rdfs:comment "An abstract description of a concept, representing a concept to be mapped to a representation and/or ontology scheme." ;
@@ -131,6 +155,10 @@ mork:Datum a owl:Class ;
     rdfs:comment "defines a mapping that explicitly states a datum must be individuated in a target OntologicalScheme" ;
     rdfs:subClassOf mork:DataMapping ;
     owl:equivalentClass [ a owl:Restriction ; owl:onProperty mork:deferredMapping ; owl:someValuesFrom mork:DataMapping ] .
+
+mork:Deferred a mork:ReviewDecision, owl:NamedIndividual ;
+    rdfs:label "deferred" ;
+    rdfs:comment "The decision on the proposed mapping waits." .
 
 mork:DeferredABoxReference a mork:DeferredContext, owl:NamedIndividual ;
     rdfs:comment "Used as a placeholder for referencing the A-Box object in a triple that a DataMapping with an RBox-match refers to." .
@@ -274,6 +302,10 @@ mork:LookupExpression a owl:Class ;
     rdfs:comment "Resolves a value against a concept scheme by matching on a specified datatype property. Evaluates by finding the concept in lookupScheme whose lookupProperty value equals the evaluated lookupSource." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:lookupScheme ; owl:someValuesFrom skos:ConceptScheme ], [ a owl:Restriction ; owl:onProperty mork:lookupSource ; owl:someValuesFrom mork:TemplateExpression ], mork:TemplateExpression .
 
+mork:MappingReview a owl:Class ;
+    rdfs:label "mapping review" ;
+    rdfs:comment "A person's or a reference's decision on one proposed mapping. It is also a prov:Activity, its reviewer named with prov:wasAssociatedWith and its time with prov:endedAtTime." .
+
 mork:MappingScheme a owl:Class ;
     rdfs:label "mapping scheme" ;
     rdfs:comment "a scheme that captures mappings between concepts, from a RepresentationScheme to an OntologicalScheme" ;
@@ -296,6 +328,10 @@ mork:Objectification a owl:Class ;
     rdfs:comment "Represents an \"objectified fact\" relating two DataConcepts to one another with a specific set of roles in mind." ;
     rdfs:subClassOf mork:DataConcept ;
     owl:equivalentClass [ a owl:Class ; owl:intersectionOf ( [ a owl:Restriction ; owl:onProperty mork:broadConceptRole ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass skos:Concept ] [ a owl:Restriction ; owl:onProperty mork:narrowConceptRole ; owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass skos:Concept ] ) ] .
+
+mork:OntologicalProjection a owl:Class ;
+    rdfs:label "ontological projection" ;
+    rdfs:comment "What the mappings of a semantic community's concepts have most often targeted in one target ontology, the class and the properties beneath it." .
 
 mork:OntologicalScheme a owl:Class ;
     rdfs:label "ontological scheme" ;
@@ -354,6 +390,14 @@ mork:ProjectionProvenance a owl:Class ;
     rdfs:comment "Records the origin and review chain of generated projection mappings, including profile, read-set identity, review status, and generation timestamps." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:provenanceCreated ; owl:someValuesFrom xsd:dateTime ], [ a owl:Restriction ; owl:onProperty mork:provenanceCreator ; owl:someValuesFrom xsd:string ], skos:Concept .
 
+mork:PropertyProjection a owl:Class ;
+    rdfs:label "property projection" ;
+    rdfs:comment "One concept of a community and the property it has most often been mapped to, beneath the projected class, with how often and how confidently." .
+
+mork:ProposalRun a owl:Class ;
+    rdfs:label "proposal run" ;
+    rdfs:comment "One run in which a proposer, such as a language model given a teaching pack, proposed mappings for a source. It is also a prov:Activity, and each mapping it proposed names it with prov:wasGeneratedBy." .
+
 mork:QualitativeIntent a owl:Class ;
     rdfs:label "qualitative intent" ;
     rdfs:comment "An intent node representing domain-bearing tokens and nominative signals (e.g., concepts, labels, codes), whose meanings must be inferred via a knowledge base." ;
@@ -381,6 +425,10 @@ mork:Referencing a owl:Class ;
     rdfs:comment "An Association in which one representation element refers to another and does not contain it." ;
     rdfs:subClassOf mork:Association .
 
+mork:Rejected a mork:ReviewDecision, owl:NamedIndividual ;
+    rdfs:label "rejected" ;
+    rdfs:comment "The proposed mapping is wrong, and nothing replaces it." .
+
 mork:Representation a owl:Class ;
     rdfs:label "representation" ;
     rdfs:comment "Is used to describe the representation of a DataConcept. Some individuals may be both DataConcept and Representation." ;
@@ -390,6 +438,10 @@ mork:RepresentationScheme a owl:Class ;
     rdfs:label "representation scheme" ;
     rdfs:comment "a scheme that maps concepts to their representation" ;
     rdfs:subClassOf [ a owl:Class ; owl:intersectionOf ( skos:ConceptScheme [ a owl:Restriction ; owl:onProperty mork:format ; owl:someValuesFrom mork:SerializationFormat ] ) ], skos:ConceptScheme .
+
+mork:ReviewDecision a owl:Class ;
+    rdfs:label "review decision" ;
+    rdfs:comment "Which decision a mapping review made. Named individuals are Accepted, Corrected, Rejected and Deferred." .
 
 mork:ReviewMode a mork:CompilationMode, owl:NamedIndividual ;
     rdfs:label "review mode" ;
@@ -420,6 +472,14 @@ mork:ScalarValueElement a owl:Class ;
     rdfs:label "scalar value" ;
     rdfs:comment "Used to describe scalar (atomic) values as members of a collection, such as an Array." ;
     rdfs:subClassOf mork:AnonymousElement .
+
+mork:SectionObservation a owl:Class ;
+    rdfs:label "section observation" ;
+    rdfs:comment "A record that a set of concepts occurred together in one section of a representation scheme, made when a mapping run over that scheme is accepted." .
+
+mork:SemanticCommunity a owl:Class ;
+    rdfs:label "semantic community" ;
+    rdfs:comment "A cluster of concepts that tend to occur together in sections of a domain's representation schemes, found by community detection over section observations." .
 
 mork:SerializationFormat a owl:Class ;
     rdfs:comment "A format in which a representation scheme's source is serialised. The individuals JSON, XML, YAML and RDF are the formats MORK names, and mork:format relates a scheme to one." .
@@ -659,6 +719,42 @@ mork:collectionElementScalarValue a owl:DatatypeProperty ;
     skos:scopeNote "Not for external use. This datatype property is used as a placeholder super-property for generated owl:DataTypeProperty axioms which are used to hold the rdfs/xsd range for individuals in the Attribute and ScalarValueElement classes.\n\nThis specific property is exclusively used to manage Objectification."^^xsd:string ;
     rdfs:subPropertyOf owl:topDataProperty .
 
+mork:communityCoherence a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "communityCoherence" ;
+    rdfs:comment "How tightly a semantic community's concepts occur together, from 0 to 1." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range xsd:decimal .
+
+mork:communityMemberWeight a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "communityMemberWeight" ;
+    rdfs:comment "How strongly a concept belongs to its community, from 0 to 1." ;
+    rdfs:domain mork:CommunityMembership ;
+    rdfs:range xsd:decimal .
+
+mork:communityObservationCount a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "communityObservationCount" ;
+    rdfs:comment "How many section observations a semantic community was found in." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range xsd:integer .
+
+mork:communityScheme a owl:ObjectProperty ;
+    rdfs:label "communityScheme" ;
+    rdfs:comment "The community scheme a semantic community belongs to." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range mork:CommunityScheme .
+
+mork:communitySchemeVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "communitySchemeVersion" ;
+    rdfs:comment "A community scheme's version." ;
+    rdfs:domain mork:CommunityScheme ;
+    rdfs:range xsd:string .
+
+mork:communitySize a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "communitySize" ;
+    rdfs:comment "How many concepts a semantic community has." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range xsd:integer .
+
 mork:compilationMode a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:label "compilation mode" ;
     rdfs:comment "The compilation mode a MappingScheme's member mappings are compiled under: DraftMode, ReviewMode, or ProductionMode (Foundations §5.10b). Unset is equivalent to DraftMode. Only ProductionMode brings the governance-state and version-identity SHACL gate (mork:GenerativeMappingProductionGovernanceShape) into force for that scheme's mappings. A mapping compiled under DraftMode or ReviewMode is unaffected by it." ;
@@ -818,6 +914,28 @@ mork:contextPath a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain mork:CompiledQuery ;
     rdfs:range rdf:List .
 
+mork:correctedBy a owl:ObjectProperty ;
+    rdfs:label "correctedBy" ;
+    rdfs:comment "The mapping that replaces a corrected proposal, for a review that decided Corrected." ;
+    rdfs:domain mork:MappingReview .
+
+mork:dagTemplateChild a owl:ObjectProperty ;
+    rdfs:label "dagTemplateChild" ;
+    rdfs:comment "A property projection a DAG template asserts beneath its root." ;
+    rdfs:domain mork:DAGTemplate ;
+    rdfs:range mork:PropertyProjection .
+
+mork:dagTemplateFrequency a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "dagTemplateFrequency" ;
+    rdfs:comment "How many of the community's mapping runs took a DAG template's shape." ;
+    rdfs:domain mork:DAGTemplate ;
+    rdfs:range xsd:integer .
+
+mork:dagTemplateRoot a owl:ObjectProperty ;
+    rdfs:label "dagTemplateRoot" ;
+    rdfs:comment "The shadow of a DAG template's root class." ;
+    rdfs:domain mork:DAGTemplate .
+
 mork:data a owl:DatatypeProperty ;
     rdfs:comment "The data a mapping reads or carries. Its sub-properties say where the data is, and what it is." ;
     rdfs:subPropertyOf owl:topDataProperty .
@@ -853,6 +971,18 @@ mork:deprecationReason a owl:DatatypeProperty ;
     rdfs:domain mork:DataMapping ;
     rdfs:range xsd:string .
 
+mork:detectionAlgorithm a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "detectionAlgorithm" ;
+    rdfs:comment "The community detection algorithm a community scheme used, for example leiden or louvain." ;
+    rdfs:domain mork:CommunityScheme ;
+    rdfs:range xsd:string .
+
+mork:detectionResolution a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "detectionResolution" ;
+    rdfs:comment "The resolution a community scheme's detection used, which sets how large its communities are." ;
+    rdfs:domain mork:CommunityScheme ;
+    rdfs:range xsd:decimal .
+
 mork:digraphMatch a owl:ObjectProperty ;
     rdfs:label "has digraph match" ;
     rdfs:comment "is used to state a hierarchical mapping link between conceptual resources in different concept schemes, where one concept is mapped to a directed (sub-)graph of related concepts." ;
@@ -865,6 +995,12 @@ mork:digraphOf a owl:ObjectProperty ;
     rdfs:comment "digraphFrom is used to state a hierarchical mapping link between conceptual resources in different concept schemes, where concepts belong to a directed (sub-)graph that relates back to some parent concept (in another scheme)." ;
     rdfs:subPropertyOf skos:narrowMatch ;
     rdfs:domain mork:Digraph .
+
+mork:discoveredFrom a owl:ObjectProperty ;
+    rdfs:label "discoveredFrom" ;
+    rdfs:comment "A section observation a community scheme was discovered from." ;
+    rdfs:domain mork:CommunityScheme ;
+    rdfs:range mork:SectionObservation .
 
 mork:effectiveConfidence a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "effective confidence" ;
@@ -985,6 +1121,12 @@ mork:hasBinding a owl:ObjectProperty ;
     rdfs:domain mork:InterpolationExpression ;
     rdfs:range mork:TemplateBinding .
 
+mork:hasCommunityMembership a owl:ObjectProperty ;
+    rdfs:label "hasCommunityMembership" ;
+    rdfs:comment "A membership of a semantic community." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range mork:CommunityMembership .
+
 mork:hasCompileFinding a owl:ObjectProperty ;
     rdfs:label "has compile finding" ;
     rdfs:comment "A finding of a compiled mapping." ;
@@ -1008,6 +1150,12 @@ mork:hasConstraintProvenance a owl:ObjectProperty ;
     rdfs:comment "Links a ShapeMapping to its provenance record (origin, review chain, lifecycle metadata)." ;
     rdfs:domain mork:ShapeMapping ;
     rdfs:range mork:ConstraintProvenance .
+
+mork:hasDAGTemplate a owl:ObjectProperty ;
+    rdfs:label "hasDAGTemplate" ;
+    rdfs:comment "A DAG template of an ontological projection." ;
+    rdfs:domain mork:OntologicalProjection ;
+    rdfs:range mork:DAGTemplate .
 
 mork:hasEffectiveConfidence a owl:ObjectProperty ;
     rdfs:label "has effective confidence" ;
@@ -1035,6 +1183,12 @@ mork:hasNaturalLanguageSource a owl:DatatypeProperty ;
     rdfs:domain mork:IntentNode ;
     rdfs:range xsd:string .
 
+mork:hasOntologicalProjection a owl:ObjectProperty ;
+    rdfs:label "hasOntologicalProjection" ;
+    rdfs:comment "An ontological projection of a semantic community." ;
+    rdfs:domain mork:SemanticCommunity ;
+    rdfs:range mork:OntologicalProjection .
+
 mork:hasParameterBinding a owl:ObjectProperty ;
     rdfs:label "has parameter binding" ;
     rdfs:comment "Relates a GenerativeMapping (ShapeMapping, RuleMapping, TransformMapping, or ProjectionMapping) to one of its typed parameter bindings (paramName, paramType, paramValue). Also used by QueryTemplate via the separate paramBinding property." ;
@@ -1046,6 +1200,12 @@ mork:hasProjectionProvenance a owl:ObjectProperty ;
     rdfs:comment "Links a ProjectionMapping to its provenance record (origin, review chain, lifecycle metadata)." ;
     rdfs:domain mork:ProjectionMapping ;
     rdfs:range mork:ProjectionProvenance .
+
+mork:hasPropertyProjection a owl:ObjectProperty ;
+    rdfs:label "hasPropertyProjection" ;
+    rdfs:comment "A property projection beneath an ontological projection." ;
+    rdfs:domain mork:OntologicalProjection ;
+    rdfs:range mork:PropertyProjection .
 
 mork:hasRuleProvenance a owl:ObjectProperty ;
     rdfs:label "has rule provenance" ;
@@ -1260,6 +1420,39 @@ mork:mappingVersion a owl:DatatypeProperty ;
     rdfs:domain mork:MappingScheme ;
     rdfs:range xsd:string .
 
+mork:matchConfidence a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "matchConfidence" ;
+    rdfs:comment "A community match's confidence, from 0 to 1." ;
+    rdfs:domain mork:CommunityMatch ;
+    rdfs:range xsd:decimal .
+
+mork:matchScore a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "matchScore" ;
+    rdfs:comment "A community match's score." ;
+    rdfs:domain mork:CommunityMatch ;
+    rdfs:range xsd:decimal .
+
+mork:matchSection a owl:ObjectProperty ;
+    rdfs:label "matchSection" ;
+    rdfs:comment "The section a community match is for." ;
+    rdfs:domain mork:CommunityMatch .
+
+mork:matchedConcepts a owl:ObjectProperty ;
+    rdfs:label "matchedConcepts" ;
+    rdfs:comment "A concept of the section that a community match found in the community." ;
+    rdfs:domain mork:CommunityMatch .
+
+mork:matchesCommunity a owl:ObjectProperty ;
+    rdfs:label "matchesCommunity" ;
+    rdfs:comment "The semantic community a community match found." ;
+    rdfs:domain mork:CommunityMatch ;
+    rdfs:range mork:SemanticCommunity .
+
+mork:memberConcept a owl:ObjectProperty ;
+    rdfs:label "memberConcept" ;
+    rdfs:comment "The concept a community membership is of." ;
+    rdfs:domain mork:CommunityMembership .
+
 mork:memberOf a owl:ObjectProperty ;
     rdfs:label "member property of" ;
     rdfs:comment "Defines the object as a component property (i.e., member) of the subject, primarily to describe Representation elements using a clear vocabulary. This property is the inverse of memberProperty." ;
@@ -1321,6 +1514,27 @@ mork:narrowerMapping a owl:ObjectProperty ;
     rdfs:subPropertyOf mork:relatedMapping ;
     rdfs:domain mork:DataMapping ;
     rdfs:range [ a owl:Class ; owl:unionOf ( mork:DataMapping [ a owl:Class ; owl:intersectionOf ( skos:OrderedCollection [ a owl:Restriction ; owl:onProperty skos:member ; owl:someValuesFrom mork:DataConcept ] ) ] ) ] .
+
+mork:observationTimestamp a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "observationTimestamp" ;
+    rdfs:comment "When a section observation was made." ;
+    rdfs:domain mork:SectionObservation ;
+    rdfs:range xsd:dateTime .
+
+mork:observedConcept a owl:ObjectProperty ;
+    rdfs:label "observedConcept" ;
+    rdfs:comment "A concept a section observation saw." ;
+    rdfs:domain mork:SectionObservation .
+
+mork:observedInScheme a owl:ObjectProperty ;
+    rdfs:label "observedInScheme" ;
+    rdfs:comment "The representation scheme a section observation was made in." ;
+    rdfs:domain mork:SectionObservation .
+
+mork:observedInSection a owl:ObjectProperty ;
+    rdfs:label "observedInSection" ;
+    rdfs:comment "The section a section observation was made in." ;
+    rdfs:domain mork:SectionObservation .
 
 mork:ontologicalScheme a owl:ObjectProperty ;
     rdfs:label "in ontological scheme" ;
@@ -1407,11 +1621,65 @@ mork:precedes a owl:ObjectProperty, owl:TransitiveProperty ;
     rdfs:domain mork:DataMapping ;
     rdfs:range mork:DataMapping .
 
+mork:projectedClass a owl:ObjectProperty ;
+    rdfs:label "projectedClass" ;
+    rdfs:comment "The shadow of the class an ontological projection most often targets." ;
+    rdfs:domain mork:OntologicalProjection .
+
+mork:projectedClassFrequency a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "projectedClassFrequency" ;
+    rdfs:comment "How many mappings of the community targeted the projected class." ;
+    rdfs:domain mork:OntologicalProjection ;
+    rdfs:range xsd:integer .
+
+mork:projectedConcept a owl:ObjectProperty ;
+    rdfs:label "projectedConcept" ;
+    rdfs:comment "The concept a property projection is for." ;
+    rdfs:domain mork:PropertyProjection .
+
+mork:projectedParentClass a owl:ObjectProperty ;
+    rdfs:label "projectedParentClass" ;
+    rdfs:comment "The shadow of the class the projected property is asserted on." ;
+    rdfs:domain mork:PropertyProjection .
+
+mork:projectedProperty a owl:ObjectProperty ;
+    rdfs:label "projectedProperty" ;
+    rdfs:comment "The shadow of the property a property projection's concept is most often mapped to." ;
+    rdfs:domain mork:PropertyProjection .
+
+mork:projectionTargetOntology a owl:ObjectProperty ;
+    rdfs:label "projectionTargetOntology" ;
+    rdfs:comment "The target ontology an ontological projection is onto." ;
+    rdfs:domain mork:OntologicalProjection .
+
 mork:propertyMappingAssertions a owl:ObjectProperty ;
     rdfs:label "has property mapping assertions" ;
     rdfs:comment "Used to make assertions about proposed object or datatype property mappings" ;
     skos:scopeNote "By convention, propertyMappingAssertions is not used to make assertions, but rather its subProperties are instead." ;
     rdfs:subPropertyOf owl:topObjectProperty .
+
+mork:propertyProjectionConfidence a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "propertyProjectionConfidence" ;
+    rdfs:comment "How confident a property projection is, from 0 to 1." ;
+    rdfs:domain mork:PropertyProjection ;
+    rdfs:range xsd:decimal .
+
+mork:propertyProjectionFrequency a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "propertyProjectionFrequency" ;
+    rdfs:comment "How many mappings of the concept targeted the projected property." ;
+    rdfs:domain mork:PropertyProjection ;
+    rdfs:range xsd:integer .
+
+mork:proposedFor a owl:ObjectProperty ;
+    rdfs:label "proposedFor" ;
+    rdfs:comment "The representation scheme a proposal run proposed mappings for." ;
+    rdfs:domain mork:ProposalRun .
+
+mork:proposerModel a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "proposerModel" ;
+    rdfs:comment "The model or other proposer that made a proposal run's mappings." ;
+    rdfs:domain mork:ProposalRun ;
+    rdfs:range xsd:string .
 
 mork:provenanceCreated a owl:DatatypeProperty ;
     rdfs:label "provenance created" ;
@@ -1522,6 +1790,23 @@ mork:resolvesIdentityFor a owl:ObjectProperty ;
     rdfs:domain mork:DataMapping ;
     rdfs:range mork:Datum .
 
+mork:reviewDecision a owl:ObjectProperty ;
+    rdfs:label "reviewDecision" ;
+    rdfs:comment "What a mapping review decided." ;
+    rdfs:domain mork:MappingReview ;
+    rdfs:range mork:ReviewDecision .
+
+mork:reviewNote a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "reviewNote" ;
+    rdfs:comment "Why a mapping review decided as it did, in words." ;
+    rdfs:domain mork:MappingReview ;
+    rdfs:range xsd:string .
+
+mork:reviewOf a owl:ObjectProperty ;
+    rdfs:label "reviewOf" ;
+    rdfs:comment "The proposed mapping a mapping review decides." ;
+    rdfs:domain mork:MappingReview .
+
 mork:reviewStatus a owl:DatatypeProperty ;
     rdfs:label "review status" ;
     rdfs:comment "Review status of the constraint. Values: DRAFT, APPROVED, DEPRECATED." ;
@@ -1550,6 +1835,26 @@ mork:semanticMatch a owl:ObjectProperty ;
     rdfs:label "is semantic match with" ;
     rdfs:comment "Used to indicate a partial/possible semantic match." ;
     rdfs:subPropertyOf mork:possibleMatch .
+
+mork:shadowDomain a owl:ObjectProperty ;
+    rdfs:label "shadowDomain" ;
+    rdfs:comment "A shadow of a class that is a domain of a shadow's property." .
+
+mork:shadowOf a owl:ObjectProperty ;
+    rdfs:label "shadowOf" ;
+    rdfs:comment "The target ontology's term a shadow individual stands for, so mapping patterns over the term can be reasoned about in OWL 2 DL." .
+
+mork:shadowRange a owl:ObjectProperty ;
+    rdfs:label "shadowRange" ;
+    rdfs:comment "A shadow of a class that is a range of a shadow's property." .
+
+mork:shadowSubClassOf a owl:ObjectProperty ;
+    rdfs:label "shadowSubClassOf" ;
+    rdfs:comment "That one shadow's class is a subclass of another shadow's." .
+
+mork:shadowSubPropertyOf a owl:ObjectProperty ;
+    rdfs:label "shadowSubPropertyOf" ;
+    rdfs:comment "That one shadow's property is a subproperty of another shadow's." .
 
 mork:siblingMapping a owl:ObjectProperty ;
     rdfs:comment "Used to construct a DataMapping graph that represents an rdf:List, since skos:Collection and skos:Concept are disjoint and we need a way to describe outputs that a represented as rdf:Lists." ;
@@ -1590,6 +1895,12 @@ mork:targetsOntology a owl:DatatypeProperty ;
     rdfs:comment "The target ontology namespace for a RuleMapping." ;
     rdfs:domain mork:RuleMapping ;
     rdfs:range xsd:anyURI .
+
+mork:teachingPackVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "teachingPackVersion" ;
+    rdfs:comment "The teaching pack and its version a proposal run's proposer was given." ;
+    rdfs:domain mork:ProposalRun ;
+    rdfs:range xsd:string .
 
 mork:template a owl:DatatypeProperty ;
     rdfs:comment "used to store templates for the generation of identifiers within a merged graph" ;

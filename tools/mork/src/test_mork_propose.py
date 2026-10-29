@@ -64,3 +64,44 @@ def test_the_check_reports_a_proposal_that_does_not_decode_or_names_no_scheme():
 def test_an_unknown_layer_is_refused():
     with pytest.raises(ValueError):
         target_cards(["instrument", "nowhere"])
+
+
+# ---- the history of proposals and reviews ----------------------------------------------------------------------------
+
+from datetime import datetime, timezone
+
+from rdflib import URIRef
+
+from mork_propose.history import History, agreement, patterns, review_against, scores
+
+AT = datetime(2026, 10, 29, tzinfo=timezone.utc)
+PACK = ROOT / "contracts" / "config-studio" / "odrl" / "odrl-instrument.mork.ttl"
+SCHEME = URIRef("https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#Scheme")
+
+
+def test_the_pack_reviewed_against_itself_is_accepted_whole():
+    g = Graph().parse(PACK)
+    assert scores(review_against(g, SCHEME, g, SCHEME, AT))["accepted_share"] == 1.0
+
+
+def test_a_review_recorded_is_the_mapping_s_latest_decision_and_a_lesson(tmp_path):
+    history = History(tmp_path / "history.ttl")
+    g = Graph().parse(PACK)
+    run = URIRef("urn:x:run/1")
+    mappings = history.record_run(run, g, SCHEME, model="a model", pack="MTP 0", source=None, at=AT)
+    history.record_review(URIRef("urn:x:review/1"), mappings[0], "rejected", reviewer=URIRef("urn:x:me"), at=AT, note="wrong")
+    history.record_review(URIRef("urn:x:review/2"), mappings[0], "accepted", reviewer=URIRef("urn:x:me"), at=AT.replace(hour=1))
+    history.save()
+    again = History(tmp_path / "history.ttl")
+    assert again.decisions()[mappings[0]][0] == URIRef("http://www.nebularis.org/ontologies/Mork#Accepted")
+    assert len(again.lessons(Graph())) == 1
+
+
+def test_a_run_s_patterns_do_not_depend_on_minted_names():
+    from rdflib import Literal
+    from rdflib.namespace import RDF
+    a, b = Graph(), Graph()
+    for g, base in ((a, "urn:one/"), (b, "urn:two/")):
+        g.add((URIRef(base + "x"), RDF.type, URIRef("urn:t#Permission")))
+        g.add((URIRef(base + "x"), URIRef("urn:t#activity"), URIRef("urn:o#use")))
+    assert agreement(patterns(a, "urn:one/"), patterns(b, "urn:two/"))["recall"] == 1.0

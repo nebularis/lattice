@@ -928,7 +928,96 @@ om:Comparison a mork:Datum ;
 
 A compiler compiles a guard to a test it can prove means what the shape means. `tools/mork_rdf` compiles the constraint components `sh:hasValue`, `sh:in`, `sh:class`, `sh:datatype`, `sh:nodeKind`, `sh:minCount`, `sh:maxCount`, `sh:not`, `sh:and` and `sh:or`, over a property shape's `sh:path` or the node itself, and refuses any other by name. Its tests check that a node passes a compiled guard exactly when pySHACL says the node conforms to the shape. A backend that cannot express a guard refuses the guarded mapping, never compiling it unguarded.
 
-### 5.18 Cross references
+### 5.18 Communities, and the history of mappings
+
+MORK expects mapping to get easier as it is done. Three kinds of evidence accumulate in a graph of their own. **Recognition**: a source field's name is lexically close to the concept it maps to, through edit distance, abbreviations and shared words, and each accepted mapping teaches the abbreviations it used. **Communities**: in a domain, certain concepts occur together in a section, so when a mapping run is accepted each of its sections becomes a `mork:SectionObservation` of the concepts it holds, community detection over those observations finds `mork:SemanticCommunity` clusters, and a new section is matched to its likeliest community (`mork:CommunityMatch`). **Projections**: what a community's concepts have been mapped to in one target ontology becomes a `mork:OntologicalProjection`, with the class and the properties they most often took and how often, and a shape the mappings take often enough becomes a `mork:DAGTemplate`, which maps a new section of the community without a model. Target terms are reasoned about through shadow individuals (`mork:shadowOf`), so the patterns stay in OWL 2 DL. `tools/mork`'s `mork_communities` package implements all of this.
+
+The history is fed by reviews. A `mork:ProposalRun` records who proposed mappings, a model and its teaching pack, and every mapping it proposed names it with `prov:wasGeneratedBy`. A `mork:MappingReview` records the decision on one of them: `mork:Accepted`, `mork:Corrected` with the mapping that replaces it, `mork:Rejected` or `mork:Deferred`, with its reviewer and time in PROV. Accepted and corrected mappings become observations and teach recognition, and rejected ones are kept, so the next proposer is told what was refused.
+
+```turtle-example
+ex:run-1 a mork:ProposalRun , prov:Activity ;
+    mork:proposerModel "a language model" ; mork:teachingPackVersion "MTP 0.1.0" ; mork:proposedFor ex:Odrl .
+ex:Map_Duty prov:wasGeneratedBy ex:run-1 .
+ex:review-7 a mork:MappingReview , prov:Activity ;
+    mork:reviewOf ex:Map_Duty ; mork:reviewDecision mork:Corrected ; mork:correctedBy ex:Map_Duty_OnAct ;
+    mork:reviewNote "A duty on a permission is what the permission arises on, not an obligation of its own." ;
+    prov:wasAssociatedWith ex:reviewer ; prov:endedAtTime "2026-10-29T12:00:00Z"^^xsd:dateTime .
+```
+
+<!-- start: {"generated": "class-diagram", "part": "Communities and the history of mappings", "classes": ["mork:SectionObservation", "mork:CommunityScheme", "mork:SemanticCommunity", "mork:CommunityMembership", "mork:CommunityMatch", "mork:OntologicalProjection", "mork:PropertyProjection", "mork:DAGTemplate", "mork:MappingReview", "mork:ReviewDecision", "mork:ProposalRun"]} -->
+
+**Communities and the history of mappings**
+
+```mermaid
+classDiagram
+    direction LR
+    class CommunityMatch {
+        matchConfidence (xsd:decimal)
+        matchScore (xsd:decimal)
+        matchSection
+        matchedConcepts
+    }
+    class CommunityMembership {
+        communityMemberWeight (xsd:decimal)
+        memberConcept
+    }
+    class CommunityScheme {
+        communitySchemeVersion (xsd:string)
+        detectionAlgorithm (xsd:string)
+        detectionResolution (xsd:decimal)
+    }
+    class DAGTemplate {
+        dagTemplateFrequency (xsd:integer)
+        dagTemplateRoot
+    }
+    class MappingReview {
+        correctedBy
+        reviewNote (xsd:string)
+        reviewOf
+    }
+    class OntologicalProjection {
+        projectedClass
+        projectedClassFrequency (xsd:integer)
+        projectionTargetOntology
+    }
+    class PropertyProjection {
+        projectedConcept
+        projectedParentClass
+        projectedProperty
+        propertyProjectionConfidence (xsd:decimal)
+        propertyProjectionFrequency (xsd:integer)
+    }
+    class ProposalRun {
+        proposedFor
+        proposerModel (xsd:string)
+        teachingPackVersion (xsd:string)
+    }
+    class ReviewDecision
+    class SectionObservation {
+        observationTimestamp (xsd:dateTime)
+        observedConcept
+        observedInScheme
+        observedInSection
+    }
+    class SemanticCommunity {
+        communityCoherence (xsd:decimal)
+        communityObservationCount (xsd:integer)
+        communitySize (xsd:integer)
+    }
+    CommunityMatch --> SemanticCommunity : matchesCommunity
+    CommunityScheme --> SectionObservation : discoveredFrom
+    DAGTemplate --> PropertyProjection : dagTemplateChild
+    MappingReview --> ReviewDecision : reviewDecision
+    OntologicalProjection --> DAGTemplate : hasDAGTemplate
+    OntologicalProjection --> PropertyProjection : hasPropertyProjection
+    SemanticCommunity --> CommunityMembership : hasCommunityMembership
+    SemanticCommunity --> CommunityScheme : communityScheme
+    SemanticCommunity --> OntologicalProjection : hasOntologicalProjection
+```
+
+<!-- end -->
+
+### 5.19 Cross references
 
 - The foundations MORK relies on, Foundation's governance states, versions and supersession, are in [Foundation](../foundation/README.md).
 - Eligibility, whose conditions the Executable vocabulary describes plans for, is in [Eligibility](../eligibility/README.md).
@@ -1042,6 +1131,72 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 **Definition.** How severe a compile finding is. Named individuals are ErrorFinding, WarningFinding and InfoFinding.
 
 **Label.** finding severity
+
+#### `mork:SectionObservation`
+
+**Definition.** A record that a set of concepts occurred together in one section of a representation scheme, made when a mapping run over that scheme is accepted.
+
+**Label.** section observation
+
+#### `mork:CommunityScheme`
+
+**Definition.** One discovery of semantic communities, over the section observations it was discovered from, with the algorithm and resolution it used.
+
+**Label.** community scheme
+
+#### `mork:SemanticCommunity`
+
+**Definition.** A cluster of concepts that tend to occur together in sections of a domain's representation schemes, found by community detection over section observations.
+
+**Label.** semantic community
+
+#### `mork:CommunityMembership`
+
+**Definition.** A concept's membership of a semantic community, with its weight in it.
+
+**Label.** community membership
+
+#### `mork:CommunityMatch`
+
+**Definition.** The best-matching semantic community for the concepts observed in one section, with its score and confidence.
+
+**Label.** community match
+
+#### `mork:OntologicalProjection`
+
+**Definition.** What the mappings of a semantic community's concepts have most often targeted in one target ontology, the class and the properties beneath it.
+
+**Label.** ontological projection
+
+#### `mork:PropertyProjection`
+
+**Definition.** One concept of a community and the property it has most often been mapped to, beneath the projected class, with how often and how confidently.
+
+**Label.** property projection
+
+#### `mork:DAGTemplate`
+
+**Definition.** A shape of mapping DAG, a root class and its property projections, that a community's mappings have taken often enough to map a new section of it without a language model.
+
+**Label.** DAG template
+
+#### `mork:MappingReview`
+
+**Definition.** A person's or a reference's decision on one proposed mapping. It is also a prov:Activity, its reviewer named with prov:wasAssociatedWith and its time with prov:endedAtTime.
+
+**Label.** mapping review
+
+#### `mork:ReviewDecision`
+
+**Definition.** Which decision a mapping review made. Named individuals are Accepted, Corrected, Rejected and Deferred.
+
+**Label.** review decision
+
+#### `mork:ProposalRun`
+
+**Definition.** One run in which a proposer, such as a language model given a teaching pack, proposed mappings for a source. It is also a prov:Activity, and each mapping it proposed names it with prov:wasGeneratedBy.
+
+**Label.** proposal run
 
 #### `mork:CompilationMode`
 
@@ -2011,6 +2166,246 @@ The object properties of MORK first, then those of Executable.
 **Label.** confidence of
 
 **Characteristics.** functional
+
+#### `mork:observedInSection`
+
+**Definition.** The section a section observation was made in.
+
+**Label.** observedInSection
+
+**Domain.** `mork:SectionObservation`
+
+#### `mork:observedInScheme`
+
+**Definition.** The representation scheme a section observation was made in.
+
+**Label.** observedInScheme
+
+**Domain.** `mork:SectionObservation`
+
+#### `mork:observedConcept`
+
+**Definition.** A concept a section observation saw.
+
+**Label.** observedConcept
+
+**Domain.** `mork:SectionObservation`
+
+#### `mork:discoveredFrom`
+
+**Definition.** A section observation a community scheme was discovered from.
+
+**Label.** discoveredFrom
+
+**Domain.** `mork:CommunityScheme`
+
+**Range.** `mork:SectionObservation`
+
+#### `mork:communityScheme`
+
+**Definition.** The community scheme a semantic community belongs to.
+
+**Label.** communityScheme
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `mork:CommunityScheme`
+
+#### `mork:hasCommunityMembership`
+
+**Definition.** A membership of a semantic community.
+
+**Label.** hasCommunityMembership
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `mork:CommunityMembership`
+
+#### `mork:memberConcept`
+
+**Definition.** The concept a community membership is of.
+
+**Label.** memberConcept
+
+**Domain.** `mork:CommunityMembership`
+
+#### `mork:matchSection`
+
+**Definition.** The section a community match is for.
+
+**Label.** matchSection
+
+**Domain.** `mork:CommunityMatch`
+
+#### `mork:matchesCommunity`
+
+**Definition.** The semantic community a community match found.
+
+**Label.** matchesCommunity
+
+**Domain.** `mork:CommunityMatch`
+
+**Range.** `mork:SemanticCommunity`
+
+#### `mork:matchedConcepts`
+
+**Definition.** A concept of the section that a community match found in the community.
+
+**Label.** matchedConcepts
+
+**Domain.** `mork:CommunityMatch`
+
+#### `mork:hasOntologicalProjection`
+
+**Definition.** An ontological projection of a semantic community.
+
+**Label.** hasOntologicalProjection
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `mork:OntologicalProjection`
+
+#### `mork:projectionTargetOntology`
+
+**Definition.** The target ontology an ontological projection is onto.
+
+**Label.** projectionTargetOntology
+
+**Domain.** `mork:OntologicalProjection`
+
+#### `mork:projectedClass`
+
+**Definition.** The shadow of the class an ontological projection most often targets.
+
+**Label.** projectedClass
+
+**Domain.** `mork:OntologicalProjection`
+
+#### `mork:hasPropertyProjection`
+
+**Definition.** A property projection beneath an ontological projection.
+
+**Label.** hasPropertyProjection
+
+**Domain.** `mork:OntologicalProjection`
+
+**Range.** `mork:PropertyProjection`
+
+#### `mork:projectedConcept`
+
+**Definition.** The concept a property projection is for.
+
+**Label.** projectedConcept
+
+**Domain.** `mork:PropertyProjection`
+
+#### `mork:projectedProperty`
+
+**Definition.** The shadow of the property a property projection's concept is most often mapped to.
+
+**Label.** projectedProperty
+
+**Domain.** `mork:PropertyProjection`
+
+#### `mork:projectedParentClass`
+
+**Definition.** The shadow of the class the projected property is asserted on.
+
+**Label.** projectedParentClass
+
+**Domain.** `mork:PropertyProjection`
+
+#### `mork:hasDAGTemplate`
+
+**Definition.** A DAG template of an ontological projection.
+
+**Label.** hasDAGTemplate
+
+**Domain.** `mork:OntologicalProjection`
+
+**Range.** `mork:DAGTemplate`
+
+#### `mork:dagTemplateRoot`
+
+**Definition.** The shadow of a DAG template's root class.
+
+**Label.** dagTemplateRoot
+
+**Domain.** `mork:DAGTemplate`
+
+#### `mork:dagTemplateChild`
+
+**Definition.** A property projection a DAG template asserts beneath its root.
+
+**Label.** dagTemplateChild
+
+**Domain.** `mork:DAGTemplate`
+
+**Range.** `mork:PropertyProjection`
+
+#### `mork:shadowOf`
+
+**Definition.** The target ontology's term a shadow individual stands for, so mapping patterns over the term can be reasoned about in OWL 2 DL.
+
+**Label.** shadowOf
+
+#### `mork:shadowSubClassOf`
+
+**Definition.** That one shadow's class is a subclass of another shadow's.
+
+**Label.** shadowSubClassOf
+
+#### `mork:shadowSubPropertyOf`
+
+**Definition.** That one shadow's property is a subproperty of another shadow's.
+
+**Label.** shadowSubPropertyOf
+
+#### `mork:shadowDomain`
+
+**Definition.** A shadow of a class that is a domain of a shadow's property.
+
+**Label.** shadowDomain
+
+#### `mork:shadowRange`
+
+**Definition.** A shadow of a class that is a range of a shadow's property.
+
+**Label.** shadowRange
+
+#### `mork:reviewOf`
+
+**Definition.** The proposed mapping a mapping review decides.
+
+**Label.** reviewOf
+
+**Domain.** `mork:MappingReview`
+
+#### `mork:reviewDecision`
+
+**Definition.** What a mapping review decided.
+
+**Label.** reviewDecision
+
+**Domain.** `mork:MappingReview`
+
+**Range.** `mork:ReviewDecision`
+
+#### `mork:correctedBy`
+
+**Definition.** The mapping that replaces a corrected proposal, for a review that decided Corrected.
+
+**Label.** correctedBy
+
+**Domain.** `mork:MappingReview`
+
+#### `mork:proposedFor`
+
+**Definition.** The representation scheme a proposal run proposed mappings for.
+
+**Label.** proposedFor
+
+**Domain.** `mork:ProposalRun`
 
 #### `mork:compilationMode`
 
@@ -3796,6 +4191,210 @@ The datatype properties of MORK first, then those of Executable.
 
 **Characteristics.** functional
 
+#### `mork:observationTimestamp`
+
+**Definition.** When a section observation was made.
+
+**Label.** observationTimestamp
+
+**Domain.** `mork:SectionObservation`
+
+**Range.** `xsd:dateTime`
+
+**Characteristics.** functional
+
+#### `mork:communitySchemeVersion`
+
+**Definition.** A community scheme's version.
+
+**Label.** communitySchemeVersion
+
+**Domain.** `mork:CommunityScheme`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:detectionAlgorithm`
+
+**Definition.** The community detection algorithm a community scheme used, for example leiden or louvain.
+
+**Label.** detectionAlgorithm
+
+**Domain.** `mork:CommunityScheme`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:detectionResolution`
+
+**Definition.** The resolution a community scheme's detection used, which sets how large its communities are.
+
+**Label.** detectionResolution
+
+**Domain.** `mork:CommunityScheme`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:communitySize`
+
+**Definition.** How many concepts a semantic community has.
+
+**Label.** communitySize
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:communityObservationCount`
+
+**Definition.** How many section observations a semantic community was found in.
+
+**Label.** communityObservationCount
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:communityCoherence`
+
+**Definition.** How tightly a semantic community's concepts occur together, from 0 to 1.
+
+**Label.** communityCoherence
+
+**Domain.** `mork:SemanticCommunity`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:communityMemberWeight`
+
+**Definition.** How strongly a concept belongs to its community, from 0 to 1.
+
+**Label.** communityMemberWeight
+
+**Domain.** `mork:CommunityMembership`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:matchScore`
+
+**Definition.** A community match's score.
+
+**Label.** matchScore
+
+**Domain.** `mork:CommunityMatch`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:matchConfidence`
+
+**Definition.** A community match's confidence, from 0 to 1.
+
+**Label.** matchConfidence
+
+**Domain.** `mork:CommunityMatch`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:projectedClassFrequency`
+
+**Definition.** How many mappings of the community targeted the projected class.
+
+**Label.** projectedClassFrequency
+
+**Domain.** `mork:OntologicalProjection`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:propertyProjectionFrequency`
+
+**Definition.** How many mappings of the concept targeted the projected property.
+
+**Label.** propertyProjectionFrequency
+
+**Domain.** `mork:PropertyProjection`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:propertyProjectionConfidence`
+
+**Definition.** How confident a property projection is, from 0 to 1.
+
+**Label.** propertyProjectionConfidence
+
+**Domain.** `mork:PropertyProjection`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `mork:dagTemplateFrequency`
+
+**Definition.** How many of the community's mapping runs took a DAG template's shape.
+
+**Label.** dagTemplateFrequency
+
+**Domain.** `mork:DAGTemplate`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
+#### `mork:reviewNote`
+
+**Definition.** Why a mapping review decided as it did, in words.
+
+**Label.** reviewNote
+
+**Domain.** `mork:MappingReview`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:proposerModel`
+
+**Definition.** The model or other proposer that made a proposal run's mappings.
+
+**Label.** proposerModel
+
+**Domain.** `mork:ProposalRun`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:teachingPackVersion`
+
+**Definition.** The teaching pack and its version a proposal run's proposer was given.
+
+**Label.** teachingPackVersion
+
+**Domain.** `mork:ProposalRun`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
 #### `mork:weighting`
 
 **Definition.** confidence score out of 100
@@ -3866,6 +4465,10 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 | `mork:IntersectionOfClasses` | `mork:ClassCombination`, `owl:NamedIndividual` | intersection of classes | Several classes are combined with owl:intersectionOf. |
 | `mork:UnionOfClasses` | `mork:ClassCombination`, `owl:NamedIndividual` | union of classes | Several classes are combined with owl:unionOf. The default. |
 | `mork:DraftMode` | `mork:CompilationMode`, `owl:NamedIndividual` | draft mode | Governance state and version identity are not required on member mappings. The default where compilationMode is unset. |
+| `mork:Accepted` | `mork:ReviewDecision`, `owl:NamedIndividual` | accepted | The proposed mapping is right as proposed. |
+| `mork:Corrected` | `mork:ReviewDecision`, `owl:NamedIndividual` | corrected | The proposed mapping is replaced by the mapping the review names with correctedBy. |
+| `mork:Rejected` | `mork:ReviewDecision`, `owl:NamedIndividual` | rejected | The proposed mapping is wrong, and nothing replaces it. |
+| `mork:Deferred` | `mork:ReviewDecision`, `owl:NamedIndividual` | deferred | The decision on the proposed mapping waits. |
 | `mork:InstanceOutput` | `mork:OutputBox`, `owl:NamedIndividual` | instance output | The instance data a compiled query writes, its target graph. |
 | `mork:TerminologyOutput` | `mork:OutputBox`, `owl:NamedIndividual` | terminology output | The classes, properties and axioms a compiled query writes, its T-Box graph. |
 | `mork:ErrorFinding` | `mork:FindingSeverity`, `owl:NamedIndividual` | error finding | A mapping not compiled. In production mode any error refuses the compilation. |
@@ -4714,6 +5317,9 @@ The Axiom Index is generated from this section.
 | `mork:ClassCombination` | Class |  |
 | `mork:Collection` | Class | Subclass of `mork:Composition`. Disjoint with `mork:Chaining`. |
 | `mork:CollectionElement` | Class | Subclass of `mork:Membership`. |
+| `mork:CommunityMatch` | Class |  |
+| `mork:CommunityMembership` | Class |  |
+| `mork:CommunityScheme` | Class |  |
 | `mork:CompilationMode` | Class |  |
 | `mork:CompileFinding` | Class |  |
 | `mork:CompiledMapping` | Class |  |
@@ -4722,6 +5328,7 @@ The Axiom Index is generated from this section.
 | `mork:ConcatExpression` | Class | Subclass of `mork:concatLeft` some `mork:TemplateExpression`, `mork:concatRight` some `mork:TemplateExpression`, `mork:TemplateExpression`. |
 | `mork:ConstraintProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
 | `mork:ConstraintScheme` | Class | Subclass of `skos:ConceptScheme`. |
+| `mork:DAGTemplate` | Class |  |
 | `mork:DataConcept` | Class | Subclass of `skos:Concept` and (`mork:conceptScheme` some `mork:TaxonomyScheme`), `skos:Concept`. |
 | `mork:DataMapping` | Class | Subclass of `skos:Concept` and (`mork:mappingScheme` some `mork:MappingScheme`), `skos:Concept`. |
 | `mork:Datum` | Class | Subclass of `mork:DataMapping`. Equivalent to `mork:deferredMapping` some `mork:DataMapping`. |
@@ -4744,10 +5351,12 @@ The Axiom Index is generated from this section.
 | `mork:Lookup` | Class | Subclass of `mork:DataMapping` and (`mork:dataRef` some `xsd:string`), `mork:DataMapping`. |
 | `mork:LookupComparison` | Class |  |
 | `mork:LookupExpression` | Class | Subclass of `mork:lookupScheme` some `skos:ConceptScheme`, `mork:lookupSource` some `mork:TemplateExpression`, `mork:TemplateExpression`. |
+| `mork:MappingReview` | Class |  |
 | `mork:MappingScheme` | Class | Subclass of `skos:ConceptScheme`. |
 | `mork:Membership` | Class | Subclass of `mork:Representation`. |
 | `mork:NormativeReferenceItent` | Class | Subclass of `mork:IntentNode`. |
 | `mork:Objectification` | Class | Subclass of `mork:DataConcept`. Equivalent to (`mork:broadConceptRole` min 1 `skos:Concept`) and (`mork:narrowConceptRole` min 1 `skos:Concept`). |
+| `mork:OntologicalProjection` | Class |  |
 | `mork:OntologicalScheme` | Class | Subclass of `skos:ConceptScheme`. |
 | `mork:OrderedCollection` | Class | Subclass of `mork:Collection`. Equivalent to `mork:orderedItems` value "true"^^xsd:boolean. Disjoint with `mork:SetListing`, `mork:UnorderedCollection`. |
 | `mork:OutputBox` | Class |  |
@@ -4758,6 +5367,8 @@ The Axiom Index is generated from this section.
 | `mork:ParameterBinding` | Class |  |
 | `mork:ProjectionMapping` | Class | Subclass of `mork:generatesClassDefinition` some `mork:OwlClass`, `mork:hasParameterBinding` min 1, `mork:hasProjectionProvenance` some `mork:ProjectionProvenance`, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesClassDefinition` some `mork:OwlClass`). |
 | `mork:ProjectionProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
+| `mork:PropertyProjection` | Class |  |
+| `mork:ProposalRun` | Class |  |
 | `mork:QualitativeIntent` | Class | Subclass of `mork:IntentNode`. |
 | `mork:QuantitativeConstraint` | Class | Subclass of `mork:IntentNode`. |
 | `mork:QueryTemplate` | Class | Subclass of `skos:Concept`. |
@@ -4765,11 +5376,14 @@ The Axiom Index is generated from this section.
 | `mork:Referencing` | Class | Subclass of `mork:Association`. |
 | `mork:Representation` | Class | Subclass of `skos:inScheme` some `mork:RepresentationScheme`, `skos:Concept`. |
 | `mork:RepresentationScheme` | Class | Subclass of `skos:ConceptScheme` and (`mork:format` some `mork:SerializationFormat`), `skos:ConceptScheme`. |
+| `mork:ReviewDecision` | Class |  |
 | `mork:RuleMapping` | Class | Subclass of `mork:generatesRuleDefinition` some `swrl:Imp`, `mork:hasParameterBinding` min 1, `mork:hasRuleProvenance` some `mork:RuleProvenance`, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesRuleDefinition` some `swrl:Imp`). |
 | `mork:RuleProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
 | `mork:RuleScheme` | Class | Subclass of `skos:ConceptScheme`. |
 | `mork:RuleTemplate` | Class | Subclass of `skos:Concept`. |
 | `mork:ScalarValueElement` | Class | Subclass of `mork:AnonymousElement`. |
+| `mork:SectionObservation` | Class |  |
+| `mork:SemanticCommunity` | Class |  |
 | `mork:SerializationFormat` | Class |  |
 | `mork:SetListing` | Class | Subclass of `mork:Collection`. Equivalent to `mork:uniqueItems` value "true"^^xsd:boolean. Disjoint with `mork:OrderedCollection`, `mork:UnorderedCollection`. |
 | `mork:ShapeMapping` | Class | Subclass of `mork:generatesShapeDefinition` some `sh:Shape`, `mork:hasConstraintProvenance` some `mork:ConstraintProvenance`, `mork:hasParameterBinding` min 1, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesShapeDefinition` some `sh:Shape`). |
@@ -4825,6 +5439,7 @@ The Axiom Index is generated from this section.
 | `mork:closureAxiom` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:closureCombination` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:closureProperty` | Object property | Domain `mork:CompiledQuery`. Functional. |
+| `mork:communityScheme` | Object property | Domain `mork:SemanticCommunity`. Range `mork:CommunityScheme`. |
 | `mork:compilationMode` | Object property | Domain `mork:MappingScheme`. Range `mork:CompilationMode`. Functional. |
 | `mork:compiledFrom` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:compiledInMode` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompilationMode`. Functional. |
@@ -4842,11 +5457,15 @@ The Axiom Index is generated from this section.
 | `mork:constraintDimension` | Object property | Domain `mork:QuantitativeConstraint`. Range `skos:Concept`. |
 | `mork:constraintUnit` | Object property | Domain `mork:QuantitativeConstraint`. Range `skos:Concept`. |
 | `mork:contextPath` | Object property | Domain `mork:CompiledQuery`. Range `rdf:List`. Functional. |
+| `mork:correctedBy` | Object property | Domain `mork:MappingReview`. |
+| `mork:dagTemplateChild` | Object property | Domain `mork:DAGTemplate`. Range `mork:PropertyProjection`. |
+| `mork:dagTemplateRoot` | Object property | Domain `mork:DAGTemplate`. |
 | `mork:deferredMapping` | Object property | Symmetric. Subproperty of `mork:relatedMapping`. |
 | `mork:dependentMapping` | Object property | Subproperty of `mork:deferredMapping`. |
 | `mork:dependsOnMapping` | Object property | Domain `mork:GenerativeMapping`. Range `mork:DataMapping`. |
 | `mork:digraphMatch` | Object property | Range `mork:Digraph`. Inverse of `mork:digraphOf`. Subproperty of `skos:broadMatch`. |
 | `mork:digraphOf` | Object property | Domain `mork:Digraph`. Subproperty of `skos:narrowMatch`. |
+| `mork:discoveredFrom` | Object property | Domain `mork:CommunityScheme`. Range `mork:SectionObservation`. |
 | `mork:egressProjection` | Object property | Domain `mork:DataMapping`. Range `mork:Representation`. |
 | `mork:elementType` | Object property | Domain `mork:Collection`. Range `mork:CollectionElement`. Subproperty of `mork:compositeNarrower`. |
 | `mork:exactABoxMatch` | Object property | Subproperty of `mork:intransitiveExactMatch`. |
@@ -4861,14 +5480,18 @@ The Axiom Index is generated from this section.
 | `mork:generatesShapeDefinition` | Object property | Domain `mork:ShapeMapping`. Range `sh:Shape`. |
 | `mork:generatesTransformDefinition` | Object property | Domain `mork:TransformMapping`. Range `rr:TriplesMap`. |
 | `mork:hasBinding` | Object property | Domain `mork:InterpolationExpression`. Range `mork:TemplateBinding`. |
+| `mork:hasCommunityMembership` | Object property | Domain `mork:SemanticCommunity`. Range `mork:CommunityMembership`. |
 | `mork:hasCompileFinding` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompileFinding`. |
 | `mork:hasCompiledQuery` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompiledQuery`. |
 | `mork:hasConcept` | Object property | Inverse of `skos:inScheme`. Subproperty of `owl:topObjectProperty`. |
 | `mork:hasConstraintProvenance` | Object property | Domain `mork:ShapeMapping`. Range `mork:ConstraintProvenance`. |
+| `mork:hasDAGTemplate` | Object property | Domain `mork:OntologicalProjection`. Range `mork:DAGTemplate`. |
 | `mork:hasEffectiveConfidence` | Object property | Domain `mork:CompiledMapping`. |
 | `mork:hasMapping` | Object property | Domain (`mork:conceptScheme` some `mork:TaxonomyScheme`) or (`mork:representationScheme` some `mork:RepresentationScheme`). Range `mork:mappingScheme` some `mork:MappingScheme`. Inverse of `mork:mappingFor`. Subproperty of `skos:relatedMatch`. |
+| `mork:hasOntologicalProjection` | Object property | Domain `mork:SemanticCommunity`. Range `mork:OntologicalProjection`. |
 | `mork:hasParameterBinding` | Object property | Domain `mork:GenerativeMapping`. Range `mork:ParameterBinding`. |
 | `mork:hasProjectionProvenance` | Object property | Domain `mork:ProjectionMapping`. Range `mork:ProjectionProvenance`. |
+| `mork:hasPropertyProjection` | Object property | Domain `mork:OntologicalProjection`. Range `mork:PropertyProjection`. |
 | `mork:hasRuleProvenance` | Object property | Domain `mork:RuleMapping`. Range `mork:RuleProvenance`. |
 | `mork:hasRuleTemplate` | Object property | Domain `mork:RuleMapping`. Range `mork:RuleTemplate`. |
 | `mork:hasSeverity` | Object property | Domain `mork:ShapeMapping`. Range `sh:Severity`. |
@@ -4891,6 +5514,10 @@ The Axiom Index is generated from this section.
 | `mork:lookupSource` | Object property | Domain `mork:LookupExpression`. Range `mork:TemplateExpression`. Functional. |
 | `mork:mappingFor` | Object property | Subproperty of `skos:relatedMatch`. |
 | `mork:mappingScheme` | Object property | Range `mork:MappingScheme`. Subproperty of `skos:inScheme`. |
+| `mork:matchSection` | Object property | Domain `mork:CommunityMatch`. |
+| `mork:matchedConcepts` | Object property | Domain `mork:CommunityMatch`. |
+| `mork:matchesCommunity` | Object property | Domain `mork:CommunityMatch`. Range `mork:SemanticCommunity`. |
+| `mork:memberConcept` | Object property | Domain `mork:CommunityMembership`. |
 | `mork:memberOf` | Object property | Inverse of `mork:memberProperty`. Subproperty of `mork:compositeBroader`. |
 | `mork:memberProperty` | Object property | Subproperty of `mork:compositeNarrower`. |
 | `mork:missingOrUnrelatedMatch` | Object property | Subproperty of `skos:relatedMatch`. |
@@ -4901,6 +5528,9 @@ The Axiom Index is generated from this section.
 | `mork:narrowRBoxCategoryMatch` | Object property | Subproperty of `mork:narrowCategoryMatch`. |
 | `mork:narrowTBoxCategoryMatch` | Object property | Subproperty of `mork:narrowCategoryMatch`. |
 | `mork:narrowerMapping` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping` or (`skos:OrderedCollection` and (`skos:member` some `mork:DataConcept`)). Subproperty of `mork:relatedMapping`. |
+| `mork:observedConcept` | Object property | Domain `mork:SectionObservation`. |
+| `mork:observedInScheme` | Object property | Domain `mork:SectionObservation`. |
+| `mork:observedInSection` | Object property | Domain `mork:SectionObservation`. |
 | `mork:ontologicalScheme` | Object property | Range `mork:OntologicalScheme`. Subproperty of `skos:inScheme`. |
 | `mork:outputBox` | Object property | Domain `mork:CompiledQuery`. Range `mork:OutputBox`. Functional. |
 | `mork:paramBinding` | Object property | Domain `mork:QueryTemplate`. Range `mork:ParameterBinding`. |
@@ -4910,7 +5540,13 @@ The Axiom Index is generated from this section.
 | `mork:placeholderMapping` | Object property | Domain `mork:DataMapping`. Range `mork:Interpolation` and (`mork:interpolationComponent` some ((`mork:dataRef` some `xsd:string`) or (`mork:dataInline` min 1))). Subproperty of `owl:topObjectProperty`. |
 | `mork:possibleMatch` | Object property | Subproperty of `skos:mappingRelation`. |
 | `mork:precedes` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping`. Transitive. |
+| `mork:projectedClass` | Object property | Domain `mork:OntologicalProjection`. |
+| `mork:projectedConcept` | Object property | Domain `mork:PropertyProjection`. |
+| `mork:projectedParentClass` | Object property | Domain `mork:PropertyProjection`. |
+| `mork:projectedProperty` | Object property | Domain `mork:PropertyProjection`. |
+| `mork:projectionTargetOntology` | Object property | Domain `mork:OntologicalProjection`. |
 | `mork:propertyMappingAssertions` | Object property | Subproperty of `owl:topObjectProperty`. |
+| `mork:proposedFor` | Object property | Domain `mork:ProposalRun`. |
 | `mork:readsOutputOf` | Object property | Domain `mork:CompiledQuery`. |
 | `mork:referenceDataMapping` | Object property | Range `mork:dataRef` some `xsd:string`. Subproperty of `mork:templateMapping`. |
 | `mork:referenceDataPath` | Object property | Subproperty of `mork:pathMatch`. |
@@ -4921,8 +5557,15 @@ The Axiom Index is generated from this section.
 | `mork:representationScheme` | Object property | Range `mork:RepresentationScheme`. Subproperty of `skos:inScheme`. |
 | `mork:representedAs` | Object property | Subproperty of `skos:relatedMatch`. |
 | `mork:resolvesIdentityFor` | Object property | Domain `mork:DataMapping`. Range `mork:Datum`. Subproperty of `mork:precedes`. |
+| `mork:reviewDecision` | Object property | Domain `mork:MappingReview`. Range `mork:ReviewDecision`. |
+| `mork:reviewOf` | Object property | Domain `mork:MappingReview`. |
 | `mork:scopeValue` | Object property | Domain `mork:SpatialScope`. Range `skos:Concept`. |
 | `mork:semanticMatch` | Object property | Subproperty of `mork:possibleMatch`. |
+| `mork:shadowDomain` | Object property |  |
+| `mork:shadowOf` | Object property |  |
+| `mork:shadowRange` | Object property |  |
+| `mork:shadowSubClassOf` | Object property |  |
+| `mork:shadowSubPropertyOf` | Object property |  |
 | `mork:siblingMapping` | Object property | Subproperty of `mork:relatedMapping`. |
 | `mork:softPrecedes` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping`. Transitive. |
 | `mork:structuralMatch` | Object property | Subproperty of `mork:possibleMatch`. |
@@ -4937,6 +5580,11 @@ The Axiom Index is generated from this section.
 | `exe:siblingsDisjoint` | Datatype property | Domain `exe:OwlArtefact`. Range `xsd:boolean`. Functional. |
 | `mork:checkCode` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:string`. Functional. |
 | `mork:collectionElementScalarValue` | Datatype property | Subproperty of `owl:topDataProperty`. |
+| `mork:communityCoherence` | Datatype property | Domain `mork:SemanticCommunity`. Range `xsd:decimal`. Functional. |
+| `mork:communityMemberWeight` | Datatype property | Domain `mork:CommunityMembership`. Range `xsd:decimal`. Functional. |
+| `mork:communityObservationCount` | Datatype property | Domain `mork:SemanticCommunity`. Range `xsd:integer`. Functional. |
+| `mork:communitySchemeVersion` | Datatype property | Domain `mork:CommunityScheme`. Range `xsd:string`. Functional. |
+| `mork:communitySize` | Datatype property | Domain `mork:SemanticCommunity`. Range `xsd:integer`. Functional. |
 | `mork:compiledBase` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:anyURI`. Functional. |
 | `mork:compiler` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:string`. Functional. |
 | `mork:conceptFQNameTemplate` | Datatype property | Subproperty of `mork:conceptNameTemplate`. |
@@ -4949,10 +5597,13 @@ The Axiom Index is generated from this section.
 | `mork:constraintUpperValue` | Datatype property | Domain `mork:QuantitativeConstraint`. Range `xsd:decimal`. |
 | `mork:constraintValue` | Datatype property | Domain `mork:QuantitativeConstraint`. Range `xsd:decimal`. |
 | `mork:constraintVersion` | Datatype property | Domain `mork:ConstraintScheme`. Range `xsd:string`. |
+| `mork:dagTemplateFrequency` | Datatype property | Domain `mork:DAGTemplate`. Range `xsd:integer`. Functional. |
 | `mork:data` | Datatype property | Subproperty of `owl:topDataProperty`. |
 | `mork:dataInline` | Datatype property | Subproperty of `mork:data`. |
 | `mork:dataRef` | Datatype property | Functional. Subproperty of `mork:data`. |
 | `mork:deprecationReason` | Datatype property | Domain `mork:DataMapping`. Range `xsd:string`. |
+| `mork:detectionAlgorithm` | Datatype property | Domain `mork:CommunityScheme`. Range `xsd:string`. Functional. |
+| `mork:detectionResolution` | Datatype property | Domain `mork:CommunityScheme`. Range `xsd:decimal`. Functional. |
 | `mork:effectiveConfidence` | Datatype property | Range `xsd:double`. Functional. |
 | `mork:effectiveFrom` | Datatype property | Range `xsd:dateTime`. |
 | `mork:effectiveUntil` | Datatype property | Range `xsd:dateTime`. |
@@ -4978,13 +5629,20 @@ The Axiom Index is generated from this section.
 | `mork:mappingIndex` | Datatype property | Subproperty of `owl:topDataProperty`. |
 | `mork:mappingRecommendation` | Datatype property | Range `xsd:string`. Functional. Subproperty of `mork:data`. |
 | `mork:mappingVersion` | Datatype property | Domain `mork:MappingScheme`. Range `xsd:string`. |
+| `mork:matchConfidence` | Datatype property | Domain `mork:CommunityMatch`. Range `xsd:decimal`. Functional. |
+| `mork:matchScore` | Datatype property | Domain `mork:CommunityMatch`. Range `xsd:decimal`. Functional. |
 | `mork:name` | Datatype property | Range `xsd:string`. Subproperty of `owl:topDataProperty`. |
+| `mork:observationTimestamp` | Datatype property | Domain `mork:SectionObservation`. Range `xsd:dateTime`. Functional. |
 | `mork:orderedItems` | Datatype property | Subproperty of `mork:itemsConstrained`. |
 | `mork:paramName` | Datatype property | Domain `mork:ParameterBinding`. Range `xsd:string`. |
 | `mork:paramType` | Datatype property | Domain `mork:ParameterBinding`. Range `xsd:string`. |
 | `mork:paramValue` | Datatype property | Domain `mork:ParameterBinding`. |
 | `mork:path` | Datatype property | Subproperty of `mork:identifier`. |
 | `mork:placeholderName` | Datatype property | Domain `mork:TemplateBinding`. Range `xsd:string`. Functional. |
+| `mork:projectedClassFrequency` | Datatype property | Domain `mork:OntologicalProjection`. Range `xsd:integer`. Functional. |
+| `mork:propertyProjectionConfidence` | Datatype property | Domain `mork:PropertyProjection`. Range `xsd:decimal`. Functional. |
+| `mork:propertyProjectionFrequency` | Datatype property | Domain `mork:PropertyProjection`. Range `xsd:integer`. Functional. |
+| `mork:proposerModel` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:string`. Functional. |
 | `mork:provenanceCreated` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:dateTime`. |
 | `mork:provenanceCreator` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
 | `mork:queryIndex` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:integer`. Functional. |
@@ -4994,12 +5652,14 @@ The Axiom Index is generated from this section.
 | `mork:readAt` | Datatype property | Domain `mork:CompiledMapping`. Range `xsd:dateTime`. Functional. |
 | `mork:reference` | Datatype property | Subproperty of `mork:identifier`. |
 | `mork:referenceIdentifier` | Datatype property | Domain `mork:NormativeReferenceItent`. Range `xsd:string`. |
+| `mork:reviewNote` | Datatype property | Domain `mork:MappingReview`. Range `xsd:string`. Functional. |
 | `mork:reviewStatus` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
 | `mork:scopeInclusion` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
 | `mork:scopeType` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
 | `mork:stratum` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:integer`. Functional. |
 | `mork:swrlText` | Datatype property | Domain `mork:RuleMapping`. Range `xsd:string`. |
 | `mork:targetsOntology` | Datatype property | Domain `mork:RuleMapping`. Range `xsd:anyURI`. |
+| `mork:teachingPackVersion` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:string`. Functional. |
 | `mork:template` | Datatype property | Subproperty of `owl:topDataProperty`. |
 | `mork:templateString` | Datatype property | Domain `mork:InterpolationExpression`. Range `xsd:string`. Functional. |
 | `mork:temporalDuration` | Datatype property | Domain `mork:TemporalScope`. Range `xsd:dayTimeDuration`. |
@@ -5015,8 +5675,11 @@ The Axiom Index is generated from this section.
 | `exe:RefusedOperation` | Individual | Type `exe:Diagnostic`. |
 | `exe:SeveralCandidates` | Individual | Type `exe:Diagnostic`. |
 | `exe:ValueSpaceMismatch` | Individual | Type `exe:Diagnostic`. |
+| `mork:Accepted` | Individual | Type `mork:ReviewDecision`, `owl:NamedIndividual`. |
 | `mork:Bottom` | Individual | Type `mork:OwlAxiom`, `owl:NamedIndividual`. |
 | `mork:CastComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
+| `mork:Corrected` | Individual | Type `mork:ReviewDecision`, `owl:NamedIndividual`. |
+| `mork:Deferred` | Individual | Type `mork:ReviewDecision`, `owl:NamedIndividual`. |
 | `mork:DeferredABoxReference` | Individual | Type `mork:DeferredContext`, `owl:NamedIndividual`. |
 | `mork:DeferredClassDefinition` | Individual | Type `mork:OwlClass`, `owl:NamedIndividual`. |
 | `mork:DeferredDataPropertyDefinition` | Individual | Type `mork:OwlDataProperty`, `owl:NamedIndividual`. |
@@ -5036,6 +5699,7 @@ The Axiom Index is generated from this section.
 | `mork:OwlNothing` | Individual | Type `mork:OwlAxiom`, `owl:NamedIndividual`. |
 | `mork:ProductionMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
 | `mork:RDF` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
+| `mork:Rejected` | Individual | Type `mork:ReviewDecision`, `owl:NamedIndividual`. |
 | `mork:ReviewMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
 | `mork:TermComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
 | `mork:TerminologyOutput` | Individual | Type `mork:OutputBox`, `owl:NamedIndividual`. |
@@ -5213,7 +5877,7 @@ Not applicable.
 ## 12. Release Notes
 
 - **Next release** (additive). The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way (no effect).
-- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect). New: `mork:appliesWhen`, a SHACL node shape that confines a mapping to the nodes conforming to it (no effect on a mapping that names none).
+- **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect). New: `mork:appliesWhen`, a SHACL node shape that confines a mapping to the nodes conforming to it (no effect on a mapping that names none). New: the terms the community tooling already wrote, `mork:SectionObservation`, `mork:CommunityScheme`, `mork:SemanticCommunity`, `mork:CommunityMembership`, `mork:CommunityMatch`, `mork:OntologicalProjection`, `mork:PropertyProjection` and `mork:DAGTemplate` with their properties and the shadow properties, and the review record, `mork:MappingReview`, `mork:ReviewDecision` with its four individuals, and `mork:ProposalRun` (no effect).
 - **Next release.** `mork:GenerativeMapping` is a subclass of `fnd:Versioned`, where it was a subclass of `fnd:Version`, which Foundation reserves for one specific version (changes meaning).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
