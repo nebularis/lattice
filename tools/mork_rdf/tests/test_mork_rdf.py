@@ -549,3 +549,71 @@ def test_a_description_whose_query_was_changed_is_refused(compiled):
     g.set((query, SH.construct, Literal(str(text) + " ")))
     with pytest.raises(ValueError):
         from_rdf(g)
+
+
+# --- the skolem rule, version 1 (§12.2) ------------------------------------------------------------------------------
+
+VECTORS = FIXTURES.parent / "skolem-vectors"
+
+
+def _skolemised(text: str, seed: int | None = None):
+    import pyoxigraph as ox
+    from mork_rdf.skolem import skolemise_with_report
+    triples = list(ox.parse(text.encode(), format=ox.RdfFormat.TURTLE))
+    if seed is not None:
+        random.Random(seed).shuffle(triples)
+    report = skolemise_with_report(triples)
+    return {f"{t} ." for t in report.triples}, report.components
+
+
+@pytest.mark.parametrize("name", ["tree", "irregular"])
+def test_each_skolem_vector_gives_exactly_its_expected_triples(name):
+    """The vectors pin the rule. A change to any IRI they hold is a change of rule, and needs a new version."""
+    got, _ = _skolemised((VECTORS / f"{name}.ttl").read_text())
+    expected = {line for line in (VECTORS / f"{name}.expected.nt").read_text().splitlines() if line}
+    assert got == expected
+
+
+def test_a_tree_node_is_named_as_the_rule_says():
+    """The README's rule, computed by hand: the description hash, then the name from the parent, predicate and
+    description, terms written as N-Triples."""
+    import hashlib
+    sha = lambda text: hashlib.sha256(text.encode("utf-8")).hexdigest()
+    s = "http://example.org/src#"
+    address = sha(f'<{s}city> "Tacoma"')
+    author = sha("\n".join(sorted([f"<{s}address> _:{address}", f'<{s}name> "Frank Herbert"'])))
+    author_name = sha(f"v1\n<http://example.org/records/dune>\n<{s}author>\n{author}")
+    address_name = sha(f"v1\n<urn:mork-rdf:skolem:v1:{author_name}>\n<{s}address>\n{address}")
+    got, _ = _skolemised((VECTORS / "tree.ttl").read_text())
+    assert f'<urn:mork-rdf:skolem:v1:{author_name}> <{s}name> "Frank Herbert" .' in got
+    assert f'<urn:mork-rdf:skolem:v1:{address_name}> <{s}city> "Tacoma" .' in got
+
+
+def test_skolem_names_do_not_depend_on_the_order_of_the_triples():
+    text = (VECTORS / "tree.ttl").read_text() + (VECTORS / "irregular.ttl").read_text().split("@prefix s: <http://example.org/src#> .")[1]
+    first, _ = _skolemised(text, 0)
+    assert all(_skolemised(text, seed)[0] == first for seed in (1, 2, 3))
+
+
+def test_a_skolem_name_survives_unrelated_additions_and_changes_with_its_own_description():
+    head = "@prefix s: <http://example.org/src#> .\n"
+    dune = '<http://example.org/records/dune> s:author [ s:name "Frank Herbert" ] .\n'
+    alone, _ = _skolemised(head + dune)
+    beside, _ = _skolemised(head + dune + '<http://example.org/records/x> s:author [ s:name "Someone" ] .\n')
+    renamed, _ = _skolemised(head + dune.replace("Frank Herbert", "F. Herbert"))
+    assert alone <= beside
+    assert not ({t.split()[0] for t in alone if "#name" in t} & {t.split()[0] for t in renamed if "#name" in t})
+
+
+def test_identical_siblings_stay_distinct_and_irregular_components_are_reported():
+    got, components = _skolemised((VECTORS / "tree.ttl").read_text())
+    assert len({t.split()[0] for t in got if '"Anon"' in t}) == 2
+    _, components = _skolemised((VECTORS / "irregular.ttl").read_text())
+    assert sorted(n for _, n in components) == [1, 1, 2]  # the shared node, the orphan, and the cycle of two
+
+
+def test_a_run_reports_the_blank_nodes_named_by_their_component():
+    compiled = compile_scheme(Graph().parse(data=HEAD, format="turtle"), MM + "S", base=BASE, at=AT)
+    source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> . _:a <{SRC}knows> _:b . _:b <{SRC}knows> _:a .", format="turtle")
+    found = [f for f in run(compiled, source).findings if f.code == "SkolemCanonical"]
+    assert len(found) == 1 and found[0].value == "2" and found[0].severity is Severity.WARNING

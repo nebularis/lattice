@@ -24,17 +24,17 @@ MORK_RUN_COST_QUICK=1 mise run check:mork-rdf-run-cost
 MORK_RUN_COST_LARGE=1 mise run check:mork-rdf-run-cost
 ```
 
-The default sizes are 10,000 and 100,000 records, and the run takes about two minutes. `MORK_RUN_COST_QUICK` runs 2,000 records alone. `MORK_RUN_COST_LARGE` adds 1,000,000, which needs about 15 GB, so it is for a machine that has it, not a laptop. It is never a dependency of `check`, and nothing is written into the repository except the two report files.
+The default sizes are 10,000 and 100,000 records, and the run takes about two minutes. `MORK_RUN_COST_QUICK` runs 2,000 records alone. `MORK_RUN_COST_LARGE` adds 1,000,000, which needs about 15 GB kept in memory and about 10 GB streamed, so it is for a machine that has it, not a laptop. It is never a dependency of `check`, and nothing is written into the repository except the two report files.
 
 ## Measured results
 
-Run of 2026-10-29 on a laptop (Python 3.14.7, pyoxigraph 0.5.13, macOS).
+Run of 2026-10-29 on a laptop (Python 3.14.7, pyoxigraph 0.5.13, macOS), with the skolem rule of the runner's README §12.2.
 
 | Records | Mode | Written | Peak MB | Run s |
 |---|---|---|---|---|
-| 10,000 | in memory | 90,000 | 425 | 2.96 |
-| 10,000 | streamed | 90,000 | 339 | 1.91 |
-| 100,000 | in memory | 900,000 | 1,447 | 42.84 |
-| 100,000 | streamed | 900,000 | 1,514 | 23.21 |
+| 10,000 | in memory | 90,000 | 370 | 2.26 |
+| 10,000 | streamed | 90,000 | 179 | 1.25 |
+| 100,000 | in memory | 900,000 | 1,499 | 26.18 |
+| 100,000 | streamed | 900,000 | 1,041 | 13.37 |
 
-At 100,000 records the peak is set before the queries run, while the source is skolemised. Loading the same file plainly into a store peaks at 558 MB, and skolemising it, which canonicalises its 100,000 blank nodes with RDFC-1.0, at 1,699 MB. Streaming saves the output's copies and about half the time, but cannot lower a peak the input sets.
+Skolemising the 100,000-record source alone peaks at 857 MB, where canonicalising it whole with RDFC-1.0, the earlier rule, peaked at 1,699 MB, and a plain load of the file at 558 MB. A run kept in memory now spends most of its peak holding the output as rdflib graphs, so a large run streams to a sink. Extrapolated, a streamed run of 1,000,000 records needs about 10 GB.

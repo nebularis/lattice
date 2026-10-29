@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Runs a compiled mapping over a source graph (README §12): blank nodes skolemised from the source's RDFC-1.0
-canonical form, the source in the default graph and reference data in its own named graph. The queries run stratum by
+"""Runs a compiled mapping over a source graph (README §12): blank nodes named by the skolem rule (§12.2),
+the source in the default graph and reference data in its own named graph. The queries run stratum by
 stratum. Each construct's triples go to a sink as the store yields them, and a mapping's output is kept in the store,
 in a graph named for the mapping, only while a later stratum still reads it. Every check's rows are returned as
 findings. Oxigraph is the engine (STD-153)."""
@@ -15,9 +15,9 @@ from typing import Iterable, Iterator, Optional, Protocol, TextIO, Union
 import pyoxigraph as ox
 from rdflib import Graph
 
+from . import skolem
 from .model import REFERENCE_GRAPH, CompiledMapping, CompiledQuery, Finding, Severity
 
-SKOLEM = "urn:mork-rdf:skolem:"
 
 
 class Sink(Protocol):
@@ -87,18 +87,9 @@ def _quads(source: Source, graph_name) -> Iterator[ox.Quad]:
 
 
 def skolemise(source: Source) -> Iterable[ox.Triple]:
-    """The source with each blank node replaced by an IRI from its RDFC-1.0 canonical label, so the same source always
-    gives the same IRIs, and a mapping can read a blank node's identity with STR(). A source with no blank node is
-    already canonical, so it is not canonicalised."""
-    # Built straight from the parser, so the triples are held once, by Oxigraph, never as a list of Python objects.
-    dataset = ox.Dataset(ox.Quad(t.subject, t.predicate, t.object) for t in _triples(source))
-    if any(isinstance(q.subject, ox.BlankNode) or isinstance(q.object, ox.BlankNode) for q in dataset):
-        dataset.canonicalize(ox.CanonicalizationAlgorithm.RDFC_1_0)
-
-    def term(t):
-        return ox.NamedNode(SKOLEM + t.value) if isinstance(t, ox.BlankNode) else t
-
-    return (ox.Triple(term(q.subject), q.predicate, term(q.object)) for q in dataset)
+    """The source with each blank node named by the skolem rule (README §12.2), so a mapping can read a blank node's
+    identity with STR(), and the same node always gives the same target IRIs."""
+    return skolem.skolemise(_triples(source))
 
 
 def run(compiled: CompiledMapping, source: Source, reference: Optional[Source] = None, sink: Optional[Sink] = None) -> RunResult:
@@ -106,7 +97,8 @@ def run(compiled: CompiledMapping, source: Source, reference: Optional[Source] =
     graph. With no sink the triples are kept in memory and returned. With a sink they go to it, and the result holds only
     the findings."""
     store = ox.Store()
-    store.extend(ox.Quad(t.subject, t.predicate, t.object, ox.DefaultGraph()) for t in skolemise(source))
+    report = skolem.Skolemised()
+    store.extend(ox.Quad(t.subject, t.predicate, t.object, ox.DefaultGraph()) for t in skolem._rule(_triples(source), report))
     if reference is not None:
         store.extend(_quads(reference, ox.NamedNode(REFERENCE_GRAPH)))
     out = sink if sink is not None else GraphSink()
@@ -148,6 +140,9 @@ def run(compiled: CompiledMapping, source: Source, reference: Optional[Source] =
         findings.append(Finding(query.code or "Check", query.mapping, _message(query.code),
                                 Severity.WARNING, focus=focus.value if focus is not None else None,
                                 value=value.value if value is not None else None))
+    for digest, count in report.components:
+        findings.append(Finding("SkolemCanonical", None, _message("SkolemCanonical"), Severity.WARNING,
+                                focus=f"{skolem.PREFIX}c:{digest}", value=str(count)))
     findings = tuple(sorted(findings, key=lambda f: (f.code, f.mapping or "", f.focus or "", f.value or "")))
     if sink is None:
         return RunResult(out.graph, findings, out.tbox)
@@ -186,5 +181,6 @@ def _message(code: Optional[str]) -> str:
         "LookupUnresolved": "no reference node matches the value, so the property was not asserted",
         "LookupAmbiguous": "several reference nodes match the value, and each was asserted",
         "TermKind": "the value's kind, an IRI or a literal, is not what the target property takes",
+        "SkolemCanonical": "these blank nodes are in a cycle, shared, or reached from no named node, so they are named by their component's canonical labels, which change whenever the component does",
         "Uncovered": "the node's class is a declared source entity that no compiled root iterates, so nothing was made from it",
     }.get(code or "", "a check reported this focus node")

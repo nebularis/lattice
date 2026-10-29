@@ -405,7 +405,7 @@ The description uses SHACL's executables for the text, so a SHACL-AF processor c
 
 The source and the reference data may each be an Oxigraph dataset, an RDF file Oxigraph parses by its extension, or an rdflib graph, which is serialised once to reach Oxigraph and is the slowest. Oxigraph holds the triples from then on.
 
-1. **Skolemise.** A source with a blank node is canonicalised with RDFC-1.0 and each blank node becomes `urn:mork-rdf:skolem:` and its canonical label. So `STR()` of every focus node is defined, and the same source always gives the same IRIs, whatever order its triples arrive in. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
+1. **Skolemise.** Each blank node becomes an IRI by the skolem rule of §12.2, so `STR()` of every focus node is defined, and the same node always gives the same IRI, whatever order the triples arrive in and whatever else the source holds. ODRL policies and most JSON-LD hold their rules as blank nodes, which is why this step matters.
 2. **Load.** The skolemised source goes in the default graph, and the reference graph in `urn:mork-rdf:reference`.
 3. **Run each stratum.** Stratum 0 holds every query that reads only the source and the reference graph, and stratum n+1 every query that reads what a stratum-n mapping made. Within a stratum each construct runs, and its triples are kept in a graph named by the mapping's IRI, added to the store once the stratum is done, so no query reads its own stratum's output. Each check runs in its mapping's stratum, and each closure collects its members.
 4. **Return.** The checks' rows as findings, and, when no sink was given, the instance triples and the T-Box triples with each closure's axiom.
@@ -422,9 +422,29 @@ A mapping's output enters the store only when a query of a later stratum reads i
 | `NTriplesSink(abox, tbox=None)` | writes N-Triples lines as they arrive, the T-Box to its own stream when one is given. Standard output keeps the runner's contract to a stream of lines, for a listener that publishes them to a broker |
 | any object with `write(query, triples)` and `close()` | whatever a deployment needs, for example a bounded queue to another process |
 
-Benchmark `mise run check:mork-rdf-run-cost` measures a run's peak memory and time at 10,000 and 100,000 records. At 100,000 the peak is about 1.5 GB in either mode, set while the source's blank nodes are canonicalised, and streaming halves the time, from 43 s to 23 s.
+Benchmark `mise run check:mork-rdf-run-cost` measures a run's peak memory and time at 10,000 and 100,000 records. At 100,000 a streamed run peaks at 1,041 MB in 13.4 s, and a run kept in memory at 1,499 MB in 26.2 s, the difference being the output held as rdflib graphs.
 
 The queries are SPARQL 1.1 with nothing engine-specific. The tests run the same constructs on rdflib and compare (§16), and a deployment can run them in Fuseki with the same dataset layout.
+
+### 12.2 The skolem rule, version 1
+
+A blank node's IRI is an identity: a mapping reads it with `STR()` and mints target IRIs from it, so the rule that names it decides which target nodes are the same across runs. This section is normative, the vectors in [`tests/skolem-vectors`](tests/skolem-vectors) pin it, and a test re-derives one name by hand from the text below. Any change to the IRIs the vectors hold is a new rule with a new version (ADR-A146).
+
+**Why not canonical labels.** RDFC-1.0 numbers a source's blank nodes over the whole source, so adding one unrelated blank node can renumber the rest. A source holding one author gives it `c14n0`, and the same author beside one more record becomes `c14n1`. The IRI and Identity Patterns catalogue (§9.4) warns that such labels change when the graph changes and are not durable identities. Version 1 uses the source-local deterministic skolem pattern (§9.2) wherever it can, and canonical labels only where it cannot, scoped so that they change only with their own part of the source.
+
+**Terms.** Every term written into a hash is in its N-Triples form: an IRI in angle brackets, a literal with its quotes, language tag or datatype. Every hash is SHA-256 of the UTF-8 text, in lowercase hex.
+
+**Tree nodes.** A blank node is a tree node when it, and every blank node connected to it through triples between blank nodes, is the object of exactly one triple, and exactly one of them is reached from a named node. Such a component is a tree with that node as its root.
+
+1. **Description.** A tree node's description hash is the hash of its triples as subject, each written as the predicate, a space and the object, where a blank object is written `_:` and that object's description hash. The lines are sorted by code point and joined by a line feed.
+2. **Name.** A tree node's key is the hash of four lines joined by line feeds: `v1`, the node that reaches it (a named node's IRI, or a blank parent's skolem IRI), the predicate that reaches it, and its description hash. Its IRI is `urn:mork-rdf:skolem:v1:` and the key. A parent is named before its children.
+3. **Siblings.** Siblings with the same key are identical in parent, predicate and description, so nothing tells them apart. Each gets the key followed by `-1`, `-2` and so on. Since they are interchangeable, any numbering gives the same graph, and their children's keys differ through their parents' IRIs.
+
+So a tree node's IRI does not depend on the order of the triples or on anything else in the source. It changes when its own description, its predicate or its parent's IRI changes, and an edit below a node changes that node's IRI and every IRI above it to its root blank node. That is RDF's own view, in which a blank node is nothing but its description. A mapping that needs an identity to survive edits to a node's content names the node in the source, or reads a natural key from it into its identity template (§6).
+
+**Other nodes.** A blank node in a cycle, reached by several triples, or reached from no named node is named with its component. The component's triples, those with a member as subject or object, are canonicalised with RDFC-1.0, the component digest is the hash of their canonical N-Triples lines, each followed by a line feed, sorted and joined, and each member's IRI is `urn:mork-rdf:skolem:v1:c:`, the digest, a colon and its canonical label. The IRI holds while the component is unchanged, and the run reports each such component as a warning (`SkolemCanonical`), with its digest and size, so an author knows those target IRIs are not durable across edits to it.
+
+**Cost.** Ground triples pass straight to the store. Only the triples that touch a blank node are held, every description is hashed once, and only the other components are canonicalised. On 100,000 records with a blank-node author each, skolemising peaks at 857 MB where canonicalising the whole source peaked at 1,699 MB, and a plain load at 558 MB.
 
 ## 13. Security
 
@@ -494,6 +514,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Lookup comparisons.** A string and an integer code against an integer reference value, under each comparison and the lexical fallback.
 - **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
+- **The skolem rule.** The vectors give exactly their expected triples, one name is re-derived by hand from §12.2, names do not depend on the triples' order, survive an unrelated addition and change with their own description, identical siblings stay two, and each irregular component is reported.
 - **Sinks.** A run streamed to N-Triples writes what a run in memory returns, on the catalogue and on a stratified run whose lookup reads an earlier stratum's classes.
 - **MORK's examples.** `ontology/mork/examples/Zoo/PropertyGeneration.ttl` and `UncertainMappings.ttl` compile to the classes, properties, axioms and typed individuals their notes describe.
 
@@ -525,6 +546,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-20 | Domain and range axioms for created properties only, in the form and combination the author names, global by default, into a T-Box graph returned apart (MR-Q4, decided 2026-10-29) | the author chooses global or local scope, and axioms never change another vocabulary |
 | MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
 | MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29) | a deployment keeps and reads it as data, and the same compilation always has the same name |
+| MR-23 | Blank nodes are named by the skolem rule of §12.2, version 1, the source-local deterministic pattern for tree nodes and component-scoped canonical labels for the rest (ADR-A146, Proposed) | identities that survive unrelated changes to a source, which whole-source canonical labels do not |
 
 ## 18. Open questions
 

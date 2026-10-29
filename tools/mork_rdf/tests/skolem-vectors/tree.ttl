@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Tree-shaped blank nodes: an author reached from a work, a nested address, and two identical siblings.
+@prefix s: <http://example.org/src#> .
+<http://example.org/records/dune> s:author [ s:name "Frank Herbert" ; s:address [ s:city "Tacoma" ] ] .
+<http://example.org/records/tract> s:author [ s:name "Anon" ] , [ s:name "Anon" ] .
