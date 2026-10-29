@@ -45,6 +45,16 @@ def check(mcn: str, *, base: str = "urn:mork-propose:out/", at: Optional[datetim
         g = mcn_decoder.decode(mcn)
     except mcn_decoder.McnSyntaxError as error:
         return Checked(None, [("decode", "error", getattr(error, "code", "syntax"), f"line {getattr(error, 'line_no', '?')}", str(error))])
+    return check_graph(g, base=base, at=at, sample=sample, target_vocabulary=target_vocabulary)
+
+
+def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[datetime] = None,
+                sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None, compiled_out: Optional[list] = None) -> Checked:
+    """The check of a mapping graph already decoded or parsed, such as the LangGraph pipeline's Turtle. Each compiled
+    mapping is appended to `compiled_out` when it is given."""
+    from mork_rdf import CompileError, compile_scheme, run
+
+    at = at or datetime(2000, 1, 1, tzinfo=timezone.utc)
     result = Checked(g)
     schemes = sorted(g.subjects(RDF.type, __import__("rdflib").URIRef(MORK_NS + "MappingScheme")), key=str)
     if not schemes:
@@ -57,6 +67,8 @@ def check(mcn: str, *, base: str = "urn:mork-propose:out/", at: Optional[datetim
                 result.findings.append(("compile", f.severity.value, f.code, f.mapping, f.message))
             continue
         result.schemes.append((str(scheme), len(compiled.queries), compiled.strata))
+        if compiled_out is not None:
+            compiled_out.append(compiled)
         for f in compiled.findings:
             result.findings.append(("validate" if f.code == "MorkShape" else "compile", f.severity.value, f.code, f.mapping, f.message))
         if sample is not None:

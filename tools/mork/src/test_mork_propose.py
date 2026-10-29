@@ -105,3 +105,19 @@ def test_a_run_s_patterns_do_not_depend_on_minted_names():
         g.add((URIRef(base + "x"), RDF.type, URIRef("urn:t#Permission")))
         g.add((URIRef(base + "x"), URIRef("urn:t#activity"), URIRef("urn:o#use")))
     assert agreement(patterns(a, "urn:one/"), patterns(b, "urn:two/"))["recall"] == 1.0
+
+
+# ---- the LangGraph pipeline meets the same check ----------------------------------------------------------------------
+
+def test_the_pipeline_compiles_an_rdf_scheme_with_mork_rdf_and_refuses_what_the_check_refuses():
+    import asyncio
+    from mork_communities.pipeline import PipelineNodes
+
+    nodes = PipelineNodes(None, None, None)
+    state = {"mapping_turtle": PACK.read_text(), "iteration_count": 0, "session_id": "s", "provenance": []}
+    compiled = asyncio.run(nodes.compile(state))
+    assert [a["artefact_type"] for a in compiled["compiled_artefacts"]] == ["sparql"]
+    cycle = """@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix mm: <http://example.org/m#> .
+        mm:S a mork:MappingScheme . mm:A mork:mappingScheme mm:S ; mork:precedes mm:B . mm:B mork:mappingScheme mm:S ; mork:precedes mm:A ."""
+    validated = asyncio.run(nodes.validate({"mapping_turtle": cycle, "iteration_count": 0}))
+    assert not validated["validation_passed"]

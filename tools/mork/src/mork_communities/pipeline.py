@@ -324,10 +324,19 @@ class PipelineNodes:
             ontology_graph_uri=self.ontology_graph_uri,
         )
 
+        violations, warnings = list(result.violations), list(result.warnings)
+        if result.valid:
+            # The check an agent's proposal takes, so both routes meet one loop: MORK's shapes, and compilation by
+            # tools/mork_rdf for a scheme whose source is RDF.
+            from mork_propose.check import check_graph
+
+            checked = check_graph(Graph().parse(data=turtle, format="turtle"))
+            for stage, severity, code, about, message in checked.findings:
+                (violations if severity == "error" else warnings).append(f"{stage} {code} {about or ''}: {message}")
         return {
-            "validation_passed": result.valid,
-            "validation_errors": result.violations + [
-                f"WARNING: {w}" for w in result.warnings
+            "validation_passed": not violations,
+            "validation_errors": violations + [
+                f"WARNING: {w}" for w in warnings
             ],
             "iteration_count": state["iteration_count"] + 1,
             "current_stage": "validation_complete",
@@ -363,8 +372,23 @@ class PipelineNodes:
                 logger.error("Compilation failed: %s", e)
                 artefacts = []
         else:
-            # No compiler available — pass through the mapping Turtle
-            # as a single artefact for review
+            # Without a compiler of its own, the pipeline compiles a scheme whose source is RDF with tools/mork_rdf, as an
+            # agent's check does, and passes anything else through for review.
+            from mork_propose.check import check_graph
+
+            compiled: list = []
+            check_graph(Graph().parse(data=turtle, format="turtle"), compiled_out=compiled)
+            artefacts = [
+                CompiledArtefact(
+                    iri=f"urn:mork-rdf:compiled:{c.digest}",
+                    artefact_type="sparql",
+                    turtle=c.text(),
+                    source_mapping=c.scheme,
+                    validation_status="compiled",
+                )
+                for c in compiled if c.queries
+            ]
+        if not artefacts and self.compiler is None:
             artefacts = [
                 CompiledArtefact(
                     iri=f"urn:mork:passthrough:{state['session_id']}",
