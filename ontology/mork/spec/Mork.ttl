@@ -2803,6 +2803,13 @@ Also supports optional jurisdiction scoping (appliesInJurisdiction) and effectiv
       rdfs:isDefinedBy "https://yaml.org/spec/" .
 
 
+###  http://www.nebularis.org/ontologies/Mork#RDF
+:RDF rdf:type owl:NamedIndividual ,
+              :SerializationFormat ;
+     rdfs:isDefinedBy "https://www.w3.org/TR/rdf11-concepts/" ;
+     skos:scopeNote "A source in RDF is read as a graph, whatever syntax carried it. Its representations are its own vocabulary's terms, a path is a SPARQL 1.1 property path, and the prefixes a path uses are declared with sh:declare." .
+
+
 #################################################################
 #    Annotations on Individuals
 #################################################################

@@ -71,4 +71,5 @@ def _message(code: Optional[str]) -> str:
         "LookupUnresolved": "no reference node matches the value, so the property was not asserted",
         "LookupAmbiguous": "several reference nodes match the value, and each was asserted",
         "TermKind": "the value's kind, an IRI or a literal, is not what the target property takes",
+        "Uncovered": "the node's class is a declared source entity that no compiled root iterates, so nothing was made from it",
     }.get(code or "", "a check reported this focus node")

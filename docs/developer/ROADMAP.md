@@ -289,6 +289,7 @@ Nothing is built in this unit. CCS took N1, N2, N4, N5 and the Behaviour part of
 | Eligibility compiler | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) | implemented, awaiting validation in a networked environment | validation |
 | Governance surfaces | [plan](plans/governance-surfaces-integration.md), [status](status/governance-surfaces.md) | fixture-backed UI shells | backend integration, three slices |
 | Housekeeping first cut | [RDF/SPARQL phase plan](plans/rdf-sparql-patterns-phase-plan.md) slice 3 | not started | scheduling. ADR-A80 accepted |
+| MORK shared reader | `tools/mork_rdf/README.md` §19, TD-124 | not started. `mork_rdf` (on `claude/config-authoring-studio`) and `mork2rml` read MORK separately | once `mork2rml` moves to W3C RML, one reader for both backends |
 | Policy mapping spike | `spikes/policy-mapping/` on `spikes/pol-map` | spike, two commits | the maintainer's decision whether to keep it |
 
 ## 6. The platform programme

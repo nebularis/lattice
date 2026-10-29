@@ -13,7 +13,7 @@ from typing import Iterable, Optional
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
-from .model import FND, MORK, SH, Finding, Severity
+from .model import FND, MORK, SH, SKOS, Finding, Severity, local
 from . import paths
 
 
@@ -75,7 +75,7 @@ _POSSIBLE = (MORK.possibleMatch, MORK.lexicalMatch, MORK.semanticMatch, MORK.str
              MORK.pathMatch, MORK.missingOrUnrelatedMatch, MORK.digraphMatch)
 _PLACEHOLDER = (MORK.placeholderMapping, MORK.concatenation, MORK.interpolationComponent)
 # Properties that change what a mapping writes, which this backend does not compile (README §10.2).
-_UNSUPPORTED = (MORK.referenceDataMapping, MORK.propertyMappingAssertions, MORK.assertsPropertyDomains, MORK.assertsPropertyRanges,
+_UNSUPPORTED = (MORK.propertyMappingAssertions, MORK.assertsPropertyDomains, MORK.assertsPropertyRanges,
                 MORK.egressProjection)
 _GENERATIVE = (MORK.GenerativeMapping, MORK.ShapeMapping, MORK.RuleMapping, MORK.TransformMapping, MORK.ProjectionMapping)
 _MAPPING_TYPES = (MORK.DataMapping, MORK.Datum, MORK.Lookup, MORK.IndexedMapping, MORK.WeightedMatch, MORK.UncertainMapping,
@@ -207,6 +207,9 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
     for node in in_force:
         if any((node, RDF.type, t) in g for t in _GENERATIVE):
             findings.append(Finding("OtherBackend", str(node), "a generative mapping, compiled by the SHACL, SWRL, projection or RML backend", Severity.INFO))
+        elif (formats := sorted({f for c in g.objects(node, MORK.mappingFor) for sc in g.objects(c, SKOS.inScheme)
+                                 for f in g.objects(sc, MORK["format"])} - {MORK.RDF}, key=str)):
+            findings.append(Finding("OtherBackend", str(node), f"its source is {', '.join(local(f) for f in formats)}, not RDF", Severity.INFO))
         elif (node, RDF.type, MORK.UncertainMapping) in g or _one(g, node, MORK.incompleteMapping) == Literal(True):
             findings.append(Finding("Uncertain", str(node), "an uncertain or incomplete mapping is a question for review, never compiled"))
         elif any(_one(g, node, p) is not None for p in _PLACEHOLDER):
@@ -224,7 +227,9 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
     present = set(candidates)
     parents: dict[URIRef, set] = {n: set() for n in candidates}
     for node in candidates:
-        for child in g.objects(node, MORK.compositeNarrowerMapping):
+        # mork:referenceDataMapping names a lookup beneath its parent. It is a subproperty of mork:templateMapping, but
+        # the lookup is a child, never a template merged in (§7.3).
+        for child in list(g.objects(node, MORK.compositeNarrowerMapping)) + list(g.objects(node, MORK.referenceDataMapping)):
             if child in present:
                 parents[child].add(node)
         for parent in list(g.objects(node, MORK.compositeBroaderMapping)) + list(g.objects(node, MORK.broaderApplicative)):
@@ -344,8 +349,10 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
     has_value = spec.data_ref is not None or spec.data_inline is not None or "exact" in s.abox or "broad" in s.abox
     rbox = s.rbox.get("exact") or s.rbox.get("inverse") or s.rbox.get("broad")
     if (spec.node, RDF.type, MORK.Lookup) in g or spec.lookup_path is not None:
-        if rbox is None or spec.lookup_path is None or "exact" not in s.tbox or spec.data_ref is None:
-            return Kind.LOOKUP, Finding("LookupIncomplete", node, "a lookup needs an R-Box match, mork:referenceDataPath, the reference class as mork:exactTBoxMatch and mork:dataRef")
+        if rbox is None or "exact" not in s.tbox or spec.data_ref is None:
+            return Kind.LOOKUP, Finding("LookupIncomplete", node, "a lookup needs an R-Box match, the reference class as mork:exactTBoxMatch and mork:dataRef")
+        if spec.lookup_path is None and spec.data_inline is not None and str(spec.data_inline) != "":
+            return Kind.LOOKUP, Finding("LookupInline", node, "a lookup's own mork:dataInline may only be \"\", which matches on the reference individual's name")
         return Kind.LOOKUP, None
     applicative = _iri(g, spec.node, MORK.broaderApplicative)
     if applicative is not None or (spec.deferred is not None and spec.parent is not None and rbox is not None and not has_value):

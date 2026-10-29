@@ -254,6 +254,17 @@ class _Compiler:
                     raise _Refusal("NoParent", f"a {spec.kind.value} mapping needs a parent")
             except _Refusal as refusal:
                 self.findings.append(Finding(refusal.code, str(spec.node), refusal.message))
+        self.coverage()
+
+    def coverage(self) -> None:
+        """A check naming each source node typed with a declared `mork:Entity` that no compiled root iterates, because
+        its root is absent, dropped or refused (§10.3)."""
+        iterated = {s for spec in iter_roots(self.r.specs) if spec.kind is Kind.DATUM for s in spec.sources}
+        uncovered = sorted((e for e in self.g.subjects(RDF.type, MORK.Entity) if isinstance(e, URIRef) and e not in iterated), key=str)
+        if uncovered:
+            text = (f"{self.prologue}SELECT DISTINCT ?focus ?value\nWHERE {{\n  VALUES ?value {{ {' '.join(_term(e) for e in uncovered)} }}\n"
+                    f"  ?focus {_term(RDF.type)} ?value .\n}}")
+            self.queries.append(CompiledQuery(str(self.r.scheme), (str(self.r.scheme),), "check", "Uncovered", text))
 
     def class_creation(self, spec: Spec) -> None:
         broad = spec.strata.tbox["broad"]
@@ -376,8 +387,14 @@ class _Compiler:
         inverse = "inverse" in spec.strata.rbox and "exact" not in spec.strata.rbox
         key, found, code = self.var("key"), self.var("found"), self.var("code")
         follow = f"{parent.focus} {paths.write(spec.data_ref)} {key} ."
-        match = (f"GRAPH <{REFERENCE_GRAPH}> {{ {found} {_term(spec.lookup_path)} {code} . {found} {_term(RDF.type)} {_term(spec.strata.tbox['exact'])} . }}"
-                 f" FILTER (STR({code}) = STR({key}))")
+        typed = f"{found} {_term(RDF.type)} {_term(spec.strata.tbox['exact'])} ."
+        if spec.lookup_path is None and spec.data_inline is not None:
+            # dataInline "" matches on the reference individual's name, its IRI after the last / or #
+            match = f"GRAPH <{REFERENCE_GRAPH}> {{ {typed} }} FILTER (REPLACE(STR({found}), \"^.*[/#]\", \"\") = STR({key}))"
+        else:
+            # on the predicate mork:referenceDataPath names, or else on the reference individual's own mork:dataInline
+            predicate = spec.lookup_path if spec.lookup_path is not None else MORK.dataInline
+            match = f"GRAPH <{REFERENCE_GRAPH}> {{ {found} {_term(predicate)} {code} . {typed} }} FILTER (STR({code}) = STR({key}))"
         triple = f"{found} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {found} ."
         self.construct(chain, [triple], [follow, match], node=spec)
         self.check(chain, "LookupUnresolved", f"({parent.focus} AS ?focus) ({key} AS ?value)",

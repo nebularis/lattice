@@ -243,7 +243,8 @@ def refusals(body: str, vocabulary: Graph | None = None) -> set:
     ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:dataRef \"src:p\" .", ("Unclassified", "A")),
     ("mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:exactTBoxMatch tgt:Other .", ("NoIterator", "A")),
     ("mm:A mork:mappingScheme mm:S ; mork:precedes mm:B . mm:B mork:mappingScheme mm:S ; mork:precedes mm:A .", ("MorkShape", "A")),
-    ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:referenceDataMapping mm:X .", ("NotCompiled", "A")),
+    ("mm:A mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:dataRef \"src:p\" ; mork:assertsPropertyRanges tgt:X .", ("NotCompiled", "A")),
+    ("mm:A a mork:Lookup ; mork:mappingScheme mm:S ; mork:compositeBroaderMapping mm:Root ; mork:exactRBoxMatch tgt:p ; mork:exactTBoxMatch tgt:G ; mork:dataRef \"src:p\" ; mork:dataInline \"fixed\" .", ("LookupInline", "A")),
 ])
 def test_a_mapping_the_compiler_cannot_honour_is_refused_by_name(body, expected):
     assert expected in refusals(body)
@@ -278,3 +279,37 @@ def test_source_data_cannot_answer_a_lookup():
     source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> ; <{SRC}genre> \"G\" . <{TGT}forged> a <{TGT}Genre> ; <{TGT}code> \"G\" .", format="turtle")
     out = run(compiled, source)
     assert not list(out.graph.objects(None, URIRef(TGT + "genre"))) and {f.code for f in out.findings} == {"LookupUnresolved"}
+
+
+@pytest.mark.parametrize("match, reference", [
+    ("mork:referenceDataPath tgt:code", "<{t}lob1> a <{t}LineOfBusiness> ; <{t}code> \"MAR\" ."),
+    ("", "<{t}lob1> a <{t}LineOfBusiness> ; <http://www.nebularis.org/ontologies/Mork#dataInline> \"MAR\" ."),
+    ('mork:dataInline ""', "<{t}MAR> a <{t}LineOfBusiness> ."),
+])
+def test_a_lookup_named_by_reference_data_mapping_matches_each_way_mork_allows(match, reference):
+    """MORK's own example: a datum names its lookup with mork:referenceDataMapping, and the lookup matches on a
+    predicate, on the reference individual's mork:dataInline, or with dataInline "" on its name (§7.3)."""
+    g = Graph().parse(data=HEAD.replace("mork:exactTBoxMatch tgt:Thing .", "mork:exactTBoxMatch tgt:Thing ; mork:referenceDataMapping mm:Lob .")
+                      + f"""mm:Lob a mork:Lookup ; mork:mappingScheme mm:S ; mork:exactRBoxMatch tgt:lob ;
+        mork:exactTBoxMatch tgt:LineOfBusiness ; mork:dataRef "src:lineOfBusiness" {'; ' + match if match else ''} .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert not compiled.errors
+    source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> ; <{SRC}lineOfBusiness> \"MAR\" . <{REC}y> a <{SRC}Thing> ; <{SRC}lineOfBusiness> \"AVN\" .", format="turtle")
+    out = run(compiled, source, Graph().parse(data=reference.format(t=TGT), format="turtle"))
+    assert len(list(out.graph.subject_objects(URIRef(TGT + "lob")))) == 1
+    assert {(f.code, f.value) for f in out.findings} == {("LookupUnresolved", "AVN")}
+
+
+def test_a_declared_entity_no_root_iterates_is_reported_on_the_run():
+    g = Graph().parse(data=HEAD + "src:Orphan a mork:Entity .", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    source = Graph().parse(data=f"<{REC}x> a <{SRC}Thing> . <{REC}o> a <{SRC}Orphan> .", format="turtle")
+    assert {(f.code, f.focus, f.value) for f in run(compiled, source).findings} == {("Uncovered", REC + "o", SRC + "Orphan")}
+
+
+def test_a_mapping_whose_source_is_another_format_is_left_to_its_backend():
+    g = Graph().parse(data=HEAD + """@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+        mm:Json a mork:RepresentationScheme ; mork:format mork:JSON . mm:J a mork:DataConcept ; skos:inScheme mm:Json .
+        mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:J ; mork:exactTBoxMatch tgt:Other .""", format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert ("OtherBackend", MM + "A") in {(f.code, f.mapping) for f in compiled.findings} and not compiled.errors

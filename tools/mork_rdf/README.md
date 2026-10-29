@@ -85,7 +85,7 @@ The compiler compiles one `mork:MappingScheme` at a time. A mapping node belongs
 
 ### 4.2 The source side in RDF
 
-MORK describes a source with representation schemes, whose `mork:format` is JSON, XML or YAML today. An RDF source needs no description of its own, because its vocabulary already names every class and property. So the representations of an RDF source are the source vocabulary's own terms:
+MORK describes a source with representation schemes, whose `mork:format` is JSON, XML, YAML or `mork:RDF`. A concept whose scheme names another format is left to that format's backend (`OtherBackend`), and a concept in no scheme, or in one with no format, is read as RDF. An RDF source needs no further description, because its vocabulary already names every class and property. So the representations of an RDF source are the source vocabulary's own terms:
 
 - **What a root iterates.** A root datum's `mork:mappingFor` names a `mork:DataConcept`, and the concept's `mork:representedAs` names the source classes, each declared `a mork:Entity` in the mapping graph. The root visits every node typed with one of them. Several classes are alternatives, as `src:Book` and `src:Pamphlet` are in §15.
 - **Where a contextual datum's focus is.** Its concept's `mork:path` is a property path from the parent's focus node, as `src:author` is from a book to its author. A concept with no path keeps the parent's focus, so a mapping can make a second target node from the same source node, as the loan example's principal does.
@@ -199,6 +199,18 @@ mm:Map_Genre a mork:DataMapping , mork:Lookup ;
     mork:dataRef "src:genre" .             # the source value
 ```
 
+A parent names its lookup either as a child, with `mork:compositeNarrowerMapping`, or with `mork:referenceDataMapping`, as MORK's own example does. `referenceDataMapping` is a subproperty of `mork:templateMapping`, but the lookup is a child whose focus is its parent's, never a template merged into the parent.
+
+The lookup matches the source value in one of three ways, as `mork:referenceDataMapping`'s definition allows:
+
+| The lookup gives | It matches |
+|---|---|
+| `mork:referenceDataPath p` | the reference node's value of `p` |
+| neither of the others | the reference node's own `mork:dataInline` |
+| `mork:dataInline ""` | the reference node's name, its IRI after the last `/` or `#` |
+
+Any other `mork:dataInline` on the lookup is refused (`LookupInline`), because a constant needs no lookup.
+
 The reference nodes are read only from the reference graph, which the runner keeps in its own named graph (§12), so source data cannot answer a lookup by declaring its own codes (§13). The match compares the two values' lexical forms with `STR()`, so a plain string matches a typed code. A value no reference node matches is not asserted (`LookupUnresolved`), and a value several match is asserted with each and reported (`LookupAmbiguous`).
 
 ### 7.4 Template expressions
@@ -256,7 +268,7 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `MorkShape` | error or warning | the mapping graph violates one of MORK's shapes |
 | `EmptyScheme` | error | no mapping node names the scheme |
 | `NotInForce`, `Superseded` | info | out of force at `at` |
-| `OtherBackend` | info | a generative mapping, for the SHACL, SWRL, projection or RML backend |
+| `OtherBackend` | info | a generative mapping, for the SHACL, SWRL, projection or RML backend, or a mapping for a concept whose representation scheme's `mork:format` is not `mork:RDF` |
 | `Uncertain` | error | an uncertain or incomplete mapping |
 | `Evidence` | info | a hypothesis or weighted match with no target |
 | `PlaceholderForm` | error | the placeholder forms that predate template expressions |
@@ -265,7 +277,8 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `BadPath` | error | a path that does not parse or names an undeclared prefix |
 | `StratumUnknown` | error | a generic match the target vocabulary does not type |
 | `NarrowMatch` | error | a narrow match in any stratum |
-| `LookupIncomplete` | error | a lookup missing its R-Box match, reference path, reference class or source |
+| `LookupIncomplete` | error | a lookup missing its R-Box match, reference class or source |
+| `LookupInline` | error | a lookup whose own `mork:dataInline` is a constant, not `""` |
 | `NoGluingProperty` | error | a contextual datum with no R-Box match to join it to its parent |
 | `NoParent` | error | an assertion with no parent |
 | `NoValue` | error | an assertion with nowhere to take its value from |
@@ -284,7 +297,7 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 
 Some of MORK's vocabulary is about something other than moving instance data, and is not this backend's to compile. A mapping that uses one of the first group is refused rather than compiled without it, because the property would change what it writes:
 
-- **Refused (`NotCompiled`).** `mork:referenceDataMapping`, whose older lookup form the `mork:Lookup` class replaces. `mork:propertyMappingAssertions`, `assertsPropertyDomains` and `assertsPropertyRanges`, which write property axioms. `mork:egressProjection`, which describes the reverse direction.
+- **Refused (`NotCompiled`).** `mork:propertyMappingAssertions`, `assertsPropertyDomains` and `assertsPropertyRanges`, which write property axioms. `mork:egressProjection`, which describes the reverse direction.
 - **Another backend's (`OtherBackend`).** Generative mappings (`ShapeMapping`, `RuleMapping`, `TransformMapping`, `ProjectionMapping`), their query templates, targeting, jurisdictions, scopes and constraints.
 - **Read for nothing.** The relations between mappings that carry no meaning for instance data (`mork:siblingMapping`, `closeMapping`, `exactMapping`, `relatedMapping`), review annotations and provenance, and the intent layer. They are kept in the mapping graph for reviewers and change no query.
 
@@ -300,8 +313,9 @@ Each check is a `SELECT` that the compiler emits beside the constructs, and the 
 | `LookupUnresolved` | a lookup | no reference node matches |
 | `LookupAmbiguous` | a lookup | several match, and each was asserted |
 | `TermKind` | an assertion whose property the target vocabulary types | a literal for an object property, or an IRI for a datatype property |
+| `Uncovered` | the scheme, when a declared `mork:Entity` has no compiled root iterating it | a source node of that class, from which nothing was made |
 
-A source node that matches no root class is not reported, because a mapping says what to map, not that everything must be mapped. A deployment that needs coverage checks it separately, against its own list of source classes.
+The declared entities are the coverage list. A node of a class the mapping graph does not declare is not reported, because a node reached along a path, such as a book's author, need not be declared, and a check over every typed node would report each of them.
 
 ## 11. Output
 
@@ -401,7 +415,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | ID | Decision | Why |
 |---|---|---|
 | MR-1 | A separate package, `tools/mork_rdf`, beside `mork2rml`, rather than a module of `tools/mork` or of `tools/mork_compilers` | `mork_compilers` compiles Eligibility conditions, and `tools/mork` holds the RML compiler and MORK's agents. A package of its own has its own README, tests and check |
-| MR-2 | An RDF source's representations are its vocabulary's own terms, a root iterating the classes its concept's `mork:representedAs` names, with no new `mork:SerializationFormat` | no change to MORK's ontology. Adding `mork:RDF` as a format is open (§18) |
+| MR-2 | An RDF source's representations are its vocabulary's own terms, a root iterating the classes its concept's `mork:representedAs` names, and `mork:RDF` is the scheme's format (MR-Q1, decided 2026-10-29) | the vocabulary already names every class and property, and the format lets a scheme declare its backend |
 | MR-3 | `mork:dataRef` and a contextual concept's `mork:path` are SPARQL 1.1 property paths, with prefixes declared by `sh:declare` | SPARQL's path language is the standard for paths over RDF, and SHACL already declares prefixes as data |
 | MR-4 | A contextual datum's focus follows its concept's `mork:path`, and `mork:dataRef` is always a value or identity reference | `dataRef` keeps one meaning in every case, as in `mork2rml` |
 | MR-5 | One construct per writing node, its WHERE the chain from the root | each query traces to one mapping, at the cost of repeated ancestor patterns (§14) |
@@ -413,18 +427,20 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-11 | Default identity is the base, the concept name or the mapping's local name, and the SHA-256 of the focus node's IRI | stable, collision-resistant and free of the source's own IRIs |
 | MR-12 | A reference inside an IRI template is encoded, one that is the whole identity is not | as RML treats a template and a column |
 | MR-13 | Properties that would change what a mapping writes, which this backend does not compile, refuse the mapping (`NotCompiled`) | ignoring them would compile something other than the mapping says |
+| MR-15 | `mork:referenceDataMapping` names a lookup child, and a lookup matches on a predicate, the reference node's `mork:dataInline` or, with `dataInline ""`, its name (§7.3) | as the property's definition and MORK's example say |
+| MR-16 | Declared `mork:Entity` classes that no compiled root iterates are reported per source node (`Uncovered`, MR-Q3, decided 2026-10-29) | coverage is visible without a list outside the mapping graph |
 | MR-14 | Oxigraph runs the queries, and rdflib must agree | STD-153, and the queries are portable SPARQL 1.1 |
 
 ## 18. Open questions
 
-| ID | Question | First thought |
+| ID | Question | Where it stands |
 |---|---|---|
-| MR-Q1 | Should MORK gain `mork:RDF` as a `mork:SerializationFormat`, so a representation scheme can say its source is RDF? | yes, at the next MORK release, so a scheme declares its backend rather than the caller choosing it |
-| MR-Q2 | Should a lookup offer an exact-term comparison beside lexical equality, for large reference schemes? | add `mork:lookupMatch` with exact and lexical values when a large scheme needs it (§14) |
-| MR-Q3 | Should a source node that matches no root be reportable, for a deployment that needs full coverage? | a separate coverage check over a declared list of source classes, not part of a mapping |
-| MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | when a T-Box generation use needs it. Instance mappings have not |
-| MR-Q5 | Should `mork2rml` and this compiler share one reader, so classification and template merging have one implementation? | yes, once `mork2rml` moves to W3C RML. The reader here is the candidate (§19) |
-| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | when the platform stores compiled artefacts. `mork:generatesTransformDefinition` ranges over R2RML triples maps today, so it needs a new range or property |
+| MR-Q1 | Should MORK gain `mork:RDF` as a `mork:SerializationFormat`? | decided 2026-10-29, yes. Added to MORK's specification, and read by the compiler (§4.2) |
+| MR-Q2 | Should a lookup offer an exact-term comparison beside lexical equality, for large reference schemes? | open |
+| MR-Q3 | Should a source node that matches no root be reportable? | decided 2026-10-29, yes, as `Uncovered` (§10.3, MR-16) |
+| MR-Q4 | Should the compiler emit property axioms for `mork:assertsPropertyDomains` and `assertsPropertyRanges`, rather than refusing them? | decided 2026-10-29, yes, since MORK is meant to create T-Box axioms on demand. Still refused (`NotCompiled`) until the design is settled |
+| MR-Q5 | Should `mork2rml` and this compiler share one reader? | decided 2026-10-29, yes, on the roadmap for when `mork2rml` moves to W3C RML (§19) |
+| MR-Q6 | Should the compiled mapping be described in RDF, as a `mork:TransformMapping`'s artefact is, rather than as text? | decided 2026-10-29, yes, now, because deployments keep mapping graphs under version control or in their graph store and other components can read it. The vocabulary is to be settled |
 
 ## 19. Relation to mork2rml, and what comes next
 
