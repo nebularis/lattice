@@ -1054,6 +1054,108 @@ class _ShaclPayloadParser:
 
 
 # ---------------------------------------------------------------------------
+# Sec 10.6 -- guard payload (mork:appliesWhen)
+# ---------------------------------------------------------------------------
+
+_GUARD_TOKEN_RE = re.compile(
+    r'>=|<=|\.\.|"(?:[^"\\]|\\.)*"|[;,\[\]{}()><=^!/]|-?\d+(?:\.\d+)?'
+    r'|\.[A-Za-z]+|:?[A-Za-z_][\w:.\-]*'
+)
+# What each side of a guard may say: the components tools/mork_rdf guards.py compiles.
+_GUARD_NODE_KEYWORDS = {"in", "=", "cls", "dt", "nk"}
+_GUARD_PROPERTY_KEYWORDS = _GUARD_NODE_KEYWORDS | {"["}
+_GUARD_COMBINERS = {"not", "and", "or"}
+
+
+class _GuardPayloadParser(_ShaclPayloadParser):
+    """A guard is a sh:NodeShape with no target and no scheme membership.
+    Reuses the constraint parser of Sec 10.3 for the components both share."""
+
+    def __init__(self, decoder: "_Decoder", shape: URIRef, line_no: int, bnode_shapes: bool):
+        super().__init__(decoder, shape, line_no, bnode_shapes)
+        self._property_counts: Dict[URIRef, int] = {}
+        self._inner_count = 0
+
+    def parse(self, text: str) -> None:
+        self.toks = []
+        pos = 0
+        while pos < len(text):
+            if text[pos] in " \t":
+                pos += 1
+                continue
+            m = _GUARD_TOKEN_RE.match(text, pos)
+            if not m:
+                raise McnSyntaxError(f"malformed guard payload near {text[pos:pos + 20]!r}", self.line_no, code="guard-malformed-guard-payload-near")
+            self.toks.append(m.group(0))
+            pos = m.end()
+        self.pos = 0
+        self.d.graph.add((self.shape, RDF.type, SH.NodeShape))
+        self._guard(self.shape)
+        if self.peek() is not None:
+            raise self._err(f"unexpected {self.peek()!r}", code="guard-unexpected-token")
+
+    def _err(self, message: str, code: str = "guard-error"):
+        return McnSyntaxError(f"malformed guard payload: {message}", self.line_no, code=code)
+
+    def _guard(self, shape: URIRef) -> None:
+        while True:
+            self._clause(shape)
+            if self.peek() != ";":
+                return
+            self.take()
+
+    def _clause(self, shape: URIRef) -> None:
+        tok = self.peek()
+        if tok in _GUARD_COMBINERS:
+            self.take()
+            self.expect("(")
+            members = [self._inner()]
+            while self.peek() == ",":
+                self.take()
+                members.append(self._inner())
+            self.expect(")")
+            if tok == "not":
+                if len(members) != 1:
+                    raise self._err("'not' takes one guard", code="guard-not-takes-one-guard")
+                self.d.graph.add((shape, SH["not"], members[0]))
+            else:
+                self.d.graph.add((shape, SH[tok], self.d._rdf_list(members)))
+        elif tok in _GUARD_NODE_KEYWORDS:
+            self._parse_constraint(shape)
+        else:
+            self._property(shape)
+
+    def _inner(self) -> URIRef:
+        self._inner_count += 1
+        node = URIRef(f"{self.shape}_g{self._inner_count}")
+        self.d.graph.add((node, RDF.type, SH.NodeShape))
+        self._guard(node)
+        return node
+
+    def _property(self, shape: URIRef) -> None:
+        count = self._property_counts.get(shape, 0) + 1
+        self._property_counts[shape] = count
+        pshape = self.d._mint_bnode() if self.bnode_shapes else URIRef(f"{shape}_p{count}")
+        self.d.graph.add((pshape, RDF.type, SH.PropertyShape))
+        self.d.graph.add((shape, SH.property, pshape))
+        inverse = self.peek() == "^"
+        if inverse:
+            self.take()
+        path = self._resolve(self.take())
+        if self.peek() == "/":
+            raise self._err("a guard's path is one property or its inverse", code="guard-path-is-one-property-or-its-inverse")
+        if inverse:
+            inv_node = self.d._mint_bnode()
+            self.d.graph.add((inv_node, SH.inversePath, path))
+            path = inv_node
+        self.d.graph.add((pshape, SH.path, path))
+        while self.peek() not in (None, ";", ",", ")"):
+            if self.peek() not in _GUARD_PROPERTY_KEYWORDS:
+                raise self._err(f"a guard cannot say {self.peek()!r} of a property", code="guard-cannot-say-of-a-property")
+            self._parse_constraint(pshape)
+
+
+# ---------------------------------------------------------------------------
 # Sec 10.4 -- RML compact payload
 # ---------------------------------------------------------------------------
 
@@ -1437,7 +1539,7 @@ def _split_top_level_words_on_semicolons(text: str) -> List[str]:
 # ---------------------------------------------------------------------------
 
 _EXPRESSION_VALUED_CODES = {"pe", "ls", "cl", "cr"}
-_ARTEFACT_PAYLOAD_CODES = {"gs": "SH", "gr": "SW", "gt": "TM"}
+_ARTEFACT_PAYLOAD_CODES = {"gs": "SH", "gr": "SW", "gt": "TM", "aw": "GUARD"}
 _ANNOTATION_ONLY_CLAUSE_KEYWORDS = {"=", "<", "!", "dom", "rng", "inv", "chain"}
 _CHARACTERISTIC_FLAG_RE = re.compile(r"^\+(F|IF|S|AS|T|R|IR)(\+(F|IF|S|AS|T|R|IR))*$")
 _OBJECT_PROPERTY_CHARACTERISTICS = {
@@ -1825,6 +1927,10 @@ class _Decoder:
             self._assert_type_list(node, type_list_token)
             self._maybe_decode_payload_prefix(node, lx)
             self._decode_pairs(node, lx)
+        elif explicit_id is not None and code not in cb.POSITIONAL_FORMS:
+            # Sec 9.6: an explicit identity with no type list is an untyped
+            # node of code-value pairs, where the code has no positional table.
+            self._decode_pairs(node, lx)
         else:
             self._decode_positional(node, lx, code, matched_key)
         return node
@@ -1841,6 +1947,8 @@ class _Decoder:
             self._decode_positional_pv(node, lx, parent_matched_key)
         elif code == "hb":
             self._decode_positional_hb(node, lx)
+        elif code == "sdl":
+            self._decode_positional_sdl(node, lx)
         else:  # pragma: no cover -- exhaustive given cb.POSITIONAL_FORMS
             raise self._error(f"no positional decoder registered for {code!r}", code="core-no-positional-decoder-registered-for")
         self._decode_pairs(node, lx)
@@ -1900,6 +2008,17 @@ class _Decoder:
         resolved = _ExpressionParser(self, self._line_no).parse_into(expr_node, span)
         self.graph.add((node, MORK.placeholderExpression, resolved))
 
+    def _decode_positional_sdl(self, node: URIRef, lx: _Lexer) -> None:
+        self._assert_type(node, "PD")
+        prefix = self._read_slot_or_skip(lx)
+        namespace = self._read_slot_or_skip(lx)
+        if prefix is not None:
+            self.graph.add((node, SH.prefix, self._literal_for_value(prefix, None)))
+        if namespace is not None:
+            if namespace.kind not in ("bare", "quoted", "iri"):
+                raise self._error("a namespace is an IRI", code="core-a-namespace-is-an-iri")
+            self.graph.add((node, SH.namespace, Literal(namespace.text, datatype=XSD.anyURI)))
+
     # -- artefact payloads (Sec 9.8, 10.2-10.4) ---------------------------
 
     def _decode_artefact_payload(self, code: str, payload_text: str, subject: URIRef) -> URIRef:
@@ -1920,6 +2039,9 @@ class _Decoder:
         elif type_code == "TM":
             self._add_type(node, RR.TriplesMap, "rr:TriplesMap")
             _RmlPayloadParser(self, node, self._line_no).parse(payload_text)
+        elif type_code == "GUARD":
+            self._add_type(node, SH.NodeShape, "sh:NodeShape")
+            _GuardPayloadParser(self, node, self._line_no, "bnode-shapes" in self.options).parse(payload_text)
         else:  # pragma: no cover
             raise self._error(f"no payload parser for type code {type_code!r}", code="core-no-payload-parser-for-type-code")
 

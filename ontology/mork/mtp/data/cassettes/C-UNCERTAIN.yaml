@@ -19,7 +19,7 @@ mcn: |
   Map_Falcon MU hy Map_Falcon_Hypothesis{n "Hypothesise the creation of several new types/classes to support the Falcon concept."} f pets:FalconType,pets:Rep_Falcon mr "Recommend defining a new individual 'Falcon' in the target ontology, representing the concept of Falcon as an individual species of Bird." w 65
   Map_Falcon_Hypothesis MD cn Map_Lays_Eggs df Map_Gen_Bird_Class{n "Falcon is a bird, birds lay eggs, however birds are not reptiles. Recommend defining a new class 'Bird' in the target ontology, and then defining 'Falcon' as an individual of the class."} xt .dcd,Map_Yield_Oviparous,Map_Yield_Pet i #Falcon n "Hypothesis mapping for 'Falcon' is Pet, Bird."
   Map_Gen_Bird_Class bt Map_Yield_Oviparous,:Animal dp Map_Oviparity c #Bird n "Create a class 'Bird' in the output ontology."
-  Map_Gen_Monotreme_Class bt Map_Yield_Oviparous,:Mamal c #Monotreme n "Create a class 'Monotreme' in the output ontology."
+  Map_Gen_Monotreme_Class bt Map_Yield_Oviparous,:Mammal c #Monotreme n "Create a class 'Monotreme' in the output ontology."
   Map_Lays_Eggs MD cn Map_Eggs xr :laysEggs v t n "Asserts the property `Falcon laysEggs true`"
   Map_Oviparity MX bt .T tc mork:OviparousBase c #Oviparous mr "Recommend introducing a notional construct to model reproductive modes, with 'Oviparity' as a member/individual."
   Map_Pet xt :Animal f pets:PetType c #Pet w 90 n "'Pet' is a possible sematic match with the class 'Animal' in the target ontology, representing the concept of pet animals."

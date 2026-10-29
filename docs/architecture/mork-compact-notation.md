@@ -26,7 +26,7 @@ MCN is the *proposal wire format* in the sense of ADR-A25: an LLM emits MCN, a d
 
 ### 1.1 Measured effect
 
-Two example files from the repository were hand-encoded in MCN and decoded with the reference decoder ([tools/mork/src/mcn_decoder.py](../../tools/mork/src/mcn_decoder.py), codebook in [mcn_codebook.py](../../tools/mork/src/mcn_codebook.py), tests in [test_mcn_decoder.py](../../tools/mork/src/test_mcn_decoder.py)); the decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
+Two example files from the repository were hand-encoded in MCN and decoded with the reference decoder ([tools/mork/src/mcn_decoder.py](../../tools/mork/src/mcn_decoder.py), codebook in [mcn_codebook.py](../../tools/mork/src/mcn_codebook.py), tests in [test_mcn_decoder.py](../../tools/mork/src/test_mcn_decoder.py)). The decoded graphs were compared to the originals with an isomorphism-aware diff (rdflib `graph_diff`). Token counts use the `o200k_base` BPE vocabulary as a proxy for current frontier tokenizers.
 
 | Document | Triples | MCN | Turtle (as written, comments stripped) | JSON-LD (compacted) | RDF/XML | N-Triples |
 |---|---|---|---|---|---|---|
@@ -48,22 +48,22 @@ Per construct, the savings are larger where Turtle is most verbose:
 | One annotated match (`exactTBoxMatch` + `mappingNote` on the axiom) | 9 | 54 | 6.0× |
 | Prefix/base header of the loan example | 50 | 118 | 2.4× |
 
-The loan example's 219 tokens include 50 tokens of prefix IRIs; §6.1 describes a profile mechanism that removes those from documents exchanged inside a known deployment.
+The loan example's 219 tokens include 50 tokens of prefix IRIs. §6.1 describes a profile mechanism that removes those from documents exchanged inside a known deployment.
 
-Both round-trips were exact: 40/40 triples for the loan example; 140 of 143 triples for the Zoo example (counting after removing the `owl:NamedIndividual` typing both sides assert), where the three differences are a defect in the original Turtle — three `owl:annotatedTarget` values are in the wrong namespace and so annotate nothing — not in the encoding.
+Both round-trips were exact: 40/40 triples for the loan example, 140 of 143 triples for the Zoo example (counting after removing the `owl:NamedIndividual` typing both sides assert), where the three differences were a defect in the original Turtle at the time, three `owl:annotatedTarget` values in the wrong namespace that annotate nothing, and not in the encoding. The original has since been corrected.
 
 ### 1.2 Non-goals
 
 - MCN does not replace Turtle as the *storage* or *interchange* format for governed artefacts. Decoded RDF is what is stored, hashed, validated and compiled.
 - MCN does not encode arbitrary RDF efficiently. It encodes MORK efficiently and everything else adequately.
-- MCN does not attempt to make LLM output *correct*; it makes it *cheap and decodable*. Validation remains the job of OWL DL checking, SHACL and the production gate (ADR-A22, ADR-A25, ADR-A28).
+- MCN does not attempt to make LLM output *correct*. It makes it *cheap and decodable*. Validation remains the job of OWL DL checking, SHACL and the production gate (ADR-A22, ADR-A25, ADR-A28).
 - Human readability is not a goal. Where legibility and token count conflict, token count wins.
 
 ---
 
 ## 2. Document model
 
-An MCN document denotes an RDF graph. The graph, when it contains an `owl:Ontology` header (directive `@o`) and only OWL 2 DL-compatible constructs, is an OWL 2 ontology document under the OWL 2 RDF-based mapping and can be serialised in any OWL syntax by any conformant tool. Decoding is a total function from well-formed MCN text to a graph; ill-formed text is rejected with an error, never silently repaired.
+An MCN document denotes an RDF graph. The graph, when it contains an `owl:Ontology` header (directive `@o`) and only OWL 2 DL-compatible constructs, is an OWL 2 ontology document under the OWL 2 RDF-based mapping and can be serialised in any OWL syntax by any conformant tool. Decoding is a total function from well-formed MCN text to a graph. Ill-formed text is rejected with an error, never silently repaired.
 
 The decoded graph consists of four kinds of contribution:
 
@@ -75,7 +75,7 @@ The decoded graph consists of four kinds of contribution:
 | Expression lines (`=`) | a `mork:TemplateExpression` tree |
 | Axiom lines (`!`) | OWL declarations, class/property axioms, GCIs, disjointness axioms, raw triples |
 
-A document is processed top to bottom in a single pass. Later lines may reference IRIs introduced by earlier or later lines; references are never checked for existence by the decoder (an IRI is an IRI). Repeated node lines for the same subject merge, exactly as repeated subjects merge in Turtle.
+A document is processed top to bottom in a single pass. Later lines may reference IRIs introduced by earlier or later lines. References are never checked for existence by the decoder (an IRI is an IRI). Repeated node lines for the same subject merge, exactly as repeated subjects merge in Turtle.
 
 ---
 
@@ -83,9 +83,9 @@ A document is processed top to bottom in a single pass. Later lines may referenc
 
 ### 3.1 Encoding and lines
 
-- UTF-8 text. Line terminator is `LF`; `CR LF` is accepted.
-- A **logical line** is a physical line, plus any immediately following physical lines that begin with `;` (continuation; the `;` is dropped and the remainder appended with one space).
-- Blank lines are ignored. A physical line whose first non-blank character is `#` is a comment and is ignored. Comments are for humans editing MCN by hand; generators SHOULD NOT emit them.
+- UTF-8 text. Line terminator is `LF`, and `CR LF` is accepted.
+- A **logical line** is a physical line, plus any immediately following physical lines that begin with `;` (a continuation, where the `;` is dropped and the remainder appended with one space).
+- Blank lines are ignored. A physical line whose first non-blank character is `#` is a comment and is ignored. Comments are for humans editing MCN by hand. Generators SHOULD NOT emit them.
 - Leading whitespace on a line has no meaning and SHOULD NOT be emitted (it costs tokens).
 
 ### 3.2 Line kinds
@@ -112,7 +112,7 @@ Within a logical line, tokens are separated by one or more spaces or tabs. The f
 | annotation | `{ … }` | attaches to the immediately preceding value, no space, §9.7 |
 | list | value `,` value `,` … | no spaces around commas, §9.5 |
 
-Brackets and braces nest; a quoted string inside them may contain any bracket character.
+Brackets and braces nest. A quoted string inside them may contain any bracket character.
 
 ### 3.4 Identifiers and IRIs
 
@@ -125,7 +125,7 @@ An **identifier** in subject or object position resolves to an IRI by these rule
 5. A token beginning with `_:` → a blank node with that label (only meaningful in `!T` lines).
 6. Otherwise → a **local id**: the base IRI declared by `@b` concatenated with the token. Error if no `@b` is in force.
 
-Local ids match `[A-Za-z_][A-Za-z0-9_.\-]*`. They are opaque: a decoder never interprets an id's spelling. Generators SHOULD use short ids; ids need to be memorable *to the generator* (a model recalls `Map_Loan` more reliably than `m7`), so brevity is a recommendation, not a rule.
+Local ids match `[A-Za-z_][A-Za-z0-9_.\-]*`. They are opaque: a decoder never interprets an id's spelling. Generators SHOULD use short ids. Ids need to be memorable *to the generator* (a model recalls `Map_Loan` more reliably than `m7`), so brevity is a recommendation, not a rule.
 
 Predeclared prefixes (never need `@p`): `mork`, `owl`, `rdf`, `rdfs`, `xsd`, `skos`, `sh`, `swrl`, `swrlb`, `rr`, `rml`, `fnd`, `dct` — bound to the IRIs used in `Mork.ttl` and `Executable.ttl` (`rml` is `http://semweb.mmlab.be/ns/rml#`).
 
@@ -139,7 +139,7 @@ A value in a **data-kind** slot (§8) is a literal. Its lexical form and datatyp
 | `"text"@en` | language-tagged |
 | `"text"^xsd:date` | typed with the given datatype (note the single `^`) |
 | bare token, code has a fixed datatype | that datatype (e.g. `w 85` → `"85"^^xsd:integer`) |
-| bare token, code's datatype is *inferred* | `t`/`f` → `xsd:boolean`; `-?[0-9]+` → `xsd:integer`; `-?[0-9]+\.[0-9]+` → `xsd:decimal`; else `xsd:string` |
+| bare token, code's datatype is *inferred* | `t`/`f` → `xsd:boolean`, `-?[0-9]+` → `xsd:integer`, `-?[0-9]+\.[0-9]+` → `xsd:decimal`. Else `xsd:string` |
 | bare token, code has no datatype | `xsd:string` |
 
 So `c #Species` is the string `"#Species"`, `v t` is boolean true, `v "t"` is the string `"t"`, and `ef 2026-10-01T00:00:00Z` is a typed `xsd:dateTime` without any annotation. A bare token that must contain a space, comma, bracket or brace is written quoted.
@@ -150,10 +150,10 @@ So `c #Species` is the string `"#Species"`, `v t` is boolean true, `v "t"` is th
 
 Every property and class has a **code**. Codes are the entire reason MCN is cheap, so their design is constrained:
 
-- **Type codes** are uppercase, one or two letters (`MD`, `RA`, `GT`). The first letter names the family (M mapping, C concept, R representation, X ontology proxy, I intent, G generative support, E expression, S scheme).
+- **Type codes** are uppercase, one or two letters (`MD`, `RA`, `GT`). The first letter names the family (M mapping, C concept, R representation, X ontology proxy, I intent, G generative support, E expression, S scheme, K compiled mapping, H community and history). The enumeration classes (value sets whose members are reserved tokens) and the other miscellaneous classes take codes of their own, such as `CM` and `AF`.
 - **Property codes** are lowercase, one to three characters, or a single punctuation mark for the SKOS hierarchy (`>` broader, `<` narrower, `~` related, `s=` `s~` `s>` `s<` `s-` for the SKOS mapping relations).
 - Frequency drives length: the ten most common assertions in real MORK data (`f`, `xt`, `xr`, `cn`, `df`, `w`, `n`, `c`, `r`, `v`) are one or two characters.
-- Codes are mnemonic where possible (`xt` exact T-Box, `bt` broad T-Box, `nt` narrow T-Box; `lx` lexical, `sx` semantic, `tx` structural) so a model can generate them reliably from a short system-prompt codebook.
+- Codes are mnemonic where possible (`xt` exact T-Box, `bt` broad T-Box, `nt` narrow T-Box, `lx` lexical, `sx` semantic, `tx` structural) so a model can generate them reliably from a short system-prompt codebook.
 - **Kind** is fixed per code: *object* (value is an IRI or inline node), *data* (value is a literal), or *polymorphic* (the property is chosen by the subject's type — `pb`, `pv`, `tl`). Because kind is fixed, bare tokens are never ambiguous: `c Loan` is a string, `xt Loan` is an IRI.
 - A **CURIE in code position** (`dct:created 2026-01-01`, `ex:myProp foo`) is accepted everywhere a code is, as an escape for properties without codes. Its kind is object unless the value is quoted, so literals for CURIE properties are always written quoted (`dct:created "2026-01-01"^xsd:date`).
 
@@ -168,10 +168,10 @@ The decoder adds the following without them being written. Generators MUST NOT w
 | Implicit fact | Rule |
 |---|---|
 | `rdf:type owl:NamedIndividual` | on every node-line subject, block header, inline node and minted expression node |
-| Scheme membership | every node line inside a `%M` block gets `mork:mappingScheme <scheme>`; `%T` → `mork:conceptScheme`; `%R` → `mork:representationScheme`; `%O` → `mork:ontologicalScheme`; `%I` → `mork:intentScheme`; `%K` and `%U` → `skos:inScheme` |
+| Scheme membership | every node line inside a `%M` block gets `mork:mappingScheme <scheme>`, `%T` → `mork:conceptScheme`, `%R` → `mork:representationScheme`, `%O` → `mork:ontologicalScheme`, `%I` → `mork:intentScheme`, `%K` and `%U` → `skos:inScheme` |
 | Default type | a node line with no type token gets the block's default type (`%M` → `mork:DataMapping`, `%T` → `mork:DataConcept`, `%R` → `mork:Representation`, `%O` → `mork:OwlAxiom`, `%I` → `mork:IntentNode`, `%K` → `sh:NodeShape`, `%U` → `swrl:Imp`). In `%X` there is no default. |
-| Implied generative types | a subject with `gs` becomes `mork:ShapeMapping`; `gr` → `mork:RuleMapping`; `gt` → `mork:TransformMapping`; `gc` → `mork:ProjectionMapping`. These mirror the `owl:equivalentClass` definitions in `Mork.ttl`; asserting them explicitly costs one token and is optional. |
-| Inline node typing | a positional inline node (§9.6) gets the class its parent code implies (`tg` → `TargetingSpec`, `pb` → `ParameterBinding`, `pv` → the provenance class matching the subject's generative type, `hb` → `TemplateBinding`) |
+| Implied generative types | a subject with `gs` becomes `mork:ShapeMapping`, `gr` → `mork:RuleMapping`, `gt` → `mork:TransformMapping`, `gc` → `mork:ProjectionMapping`. These mirror the `owl:equivalentClass` definitions in `Mork.ttl`. Asserting them explicitly costs one token and is optional. |
+| Inline node typing | a positional inline node (§9.6) gets the class its parent code implies (`tg` → `TargetingSpec`, `pb` → `ParameterBinding`, `pv` → the provenance class matching the subject's generative type, `hb` → `TemplateBinding`, `sdl` → `sh:PrefixDeclaration`) |
 | `swrlCompactSyntax` | a `gr` payload string is also asserted verbatim as `mork:swrlCompactSyntax` on the mapping, as the ontology recommends |
 | Datatypes | per code, §3.5 |
 | Inverses | **not** materialised by default. The loan example in the repository documents why: emitting both directions of `compositeNarrowerMapping`/`compositeBroaderMapping` double-counts edges in the dependency analyser. `@opt inv` asks the decoder to add the inverse of every asserted edge whose property has a declared `owl:inverseOf`. |
@@ -184,20 +184,20 @@ What the decoder never adds: `mappingScheme` for nodes in `%X`, `Datum` typing f
 
 | Directive | Form | Effect |
 |---|---|---|
-| `@b` | `@b <iri>` | Base IRI for local ids. The author includes the trailing `#` or `/`. May appear more than once; each occurrence applies to subsequent lines. |
-| `@o` | `@o <ontology-iri> [<version-iri>]` | Asserts `<ontology-iri> a owl:Ontology` (and `owl:versionIRI`). Required for the output to be an OWL ontology *document*; optional for a bare graph. |
+| `@b` | `@b <iri>` | Base IRI for local ids. The author includes the trailing `#` or `/`. May appear more than once. Each occurrence applies to subsequent lines. |
+| `@o` | `@o <ontology-iri> [<version-iri>]` | Asserts `<ontology-iri> a owl:Ontology` (and `owl:versionIRI`). Required for the output to be an OWL ontology *document*. Optional for a bare graph. |
 | `@i` | `@i <iri>,<iri>,…` | `owl:imports` on the ontology declared by `@o`. Error if no `@o` precedes it. |
 | `@p` | `@p prefix=<iri>` | Binds a prefix. Rebinding a predeclared prefix is an error. |
 | `@t` | `@t prefix` | Names the **default target prefix**: tokens of the form `:Local` resolve against it. Intended for the target ontology, which is referenced from almost every mapping. |
 | `@u` | `@u name` | Loads a named **profile** (§6.1). |
 | `@opt` | `@opt flag …` | Decoder options: `inv` (materialise inverses), `strict` (treat lint warnings in §14.2 as errors), `bnode-shapes` (emit SHACL property shapes as blank nodes instead of minted IRIs). |
-| `@v` | `@v 0.1` | MCN version the document was written against. Optional; defaults to the decoder's version. |
+| `@v` | `@v 0.1` | MCN version the document was written against. Optional. Defaults to the decoder's version. |
 
-Directive lines are processed where they occur; a `@b` or `@t` can change mid-document, which allows one document to carry several schemes with different bases.
+Directive lines are processed where they occur. A `@b` or `@t` can change mid-document, which allows one document to carry several schemes with different bases.
 
 ### 6.1 Profiles
 
-A profile is a named, out-of-band bundle of `@b`, `@p`, `@t` and `@opt` settings maintained by a deployment (for example one per target ontology). `@u lattice-insure-o` replaces the ~50 tokens of prefix IRIs that would otherwise head every document. Profiles are resolved by the decoder from a registry it is configured with; a document that uses `@u` is only decodable with that registry, and the decoder MUST record the profile's content hash in the decoded graph as `mork:inputHash` on the ontology node (so decoded output remains reproducible). Profiles are RECOMMENDED for agent-to-decoder traffic inside a deployment and NOT RECOMMENDED for MCN that is stored or exchanged.
+A profile is a named, out-of-band bundle of `@b`, `@p`, `@t` and `@opt` settings maintained by a deployment (for example one per target ontology). `@u lattice-insure-o` replaces the ~50 tokens of prefix IRIs that would otherwise head every document. Profiles are resolved by the decoder from a registry it is configured with. A document that uses `@u` is only decodable with that registry, and the decoder MUST record the profile's content hash in the decoded graph as `mork:inputHash` on the ontology node (so decoded output remains reproducible). Profiles are RECOMMENDED for agent-to-decoder traffic inside a deployment and NOT RECOMMENDED for MCN that is stored or exchanged.
 
 ---
 
@@ -216,9 +216,9 @@ A block header opens a scheme and a context that lasts until the next block head
 %X                         no scheme, no membership, no default type
 ```
 
-The header is itself a node line for the scheme individual: `%M MS md .prod mv 1.2` declares `MS` as a `MappingScheme` in `ProductionMode` with version `1.2`. In `%R` a reserved format token immediately after the id (`.json`, `.xml`, `.yaml`) is shorthand for `fm`.
+The header is itself a node line for the scheme individual: `%M MS md .prod mv 1.2` declares `MS` as a `MappingScheme` in `ProductionMode` with version `1.2`. In `%R` a reserved format token immediately after the id (`.json`, `.xml`, `.yaml`, `.rdf`) is shorthand for `fm`.
 
-A node that belongs to two schemes (a `DataConcept` that is also a `Representation`, as in the `Rep_Issuer` example in `Mork.ttl`) is written once inside one block with the second membership given explicitly (`rs Rep_Scheme`), or written as two node lines in two blocks; both produce the same graph.
+A node that belongs to two schemes (a `DataConcept` that is also a `Representation`, as in the `Rep_Issuer` example in `Mork.ttl`) is written once inside one block with the second membership given explicitly (`rs Rep_Scheme`), or written as two node lines in two blocks. Both produce the same graph.
 
 `%X` is for content that has no scheme: shadow property declarations, external T-Box fragments, standalone template expressions, artefacts referenced from several mappings.
 
@@ -226,7 +226,7 @@ A node that belongs to two schemes (a `DataConcept` that is also a `Representati
 
 ## 8. Codebook
 
-The tables in this section are normative and complete with respect to `Mork.ttl` at the commit this document was written against: every class, object property, datatype property, annotation property and named individual in the ontology has a code or a reserved token. The `Notes` column records defaults and inference behaviour.
+The tables in this section are normative and complete with respect to `Mork.ttl` at the commit this document was written against: every class, object property, datatype property, annotation property and named individual in the ontology has a code or a reserved token, or is listed in §8.5 with the reason it has none. The `Notes` column records defaults and inference behaviour.
 
 ### 8.1 Type codes
 
@@ -243,9 +243,9 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `ML` | `mork:Lookup` |  |
 | `MW` | `mork:WeightedMatch` |  |
 | `MI` | `mork:Interpolation` | a skos:OrderedCollection, not a DataMapping |
-| `MH` | `mork:Hypothesis` | normally inferred; rarely asserted |
+| `MH` | `mork:Hypothesis` | normally inferred, rarely asserted |
 | `MN` | `mork:IndexedMapping` |  |
-| `MG` | `mork:GenerativeMapping` | abstract; prefer MS/MR/MT/MP |
+| `MG` | `mork:GenerativeMapping` | abstract, prefer MS/MR/MT/MP |
 | `MS` | `mork:ShapeMapping` | implied by `gs` |
 | `MR` | `mork:RuleMapping` | implied by `gr` |
 | `MT` | `mork:TransformMapping` | implied by `gt` |
@@ -289,7 +289,7 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `XO` | `mork:OwlObjectProperty` |  |
 | `XD` | `mork:OwlDataProperty` |  |
 | `XG` | `mork:Digraph` | deprecated in Mork.ttl |
-| `XI` | `mork:DeferredConceptIRI` | the class; the punned individual is `.dci` |
+| `XI` | `mork:DeferredConceptIRI` | the class, punned with the individual `.dci` |
 
 **Intent**
 
@@ -330,7 +330,7 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `EK` | `mork:LookupExpression` |  |
 | `EB` | `mork:TemplateBinding` | positional form `[name expr]` |
 
-**Scheme** (normally introduced by block headers; usable as explicit types in `%X`)
+**Scheme** (normally introduced by block headers, usable as explicit types in `%X`)
 
 | Code | Class | Notes |
 |---|---|---|
@@ -353,10 +353,45 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `SW` | `swrl:Imp` | payload form `SW "<swrl-compact>"`, §10.2 |
 | `TM` | `rr:TriplesMap` | payload form `TM "<rml-compact>"`, §10.4 |
 | `PI` | `fnd:PersistentIdentity` |  |
+| `PD` | `sh:PrefixDeclaration` | positional form `[prefix namespace]` under `sdl`, §9.6 |
+
+**Enumeration (value sets whose members are reserved tokens, §8.4)**
+
+| Code | Class | Notes |
+|---|---|---|
+| `AF` | `mork:AxiomForm` |  |
+| `CB` | `mork:ClassCombination` |  |
+| `LC` | `mork:LookupComparison` |  |
+| `RD` | `mork:ReviewDecision` |  |
+| `FS` | `mork:FindingSeverity` |  |
+| `OB` | `mork:OutputBox` |  |
+
+**Compiled mapping (the output of the RDF-to-RDF compiler, usually written by it)**
+
+| Code | Class | Notes |
+|---|---|---|
+| `KM` | `mork:CompiledMapping` |  |
+| `KQ` | `mork:CompiledQuery` |  |
+| `KF` | `mork:CompileFinding` |  |
+
+**Community and history (semantic communities, projections, reviews and proposal runs)**
+
+| Code | Class | Notes |
+|---|---|---|
+| `HO` | `mork:SectionObservation` |  |
+| `HC` | `mork:SemanticCommunity` |  |
+| `HS` | `mork:CommunityScheme` |  |
+| `HB` | `mork:CommunityMembership` |  |
+| `HT` | `mork:CommunityMatch` |  |
+| `HP` | `mork:OntologicalProjection` |  |
+| `HR` | `mork:PropertyProjection` |  |
+| `HD` | `mork:DAGTemplate` |  |
+| `HW` | `mork:MappingReview` |  |
+| `HU` | `mork:ProposalRun` |  |
 
 ### 8.2 Property codes
 
-Kind: *object* takes an IRI, inline node or payload; *data* takes a literal typed per the last column (*inferred* per §3.5); *polymorphic* is resolved by subject type per §8.3.
+Kind: *object* takes an IRI, inline node or payload, *data* takes a literal typed per the last column (*inferred* per §3.5), *polymorphic* is resolved by subject type per §8.3.
 
 **Scheme membership** (normally implicit via block headers)
 
@@ -656,7 +691,7 @@ Kind: *object* takes an IRI, inline node or payload; *data* takes a literal type
 | `dcd` | `dct:description` | data | xsd:string |
 | `dco` | `dct:contributor` | data | xsd:string |
 
-**SHACL targeting** (on `GT` nodes; usually written positionally)
+**SHACL targeting** (on `GT` nodes, usually written positionally)
 
 | Code | Property | Kind | Literal type |
 |---|---|---|---|
@@ -664,6 +699,111 @@ Kind: *object* takes an IRI, inline node or payload; *data* takes a literal type
 | `tob` | `sh:targetObjectsOf` | object |  |
 | `tsb` | `sh:targetSubjectsOf` | object |  |
 | `tnd` | `sh:targetNode` | object |  |
+
+**Guard and lookup**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `aw` | `mork:appliesWhen` | object |  |
+| `af` | `mork:axiomForm` | object |  |
+| `cmb` | `mork:classCombination` | object |  |
+| `lcm` | `mork:lookupComparison` | object |  |
+| `ldt` | `mork:lookupDatatype` | object |  |
+
+**Compiled mapping**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `hq` | `mork:hasCompiledQuery` | object |  |
+| `hf` | `mork:hasCompileFinding` | object |  |
+| `hec` | `mork:hasEffectiveConfidence` | object |  |
+| `cof` | `mork:confidenceOf` | object |  |
+| `cim` | `mork:compiledInMode` | object |  |
+| `cfr` | `mork:compiledFrom` | object |  |
+| `cla` | `mork:closureAxiom` | object |  |
+| `clc` | `mork:closureCombination` | object |  |
+| `clp` | `mork:closureProperty` | object |  |
+| `cxp` | `mork:contextPath` | object |  |
+| `ob` | `mork:outputBox` | object |  |
+| `roo` | `mork:readsOutputOf` | object |  |
+| `fab` | `mork:findingAbout` | object |  |
+| `fsv` | `mork:findingSeverity` | object |  |
+| `chk` | `mork:checkCode` | data | xsd:string |
+| `cbs` | `mork:compiledBase` | data | xsd:anyURI |
+| `cpl` | `mork:compiler` | data | xsd:string |
+| `efc` | `mork:effectiveConfidence` | data | xsd:double |
+| `fc` | `mork:findingCode` | data | xsd:string |
+| `fx` | `mork:findingIndex` | data | xsd:integer |
+| `fmg` | `mork:findingMessage` | data | xsd:string |
+| `mdg` | `mork:mappingDigest` | data | xsd:string |
+| `qi` | `mork:queryIndex` | data | xsd:integer |
+| `qk` | `mork:queryKind` | data | xsd:string |
+| `rat` | `mork:readAt` | data | xsd:dateTime |
+| `stm` | `mork:stratum` | data | xsd:integer |
+
+**Community and history**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `hcm` | `mork:hasCommunityMembership` | object |  |
+| `hop` | `mork:hasOntologicalProjection` | object |  |
+| `hpp` | `mork:hasPropertyProjection` | object |  |
+| `hdt` | `mork:hasDAGTemplate` | object |  |
+| `cos` | `mork:communityScheme` | object |  |
+| `dfr` | `mork:discoveredFrom` | object |  |
+| `mbc` | `mork:memberConcept` | object |  |
+| `mtc` | `mork:matchesCommunity` | object |  |
+| `mts` | `mork:matchSection` | object |  |
+| `mcs` | `mork:matchedConcepts` | object |  |
+| `obc` | `mork:observedConcept` | object |  |
+| `ois` | `mork:observedInScheme` | object |  |
+| `oin` | `mork:observedInSection` | object |  |
+| `pjc` | `mork:projectedClass` | object |  |
+| `pjn` | `mork:projectedConcept` | object |  |
+| `pjp` | `mork:projectedParentClass` | object |  |
+| `pjy` | `mork:projectedProperty` | object |  |
+| `pto` | `mork:projectionTargetOntology` | object |  |
+| `dtc` | `mork:dagTemplateChild` | object |  |
+| `dtr` | `mork:dagTemplateRoot` | object |  |
+| `prf` | `mork:proposedFor` | object |  |
+| `rdc` | `mork:reviewDecision` | object |  |
+| `rvo` | `mork:reviewOf` | object |  |
+| `cby` | `mork:correctedBy` | object |  |
+| `coh` | `mork:communityCoherence` | data | xsd:decimal |
+| `cmw` | `mork:communityMemberWeight` | data | xsd:decimal |
+| `coc` | `mork:communityObservationCount` | data | xsd:integer |
+| `csv` | `mork:communitySchemeVersion` | data | xsd:string |
+| `csz` | `mork:communitySize` | data | xsd:integer |
+| `dtf` | `mork:dagTemplateFrequency` | data | xsd:integer |
+| `dal` | `mork:detectionAlgorithm` | data | xsd:string |
+| `dre` | `mork:detectionResolution` | data | xsd:decimal |
+| `mcf` | `mork:matchConfidence` | data | xsd:decimal |
+| `msc` | `mork:matchScore` | data | xsd:decimal |
+| `ots` | `mork:observationTimestamp` | data | xsd:dateTime |
+| `pcf` | `mork:projectedClassFrequency` | data | xsd:integer |
+| `ppc` | `mork:propertyProjectionConfidence` | data | xsd:decimal |
+| `ppf` | `mork:propertyProjectionFrequency` | data | xsd:integer |
+| `prm` | `mork:proposerModel` | data | xsd:string |
+| `rnt` | `mork:reviewNote` | data | xsd:string |
+| `tpv` | `mork:teachingPackVersion` | data | xsd:string |
+
+**Shadow declarations**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `sho` | `mork:shadowOf` | object |  |
+| `shd` | `mork:shadowDomain` | object |  |
+| `shr` | `mork:shadowRange` | object |  |
+| `shc` | `mork:shadowSubClassOf` | object |  |
+| `shp` | `mork:shadowSubPropertyOf` | object |  |
+
+**SHACL prefix declaration (on a scheme, for the paths of an RDF source)**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `sdl` | `sh:declare` | object |  |
+| `spx` | `sh:prefix` | data | xsd:string |
+| `sns` | `sh:namespace` | data | xsd:anyURI |
 
 ### 8.3 Polymorphic codes
 
@@ -680,7 +820,7 @@ Resolution uses the subject's asserted types *at the point the code is decoded* 
 | `pv` | `mork:TransformMapping` | `mork:hasTransformProvenance` (inline typed `TransformProvenance`) |
 | `pv` | `mork:ProjectionMapping` | `mork:hasProjectionProvenance` (inline typed `ProjectionProvenance`) |
 
-An unresolvable polymorphic code is an error; the explicit codes (`pvc`, `st`, …) are always available.
+An unresolvable polymorphic code is an error. The explicit codes (`pvc`, `st`, …) are always available.
 
 ### 8.4 Reserved value tokens
 
@@ -714,6 +854,34 @@ Reserved tokens begin with `.` and are valid only in object position.
 | `.gR` | `fnd:Reviewed` |
 | `.gA` | `fnd:Active` |
 | `.gS` | `fnd:Superseded` |
+| `.rdf` | `mork:RDF` |
+| `.acc` | `mork:Accepted` |
+| `.cor` | `mork:Corrected` |
+| `.rej` | `mork:Rejected` |
+| `.defer` | `mork:Deferred` |
+| `.glob` | `mork:GlobalAxioms` |
+| `.dfn` | `mork:DefiningRestriction` |
+| `.ex` | `mork:ExistentialRestriction` |
+| `.all` | `mork:UniversalRestriction` |
+| `.union` | `mork:UnionOfClasses` |
+| `.inter` | `mork:IntersectionOfClasses` |
+| `.cast` | `mork:CastComparison` |
+| `.lexcmp` | `mork:LexicalComparison` |
+| `.termcmp` | `mork:TermComparison` |
+| `.err` | `mork:ErrorFinding` |
+| `.wrn` | `mork:WarningFinding` |
+| `.inf` | `mork:InfoFinding` |
+| `.iout` | `mork:InstanceOutput` |
+| `.tout` | `mork:TerminologyOutput` |
+
+### 8.5 Terms without a code
+
+A term of `Mork.ttl` may be left without a code when it is never written directly, for example an abstract superproperty. Such a term is listed here with the reason, and the coverage check in [test_mcn_decoder.py](../../tools/mork/src/test_mcn_decoder.py) accepts a missing code only for a term listed here. A term written with a CURIE in code position is still decodable (§4), so a listing never limits what a document can say.
+
+| Term | Reason |
+|---|---|
+
+No term is listed at this version. Every class, object property, datatype property and named individual of `Mork.ttl` has a code or a reserved token.
 
 ---
 
@@ -725,11 +893,11 @@ subject [types] (code value-list)*
 
 ### 9.1 Subject
 
-An identifier per §3.4. Local ids are the norm; a CURIE or `<iri>` subject lets a document assert facts about external individuals (for example `owl:sameAs` on an `OwlAxiom` proxy).
+An identifier per §3.4. Local ids are the norm. A CURIE or `<iri>` subject lets a document assert facts about external individuals (for example `owl:sameAs` on an `OwlAxiom` proxy).
 
 ### 9.2 Types
 
-The token immediately after the subject is a type list if it begins with `+`, or if every `+`-separated part is a type code or a CURIE whose local name starts with an uppercase letter. Otherwise it is the first property code and the block default type applies. This rule means a CURIE property with an uppercase local name cannot appear first on a line; put any code before it. In `!I` lines the `:` type list additionally accepts bare local ids without the `+` (§11).
+The token immediately after the subject is a type list if it begins with `+`, or if every `+`-separated part is a type code or a CURIE whose local name starts with an uppercase letter. Otherwise it is the first property code and the block default type applies. This rule means a CURIE property with an uppercase local name cannot appear first on a line. Put any code before it. In `!I` lines the `:` type list additionally accepts bare local ids without the `+` (§11).
 
 ### 9.3 Property pairs
 
@@ -745,22 +913,25 @@ A value is one of: a bare token, a quoted literal, an `<iri>`, or an inline node
 
 ### 9.6 Inline nodes
 
-`[ … ]` in value position creates a node, links it as the object of the current code, and asserts the contents on the new node. Three forms exist; the first token inside the brackets selects the form:
+`[ … ]` in value position creates a node, links it as the object of the current code, and asserts the contents on the new node. Three forms exist, and the first token inside the brackets selects the form:
 
 | First token | Form | Meaning |
 |---|---|---|
-| `#id` | explicit identity | the node is the local id `id` (or CURIE/`<iri>`); following tokens are interpreted as one of the two forms below |
+| `#id` | explicit identity | the node is the local id `id` (or CURIE/`<iri>`). The following tokens are read as the typed form when they begin with a type list, as the positional form under a code that has a positional table, and otherwise as `code value` pairs on an untyped node |
 | a type list (§9.2) | **typed** | the node gets those types, then `code value` pairs as on a node line |
-| anything else | **positional** | only permitted under codes with a positional table (below); the first *k* tokens fill the slots in order (`_` skips a slot), after which `code value` pairs may follow |
+| anything else | **positional** | only permitted under codes with a positional table (below). The first *k* tokens fill the slots in order (`_` skips a slot), after which `code value` pairs may follow |
 
 Positional tables:
 
 | Under code | Node type | Slots | Notes |
 |---|---|---|---|
 | `tg` | `TargetingSpec` | `mode target` | mode ∈ `c` (`sh:targetClass`), `o` (`sh:targetObjectsOf`), `s` (`sh:targetSubjectsOf`), `n` (`sh:targetNode`). A bare IRI directly as the value of `tg` is shorthand for `[c IRI]`. |
-| `pb` | `ParameterBinding` | `name type value` | type ∈ `N`umeric, `C`oncept, `P`ath, `S`tring, `D`uration, or the full word; value is inferred-typed per §3.5 |
+| `pb` | `ParameterBinding` | `name type value` | type ∈ `N`umeric, `C`oncept, `P`ath, `S`tring, `D`uration, or the full word. Value is inferred-typed per §3.5 |
 | `pv` | provenance class per §8.3 | `creator model confidence status` | status is the `reviewStatus` string (`DRAFT`, `APPROVED`, `DEPRECATED`) |
 | `hb` | `TemplateBinding` | `name expr` | expr is a template expression (§10.1) |
+| `sdl` | `sh:PrefixDeclaration` | `prefix namespace` | the namespace is typed `xsd:anyURI` whether it is bare, quoted or an `<iri>`. A prefix spelled like a type code (`M`) is quoted |
+
+An explicit identity with `code value` pairs and no type list, such as `f [#x c "y"]` or `sh:declare [#d sh:prefix "a"]`, is therefore an untyped node, and is the way to give a node its own IRI under any code without a positional table. Under a code with a positional table the same tokens are read as slots, so a typed form (`sdl [#d PD spx a sns http://a.org/]`) is written there. Without `#id`, `code value` pairs alone are refused, since the node would have neither a type nor an identity.
 
 Inline nodes without `#id` receive minted IRIs (§12.2), not blank nodes, so that generated provenance and targeting records are addressable by SHACL reports and audit queries. Inline nodes nest to any depth.
 
@@ -782,7 +953,7 @@ In a list, the braces bind to the preceding member: `cn a{n "x"},b`. Annotations
 
 ### 9.8 Artefact payloads
 
-The codes `gs`, `gr`, `gt` and the types `SH`, `SW`, `TM` accept a **payload string**: a quoted literal written in the corresponding sub-notation (§10.2–10.4). The decoder mints an artefact node (§12.2), parses the payload into structured RDF (a `sh:NodeShape`, `swrl:Imp` or `rr:TriplesMap` graph), and links it. The payload text itself is *not* stored, except that a `gr` payload is additionally asserted as `mork:swrlCompactSyntax` on the mapping, as `Mork.ttl` recommends.
+The codes `gs`, `gr`, `gt`, `aw` and the types `SH`, `SW`, `TM` accept a **payload string**: a quoted literal written in the corresponding sub-notation (§10.2–10.4, and §10.6 for `aw`). The decoder mints an artefact node (§12.2), parses the payload into structured RDF (a `sh:NodeShape`, `swrl:Imp` or `rr:TriplesMap` graph), and links it. The payload text itself is *not* stored, except that a `gr` payload is additionally asserted as `mork:swrlCompactSyntax` on the mapping, as `Mork.ttl` recommends.
 
 Three ways to supply an artefact, from cheapest to most explicit:
 
@@ -793,7 +964,7 @@ r1 MR gr eligRule
 eligRule SW "Applicant(?a)^…->Eligible(?a)"
 ```
 
-Whether the artefact is LLM-authored or compiler-generated is a governance question (ADR-A25), not a syntactic one; both are written the same way.
+Whether the artefact is LLM-authored or compiler-generated is a governance question (ADR-A25), not a syntactic one. Both are written the same way.
 
 ---
 
@@ -825,7 +996,7 @@ Examples and their decoded structure:
 ```
 loanIri = 'http://ex.org/loan/'+$loanId
 ```
-→ `loanIri` a `ConcatExpression`; `concatLeft loanIri_l` (a `LiteralExpression`, `dataInline "http://ex.org/loan/"`); `concatRight loanIri_r` (a `RefExpression`, `dataRef "loanId"`).
+→ `loanIri` a `ConcatExpression`, `concatLeft loanIri_l` (a `LiteralExpression`, `dataInline "http://ex.org/loan/"`), `concatRight loanIri_r` (a `RefExpression`, `dataRef "loanId"`).
 
 ```
 fullName = %"{l}, {f}"(l=$last,f=$first)
@@ -859,11 +1030,11 @@ arg     := '?' name                                variable
 
 Names resolve per §3.4, so `Applicant` is a local id, `:Applicant` uses the target prefix and `ex:Applicant` is a CURIE. Whitespace around `^` and `->` is permitted and SHOULD be omitted.
 
-Decoding produces the standard SWRL RDF vocabulary: `swrl:body` and `swrl:head` are `swrl:AtomList`s (RDF collections); variables are IRIs minted as `<rule-iri>_v_<name>` and typed `swrl:Variable`; atom nodes and list cells are blank nodes numbered in document order.
+Decoding produces the standard SWRL RDF vocabulary: `swrl:body` and `swrl:head` are `swrl:AtomList`s (RDF collections). Variables are IRIs minted as `<rule-iri>_v_<name>` and typed `swrl:Variable`. Atom nodes and list cells are blank nodes numbered in document order.
 
 ### 10.3 SHACL compact payload
 
-The payload for `gs` and `SH` is a subset of SHACL Core sufficient for the shapes a `ShapeTemplate` instantiates. It is deliberately not the W3C SHACL Compact Syntax, which spends tokens on prefixes and braces; anything outside this subset is written with `!T` lines against the minted shape IRI.
+The payload for `gs` and `SH` is a subset of SHACL Core sufficient for the shapes a `ShapeTemplate` instantiates. It is deliberately not the W3C SHACL Compact Syntax, which spends tokens on prefixes and braces. Anything outside this subset is written with `!T` lines against the minted shape IRI.
 
 ```
 shape     := targets ( ';' clause )*
@@ -921,7 +1092,7 @@ Example:
 tm_loan MT gt "src loan.json it $ ; sm http://ex.org/loan/{loanId} cls fin:Loan ; fin:principal ^tm_principal_gt1[loanId=loanId]"
 ```
 
-Blank nodes are used for logical source, subject map, predicate-object maps and object maps, exactly as R2RML/RML conventionally does; the triples map itself is a minted IRI.
+Blank nodes are used for logical source, subject map, predicate-object maps and object maps, exactly as R2RML/RML conventionally does. The triples map itself is a minted IRI.
 
 ### 10.5 OWL class expressions
 
@@ -943,9 +1114,9 @@ PE      := identifier | '^' identifier             property or its inverse (owl:
 card    := n | n '..' | '..' m | n '..' m          exactly n | min n | max m | min n and max m
 ```
 
-The qualifier separator is `/` rather than `:` because `:Name` already denotes the default target prefix (§3.4); `p#1../:Loan` is a qualified cardinality over `fin:Loan` when `@t fin` is in force.
+The qualifier separator is `/` rather than `:` because `:Name` already denotes the default target prefix (§3.4), so `p#1../:Loan` is a qualified cardinality over `fin:Loan` when `@t fin` is in force.
 
-Data ranges use the same grammar with datatype identifiers and literal enumerations `{"a","b"}`; facet restrictions are written as `!T` triples.
+Data ranges use the same grammar with datatype identifiers and literal enumerations `{"a","b"}`. Facet restrictions are written as `!T` triples.
 
 Examples from `Mork.ttl`, as they would be written in MCN:
 
@@ -957,6 +1128,37 @@ Examples from `Mork.ttl`, as they would be written in MCN:
 ```
 
 The last line is GCI Axiom 2.14a verbatim: `∃broaderApplicative.DataMapping ⊓ ¬∃exactRBoxMatch.⊤ ⊑ ⊥`.
+
+### 10.6 Guard payload
+
+The payload for `aw` (`mork:appliesWhen`) is a SHACL node shape that the nodes a mapping applies to must conform to. The mapping supplies the focus node, so a guard has no target and no scheme membership, and the guard compiler of [tools/mork_rdf](../../tools/mork_rdf/README.md) refuses a shape that has either. The notation reuses the constraint words of §10.3 and covers the components that compiler compiles, so a guard that decodes cannot be refused for a component it names.
+
+```
+guard   := gclause ( ';' gclause )*
+gclause := propshape                                   one sh:property
+         | 'in' '{' value (',' value)* '}'             sh:in of the focus node
+         | '=' value                                   sh:hasValue
+         | 'cls' IRI | 'dt' IRI | 'nk' kind            sh:class, sh:datatype, sh:nodeKind
+         | 'not' '(' guard ')'                         sh:not
+         | 'and' '(' guard ( ',' guard )* ')'          sh:and
+         | 'or' '(' guard ( ',' guard )* ')'           sh:or
+propshape := path pconstraint*
+path      := IRI | '^' IRI                             sh:path, or its sh:inversePath
+pconstraint := '[' n '..' m? ']'                       sh:minCount n, sh:maxCount m
+             | '=' value                               sh:hasValue
+             | 'in' '{' value (',' value)* '}'         sh:in
+             | 'cls' IRI | 'dt' IRI | 'nk' kind        sh:class, sh:datatype, sh:nodeKind
+```
+
+Names, values and node kinds are those of §10.3, so a name is a CURIE or `:Local` and a value is a name, a number, `t`, `f` or a quoted string. A path is one property or the inverse of one, and a sequence path is refused. A path spelled like a keyword (`in`, `not`) is written as a CURIE. Any other component of §10.3 (patterns, ranges, lengths, comparisons) is refused in a guard, since the guard compiler would refuse it.
+
+For example, a guard that admits the nodes with an `odrl:operator` of `odrl:lt` or `odrl:lteq` is
+
+```
+Map_Lt aw "odrl:operator [1..] in {odrl:lt,odrl:lteq}"
+```
+
+which decodes to a `sh:NodeShape` `Map_Lt_aw1` with one `sh:property` `Map_Lt_aw1_p1` carrying `sh:path odrl:operator`, `sh:minCount 1` and `sh:in ( odrl:lt odrl:lteq )`. The shape of a `not`, `and` or `or` member is minted as `Map_Lt_aw1_g1`, and so on. A guard may instead name a shape written elsewhere, `aw Guard_Lt`, or be a typed inline node, `aw [#g SH sh:property …]`.
 
 ---
 
@@ -970,13 +1172,13 @@ Axiom lines carry OWL content that is not an individual's property assertion. Th
 | `!O pe clause*` | `owl:ObjectProperty`. `pe` is a `PE` (§10.5): normally a plain id, but `^id` makes the subject `ObjectInverseOf(id)` (a minted, typed blank node) — used for `Mork.ttl`'s own precedence axioms, e.g. `!O ^compositeBroaderMapping < precedes` for Axiom P1 (`SubObjectPropertyOf(ObjectInverseOf(:compositeBroaderMapping) :precedes)`). Clauses: `< PE` subPropertyOf, `= PE` equivalentProperty, `inv PE` inverseOf, `dom CE`, `rng CE`, `+F` `+IF` `+S` `+AS` `+T` `+R` `+IR` characteristics (combinable: `+AS+IR`, but OWL 2 DL forbids `+AS` and `+IR` alongside `+T`, ADR-A97), `chain PE,PE,…` propertyChainAxiom, or `code value` pairs. |
 | `!D id clause*` | `owl:DatatypeProperty`. Clauses as `!O` minus `inv`/`chain`, plus `rng` taking a data range. |
 | `!A id clause*` | `owl:AnnotationProperty`. Clauses: `< id`, `dom`, `rng`, `code value` pairs. |
-| `!I id (: types)? (code value)*` | `owl:NamedIndividual` outside any block: `: type+type` gives class assertions, where each type is a type code or any identifier (local ids allowed without `+`); the rest as a node line. |
+| `!I id (: types)? (code value)*` | `owl:NamedIndividual` outside any block: `: type+type` gives class assertions, where each type is a type code or any identifier (local ids allowed without `+`). The rest as a node line. |
 | `!G CE < CE` | general class inclusion. |
 | `!DC a,b,c` | `owl:AllDisjointClasses`. |
 | `!DP a,b,c` | `owl:AllDisjointProperties`. |
 | `!DI a,b,c` | `owl:AllDifferent`. |
 | `!SA a,b,c` | pairwise `owl:sameAs`. |
-| `!T s p o` | one raw triple. Each term is an identifier, `_:label` blank node, `<iri>` or quoted literal (with `@lang`/`^dt`). The escape hatch of last resort; a decoder MUST accept any triple this way. |
+| `!T s p o` | one raw triple. Each term is an identifier, `_:label` blank node, `<iri>` or quoted literal (with `@lang`/`^dt`). The escape hatch of last resort. A decoder MUST accept any triple this way. |
 
 Ids in `!` lines are identifiers per §3.4, so external terms are declared with CURIEs (`!C fin:Loan`) and local terms with bare ids.
 
@@ -986,7 +1188,7 @@ Ids in `!` lines are identifiers per §3.4, so external terms are declared with 
 
 ### 12.1 Named nodes
 
-A local id `x` under base `B` is the IRI `B + x`. The generator owns these names; the decoder never rewrites them.
+A local id `x` under base `B` is the IRI `B + x`. The generator owns these names. The decoder never rewrites them.
 
 ### 12.2 Minted IRIs
 
@@ -995,15 +1197,16 @@ Nodes the generator does not name receive deterministic IRIs derived from their 
 | Node | IRI |
 |---|---|
 | inline node, *n*-th under code `k` on subject `S` (counting per subject and code, in document order) | `S` + `_` + `k` + *n* — e.g. `cs_shape_tg1`, `cs_shape_pb2` |
-| artefact payload under `gs`/`gr`/`gt` on `S` | `S_gs1`, `S_gr1`, `S_gt1` |
+| artefact payload under `gs`/`gr`/`gt`/`aw` on `S` | `S_gs1`, `S_gr1`, `S_gt1`, `S_aw1` |
 | expression root from line `id = …` | `id` |
 | concat operands of expression node `E` | `E_l`, `E_r` |
 | interpolation binding *n* of `E`, and its expression | `E_bn`, `E_bn_e` |
 | lookup source of `E` | `E_s` |
 | SWRL variable `?x` of rule `R` | `R_v_x` |
 | SHACL property shape *n* of node shape `N` | `N_pn` (unless `@opt bnode-shapes`) |
+| `not`, `and` or `or` member *n* of the guard `N` | `N_gn` |
 
-The separator `_` and the code names cannot collide with generator-chosen ids in practice; a generator that wants to be certain avoids ids ending in `_` + code + digits.
+The separator `_` and the code names cannot collide with generator-chosen ids in practice. A generator that wants to be certain avoids ids ending in `_` + code + digits.
 
 ### 12.3 Blank nodes
 
@@ -1019,13 +1222,13 @@ The **canonical decoding** of a document is: the N-Triples serialisation of the 
 
 The algorithm is presented as the decoder's obligations, in order. A conforming decoder may be implemented in any way that produces the same graph.
 
-**D1. Line assembly.** Split into physical lines; drop blank lines and comment lines; join `;`-continuations. Number logical lines for error reporting.
+**D1. Line assembly.** Split into physical lines. Drop blank lines and comment lines. Join `;`-continuations. Number logical lines for error reporting.
 
-**D2. Directive pass is not separate.** Directives take effect when reached. Initialise: prefix table = predeclared prefixes; base = none; target prefix = none; block = `%X`; options = {}.
+**D2. Directive pass is not separate.** Directives take effect when reached. Initialise: prefix table = predeclared prefixes. Base = none. Target prefix = none. Block = `%X`. Options = {}.
 
 **D3. For each logical line, dispatch on its first character.**
 
-**D4. Block header** `%K id …`: resolve `id`; assert `id a owl:NamedIndividual`, `id a <scheme class>`; if `%R` and the next token is a reserved format token, assert `mork:format`; decode the remaining `code value` pairs with `id` as subject; set the current block context (membership property, scheme IRI, default type). `%X` clears the context.
+**D4. Block header** `%K id …`: resolve `id`. Assert `id a owl:NamedIndividual`, `id a <scheme class>`. If `%R` and the next token is a reserved format token, assert `mork:format`. Decode the remaining `code value` pairs with `id` as subject. Set the current block context (membership property, scheme IRI, default type). `%X` clears the context.
 
 **D5. Node line.**
 1. Resolve the subject `S`. Assert `S a owl:NamedIndividual`.
@@ -1038,9 +1241,9 @@ The algorithm is presented as the decoder's obligations, in order. A conforming 
 **D6. Property pair** `k v1{a1},v2{a2},…` on subject `S`:
 1. Resolve `k` to a predicate `P` and kind (§4, §8.3). A CURIE is resolved directly.
 2. For each value `v`:
-   - inline `[…]` → create node `N` (§9.6, §12.2), assert its type(s), decode its contents with `N` as subject; object = `N`.
+   - inline `[…]` → create node `N` (§9.6, §12.2), assert its type(s), decode its contents with `N` as subject. Object = `N`.
    - `k` is `tg` and `v` is a bare identifier → as if `[c v]`.
-   - `k` ∈ {`gs`,`gr`,`gt`} and `v` is quoted → mint the artefact node, decode the payload onto it; object = that node; if `gr`, also assert `S mork:swrlCompactSyntax "v"`.
+   - `k` ∈ {`gs`,`gr`,`gt`,`aw`} and `v` is quoted → mint the artefact node, decode the payload onto it. Object = that node. If `gr`, also assert `S mork:swrlCompactSyntax "v"`.
    - kind data → object = literal per §3.5.
    - otherwise → object = identifier per §3.4 (quoted strings in object-kind slots are an error).
 3. Assert `S P object`.
@@ -1049,9 +1252,9 @@ The algorithm is presented as the decoder's obligations, in order. A conforming 
 
 **D7. Axiom line** per §11, using the class-expression parser of §10.5. `!T` asserts exactly one triple.
 
-**D8. Options.** If `inv` is set, after the pass add `o P⁻ s` for every asserted `s P o` where `P` has a known `owl:inverseOf` in `Mork.ttl` (the decoder ships this table; it is not read from the data). If `strict` is set, run the lint rules of §14.2 and fail on any hit.
+**D8. Options.** If `inv` is set, after the pass add `o P⁻ s` for every asserted `s P o` where `P` has a known `owl:inverseOf` in `Mork.ttl` (the decoder ships this table and does not read it from the data). If `strict` is set, run the lint rules of §14.2 and fail on any hit.
 
-**D9. Output.** The decoded graph. For OWL tooling, serialise as Turtle/RDF-XML or hand the graph to an OWL API; the graph conforms to the OWL 2 RDF mapping so long as the generator has not used `!T` to write something outside OWL 2 DL (a decoder does not police that; the DL checker does).
+**D9. Output.** The decoded graph. For OWL tooling, serialise as Turtle/RDF-XML or hand the graph to an OWL API. The graph conforms to the OWL 2 RDF mapping so long as the generator has not used `!T` to write something outside OWL 2 DL (a decoder does not police that, the DL checker does).
 
 ### 13.1 Correspondence to OWL 2 structural axioms
 
@@ -1069,7 +1272,7 @@ For readers who prefer to think in functional syntax, the constructs MCN emits m
 | `!DC` / `!DP` / `!DI` | `DisjointClasses`, `DisjointObjectProperties`, `DifferentIndividuals` |
 | `@o`, `@i` | ontology IRI, `Import` |
 
-Because MCN emits the RDF graph rather than structural axioms directly, the OWL 2 RDF-to-structural mapping performs this translation; the table only documents what to expect.
+Because MCN emits the RDF graph rather than structural axioms directly, the OWL 2 RDF-to-structural mapping performs this translation. The table only documents what to expect.
 
 ---
 
@@ -1079,14 +1282,14 @@ Because MCN emits the RDF graph rather than structural axioms directly, the OWL 
 
 A decoder MUST reject the document, naming the logical line, on:
 
-- unknown directive, block kind, type code or property code (a CURIE with an unbound prefix is "unknown");
-- a `:Local` token without `@t`, or a local id without `@b`;
-- a quoted literal in an object-kind slot, or an inline node in a data-kind slot;
-- an unresolvable polymorphic code;
-- a positional inline form under a code with no positional table, or with too few slots;
-- unbalanced quotes, brackets or braces; a `{…}` not directly attached to a value;
-- an `@i` before `@o`; rebinding a predeclared prefix;
-- a malformed payload (SWRL, SHACL, RML) or expression;
+- unknown directive, block kind, type code or property code (a CURIE with an unbound prefix is "unknown"),
+- a `:Local` token without `@t`, or a local id without `@b`,
+- a quoted literal in an object-kind slot, or an inline node in a data-kind slot,
+- an unresolvable polymorphic code,
+- a positional inline form under a code with no positional table, or with too few slots,
+- unbalanced quotes, brackets or braces, or a `{…}` not directly attached to a value,
+- an `@i` before `@o`, or rebinding a predeclared prefix,
+- a malformed payload (SWRL, SHACL, RML, guard) or expression,
 - a `!` line with an unknown kind or clause.
 
 A decoder MUST NOT reject a document because a referenced IRI is not defined in it, because a GCI of `Mork.ttl` is violated, or because a mapping is incomplete. Those are graph-level judgements made after decoding.
@@ -1097,7 +1300,7 @@ Decoders SHOULD offer the following warnings (errors under `@opt strict`). Each 
 
 | Lint | Mirrors |
 |---|---|
-| `MD` node without `df` | `Datum ≡ ∃deferredMapping.DataMapping`; Axiom 2.7a |
+| `MD` node without `df` | `Datum ≡ ∃deferredMapping.DataMapping`, Axiom 2.7a |
 | `ap` without `xr` or `xi` on the same subject | GCI 2.14a |
 | `ba` together with `cb` but no `xr`/`xi` | GCI 2.14b |
 | `br` together with `cb` but neither `xa` nor `ba` | GCI 2.14d |
@@ -1119,21 +1322,21 @@ After decoding, the graph goes through exactly the existing pipeline: OWL 2 DL p
 
 ## 15. Encoding algorithm (RDF → MCN)
 
-Decoding is the required direction. Encoding is specified so that existing Turtle can be placed in an LLM context at MCN cost (a mapping scheme fed back for revision, a taxonomy handed to a mapping agent, the MORK T-Box itself as a reference). Encoding is lossless for any graph; it is *compact* for MORK-shaped graphs.
+Decoding is the required direction. Encoding is specified so that existing Turtle can be placed in an LLM context at MCN cost (a mapping scheme fed back for revision, a taxonomy handed to a mapping agent, the MORK T-Box itself as a reference). Encoding is lossless for any graph. It is *compact* for MORK-shaped graphs.
 
 **E1. Partition subjects.** Every named subject with `mork:mappingScheme`, `mork:conceptScheme`, `mork:representationScheme`, `mork:ontologicalScheme`, `mork:intentScheme` or `skos:inScheme` pointing at a `ConstraintScheme`/`RuleScheme` is assigned to that scheme's block (a subject with two memberships goes to the first in the order just given and carries the other explicitly). Everything else goes to `%X`.
 
 **E2. Header.** Emit `@b` for the most common namespace among local subjects, `@p` for every other namespace used, `@t` for the most-referenced namespace in object position that is not the base, `@o`/`@i` from the `owl:Ontology` node.
 
 **E3. Per block,** emit the header with the scheme's own properties, then one node line per subject:
-- types: drop `owl:NamedIndividual`; drop the block default type if present; map the rest to type codes (unknown classes as CURIEs); omit a type implied by a payload code that will be emitted;
-- properties: drop the membership property of the block; for each remaining predicate use its code, else a CURIE; group objects of the same predicate into a list; literals bare when their lexical form has no whitespace or delimiter and their datatype equals the code's default, else quoted with `^dt`/`@lang` as needed;
-- inverse pairs: if both `s P o` and `o P⁻ s` are present, emit only the one whose subject is being written first and set `@opt inv` — or emit both (always correct, sometimes wasteful);
-- `owl:Axiom` reifications whose source/property/target match an emitted pair become `{…}` on that value; unmatched reifications (the Zoo example's defect) are emitted as `!T` lines with `_:` labels;
-- `TargetingSpec`, `ParameterBinding`, provenance and `TemplateBinding` nodes referenced from exactly one subject and having only the positional properties collapse into positional inline nodes; other single-parent helper nodes become typed inline nodes; multi-parent nodes stay as their own lines;
-- `TemplateExpression` trees whose root is referenced from elsewhere become expression lines; `swrl:Imp`, `sh:NodeShape` and `rr:TriplesMap` graphs that fit the payload sub-notations become payload strings, otherwise `SW`/`SH`/`TM` node lines with `!T` for the rest.
+- types: drop `owl:NamedIndividual`. Drop the block default type if present. Map the rest to type codes (unknown classes as CURIEs). Omit a type implied by a payload code that will be emitted,
+- properties: drop the membership property of the block. For each remaining predicate use its code, else a CURIE. Group objects of the same predicate into a list. Write literals bare when their lexical form has no whitespace or delimiter and their datatype equals the code's default, else quoted with `^dt`/`@lang` as needed,
+- inverse pairs: if both `s P o` and `o P⁻ s` are present, emit only the one whose subject is being written first and set `@opt inv` — or emit both (always correct, sometimes wasteful),
+- `owl:Axiom` reifications whose source/property/target match an emitted pair become `{…}` on that value. Unmatched reifications (the Zoo example's defect) are emitted as `!T` lines with `_:` labels,
+- `TargetingSpec`, `ParameterBinding`, provenance and `TemplateBinding` nodes referenced from exactly one subject and having only the positional properties collapse into positional inline nodes. Other single-parent helper nodes become typed inline nodes. Multi-parent nodes stay as their own lines,
+- `TemplateExpression` trees whose root is referenced from elsewhere become expression lines. `swrl:Imp`, `sh:NodeShape` and `rr:TriplesMap` graphs that fit the payload sub-notations become payload strings, otherwise `SW`/`SH`/`TM` node lines with `!T` for the rest.
 
-**E4. T-Box.** `owl:Class`, property and GCI content is emitted as `!` lines, using §10.5 for class expressions; anything unrepresentable falls back to `!T`.
+**E4. T-Box.** `owl:Class`, property and GCI content is emitted as `!` lines, using §10.5 for class expressions. Anything unrepresentable falls back to `!T`.
 
 **E5. Verify.** Decode the result and check graph isomorphism with the input. An encoder that cannot make this check pass MUST fall back to `!T` for the offending triples rather than emit an approximation.
 
@@ -1167,7 +1370,7 @@ Map_Principal ap Map_Loan cb Map_Loan xi :principal c LoanPrincipal r loanId cn 
 Map_PrincipalValue cb Map_Principal xr qnt:numericValue r principal
 ```
 
-Reading the mapping block: `Map_Loan_Class` is a `DataMapping` (block default) whose T-Box match is `fin:Loan`. `Map_Loan` is a `Datum` for `Concept_Loan`, deferred on the class mapping, individuated as `Loan` keyed by `loanId`. `Map_Principal` applies in the context of `Map_Loan` (`ap`), composes into it (`cb`), and reaches the quantity through the inverse of `fin:principal` (`xi`); its component `Map_PrincipalValue` asserts `qnt:numericValue` from the `principal` field. `M+MD` reproduces the original's redundant double typing; `MD` alone would be the normal spelling.
+Reading the mapping block: `Map_Loan_Class` is a `DataMapping` (block default) whose T-Box match is `fin:Loan`. `Map_Loan` is a `Datum` for `Concept_Loan`, deferred on the class mapping, individuated as `Loan` keyed by `loanId`. `Map_Principal` applies in the context of `Map_Loan` (`ap`), composes into it (`cb`), and reaches the quantity through the inverse of `fin:principal` (`xi`). Its component `Map_PrincipalValue` asserts `qnt:numericValue` from the `principal` field. `M+MD` reproduces the original's redundant double typing, `MD` alone would be the normal spelling.
 
 ### 16.2 Uncertain mappings (repository example, excerpt)
 
@@ -1191,7 +1394,7 @@ Map_Oviparity MX bt .T tc OviparousBase c #Oviparous mr "Recommend introducing a
 Map_Yield_Oviparous MX y .dci c #Oviparous n "Yields the axiom <BaseIRI>#Oviparous at processing time."
 ```
 
-The full encoding (1366 tokens against 2674 for the Turtle) decodes to a graph differing from the original in exactly three `owl:annotatedTarget` triples, where the original's reified annotations reference `mork:Map_Falcon_Hypothesis`, `mork:Map_Gen_Bird_Class` and `mork:Map_Platypus_Hypothesis` — IRIs that do not exist — instead of the local individuals. In MCN the `{…}` form cannot express that mistake.
+The full encoding (1366 tokens against 2674 for the Turtle) decoded, when it was measured, to a graph differing from the original in exactly three `owl:annotatedTarget` triples, where the original's reified annotations referenced `mork:Map_Falcon_Hypothesis`, `mork:Map_Gen_Bird_Class` and `mork:Map_Platypus_Hypothesis`, IRIs that do not exist, instead of the local individuals. The original has since been corrected. In MCN the `{…}` form cannot express that mistake.
 
 ### 16.3 A generative mapping with intent, provenance and artefacts
 
@@ -1207,7 +1410,7 @@ v2 MS ss cs_shape ef 2026-10-01T00:00:00Z fi cs_shape_fi1 gv .gA tg :Applicant p
 loanIri = 'http://ex.org/loan/'+$loanId
 ```
 
-Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`sh:targetClass ex:Applicant`), `hasParameterBinding cs_shape_pb1` (`paramName "min"`, `paramType "Numeric"`, `paramValue 700`), `hasConstraintProvenance cs_shape_pv1` (creator, model id, confidence, review status, created), `hasShapeTemplate`, `hasSeverity sh:Violation`, `fnd:hasGovernanceState fnd:Active`, `fnd:hasIdentity cs_shape_fi1` (a `PersistentIdentity`), and `generatesShapeDefinition cs_shape_gs1` (a structured `sh:NodeShape`). `cs_rule` is a `RuleMapping` with `hasTargetingSpec cs_rule_tg1` (`sh:targetObjectsOf :hasCreditScore`), `appliesInJurisdiction :US` asserted directly on `cs_rule` itself (`mork:appliesInJurisdiction` has `rdfs:domain :GenerativeMapping` in `Mork.ttl`, not `TargetingSpec`, so it is written as a top-level pair rather than nested inside `tg [...]`), and whose `generatesRuleDefinition` is a structured `swrl:Imp` with body and head atom lists and minted variables `cs_rule_gr1_v_a`, `cs_rule_gr1_v_s`; the compact text is retained as `swrlCompactSyntax`. `v2` supersedes `cs_shape`, shares its persistent identity and carries the `effectiveFrom` GCI 5.10a requires.
+Decoded, `cs_shape` is a `ShapeMapping` with `hasTargetingSpec cs_shape_tg1` (`sh:targetClass ex:Applicant`), `hasParameterBinding cs_shape_pb1` (`paramName "min"`, `paramType "Numeric"`, `paramValue 700`), `hasConstraintProvenance cs_shape_pv1` (creator, model id, confidence, review status, created), `hasShapeTemplate`, `hasSeverity sh:Violation`, `fnd:hasGovernanceState fnd:Active`, `fnd:hasIdentity cs_shape_fi1` (a `PersistentIdentity`), and `generatesShapeDefinition cs_shape_gs1` (a structured `sh:NodeShape`). `cs_rule` is a `RuleMapping` with `hasTargetingSpec cs_rule_tg1` (`sh:targetObjectsOf :hasCreditScore`), `appliesInJurisdiction :US` asserted directly on `cs_rule` itself (`mork:appliesInJurisdiction` has `rdfs:domain :GenerativeMapping` in `Mork.ttl`, not `TargetingSpec`, so it is written as a top-level pair rather than nested inside `tg [...]`), and whose `generatesRuleDefinition` is a structured `swrl:Imp` with body and head atom lists and minted variables `cs_rule_gr1_v_a`, `cs_rule_gr1_v_s`. The compact text is retained as `swrlCompactSyntax`. `v2` supersedes `cs_shape`, shares its persistent identity and carries the `effectiveFrom` GCI 5.10a requires.
 
 ### 16.4 A representation scheme and taxonomy (from the `Mork.ttl` examples)
 
@@ -1224,7 +1427,7 @@ DC_ContractingParties_Party cid Party
 Concept_Contract_Signatories CO brl Rep_Contract nrl Rep_Signatories nn "Models the association between contract and signatories"
 ```
 
-`id ""` is the empty identifier that marks an `AnonymousElement`; the empty string must be quoted, as must the path containing `[n]`, since `[` is a delimiter (§3.3).
+`id ""` is the empty identifier that marks an `AnonymousElement`. The empty string must be quoted, as must the path containing `[n]`, since `[` is a delimiter (§3.3).
 
 ### 16.5 The MORK T-Box in MCN
 
@@ -1255,20 +1458,41 @@ MCN can carry `Mork.ttl` itself, which is useful for placing the vocabulary's fo
 
 `!O ^compositeBroaderMapping < precedes` is Axiom P1 (`SubObjectPropertyOf(ObjectInverseOf(compositeBroaderMapping) precedes)`), written with the inverse-property form of §10.5.
 
+### 16.6 A guarded mapping scheme over an RDF source
+
+A mapping scheme over an RDF source declares the prefixes of its paths with `sdl`, and guards mappings with `aw` (§10.6). This scheme compiles with the RDF-to-RDF compiler of [tools/mork_rdf](../../tools/mork_rdf/README.md) with no guard or path finding.
+
+```
+@b <http://example.org/mapping#>
+@p src=<http://example.org/src#>
+@p tgt=<http://example.org/tgt#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+%X
+src:Rule RE
+Concept_Rule C ra src:Rule
+%M Policy md .draft sdl [src http://example.org/src#],[tgt http://example.org/tgt#],[odrl http://www.w3.org/ns/odrl/2/]
+Map_RuleClass xt tgt:Rule
+Map_Rule MD f Concept_Rule df Map_RuleClass cn Map_Lt,Map_Other
+Map_Lt xr tgt:ordered r odrl:operator aw "odrl:operator [1..] in {odrl:lt,odrl:lteq};^src:of [..0]"
+Map_Other xr tgt:other r odrl:operator aw "not(odrl:operator = odrl:eq);and(odrl:operator cls src:Op,or(odrl:a [1..],odrl:b = odrl:v))"
+```
+
+`sdl [odrl http://www.w3.org/ns/odrl/2/]` on the scheme declares one `sh:PrefixDeclaration` (`Policy_sdl3`) with `sh:prefix "odrl"` and `sh:namespace "http://www.w3.org/ns/odrl/2/"^^xsd:anyURI`. Each `aw` payload is a target-less `sh:NodeShape` (`Map_Lt_aw1`, `Map_Other_aw1`).
+
 ---
 
 ## 17. Authoring guidance for generators
 
-These are recommendations for the system prompt of a mapping agent that emits MCN; they are not part of the notation.
+These are recommendations for the system prompt of a mapping agent that emits MCN. They are not part of the notation.
 
-1. **Ship the codebook, not the ontology.** §8 is about 2,500 tokens and is the entire vocabulary. `Mork.ttl` is ~45,000 tokens; its definitions and scope notes belong in a retrieval store the agent consults when it needs the *meaning* of a term, not in every prompt.
+1. **Ship the codebook, not the ontology.** §8 is the entire vocabulary and a small part of the size of `Mork.ttl`. `Mork.ttl` is ~45,000 tokens. Its definitions and scope notes belong in a retrieval store the agent consults when it needs the *meaning* of a term, not in every prompt.
 2. **Prefer structure to prose.** A `mappingNote` that restates what `lx :laysEggs` already says wastes tokens twice (in generation and in every later read). Notes should carry the *evidence* — the reasoning, the source excerpt, the alternative rejected.
 3. **Name nodes, don't number them.** `Map_Loan` costs a few more tokens than `m3` but is far less likely to be mis-referenced three hundred tokens later.
-4. **Type once.** Write `MD`, not `M+MD`; write `gs …` and let `MS` be implied unless a polymorphic code precedes it.
+4. **Type once.** Write `MD`, not `M+MD`. Write `gs …` and let `MS` be implied unless a polymorphic code precedes it.
 5. **Use profiles inside a deployment** (`@u`) and full headers when the MCN will be stored.
 6. **One direction per inverse pair.** Emit `cn` from the parent or `cb` from the child, not both (§5).
-7. **Emit the lint set.** Run §14.2 on every decode and feed the warnings back to the agent; they are cheap and catch the errors reasoners report expensively.
-8. **Never escape what has a code.** A CURIE in code position is a signal that the codebook is incomplete; treat it as a change request against §8.
+7. **Emit the lint set.** Run §14.2 on every decode and feed the warnings back to the agent. They are cheap and catch the errors reasoners report expensively.
+8. **Never escape what has a code.** A CURIE in code position is a signal that the codebook is incomplete. Treat it as a change request against §8.
 
 ---
 
@@ -1278,11 +1502,11 @@ These are recommendations for the system prompt of a mapping agent that emits MC
 |---|---|
 | **MCN-Core** | §3, §5, §6 (except `@u`), §7, §8, §9 (except payload strings), §11 `!I` and `!T`, §12, §13 (except payloads), §14.1 |
 | **MCN-Full** | Core plus §10.1 (expressions), §10.5 and all of §11 (axiom lines), `@u` profiles, `@opt inv` |
-| **MCN-Artefacts** | Full plus §10.2 (SWRL), §10.3 (SHACL), §10.4 (RML) payloads |
+| **MCN-Artefacts** | Full plus §10.2 (SWRL), §10.3 (SHACL), §10.4 (RML) and §10.6 (guard) payloads |
 
-A decoder states which level it implements. A generator targets a level and MUST NOT emit constructs above it. This document's examples in §16.1, §16.2 and §16.4 are Core; §16.3 and §16.5 are Artefacts.
+A decoder states which level it implements. A generator targets a level and MUST NOT emit constructs above it. This document's examples in §16.1, §16.2 and §16.4 are Core. §16.3 and §16.5 are Artefacts.
 
-Versioning of the notation follows the codebook: adding codes is a minor version; changing or removing the meaning of a code is a major version, and `@v` lets a decoder refuse a document written against a codebook it does not have.
+Versioning of the notation follows the codebook: adding codes is a minor version. Changing or removing the meaning of a code is a major version, and `@v` lets a decoder refuse a document written against a codebook it does not have.
 
 ---
 
@@ -1306,7 +1530,7 @@ pair        := code valuelist
 code        := PROPCODE | CURIE
 valuelist   := value annotation? (',' value annotation?)*
 value       := BARE | QUOTED ('@' LANG | '^' CURIE)? | IRI | inline
-inline      := '[' ( '#' ident )? ( typelist pair* | positional ) ']'
+inline      := '[' ( '#' ident )? ( typelist pair* | positional | pair+ ) ']'   ; pair+ only after '#' ident, under a code with no positional table
 positional  := slot+ pair*                       ; slot count fixed by the enclosing code
 slot        := value | '_'
 annotation  := '{' pair* '}'                     ; no whitespace before '{'
@@ -1339,6 +1563,6 @@ BARE        := [^ \t,{}\[\]"<]+  [^ \t,{}\[\]]*
 ## 20. Open questions
 
 - **Streaming.** Because a node line is self-contained given the block context, a decoder can process MCN incrementally as a model streams it and surface lint warnings mid-generation. Whether the agent loop should exploit that (stop-and-correct) is an architecture question for ADR-A25's bounded-completion mode.
-- **A JSON envelope for tool use.** Structured-output APIs constrain models to JSON schemas; `mork_schemas.py` already exists for that path. An MCN document can be carried as a single string field in such a schema, which keeps token cost low while retaining the schema-level validation of the envelope; whether to retire the per-field Pydantic schema in favour of `{"mcn": "…"}` should be decided by measuring error rates, not assumed.
-- **Numeric auto-ids.** A `@opt autoid` that lets a bare integer subject mint `B + "n" + digits` would shave tokens further; §17 argues against it on reliability grounds, but the measurement has not been made.
-- **Codebook governance.** The codebook must track `Mork.ttl`. [tools/mork/src/mcn_codebook.py](../../tools/mork/src/mcn_codebook.py) is that machine-readable file (the tables in §8 were generated from it), and `TestCodebookCoverage` in [test_mcn_decoder.py](../../tools/mork/src/test_mcn_decoder.py) fails whenever a class, property or named individual is added to `Mork.ttl` without a corresponding code. Regenerating §8's Markdown tables from the module on each change, rather than maintaining them by hand, remains open.
+- **A JSON envelope for tool use.** Structured-output APIs constrain models to JSON schemas. `mork_schemas.py` already exists for that path. An MCN document can be carried as a single string field in such a schema, which keeps token cost low while retaining the schema-level validation of the envelope. Whether to retire the per-field Pydantic schema in favour of `{"mcn": "…"}` should be decided by measuring error rates, not assumed.
+- **Numeric auto-ids.** A `@opt autoid` that lets a bare integer subject mint `B + "n" + digits` would shave tokens further. §17 argues against it on reliability grounds, but the measurement has not been made.
+- **Codebook governance.** The codebook must track `Mork.ttl`. [tools/mork/src/mcn_codebook.py](../../tools/mork/src/mcn_codebook.py) is that machine-readable file (the tables in §8 were generated from it), and `TestCodebookCoverage` in [test_mcn_decoder.py](../../tools/mork/src/test_mcn_decoder.py) reads `Mork.ttl` and fails whenever a class, property or named individual is added to it without a corresponding code, unless §8.5 lists the term. Regenerating §8's Markdown tables from the module on each change, rather than maintaining them by hand, remains open.

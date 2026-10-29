@@ -172,6 +172,32 @@ _type("SP", "sh:PropertyShape", "Artefact")
 _type("SW", "swrl:Imp", "Artefact", 'payload form: SW "<swrl-compact>"')
 _type("TM", "rr:TriplesMap", "Artefact", 'payload form: TM "<rml-compact>"')
 _type("PI", "fnd:PersistentIdentity", "Artefact")
+_type("PD", "sh:PrefixDeclaration", "Artefact", "positional form [prefix namespace]")
+
+# -- Enumerations (value-set classes whose members are reserved tokens, §8.4) --
+_type("AF", "mork:AxiomForm", "Enumeration")
+_type("CB", "mork:ClassCombination", "Enumeration")
+_type("LC", "mork:LookupComparison", "Enumeration")
+_type("RD", "mork:ReviewDecision", "Enumeration")
+_type("FS", "mork:FindingSeverity", "Enumeration")
+_type("OB", "mork:OutputBox", "Enumeration")
+
+# -- Compiled mapping --
+_type("KM", "mork:CompiledMapping", "Compiled")
+_type("KQ", "mork:CompiledQuery", "Compiled")
+_type("KF", "mork:CompileFinding", "Compiled")
+
+# -- Community and history --
+_type("HO", "mork:SectionObservation", "Community")
+_type("HC", "mork:SemanticCommunity", "Community")
+_type("HS", "mork:CommunityScheme", "Community")
+_type("HB", "mork:CommunityMembership", "Community")
+_type("HT", "mork:CommunityMatch", "Community")
+_type("HP", "mork:OntologicalProjection", "Community")
+_type("HR", "mork:PropertyProjection", "Community")
+_type("HD", "mork:DAGTemplate", "Community")
+_type("HW", "mork:MappingReview", "Community")
+_type("HU", "mork:ProposalRun", "Community")
 
 
 # ---------------------------------------------------------------------------
@@ -483,6 +509,96 @@ _prop("tob", "sh:targetObjectsOf", group="SHACL targeting")
 _prop("tsb", "sh:targetSubjectsOf", group="SHACL targeting")
 _prop("tnd", "sh:targetNode", group="SHACL targeting")
 
+# -- Guard and lookup --
+_prop("aw", "mork:appliesWhen", group="Guard and lookup")
+_prop("af", "mork:axiomForm", group="Guard and lookup")
+_prop("cmb", "mork:classCombination", group="Guard and lookup")
+_prop("lcm", "mork:lookupComparison", group="Guard and lookup")
+_prop("ldt", "mork:lookupDatatype", group="Guard and lookup")
+
+# -- Compiled mapping --
+_prop("hq", "mork:hasCompiledQuery", group="Compiled mapping")
+_prop("hf", "mork:hasCompileFinding", group="Compiled mapping")
+_prop("hec", "mork:hasEffectiveConfidence", group="Compiled mapping")
+_prop("cof", "mork:confidenceOf", group="Compiled mapping")
+_prop("cim", "mork:compiledInMode", group="Compiled mapping")
+_prop("cfr", "mork:compiledFrom", group="Compiled mapping")
+_prop("cla", "mork:closureAxiom", group="Compiled mapping")
+_prop("clc", "mork:closureCombination", group="Compiled mapping")
+_prop("clp", "mork:closureProperty", group="Compiled mapping")
+_prop("cxp", "mork:contextPath", group="Compiled mapping")
+_prop("ob", "mork:outputBox", group="Compiled mapping")
+_prop("roo", "mork:readsOutputOf", group="Compiled mapping")
+_prop("fab", "mork:findingAbout", group="Compiled mapping")
+_prop("fsv", "mork:findingSeverity", group="Compiled mapping")
+_prop("chk", "mork:checkCode", kind=KIND_DATA, group="Compiled mapping")
+_prop("cbs", "mork:compiledBase", kind=KIND_DATA, datatype="xsd:anyURI", group="Compiled mapping")
+_prop("cpl", "mork:compiler", kind=KIND_DATA, group="Compiled mapping")
+_prop("efc", "mork:effectiveConfidence", kind=KIND_DATA, datatype="xsd:double", group="Compiled mapping")
+_prop("fc", "mork:findingCode", kind=KIND_DATA, group="Compiled mapping")
+_prop("fx", "mork:findingIndex", kind=KIND_DATA, datatype="xsd:integer", group="Compiled mapping")
+_prop("fmg", "mork:findingMessage", kind=KIND_DATA, group="Compiled mapping")
+_prop("mdg", "mork:mappingDigest", kind=KIND_DATA, group="Compiled mapping")
+_prop("qi", "mork:queryIndex", kind=KIND_DATA, datatype="xsd:integer", group="Compiled mapping")
+_prop("qk", "mork:queryKind", kind=KIND_DATA, group="Compiled mapping")
+_prop("rat", "mork:readAt", kind=KIND_DATA, datatype="xsd:dateTime", group="Compiled mapping")
+_prop("stm", "mork:stratum", kind=KIND_DATA, datatype="xsd:integer", group="Compiled mapping")
+
+# -- Community and history --
+_prop("hcm", "mork:hasCommunityMembership", group="Community and history")
+_prop("hop", "mork:hasOntologicalProjection", group="Community and history")
+_prop("hpp", "mork:hasPropertyProjection", group="Community and history")
+_prop("hdt", "mork:hasDAGTemplate", group="Community and history")
+_prop("cos", "mork:communityScheme", group="Community and history")
+_prop("dfr", "mork:discoveredFrom", group="Community and history")
+_prop("mbc", "mork:memberConcept", group="Community and history")
+_prop("mtc", "mork:matchesCommunity", group="Community and history")
+_prop("mts", "mork:matchSection", group="Community and history")
+_prop("mcs", "mork:matchedConcepts", group="Community and history")
+_prop("obc", "mork:observedConcept", group="Community and history")
+_prop("ois", "mork:observedInScheme", group="Community and history")
+_prop("oin", "mork:observedInSection", group="Community and history")
+_prop("pjc", "mork:projectedClass", group="Community and history")
+_prop("pjn", "mork:projectedConcept", group="Community and history")
+_prop("pjp", "mork:projectedParentClass", group="Community and history")
+_prop("pjy", "mork:projectedProperty", group="Community and history")
+_prop("pto", "mork:projectionTargetOntology", group="Community and history")
+_prop("dtc", "mork:dagTemplateChild", group="Community and history")
+_prop("dtr", "mork:dagTemplateRoot", group="Community and history")
+_prop("prf", "mork:proposedFor", group="Community and history")
+_prop("rdc", "mork:reviewDecision", group="Community and history")
+_prop("rvo", "mork:reviewOf", group="Community and history")
+_prop("cby", "mork:correctedBy", group="Community and history")
+_prop("coh", "mork:communityCoherence", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("cmw", "mork:communityMemberWeight", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("coc", "mork:communityObservationCount", kind=KIND_DATA, datatype="xsd:integer", group="Community and history")
+_prop("csv", "mork:communitySchemeVersion", kind=KIND_DATA, group="Community and history")
+_prop("csz", "mork:communitySize", kind=KIND_DATA, datatype="xsd:integer", group="Community and history")
+_prop("dtf", "mork:dagTemplateFrequency", kind=KIND_DATA, datatype="xsd:integer", group="Community and history")
+_prop("dal", "mork:detectionAlgorithm", kind=KIND_DATA, group="Community and history")
+_prop("dre", "mork:detectionResolution", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("mcf", "mork:matchConfidence", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("msc", "mork:matchScore", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("ots", "mork:observationTimestamp", kind=KIND_DATA, datatype="xsd:dateTime", group="Community and history")
+_prop("pcf", "mork:projectedClassFrequency", kind=KIND_DATA, datatype="xsd:integer", group="Community and history")
+_prop("ppc", "mork:propertyProjectionConfidence", kind=KIND_DATA, datatype="xsd:decimal", group="Community and history")
+_prop("ppf", "mork:propertyProjectionFrequency", kind=KIND_DATA, datatype="xsd:integer", group="Community and history")
+_prop("prm", "mork:proposerModel", kind=KIND_DATA, group="Community and history")
+_prop("rnt", "mork:reviewNote", kind=KIND_DATA, group="Community and history")
+_prop("tpv", "mork:teachingPackVersion", kind=KIND_DATA, group="Community and history")
+
+# -- Shadow --
+_prop("sho", "mork:shadowOf", group="Shadow")
+_prop("shd", "mork:shadowDomain", group="Shadow")
+_prop("shr", "mork:shadowRange", group="Shadow")
+_prop("shc", "mork:shadowSubClassOf", group="Shadow")
+_prop("shp", "mork:shadowSubPropertyOf", group="Shadow")
+
+# -- SHACL declaration --
+_prop("sdl", "sh:declare", group="SHACL declaration")
+_prop("spx", "sh:prefix", kind=KIND_DATA, group="SHACL declaration")
+_prop("sns", "sh:namespace", kind=KIND_DATA, datatype="xsd:anyURI", group="SHACL declaration")
+
 
 # ---------------------------------------------------------------------------
 # §8.3 Polymorphic code resolution
@@ -554,6 +670,7 @@ POSITIONAL_FORMS: Dict[str, PositionalForm] = {
     "pb": PositionalForm("GP", ("pnm", "pty", "pvl")),
     "pv": PositionalForm(None, ("pc", "mid", "lc", "rv")),
     "hb": PositionalForm("EB", ("phn", "pe")),
+    "sdl": PositionalForm("PD", ("spx", "sns")),
 }
 
 # `tg` mode letter -> the SHACL targeting property code it stands for.
@@ -605,7 +722,7 @@ BLOCKS: Dict[str, BlockSpec] = {
 }
 
 # Reserved format tokens accepted right after the id in a %R header.
-REPRESENTATION_FORMATS = {".json", ".xml", ".yaml"}
+REPRESENTATION_FORMATS = {".json", ".xml", ".yaml", ".rdf"}
 
 
 # ---------------------------------------------------------------------------
@@ -639,6 +756,25 @@ RESERVED: Dict[str, str] = {
     ".gR": "fnd:Reviewed",
     ".gA": "fnd:Active",
     ".gS": "fnd:Superseded",
+    ".rdf": "mork:RDF",
+    ".acc": "mork:Accepted",
+    ".cor": "mork:Corrected",
+    ".rej": "mork:Rejected",
+    ".defer": "mork:Deferred",
+    ".glob": "mork:GlobalAxioms",
+    ".dfn": "mork:DefiningRestriction",
+    ".ex": "mork:ExistentialRestriction",
+    ".all": "mork:UniversalRestriction",
+    ".union": "mork:UnionOfClasses",
+    ".inter": "mork:IntersectionOfClasses",
+    ".cast": "mork:CastComparison",
+    ".lexcmp": "mork:LexicalComparison",
+    ".termcmp": "mork:TermComparison",
+    ".err": "mork:ErrorFinding",
+    ".wrn": "mork:WarningFinding",
+    ".inf": "mork:InfoFinding",
+    ".iout": "mork:InstanceOutput",
+    ".tout": "mork:TerminologyOutput",
 }
 
 
