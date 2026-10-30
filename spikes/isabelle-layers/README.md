@@ -40,3 +40,7 @@ All thirteen theories build and every theorem in them is proved. Two statements 
 - Entailment regimes: Surface's X1 is proved over asserted triples only.
 - Q3's canonical form for range sets and Q6's conversion coherence: both need a representation decision (dense against discrete spaces, conversion chains) the README leaves to a profile.
 - Store isolation: Persistence's model applies writes one at a time, which is what a store's atomic update promises and nothing more. Write skew between updates is the conformance test's.
+
+## Code generation, a draft
+
+`CodeGen.thy` is a second spike, not listed in `ROOT` because it does not yet build. It evaluates the models with the code generator (`value`) and exports fragments to Haskell and SML. Its last build showed every `value` passing except `guard_row`, which now has a code equation, and `export_code` refusing `length_prefix.enc` because a locale's `fun` has no code equations outside an interpretation. The next steps are to export the interpretation's constant instead, or restate `enc` as a top-level function over `decimal`, then add `CodeGen` to `ROOT`, build, and run the Haskell export with GHC against the minting specification's tuple example. Building `HOL-Library` for the target-numeral and char adaptations is what makes the generated Haskell use native `Integer` and `Char`, and it needs more memory than a laptop beside other work should give it.
