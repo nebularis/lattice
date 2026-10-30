@@ -151,10 +151,11 @@ class ConfigStudioWorker:
                 return import_rml(job, input_("configuration"))
             if target == CST.MappingLanguageModelProposer:
                 from . import config_studio_mapping_proposer as mapping
+                from .llm_providers import provider_from_env
 
                 baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
                 rounds = int(os.environ.get("LATTICE_MAPPING_PROPOSER_ROUNDS") or 40)
-                return mapping.propose_mapping(job, input_("configuration") + baseline, mapping.model_from_env(os.environ),
+                return mapping.propose_mapping(job, input_("configuration") + baseline, provider_from_env(os.environ),
                                                str(graph.value(job, CST.submittedAt)), rounds)
             if target == CST.SentenceFormProposer:
                 proposer = proposers.SentenceFormProposer()

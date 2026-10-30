@@ -130,9 +130,9 @@ cst:toolArguments a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain 
 cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts, or run the mapping part over a sample source, writing nothing but the job." .
 cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
-cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, with a pack the deployment supplies." .
+cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model through the deployment's provider, with a pack the deployment supplies." .
 cst:RmlImporter a cst:Target ; rdfs:comment "An RML mapping read into a MORK mapping scheme for the mapping part, with what MORK cannot say as warnings." .
-cst:MappingLanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, given MORK's proposal tools as functions, as a proposer of a mapping scheme from a source vocabulary, checked over a sample source when one is given." .
+cst:MappingLanguageModelProposer a cst:Target ; rdfs:comment "A language model through the deployment's provider, given MORK's proposal tools as functions, as a proposer of a mapping scheme from a source vocabulary, checked over a sample source when one is given." .
 cst:OdrlProposer a cst:Target ; rdfs:comment "An ODRL 2.2 policy, compiled through the studio's MORK mapping scheme, as a proposer of one stated term for each of its rules (ADR-A144)." .
 cst:ImportDocument a owl:Class ;
     rdfs:comment "A document a job imports, such as an ODRL policy, carried in the job's input with what it says it is (STD-292)." .

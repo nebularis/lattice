@@ -2,8 +2,8 @@
 import pytest
 
 from lattice_workers.config_studio_main import read_config
-from lattice_workers.config_studio_mapping_proposer import model_from_env
 from lattice_workers.config_studio_secrets import secret
+from lattice_workers.llm_providers import provider_from_env
 
 
 def test_a_secret_is_read_from_the_environment_or_the_file_it_names(tmp_path):
@@ -36,6 +36,6 @@ def test_the_worker_reads_its_secrets_through_files(tmp_path):
     config = read_config({"LATTICE_AMQP_URI_FILE": str(tmp_path / "amqp"), "LATTICE_FUSEKI_URL": "http://f",
                           "LATTICE_FUSEKI_PASSWORD_FILE": str(tmp_path / "fuseki"), "LATTICE_ROOT": str(tmp_path)})
     assert (config.amqp_uri, config.fuseki_password) == ("amqp://u:p@host/%2F", "pw")
-    model = model_from_env({"LATTICE_PROPOSER_URL": "http://m", "LATTICE_PROPOSER_MODEL": "m",
+    model = provider_from_env({"LATTICE_PROPOSER_URL": "http://m", "LATTICE_PROPOSER_MODEL": "m",
                             "LATTICE_PROPOSER_KEY_FILE": str(tmp_path / "proposer")})
     assert model.key == "sk-test"

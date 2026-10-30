@@ -81,10 +81,12 @@ Read by `config_studio_main.read_config`, and the proposer settings by each prop
 | `LATTICE_FUSEKI_DATASET` | no | `studio` | The dataset name, which must be the service's |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | no | none | Basic authentication to Fuseki |
 | `LATTICE_ROOT` | no | found from the working directory | The repository root, where the worker reads the ontology files it validates against |
-| `LATTICE_PROPOSER_URL` | no | none | The base URL of a Chat Completions endpoint for the `language-model` and `mapping-language-model` proposers, to which `/chat/completions` is added. Unset, with the model, fails every `propose` job for those proposers, saying no language model is configured. The `sentence-forms` and `rml` proposers need none of these |
-| `LATTICE_PROPOSER_MODEL` | no | none | The model the endpoint is asked for |
+| `LATTICE_PROPOSER_PROVIDER` | no | `chat-completions` | Which language model provider the `language-model` and `mapping-language-model` proposers use. `chat-completions` speaks the Chat Completions wire format to `LATTICE_PROPOSER_URL`. `anthropic` uses Anthropic's Messages API through its SDK, with prompt caching on the conversation, so each turn of a mapping proposal reads the turns before it from the cache. Anything else fails the job. The `sentence-forms` and `rml` proposers need none of these settings |
+| `LATTICE_PROPOSER_URL` | for `chat-completions` | none | The endpoint's base URL, to which `/chat/completions` is added. For `anthropic`, it overrides the API's base URL, for example to reach a gateway. Without it, or without the model, a `chat-completions` job fails, saying no language model is configured |
+| `LATTICE_PROPOSER_MODEL` | yes, for either proposer | none | The model asked, for example `claude-opus-5-5` |
+| `LATTICE_PROPOSER_EFFORT` | no | the model's own | For `anthropic` only, the model's effort: `low`, `medium`, `high`, `xhigh` or `max`. A mapping proposal is a long tool loop, which `high` suits |
 | `LATTICE_PROPOSER_PACK` | no | none | For the `language-model` proposer only, the folder of the pack the prompt is rendered from, a `manifest.json` with its templates, as the [contract](../../contracts/config-studio/README.md#proposers) describes. The repository holds no clause-reading pack, so a deployment supplies its own |
-| `LATTICE_PROPOSER_KEY` | no | none | Sent as a bearer token. Keep it in a secret store and give it to the worker through `LATTICE_PROPOSER_KEY_FILE` (see [Secrets in files](#secrets-in-files)), never in a file the repository tracks. It is never logged |
+| `LATTICE_PROPOSER_KEY` | no | none | The provider's key. Without it, `anthropic` falls back to the SDK's own sources, such as `ANTHROPIC_API_KEY`. Keep it in a secret store and give it to the worker through `LATTICE_PROPOSER_KEY_FILE` (see [Secrets in files](#secrets-in-files)), never in a file the repository tracks. It is never logged |
 | `LATTICE_MAPPING_PROPOSER_ROUNDS` | no | `40` | The most turns a mapping proposal gives the model before the job fails |
 
 ### Values the stack sets

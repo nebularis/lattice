@@ -5,30 +5,29 @@ The model is asked over the Chat Completions wire format, with `mork_propose`'s 
 pack, the target cards, the source's cards, candidate target terms, one target term in depth, and the check. It calls
 them as the trial agents did, until it answers with a scheme in MCN. Every tool reads only the job's own documents, the
 source vocabulary and the sample source, so the model never names a file. The workspace's own reviews are given to it as
-rules (`History.rules`), so what the author corrected before is said before the model proposes again.
+rules (`History.rules`), so what the author corrected before is said before the model proposes again. The model is
+reached through an `LLMProvider` (`llm_providers`), so a deployment chooses its endpoint and provider.
 
 The answer is decoded, checked once more over the sample, and returned as an artefact for the mapping part: the proposal
 with a `mork:ProposalRun` that records the model, the pack, the run's start and end and the tokens its provider counted,
 each mapping naming the run with `prov:wasGeneratedBy`. The author reviews it in mapping mode, and nothing is saved until
-they save. A deployment configures the model with LATTICE_PROPOSER_URL, LATTICE_PROPOSER_MODEL and LATTICE_PROPOSER_KEY,
-as for the sentence-level proposer, and LATTICE_MAPPING_PROPOSER_ROUNDS bounds the tool calls, 40 by default."""
+they save. LATTICE_MAPPING_PROPOSER_ROUNDS bounds the tool calls, 40 by default."""
 
 from __future__ import annotations
 
 import json
 import re
 import tempfile
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Mapping, Optional, Protocol
+from typing import Callable, Optional
 
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import PROV, RDF, SH, XSD
 
 from .config_studio_jobs import CST, _Result
-from .config_studio_secrets import secret
+from .llm_providers import LLMProvider
 
 MORK = "http://www.nebularis.org/ontologies/Mork#"
 LAYERS = ["instrument", "eligibility", "party", "behaviour", "quantification"]
@@ -46,45 +45,6 @@ TOOLS = [
     {"name": "check_mapping", "description": "Decode, validate and compile a proposal in MCN, run it over the sample source when there is one, and hold what it writes to LATTICE's laws. Findings at severity info are not errors.",
      "parameters": {"type": "object", "properties": {"mcn": {"type": "string"}}, "required": ["mcn"]}},
 ]
-
-
-class Model(Protocol):
-    """A chat model that may call tools. `chat` returns the assistant's message and the tokens it read and wrote."""
-
-    name: str
-
-    def chat(self, messages: list, tools: list) -> tuple[dict, int, int]: ...
-
-
-@dataclass
-class ChatCompletionsModel:
-    endpoint: str
-    model: str
-    key: Optional[str] = None
-    timeout: float = 300.0
-
-    @property
-    def name(self) -> str:
-        return self.model
-
-    def chat(self, messages: list, tools: list) -> tuple[dict, int, int]:
-        body = json.dumps({"model": self.model, "temperature": 0, "messages": messages,
-                           "tools": [{"type": "function", "function": t} for t in tools]}).encode("utf-8")
-        headers = {"Content-Type": "application/json"}
-        if self.key:
-            headers["Authorization"] = f"Bearer {self.key}"
-        request = urllib.request.Request(self.endpoint.rstrip("/") + "/chat/completions", data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310, the deployment's own endpoint
-            reply = json.loads(response.read().decode("utf-8"))
-        usage = reply.get("usage") or {}
-        return reply["choices"][0]["message"], int(usage.get("prompt_tokens") or 0), int(usage.get("completion_tokens") or 0)
-
-
-def model_from_env(env: Mapping[str, str]) -> ChatCompletionsModel:
-    url, model = (env.get(k, "").strip() for k in ("LATTICE_PROPOSER_URL", "LATTICE_PROPOSER_MODEL"))
-    if not (url and model):
-        raise ValueError("no language model is configured: set LATTICE_PROPOSER_URL and LATTICE_PROPOSER_MODEL")
-    return ChatCompletionsModel(url, model, secret(env, "LATTICE_PROPOSER_KEY"))
 
 
 @dataclass
@@ -149,7 +109,7 @@ def _document(config: Graph, role: URIRef) -> Optional[tuple[str, str, Optional[
     return str(content), media, (str(config.value(docs[0], CST.sourceNamespace)) if config.value(docs[0], CST.sourceNamespace) else None)
 
 
-def propose_mapping(job: URIRef, config: Graph, model: Model, submitted_at: str, rounds: int = 40,
+def propose_mapping(job: URIRef, config: Graph, model: LLMProvider, submitted_at: str, rounds: int = 40,
                     clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)) -> Graph:
     """The job's result: the final check's findings and one artefact for the mapping part."""
     from .config_studio_jobs import catalogue
@@ -182,7 +142,7 @@ def propose_mapping(job: URIRef, config: Graph, model: Model, submitted_at: str,
         for _ in range(rounds):
             message, used_in, used_out = model.chat(messages, TOOLS)
             read, written = read + used_in, written + used_out
-            messages.append({k: v for k, v in message.items() if k in ("role", "content", "tool_calls")})
+            messages.append(message)  # whole, so a provider gets back what it keeps on its own messages
             calls = message.get("tool_calls") or []
             if not calls:
                 answer = _mcn(message.get("content") or "")

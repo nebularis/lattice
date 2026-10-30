@@ -18,7 +18,7 @@ The platform needs a stated open-source/commercial boundary before third-party o
 - **SPI interface modules are the sanctioned extension boundary**, documented explicitly as the seam where OSS and commercial implementations meet.
 - The OSS/commercial seam is published as an inventory of every extension point:
 
-  `ScopedDataset`, `ChangeFeedSource`, `ReasonerProvider`, `ShaclEngine`, `LlmProvider`, `IdentityProvider`, `ArtifactStore`, `SecretProvider`, `UsageSink`, `PackSigner`/`TrustStore`, `PartitionedWorkQueue`, `DocumentExtractor`, `NotificationSink`.
+  `ScopedDataset`, `ChangeFeedSource`, `ReasonerProvider`, `ShaclEngine`, `LLMProvider`, `IdentityProvider`, `ArtifactStore`, `SecretProvider`, `UsageSink`, `PackSigner`/`TrustStore`, `PartitionedWorkQueue`, `DocumentExtractor`, `NotificationSink`.
 
 LATTICE does not force a choice of backend for any of these; each SPI ships at least one reference (often in-process) implementation under MPL-2.0.
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import re
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +18,7 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SH, SKOS, XSD
 
 from .config_studio_jobs import CST, _Result
-from .config_studio_secrets import secret
+from .llm_providers import LLMProvider, provider_from_env
 
 WRD = Namespace("https://www.nebularis.org/neuro-semantic/lattice/wording#")
 INS = Namespace("https://www.nebularis.org/neuro-semantic/lattice/instrument#")
@@ -182,7 +181,7 @@ class Pack:
     version: str
     system: str
     prompt: str
-    temperature: float
+    temperature: Optional[float]
 
     @staticmethod
     def load(folder: Path) -> "Pack":
@@ -191,7 +190,7 @@ class Pack:
             name=str(manifest["name"]), version=str(manifest["version"]),
             system=(folder / manifest["system"]).read_text(encoding="utf-8"),
             prompt=(folder / manifest["prompt"]).read_text(encoding="utf-8"),
-            temperature=float(manifest.get("temperature", 0)),
+            temperature=float(manifest["temperature"]) if "temperature" in manifest else None,
         )
 
 
@@ -204,32 +203,20 @@ def _schema() -> dict:
 
 @dataclass
 class LanguageModelProposer:
-    """A model behind a Chat Completions endpoint, asked with the deployment's pack. Its reply is checked against the
-    contract's schema, and a label the workspace does not declare is dropped and said so in the evidence."""
+    """A model behind an `LLMProvider`, asked with the deployment's pack. Its reply is checked against the contract's
+    schema, and a label the workspace does not declare is dropped and said so in the evidence."""
 
-    endpoint: str
-    model: str
+    provider: LLMProvider
     pack: Pack
-    key: Optional[str] = None
-    timeout: float = 60.0
     name: str = "language-model"
 
     @property
     def version(self) -> str:
-        return f"language-model {self.model}, pack {self.pack.name} {self.pack.version}"
+        return f"language-model {self.provider.name}, pack {self.pack.name} {self.pack.version}"
 
     def _ask(self, system: str, prompt: str) -> str:
-        body = json.dumps({
-            "model": self.model, "temperature": self.pack.temperature,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        }).encode("utf-8")
-        headers = {"Content-Type": "application/json"}
-        if self.key:
-            headers["Authorization"] = f"Bearer {self.key}"
-        request = urllib.request.Request(self.endpoint.rstrip("/") + "/chat/completions", data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310, the deployment's own endpoint
-            reply = json.loads(response.read().decode("utf-8"))
-        return reply["choices"][0]["message"]["content"]
+        message, _, _ = self.provider.chat([{"role": "system", "content": system}, {"role": "user", "content": prompt}], [], self.pack.temperature)
+        return message["content"] or ""
 
     def propose(self, clause: Clause, context: Context) -> Sequence[Candidate]:
         import jsonschema
@@ -269,10 +256,10 @@ class LanguageModelProposer:
 
 
 def language_model_from_env(env: Mapping[str, str]) -> LanguageModelProposer:
-    url, model, pack = (env.get(k, "").strip() for k in ("LATTICE_PROPOSER_URL", "LATTICE_PROPOSER_MODEL", "LATTICE_PROPOSER_PACK"))
-    if not (url and model and pack):
-        raise ValueError("no language model is configured: set LATTICE_PROPOSER_URL, LATTICE_PROPOSER_MODEL and LATTICE_PROPOSER_PACK")
-    return LanguageModelProposer(url, model, Pack.load(Path(pack)), secret(env, "LATTICE_PROPOSER_KEY"))
+    pack = (env.get("LATTICE_PROPOSER_PACK") or "").strip()
+    if not pack:
+        raise ValueError("no language model is configured: set LATTICE_PROPOSER_PACK, and the provider's settings")
+    return LanguageModelProposer(provider_from_env(env), Pack.load(Path(pack)))
 
 
 # ---- the job --------------------------------------------------------------------------------------------------------
