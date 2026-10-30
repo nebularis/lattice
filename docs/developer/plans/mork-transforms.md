@@ -4,7 +4,7 @@
 
 **Unit ID:** `mork-transforms` (XJ)
 **Unit type:** multi-slice unit, validation gate per slice
-**Status:** decisions XJ-Q1 to XJ-Q7 answered 2026-10-30. ADR-A148 Proposed. XJ1 to XJ5 built 2026-10-30. XJ6 and XJ7 wait for XJ-Q8 to XJ-Q12
+**Status:** decisions XJ-Q1 to XJ-Q7 answered 2026-10-30. ADR-A148 Proposed. XJ1 to XJ5 built 2026-10-30. XJ-Q9 to XJ-Q12 answered 2026-10-30. XJ6 and XJ7 wait for XJ-Q8 and XJ-Q13
 **Status record:** [mork-transforms.md](../status/mork-transforms.md)
 **ADR:** [A-148](../../architecture/decisions/ADR-A148-mork-transform-backends.md), Proposed
 **Depends on:** `tools/mork_rdf`'s reader. Independent of the XSLT sidecar unit, which may later host the stylesheets
@@ -44,18 +44,32 @@ Later, outside this unit: lookups, guards and creations in XSLT.
 
 ## 5. The studio's slices
 
-The maintainer asked on 2026-10-30 for the studio's mapping mode to run an XML or JSON sample through a worker on RabbitMQ (ADR-A148 decision 7). Today a dry run of the mapping part (`kind=dry-run&target=mapping`) takes one Turtle sample, and the Python worker compiles each scheme with `tools/mork_rdf`, runs it on Oxigraph and returns one N-Triples artefact for each mapping and stratum, which the canvas counts, the stepper and the mapping card read. Measured 2026-10-30 on a laptop with the `policies` example: compiling a plan takes about 5 ms, and one engine run through the command line about 150 ms for JOLT and 290 to 450 ms for XSLT, nearly all of it the JVM starting.
+The maintainer asked on 2026-10-30 for the studio's mapping mode to run an XML or JSON sample through a worker on RabbitMQ (ADR-A148 decision 7). Today a dry run of the mapping part (`kind=dry-run&target=mapping`) takes one Turtle sample, and the Python worker compiles each scheme with `tools/mork_rdf`, runs it on Oxigraph and returns one N-Triples artefact for each mapping and stratum, which the canvas counts, the stepper and the mapping card read. Profiled 2026-10-30 on a laptop with the `policies` example, warm:
+
+| Step | Time | Where it goes |
+|---|---|---|
+| parse the mapping, rdflib | about 1 ms | Turtle parsing, plus 150 ms to import rdflib once per process |
+| plan | about 1 ms | the reader's graph lookups |
+| compile to XSLT or JOLT | about 0.1 ms | |
+| XSLT run in a warm JVM | 5 to 10 ms | Saxon compiles the stylesheet on each call, and caching the compiled stylesheet by its digest is the next lever |
+| JOLT run in a warm JVM | about 1 ms | |
+| the first run in a JVM | 240 ms XSLT, 90 ms JOLT | class loading and interpreted code, so a command line pays it on every run (0.3 s and 0.15 s) |
+
+So a run's cost is a cold JVM, which a resident worker removes, and neither rdflib nor memory pressure is the cause, since the in-JVM loop runs in milliseconds on the same machine.
+
+The maintainer set a principle on 2026-10-30. When a user journey needs several routes or more than one communicating worker, a coordinator owns the unit of work, with its timeouts, circuit breaking and error handling, and supervises the jobs inside it. A job that waits on another job, or creates one, is that case.
 
 | ID | Question | Options | Recommendation |
 |---|---|---|---|
-| XJ-Q8 | Where the engines run for a dry run | (a) the Python worker runs the jar once per job, about 0.15 to 0.45 s each, with no new component. (b) a Java worker on a queue of its own, `lattice.studio.transforms`, which the Python worker asks for each run and waits on, a warm JVM and a component to deploy, with a timeout when it is down. (c) the Python worker compiles and hands the job on to the Java worker, which runs it and sends the job's update to the writer itself, so no job waits on another, and two workers each finish some jobs | (b), since decision 7 names a worker on RabbitMQ and an ingress endpoint later can use the same queue |
-| XJ-Q9 | Which mapping wrote each triple | (a) after the run, the worker attributes each triple through the plan: a type to its datum, a glue property to the child datum, an asserted property to its assertion, and a triple two mappings could have written to both. (b) a traced variant of each transform that writes the mapping beside each triple, which JOLT cannot do without a second form of the chain. (c) no attribution, so the canvas counts and the card's output are hidden for these runs | (a), with what the engine runs left as it is published |
-| XJ-Q10 | How the sample's format is chosen | (a) a format selector beside the sample, Turtle, XML or JSON, set from the text when it is pasted, and each scheme whose `mork:format` matches is run while the others are reported as not run. (b) one sample for each scheme | (a) |
-| XJ-Q11 | What else the studio gives | (a) the dry run also returns each scheme's stylesheet or chain as an artefact to read and download, and the `compile` job of the mapping part writes them beside the SPARQL. (b) only the run's output | (a), since the stylesheet or chain is what an adopter takes |
-| XJ-Q12 | A sample workspace | (a) a sample, "Policies from XML and JSON", from the `policies` example, with both schemes and both sources. (b) none | (a) |
+| XJ-Q8 | How a transform's result reaches the browser | (a) request-reply. The service publishes the run to the Java worker's queue, `lattice.studio.transforms`, with a reply queue, waits as it waits on the writer for a save, and answers the HTTP request with the output. The output is not stored, since a dry run is derived and can be rerun. (b) push. The service answers 202 with the job's IRI as its transaction id, and the Java worker publishes the result to an events exchange with that IRI in its headers, which RabbitMQ's Web STOMP plugin serves to the browser over a WebSocket. A message the service sends to a queue with a TTL dead-letters into the same exchange with the same key, so the worker and the timeout race and the browser takes the first per IRI and ignores the rest. Replacing the polling of every job kind this way is a unit of its own, amending ADR-A136 | (a) for this case, since a warm run takes milliseconds and the pattern already exists for saves. (b) as its own unit for the jobs that run long |
+| XJ-Q13 | How the compile and the run are sequenced, since the compiler is Python and the engines Java | (a) two jobs the browser sequences. The `compile` job of XJ-Q11 writes each scheme's stylesheet or chain and its attribution table to its job graph, and the transform names that job and the sample, so no job waits on or creates another, and a changed sample reuses the compiled artefacts. (b) one dry run owned by a coordinator, which runs the compile and then the transform and owns their timeouts and errors | (a), with (b) when a journey chains jobs itself |
+| XJ-Q9 | Which mapping wrote each triple | (a) after the run, the worker attributes each triple through the plan: a type to its datum, a glue property to the child datum, an asserted property to its assertion, and a triple two mappings could have written to both. (b) a traced variant of each transform that writes the mapping beside each triple, which JOLT cannot do without a second form of the chain. (c) no attribution, so the canvas counts and the card's output are hidden for these runs | (a), answered 2026-10-30. The attribution table travels with the compiled artefacts, and the Java worker applies it |
+| XJ-Q10 | How the sample's format is chosen | (a) a format selector beside the sample, Turtle, XML or JSON, set from the text when it is pasted, and each scheme whose `mork:format` matches is run while the others are reported as not run. (b) one sample for each scheme | (a), answered 2026-10-30 |
+| XJ-Q11 | What else the studio gives | (a) the dry run also returns each scheme's stylesheet or chain as an artefact to read and download, and the `compile` job of the mapping part writes them beside the SPARQL. (b) only the run's output | (a), answered 2026-10-30 |
+| XJ-Q12 | A sample workspace | (a) a sample, "Policies from XML and JSON", from the `policies` example, with both schemes and both sources. (b) none | (a), answered 2026-10-30 |
 
 | Slice | What | Done when |
 |---|---|---|
-| XJ6 | the engine path XJ-Q8 chooses, with the topology and the operations guide | a dry run of an XML or JSON sample returns its output, and the worker's tests run it |
+| XJ6 | a Java worker in `workers/` consuming `lattice.studio.transforms`, the route XJ-Q8 and XJ-Q13 choose, with the topology and the operations guide | a transform of an XML or JSON sample returns each mapping's output, and the worker's tests run it on RabbitMQ |
 | XJ7 | attribution, the format selector, the artefacts and the sample, in the worker, the contract and the browser | the `policies` sample's runs show each mapping's output on the canvas, checked live in the browser |
 
