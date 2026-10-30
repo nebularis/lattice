@@ -15,6 +15,7 @@ import { mint } from "../rdf/editors";
 import { reviewGraph, schemesOf, written, type MappingNode, type RunCost, type Scheme } from "../rdf/mapping";
 import { Spinner, go } from "./kit";
 import { NodeEditor } from "./ConfigView";
+import { MappingCanvas } from "./MappingCanvas";
 import { useStudio } from "./Workspace";
 
 const INDENT = 28;
@@ -36,6 +37,21 @@ export function MappingView({ selected }: { selected?: string }) {
   const picked = scheme?.mappings.find((m) => m.iri === selected);
   const [busy, setBusy] = useState(false);
   const sampleRun = useSampleRun(studio.id, graph);
+  const [drawing, setDrawing] = useState<"tree" | "canvas">(() => {
+    try {
+      return localStorage.getItem("lattice-studio:mapping-drawing") === "canvas" ? "canvas" : "tree";
+    } catch {
+      return "tree";
+    }
+  });
+  const draw = (to: "tree" | "canvas") => {
+    setDrawing(to);
+    try {
+      localStorage.setItem("lattice-studio:mapping-drawing", to);
+    } catch {
+      // The drawing is remembered for this visit only.
+    }
+  };
 
   /** A new mapping in the scheme, under `parent` when one is given, named by the author. */
   const add = (type: "Datum" | "DataMapping", parent?: string) => {
@@ -129,11 +145,25 @@ export function MappingView({ selected }: { selected?: string }) {
             <header>
               <h3 className="grow">Mappings</h3>
               {sampleRun.result && <Stepper run={sampleRun} />}
+              <div className="mode-switch" role="group" aria-label="Drawing" style={{ margin: 0 }}>
+                <button aria-pressed={drawing === "tree"} onClick={() => draw("tree")}>Tree</button>
+                <button aria-pressed={drawing === "canvas"} onClick={() => draw("canvas")}>Canvas</button>
+              </div>
             </header>
-            <p className="small muted" style={{ margin: "8px 16px 0" }}>Indented under their parent. a writes a type, → a property, ← an inverse property, = an individual. The bar on the left is the latest review.</p>
-            <div style={{ padding: "8px 16px", overflowX: "auto" }}>
-              <Tree scheme={scheme} prefixes={prefixes} selected={selected} source={source} open={open} run={sampleRun} />
-            </div>
+            {drawing === "tree" ? (
+              <>
+                <p className="small muted" style={{ margin: "8px 16px 0" }}>Indented under their parent. a writes a type, → a property, ← an inverse property, = an individual. The bar on the left is the latest review.</p>
+                <div style={{ padding: "8px 16px", overflowX: "auto" }}>
+                  <Tree scheme={scheme} prefixes={prefixes} selected={selected} source={source} open={open} run={sampleRun} />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="small muted" style={{ margin: "8px 16px 0" }}>Drag from a mapping's right edge to another mapping to make it the parent, or from a source concept to say what a mapping maps for. Right-click a mapping, a link or the canvas for what fits there.</p>
+                <MappingCanvas workspace={studio.id} scheme={scheme} graph={graph} prefixes={prefixes} selected={selected} open={open} add={add}
+                  edit={(change) => studio.model.edit("mapping", change)} counts={sampleRun.result ? (m) => sampleRun.output(m).length : undefined} />
+              </>
+            )}
           </section>
         </div>
       </div>

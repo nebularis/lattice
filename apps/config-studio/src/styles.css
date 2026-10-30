@@ -390,3 +390,12 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 .assembled .clause-number { margin-right: 8px; font-variant-numeric: tabular-nums; }
 .doc-var { background: var(--warn-2); color: inherit; padding: 0 3px; border-radius: 3px; }
 .doc-ref { text-decoration: underline dotted; }
+
+/* --- mapping canvas ----------------------------------------------------------- */
+
+.canvas-node { position: relative; width: 240px; padding: 6px 10px 6px 12px; background: var(--surface); color: var(--text); border: 1.5px solid var(--border-strong); border-radius: 8px; font-size: 12px; }
+.canvas-node.canvas-source { background: var(--surface-2); }
+.canvas-terms { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.canvas-review { position: absolute; left: 2px; top: 6px; bottom: 6px; width: 4px; border-radius: 2px; }
+.react-flow { --xy-background-color: var(--bg); --xy-edge-stroke: var(--border-strong); --xy-controls-button-background-color: var(--surface); --xy-controls-button-color: var(--text); }
+

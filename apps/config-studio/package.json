@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@lattice/authoring-domain": "workspace:*",
+    "@xyflow/react": "12.12.0",
     "lucide-react": "1.62.0",
     "n3": "2.13.12",
     "react": "19.3.1",

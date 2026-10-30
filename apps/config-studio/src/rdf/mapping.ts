@@ -178,6 +178,44 @@ export function reviewGraph(mapping: string, decision: "Accepted" | "Corrected" 
   });
 }
 
+/** The mappings beneath `node` by their parent links, either way the links are written. */
+export function descendants(g: Graph, node: string): Set<string> {
+  const out = new Set<string>();
+  const stack = [node];
+  while (stack.length) {
+    const n = stack.pop()!;
+    const children = [...g.subjects(MORK("compositeBroaderMapping"), n), ...g.objects(n, MORK("compositeNarrowerMapping"))].map((t) => t.value);
+    for (const c of children) if (!out.has(c)) out.add(c), stack.push(c);
+  }
+  return out;
+}
+
+/** `parent` made `child`'s one parent, as a broader link, or undefined where it would make a cycle. */
+export function setParent(g: Graph, child: string, parent: string): Graph | undefined {
+  if (child === parent || descendants(g, child).has(parent)) return undefined;
+  return g.edit((e) => {
+    for (const q of g.quads(null, MORK("compositeNarrowerMapping"), child)) e.store.removeQuad(q);
+    e.setAll(child, MORK("compositeBroaderMapping"), [iri(parent)]);
+  });
+}
+
+/** What a mapping maps for, a source concept. */
+export function setSource(g: Graph, mapping: string, concept: string): Graph {
+  return g.edit((e) => e.setAll(mapping, MORK("mappingFor"), [iri(concept)]));
+}
+
+/** A mapping's parent, template or source link removed. */
+export function unlink(g: Graph, link: "parent" | "template" | "source", mapping: string): Graph {
+  return g.edit((e) => {
+    if (link === "parent") {
+      for (const q of g.quads(null, MORK("compositeNarrowerMapping"), mapping)) e.store.removeQuad(q);
+      e.setAll(mapping, MORK("compositeBroaderMapping"), []);
+    } else {
+      e.setAll(mapping, MORK(link === "template" ? "templateMapping" : "mappingFor"), []);
+    }
+  });
+}
+
 /** The terms a mapping writes, compacted, each with the box it writes in. */
 export function written(n: MappingNode, prefixes: Record<string, string>): { box: string; term: string }[] {
   const c = (t: string) => compact(t, prefixes);

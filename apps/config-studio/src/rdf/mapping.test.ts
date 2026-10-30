@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { Graph, MORK, localName } from "@lattice/authoring-domain";
 import { kindOf, sectionsFor } from "./editors";
 import { Vocabulary } from "./vocabulary";
-import { reviewGraph, schemesOf } from "./mapping";
+import { reviewGraph, schemesOf, setParent, setSource, unlink } from "./mapping";
 import { split } from "./split";
 
 const OM = "https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#";
@@ -55,14 +55,18 @@ describe("the mapping samples", () => {
     expect(lrml.baseline.quads().map((q) => q.subject.value).filter((v, n, all) => all.indexOf(v) === n).sort()).toEqual(["http://example.org/lrml-mapping", "urn:lattice:reviewer:agent-for-the-maintainer"]);
     expect(lrml.mapping.has("http://example.org/lrml-mapping#Map_InForce_mork:appliesWhen1_sh:property1")).toBe(true);
     const schemes = schemesOf(lrml.mapping);
-    expect(schemes.map((s) => s.label).sort()).toEqual(["LegalRuleML metamodel instances to stated meaning", "MS, proposed in legalruleml-cold"]);
+    expect(schemes.map((s) => s.label).sort()).toEqual([
+      "LegalRuleML deontic specifications to stated LATTICE relations",
+      "LegalRuleML metamodel instances to stated meaning",
+      "MS, proposed in legalruleml-cold",
+    ]);
     // The scorer reviews every mapping but a template, which it reads through the mappings that use it.
     for (const s of schemes) expect(s.mappings.filter((m) => !m.review).map((m) => m.isTemplate)).not.toContain(false);
   });
 
   it("follows a narrower link to a child, and links a correction to the pack's mapping", () => {
     const schemes = schemesOf(sample("odrl-mappings").mapping);
-    expect(schemes).toHaveLength(2);
+    expect(schemes).toHaveLength(3); // the pack, then the trial's two runs
     const run = schemes.find((s) => s.label.endsWith("run-1"))!;
     expect(run.mappings.some((m) => m.depth > 0)).toBe(true);
     const corrected = run.mappings.find((m) => m.review?.decision === "Corrected")!;
@@ -111,5 +115,33 @@ describe("a proposal in the studio", () => {
     const second = first.merge(reviewGraph(P + "M", "Accepted", "", "2026-10-30T05:00:00Z", 2));
     expect(schemesOf(first)[0].mappings[0].review).toMatchObject({ decision: "Corrected", note: "names an occupancy" });
     expect(schemesOf(second)[0].mappings[0].review?.decision).toBe("Accepted");
+  });
+});
+
+describe("editing a scheme on the canvas", () => {
+  const P = "https://example.org/e#";
+  const g = Graph.parse(`@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+    <${P}S> a mork:MappingScheme .
+    <${P}A> a mork:Datum ; mork:mappingScheme <${P}S> ; mork:compositeNarrowerMapping <${P}B> .
+    <${P}B> a mork:Datum ; mork:mappingScheme <${P}S> .
+    <${P}C> a mork:DataMapping ; mork:mappingScheme <${P}S> ; mork:compositeBroaderMapping <${P}B> .
+    <${P}K> a mork:DataConcept ; mork:path "ex:k" .`);
+  const parent = (h: Graph, m: string) => schemesOf(h)[0].mappings.find((x) => x.iri === P + m)?.parent;
+
+  it("makes a mapping another's one parent, whichever way the old link was written, and refuses a cycle", () => {
+    const moved = setParent(g, P + "B", P + "C");
+    expect(moved).toBeUndefined(); // C is beneath B
+    const h = setParent(g, P + "C", P + "A")!;
+    expect(parent(h, "C")).toBe(P + "A");
+    const k = setParent(h, P + "B", P + "C")!;
+    expect(parent(k, "B")).toBe(P + "C");
+    expect(k.quads(null, "http://www.nebularis.org/ontologies/Mork#compositeNarrowerMapping")).toHaveLength(0);
+  });
+
+  it("links a mapping to the concept it maps for, and removes a link", () => {
+    const h = setSource(g, P + "C", P + "K");
+    expect(schemesOf(h)[0].mappings.find((x) => x.iri === P + "C")?.source).toBe(P + "K");
+    expect(parent(unlink(g, "parent", P + "B"), "B")).toBeUndefined();
+    expect(schemesOf(unlink(h, "source", P + "C"))[0].mappings.find((x) => x.iri === P + "C")?.source).toBeUndefined();
   });
 });
