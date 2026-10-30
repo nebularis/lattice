@@ -26,6 +26,18 @@ The reviews' most frequent corrections each break a semantic rule the target lay
 
 An `ask_target(question)` tool over the knowledge index's term search is a further option. The index ranked `ins:Power` at 0.82 for "a legal relation whose holder can change a counterparty's position by an act", which BM25 over labels cannot do.
 
+## What was done, 2026-10-30
+
+| # | Done | Where |
+|---|---|---|
+| R6 | a card gives a term's `rdfs:comment` or its `fnd:utility`, whichever is longer, uncut, as the maintainer chose. The 83 empty cards stay empty: those terms of Behaviour, Quantification and Eligibility carry neither annotation, so the review's fallback could not fill them | `tools/mork/src/mork_propose/cards.py` |
+| R1 | `describe_term` gives a term's comment and utility, place, properties, individuals and the messages of the shapes that name it | `tools/mork/src/mork_propose/describe.py` |
+| R2 | the check runs a proposal over its sample and validates the output against every layer's shapes with OWL RL entailment, each result on the mapping that wrote it. What the context supplies, a persisted identity or a term's clause, is information. On the ODRL trial's proposal it reports 20 errors where it reported none, and the pack is clean. LegalRuleML gained a sample source. A proposal run records its start and tokens | `tools/mork/src/mork_propose/check.py`, `contracts/config-studio/legalruleml/trial/sample-supply-terms.ttl` |
+| R3 | a translation table in MTP's data, as the maintainer chose over labels in the layers, carried as a card in the teaching pack and indexed by the ranking | `ontology/mork/mtp/data/translations.yaml` |
+| R4 | five target-side cassettes, each run over a shared sample in a test and held to the layers' shapes | `ontology/mork/mtp/data/cassettes/C-*.yaml`, `ontology/mork/examples/Patterns/` |
+| R5 | rules from a history, grouped by what was corrected or by the reviewer's note, with recurring ones marked as candidate minimal pairs for a person to promote | `History.rules`, `mork:propose -- lessons` |
+| `ask_target` | waits until R1 to R3 are measured, as the maintainer decided | |
+
 ## Register gaps
 
 The index answered the rules side weakly because Instrument §4.4 and §4.6, the proposer tools, the trials and the doctrine's new invariants are not register entries.
