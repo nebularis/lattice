@@ -153,3 +153,16 @@ def test_a_card_gives_the_comment_or_the_utility_whichever_says_more_in_full():
     by = {c.curie.rsplit(":", 1)[-1]: c.definition for c in cards(g, ["https://example.org/x#"])}
     assert by == {"A": "Subject: a permission. Excepts exactly one prohibition / whose obligor is its holder (law I8).",
                   "B": "What B is, said at length. And a second sentence the old cards cut."}
+
+
+def test_describe_term_gives_a_term_s_utility_and_the_laws_its_shapes_state():
+    from mork_propose.server import describe_term
+
+    permission = describe_term("ins:Permission")
+    assert "utility: Subject: a permission. Excepts exactly one prohibition" in permission
+    assert any("(law I8)" in line for line in permission.splitlines() if line.startswith("- "))
+    role = describe_term("pty:Role")
+    assert "individuals: pty:Accountable, pty:Guarantor, pty:Obligee, pty:Obligor, pty:Performing" in role
+    assert "laws and shapes" not in role  # a shape about pty:RoleOccupancy is not about pty:Role
+    with pytest.raises(ValueError):
+        describe_term("ins:NoSuchTerm")

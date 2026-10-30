@@ -15,6 +15,7 @@ from rdflib import Graph
 
 from . import cards as _cards
 from .check import check
+from .describe import describe_term as _describe
 from .rank import candidates as _candidates
 
 LAYERS = ("instrument", "eligibility", "party", "behaviour", "foundation", "quantification", "vocabulary", "wording")
@@ -66,6 +67,13 @@ def candidate_terms(path: str, term: str, layers: list[str], k: int = 8, namespa
     return "\n".join(f"{score:.2f} | {card.line()}" for card, score in _candidates(found[0], targets, k)) or "no candidate shares a word with the term"
 
 
+def describe_term(term: str) -> str:
+    """One LATTICE term in depth, a CURIE such as ins:Permission or an IRI: its comment and utility in full, where it
+    sits, the properties of it and to it, its individuals, and the laws its layer's shapes state about it. Read it for
+    each term a card leaves unclear, before writing a mapping to it."""
+    return _describe(term, LAYERS)
+
+
 def check_mapping(mcn: str, sample: str = "") -> str:
     """Decodes, validates and compiles a proposal in MCN, and runs it over a sample source file when one is given, as
     JSON: whether it decoded, its schemes, and every finding."""
@@ -78,9 +86,10 @@ def main() -> None:
 
     server = MCPServer("lattice-mork-propose", instructions=(
         "Propose MORK mappings from a source vocabulary to LATTICE. Read teaching_pack first, then the cards of the source "
-        "and of the target layers, ask candidate_terms where a source term's match is unclear, write the mapping scheme in "
+        "and of the target layers, ask candidate_terms where a source term's match is unclear, read describe_term for each "
+        "target term you mean to use, write the mapping scheme in "
         "MCN, and run check_mapping until it reports no error. Nothing is saved: a person reviews what you propose."))
-    for tool in (teaching_pack, target_cards, source_cards, candidate_terms, check_mapping):
+    for tool in (teaching_pack, target_cards, source_cards, candidate_terms, describe_term, check_mapping):
         server.tool()(tool)
     server.run("stdio")
 

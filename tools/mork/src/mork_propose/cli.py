@@ -20,6 +20,7 @@ def main(argv=None) -> int:
     c = sub.add_parser("candidates", help="target terms for one source term")
     c.add_argument("path"); c.add_argument("term"); c.add_argument("layers", nargs="+"); c.add_argument("-k", type=int, default=8)
     c.add_argument("--namespace", default="")
+    d = sub.add_parser("describe", help="one LATTICE term in depth, with the laws its shapes state"); d.add_argument("term")
     k = sub.add_parser("check", help="decode, validate, compile and run a proposal in MCN"); k.add_argument("mcn"); k.add_argument("--sample", default="")
     a = parser.parse_args(argv)
     if a.tool == "teaching-pack":
@@ -30,6 +31,8 @@ def main(argv=None) -> int:
         print(server.source_cards(a.path, a.namespace))
     elif a.tool == "candidates":
         print(server.candidate_terms(a.path, a.term, a.layers, a.k, a.namespace))
+    elif a.tool == "describe":
+        print(server.describe_term(a.term))
     elif a.tool == "check":
         print(server.check_mapping(Path(a.mcn).read_text(encoding="utf-8"), a.sample))
     return 0
