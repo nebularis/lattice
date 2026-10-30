@@ -119,7 +119,7 @@ function Tree({ scheme, prefixes, selected, source, open }: { scheme: Scheme; pr
               {m.label.length > 30 ? m.label.slice(0, 29) + "…" : m.label}
             </text>
             <text x={x(m) + BOX_W + 12} y={y(m) + BOX_H / 2 + 4} style={{ fill: "var(--text-2, var(--text))" }}>
-              {terms || "writes nothing"}
+              {terms || (m.template ? "" : "writes nothing")}
               {extra && <tspan style={{ fill: "var(--text-3)" }}>{`   ${extra}`}</tspan>}
             </text>
           </g>
