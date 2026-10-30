@@ -38,6 +38,17 @@ An `ask_target(question)` tool over the knowledge index's term search is a furth
 | R5 | rules from a history, grouped by what was corrected or by the reviewer's note, with recurring ones marked as candidate minimal pairs for a person to promote | `History.rules`, `mork:propose -- lessons` |
 | `ask_target` | waits until R1 to R3 are measured, as the maintainer decided | |
 
+## Trying the rest of MORK on the trials, 2026-10-30
+
+| Part | What it gave | Where |
+|---|---|---|
+| the re-runs | ODRL accepted 58% where it accepted 23%, in 107k tokens where it spent 191k. LegalRuleML cold accepted 63% where it accepted 24%, near the warm run's 68% | the trial READMEs |
+| recognition (`mork_communities.recognition`) | nothing as a ranking signal between two vocabularies: 2% of ODRL's confirmed targets in its first ten and 40% of LegalRuleML's, against 18% and 90% for BM25 with the translation table, and fusing it in lowers the ranking. It compares surface forms, which suits a data dictionary's field names against concepts, the ACORD case, and that is where it belongs | `benchmark/mork-candidate-ranking` |
+| communities, projections and DAG templates | `mork_communities` reads a source as `mork:Representation` sections, which an RDF source mapped by concepts and paths does not have. Observing the mapping DAGs instead, a root mapping and everything beneath it as a section, gives three sensible communities: LegalRuleML's deontic specifications with their bearer and auxiliary party, ODRL's rules with their parties and action, and ODRL's constraints with their operators. Each projects to the target shape the cassettes teach. No community spans the two standards, since their vocabularies share no term. What carries over between standards is the target side, which projections and DAG templates record | `tools/mork/src/mork_propose/baseline.py`, `contracts/config-studio/communities-baseline.ttl` |
+| persistence | a Turtle baseline beside the trials, written by `mise run mork:communities-baseline` from the reviewed mappings, the same for the same reviews: sorted observations, communities numbered by their first member, a version digested from the observations. A deployment would keep the same graph in its store, and the confirmed corpus from real use stays private | |
+
+Not changed in `mork_communities`: its scheme version and observation times read the clock, and its materialisers nest their own folder under the base given. The baseline works around both.
+
 ## Register gaps
 
 The index answered the rules side weakly because Instrument §4.4 and §4.6, the proposer tools, the trials and the doctrine's new invariants are not register entries.

@@ -25,6 +25,10 @@ Where the MORK mapping packs for published standards live, what each proposal tr
 
 LegalRuleML has no hand-made pack yet, so its proposals are reviewed against the reviews in its history rather than against a pack.
 
+## Communities
+
+The section observations, communities and projections drawn from the ODRL pack and the mappings both trials' reviews accepted are in `contracts/config-studio/communities-baseline.ttl`. `mise run mork:communities-baseline` writes it again after a review.
+
 ## Trying them in the studio
 
 1. Start the studio with `mise run studio:up -- --dev` and open http://127.0.0.1:4175.

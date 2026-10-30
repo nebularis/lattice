@@ -317,6 +317,11 @@ description = "Measure a MORK run's peak memory and time on the catalogue mappin
 env = { PYTHONPATH = "{{config_root}}/tools" }
 run = "python -m pytest benchmark/mork-rdf-run-cost -q -p no:cacheprovider && python benchmark/mork-rdf-run-cost/check.py"
 
+[tasks."mork:communities-baseline"]
+description = "Write contracts/config-studio/communities-baseline.ttl: section observations, communities and projections drawn from the ODRL pack and the mappings the ODRL and LegalRuleML trials' reviews accepted (MORK README §5.18). Deterministic for the same reviews"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.baseline"
+
 [tasks."check:mork-candidate-ranking"]
 description = "Measure how often BM25, BM25 with MTP's translation table, MORK's recognition engine and the two fused put the confirmed target term in their first five and first ten, on the ODRL pack and the LegalRuleML history (ADR-A124). Run on demand, not part of check. Fails on a source with no confirmed pair or a method that ranks nothing, never on a hit rate"
 env = { PYTHONPATH = "{{config_root}}/tools" }

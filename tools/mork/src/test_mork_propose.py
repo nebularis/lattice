@@ -246,3 +246,20 @@ def test_a_history_teaches_rules_grouped_by_what_was_corrected_the_most_frequent
     assert lrml[0].startswith("stated meaning names roles, never occupancies") and "6x" in lrml[0] and "[recurring" in lrml[0]
     odrl = History(trial / "odrl" / "trial" / "history.ttl").rules(Graph().parse(trial / "odrl" / "odrl-instrument.mork.ttl"), vocabulary)
     assert any(r.startswith("Instead of elg:ExactCondition, write elg:Condition. The proposal wrote a subclass") for r in odrl)
+
+
+def test_the_communities_baseline_is_the_same_for_the_same_reviews_and_groups_a_source_s_parties_with_its_relations(tmp_path):
+    from rdflib.compare import isomorphic
+    from rdflib.namespace import RDF
+
+    from mork_propose import baseline
+    from mork_propose.history import MORK
+
+    first, second = tmp_path / "a.ttl", tmp_path / "b.ttl"
+    assert baseline.main(["--out", str(first)]) == 0 and baseline.main(["--out", str(second)]) == 0
+    a, b = Graph().parse(first), Graph().parse(second)
+    assert isomorphic(a, b)
+    members = [{str(a.value(ms, MORK.memberConcept)) for ms in a.objects(c, MORK.hasCommunityMembership)}
+               for c in a.subjects(RDF.type, MORK.SemanticCommunity)]
+    lrml = "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"
+    assert any({lrml + "Bearer", lrml + "AuxiliaryParty", lrml + "Obligation"} <= m for m in members)
