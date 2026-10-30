@@ -237,8 +237,8 @@ to the store or where it is a matter of capacity.
 | [TSD-36](#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives) | the same row reached by a bound object or by a bound subject | not specified | not tested | the bound object scans the predicate's matches, the bound subject seeks | Observed |
 | [TSD-40](#tsd-40-a-zero-or-more-property-paths-cost-changed-between-oxigraph-0511-and-0513) | a `*` property path from a bound object | not specified | not tested | 2.4 times faster on 0.5.13 than on 0.5.11, where enumeration is unchanged | Observed |
 | [TSD-41](#tsd-41-a-group_concat-over-a-union-of-nested-aggregate-sub-selects-drops-one-groups-contribution-on-oxigraph) | `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects | not specified | keeps every contributing group's value | drops one group's value for one case found so far | Observed |
-| [TSD-42](#tsd-42-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
-| [TSD-43](#tsd-43-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
+| [TSD-62](#tsd-62-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
+| [TSD-63](#tsd-63-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
 | [TSD-44](#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput) | many small updates to one TDB2 dataset, one request each or batched | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
 
 ## 6. The findings
@@ -1448,7 +1448,7 @@ Every other field of every row (`record`, `decision`) agrees between the two eng
 
 **Reproduce it.** `MORK_SPARQL_ENGINE=oxigraph mise exec -- python -m pytest tools/mork_compilers/src/mork_compilers/test_closure_readings.py::RelianceTests::test_a_profile_row_names_the_union_of_its_conditions_closures -q`, or `mise run check:mork-compilers-conformance`, which runs the whole suite on Oxigraph.
 
-### TSD-42. Fuseki on TDB2 applies concurrent updates one at a time, and a read does not wait for them
+### TSD-62. Fuseki on TDB2 applies concurrent updates one at a time, and a read does not wait for them
 
 **Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS, 2026-10-28, choosing how many store writers the Configuration Studio runs. Not read from Jena's source, though Jena documents TDB2's transactions as multiple readers and a single writer.
 
@@ -1469,7 +1469,7 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** The requests above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
 
-### TSD-43. rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` when it parses
+### TSD-63. rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` when it parses
 
 **Evidence:** Observed on rdflib 7.6.0, 2026-10-28, when the studio's writer compared a job graph the worker sent back with the one the service wrote. Not tested on Oxigraph.
 
@@ -1485,9 +1485,9 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 ### TSD-44. A small update on Fuseki TDB2 costs its commit, so batching updates is the lever for write throughput
 
-**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS (APFS), 2026-10-28, following TSD-42. Not read from Jena's source. Not measured on Linux or Windows, whose file systems sync differently.
+**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS (APFS), 2026-10-28, following TSD-62. Not read from Jena's source. Not measured on Linux or Windows, whose file systems sync differently.
 
-**Context.** TSD-42 showed that TDB2 applies one update at a time. Whether the cost of each is the work or the commit decides whether batching helps.
+**Context.** TSD-62 showed that TDB2 applies one update at a time. Whether the cost of each is the work or the commit decides whether batching helps.
 
 **How we found it.** 200 updates shaped like a studio save, each dropping one graph and inserting 50 triples into it, sent four ways, twice, with the graphs dropped between runs.
 
@@ -1500,13 +1500,13 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **What the store does.** Nearly all of a small update's cost is fixed per request, which Fuseki runs as one write transaction and TDB2 commits to disk, about 65 ms here. The operations inside a request cost under a millisecond each.
 
-**Why.** A Jena dataset's transactions are multiple readers and a single writer, which is why concurrent updates queue (TSD-42), and that is Jena's transaction model, not TDB2's alone, since Jena's in-memory dataset has it too. The fixed cost is TDB2's: a commit makes its journal durable before it answers. We infer this from the measurements, and did not read the source or measure the in-memory dataset.
+**Why.** A Jena dataset's transactions are multiple readers and a single writer, which is why concurrent updates queue (TSD-62), and that is Jena's transaction model, not TDB2's alone, since Jena's in-memory dataset has it too. The fixed cost is TDB2's: a commit makes its journal durable before it answers. We infer this from the measurements, and did not read the source or measure the in-memory dataset.
 
 **What it means for LATTICE.** On TDB2, write throughput is about 15 transactions a second, however many writers send them. A writer that merges the updates waiting for it into one request multiplies that by the batch size, so batching, not more writers, is the lever. A batch shares one transaction, so it commits or fails as one.
 
 **Reproduce it.** The four forms above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
 
-### TSD-45. A cast lookup key joins a stored integer by value on both stores, and Oxigraph joins `xsd:long` with `xsd:integer` too
+### TSD-64. A cast lookup key joins a stored integer by value on both stores, and Oxigraph joins `xsd:long` with `xsd:integer` too
 
 **Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-10-29, with the probe below. Not read from either engine's source.
 

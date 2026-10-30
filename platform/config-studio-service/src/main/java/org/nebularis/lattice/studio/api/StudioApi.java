@@ -543,7 +543,7 @@ public final class StudioApi {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
         if ("odrl".equals(target) || "rml".equals(target) || ("dry-run".equals(kind) && "mapping".equals(target))) {
-            // Each component validates what it receives (PRI-75, STD-279). A mapping's dry run reads its sample source from one.
+            // Each component validates what it receives (PRI-75, STD-298). A mapping's dry run reads its sample source from one.
             List<Resource> documents = config.listSubjectsWithProperty(RDF.type, Cst.ImportDocument).toList();
             if (documents.size() != 1 || !documents.get(0).hasProperty(Cst.documentContent)
                 || !documents.get(0).hasProperty(Cst.documentMediaType)) {

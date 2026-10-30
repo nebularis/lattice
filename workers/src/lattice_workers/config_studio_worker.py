@@ -187,7 +187,7 @@ class ConfigStudioWorker:
         submitted = graph.value(job, CST.submittedAt)
         if kind is None or target is None or submitted is None:
             raise ValueError("job lacks a known kind, a known target or a submission time")
-        # The job graph is the service's, but the worker reads only what a job of its own may name (STD-279).
+        # The job graph is the service's, but the worker reads only what a job of its own may name (STD-298).
         return run_job(
             job, kind, target,
             self._read(graph, job, CST.configGraph, "configuration", allowed=lambda iri: iri == f"{job}:input"),

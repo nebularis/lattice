@@ -201,7 +201,7 @@ Probe P5: with `Parts.strangers` replaced by an empty list, CS8-03 failed (`aGra
 | CS9-05 | another process on the service's port / `Stack.claim` / refused before anything starts, and accepted once the port is free. Found by the runbook's author: `up` reported success while the service failed to bind | L1 | − | pass |
 | CS9-06 | the downloaded RabbitMQ without `loopback_users []` / `studio:up`, `test:stack`, a second `up`, `studio:down` / both browser tests pass, the second `up` skips what runs, RabbitMQ shuts down through `rabbitmqctl` | L5 | + | pass, macOS |
 
-### STD-279 review of both services
+### STD-298 review of both services
 
 | Component | Input | Validated at the component | Finding |
 |---|---|---|---|
@@ -255,7 +255,7 @@ Built by a sub-agent on its own branch, reviewed and merged.
 | CS14-08 | `data_dir` / each platform and `LATTICE_STUDIO_DATA` / the folders the operations guide names | L1 | + | pass, 4 stack tests |
 | CS14-09 | the native stack on TDB2 in a scratch data folder / create, save, a stale save, a validation, export, import, delete, `studio:down` and `studio:up` / `201`, `204`, `412`, `cst:Succeeded`, `200`, `201`, `204`, and the workspaces still there after the restart | L5 | + − | pass. The first run found CS-B26 (rdflib's dateTime) and a curl of a whole sample into a baseline, now `422` (CS-B28) |
 | CS14-10 | the Docker stack / the same, then `docker compose restart fuseki` / the workspace answers `200` after the restart, and RabbitMQ lists `rabbitmq_consistent_hash_exchange` among its plugins | L5 | + | pass. The first runs found the compose file had never run: the Fuseki jar was unreadable, `--loc` needed its folder, and Fuseki needs a writable base. Fixed, and `up --docker` now rebuilds |
-| CS14-11 | probe P6, eight concurrent 20,000-triple inserts and a read during a 200,000-triple insert on Fuseki TDB2 / timed / concurrent no faster than sequential, the read not blocked | L5 | + | 0.94 and 1.06 of sequential, reads in 3 and 8 ms. TSD-42 |
+| CS14-11 | probe P6, eight concurrent 20,000-triple inserts and a read during a 200,000-triple insert on Fuseki TDB2 / timed / concurrent no faster than sequential, the read not blocked | L5 | + | 0.94 and 1.06 of sequential, reads in 3 and 8 ms. TSD-62 |
 | CS14-12 | the service suite / `mise run check:config-studio` / pass | L1 | + | pass, 50 Java tests |
 
 ## CS15: the facility agreement sample
@@ -465,7 +465,7 @@ Not run: the compiled queries in Fuseki, and any measurement of their cost (READ
 | MG-02 | the merged tree / `mise run check:workers` / every worker test passes | L1 | + | pass, 134 and 1 expected failure |
 | MG-03 | the merged registers / `mise run check:knowledge` and the identifier test / no claim over the limit, no whole-file pointer, no identifier defined twice | L1 | + − | pass, 116 and 12, after seven claims were cut and MEC-87 pointed at a section |
 | MG-04 | the stack's fake service / `mise run test:config-studio` / every browser test passes with `main`'s shapes in the forms | L4 | + | pass, 20 |
-| MG-05 | Quantification's `additivity.ttl` / validated by the studio / refused by law Q13's shape, `main`'s own defect | L1 | − | expected failure, strict, recorded as TD-123 |
+| MG-05 | Quantification's `additivity.ttl` / validated by the studio / refused by law Q13's shape, `main`'s own defect | L1 | − | expected failure, strict, recorded as TD-133 |
 | MG-06 | the merged tree / `mise run check` / every repository check passes | L1 | + − | fails on `main`'s own files only. `check:ontology-versioning` finds `persistence-store.ttl` with no release row and the `spc-v0.19.0` tag naming SPC's namespace from before `main` moved it, files this branch leaves as `main` has them. `check:frontend` failed in the background run with exit 129, a hangup, and passed alone. `check:mtp` passes once MTP's pins are regenerated for `main`'s `Mork.ttl` |
 
 Fixed for `main`'s hardening: `wrd:AssemblyModel` subclasses `fnd:Versioned`, the staging and the worker no longer name the shape files `main` deleted (Party's, TD-110, and Quantification's `structural.ttl`), the facility sample's versioned Quantification nodes and its admission profile carry identities, and the profile's conditions are minted under it, so Foundation's meaning-bearing warning does not fire.

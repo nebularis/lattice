@@ -20,7 +20,7 @@ import org.apache.jena.vocabulary.RDF;
  * the first part whose namespace a named subject uses in its {@code rdf:type} or its predicates, a concept scheme or
  * concept for vocabulary, baseline otherwise, and a blank node with the subject that refers to it, as is a named node of a
  * mapping's own structure that uses no part's terms, such as a guard's shape. The service checks a
- * saved graph with it, since it cannot know the browser sorted the graph (STD-279).
+ * saved graph with it, since it cannot know the browser sorted the graph (STD-298).
  */
 public final class Parts {
     private static final String LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/";

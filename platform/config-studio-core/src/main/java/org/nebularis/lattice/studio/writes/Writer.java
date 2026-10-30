@@ -47,7 +47,7 @@ import org.nebularis.lattice.studio.store.StudioStore;
 /**
  * Applies {@link Command}s to the store, a batch in one SPARQL Update request, so the batch costs one commit (TSD-44).
  * The writer of a partition is the only code that writes the graphs of the workspaces routed to it, and it checks every
- * command it receives, whatever its sender checked (STD-279).
+ * command it receives, whatever its sender checked (STD-298).
  *
  * <p>Each command's first operation inserts its receipt, a {@code cst:Receipt} with its cause, sender and transaction
  * time (PRI-54), only where the command's precondition holds in the store, such as a save's expected revision (PAT-21).
@@ -672,7 +672,7 @@ public final class Writer {
 
     /**
      * The job node's own statements, compared by value: rdflib writes an {@code xsd:dateTime} that Jena wrote with
-     * {@code Z} back with {@code +00:00}, which is the same value under another lexical form (TSD-43).
+     * {@code Z} back with {@code +00:00}, which is the same value under another lexical form (TSD-63).
      */
     private static boolean sameValues(Model a, Model b) {
         if (a.size() != b.size()) {

@@ -226,7 +226,7 @@ The reference nodes are read only from the reference graph, which the runner kee
 | `mork:LexicalComparison` | the lexical forms are equal, `STR(a) = STR(b)`, whatever the datatypes | every source value against every reference value, so 10,000 against 250 codes is 2.5 million comparisons |
 | `mork:TermComparison` | the same RDF term with no cast, so a string never matches an integer and is reported unresolved, as the author chose | one index probe |
 
-Name the reference data's own datatype. Oxigraph joins any integer-derived types alike and rdflib does not, and both join numbers by value, so `"007"` cast to `xsd:integer` finds 7 (TSD-45). A cast comparison with no `mork:lookupDatatype` falls back to the lexical comparison, reported as info (`LookupLexical`), since the compiler never sees the reference data and cannot guess its type. A match on the reference node's name always compares text. A value no reference node matches is not asserted (`LookupUnresolved`), and a value several match is asserted with each and reported (`LookupAmbiguous`).
+Name the reference data's own datatype. Oxigraph joins any integer-derived types alike and rdflib does not, and both join numbers by value, so `"007"` cast to `xsd:integer` finds 7 (TSD-64). A cast comparison with no `mork:lookupDatatype` falls back to the lexical comparison, reported as info (`LookupLexical`), since the compiler never sees the reference data and cannot guess its type. A match on the reference node's name always compares text. A value no reference node matches is not asserted (`LookupUnresolved`), and a value several match is asserted with each and reported (`LookupAmbiguous`).
 
 ### 7.4 Template expressions
 
@@ -451,7 +451,7 @@ The queries are SPARQL 1.1 with nothing engine-specific. The tests run the same 
 
 ### 12.2 The skolem rule, version 1
 
-A blank node's IRI is an identity: a mapping reads it with `STR()` and mints target IRIs from it, so the rule that names it decides which target nodes are the same across runs. This section is normative, the vectors in [`tests/skolem-vectors`](tests/skolem-vectors) pin it, and a test re-derives one name by hand from the text below. Any change to the IRIs the vectors hold is a new rule with a new version (ADR-A146).
+A blank node's IRI is an identity: a mapping reads it with `STR()` and mints target IRIs from it, so the rule that names it decides which target nodes are the same across runs. This section is normative, the vectors in [`tests/skolem-vectors`](tests/skolem-vectors) pin it, and a test re-derives one name by hand from the text below. Any change to the IRIs the vectors hold is a new rule with a new version (ADR-A147).
 
 **Why not canonical labels.** RDFC-1.0 numbers a source's blank nodes over the whole source, so adding one unrelated blank node can renumber the rest. A source holding one author gives it `c14n0`, and the same author beside one more record becomes `c14n1`. The IRI and Identity Patterns catalogue (§9.4) warns that such labels change when the graph changes and are not durable identities. Version 1 uses the source-local deterministic skolem pattern (§9.2) wherever it can, and canonical labels only where it cannot, scoped so that they change only with their own part of the source.
 
@@ -571,7 +571,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-20 | Domain and range axioms for created properties only, in the form and combination the author names, global by default, into a T-Box graph returned apart (MR-Q4, decided 2026-10-29) | the author chooses global or local scope, and axioms never change another vocabulary |
 | MR-21 | A node beneath several parents is compiled in each parent's context, where it was refused before | each path from a root is a context of its own, as MORK's examples use a shared child |
 | MR-22 | A compiled mapping is described in RDF by the terms of §11.1, named by its digest, in a graph of its own, with SHACL's executables for its text and no property of `mork:TransformMapping` (MR-Q6, decided 2026-10-29) | a deployment keeps and reads it as data, and the same compilation always has the same name |
-| MR-23 | Blank nodes are named by the skolem rule of §12.2, version 1, the source-local deterministic pattern for tree nodes and component-scoped canonical labels for the rest (ADR-A146, Proposed) | identities that survive unrelated changes to a source, which whole-source canonical labels do not |
+| MR-23 | Blank nodes are named by the skolem rule of §12.2, version 1, the source-local deterministic pattern for tree nodes and component-scoped canonical labels for the rest (ADR-A147, Proposed) | identities that survive unrelated changes to a source, which whole-source canonical labels do not |
 | MR-24 | A guard is a SHACL node shape named by `mork:appliesWhen`, compiled for a closed subset of SHACL with pySHACL as the oracle, and refused beyond it (decided 2026-10-29) | a guard tests the source's shape, which SHACL is the standard for, and no expression language is added to MORK |
 | MR-25 | MORK's specification is closed under RDFS once, and each mapping graph's own entailments are added to it for validation, unless it states schema (2026-10-29) | the closure was nearly all of a compile's time, and the findings are the same |
 

@@ -147,7 +147,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Proposed, 2026-10-28 |
 | [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Proposed, 2026-10-28 |
 | [A-144](ADR-A144-odrl-import-through-mork.md) | The contract builder imports ODRL policies as proposals, through a MORK mapping | Proposed, 2026-10-29 |
-| [A-146](ADR-A146-skolem-rule-for-mapped-sources.md) | How a MORK run names a source's blank nodes: from the node that reaches each and its description, with component-scoped canonical labels for the rest | Proposed, 2026-10-29 |
+| [A-147](ADR-A147-skolem-rule-for-mapped-sources.md) | How a MORK run names a source's blank nodes: from the node that reaches each and its description, with component-scoped canonical labels for the rest | Proposed, 2026-10-29 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

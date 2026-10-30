@@ -162,7 +162,7 @@ The service has no authentication. It binds to the loopback address, and a write
 | a validation | one submission, a few polls and one deletion. The worker makes three reads and one write | two graphs written and dropped |
 | a save | one request, one command to the writer and its reply, a read of the revision and one SPARQL Update | the configuration graph, twice: to the broker and to the store |
 
-Validation dominates, at about a second on a laptop. A burst of typing yields one job, because edits are debounced and the browser keeps at most one validation in flight per graph. TDB2 applies one update at a time per dataset, so more writers do not write faster on one dataset ([TSD-42](triple-store-discovery.md#tsd-42-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them)). They keep a busy workspace from delaying others and check commands in parallel, and a read never waits for a write. A response in RDF/XML is rewritten from Turtle, which costs about 60 ms for the 640 KB vocabulary against 3 ms as Turtle.
+Validation dominates, at about a second on a laptop. A burst of typing yields one job, because edits are debounced and the browser keeps at most one validation in flight per graph. TDB2 applies one update at a time per dataset, so more writers do not write faster on one dataset ([TSD-62](triple-store-discovery.md#tsd-62-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them)). They keep a busy workspace from delaying others and check commands in parallel, and a read never waits for a write. A response in RDF/XML is rewritten from Turtle, which costs about 60 ms for the 640 KB vocabulary against 3 ms as Turtle.
 
 ## Decisions
 

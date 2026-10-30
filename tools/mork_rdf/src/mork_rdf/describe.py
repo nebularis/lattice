@@ -113,7 +113,7 @@ def from_rdf(g: Graph, node: URIRef | str | None = None) -> CompiledMapping:
     compiled = CompiledMapping(
         scheme=str(one(node, PROV.wasDerivedFrom)),
         mapping_digest=str(one(node, MORK.mappingDigest)),
-        # rdflib writes a parsed instant's Z as +00:00 (TSD-43), so it is written back as the compiler writes it.
+        # rdflib writes a parsed instant's Z as +00:00 (TSD-63), so it is written back as the compiler writes it.
         at=one(node, MORK.readAt).toPython().astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
         base=str(one(node, MORK.compiledBase)),
         mode={v: k for k, v in _MODE.items()}[one(node, MORK.compiledInMode)],

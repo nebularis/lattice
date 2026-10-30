@@ -453,7 +453,7 @@ the refiner is where the engineering actually is.
 
 **What changes since §2.** Two facts make Route A cleaner than §2.1 judged. The studio's service already runs Saxon-HE 12.5 for the document-to-wording kit, so the OASIS normaliser costs no new dependency. Normalising first removes §2.1's serialisation sensitivity, since every mapping is written against the normalised form only. The route is then three deterministic steps, each an artefact a reviewer can run by hand:
 
-1. Validate the document against the OASIS schema at the receiving service (STD-279), with its dialect declared in the protocol, never sniffed (STD-292).
+1. Validate the document against the OASIS schema at the receiving service (STD-298), with its dialect declared in the protocol, never sniffed (STD-292).
 2. Normalise it with the OASIS normaliser XSLT.
 3. Run RML compiled from a MORK mapping graph by `mork2rml`, then hand the shallow result to the refiner of §6.
 

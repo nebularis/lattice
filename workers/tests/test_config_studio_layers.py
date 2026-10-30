@@ -65,7 +65,7 @@ def test_a_handover_resolves_to_each_edition_in_its_own_segment():
 
 
 @pytest.mark.parametrize("name", [
-    pytest.param("additivity.ttl", marks=pytest.mark.xfail(strict=True, reason="ex:signing-factor, a ratio of one space, names no qnt:baseRole, which Q13's shape refuses (TD-123)")),
+    pytest.param("additivity.ttl", marks=pytest.mark.xfail(strict=True, reason="ex:signing-factor, a ratio of one space, names no qnt:baseRole, which Q13's shape refuses (TD-133)")),
     "context-anchor.ttl",
 ])
 def test_quantification_examples_conform(name: str):

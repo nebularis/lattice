@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR-A146: How a MORK run names a source's blank nodes
+# ADR-A147: How a MORK run names a source's blank nodes
 
 **Status:** Proposed 2026-10-29
 **Date:** 2026-10-29

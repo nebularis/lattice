@@ -41,7 +41,7 @@ The `dal:` and `srf:` specifications already hold what a form needs: each proper
 - When `ontology/persistence` or `ontology/surface` adds a property or a value, the studio offers it without a change.
 - The studio depends on Fuseki and RabbitMQ to validate. Without them it opens nothing.
 - Validation runs as a job, so feedback takes a broker round trip and a compile, about a second on a laptop.
-- Every component validates what it receives, whatever its client has checked (PRI-75, STD-279): the service checks a body's size, type, syntax and part membership and every identifier, and the worker reads only the graphs its own job may name.
+- Every component validates what it receives, whatever its client has checked (PRI-75, STD-298): the service checks a body's size, type, syntax and part membership and every identifier, and the worker reads only the graphs its own job may name.
 - No authentication: the service binds to `127.0.0.1` and refuses cross-origin writes by requiring `text/turtle` without answering a preflight. A shared deployment needs authentication first.
 
 ## Provenance
@@ -65,14 +65,14 @@ The maintainer decided the design on 2026-10-28, after reopening how a job's sta
 1. **One writer per workspace at a time.** The service and the worker never write the store. Each write is a command, keyed by its workspace's id, published to a consistent-hash exchange that routes it to one of a fixed number of partition queues. Each queue has a single active consumer, so the writes of one workspace, its jobs included, are applied in order by one writer, which needs no lock to guard a revision. A deployment sets how many writers it runs, from one to the number of partitions. A second instance's writers stand by and take over a partition whose writer goes away.
 2. **A save still answers at once.** The service waits for the writer's reply on RabbitMQ's direct reply-to, so the browser sees `204`, `412` or `422` as before. A write no writer applied in time expires rather than being applied after the caller was told it failed, and the caller gets `503`.
 3. **The worker sends its result, never writes it.** A job's status, report and artefacts go to the job's workspace's writer as a `job-update`. The writer refuses an update that changes anything on the job but its status and results, compared by value, and drops an update for a job deleted meanwhile.
-4. **The writer checks what it receives,** whatever its sender checked (PRI-75, STD-279): the ids, the graphs a command may carry, part membership, and a job's references.
+4. **The writer checks what it receives,** whatever its sender checked (PRI-75, STD-298): the ids, the graphs a command may carry, part membership, and a job's references.
 5. **On disk.** Fuseki keeps the studio's dataset in TDB2, in the user's data folder or a folder a deployment names, so workspaces outlive the application. Jobs are kept there too, and finished jobs are deleted after a retention a deployment sets, 30 days by default.
 6. **Samples are copied.** A workspace made from a sample is a copy that records which sample it came from, so nothing is loaded at start and a later change to a sample does not reach it.
 7. **Export and import.** A workspace exports as one TriG file of every graph but its jobs, and imports under a new id with its revisions, so it can be kept, shared and moved independently of the store's format.
 
 **Rejected.** Writers handed messages in turn, which would let two writers hold one workspace's graphs at once. A writer per workspace, whose number grows with use. Jobs in memory beside an on-disk store, which the maintainer declined so past results can be read again. Samples loaded at start as read-only workspaces.
 
-**Consequences.** A save costs a broker round trip more than it did. TDB2 applies one update at a time per dataset (TSD-42), so more writers do not write faster on one dataset, and more throughput needs a dataset per group of partitions. A delete leaves space TDB2 reclaims only by compaction. Any client of the broker can send a command, so the broker is as trusted as the store.
+**Consequences.** A save costs a broker round trip more than it did. TDB2 applies one update at a time per dataset (TSD-62), so more writers do not write faster on one dataset, and more throughput needs a dataset per group of partitions. A delete leaves space TDB2 reclaims only by compaction. Any client of the broker can send a command, so the broker is as trusted as the store.
 
 
 ## Amendment, 2026-10-28: the store writers deployed apart, on a super stream (Proposed)
@@ -87,4 +87,4 @@ The maintainer decided the design on 2026-10-28, reopening where the writers of 
 
 **Rejected.** The writers inside the service, which shared its failure domain, its broker connection and its write access, and could not be scaled or deployed apart. Classic queues with a single active consumer each, which fail over but give every partition to the first instance to start, so spreading them would need each instance configured by hand.
 
-**Consequences.** RabbitMQ needs its stream plugin and a port for the stream protocol, advertised at an address the writers reach. Each partition keeps a week of writes or 1 GiB. TDB2 applies one update at a time per dataset (TSD-42), so more writer instances add availability and parallel checking, not commits, while one database serves them.
+**Consequences.** RabbitMQ needs its stream plugin and a port for the stream protocol, advertised at an address the writers reach. Each partition keeps a week of writes or 1 GiB. TDB2 applies one update at a time per dataset (TSD-62), so more writer instances add availability and parallel checking, not commits, while one database serves them.

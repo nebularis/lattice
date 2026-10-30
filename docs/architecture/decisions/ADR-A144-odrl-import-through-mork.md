@@ -4,7 +4,7 @@
 
 **Status:** Proposed 2026-10-29
 **Date:** 2026-10-29
-**Related:** [ADR-A138](ADR-A138-contract-builder.md) (every template enters stated meaning through a proposal), [ADR-A146](ADR-A146-skolem-rule-for-mapped-sources.md) (how the run names the policy's blank nodes)
+**Related:** [ADR-A138](ADR-A138-contract-builder.md) (every template enters stated meaning through a proposal), [ADR-A147](ADR-A147-skolem-rule-for-mapped-sources.md) (how the run names the policy's blank nodes)
 **Described in:** [Configuration Studio contract](../../../contracts/config-studio/README.md), "Importing an ODRL policy", and [`tools/mork_rdf`](../../../tools/mork_rdf/README.md)
 
 ## Context
