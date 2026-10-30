@@ -14,6 +14,7 @@ temp-ext*
 .build/config-studio-stack-results/
 .build/pytest-cache/*
 !.build/pytest-cache/.gitkeep
+workers/.build/
 .build/full-sweep/*
 .build/yarn-cache/*
 !.build/yarn-cache/.gitkeep

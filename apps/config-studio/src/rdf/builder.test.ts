@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CST, ELG, Graph, INS, PTY, QNT, SKOS, VOC, WRD, XSD } from "@lattice/authoring-domain";
+import { CST, ELG, FND, Graph, INS, PTY, QNT, SKOS, VOC, WRD, XSD } from "@lattice/authoring-domain";
 import { addAssembly, assembliesOf, choicesMade, choicesOf, flatten, formsOf, outline, removeAssembly, setForm, settableOf, settingsMade, toggleChoice, writeSetting } from "./builder";
 import { CONFIG_PARTS, split } from "./split";
 
@@ -43,6 +43,10 @@ describe("the split rule for library and assembly", () => {
     // The roles are the party layer's, so they stay with the baseline, and a proposal and its terms are meaning and review.
     expect(parts.baseline.ofType(PTY("Role")).length).toBe(3);
     expect(parts.baseline.quads().every((q) => q.subject.value.startsWith("https://example.org/lattice/studio/roles/"))).toBe(true);
+    // An identity goes with the versioned node that names it, never to the baseline.
+    const identities = parts.quantification.quads(undefined, FND("hasIdentity"));
+    expect(identities.length).toBeGreaterThan(0);
+    expect(identities.every((q) => parts.quantification.has(q.object.value))).toBe(true);
     expect(parts.meaning.types("https://example.org/lattice/studio/meaning/pay-interest")).toContain(INS("Obligation"));
     expect(parts.review.ofType(CST("Proposal")).length).toBe(3);
     expect(parts.review.has("https://example.org/lattice/studio/meaning/pay-interest")).toBe(false);

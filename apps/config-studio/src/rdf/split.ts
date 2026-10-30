@@ -5,9 +5,10 @@
 // goes to vocabulary. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, a cst:Proposal to review, a subject using mork: terms to mapping, then any subject using ins: terms to meaning, and any
 // other wrd: subject to library, after the rest. Everything else is baseline. A blank node goes wherever the subject that
 // refers to it went, so path steps written as blank nodes and RDF lists stay with their owner. So does a named node of a mapping's
-// own structure that uses no part's terms, such as a guard's SHACL shape or a scheme's prefix declaration.
+// own structure that uses no part's terms, such as a guard's SHACL shape or a scheme's prefix declaration, and so does the
+// fnd:PersistentIdentity a versioned node names with fnd:hasIdentity.
 
-import { CST, Graph, MORK, PREFIXES, SH, SKOS, TYPE, WRD, type Quad, type Term } from "@lattice/authoring-domain";
+import { CST, FND, Graph, MORK, PREFIXES, SH, SKOS, TYPE, WRD, type Quad, type Term } from "@lattice/authoring-domain";
 
 export type Part = "baseline" | "library" | "assembly" | "meaning" | "review" | "mapping" | "vocabulary" | "quantification" | "eligibility" | "surface" | "persistence";
 
@@ -68,7 +69,8 @@ export function split(graph: Graph): Record<Part, Graph> {
       // A blank node first reached from a named node that later moved to mapping moves with it.
       const blank = q.object.termType === "BlankNode" && (!owner.has(q.object.id) || (owner.get(q.object.id) === "baseline" && owner.get(s.id) !== "baseline"));
       const structure = q.object.termType === "NamedNode" && owner.get(s.id) === "mapping" && owner.get(q.object.id) === "baseline" && MAPPING_STRUCTURE.has(q.predicate.value);
-      if (blank || structure) {
+      const identity = q.object.termType === "NamedNode" && q.predicate.value === FND("hasIdentity") && owner.get(q.object.id) === "baseline" && owner.get(s.id) !== "baseline";
+      if (blank || structure || identity) {
         owner.set(q.object.id, owner.get(s.id)!);
         pending.push(q.object);
       }

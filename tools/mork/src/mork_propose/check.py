@@ -107,6 +107,8 @@ _LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 # as context before validating would keep the rest of the shape an error.
 _CONTEXT = {
     _LATTICE + "foundation#hasIdentity": "identity is minted when the meaning is persisted, not by a mapping",
+    # Foundation's shape for a versioned thing states the identity rule as a node-level sh:or, which has no result path.
+    _LATTICE + "foundation#VersionedShape": "identity is minted when the meaning is persisted, not by a mapping",
     _LATTICE + "instrument#TermShape": "a stated term's clause is chosen where the meaning is written, such as at an import",
 }
 

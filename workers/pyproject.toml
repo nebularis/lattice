@@ -26,4 +26,4 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-cache_dir = "../.build/pytest-cache"
+cache_dir = ".build/pytest-cache"  # inside workers/, since pytest 9.2 refuses a cache directory reached through ..

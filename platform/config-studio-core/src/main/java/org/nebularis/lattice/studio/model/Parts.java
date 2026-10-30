@@ -19,7 +19,7 @@ import org.apache.jena.vocabulary.RDF;
  * Which part of a workspace each subject of a graph belongs to, by the rule of the browser's {@code src/rdf/split.ts}:
  * the first part whose namespace a named subject uses in its {@code rdf:type} or its predicates, a concept scheme or
  * concept for vocabulary, baseline otherwise, and a blank node with the subject that refers to it, as is a named node of a
- * mapping's own structure that uses no part's terms, such as a guard's shape. The service checks a
+ * mapping's own structure that uses no part's terms, such as a guard's shape, and the identity a versioned node names. The service checks a
  * saved graph with it, since it cannot know the browser sorted the graph (STD-298).
  */
 public final class Parts {
@@ -81,10 +81,13 @@ public final class Parts {
                 RDFNode o = st.getObject();
                 boolean structure = o.isURIResource() && "mapping".equals(owner.get(s)) && "baseline".equals(owner.get(o.asResource()))
                     && MAPPING_STRUCTURE.contains(st.getPredicate().getURI());
+                // The fnd:PersistentIdentity a versioned node names follows the node it identifies.
+                boolean identity = o.isURIResource() && st.getPredicate().getURI().equals(LATTICE + "foundation#hasIdentity")
+                    && "baseline".equals(owner.get(o.asResource())) && !"baseline".equals(owner.get(s));
                 // A blank node first reached from a named node that later moved to mapping moves with it.
                 boolean blank = o.isAnon() && (!owner.containsKey(o.asResource())
                     || ("baseline".equals(owner.get(o.asResource())) && !"baseline".equals(owner.get(s))));
-                if (blank || structure) {
+                if (blank || structure || identity) {
                     owner.put(o.asResource(), owner.get(s));
                     pending.add(o.asResource());
                 }
