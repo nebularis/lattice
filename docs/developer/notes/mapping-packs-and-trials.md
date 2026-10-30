@@ -21,14 +21,16 @@ Where the MORK mapping packs for published standards live, what each proposal tr
 | the metamodel as one Turtle source | `contracts/config-studio/legalruleml/trial/legalruleml-metamodel.ttl` |
 | the cold run, with no history, and the warm run, given the ODRL trial's lessons | `contracts/config-studio/legalruleml/trial/cold/`, `contracts/config-studio/legalruleml/trial/warm/`, `contracts/config-studio/legalruleml/trial/odrl-lessons.txt` |
 | both runs with their reviews, including the amended reviews of right | `contracts/config-studio/legalruleml/trial/history.ttl` |
+| a sample source, a made-up supply agreement written in the metamodel by the team, for mapping mode and the check | `contracts/config-studio/legalruleml/trial/sample-supply-terms.ttl` |
 
-LegalRuleML has no hand-made pack and no sample source yet, so its proposals can be explored in mapping mode but not run.
+LegalRuleML has no hand-made pack yet, so its proposals are reviewed against the reviews in its history rather than against a pack.
 
 ## Trying them in the studio
 
 1. Start the studio with `mise run studio:up -- --dev` and open http://127.0.0.1:4175.
 2. Make a new workspace from the sample **ODRL mappings** or **LegalRuleML mappings**. The samples are listed in `contracts/config-studio/samples/samples.ttl`, and `mise run build:config-studio-assets` stages them.
 3. Switch to **Mapping** mode. Pick a scheme from the list, the hand-made pack first, and pick a mapping to see its review and edit it.
-4. To run the mappings, use **Load a file** under **Sample source** and choose `contracts/config-studio/odrl/trial/software-licence.ttl`, or paste its text. The run repeats whenever a mapping or the sample changes.
+4. To run the mappings, use **Load a file** under **Sample source** and choose `contracts/config-studio/odrl/trial/software-licence.ttl` for ODRL or `contracts/config-studio/legalruleml/trial/sample-supply-terms.ttl` for LegalRuleML, or paste its text. The run repeats whenever a mapping or the sample changes.
+5. The same sample checks a proposal outside the studio, its output held to the target layers' shapes: `mise run mork:propose -- check <proposal.mcn> --sample <sample.ttl>`.
 
 The review of what the proposing agents were given, and what to change, is in [mapping-proposer-review.md](mapping-proposer-review.md).
