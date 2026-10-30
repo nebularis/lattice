@@ -152,6 +152,61 @@ class History:
         return out
 
 
+    def rules(self, reference: Optional[Graph] = None, vocabulary: Optional[Graph] = None, recurring: int = 2) -> list[str]:
+        """What the next proposer is told as rules rather than a ledger: the corrections grouped by what they changed,
+        the terms a proposal wrote against the terms the review kept, and the rejections grouped by the term written,
+        each with how often it recurred, the mappings it covers and one reviewer's note, the most frequent first. A
+        written term that `vocabulary` makes a subclass of a kept one is marked, and a rule that recurs at least
+        `recurring` times is marked as a candidate for MTP's minimal pairs. Corrections that kept a mapping's terms and
+        changed only what it reads are counted apart, and a correction that names no correcting mapping, as a person's
+        review of a source with no pack may not, is grouped by the reviewer's note, which states its lesson."""
+        from rdflib.namespace import RDFS
+
+        world = self.graph + (reference if reference is not None else Graph())  # a new graph, so the history's prefixes stay as they are
+        for prefix, namespace in (vocabulary.namespaces() if vocabulary is not None else ()):
+            world.bind(prefix, namespace, override=False)
+        name = world.namespace_manager.normalizeUri
+        written = lambda node: {o for p in (MORK.exactTBoxMatch, MORK.exactRBoxMatch, MORK.inverseRBoxMatch, MORK.exactABoxMatch)
+                                for o in world.objects(node, p) if isinstance(o, URIRef)}
+        supers = lambda t: set(vocabulary.transitive_objects(t, RDFS.subClassOf)) - {t} if vocabulary is not None else set()
+        local = lambda node: str(node).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        changes: dict = {}
+        rejected: dict = {}
+        for mapping, (decision, corrected, note) in sorted(self.decisions().items(), key=lambda kv: str(kv[0])):
+            mine = written(mapping)
+            if decision == MORK.Corrected:
+                kept = written(corrected) if corrected is not None else set()
+                key = (frozenset(mine - kept), frozenset(kept - mine)) if corrected is not None else (" ".join(note.split()).lower(), None)
+                changes.setdefault(key, []).append((local(mapping), note))
+            elif decision == MORK.Rejected:
+                for term in sorted(mine, key=str) or [None]:
+                    rejected.setdefault(term, []).append((local(mapping), note))
+        out = []
+        ranked = sorted(changes.items(), key=lambda kv: (-len(kv[1]), str(kv[0][0])))
+        for (dropped, added), seen in ranked:
+            terms = lambda ts: ", ".join(sorted(name(t) for t in ts))
+            if added is None:
+                written_there = sorted({name(t) for m, _ in seen for t in written(next(x for x in self.decisions() if local(x) == m))})
+                rule = f"{seen[0][1] or 'Corrected by the reviewer'} (it had written {', '.join(written_there) or 'nothing'})"
+                seen = [(m, "") for m, _ in seen]
+            elif not dropped and not added:
+                rule = "Kept its terms, but read another element of the source"
+            else:
+                rule = f"Instead of {terms(dropped) or 'nothing'}, write {terms(added) or 'nothing'}"
+                if added and any(supers(d) & added for d in dropped):
+                    rule += ". The proposal wrote a subclass where the review kept its superclass"
+            out.append(self._rule(rule, seen, recurring))
+        for term, seen in sorted(rejected.items(), key=lambda kv: (-len(kv[1]), str(kv[0]))):
+            out.append(self._rule(f"Do not write {name(term)}" if term is not None else "Do not propose a mapping that writes nothing", seen, recurring))
+        return out
+
+    @staticmethod
+    def _rule(rule: str, seen: list, recurring: int) -> str:
+        note = next((n for _, n in seen if n), "")
+        mark = " [recurring: a candidate minimal pair for MTP]" if len(seen) >= recurring else ""
+        return f"{rule}. {len(seen)}x ({', '.join(m for m, _ in seen)}){mark}." + (f" For example: {note}" if note else "")
+
+
 def review_against(proposal: Graph, scheme: URIRef, reference: Graph, reference_scheme: URIRef, at: datetime) -> list[tuple]:
     """For each mapping of the proposal, (mapping, decision, corrected_by, note), decided by the reference pack."""
     theirs = signatures(reference, reference_scheme, at)

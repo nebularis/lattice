@@ -87,7 +87,10 @@ def _target() -> tuple[Graph, Graph]:
 
     vocabulary, shapes = Graph(), Graph()
     for m in LAYERS:
-        vocabulary += _cards._layer_graph(m)
+        layer = _cards._layer_graph(m)
+        vocabulary += layer
+        for prefix, namespace in layer.namespaces():
+            vocabulary.bind(prefix, namespace, override=False)
         shapes += _shapes(m)
     return vocabulary, shapes
 

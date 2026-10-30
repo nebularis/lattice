@@ -234,3 +234,15 @@ def test_a_target_side_cassette_runs_over_its_sample_and_keeps_the_target_layers
     checked = check_graph(mcn_decoder.decode(data["mcn"]), sample=Graph().parse(root / data["sample"]), target_vocabulary=vocabulary, target_shapes=shapes)
     assert checked.output is not None and len(checked.output) > 0
     assert [f for f in checked.findings if f[1] in ("error", "warning")] == []
+
+
+def test_a_history_teaches_rules_grouped_by_what_was_corrected_the_most_frequent_first():
+    from mork_propose.history import History
+    from mork_propose.server import _target
+
+    trial = Path(__file__).resolve().parents[3] / "contracts" / "config-studio"
+    vocabulary = _target()[0]
+    lrml = History(trial / "legalruleml" / "trial" / "history.ttl").rules(None, vocabulary)
+    assert lrml[0].startswith("stated meaning names roles, never occupancies") and "6x" in lrml[0] and "[recurring" in lrml[0]
+    odrl = History(trial / "odrl" / "trial" / "history.ttl").rules(Graph().parse(trial / "odrl" / "odrl-instrument.mork.ttl"), vocabulary)
+    assert any(r.startswith("Instead of elg:ExactCondition, write elg:Condition. The proposal wrote a subclass") for r in odrl)
