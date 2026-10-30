@@ -1,0 +1,44 @@
+[mork:propose] $ python -m mork_propose.cli check contracts/config-studio/legalruleml/trial/cold-2/attempt-5.mcn --sample contracts/config-studio/legalruleml/trial/sample-supply-terms.ttl
+{
+ "decoded": true,
+ "triples": 320,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/mtp/legalruleml-cold2#Scheme",
+   "queries": 54,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/mtp/legalruleml-cold2#Obl",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/obligation-term/f7a6ca4dd8a4381eb992e0dedb078c5b0b2c405a639ac57fc18e757e0b50bd7d)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/mtp/legalruleml-cold2#Perm",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/permission-term/297e7e5e3c00d0be11e96bb94a8367df4e9fdbb96cad36f2c067344cf7733918)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Term",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/implied-term/inspect%20the%20goods%20on%20delivery)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/mtp/legalruleml-cold2#Right_T",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/right-term/3e6b6ea43bbb7ecbbe958057515de3b1917ff91d45fa343818ae019d80b956d3)"
+  }
+ ],
+ "errors": 0,
+ "output_triples": 43
+}

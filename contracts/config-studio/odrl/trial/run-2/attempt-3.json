@@ -1,0 +1,44 @@
+[mork:propose] $ python -m mork_propose.cli check contracts/config-studio/odrl/trial/run-2/attempt-3.mcn --sample contracts/config-studio/odrl/trial/software-licence.ttl
+{
+ "decoded": true,
+ "triples": 487,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/odrl/mapping#Scheme",
+   "queries": 79,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/odrl/mapping#Implied_Term",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/implied-term/http%3A%2F%2Fwww.w3.org%2Fns%2Fodrl%2F2%2Fuse)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/odrl/mapping#Permission_Scope",
+   "message": "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity. Left to the context: identity is minted when the meaning is persisted, not by a mapping. (on urn:mork-propose:out/scope/5b62c2216f02320e8805226a4f408f179df72d10238db565209f793b530ffc4e)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/odrl/mapping#Policy",
+   "message": "A term is either stated, an ins:Template expressed in exactly one element version and bound in none, or bound, bound in exactly one instrument version from exactly one stated term or implied by a source, and expressed in none (law I2). Left to the context: a stated term's clause is chosen where the meaning is written, such as at an import. (on urn:mork-propose:out/term/6bbd7be2ae86000c25c706523e5a411a342e90e3df873d3fb5362db4e1a90f4c)"
+  },
+  {
+   "stage": "meaning",
+   "severity": "info",
+   "code": "ContextShape",
+   "about": "https://example.org/lattice/odrl/mapping#Until_Range_Space",
+   "message": "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity. Left to the context: identity is minted when the meaning is persisted, not by a mapping. (on urn:mork-propose:out/space/date)"
+  }
+ ],
+ "errors": 0,
+ "output_triples": 71
+}

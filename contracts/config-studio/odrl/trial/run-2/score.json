@@ -1,0 +1,480 @@
+{
+ "run": "run-2",
+ "scheme": "https://example.org/lattice/odrl/mapping#Scheme",
+ "mappings": {
+  "accepted": 30,
+  "corrected": 22,
+  "rejected": 0,
+  "deferred": 0,
+  "total": 52,
+  "accepted_share": 0.577
+ },
+ "cost": {
+  "seconds": 136,
+  "input_tokens": null,
+  "output_tokens": null,
+  "total_tokens": 106804
+ },
+ "output": {
+  "precision": 0.825,
+  "recall": 0.627,
+  "missing": [
+   [
+    "[AdmissionProfile]",
+    "conditionKey",
+    "odrl-implied-scope"
+   ],
+   [
+    "[AdmissionProfile]",
+    "conditionKey",
+    "odrl-rule-scope"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[Condition ExactCondition]"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[Condition IntervalCondition]"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "conditionKey",
+    "odrl-constraint"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "matchStrategy",
+    "ExactMatch"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "requiredConcept",
+    "https://example.org/lattice/odrl/site/leeds"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "type",
+    "Condition"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "type",
+    "ExactCondition"
+   ],
+   [
+    "[Condition ExactCondition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "conditionKey",
+    "odrl-constraint"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "matchStrategy",
+    "IntervalContainment"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "requiredRangeSet",
+    "[RangeSet]"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "type",
+    "Condition"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "type",
+    "IntervalCondition"
+   ],
+   [
+    "[Condition IntervalCondition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[ExactCondition]",
+    "conditionKey",
+    "odrl-target"
+   ],
+   [
+    "[ExactCondition]",
+    "requiredConcept",
+    "https://example.org/lattice/odrl/asset/analytics-suite"
+   ],
+   [
+    "[Obligation Template]",
+    "arisesOnBreachOf",
+    "[Prohibition Template]"
+   ],
+   [
+    "[Obligation Template]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[OnAct]",
+    "activity",
+    "http://www.w3.org/ns/odrl/2/compensate"
+   ],
+   [
+    "[OnAct]",
+    "by",
+    "[Role]"
+   ],
+   [
+    "[OnAct]",
+    "type",
+    "OnAct"
+   ],
+   [
+    "[Permission Template]",
+    "arisesOn",
+    "[OnAct]"
+   ],
+   [
+    "[Prohibition Template]",
+    "scope",
+    "[AdmissionProfile]"
+   ],
+   [
+    "[Role]",
+    "label",
+    "Corvid Software Ltd"
+   ],
+   [
+    "[Role]",
+    "label",
+    "Fernwood Analytics Ltd"
+   ],
+   [
+    "[Template Term]",
+    "impliedBy",
+    "ExclusiveRights"
+   ]
+  ],
+  "extra": [
+   [
+    "[AdmissionProfile]",
+    "conditionKey",
+    "permission-scope"
+   ],
+   [
+    "[AdmissionProfile]",
+    "hasCondition",
+    "[Condition]"
+   ],
+   [
+    "[Condition]",
+    "conditionKey",
+    "until"
+   ],
+   [
+    "[Condition]",
+    "matchStrategy",
+    "IntervalContainment"
+   ],
+   [
+    "[Condition]",
+    "requiredRangeSet",
+    "[RangeSet]"
+   ],
+   [
+    "[Condition]",
+    "type",
+    "Condition"
+   ],
+   [
+    "[Condition]",
+    "wildcardSemantics",
+    "NoWildcard"
+   ],
+   [
+    "[ExactCondition]",
+    "conditionKey",
+    "spatial"
+   ],
+   [
+    "[ExactCondition]",
+    "requiredConcept",
+    "https://example.org/lattice/odrl/site/leeds"
+   ],
+   [
+    "[Role]",
+    "label",
+    "party"
+   ]
+  ],
+  "proposal_triples": 71,
+  "pack_triples": 119
+ },
+ "decisions": [
+  {
+   "mapping": "Duty",
+   "decision": "corrected",
+   "note": "the pack's Permission writes Template, Term"
+  },
+  {
+   "mapping": "Duty_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Duty_Obligee",
+   "decision": "corrected",
+   "note": "the pack maps this source with Duty, to OnAct, arisesOn"
+  },
+  {
+   "mapping": "Duty_Obligor",
+   "decision": "corrected",
+   "note": "the pack maps this source with Duty, to OnAct, arisesOn"
+  },
+  {
+   "mapping": "Implied",
+   "decision": "accepted",
+   "note": "as the pack's Implied"
+  },
+  {
+   "mapping": "Implied_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Implied_Obligee",
+   "decision": "corrected",
+   "note": "the pack maps this source with Permission, to Template, Term"
+  },
+  {
+   "mapping": "Implied_Obligor",
+   "decision": "corrected",
+   "note": "the pack maps this source with Permission, to Template, Term"
+  },
+  {
+   "mapping": "Implied_Term",
+   "decision": "accepted",
+   "note": "as the pack's Implied_Term"
+  },
+  {
+   "mapping": "Obligation",
+   "decision": "corrected",
+   "note": "the pack's Obligation writes Template, Term"
+  },
+  {
+   "mapping": "Obligation_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Obligation_Obligee",
+   "decision": "corrected",
+   "note": "the pack maps this source with Obligation, to Template, Term"
+  },
+  {
+   "mapping": "Obligation_Obligor",
+   "decision": "corrected",
+   "note": "the pack maps this source with Obligation, to Template, Term"
+  },
+  {
+   "mapping": "Permission",
+   "decision": "corrected",
+   "note": "the pack's Permission writes Template, Term"
+  },
+  {
+   "mapping": "Permission_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Permission_Counterparty",
+   "decision": "corrected",
+   "note": "the pack maps this source with Permission, to Template, Term"
+  },
+  {
+   "mapping": "Permission_Holder",
+   "decision": "corrected",
+   "note": "the pack maps this source with Permission, to Template, Term"
+  },
+  {
+   "mapping": "Permission_Scope",
+   "decision": "accepted",
+   "note": "as the pack's Implied_Scope"
+  },
+  {
+   "mapping": "Permission_Scope_Key",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Key"
+  },
+  {
+   "mapping": "Permission_Scope_Operation",
+   "decision": "accepted",
+   "note": "as the pack's Implied_Scope_Operation"
+  },
+  {
+   "mapping": "Place",
+   "decision": "corrected",
+   "note": "the pack's Constraint writes Condition, hasCondition"
+  },
+  {
+   "mapping": "Place_Key",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Key"
+  },
+  {
+   "mapping": "Place_Required",
+   "decision": "accepted",
+   "note": "as the pack's Constraint_Required"
+  },
+  {
+   "mapping": "Place_Strategy",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Strategy"
+  },
+  {
+   "mapping": "Place_Wildcard",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Wildcard"
+  },
+  {
+   "mapping": "Policy",
+   "decision": "corrected",
+   "note": "the pack maps this source with Policy, to "
+  },
+  {
+   "mapping": "Prohibition",
+   "decision": "corrected",
+   "note": "the pack's Prohibition writes Template, Term"
+  },
+  {
+   "mapping": "Prohibition_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Prohibition_Obligee",
+   "decision": "corrected",
+   "note": "the pack maps this source with Prohibition, to Template, Term"
+  },
+  {
+   "mapping": "Prohibition_Obligor",
+   "decision": "corrected",
+   "note": "the pack maps this source with Prohibition, to Template, Term"
+  },
+  {
+   "mapping": "Remedy",
+   "decision": "corrected",
+   "note": "the pack's Prohibition writes Template, Term"
+  },
+  {
+   "mapping": "Remedy_Activity",
+   "decision": "accepted",
+   "note": "as the pack's Consequence_Activity"
+  },
+  {
+   "mapping": "Remedy_Obligee",
+   "decision": "corrected",
+   "note": "the pack maps this source with Remedy, to Obligation, Template, arisesOnBreachOf"
+  },
+  {
+   "mapping": "Remedy_Obligor",
+   "decision": "corrected",
+   "note": "the pack maps this source with Remedy, to Obligation, Template, arisesOnBreachOf"
+  },
+  {
+   "mapping": "Remedy_Term",
+   "decision": "accepted",
+   "note": "as the pack's Implied_Term"
+  },
+  {
+   "mapping": "Role_T_Label",
+   "decision": "corrected",
+   "note": "the pack maps this source with Asset, to ExactCondition, hasCondition"
+  },
+  {
+   "mapping": "Space_T_Order",
+   "decision": "accepted",
+   "note": "as the pack's Space_T_Order"
+  },
+  {
+   "mapping": "Until",
+   "decision": "accepted",
+   "note": "as the pack's Constraint"
+  },
+  {
+   "mapping": "Until_Key",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Key"
+  },
+  {
+   "mapping": "Until_Range",
+   "decision": "accepted",
+   "note": "as the pack's Range"
+  },
+  {
+   "mapping": "Until_RangeSet",
+   "decision": "accepted",
+   "note": "as the pack's RangeSet"
+  },
+  {
+   "mapping": "Until_RangeSet_Space",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Space"
+  },
+  {
+   "mapping": "Until_Range_Space",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Space"
+  },
+  {
+   "mapping": "Until_Strategy",
+   "decision": "corrected",
+   "note": "the pack's Asset_Strategy writes ExactMatch, matchStrategy"
+  },
+  {
+   "mapping": "Until_Upper",
+   "decision": "accepted",
+   "note": "as the pack's Upper"
+  },
+  {
+   "mapping": "Until_Upper_Closure",
+   "decision": "corrected",
+   "note": "the pack maps this source with Asset, to ExactCondition, hasCondition"
+  },
+  {
+   "mapping": "Until_Upper_Sense",
+   "decision": "accepted",
+   "note": "as the pack's Upper_Sense"
+  },
+  {
+   "mapping": "Until_Upper_Space",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Space"
+  },
+  {
+   "mapping": "Until_Upper_Value",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Value"
+  },
+  {
+   "mapping": "Until_Upper_Value_Number",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Value_Number"
+  },
+  {
+   "mapping": "Until_Upper_Value_Space",
+   "decision": "accepted",
+   "note": "as the pack's Bound_T_Space"
+  },
+  {
+   "mapping": "Until_Wildcard",
+   "decision": "accepted",
+   "note": "as the pack's Asset_Wildcard"
+  }
+ ]
+}

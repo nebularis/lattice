@@ -50,6 +50,244 @@
     prov:endedAtTime "2026-10-29T20:00:00+00:00"^^xsd:dateTime ;
     prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
 
+<urn:mork-propose:run:legalruleml-cold-2:review/1> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/10> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Counterparty> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/11> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Holder> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/12> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "states the prohibition the permission excepts, its obligor the holder (law I8), as the doctrine asks" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/13> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Activity> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/14> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Activity_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/15> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Obligee> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/16> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Obligor> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/17> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Term> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/18> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/19> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "map every prohibition. Where the source names no auxiliary party, the obligee is left for the reviewer, never the prohibition dropped by a guard" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/2> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Activity> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/20> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Activity> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/21> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Activity_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/22> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Obligee> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/23> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Obligor> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/24> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Relation> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/25> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewNote "the claim end of a right, owed by the auxiliary party to the bearer, which both earlier runs missed" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/26> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Activity> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/27> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Activity_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/28> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Obligee> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/29> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Obligor> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/3> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Activity_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/30> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Corrected ;
+    mork:reviewNote "a LegalRuleML right is two relations under one term: the claim end mapped here, and a permission held by the bearer with the prohibition it excepts, which the term also needs, as Perm states" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Right_T> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/31> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/32> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Role_T_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/4> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Obligee> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/5> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Obligor> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/6> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Relation> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/7> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Accepted ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/8> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Activity> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
+<urn:mork-propose:run:legalruleml-cold-2:review/9> a mork:MappingReview,
+        prov:Activity ;
+    mork:reviewDecision mork:Deferred ;
+    mork:reviewNote "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act" ;
+    mork:reviewOf <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Activity_Label> ;
+    prov:endedAtTime "2026-10-30T01:27:05+00:00"^^xsd:dateTime ;
+    prov:wasAssociatedWith <urn:lattice:reviewer:agent-for-the-maintainer> .
+
 <urn:mork-propose:run:legalruleml-cold:review/1> a mork:MappingReview,
         prov:Activity ;
     mork:reviewDecision mork:Rejected ;
@@ -663,6 +901,233 @@
     sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"^^xsd:anyURI ;
     sh:prefix "lrmlmm" .
 
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl_Activity_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Activity> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligee> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ObligationAux> ;
+    mork:mappingNote "The auxiliary party is the party the obligation is related to. LegalRuleML does not say it is the creditor, so owed-to is read from the name." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    mork:weighting 85 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligor> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ObligationBearer> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ObligationAux> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:AuxiliaryParty" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ObligationBearer> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:Bearer" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ObligationConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:representedAs <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Obligation> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Activity_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Activity> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Counterparty> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#counterparty> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#PermissionAux> ;
+    mork:mappingNote "An auxiliary party need not be the party that cannot demand otherwise of the holder." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    mork:weighting 70 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Holder> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#holder> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#PermissionBearer> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Activity_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Activity> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligee> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#PermissionAux> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligor> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#PermissionBearer> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Term> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> ;
+    mork:conceptNameTemplate "implied-term/${rdfs:label}" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#PermissionConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:representedAs <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Permission> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_Activity_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Activity> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligee> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionAux> ;
+    mork:mappingNote "A prohibition has no auxiliary party in general. It is mapped only where one is given (guard on Proh), because LATTICE requires an obligee." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    mork:weighting 45 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Relation> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligor> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionBearer> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_aw1> a owl:NamedIndividual,
+        sh:NodeShape ;
+    sh:property <https://example.org/lattice/mtp/legalruleml-cold2#Proh_aw1_p1> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_aw1_p1> a sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:path <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#AuxiliaryParty> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionAux> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:AuxiliaryParty" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionBearer> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:Bearer" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:representedAs <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Prohibition> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#RightAux> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:AuxiliaryParty" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#RightBearer> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:Bearer" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#RightConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:representedAs <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Right> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Activity_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Activity> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligee> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#RightBearer> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#obligor> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#RightAux> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Role_T_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Role_T> ;
+    mork:dataRef "rdfs:label" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Scheme_sdl1> a owl:NamedIndividual,
+        sh:PrefixDeclaration ;
+    sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"^^xsd:anyURI ;
+    sh:prefix "lrmlmm" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Scheme_sdl2> a owl:NamedIndividual,
+        sh:PrefixDeclaration ;
+    sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ;
+    sh:prefix "rdfs" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Source> a mork:RepresentationScheme,
+        owl:NamedIndividual ;
+    rdfs:label "LegalRuleML deontic specifications" ;
+    mork:format mork:RDF .
+
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Authority> a mork:Datum,
         owl:NamedIndividual ;
     mork:conceptName "authority" ;
@@ -857,23 +1322,7 @@
     mork:weighting 35 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
-<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Obligation> a mork:Entity,
-        owl:NamedIndividual ;
-    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
-
-<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Permission> a mork:Entity,
-        owl:NamedIndividual ;
-    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
-
-<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Prohibition> a mork:Entity,
-        owl:NamedIndividual ;
-    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
-
 <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Reparation> a mork:Entity,
-        owl:NamedIndividual ;
-    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
-
-<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Right> a mork:Entity,
         owl:NamedIndividual ;
     mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
 
@@ -920,6 +1369,100 @@
     mork:mappingScheme <http://example.org/lrml-mapping#MS> ;
     mork:weighting 55 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "obligation-term" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ObligationConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl_Activity> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Obl_Relation> ;
+    mork:conceptNameTemplate "activity/${rdfs:label}" ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "permission-term" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#PermissionConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Activity> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> ;
+    mork:conceptNameTemplate "activity/${rdfs:label}" ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied_Activity> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> ;
+    mork:conceptNameTemplate "activity/${rdfs:label}" ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#PermissionAux> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:AuxiliaryParty" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#PermissionBearer> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/legalruleml-cold2#Concepts> ;
+    mork:path "lrmlmm:Bearer" .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:appliesWhen <https://example.org/lattice/mtp/legalruleml-cold2#Proh_aw1> ;
+    mork:conceptName "prohibition-term" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#ProhibitionConcept> ;
+    mork:mappingNote "Prohibitions without an auxiliary party are not mapped, so the sample resell prohibition yields nothing." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:weighting 55 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_Activity> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Proh_Relation> ;
+    mork:conceptNameTemplate "activity/${rdfs:label}" ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim_Activity> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim> ;
+    mork:conceptNameTemplate "activity/${rdfs:label}" ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_T> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "right-term" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Term> ;
+    mork:mappingFor <https://example.org/lattice/mtp/legalruleml-cold2#RightConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Obligation> a mork:Datum,
         owl:NamedIndividual ;
@@ -1000,6 +1543,22 @@
     mork:weighting 80 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Obligation> a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Permission> a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Prohibition> a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#Right> a mork:Entity,
+        owl:NamedIndividual ;
+    mork:representationScheme <http://example.org/lrml-mapping#Scheme_LRML> .
+
 <http://example.org/lrml-mapping#Map_Obligation> a mork:DataMapping,
         mork:Datum,
         owl:NamedIndividual ;
@@ -1074,6 +1633,39 @@
     mork:weighting 35 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
+<https://example.org/lattice/mtp/legalruleml-cold2#Obl_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Obl> ;
+    mork:conceptName "obligation" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Proh_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Proh> ;
+    mork:conceptName "prohibition" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Prohibition>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Right_Claim> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Right_T> ;
+    mork:conceptName "right-claim" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Obligation>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:mappingNote "A right also gives the bearer a permission. Only the claim end is mapped, since the permission needs a prohibition the source does not state.",
+        "A right is several Hohfeld relations. Its claim end is an obligation owed to the bearer by the auxiliary party." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:weighting 65 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#AuxiliaryConcept> a mork:DataConcept,
         owl:NamedIndividual ;
     mork:conceptScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Concepts> ;
@@ -1096,6 +1688,29 @@
     mork:weighting 60 ;
     prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-warm> .
 
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Implied> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> ;
+    mork:conceptNameTemplate "implied-prohibition/${rdfs:label}" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Prohibition>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:inverseRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#excepts> ;
+    mork:mappingNote "A weak permission is the absence of a prohibition, a strong one excepts it. The metamodel does not say which, so the excepted prohibition is always stated.",
+        "Law I8: the permission excepts a prohibition on the same act, its obligor the holder." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    mork:weighting 60 ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Perm_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/legalruleml-cold2#Perm> ;
+    mork:conceptName "permission" ;
+    mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#arisesUnder> ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#Permission>,
+        <https://www.nebularis.org/neuro-semantic/lattice/instrument#Template> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
+
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T> a mork:Datum,
         owl:NamedIndividual ;
     mork:conceptName "role" ;
@@ -1106,6 +1721,17 @@
 <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Concepts> a mork:TaxonomyScheme,
         owl:NamedIndividual ;
     skos:inScheme <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Lrml> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Concepts> a mork:TaxonomyScheme,
+        owl:NamedIndividual ;
+    skos:inScheme <https://example.org/lattice/mtp/legalruleml-cold2#Source> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Role_T> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "role" ;
+    mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/party#Role> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/legalruleml-cold2#Scheme> ;
+    prov:wasGeneratedBy <urn:mork-propose:run:legalruleml-cold-2> .
 
 <urn:mork-propose:run:legalruleml-cold> a mork:ProposalRun,
         prov:Activity ;
@@ -1134,6 +1760,21 @@
         owl:NamedIndividual ;
     mork:format mork:RDF ;
     sh:declare <http://example.org/lrml-mapping#Scheme_LRML_sh:declare1> .
+
+<https://example.org/lattice/mtp/legalruleml-cold2#Scheme> a mork:MappingScheme,
+        owl:NamedIndividual ;
+    rdfs:label "LegalRuleML deontic specifications to stated LATTICE relations" ;
+    mork:compilationMode mork:ReviewMode ;
+    sh:declare <https://example.org/lattice/mtp/legalruleml-cold2#Scheme_sdl1>,
+        <https://example.org/lattice/mtp/legalruleml-cold2#Scheme_sdl2> .
+
+<urn:mork-propose:run:legalruleml-cold-2> a mork:ProposalRun,
+        prov:Activity ;
+    mork:proposerModel "claude-sonnet (subagent)" ;
+    mork:teachingPackVersion "MTP with target-side cassettes and the translation table, mork_propose with describe_term and the layers' shapes" ;
+    mork:totalTokens "116986"^^xsd:nonNegativeInteger ;
+    prov:endedAtTime "2026-10-30T01:26:56+00:00"^^xsd:dateTime ;
+    prov:startedAtTime "2026-10-30T01:24:17+00:00"^^xsd:dateTime .
 
 <http://example.org/lrml-mapping#MS> a mork:MappingScheme,
         owl:NamedIndividual ;

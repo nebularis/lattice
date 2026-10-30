@@ -10,7 +10,7 @@ Where the MORK mapping packs for published standards live, what each proposal tr
 | ODRL's vocabulary and JSON-LD context, bundled so nothing is fetched | `contracts/config-studio/odrl/odrl22.ttl`, `contracts/config-studio/odrl/odrl.jsonld` |
 | the sample policy, a software licence, as JSON-LD for the Meaning view's ODRL import | `contracts/config-studio/odrl/software-licence.odrl.jsonld` |
 | the same policy as Turtle, the sample source for mapping mode | `contracts/config-studio/odrl/trial/software-licence.ttl` |
-| the trial: a language model's proposal, each attempt with the check's answer, and its notes and score | `contracts/config-studio/odrl/trial/README.md`, `contracts/config-studio/odrl/trial/run-1/` |
+| the trial: a language model's proposals, each attempt with the check's answer, and its notes and score, run 2 with the improved tools | `contracts/config-studio/odrl/trial/README.md`, `contracts/config-studio/odrl/trial/run-1/`, `contracts/config-studio/odrl/trial/run-2/` |
 | the trial's history, the proposal with each mapping reviewed against the pack | `contracts/config-studio/odrl/trial/history.ttl` |
 
 ## LegalRuleML
@@ -19,7 +19,7 @@ Where the MORK mapping packs for published standards live, what each proposal tr
 |---|---|
 | the OASIS RDFS schemas the trial read, with their notice | `contracts/config-studio/legalruleml/rdfs/`, `contracts/config-studio/legalruleml/README.md` |
 | the metamodel as one Turtle source | `contracts/config-studio/legalruleml/trial/legalruleml-metamodel.ttl` |
-| the cold run, with no history, and the warm run, given the ODRL trial's lessons | `contracts/config-studio/legalruleml/trial/cold/`, `contracts/config-studio/legalruleml/trial/warm/`, `contracts/config-studio/legalruleml/trial/odrl-lessons.txt` |
+| the cold run, with no history, the warm run, given the ODRL trial's lessons, and a second cold run with the improved tools | `contracts/config-studio/legalruleml/trial/cold/`, `contracts/config-studio/legalruleml/trial/warm/`, `contracts/config-studio/legalruleml/trial/cold-2/`, `contracts/config-studio/legalruleml/trial/odrl-lessons.txt` |
 | both runs with their reviews, including the amended reviews of right | `contracts/config-studio/legalruleml/trial/history.ttl` |
 | a sample source, a made-up supply agreement written in the metamodel by the team, for mapping mode and the check | `contracts/config-studio/legalruleml/trial/sample-supply-terms.ttl` |
 

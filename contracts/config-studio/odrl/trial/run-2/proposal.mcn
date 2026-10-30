@@ -1,0 +1,84 @@
+@b <https://example.org/lattice/odrl/mapping#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+@p vcard=<http://www.w3.org/2006/vcard/ns#>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p qnt=<https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+%R Source fm mork:RDF lb "ODRL 2.2 policies"
+%X
+odrl:Agreement RE
+%T Concepts in Source
+PolicyConcept C ra odrl:Agreement
+PermissionConcept C p odrl:permission
+ProhibitionConcept C p odrl:prohibition
+ObligationConcept C p odrl:obligation
+DutyConcept C p odrl:permission/odrl:duty
+RemedyConcept C p odrl:prohibition/odrl:remedy
+PlaceConcept C p odrl:constraint
+DateConcept C p odrl:constraint
+PermAssignee C p ^odrl:permission/odrl:assignee
+PermAssigner C p ^odrl:permission/odrl:assigner
+ProhAssignee C p ^odrl:prohibition/odrl:assignee
+ProhAssigner C p ^odrl:prohibition/odrl:assigner
+OblAssignee C p ^odrl:obligation/odrl:assignee
+OblAssigner C p ^odrl:obligation/odrl:assigner
+DutyAssignee C p ^odrl:duty/^odrl:permission/odrl:assignee
+DutyAssigner C p ^odrl:duty/^odrl:permission/odrl:assigner
+RemAssignee C p ^odrl:remedy/^odrl:prohibition/odrl:assignee
+RemAssigner C p ^odrl:remedy/^odrl:prohibition/odrl:assigner
+%M Scheme md mork:ReviewMode lb "an ODRL policy to a stated term with its permission, prohibitions, obligations and remedy" sdl [odrl <http://www.w3.org/ns/odrl/2/>]
+Role_T MD xt pty:Role c role
+Role_T_Label M cb Role_T xr rdfs:label v "party"
+Policy MD f PolicyConcept xt ins:Term,ins:Template c term
+Permission MD cb Policy f PermissionConcept xt ins:Permission,ins:Template xr ins:arisesUnder c permission w 80 n "An ODRL permission is a liberty, so an ins:Permission."
+Permission_Activity M cb Permission xr ins:activity r odrl:action
+Permission_Holder MD cb Permission tp Role_T f PermAssignee xi ins:holder
+Permission_Counterparty MD cb Permission tp Role_T f PermAssigner xi ins:counterparty
+Implied MD cb Permission xt ins:Prohibition,ins:Template xi ins:excepts ct "implied-prohibition/${odrl:action}" n "The prohibition the permission excepts (law I8)."
+Implied_Term MD cb Implied xt ins:Term,ins:Template xi ins:arisesUnder ct "implied-term/${odrl:action}"
+Implied_Activity M cb Implied xr ins:activity r odrl:action
+Implied_Obligor MD cb Implied tp Role_T f PermAssignee xi ins:obligor
+Implied_Obligee MD cb Implied tp Role_T f PermAssigner xi ins:obligee
+Prohibition MD cb Policy f ProhibitionConcept xt ins:Prohibition,ins:Template xr ins:arisesUnder c prohibition w 85 n "An ODRL prohibition is a duty not to act, so an ins:Prohibition."
+Prohibition_Activity M cb Prohibition xr ins:activity r odrl:action
+Prohibition_Obligor MD cb Prohibition tp Role_T f ProhAssignee xi ins:obligor
+Prohibition_Obligee MD cb Prohibition tp Role_T f ProhAssigner xi ins:obligee
+Remedy MD cb Prohibition f RemedyConcept xt ins:Obligation,ins:Template xr ins:arisesOnBreachOf c remedy w 75 n "ODRL remedy is what must be done on breach of the prohibition. The remedy's own parties are taken as the prohibition's."
+Remedy_Term MD cb Remedy xt ins:Term,ins:Template xi ins:arisesUnder c remedy-term
+Remedy_Activity M cb Remedy xr ins:activity r odrl:action
+Remedy_Obligor MD cb Remedy tp Role_T f RemAssignee xi ins:obligor
+Remedy_Obligee MD cb Remedy tp Role_T f RemAssigner xi ins:obligee
+Obligation MD cb Policy f ObligationConcept xt ins:Obligation,ins:Template xr ins:arisesUnder c obligation w 70 n "A policy-level ODRL obligation has no stated obligee, so the assigner is assumed."
+Obligation_Activity M cb Obligation xr ins:activity r odrl:action
+Obligation_Obligor MD cb Obligation tp Role_T f OblAssignee xi ins:obligor
+Obligation_Obligee MD cb Obligation tp Role_T f OblAssigner xi ins:obligee
+Duty MD cb Policy f DutyConcept xt ins:Obligation,ins:Template xr ins:arisesUnder c duty w 55 n "A duty of a permission is owed by the assignee for the permission to apply. Linking it to the permission (ins:fulfilledWhen) is not done, so uncertain."
+Duty_Activity M cb Duty xr ins:activity r odrl:action
+Duty_Obligor MD cb Duty tp Role_T f DutyAssignee xi ins:obligor
+Duty_Obligee MD cb Duty tp Role_T f DutyAssigner xi ins:obligee
+Permission_Scope MD cb Permission xt elg:AdmissionProfile xi ins:scope c scope w 70 n "The constraints of an ODRL permission are conditions on when it applies, composed as a profile requiring all."
+Permission_Scope_Operation M cb Permission_Scope xr elg:compositionOperation xa elg:AllRequired
+Permission_Scope_Key M cb Permission_Scope xr elg:conditionKey v "permission-scope"
+Place MD cb Permission_Scope f PlaceConcept aw "odrl:leftOperand = odrl:spatial" xt elg:ExactCondition xi elg:hasCondition c place-condition w 75 n "A spatial constraint with operator eq is an exact match on a place concept. Other operators are not mapped."
+Place_Key M cb Place xr elg:conditionKey v "spatial"
+Place_Strategy M cb Place xr elg:matchStrategy xa elg:ExactMatch
+Place_Wildcard M cb Place xr elg:wildcardSemantics xa elg:NoWildcard
+Place_Required M cb Place xr elg:requiredConcept r odrl:rightOperand
+Until MD cb Permission_Scope f DateConcept aw "odrl:leftOperand = odrl:dateTime" xt elg:Condition xi elg:hasCondition c until-condition w 50 n "A dateTime constraint with operator lt is an interval with an open upper bound. The date is a literal where the value space expects a number, so uncertain."
+Until_Key M cb Until xr elg:conditionKey v "until"
+Until_Strategy M cb Until xr elg:matchStrategy xa elg:IntervalContainment
+Until_Wildcard M cb Until xr elg:wildcardSemantics xa elg:NoWildcard
+Until_RangeSet MD cb Until xt qnt:RangeSet xi elg:requiredRangeSet c range-set
+Until_RangeSet_Space MD cb Until_RangeSet tp Space_T xi qnt:onSpace
+Until_Range MD cb Until_RangeSet xt qnt:Range xi qnt:hasRange c range
+Until_Range_Space MD cb Until_Range tp Space_T xi qnt:onSpace
+Until_Upper MD cb Until_Range xt qnt:Bound xi qnt:upperBound c upper-bound
+Until_Upper_Sense M cb Until_Upper xr qnt:boundSense xa qnt:Upper
+Until_Upper_Closure M cb Until_Upper xr qnt:boundClosure xa qnt:Open
+Until_Upper_Space MD cb Until_Upper tp Space_T xi qnt:onSpace
+Until_Upper_Value MD cb Until_Upper xt qnt:Quantity xi qnt:boundValue c value
+Until_Upper_Value_Space MD cb Until_Upper_Value tp Space_T xi qnt:onSpace
+Until_Upper_Value_Number M cb Until_Upper_Value xr qnt:numericValue r odrl:rightOperand
+Space_T MD xt qnt:ValueSpace ct "space/date" n "One value space for the dates of the constraints."
+Space_T_Order M cb Space_T xr qnt:orderKind xa qnt:TotalOrder
