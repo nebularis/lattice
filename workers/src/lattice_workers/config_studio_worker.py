@@ -141,6 +141,13 @@ class ConfigStudioWorker:
                 if len(documents) != 1:
                     raise ValueError(f"an ODRL import reads exactly one cst:ImportDocument, and the input holds {len(documents)}")
                 return config_studio_odrl.propose_odrl(job, config, spec, documents[0], str(graph.value(job, CST.submittedAt)))
+            if target == CST.MappingLanguageModelProposer:
+                from . import config_studio_mapping_proposer as mapping
+
+                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+                rounds = int(os.environ.get("LATTICE_MAPPING_PROPOSER_ROUNDS") or 40)
+                return mapping.propose_mapping(job, input_("configuration") + baseline, mapping.model_from_env(os.environ),
+                                               str(graph.value(job, CST.submittedAt)), rounds)
             if target == CST.SentenceFormProposer:
                 proposer = proposers.SentenceFormProposer()
             elif target == CST.LanguageModelProposer:

@@ -4,7 +4,7 @@
 // writes and its latest review. It is read only, and lays the tree out the same way every time, one row per mapping in
 // depth-first order.
 
-import { Graph, LABEL, MORK, TYPE, compact, localName, type Term } from "@lattice/authoring-domain";
+import { Graph, LABEL, MORK, TYPE, compact, iri, literal, typed, localName, type Term } from "@lattice/authoring-domain";
 
 export interface Targets {
   tbox: string[];
@@ -38,6 +38,8 @@ export interface MappingNode {
   /** Whether another mapping names it as its template. */
   isTemplate: boolean;
   review?: Review;
+  /** The proposal run that generated it, where one did. */
+  generatedBy?: string;
   depth: number;
   row: number;
 }
@@ -49,9 +51,20 @@ export interface SourceConcept {
   representedAs: string[];
 }
 
+/** What a proposal run cost, as far as its provider counted. */
+export interface RunCost {
+  iri: string;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  seconds?: number;
+}
+
 export interface Scheme {
   iri: string;
   label: string;
+  run?: RunCost;
   labelled: boolean;
   mappings: MappingNode[];
   sources: SourceConcept[];
@@ -104,6 +117,7 @@ export function schemesOf(g: Graph): Scheme[] {
         },
         isTemplate: templates.has(m),
         review: reviews.get(m),
+        generatedBy: g.value(m, PROV + "wasGeneratedBy"),
         depth: 0,
         row: 0,
       };
@@ -129,10 +143,39 @@ export function schemesOf(g: Graph): Scheme[] {
     const run = members.map((m) => g.value(m, PROV + "wasGeneratedBy")).find(Boolean);
     const name = g.value(scheme, LABEL) ?? (run ? `${localName(scheme.value)}, proposed in ${run.split(/[:/#]/).pop()}` : localName(scheme.value));
     const used = new Set(ordered.map((n) => n.source));
-    return { iri: scheme.value, label: name, labelled: g.value(scheme, LABEL) !== undefined, mappings: ordered, sources: sources.filter((s) => used.has(s.iri)) };
+    return { iri: scheme.value, label: name, labelled: g.value(scheme, LABEL) !== undefined, run: run ? costOf(g, run) : undefined, mappings: ordered, sources: sources.filter((s) => used.has(s.iri)) };
   })
     // A labelled scheme, such as a hand-made pack, before the proposals.
     .sort((a, b) => Number(b.labelled) - Number(a.labelled) || a.label.localeCompare(b.label));
+}
+
+function costOf(g: Graph, run: string): RunCost {
+  const n = (p: string) => (g.value(run, p) === undefined ? undefined : Number(g.value(run, p)));
+  const start = g.value(run, PROV + "startedAtTime");
+  const end = g.value(run, PROV + "endedAtTime");
+  return {
+    iri: run,
+    model: g.value(run, MORK("proposerModel")),
+    inputTokens: n(MORK("inputTokens")),
+    outputTokens: n(MORK("outputTokens")),
+    totalTokens: n(MORK("totalTokens")),
+    seconds: start && end ? Math.round((Date.parse(end) - Date.parse(start)) / 1000) : undefined,
+  };
+}
+
+/** A review of one mapping, made in the studio: its decision, note and the mapping that corrects it, by the author, now. */
+export function reviewGraph(mapping: string, decision: "Accepted" | "Corrected" | "Rejected" | "Deferred", note: string, at: string, n: number, correctedBy?: string): Graph {
+  const review = `${mapping}/review/${n}`;
+  return Graph.empty().edit((e) => {
+    e.add(review, TYPE, iri(MORK("MappingReview")));
+    e.add(review, TYPE, iri(PROV + "Activity"));
+    e.add(review, MORK("reviewOf"), iri(mapping));
+    e.add(review, MORK("reviewDecision"), iri(MORK(decision)));
+    e.add(review, PROV + "wasAssociatedWith", iri("urn:lattice:studio:author"));
+    e.add(review, PROV + "endedAtTime", typed(at, "http://www.w3.org/2001/XMLSchema#dateTime"));
+    if (note.trim()) e.add(review, MORK("reviewNote"), literal(note.trim()));
+    if (correctedBy) e.add(review, MORK("correctedBy"), iri(correctedBy));
+  });
 }
 
 /** The terms a mapping writes, compacted, each with the box it writes in. */

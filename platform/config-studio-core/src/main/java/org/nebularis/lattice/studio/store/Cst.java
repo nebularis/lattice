@@ -52,6 +52,10 @@ public final class Cst {
     public static final Resource SentenceFormProposer = r("SentenceFormProposer");
     public static final Resource LanguageModelProposer = r("LanguageModelProposer");
     public static final Resource OdrlProposer = r("OdrlProposer");
+    public static final Resource MappingLanguageModelProposer = r("MappingLanguageModelProposer");
+    public static final Property documentRole = p("documentRole");
+    public static final Resource SourceVocabulary = r("SourceVocabulary");
+    public static final Resource SampleSource = r("SampleSource");
     public static final Resource ImportDocument = r("ImportDocument");
     public static final Property documentContent = p("documentContent");
     public static final Property documentMediaType = p("documentMediaType");

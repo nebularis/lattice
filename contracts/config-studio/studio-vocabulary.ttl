@@ -126,6 +126,7 @@ cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term'
 cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
 cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, with a pack the deployment supplies." .
+cst:MappingLanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, given MORK's proposal tools as functions, as a proposer of a mapping scheme from a source vocabulary, checked over a sample source when one is given." .
 cst:OdrlProposer a cst:Target ; rdfs:comment "An ODRL 2.2 policy, compiled through the studio's MORK mapping scheme, as a proposer of one stated term for each of its rules (ADR-A144)." .
 cst:ImportDocument a owl:Class ;
     rdfs:comment "A document a job imports, such as an ODRL policy, carried in the job's input with what it says it is (STD-292)." .
@@ -133,6 +134,13 @@ cst:documentContent a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domai
     rdfs:comment "The document's text, as received." .
 cst:documentMediaType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range xsd:string ;
     rdfs:comment "The media type the document was received with, never one sniffed from its content." .
+cst:documentRole a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range cst:DocumentRole ;
+    rdfs:comment "What a job reads a document as, where a job reads several." .
+cst:DocumentRole a owl:Class ; rdfs:comment "What a job reads a document as." .
+cst:SourceVocabulary a cst:DocumentRole ; rdfs:comment "The vocabulary a mapping is proposed from." .
+cst:SampleSource a cst:DocumentRole ; rdfs:comment "Data in the source vocabulary, which a proposed mapping is run over and checked on." .
+cst:sourceNamespace a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range xsd:string ;
+    rdfs:comment "The namespace of a source vocabulary's own terms, which its cards are limited to." .
 cst:importInto a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ;
     rdfs:comment "The clause of the library the imported terms are proposed on. Without one the job generates a form with a clause for each term." .
 cst:proposer a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;

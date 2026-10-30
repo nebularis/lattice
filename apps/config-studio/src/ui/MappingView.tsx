@@ -2,15 +2,17 @@
 // Mapping mode's view: the source concepts a MORK mapping scheme reads on the left, its mappings drawn as the tree their
 // parent links make, each with the terms it writes and its latest review, and for the mapping picked its review and its
 // editor, whose findings come from compiling the part with mork_rdf as it is edited. Given a sample source, the part runs
-// over it whenever either changes, and the author steps through the run's strata, each mapping showing what it wrote.
+// over it whenever either changes, and the author steps through the run's strata, each mapping showing what it wrote. A
+// language model proposes a scheme from a source vocabulary with MORK's proposal tools, and the author reviews each of
+// its mappings here, each review a mork:MappingReview the next proposal learns from.
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Hammer, Network, Plus } from "lucide-react";
-import { LABEL, MORK, PREFIXES, TYPE, compact, iri, literal, namespaceOf, type Graph } from "@lattice/authoring-domain";
+import { ChevronLeft, ChevronRight, Hammer, Network, Plus, Sparkles } from "lucide-react";
+import { CST, Graph, LABEL, MORK, PREFIXES, TYPE, compact, iri, literal, namespaceOf } from "@lattice/authoring-domain";
 import { api, awaitJob } from "../api";
-import { importDocument } from "../rdf/odrl";
+import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
-import { schemesOf, written, type MappingNode, type Scheme } from "../rdf/mapping";
+import { reviewGraph, schemesOf, written, type MappingNode, type RunCost, type Scheme } from "../rdf/mapping";
 import { Spinner, go } from "./kit";
 import { NodeEditor } from "./ConfigView";
 import { useStudio } from "./Workspace";
@@ -62,12 +64,17 @@ export function MappingView({ selected }: { selected?: string }) {
     }
   };
 
+  const proposed = (iri?: string) => iri && go("w", studio.id, "mapping", iri);
   if (!scheme) {
     return (
       <div className="empty">
         <Network size={28} color="var(--accent)" />
         <h3>No mapping scheme yet</h3>
-        <p className="small">Import a file holding a MORK mapping scheme, such as a mapping pack, and its mappings are drawn here.</p>
+        <p className="small">Import a file holding a MORK mapping scheme, such as a mapping pack, or have a language model propose one from a source vocabulary.</p>
+        <div style={{ maxWidth: 420, width: "100%", textAlign: "left" }}>
+          <SamplePanel run={sampleRun} />
+          <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
+        </div>
       </div>
     );
   }
@@ -91,12 +98,14 @@ export function MappingView({ selected }: { selected?: string }) {
             </select>
           )}
           <div className="small muted">{scheme.label}</div>
+          {scheme.run && <div className="small muted">{cost(scheme.run)}</div>}
           <div className="row" style={{ gap: 6 }}>
             <button className="btn sm" onClick={() => add("Datum")}><Plus size={13} /> Root datum</button>
             <button className="btn sm" disabled={busy} onClick={() => void compile()}>{busy ? <Spinner /> : <Hammer size={13} />} Compile</button>
           </div>
         </div>
         <SamplePanel run={sampleRun} />
+        <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
         <h4>Source concepts it maps</h4>
         {scheme.sources.length === 0 && <div className="empty small">No mapping of the scheme names a source concept.</div>}
         {scheme.sources.map((s) => {
@@ -197,6 +206,7 @@ function MappingCard({ node, schemes, prefixes, open, add, output }: { node: Map
         <button className="btn sm" onClick={() => add("Datum", node.iri)}><Plus size={13} /> Child datum</button>
         <button className="btn sm" onClick={() => add("DataMapping", node.iri)}><Plus size={13} /> Child data mapping</button>
       </header>
+      {node.generatedBy && <ReviewControls node={node} scheme={schemes.find((s) => s.mappings.some((m) => m.iri === node.iri))!} prefixes={prefixes} />}
       {r && (
         <div className="fields">
           <div className="field">
@@ -362,6 +372,122 @@ function Stepper({ run }: { run: SampleRun }) {
       <button className="btn ghost icon sm" aria-label="Previous stratum" disabled={run.step <= 0} onClick={() => run.setStep(run.step - 1)}><ChevronLeft size={14} /></button>
       <span className="small">Stratum {run.step + 1} of {Math.max(strata, 1)}</span>
       <button className="btn ghost icon sm" aria-label="Next stratum" disabled={run.step >= strata - 1} onClick={() => run.setStep(run.step + 1)}><ChevronRight size={14} /></button>
+    </div>
+  );
+}
+
+/** A run's model, tokens and time, as a line. */
+function cost(run: RunCost): string {
+  const tokens = run.totalTokens ?? (run.inputTokens !== undefined || run.outputTokens !== undefined ? (run.inputTokens ?? 0) + (run.outputTokens ?? 0) : undefined);
+  return [run.model && `proposed by ${run.model}`, tokens !== undefined && `${tokens.toLocaleString()} tokens`, run.seconds !== undefined && `${run.seconds} s`].filter(Boolean).join(", ");
+}
+
+/** One document a mapping proposal reads, with what it is read as. */
+function document(node: string, content: string, media: string, role: "SourceVocabulary" | "SampleSource", namespace = ""): Graph {
+  return Graph.empty().edit((e) => {
+    e.add(node, TYPE, iri(CST("ImportDocument")));
+    e.add(node, CST("documentContent"), literal(content));
+    e.add(node, CST("documentMediaType"), literal(media));
+    e.add(node, CST("documentRole"), iri(CST(role)));
+    if (namespace) e.add(node, CST("sourceNamespace"), literal(namespace));
+  });
+}
+
+/** Has a language model propose a scheme from a source vocabulary, checked over the sample source when there is one, and adds
+ * it to the mapping part as an unsaved edit. The deployment configures the model. */
+function ProposePanel({ sample, onProposed }: { sample?: string; onProposed: (scheme?: string) => void }) {
+  const studio = useStudio();
+  const [file, setFile] = useState<{ name: string; text: string }>();
+  const [namespace, setNamespace] = useState("");
+  const [state, setState] = useState<"idle" | "running" | "failed" | "done">("idle");
+  const [message, setMessage] = useState<string>();
+  const propose = async () => {
+    const media = file && mediaTypeOf(file.name);
+    if (!file || !media || media === "application/ld+json") {
+      setState("failed");
+      setMessage("Give the source vocabulary as Turtle or N-Triples.");
+      return;
+    }
+    setState("running");
+    setMessage(undefined);
+    try {
+      const id = studio.id;
+      const source = document(`urn:lattice:studio:ws:${id}:import/1`, file.text, media, "SourceVocabulary", namespace.trim());
+      const samples = sample ? document(`urn:lattice:studio:ws:${id}:import/2`, sample, "text/turtle", "SampleSource") : undefined;
+      const current = studio.model.state.configs.mapping!.current;
+      const body = [source, samples].reduce((g: Graph, d) => (d ? g.merge(d) : g), current);
+      const job = await awaitJob(await api.submit(id, "propose", "mapping-language-model", body));
+      if (job.status === "Failed") {
+        setState("failed");
+        setMessage(job.failure ?? "The proposal failed.");
+        return;
+      }
+      const applied = applyArtefacts(job.artefacts, { mapping: current });
+      if (applied.edits.mapping) studio.model.edit("mapping", () => applied.edits.mapping!);
+      const errors = job.issues.filter((i) => i.severity === "Violation").length;
+      setState("done");
+      setMessage(`Proposed${errors ? `, with ${errors} ${errors === 1 ? "error" : "errors"} left` : ", and its check passed"}. Review each mapping, then save.`);
+      onProposed(applied.edits.mapping?.ofType(MORK("MappingScheme")).find((s) => !current.has(s))?.value);
+    } catch (error) {
+      setState("failed");
+      setMessage(error instanceof Error ? error.message : String(error));
+    }
+  };
+  return (
+    <>
+      <h4>Propose with a language model</h4>
+      <div style={{ padding: "0 14px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <label className="btn sm" style={{ alignSelf: "flex-start" }}>
+          {file ? file.name : "Source vocabulary"}
+          <input type="file" accept=".ttl,.nt" hidden onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (f) setFile({ name: f.name, text: await f.text() });
+          }} />
+        </label>
+        <input className="input mono small" placeholder="Its namespace, to read only its own terms" aria-label="Source namespace" value={namespace} onChange={(e) => setNamespace(e.target.value)} />
+        <div className="row" style={{ gap: 6 }}>
+          <button className="btn sm primary" disabled={!file || state === "running"} onClick={() => void propose()}>
+            {state === "running" ? <Spinner size={12} /> : <Sparkles size={13} />} Propose
+          </button>
+          <span className="grow small muted" role="status">
+            {state === "running" ? "The model is proposing, which takes minutes" : state === "failed" ? <span style={{ color: "var(--bad)" }}>{message}</span> : message ?? (sample ? "It is checked over the sample source." : "Give a sample source above to have it checked on data.")}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Accept, correct, reject or defer a proposed mapping, with a note, as a mork:MappingReview in the mapping part. */
+function ReviewControls({ node, scheme, prefixes }: { node: MappingNode; scheme: Scheme; prefixes: Record<string, string> }) {
+  const studio = useStudio();
+  const [note, setNote] = useState("");
+  const [correctedBy, setCorrectedBy] = useState("");
+  const decide = (decision: "Accepted" | "Corrected" | "Rejected" | "Deferred") => {
+    const graph = studio.model.state.configs.mapping!.current;
+    const n = graph.subjects(MORK("reviewOf"), node.iri).length + 1;
+    studio.model.edit("mapping", (g) => g.merge(reviewGraph(node.iri, decision, note, new Date().toISOString(), n, decision === "Corrected" && correctedBy ? correctedBy : undefined)));
+    setNote("");
+  };
+  return (
+    <div className="fields">
+      <div className="field">
+        <div className="label"><div className="name">Your review</div></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <textarea className="small" rows={2} value={note} placeholder="Why, which the next proposal is told" aria-label="Review note" onChange={(e) => setNote(e.target.value)} />
+          <select className="select small" value={correctedBy} onChange={(e) => setCorrectedBy(e.target.value)} aria-label="Corrected by">
+            <option value="">Corrected by no mapping of the scheme</option>
+            {scheme.mappings.filter((m) => m.iri !== node.iri).map((m) => (
+              <option key={m.iri} value={m.iri}>{m.label} ({compact(m.iri, prefixes)})</option>
+            ))}
+          </select>
+          <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+            {(["Accepted", "Corrected", "Rejected", "Deferred"] as const).map((d) => (
+              <button key={d} className="btn sm" style={{ color: DECISION[d] }} onClick={() => decide(d)}>{d === "Accepted" ? "Accept" : d === "Corrected" ? "Correct" : d === "Rejected" ? "Reject" : "Defer"}</button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

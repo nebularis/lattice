@@ -99,6 +99,17 @@ class AssemblyTest {
     }
 
     @Test
+    void aMappingProposalNeedsOneSourceVocabularyAndAtMostOneSample() {
+        String doc = "<urn:x:%s> a cst:ImportDocument ; cst:documentRole cst:%s ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        String path = "/api/workspaces/" + WS + "/jobs";
+        assertEquals(422, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY).status());
+        assertEquals(422, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY + doc.formatted("s", "SampleSource")).status());
+        assertEquals(202, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY + doc.formatted("v", "SourceVocabulary")).status());
+        assertEquals(202, f.post(path, "kind=propose&target=mapping-language-model",
+            LIBRARY + doc.formatted("v", "SourceVocabulary") + doc.formatted("s", "SampleSource")).status());
+    }
+
+    @Test
     void aMappingDryRunNeedsItsSampleAsOneImportDocument() {
         assertEquals(422, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=mapping", LIBRARY).status());
         String sample = LIBRARY + "<urn:x:doc> a cst:ImportDocument ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";

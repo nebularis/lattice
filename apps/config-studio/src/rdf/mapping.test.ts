@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { Graph, MORK, localName } from "@lattice/authoring-domain";
 import { kindOf, sectionsFor } from "./editors";
 import { Vocabulary } from "./vocabulary";
-import { schemesOf } from "./mapping";
+import { reviewGraph, schemesOf } from "./mapping";
 import { split } from "./split";
 
 const OM = "https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#";
@@ -89,5 +89,27 @@ describe("a mapping's editor", () => {
     expect(sections.map((s) => s.title)).toEqual(["Reads", "Writes", "Structure"]);
     const kinds = Object.fromEntries(sections.flatMap((s) => s.fields).map((f) => [localName(f.property), f.kind]));
     expect(kinds).toMatchObject({ exactTBoxMatch: "targetClass", exactRBoxMatch: "targetProperty", exactABoxMatch: "targetIndividual", compositeBroaderMapping: "reference", appliesWhen: "reference", dataRef: "text" });
+  });
+});
+
+describe("a proposal in the studio", () => {
+  const P = "https://example.org/p#";
+  const run = "urn:lattice:studio:job:1:run";
+  const g = Graph.parse(`@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix prov: <http://www.w3.org/ns/prov#> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+    <${P}S> a mork:MappingScheme . <${P}M> a mork:Datum ; mork:mappingScheme <${P}S> ; prov:wasGeneratedBy <${run}> .
+    <${run}> a mork:ProposalRun ; mork:proposerModel "a model" ; mork:inputTokens 1200 ; mork:outputTokens 300 ;
+      prov:startedAtTime "2026-10-30T03:00:00Z"^^xsd:dateTime ; prov:endedAtTime "2026-10-30T03:02:15Z"^^xsd:dateTime .`);
+
+  it("names the scheme by its run and reads what the run cost", () => {
+    const [scheme] = schemesOf(g);
+    expect(scheme.run).toMatchObject({ model: "a model", inputTokens: 1200, outputTokens: 300, seconds: 135 });
+    expect(scheme.mappings[0].generatedBy).toBe(run);
+  });
+
+  it("records a review made in the studio, the latest deciding", () => {
+    const first = g.merge(reviewGraph(P + "M", "Corrected", "names an occupancy", "2026-10-30T04:00:00Z", 1));
+    const second = first.merge(reviewGraph(P + "M", "Accepted", "", "2026-10-30T05:00:00Z", 2));
+    expect(schemesOf(first)[0].mappings[0].review).toMatchObject({ decision: "Corrected", note: "names an occupancy" });
+    expect(schemesOf(second)[0].mappings[0].review?.decision).toBe("Accepted");
   });
 });

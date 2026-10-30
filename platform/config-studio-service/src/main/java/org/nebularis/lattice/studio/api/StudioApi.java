@@ -51,7 +51,8 @@ public final class StudioApi {
     private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence", "mapping");
     /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
     private static final Map<String, Resource> PROPOSERS = Map.of(
-        "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer, "odrl", Cst.OdrlProposer);
+        "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer, "odrl", Cst.OdrlProposer,
+        "mapping-language-model", Cst.MappingLanguageModelProposer);
 
     private static final String TRIG = "application/trig";
 
@@ -546,6 +547,16 @@ public final class StudioApi {
             if (documents.size() != 1 || !documents.get(0).hasProperty(Cst.documentContent)
                 || !documents.get(0).hasProperty(Cst.documentMediaType)) {
                 return ApiResponse.text(422, "an odrl import and a mapping's dry run each need exactly one cst:ImportDocument with a cst:documentContent and a cst:documentMediaType");
+            }
+        }
+        if ("mapping-language-model".equals(target)) {
+            // A proposal reads one source vocabulary and at most one sample source, each with its content and media type.
+            List<Resource> documents = config.listSubjectsWithProperty(RDF.type, Cst.ImportDocument).toList();
+            long sources = documents.stream().filter(d -> d.hasProperty(Cst.documentRole, Cst.SourceVocabulary)).count();
+            long samples = documents.stream().filter(d -> d.hasProperty(Cst.documentRole, Cst.SampleSource)).count();
+            if (sources != 1 || samples > 1 || documents.size() != sources + samples
+                || documents.stream().anyMatch(d -> !d.hasProperty(Cst.documentContent) || !d.hasProperty(Cst.documentMediaType))) {
+                return ApiResponse.text(422, "a mapping proposal needs one cst:ImportDocument of role cst:SourceVocabulary and at most one of role cst:SampleSource, each with a cst:documentContent and a cst:documentMediaType");
             }
         }
         String job = ids.get().toString();
