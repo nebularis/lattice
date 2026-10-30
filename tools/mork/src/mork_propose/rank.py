@@ -17,7 +17,8 @@ _COMPATIBLE = {
     "class": ("class", "concept"),
     "concept": ("concept", "class", "individual"),
     "individual": ("individual", "concept", "class"),
-    "object property": ("object property", "property", "datatype property"),
+    # An RDF source's object property often stands for what it points at, as odrl:duty for a duty, so it may map to a class.
+    "object property": ("object property", "property", "datatype property", "class"),
     "datatype property": ("datatype property", "property", "object property"),
     "property": ("object property", "datatype property", "property"),
 }

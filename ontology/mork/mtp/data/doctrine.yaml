@@ -11,6 +11,9 @@ invariants:
   - LATTICE never uses the word right, which covers four Hohfeld relations. A claim is the obligee end of an ins:Obligation (its holder an ins:ClaimHolder), a liberty an ins:Permission, a power an ins:Power, an immunity an ins:Exclusion of a power. A source's right may be several at once, each its own relation under one term.
   - An ins:Permission always excepts a prohibition (law I8). A licence's permission excepts the prohibition its owner's exclusive rights imply, so a mapping that creates a permission also states, or names, the prohibition it excepts.
   - Stated meaning names roles (pty:Role), never role occupancies, and every stated term is both ins:Term and ins:Template, with its relations under it by ins:arisesUnder.
+  - A relation's ins:activity is a skos:Concept naming the act, never a literal. Where the source names its act by an IRI, map that IRI. Where it names the act only in text, mint a concept for it with a note, for a reviewer to confirm or replace with a concept of the activity scheme.
+  - Declare each prefix a mapping scheme's paths use with its own sh:declare, in MCN one sdl [prefix <namespace>] for each prefix, repeated on the scheme line and never joined by a comma. rdfs, owl and xsd need declaring too when a path uses them.
+  - A date or a time is a qnt:Quantity whose qnt:numericValue is the xsd:date or xsd:dateTime literal itself, on a value space that declares that datatype with qnt:valueDatatype, since a space's values are xsd:decimal unless it says otherwise. The property's name is historical, and the literal's datatype follows the space.
 decision_ladder:
   - Identify the mapping family.
   - Identify the source representation.

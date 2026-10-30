@@ -317,6 +317,11 @@ description = "Measure a MORK run's peak memory and time on the catalogue mappin
 env = { PYTHONPATH = "{{config_root}}/tools" }
 run = "python -m pytest benchmark/mork-rdf-run-cost -q -p no:cacheprovider && python benchmark/mork-rdf-run-cost/check.py"
 
+[tasks."check:mork-candidate-ranking"]
+description = "Measure how often BM25, BM25 with MTP's translation table, MORK's recognition engine and the two fused put the confirmed target term in their first five and first ten, on the ODRL pack and the LegalRuleML history (ADR-A124). Run on demand, not part of check. Fails on a source with no confirmed pair or a method that ranks nothing, never on a hit rate"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m pytest benchmark/mork-candidate-ranking -q -p no:cacheprovider && python benchmark/mork-candidate-ranking/check.py"
+
 [tasks."check:ledger-posting-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph. Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"

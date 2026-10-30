@@ -123,6 +123,7 @@ om:Comparison a sh:NodeShape ;
     sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:lt odrl:lteq odrl:gt odrl:gteq ) ] .
 om:UpperComparison a sh:NodeShape ; sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:lt odrl:lteq ) ] .
 om:LowerComparison a sh:NodeShape ; sh:property [ sh:path odrl:operator ; sh:minCount 1 ; sh:in ( odrl:gt odrl:gteq ) ] .
+om:DateOperand a sh:NodeShape ; sh:property [ sh:path odrl:leftOperand ; sh:hasValue odrl:dateTime ] .
 
 # A comparison's range set: one range on the left operand's value space, bounded above by lt and lteq or below by gt
 # and gteq at the right operand, open for lt and gt and closed for lteq and gteq.
@@ -149,6 +150,10 @@ om:Space_T a mork:Datum ; mork:mappingScheme om:Scheme ;
     mork:exactTBoxMatch qnt:ValueSpace ; mork:conceptNameTemplate "space/${odrl:leftOperand}" .
 om:Space_T_Order a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Space_T ;
     mork:exactRBoxMatch qnt:orderKind ; mork:exactABoxMatch qnt:TotalOrder .
+# A date is held as a quantity whose literal is an xsd:date, on a space that declares that datatype, since a space's values
+# are xsd:decimal unless it says otherwise. ODRL's dateTime operand compares dates.
+om:Space_T_Datatype a mork:DataMapping ; mork:mappingScheme om:Scheme ; mork:compositeBroaderMapping om:Space_T ;
+    mork:exactRBoxMatch qnt:valueDatatype ; mork:exactABoxMatch xsd:date ; mork:appliesWhen om:DateOperand .
 
 # A bound at the right operand, on the left operand's space, its closure from the operator.
 om:Bound_T a mork:Datum ; mork:mappingScheme om:Scheme ; mork:exactTBoxMatch qnt:Bound ; mork:conceptName "bound" .
