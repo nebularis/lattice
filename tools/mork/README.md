@@ -17,7 +17,7 @@ The package provides the MORK decoder, codebook, community tooling, and MTP gene
 | Tool | Gives |
 |---|---|
 | `teaching_pack` | MTP's L0, doctrine, partition and worked cassettes, and MCN's codebook, about 4,500 tokens |
-| `target_cards` | one line per term of each named LATTICE layer: its CURIE, kind, label, the first sentence of its definition, and its superclass, domain or range. The deontic layers, Instrument, Eligibility, Party and Behaviour, are about 8,600 tokens together, where their READMEs are about 120,000 |
+| `target_cards` | one line per term of each named LATTICE layer: its CURIE, kind, label, its `rdfs:comment` or its `fnd:utility`, whichever is longer, in full, and its superclass, domain or range. The deontic layers, Instrument, Eligibility, Party and Behaviour, are about 17,800 tokens together, where their READMEs are about 120,000 |
 | `source_cards` | the same for a source vocabulary in an RDF file, for example ODRL's 206 terms in about 7,000 tokens |
 | `candidate_terms` | the target terms likeliest to match one source term, ranked by BM25 over labels, names and definitions among terms of a compatible kind, so the agent chooses among a few |
 | `check_mapping` | a proposal in MCN decoded by the reference decoder, validated against MORK's shapes and compiled by `tools/mork_rdf`, and run over a sample source when one is given, with every failure a finding the agent can act on |

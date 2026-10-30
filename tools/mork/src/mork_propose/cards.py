@@ -17,12 +17,13 @@ _KINDS = ((OWL.Class, "class"), (RDFS.Class, "class"), (OWL.ObjectProperty, "obj
           (OWL.DatatypeProperty, "datatype property"), (RDF.Property, "property"), (OWL.AnnotationProperty, None),
           (SKOS.Concept, "concept"), (OWL.NamedIndividual, "individual"))
 _DEFINITIONS = (RDFS.comment, SKOS.definition)
+_UTILITY = (URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#utility"),)
 _LABELS = (RDFS.label, SKOS.prefLabel)
 
 
 @dataclass(frozen=True)
 class Card:
-    """One term: its CURIE, its kind, its label and the first sentence of its definition, and what places it."""
+    """One term: its CURIE, its kind, its label, its definition or its utility, whichever says more, and what places it."""
 
     iri: URIRef
     curie: str
@@ -35,12 +36,11 @@ class Card:
         return " | ".join([self.curie, self.kind, self.label, self.definition, ", ".join(self.places)])
 
 
-def _first_sentence(text: str, limit: int = 160) -> str:
-    text = " ".join(text.split())
-    # A sentence ends at a full stop and a space, but not after an abbreviation such as "e.g." or "i.e.".
-    end = next((m.start() for m in re.finditer(r"\. ", text) if not re.search(r"(?:\b(?:e\.g|i\.e|cf|etc|viz|no|vs))$", text[: m.start()], re.I)), -1)
-    text = text if end < 0 else text[: end + 1]
-    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+def _text(g: Graph, s) -> str:
+    """A term's rdfs:comment or skos:definition, which says what it is, or its fnd:utility, which says how to use it and
+    often states the law that governs it, whichever is longer, in full on one line. A term with neither has none."""
+    found = [_one(g, s, _DEFINITIONS) or "", _one(g, s, _UTILITY) or ""]
+    return " ".join(max(found, key=len).split()).replace(" | ", " / ")
 
 
 def _one(g: Graph, s, predicates) -> Optional[str]:
@@ -77,14 +77,14 @@ def cards(g: Graph, within: Optional[Iterable[str]] = None) -> list[Card]:
                 places += [f"type {curie(o)}" for o in sorted(g.objects(s, RDF.type), key=str)
                            if isinstance(o, URIRef) and o not in (OWL.NamedIndividual, SKOS.Concept)]
             label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
-            out[s] = Card(s, curie(s), kind, label, _first_sentence(_one(g, s, _DEFINITIONS) or ""), tuple(places))
+            out[s] = Card(s, curie(s), kind, label, _text(g, s), tuple(places))
     # An individual a vocabulary types only with one of its classes, such as qnt:Upper a qnt:BoundSense.
     classes = {c for c in g.subjects(RDF.type, OWL.Class)} | {c for c in g.subjects(RDF.type, RDFS.Class)}
     for s, cls in g.subject_objects(RDF.type):
         if isinstance(s, URIRef) and s not in out and cls in classes and (not spaces or str(s).startswith(spaces)):
             label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
             types = tuple(f"type {curie(o)}" for o in sorted(g.objects(s, RDF.type), key=str) if o in classes)
-            out[s] = Card(s, curie(s), "individual", label, _first_sentence(_one(g, s, _DEFINITIONS) or ""), types)
+            out[s] = Card(s, curie(s), "individual", label, _text(g, s), types)
     return sorted((c for c in out.values() if c is not None), key=lambda c: c.curie)
 
 

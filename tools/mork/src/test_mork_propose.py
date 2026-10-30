@@ -141,3 +141,15 @@ def test_a_target_term_the_target_vocabulary_does_not_declare_in_its_own_namespa
         ex:a mork:exactTBoxMatch ins:Obligatio . ex:b mork:exactRBoxMatch ins:activity . ex:c mork:exactRBoxMatch rdf:type .
         ex:d mork:exactABoxMatch ex:Own .""", format="turtle")
     assert [(str(m), code) for _, _, code, m, _ in unknown_targets(g, vocabulary)] == [("https://example.org/m#a", "UnknownTarget")]
+
+
+def test_a_card_gives_the_comment_or_the_utility_whichever_says_more_in_full():
+    from mork_propose.cards import cards
+
+    g = Graph().parse(data="""@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> . @prefix ex: <https://example.org/x#> .
+        ex:A a owl:Class ; rdfs:comment "Short." ; fnd:utility "Subject: a permission. Excepts exactly one prohibition | whose obligor is its holder (law I8)." .
+        ex:B a owl:Class ; rdfs:comment "What B is, said at length. And a second sentence the old cards cut." ; fnd:utility "Use B." .""", format="turtle")
+    by = {c.curie.rsplit(":", 1)[-1]: c.definition for c in cards(g, ["https://example.org/x#"])}
+    assert by == {"A": "Subject: a permission. Excepts exactly one prohibition / whose obligor is its holder (law I8).",
+                  "B": "What B is, said at length. And a second sentence the old cards cut."}
