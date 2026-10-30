@@ -141,7 +141,8 @@ describe("precedence", () => {
   });
 
   it("is as before for a field read without a class", () => {
-    expect(vocab.field(T("size")).kind).toBe("iri");
+    // No shape applies, so the integer datatype of Thing's shape is not read. A datatype property with no range is text.
+    expect(vocab.field(T("size")).kind).toBe("text");
     expect(vocab.field(T("size")).required).toBe(false);
   });
 });

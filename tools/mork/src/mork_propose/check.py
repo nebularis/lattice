@@ -48,6 +48,33 @@ def check(mcn: str, *, base: str = "urn:mork-propose:out/", at: Optional[datetim
     return check_graph(g, base=base, at=at, sample=sample, target_vocabulary=target_vocabulary)
 
 
+TARGETS = ("exactTBoxMatch", "exactRBoxMatch", "inverseRBoxMatch", "exactABoxMatch")
+
+
+# RDF's own vocabularies, whose terms a layer may mention without declaring them all.
+META = {"http://www.w3.org/1999/02/22-rdf-syntax-ns#", "http://www.w3.org/2000/01/rdf-schema#", "http://www.w3.org/2002/07/owl#",
+        "http://www.w3.org/2001/XMLSchema#"}
+
+
+def _namespace(iri: str) -> str:
+    return iri[: max(iri.rfind("#"), iri.rfind("/")) + 1]
+
+
+def unknown_targets(g: Graph, vocabulary: Graph) -> list:
+    """A target term in a namespace the target vocabulary declares terms in, which it does not declare, such as a
+    misspelt class. A term of any other namespace, such as RDF's own or a source's, is left alone."""
+    from rdflib import URIRef
+
+    declared = {s for s in vocabulary.subjects() if isinstance(s, URIRef)}
+    namespaces = {_namespace(str(s)) for s in declared} - META
+    out = []
+    for name in TARGETS:
+        for mapping, term in sorted(g.subject_objects(URIRef(MORK_NS + name)), key=str):
+            if isinstance(term, URIRef) and term not in declared and _namespace(str(term)) in namespaces:
+                out.append(("validate", "error", "UnknownTarget", mapping, f"mork:{name} names {term}, which the target vocabulary does not declare"))
+    return out
+
+
 def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[datetime] = None,
                 sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None, compiled_out: Optional[list] = None) -> Checked:
     """The check of a mapping graph already decoded or parsed, such as the LangGraph pipeline's Turtle. Each compiled
@@ -59,6 +86,8 @@ def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[d
     schemes = sorted(g.subjects(RDF.type, __import__("rdflib").URIRef(MORK_NS + "MappingScheme")), key=str)
     if not schemes:
         result.findings.append(("compile", "error", "NoScheme", None, "the proposal declares no mork:MappingScheme, so nothing compiles"))
+    if target_vocabulary is not None:
+        result.findings.extend(unknown_targets(g, target_vocabulary))
     for scheme in schemes:
         try:
             compiled = compile_scheme(g, scheme, base=base, at=at, target_vocabulary=target_vocabulary)

@@ -48,7 +48,7 @@ public final class StudioApi {
     private static final List<String> GRAPH_NAMES = Workspace.GRAPHS;
     /** The configurations a job checks, and those of them that compile. */
     private static final List<String> TARGETS = GRAPH_NAMES.subList(1, GRAPH_NAMES.size());
-    private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence");
+    private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence", "mapping");
     /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
     private static final Map<String, Resource> PROPOSERS = Map.of(
         "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer, "odrl", Cst.OdrlProposer);

@@ -223,6 +223,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
             <>
               <div className="group">Mapping</div>
               <NavLink to="mapping" view={view} id={id} icon={<Network size={16} />} label="Schemes" count={state.configs.mapping!.current.ofType(MORK("MappingScheme")).length} issues={model.issues.mapping} dirty={dirty.mapping} />
+              <div className="group">Output</div>
+              <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
             </>
           ) : builder ? (
             <>

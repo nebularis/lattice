@@ -8,6 +8,7 @@ repository catalogue reader, never by a path written here (STD-273).
 from __future__ import annotations
 
 import functools
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -87,7 +88,12 @@ _SPECS = {
         for module in ("foundation", "quantification", "party", "eligibility", "wording", "behaviour", "instrument")
         for role in ("spec", "vocab")
     ],
-    "mapping": [("mork", "spec", "*.ttl")],
+    # A mapping's target terms, which compiling it checks: the layers stated meaning is written in.
+    "mapping": [("vocabulary", "spec", "*.ttl")] + [
+        (module, role, "*.ttl")
+        for module in ("foundation", "quantification", "party", "eligibility", "wording", "behaviour", "instrument")
+        for role in ("spec", "vocab")
+    ],
 }
 _SHAPES = {
     "persistence": [("persistence", "constraints.ttl")],
@@ -96,7 +102,6 @@ _SHAPES = {
     "quantification": [("quantification", "constraints.ttl")],
     "eligibility": [("eligibility", "structural.ttl"), ("eligibility", "constraints.ttl")],
     "meaning": [("instrument", "structural.ttl"), ("instrument", "constraints.ttl")],
-    "mapping": [("mork", "constraints.ttl")],
 }
 TARGETS = tuple(_SPECS)
 
@@ -205,6 +210,9 @@ def _copy_shacl_report(result: _Result, report: Graph) -> None:
 
 
 def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root: str, now: datetime) -> None:
+    if target == "mapping":
+        result.conforms(_mapping_findings(result, config, baseline, root, now))
+        return
     data = _merge(Graph() if target == "surface" else _spec(root, target), baseline, config)
     conforms, report, _ = pyshacl.validate(
         data, shacl_graph=_shapes(root, target), inference="none", advanced=True, allow_warnings=True
@@ -225,6 +233,37 @@ def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root
             SH.Warning, "Surface constraints.ttl was not run, since pySHACL refuses it. Compile to check those laws.",
             "ConstraintsNotRun",
         )
+
+
+# The namespace a mapping's compiled queries mint under. The studio never runs them on its own data, so it is a placeholder.
+_MAPPING_BASE = "urn:lattice:studio:mapping/"
+_MAPPING_SEVERITY = {"error": SH.Violation, "warning": SH.Warning}
+
+
+def _mapping_findings(result: _Result, config: Graph, baseline: Graph, root: str, now: datetime, compiled: Optional[list] = None) -> bool:
+    """Compiles every mapping scheme with mork_rdf, which validates it against MORK's shapes first and checks its target
+    terms against the layers, and records each finding on the mapping it concerns. A finding that asks for review, such
+    as an uncertain mapping, is information. Returns whether nothing is an error."""
+    from mork_propose.check import check_graph
+
+    checked = check_graph(_merge(baseline, config), base=_MAPPING_BASE, at=now, target_vocabulary=_spec(root, "mapping"), compiled_out=compiled)
+    for _, severity, code, about, message in checked.findings:
+        result.finding(_MAPPING_SEVERITY.get(severity, SH.Info), message, code, URIRef(str(about)) if about else None)
+    return not any(f[1] == "error" for f in checked.findings)
+
+
+def _compile_mapping(result: _Result, config: Graph, baseline: Graph, root: str, now: datetime) -> None:
+    """Each scheme's compiled form as RDF, and its queries in the order a run takes them, grouped by scheme."""
+    from mork_rdf import to_rdf
+
+    compiled: list = []
+    result.conforms(_mapping_findings(result, config, baseline, root, now, compiled))
+    for c in compiled:
+        name = re.sub(r"[^A-Za-z0-9_-]+", "-", c.scheme.rsplit("#", 1)[-1].rsplit("/", 1)[-1]).strip("-") or "scheme"
+        result.artefact(f"{name}.compiled.ttl", "text/turtle", to_rdf(c).serialize(format="turtle"), c.scheme)
+        queries = sorted(c.queries, key=lambda q: (q.stratum, q.box != "tbox", q.mapping, q.kind))
+        text = "\n\n".join(f"# {q.kind} for {q.mapping}, stratum {q.stratum}, {q.box}\n{q.text}" for q in queries)
+        result.artefact(f"{name}.rq", "application/sparql-query", text + "\n", c.scheme)
 
 
 def _persistence_findings(result: _Result, config: Graph, baseline: Graph, root: str) -> Optional[Tuple[Graph, Any]]:
@@ -311,6 +350,8 @@ def run_job(
         _validate(result, target, config, baseline, base, now)
     elif target == "persistence":
         _compile_persistence(result, config, baseline, base)
+    elif target == "mapping":
+        _compile_mapping(result, config, baseline, base, now)
     elif target == "eligibility":
         result.conforms(layers.eligibility_artefacts(result, _merge(_spec(base, target), baseline, config), now))
     else:

@@ -7,7 +7,7 @@
 // ontology cannot say is declared here, in OVERRIDES.
 
 import { type Constraint, merge, readShapes } from "./shapes";
-import { COMMENT, DAL, ELG, Graph, LABEL, OWL, QNT, RDF, RDFS, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, sentence, type Term } from "@lattice/authoring-domain";
+import { COMMENT, DAL, ELG, Graph, LABEL, MORK, OWL, QNT, RDF, RDFS, SH, SKOS, SRF, TYPE, VOC, XSD, humanise, localName, namedNode, sentence, type Term } from "@lattice/authoring-domain";
 
 export type FieldKind =
   | "text"
@@ -19,7 +19,10 @@ export type FieldKind =
   | "property" // a property of the baseline
   | "propertyList" // an rdf:List of baseline properties
   | "textList" // an rdf:List of strings
-  | "iri"; // any IRI, typed by hand
+  | "iri" // any IRI, typed by hand
+  | "targetClass" // a class of the layers or the baseline, which a mapping writes
+  | "targetProperty" // a property of the layers or the baseline, which a mapping writes
+  | "targetIndividual"; // an individual of the layers, which a mapping writes
 
 export interface Option {
   iri: string;
@@ -60,6 +63,18 @@ interface Override {
 /** Properties whose range the ontology leaves open, or whose values are a baseline's terms. */
 const OVERRIDES: Record<string, Override> = {
   [DAL("targetClass")]: { kind: "class", single: true },
+  // MORK declares no domains and few ranges, so a mapping's fields are placed by its kinds (editors.ts) and typed here.
+  [MORK("exactTBoxMatch")]: { kind: "targetClass", single: false },
+  [MORK("exactRBoxMatch")]: { kind: "targetProperty", single: false },
+  [MORK("inverseRBoxMatch")]: { kind: "targetProperty", single: false },
+  [MORK("exactABoxMatch")]: { kind: "targetIndividual", single: false },
+  [MORK("compositeBroaderMapping")]: { kind: "reference", single: true, range: MORK("DataMapping") },
+  [MORK("templateMapping")]: { kind: "reference", single: true, range: MORK("DataMapping") },
+  [MORK("appliesWhen")]: { kind: "reference", single: true, range: SH("NodeShape") },
+  [MORK("mappingScheme")]: { kind: "reference", single: true, range: MORK("MappingScheme") },
+  [MORK("mappingFor")]: { kind: "iri", single: true },
+  [MORK("mappingNote")]: { kind: "text", single: true },
+  [MORK("representedAs")]: { kind: "iri", single: false },
   [DAL("coversClass")]: { kind: "class", single: false },
   [DAL("keyProperty")]: { kind: "propertyList", single: true },
   [DAL("scopeProperty")]: { kind: "property", single: false },
@@ -88,6 +103,8 @@ const OVERRIDES: Record<string, Override> = {
 
 const NUMBERS = new Set(["integer", "long", "int", "nonNegativeInteger", "positiveInteger", "decimal"].map(XSD));
 const BOOLEAN = XSD("boolean");
+/** RDF's own vocabularies, never a mapping's target term by choice. */
+const META = [RDF(""), RDFS(""), OWL(""), XSD("")];
 const TEXT = new Set([XSD("string"), XSD("anyURI"), XSD("dateTime"), RDFS("Literal")]);
 
 export class Vocabulary {
@@ -95,6 +112,7 @@ export class Vocabulary {
   private readonly byDomain = new Map<string, string[]>();
   private readonly shapes: Map<string, Map<string, Constraint>>;
   private readonly fieldCache = new Map<string, Field>();
+  private readonly targetCache = new Map<string, Option[]>();
 
   constructor(readonly graph: Graph) {
     this.shapes = readShapes(graph);
@@ -149,6 +167,23 @@ export class Vocabulary {
     return types.includes(OWL("ObjectProperty")) || types.includes(OWL("DatatypeProperty")) || types.includes(RDF("Property"));
   }
 
+  /** The terms a mapping may write, by kind: every class, property or individual the staged layers declare, MORK's own
+   * and RDF's own left out, sorted by label. */
+  targets(kind: "class" | "property" | "individual"): Option[] {
+    const cached = this.targetCache.get(kind);
+    if (cached) return cached;
+    const g = this.graph;
+    const own = (iri: string) => !iri.startsWith(MORK("")) && !iri.startsWith(SH("")) && !META.some((m) => iri.startsWith(m));
+    const isClass = (iri: string) => g.types(iri).some((t) => t === OWL("Class") || t === RDFS("Class"));
+    const subjects = [...new Set(g.quads(null, TYPE).filter((q) => q.subject.termType === "NamedNode").map((q) => q.subject.value))].filter(own);
+    const picked = subjects.filter((s) =>
+      kind === "class" ? isClass(s) : kind === "property" ? this.isProperty(s) : !isClass(s) && !this.isProperty(s) && g.types(s).some((t) => own(t) && isClass(t)),
+    );
+    const options = this.options(picked.map((s) => namedNode(s)));
+    this.targetCache.set(kind, options);
+    return options;
+  }
+
   individuals(classIri: string): Option[] {
     return this.options(this.graph.subjects(TYPE, classIri));
   }
@@ -196,7 +231,7 @@ export class Vocabulary {
       field = { ...base, kind: "number", single: true, datatype: range };
     } else if (shape?.in) {
       field = { ...base, kind: "choice", single: functional, options: this.options(shape.in) };
-    } else if (shape?.datatype || (range && (TEXT.has(range) || g.types(property).includes(OWL("DatatypeProperty"))))) {
+    } else if (shape?.datatype || (range && TEXT.has(range)) || g.types(property).includes(OWL("DatatypeProperty"))) {
       field = { ...base, kind: "text", single: true, datatype: range };
     } else if (range === RDFS("Class") || range === OWL("Class")) {
       field = { ...base, kind: "class", single: functional };

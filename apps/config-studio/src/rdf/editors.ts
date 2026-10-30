@@ -54,7 +54,18 @@ const CONTRACT: Section = {
   fields: ["contractKey", "carrier", "targetNamespace", "surfaceProfile", "realisationMode", "populationBudget"].map(SRF),
 };
 
+// A mapping's fields by what each says, since MORK places none by domain. The mapping view draws its scheme.
+const MAPPING_SECTIONS: Section[] = [
+  { title: "Reads", fields: [MORK("mappingFor"), MORK("dataRef"), MORK("dataInline"), MORK("conceptName"), MORK("conceptNameTemplate"), MORK("appliesWhen")] },
+  { title: "Writes", fields: [MORK("exactTBoxMatch"), MORK("exactRBoxMatch"), MORK("inverseRBoxMatch"), MORK("exactABoxMatch")] },
+  { title: "Structure", fields: [LABEL, MORK("compositeBroaderMapping"), MORK("templateMapping"), MORK("mappingScheme"), MORK("weighting"), MORK("mappingNote")] },
+];
+
 export const KINDS: Kind[] = [
+  { type: MORK("Datum"), part: "mapping", title: "Datum", plural: "Data", creatable: false, sections: MAPPING_SECTIONS },
+  { type: MORK("DataMapping"), part: "mapping", title: "Data mapping", plural: "Data mappings", creatable: false, sections: MAPPING_SECTIONS },
+  { type: MORK("DataConcept"), part: "mapping", title: "Source concept", plural: "Source concepts", creatable: false, sections: [{ title: "Source", fields: [LABEL, MORK("path"), MORK("representedAs")] }] },
+  { type: MORK("MappingScheme"), part: "mapping", title: "Mapping scheme", plural: "Mapping schemes", creatable: false, sections: [{ title: "Scheme", fields: [LABEL, MORK("compilationMode")] }] },
   // The contract builder's views draw these (ADR-A138). A form's elements are listed by their kinds, derived from the vocabulary.
   { type: CST("Assembly"), part: "assembly", title: "Assembly", plural: "Assemblies", creatable: false },
   {

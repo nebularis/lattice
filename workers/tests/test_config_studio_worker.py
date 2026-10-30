@@ -96,6 +96,35 @@ def artefacts(g: Graph, job: URIRef) -> dict[str, tuple[str, str, str]]:
     }
 
 
+MAPPING = """@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix ex: <https://example.org/m#> .
+ex:S a mork:MappingScheme ; mork:compilationMode mork:ReviewMode .
+ex:Rule a mork:Entity .
+ex:RuleMapping a mork:Datum ; mork:mappingScheme ex:S ; mork:mappingFor ex:Rule ; mork:exactTBoxMatch ins:Obligatio ; mork:conceptName "rule" .
+ex:Rule_Act a mork:DataMapping ; mork:mappingScheme ex:S ; mork:compositeBroaderMapping ex:RuleMapping ; mork:exactRBoxMatch ins:activity ;
+    mork:dataRef "ex:act(" .
+"""
+
+
+def test_a_mapping_validates_by_compiling_with_mork_rdf_each_finding_on_its_mapping(tmp_path):
+    config = tmp_path / "mapping.ttl"
+    config.write_text(MAPPING, encoding="utf-8")
+    g, job = run("validate", "mapping", config)
+    assert (job, CST.conforms, Literal(False)) in g
+    found = {(str(g.value(r, CST.code)), str(g.value(r, SH.focusNode))) for r in results(g, job, SH.Violation)}
+    assert found == {("UnknownTarget", "https://example.org/m#RuleMapping"), ("BadPath", "https://example.org/m#Rule_Act")}
+
+
+def test_a_mapping_compiles_to_its_compiled_form_and_queries(tmp_path):
+    config = tmp_path / "mapping.ttl"
+    config.write_text(MAPPING.replace("ins:Obligatio ", "ins:Obligation ").replace('"ex:act("', '"<http://www.w3.org/2000/01/rdf-schema#label>"'), encoding="utf-8")
+    g, job = run("compile", "mapping", config)
+    assert (job, CST.conforms, Literal(True)) in g
+    assert sorted(artefacts(g, job)) == ["S.compiled.ttl", "S.rq"]
+    assert "CONSTRUCT" in artefacts(g, job)["S.rq"][1]
+
+
 def test_persistence_validate_conforming():
     g, job = run("validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
     assert g.value(job, CST.status) == CST.Succeeded

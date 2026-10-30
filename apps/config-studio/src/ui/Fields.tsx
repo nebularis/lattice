@@ -74,6 +74,18 @@ export function FieldControl(props: FieldProps) {
           onChange={(vs) => set(vs.map((v) => iri(v)))}
         />
       );
+    case "targetClass":
+    case "targetProperty":
+    case "targetIndividual": {
+      // A mapping's target terms: the layers' own, then the baseline's.
+      const which = field.kind === "targetClass" ? "class" : field.kind === "targetProperty" ? "property" : "individual";
+      const own = which === "class" ? [...props.baseline.classes.values()] : which === "property" ? [...props.baseline.properties.values()] : [];
+      const options = [
+        ...props.vocab.targets(which).map((o) => ({ iri: o.iri, label: o.label, group: compact(o.iri).split(":")[0] })),
+        ...own.map((t) => ({ iri: t.iri, label: t.label, group: "Baseline" })),
+      ];
+      return <TermPicker single={field.single} selected={values.map((v) => v.value)} options={options} placeholder={`Pick a ${which} it writes`} onChange={(vs) => set(vs.map((v) => iri(v)))} />;
+    }
     case "propertyList": {
       const head = values[0];
       const list = head ? (graph.list(head) ?? []).map((t) => t.value) : [];

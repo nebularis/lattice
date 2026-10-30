@@ -4,7 +4,7 @@
 // findings and the gaps between what is declared and what the SPARQL implements.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Database, Download, FileText, Hammer, ListChecks, Sparkles } from "lucide-react";
+import { Check, Copy, Database, Download, FileText, Hammer, ListChecks, Network, Sparkles } from "lucide-react";
 import { Graph } from "@lattice/authoring-domain";
 import { api, jobId } from "../api";
 import { nodeFor } from "../rdf/editors";
@@ -94,7 +94,7 @@ export function BuildView() {
           {jobs.length === 0 && <div className="empty small">No compile yet.</div>}
           {jobs.map((j) => (
             <div key={j.iri} className="list-item" aria-selected={j.iri === selected} onClick={() => setSelected(j.iri)}>
-              {j.target === "Persistence" ? <Database size={15} color="var(--persist)" /> : j.target === "Surface" ? <Sparkles size={15} color="var(--surface-c)" /> : <ListChecks size={15} color="var(--ok)" />}
+              {j.target === "Persistence" ? <Database size={15} color="var(--persist)" /> : j.target === "Surface" ? <Sparkles size={15} color="var(--surface-c)" /> : j.target === "Mapping" ? <Network size={15} color="var(--accent)" /> : <ListChecks size={15} color="var(--ok)" />}
               <div className="grow">
                 <div className="name">{j.target}</div>
                 <div className="detail">{ago(j.submittedAt)}</div>

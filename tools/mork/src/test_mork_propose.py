@@ -129,3 +129,15 @@ def test_an_uncertain_mapping_in_a_proposal_waits_for_review_and_is_no_error():
     checked = json.loads(check_mapping(text))
     reviews = [f for f in checked["findings"] if f["code"] == "Uncertain"]
     assert reviews and all(f["severity"] == "review" for f in reviews)
+
+
+def test_a_target_term_the_target_vocabulary_does_not_declare_in_its_own_namespace_is_an_error():
+    from mork_propose.check import unknown_targets
+
+    vocabulary = Graph().parse(data="""@prefix ins: <https://example.org/ins#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
+        ins:Obligation a owl:Class . ins:activity a owl:ObjectProperty .""", format="turtle")
+    g = Graph().parse(data="""@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix ins: <https://example.org/ins#> .
+        @prefix ex: <https://example.org/m#> . @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        ex:a mork:exactTBoxMatch ins:Obligatio . ex:b mork:exactRBoxMatch ins:activity . ex:c mork:exactRBoxMatch rdf:type .
+        ex:d mork:exactABoxMatch ex:Own .""", format="turtle")
+    assert [(str(m), code) for _, _, code, m, _ in unknown_targets(g, vocabulary)] == [("https://example.org/m#a", "UnknownTarget")]

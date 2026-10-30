@@ -27,7 +27,7 @@ VOCABULARY = (
     ("persistence", "spec"), ("surface", "spec"), ("surface", "vocab"), ("foundation", "spec"), ("foundation", "vocab"), ("vocabulary", "spec"),
     ("quantification", "spec"), ("quantification", "vocab"), ("eligibility", "spec"), ("eligibility", "vocab"),
     ("wording", "spec"), ("wording", "vocab"), ("party", "spec"), ("party", "vocab"), ("behaviour", "spec"), ("behaviour", "vocab"),
-    ("instrument", "spec"), ("instrument", "vocab"),
+    ("instrument", "spec"), ("instrument", "vocab"), ("mork", "spec"),
 )
 
 # The layers whose SHACL shapes place and constrain the forms' properties. The browser reads only

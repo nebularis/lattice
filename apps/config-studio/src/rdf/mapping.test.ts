@@ -4,7 +4,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Graph } from "@lattice/authoring-domain";
+import { Graph, MORK, localName } from "@lattice/authoring-domain";
+import { kindOf, sectionsFor } from "./editors";
+import { Vocabulary } from "./vocabulary";
 import { schemesOf } from "./mapping";
 import { split } from "./split";
 
@@ -65,5 +67,27 @@ describe("the mapping samples", () => {
     expect(run.mappings.some((m) => m.depth > 0)).toBe(true);
     const corrected = run.mappings.find((m) => m.review?.decision === "Corrected")!;
     expect(corrected.review!.correctedBy!.startsWith(OM)).toBe(true);
+  });
+});
+
+describe("a mapping's editor", () => {
+  const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../../.build/config-studio");
+  const vocab = Vocabulary.parse(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
+  const INS = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
+
+  it("offers the layers' terms as targets, never MORK's or RDF's own", () => {
+    const classes = vocab.targets("class").map((o) => o.iri);
+    expect(classes).toContain(INS + "Obligation");
+    expect(classes.some((c) => c.startsWith(MORK("")) || c.startsWith("http://www.w3.org/"))).toBe(false);
+    expect(vocab.targets("property").map((o) => o.iri)).toContain(INS + "obligee");
+    expect(vocab.targets("individual").map((o) => o.iri)).toContain("https://www.nebularis.org/neuro-semantic/lattice/eligibility#AllRequired");
+  });
+
+  it("groups a mapping's fields by what it reads, what it writes and where it sits, each typed for its use", () => {
+    const g = Graph.parse(`<urn:x:m> a <${MORK("Datum")}> .`);
+    const sections = sectionsFor(kindOf(g, "urn:x:m", "mapping")!, vocab);
+    expect(sections.map((s) => s.title)).toEqual(["Reads", "Writes", "Structure"]);
+    const kinds = Object.fromEntries(sections.flatMap((s) => s.fields).map((f) => [localName(f.property), f.kind]));
+    expect(kinds).toMatchObject({ exactTBoxMatch: "targetClass", exactRBoxMatch: "targetProperty", exactABoxMatch: "targetIndividual", compositeBroaderMapping: "reference", appliesWhen: "reference", dataRef: "text" });
   });
 });

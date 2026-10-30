@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
-// Mapping mode's view, read only: the source concepts a MORK mapping scheme reads on the left, its mappings drawn as the
-// tree their parent links make, each with the terms it writes and its latest review, and the findings of the mapping part's
-// validation for the mapping picked. Editing, compiling and stepping a sample through it come later.
+// Mapping mode's view: the source concepts a MORK mapping scheme reads on the left, its mappings drawn as the tree their
+// parent links make, each with the terms it writes and its latest review, and for the mapping picked its review and its
+// editor, whose findings come from compiling the part with mork_rdf as it is edited. Stepping a sample through it comes later.
 
 import { useMemo, useState } from "react";
-import { Network } from "lucide-react";
-import { PREFIXES, compact } from "@lattice/authoring-domain";
+import { Hammer, Network, Plus } from "lucide-react";
+import { LABEL, MORK, PREFIXES, TYPE, compact, iri, literal, namespaceOf } from "@lattice/authoring-domain";
+import { api } from "../api";
+import { mint } from "../rdf/editors";
 import { schemesOf, written, type MappingNode, type Scheme } from "../rdf/mapping";
-import { SeverityIcon, go } from "./kit";
+import { Spinner, go } from "./kit";
+import { NodeEditor } from "./ConfigView";
 import { useStudio } from "./Workspace";
 
 const INDENT = 28;
@@ -27,6 +30,34 @@ export function MappingView({ selected }: { selected?: string }) {
   const scheme = schemes.find((s) => s.mappings.some((m) => m.iri === selected)) ?? schemes.find((s) => s.iri === schemeIri) ?? schemes[0];
   const open = (node: string) => go("w", studio.id, "mapping", node);
   const picked = scheme?.mappings.find((m) => m.iri === selected);
+  const [busy, setBusy] = useState(false);
+
+  /** A new mapping in the scheme, under `parent` when one is given, named by the author. */
+  const add = (type: "Datum" | "DataMapping", parent?: string) => {
+    const name = window.prompt(`Name the new ${type === "Datum" ? "datum" : "data mapping"}`);
+    if (!name?.trim() || !scheme) return;
+    const node = mint(graph, namespaceOf(scheme.iri), name.trim());
+    studio.model.edit("mapping", (g) =>
+      g.edit((e) => {
+        e.add(node, TYPE, iri(MORK(type)));
+        e.add(node, MORK("mappingScheme"), iri(scheme.iri));
+        e.add(node, LABEL, literal(name.trim()));
+        if (parent) e.add(node, MORK("compositeBroaderMapping"), iri(parent));
+      }),
+    );
+    open(node);
+  };
+
+  /** Compiles the part as edited, saved or not, and opens the build view on the job. */
+  const compile = async () => {
+    setBusy(true);
+    try {
+      await api.submit(studio.id, "compile", "mapping", graph);
+      go("w", studio.id, "build");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (!scheme) {
     return (
@@ -57,6 +88,10 @@ export function MappingView({ selected }: { selected?: string }) {
             </select>
           )}
           <div className="small muted">{scheme.label}</div>
+          <div className="row" style={{ gap: 6 }}>
+            <button className="btn sm" onClick={() => add("Datum")}><Plus size={13} /> Root datum</button>
+            <button className="btn sm" disabled={busy} onClick={() => void compile()}>{busy ? <Spinner /> : <Hammer size={13} />} Compile</button>
+          </div>
         </div>
         <h4>Source concepts it maps</h4>
         {scheme.sources.length === 0 && <div className="empty small">No mapping of the scheme names a source concept.</div>}
@@ -75,7 +110,8 @@ export function MappingView({ selected }: { selected?: string }) {
       </div>
       <div className="detail-pane">
         <div className="editor" style={{ maxWidth: "none" }}>
-          {picked && <MappingCard node={picked} schemes={schemes} prefixes={prefixes} open={open} />}
+          {picked && <MappingCard node={picked} schemes={schemes} prefixes={prefixes} open={open} add={add} />}
+          {picked && <div style={{ margin: "0 -28px" }}><NodeEditor key={picked.iri} part="mapping" node={picked.iri} /></div>}
           <section className="card section" aria-label={`Mappings of ${scheme.label}`}>
             <header>
               <h3 className="grow">Mappings</h3>
@@ -136,54 +172,32 @@ function Tree({ scheme, prefixes, selected, source, open }: { scheme: Scheme; pr
 
 const DECISION: Record<string, string> = { Accepted: "var(--ok)", Corrected: "var(--warn)", Rejected: "var(--bad)", Deferred: "var(--text-3)" };
 
-function MappingCard({ node, schemes, prefixes, open }: { node: MappingNode; schemes: Scheme[]; prefixes: Record<string, string>; open: (n: string) => void }) {
-  const { model } = useStudio();
-  const issues = model.issues.mapping.filter((i) => i.focus === node.iri);
+/** The picked mapping's name, its children to add, and its latest review. Its fields and findings are in its editor. */
+function MappingCard({ node, schemes, prefixes, open, add }: { node: MappingNode; schemes: Scheme[]; prefixes: Record<string, string>; open: (n: string) => void; add: (type: "Datum" | "DataMapping", parent?: string) => void }) {
   const all = schemes.flatMap((s) => s.mappings);
-  const label = (iri: string) => all.find((m) => m.iri === iri)?.label ?? compact(iri, prefixes);
-  const link = (iri?: string) => (iri && all.some((m) => m.iri === iri) ? <button className="link" onClick={() => open(iri)}>{label(iri)}</button> : iri ? <span className="mono">{compact(iri, prefixes)}</span> : <span className="muted">none</span>);
-  const rows: [string, React.ReactNode][] = [
-    ["Kind", node.kind],
-    ["Parent", link(node.parent)],
-    ["Template", link(node.template)],
-    ["Maps for", link(node.source)],
-    ["Reads", node.reads ? <span className="mono">{node.reads}</span> : <span className="muted">its parent's subject</span>],
-    ["Guard", link(node.guard)],
-    ["Writes", written(node, prefixes).map((w) => `${w.box} ${w.term}`).join(", ") || <span className="muted">{node.template ? "through its template" : "nothing"}</span>],
-  ];
-  if (node.review) {
-    const r = node.review;
-    rows.push(["Review", (
-      <div>
-        <span className="chip" style={{ color: DECISION[r.decision] }}>{r.decision}</span>
-        {r.correctedBy && <> by {link(r.correctedBy)}</>}
-        {r.note && <p className="small" style={{ margin: "6px 0 0" }}>{r.note}</p>}
-        {(r.reviewer || r.at) && <div className="small muted">{[r.reviewer && compact(r.reviewer, prefixes), r.at?.slice(0, 10)].filter(Boolean).join(", ")}</div>}
-      </div>
-    )]);
-  }
+  const r = node.review;
   return (
     <section className="card section" aria-label={`Mapping ${node.label}`} style={{ marginBottom: 16 }}>
-      <header>
+      <header style={{ flexWrap: "wrap" }}>
         <h3 className="grow">{node.label}</h3>
-        <span className="mono small muted">{compact(node.iri, prefixes)}</span>
+        <button className="btn sm" onClick={() => add("Datum", node.iri)}><Plus size={13} /> Child datum</button>
+        <button className="btn sm" onClick={() => add("DataMapping", node.iri)}><Plus size={13} /> Child data mapping</button>
       </header>
-      <div className="fields">
-        {rows.map(([k, v]) => (
-          <div className="field" key={k}>
-            <div className="label"><div className="name">{k}</div></div>
-            <div>{v}</div>
-          </div>
-        ))}
-        <div className="field">
-          <div className="label"><div className="name">Findings</div></div>
-          <div>
-            {issues.length === 0 ? <span className="muted small">None</span> : issues.map((i, n) => (
-              <div key={n} className="row small" style={{ gap: 6 }}><SeverityIcon severity={i.severity} /> {i.message}</div>
-            ))}
+      {r && (
+        <div className="fields">
+          <div className="field">
+            <div className="label"><div className="name">Review</div></div>
+            <div>
+              <span className="chip" style={{ color: DECISION[r.decision] }}>{r.decision}</span>
+              {r.correctedBy && (
+                <> by {all.some((m) => m.iri === r.correctedBy) ? <button className="link" onClick={() => open(r.correctedBy!)}>{all.find((m) => m.iri === r.correctedBy)!.label}</button> : <span className="mono">{compact(r.correctedBy, prefixes)}</span>}</>
+              )}
+              {r.note && <p className="small" style={{ margin: "6px 0 0" }}>{r.note}</p>}
+              {(r.reviewer || r.at) && <div className="small muted">{[r.reviewer && compact(r.reviewer, prefixes), r.at?.slice(0, 10)].filter(Boolean).join(", ")}</div>}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
