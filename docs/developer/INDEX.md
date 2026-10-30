@@ -815,6 +815,7 @@ and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX
 | **Status Record** | [config-studio.md](status/config-studio.md) |
 | **Validation Packs** | [CS0 to CS6](validation/config-studio.md) |
 | **ADRs** | A-136, Proposed |
+| **Mapping packs and trials** | where the ODRL and LegalRuleML packs, trials and sample sources live, and how to try them in mapping mode: [mapping-packs-and-trials.md](notes/mapping-packs-and-trials.md). The review of the proposer's inputs: [mapping-proposer-review.md](notes/mapping-proposer-review.md) |
 
 A web application for authoring vocabulary, quantification, eligibility, persistence and surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
 
