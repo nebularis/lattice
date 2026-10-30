@@ -148,6 +148,15 @@ export_code
   guard guard_row commit confirm
   in SML module_name Lattice file_prefix lattice_sml
 
+text \<open>Scala compiles each class to a file named after it, so a type and a constructor whose names
+differ only in case, such as nat and Nat, overwrite each other on a case-insensitive filesystem,
+which is macOS's default. The constructors are renamed for Scala alone.\<close>
+
+code_identifier
+  constant Code_Target_Nat.Nat \<rightharpoonup> (Scala) "Lattice.Nat_of_integer"
+| constant Num.num.One \<rightharpoonup> (Scala) "Lattice.One_num"
+| constant Quantification.bound.Bound \<rightharpoonup> (Scala) "Lattice.Bound_of"
+
 export_code
   contains meet closed_range add_months jan31 enc decimal pct dec dp lexlt val
   guard guard_row commit confirm stale_store stale_request

@@ -68,7 +68,7 @@ Under the default representations `nat` is a Peano datatype, `int` is built over
 |---|---|---|---|
 | Haskell, default representations | `Lattice.hs`, `Str_Literal.hs` | 1,985 lines, 57.5 KB | `ghc -O0`, no warnings |
 | Haskell, with the adaptations | `Lattice.hs`, `Bit_Shifts.hs`, `Str_Literal.hs` | 1,136 lines, 35.8 KB | `ghc -O0`, no warnings |
-| Scala, with the adaptations | `lattice_scala.scala` | 716 lines, 24.7 KB | `isabelle scalac`, three warnings that two generated classes differ only in case, such as `Lattice$Nat` and `Lattice$nat`, which overwrite each other on a case-insensitive filesystem such as macOS's default |
+| Scala, with the adaptations | `lattice_scala.scala` | 716 lines, 24.8 KB | `isabelle scalac`, no warnings. It first warned that three pairs of generated classes differ only in case, such as `Lattice$Nat` and `Lattice$nat`, which overwrite each other on a case-insensitive filesystem such as macOS's default. `CodeGen` renames the three constructors for Scala with `code_identifier`, and any new datatype whose constructor shares its name with its type will need the same |
 | SML, with the adaptations | `lattice_sml.ML` | 463 lines, 16.1 KB | exported, not compiled on its own |
 
 The generated modules export their types without constructors, so a caller cannot build a `Nat` or a `Char`. Both theories export `nat_of_integer`, `integer_of_nat`, `char_of_integer`, `integer_of_char`, `String.explode` and `String.implode` for that reason.

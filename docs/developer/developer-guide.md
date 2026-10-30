@@ -198,6 +198,30 @@ ordinary Turtle.
 | [`tools/models/`](../../tools/models/README.md) | Alloy/SMT design-time models, evidence for an ADR before it is accepted (track C) | run directly with the Alloy Analyzer JAR, see that README |
 | [`tools/reference/`](../../tools/reference/README.md) | Hand-written reference semantics, differentially tested against the real compilers (track B, ADR-A-FM3) | `mise run check:reference-eligibility` |
 
+### Isabelle's memory
+
+An `isabelle build` runs two processes, a JVM front end and the Poly/ML prover. Isabelle2025-2's distribution settings give the JVM `-Xmx4g`, and the JVM grows to its cap whether or not the build needs it. On 2026-10-30, clean builds of `spikes/isabelle-layers`'s `LatticeLayers` session on Linux x86_64 measured these peaks, sampled from resident memory:
+
+| Settings | JVM | Poly/ML | Together | Elapsed |
+|---|---|---|---|---|
+| the distribution's | 4,082 MB | 1,668 MB | 5,693 MB | 48 s |
+| `-Xmx512m`, three runs | 714 to 731 MB | 897 to 1,620 MB | 1,601 to 2,324 MB | 27 to 29 s |
+| `-Xmx512m` and `ML_OPTIONS="--maxheap 600M"`, four runs | 718 to 731 MB | 758 to 885 MB | 1,466 to 1,604 MB | 27 to 30 s |
+
+To build within about 1.6 GB, put these two lines in your own user settings, `~/.isabelle/Isabelle2025-2/etc/settings` (`%USERPROFILE%\.isabelle\Isabelle2025-2\etc\settings` on Windows), never in the repository:
+
+```bash
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms128m -Xmx512m -Xss16m"
+ML_OPTIONS="--maxheap 600M"
+```
+
+`isabelle getenv ISABELLE_TOOL_JAVA_OPTIONS ML_OPTIONS` shows the values in force. Four further points from the same measurement.
+
+- Never rebuild `HOL` or `Pure`. The distribution ships both heaps built, and `isabelle build -f` rebuilds every ancestor of the session named, which is how a `HOL` build was killed at 9 GB on a 15 GB machine. Use `-c` to rebuild only the session named.
+- A session that imports `HOL-Library` theories through `sessions "HOL-Library"` in its `ROOT` loads them from source and needs no `HOL-Library` heap, so there is no second heap build running beside the session's own.
+- With `-Xmx512m`, `threads=1` held the peak at about 1.5 GB as well, but took 64 s instead of 27 s, so it is not the remedy.
+- The figures are one machine's, measured on Linux only. The desktop editor has its own cap, `JEDIT_JAVA_OPTIONS`, also `-Xmx4g`, which was not measured, and an interactive session over large theories may need more than a batch build.
+
 ### Repository-wide gates (`tools/*.py`)
 
 | Script | Checks | Command |
