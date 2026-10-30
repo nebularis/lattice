@@ -586,6 +586,9 @@ _prop("ppf", "mork:propertyProjectionFrequency", kind=KIND_DATA, datatype="xsd:i
 _prop("prm", "mork:proposerModel", kind=KIND_DATA, group="Community and history")
 _prop("rnt", "mork:reviewNote", kind=KIND_DATA, group="Community and history")
 _prop("tpv", "mork:teachingPackVersion", kind=KIND_DATA, group="Community and history")
+_prop("itk", "mork:inputTokens", kind=KIND_DATA, datatype="xsd:nonNegativeInteger", group="Community and history")
+_prop("otk", "mork:outputTokens", kind=KIND_DATA, datatype="xsd:nonNegativeInteger", group="Community and history")
+_prop("ttk", "mork:totalTokens", kind=KIND_DATA, datatype="xsd:nonNegativeInteger", group="Community and history")
 
 # -- Shadow --
 _prop("sho", "mork:shadowOf", group="Shadow")

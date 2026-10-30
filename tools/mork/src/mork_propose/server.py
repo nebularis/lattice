@@ -8,6 +8,7 @@ Run it with `mise run mork:propose-mcp`."""
 
 from __future__ import annotations
 
+import functools
 import json
 from pathlib import Path
 
@@ -74,10 +75,26 @@ def describe_term(term: str) -> str:
     return _describe(term, LAYERS)
 
 
+@functools.lru_cache(maxsize=1)
+def _target() -> tuple[Graph, Graph]:
+    """Every layer's specification and vocabulary, and every layer's shapes, merged, which a proposal's target terms and
+    what it writes are checked against."""
+    from .describe import _shapes
+
+    vocabulary, shapes = Graph(), Graph()
+    for m in LAYERS:
+        vocabulary += _cards._layer_graph(m)
+        shapes += _shapes(m)
+    return vocabulary, shapes
+
+
 def check_mapping(mcn: str, sample: str = "") -> str:
-    """Decodes, validates and compiles a proposal in MCN, and runs it over a sample source file when one is given, as
-    JSON: whether it decoded, its schemes, and every finding."""
-    checked = check(mcn, sample=_source(sample) if sample else None)
+    """Decodes, validates and compiles a proposal in MCN, checks that every target term is declared, and runs it over a
+    sample source file when one is given, validating what it writes against the target layers' shapes, as JSON: whether
+    it decoded, its schemes, and every finding, a shape's on the mapping that wrote its node. Give a sample whenever
+    there is one, since only a run shows whether the meaning written keeps the layers' laws."""
+    vocabulary, shapes = _target()
+    checked = check(mcn, sample=_source(sample) if sample else None, target_vocabulary=vocabulary, target_shapes=shapes)
     return json.dumps(checked.summary(), indent=1)
 
 

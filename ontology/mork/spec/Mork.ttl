@@ -1289,6 +1289,12 @@ mork:inputHash a owl:DatatypeProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( mork:ConstraintProvenance mork:RuleProvenance mork:ProjectionProvenance ) ] ;
     rdfs:range xsd:string .
 
+mork:inputTokens a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "inputTokens" ;
+    rdfs:comment "How many tokens a proposal run's proposer read, as its provider counted them, across every call of the run." ;
+    rdfs:domain mork:ProposalRun ;
+    rdfs:range xsd:nonNegativeInteger .
+
 mork:intentMapping a owl:ObjectProperty ;
     rdfs:label "intent mapping" ;
     rdfs:comment "Links an intent node to the DataMapping (or ShapeMapping/RuleMapping) that realises it in terms of the target ontology." ;
@@ -1551,6 +1557,12 @@ mork:outputBox a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Whether a compiled query writes instance data or terminology." ;
     rdfs:domain mork:CompiledQuery ;
     rdfs:range mork:OutputBox .
+
+mork:outputTokens a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "outputTokens" ;
+    rdfs:comment "How many tokens a proposal run's proposer wrote, as its provider counted them, across every call of the run." ;
+    rdfs:domain mork:ProposalRun ;
+    rdfs:range xsd:nonNegativeInteger .
 
 mork:paramBinding a owl:ObjectProperty ;
     rdfs:label "param binding" ;
@@ -1940,6 +1952,12 @@ mork:temporalUnit a owl:DatatypeProperty ;
     rdfs:comment "The unit of the temporal scope. Range: {\"Days\", \"Months\", \"Years\"}." ;
     rdfs:domain mork:TemporalScope ;
     rdfs:range xsd:string .
+
+mork:totalTokens a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "totalTokens" ;
+    rdfs:comment "How many tokens a proposal run's proposer read and wrote together, where its provider gives only the total." ;
+    rdfs:domain mork:ProposalRun ;
+    rdfs:range xsd:nonNegativeInteger .
 
 mork:uniqueItems a owl:DatatypeProperty ;
     rdfs:comment "Whether the items of a Collection are unique, as in a set." ;

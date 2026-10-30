@@ -932,11 +932,13 @@ A compiler compiles a guard to a test it can prove means what the shape means. `
 
 MORK expects mapping to get easier as it is done. Three kinds of evidence accumulate in a graph of their own. **Recognition**: a source field's name is lexically close to the concept it maps to, through edit distance, abbreviations and shared words, and each accepted mapping teaches the abbreviations it used. **Communities**: in a domain, certain concepts occur together in a section, so when a mapping run is accepted each of its sections becomes a `mork:SectionObservation` of the concepts it holds, community detection over those observations finds `mork:SemanticCommunity` clusters, and a new section is matched to its likeliest community (`mork:CommunityMatch`). **Projections**: what a community's concepts have been mapped to in one target ontology becomes a `mork:OntologicalProjection`, with the class and the properties they most often took and how often, and a shape the mappings take often enough becomes a `mork:DAGTemplate`, which maps a new section of the community without a model. Target terms are reasoned about through shadow individuals (`mork:shadowOf`), so the patterns stay in OWL 2 DL. `tools/mork`'s `mork_communities` package implements all of this.
 
-The history is fed by reviews. A `mork:ProposalRun` records who proposed mappings, a model and its teaching pack, and every mapping it proposed names it with `prov:wasGeneratedBy`. A `mork:MappingReview` records the decision on one of them: `mork:Accepted`, `mork:Corrected` with the mapping that replaces it, `mork:Rejected` or `mork:Deferred`, with its reviewer and time in PROV. Accepted and corrected mappings become observations and teach recognition, and rejected ones are kept, so the next proposer is told what was refused.
+The history is fed by reviews. A `mork:ProposalRun` records who proposed mappings, a model and its teaching pack, and every mapping it proposed names it with `prov:wasGeneratedBy`. It records what the run cost too, its tokens read and written (`mork:inputTokens`, `mork:outputTokens`, or `mork:totalTokens` where only the total is known) and its start and end in PROV, so two ways of proposing are compared on cost as well as on what a review accepts (decided by the maintainer 2026-10-30). A `mork:MappingReview` records the decision on one of them: `mork:Accepted`, `mork:Corrected` with the mapping that replaces it, `mork:Rejected` or `mork:Deferred`, with its reviewer and time in PROV. Accepted and corrected mappings become observations and teach recognition, and rejected ones are kept, so the next proposer is told what was refused.
 
 ```turtle-example
 ex:run-1 a mork:ProposalRun , prov:Activity ;
-    mork:proposerModel "a language model" ; mork:teachingPackVersion "MTP 0.1.0" ; mork:proposedFor ex:Odrl .
+    mork:proposerModel "a language model" ; mork:teachingPackVersion "MTP 0.1.0" ; mork:proposedFor ex:Odrl ;
+    mork:inputTokens 151200 ; mork:outputTokens 39900 ;
+    prov:startedAtTime "2026-10-29T11:52:56Z"^^xsd:dateTime ; prov:endedAtTime "2026-10-29T12:00:00Z"^^xsd:dateTime .
 ex:Map_Duty prov:wasGeneratedBy ex:run-1 .
 ex:review-7 a mork:MappingReview , prov:Activity ;
     mork:reviewOf ex:Map_Duty ; mork:reviewDecision mork:Corrected ; mork:correctedBy ex:Map_Duty_OnAct ;
@@ -988,9 +990,12 @@ classDiagram
         propertyProjectionFrequency (xsd:integer)
     }
     class ProposalRun {
+        inputTokens (xsd:nonNegativeInteger)
+        outputTokens (xsd:nonNegativeInteger)
         proposedFor
         proposerModel (xsd:string)
         teachingPackVersion (xsd:string)
+        totalTokens (xsd:nonNegativeInteger)
     }
     class ReviewDecision
     class SectionObservation {
@@ -4395,6 +4400,42 @@ The datatype properties of MORK first, then those of Executable.
 
 **Characteristics.** functional
 
+#### `mork:inputTokens`
+
+**Definition.** How many tokens a proposal run's proposer read, as its provider counted them, across every call of the run.
+
+**Label.** inputTokens
+
+**Domain.** `mork:ProposalRun`
+
+**Range.** `xsd:nonNegativeInteger`
+
+**Characteristics.** functional
+
+#### `mork:totalTokens`
+
+**Definition.** How many tokens a proposal run's proposer read and wrote together, where its provider gives only the total.
+
+**Label.** totalTokens
+
+**Domain.** `mork:ProposalRun`
+
+**Range.** `xsd:nonNegativeInteger`
+
+**Characteristics.** functional
+
+#### `mork:outputTokens`
+
+**Definition.** How many tokens a proposal run's proposer wrote, as its provider counted them, across every call of the run.
+
+**Label.** outputTokens
+
+**Domain.** `mork:ProposalRun`
+
+**Range.** `xsd:nonNegativeInteger`
+
+**Characteristics.** functional
+
 #### `mork:weighting`
 
 **Definition.** confidence score out of 100
@@ -5619,6 +5660,7 @@ The Axiom Index is generated from this section.
 | `mork:individualIRI` | Datatype property | Subproperty of `mork:individualName`. |
 | `mork:individualName` | Datatype property | Subproperty of `mork:name`. |
 | `mork:inputHash` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
+| `mork:inputTokens` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:nonNegativeInteger`. Functional. |
 | `mork:interpolationTemplate` | Datatype property | Range `xsd:string`. Subproperty of `mork:template`. |
 | `mork:iri` | Datatype property | Domain `mork:OwlAxiom`. Functional. Subproperty of `mork:conceptId`. |
 | `mork:itemsConstrained` | Datatype property | Range `xsd:boolean`. Subproperty of `owl:topDataProperty`. |
@@ -5634,6 +5676,7 @@ The Axiom Index is generated from this section.
 | `mork:name` | Datatype property | Range `xsd:string`. Subproperty of `owl:topDataProperty`. |
 | `mork:observationTimestamp` | Datatype property | Domain `mork:SectionObservation`. Range `xsd:dateTime`. Functional. |
 | `mork:orderedItems` | Datatype property | Subproperty of `mork:itemsConstrained`. |
+| `mork:outputTokens` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:nonNegativeInteger`. Functional. |
 | `mork:paramName` | Datatype property | Domain `mork:ParameterBinding`. Range `xsd:string`. |
 | `mork:paramType` | Datatype property | Domain `mork:ParameterBinding`. Range `xsd:string`. |
 | `mork:paramValue` | Datatype property | Domain `mork:ParameterBinding`. |
@@ -5664,6 +5707,7 @@ The Axiom Index is generated from this section.
 | `mork:templateString` | Datatype property | Domain `mork:InterpolationExpression`. Range `xsd:string`. Functional. |
 | `mork:temporalDuration` | Datatype property | Domain `mork:TemporalScope`. Range `xsd:dayTimeDuration`. |
 | `mork:temporalUnit` | Datatype property | Domain `mork:TemporalScope`. Range `xsd:string`. |
+| `mork:totalTokens` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:nonNegativeInteger`. Functional. |
 | `mork:uniqueItems` | Datatype property | Subproperty of `mork:itemsConstrained`. |
 | `mork:weighting` | Datatype property | Range `xsd:integer`. Subproperty of `owl:topDataProperty`. |
 | `exe:AboveExclusion` | Individual | Type `exe:Diagnostic`. |

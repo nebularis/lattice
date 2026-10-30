@@ -786,6 +786,9 @@ Kind: *object* takes an IRI, inline node or payload, *data* takes a literal type
 | `prm` | `mork:proposerModel` | data | xsd:string |
 | `rnt` | `mork:reviewNote` | data | xsd:string |
 | `tpv` | `mork:teachingPackVersion` | data | xsd:string |
+| `itk` | `mork:inputTokens` | data | xsd:nonNegativeInteger |
+| `otk` | `mork:outputTokens` | data | xsd:nonNegativeInteger |
+| `ttk` | `mork:totalTokens` | data | xsd:nonNegativeInteger |
 
 **Shadow declarations**
 

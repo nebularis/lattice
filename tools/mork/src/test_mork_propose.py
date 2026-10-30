@@ -166,3 +166,39 @@ def test_describe_term_gives_a_term_s_utility_and_the_laws_its_shapes_state():
     assert "laws and shapes" not in role  # a shape about pty:RoleOccupancy is not about pty:Role
     with pytest.raises(ValueError):
         describe_term("ins:NoSuchTerm")
+
+
+def test_the_check_holds_what_a_proposal_writes_on_a_sample_to_the_target_layers_laws():
+    from mork_propose.server import check_mapping
+
+    odrl = Path(__file__).resolve().parents[3] / "contracts" / "config-studio" / "odrl"
+    sample = str(odrl / "trial" / "software-licence.ttl")
+    run_1 = json.loads(check_mapping((odrl / "trial" / "run-1" / "proposal.mcn").read_text(encoding="utf-8"), sample))
+    broken = {f["message"].split(" (on ")[0] for f in run_1["findings"] if f["code"] == "TargetShape" and f["severity"] == "error"}
+    assert "A permission excepts exactly one prohibition." in broken  # law I8, which the trial's reviews corrected
+    assert all(f["about"] for f in run_1["findings"] if f["stage"] == "meaning")  # each on the mapping that wrote it
+
+    from mork_propose.check import check_graph
+    from mork_propose.server import _target
+
+    vocabulary, shapes = _target()
+    pack = check_graph(Graph().parse(odrl / "odrl-instrument.mork.ttl"), sample=Graph().parse(sample), target_vocabulary=vocabulary, target_shapes=shapes)
+    assert {f[2] for f in pack.findings if f[1] == "error"} == set()
+    assert {f[2] for f in pack.findings if f[0] == "meaning"} == {"ContextShape"}
+
+
+def test_a_run_records_what_it_cost(tmp_path):
+    from datetime import datetime, timezone
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import PROV, XSD
+
+    from mork_propose.history import MORK, History
+
+    history = History(tmp_path / "history.ttl")
+    run = URIRef("urn:mork-propose:run:cost")
+    at, started = datetime(2026, 10, 30, 12, tzinfo=timezone.utc), datetime(2026, 10, 30, 11, 55, tzinfo=timezone.utc)
+    history.record_run(run, Graph(), URIRef("urn:x:s"), model="m", pack="p", source=None, at=at, started=started, total_tokens=150000)
+    g = history.graph
+    assert (run, PROV.startedAtTime, Literal(started.isoformat(), datatype=XSD.dateTime)) in g
+    assert (run, MORK.totalTokens, Literal(150000, datatype=XSD.nonNegativeInteger)) in g
+    assert g.value(run, MORK.inputTokens) is None

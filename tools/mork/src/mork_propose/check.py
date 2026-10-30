@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 """The check a proposing agent runs on its proposal before a person reviews it: decode the MCN with the reference
 decoder, validate the graph against MORK's shapes, compile each mapping scheme it holds with `tools/mork_rdf`, and,
-given a sample source, run it. Every failure is a finding the agent can act on, never an exception."""
+given a sample source, run it and validate what it wrote against the target layers' shapes, each result reported on the
+mapping that wrote its focus node. Every failure is a finding the agent can act on, never an exception."""
 
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ class Checked:
 
 
 def check(mcn: str, *, base: str = "urn:mork-propose:out/", at: Optional[datetime] = None,
-          sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None) -> Checked:
+          sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None, target_shapes: Optional[Graph] = None) -> Checked:
     """`at` is the instant the mappings in force are read at, an input and never the clock (PRI-56), the epoch of the
     proposal when none is given."""
     import mcn_decoder
@@ -45,7 +46,7 @@ def check(mcn: str, *, base: str = "urn:mork-propose:out/", at: Optional[datetim
         g = mcn_decoder.decode(mcn)
     except mcn_decoder.McnSyntaxError as error:
         return Checked(None, [("decode", "error", getattr(error, "code", "syntax"), f"line {getattr(error, 'line_no', '?')}", str(error))])
-    return check_graph(g, base=base, at=at, sample=sample, target_vocabulary=target_vocabulary)
+    return check_graph(g, base=base, at=at, sample=sample, target_vocabulary=target_vocabulary, target_shapes=target_shapes)
 
 
 TARGETS = ("exactTBoxMatch", "exactRBoxMatch", "inverseRBoxMatch", "exactABoxMatch")
@@ -75,10 +76,71 @@ def unknown_targets(g: Graph, vocabulary: Graph) -> list:
     return out
 
 
+class _Recorder:
+    """A run's sink that keeps every triple and which mapping wrote it."""
+
+    def __init__(self) -> None:
+        self.triples: set = set()
+        self.typed_by: dict = {}
+
+    def write(self, query, triples) -> None:
+        for t in triples:
+            self.triples.add(t)
+            if t.predicate.value == str(RDF.type):
+                self.typed_by.setdefault(t.subject.value, query.mapping)
+
+    def close(self) -> None:
+        pass
+
+    def graph(self) -> Graph:
+        import pyoxigraph as ox
+
+        out = Graph()
+        if self.triples:
+            out.parse(data=ox.serialize(sorted(self.triples, key=str), format=ox.RdfFormat.N_TRIPLES).decode("utf-8"), format="nt")
+        return out
+
+
+_LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
+# What a mapping cannot write, since it is supplied where the meaning is written: by the result path, or by the shape.
+# ponytail: ins:TermShape is downgraded whole, so a term missing ins:Template is information too. Supplying the clause
+# as context before validating would keep the rest of the shape an error.
+_CONTEXT = {
+    _LATTICE + "foundation#hasIdentity": "identity is minted when the meaning is persisted, not by a mapping",
+    _LATTICE + "instrument#TermShape": "a stated term's clause is chosen where the meaning is written, such as at an import",
+}
+
+
+def meaning_findings(output: Graph, typed_by: dict, vocabulary: Graph, shapes: Graph) -> list:
+    """What the target layers' shapes say of a run's output, each on the mapping that typed its focus node, read with
+    OWL RL entailment as a reasoner would. A result about a node the run did not type, such as one of the vocabulary's
+    own, is not the proposal's and is left out, and one about what the context supplies (`_CONTEXT`) is information."""
+    import pyshacl
+    from rdflib.namespace import SH
+
+    _, report, _ = pyshacl.validate(output + vocabulary, shacl_graph=shapes, inference="owlrl", advanced=True, allow_warnings=True)
+    severity = {SH.Violation: "error", SH.Warning: "warning"}
+    out = set()
+    for r in report.subjects(RDF.type, SH.ValidationResult):
+        focus = report.value(r, SH.focusNode)
+        if str(focus) not in typed_by:
+            continue
+        message = " ".join(str(report.value(r, SH.resultMessage) or "a shape of the target layers is not met").split())
+        context = _CONTEXT.get(str(report.value(r, SH.resultPath))) or _CONTEXT.get(str(report.value(r, SH.sourceShape)))
+        if context:
+            out.add(("meaning", "info", "ContextShape", typed_by[str(focus)], f"{message} Left to the context: {context}. (on {focus})"))
+        else:
+            out.add(("meaning", severity.get(report.value(r, SH.resultSeverity), "info"), "TargetShape", typed_by[str(focus)],
+                     f"{message} (on {focus})"))
+    return sorted(out, key=lambda f: (f[3] or "", f[4]))
+
+
 def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[datetime] = None,
-                sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None, compiled_out: Optional[list] = None) -> Checked:
+                sample: Optional[Graph] = None, target_vocabulary: Optional[Graph] = None, compiled_out: Optional[list] = None,
+                target_shapes: Optional[Graph] = None) -> Checked:
     """The check of a mapping graph already decoded or parsed, such as the LangGraph pipeline's Turtle. Each compiled
-    mapping is appended to `compiled_out` when it is given."""
+    mapping is appended to `compiled_out` when it is given. With a sample and `target_shapes`, what the run writes is
+    validated against them, read with `target_vocabulary`."""
     from mork_rdf import CompileError, compile_scheme, run
 
     at = at or datetime(2000, 1, 1, tzinfo=timezone.utc)
@@ -104,8 +166,12 @@ def check_graph(g: Graph, *, base: str = "urn:mork-propose:out/", at: Optional[d
             severity = "review" if f.code == "Uncertain" else f.severity.value
             result.findings.append(("validate" if f.code == "MorkShape" else "compile", severity, f.code, f.mapping, f.message))
         if sample is not None:
-            ran = run(compiled, sample)
-            result.output = (result.output or Graph()) + ran.graph + ran.tbox
+            recorder = _Recorder()
+            ran = run(compiled, sample, sink=recorder)
+            written = recorder.graph()
+            result.output = (result.output or Graph()) + written
             for f in ran.findings:
                 result.findings.append(("run", f.severity.value, f.code, f.focus, f"{f.message} ({f.value})" if f.value else f.message))
+            if target_shapes is not None:
+                result.findings.extend(meaning_findings(written, recorder.typed_by, target_vocabulary or Graph(), target_shapes))
     return result

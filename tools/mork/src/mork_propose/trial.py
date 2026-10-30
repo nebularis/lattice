@@ -17,7 +17,9 @@ from rdflib.namespace import RDF
 from .history import MORK, History, agreement, patterns, review_against, scores
 
 
-def score(run_dir: Path, pack: Path, pack_scheme: URIRef, history_path: Path, sample: Path | None, *, model: str, at: datetime) -> dict:
+def score(run_dir: Path, pack: Path, pack_scheme: URIRef, history_path: Path, sample: Path | None, *, model: str, at: datetime,
+          started: datetime | None = None, input_tokens: int | None = None, output_tokens: int | None = None,
+          total_tokens: int | None = None) -> dict:
     import mcn_decoder
     from mork_rdf import compile_scheme, run
 
@@ -31,13 +33,17 @@ def score(run_dir: Path, pack: Path, pack_scheme: URIRef, history_path: Path, sa
 
     history = History(history_path)
     run_iri = URIRef(f"urn:mork-propose:run:{run_dir.name}")
-    history.record_run(run_iri, proposal, scheme, model=model, pack="MTP, mork_propose", source=None, at=at)
+    history.record_run(run_iri, proposal, scheme, model=model, pack="MTP, mork_propose", source=None, at=at, started=started,
+                       input_tokens=input_tokens, output_tokens=output_tokens, total_tokens=total_tokens)
     reviewer = URIRef(str(pack_scheme))
     for n, (mapping, decision, corrected, note) in enumerate(decisions, start=1):
         history.record_review(URIRef(f"{run_iri}:review/{n}"), mapping, decision, reviewer=reviewer, at=at, note=note, corrected_by=corrected)
     history.save()
 
     result = {"run": run_dir.name, "scheme": str(scheme), "mappings": scores(decisions)}
+    if any(v is not None for v in (started, input_tokens, output_tokens, total_tokens)):
+        result["cost"] = {"seconds": round((at - started).total_seconds()) if started else None, "input_tokens": input_tokens,
+                          "output_tokens": output_tokens, "total_tokens": total_tokens}
     if sample is not None:
         source = Graph().parse(sample)
         mine = compile_scheme(proposal, scheme, base="urn:trial:proposal/", at=at)
@@ -59,9 +65,15 @@ def main(argv=None) -> int:
     p.add_argument("--sample", default="")
     p.add_argument("--model", default="unknown")
     p.add_argument("--at", default="2026-10-29T00:00:00+00:00", help="the instant the mappings are read at, an input and never the clock")
+    p.add_argument("--started", default="", help="when the run started, which with --at gives its duration")
+    p.add_argument("--input-tokens", type=int, default=None)
+    p.add_argument("--output-tokens", type=int, default=None)
+    p.add_argument("--total-tokens", type=int, default=None, help="where only the total of read and written is known")
     a = p.parse_args(argv)
+    started = datetime.fromisoformat(a.started).astimezone(timezone.utc) if a.started else None
     result = score(Path(a.run_dir), Path(a.pack), URIRef(a.pack_scheme), Path(a.history), Path(a.sample) if a.sample else None,
-                   model=a.model, at=datetime.fromisoformat(a.at).astimezone(timezone.utc))
+                   model=a.model, at=datetime.fromisoformat(a.at).astimezone(timezone.utc), started=started,
+                   input_tokens=a.input_tokens, output_tokens=a.output_tokens, total_tokens=a.total_tokens)
     print(json.dumps({k: v for k, v in result.items() if k != "decisions"}, indent=1))
     return 0
 

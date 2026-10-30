@@ -86,8 +86,10 @@ class History:
         self.path.write_text(self.graph.serialize(format="turtle"), encoding="utf-8")
 
     def record_run(self, run: URIRef, proposal: Graph, scheme: URIRef, *, model: str, pack: str, source: Optional[URIRef],
-                   at: datetime) -> list[URIRef]:
-        """The run and every mapping of the proposal's scheme, each naming the run that generated it."""
+                   at: datetime, started: Optional[datetime] = None, input_tokens: Optional[int] = None,
+                   output_tokens: Optional[int] = None, total_tokens: Optional[int] = None) -> list[URIRef]:
+        """The run and every mapping of the proposal's scheme, each naming the run that generated it, with what the run
+        cost where it is known: its start, and the tokens its proposer read and wrote."""
         g = self.graph
         g += proposal
         g.add((run, RDF.type, MORK.ProposalRun))
@@ -95,6 +97,11 @@ class History:
         g.add((run, MORK.proposerModel, Literal(model)))
         g.add((run, MORK.teachingPackVersion, Literal(pack)))
         g.add((run, PROV.endedAtTime, Literal(at.isoformat(), datatype=XSD.dateTime)))
+        if started is not None:
+            g.add((run, PROV.startedAtTime, Literal(started.isoformat(), datatype=XSD.dateTime)))
+        for predicate, count in ((MORK.inputTokens, input_tokens), (MORK.outputTokens, output_tokens), (MORK.totalTokens, total_tokens)):
+            if count is not None:
+                g.add((run, predicate, Literal(count, datatype=XSD.nonNegativeInteger)))
         if source is not None:
             g.add((run, MORK.proposedFor, source))
         mappings = sorted((m for m in proposal.subjects(MORK.mappingScheme, scheme) if isinstance(m, URIRef)), key=str)
