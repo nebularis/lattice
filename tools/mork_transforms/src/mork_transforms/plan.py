@@ -293,3 +293,37 @@ def plan(g: Graph, scheme: URIRef | str, fmt: str, *, base: str, at: datetime, t
     lowering = _Lowering(g, reading, fmt, base)
     roots = lowering.lower()
     return Plan(str(scheme), fmt, base, roots, tuple(sorted(set(reading.findings + lowering.findings))))
+
+
+def source_formats(g: Graph, scheme: URIRef | str) -> set[str]:
+    """The transform formats a scheme's mappings read, "xml" or "json", from the representation scheme of each concept
+    they are `mork:mappingFor`, as the reader finds a mapping's source."""
+    by_format = {f: name for name, (f, _) in FORMATS.items()}
+    return {by_format[f] for m in g.subjects(MORK.mappingScheme, URIRef(scheme)) for c in g.objects(m, MORK.mappingFor)
+            for sc in g.objects(c, SKOS.inScheme) for f in g.objects(sc, MORK["format"]) if f in by_format}
+
+
+def attribution(p: Plan) -> list[dict]:
+    """Which mapping writes which triples of a run, as a table read after the run (XJ-Q9), since what the engine runs is
+    left as it is published. A node is a datum's when it has one of the datum's types or the datum's identity, its IRI or
+    the constant text an IRI of it starts with. The datum's mapping writes its types and its glue, and each assertion's
+    mapping its property, from the datum's node or, inverse, to it. A triple two rows could have written counts for both."""
+    rows: list[dict] = []
+
+    def walk(d: Datum) -> None:
+        identity = d.identity
+        first = identity.pieces[0] if isinstance(identity, Template) and identity.pieces else None
+        rows.append({
+            "mapping": d.mapping,
+            "types": [str(t) for t in d.types],
+            "iri": str(identity.term) if isinstance(identity, Constant) else None,
+            "prefix": identity.prefix if isinstance(identity, Positional) else first if isinstance(first, str) else None,
+            "glue": {"property": str(d.glue[0]), "parentIsSubject": d.glue[1]} if d.glue else None,
+            "assertions": [{"mapping": a.mapping, "property": str(a.prop), "inverse": a.inverse} for a in d.assertions],
+        })
+        for child in d.children:
+            walk(child)
+
+    for root in p.roots:
+        walk(root)
+    return rows

@@ -7,7 +7,7 @@
 
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
 pinned here, or with `--docker` from the compose file. It then builds and starts the store writer, the service, the
-worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
+worker, the transforms worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
 the compose file also serves the built add-in over HTTPS on 3443, which Word needs. Each process writes its log and its
 process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
 TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
@@ -97,7 +97,7 @@ PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 """
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
-ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "addin", "web")
+ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "transforms", "addin", "web")
 
 
 class Stack:
@@ -232,7 +232,7 @@ class Stack:
                 print(f"{name}: up on 127.0.0.1:{port}")
         if not dev:
             run(["yarn", "workspace", "@lattice/config-studio", "run", "build"], self.root)
-        run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer", "-am", "package", "-DskipTests"], self.root)
+        run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer,config-studio-transforms", "-am", "package", "-DskipTests"], self.root)
         jar = self.platform / "config-studio-service" / "target" / "config-studio-service.jar"
         if self.pid("writer") is None:
             self.spawn("writer", ["java", "-jar", str(self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar")], WRITER_ENV)
@@ -241,6 +241,8 @@ class Stack:
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
+        if self.pid("transforms") is None:
+            self.spawn("transforms", ["java", "-jar", str(self.platform / "config-studio-transforms" / "target" / "config-studio-transforms.jar")], STUDIO_ENV)
         if self.claim("addin", ADDIN_PORT):
             self.spawn("addin", ["yarn", "workspace", "@lattice/word-authoring-addin", "run", "dev"])
             self.wait_for("addin", ADDIN_PORT)

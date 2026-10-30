@@ -49,13 +49,24 @@ def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
     assert samples == [
         f"urn:lattice:studio:sample:{n}"
-        for n in ("builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "odrl-mappings", "quantities", "saas",
+        for n in ("builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "odrl-mappings", "policies-transforms", "quantities", "saas",
                   "vocabulary-bindings")
     ]
     assert not list(listing.objects(None, CST.part))
     lending = Graph().parse(staged / "samples" / "lending.ttl")
     assert (URIRef("https://example.org/lending#LoanApplication"), RDF.type, OWL.Class) in lending
     assert (URIRef("https://example.org/lending#LoanApplicationStrongProfile"), RDF.type, DAL.DataAccessProfile) in lending
+
+
+def test_the_policies_sample_offers_each_examples_source_as_it_is(staged: Path) -> None:
+    """The sources mapping mode offers are the files `tools/mork_transforms` tests the transforms on."""
+    catalogue = lattice_repo_catalogue.load(lattice_repo_catalogue.find_root())
+    example = catalogue.root / catalogue.area("tools") / "mork_transforms" / "tests" / "examples" / "policies"
+    sample = Graph().parse(staged / "samples" / "policies-transforms.ttl")
+    skos = URIRef("http://www.w3.org/2004/02/skos/core#example")
+    for fmt in ("xml", "json"):
+        offered = sample.value(URIRef(f"urn:example:source/{fmt}#Source"), skos)
+        assert str(offered) == (example / f"source.{fmt}").read_text(encoding="utf-8")
 
 
 def test_a_sample_naming_a_missing_file_is_refused(tmp_path: Path) -> None:

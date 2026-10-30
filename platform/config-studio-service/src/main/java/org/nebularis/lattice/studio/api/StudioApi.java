@@ -201,6 +201,9 @@ public final class StudioApi {
             if (s.length == 5 && s[2].equals("documents") && Graphs.isId(s[3]) && s[4].equals("report")) {
                 return method.equals("GET") ? documentReport(ws, s[3]) : notAllowed("GET");
             }
+            if (s.length == 3 && s[2].equals("transforms")) {
+                return method.equals("POST") ? transform(req, ws) : notAllowed("POST");
+            }
             if (s.length == 3 && s[2].equals("jobs")) {
                 return switch (method) {
                     case "GET" -> listJobs(ws);
@@ -660,6 +663,63 @@ public final class StudioApi {
             }
         }
         return null;
+    }
+
+    /** How long a transform waits for the transforms worker. A warm run takes milliseconds (ADR-A148). */
+    private static final java.time.Duration TRANSFORM_TIMEOUT = java.time.Duration.ofSeconds(30);
+    private static final List<String> SAMPLE_TYPES = List.of("application/xml", "text/xml", "application/json");
+
+    /**
+     * Runs the transforms a compile job of the mapping part wrote over a sample source in XML or JSON, through the
+     * transforms worker, and answers with its reply. Nothing is stored, since a run is derived and can be repeated.
+     */
+    private ApiResponse transform(ApiRequest req, String id) {
+        String job = query(req.query()).get("job");
+        if (load(id) == null || job == null || !Graphs.isId(job)) {
+            return notFound();
+        }
+        Resource compile = ResourceFactory.createResource(Graphs.job(job));
+        Model m = store.graph(Graphs.job(job));
+        if (!m.contains(compile, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
+            return notFound();
+        }
+        if (!m.contains(compile, Cst.kind, Cst.Compile) || !m.contains(compile, Cst.target, Cst.target("mapping"))
+            || !m.contains(compile, Cst.status, Cst.Succeeded)) {
+            return ApiResponse.text(409, "the job is not a finished compilation of the mapping part");
+        }
+        String media = media(req);
+        if (!SAMPLE_TYPES.contains(media)) {
+            return ApiResponse.text(415, "Content-Type must be one of " + SAMPLE_TYPES);
+        }
+        byte[] sample = req.body() == null ? new byte[0] : req.body();
+        if (sample.length > MAX_BODY_BYTES) {
+            return tooLarge();
+        }
+        String run = ids.get().toString();
+        byte[] reply;
+        try {
+            reply = bus.transform(run, Graphs.job(job), media, sample, TRANSFORM_TIMEOUT);
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            LOG.error("asking for a transform of {} failed", job, e);
+            return ApiResponse.text(503, "the transform could not be handed to the transforms worker");
+        }
+        if (reply == null) {
+            return ApiResponse.text(504, "no transforms worker answered within " + TRANSFORM_TIMEOUT.toSeconds() + " s");
+        }
+        // Each component validates what it receives (PRI-75): the reply is Turtle describing this run.
+        Model answer;
+        try {
+            answer = Turtle.parse(reply, Lang.TURTLE);
+        } catch (RiotException e) {
+            answer = null;
+        }
+        if (answer == null || !answer.contains(ResourceFactory.createResource("urn:lattice:studio:transform:" + run), RDF.type, Cst.Transform)) {
+            return ApiResponse.text(502, "the transforms worker's reply does not describe the run");
+        }
+        return ApiResponse.turtle(200, Turtle.write(answer));
     }
 
     private ApiResponse listJobs(String id) {

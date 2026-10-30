@@ -1,0 +1,78 @@
+[
+ {
+  "operation": "shift",
+  "spec": {
+   "policies": {
+    "*": {
+     "#active": "r0[&1].urn:example:target\\#status[0].\\@value",
+     "#urn:example:target\\#Acme": "r0[&1].\\@reverse.urn:example:target\\#insures[0].\\@id",
+     "#urn:example:target\\#Policy": "r0[&1].\\@type[]",
+     "$": "r0[&1]._p",
+     "covers": {
+      "*": {
+       "#urn:example:target\\#Cover": "r0[&3].\\@reverse.urn:example:target\\#coverOf[&1].\\@type[]",
+       "$": "r0[&3].\\@reverse.urn:example:target\\#coverOf[&1]._p",
+       "code": {
+        "FIRE": {
+         "#urn:example:target\\#Fire": "r0[&5].\\@reverse.urn:example:target\\#coverOf[&3].urn:example:target\\#peril[0].\\@id"
+        },
+        "FLOOD": {
+         "#urn:example:target\\#Flood": "r0[&5].\\@reverse.urn:example:target\\#coverOf[&3].urn:example:target\\#peril[0].\\@id"
+        }
+       }
+      }
+     },
+     "holder": {
+      "@": "r0[&2].urn:example:target\\#holderName[0].\\@value"
+     },
+     "number": {
+      "@": "r0[&2]._k1"
+     }
+    }
+   }
+  }
+ },
+ {
+  "operation": "modify-overwrite-beta",
+  "spec": {
+   "r0": {
+    "*": {
+     "\\@id": "=concat('urn:example:base/policy/', @(1,_k1))",
+     "\\@reverse": {
+      "urn:example:target\\#coverOf": {
+       "*": {
+        "\\@id": "=concat('urn:example:base/cover/', 'policies', '/', @(4,_p), '/', 'covers', '/', @(1,_p))"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ {
+  "operation": "remove",
+  "spec": {
+   "r0": {
+    "*": {
+     "@reverse": {
+      "urn:example:target#coverOf": {
+       "*": {
+        "_p": ""
+       }
+      }
+     },
+     "_k1": "",
+     "_p": ""
+    }
+   }
+  }
+ },
+ {
+  "operation": "shift",
+  "spec": {
+   "r0": {
+    "*": "\\@graph[]"
+   }
+  }
+ }
+]

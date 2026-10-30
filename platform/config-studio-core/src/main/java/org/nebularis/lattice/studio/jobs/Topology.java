@@ -11,6 +11,12 @@ public final class Topology {
     public static final String DEAD_LETTER_EXCHANGE = "lattice.studio.dlx";
     public static final String JOBS_QUEUE = "lattice.studio.jobs";
     public static final String JOBS_ROUTING_KEY = "lattice.studio.jobs";
+    /**
+     * Runs of a compiled transform (ADR-A148), each a request answered on its sender's direct reply-to. A request expires
+     * when its sender stops waiting, so it is never dead-lettered.
+     */
+    public static final String TRANSFORMS_QUEUE = "lattice.studio.transforms";
+    public static final String TRANSFORMS_ROUTING_KEY = "lattice.studio.transforms";
     public static final String DEAD_QUEUE = "lattice.studio.dead";
     public static final String DEAD_ROUTING_KEY = "#";
     /**
@@ -33,6 +39,8 @@ public final class Topology {
         channel.exchangeDeclare(DEAD_LETTER_EXCHANGE, "topic", true);
         channel.queueDeclare(JOBS_QUEUE, true, false, false, Map.of("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE));
         channel.queueBind(JOBS_QUEUE, EXCHANGE, JOBS_ROUTING_KEY);
+        channel.queueDeclare(TRANSFORMS_QUEUE, true, false, false, Map.of());
+        channel.queueBind(TRANSFORMS_QUEUE, EXCHANGE, TRANSFORMS_ROUTING_KEY);
         channel.queueDeclare(DEAD_QUEUE, true, false, false, Map.of());
         channel.queueBind(DEAD_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_ROUTING_KEY);
         // A super stream, declared as `rabbitmq-streams add_super_stream` would: the exchange marked as one, and each

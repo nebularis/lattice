@@ -267,6 +267,11 @@ cst:code a owl:DatatypeProperty ; rdfs:domain sh:ValidationResult ; rdfs:range x
 
 cst:artefact a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Artefact .
 
+cst:Transform a owl:Class ; rdfs:subClassOf cst:Job ;
+    rdfs:comment "A run of a compile job's transforms over a sample source in XML or JSON, answered on the request that asked for it and never stored (ADR-A148)." .
+cst:compileJob a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Transform ; rdfs:range cst:Job ;
+    rdfs:comment "The compile job of the mapping part whose stylesheets or chains the run took." .
+
 cst:Artefact a owl:Class ;
     rdfs:comment "A file a compilation produced, kept as text so the author can read it." .
 cst:path a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string ;

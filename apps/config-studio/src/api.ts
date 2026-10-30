@@ -154,6 +154,20 @@ export const api = {
     return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
   },
 
+  /** Runs a finished compile job's XSLT stylesheets or JOLT chains over a sample in XML or JSON, through the transforms
+   * worker, and answers at once. The run is never stored (ADR-A148). */
+  async transform(id: string, compileJob: string, mediaType: string, sample: string): Promise<Job> {
+    const response = await request(`/api/workspaces/${id}/transforms?job=${encodeURIComponent(compileJob)}`, {
+      method: "POST",
+      headers: { "Content-Type": mediaType },
+      body: sample,
+    });
+    const graph = Graph.parse(await response.text());
+    const run = graph.ofType(CST("Transform"))[0];
+    if (!run) throw new ApiError(502, "the reply does not describe the run");
+    return readJob(graph, run.value);
+  },
+
   async job(jobId: string): Promise<Job> {
     const { graph } = await turtle(`/api/jobs/${jobId}`);
     return readJob(graph, `urn:lattice:studio:job:${jobId}`);

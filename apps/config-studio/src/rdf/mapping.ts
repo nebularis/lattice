@@ -4,7 +4,7 @@
 // writes and its latest review. It is read only, and lays the tree out the same way every time, one row per mapping in
 // depth-first order.
 
-import { Graph, LABEL, MORK, TYPE, compact, iri, literal, typed, localName, type Term } from "@lattice/authoring-domain";
+import { Graph, LABEL, MORK, SKOS, TYPE, compact, iri, literal, typed, localName, type Term } from "@lattice/authoring-domain";
 
 export interface Targets {
   tbox: string[];
@@ -225,4 +225,35 @@ export function written(n: MappingNode, prefixes: Record<string, string>): { box
     ...n.targets.inverse.map((t) => ({ box: "←", term: c(t) })),
     ...n.targets.abox.map((t) => ({ box: "=", term: c(t) })),
   ];
+}
+
+/** The formats a sample source may be in. Turtle runs on the SPARQL backend, XML and JSON on the transforms (ADR-A148). */
+export type SampleFormat = "text/turtle" | "application/xml" | "application/json";
+export const SAMPLE_FORMATS: [SampleFormat, string][] = [["text/turtle", "Turtle"], ["application/xml", "XML"], ["application/json", "JSON"]];
+
+/** The format of a pasted or loaded sample: by the file's extension, else XML when it opens with a declaration or an
+ * element, JSON when it parses as JSON, and Turtle otherwise. The author can change it. */
+export function sampleFormat(text: string, filename?: string): SampleFormat {
+  const ext = filename?.toLowerCase().match(/\.([a-z]+)$/)?.[1];
+  if (ext === "xml") return "application/xml";
+  if (ext === "json") return "application/json";
+  if (ext === "ttl" || ext === "nt") return "text/turtle";
+  const s = text.trimStart();
+  if (/^(<\?xml|<[A-Za-z_][\w.-]*(:[\w.-]+)?[\s/>])/.test(s)) return "application/xml";
+  try {
+    JSON.parse(s);
+    return "application/json";
+  } catch {
+    return "text/turtle";
+  }
+}
+
+/** The example document each representation scheme of the part carries as `skos:example`, with the format it is in. */
+export function exampleSources(g: Graph): { scheme: string; text: string; format: SampleFormat }[] {
+  const formats: Record<string, SampleFormat> = { XML: "application/xml", JSON: "application/json", RDF: "text/turtle" };
+  return g
+    .subjects(MORK("format"))
+    .map((s) => ({ scheme: s.value, text: g.value(s.value, SKOS("example")), format: formats[localName(g.value(s.value, MORK("format")) ?? "")] }))
+    .filter((e): e is { scheme: string; text: string; format: SampleFormat } => !!e.text && !!e.format)
+    .sort((a, b) => a.scheme.localeCompare(b.scheme));
 }

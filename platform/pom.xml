@@ -18,6 +18,7 @@
     <module>config-studio-authoring</module>
     <module>config-studio-service</module>
     <module>config-studio-writer</module>
+    <module>config-studio-transforms</module>
   </modules>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>

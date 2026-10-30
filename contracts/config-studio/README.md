@@ -56,6 +56,7 @@ Every request and response body is RDF in UTF-8, unless the table says otherwise
 | `POST /api/workspaces/{ws}/jobs?kind=propose&target=mapping-language-model` | the mapping configuration, with one `cst:ImportDocument` of `cst:documentRole` `cst:SourceVocabulary`, its `cst:sourceNamespace` optional, and at most one of role `cst:SampleSource`, each Turtle or N-Triples | `202`, as for any job. `422` otherwise. See Mapping proposals |
 | `POST /api/workspaces/{ws}/jobs?kind=dry-run&target=meaning` | the configurations and a `cst:DryRun`, which is never saved | `202`, as for any job. See Dry run |
 | `POST /api/workspaces/{ws}/jobs?kind=dry-run&target=mapping` | the mapping configuration and one `cst:ImportDocument`, its sample source in Turtle or N-Triples | `202`, as for any job. `422` without exactly one document with content and a media type. See Dry run |
+| `POST /api/workspaces/{ws}/transforms?job={job}` | a sample source in XML or JSON, `Content-Type` `application/xml`, `text/xml` or `application/json` | `200`, the run as a `cst:Transform`. `404` for a job the workspace does not hold, `409` for one that is not a finished compilation of the mapping part, `415` for another media type, `413` over 5 MiB, `504` when no transforms worker answered within 30 seconds. See Transforms |
 | `GET /api/workspaces/{ws}/jobs` | | `200`, the description of each compile job of the workspace: status, kind, target and times, without report or artefacts |
 | `GET /api/document-templates` | | `200`, every `cst:DocumentTemplate` a document may be drafted from, each with its `cst:templateKey`, `rdfs:label` and its `cst:section`s in `cst:order`, each section with `cst:sectionKey`, `rdfs:label` (its heading), `cst:elementKind` (`clause` or `definition`), `cst:termKind`, `cst:required` and `rdfs:comment` (its guidance) |
 | `GET /api/document-samples` | | `200`, every `cst:DocumentSample` with `cst:sampleKey` and `rdfs:label` |
@@ -172,7 +173,24 @@ The job's artefacts are one for each configuration the proposals add to, named b
 
 A dry run decides a stated term's eligibility conditions over sample facts, without instantiating anything (ADR-A138 decision 7, CB-Q2). The request body holds the configurations and one `cst:DryRun`, with `cst:term` the stated term and a `cst:fact` for each sample: `cst:forCondition` the condition, and `cst:number` a number for an interval condition or `cst:concept` a concept for a concept condition, one fact per concept. The worker finds the conditions the term reads, through its relations and their qualifiers, poses each as an `elg:Question` with the facts as its candidate, and decides it by the condition's compiled SPARQL, as an eligibility validation decides a question, never by the reference evaluator (ADR-A-FM3). The job gives one `cst:testResult` per condition, with `cst:condition`, `cst:decision` and `cst:diagnostic` when Undetermined, and reports as information a condition with no fact, which reads Undetermined, and a fact for a condition the term does not read. The facts live in the job's input only, deleted with the job. Stepping a regime over sample events has no compiled path yet, so a dry run does not step regimes (BQ-1).
 
-A dry run of the mapping part compiles each scheme with `tools/mork_rdf` and runs it over the sample source, writing nothing but the job. Its findings are the compiler's and the run's checks, and its artefacts are what each mapping wrote, one N-Triples file for each mapping and stratum, with `cst:group` the mapping and `cst:stratum` the step of the run that wrote it. The browser keeps the sample in its own storage for the workspace and reruns whenever the mapping part or the sample changes.
+A dry run of the mapping part compiles each scheme with `tools/mork_rdf` and runs it over the sample source, writing nothing but the job. Its findings are the compiler's and the run's checks, and its artefacts are what each mapping wrote, one N-Triples file for each mapping and stratum, with `cst:group` the mapping and `cst:stratum` the step of the run that wrote it. The browser keeps the sample and its format in its own storage for the workspace and reruns whenever the mapping part or the sample changes. A sample in XML or JSON runs as a transform instead.
+
+### Transforms
+
+A compile job of the mapping part also compiles each scheme over an XML or JSON source with `tools/mork_transforms` (ADR-A148), grouped by the scheme: `{scheme}.xsl`, an XSLT 3.0 stylesheet (`application/xslt+xml`), or `{scheme}.jolt.json`, a JOLT chain (`application/json`), and beside each `{path}.attribution.json`, the table that attributes what a run writes to its mappings. What a backend refuses or warns of is a finding on its mapping.
+
+A transform runs a finished compile job's stylesheets or chains over a sample source in the transforms worker and answers at once. Nothing is stored, since a run is derived and can be repeated. The service checks the request and publishes the sample as the message body, with `content_type` the sample's media type, header `job` the compile job's IRI, a correlation id, RabbitMQ's direct reply-to and an expiration of 30 seconds, routed with `lattice.studio.transforms` on exchange `lattice.studio`. The worker reads the compile job from the store, checks it as the service did, and replies with a Turtle graph. A request without a reply queue, a correlation id or a job IRI is dropped.
+
+```turtle
+<urn:lattice:studio:transform:{id}> a cst:Transform ;   # {id} is the request's correlation id
+    cst:compileJob <urn:lattice:studio:job:{job}> ;
+    cst:status cst:Succeeded ;                           # or cst:Failed, with cst:failureMessage
+    cst:conforms true ;
+    cst:report <urn:lattice:studio:transform:{id}#report> ;
+    cst:artefact <urn:lattice:studio:transform:{id}#artefact-1> .
+```
+
+Each scheme with a transform of the sample's format runs, and each mapping's artefact is what it wrote, as a mapping dry run's at stratum 0. A node is a datum's when it has one of the datum's types, its IRI, or an IRI that starts with the constant text its identity starts with, and a triple two mappings could have written is in both artefacts. A scheme with no transform of that format is reported as information with `cst:code` `NotRun`, and a source the engine cannot read fails the run.
 
 ### Mapping proposals
 

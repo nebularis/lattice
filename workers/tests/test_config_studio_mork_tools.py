@@ -75,3 +75,16 @@ def test_an_rml_mapping_imports_and_compiles_back_to_the_same_rml():
     assert isomorphic(Graph().parse(data=str(compiled.value(rml, CST.content)), format="turtle"), Graph().parse(loan, format="turtle"))
     with pytest.raises(ValueError, match="already holds"):
         import_rml(JOB, g + scheme)
+
+
+def test_a_mapping_compilation_writes_each_xml_and_json_schemes_transform_and_its_attribution_table():
+    """ADR-A148: the transforms worker runs what a compile job of the mapping part writes."""
+    policies = ROOT / jobs.catalogue().area("tools") / "mork_transforms" / "tests" / "examples" / "policies"
+    schemes = Graph().parse(policies / "xml.mork.ttl").parse(policies / "json.mork.ttl")
+    compiled = jobs.run_job(JOB, "compile", "mapping", schemes, Graph(), str(ROOT), "2026-10-30T00:00:00Z")
+    files = {(str(compiled.value(a, CST.group)).rsplit("/", 1)[-1], str(compiled.value(a, CST.path)), str(compiled.value(a, CST.mediaType)))
+             for a in compiled.objects(JOB, CST.artefact)}
+    assert {("xml#Scheme", "Scheme.xsl", "application/xslt+xml"), ("xml#Scheme", "Scheme.xsl.attribution.json", "application/json"),
+            ("json#Scheme", "Scheme.jolt.json", "application/json"), ("json#Scheme", "Scheme.jolt.json.attribution.json", "application/json")} <= files
+    codes = {str(c) for c in compiled.objects(None, CST.code)}
+    assert {"PositionalIdentity", "KeyNotEncoded"} <= codes

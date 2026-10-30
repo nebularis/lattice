@@ -640,7 +640,7 @@ description = "Test the Configuration Studio: its staging, worker, service, and 
 depends = ["build:config-studio-assets", "check:authoring-domain"]
 run = [
   "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
-  "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer -am verify",
+  "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]
 
@@ -650,7 +650,7 @@ depends = ["build:config-studio-assets"]
 run = "yarn workspace @lattice/config-studio run test"
 
 [tasks."studio:up"]
-description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service and the worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
+description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service, the worker and the transforms worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
 depends = ["build:config-studio-assets"]
 run = "python tools/config_studio_stack.py up"
 
@@ -685,6 +685,11 @@ run = "mvn -q -f platform/pom.xml -pl config-studio-writer -am package -DskipTes
 description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ"
 env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
 run = "python -m lattice_workers.config_studio_main"
+
+[tasks."studio:transforms"]
+description = "Build and run the Configuration Studio's transforms worker, which runs the mapping part's XSLT stylesheets and JOLT chains, against Fuseki and RabbitMQ"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+run = "mvn -q -f platform/pom.xml -pl config-studio-transforms -am package -DskipTests && java -jar platform/config-studio-transforms/target/config-studio-transforms.jar"
 
 [tasks."studio:web"]
 description = "Serve the Configuration Studio's browser code with hot reload on 127.0.0.1:4175, proxying /api to the service"

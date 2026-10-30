@@ -2,12 +2,16 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
+import os
+
 import pytest
 from rdflib import BNode, Graph, URIRef
 from rdflib.compare import isomorphic
 
 from mork_rdf.paths import PathError
-from mork_transforms import compile_xslt, plan
+import json
+
+from mork_transforms import attribution, compile_xslt, plan, source_formats
 from mork_transforms.engine import available, run
 from mork_transforms.jolt import compile_jolt
 from mork_transforms.paths import parse_json, parse_xml
@@ -80,3 +84,30 @@ def test_positions_are_counted_as_each_format_counts_them_and_a_key_is_encoded_i
     assert "KeyNotEncoded" in {f.code for f in findings}
     out = Graph().parse(data=run("jolt", chain, '{"policies": [{"number": "P-9", "covers": [{}, {"code": "FIRE"}]}]}'), format="json-ld")
     assert (URIRef(BASE + "cover/policies/0/covers/1"), URIRef("urn:example:target#coverOf"), URIRef(BASE + "policy/P-9")) in out
+
+
+def _compiled(name: str) -> dict[str, str]:
+    """What the studio's compile job writes for each scheme of an example: its transform and its attribution table."""
+    xml, json_plan = _plan(name, "xml"), _plan(name, "json")
+    table = lambda p: json.dumps(attribution(p), indent=1, sort_keys=True) + "\n"
+    return {"xml.xsl": compile_xslt(xml), "xml.xsl.attribution.json": table(xml),
+            "json.jolt.json": compile_jolt(json_plan)[0], "json.jolt.json.attribution.json": table(json_plan)}
+
+
+def test_the_compiled_fixtures_the_transforms_worker_reads_are_what_the_compiler_writes():
+    """`platform/config-studio-transforms` runs these. `LATTICE_REWRITE_FIXTURES=1` writes them afresh."""
+    folder = EXAMPLES / "policies" / "compiled"
+    for file, text in _compiled("policies").items():
+        if os.environ.get("LATTICE_REWRITE_FIXTURES"):
+            folder.mkdir(exist_ok=True)
+            (folder / file).write_text(text, encoding="utf-8", newline="\n")
+        assert (folder / file).read_text(encoding="utf-8") == text, file
+
+
+def test_a_schemes_source_formats_and_its_attribution_table():
+    g = Graph().parse(EXAMPLES / "policies" / "xml.mork.ttl")
+    assert source_formats(g, "urn:example:mapping/xml#Scheme") == {"xml"}
+    rows = {r["mapping"].rsplit("#", 1)[1]: r for r in attribution(_plan("policies", "xml"))}
+    assert rows["Policy"]["prefix"] == BASE + "policy/" and rows["Cover"]["prefix"] == BASE + "cover/"
+    assert rows["Cover"]["glue"] == {"property": "urn:example:target#coverOf", "parentIsSubject": False}
+    assert {(a["mapping"].rsplit("#", 1)[1], a["inverse"]) for a in rows["Policy"]["assertions"]} == {("Holder", False), ("Insurer", True), ("Status", False)}

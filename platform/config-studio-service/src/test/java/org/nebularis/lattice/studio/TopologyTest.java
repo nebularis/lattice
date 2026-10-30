@@ -17,12 +17,15 @@ class TopologyTest {
         for (String[] pair : new String[][] {
             {"exchange", Topology.EXCHANGE}, {"deadLetterExchange", Topology.DEAD_LETTER_EXCHANGE},
             {"name", Topology.JOBS_QUEUE}, {"routingKey", Topology.JOBS_ROUTING_KEY},
+            {"name", Topology.TRANSFORMS_QUEUE}, {"routingKey", Topology.TRANSFORMS_ROUTING_KEY},
             {"name", Topology.DEAD_QUEUE}, {"routingKey", Topology.DEAD_ROUTING_KEY}}) {
             assertTrue(json.contains("\"" + pair[0] + "\": \"" + pair[1] + "\""), pair[0] + " " + pair[1]);
         }
         String jobs = json.substring(json.indexOf("\"lattice.studio.jobs\""), json.indexOf("\"lattice.studio.dead\""));
         assertTrue(jobs.contains("\"deadLetter\": true"));
         assertTrue(json.substring(json.indexOf("\"lattice.studio.dead\"")).contains("\"deadLetter\": false"));
+        String transforms = json.substring(json.indexOf("\"lattice.studio.transforms\""), json.indexOf("\"lattice.studio.dead\""));
+        assertTrue(transforms.contains("\"deadLetter\": false"));
         assertTrue(json.contains("\"superStream\": \"" + Topology.WRITES + "\""));
         assertTrue(json.contains("\"partitions\": " + Topology.PARTITIONS));
         assertTrue(json.contains("\"x-max-age\": \"" + Topology.PARTITION_ARGUMENTS.get("x-max-age") + "\""));

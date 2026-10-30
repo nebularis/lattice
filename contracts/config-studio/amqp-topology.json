@@ -8,6 +8,11 @@
       "deadLetter": true
     },
     {
+      "name": "lattice.studio.transforms",
+      "routingKey": "lattice.studio.transforms",
+      "deadLetter": false
+    },
+    {
       "name": "lattice.studio.dead",
       "routingKey": "#",
       "deadLetter": false

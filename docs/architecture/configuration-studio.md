@@ -2,7 +2,7 @@
 
 # Configuration Studio
 
-The Configuration Studio is a web application for authoring an applied ontology's configuration against its baseline: vocabulary bindings (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence profiles (`dal:`) and surface contracts (`srf:`). It checks each configuration with its layer's own shapes and compilers as the author edits, and compiles persistence and surface configuration into the artefacts a deployment runs. It is a supported part of LATTICE, built from a browser application in [`apps/config-studio`](../../apps/config-studio/README.md), a service in [`platform/config-studio-service`](../../platform/config-studio-service/README.md), a store writer in [`platform/config-studio-writer`](../../platform/config-studio-writer/README.md), their shared core in [`platform/config-studio-core`](../../platform/config-studio-core/README.md), a worker in [`workers`](../../workers/README.md#configuration-studio-jobs-adr-a136), and its contracts in [`contracts/config-studio`](../../contracts/config-studio/README.md). How to run and operate it is in the [operations guide](../operator/configuration-studio-operations.md) and the [runbook](../operator/configuration-studio-runbook.md).
+The Configuration Studio is a web application for authoring an applied ontology's configuration against its baseline: vocabulary bindings (`voc:`), quantification (`qnt:`), eligibility (`elg:`), persistence profiles (`dal:`) and surface contracts (`srf:`). It checks each configuration with its layer's own shapes and compilers as the author edits, and compiles persistence and surface configuration into the artefacts a deployment runs. It is a supported part of LATTICE, built from a browser application in [`apps/config-studio`](../../apps/config-studio/README.md), a service in [`platform/config-studio-service`](../../platform/config-studio-service/README.md), a store writer in [`platform/config-studio-writer`](../../platform/config-studio-writer/README.md), their shared core in [`platform/config-studio-core`](../../platform/config-studio-core/README.md), a worker in [`workers`](../../workers/README.md#configuration-studio-jobs-adr-a136), a transforms worker in [`platform/config-studio-transforms`](../../platform/config-studio-transforms/README.md), and its contracts in [`contracts/config-studio`](../../contracts/config-studio/README.md). How to run and operate it is in the [operations guide](../operator/configuration-studio-operations.md) and the [runbook](../operator/configuration-studio-runbook.md).
 
 ## Components
 
@@ -19,6 +19,8 @@ flowchart LR
         JOB["job graphs"]
     end
     MQ["RabbitMQ queue lattice.studio.jobs"]
+    TQ["RabbitMQ queue lattice.studio.transforms"]
+    TW["transforms worker (Java, Saxon-HE, JOLT)"]
     WX["RabbitMQ super stream lattice.studio.writes, 8 partitions"]
     WR["config-studio-writer instances, one group"]
     subgraph Worker["Python worker"]
@@ -29,6 +31,10 @@ flowchart LR
     API -- "read, studio service" --> Store
     API -- "write, keyed by workspace" --> WX
     API -- "job IRI" --> MQ
+    API -- "sample, compile job IRI" --> TQ
+    TQ --> TW
+    TW -- "read the compile job" --> Store
+    TW -. "reply" .-> API
     MQ -- "job IRI" --> Worker
     Worker -- "read inputs" --> Store
     Worker -- "job-update, keyed by workspace" --> WX
@@ -43,6 +49,7 @@ flowchart LR
 | service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store |
 | store writer (`config-studio-writer`) | every write to the store for the partitions it holds, in batches of one request each, the revision guard, a receipt per write, and the sweep of finished jobs | serve HTTP, or apply a command it has not checked |
 | worker | validation and compilation, with the engines `mise run check` uses | take a path, a command or a graph of its own choosing from a message |
+| transforms worker (`config-studio-transforms`) | running a compile job's XSLT stylesheets and JOLT chains over a sample source and attributing what they write to the mappings, warm between requests (ADR-A148) | write the store, or run a transform the compile job does not hold |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
 | RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their partition on a super stream | carry a job's content to the worker |
 

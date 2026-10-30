@@ -68,3 +68,10 @@
     rdfs:label "LegalRuleML mappings" ;
     rdfs:comment "Two proposals mapping LegalRuleML's metamodel to stated meaning, one made cold and one made with the ODRL trial's history, each mapping with its review, to explore in mapping mode." ;
     cst:part [ cst:fileName "../legalruleml/trial/history.ttl" ] .
+
+<urn:lattice:studio:sample:policies-transforms> a cst:Sample ;
+    rdfs:label "Policies from XML and JSON" ;
+    rdfs:comment "One mapping of policies with their holders and covers, written twice, a scheme over an XML source and a scheme over a JSON source, each with an example source to run in mapping mode. The XML scheme compiles to an XSLT stylesheet and the JSON scheme to a JOLT chain, and a cover without a key has a positional identity." ;
+    cst:part [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/xml.mork.ttl" ] ,
+             [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/json.mork.ttl" ] ,
+             [ cst:fileName "policies-sources.ttl" ] .

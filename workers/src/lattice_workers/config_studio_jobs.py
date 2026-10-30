@@ -8,6 +8,7 @@ repository catalogue reader, never by a path written here (STD-273).
 from __future__ import annotations
 
 import functools
+import json
 import re
 import sys
 from datetime import datetime
@@ -270,6 +271,32 @@ def _compile_mapping(result: _Result, config: Graph, baseline: Graph, root: str,
         queries = sorted(c.queries, key=lambda q: (q.stratum, q.box != "tbox", q.mapping, q.kind))
         text = "\n\n".join(f"# {q.kind} for {q.mapping}, stratum {q.stratum}, {q.box}\n{q.text}" for q in queries)
         result.artefact(f"{name}.rq", "application/sparql-query", text + "\n", c.scheme)
+    _compile_transforms(result, _merge(baseline, config), now)
+
+
+# The media type of each transform, by the format it reads. Its attribution table is `{path}.attribution.json` beside it.
+_TRANSFORMS = {"xml": ("xsl", "application/xslt+xml"), "json": ("jolt.json", "application/json")}
+
+
+def _compile_transforms(result: _Result, g: Graph, now: datetime) -> None:
+    """Each scheme over an XML or JSON source compiled with mork_transforms to an XSLT 3.0 stylesheet or a JOLT chain
+    (ADR-A148), with the table that attributes what a run writes to its mappings, which the transforms worker reads. What
+    a backend refuses or warns of is a finding on its mapping, and the reader's notes are the SPARQL backend's already."""
+    from mork_transforms import attribution, compile_xslt, plan, source_formats
+    from mork_transforms.jolt import compile_jolt
+
+    for scheme in sorted(g.subjects(RDF.type, URIRef(_MORK + "MappingScheme")), key=str):
+        name = re.sub(r"[^A-Za-z0-9_-]+", "-", str(scheme).rsplit("#", 1)[-1].rsplit("/", 1)[-1]).strip("-") or "scheme"
+        for fmt in sorted(source_formats(g, scheme)):
+            p = plan(g, scheme, fmt, base=_MAPPING_BASE, at=now)
+            text, findings = (compile_xslt(p), p.findings) if fmt == "xml" else compile_jolt(p)
+            for f in findings if fmt == "xml" else p.findings + findings:
+                if f.severity.value in _MAPPING_SEVERITY:
+                    result.finding(_MAPPING_SEVERITY[f.severity.value], f.message, f.code, URIRef(f.mapping) if f.mapping else None)
+            suffix, media = _TRANSFORMS[fmt]
+            result.artefact(f"{name}.{suffix}", media, text, str(scheme))
+            table = json.dumps(attribution(p), indent=1, sort_keys=True)
+            result.artefact(f"{name}.{suffix}.attribution.json", "application/json", table + "\n", str(scheme))
 
 
 # The media types a sample source may be given in. JSON-LD is left out, since a context it names would be fetched.

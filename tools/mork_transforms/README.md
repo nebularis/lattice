@@ -14,7 +14,7 @@ stylesheet = compile_xslt(p)                     # XSLT 3.0, writes canonical N-
 chain, findings = compile_jolt(plan(graph, other, "json", base=..., at=...))  # JOLT, writes expanded JSON-LD
 ```
 
-`p.findings` holds what the reader and the plan found, among them every mapping refused because a transform cannot carry it, and `compile_jolt` adds what JOLT alone cannot. `platform/mork-transforms` runs both, and `mork_transforms.engine.run` calls it.
+`p.findings` holds what the reader and the plan found, among them every mapping refused because a transform cannot carry it, and `compile_jolt` adds what JOLT alone cannot. `platform/mork-transforms` runs both, and `mork_transforms.engine.run` calls it. `source_formats(graph, scheme)` gives the formats a scheme reads, and `attribution(plan)` the table that attributes what a run writes to its mappings, which the studio's transforms worker reads.
 
 ## The source
 
@@ -35,4 +35,4 @@ Lookups, guards, class and property creation, and a deferred reference to data o
 
 ## Tests
 
-`mise run check:mork-transforms` builds the engines, runs their tests, then compiles each example under `tests/examples/` and checks that Saxon-HE and JOLT give its `expected.nt`, positional identities compared as blank nodes.
+`mise run check:mork-transforms` builds the engines, runs their tests, then compiles each example under `tests/examples/` and checks that Saxon-HE and JOLT give its `expected.nt`, positional identities compared as blank nodes. `tests/examples/policies/compiled/` holds what the studio's compile job writes for that example, which the transforms worker's tests run, and a test keeps it equal to the compiler's output (`LATTICE_REWRITE_FIXTURES=1` writes it afresh).

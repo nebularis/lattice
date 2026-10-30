@@ -38,6 +38,14 @@ public final class Cst {
     public static final Property artefact = p("artefact");
     public static final Property path = p("path");
     public static final Property content = p("content");
+    public static final Property mediaType = p("mediaType");
+    public static final Property group = p("group");
+    public static final Property stratum = p("stratum");
+    public static final Property conforms = p("conforms");
+    public static final Property report = p("report");
+    public static final Resource Artefact = r("Artefact");
+    public static final Resource Transform = r("Transform");
+    public static final Property compileJob = p("compileJob");
     public static final Property fromSample = p("fromSample");
     public static final Resource Receipt = r("Receipt");
     public static final Property commandId = p("commandId");

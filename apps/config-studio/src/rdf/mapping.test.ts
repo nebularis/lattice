@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { Graph, MORK, localName } from "@lattice/authoring-domain";
 import { kindOf, sectionsFor } from "./editors";
 import { Vocabulary } from "./vocabulary";
-import { reviewGraph, schemesOf, setParent, setSource, unlink } from "./mapping";
+import { reviewGraph, sampleFormat, schemesOf, setParent, setSource, unlink } from "./mapping";
 import { split } from "./split";
 
 const OM = "https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#";
@@ -143,5 +143,18 @@ describe("editing a scheme on the canvas", () => {
     expect(schemesOf(h)[0].mappings.find((x) => x.iri === P + "C")?.source).toBe(P + "K");
     expect(parent(unlink(g, "parent", P + "B"), "B")).toBeUndefined();
     expect(schemesOf(unlink(h, "source", P + "C"))[0].mappings.find((x) => x.iri === P + "C")?.source).toBeUndefined();
+  });
+});
+
+describe("a sample's format", () => {
+  it("is read from the file's extension, else from how the text opens", () => {
+    expect(sampleFormat("anything", "policies.xml")).toBe("application/xml");
+    expect(sampleFormat("anything", "policies.json")).toBe("application/json");
+    expect(sampleFormat('<?xml version="1.0"?><a/>')).toBe("application/xml");
+    expect(sampleFormat("  <p:policies xmlns:p=\"urn:p\">")).toBe("application/xml");
+    expect(sampleFormat('{"policies": []}')).toBe("application/json");
+    expect(sampleFormat("<http://example.org/a> <http://example.org/p> 1 .")).toBe("text/turtle");
+    expect(sampleFormat("<urn:a:b> a <urn:c> .")).toBe("text/turtle");
+    expect(sampleFormat("@prefix ex: <urn:ex:> . ex:a a ex:B .")).toBe("text/turtle");
   });
 });

@@ -2,7 +2,7 @@
 
 # MORK transforms
 
-The transform backends for MORK ([ADR-A148](../../docs/architecture/decisions/ADR-A148-mork-transform-backends.md)). It runs a generated XSLT 3.0 stylesheet on Saxon-HE and a generated JOLT chain on Bazaarvoice JOLT. It is a library (`Transforms.xslt`, `Transforms.jolt`) and a command line. A worker that takes a run from RabbitMQ follows when the studio runs transforms. The compilers are in [`tools/mork_transforms`](../../tools/mork_transforms).
+The transform backends for MORK ([ADR-A148](../../docs/architecture/decisions/ADR-A148-mork-transform-backends.md)). It runs a generated XSLT 3.0 stylesheet on Saxon-HE and a generated JOLT chain on Bazaarvoice JOLT. It is a library (`Transforms.xslt`, `Transforms.jolt`) and a command line. The studio runs it in [`platform/config-studio-transforms`](../config-studio-transforms/README.md). Each engine keeps up to 64 compiled stylesheets and chains, keyed by the SHA-256 of their text, so a stylesheet run again is not compiled again, which on a laptop takes a warm XSLT run of the `policies` example from 5 to 10 ms to about 2 ms. The compilers are in [`tools/mork_transforms`](../../tools/mork_transforms).
 
 ```bash
 java -jar target/mork-transforms.jar xslt <stylesheet-file> < source.xml
