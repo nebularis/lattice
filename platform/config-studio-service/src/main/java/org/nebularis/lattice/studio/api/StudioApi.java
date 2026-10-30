@@ -53,7 +53,7 @@ public final class StudioApi {
     /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
     private static final Map<String, Resource> PROPOSERS = Map.of(
         "sentence-forms", Cst.SentenceFormProposer, "language-model", Cst.LanguageModelProposer, "odrl", Cst.OdrlProposer,
-        "mapping-language-model", Cst.MappingLanguageModelProposer);
+        "mapping-language-model", Cst.MappingLanguageModelProposer, "rml", Cst.RmlImporter);
 
     private static final String TRIG = "application/trig";
 
@@ -542,7 +542,7 @@ public final class StudioApi {
         if (config == null) {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
-        if ("odrl".equals(target) || ("dry-run".equals(kind) && "mapping".equals(target))) {
+        if ("odrl".equals(target) || "rml".equals(target) || ("dry-run".equals(kind) && "mapping".equals(target))) {
             // Each component validates what it receives (PRI-75, STD-279). A mapping's dry run reads its sample source from one.
             List<Resource> documents = config.listSubjectsWithProperty(RDF.type, Cst.ImportDocument).toList();
             if (documents.size() != 1 || !documents.get(0).hasProperty(Cst.documentContent)

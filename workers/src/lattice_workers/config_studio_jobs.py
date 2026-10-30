@@ -255,8 +255,12 @@ def _mapping_findings(result: _Result, config: Graph, baseline: Graph, root: str
 
 
 def _compile_mapping(result: _Result, config: Graph, baseline: Graph, root: str, now: datetime) -> None:
-    """Each scheme's compiled form as RDF, and its queries in the order a run takes them, grouped by scheme."""
+    """Each scheme's compiled form as RDF, and its queries in the order a run takes them, grouped by scheme. A scheme whose
+    source is JSON, XML or CSV, which mork_rdf leaves to another backend, is compiled to RML as well, with mork2rml, under
+    its scheme's namespace."""
     from mork_rdf import to_rdf
+
+    _compile_rml(result, _merge(baseline, config))
 
     compiled: list = []
     result.conforms(_mapping_findings(result, config, baseline, root, now, compiled))
@@ -319,6 +323,26 @@ def run_mapping(job: URIRef, config: Graph, baseline: Graph, root: str, submitte
             result.artefact(f"{stratum}/{name}.nt", "application/n-triples", text, mapping, stratum)
     result.conforms(conforms)
     return result.graph
+
+
+_MORK = "http://www.nebularis.org/ontologies/Mork#"
+_RML_FORMATS = {URIRef(_MORK + f) for f in ("JSON", "XML", "CSV", "YAML")}
+
+
+def _compile_rml(result: _Result, g: Graph) -> None:
+    import mork2rml
+
+    representations = sorted(s for s, f in g.subject_objects(URIRef(_MORK + "format")) if f in _RML_FORMATS)
+    if not representations:
+        return
+    schemes = sorted(g.subjects(RDF.type, URIRef(_MORK + "MappingScheme")), key=str)
+    scheme = str(schemes[0]) if schemes else ""
+    base = scheme[: max(scheme.rfind("#"), scheme.rfind("/")) + 1] or "urn:lattice:studio:rml/"
+    source = g.value(representations[0], URIRef(_MORK + "identifier"))
+    if len(schemes) > 1:
+        result.finding(SH.Info, f"the schemes are compiled to RML together, under {base}", "RmlTogether")
+    rml = mork2rml.MorkToRmlCompiler(g, base_iri=base, default_source=str(source) if source else None).compile()
+    result.artefact("mapping.rml.ttl", "text/turtle", rml.serialize(format="turtle"), scheme or "rml")
 
 
 def _persistence_findings(result: _Result, config: Graph, baseline: Graph, root: str) -> Optional[Tuple[Graph, Any]]:

@@ -73,7 +73,7 @@ export function BuildView() {
       <div className="page-head">
         <div className="grow">
           <h1>Build</h1>
-          <p>Compile the configuration as it stands in the editor, saved or not. The eligibility compiler gives each condition's decision query and shapes, the persistence compiler the compiled profile and its SPARQL, the surface compiler the generated surfaces.</p>
+          <p>Compile the configuration as it stands in the editor, saved or not. The eligibility compiler gives each condition's decision query and shapes, the persistence compiler the compiled profile and its SPARQL, the surface compiler the generated surfaces. Mapping mode's compile gives each scheme's compiled form and queries, and RML for a scheme over JSON, XML or CSV.</p>
         </div>
         <button className="btn" disabled={!model.state.configs.eligibility!.current.size} onClick={() => void compile("eligibility")}>
           <ListChecks size={15} /> Compile eligibility

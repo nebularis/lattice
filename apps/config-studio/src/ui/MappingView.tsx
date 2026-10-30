@@ -90,6 +90,7 @@ export function MappingView({ selected }: { selected?: string }) {
         <div style={{ maxWidth: 420, width: "100%", textAlign: "left" }}>
           <SamplePanel run={sampleRun} />
           <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
+          <RmlImport onImported={proposed} />
         </div>
       </div>
     );
@@ -122,6 +123,7 @@ export function MappingView({ selected }: { selected?: string }) {
         </div>
         <SamplePanel run={sampleRun} />
         <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
+        <RmlImport onImported={proposed} />
         <h4>Source concepts it maps</h4>
         {scheme.sources.length === 0 && <div className="empty small">No mapping of the scheme names a source concept.</div>}
         {scheme.sources.map((s) => {
@@ -521,3 +523,57 @@ function ReviewControls({ node, scheme, prefixes }: { node: MappingNode; scheme:
     </div>
   );
 }
+
+/** Reads an RML mapping into a MORK scheme in the worker, and adds it to the mapping part as an unsaved edit, saying what
+ * MORK could not read. Compiling the part writes it back as RML. */
+function RmlImport({ onImported }: { onImported: (scheme?: string) => void }) {
+  const studio = useStudio();
+  const [state, setState] = useState<"idle" | "running" | "failed" | "done">("idle");
+  const [message, setMessage] = useState<string>();
+  const load = async (file?: File) => {
+    if (!file) return;
+    const media = /\.(rml|ttl)$/i.test(file.name) ? "text/turtle" : /\.nt$/i.test(file.name) ? "application/n-triples" : undefined;
+    if (!media) {
+      setState("failed");
+      setMessage("Give the RML mapping as Turtle (.rml or .ttl) or N-Triples.");
+      return;
+    }
+    setState("running");
+    try {
+      const current = studio.model.state.configs.mapping!.current;
+      const body = current.merge(importDocument(studio.id, await file.text(), media, false));
+      const job = await awaitJob(await api.submit(studio.id, "propose", "rml", body));
+      if (job.status === "Failed") {
+        setState("failed");
+        setMessage(job.failure ?? "The import failed.");
+        return;
+      }
+      const applied = applyArtefacts(job.artefacts, { mapping: current });
+      if (applied.edits.mapping) studio.model.edit("mapping", () => applied.edits.mapping!);
+      const unread = job.issues.filter((i) => i.severity === "Warning");
+      setState("done");
+      setMessage(unread.length ? `Imported. Not read: ${unread.map((i) => i.message).join("; ")}` : "Imported, every construct read. Review it, then save.");
+      onImported(applied.edits.mapping?.ofType(MORK("MappingScheme")).find((s) => !current.has(s))?.value);
+    } catch (error) {
+      setState("failed");
+      setMessage(error instanceof Error ? error.message : String(error));
+    }
+  };
+  return (
+    <>
+      <h4>Import RML</h4>
+      <div style={{ padding: "0 14px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="row" style={{ gap: 6 }}>
+          <label className="btn sm">
+            {state === "running" ? <Spinner size={12} /> : null} RML mapping
+            <input type="file" accept=".rml,.ttl,.nt" hidden onChange={(e) => void load(e.target.files?.[0])} />
+          </label>
+          <span className="grow small muted" role="status">
+            {state === "failed" ? <span style={{ color: "var(--bad)" }}>{message}</span> : message ?? "Read into a scheme here. Compile writes RML back."}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+

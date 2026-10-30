@@ -53,3 +53,25 @@ def test_an_unknown_tool_or_a_missing_source_is_refused():
         run_tool(JOB, _input("read_file", {"path": "/etc/passwd"}))
     with pytest.raises(ValueError, match="reads a source vocabulary"):
         run_tool(JOB, _input("source_cards", {}, source=False))
+
+
+def test_an_rml_mapping_imports_and_compiles_back_to_the_same_rml():
+    from rdflib.compare import isomorphic
+
+    from lattice_workers.config_studio_mork_tools import import_rml
+
+    loan = ROOT / "ontology" / "mork" / "examples" / "Mork2RML" / "loan_mapping.rml"
+    g = Graph()
+    doc = URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:import/1")
+    g.add((doc, RDF.type, CST.ImportDocument))
+    g.add((doc, CST.documentContent, Literal(loan.read_text(encoding="utf-8"))))
+    g.add((doc, CST.documentMediaType, Literal("text/turtle")))
+    imported = import_rml(JOB, g)
+    artefact = next(a for a in imported.objects(JOB, CST.artefact) if str(imported.value(a, CST.group)) == "mapping")
+    scheme = Graph().parse(data=str(imported.value(artefact, CST.content)), format="turtle")
+    assert (URIRef("http://example.org/fin/Scheme"), RDF.type, URIRef("http://www.nebularis.org/ontologies/Mork#MappingScheme")) in scheme
+    compiled = jobs.run_job(JOB, "compile", "mapping", scheme, Graph(), str(ROOT), "2026-10-30T00:00:00Z")
+    rml = next(a for a in compiled.objects(JOB, CST.artefact) if str(compiled.value(a, CST.path)) == "mapping.rml.ttl")
+    assert isomorphic(Graph().parse(data=str(compiled.value(rml, CST.content)), format="turtle"), Graph().parse(loan, format="turtle"))
+    with pytest.raises(ValueError, match="already holds"):
+        import_rml(JOB, g + scheme)

@@ -56,6 +56,7 @@ public final class Cst {
     public static final Resource LanguageModelProposer = r("LanguageModelProposer");
     public static final Resource OdrlProposer = r("OdrlProposer");
     public static final Resource MappingLanguageModelProposer = r("MappingLanguageModelProposer");
+    public static final Resource RmlImporter = r("RmlImporter");
     public static final Resource ToolCall = r("ToolCall");
     public static final Resource ToolRequest = r("ToolRequest");
     public static final Property toolName = p("toolName");

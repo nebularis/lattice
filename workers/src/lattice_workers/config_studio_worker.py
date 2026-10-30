@@ -145,6 +145,10 @@ class ConfigStudioWorker:
                 if len(documents) != 1:
                     raise ValueError(f"an ODRL import reads exactly one cst:ImportDocument, and the input holds {len(documents)}")
                 return config_studio_odrl.propose_odrl(job, config, spec, documents[0], str(graph.value(job, CST.submittedAt)))
+            if target == CST.RmlImporter:
+                from .config_studio_mork_tools import import_rml
+
+                return import_rml(job, input_("configuration"))
             if target == CST.MappingLanguageModelProposer:
                 from . import config_studio_mapping_proposer as mapping
 

@@ -71,3 +71,35 @@ def run_tool(job: URIRef, config: Graph) -> Graph:
     result.artefact("result", media, out, name)
     result.conforms(True)
     return result.graph
+
+
+def import_rml(job: URIRef, config: Graph) -> Graph:
+    """An RML mapping, the input's one `cst:ImportDocument`, read into a MORK scheme for the mapping part, with what MORK
+    cannot say as warnings. The scheme is named under the base its subject templates share, so compiling it back to RML
+    mints under the same base. One that names a node the workspace already holds is refused."""
+    from rdflib.namespace import SH
+
+    catalogue()
+    import rml2mork
+
+    docs = list(config.subjects(RDF.type, CST.ImportDocument))
+    if len(docs) != 1:
+        raise ValueError("an RML import reads exactly one cst:ImportDocument")
+    media = str(config.value(docs[0], CST.documentMediaType))
+    if media not in _FORMATS:
+        raise ValueError(f"an RML mapping is read as Turtle or N-Triples, not {media}")
+    rml = Graph().parse(data=str(config.value(docs[0], CST.documentContent)), format="turtle" if media == "text/turtle" else "nt")
+    workspace = Graph()
+    for t in config:
+        if t[0] not in docs:
+            workspace.add(t)
+    read = rml2mork.read(rml, rml2mork.template_base(rml) or f"{job}:rml#")
+    clashes = sorted({str(s) for s in read.graph.subjects() if isinstance(s, URIRef) and (s, None, None) in workspace})
+    if clashes:
+        raise ValueError(f"the RML mapping names {clashes[0]}, which the workspace already holds")
+    result = _Result(job)
+    for finding in read.findings:
+        result.finding(SH.Warning, finding, "RmlNotRead")
+    result.artefact("rml-import.ttl", "text/turtle", read.graph.serialize(format="turtle"), "mapping")
+    result.conforms(True)
+    return result.graph

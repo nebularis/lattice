@@ -99,6 +99,14 @@ class AssemblyTest {
     }
 
     @Test
+    void anRmlImportNeedsItsMappingAsOneImportDocument() {
+        String path = "/api/workspaces/" + WS + "/jobs";
+        assertEquals(422, f.post(path, "kind=propose&target=rml", LIBRARY).status());
+        String doc = LIBRARY + "<urn:x:rml> a cst:ImportDocument ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        assertEquals(202, f.post(path, "kind=propose&target=rml", doc).status());
+    }
+
+    @Test
     void aMappingProposalNeedsOneSourceVocabularyAndAtMostOneSample() {
         String doc = "<urn:x:%s> a cst:ImportDocument ; cst:documentRole cst:%s ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
         String path = "/api/workspaces/" + WS + "/jobs";
