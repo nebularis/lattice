@@ -40,6 +40,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.apache.jena.vocabulary.SKOS;
+import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
@@ -52,7 +53,9 @@ import org.nebularis.lattice.studio.writes.Writes;
  * The studio as a Model Context Protocol server, over the Streamable HTTP transport at {@code /mcp}
  * (contracts/config-studio/README.md, ADR-A138 BQ-2). An MCP host reads the library's clauses and proposes stated
  * meaning with its own model, and every proposal is saved to the review configuration as a save from the browser is,
- * waiting for a person's decision. The server holds no model and calls none. Requests are answered whole, never
+ * waiting for a person's decision. It also offers MORK's proposal tools, so a host proposes a mapping scheme with its own
+ * model and saves it to a workspace's mapping part for review there: those that read no source are served as staged,
+ * and those that read a source or a sample run in the worker as a tool job. The server holds no model and calls none. Requests are answered whole, never
  * streamed, so a session holds nothing but the client's name for the proposals it makes.
  */
 final class StudioMcp {
@@ -70,10 +73,13 @@ final class StudioMcp {
     private final Clock clock;
     private final Supplier<UUID> ids;
     private final Path assets;
+    private final java.util.function.BiFunction<String, Model, Model> tools;
     private final Map<String, String> clients = new ConcurrentHashMap<>();
     private volatile Model vocabulary;
 
-    StudioMcp(StudioStore store, Writes writes, Clock clock, Supplier<UUID> ids, Path assets) {
+    StudioMcp(StudioStore store, Writes writes, Clock clock, Supplier<UUID> ids, Path assets,
+              java.util.function.BiFunction<String, Model, Model> tools) {
+        this.tools = tools;
         this.store = store;
         this.writes = writes;
         this.clock = clock;
@@ -173,9 +179,36 @@ final class StudioMcp {
         propose.put("evidence", "the words of the clause the proposal rests on");
         list.add(tool("propose", "Propose the stated meaning of one clause, as a proposal waiting for a person's decision in the studio. "
             + "It is never stated meaning until someone confirms it.", schema(propose, List.of("workspace", "clause", "kind", "evidence"))));
+        morkTools(list);
         JsonObject out = new JsonObject();
         out.put("tools", list);
         return out;
+    }
+
+    /** MORK's proposal tools, for proposing a mapping scheme (MORK README §5.18). */
+    private static void morkTools(JsonArray list) {
+        String source = "the source vocabulary, as Turtle";
+        list.add(tool("mork_teaching_pack", "MORK's teaching pack: its notation, doctrine, worked cassettes, the translation table of legal words "
+            + "and MCN's codebook. Read it before proposing a mapping.", schema(Map.of(), List.of())));
+        list.add(tool("mork_target_cards", "One line per term of the named LATTICE layers: its CURIE, kind, label, definition or utility, and place.",
+            schema(Map.of("layers", "layer names, comma-separated: instrument, eligibility, party, behaviour, quantification, foundation, vocabulary, wording"),
+                List.of("layers"))));
+        list.add(tool("mork_describe_term", "One LATTICE term in depth: its comment and utility, its place, the properties of it and to it, "
+            + "its individuals, and the laws its layer's shapes state. Read it for each target term a mapping writes.",
+            schema(Map.of("term", "a CURIE, such as ins:Permission"), List.of("term"))));
+        list.add(tool("mork_source_cards", "One line per term of a source vocabulary.",
+            schema(Map.of("workspace", "the workspace's id", "source", source, "namespace", "the source's own namespace, to read only its terms"),
+                List.of("workspace", "source"))));
+        list.add(tool("mork_candidate_terms", "The LATTICE terms likeliest to match one source term, best first.",
+            schema(Map.of("workspace", "the workspace's id", "source", source, "term", "a CURIE or IRI of the source vocabulary",
+                "namespace", "the source's own namespace"), List.of("workspace", "source", "term"))));
+        list.add(tool("mork_check_mapping", "Decode, validate and compile a proposal in MCN, check its target terms, and run it over a sample "
+            + "source when one is given, holding what it writes to LATTICE's laws. Findings at severity info are not errors. Run it until it reports no error.",
+            schema(Map.of("workspace", "the workspace's id", "mcn", "the proposal, in MCN", "sample", "a sample source as Turtle"), List.of("workspace", "mcn"))));
+        list.add(tool("mork_propose_mapping", "Save a checked proposal to a workspace's mapping part, with a proposal run recording the model and the "
+            + "tokens it spent, for a person to review in the studio's mapping mode. It is never accepted until someone reviews it.",
+            schema(Map.of("workspace", "the workspace's id", "mcn", "the proposal, in MCN, with a base of its own", "model", "the model that proposed it",
+                "inputTokens", "the tokens the model read, as a number", "outputTokens", "the tokens it wrote, as a number"), List.of("workspace", "mcn"))));
     }
 
     private static JsonObject tool(String name, String description, JsonObject inputSchema) {
@@ -250,6 +283,13 @@ final class StudioMcp {
                 case "list_clauses" -> listClauses(workspace(args));
                 case "read_clause" -> readClause(workspace(args), required(args, "clause"));
                 case "propose" -> propose(workspace(args), args, session);
+                case "mork_teaching_pack" -> staged("teaching-pack.txt");
+                case "mork_target_cards" -> targetCards(required(args, "layers"));
+                case "mork_describe_term" -> describeTerm(required(args, "term"));
+                case "mork_source_cards" -> morkTool(workspace(args), "source_cards", args);
+                case "mork_candidate_terms" -> morkTool(workspace(args), "candidate_terms", args);
+                case "mork_check_mapping" -> morkTool(workspace(args), "check_mapping", args);
+                case "mork_propose_mapping" -> proposeMapping(workspace(args), args, session);
                 default -> throw new InvalidParams("no tool is named " + name);
             };
             return content(text, false);
@@ -360,6 +400,126 @@ final class StudioMcp {
             }
         }
         throw new Refusal("The review configuration kept changing while the proposal was saved. Try again.");
+    }
+
+    // --- MORK's proposal tools -----------------------------------------------------------------------------------
+
+    private static final List<String> LAYERS = List.of("instrument", "eligibility", "party", "behaviour", "quantification", "foundation", "vocabulary", "wording");
+    private static final String PROV = "http://www.w3.org/ns/prov#";
+    private static final String MORK = "http://www.nebularis.org/ontologies/Mork#";
+    private static final int MAX_DOCUMENT = 2_000_000;
+
+    private String staged(String name) {
+        try {
+            return Files.readString(assets.resolve("mork").resolve(name), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new Refusal("MORK's tools are not staged: run mise run build:config-studio-assets");
+        }
+    }
+
+    private String targetCards(String layers) {
+        StringBuilder out = new StringBuilder();
+        for (String layer : layers.split(",")) {
+            String name = layer.trim();
+            if (!LAYERS.contains(name)) {
+                throw new Refusal("No layer is named " + name + ". Choose from " + String.join(", ", LAYERS) + ".");
+            }
+            out.append(staged("cards/" + name + ".txt")).append('\n');
+        }
+        return out.toString();
+    }
+
+    private String describeTerm(String term) {
+        JsonObject terms = JSON.parse(staged("describe.json"));
+        if (!terms.hasKey(term)) {
+            throw new Refusal("No LATTICE layer declares " + term + ". Name a term by its CURIE, as the target cards do.");
+        }
+        return terms.get(term).getAsString().value();
+    }
+
+    /** Runs a tool in the worker with its documents and arguments, and gives its result. */
+    private String morkTool(Workspace ws, String name, JsonObject args) {
+        Model input = ModelFactory.createDefaultModel();
+        String base = "urn:lattice:studio:ws:" + ws.id() + ":tool/" + ids.get();
+        JsonObject arguments = new JsonObject();
+        for (String key : List.of("namespace", "term", "mcn")) {
+            if (text(args, key) != null) {
+                arguments.put(key, text(args, key));
+            }
+        }
+        input.createResource(base).addProperty(RDF.type, Cst.ToolRequest).addProperty(Cst.toolName, name)
+            .addProperty(Cst.toolArguments, arguments.toString());
+        document(input, base + "/source", text(args, "source"), Cst.SourceVocabulary);
+        document(input, base + "/sample", text(args, "sample"), Cst.SampleSource);
+        Model job = tools.apply(ws.id(), input);
+        if (job == null) {
+            throw new Refusal("The worker did not answer within two minutes. Is it running?");
+        }
+        String failure = job.listObjectsOfProperty(Cst.failureMessage).nextOptional().map(n -> n.asLiteral().getString()).orElse(null);
+        if (failure != null) {
+            throw new Refusal(name + " failed: " + failure);
+        }
+        return job.listSubjectsWithProperty(Cst.path, "result").nextOptional()
+            .map(a -> a.getProperty(Cst.content).getString()).orElseThrow(() -> new Refusal(name + " gave no result."));
+    }
+
+    private static void document(Model input, String node, String text, Resource role) {
+        if (text == null || text.isBlank()) {
+            return;
+        }
+        if (text.length() > MAX_DOCUMENT) {
+            throw new Refusal("A document is at most " + MAX_DOCUMENT + " characters.");
+        }
+        input.createResource(node).addProperty(RDF.type, Cst.ImportDocument).addProperty(Cst.documentRole, role)
+            .addProperty(Cst.documentContent, text).addProperty(Cst.documentMediaType, "text/turtle");
+    }
+
+    /** Decodes a proposal in the worker, and saves it to the mapping part with its run, refusing one that names a node the workspace holds. */
+    private String proposeMapping(Workspace ws, JsonObject args, String session) {
+        JsonObject decode = new JsonObject();
+        decode.put("mcn", required(args, "mcn"));
+        Model proposal = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(proposal, new java.io.StringReader(morkTool(ws, "decode_mcn", decode)), null, Lang.TURTLE);
+        Model world = world(ws);
+        List<String> clashes = proposal.listSubjects().filterKeep(Resource::isURIResource).filterKeep(s -> world.contains(s, null))
+            .mapWith(Resource::getURI).toList();
+        if (!clashes.isEmpty()) {
+            throw new Refusal("The proposal names " + clashes.get(0) + ", which the workspace already holds. Give it a base of its own.");
+        }
+        if (Parts.strangers(proposal, "mapping", 1).size() > 0) {
+            throw new Refusal("The proposal holds what is not a mapping: " + Parts.strangers(proposal, "mapping", 1).get(0) + ".");
+        }
+        Resource run = proposal.createResource("urn:lattice:studio:ws:" + ws.id() + ":run/" + ids.get())
+            .addProperty(RDF.type, proposal.createResource(MORK + "ProposalRun")).addProperty(RDF.type, proposal.createResource(PROV + "Activity"))
+            .addProperty(proposal.createProperty(MORK + "teachingPackVersion"), "MTP, through the studio's MCP server")
+            .addProperty(proposal.createProperty(PROV + "endedAtTime"), proposal.createTypedLiteral(instant().toString(), XSDDatatype.XSDdateTime));
+        String client = session == null ? null : clients.get(session);
+        String model = text(args, "model") != null ? text(args, "model") : client != null ? client : "an MCP client";
+        run.addProperty(proposal.createProperty(MORK + "proposerModel"), model);
+        for (String key : List.of("inputTokens", "outputTokens")) {
+            String n = text(args, key);
+            if (n != null) {
+                if (!n.matches("\\d{1,12}")) {
+                    throw new Refusal(key + " is a whole number.");
+                }
+                run.addProperty(proposal.createProperty(MORK + key), proposal.createTypedLiteral(n, XSDDatatype.XSDnonNegativeInteger));
+            }
+        }
+        List<Resource> mappings = proposal.listSubjectsWithProperty(proposal.createProperty(MORK + "mappingScheme")).toList();
+        mappings.forEach(m -> m.addProperty(proposal.createProperty(PROV + "wasGeneratedBy"), run));
+        for (int attempt = 0; attempt < 2; attempt++) {
+            Workspace now = Workspace.from(ws.id(), store.graph(Graphs.workspace(ws.id())));
+            Model mapping = store.graph(Graphs.config(ws.id(), "mapping")).add(proposal);
+            Reply reply = writes.send(Command.save(ws.id(), "mapping", now.revision("mapping"), instant(), mapping));
+            if (reply.applied()) {
+                return "Saved " + mappings.size() + " mappings to the mapping part as " + run.getURI()
+                    + ". A person reviews each in the studio's mapping mode.";
+            }
+            if (reply.status() != 412) {
+                throw new Refusal("The proposal could not be saved: " + reply.message());
+            }
+        }
+        throw new Refusal("The mapping part kept changing while the proposal was saved. Try again.");
     }
 
     // --- reading the workspace ----------------------------------------------------------------------------------

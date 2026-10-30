@@ -35,6 +35,9 @@ public final class Cst {
     public static final Property startedAt = p("startedAt");
     public static final Property finishedAt = p("finishedAt");
     public static final Property failureMessage = p("failureMessage");
+    public static final Property artefact = p("artefact");
+    public static final Property path = p("path");
+    public static final Property content = p("content");
     public static final Property fromSample = p("fromSample");
     public static final Resource Receipt = r("Receipt");
     public static final Property commandId = p("commandId");
@@ -53,6 +56,10 @@ public final class Cst {
     public static final Resource LanguageModelProposer = r("LanguageModelProposer");
     public static final Resource OdrlProposer = r("OdrlProposer");
     public static final Resource MappingLanguageModelProposer = r("MappingLanguageModelProposer");
+    public static final Resource ToolCall = r("ToolCall");
+    public static final Resource ToolRequest = r("ToolRequest");
+    public static final Property toolName = p("toolName");
+    public static final Property toolArguments = p("toolArguments");
     public static final Property documentRole = p("documentRole");
     public static final Resource SourceVocabulary = r("SourceVocabulary");
     public static final Resource SampleSource = r("SampleSource");

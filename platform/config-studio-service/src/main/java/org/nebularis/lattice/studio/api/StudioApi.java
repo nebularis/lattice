@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.RDF;
@@ -82,7 +83,7 @@ public final class StudioApi {
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
-        this.mcp = new StudioMcp(store, writes, clock, ids, assets);
+        this.mcp = new StudioMcp(store, writes, clock, ids, assets, this::runTool);
     }
 
     public ApiResponse handle(ApiRequest req) {
@@ -615,6 +616,7 @@ public final class StudioApi {
             case "assemble" -> Cst.Assemble;
             case "propose" -> Cst.Propose;
             case "dry-run" -> Cst.DryRunJob;
+            case "tool" -> Cst.ToolCall;
             default -> Cst.Analyse;
         });
         if (target != null) {
@@ -626,6 +628,38 @@ public final class StudioApi {
         job.addProperty(Cst.status, Cst.Queued);
         job.addProperty(Cst.submittedAt, m.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
         return m;
+    }
+
+    /**
+     * Runs one of MORK's proposal tools in the worker for the MCP server, as a tool job of the workspace whose input is
+     * {@code input}, and waits for it: the finished job graph, or null when the worker did not finish it within two
+     * minutes. The job stays in the store as any job does, and is swept with them.
+     */
+    Model runTool(String ws, Model input) {
+        Workspace workspace = load(ws);
+        if (workspace == null) {
+            return null;
+        }
+        String job = ids.get().toString();
+        String jobIri = Graphs.job(job);
+        ApiResponse published = publishJob(ws, job, jobDescription(jobIri, ws, workspace, "tool", null, Graphs.jobInput(job)), input);
+        if (published.status() != 202) {
+            return null;
+        }
+        Resource j = ResourceFactory.createResource(jobIri);
+        for (int n = 0; n < 1200; n++) {
+            Model m = store.graph(jobIri);
+            if (m.contains(j, Cst.status, Cst.Succeeded) || m.contains(j, Cst.status, Cst.Failed)) {
+                return m;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+        }
+        return null;
     }
 
     private ApiResponse listJobs(String id) {

@@ -90,7 +90,7 @@ class McpTest {
         assertEquals(403, rpc("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}", Map.of("origin", "https://evil.example")).status());
         assertEquals(200, rpc("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}", Map.of("origin", "http://localhost:6274")).status());
         assertTrue(call("nope", "{}", null).hasKey("error"));
-        assertEquals(4, call("tools/list", "{}", null).get("result").getAsObject().get("tools").getAsArray().size());
+        assertEquals(11, call("tools/list", "{}", null).get("result").getAsObject().get("tools").getAsArray().size());
     }
 
     @Test

@@ -122,6 +122,11 @@ cst:number a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:deci
     rdfs:comment "A sample fact's number, for an interval condition." .
 cst:concept a owl:ObjectProperty ;
     rdfs:comment "A sample fact's concept, for a concept condition." .
+cst:ToolCall a cst:JobKind ; rdfs:comment "A tool job: one of MORK's proposal tools run for the studio's MCP server, its request a cst:ToolRequest." .
+cst:ToolRequest a owl:Class ; rdfs:comment "A tool job's request: the tool and its arguments." .
+cst:toolName a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ToolRequest ; rdfs:range xsd:string .
+cst:toolArguments a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ToolRequest ; rdfs:range xsd:string ;
+    rdfs:comment "The tool's arguments, a JSON object." .
 cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts, or run the mapping part over a sample source, writing nothing but the job." .
 cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
@@ -219,7 +224,7 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
 cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .

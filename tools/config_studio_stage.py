@@ -112,7 +112,26 @@ def stage(root: Path, out: Path) -> None:
     (out / "prompts").mkdir(parents=True, exist_ok=True)
     mtp = catalogue.root / catalogue.module("mork").directory("mtp") / "out" / "l0.txt"
     (out / "prompts" / "mtp-l0.txt").write_text(mtp.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    stage_mork(out / "mork")
     print(f"staged {out.as_posix()}")
+
+
+def stage_mork(folder: Path) -> None:
+    """MORK's proposal tools that read no source, which the service's MCP server serves as staged: the teaching pack,
+    each layer's cards, and every layer term in depth, by CURIE."""
+    import json
+
+    from mork_propose import server
+    from mork_propose.cards import layer_card
+
+    (folder / "cards").mkdir(parents=True, exist_ok=True)
+    (folder / "teaching-pack.txt").write_text(server.teaching_pack(), encoding="utf-8", newline="\n")
+    terms = {}
+    for layer in server.LAYERS:
+        (folder / "cards" / f"{layer}.txt").write_text(server.target_cards([layer]), encoding="utf-8", newline="\n")
+        for card in layer_card(layer):
+            terms.setdefault(card.curie, server.describe_term(card.curie))
+    (folder / "describe.json").write_text(json.dumps(terms, indent=0, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
 def main(argv: List[str] | None = None) -> None:

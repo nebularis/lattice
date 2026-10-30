@@ -82,6 +82,15 @@ The service is also a Model Context Protocol server, over MCP's Streamable HTTP 
 | `list_clauses` | `workspace` | each text of the library's forms with its IRI, number, text, and whether it has stated meaning, a proposal waiting, or neither |
 | `read_clause` | `workspace`, `clause` | the clause's text, its stated meaning in plain words, and what a proposal may name: the relation kinds, the workspace's roles and the activities, each by label |
 | `propose` | `workspace`, `clause`, `kind`, `evidence`, and `role`, `counterRole` and `activity` where there are | a `cst:Proposal` waiting for review, saved to the review configuration as any save is, with `cst:proposer` `assistant` and `cst:proposerVersion` the client's name and version from `initialize`. A label the workspace does not declare refuses the call, with what it does declare |
+| `mork_teaching_pack` | none | MORK's teaching pack, MTP with its cassettes, the translation table and MCN's codebook, as staged |
+| `mork_target_cards` | `layers`, comma-separated | one line per term of each named LATTICE layer, as staged |
+| `mork_describe_term` | `term`, a CURIE | one term in depth with the laws its layer's shapes state, as staged |
+| `mork_source_cards` | `workspace`, `source` as Turtle, `namespace` | one line per term of the source vocabulary, run in the worker |
+| `mork_candidate_terms` | `workspace`, `source`, `term`, `namespace` | the likeliest LATTICE terms for one source term, run in the worker |
+| `mork_check_mapping` | `workspace`, `mcn`, and a `sample` source as Turtle | the check's findings as JSON, the output on the sample held to the layers' shapes, run in the worker |
+| `mork_propose_mapping` | `workspace`, `mcn`, and `model`, `inputTokens` and `outputTokens` where known | the decoded scheme saved to the mapping part with a `mork:ProposalRun`, each mapping naming it, for review in mapping mode. A scheme naming a node the workspace holds, or holding anything but a mapping, is refused |
+
+The MORK tools that read no source are staged by `mise run build:config-studio-assets` under `mork/`, so the service serves them without the worker. Those that read a source or a sample, and decoding a proposal to save it, run in the worker as a tool job (`cst:ToolCall`) whose input holds one `cst:ToolRequest`, naming the tool and its arguments as JSON, and the documents as `cst:ImportDocument`s with their roles. The service waits up to two minutes for it, and the job stays in the store as any job does.
 
 A proposal from MCP is decided in the studio like any other, and nothing the server does confirms one.
 

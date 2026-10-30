@@ -113,6 +113,10 @@ class ConfigStudioWorker:
         from . import config_studio_assembly
 
         input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
+        if graph.value(job, CST.kind) == CST.ToolCall:
+            from .config_studio_mork_tools import run_tool
+
+            return run_tool(job, input_("configuration"))
         if graph.value(job, CST.kind) == CST.DryRunJob:
             from . import config_studio_dryrun
             from .config_studio_jobs import _spec

@@ -79,6 +79,19 @@ def _messages(shapes: Graph, term: URIRef, curie: str) -> list[str]:
     return found
 
 
+@functools.lru_cache(maxsize=8)
+def _world(layers: tuple) -> tuple[Graph, Graph]:
+    """The named layers merged, with every layer's prefixes, and their shapes merged. Cached, so never modified."""
+    world, shapes = Graph(), Graph()
+    for m in layers:
+        layer = _layer_graph(m)
+        world += layer
+        for prefix, namespace in layer.namespaces():
+            world.bind(prefix, namespace, override=False)
+        shapes += _shapes(m)
+    return world, shapes
+
+
 def describe_term(term: str, layers: Iterable[str]) -> str:
     """The term, a CURIE such as ins:Permission or a full IRI, as it is declared in one of `layers`."""
     layers = list(layers)
@@ -88,11 +101,7 @@ def describe_term(term: str, layers: Iterable[str]) -> str:
     if owner is None:
         raise ValueError(f"no layer of {', '.join(layers)} declares {term}")
     g = graphs[owner]
-    world = Graph()
-    for other in graphs.values():
-        world += other
-        for prefix, namespace in other.namespaces():
-            world.bind(prefix, namespace, override=False)
+    world, shapes = _world(tuple(layers))
     nm = world.namespace_manager
     curie = lambda t: t.n3(nm) if isinstance(t, URIRef) else "a combination"
     kinds = sorted(curie(t) for t in g.objects(iri, RDF.type))
@@ -120,9 +129,6 @@ def describe_term(term: str, layers: Iterable[str]) -> str:
     individuals = sorted(curie(s) for s in world.subjects(RDF.type, iri) if isinstance(s, URIRef))
     if individuals:
         lines.append(f"individuals: {', '.join(individuals)}")
-    shapes = Graph()
-    for m in layers:
-        shapes += _shapes(m)
     messages = _messages(shapes, iri, curie(iri))
     if messages:
         lines.append("laws and shapes:")
