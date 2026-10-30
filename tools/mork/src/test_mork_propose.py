@@ -187,6 +187,25 @@ def test_the_check_holds_what_a_proposal_writes_on_a_sample_to_the_target_layers
     assert {f[2] for f in pack.findings if f[0] == "meaning"} == {"ContextShape"}
 
 
+def test_the_context_supplies_a_stated_terms_clause_and_nothing_else_of_law_I2():
+    from rdflib import URIRef
+    from rdflib.namespace import RDF
+
+    from mork_propose.check import meaning_findings
+    from mork_propose.server import _target
+
+    ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#"
+    stated, untyped = URIRef("urn:x:stated"), URIRef("urn:x:untyped")
+    output = Graph()
+    output.add((stated, RDF.type, URIRef(ins + "Term")))
+    output.add((stated, RDF.type, URIRef(ins + "Template")))
+    output.add((untyped, RDF.type, URIRef(ins + "Term")))  # neither stated nor bound
+    vocabulary, shapes = _target()
+    found = {(f[1], f[2], f[4].rsplit("(on ", 1)[1]) for f in meaning_findings(output, {str(stated): "m1", str(untyped): "m2"}, vocabulary, shapes)}
+    assert ("info", "ContextShape", "urn:x:stated)") in found and ("error", "TargetShape", "urn:x:untyped)") in found
+    assert not any(sv == "error" and on == "urn:x:stated)" for sv, _, on in found)
+
+
 def test_a_run_records_what_it_cost(tmp_path):
     from datetime import datetime, timezone
     from rdflib import Literal, URIRef

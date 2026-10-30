@@ -103,14 +103,25 @@ class _Recorder:
 
 _LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 # What a mapping cannot write, since it is supplied where the meaning is written: by the result path, or by the shape.
-# ponytail: ins:TermShape is downgraded whole, so a term missing ins:Template is information too. Supplying the clause
-# as context before validating would keep the rest of the shape an error.
 _CONTEXT = {
     _LATTICE + "foundation#hasIdentity": "identity is minted when the meaning is persisted, not by a mapping",
     # Foundation's shape for a versioned thing states the identity rule as a node-level sh:or, which has no result path.
     _LATTICE + "foundation#VersionedShape": "identity is minted when the meaning is persisted, not by a mapping",
-    _LATTICE + "instrument#TermShape": "a stated term's clause is chosen where the meaning is written, such as at an import",
 }
+_CLAUSE = "a stated term's clause is chosen where the meaning is written, such as at an import"
+
+
+def _clauses(output: Graph, vocabulary: Graph) -> dict:
+    """The clause the context supplies to each stated term the run wrote without one, so that `ins:TermShape`, whose
+    node-level xone has no result path to mark as context, still holds a term to the rest of law I2."""
+    from rdflib import URIRef
+    from rdflib.namespace import RDFS
+
+    term, template = URIRef(_LATTICE + "instrument#Term"), URIRef(_LATTICE + "instrument#Template")
+    terms = set(vocabulary.transitive_subjects(RDFS.subClassOf, term)) | {term}
+    expressed = URIRef(_LATTICE + "instrument#expressedIn")
+    return {s: URIRef(f"urn:mork-propose:context:clause:{n}") for n, s in enumerate(sorted(
+        {s for s in output.subjects(RDF.type, template) if any((s, RDF.type, t) in output for t in terms) and (s, expressed, None) not in output}, key=str))}
 
 
 def meaning_findings(output: Graph, typed_by: dict, vocabulary: Graph, shapes: Graph) -> list:
@@ -120,9 +131,17 @@ def meaning_findings(output: Graph, typed_by: dict, vocabulary: Graph, shapes: G
     import pyshacl
     from rdflib.namespace import SH
 
-    _, report, _ = pyshacl.validate(output + vocabulary, shacl_graph=shapes, inference="owlrl", advanced=True, allow_warnings=True)
+    from rdflib import URIRef
+
+    clauses = _clauses(output, vocabulary)
+    data = output + vocabulary
+    for term, clause in clauses.items():
+        data.add((term, URIRef(_LATTICE + "instrument#expressedIn"), clause))
+        data.add((clause, RDF.type, URIRef(_LATTICE + "wording#Element")))
+    _, report, _ = pyshacl.validate(data, shacl_graph=shapes, inference="owlrl", advanced=True, allow_warnings=True)
     severity = {SH.Violation: "error", SH.Warning: "warning"}
-    out = set()
+    out = {("meaning", "info", "ContextShape", typed_by[str(t)], f"A stated term is expressed in exactly one element version. Left to the context: {_CLAUSE}. (on {t})")
+           for t in clauses if str(t) in typed_by}
     for r in report.subjects(RDF.type, SH.ValidationResult):
         focus = report.value(r, SH.focusNode)
         if str(focus) not in typed_by:
