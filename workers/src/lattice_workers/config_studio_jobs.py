@@ -159,11 +159,13 @@ class _Result:
         self.graph.add((self.job, CST.conforms, literal))
         self.graph.add((self.report, SH.conforms, literal))
 
-    def artefact(self, path: str, media_type: str, content: str, group: str) -> None:
+    def artefact(self, path: str, media_type: str, content: str, group: str, stratum: Optional[int] = None) -> None:
         node = self._mint("artefact")
         add = self.graph.add
         add((self.job, CST.artefact, node))
         add((node, RDF.type, CST.Artefact))
+        if stratum is not None:
+            add((node, CST.stratum, Literal(stratum, datatype=XSD.nonNegativeInteger)))
         add((node, CST.path, Literal(path)))
         add((node, CST.mediaType, Literal(media_type)))
         add((node, CST.content, Literal(content)))
@@ -264,6 +266,59 @@ def _compile_mapping(result: _Result, config: Graph, baseline: Graph, root: str,
         queries = sorted(c.queries, key=lambda q: (q.stratum, q.box != "tbox", q.mapping, q.kind))
         text = "\n\n".join(f"# {q.kind} for {q.mapping}, stratum {q.stratum}, {q.box}\n{q.text}" for q in queries)
         result.artefact(f"{name}.rq", "application/sparql-query", text + "\n", c.scheme)
+
+
+# The media types a sample source may be given in. JSON-LD is left out, since a context it names would be fetched.
+_SAMPLE_FORMATS = {"text/turtle": "turtle", "application/n-triples": "nt"}
+
+
+def run_mapping(job: URIRef, config: Graph, baseline: Graph, root: str, submitted_at: str) -> Graph:
+    """A dry run of the mapping part over the sample source its one cst:ImportDocument carries: every scheme compiled,
+    then run stratum by stratum, with what each mapping wrote at each stratum as an N-Triples artefact grouped by the
+    mapping and marked with its stratum. Nothing is written but the job."""
+    import pyoxigraph as ox
+    from mork_rdf import run
+
+    now = datetime.fromisoformat(submitted_at.replace("Z", "+00:00"))
+    result = _Result(job)
+    documents = list(config.subjects(RDF.type, CST.ImportDocument))
+    if len(documents) != 1:
+        raise ValueError("a mapping's dry run needs exactly one cst:ImportDocument, its sample source")
+    content, media = config.value(documents[0], CST.documentContent), config.value(documents[0], CST.documentMediaType)
+    if str(media) not in _SAMPLE_FORMATS:
+        raise ValueError(f"a sample source is Turtle or N-Triples, not {media}")
+    sample = Graph().parse(data=str(content), format=_SAMPLE_FORMATS[str(media)])
+    mappings = Graph()
+    for t in config:
+        if t[0] != documents[0]:
+            mappings.add(t)
+
+    class Recorder:
+        """Keeps what each construct and closure wrote, by mapping and stratum."""
+
+        def __init__(self) -> None:
+            self.out: dict = {}
+
+        def write(self, query, triples) -> None:
+            self.out.setdefault((query.mapping, query.stratum), set()).update(triples)
+
+        def close(self) -> None:
+            pass
+
+    compiled: list = []
+    conforms = _mapping_findings(result, mappings, baseline, root, now, compiled)
+    for c in compiled:
+        recorder = Recorder()
+        ran = run(c, sample, sink=recorder)
+        for f in ran.findings:
+            message = f"{f.message} ({f.value})" if f.value else f.message
+            result.finding(SH.Warning, message, f.code, URIRef(f.mapping) if f.mapping else None)
+        for (mapping, stratum), triples in sorted(recorder.out.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+            text = ox.serialize(sorted(triples, key=str), format=ox.RdfFormat.N_TRIPLES).decode("utf-8")
+            name = re.sub(r"[^A-Za-z0-9_-]+", "-", mapping.rsplit("#", 1)[-1].rsplit("/", 1)[-1]).strip("-") or "mapping"
+            result.artefact(f"{stratum}/{name}.nt", "application/n-triples", text, mapping, stratum)
+    result.conforms(conforms)
+    return result.graph
 
 
 def _persistence_findings(result: _Result, config: Graph, baseline: Graph, root: str) -> Optional[Tuple[Graph, Any]]:

@@ -122,7 +122,7 @@ cst:number a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:deci
     rdfs:comment "A sample fact's number, for an interval condition." .
 cst:concept a owl:ObjectProperty ;
     rdfs:comment "A sample fact's concept, for a concept condition." .
-cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts." .
+cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts, or run the mapping part over a sample source, writing nothing but the job." .
 cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
 cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
 cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model over the Chat Completions wire format, with a pack the deployment supplies." .
@@ -260,7 +260,9 @@ cst:path a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefa
 cst:mediaType a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
 cst:content a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
 cst:group a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ;
-    rdfs:comment "What an artefact or gap belongs to: a persistence target, or a surface contract." .
+    rdfs:comment "What an artefact or gap belongs to: a persistence target, a surface contract, or a mapping." .
+cst:stratum a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "The step of a mapping run that wrote the artefact, from 0, after every step whose output it reads." .
 
 cst:gap a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Gap .
 

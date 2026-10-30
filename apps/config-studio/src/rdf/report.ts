@@ -22,6 +22,8 @@ export interface Artefact {
   mediaType: string;
   content: string;
   group: string;
+  /** For a mapping's dry run, the step of the run that wrote it. */
+  stratum?: number;
 }
 
 export interface Gap {
@@ -103,6 +105,7 @@ export function readJob(graph: Graph, iri: string): Job {
         mediaType: graph.value(a, CST("mediaType")) ?? "text/plain",
         content: graph.value(a, CST("content")) ?? "",
         group: graph.value(a, CST("group")) ?? "",
+        stratum: graph.value(a, CST("stratum")) === undefined ? undefined : Number(graph.value(a, CST("stratum"))),
       }))
       .sort((a, b) => a.group.localeCompare(b.group) || a.path.localeCompare(b.path)),
     gaps: graph

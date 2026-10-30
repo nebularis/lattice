@@ -125,6 +125,43 @@ def test_a_mapping_compiles_to_its_compiled_form_and_queries(tmp_path):
     assert "CONSTRUCT" in artefacts(g, job)["S.rq"][1]
 
 
+def test_a_mapping_runs_over_a_sample_writing_each_mapping_s_output_by_stratum(tmp_path):
+    odrl = ROOT / "contracts" / "config-studio" / "odrl"
+    config = Graph().parse(odrl / "odrl-instrument.mork.ttl")
+    document = URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:import/1")
+    config.add((document, RDF.type, CST.ImportDocument))
+    config.add((document, CST.documentContent, Literal((odrl / "trial" / "software-licence.ttl").read_text(encoding="utf-8"))))
+    config.add((document, CST.documentMediaType, Literal("text/turtle")))
+    path = tmp_path / "mapping.ttl"
+    config.serialize(path, format="turtle")
+    store = FakeStore()
+    iri = submit(store, "validate", "mapping", path)
+    job = URIRef(iri)
+    store.graphs[iri].set((job, CST.kind, CST.DryRunJob))
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert (job, CST.status, CST.Succeeded) in g
+    out = {str(g.value(a, CST.group)).rsplit("#", 1)[-1]: (int(g.value(a, CST.stratum)), str(g.value(a, CST.content))) for a in g.objects(job, CST.artefact)}
+    # The licence's one permission becomes a stated term and a permission, each written by its own mapping.
+    assert out["Permission"][0] == 0
+    assert "instrument#Term>" in out["Permission"][1] and "instrument#Permission>" in out["Permission_Relation"][1]
+
+
+def test_a_mapping_s_dry_run_refuses_a_sample_given_as_json_ld(tmp_path):
+    config = Graph()
+    document = URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:import/1")
+    config.add((document, RDF.type, CST.ImportDocument))
+    config.add((document, CST.documentContent, Literal("{}")))
+    config.add((document, CST.documentMediaType, Literal("application/ld+json")))
+    path = tmp_path / "mapping.ttl"
+    config.serialize(path, format="turtle")
+    store = FakeStore()
+    iri = submit(store, "validate", "mapping", path)
+    store.graphs[iri].set((URIRef(iri), CST.kind, CST.DryRunJob))
+    ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    assert "Turtle or N-Triples" in str(store.graphs[iri].value(URIRef(iri), CST.failureMessage))
+
+
 def test_persistence_validate_conforming():
     g, job = run("validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
     assert g.value(job, CST.status) == CST.Succeeded

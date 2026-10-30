@@ -99,6 +99,13 @@ class AssemblyTest {
     }
 
     @Test
+    void aMappingDryRunNeedsItsSampleAsOneImportDocument() {
+        assertEquals(422, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=mapping", LIBRARY).status());
+        String sample = LIBRARY + "<urn:x:doc> a cst:ImportDocument ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        assertEquals(202, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=mapping", sample).status());
+    }
+
+    @Test
     void aProposeJobNamesItsProposer() {
         ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=sentence-forms", LIBRARY);
         assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));

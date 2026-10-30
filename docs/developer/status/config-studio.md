@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action:** the MORK studio module's slice 3, stepping a sample through the strata, after slices 1 (mapping mode, the `mapping` part and its view, with the ODRL and LegalRuleML samples) and 2 (editing mappings, and validating and compiling the part with `mork_rdf`). Then slice 4, proposing. The proposer's inputs are to be refined from the [review of the trials](../notes/mapping-proposer-review.md) once the studio is built. The maintainer reviews ADR-A144 (the ODRL import) and ADR-A146 (the skolem rule), both Proposed, and MR-23. ADR-A146 follows the 145 that ccs-trunk's ADR takes at the second merge.
+**Next action:** the MORK studio module's slice 4, proposing with a language model and reviewing in the view, after slices 1 (mapping mode, the `mapping` part and its view, with the ODRL and LegalRuleML samples), 2 (editing mappings, and validating and compiling the part with `mork_rdf`) and 3 (a live run over a sample source, stepped by stratum). The proposer's inputs are to be refined from the [review of the trials](../notes/mapping-proposer-review.md) once the studio is built. The maintainer reviews ADR-A144 (the ODRL import) and ADR-A146 (the skolem rule), both Proposed, and MR-23. ADR-A146 follows the 145 that ccs-trunk's ADR takes at the second merge.
 
 ## Decisions taken alone, for ratification
 

@@ -523,10 +523,10 @@ public final class StudioApi {
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
             && !("assemble".equals(kind) && "assembly".equals(target))
             && !("propose".equals(kind) && PROPOSERS.containsKey(target))
-            && !("dry-run".equals(kind) && "meaning".equals(target))) {
+            && !("dry-run".equals(kind) && ("meaning".equals(target) || "mapping".equals(target)))) {
             return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
                 + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet()
-                + ", dry-run, with target meaning, or analyse, with target a document");
+                + ", dry-run, with target meaning or mapping, or analyse, with target a document");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -540,12 +540,12 @@ public final class StudioApi {
         if (config == null) {
             return ApiResponse.text(400, "the body does not parse as its Content-Type");
         }
-        if ("odrl".equals(target)) {
-            // Each component validates what it receives (PRI-75, STD-279).
+        if ("odrl".equals(target) || ("dry-run".equals(kind) && "mapping".equals(target))) {
+            // Each component validates what it receives (PRI-75, STD-279). A mapping's dry run reads its sample source from one.
             List<Resource> documents = config.listSubjectsWithProperty(RDF.type, Cst.ImportDocument).toList();
             if (documents.size() != 1 || !documents.get(0).hasProperty(Cst.documentContent)
                 || !documents.get(0).hasProperty(Cst.documentMediaType)) {
-                return ApiResponse.text(422, "an odrl import needs exactly one cst:ImportDocument with a cst:documentContent and a cst:documentMediaType");
+                return ApiResponse.text(422, "an odrl import and a mapping's dry run each need exactly one cst:ImportDocument with a cst:documentContent and a cst:documentMediaType");
             }
         }
         String job = ids.get().toString();
