@@ -15,9 +15,10 @@ The maintainer answered XJ-Q1 to XJ-Q7 on 2026-10-30, and XJ1 to XJ5 were built 
 
 Checks run 2026-10-30, all passing: `check:mork-transforms`, `check:mork-rdf`, `check:mork`, `check:java`, `check:catalogue`, `check:identifiers`, `check:knowledge`, `check:reasoning-isolation`, `check:published-decisions`, `check:agent-guidance`.
 
-**Next action, for the maintainer:** review ADR-A148 and the two new unratified facet values, `xslt` and `jolt`. Then, outside this unit: the studio's mapping mode with XML and JSON samples through a RabbitMQ worker, and lookups, guards and creations in XSLT.
+**Next action, for the maintainer:** review ADR-A148 and the two new unratified facet values, `xslt` and `jolt`. Answer XJ-Q8 to XJ-Q12 (plan §5) for the studio's slices XJ6 and XJ7.
 
 ## Log
 
 - 2026-10-30: unit planned from BL-03. ADR-A148 proposed.
+- 2026-10-30: the maintainer asked for the studio's slices. XJ6 and XJ7 planned, with XJ-Q8 to XJ-Q12.
 - 2026-10-30: XJ1 to XJ5 built. JOLT writes JSON-LD's keywords and IRIs as keys when `.`, `#`, `@` and its other syntax are escaped with a backslash in `shift` and `modify-overwrite-beta`, while `remove` matches keys unescaped.
