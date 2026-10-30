@@ -19,6 +19,7 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SH, SKOS, XSD
 
 from .config_studio_jobs import CST, _Result
+from .config_studio_secrets import secret
 
 WRD = Namespace("https://www.nebularis.org/neuro-semantic/lattice/wording#")
 INS = Namespace("https://www.nebularis.org/neuro-semantic/lattice/instrument#")
@@ -271,7 +272,7 @@ def language_model_from_env(env: Mapping[str, str]) -> LanguageModelProposer:
     url, model, pack = (env.get(k, "").strip() for k in ("LATTICE_PROPOSER_URL", "LATTICE_PROPOSER_MODEL", "LATTICE_PROPOSER_PACK"))
     if not (url and model and pack):
         raise ValueError("no language model is configured: set LATTICE_PROPOSER_URL, LATTICE_PROPOSER_MODEL and LATTICE_PROPOSER_PACK")
-    return LanguageModelProposer(url, model, Pack.load(Path(pack)), env.get("LATTICE_PROPOSER_KEY") or None)
+    return LanguageModelProposer(url, model, Pack.load(Path(pack)), secret(env, "LATTICE_PROPOSER_KEY"))
 
 
 # ---- the job --------------------------------------------------------------------------------------------------------

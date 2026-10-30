@@ -68,4 +68,6 @@ The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lat
 | `LATTICE_FUSEKI_PASSWORD` | no | none |
 | `LATTICE_ROOT` | no | found from the working directory by the catalogue reader |
 
+`LATTICE_AMQP_URI`, `LATTICE_FUSEKI_PASSWORD` and `LATTICE_PROPOSER_KEY` may each be read from a file instead, by setting `NAME_FILE` to its path (`config_studio_secrets.py`, and the [operations guide](../docs/operator/configuration-studio-operations.md#secrets-in-files)).
+
 Tests: `mise exec -- python -m pytest workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py`.

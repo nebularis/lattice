@@ -14,6 +14,7 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 from .config_studio_jobs import find_root
+from .config_studio_secrets import secret
 from .config_studio_worker import (
     JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore, declare_topology, declare_writes,
 )
@@ -33,7 +34,7 @@ class Config:
 
 
 def read_config(env: Mapping[str, str]) -> Config:
-    amqp_uri = env.get("LATTICE_AMQP_URI")
+    amqp_uri = secret(env, "LATTICE_AMQP_URI")
     if not amqp_uri:
         raise ValueError("LATTICE_AMQP_URI is required")
     fuseki_url = env.get("LATTICE_FUSEKI_URL")
@@ -44,7 +45,7 @@ def read_config(env: Mapping[str, str]) -> Config:
         fuseki_url=fuseki_url,
         fuseki_dataset=env.get("LATTICE_FUSEKI_DATASET", "studio"),
         fuseki_user=env.get("LATTICE_FUSEKI_USER"),
-        fuseki_password=env.get("LATTICE_FUSEKI_PASSWORD"),
+        fuseki_password=secret(env, "LATTICE_FUSEKI_PASSWORD"),
         root=find_root(env.get("LATTICE_ROOT")),
     )
 

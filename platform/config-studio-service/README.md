@@ -32,6 +32,8 @@ All under `org.nebularis.lattice.studio`.
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | none | basic authentication |
 | `LATTICE_AMQP_URI` | none | RabbitMQ URI. Absent means jobs are recorded, never delivered, and stay `cst:Queued`, and writes go to an in-process writer, for tests and a demonstration only. With it, writes go to the [store writer](../config-studio-writer/README.md) |
 
+`LATTICE_FUSEKI_PASSWORD` and `LATTICE_AMQP_URI` may each be read from a file instead, by setting `NAME_FILE` to its path, as the [operations guide](../../docs/operator/configuration-studio-operations.md#secrets-in-files) describes.
+
 ## Build and test
 
 ```bash

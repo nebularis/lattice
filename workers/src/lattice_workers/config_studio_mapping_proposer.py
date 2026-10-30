@@ -28,6 +28,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import PROV, RDF, SH, XSD
 
 from .config_studio_jobs import CST, _Result
+from .config_studio_secrets import secret
 
 MORK = "http://www.nebularis.org/ontologies/Mork#"
 LAYERS = ["instrument", "eligibility", "party", "behaviour", "quantification"]
@@ -83,7 +84,7 @@ def model_from_env(env: Mapping[str, str]) -> ChatCompletionsModel:
     url, model = (env.get(k, "").strip() for k in ("LATTICE_PROPOSER_URL", "LATTICE_PROPOSER_MODEL"))
     if not (url and model):
         raise ValueError("no language model is configured: set LATTICE_PROPOSER_URL and LATTICE_PROPOSER_MODEL")
-    return ChatCompletionsModel(url, model, env.get("LATTICE_PROPOSER_KEY") or None)
+    return ChatCompletionsModel(url, model, secret(env, "LATTICE_PROPOSER_KEY"))
 
 
 @dataclass

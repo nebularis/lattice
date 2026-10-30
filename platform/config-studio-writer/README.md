@@ -19,4 +19,6 @@ The only component that writes the Configuration Studio's store ([ADR-A136](../.
 | `LATTICE_STREAM_URI` | required | RabbitMQ's stream URI, for example `rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f` |
 | `LATTICE_STUDIO_JOB_RETENTION_DAYS` | `30` | days a finished job is kept |
 
+`LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may each be read from a file instead, by setting `NAME_FILE` to its path, as the [operations guide](../../docs/operator/configuration-studio-operations.md#secrets-in-files) describes.
+
 `mise run studio:up` starts one instance, and `mise run studio:writer` runs one in a terminal. Run several to share the partitions. Its tests run with `mise run check:config-studio`.

@@ -53,7 +53,7 @@ The dev server proxies `/api` to `127.0.0.1` on `LATTICE_STUDIO_PORT`, or `8090`
 
 ### Service
 
-Read by `StudioConfig.fromEnv`. A blank value counts as unset.
+Read by `StudioConfig.fromEnv`. A blank value counts as unset. `LATTICE_FUSEKI_PASSWORD` and `LATTICE_AMQP_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)).
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -68,23 +68,24 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset.
 
 ### Store writer
 
-Read by `WriterConfig.fromEnv`. The variables are in the [writer's README](../../platform/config-studio-writer/README.md). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write`, the stack's AMQP URI, and `LATTICE_STREAM_URI=rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f`. It is the only process given the update service.
+Read by `WriterConfig.fromEnv`. The variables are in the [writer's README](../../platform/config-studio-writer/README.md). `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write`, the stack's AMQP URI, and `LATTICE_STREAM_URI=rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f`. It is the only process given the update service.
 
 ### Worker
 
-Read by `config_studio_main.read_config`.
+Read by `config_studio_main.read_config`, and the proposer settings by each proposal job. `LATTICE_AMQP_URI`, `LATTICE_FUSEKI_PASSWORD` and `LATTICE_PROPOSER_KEY` may instead be read from a file (see [Secrets in files](#secrets-in-files)).
 
 | Variable | Required | Default | Meaning |
 |---|---|---|---|
-| `LATTICE_AMQP_URI` | yes | none | RabbitMQ's URI. Unset stops the worker at start with `LATTICE_AMQP_URI is required` |
+| `LATTICE_AMQP_URI` | yes | none | RabbitMQ's URI. Unset, with `LATTICE_AMQP_URI_FILE`, stops the worker at start with `LATTICE_AMQP_URI is required` |
 | `LATTICE_FUSEKI_URL` | yes | none | Fuseki's base URL. Unset stops the worker at start |
 | `LATTICE_FUSEKI_DATASET` | no | `studio` | The dataset name, which must be the service's |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | no | none | Basic authentication to Fuseki |
 | `LATTICE_ROOT` | no | found from the working directory | The repository root, where the worker reads the ontology files it validates against |
-| `LATTICE_PROPOSER_URL` | no | none | The base URL of a Chat Completions endpoint for the `language-model` proposer, to which `/chat/completions` is added. Unset, with the next two, fails every `propose` job for that proposer, saying no language model is configured. The `sentence-forms` proposer needs none of them |
+| `LATTICE_PROPOSER_URL` | no | none | The base URL of a Chat Completions endpoint for the `language-model` and `mapping-language-model` proposers, to which `/chat/completions` is added. Unset, with the model, fails every `propose` job for those proposers, saying no language model is configured. The `sentence-forms` and `rml` proposers need none of these |
 | `LATTICE_PROPOSER_MODEL` | no | none | The model the endpoint is asked for |
-| `LATTICE_PROPOSER_PACK` | no | none | The folder of the pack the prompt is rendered from, a `manifest.json` with its templates, as the [contract](../../contracts/config-studio/README.md#proposers) describes. The repository holds no clause-reading pack, so a deployment supplies its own |
-| `LATTICE_PROPOSER_KEY` | no | none | Sent as a bearer token. Keep it in the environment or a secret store, never in a file the repository tracks. It is never logged |
+| `LATTICE_PROPOSER_PACK` | no | none | For the `language-model` proposer only, the folder of the pack the prompt is rendered from, a `manifest.json` with its templates, as the [contract](../../contracts/config-studio/README.md#proposers) describes. The repository holds no clause-reading pack, so a deployment supplies its own |
+| `LATTICE_PROPOSER_KEY` | no | none | Sent as a bearer token. Keep it in a secret store and give it to the worker through `LATTICE_PROPOSER_KEY_FILE` (see [Secrets in files](#secrets-in-files)), never in a file the repository tracks. It is never logged |
+| `LATTICE_MAPPING_PROPOSER_ROUNDS` | no | `40` | The most turns a mapping proposal gives the model before the job fails |
 
 ### Values the stack sets
 
@@ -99,7 +100,46 @@ Read by `config_studio_main.read_config`.
 
 `studio:up` also reads `LATTICE_STUDIO_DATA`, the folder for the store (see [Where things live](#where-things-live)).
 
-The AMQP URI holds RabbitMQ's `guest` password. That is acceptable only because the broker is local and `guest` is its default. Do not put a real credential in it.
+The AMQP URI holds RabbitMQ's `guest` password. That is acceptable only because the broker is local and `guest` is its default. Do not put a real credential in it. Give a real one through `LATTICE_AMQP_URI_FILE`.
+
+### Secrets in files
+
+Each secret below may be given as a file instead of a value. Set `NAME_FILE` to the file's path, and the process reads the value from it. Setting both `NAME` and `NAME_FILE` stops the process at start, or fails the job, since one of them would otherwise be ignored. An error names the variable and the path, never the value.
+
+| Secret | Read by | Read |
+|---|---|---|
+| `LATTICE_PROPOSER_KEY` | the worker | at each proposal job, so a rotated key is used from the next job without a restart |
+| `LATTICE_FUSEKI_PASSWORD` | the service, the writer, the worker | at start |
+| `LATTICE_AMQP_URI` | the service, the writer, the worker | at start |
+| `LATTICE_STREAM_URI` | the writer | at start |
+
+A secret read at start takes a restart of that process to change.
+
+**The file's format.** UTF-8 text holding the value alone, with no name, no `=`, no quotes and no `export`. One trailing line ending, `\n` or `\r\n`, is dropped, so `echo` and most editors are fine, and nothing else is changed, so a leading or trailing space is part of the value. An empty file is refused. A URI is written whole, for example `amqp://studio:<password>@broker.example:5672/%2F`, with any reserved character in the password percent-encoded.
+
+**The file's permissions.** Only the user the process runs as should read it, and nobody should write it but whatever puts the secret there. On Linux or macOS:
+
+```bash
+(umask 077 && read -rs key && printf '%s' "$key" > /path/to/proposer.key)
+```
+
+```bash
+chmod 0400 /path/to/proposer.key
+```
+
+The first prompts for the value without echoing it or keeping it in the shell's history, and writes it with `0600` from the start, so no other user can read it even for a moment. The second takes away the owner's own write, leaving `0400`, which lets the owner read it and no one else do anything. Keep `0600` instead if a person edits it by hand. The file must be owned by the user the process runs as (`chown` it if another user wrote it), and its folder should be `0700`, so others can neither list nor replace it. A secret store's own command can write the file in place of the first line. On Windows, remove inherited access and grant only the process's user read, for example `icacls proposer.key /inheritance:r /grant:r "%USERNAME%:R"`. The studio does not check the file's permissions, since a container platform sets them itself, so they are the operator's to set.
+
+**From a secret store.** Every secret store can write a file, so none needs code in the studio. Examples follow.
+
+| Source | How the file is made | Notes |
+|---|---|---|
+| Docker Compose | a top-level `secrets:` entry with `file:` or `environment:`, listed under the service, appears at `/run/secrets/<name>`. Set `LATTICE_PROPOSER_KEY_FILE=/run/secrets/proposer_key` | A `file:` secret is mounted with the host file's own permissions, so `chmod 0400` it on the host. In Swarm, set `mode: 0400` and `uid` on the service's secret |
+| Kubernetes | a `Secret` mounted as a volume, one file per key, for example at `/var/run/secrets/lattice/proposer-key` | The default mode is `0644`. Set `defaultMode: 0400` on the volume, with `securityContext.runAsUser` and `fsGroup` matching the process's user, or the user cannot read it. Prefer a volume to `env.valueFrom.secretKeyRef`, which puts the value back into the environment |
+| HashiCorp Vault, Agent | a `template` stanza that renders `{{ with secret "secret/data/lattice/studio" }}{{ .Data.data.proposer_key }}{{ end }}` to a `destination` file, with `perms = "0400"` | The Agent renews its token and renders the file again when the secret changes. The worker reads the proposer key afresh at the next job. Restart the others after a change |
+| HashiCorp Vault, CSI | the Secrets Store CSI driver with the Vault provider, a `SecretProviderClass` naming each object's `secretPath` and `secretKey`, mounted as a volume | Set each object's `filePermission` to `0400`. Turning on the driver's rotation updates the file in place |
+| A cloud secret manager | its CSI provider, or its agent, writes a file the same way | as for Vault |
+
+Whichever is used, the value should never also be set in `NAME`, a compose file, a manifest or a shell profile. A secret store that can only set an environment variable works too, through `NAME`, at the cost of the value being visible in the process's environment.
 
 ---
 
@@ -337,6 +377,6 @@ The Configuration Studio is a single-author tool for one machine. **It must not 
 | Response headers | `X-Content-Type-Options: nosniff` on every response. `Cache-Control: no-store` on every `/api` response except the vocabulary, which is revalidated by its `ETag`. `Referrer-Policy: no-referrer` on every response. On an HTML response, `Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'`, which allows no scripts from elsewhere and no framing |
 | Static files | The service resolves a requested file to its real path and serves it only if it is a regular file under `LATTICE_STUDIO_STATIC`, so a `..` or a link out is refused |
 | Errors | An unexpected error returns `500` with the text `internal error` and logs the detail to the service log, not to the client |
-| Secrets | The AMQP URI and the optional Fuseki credentials are environment variables. They are not written to the repository, but they are visible in the process environment and the compose file has the broker's password in the clear |
+| Secrets | The AMQP and stream URIs, the Fuseki password and the proposer key are read from the environment or from a file it names ([Secrets in files](#secrets-in-files)). A value in the environment is visible to anyone who can read the process's environment, and a file only to whom its permissions allow. The local stack's compose file has the broker's default `guest` password in the clear |
 
 Reaching it from another machine needs authentication, TLS and a persistent store first, none of which the studio has yet.

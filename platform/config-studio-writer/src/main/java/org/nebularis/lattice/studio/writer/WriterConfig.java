@@ -2,6 +2,7 @@
 package org.nebularis.lattice.studio.writer;
 
 import java.util.Map;
+import org.nebularis.lattice.studio.settings.Secrets;
 
 /** The writer's settings, read from the environment. A null field means the setting is absent. */
 public record WriterConfig(String fusekiUrl, String fusekiDataset, String fusekiUser, String fusekiPassword,
@@ -9,8 +10,8 @@ public record WriterConfig(String fusekiUrl, String fusekiDataset, String fuseki
 
     public static WriterConfig fromEnv(Map<String, String> env) {
         String fuseki = required(env, "LATTICE_FUSEKI_URL");
-        String amqp = required(env, "LATTICE_AMQP_URI");
-        String stream = required(env, "LATTICE_STREAM_URI");
+        String amqp = Secrets.required(env, "LATTICE_AMQP_URI");
+        String stream = Secrets.required(env, "LATTICE_STREAM_URI");
         int retention;
         try {
             retention = Integer.parseInt(env.getOrDefault("LATTICE_STUDIO_JOB_RETENTION_DAYS", "30").trim());
@@ -21,7 +22,7 @@ public record WriterConfig(String fusekiUrl, String fusekiDataset, String fuseki
             throw new IllegalArgumentException("LATTICE_STUDIO_JOB_RETENTION_DAYS is at least 1");
         }
         return new WriterConfig(fuseki, env.getOrDefault("LATTICE_FUSEKI_WRITE_DATASET", "studio-write"),
-            optional(env, "LATTICE_FUSEKI_USER"), optional(env, "LATTICE_FUSEKI_PASSWORD"), amqp, stream, retention);
+            optional(env, "LATTICE_FUSEKI_USER"), Secrets.secret(env, "LATTICE_FUSEKI_PASSWORD"), amqp, stream, retention);
     }
 
     private static String required(Map<String, String> env, String name) {
