@@ -152,6 +152,7 @@ cst:Decline a cst:ReviewDecision ; rdfs:comment "The proposal is wrong, and its 
 cst:Defer a cst:ReviewDecision ; rdfs:comment "The proposal is set aside for later, and its templates are not stated meaning yet." .
 cst:Meaning a cst:Target ; rdfs:comment "The meaning configuration, stated meaning in ins:, validated with Instrument's shapes." .
 cst:Review a cst:Target ; rdfs:comment "The review configuration, proposals and their decisions." .
+cst:Mapping a cst:Target ; rdfs:comment "The mapping configuration, MORK mapping schemes and the guards they name, validated with MORK's shapes." .
 
 cst:DocumentTemplate a owl:Class ;
     rdfs:comment "The sections a document drafted from it holds, and what each may hold." .

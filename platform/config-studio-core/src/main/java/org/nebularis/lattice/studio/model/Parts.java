@@ -18,13 +18,14 @@ import org.apache.jena.vocabulary.RDF;
 /**
  * Which part of a workspace each subject of a graph belongs to, by the rule of the browser's {@code src/rdf/split.ts}:
  * the first part whose namespace a named subject uses in its {@code rdf:type} or its predicates, a concept scheme or
- * concept for vocabulary, baseline otherwise, and a blank node with the subject that refers to it. The service checks a
+ * concept for vocabulary, a mapping's guard for mapping, baseline otherwise, and a blank node with the subject that refers to it. The service checks a
  * saved graph with it, since it cannot know the browser sorted the graph (STD-279).
  */
 public final class Parts {
     private static final String LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/";
     private static final String SKOS = "http://www.w3.org/2004/02/skos/core#";
     private static final String CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
+    private static final String MORK = "http://www.nebularis.org/ontologies/Mork#";
     private static final Map<String, Predicate<Statement>> OWNERS = new LinkedHashMap<>();
 
     static {
@@ -35,6 +36,7 @@ public final class Parts {
         // A proposal and its decision, then stated meaning: any subject using Instrument's terms (ADR-A138).
         OWNERS.put("review", s -> (s.getPredicate().equals(RDF.type) && isIri(s.getObject(), CST + "Proposal"))
             || s.getPredicate().getURI().equals(CST + "proposes"));
+        OWNERS.put("mapping", uses(MORK));
         OWNERS.put("meaning", uses(LATTICE + "instrument#"));
         OWNERS.put("persistence", uses(LATTICE + "persistence#"));
         OWNERS.put("surface", uses(LATTICE + "surface#"));
@@ -64,6 +66,12 @@ public final class Parts {
         graph.listSubjects().forEachRemaining(s -> {
             if (s.isURIResource()) {
                 List<Statement> statements = s.listProperties().toList();
+                // A guard is a SHACL shape, which uses no mork: term of its own, so it goes where the mapping naming it goes.
+                if (graph.contains(null, graph.createProperty(MORK + "appliesWhen"), s)) {
+                    owner.put(s, "mapping");
+                    pending.add(s);
+                    return;
+                }
                 owner.put(s, OWNERS.entrySet().stream().filter(e -> statements.stream().anyMatch(e.getValue()))
                     .map(Map.Entry::getKey).findFirst().orElse("baseline"));
                 pending.add(s);

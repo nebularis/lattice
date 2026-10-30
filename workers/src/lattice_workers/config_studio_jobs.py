@@ -87,6 +87,7 @@ _SPECS = {
         for module in ("foundation", "quantification", "party", "eligibility", "wording", "behaviour", "instrument")
         for role in ("spec", "vocab")
     ],
+    "mapping": [("mork", "spec", "*.ttl")],
 }
 _SHAPES = {
     "persistence": [("persistence", "constraints.ttl")],
@@ -95,6 +96,7 @@ _SHAPES = {
     "quantification": [("quantification", "constraints.ttl")],
     "eligibility": [("eligibility", "structural.ttl"), ("eligibility", "constraints.ttl")],
     "meaning": [("instrument", "structural.ttl"), ("instrument", "constraints.ttl")],
+    "mapping": [("mork", "constraints.ttl")],
 }
 TARGETS = tuple(_SPECS)
 

@@ -4,7 +4,7 @@
 
 **Unit ID:** `config-studio`
 **Status:** 🟡 CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, and ADR-A136's second amendment (writers and the on-disk store) accepted the same day
-**Last updated:** 2026-10-28
+**Last updated:** 2026-10-30
 **Plan:** [config-studio.md](../plans/config-studio.md)
 **Sketch:** [config-studio.md](../sketches/config-studio.md)
 **ADR:** [A-136](../../architecture/decisions/ADR-A136-configuration-studio.md) and [A-137](../../architecture/decisions/ADR-A137-document-markup-vocabulary.md), Accepted 2026-10-28
@@ -15,7 +15,7 @@
 
 Built autonomously in one session at the maintainer's request, from sketch to a browser test over the live stack. Every check the Validation Pack lists was run and passed. The decisions below were taken alone and wait for ratification. ADR-A136 stays Proposed.
 
-**Next action:** CB5a's service and browser half, the flag-gated `target=odrl` and the Meaning view's import, then the MORK studio module. The maintainer reviews ADR-A144 (the ODRL import) and ADR-A146 (the skolem rule), both Proposed, and MR-23. ADR-A146 follows the 145 that ccs-trunk's ADR takes at the second merge.
+**Next action:** the MORK studio module's slice 2, editing mappings and a compile and check job with `mork_rdf`, after slice 1 (mapping mode, the `mapping` part and its read-only view). Then slices 3 and 4, stepping a sample through the strata and proposing. The proposer's inputs are to be refined from the [review of the trials](../notes/mapping-proposer-review.md) once the studio is built. The maintainer reviews ADR-A144 (the ODRL import) and ADR-A146 (the skolem rule), both Proposed, and MR-23. ADR-A146 follows the 145 that ccs-trunk's ADR takes at the second merge.
 
 ## Decisions taken alone, for ratification
 

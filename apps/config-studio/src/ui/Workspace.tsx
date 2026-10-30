@@ -15,6 +15,7 @@ import {
   Layers,
   LayoutDashboard,
   Library,
+  Network,
   PanelRight,
   Puzzle,
   Redo2,
@@ -31,7 +32,7 @@ import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
 import { assembliesOf, formsOf } from "../rdf/builder";
 import { termsOf } from "../rdf/meaning";
-import { INS, compact, type Graph } from "@lattice/authoring-domain";
+import { INS, MORK, compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
 import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "../state";
@@ -39,6 +40,7 @@ import { BaselineView } from "./BaselineView";
 import { BuildView } from "./BuildView";
 import { AssemblyView, LibraryView, useAssembler } from "./BuilderView";
 import { InstrumentView } from "./InstrumentView";
+import { MappingView } from "./MappingView";
 import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
 import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
@@ -66,12 +68,15 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "instrument", "vocabulary", "quantification", "eligibility", "persistence", "surface", "build"] as const;
+const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "instrument", "vocabulary", "quantification", "eligibility", "persistence", "surface", "mapping", "build"] as const;
 
 /** The views of builder mode (ADR-A138), which share the workspace's state, inspector and problems drawer with the rest. */
 const BUILDER_VIEWS: readonly string[] = ["library", "assembly", "meaning", "instrument"];
 
-const PART_NAV: { part: Exclude<Part, "review">; label: string; icon: React.ReactNode }[] = [
+/** The views of mapping mode, MORK mapping schemes from a source's structure into LATTICE's terms. */
+const MAPPING_VIEWS: readonly string[] = ["mapping"];
+
+const PART_NAV: { part: Exclude<Part, "review" | "mapping">; label: string; icon: React.ReactNode }[] = [
   { part: "vocabulary", label: "Vocabulary", icon: <BookOpen size={16} /> },
   { part: "quantification", label: "Quantification", icon: <Ruler size={16} /> },
   { part: "eligibility", label: "Eligibility", icon: <ListChecks size={16} /> },
@@ -86,9 +91,10 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const { state } = model;
   const view: View = (VIEWS as readonly string[]).includes(route[0]) ? (route[0] as View) : "overview";
   const builder = BUILDER_VIEWS.includes(view);
+  const mode = builder ? "builder" : MAPPING_VIEWS.includes(view) ? "mapping" : "configure";
   // The last view of each mode, so the switch returns to it.
-  const lastView = useRef({ configure: "overview", builder: "library" });
-  lastView.current[builder ? "builder" : "configure"] = view;
+  const lastView = useRef({ configure: "overview", builder: "library", mapping: "mapping" });
+  lastView.current[mode] = view;
   const node = route[1];
   const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : view === "instrument" ? "meaning" : "persistence";
   const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
@@ -203,14 +209,22 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
 
         <nav className="nav" aria-label="Workspace">
           <div className="mode-switch" role="group" aria-label="Mode">
-            <button aria-pressed={!builder} onClick={() => go("w", id, lastView.current.configure)}>
+            <button aria-pressed={mode === "configure"} onClick={() => go("w", id, lastView.current.configure)}>
               Configure
             </button>
-            <button aria-pressed={builder} onClick={() => go("w", id, lastView.current.builder)}>
+            <button aria-pressed={mode === "builder"} onClick={() => go("w", id, lastView.current.builder)}>
               Builder
             </button>
+            <button aria-pressed={mode === "mapping"} onClick={() => go("w", id, lastView.current.mapping)}>
+              Mapping
+            </button>
           </div>
-          {builder ? (
+          {mode === "mapping" ? (
+            <>
+              <div className="group">Mapping</div>
+              <NavLink to="mapping" view={view} id={id} icon={<Network size={16} />} label="Schemes" count={state.configs.mapping!.current.ofType(MORK("MappingScheme")).length} issues={model.issues.mapping} dirty={dirty.mapping} />
+            </>
+          ) : builder ? (
             <>
               <div className="group">Contract builder</div>
               <NavLink to="library" view={view} id={id} icon={<Library size={16} />} label="Library" count={formsOf(model.world).length} issues={model.issues.library} dirty={dirty.library} />
@@ -239,7 +253,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "assembly" && <AssemblyView selected={node} assembler={assembler} />}
           {view === "meaning" && <MeaningView selected={node} field={route[2]} />}
           {view === "instrument" && <InstrumentView selected={node} field={route[2]} />}
-          {editing && !builder && <ConfigView part={activePart} selected={node} field={route[2]} />}
+          {view === "mapping" && <MappingView selected={node} />}
+          {editing && mode === "configure" && <ConfigView part={activePart} selected={node} field={route[2]} />}
           {view === "build" && <BuildView />}
         </main>
 

@@ -73,6 +73,19 @@ class AssemblyTest {
     }
 
     @Test
+    void aMappingAndTheGuardItNamesGoToMappingThoughItWritesInstrumentTerms() {
+        Model g = parse(PREFIXES + "@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .\n"
+            + "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            + "ex:m a mork:DataMapping ; mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ; mork:appliesWhen ex:g .\n"
+            + "ex:g a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .\n");
+        Map<String, String> byName = new java.util.HashMap<>();
+        Parts.owners(g).forEach((r, part) -> byName.put(r.isURIResource() ? r.getURI().substring("https://example.org/".length()) : "blank", part));
+        assertEquals("mapping", byName.get("m"));
+        assertEquals("mapping", byName.get("g"), "a guard uses no MORK term but goes with the mapping naming it");
+        assertEquals("mapping", byName.get("blank"));
+    }
+
+    @Test
     void aDryRunJobIsQueuedForMeaningOnly() {
         ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=meaning", LIBRARY);
         assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));

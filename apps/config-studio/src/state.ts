@@ -26,6 +26,7 @@ const DEPENDS: Record<Part, Part[]> = {
   // Instrument's shapes read the clauses, the roles and the concepts a template names.
   meaning: ["library", "vocabulary"],
   review: [],
+  mapping: [],
   vocabulary: [],
   quantification: [],
   eligibility: ["vocabulary", "quantification"],

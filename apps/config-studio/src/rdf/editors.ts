@@ -4,7 +4,7 @@
 // by rdfs:domain is not the one an author wants, as for the dimensions of a dal:DataAccessProfile.
 // Any other dal: or srf: node gets one section of its type's own properties.
 
-import { BHV, COMMENT, CST, DAL, ELG, FND, Graph, INS, LABEL, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, WRD, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
+import { BHV, COMMENT, CST, DAL, ELG, FND, Graph, INS, LABEL, MORK, PREFIXES, QNT, SKOS, SRF, TYPE, VOC, WRD, XSD, compact, humanise, iri, literal, localName, sentence, type NamedNode, type Term, typed } from "@lattice/authoring-domain";
 import type { Baseline } from "./baseline";
 import type { Issue } from "./report";
 import type { Field, Vocabulary } from "./vocabulary";
@@ -251,7 +251,7 @@ const BOUND_REASON = "Bound meaning. Instantiating an assembled wording writes i
 
 const KIND_BY_TYPE = new Map(KINDS.map((k) => [k.type, k]));
 
-const OWN_NAMESPACE: Record<Part, string> = { library: WRD(""), assembly: CST(""), meaning: INS(""), review: CST(""), persistence: DAL(""), surface: SRF(""), vocabulary: VOC(""), quantification: QNT(""), eligibility: ELG("") };
+const OWN_NAMESPACE: Record<Part, string> = { library: WRD(""), assembly: CST(""), meaning: INS(""), review: CST(""), mapping: MORK(""), persistence: DAL(""), surface: SRF(""), vocabulary: VOC(""), quantification: QNT(""), eligibility: ELG("") };
 
 export function kindOf(graph: Graph, node: Term | string, part: Part): Kind | undefined {
   const types = graph.types(node);

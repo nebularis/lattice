@@ -3,7 +3,7 @@
 // sections and fields come from the vocabulary (rdf/editors.ts, rdf/vocabulary.ts).
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, ClipboardCheck, Database, Library, ListChecks, Plus, Puzzle, Ruler, Scale, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, BookOpen, ChevronDown, ChevronRight, ClipboardCheck, Database, Library, ListChecks, Network, Plus, Puzzle, Ruler, Scale, Sparkles, Trash2, X } from "lucide-react";
 import { KINDS, classOf, concerns, create, describe, kindOf, nameOf, sectionsFor, type Kind, type Special as SpecialKind } from "../rdf/editors";
 import { DAL, SRF, compact, type Graph } from "@lattice/authoring-domain";
 import { readPath, writePath, type Step } from "../rdf/path";
@@ -294,6 +294,12 @@ export const PART_INFO: Record<Part, { title: string; tone: string; icon: (size:
     tone: "warn",
     icon: (n) => <ClipboardCheck size={n} color="var(--warn)" />,
     empty: "A proposal carries the templates proposed for a clause, who proposed them and the reviewer's decision.",
+  },
+  mapping: {
+    title: "Mapping",
+    tone: "accent",
+    icon: (n) => <Network size={n} color="var(--accent)" />,
+    empty: "A MORK mapping scheme reads a source's structure into LATTICE's terms, one mapping for each thing it writes.",
   },
   vocabulary: {
     title: "Vocabulary",

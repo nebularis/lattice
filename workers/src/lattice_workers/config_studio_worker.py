@@ -33,6 +33,7 @@ _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
     CST.Persistence: "persistence", CST.Surface: "surface", CST.Vocabulary: "vocabulary",
     CST.Quantification: "quantification", CST.Eligibility: "eligibility", CST.Meaning: "meaning",
+    CST.Mapping: "mapping",
 }
 # What the worker writes, so that a rerun starts from what the service wrote.
 _WORKER_PREDICATES = (

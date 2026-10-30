@@ -21,7 +21,7 @@ const parse = (ttl: string) => Graph.parse(prefixes + ttl);
 
 describe("the split rule for library and assembly", () => {
   it("keeps the configuration parts in the service's order", () => {
-    expect(CONFIG_PARTS).toEqual(["library", "assembly", "meaning", "review", "vocabulary", "quantification", "eligibility", "surface", "persistence"]);
+    expect(CONFIG_PARTS).toEqual(["library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence"]);
   });
 
   it("sorts the builder sample into library, assembly and the layers a form reads", () => {
