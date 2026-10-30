@@ -1,13 +1,15 @@
 (* SPDX-License-Identifier: MPL-2.0 *)
 
-(* Code generation spike: which of the layer models are executable as written, which need a code
-   equation, and what Isabelle's code generator makes of them. Every value below is evaluated by
-   the code generator (the value command), so a printed result is the generated program's
-   result, not the kernel's. The export_code commands at the end write Haskell and SML into the
-   session's export area, retrieved with isabelle export. *)
+(* Code generation spike, part two: which of the layer models are executable as written, which
+   need a code equation, and what Isabelle's code generator makes of them. The code equations are
+   in CodeGenPlain, with an export under the default representations. This theory adds the
+   HOL-Library adaptations, so nat and int become target integers and char an abstract type over
+   them. Every value below is evaluated by the code generator, so a printed result is the
+   generated program's result, not the kernel's. The export_code commands at the end write
+   Haskell and SML into the session's export area, retrieved with isabelle export. *)
 
 theory CodeGen
-imports Quantification Vocabulary Behaviour Ledger Instrument Party Persistence Minting Surface EligibilityConditions
+imports CodeGenPlain "HOL-Library.Code_Target_Numeral" "HOL-Library.Code_Abstract_Char"
 begin
 
 section \<open>Executable as written\<close>
@@ -31,7 +33,7 @@ value "sum_like True [\<lparr> amt = 1, in_unit = ''kg'', on_base = Some ''a'' \
 
 text \<open>The minting specification's own tuple example, section 4.1, byte for byte.\<close>
 
-value "decimal_prefix.enc [''v1'', ''person-email-unique'', ''acme'', ''ada@example.org'']"
+value "enc decimal [''v1'', ''person-email-unique'', ''acme'', ''ada@example.org'']"
 
 text \<open>Percent-encoding of the bytes of "a/b", decoded again, and the dot-segment collision.\<close>
 
@@ -39,7 +41,8 @@ value "pct [97, 47, 98]"
 value "dec (pct [97, 47, 98])"
 value "norm_path [''a'', ''..'', ''b'']"
 
-text \<open>Fixed-width positions.\<close>
+text \<open>Fixed-width positions. Under the default representation of nat, dp 19 computes ten to the
+eighteenth in unary and does not finish, so this is the value the adaptations make evaluable.\<close>
 
 value "dp 19 (91438 :: nat)"
 value "lexlt (dp 2 3) (dp 2 10)"
@@ -81,35 +84,8 @@ value "claim (claim (\<lambda>_. None) (1 :: nat) (10 :: nat)) 1 11 1"
 
 section \<open>Executable with a code equation\<close>
 
-text \<open>The guarded write's guard and confirmation quantify over the row option. That is not
-executable as an existential, but it is as a case split, and the two are equal, so the case
-split is given to the code generator as the implementation.\<close>
-
-lemma guard_code [code]:
-  "guard s r \<longleftrightarrow>
-     ds_epoch s = writer_epoch r \<and>
-     (case rows s (target r) of None \<Rightarrow> False | Some w \<Rightarrow> seq w = expected r \<and> \<not> tomb w) \<and>
-     claims s (txn r) = None"
-  unfolding guard_def by (auto split: option.splits)
-
-lemma confirm_code [code]:
-  "confirm s r =
-     (case claims s (txn r) of
-        Some d \<Rightarrow> (if d = digest r then Applied else IdempotencyKeyReuse)
-      | None \<Rightarrow>
-          if ds_epoch s \<noteq> writer_epoch r then EpochChanged
-          else if (case rows s (target r) of None \<Rightarrow> False | Some w \<Rightarrow> tomb w) then Gone
-          else PreconditionFailed)"
-  unfolding confirm_def by (auto split: option.splits)
-
-lemma guard_row_code [code]:
-  "guard_row s r \<longleftrightarrow>
-     (case rows s (target r) of None \<Rightarrow> False
-      | Some w \<Rightarrow> row_epoch w = writer_epoch r \<and> seq w = expected r \<and> \<not> tomb w) \<and>
-     claims s (txn r) = None"
-  unfolding guard_row_def by (auto split: option.splits)
-
-text \<open>The TD-118 witness, run: the stale writer's request against the stale store.\<close>
+text \<open>The guard, the row-level guard and the confirmation execute through the code equations
+in CodeGenPlain. The TD-118 witness, run: the stale writer's request against the stale store.\<close>
 
 value "guard stale_store stale_request"
 value "guard_row stale_store stale_request"
@@ -124,30 +100,58 @@ value "confirm (commit stale_store fresh_request) fresh_request"
 value "confirm (commit (commit stale_store fresh_request) fresh_request) fresh_request"
 value "rows (commit stale_store fresh_request) 17"
 
+text \<open>Vocabulary's resolution, through its code equation: a binding scoped to 1 dominates an
+unscoped one, so it wins in context {1}, and two bindings with incomparable scopes conflict.\<close>
+
+value "resolve {\<lparr> scopes = {}, validity = \<lparr> valid_from = 0, valid_to = None \<rparr>, scheme = 1 :: nat \<rparr>,
+               \<lparr> scopes = {1 :: nat}, validity = \<lparr> valid_from = 0, valid_to = None \<rparr>, scheme = 2 \<rparr>} {1} 5 None"
+value "resolve {\<lparr> scopes = {1 :: nat}, validity = \<lparr> valid_from = 0, valid_to = None \<rparr>, scheme = 2 :: nat \<rparr>,
+               \<lparr> scopes = {2}, validity = \<lparr> valid_from = 0, valid_to = None \<rparr>, scheme = 3 \<rparr>} {1, 2} 5 None"
+
+text \<open>Profile resolution, through its code equation: at a priority tie the candidate needing no
+reasoning wins, and two such candidates are Ambiguity.\<close>
+
+value "resolve_dim True {\<lparr> prio = 2, needs_reasoning = False, cand.val = 10 :: nat \<rparr>,
+                         \<lparr> prio = 2, needs_reasoning = True, cand.val = 20 \<rparr>,
+                         \<lparr> prio = 1, needs_reasoning = False, cand.val = 30 \<rparr>}"
+value "resolve_dim True {\<lparr> prio = 2, needs_reasoning = False, cand.val = 10 :: nat \<rparr>,
+                         \<lparr> prio = 2, needs_reasoning = False, cand.val = 40 \<rparr>}"
+
 section \<open>Not executable as written\<close>
 
-text \<open>Vocabulary's resolution quantifies over a set of bindings with THE, and Persistence's
-profile resolution takes Max over a set. Both execute once the set is a list, which is how a
-caller holds them anyway. Eligibility's hierarchical match is a reflexive-transitive closure of
-a relation given as a predicate, so it needs the relation as a finite list of pairs before
-rtrancl's own code equations apply. Membership and the tuple encoding sit in locales over a
-function, and execute through an interpretation, as decimal_prefix.enc above shows.\<close>
+text \<open>Eligibility's hierarchical match is a reflexive-transitive closure of the broader relation,
+given as a predicate inside the locale scheme, which has no interpretation. The code generator
+reports no code equations for scheme.decide or scheme.below_eq. Executing it needs the relation
+as a finite set of pairs, so that rtrancl's own code equations apply, and an interpretation or
+explicit parameters to give the generator a constant. Membership's definitions sit in a locale
+with no interpretation for the same reason. The tuple encoder took its length rendering as an
+argument for this reason, as enc decimal above shows.\<close>
 
 section \<open>Export\<close>
 
+text \<open>The conversions between the target's Integer and String and the model's nat, char
+and string are exported so a driver can build arguments and read results.\<close>
+
 export_code
   contains meet closed_range add_months jan31 ccontains off_peak sum_like
-  length_prefix.enc decimal pct dec norm_path dp lexlt val
+  enc decimal pct dec norm_path dp lexlt val
   parts residual settle_at_position
   dconf wfc gate holds exit history
   due_at exercise tolled_end
   compose
-  guard commit confirm claim stale_store stale_request fresh_request
+  guard guard_row commit confirm claim stale_store stale_request fresh_request resolve resolve_dim
+  nat_of_integer integer_of_nat char_of_integer integer_of_char String.explode String.implode
   in Haskell module_name Lattice file_prefix lattice_haskell
 
 export_code
-  contains meet closed_range add_months jan31 length_prefix.enc decimal pct dec dp lexlt val
-  guard commit confirm
+  contains meet closed_range add_months jan31 enc decimal pct dec dp lexlt val
+  guard guard_row commit confirm
   in SML module_name Lattice file_prefix lattice_sml
+
+export_code
+  contains meet closed_range add_months jan31 enc decimal pct dec dp lexlt val
+  guard guard_row commit confirm stale_store stale_request
+  nat_of_integer integer_of_nat String.explode String.implode
+  in Scala module_name Lattice file_prefix lattice_scala
 
 end

@@ -16,15 +16,19 @@ and the bytes. The encoding is self-delimiting, so no component value can make t
 tuples encode alike. The proof needs two facts about the length rendering: it is injective
 (decimal with no leading zeros) and it contains no colon. Both hold of decimal, shown below.\<close>
 
+text \<open>The encoder takes the length rendering as its first argument, so it is an ordinary
+function the code generator can export. The locale below carries the two assumptions the
+injectivity proof needs, and states its theorems about enc lenstr.\<close>
+
+fun enc :: "(nat \<Rightarrow> string) \<Rightarrow> string list \<Rightarrow> string" where
+  "enc lenstr [] = []"
+| "enc lenstr (c # cs) = lenstr (length c) @ CHR '':'' # c @ enc lenstr cs"
+
 locale length_prefix =
   fixes lenstr :: "nat \<Rightarrow> string"
   assumes lenstr_inj: "lenstr n = lenstr m \<Longrightarrow> n = m"
     and lenstr_no_colon: "CHR '':'' \<notin> set (lenstr n)"
 begin
-
-fun enc :: "string list \<Rightarrow> string" where
-  "enc [] = []"
-| "enc (c # cs) = lenstr (length c) @ CHR '':'' # c @ enc cs"
 
 lemma prefix_unique:
   assumes "lenstr n @ CHR '':'' # r = lenstr m @ CHR '':'' # r'"
@@ -41,7 +45,7 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-theorem enc_injective: "enc xs = enc ys \<Longrightarrow> xs = ys"
+theorem enc_injective: "enc lenstr xs = enc lenstr ys \<Longrightarrow> xs = ys"
 proof (induction xs arbitrary: ys)
   case Nil
   then show ?case by (cases ys) auto
@@ -53,10 +57,10 @@ next
     with Cons.prems show ?thesis by simp
   next
     case (Cons d ds)
-    with Cons.prems have "lenstr (length c) @ CHR '':'' # (c @ enc cs) = lenstr (length d) @ CHR '':'' # (d @ enc ds)"
+    with Cons.prems have "lenstr (length c) @ CHR '':'' # (c @ enc lenstr cs) = lenstr (length d) @ CHR '':'' # (d @ enc lenstr ds)"
       by simp
-    then have "length c = length d" and "c @ enc cs = d @ enc ds" using prefix_unique by blast+
-    then have "c = d" and "enc cs = enc ds" by (simp_all add: append_eq_append_conv)
+    then have "length c = length d" and "c @ enc lenstr cs = d @ enc lenstr ds" using prefix_unique by blast+
+    then have "c = d" and "enc lenstr cs = enc lenstr ds" by (simp_all add: append_eq_append_conv)
     with Cons.IH Cons show ?thesis by simp
   qed
 qed
@@ -165,7 +169,7 @@ qed
 text \<open>The specification's example, 2:v119:person-email-unique4:acme15:ada@example.org, is one
 instance of a now proved general fact: the tuple's encoding is injective.\<close>
 
-corollary tuple_encoding_injective: "decimal_prefix.enc xs = decimal_prefix.enc ys \<Longrightarrow> xs = ys"
+corollary tuple_encoding_injective: "enc decimal xs = enc decimal ys \<Longrightarrow> xs = ys"
   by (rule decimal_prefix.enc_injective)
 
 section \<open>Percent-encoding, section 6.2\<close>

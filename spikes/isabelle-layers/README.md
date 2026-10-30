@@ -10,11 +10,11 @@ From the repository root:
 isabelle build -d tools/proofs/eligibility -d spikes/isabelle-layers LatticeLayers
 ```
 
-A pass prints `Finished LatticeLayers`. Every theorem is kernel-checked, with no `sorry`, `oops`, `axiomatization` or `by eval`. Locales carry the assumptions a theorem rests on, named at its head.
+A pass prints `Finished LatticeLayers`. The session loads `HOL-Library`'s code adaptations from source for `CodeGen`, so no `HOL-Library` heap is needed. Every theorem is kernel-checked, with no `sorry`, `oops`, `axiomatization` or `by eval`. Locales carry the assumptions a theorem rests on, named at its head.
 
 ## Status
 
-All thirteen theories build and every theorem in them is proved. Two statements were corrected during proof, and both are findings rather than proof engineering: a padded position reads back as its value only when the value fits the width (Minting's `val_dp` carries that premise, and width zero reads back nothing), and profile resolution's tie is Ambiguity only when no top candidate avoids reasoning (Persistence's `tie_is_ambiguity` and `reasoning_tie_is_ambiguity`), since the rule prefers one that does.
+All thirteen layer theories and the two code-generation theories build, and every theorem in them is proved. Two statements were corrected during proof, and both are findings rather than proof engineering: a padded position reads back as its value only when the value fits the width (Minting's `val_dp` carries that premise, and width zero reads back nothing), and profile resolution's tie is Ambiguity only when no top candidate avoids reasoning (Persistence's `tie_is_ambiguity` and `reasoning_tie_is_ambiguity`), since the rule prefers one that does.
 
 ## What each theory proves
 
@@ -41,6 +41,59 @@ All thirteen theories build and every theorem in them is proved. Two statements 
 - Q3's canonical form for range sets and Q6's conversion coherence: both need a representation decision (dense against discrete spaces, conversion chains) the README leaves to a profile.
 - Store isolation: Persistence's model applies writes one at a time, which is what a store's atomic update promises and nothing more. Write skew between updates is the conformance test's.
 
-## Code generation, a draft
+## Generating an evaluator
 
-`CodeGen.thy` is a second spike, not listed in `ROOT` because it does not yet build. It evaluates the models with the code generator (`value`) and exports fragments to Haskell and SML. Its last build showed every `value` passing except `guard_row`, which now has a code equation, and `export_code` refusing `length_prefix.enc` because a locale's `fun` has no code equations outside an interpretation. The next steps are to export the interpretation's constant instead, or restate `enc` as a top-level function over `decimal`, then add `CodeGen` to `ROOT`, build, and run the Haskell export with GHC against the minting specification's tuple example. Building `HOL-Library` for the target-numeral and char adaptations is what makes the generated Haskell use native `Integer` and `Char`, and it needs more memory than a laptop beside other work should give it.
+The question was what generating an evaluator from these models looks like. Everything below was run on Linux x86_64 with 4 cores and 15 GB, Isabelle2025-2, GHC 9.4.7 and Isabelle's own Scala 3.3.4, on 2026-10-30. Generated code was written outside the repository and never enters git.
+
+Two theories hold the work. `CodeGenPlain` gives the code equations and exports Haskell under the code generator's default representations. `CodeGen` imports it, adds `HOL-Library.Code_Target_Numeral` and `HOL-Library.Code_Abstract_Char`, evaluates the models with `value` and exports Haskell, SML and Scala. A clean build of the session took 26 s, and the largest single process peaked at 4.3 GB resident.
+
+### What executes
+
+| Fragment | As written | What it needed |
+|---|---|---|
+| Quantification's ranges, meet, cyclic windows and sums, Temporal's month arithmetic | executes | nothing |
+| Minting's percent-encoding, dot segments and fixed-width positions | executes | nothing |
+| Minting's tuple encoder | no code equations | `enc` was a `fun` inside the locale `length_prefix`, whose equations are conditional on the locale's assumptions. It now takes the length rendering as its first argument, and the locale states `enc_injective` about `enc lenstr`. `tuple_encoding_injective` is unchanged in meaning |
+| Ledger's settlement and pro-rata split, Behaviour's configurations and gate, Instrument's anchors and windows, the eligibility composition, key claims | executes | nothing |
+| Persistence's `guard`, `guard_row` and `confirm` | not executable | each quantifies existentially over the row option, which the generator could only run by enumerating the row type. A case split, proved equal to the definition, is the code equation |
+| Vocabulary's `resolve` and Persistence's `resolve_dim` | not executable, `Type ... not of sort enum` | the test for one winner is `∃w. S = {w}` and the winner is `THE w. S = {w}`. HOL's `is_singleton` and `the_elem` say the same and execute on a finite set, so a code equation restates each over them. Sets did not need restating as lists, because set literals already execute, and `Max` over one executes too |
+| Eligibility's `scheme.decide` and `scheme.below_eq` | `No code equations for scheme.decide` | the hierarchical match is a reflexive-transitive closure of `broader`, given as a predicate inside the locale `scheme`, which has no interpretation. It needs the relation as a finite set of pairs, so that `rtrancl`'s own code equations apply, and either an interpretation or explicit parameters to give the generator a constant. Not done here |
+| Membership | not exercised | its definitions sit in a locale with no interpretation, the same obstacle as `scheme` |
+
+### What the representations cost
+
+Under the default representations `nat` is a Peano datatype, `int` is built over binary numerals, and `char` is a datatype of eight booleans. `value "dp 19 (91438 :: nat)"` computes ten to the eighteenth in unary and did not finish, which is why the first build of `CodeGen` ended in the session's 600 s timeout. With the adaptations `nat` and `int` are newtypes over the target's integers, `char` is a newtype over an integer, and the same value prints `0000000000000091438`. `Code_Abstract_Char` also changes how `value` prints a string, as a list of `Chr` codes.
+
+| Export | Files | Size | Compiles |
+|---|---|---|---|
+| Haskell, default representations | `Lattice.hs`, `Str_Literal.hs` | 1,985 lines, 57.5 KB | `ghc -O0`, no warnings |
+| Haskell, with the adaptations | `Lattice.hs`, `Bit_Shifts.hs`, `Str_Literal.hs` | 1,136 lines, 35.8 KB | `ghc -O0`, no warnings |
+| Scala, with the adaptations | `lattice_scala.scala` | 716 lines, 24.7 KB | `isabelle scalac`, three warnings that two generated classes differ only in case, such as `Lattice$Nat` and `Lattice$nat`, which overwrite each other on a case-insensitive filesystem such as macOS's default |
+| SML, with the adaptations | `lattice_sml.ML` | 463 lines, 16.1 KB | exported, not compiled on its own |
+
+The generated modules export their types without constructors, so a caller cannot build a `Nat` or a `Char`. Both theories export `nat_of_integer`, `integer_of_nat`, `char_of_integer`, `integer_of_char`, `String.explode` and `String.implode` for that reason.
+
+### Against the specification
+
+A driver of twenty-three lines called the exported functions and printed the results. The same driver ran against both Haskell builds, and a Scala translation of it against the Scala build.
+
+| Call | Specification | Haskell, adapted | Haskell, default | Scala |
+|---|---|---|---|---|
+| `enc decimal ["v1", "person-email-unique", "acme", "ada@example.org"]` | `2:v119:person-email-unique4:acme15:ada@example.org` (§4.1) | same | same | same |
+| `pct` of the bytes of `a/b` | `a%2Fb` (§6.2) | `[97,37,50,70,98]`, which is `a%2Fb` | same | same |
+| `dec` of that | `a/b` | `[97,47,98]` | same | same |
+| `dp 19 91438` | nineteen digits, zero-padded | `0000000000000091438` | no output within 60 s | same as adapted |
+| TD-118 witness, `guard` and `guard_row` on the stale store and request | false and true | false, true | not reached | false, true |
+
+`tuple_bytes` and `percent_encode` in `packages/minting/python` give the same two strings. The model's strings are byte strings, so a non-ASCII component has to reach `enc` as its UTF-8 bytes, where the Python library encodes it itself.
+
+### As a reference evaluator
+
+A hypothesis, not a decision. The generated Haskell could stand beside the Python reference in `tools/reference/eligibility` as a differential oracle for the fragments that execute, under four conditions.
+
+- The trust base is stated. The theorems hold of the Isabelle definitions. The generated code adds the code generator, the target compiler and the adaptations' mapping of `nat`, `int` and `char` onto target integers, none of which the kernel checks.
+- It covers what the models cover. These theories state a layer's laws, not its whole behaviour, and the eligibility decision table does not yet execute, so a comparison with the Python reference starts with the minting encodings, the persistence guards, the ledger split and the composition of decisions.
+- The adaptations are always on. Without them an ordinary fixed-width position does not terminate, so the default representations are fit for nothing beyond small values.
+- A thin layer adapts the interface. It converts between the target's integers and strings and the generated types, and between Unicode text and UTF-8 bytes, and the same conformance vectors the Python reference reads would have to be run through it.
+
+Track E's E2, a proved SPARQL compiler core, is a different object. This spike shows only that the extraction path runs end to end at this scale.
