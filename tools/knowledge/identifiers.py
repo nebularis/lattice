@@ -161,6 +161,14 @@ FAMILIES: tuple[Family, ...] = (
         note="removed from the register when an item gains a home in a plan",
     ),
     Family(
+        name="backlog",
+        mention=re.compile(r"\b(BL-\d+)\b"),
+        definition="table-row",
+        defines=((DEVELOPER / "backlog.md").as_posix(),),
+        removable=True,
+        note="removed from the register when a plan takes the idea on",
+    ),
+    Family(
         name="mechanism",
         mention=re.compile(r"\b(MEC-\d+)\b"),
         definition="table-row",

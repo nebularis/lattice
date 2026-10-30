@@ -142,8 +142,8 @@ closed.
 
 ### Dependencies
 
-| # | Debt | Spotted | Cost while it stays | Likely home |
-|---|---|---|---|---|
+| # | Debt | Spotted | Cost while it stays | Likely home | Bears on |
+|---|---|---|---|---|---|
 | TD-96 | **The Configuration Studio's worker does not reconnect, and requeues a job whose result it cannot publish.** It retries its first connection to RabbitMQ, but any later broker or store error ends it after it requeues the message, so a job that always fails to write is redelivered on every restart, and the worker logs nothing but a traceback | 2026-10-28, `config-studio`, writing CS9's runbook | a worker that stops on a broker restart until someone starts it again, and a job that can never finish keeps failing it | reconnect with a backoff, as the service's start does, count deliveries with RabbitMQ's `x-delivery-count` on a quorum queue or a dead-letter after N, and log each job's start and end |
 | TD-97 | **The Configuration Studio's TDB2 store is never compacted.** Deleting a workspace or sweeping a job frees no disk space, since TDB2 reclaims space only when compacted, and the studio neither compacts nor offers a task to | 2026-10-28, `config-studio`, the on-disk store | the data folder grows with every job the sweep deletes, about the size of every job ever run | a `studio:compact` task through Fuseki's compaction, or compaction on `studio:down` while nothing writes | none |
 | TD-99 | **Any client of the studio's broker can send a store write.** The writer checks every command, but cannot tell the service's from the worker's or another client's, so a client with the broker's credentials can change any workspace | 2026-10-28, `config-studio`, the partitioned writers | acceptable while the broker listens on loopback with its default user, and blocks a shared deployment | a broker user per component, with RabbitMQ's validated `user_id` checked by the writer against the commands each may send | none |

@@ -87,6 +87,7 @@ FAMILY_CLASS = {
     "decision": "Decision",
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
+    "backlog": "Backlog",
     "store-discovery": "Discovery",
     "mechanism": "Mechanism",
     "capability": "Capability",
@@ -428,6 +429,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Claim": ("claim", "claim"),
     "Capability": ("claim", "claim"),
     "Debt": ("claim", "claim"),
+    "Idea": ("claim", "claim"),
     "Decision": ("claim", "claim"),
     "Name": ("label", "label"),
     "Pointer": ("pointer", "text"),
@@ -466,6 +468,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
+        "Why we want it", "What exists", "Status",
     }
 )
 

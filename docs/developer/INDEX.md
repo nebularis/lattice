@@ -28,6 +28,12 @@ whole architecture, pictured, five ways).
 
 ---
 
+# Registers
+
+The registers hold entries that are not units of work. [Pending design decisions](pending-design-decisions.md), [technical debt](technical-debt.md) and the [backlog](backlog.md) are removable, each row leaving when a document takes it on. [Capabilities](capabilities.md), [mechanisms](mechanisms.md), [patterns](patterns.md), [principles](principles.md) and [standards](standards.md) are kept. All are read by the knowledge index.
+
+---
+
 # Part I — Completed Work
 
 ## Persistence and IRI patterns: the change package at a glance
