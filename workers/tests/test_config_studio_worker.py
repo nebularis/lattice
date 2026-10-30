@@ -669,14 +669,14 @@ def _decisions(g: Graph, job: URIRef) -> dict:
 
 @pytest.mark.parametrize("count, decision", [("3", "Permitted"), ("1", "Denied")])
 def test_a_dry_run_decides_the_terms_condition_over_a_sample_number(count, decision):
-    g, job = _dry_run(f'; cst:fact [ cst:forCondition <{F}more-than-one-lender> ; cst:number "{count}"^^xsd:decimal ]')
+    g, job = _dry_run(f'; cst:fact [ cst:forCondition <{F}when-syndicated-more-than-one-lender> ; cst:number "{count}"^^xsd:decimal ]')
     assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
-    assert _decisions(g, job) == {"more-than-one-lender": decision}
+    assert _decisions(g, job) == {"when-syndicated-more-than-one-lender": decision}
 
 
 def test_a_dry_run_without_a_fact_reads_undetermined_and_says_so():
     g, job = _dry_run("")
-    assert _decisions(g, job) == {"more-than-one-lender": "Undetermined"}
+    assert _decisions(g, job) == {"when-syndicated-more-than-one-lender": "Undetermined"}
     assert any("No sample fact" in str(g.value(r, SH.resultMessage)) for r in results(g, job, SH.Info))
 
 

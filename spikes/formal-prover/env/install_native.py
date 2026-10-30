@@ -3,7 +3,7 @@
 and bootstrap:formal-native-rocq). Windows keeps its PowerShell scripts.
 
 Usage:
-    python install_native.py isabelle    Isabelle2025-2, from the Cambridge mirror, with its prebuilt heaps
+    python install_native.py isabelle    Isabelle2025-2, from its release archive, with its prebuilt heaps
     python install_native.py rocq        an opam switch with OCaml 5.3.0 and Rocq (needs opam on PATH)
 
 Both install under $LATTICE_FORMAL_ROOT, default ~/.local/share/lattice-formal, and are re-runnable.
@@ -22,7 +22,9 @@ import urllib.request
 from pathlib import Path
 
 ISABELLE = "Isabelle2025-2"
-ISABELLE_MIRROR = "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist"
+# Each release keeps its own archive, which serves every platform bundle over HTTPS with no
+# redirect. The Cambridge mirror holds only the current release, so it 404s once the pin ages.
+ISABELLE_MIRROR = f"https://isabelle.in.tum.de/website-{ISABELLE}/dist"
 OCAML = "5.3.0"
 SWITCH = os.environ.get("FMX_SWITCH", "fm")
 ROCQ_REPO = ("rocq-released", "https://rocq-prover.org/opam/released")

@@ -8,8 +8,8 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> .
 
 pty:Actor a owl:Class ;
     rdfs:comment "A real-world party — a person, an organisation, or any other agent capable of occupying a role." ;

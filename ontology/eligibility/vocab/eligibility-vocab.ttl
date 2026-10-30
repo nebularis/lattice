@@ -13,8 +13,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/eligibility-vocab> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> ;
     dct:description "Eligibility models admissibility by declaring reusable conditions, collecting evaluation questions, and recording a three-valued decision (Permitted, Denied, Undetermined)." ;
     dct:creator <https://github.com/nebularis> .
 
@@ -29,6 +29,9 @@ elg:AnySufficient a elg:CompositionOperation ;
     rdfs:comment "Permitted when any condition is Permitted, Denied when every condition is Denied, otherwise Undetermined, the strong Kleene disjunction." .
 
 elg:Denied a elg:Decision .
+
+elg:Disjoint a elg:Comparison ;
+    rdfs:comment "No tested value is found among the reference values. Read as some value, negated (L18, L16)." .
 
 elg:E1 a elg:OperationalProfile ;
     rdfs:comment "Exact-match profile" .
@@ -54,6 +57,9 @@ elg:Forward a elg:StepDirection ;
     rdfs:comment "Traversed from subject to object." .
 
 elg:HierarchicalMatch a elg:MatchStrategy .
+
+elg:Intersects a elg:Comparison ;
+    rdfs:comment "Some tested value is found among the reference values. Read as some value of the tested binding's set (L18)." .
 
 elg:IntervalContainment a elg:MatchStrategy .
 
@@ -81,6 +87,9 @@ elg:SomeValue a elg:ValueReading ;
 
 elg:StaticConstraint a elg:LawRegister ;
     rdfs:comment "Discharged by SHACL, SPARQL, or other static analysis of declarations." .
+
+elg:Subset a elg:Comparison ;
+    rdfs:comment "Every tested value is found among the reference values. Read as every value of the tested binding's set (L18)." .
 
 elg:Undetermined a elg:Decision .
 
@@ -112,22 +121,22 @@ elg:L8 a elg:Law ;
 	rdfs:comment "EligibilityDecision names one operational profile." .
 elg:L9 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the bound scheme's ordering relation, restricted to that scheme's members, below the asserted value. The ordering relation is acyclic over the bound scheme; a scheme carrying a cycle is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
+	rdfs:comment "Hierarchical match closure. A candidate value satisfies a condition under hierarchical match exactly when it stands in the reflexive-transitive closure of the condition's hierarchy relation, restricted to the bound scheme's members, below the asserted value. The relation is the condition's hierarchy relation, skos:broader when it names none, and it is acyclic over the bound scheme. A scheme carrying a cycle in that relation is not evaluable under hierarchical match. A condition under hierarchical match with no resolved scheme at all has no closure to test a candidate against, and is undetermined for every candidate, the same reasoning L14 applies once a scheme resolves but states nothing about the candidate's position within it." .
 elg:L10 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Exclusion precedence. A candidate that matches an excluded concept of a condition, under the condition's match strategy, does not satisfy the condition, whether or not it also matches a required concept." .
 elg:L11 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the bound scheme's ordering, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
+	rdfs:comment "Exclusion granularity. Under hierarchical match, a candidate that stands strictly above an excluded concept in the condition's hierarchy relation, and is otherwise admitted, leaves the condition undetermined for that candidate. Its true value may or may not fall under the exclusion." .
 elg:L12 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded." .
+	rdfs:comment "Default inclusion. A condition that declares excluded concepts and no required concept requires every member of its bound scheme, so it admits any member not excluded. When its contract has scheme bindings and none of them applies at the resolution time it has no members to admit, and no answer other than undetermined holds under every scheme that could have resolved, so it is undetermined for every candidate, an excluded one included, as L9 states for hierarchical match." .
 elg:L13 a elg:Law ;
 	elg:lawRegister elg:StaticConstraint ;
 	rdfs:comment "Reachable exclusions. Where a condition declares required concepts, each of its excluded concepts matches at least one of them under the condition's match strategy. An exclusion outside every inclusion excludes nothing." .
 elg:L14 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
-	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a broader concept within that scheme, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
+	rdfs:comment "Hierarchy precondition. Under hierarchical match, when no member of the resolved scheme has a link of the condition's hierarchy relation to another member of it, a candidate that is a member and is neither a required nor an excluded concept leaves the condition undetermined. The scheme cannot say, by that relation, whether the candidate falls under a required or an excluded concept. This takes precedence over default inclusion (L12)." .
 elg:L15 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Set readings. A bound condition whose binding reads some or every value decides each value it reaches as a single candidate would be decided, then combines the outcomes by strong Kleene logic. Under some value it is Permitted if any value is Permitted. Under every value it is Denied if any value is Denied. An outcome that needs the values reached to be all there are, Denied under some value and Permitted under every value, follows only under a closure in force that the binding names (L17): then some value is Denied when every value is Denied, and every value Permitted when every value is Permitted, the empty case included. Otherwise the condition is Undetermined." .
@@ -137,6 +146,16 @@ elg:L16 a elg:Law ;
 elg:L17 a elg:Law ;
 	elg:lawRegister elg:SemanticLaw ;
 	rdfs:comment "Closures. A closure is in force from its source's effective time. In force, it licenses that the values a binding naming it reaches, as recorded up to the deciding record's recording time, are all there are. A closure covers only the bindings that name it." .
+elg:L18 a elg:Law ;
+	elg:lawRegister elg:SemanticLaw ;
+	rdfs:comment "Set comparison. A set comparison relates the values its tested binding reads from a subject to the values its reference binding reads from the same subject. Each tested value is decided as a single candidate would be. It is Permitted when it matches a reference value under the comparison's match strategy, equal to it under exact match and at or below it by the condition's hierarchy relation under hierarchical match. It is Denied when it matches none and the reference binding names a closure in force, and undetermined otherwise. Under subset the outcomes are read as every value, under intersects as some value, and under disjoint as some value and then negated (L16), the tested binding's closure licensing the reading (L15, L17). Under hierarchical match the comparison needs its contract's scheme as any hierarchical condition does, and is undetermined for every subject when no binding of the contract applies (L9). A tested value outside the scheme is undetermined, as a single candidate would be (L9), and a reference value outside the scheme matches nothing. Over a scheme in which no member has a link of the condition's hierarchy relation to another, a tested value that is not equal to a reference value is undetermined whatever the reference binding's closure, as L14 leaves a single candidate that no required concept names." .
 
 # The three decision values are distinct, so a reasoner never merges Permitted and Denied on one decision.
 [ a owl:AllDifferent ; owl:distinctMembers ( elg:Permitted elg:Denied elg:Undetermined ) ] .
+
+# The five reference profiles are published terms, versioned by the layer's release (Foundation section 4).
+elg:E1 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E2 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E3 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E4 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .
+elg:E5 rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/eligibility-vocab> .

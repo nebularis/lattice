@@ -66,7 +66,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.19.0"
+version = "0.20.0"
 kinds = ["substrate"]
 ```
 
@@ -218,7 +218,7 @@ be absent.
 name = "mork"
 path = "tools/mork"
 import-names = ["mork_communities", "mtp", "mcn", "mork_propose"]
-reaches = ["ontology/mork"]
+reaches = ["ontology/mork", "contracts/config-studio", "docs/architecture"]
 
 [[tools]]
 name = "mork_compilers"
@@ -254,9 +254,20 @@ path = "tools/testing/mem_check"
 import-names = ["mem_check"]
 
 [[tools]]
+name = "testing/jena"
+path = "tools/testing/jena"
+import-names = ["lattice_testing_jena"]
+reaches = ["platform/sparql-testkit"]
+
+[[tools]]
 name = "testing/oxigraph"
 path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
+
+[[tools]]
+name = "testing/sparql_probes"
+path = "tools/testing/sparql_probes"
+import-names = ["sparql_probes"]
 
 [[tools]]
 name = "vocabulary"
@@ -314,6 +325,7 @@ paths = [
     ".build/",
     "docs/_site/",
     "platform/reasoning-testkit/target/reasoning-testkit.jar",
+    "platform/sparql-testkit/target/sparql-testkit.jar",
 ]
 ```
 

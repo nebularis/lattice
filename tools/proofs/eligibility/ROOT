@@ -5,3 +5,6 @@ session Eligibility = HOL +
     KernelLaws
     Eligibility
     Adequacy
+    Hierarchy
+    Resolution
+    SetComparison

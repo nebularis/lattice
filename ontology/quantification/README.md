@@ -58,9 +58,9 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Word
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> .
 ```
 
 ## 3. How to Read This Document
@@ -761,7 +761,6 @@ cardinality, which an open world reads as a number not yet known, and the layer 
 quantity with its number for each instance. Where the value comes from a defined word, the chain of
 words and variables must not loop back to where it started: such a loop is a violation, which
 Instrument reports hop by hop (Instrument README §18.4).
-
 
 ### `qnt:OrdinalValue`
 
@@ -1776,6 +1775,7 @@ The role contract (ADR-A115), for context values and a proportion's base. It bin
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 qnt:ContextRoleContract a voc:SchemeContract ;
+    rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/quantification> ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;
@@ -2307,9 +2307,8 @@ What changed from the earlier draft, and why — kept here rather than only in a
 
 ## 17. Release Notes
 
-- **Next release** (additive). The laws are individuals `qnt:Q1` to `qnt:Q14`, `qnt:TruncatedDifference` is Q8's depletion operation, `qnt:ProportionNamesBaseRoleShape` checks Q13 for proportion spaces, Q14 states month arithmetic on positions, and `qnt:spaceHash` names its content and the substrate's digest rule (the substrate's digest rule, Persistence section 5.6). The empty `shapes/rules.ttl` and `shapes/structural.ttl` are gone.
-
-- **Next release.** Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
+- **0.20.0**.
+  - may invalidate ([ADR-A143](../../docs/architecture/decisions/ADR-A143-one-canonicalisation.md)). The laws are individuals `qnt:Q1` to `qnt:Q14`, `qnt:TruncatedDifference` is Q8's depletion operation, `qnt:ProportionNamesBaseRoleShape` requires a proportion space to name its base role (Q13), Q14 states month arithmetic on positions, and `qnt:spaceHash` names its content and the substrate's digest rule. The empty `shapes/rules.ttl` and `shapes/structural.ttl` are gone.
 - **0.19.0**. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - **0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect).** The shapes and projection directories no longer carry a `.version` of their own. No other change.
 - **0.8.0** (additive, CCS C9b2): `qnt:additivity`, with `qnt:Extensive` and `qnt:Intensive` in
@@ -2323,3 +2322,5 @@ What changed from the earlier draft, and why — kept here rather than only in a
   `qnt:upperOffsetBy` on `qnt:AnchorBinding`. Shapes 0.2.0 (additive): a context value's role and
   space, and an anchor binding's offsets in one form. This README became the literate source of
   the spec, vocab and shapes, with no change to their graphs. Every importer is re-pinned.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

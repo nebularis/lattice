@@ -36,7 +36,7 @@ describe("the split rule for library and assembly", () => {
     // The sample's own assembled wording uses Wording's terms, but its value records are an assembly's.
     expect(parts.assembly.types(F + "v-lender-count")).toEqual([WRD("VariableValue")]);
     expect(parts.library.has(F + "v-lender-count")).toBe(false);
-    expect(parts.eligibility.types(F + "more-than-one-lender")).toContain(ELG("IntervalCondition"));
+    expect(parts.eligibility.types(F + "when-syndicated-more-than-one-lender")).toContain(ELG("IntervalCondition"));
     expect(parts.quantification.types(F + "count-space")).toContain(QNT("ValueSpace"));
     expect(parts.vocabulary.types(F + "uk")).toContain(SKOS("Concept"));
     expect(parts.vocabulary.types(F + "jurisdiction-contract")).toContain(VOC("SchemeContract"));

@@ -89,6 +89,7 @@ FAMILY_CLASS = {
     "technical-debt": "Debt",
     "backlog": "Backlog",
     "store-discovery": "Discovery",
+    "store-question": "Discovery",
     "mechanism": "Mechanism",
     "capability": "Capability",
     "pattern": "Pattern",
@@ -431,6 +432,8 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Debt": ("claim", "claim"),
     "Idea": ("claim", "claim"),
     "Decision": ("claim", "claim"),
+    "Question": ("claim", "claim"),
+    "Why it matters": ("problemShape", "text"),
     "Name": ("label", "label"),
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
@@ -441,6 +444,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Evidenced by": ("evidencedBy", "ids"),
     "Decided by": ("decidedBy", "ids"),
     "Refines": ("refines", "ids"),
+    "Answered by": ("answeredBy", "ids"),
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
     "Unchecked because": ("uncheckedBecause", "text"),
@@ -469,6 +473,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
         "Why we want it", "What exists", "Status",
+        "Next step",
     }
 )
 
@@ -688,8 +693,11 @@ def register_rows(out: Extract) -> None:
                                 if other != canonical:
                                     add(prop, node(other))
                                     out.bump(prop)
+                                    if prop == "answeredBy":
+                                        status = "Answered"
                         elif kind == "ratified":
-                            value = CONTROLLED["ratified"].get(cell.lower())
+                            # The leading yes or no is the fact, and a tail such as "added 2026-10-27" is for the reader.
+                            value = CONTROLLED["ratified"].get(cell.split(",")[0].strip().lower())
                             if value is None:
                                 out.problems.append(f"{here} has Ratified '{cell}', not yes or no")
                             else:
@@ -712,6 +720,8 @@ def register_rows(out: Extract) -> None:
                                     continue
                                 add(prop, ki(CONTROLLED[kind][value]))
                     add("status", ki(status))
+                    # The defining row, kept apart from the Pointer column so `read` prints it first.
+                    add("row", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_pointer:
                         add("pointer", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_claim:

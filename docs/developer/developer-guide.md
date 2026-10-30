@@ -15,7 +15,7 @@ of this, see [`docs/diagrams/`](../diagrams/README.md).
 | `ontology/` | Semantic assets only: normative sources, shapes, vocabularies, projections, examples, semantic documentation. One directory per layer (`foundation`, `vocabulary`, `quantification`, `party`, `eligibility`, `behaviour`, `wording`, `instrument`, `surface`, `mork`, `persistence`, `governance`, `spc`) plus `applied/` domain ontologies and `examples/` |
 | `tools/` | Executable reference implementations and developer-facing toolchains: compilers, resolvers, validators, formal-methods artefacts. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
 | `benchmark/` | Checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
-| `platform/` | Runtime platform services (Java/Maven): authoring, Surface workflow, release integration, the semantic dataset SPI and Fuseki backend, policy, the test-only reasoning harness |
+| `platform/` | Runtime platform services (Java/Maven): authoring, Surface workflow, release integration, the semantic dataset SPI and Fuseki backend, policy, the test-only reasoning and SPARQL harnesses |
 | `apps/` | User-facing web applications (TypeScript/React, Yarn workspace): the MORK Review Workbench, Surface Contract Studio, the Word authoring add-in |
 | `packages/` | Standalone libraries with no LATTICE dependency (identity minting, Python and Java) |
 | `contracts/` | Inter-component data contracts (JSON Schema): events, identity, MORK, release, Surface |
@@ -189,7 +189,11 @@ ordinary Turtle.
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |
 | [`tools/testing/oxigraph/`](../../tools/testing/oxigraph/README.md) | An in-memory Oxigraph engine for the persistence tests and benchmark (ADR-A125). Not a store SPI | `mise run check:persistence` (default engine), `mise run check:persistence-conformance` (every engine, on demand and before a merge) |
+| [`tools/testing/jena/`](../../tools/testing/jena/README.md) | An in-memory Apache Jena ARQ engine, the third engine of the conformance runs, driven over a pipe from `platform/sparql-testkit` (ADR-A125). Not a store SPI | `mise run check:testing-jena`, `mise run check:sparql-probes-conformance` |
+| [`tools/testing/sparql_probes/`](../../tools/testing/sparql_probes/README.md) | Probes of how SPARQL engines behave that are not about one tool, run on rdflib, Oxigraph and Jena (the aggregate-over-an-error matrix, TSD-43) | `mise run check:sparql-probes-conformance`, and `mise run check:conformance` for every conformance task |
 | [`benchmark/persistence-composite-cost/`](../../benchmark/persistence-composite-cost/README.md) | The cost of a composite replace on rdflib and Oxigraph (ADR-A124, TD-42) | `mise run check:persistence-composite-cost` |
+| [`benchmark/persistence-graph-naming-cost/`](../../benchmark/persistence-graph-naming-cost/README.md) | What a `GRAPH ?g` inside an `OPTIONAL` costs, and what the generated named-graph replace costs under each graph naming, on rdflib and Oxigraph (ADR-A124, TSD-42, PDD-17) | `mise run check:persistence-graph-naming-cost` |
+| [`benchmark/persistence-graph-naming-cost-jvm/`](../../benchmark/persistence-graph-naming-cost-jvm/README.md) | The same measurements on Jena (in-memory and TDB2) and RDF4J, running the operations the Python benchmark renders (ADR-A124, TSD-42, PDD-17) | `mise run check:persistence-graph-naming-cost-jvm` |
 
 ### Formal-methods toolchains (`tools/`)
 
@@ -220,8 +224,8 @@ ordinary Turtle.
 
 Authoring service (design-time control plane), Surface workflow (revision lifecycle and worker
 coordination), release integration, the semantic dataset SPI and its Fuseki backend, the semantic
-policy module, and the test-only reasoning harness (`reasoning-testkit`, never a runtime
-dependency, ADR-A83). `mise run check:java` runs the whole Maven reactor.
+policy module, and the test-only harnesses (`reasoning-testkit`, ADR-A83, and `sparql-testkit`, which runs Jena for the conformance runs, ADR-A125), never a runtime
+dependency. `mise run check:java` runs the whole Maven reactor.
 
 ### Frontend applications (`apps/`)
 

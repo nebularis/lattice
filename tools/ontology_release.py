@@ -108,7 +108,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"rewrote {path} ({count})")
     for command in (["tools/ontology_catalog.py", "write"], ["tools/ontology_releases.py", "write"]):
         subprocess.run([sys.executable, *command], cwd=root, check=True)
-    print(f"release {args.version} prepared in {len(counts)} file(s). Write each layer's release notes, run the"
+    print(f"release {args.version} prepared in {len(counts)} file(s). Rename each changed README's Unreleased release-note lead to the number, run the"
           f" checks, commit, and the maintainer tags ontologies-v{args.version}")
     return 0
 

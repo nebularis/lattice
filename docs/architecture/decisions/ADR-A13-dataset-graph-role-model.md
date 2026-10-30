@@ -56,3 +56,19 @@ Whether this model requires new `fnd:` properties (a graph-role annotation prope
 - No layer's specification may assume a graph is "not real" until compiled or fully validated.
 - Eligibility and Behaviour's own operational profiles (defined in their respective ADRs and READMEs) each state which graph roles and commitment level they require.
 - The minimum a conforming deployment must physically implement is: distinguish source/mapping content from declaration/assertion content, and distinguish both from execution content. Finer-grained named-graph separation is a deployment choice, not a substrate requirement.
+
+## Addendum (2026-10-27): how a finer partition keeps its role, and where a period goes
+
+Finer-grained named-graph separation is a deployment choice above, which the ledger's period partition exercises: a graph per account partition and closing period, measured in [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) finding 7. Two questions follow from the requirement that every operational consumer declares which graph roles it trusts.
+
+**A role is declared once per graph family, not written into every graph.** Persistence already selects instances by graph-IRI prefix (`dal:GraphPatternScope` with `dal:graphPrefix`), and a family's graphs share that prefix by the template rule of [ADR-A122](ADR-A122-aggregate-ownership.md) decision 8. So a family declares its role once and a consumer resolves the role per family rather than per graph. The alternatives were a role segment in every graph IRI, which costs nothing but can be read only by string matching, and a role triple per graph in a catalogue, which is a second place the role can disagree with itself. Declaring it once is one statement for a deployment where the catalogue is one statement per graph.
+
+This leaves the open sub-question above unchanged. A family-level declaration needs no annotation property on a graph, so Foundation gains nothing here, and the question stands for whoever first needs a role on an individual graph.
+
+**A closing period belongs inside the root's identity, never as a second template variable.** ADR-A122 decision 8 makes a named graph's IRI injective in its root, with `{id}` exactly once, so that equal graph IRIs imply the same family and the same root and no two aggregates can silently share a graph. [ADR-A123](ADR-A123-typed-operation-ir.md)'s addendum on who names a named graph rests on that: a generated operation computes the graph from the root, and a guard checks a caller-supplied graph against the same rule. A second variable would make the graph a function of two arguments, so the operation gains a parameter and the guard gains a term, and an optional second variable would make it a partial function, which is a case split in every proof about what a write touches.
+
+The aggregate boundary settles it independently. `dal:NamedGraphBoundary` replaces the whole graph on every write, because replacing the aggregate is what makes each write the complete new state. A root whose triples spanned several period graphs would have each write replace one slice of it, and that guarantee would be false.
+
+So the partitioned unit is itself an aggregate root: the account's book for one period, a node the closing already produces. The template is untouched, the graph stays injective in its root, whole-graph replace keeps its meaning, and the book carries its own version row, guard, receipt and retention as any aggregate does.
+
+**What this does not decide.** Whether a sealed period's book is registered for immutable identity, which is [ADR-A34](ADR-A34-surface-graph-family-registry-and-immutable-identity.md)'s question rather than this one, and the ledger's own MS-Q2 detail of how a book's IRI is minted.

@@ -346,12 +346,7 @@ the comment early. Mermaid diagrams are never hidden.
 
 ## Release Notes
 
-Every version named in section 2, and every released version in the
-[release register](ontology-releases.md), has an entry. An entry says what changed and which documents
-moved, and cites only published decisions. For a module in the release
-([ADR-A129](decisions/ADR-A129-one-release-for-the-substrate.md)), each change in an entry ends with its data
-class in brackets, `(no effect)`, `(may invalidate)` or `(changes meaning)`, as the
-[versioning policy](ontology-versioning-policy.md) defines them.
+Every version named in section 2, and every release in which the module changed, has an entry, newest first, and the section ends by pointing at the [release register](ontology-releases.md). An entry is one bullet, `- **X.Y.Z**.`, with one sub-bullet per change that opens with its class, *changes meaning*, *may invalidate* or *no effect*, as the [versioning policy](ontology-versioning-policy.md) defines them, cites its published decision where it has one, and says what changed and what an adopter must do. A change whose number is not yet assigned sits under `- **Unreleased**.`, which the cut renames (ADR-A126 addendum of 2026-10-29, STD-293).
 
 ## Current conventions, until a module is migrated
 

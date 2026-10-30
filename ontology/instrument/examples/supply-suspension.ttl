@@ -173,20 +173,20 @@ tmpl:in-force a bhv:State ;
 tmpl:suspended a bhv:State ;
     bhv:inStateSpace tmpl:suspension-regime ; ins:stateKind ins-voc:Suspended .
 
-tmpl:on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:suspend-deliveries-on-suspension a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:suspend .
-tmpl:on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:resume-deliveries-on-resumption a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:require-resumption .
 
 tmpl:suspend-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:suspended ;
-    bhv:hasTrigger tmpl:on-suspension ;
+    bhv:hasTrigger tmpl:suspend-deliveries-on-suspension ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:resume-deliveries a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:suspended ; bhv:toState tmpl:in-force ;
-    bhv:hasTrigger tmpl:on-resumption ;
+    bhv:hasTrigger tmpl:resume-deliveries-on-resumption ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== Stated meaning: the force majeure regime ===============================
@@ -205,20 +205,20 @@ tmpl:unaffected a bhv:State ;
 tmpl:affected a bhv:State ;
     bhv:inStateSpace tmpl:force-majeure-regime ; ins:stateKind ins-voc:ForceMajeure .
 
-tmpl:on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-begins-on-force-majeure a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-prevents .
-tmpl:on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
+tmpl:force-majeure-ends-on-force-majeure-ended a ins:OnCondition , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:condition ex:force-majeure-ended .
 
 tmpl:force-majeure-begins a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:unaffected ; bhv:toState tmpl:affected ;
-    bhv:hasTrigger tmpl:on-force-majeure ;
+    bhv:hasTrigger tmpl:force-majeure-begins-on-force-majeure ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:force-majeure-ends a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:affected ; bhv:toState tmpl:unaffected ;
-    bhv:hasTrigger tmpl:on-force-majeure-ended ;
+    bhv:hasTrigger tmpl:force-majeure-ends-on-force-majeure-ended ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The agreement between Brightwater and Halden ===========================
@@ -276,3 +276,27 @@ ex:require-resumption a ins:Power ;
 # A term whose only content is a regime is bound too, as every stated term is
 # (law I17). The regime itself is read as stated (law I13).
 ex:term-14-1 a ins:Term ; ins:boundIn ex:halden-v1 ; ins:boundFrom tmpl:term-14-1 .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:halden-wording-identity a fnd:PersistentIdentity .
+ex:buyer-occ-identity a fnd:PersistentIdentity .
+ex:supplier-occ-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-begins fnd:hasIdentity tmpl:force-majeure-begins-identity .
+tmpl:force-majeure-begins-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-ends fnd:hasIdentity tmpl:force-majeure-ends-identity .
+tmpl:force-majeure-ends-identity a fnd:PersistentIdentity .
+tmpl:resume-deliveries fnd:hasIdentity tmpl:resume-deliveries-identity .
+tmpl:resume-deliveries-identity a fnd:PersistentIdentity .
+tmpl:suspend-deliveries fnd:hasIdentity tmpl:suspend-deliveries-identity .
+tmpl:suspend-deliveries-identity a fnd:PersistentIdentity .
+ex:halden-identity a fnd:PersistentIdentity .
+ex:sec-14-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:sec-8-identity a fnd:PersistentIdentity .
+tmpl:force-majeure-regime-identity a fnd:PersistentIdentity .
+tmpl:suspension-regime-identity a fnd:PersistentIdentity .
+ex:cl-14-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:cl-8-1-identity a fnd:PersistentIdentity .
+ex:cl-8-2-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

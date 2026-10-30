@@ -137,19 +137,13 @@ justification in its Validation Pack, countersigned at the gate.
   `check:ontology-versioning` to report a pending bump for a branch's own new release-member
   content until the actual merge-time bump — that is the correct state of a branch mid-flight, not
   a defect to work around.
-- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning,
-  the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED`
-  is expected there. The release moves once, by `mise run release:prepare`, before the merge into
-  `main`, and the tag follows the merge.
-- **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or
-  `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed
-  `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them
-  once the change is merged. Repeat it in every handoff until the tags exist.
+- **Versions on a working branch.** Where the maintainer has agreed that a branch defers versioning, the branch makes no bump, its status record says so, and `check:ontology-versioning`'s `UNBUMPED` is expected there. The branch writes each change's release note when it makes the change, under `- **Unreleased**.` in the layer's README, classed as the versioning policy says (STD-293). The release moves once, by `mise run release:prepare`, before the merge into `main`, and the tag follows the merge.
+- **Release tags are the maintainer's.** Whenever `mise run build:ontology-releases` adds a row, or `mise run check:ontology-versioning` lists pending tags, end the handoff with a notice headed `🔴 RELEASE TAGS REQUIRED`, listing each tag as a, b, c with the commands to create and push them once the change is merged. Repeat it in every handoff until the tags exist.
 - **Conformance before a merge.** Before a branch is merged into `main`, every conformance task of a suite the branch touched runs
   and passes, for example `mise run check:persistence-conformance`, which runs the generated SPARQL on every engine we have. They are
   not part of `check` (skill `lattice-testing`), so the handoff that asks for the merge lists each one with its result, or says it
   was not run and why. A failure on one engine is recorded in the triple-store record and is fixed or accepted before the merge.
-- **The merge gate.** A merge into `main` runs the hooks' merge checks, published decisions over the whole tree and ontology versioning among them (ADR-A133). Before merging on GitHub, where no local hook runs, run `mise run hooks:merge`. No hook ever blocks a push, so a branch always reaches the maintainer for review.
+- **The merge gate.** A merge into `main` runs the hooks' merge checks, published decisions over the whole tree and ontology versioning among them (ADR-A133). Before merging on GitHub, where no local hook runs, run `mise run hooks:merge`. No hook ever blocks a push, so a branch always reaches the maintainer for review. A README migrated to the ADR-A126 layout may cite only a published decision (ADR-A127), and the published-decisions check fails the merge on a citation of a Proposed one, so the handoff before a merge lists every Proposed decision such a README cites under 🔴 PLAN FIRST, for the maintainer to accept first (PDD-16).
 - Never merge, push or tag without the maintainer's go-ahead.
 
 ## Reporting

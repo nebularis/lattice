@@ -9,7 +9,7 @@
 
 <https://www.nebularis.org/neuro-semantic/foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 
 fnd:utility a owl:AnnotationProperty ;
@@ -22,7 +22,7 @@ fnd:meaningBearing a owl:AnnotationProperty ;
 
 fnd:Versioned a owl:Class ;
     rdfs:comment "An individual representing a specific, identified state of some persistent thing." ;
-    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy." ;
+    fnd:utility "A mixin for identity that survives change. The domain individual itself plays the role of being a version, rather than pointing out to a separate version object. Subclass this when a domain concept needs identity that survives being edited or restated. Instances of a versioned class are the versions themselves; each carries identity via hasIdentity, and successive versions link through supersededBy. A published term of a versioned class, one an ontology document declares and marks rdfs:isDefinedBy that ontology, carries no identity of its own: its identity is its IRI and its versions are the ontology's releases (section 4)." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty fnd:hasIdentity ;

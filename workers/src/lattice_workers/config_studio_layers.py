@@ -185,7 +185,8 @@ def _decide_questions(result: Any, graph: Graph, now: datetime) -> bool:
             if plan.evidence is not None:
                 add((node, CST.decision, CST.NotTested))
                 continue
-            rows = [row for row in run_query(graph, PREFIXES + condition_select(plan)) if row[0] == question]
+            # The graph is rdflib's, so the query runs there. The compilers' default engine is Oxigraph, which would re-parse the graph and refuse an IRI rdflib accepts.
+            rows = [row for row in run_query(graph, PREFIXES + condition_select(plan), engine="rdflib") if row[0] == question]
         except IRCompileError:
             add((node, CST.decision, CST.NotTested))
             continue

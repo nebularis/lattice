@@ -17,8 +17,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://www.nebularis.org/ontologies/Mork> a owl:Ontology ;
-    owl:versionIRI <http://www.nebularis.org/ontologies/Mork/0.19.0> ;
-    owl:imports <http://www.w3.org/2003/11/swrl>, <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ;
+    owl:versionIRI <http://www.nebularis.org/ontologies/Mork/0.20.0> ;
+    owl:imports <http://www.w3.org/2003/11/swrl>, <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ;
     dct:description """MORK states a mapping between a source and a target ontology as data. A mapping is a node in a graph that says which source element corresponds to which target element, in which stratum of the target (its classes, its properties or its individuals), how closely, how confidently and under what governance. Mappings compose into a directed acyclic graph, so that the order in which they must run is derived and never written down.
 
 A compiler reads the mapping graph and writes executable artefacts, such as RML mappings, SPARQL queries, SHACL shapes and SWRL rules. A language model may propose the graph, and a validator and a person then check it before anything compiles. The module also holds Executable, the vocabulary for the plans, artefacts and diagnostics that MORK's Eligibility backends produce.""" ;

@@ -84,7 +84,7 @@ The ontology header states the layer scope and the intended modelling split betw
 #################################################################
 
 <https://www.nebularis.org/neuro-semantic/lattice/spc> a owl:Ontology ;
-  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/spc/0.19.0> ;
+  owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/spc/0.20.0> ;
   rdfs:comment "SPC OWL Ontology: Structural encoding of sorts, behaviours, session types (global/local), configurations, interfaces/open systems, typing assertions, domain bridge, and selected invariants. See foundation and DL papers for formal semantics and proofs." ;
   rdfs:comment "Design principles: structural layer in OWL 2 DL; domain layer (refinement predicates) in tractable fragment (EL++); use of keys for intra-parent uniqueness (branch/label), property chains for participant extraction, qualified cardinality for structural exactness." ;
   rdfs:comment "Contravariant functor 𝒪: SPC^op → DL is realized by conservative extension patterns; narrowing behaviour in SPC corresponds to expanding knowledge in DL." .
@@ -1406,4 +1406,7 @@ spc/
 
 ## Release notes
 
-- **Next release** (breaking, [ADR-A62](../../docs/architecture/decisions/ADR-A62-spc-namespace-harmonisation.md)). The ontology IRI, namespace and version IRI move from the `example.org` placeholder to `https://www.nebularis.org/neuro-semantic/lattice/spc`. Anything that imported SPC at an earlier tag re-keys.
+- **0.20.0**.
+  - changes meaning ([ADR-A62](../../docs/architecture/decisions/ADR-A62-spc-namespace-harmonisation.md)). The ontology IRI, namespace and version IRI move from the `example.org` placeholder to `https://www.nebularis.org/neuro-semantic/lattice/spc`. Anything that imported SPC at an earlier tag re-keys.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

@@ -12,8 +12,8 @@ the candidate's filler:
 - a concept condition: the union of the required concepts' fillers minus the
   union of the excluded ones. Hierarchical match uses ``Within(c)``, a class
   of concepts with ``{c} ⊑ Within(c)`` and ``Within(d) ⊑ Within(c)`` for d
-  narrower than c. ``∃R.Within(c)`` at the path's last step R is ADR-A90's
-  ``Within_R(c)``. Flat strategies use nominals. A condition with
+  narrower than c, one class per hierarchy relation and concept. ``∃R.Within(c)``
+  at the path's last step R is ADR-A90's ``Within_R(c)``. Flat strategies use nominals. A condition with
   exclusions only requires the scheme's top concepts, or all its members.
 - an interval condition: a datatype restriction on ``owl:real`` per required
   interval, on a ``qnt:Quantity``'s numeric value, in the interval's unit, or
@@ -24,7 +24,17 @@ the candidate's filler:
 ``AnySufficient`` ones unite them. Concepts named in a module are declared
 distinct, as the SPARQL reference compares them by IRI. Sibling concepts'
 ``Within`` classes are declared disjoint only on request, and only for a
-scheme with one broader concept per member. Each claimed binding also gets a
+scheme with one broader concept per member. A hierarchical plan with no scheme,
+which L9 leaves Undetermined for every candidate, is refused, since a class cannot
+state Undetermined. A condition walks the relation it names with
+``elg:hierarchyRelation`` (``skos:broader`` when it names none), and ``within(c, relation)``
+mints its class, so conditions that walk different relations over one scheme place the
+same member differently without conflict. For ``skos:broader`` the IRI is ``mint(c, "within")``,
+as before, so existing modules are unchanged. For any other relation it is
+``mint(c, "within-" + local name of the relation)``, for example ``.../tumour-within-part-of``.
+A module that holds two relations with one local name, or one relation placing one member
+differently in two schemes (two editions), is refused. Sibling disjointness is computed per
+relation. Each claimed binding also gets a
 SHACL shape checking the claim on data, so classes and data agree.
 
 The checks ask the test-only reasoning harness (ADR-A83) and return an
@@ -38,11 +48,20 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
-from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
+from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS, XSD
 
 from . import reasoning
 from .common import local_name, mint
-from .eligibility_ir import ConceptPlan, IntervalPlan, IRCompileError, ProfilePlan, RequiredInterval, has_readings
+from .eligibility_ir import (
+    ConceptPlan,
+    IntervalPlan,
+    IRCompileError,
+    ProfilePlan,
+    RequiredInterval,
+    has_readings,
+    refuse_set_comparison,
+    refuse_without_scheme,
+)
 from .namespaces import ELG, EXE, QNT
 from .sparql_backend import literal_readable
 
@@ -56,8 +75,11 @@ def owl_class(iri: URIRef) -> URIRef:
     return mint(iri, "class")
 
 
-def within(concept: URIRef) -> URIRef:
-    return mint(concept, "within")
+def within(concept: URIRef, relation: URIRef = SKOS.broader) -> URIRef:
+    """The ``Within`` class of ``concept`` under ``relation``."""
+    if relation == SKOS.broader:
+        return mint(concept, "within")
+    return mint(concept, f"within-{local_name(relation)}")
 
 
 def _list(graph: Graph, items: Iterable) -> BNode:
@@ -118,8 +140,8 @@ def _along(graph: Graph, steps: Sequence[Tuple[URIRef, bool]], filler):
 def _concept_filler(graph: Graph, plan: ConceptPlan):
     if plan.hierarchical:
         tops = [member for member, broader in plan.hierarchy if not broader]
-        required = [within(concept) for concept in plan.required or tops]
-        excluded = [within(concept) for concept in plan.excluded]
+        required = [within(concept, plan.relation) for concept in plan.required or tops]
+        excluded = [within(concept, plan.relation) for concept in plan.excluded]
     else:
         required = [_one_of(graph, plan.required or [member for member, _ in plan.hierarchy])]
         excluded = [_one_of(graph, plan.excluded)] if plan.excluded else []
@@ -198,6 +220,7 @@ def _single_valued_shape(graph: Graph, plan: Union[IntervalPlan, ConceptPlan]) -
 
 
 def _condition(graph: Graph, plan: Union[IntervalPlan, ConceptPlan], artefact: URIRef) -> URIRef:
+    refuse_without_scheme(plan, "design-time class")
     evidence = plan.evidence
     if evidence is None:
         raise IRCompileError(f"{plan.condition} has no elg:EvidenceBinding, and the OWL backend compiles bound conditions only")
@@ -253,36 +276,48 @@ def _concept_plans(plans: Sequence[Plan]) -> List[ConceptPlan]:
 
 
 def _hierarchy(graph: Graph, concepts: Sequence[ConceptPlan], disjoint_siblings: bool) -> None:
-    broader: Dict[URIRef, Tuple[URIRef, ...]] = {}
+    broader: Dict[Tuple[URIRef, URIRef], Tuple[URIRef, ...]] = {}
     for plan in concepts:
         if not plan.hierarchical:
             continue
         for member, above in plan.hierarchy:
-            if broader.setdefault(member, above) != above:
-                raise IRCompileError(f"{member} has different broader concepts in the schemes of one module")
-    for member, above in sorted(broader.items()):
-        graph.add((within(member), RDF.type, OWL.Class))
-        graph.add((_one_of(graph, [member]), RDFS.subClassOf, within(member)))
+            if broader.setdefault((plan.relation, member), above) != above:
+                raise IRCompileError(
+                    f"{member} has different members above it by {plan.relation} in the schemes of one module, "
+                    f"so one Within class cannot serve every condition walking {plan.relation}"
+                )
+    names: Dict[str, URIRef] = {}
+    for relation, _ in broader:
+        if relation != SKOS.broader and names.setdefault(local_name(relation), relation) != relation:
+            raise IRCompileError(f"{relation} and {names[local_name(relation)]} share the local name {local_name(relation)}, so their Within classes would collide")
+    for (relation, member), above in sorted(broader.items()):
+        graph.add((within(member, relation), RDF.type, OWL.Class))
+        graph.add((_one_of(graph, [member]), RDFS.subClassOf, within(member, relation)))
         for concept in above:
-            graph.add((within(member), RDFS.subClassOf, within(concept)))
+            graph.add((within(member, relation), RDFS.subClassOf, within(concept, relation)))
     if not disjoint_siblings:
         return
     if any(len(above) > 1 for above in broader.values()):
         raise IRCompileError("sibling disjointness needs one broader concept per member")
-    children: Dict[Optional[URIRef], List[URIRef]] = {}
-    for member, above in sorted(broader.items()):
-        children.setdefault(above[0] if above else None, []).append(member)
-    for siblings in children.values():
+    children: Dict[Tuple[URIRef, Optional[URIRef]], List[URIRef]] = {}
+    for (relation, member), above in sorted(broader.items()):
+        children.setdefault((relation, above[0] if above else None), []).append(member)
+    for (relation, _), siblings in children.items():
         if len(siblings) > 1:
             node = BNode()
             graph.add((node, RDF.type, OWL.AllDisjointClasses))
-            graph.add((node, OWL.members, _list(graph, [within(s) for s in siblings])))
+            graph.add((node, OWL.members, _list(graph, [within(s, relation) for s in siblings])))
 
 
 def compile_classes(*plans: Plan, disjoint_siblings: bool = False) -> Graph:
     """One OWL module holding every plan's classes, for plans bound to
     subjects through claimed single-valued paths."""
     for plan in plans:
+        refuse_set_comparison(
+            plan, "design-time class",
+            "OWL 2 DL cannot relate the values of two paths from one subject, since it has no way to say that every value of one "
+            "property chain of an individual is, or is not, a value of another",
+        )
         if has_readings(plan):
             raise IRCompileError(
                 f"{getattr(plan, 'profile', None) or plan.condition} reads several values or is negated (ADR-A103), "

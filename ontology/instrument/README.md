@@ -45,14 +45,14 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.20.0> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
@@ -1080,8 +1080,8 @@ flowchart TB
 # @output-file "spec/instrument-acts.ttl"
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> .
 ```
 
 ```turtle-spec
@@ -1886,13 +1886,13 @@ tmpl:notice-regime a ins:Regime , bhv:StateSpace , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-notice-on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:hasTrigger tmpl:give-notice-on-notice-given ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 ```
 
@@ -1916,11 +1916,11 @@ tmpl:notice-regime a ins:Regime , ins:Template ;
     ins:arisesUnder tmpl:term-11-1 ;
     bhv:initialState tmpl:in-force .
 
-tmpl:on-notice-given ins:ofPower tmpl:end-on-notice .
+tmpl:give-notice-on-notice-given ins:ofPower tmpl:end-on-notice .
 
 tmpl:give-notice a ins:RegimeTransition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given .
+    bhv:hasTrigger tmpl:give-notice-on-notice-given .
 ```
 
 The axioms that make this work are on the Instrument classes and properties (§10, §11).
@@ -3134,10 +3134,11 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.20.0> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ActivityContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Activity scheme contract"@en ;
@@ -3145,12 +3146,14 @@ ins-voc:ActivityContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:Activities .
 
 ins-voc:LocationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:LocationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Location scheme contract"@en ;
 	voc:constrainsProperty ins:operatesAt .
 
 ins-voc:EncodingStatuses a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:EncodingStatuses-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Encoding statuses"@en ;
@@ -3161,12 +3164,14 @@ ins-voc:NoMeaning a skos:Concept ; skos:inScheme ins-voc:EncodingStatuses ;
 	skos:definition "Reviewed, and binding nobody: a note for information, guidance, an example."@en .
 
 ins-voc:TermClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:TermClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Term classification scheme contract"@en ;
 	voc:constrainsProperty ins:classification .
 
 ins-voc:Activities a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:Activities-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline activities"@en ;
@@ -3253,6 +3258,7 @@ The state kinds:
 
 ```turtle-vocab
 ins-voc:StateKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "State kind scheme contract"@en ;
@@ -3260,6 +3266,7 @@ ins-voc:StateKindContract a voc:SchemeContract ;
 	voc:boundScheme ins-voc:StateKinds .
 
 ins-voc:StateKinds a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:StateKinds-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline state kinds"@en ;
@@ -3303,6 +3310,7 @@ The context roles, and the instrument as a whole:
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 ins-voc:ContextRoles a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;
 	fnd:hasIdentity ins-voc:ContextRoles-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Instrument context roles"@en ;
@@ -5427,7 +5435,6 @@ withdrawal counts is the facility's, since withdrawal has no default.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
-- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change to the
   vocabulary. The example `property-endorsement.ttl` gains a new version of the section holding the replaced clause,
   `ex:sec-2-v2`, which the second assembled wording includes, following Wording 0.19.0's shared values.
@@ -5516,3 +5523,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   Instrument now imports Party.
 - 0.8.0: re-pinned to Foundation 0.4.0 and the layers re-pinned with it, with no other change (CCS
   F1, ADR-A114).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

@@ -355,13 +355,18 @@ def test_every_table_in_a_register_is_a_data_table():
     rdfs:comment of the T-Box property it maps to, written once. A register that explains its own
     columns does so in a second table, whose first column is not an identifier, so that is what
     fails. The first register written carried one, and every later register would have repeated it."""
-    registers = {
-        path
-        for family in identifiers.FAMILIES
-        if family.definition == "table-row"
-        for pattern in family.defines
-        for path in identifiers.ROOT.glob(pattern)
-    }
+    def files(definition):
+        return {
+            path
+            for family in identifiers.FAMILIES
+            if family.definition == definition
+            for pattern in family.defines
+            for path in identifiers.ROOT.glob(pattern)
+        }
+
+    # A document whose headings define entries, such as the store-discovery record, holds a register
+    # table among its other tables, so only files that are registers and nothing else are held to it.
+    registers = files("table-row") - files("heading")
     assert len(registers) >= 6
     offenders = []
     for path in sorted(registers):
@@ -460,10 +465,50 @@ def test_read_returns_the_bounded_text_of_a_pointer(built):
     _, store = built
     pieces = ask.read_ranges(store, "MEC-01")
     assert pieces and all(text.strip() for _, text in pieces)
-    path = pieces[0][0].rsplit(":", 1)[0]
+    path = pieces[0][0].removeprefix("row ").rsplit(":", 1)[0]
     whole = (extract.ROOT / path).read_text(encoding="utf-8").count("\n")
     assert sum(text.count("\n") + 1 for _, text in pieces) < whole
 
+
+@pytest.mark.parametrize("identifier", ["CAP-64", "STD-153"])
+def test_read_prints_the_register_row_before_what_its_pointer_names(built, identifier):
+    import ask
+
+    _, store = built
+    pieces = ask.read_ranges(store, identifier)
+    where, text = pieces[0]
+    assert where.startswith("row docs/developer/") and text.startswith(f"| {identifier} |")
+    assert len(pieces) > 1 and all(w.startswith("pointed-at ") for w, _ in pieces[1:])
+
+
+
+def test_an_open_store_question_is_a_discovery_with_its_row(built):
+    """The discovery record's open questions are rows of its own table, read like a register's."""
+    import ask
+
+    _, store = built
+    rows = list(store.query(f"SELECT ?k ?s WHERE {{ GRAPH ?g {{ <{extract.KI}node/TSDQ1> a ?k ; <{extract.KI}status> ?s }} }}"))
+    assert [(r["k"].value, r["s"].value) for r in rows] == [(extract.KI + "Discovery", extract.KI + "Open")]
+    where, text = ask.read_ranges(store, "TSD-Q1")[0]
+    assert where.startswith("row docs/architecture/triple-store-discovery.md:") and text.startswith("| TSD-Q1 |")
+
+
+def test_an_answered_store_question_names_its_finding_and_is_labelled_not_hidden(built):
+    """A question answered in full keeps its row, with status Answered and a link to the finding."""
+    import ask
+
+    _, store = built
+    q = f"<{extract.KI}node/TSDQ20>"
+    rows = list(store.query(f"SELECT ?s ?f WHERE {{ GRAPH ?g {{ {q} <{extract.KI}status> ?s ; <{extract.KI}answeredBy> ?f }} }}"))
+    assert [(r["s"].value, r["f"].value) for r in rows] == [(extract.KI + "Answered", extract.KI + "node/TSD41")]
+    # find filters on kind, phase and audience only, so an answered question stays a candidate.
+    assert any(r["id"] == "TSD-Q20" for r in ask.rows_of(store.query(ask.CANDIDATES)))
+
+
+def test_a_ratified_cell_is_read_by_its_leading_word(built):
+    """A tail after the yes or no, such as "added 2026-10-27", is for the reader and costs no status."""
+    out, _ = built
+    assert not [p for p in out.problems if "has Ratified" in p]
 
 def test_a_query_rebuilds_an_index_older_than_the_files_it_reads(tmp_path, monkeypatch):
     """The maintainer's requirement: when a document changes, the index must pick up the new line
@@ -898,7 +943,7 @@ def test_a_declared_term_carries_a_claim_from_its_own_document(built):
 # Measured 2026-10-28 when the check was written, and recorded as TD-100. Remove an entry when its
 # claim is cut to the limit, and never add one.
 KNOWN_LONG_CLAIMS = frozenset({
-    "TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-276", "STD-277",
+    "TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296",
 })
 
 

@@ -1,0 +1,13 @@
+{
+  "subject": "TS9",
+  "statedAs": "SetComparison.hier_member_decide_no_hierarchy",
+  "statementDigest": "sha256:ac90453f936bb295807b1855346282dea71b2ce3adda651dabe6125f65efef1c",
+  "method": "Proof",
+  "scope": "EverySchemeWithoutHierarchy",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

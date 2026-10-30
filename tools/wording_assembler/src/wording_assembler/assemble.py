@@ -125,7 +125,8 @@ def _decide(plan: Plan, settings: Graph) -> Dict[URIRef, Tuple[str, List[URIRef]
     decided: Dict[URIRef, str] = {}
     by_profile: Dict[URIRef, str] = {i.profile: i.query for i in plan.inclusions.values()}
     for profile in sorted(by_profile, key=str):   # one compiled query per profile, over every record of it
-        for row in run_query(data, by_profile[profile]):
+        # The data graph is rdflib's, so the query runs there. The compilers' default engine is Oxigraph, which would re-parse the graph and refuse an IRI rdflib accepts.
+        for row in run_query(data, by_profile[profile], engine="rdflib"):
             element = records.get(row[0])
             if element is not None and plan.inclusions[element].profile == profile:
                 decided[element] = local(row[1])

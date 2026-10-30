@@ -141,13 +141,13 @@ scheme (§7, §8):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.7.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
     rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are
@@ -346,11 +346,11 @@ by `skos:editorialNote "Reference edition published by LATTICE. Not a market sta
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.7.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -3981,9 +3981,9 @@ authority to cite, and its note says so.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.7.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.7.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.8.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
 
 prl-voc:IntensityMeasureScheme a voc:ConceptScheme ;
     fnd:hasIdentity prl-voc:IntensityMeasureScheme-identity ;
@@ -4793,13 +4793,16 @@ upstream changes (substrate track S1, S2). Neither blocks this module's first re
 
 ## 11. Release notes
 
-- **Next release** (breaking). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as ADR-A98 decision 6 states and the applied README's table now records. Data and imports under the old root need re-keying. A minor bump under ADR-A113 at the next release.
+- **0.8.0**.
+  - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - changes meaning (ADR-A98 decision 6, under ADR-A113). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as the applied README's table records. Data and imports under the old root re-key.
 
 | Version | Change |
 |---|---|
-| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-2.1: the `prl:` properties, kind/part/trigger/overlap/characteristic links, the eight reference schemes, the well-formedness shapes |
 | `0.4.0` | re-pinned by the computable-contract-substrate unit's Foundation and Quantification cascades (no content change). AIR-2.0 (this slice) converts the module to a literate README and adds `prl:DocumentationShape` to `shapes/constraints.ttl`, bumping the shapes `.version` to `0.2.0` only |
 | `0.5.0` | AIR-2.2: imports `insurance/common`, specialises four characteristic properties as its sub-properties, fills the characteristic and companion scheme regions |
 | shapes `0.3.1` | the duplicate-code and parent-code queries of `prl:ReferenceCodeShape` read the same rows by looking a notation up before testing the scheme, instead of joining every cause concept once per focus node. About seventeen times faster on the reference scheme, with no change to what a graph experiences |
 | `0.7.0` | spec, vocab and intensity re-pinned to the substrate release 0.19.0 and `insurance/common` 0.8.0, with no content change |
+
+Earlier versions are listed in the [ontology release register](../../../../docs/architecture/ontology-releases.md).

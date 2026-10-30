@@ -213,3 +213,17 @@ ex:end-participation a ins:Power ;
     ins:holder ex:sponsor-occ ;
     ins:counterparty ex:investigator-occ ;
     ins:activity ins-voc:EndParticipation .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:site-104-wording-identity a fnd:PersistentIdentity .
+ex:investigator-occ-identity a fnd:PersistentIdentity .
+ex:sponsor-occ-identity a fnd:PersistentIdentity .
+ex:site-104-identity a fnd:PersistentIdentity .
+ex:sec-14-identity a fnd:PersistentIdentity .
+ex:sec-5-identity a fnd:PersistentIdentity .
+ex:sec-9-identity a fnd:PersistentIdentity .
+ex:cl-14-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:cl-5-2-identity a fnd:PersistentIdentity .
+ex:cl-9-1-identity a fnd:PersistentIdentity .
+ex:protocol-identity a fnd:PersistentIdentity .

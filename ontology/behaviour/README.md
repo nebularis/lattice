@@ -86,12 +86,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Versioned ;
@@ -262,8 +262,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.20.0> .
 ```
 
 ```turtle-spec
@@ -609,8 +609,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.20.0> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .
@@ -650,8 +650,8 @@ bhv:External a bhv:TransitionType ;
 bhv:Sequential a bhv:AbsorptionPolicy .
 bhv:Proportional a bhv:AbsorptionPolicy .
 
-bhv:B-P1 a bhv:OperationalProfile ; rdfs:comment "Direct transition-evaluation profile" .
-bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluation profile" .
+bhv:B-P1 a bhv:OperationalProfile ; rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ; rdfs:comment "Direct transition-evaluation profile" .
+bhv:B-P2 a bhv:OperationalProfile ; rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ; rdfs:comment "Sequential allowance-evaluation profile" .
 
 # ---- The occasion state space: a fixed core, refined by sub-states ----------
 # Its transitions are the runtime evaluator's, derived from the legal
@@ -662,6 +662,7 @@ bhv:B-P2 a bhv:OperationalProfile ; rdfs:comment "Sequential allowance-evaluatio
 # from, so reinstatement is deep history into it (C11a-Q1).
 
 bhv:OccasionStates a bhv:StateSpace ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ;
 	fnd:hasIdentity bhv:OccasionStates-identity ;
 	bhv:initialState bhv:Live ;
 	rdfs:label "Occasion states"@en ;
@@ -684,6 +685,7 @@ bhv:Suspended a bhv:State ; bhv:inStateSpace bhv:OccasionStates ;
 	rdfs:comment "The relation is suspended for the case. Entered from bhv:Live. Reinstatement enters bhv:Live by deep history, resuming the state, and any refinement of it, the suspension interrupted (law B5). The evaluator's." .
 
 bhv:LiveStates a bhv:StateSpace ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/behaviour-vocab> ;
 	fnd:hasIdentity bhv:LiveStates-identity ;
 	bhv:regionOf bhv:Live ;
 	bhv:initialState bhv:Pending ;
@@ -1519,8 +1521,9 @@ where only the highest enabled transition fires.
 
 ## 11. Release notes
 
-- **Next release** (additive). `bhv:hasTrigger`, `bhv:hasGuard` and `bhv:hasEffect` are `fnd:meaningBearing`, and a transition definition's parts are minted under it (Foundation section 4).
-- **Next release** (deprecations). `bhv:AllowanceAccount`, `bhv:AllowanceDefinition` and `bhv:availableBalance` are deprecated and reported by warning shapes: a balance is derived from Ledger's postings, never stored and overwritten ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). They are removed when Behaviour imports Ledger (LG-3).
+- **0.20.0**.
+  - may invalidate ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)). `bhv:hasTrigger`, `bhv:hasGuard` and `bhv:hasEffect` are `fnd:meaningBearing`, and a transition definition's parts are minted under it (Foundation section 4). Foundation's shape warns on a definition whose part is shared or referenced by identity.
+  - may invalidate ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). `bhv:AllowanceAccount`, `bhv:AllowanceDefinition` and `bhv:availableBalance` are deprecated and reported by warning shapes, since a balance is derived from Ledger's postings and never stored and overwritten. They are removed when Behaviour imports Ledger.
 
 Breaking versions at major version zero ([ADR-A113](../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
@@ -1559,6 +1562,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.13.1 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, patch): the runtime document is
   extracted from §5.2 instead of authored as a file, with the same triples, and the three move
   together (ADR-A120).
-- Next release. Re-pinned: Ledger joins the substrate's release ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No other change. Behaviour does not yet import Ledger (LG-3).
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). The shapes and projection directories no longer carry a `.version` of their own. No other change.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

@@ -92,13 +92,13 @@ vocab = ["vocab/common-vocab.ttl"]
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/common>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> ;
     rdfs:label "Insurance domain shared contracts"@en ;
     rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.4.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.5.0> .
 
 icm:peril a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
@@ -177,8 +177,8 @@ without the full peril vocabulary, can depend on `common/` alone.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.8.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.8.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -592,13 +592,16 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 
 ## 10. Release notes
 
-- **Next release** (breaking). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as ADR-A98 decision 6 states and the applied README's table now records. Data and imports under the old root need re-keying. A minor bump under ADR-A113 at the next release.
+- **0.9.0**.
+  - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - changes meaning (ADR-A98 decision 6, under ADR-A113). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as the applied README's table records. Data and imports under the old root re-key.
 
 | Version | Change |
 |---|---|
-| next version | re-pinned to the substrate's next release, in which Ledger joins ([ADR-A131](../../../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). No content change |
 | `0.1.0` | AIR-1.2: the six shared classification properties, the six scheme contracts, the four liability role types |
 | `0.5.0` | re-pinned by the computable-contract-substrate unit's Foundation, Vocabulary and Party cascades (no content change) |
 | `0.6.0` (spec) | AIR-4.4: `icm:LossEvent` and `icm:classOfBusiness`. The vocabulary adds `icm-voc:ClassOfBusinessContract` and `icm-voc:GlideNumber` and re-pins to the spec's 0.6.0 |
 | `0.6.0` | AIR-2.6: QUDT-aligned units across nine families, four exact conversions, and a draft list of ISO 4217 currencies on one money value space (common-vocab only, no spec change) |
 | `0.8.0` | spec and vocab re-pinned to the substrate release 0.19.0, with no content change |
+
+Earlier versions are listed in the [ontology release register](../../../../docs/architecture/ontology-releases.md).

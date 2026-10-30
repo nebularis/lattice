@@ -27,8 +27,8 @@ The ontology header, stated here so the extracted document carries it.
 
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> .
 ```
 
 ## 3. How to Read This Document
@@ -404,4 +404,7 @@ Six classes mutually disjoint (§6).
 
 ## 11. Release notes
 
-- **Next release** (clarifying). An occupancy is filled by a new version that supersedes the unfilled one, never by an edit (Foundation section 4). The Quantification import the spec never used is dropped, and the three empty shape files are deleted with the `shapes` role, so Party's rules on shares and delegation are unchecked (TD-110).
+- **0.20.0**.
+  - no effect. An occupancy is filled by a new version that supersedes the unfilled one, never by an edit (Foundation section 4). The Quantification import the spec never used is dropped, and the three empty shape files are deleted with the `shapes` role, so Party's rules on shares and delegation are unchecked (TD-110).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

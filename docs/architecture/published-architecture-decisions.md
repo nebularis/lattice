@@ -29,3 +29,8 @@ Do not edit it by hand.
 | [A129](decisions/ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | 2026-10-20 | [Ontology versioning policy](ontology-versioning-policy.md) |
 | [A131](decisions/ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | 2026-10-26 | [Ledger](../../ontology/ledger/README.md) |
 | [A132](decisions/ADR-A132-persistence-caller-library.md) | A caller library for the generated persistence operations | 2026-10-20 | [the persistence caller library](../../packages/persistence/python/README.md) |
+| [A141](decisions/ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | 2026-10-29 | [Foundation](../../ontology/foundation/README.md) |
+| [A142](decisions/ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | 2026-10-29 | [Foundation](../../ontology/foundation/README.md), [Persistence](../../ontology/persistence/README.md) |
+| [A143](decisions/ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate | 2026-10-29 | [Surface](../../ontology/surface/README.md), [Quantification](../../ontology/quantification/README.md), [Persistence](../../ontology/persistence/README.md), [MCN](mork-compact-notation.md) |
+| [A145](decisions/ADR-A145-set-comparisons-and-aggregate-bindings.md) | Set comparisons and aggregate bindings | 2026-10-29 | [Eligibility](../../ontology/eligibility/README.md), [MORK](../../ontology/mork/README.md) |
+| [A146](decisions/ADR-A146-published-terms-versioned-by-release.md) | A published term is versioned by its release | 2026-10-29 | [Foundation](../../ontology/foundation/README.md) |

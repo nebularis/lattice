@@ -12,7 +12,7 @@
 # managers" ticked, plus these hosts:
 #
 #   mise.jdx.dev        mise itself
-#   www.cl.cam.ac.uk    Isabelle, from the Cambridge mirror
+#   isabelle.in.tum.de  Isabelle, from the pinned release's own archive
 #
 # Rules the cloud imposes (code.claude.com/docs/en/cloud-environments):
 #   - a setup script that exits non-zero stops the session from starting, so
@@ -24,7 +24,7 @@
 #
 # Sources: mise from mise.jdx.dev, Java 25 from Ubuntu's archive, Python 3.14
 # from the deadsnakes PPA, Node 22 and Maven from the image, Isabelle2025-2
-# from the Cambridge mirror. Erlang/Elixir (check:spc, which runs no tests yet,
+# from its own release archive. Erlang/Elixir (check:spc, which runs no tests yet,
 # TD-22) and Playwright's browsers are left out.
 #
 # The container has no DNS of its own. Outbound HTTPS goes through the agent
@@ -40,7 +40,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 ISABELLE=Isabelle2025-2
-ISABELLE_URL="https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/${ISABELLE}_linux.tar.gz"
+ISABELLE_URL="https://isabelle.in.tum.de/website-${ISABELLE}/dist/${ISABELLE}_linux.tar.gz"
 LOGS=/tmp/lattice-setup
 mkdir -p "$LOGS"
 

@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -433,7 +433,6 @@ loop may pass through words and variables alike. Instrument's shapes report each
 and its reference instantiator reports the whole loop in order, with the clause stating each hop
 (Instrument README §18.4).
 
-
 ### 5.10 Tables
 
 A table has two axes. Its fields say what is recorded, and are always declared in the wording, each
@@ -714,10 +713,11 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.20.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.20.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Element type scheme contract"@en ;
@@ -725,18 +725,21 @@ wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	voc:boundScheme wrd-voc:ElementTypes .
 
 wrd-voc:ClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Classification scheme contract"@en ;
 	voc:constrainsProperty wrd:classification .
 
 wrd-voc:DocumentKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:DocumentKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Document kind scheme contract"@en ;
 	voc:constrainsProperty wrd:documentKind .
 
 wrd-voc:ElementTypes a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypes-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline element types"@en ;
@@ -1673,3 +1676,5 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   (changes meaning, since a reasoner no longer merges two records that share a value). The shapes follow, accepting a value
   in several assembled wordings (no effect). New example `shared-values.ttl`.
 - 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

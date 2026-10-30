@@ -256,7 +256,7 @@ def test_c9b1_10_on_exercise_is_a_derived_trigger() -> None:
         for trigger in g.subjects(RDF.type, INS.OnExercise):
             assert set(g.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}, (path.name, trigger)
     g = _graph(EXAMPLES / "licence-notice.ttl")
-    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/on-notice-given")
+    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/give-notice-on-notice-given")
     g.set((trigger, BHV.triggerKind, BHV.ExternalStimulus))
     assert any(f == str(trigger) and "bhv:DerivedTrigger, fixed" in m for f, m in _results(g))
 

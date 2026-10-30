@@ -17,8 +17,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/executable> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.19.0> ;
-    owl:imports <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/executable/0.20.0> ;
+    owl:imports <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> ;
     dct:description """MORK states a mapping between a source and a target ontology as data. A mapping is a node in a graph that says which source element corresponds to which target element, in which stratum of the target (its classes, its properties or its individuals), how closely, how confidently and under what governance. Mappings compose into a directed acyclic graph, so that the order in which they must run is derived and never written down.
 
 A compiler reads the mapping graph and writes executable artefacts, such as RML mappings, SPARQL queries, SHACL shapes and SWRL rules. A language model may propose the graph, and a validator and a person then check it before anything compiles. The module also holds Executable, the vocabulary for the plans, artefacts and diagnostics that MORK's Eligibility backends produce.""" ;
@@ -63,6 +63,9 @@ exe:IntervalContainmentPlan a owl:Class ;
 exe:MissingCandidate a exe:Diagnostic ;
     rdfs:comment "The question offers no candidate." .
 
+exe:NoApplicableBinding a exe:Diagnostic ;
+    rdfs:comment "The condition's scheme contract has bindings, and none applies at the resolution time or in the active scopes, with no bound scheme as a fallback, so there is no scheme to decide the candidate against (ADR-A85, elg:L9)." .
+
 exe:NoBoundInUnit a exe:Diagnostic ;
     rdfs:comment "No required interval is stated in the candidate's unit, and no conversion is attempted (qnt:NoBoundInUnit)." .
 
@@ -70,7 +73,7 @@ exe:NoClosureLicence a exe:Diagnostic ;
     rdfs:comment "The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source." .
 
 exe:NoHierarchy a exe:Diagnostic ;
-    rdfs:comment "Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
+    rdfs:comment "Under hierarchical match, no member of the resolved scheme has a link of the condition's hierarchy relation to another member, so a member the condition does not name cannot be placed (elg:L14, ADR-A100)." .
 
 exe:OutsideScheme a exe:Diagnostic ;
     rdfs:comment "The candidate concept is not a member of the scheme the condition's contract resolved to." .
@@ -94,6 +97,11 @@ exe:RefusedOperation a exe:Diagnostic ;
 exe:SatisfiabilityCheck a owl:Class ;
     rdfs:comment "Whether the checked class can have any instance." ;
     rdfs:subClassOf exe:DesignTimeCheck .
+
+exe:SetComparisonPlan a owl:Class ;
+    rdfs:comment "A condition plan that relates the values one evidence binding reads from a subject to the values another reads from the same subject, by subset, intersection or disjointness (elg:SetComparison, elg:L18)." ;
+    rdfs:subClassOf exe:ConditionPlan ;
+    owl:disjointWith exe:ConceptMatchPlan, exe:IntervalContainmentPlan .
 
 exe:SeveralCandidates a exe:Diagnostic ;
     rdfs:comment "The question offers more than one candidate concept, and no reading of several is defined." .

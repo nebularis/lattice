@@ -1,10 +1,13 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A143: One canonicalisation for the substrate
 
-**Status:** Proposed 2026-10-28
+**Status:** Published, 2026-10-29. Accepted 2026-10-29.
 **Date:** 2026-10-28
-**Related:** [ADR-A82](ADR-A82-framework-neutral-identity-pattern-selection.md) (identity patterns, and the identity guide's RDFC-1.0 rule), [ADR-A132](ADR-A132-persistence-caller-library.md) (the conformance vectors that recompute digests)
+**Related:** the [identity guide](../iri-identity-patterns.md) (its RDFC-1.0 rule), [ADR-A132](ADR-A132-persistence-caller-library.md) (the conformance vectors that recompute digests)
 **Described in:** [Surface](../../../ontology/surface/README.md) §6, [Quantification](../../../ontology/quantification/README.md) `qnt:spaceHash`, [Persistence](../../../ontology/persistence/README.md) §5, [MCN](../mork-compact-notation.md) §12.4
 
 ## Context

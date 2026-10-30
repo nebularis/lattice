@@ -85,7 +85,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-68](ADR-A68-pii-and-erasure.md) | PII and erasure | Proposed |
 | [A-69](ADR-A69-pack-trust-and-safe-sparql-subset.md) | Pack trust model and safe SPARQL subset | Proposed |
 | [A-71](ADR-A71-platform-licence-and-spi-seam.md) | Platform licence (MPL-2.0) and SPI seam | Proposed |
-| [A-74](ADR-A74-graph-primary-realm-model.md) | Graph-primary realm model | Proposed |
+| [A-74](ADR-A74-graph-primary-realm-model.md) | One declared authority per kind of state | Proposed |
 | [A-75](ADR-A75-three-tier-store-spi.md) | Three-tier store SPI (Core/Extended/Native) | Proposed |
 | [A-81](ADR-A81-control-plane-http-runtime.md) | Control Plane HTTP runtime | Proposed |
 | [A-82](ADR-A82-framework-neutral-identity-pattern-selection.md) | Framework-neutral identity pattern selection | Proposed |
@@ -143,10 +143,12 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-138](ADR-A138-contract-builder.md) | The contract builder, a mode of the Configuration Studio | Accepted 2026-10-28 |
 | [A-139](ADR-A139-wording-baseline-assembly-model.md) | Wording's baseline assembly model | Accepted 2026-10-28 |
 | [A-140](ADR-A140-wording-assembler-topology.md) | Where the Wording assembler lives and how it runs | Accepted 2026-10-28 |
-| [A-141](ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Proposed, 2026-10-28 |
-| [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Proposed, 2026-10-28 |
-| [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Proposed, 2026-10-28 |
+| [A-141](ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Published, 2026-10-29 |
+| [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Published, 2026-10-29 |
+| [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Published, 2026-10-29 |
 | [A-144](ADR-A144-odrl-import-through-mork.md) | The contract builder imports ODRL policies as proposals, through a MORK mapping | Proposed, 2026-10-29 |
+| [A-145](ADR-A145-set-comparisons-and-aggregate-bindings.md) | Set comparisons and aggregate bindings | Published, 2026-10-29 |
+| [A-146](ADR-A146-published-terms-versioned-by-release.md) | A published term is versioned by its release, so it carries no identity chain of its own | Published, 2026-10-29 |
 | [A-147](ADR-A147-skolem-rule-for-mapped-sources.md) | How a MORK run names a source's blank nodes: from the node that reaches each and its description, with component-scoped canonical labels for the rest | Proposed, 2026-10-29 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,

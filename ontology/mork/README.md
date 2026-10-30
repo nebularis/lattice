@@ -16,8 +16,8 @@ A compiler reads the mapping graph and writes executable artefacts, such as RML 
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.19.0> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> |
-| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.19.0> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> |
+| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.20.0> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> |
+| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.20.0> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -728,7 +728,7 @@ classDiagram
 
 Executable names Eligibility terms and does not import Eligibility into MORK, so adding the compilers never makes Eligibility or Quantification depend on MORK. The vocabulary describes compiled artefacts and does not record runs ([ADR-A90](../../docs/architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md)).
 
-<!-- start: {"generated": "class-diagram", "part": "Executable plans, artefacts and checks", "classes": ["exe:ExecutablePlan", "exe:ConditionPlan", "exe:ProfilePlan", "exe:IntervalContainmentPlan", "exe:ConceptMatchPlan", "exe:GeneratedArtefact", "exe:SparqlArtefact", "exe:ShaclArtefact", "exe:SwrlArtefact", "exe:OwlArtefact", "exe:DesignTimeCheck", "exe:SubsumptionCheck", "exe:SatisfiabilityCheck", "exe:OverlapCheck", "exe:Diagnostic"]} -->
+<!-- start: {"generated": "class-diagram", "part": "Executable plans, artefacts and checks", "classes": ["exe:ExecutablePlan", "exe:ConditionPlan", "exe:ProfilePlan", "exe:IntervalContainmentPlan", "exe:SetComparisonPlan", "exe:ConceptMatchPlan", "exe:GeneratedArtefact", "exe:SparqlArtefact", "exe:ShaclArtefact", "exe:SwrlArtefact", "exe:OwlArtefact", "exe:DesignTimeCheck", "exe:SubsumptionCheck", "exe:SatisfiabilityCheck", "exe:OverlapCheck", "exe:Diagnostic"]} -->
 
 **Executable plans, artefacts and checks**
 
@@ -762,6 +762,7 @@ classDiagram
     }
     class ProfilePlan
     class SatisfiabilityCheck
+    class SetComparisonPlan
     class ShaclArtefact
     class SparqlArtefact
     class SubsumptionCheck
@@ -769,6 +770,7 @@ classDiagram
     ConditionPlan --> Condition : implementsCondition
     ConditionPlan <|-- ConceptMatchPlan
     ConditionPlan <|-- IntervalContainmentPlan
+    ConditionPlan <|-- SetComparisonPlan
     DesignTimeCheck --> OwlArtefact : checkedModule
     DesignTimeCheck <|-- OverlapCheck
     DesignTimeCheck <|-- SatisfiabilityCheck
@@ -1807,6 +1809,12 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 **Definition.** Whether the checked class can have any instance.
 
 **Subclass of.** `exe:DesignTimeCheck`
+
+#### `exe:SetComparisonPlan`
+
+**Definition.** A condition plan that relates the values one evidence binding reads from a subject to the values another reads from the same subject, by subset, intersection or disjointness (elg:SetComparison, elg:L18).
+
+**Subclass of.** `exe:ConditionPlan`
 
 #### `exe:ShaclArtefact`
 
@@ -4529,9 +4537,10 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 |---|---|---|
 | `exe:AboveExclusion` | `exe:Diagnostic` | Under hierarchical match, the candidate stands strictly above an excluded concept (elg:L11). |
 | `exe:MissingCandidate` | `exe:Diagnostic` | The question offers no candidate. |
+| `exe:NoApplicableBinding` | `exe:Diagnostic` | The condition's scheme contract has bindings, and none applies at the resolution time or in the active scopes, with no bound scheme as a fallback, so there is no scheme to decide the candidate against (ADR-A85, elg:L9). |
 | `exe:NoBoundInUnit` | `exe:Diagnostic` | No required interval is stated in the candidate's unit, and no conversion is attempted (qnt:NoBoundInUnit). |
 | `exe:NoClosureLicence` | `exe:Diagnostic` | The outcome needs the records a binding reaches to be complete, and no closure in force licenses that (ADR-A105, elg:L15, elg:L17). Also the reason a compiler refuses a binding that names something which is not a closure, or a closure with no source. |
-| `exe:NoHierarchy` | `exe:Diagnostic` | Under hierarchical match, no member of the resolved scheme has a broader concept within it, so a member the condition does not name cannot be placed (elg:L14, ADR-A100). |
+| `exe:NoHierarchy` | `exe:Diagnostic` | Under hierarchical match, no member of the resolved scheme has a link of the condition's hierarchy relation to another member, so a member the condition does not name cannot be placed (elg:L14, ADR-A100). |
 | `exe:OutsideScheme` | `exe:Diagnostic` | The candidate concept is not a member of the scheme the condition's contract resolved to. |
 | `exe:RefusedOperation` | `exe:Diagnostic` | A profile's composition operation has no evaluable definition here, for example one a downstream ontology adds (ADR-A05). |
 | `exe:SeveralCandidates` | `exe:Diagnostic` | The question offers more than one candidate concept, and no reading of several is defined. |
@@ -4560,6 +4569,10 @@ Disjoint classes. One `owl:AllDisjointClasses` axiom carries a comment, so it is
 **Disjoint.** `exe:ConditionPlan`, `exe:ProfilePlan`
 
 **Disjoint.** `exe:IntervalContainmentPlan`, `exe:ConceptMatchPlan`
+
+**Disjoint.** `exe:SetComparisonPlan`, `exe:IntervalContainmentPlan`
+
+**Disjoint.** `exe:SetComparisonPlan`, `exe:ConceptMatchPlan`
 
 **Disjoint.** `exe:OwlArtefact`, `exe:ShaclArtefact`
 
@@ -5334,17 +5347,18 @@ The Axiom Index is generated from this section.
 
 | Term | Kind | Summary |
 |---|---|---|
-| `exe:ConceptMatchPlan` | Class | Subclass of `exe:ConditionPlan`. Disjoint with `exe:IntervalContainmentPlan`. |
+| `exe:ConceptMatchPlan` | Class | Subclass of `exe:ConditionPlan`. Disjoint with `exe:IntervalContainmentPlan`, `exe:SetComparisonPlan`. |
 | `exe:ConditionPlan` | Class | Subclass of `exe:ExecutablePlan`. Disjoint with `exe:ProfilePlan`. |
 | `exe:DesignTimeCheck` | Class | Subclass of `prov:Entity`. |
 | `exe:Diagnostic` | Class |  |
 | `exe:ExecutablePlan` | Class | Subclass of `prov:Entity`. |
 | `exe:GeneratedArtefact` | Class | Subclass of `prov:Entity`. |
-| `exe:IntervalContainmentPlan` | Class | Subclass of `exe:ConditionPlan`. Disjoint with `exe:ConceptMatchPlan`. |
+| `exe:IntervalContainmentPlan` | Class | Subclass of `exe:ConditionPlan`. Disjoint with `exe:ConceptMatchPlan`, `exe:SetComparisonPlan`. |
 | `exe:OverlapCheck` | Class | Subclass of `exe:DesignTimeCheck`. Disjoint with `exe:SatisfiabilityCheck`, `exe:SubsumptionCheck`. |
 | `exe:OwlArtefact` | Class | Subclass of `exe:GeneratedArtefact`. Disjoint with `exe:ShaclArtefact`, `exe:SparqlArtefact`, `exe:SwrlArtefact`. |
 | `exe:ProfilePlan` | Class | Subclass of `exe:ExecutablePlan`. Disjoint with `exe:ConditionPlan`. |
 | `exe:SatisfiabilityCheck` | Class | Subclass of `exe:DesignTimeCheck`. Disjoint with `exe:OverlapCheck`, `exe:SubsumptionCheck`. |
+| `exe:SetComparisonPlan` | Class | Subclass of `exe:ConditionPlan`. Disjoint with `exe:ConceptMatchPlan`, `exe:IntervalContainmentPlan`. |
 | `exe:ShaclArtefact` | Class | Subclass of `exe:GeneratedArtefact`. Disjoint with `exe:OwlArtefact`, `exe:SparqlArtefact`, `exe:SwrlArtefact`. |
 | `exe:SparqlArtefact` | Class | Subclass of `exe:GeneratedArtefact`. Disjoint with `exe:OwlArtefact`, `exe:ShaclArtefact`, `exe:SwrlArtefact`. |
 | `exe:SubsumptionCheck` | Class | Subclass of `exe:DesignTimeCheck`. Disjoint with `exe:OverlapCheck`, `exe:SatisfiabilityCheck`. |
@@ -5712,6 +5726,7 @@ The Axiom Index is generated from this section.
 | `mork:weighting` | Datatype property | Range `xsd:integer`. Subproperty of `owl:topDataProperty`. |
 | `exe:AboveExclusion` | Individual | Type `exe:Diagnostic`. |
 | `exe:MissingCandidate` | Individual | Type `exe:Diagnostic`. |
+| `exe:NoApplicableBinding` | Individual | Type `exe:Diagnostic`. |
 | `exe:NoBoundInUnit` | Individual | Type `exe:Diagnostic`. |
 | `exe:NoClosureLicence` | Individual | Type `exe:Diagnostic`. |
 | `exe:NoHierarchy` | Individual | Type `exe:Diagnostic`. |
@@ -5922,7 +5937,9 @@ Not applicable.
 
 - **Next release** (additive). The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way (no effect).
 - **Next release** (additive). `mork:RDF` joins `mork:JSON`, `mork:XML` and `mork:YAML` as a serialisation format, for a source that is RDF in every serialisation. New: `mork:LookupComparison` with `mork:CastComparison`, `mork:LexicalComparison` and `mork:TermComparison`, and `mork:lookupComparison` and `mork:lookupDatatype` for a lookup that compares by a cast, by lexical form or by exact term. New: `mork:AxiomForm` with `mork:GlobalAxioms`, `mork:UniversalRestriction`, `mork:ExistentialRestriction` and `mork:DefiningRestriction`, `mork:axiomForm`, and `mork:ClassCombination` with `mork:UnionOfClasses` and `mork:IntersectionOfClasses`, and `mork:classCombination`, for the axioms that `mork:assertsPropertyDomains` and `mork:assertsPropertyRanges` produce. A mapping that names none of them means what it meant before (no effect). New: `mork:CompiledMapping`, `mork:CompiledQuery`, `mork:CompileFinding`, `mork:OutputBox` and `mork:FindingSeverity` with their individuals and properties, for describing a compiled mapping as RDF (no effect). New: `mork:appliesWhen`, a SHACL node shape that confines a mapping to the nodes conforming to it (no effect on a mapping that names none). New: the terms the community tooling already wrote, `mork:SectionObservation`, `mork:CommunityScheme`, `mork:SemanticCommunity`, `mork:CommunityMembership`, `mork:CommunityMatch`, `mork:OntologicalProjection`, `mork:PropertyProjection` and `mork:DAGTemplate` with their properties and the shadow properties, and the review record, `mork:MappingReview`, `mork:ReviewDecision` with its four individuals, and `mork:ProposalRun` (no effect).
-- **Next release.** `mork:GenerativeMapping` is a subclass of `fnd:Versioned`, where it was a subclass of `fnd:Version`, which Foundation reserves for one specific version (changes meaning).
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys. `mork:GenerativeMapping` is a subclass of `fnd:Versioned`, where it was a subclass of `fnd:Version`, which Foundation reserves for one specific version.
+  - no effect. Executable.ttl gains SetComparisonPlan, a condition plan relating the values two evidence bindings read from one subject, and the NoApplicableBinding diagnostic.
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 

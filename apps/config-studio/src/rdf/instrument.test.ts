@@ -67,14 +67,14 @@ describe("a regime as a state machine", () => {
 
   it("tells which regime a state, a transition or a trigger belongs to", () => {
     const regimes = [regime];
-    for (const node of [regime.iri, T + "in-force", T + "give-notice", T + "on-notice-given"]) expect(regimeOfNode(regimes, node)).toBe(regime);
+    for (const node of [regime.iri, T + "in-force", T + "give-notice", T + "give-notice-on-notice-given"]) expect(regimeOfNode(regimes, node)).toBe(regime);
     expect(regimeOfNode(regimes, T + "term-11-1")).toBeUndefined();
   });
 });
 
 describe("a dry run request", () => {
   it("knows a condition by its kind and offers a concept condition the concepts of its scheme", () => {
-    expect(isIntervalCondition(world, F + "more-than-one-lender")).toBe(true);
+    expect(isIntervalCondition(world, F + "when-syndicated-more-than-one-lender")).toBe(true);
     const eligibility = Graph.parse(readFileSync(join(assets, "samples/lending-eligibility.ttl"), "utf-8"));
     const sector = "https://example.org/lattice/eligibility/eligible-sector";
     expect(isIntervalCondition(eligibility, sector)).toBe(false);

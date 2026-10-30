@@ -39,7 +39,7 @@ LAYER = ONTOLOGY / "instrument"
 QLAYER = ONTOLOGY / "quantification"
 SPEC, VOCAB = LAYER / "spec" / "instrument.ttl", LAYER / "vocab" / "instrument-vocab.ttl"
 NEW = ["trial-reporting", "lease-expiry", "licence-survival", "service-renewal"]
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "quantification/vocab/quantification-vocab.ttl", "party/spec/party.ttl", "party/vocab/party-vocab.ttl",
          "eligibility/spec/eligibility.ttl", "eligibility/vocab/eligibility-vocab.ttl", "wording/spec/wording.ttl",
          "wording/vocab/wording-vocab.ttl", "behaviour/spec/behaviour.ttl", "behaviour/vocab/behaviour-vocab.ttl",
@@ -47,7 +47,8 @@ LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "qu
 ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour",
                             "instrument")
-              for kind in ("structural", "constraints")]
+              for kind in ("structural", "constraints")
+              if (ONTOLOGY / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification and Party ship no empty shapes file (TD-110)
 
 
 def _graph(*sources) -> Graph:
@@ -136,7 +137,7 @@ def test_c7b_02_quantification_example_conforms() -> None:
     # Quantification's own model: with Instrument's vocab beside it, its role binding and Instrument's
     # would conflict on one contract (held design question HQ-4).
     data = _graph(QLAYER / "examples" / "context-anchor.ttl")
-    model = _graph(*[ONTOLOGY / p for p in LOWER[:4]])
+    model = _graph(*[ONTOLOGY / p for p in LOWER[:5]])  # Foundation and its vocabulary, Vocabulary, and Quantification and its vocabulary
     _, report, _ = validate(model + data, shacl_graph=EVERY_SHAPE, inference="none", advanced=True)
     assert not list(report.subjects(SH.resultSeverity, SH.Violation))
 
@@ -263,9 +264,9 @@ def test_c7b_17_nothing_still_imports_quantification_0_6_0() -> None:
 # ---- C7b-18, C7b-19: expiry, entry and implicit survival --------------------
 
 @pytest.mark.parametrize("add, remove, focus, message", [
-    ("tmpl:on-expiry-date ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue \"1\"^^xsd:decimal ; qnt:inUnit ex:day ] .",
-     (), "/on-expiry-date", "exactly one of a length"),
-    ("", ((LE["on-expiry-date"], INS.at, LE_EX["expiry-date"]),), "/on-expiry-date", "exactly one of a length"),
+    ("tmpl:expire-on-expiry-date ins:after [ a qnt:Quantity ; qnt:onSpace ex:durations ; qnt:numericValue \"1\"^^xsd:decimal ; qnt:inUnit ex:day ] .",
+     (), "/expire-on-expiry-date", "exactly one of a length"),
+    ("", ((LE["expire-on-expiry-date"], INS.at, LE_EX["expiry-date"]),), "/expire-on-expiry-date", "exactly one of a length"),
     ("", ((LE["on-expired"], INS.ofState, LE["expired"]),), "/on-expired", "exactly one state"),
 ])
 def test_c7b_18_expiry_and_entry_shapes(add: str, remove: tuple, focus: str, message: str) -> None:

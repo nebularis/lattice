@@ -414,7 +414,7 @@ Not run: a language model behind a real provider's endpoint, which needs a deplo
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
 | CB4-01 | a dry-run job for meaning, and one for the library / `POST …/jobs` / `202` with `cst:DryRunJob`, `400` | L1 | + − | pass, `AssemblyTest` |
-| CB4-02 | clause 9.1's term, scoped by `more-than-one-lender`, with 3 lenders and with 1 / the worker's dry run / Permitted and Denied, by the condition's compiled SPARQL | L1 | + − | pass |
+| CB4-02 | clause 9.1's term, scoped by `when-syndicated-more-than-one-lender`, with 3 lenders and with 1 / the worker's dry run / Permitted and Denied, by the condition's compiled SPARQL | L1 | + − | pass |
 | CB4-03 | no fact, and a fact for a condition the term does not read / a dry run / Undetermined with an information finding, and an information finding | L1 | − | pass |
 | CB4-04 | a regime built like the notice regime of Instrument's licence example / laid out / its states by kind, the initial state, each transition labelled by its trigger and relation, the gating under each state, an unreachable state after the rest | L1 | + | pass, 8 browser unit tests |
 | CB4-05 | the builder's editor on a stated term / its fields / no property of bound meaning | L1 | − | pass |
