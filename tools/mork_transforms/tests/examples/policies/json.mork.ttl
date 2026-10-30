@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Policies with their holders and covers, read from JSON (ADR-A148). The XML scheme beside it maps the same data.
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix tgt:  <urn:example:target#> .
+@prefix src:  <urn:example:source/json#> .
+@prefix m:    <urn:example:mapping/json#> .
+
+m:Scheme a mork:MappingScheme .
+
+src:Source a mork:RepresentationScheme ; mork:format mork:JSON .
+src:Policy a skos:Concept ; skos:inScheme src:Source ; mork:path "$.policies[*]" .
+src:Cover a skos:Concept ; skos:inScheme src:Source ; mork:path "covers[*]" .
+src:Fire a skos:Concept ; skos:inScheme src:Source ; skos:notation "FIRE" .
+src:Flood a skos:Concept ; skos:inScheme src:Source ; skos:notation "FLOOD" .
+
+m:Policy a mork:Datum ; mork:mappingScheme m:Scheme ; mork:mappingFor src:Policy ;
+    mork:exactTBoxMatch tgt:Policy ; mork:conceptName "policy" ; mork:dataRef "number" .
+m:Holder a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Policy ;
+    mork:exactRBoxMatch tgt:holderName ; mork:dataRef "holder" .
+m:Status a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Policy ;
+    mork:exactRBoxMatch tgt:status ; mork:dataInline "active" .
+m:Insurer a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Policy ;
+    mork:inverseRBoxMatch tgt:insures ; mork:exactABoxMatch tgt:Acme .
+m:Cover a mork:Datum ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Policy ; mork:mappingFor src:Cover ;
+    mork:exactTBoxMatch tgt:Cover ; mork:exactRBoxMatch tgt:coverOf ; mork:conceptName "cover" .
+m:Peril a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Cover ;
+    mork:exactRBoxMatch tgt:peril ; mork:dataRef "code" .
+m:FireRow a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Peril ;
+    mork:mappingFor src:Fire ; mork:exactABoxMatch tgt:Fire .
+m:FloodRow a mork:DataMapping ; mork:mappingScheme m:Scheme ; mork:compositeBroaderMapping m:Peril ;
+    mork:mappingFor src:Flood ; mork:exactABoxMatch tgt:Flood .

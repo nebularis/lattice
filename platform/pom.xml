@@ -13,6 +13,7 @@
     <module>surface-workflow</module>
     <module>reasoning-testkit</module>
     <module>sparql-testkit</module>
+    <module>mork-transforms</module>
     <module>config-studio-core</module>
     <module>config-studio-authoring</module>
     <module>config-studio-service</module>

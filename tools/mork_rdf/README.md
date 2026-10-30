@@ -4,7 +4,7 @@
 
 `mork_rdf` compiles a MORK mapping scheme whose source is RDF into SPARQL 1.1 queries. Each mapping node that writes triples becomes one `CONSTRUCT`, and each way a mapping can fail on real data becomes one check `SELECT` that names the focus nodes it could not map. Running the constructs over a source graph gives the target graph, and running the checks says what was left out and why.
 
-It is the RDF-to-RDF backend of MORK's compiler family. [`tools/mork/src/mork2rml.py`](../mork/src/mork2rml.py) compiles the same mapping vocabulary to RML for sources that are not RDF (JSON, XML, CSV), and [`tools/mork_compilers`](../mork_compilers) compiles Eligibility conditions to SPARQL, SHACL and SWRL. One mapping graph serves several backends, and the backend is chosen by the source.
+It is the RDF-to-RDF backend of MORK's compiler family. [`tools/mork/src/mork2rml.py`](../mork/src/mork2rml.py) compiles the same mapping vocabulary to RML for sources that are not RDF (JSON, XML, CSV), [`tools/mork_transforms`](../mork_transforms) compiles a mapping over XML to XSLT and over JSON to JOLT with this package's reader, and [`tools/mork_compilers`](../mork_compilers) compiles Eligibility conditions to SPARQL, SHACL and SWRL. One mapping graph serves several backends, and the backend is chosen by the source.
 
 Status: built 2026-10-29 for the contract builder's rule-language import (CB5), autonomously, and not yet reviewed. The decisions this document takes are listed for ratification in §17, and the questions it leaves open in §18.
 

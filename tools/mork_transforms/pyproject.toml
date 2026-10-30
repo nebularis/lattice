@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-mork-transforms"
+version = "0.1.0"
+description = "MORK mappings over XML and JSON sources, compiled to an XSLT 3.0 stylesheet or a JOLT chain (ADR-A148)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7.0,<8",
+  "lattice-mork-rdf",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

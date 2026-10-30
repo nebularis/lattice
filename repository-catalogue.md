@@ -284,6 +284,11 @@ import-names = ["wording_assembler"]
 name = "mork_rdf"
 path = "tools/mork_rdf"
 import-names = ["mork_rdf"]
+
+[[tools]]
+name = "mork_transforms"
+path = "tools/mork_transforms"
+import-names = ["mork_transforms"]
 ```
 
 ## Documentation areas

@@ -46,7 +46,7 @@ class Spec:
     parents: tuple[URIRef, ...] = ()        # a DAG node may sit beneath several parents, compiled in each context
     children: tuple[URIRef, ...] = ()
     sources: tuple[URIRef, ...] = ()        # source classes a root iterates, or the source individual of a correspondence
-    data_ref: Optional[paths.Path] = None   # a path from the focus node
+    data_ref: Optional[object] = None       # a path from the focus node, in the source format's path language
     data_ref_text: Optional[str] = None
     data_inline: Optional[Literal] = None
     concept_name: Optional[str] = None
@@ -196,8 +196,13 @@ def _identity(g: Graph, node) -> Optional[URIRef]:
     return None
 
 
-def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Graph] = None, min_confidence: Optional[float] = None) -> Reading:
+def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Graph] = None, min_confidence: Optional[float] = None,
+         source_format: URIRef = MORK.RDF, parse_path=None) -> Reading:
+    """`source_format` is the format of the source the backend reads, and `parse_path` reads `mork:dataRef` in that
+    format's path language, SPARQL's property paths for RDF (ADR-A148). A mapping for a source of another format is left
+    to its backend."""
     target_vocabulary = target_vocabulary if target_vocabulary is not None else Graph()
+    parse_path = parse_path or paths.parse
     findings: list[Finding] = []
     mode = _MODES.get(_iri(g, scheme, MORK.compilationMode), "draft")
     declared = prefixes(g, scheme)
@@ -228,8 +233,8 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             findings.append(Finding("OtherBackend", str(node), "a generative mapping, compiled by the SHACL, SWRL, projection or RML backend", Severity.INFO))
         elif (formats := sorted({f for c in g.objects(node, MORK.mappingFor)
                                  for sc in list(g.objects(c, SKOS.inScheme)) + list(g.objects(c, MORK.representationScheme))
-                                 for f in g.objects(sc, MORK["format"])} - {MORK.RDF}, key=str)):
-            findings.append(Finding("OtherBackend", str(node), f"its source is {', '.join(local(f) for f in formats)}, not RDF", Severity.INFO))
+                                 for f in g.objects(sc, MORK["format"])} - {source_format}, key=str)):
+            findings.append(Finding("OtherBackend", str(node), f"its source is {', '.join(local(f) for f in formats)}, not {local(source_format)}", Severity.INFO))
             elsewhere.add(node)
         elif (node, RDF.type, MORK.UncertainMapping) in g or _one(g, node, MORK.incompleteMapping) == Literal(True):
             findings.append(Finding("Uncertain", str(node), "an uncertain or incomplete mapping is a question for review, never compiled"))
@@ -255,7 +260,7 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
         changed = False
         for node in list(candidates):
             if beneath(node):
-                findings.append(Finding("OtherBackend", str(node), "it is beneath a mapping whose source is not RDF", Severity.INFO))
+                findings.append(Finding("OtherBackend", str(node), f"it is beneath a mapping whose source is not {local(source_format)}", Severity.INFO))
                 elsewhere.add(node)
                 candidates.remove(node)
                 changed = True
@@ -283,7 +288,7 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
     for node in candidates:
         data_ref_text = _text(g, node, MORK.dataRef)
         try:
-            data_ref = paths.parse(data_ref_text, declared) if data_ref_text is not None else None
+            data_ref = parse_path(data_ref_text, declared) if data_ref_text is not None else None
         except paths.PathError as error:
             findings.append(Finding("BadPath", str(node), str(error)))
             continue
