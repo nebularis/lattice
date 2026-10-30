@@ -202,3 +202,21 @@ def test_a_run_records_what_it_cost(tmp_path):
     assert (run, PROV.startedAtTime, Literal(started.isoformat(), datatype=XSD.dateTime)) in g
     assert (run, MORK.totalTokens, Literal(150000, datatype=XSD.nonNegativeInteger)) in g
     assert g.value(run, MORK.inputTokens) is None
+
+
+def test_every_term_of_the_translation_table_is_declared_by_a_layer():
+    from mork_propose.server import LAYERS, describe_term
+    from mork_propose.translations import table
+
+    for entry in table():
+        for reading in entry["means"]:
+            assert describe_term(reading["term"]).startswith("# "), reading["term"]
+
+
+def test_a_source_s_right_finds_each_relation_it_may_mean_through_the_translation_table():
+    from mork_propose.server import candidate_terms, teaching_pack
+
+    lrml = Path(__file__).resolve().parents[3] / "contracts" / "config-studio" / "legalruleml" / "trial" / "legalruleml-metamodel.ttl"
+    found = {line.split(" | ")[1] for line in candidate_terms(str(lrml), "lrmlmm:Right", ["instrument", "eligibility", "party", "behaviour"], 6).splitlines()}
+    assert {"ins:Permission", "ins:Power", "ins:Exclusion", "ins:Obligation"} <= found
+    assert "right, entitlement | ins:Power | a right to terminate" in teaching_pack()

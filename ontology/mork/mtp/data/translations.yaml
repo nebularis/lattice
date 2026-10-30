@@ -1,0 +1,138 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Words a source vocabulary uses for legal relations and the parts of a contract, and what LATTICE says instead
+# (Instrument README §4.4 to §4.6). A word may mean several terms, and each reading says when it holds, so a proposer
+# picks by the source's sense and never by the word. mork_propose renders this as a card in the teaching pack, and its
+# candidate ranking indexes each word under every term it may mean.
+- word: right
+  also: [entitlement]
+  means:
+    - term: ins:Obligation
+      when: a right to be paid or to receive something, the obligee's end of an obligation, whose holder is classified ins:ClaimHolder
+    - term: ins:Permission
+      when: a right to use or to act, a liberty, which excepts the prohibition it is against
+    - term: ins:Power
+      when: a right to terminate, to elect or to demand, an act that changes the counterparty's position
+    - term: ins:Exclusion
+      when: a right not to have a power exercised against one, an immunity
+- word: claim
+  means:
+    - term: ins:Obligation
+      when: the obligee's end of an obligation, never a node of its own
+    - term: ins:obligee
+      when: the party who holds the claim
+- word: duty
+  means:
+    - term: ins:Obligation
+      when: the obligor's end of an obligation, never a node of its own
+    - term: ins:obligor
+      when: the party who owes the duty
+- word: obligation
+  also: [obligatory, must, shall]
+  means:
+    - term: ins:Obligation
+      when: a party must act for another
+    - term: ins:ContinuingObligation
+      when: a party must ensure that a state holds, rather than perform an act
+- word: prohibition
+  also: [forbidden, prohibited, must not, shall not]
+  means:
+    - term: ins:Prohibition
+      when: a party must not act
+- word: permission
+  also: [privilege, liberty, permitted, may, licence, license]
+  means:
+    - term: ins:Permission
+      when: a party may act despite a duty not to, which it excepts with ins:excepts (law I8)
+    - term: ins:Exclusion
+      when: a party need not act despite a duty to, which it excepts
+- word: no-right
+  means:
+    - term: ins:counterparty
+      when: the party that cannot demand otherwise of a permission's holder
+- word: power
+  also: [option, election]
+  means:
+    - term: ins:Power
+      when: a party can, by an act, change the counterparty's legal position
+- word: liability
+  means:
+    - term: ins:counterparty
+      when: the far end of a power, whose position the holder can change. Never for a liability to pay, which is an obligation
+    - term: ins:Obligation
+      when: a liability to pay or to make good
+- word: immunity
+  also: [disability]
+  means:
+    - term: ins:Exclusion
+      when: a power cannot be exercised against the holder, an exclusion excepting the power
+- word: bearer
+  also: [subject, addressee]
+  means:
+    - term: ins:obligor
+      when: the party an obligation or a prohibition is directed at
+    - term: ins:holder
+      when: the party a permission, exclusion or power is directed at
+- word: beneficiary
+  also: [auxiliary party, creditor]
+  means:
+    - term: ins:obligee
+      when: the party an obligation is owed to
+    - term: ins:counterparty
+      when: the other party of a permission, exclusion or power
+- word: condition
+  also: [contingency, precondition]
+  means:
+    - term: elg:Condition
+      when: a contingency, something that must hold for a relation to apply
+    - term: ins:classification
+      when: the class of a term whose breach lets the other side terminate, as against a warranty
+- word: provision
+  also: [stipulation]
+  means:
+    - term: ins:Term
+      when: what a provision provides, the stated meaning of a clause
+    - term: wrd:Element
+      when: the provision's text, a part of the wording
+- word: clause
+  also: [section, schedule, article, paragraph]
+  means:
+    - term: wrd:Element
+      when: a part of the document's wording. Its meaning is an ins:Term expressed in it
+- word: rule
+  also: [norm, statement, legal rule]
+  means:
+    - term: ins:Term
+      when: a bond between named parties that a clause states, every stated term also an ins:Template with its relations under it
+- word: violation
+  also: [breach, non-compliance]
+  means:
+    - term: ins:OnBreach
+      when: what an instrument waits for when a relation is breached, a legal trigger, never a recorded event
+- word: reparation
+  also: [penalty, sanction, remedy]
+  means:
+    - term: ins:Obligation
+      when: what must be done once a relation is breached, an obligation arising on an ins:OnBreach trigger
+- word: event
+  means:
+    - term: ins:OnAct
+      when: an act an instrument waits for, a legal trigger. What happened is recorded by the runtime
+    - term: ins:OnCondition
+      when: a state of affairs an instrument waits for
+- word: status
+  also: [lifecycle, state]
+  means:
+    - term: ins:Regime
+      when: one of the several regimes an instrument may be in at once, each with its states
+    - term: bhv:State
+      when: a regime's state
+- word: suspended
+  also: [paused, tolled]
+  means:
+    - term: ins:tolledIn
+      when: a period that stops running
+- word: deadline
+  also: [due date, time limit]
+  means:
+    - term: ins:due
+      when: the range an obligation must be performed in, which may have a lower bound as well as an upper one

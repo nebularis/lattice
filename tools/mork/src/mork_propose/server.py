@@ -17,6 +17,7 @@ from rdflib import Graph
 from . import cards as _cards
 from .check import check
 from .describe import describe_term as _describe
+from . import translations as _translations
 from .rank import candidates as _candidates
 
 LAYERS = ("instrument", "eligibility", "party", "behaviour", "foundation", "quantification", "vocabulary", "wording")
@@ -29,13 +30,15 @@ def _mtp() -> Path:
 
 
 def teaching_pack() -> str:
-    """MTP's L0 and its doctrine, partition and worked cassettes, with MCN's codebook: what a model learns MCN from."""
+    """MTP's L0 and its doctrine, partition and worked cassettes, the translation table of a source's legal words, and
+    MCN's codebook: what a model learns MCN from."""
     mtp = _mtp()
     parts = [(mtp / "out" / "l0.txt").read_text(encoding="utf-8")]
     for name in ("doctrine.yaml", "partition.yaml"):
         parts.append(f"# {name}\n" + (mtp / "data" / name).read_text(encoding="utf-8"))
     for cassette in sorted((mtp / "data" / "cassettes").glob("*.yaml")):
         parts.append(f"# cassette {cassette.stem}\n" + cassette.read_text(encoding="utf-8"))
+    parts.append(_translations.card())
     parts.append(_cards.codebook_card())
     return "\n\n".join(parts)
 
@@ -65,7 +68,8 @@ def candidate_terms(path: str, term: str, layers: list[str], k: int = 8, namespa
     if not found:
         raise ValueError(f"{term} is not a term of {path}")
     targets = [c for m in layers for c in _cards.layer_card(m)]
-    return "\n".join(f"{score:.2f} | {card.line()}" for card, score in _candidates(found[0], targets, k)) or "no candidate shares a word with the term"
+    ranked = _candidates(found[0], targets, k, aliases=_translations.aliases())
+    return "\n".join(f"{score:.2f} | {card.line()}" for card, score in ranked) or "no candidate shares a word with the term"
 
 
 def describe_term(term: str) -> str:

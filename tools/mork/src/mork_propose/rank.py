@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 """Candidate target terms for a source term, so a proposing model chooses among a few terms and their neighbours, and
 the cost of a proposal grows with the source, never with the target. Ranking is BM25 over each card's label, its local
-name split into words and its definition, among the target terms of a kind the source term can map to. It is
-deterministic, and ties fall to the CURIE."""
+name split into words, its definition and the words the translation table gives it, among the target terms of a kind
+the source term can map to. It is deterministic, and ties fall to the CURIE."""
 
 from __future__ import annotations
 
@@ -40,18 +40,23 @@ def _local(card: Card) -> str:
     return card.curie.rsplit(":", 1)[-1]
 
 
-def _document(card: Card) -> list[str]:
-    # The label and name count twice, since they name the term and a definition only describes it.
-    return 2 * (words(card.label) + words(_local(card))) + words(card.definition)
+def _document(card: Card, aliases: dict) -> list[str]:
+    # The label, the name and a source's word for the term count twice, since they name it and a definition only
+    # describes it.
+    named = words(card.label) + words(_local(card)) + [w for alias in aliases.get(card.curie, ()) for w in words(alias)]
+    return 2 * named + words(card.definition)
 
 
-def candidates(source: Card, targets: list[Card], k: int = 8, k1: float = 1.2, b: float = 0.75) -> list[tuple[Card, float]]:
-    """The `k` target terms likeliest to be the source term's match, best first, each with its score."""
+def candidates(source: Card, targets: list[Card], k: int = 8, k1: float = 1.2, b: float = 0.75,
+               aliases: dict | None = None) -> list[tuple[Card, float]]:
+    """The `k` target terms likeliest to be the source term's match, best first, each with its score. `aliases` gives the
+    other words each target term is known by, by CURIE, such as the translation table's."""
+    aliases = aliases or {}
     kinds = _COMPATIBLE.get(source.kind, (source.kind,))
     pool = [t for t in targets if t.kind in kinds]
     if not pool:
         return []
-    docs = [Counter(_document(t)) for t in pool]
+    docs = [Counter(_document(t, aliases)) for t in pool]
     lengths = [sum(d.values()) for d in docs]
     mean = sum(lengths) / len(lengths) or 1.0
     df = Counter(w for d in docs for w in d)
