@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A made-up source of undertakings between named parties, which MTP's target-side pattern cassettes (C-STATED-OBLIGATION
+# and the others in ontology/mork/mtp/data/cassettes) map to LATTICE's stated meaning. Each cassette's mapping runs over
+# it, and what it writes keeps the target layers' laws.
+@prefix src: <https://example.org/lattice/mtp/source#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+src:harbour src:name "Harbour Supplies Ltd" .
+src:fenwick src:name "Fenwick Foods Ltd" .
+
+src:deliver a src:Undertaking ; src:by src:harbour ; src:to src:fenwick ; src:act src:delivery ;
+    src:at src:leeds ; src:withinDays 30 ; src:remedy src:late-credit .
+src:no-resale a src:Restriction ; src:by src:fenwick ; src:act src:resale .
+src:inspection a src:Allowance ; src:by src:fenwick ; src:against src:harbour ; src:act src:inspecting .
+src:late-credit a src:Remedy ; src:by src:harbour ; src:to src:fenwick ; src:act src:crediting .

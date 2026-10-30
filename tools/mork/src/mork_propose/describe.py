@@ -91,7 +91,9 @@ def describe_term(term: str, layers: Iterable[str]) -> str:
     world = Graph()
     for other in graphs.values():
         world += other
-    nm = g.namespace_manager
+        for prefix, namespace in other.namespaces():
+            world.bind(prefix, namespace, override=False)
+    nm = world.namespace_manager
     curie = lambda t: t.n3(nm) if isinstance(t, URIRef) else "a combination"
     kinds = sorted(curie(t) for t in g.objects(iri, RDF.type))
     lines = [f"# {curie(iri)} ({', '.join(kinds)}), in {owner}", f"label: {_one(g, iri, (RDFS.label, SKOS.prefLabel)) or '-'}"]

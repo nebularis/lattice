@@ -220,3 +220,17 @@ def test_a_source_s_right_finds_each_relation_it_may_mean_through_the_translatio
     found = {line.split(" | ")[1] for line in candidate_terms(str(lrml), "lrmlmm:Right", ["instrument", "eligibility", "party", "behaviour"], 6).splitlines()}
     assert {"ins:Permission", "ins:Power", "ins:Exclusion", "ins:Obligation"} <= found
     assert "right, entitlement | ins:Power | a right to terminate" in teaching_pack()
+
+
+@pytest.mark.parametrize("cassette", ["C-STATED-OBLIGATION", "C-PERMISSION", "C-CONCEPT-CONDITION", "C-INTERVAL-CONDITION", "C-REMEDY-ON-BREACH"])
+def test_a_target_side_cassette_runs_over_its_sample_and_keeps_the_target_layers_laws(cassette):
+    import mcn_decoder
+    from mork_propose.check import check_graph
+    from mork_propose.server import _mtp, _target
+
+    root = Path(__file__).resolve().parents[3]
+    data = yaml.safe_load((_mtp() / "data" / "cassettes" / f"{cassette}.yaml").read_text(encoding="utf-8"))
+    vocabulary, shapes = _target()
+    checked = check_graph(mcn_decoder.decode(data["mcn"]), sample=Graph().parse(root / data["sample"]), target_vocabulary=vocabulary, target_shapes=shapes)
+    assert checked.output is not None and len(checked.output) > 0
+    assert [f for f in checked.findings if f[1] in ("error", "warning")] == []

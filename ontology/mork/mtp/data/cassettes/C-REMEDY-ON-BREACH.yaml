@@ -1,0 +1,31 @@
+id: C-REMEDY-ON-BREACH
+source: ontology/mork/examples/Patterns/remedy-on-breach.ttl
+sample: ontology/mork/examples/Patterns/source-sample.ttl
+side: target
+focus: "a remedy, an obligation that arises on the breach of the one it remedies, under a term of its own"
+mcn: |
+  @b <https://example.org/lattice/mtp/patterns/remedy-on-breach#>
+  @p src=<https://example.org/lattice/mtp/source#>
+  @p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+  @p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+  %R Source fm mork:RDF lb "undertakings between named parties"
+  %X
+  src:Undertaking RE
+  %T Concepts in Source
+  UndertakingConcept C ra src:Undertaking
+  ByConcept C p src:by
+  ToConcept C p src:to
+  RemedyConcept C p src:remedy
+  %M Scheme md mork:ReviewMode lb "an undertaking and the remedy that arises on its breach" sdl [src <https://example.org/lattice/mtp/source#>]
+  Role_T MD xt pty:Role c role
+  Role_T_Label M cb Role_T xr rdfs:label r src:name
+  Undertaking MD f UndertakingConcept xt ins:Term,ins:Template c term
+  Undertaking_Relation MD cb Undertaking xt ins:Obligation,ins:Template xr ins:arisesUnder c relation
+  Undertaking_Activity M cb Undertaking_Relation xr ins:activity r src:act
+  Undertaking_Obligor MD cb Undertaking_Relation tp Role_T f ByConcept xi ins:obligor
+  Undertaking_Obligee MD cb Undertaking_Relation tp Role_T f ToConcept xi ins:obligee
+  Remedy MD cb Undertaking_Relation f RemedyConcept xt ins:Obligation,ins:Template xr ins:arisesOnBreachOf c remedy n "A remedy is an obligation that arises on the breach of the one it remedies, never a node of another kind."
+  Remedy_Term MD cb Remedy xt ins:Term,ins:Template xi ins:arisesUnder c remedy-term
+  Remedy_Activity M cb Remedy xr ins:activity r src:act
+  Remedy_Obligor MD cb Remedy tp Role_T f ByConcept xi ins:obligor
+  Remedy_Obligee MD cb Remedy tp Role_T f ToConcept xi ins:obligee

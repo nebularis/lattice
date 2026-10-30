@@ -1,0 +1,253 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Decoded from the MCN of MTP's cassette interval-condition, so the cassette and this file are isomorphic.
+@prefix elg: <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix src: <https://example.org/lattice/mtp/source#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Role_T_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Role_T> ;
+    mork:dataRef "src:name" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Space_T_Order> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Space_T> ;
+    mork:exactABoxMatch qnt:TotalOrder ;
+    mork:exactRBoxMatch qnt:orderKind ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Activity> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Relation> ;
+    mork:dataRef "src:act" ;
+    mork:exactRBoxMatch ins:activity ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Key> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days> ;
+    mork:dataInline "days-since-order" ;
+    mork:exactRBoxMatch elg:conditionKey ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_RangeSet_Space> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_RangeSet> ;
+    mork:inverseRBoxMatch qnt:onSpace ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Space_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Range_Space> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Range> ;
+    mork:inverseRBoxMatch qnt:onSpace ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Space_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Strategy> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days> ;
+    mork:exactABoxMatch elg:IntervalContainment ;
+    mork:exactRBoxMatch elg:matchStrategy ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Closure> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper> ;
+    mork:exactABoxMatch qnt:Closed ;
+    mork:exactRBoxMatch qnt:boundClosure ;
+    mork:mappingNote "Within thirty days includes the thirtieth." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Sense> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper> ;
+    mork:exactABoxMatch qnt:Upper ;
+    mork:exactRBoxMatch qnt:boundSense ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Space> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper> ;
+    mork:inverseRBoxMatch qnt:onSpace ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Space_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Value_Number> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Value> ;
+    mork:dataRef "src:withinDays" ;
+    mork:exactRBoxMatch qnt:numericValue ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Value_Space> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Value> ;
+    mork:inverseRBoxMatch qnt:onSpace ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Space_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Wildcard> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days> ;
+    mork:exactABoxMatch elg:NoWildcard ;
+    mork:exactRBoxMatch elg:wildcardSemantics ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Relation> ;
+    mork:inverseRBoxMatch ins:obligee ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/interval-condition#ToConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Relation> ;
+    mork:inverseRBoxMatch ins:obligor ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/interval-condition#ByConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/interval-condition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope_Key> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope> ;
+    mork:dataInline "undertaking-scope" ;
+    mork:exactRBoxMatch elg:conditionKey ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope_Operation> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope> ;
+    mork:exactABoxMatch elg:AllRequired ;
+    mork:exactRBoxMatch elg:compositionOperation ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#ByConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/interval-condition#Concepts> ;
+    mork:path "src:by" .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Scheme_sdl1> a owl:NamedIndividual,
+        sh:PrefixDeclaration ;
+    sh:namespace "https://example.org/lattice/mtp/source#"^^xsd:anyURI ;
+    sh:prefix "src" .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Source> a mork:RepresentationScheme,
+        owl:NamedIndividual ;
+    rdfs:label "undertakings between named parties" ;
+    mork:format mork:RDF .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#ToConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/interval-condition#Concepts> ;
+    mork:path "src:to" .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "term" ;
+    mork:exactTBoxMatch ins:Template,
+        ins:Term ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/interval-condition#UndertakingConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#UndertakingConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/interval-condition#Concepts> ;
+    mork:representedAs src:Undertaking .
+
+src:Undertaking a mork:Entity,
+        owl:NamedIndividual .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Range> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_RangeSet> ;
+    mork:conceptName "range" ;
+    mork:exactTBoxMatch qnt:Range ;
+    mork:inverseRBoxMatch qnt:hasRange ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_RangeSet> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days> ;
+    mork:conceptName "range-set" ;
+    mork:exactTBoxMatch qnt:RangeSet ;
+    mork:inverseRBoxMatch elg:requiredRangeSet ;
+    mork:mappingNote "An interval condition requires a range set, a union of ranges on one value space." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper_Value> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper> ;
+    mork:conceptName "value" ;
+    mork:exactTBoxMatch qnt:Quantity ;
+    mork:inverseRBoxMatch qnt:boundValue ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Concepts> a mork:TaxonomyScheme,
+        owl:NamedIndividual ;
+    skos:inScheme <https://example.org/lattice/mtp/patterns/interval-condition#Source> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Role_T> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "role" ;
+    mork:exactTBoxMatch pty:Role ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Relation> ;
+    mork:conceptName "scope" ;
+    mork:exactTBoxMatch elg:AdmissionProfile ;
+    mork:inverseRBoxMatch ins:scope ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Scope> ;
+    mork:conceptName "days-condition" ;
+    mork:exactTBoxMatch elg:Condition ;
+    mork:inverseRBoxMatch elg:hasCondition ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Upper> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Days_Range> ;
+    mork:conceptName "upper-bound" ;
+    mork:exactTBoxMatch qnt:Bound ;
+    mork:inverseRBoxMatch qnt:upperBound ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Undertaking_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/interval-condition#Undertaking> ;
+    mork:conceptName "relation" ;
+    mork:exactRBoxMatch ins:arisesUnder ;
+    mork:exactTBoxMatch ins:Obligation,
+        ins:Template ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Space_T> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptNameTemplate "space/days-since-order" ;
+    mork:exactTBoxMatch qnt:ValueSpace ;
+    mork:mappingNote "One value space, named once, which every range, bound and quantity on it names." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/interval-condition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/interval-condition#Scheme> a mork:MappingScheme,
+        owl:NamedIndividual ;
+    rdfs:label "an undertaking to an obligation scoped by an interval condition" ;
+    mork:compilationMode mork:ReviewMode ;
+    sh:declare <https://example.org/lattice/mtp/patterns/interval-condition#Scheme_sdl1> .
+

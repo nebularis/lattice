@@ -1,0 +1,145 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Decoded from the MCN of MTP's cassette permission-implied-prohibition, so the cassette and this file are isomorphic.
+@prefix ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pty: <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix src: <https://example.org/lattice/mtp/source#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Activity> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Relation> ;
+    mork:dataRef "src:act" ;
+    mork:exactRBoxMatch ins:activity ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Counterparty> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Relation> ;
+    mork:inverseRBoxMatch ins:counterparty ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#AgainstConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Holder> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Relation> ;
+    mork:inverseRBoxMatch ins:holder ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#ByConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied_Activity> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied> ;
+    mork:dataRef "src:act" ;
+    mork:exactRBoxMatch ins:activity ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied_Obligee> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied> ;
+    mork:inverseRBoxMatch ins:obligee ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#AgainstConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied_Obligor> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied> ;
+    mork:inverseRBoxMatch ins:obligor ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#ByConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> ;
+    mork:templateMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied_Term> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied> ;
+    mork:conceptNameTemplate "implied-term/${src:act}/${src:by}/${src:against}" ;
+    mork:exactTBoxMatch ins:Template,
+        ins:Term ;
+    mork:inverseRBoxMatch ins:arisesUnder ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T_Label> a mork:DataMapping,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> ;
+    mork:dataRef "src:name" ;
+    mork:exactRBoxMatch rdfs:label ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "term" ;
+    mork:exactTBoxMatch ins:Template,
+        ins:Term ;
+    mork:mappingFor <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#AllowanceConcept> ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#AllowanceConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Concepts> ;
+    mork:representedAs src:Allowance .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme_sdl1> a owl:NamedIndividual,
+        sh:PrefixDeclaration ;
+    sh:namespace "https://example.org/lattice/mtp/source#"^^xsd:anyURI ;
+    sh:prefix "src" .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Source> a mork:RepresentationScheme,
+        owl:NamedIndividual ;
+    rdfs:label "undertakings between named parties" ;
+    mork:format mork:RDF .
+
+src:Allowance a mork:Entity,
+        owl:NamedIndividual .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#AgainstConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Concepts> ;
+    mork:path "src:against" .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#ByConcept> a mork:DataConcept,
+        owl:NamedIndividual ;
+    mork:conceptScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Concepts> ;
+    mork:path "src:by" .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Concepts> a mork:TaxonomyScheme,
+        owl:NamedIndividual ;
+    skos:inScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Source> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Relation> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance> ;
+    mork:conceptName "relation" ;
+    mork:exactRBoxMatch ins:arisesUnder ;
+    mork:exactTBoxMatch ins:Permission,
+        ins:Template ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Implied> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:compositeBroaderMapping <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Allowance_Relation> ;
+    mork:conceptNameTemplate "implied-prohibition/${src:act}/${src:by}/${src:against}" ;
+    mork:exactTBoxMatch ins:Prohibition,
+        ins:Template ;
+    mork:inverseRBoxMatch ins:excepts ;
+    mork:mappingNote "The law implies the prohibition a permission excepts: the same act, its obligor the permission's holder (law I8). Named by act and parties, so permissions of one act share it." ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Role_T> a mork:Datum,
+        owl:NamedIndividual ;
+    mork:conceptName "role" ;
+    mork:exactTBoxMatch pty:Role ;
+    mork:mappingScheme <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> .
+
+<https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme> a mork:MappingScheme,
+        owl:NamedIndividual ;
+    rdfs:label "an allowance to a permission and the prohibition it excepts" ;
+    mork:compilationMode mork:ReviewMode ;
+    sh:declare <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#Scheme_sdl1> .
+
