@@ -2,7 +2,7 @@
 #
 # The Configuration Studio's samples (ADR-A136). Each part names a repository file: an ontology
 # module's file by module, role and file name, resolved through the repository catalogue, or a
-# file beside this one by file name alone. tools/config_studio_stage.py resolves and stages them.
+# file by its path from this folder. tools/config_studio_stage.py resolves and stages them.
 
 @prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -57,3 +57,14 @@
     cst:part [ cst:module "wording" ; cst:role "examples" ; cst:fileName "facility-form.ttl" ] ,
              [ cst:fileName "builder-assemblies.ttl" ] ,
              [ cst:fileName "builder-meaning.ttl" ] .
+
+<urn:lattice:studio:sample:odrl-mappings> a cst:Sample ;
+    rdfs:label "ODRL mappings" ;
+    rdfs:comment "The hand-made MORK mapping pack from an ODRL 2.2 policy to stated meaning, and a language model's proposal for the same source with each of its mappings reviewed against the pack, to explore in mapping mode." ;
+    cst:part [ cst:fileName "../odrl/odrl-instrument.mork.ttl" ] ,
+             [ cst:fileName "../odrl/trial/history.ttl" ] .
+
+<urn:lattice:studio:sample:legalruleml-mappings> a cst:Sample ;
+    rdfs:label "LegalRuleML mappings" ;
+    rdfs:comment "Two proposals mapping LegalRuleML's metamodel to stated meaning, one made cold and one made with the ODRL trial's history, each mapping with its review, to explore in mapping mode." ;
+    cst:part [ cst:fileName "../legalruleml/trial/history.ttl" ] .

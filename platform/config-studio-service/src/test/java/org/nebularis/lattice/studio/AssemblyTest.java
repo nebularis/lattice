@@ -77,12 +77,16 @@ class AssemblyTest {
         Model g = parse(PREFIXES + "@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .\n"
             + "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
             + "ex:m a mork:DataMapping ; mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ; mork:appliesWhen ex:g .\n"
-            + "ex:g a sh:NodeShape ; sh:property [ sh:path ex:p ; sh:minCount 1 ] .\n");
+            + "ex:g a sh:NodeShape ; sh:property ex:gp .\n"
+            + "ex:gp sh:path ex:p ; sh:property [ sh:minCount 1 ] .\n"
+            + "ex:c a <http://www.w3.org/2002/07/owl#Class> .\n");
         Map<String, String> byName = new java.util.HashMap<>();
         Parts.owners(g).forEach((r, part) -> byName.put(r.isURIResource() ? r.getURI().substring("https://example.org/".length()) : "blank", part));
         assertEquals("mapping", byName.get("m"));
         assertEquals("mapping", byName.get("g"), "a guard uses no MORK term but goes with the mapping naming it");
+        assertEquals("mapping", byName.get("gp"), "a guard's named property shape goes with it too");
         assertEquals("mapping", byName.get("blank"));
+        assertEquals("baseline", byName.get("c"));
     }
 
     @Test

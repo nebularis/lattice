@@ -2,11 +2,12 @@
 // Sorts an imported graph into the graphs a workspace keeps, by the terms each named subject uses:
 // its rdf:type or its predicates. The first part in PARTS whose namespace a subject uses takes it,
 // so an elg:Question that names a qnt:RangeSet stays with eligibility. A concept scheme or concept
-// goes to vocabulary. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, a cst:Proposal to review, a subject using mork: terms or named as a mapping's guard to mapping, then any subject using ins: terms to meaning, and any
+// goes to vocabulary. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, a cst:Proposal to review, a subject using mork: terms to mapping, then any subject using ins: terms to meaning, and any
 // other wrd: subject to library, after the rest. Everything else is baseline. A blank node goes wherever the subject that
-// refers to it went, so path steps written as blank nodes and RDF lists stay with their owner.
+// refers to it went, so path steps written as blank nodes and RDF lists stay with their owner. So does a named node of a mapping's
+// own structure that uses no part's terms, such as a guard's SHACL shape or a scheme's prefix declaration.
 
-import { CST, Graph, MORK, PREFIXES, SKOS, TYPE, WRD, type Quad, type Term } from "@lattice/authoring-domain";
+import { CST, Graph, MORK, PREFIXES, SH, SKOS, TYPE, WRD, type Quad, type Term } from "@lattice/authoring-domain";
 
 export type Part = "baseline" | "library" | "assembly" | "meaning" | "review" | "mapping" | "vocabulary" | "quantification" | "eligibility" | "surface" | "persistence";
 
@@ -44,9 +45,10 @@ function uses(base: string): (q: Quad) => boolean {
   return (q) => q.predicate.value.startsWith(base) || (q.predicate.value === TYPE && q.object.value.startsWith(base));
 }
 
+/** The links from a mapping to named nodes of its own structure. */
+const MAPPING_STRUCTURE = new Set([MORK("appliesWhen"), SH("declare"), SH("property")]);
+
 function partOfNamed(graph: Graph, subject: Term): Part {
-  // A guard is a SHACL shape, which uses no mork: term of its own, so it goes where the mapping naming it goes.
-  if (graph.quads(undefined, MORK("appliesWhen"), subject).length) return "mapping";
   const quads = graph.quads(subject);
   return OWNERS.find(([, owns]) => quads.some(owns))?.[0] ?? "baseline";
 }
@@ -59,11 +61,14 @@ export function split(graph: Graph): Record<Part, Graph> {
     owner.set(q.subject.id, partOfNamed(graph, q.subject));
     pending.push(q.subject);
   }
-  // Blank nodes inherit their referrer's part, breadth first from the named subjects.
+  // Blank nodes inherit their referrer's part, breadth first from the named subjects, and so do a mapping's own named nodes.
   while (pending.length) {
     const s = pending.shift()!;
     for (const q of graph.quads(s)) {
-      if (q.object.termType === "BlankNode" && !owner.has(q.object.id)) {
+      // A blank node first reached from a named node that later moved to mapping moves with it.
+      const blank = q.object.termType === "BlankNode" && (!owner.has(q.object.id) || (owner.get(q.object.id) === "baseline" && owner.get(s.id) !== "baseline"));
+      const structure = q.object.termType === "NamedNode" && owner.get(s.id) === "mapping" && owner.get(q.object.id) === "baseline" && MAPPING_STRUCTURE.has(q.predicate.value);
+      if (blank || structure) {
         owner.set(q.object.id, owner.get(s.id)!);
         pending.push(q.object);
       }

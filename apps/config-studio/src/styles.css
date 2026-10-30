@@ -374,7 +374,7 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 
 /* Builder mode (ADR-A138) */
 .mode-switch { display: flex; gap: 2px; padding: 3px; margin: 0 2px 8px; background: var(--surface-2); border-radius: 9px; }
-.mode-switch button { all: unset; box-sizing: border-box; flex: 1; text-align: center; cursor: pointer; padding: 5px 8px; border-radius: 7px; font-weight: 550; color: var(--text-2); }
+.mode-switch button { all: unset; box-sizing: border-box; flex: 1 1 auto; min-width: 0; text-align: center; cursor: pointer; padding: 5px 4px; border-radius: 7px; font-size: 13px; font-weight: 550; color: var(--text-2); white-space: nowrap; }
 .mode-switch button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 .outline-row { gap: 8px; }
 .outline-id { min-width: 38px; color: var(--text-3); font-size: 12px; }

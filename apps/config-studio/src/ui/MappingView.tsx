@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Mapping mode's view, read only: the source concepts a MORK mapping scheme reads on the left, its mappings drawn as the
-// tree their parent links make, each with the terms it writes, and the findings of the mapping part's validation for the
-// mapping picked. Editing, compiling and stepping a sample through it come later.
+// tree their parent links make, each with the terms it writes and its latest review, and the findings of the mapping part's
+// validation for the mapping picked. Editing, compiling and stepping a sample through it come later.
 
 import { useMemo, useState } from "react";
 import { Network } from "lucide-react";
@@ -23,7 +23,8 @@ export function MappingView({ selected }: { selected?: string }) {
   const prefixes = useMemo(() => ({ ...PREFIXES, ...graph.prefixes }), [graph]);
   const [schemeIri, setSchemeIri] = useState<string>();
   const [source, setSource] = useState<string>();
-  const scheme = schemes.find((s) => s.iri === schemeIri) ?? schemes.find((s) => s.mappings.some((m) => m.iri === selected)) ?? schemes[0];
+  // The picked mapping's scheme, so a correction's link opens the scheme it is in.
+  const scheme = schemes.find((s) => s.mappings.some((m) => m.iri === selected)) ?? schemes.find((s) => s.iri === schemeIri) ?? schemes[0];
   const open = (node: string) => go("w", studio.id, "mapping", node);
   const picked = scheme?.mappings.find((m) => m.iri === selected);
 
@@ -46,7 +47,10 @@ export function MappingView({ selected }: { selected?: string }) {
             <span className="small muted">{scheme.mappings.length} mappings</span>
           </div>
           {schemes.length > 1 && (
-            <select value={scheme.iri} onChange={(e) => setSchemeIri(e.target.value)} aria-label="Mapping scheme">
+            <select value={scheme.iri} onChange={(e) => {
+              setSchemeIri(e.target.value);
+              go("w", studio.id, "mapping");
+            }} aria-label="Mapping scheme">
               {schemes.map((s) => (
                 <option key={s.iri} value={s.iri}>{s.label}</option>
               ))}
@@ -54,8 +58,8 @@ export function MappingView({ selected }: { selected?: string }) {
           )}
           <div className="small muted">{scheme.label}</div>
         </div>
-        <h4>Source concepts</h4>
-        {scheme.sources.length === 0 && <div className="empty small">The scheme names no source concept.</div>}
+        <h4>Source concepts it maps</h4>
+        {scheme.sources.length === 0 && <div className="empty small">No mapping of the scheme names a source concept.</div>}
         {scheme.sources.map((s) => {
           const readers = scheme.mappings.filter((m) => m.source === s.iri).length;
           return (
@@ -71,12 +75,12 @@ export function MappingView({ selected }: { selected?: string }) {
       </div>
       <div className="detail-pane">
         <div className="editor" style={{ maxWidth: "none" }}>
-          {picked && <MappingCard node={picked} scheme={scheme} prefixes={prefixes} open={open} />}
+          {picked && <MappingCard node={picked} schemes={schemes} prefixes={prefixes} open={open} />}
           <section className="card section" aria-label={`Mappings of ${scheme.label}`}>
             <header>
               <h3 className="grow">Mappings</h3>
-              <span className="small muted">Indented under their parent. a writes a type, → a property, ← an inverse property, = an individual.</span>
             </header>
+            <p className="small muted" style={{ margin: "8px 16px 0" }}>Indented under their parent. a writes a type, → a property, ← an inverse property, = an individual. The bar on the left is the latest review.</p>
             <div style={{ padding: "8px 16px", overflowX: "auto" }}>
               <Tree scheme={scheme} prefixes={prefixes} selected={selected} source={source} open={open} />
             </div>
@@ -115,7 +119,8 @@ function Tree({ scheme, prefixes, selected, source, open }: { scheme: Scheme; pr
             <rect x={x(m)} y={y(m)} width={BOX_W} height={BOX_H} rx={6}
               style={{ fill: lit ? "var(--accent-2)" : m.isTemplate ? "var(--surface-2)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--border-strong)", strokeDasharray: m.isTemplate ? "4 3" : undefined }}
               strokeWidth={on ? 2.5 : 1.2} />
-            <text x={x(m) + 8} y={y(m) + BOX_H / 2 + 4} style={{ fill: "var(--text)", fontWeight: m.kind === "Datum" ? 600 : 400 }}>
+            {m.review && <rect x={x(m) + 1} y={y(m) + 4} width={4} height={BOX_H - 8} rx={2} style={{ fill: DECISION[m.review.decision] ?? "var(--text-3)" }}><title>{m.review.decision}</title></rect>}
+            <text x={x(m) + 10} y={y(m) + BOX_H / 2 + 4} style={{ fill: "var(--text)", fontWeight: m.kind === "Datum" ? 600 : 400 }}>
               {m.label.length > 30 ? m.label.slice(0, 29) + "…" : m.label}
             </text>
             <text x={x(m) + BOX_W + 12} y={y(m) + BOX_H / 2 + 4} style={{ fill: "var(--text-2, var(--text))" }}>
@@ -129,11 +134,14 @@ function Tree({ scheme, prefixes, selected, source, open }: { scheme: Scheme; pr
   );
 }
 
-function MappingCard({ node, scheme, prefixes, open }: { node: MappingNode; scheme: Scheme; prefixes: Record<string, string>; open: (n: string) => void }) {
+const DECISION: Record<string, string> = { Accepted: "var(--ok)", Corrected: "var(--warn)", Rejected: "var(--bad)", Deferred: "var(--text-3)" };
+
+function MappingCard({ node, schemes, prefixes, open }: { node: MappingNode; schemes: Scheme[]; prefixes: Record<string, string>; open: (n: string) => void }) {
   const { model } = useStudio();
   const issues = model.issues.mapping.filter((i) => i.focus === node.iri);
-  const label = (iri: string) => scheme.mappings.find((m) => m.iri === iri)?.label ?? compact(iri, prefixes);
-  const link = (iri?: string) => (iri && scheme.mappings.some((m) => m.iri === iri) ? <button className="link" onClick={() => open(iri)}>{label(iri)}</button> : iri ? <span className="mono">{compact(iri, prefixes)}</span> : <span className="muted">none</span>);
+  const all = schemes.flatMap((s) => s.mappings);
+  const label = (iri: string) => all.find((m) => m.iri === iri)?.label ?? compact(iri, prefixes);
+  const link = (iri?: string) => (iri && all.some((m) => m.iri === iri) ? <button className="link" onClick={() => open(iri)}>{label(iri)}</button> : iri ? <span className="mono">{compact(iri, prefixes)}</span> : <span className="muted">none</span>);
   const rows: [string, React.ReactNode][] = [
     ["Kind", node.kind],
     ["Parent", link(node.parent)],
@@ -141,8 +149,19 @@ function MappingCard({ node, scheme, prefixes, open }: { node: MappingNode; sche
     ["Maps for", link(node.source)],
     ["Reads", node.reads ? <span className="mono">{node.reads}</span> : <span className="muted">its parent's subject</span>],
     ["Guard", link(node.guard)],
-    ["Writes", written(node, prefixes).map((w) => `${w.box} ${w.term}`).join(", ") || <span className="muted">nothing</span>],
+    ["Writes", written(node, prefixes).map((w) => `${w.box} ${w.term}`).join(", ") || <span className="muted">{node.template ? "through its template" : "nothing"}</span>],
   ];
+  if (node.review) {
+    const r = node.review;
+    rows.push(["Review", (
+      <div>
+        <span className="chip" style={{ color: DECISION[r.decision] }}>{r.decision}</span>
+        {r.correctedBy && <> by {link(r.correctedBy)}</>}
+        {r.note && <p className="small" style={{ margin: "6px 0 0" }}>{r.note}</p>}
+        {(r.reviewer || r.at) && <div className="small muted">{[r.reviewer && compact(r.reviewer, prefixes), r.at?.slice(0, 10)].filter(Boolean).join(", ")}</div>}
+      </div>
+    )]);
+  }
   return (
     <section className="card section" aria-label={`Mapping ${node.label}`} style={{ marginBottom: 16 }}>
       <header>

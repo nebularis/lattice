@@ -42,3 +42,28 @@ describe("a scheme as a tree", () => {
     expect(roots.map((m) => m.isTemplate)).toEqual([...roots.map((m) => m.isTemplate)].sort((a, b) => Number(a) - Number(b)));
   });
 });
+
+describe("the mapping samples", () => {
+  const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../../.build/config-studio");
+  const sample = (id: string) => split(Graph.parse(readFileSync(join(assets, `samples/${id}.ttl`), "utf-8")));
+
+  it("puts the trials' runs, schemes and reviews in the mapping part, each scheme named by its run where it has no label", () => {
+    const lrml = sample("legalruleml-mappings");
+    // Only the reviewer's description and an ontology header use no part's terms and are not a mapping's own structure.
+    expect(lrml.baseline.quads().map((q) => q.subject.value).filter((v, n, all) => all.indexOf(v) === n).sort()).toEqual(["http://example.org/lrml-mapping", "urn:lattice:reviewer:agent-for-the-maintainer"]);
+    expect(lrml.mapping.has("http://example.org/lrml-mapping#Map_InForce_mork:appliesWhen1_sh:property1")).toBe(true);
+    const schemes = schemesOf(lrml.mapping);
+    expect(schemes.map((s) => s.label).sort()).toEqual(["LegalRuleML metamodel instances to stated meaning", "MS, proposed in legalruleml-cold"]);
+    // The scorer reviews every mapping but a template, which it reads through the mappings that use it.
+    for (const s of schemes) expect(s.mappings.filter((m) => !m.review).map((m) => m.isTemplate)).not.toContain(false);
+  });
+
+  it("follows a narrower link to a child, and links a correction to the pack's mapping", () => {
+    const schemes = schemesOf(sample("odrl-mappings").mapping);
+    expect(schemes).toHaveLength(2);
+    const run = schemes.find((s) => s.label.endsWith("run-1"))!;
+    expect(run.mappings.some((m) => m.depth > 0)).toBe(true);
+    const corrected = run.mappings.find((m) => m.review?.decision === "Corrected")!;
+    expect(corrected.review!.correctedBy!.startsWith(OM)).toBe(true);
+  });
+});

@@ -18,7 +18,8 @@ import org.apache.jena.vocabulary.RDF;
 /**
  * Which part of a workspace each subject of a graph belongs to, by the rule of the browser's {@code src/rdf/split.ts}:
  * the first part whose namespace a named subject uses in its {@code rdf:type} or its predicates, a concept scheme or
- * concept for vocabulary, a mapping's guard for mapping, baseline otherwise, and a blank node with the subject that refers to it. The service checks a
+ * concept for vocabulary, baseline otherwise, and a blank node with the subject that refers to it, as is a named node of a
+ * mapping's own structure that uses no part's terms, such as a guard's shape. The service checks a
  * saved graph with it, since it cannot know the browser sorted the graph (STD-279).
  */
 public final class Parts {
@@ -26,6 +27,8 @@ public final class Parts {
     private static final String SKOS = "http://www.w3.org/2004/02/skos/core#";
     private static final String CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
     private static final String MORK = "http://www.nebularis.org/ontologies/Mork#";
+    private static final String SHACL = "http://www.w3.org/ns/shacl#";
+    private static final java.util.Set<String> MAPPING_STRUCTURE = java.util.Set.of(MORK + "appliesWhen", SHACL + "declare", SHACL + "property");
     private static final Map<String, Predicate<Statement>> OWNERS = new LinkedHashMap<>();
 
     static {
@@ -66,23 +69,22 @@ public final class Parts {
         graph.listSubjects().forEachRemaining(s -> {
             if (s.isURIResource()) {
                 List<Statement> statements = s.listProperties().toList();
-                // A guard is a SHACL shape, which uses no mork: term of its own, so it goes where the mapping naming it goes.
-                if (graph.contains(null, graph.createProperty(MORK + "appliesWhen"), s)) {
-                    owner.put(s, "mapping");
-                    pending.add(s);
-                    return;
-                }
                 owner.put(s, OWNERS.entrySet().stream().filter(e -> statements.stream().anyMatch(e.getValue()))
                     .map(Map.Entry::getKey).findFirst().orElse("baseline"));
                 pending.add(s);
             }
         });
-        // Blank nodes take their referrer's part, breadth first from the named subjects.
+        // Blank nodes take their referrer's part, breadth first from the named subjects, and so do a mapping's own named nodes.
         while (!pending.isEmpty()) {
             Resource s = pending.poll();
             s.listProperties().forEachRemaining(st -> {
                 RDFNode o = st.getObject();
-                if (o.isAnon() && !owner.containsKey(o.asResource())) {
+                boolean structure = o.isURIResource() && "mapping".equals(owner.get(s)) && "baseline".equals(owner.get(o.asResource()))
+                    && MAPPING_STRUCTURE.contains(st.getPredicate().getURI());
+                // A blank node first reached from a named node that later moved to mapping moves with it.
+                boolean blank = o.isAnon() && (!owner.containsKey(o.asResource())
+                    || ("baseline".equals(owner.get(o.asResource())) && !"baseline".equals(owner.get(s))));
+                if (blank || structure) {
                     owner.put(o.asResource(), owner.get(s));
                     pending.add(o.asResource());
                 }

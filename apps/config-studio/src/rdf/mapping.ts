@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: MPL-2.0
 // The mapping view's model: each MORK mapping scheme of the mapping part, its mappings as the tree their
-// mork:compositeBroaderMapping links make, the source concepts they read, and the terms each writes. It is read only, and
-// lays the tree out the same way every time, one row per mapping in depth-first order.
+// mork:compositeBroaderMapping and mork:compositeNarrowerMapping links make, the source concepts they read, the terms each
+// writes and its latest review. It is read only, and lays the tree out the same way every time, one row per mapping in
+// depth-first order.
 
-import { Graph, LABEL, MORK, compact, localName, type Term } from "@lattice/authoring-domain";
+import { Graph, LABEL, MORK, TYPE, compact, localName, type Term } from "@lattice/authoring-domain";
 
 export interface Targets {
   tbox: string[];
   rbox: string[];
   inverse: string[];
   abox: string[];
+}
+
+export interface Review {
+  /** Accepted, Corrected, Rejected or Deferred. */
+  decision: string;
+  note?: string;
+  correctedBy?: string;
+  reviewer?: string;
+  at?: string;
 }
 
 export interface MappingNode {
@@ -27,6 +37,7 @@ export interface MappingNode {
   targets: Targets;
   /** Whether another mapping names it as its template. */
   isTemplate: boolean;
+  review?: Review;
   depth: number;
   row: number;
 }
@@ -41,11 +52,26 @@ export interface SourceConcept {
 export interface Scheme {
   iri: string;
   label: string;
+  labelled: boolean;
   mappings: MappingNode[];
   sources: SourceConcept[];
 }
 
 const label = (g: Graph, node: string) => g.value(node, LABEL) ?? localName(node);
+const PROV = "http://www.w3.org/ns/prov#";
+
+/** Each reviewed mapping's latest review, by its time. */
+function reviewsOf(g: Graph): Map<string, Review> {
+  const latest = new Map<string, Review>();
+  for (const r of g.subjects(TYPE, MORK("MappingReview"))) {
+    const of = g.value(r, MORK("reviewOf"));
+    const decision = g.value(r, MORK("reviewDecision"));
+    if (!of || !decision) continue;
+    const review = { decision: localName(decision), note: g.value(r, MORK("reviewNote")), correctedBy: g.value(r, MORK("correctedBy")), reviewer: g.value(r, PROV + "wasAssociatedWith"), at: g.value(r, PROV + "endedAtTime") };
+    if ((latest.get(of)?.at ?? "") <= (review.at ?? "")) latest.set(of, review);
+  }
+  return latest;
+}
 const iris = (terms: Term[]) => terms.filter((t) => t.termType === "NamedNode").map((t) => t.value).sort();
 
 export function schemesOf(g: Graph): Scheme[] {
@@ -55,7 +81,8 @@ export function schemesOf(g: Graph): Scheme[] {
     path: g.value(s, MORK("path")),
     representedAs: iris(g.objects(s, MORK("representedAs"))),
   }));
-  return g.ofType(MORK("MappingScheme")).map((scheme) => {
+  const reviews = reviewsOf(g);
+  return g.ofType(MORK("MappingScheme")).map((scheme): Scheme => {
     const members = g.subjects(MORK("mappingScheme"), scheme).filter((m) => m.termType === "NamedNode").map((m) => m.value);
     const templates = new Set(members.flatMap((m) => g.objects(m, MORK("templateMapping")).map((t) => t.value)));
     const read = (m: string): MappingNode => {
@@ -64,7 +91,7 @@ export function schemesOf(g: Graph): Scheme[] {
         iri: m,
         label: label(g, m),
         kind: localName(g.types(m).find((t) => t.startsWith(MORK(""))) ?? MORK("Mapping")),
-        parent: g.value(m, MORK("compositeBroaderMapping")),
+        parent: g.value(m, MORK("compositeBroaderMapping")) ?? g.subjects(MORK("compositeNarrowerMapping"), m).find((p) => p.termType === "NamedNode")?.value,
         template: g.value(m, MORK("templateMapping")),
         source: g.value(m, MORK("mappingFor")),
         reads: g.value(m, MORK("dataRef")) ?? (inline ? `= ${inline.value}` : undefined) ?? g.value(m, MORK("conceptName")) ?? g.value(m, MORK("conceptNameTemplate")),
@@ -76,6 +103,7 @@ export function schemesOf(g: Graph): Scheme[] {
           abox: iris(g.objects(m, MORK("exactABoxMatch"))),
         },
         isTemplate: templates.has(m),
+        review: reviews.get(m),
         depth: 0,
         row: 0,
       };
@@ -97,8 +125,14 @@ export function schemesOf(g: Graph): Scheme[] {
     roots.forEach((r) => visit(r, 0));
     // A cycle of parents has no root, and its mappings are listed after the rest, at depth 0.
     [...nodes.values()].sort(byLabel).forEach((n) => visit(n, 0));
-    return { iri: scheme.value, label: label(g, scheme.value), mappings: ordered, sources };
-  });
+    // A proposal's scheme is unlabelled, and is named by the run that generated its mappings.
+    const run = members.map((m) => g.value(m, PROV + "wasGeneratedBy")).find(Boolean);
+    const name = g.value(scheme, LABEL) ?? (run ? `${localName(scheme.value)}, proposed in ${run.split(/[:/#]/).pop()}` : localName(scheme.value));
+    const used = new Set(ordered.map((n) => n.source));
+    return { iri: scheme.value, label: name, labelled: g.value(scheme, LABEL) !== undefined, mappings: ordered, sources: sources.filter((s) => used.has(s.iri)) };
+  })
+    // A labelled scheme, such as a hand-made pack, before the proposals.
+    .sort((a, b) => Number(b.labelled) - Number(a.labelled) || a.label.localeCompare(b.label));
 }
 
 /** The terms a mapping writes, compacted, each with the box it writes in. */
