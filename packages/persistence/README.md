@@ -12,8 +12,7 @@ You do not need these libraries to call a generated operation. The compiled prof
 | Directory | What it is |
 |---|---|
 | [`python/`](python/README.md) | `lattice-persistence` for Python 3.14 or later. Standard library and rdflib only |
-
-A Java library follows as `java/` when a Java caller needs it, held to the same vectors.
+| [`java/`](java/README.md) | `lattice-persistence` for JDK 25 or later. Apache Jena ARQ only, to read a compiled profile |
 
 ## Checks
 

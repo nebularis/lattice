@@ -249,9 +249,13 @@ depends = ["bootstrap:pip"]
 description = "Install the persistence caller library (ADR-A132) with its test extra"
 run = "python -m pip install -e \"./packages/persistence/python[test]\""
 
+[tasks."check:persistence-library-java"]
+description = "Build the standalone Java persistence caller library and run it against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+run = "mvn -q -f packages/persistence/java/pom.xml verify"
+
 [tasks."check:persistence-library"]
-depends = ["check:persistence-vectors"]
-description = "Run the persistence caller library against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+depends = ["check:persistence-vectors", "check:persistence-library-java"]
+description = "Run both persistence caller libraries, Python and Java, against the conformance vectors in contracts/persistence and their own tests (ADR-A132)"
 run = "python -m pytest packages/persistence/python/tests -q"
 
 [tasks."build:persistence-execution"]
