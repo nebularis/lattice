@@ -85,6 +85,8 @@ public final class StudioApi {
     private final Refresher refresher;
     private static final Duration AWAIT_REFRESH = Duration.ofSeconds(10);
     private static final Duration REFRESH_TIMEOUT = Duration.ofSeconds(60);
+    /** How long a refresh that nothing waits for gathers the writes after the first, so a burst of saves costs one refresh. */
+    private static final Duration REFRESH_DELAY = Duration.ofMillis(500);
 
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
@@ -111,7 +113,7 @@ public final class StudioApi {
             afterWrite(c, reply);
             return reply;
         };
-        this.refresher = new Refresher(this::refreshOnce);
+        this.refresher = new Refresher(this::refreshOnce, REFRESH_DELAY);
         this.bus = bus;
         this.clock = clock;
         this.ids = ids;
@@ -146,8 +148,9 @@ public final class StudioApi {
     }
 
     /**
-     * One refresh: submits a refresh job, which names no workspace, hands it to the worker, waits for it to finish and deletes it.
-     * It throws when the job fails or the worker does not finish it in time.
+     * One refresh: submits a refresh job, which names no workspace, hands it to the worker and waits for it to finish. The writer
+     * deletes a refresh job with the update that succeeds it, so its graph gone is its success. A job that failed or did not finish in
+     * time is deleted here, and the refresh throws.
      */
     private void refreshOnce() throws Exception {
         String job = UUID.randomUUID().toString();
@@ -161,12 +164,17 @@ public final class StudioApi {
         if (!sent.applied()) {
             throw new IllegalStateException("the refresh job was refused: " + sent.message());
         }
+        boolean gone = false;
         try {
             bus.publish(jobIri);
             Resource node = ResourceFactory.createResource(jobIri);
             long deadline = System.nanoTime() + REFRESH_TIMEOUT.toNanos();
             while (System.nanoTime() < deadline) {
                 Model m = store.graph(jobIri);
+                if (m.isEmpty()) {
+                    gone = true;
+                    return;
+                }
                 if (m.contains(node, Cst.status, Cst.Succeeded)) {
                     return;
                 }
@@ -177,7 +185,9 @@ public final class StudioApi {
             }
             throw new java.util.concurrent.TimeoutException("the worker did not finish the refresh job in " + REFRESH_TIMEOUT.toSeconds() + " s");
         } finally {
-            writes.send(Command.deleteRefresh(job));
+            if (!gone) {
+                writes.send(Command.deleteRefresh(job));
+            }
         }
     }
 

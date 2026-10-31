@@ -113,7 +113,9 @@ class ConfigStudioWorker:
         running = Graph() + graph
         running.add((job, CST.status, CST.Running))
         running.add((job, CST.startedAt, _time(self._clock())))
-        self._store.put_graph(job_iri, running)
+        # A refresh job is read by the service alone, which waits for its end, so marking it running would cost a commit for no reader.
+        if graph.value(job, CST.kind) != CST.Refresh:
+            self._store.put_graph(job_iri, running)
 
         final = Graph() + running
         final.remove((job, CST.status, None))

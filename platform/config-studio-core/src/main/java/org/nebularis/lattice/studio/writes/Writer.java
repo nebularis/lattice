@@ -742,6 +742,14 @@ public final class Writer {
                 request.add(clear(recordIri, mine(c, receipts)));
                 request.add(insert(recordIri, record, mine(c, receipts)));
             }
+            if (refresh && update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded)) {
+                // A refresh that succeeded has nothing left to read, so the update that writes its projections deletes the job
+                // and its receipts too, last, which saves the service a request and the store a commit for every refresh.
+                List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), receipts);
+                graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
+                jobs.put(c.job(), Optional.empty());
+                return planned(index, c, Reply.ok(), () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound());
+            }
             jobs.put(c.job(), Optional.of(update));
             return planned(index, c, Reply.ok(), Reply::notFound);
         }

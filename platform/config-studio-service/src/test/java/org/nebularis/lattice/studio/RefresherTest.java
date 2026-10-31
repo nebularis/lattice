@@ -81,6 +81,25 @@ class RefresherTest {
     }
 
     @Test
+    void aBurstOfRequestsWithNobodyWaitingCostsOneRefreshAndAWaitDoesNotWaitForTheDelay() throws Exception {
+        AtomicInteger runs = new AtomicInteger();
+        try (Refresher refresher = new Refresher(runs::incrementAndGet, Duration.ofMillis(300))) {
+            for (int i = 0; i < 20; i++) {
+                refresher.request();
+            }
+            assertEquals(0, runs.get(), "nothing runs before the delay");
+            assertTrue(refresher.awaitIdle(SECONDS));
+            assertEquals(1, runs.get(), "twenty requests in the delay are one refresh");
+            refresher.request();
+            long t0 = System.nanoTime();
+            assertTrue(refresher.awaitFresh(SECONDS));
+            assertTrue(System.nanoTime() - t0 < Duration.ofMillis(250).toNanos(), "a wait starts a refresh at once");
+            assertTrue(refresher.awaitIdle(SECONDS));
+            assertEquals(2, runs.get(), "the request the wait overtook needs no refresh of its own");
+        }
+    }
+
+    @Test
     void awaitFreshReturnsOnlyAfterARefreshThatStartedAfterTheCall() throws Exception {
         Gated run = new Gated(3);
         try (Refresher refresher = new Refresher(run)) {

@@ -66,3 +66,45 @@ The other two pairs agree: saves 65% to 95% slower, reads 30% to 100% slower, pu
 
 **What is not yet known.** These are measures of the whole studio, so they say how much slower and not why. Hypotheses, none measured: a read now loads the workspace from its description and two scans of version rows, where it read one description. A save adds a read of the part for its delta, skolemisation, a digest and a claim, and queues a refresh that reads the whole store while the next request runs. Publishing now waits for that refresh. SQ3's component benchmarks are to separate them.
 
+## Phase D's causes and their fixes
+
+**What the time went on**, traced from Fuseki's log of each request (`--verbose`) and Java Flight Recorder on the service and the writer, on the harness's `single` topology, with TDB2 and with Fuseki's in-memory dataset:
+- **Commits.** Every update request on TDB2 cost 52 ms to 104 ms whatever its size, and 1 ms to 9 ms in memory (TSD-44). Each refresh was four of them (the job submitted, marked running, finished with its projections, deleted), so each save was followed by four more commits, and the next save queued behind them in the writers' queue. A publish waited for its refresh, five commits in all where it had one.
+- **The writer's CPU.** About 40% of the writer's samples were the SPARQL parser reading the payload, which the writer had written out as text into the generated operation and then parsed back.
+- **Reads.** A workspace's load scanned each family's meta graph for every row under the workspace's prefix, two queries whose cost grows with every part in the store.
+
+**What changed**:
+- the writer fills each payload slot with a marker triple, parses the small request, and replaces the marker's quads with the payload's quads in the syntax tree, so a payload is never parsed (`StudioOperations.build`)
+- a workspace's version rows are read by their roots, the parts' and the documents' its description lists, in one query with an inline `VALUES`, one index lookup a root (`StudioStore.versionRows`)
+- a refresh is two commits: the worker no longer marks a refresh job running, and the update that succeeds it deletes the job and its receipts (ADR-A149 addendum, the cost of a refresh)
+- a refresh that no reply waits for starts half a second after the first write that asked for it, so a burst of writes shares one (`Refresher`)
+- the platform's jar plugin always creates the jar, since without `clean` a shaded module's jar kept stale copies of a changed dependency's classes, which made the first measurement of these fixes measure the old code.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| SQD-01 | twenty refresh requests within the delay / the delay passes / one refresh ran, and a wait that follows starts one at once | L1 | + | pass |
+| SQD-02 | a refresh job / its update succeeds / the projections are written and the job and its receipts are gone, and a second update of it is not found | L4 | + | pass |
+| SQD-03 | a refresh job / the worker runs it / one update reaches the writer, never a running one | L1 | + | pass |
+| SQD-04 | every existing writer, service and operation test / the payload spliced and the rows read by root / all pass unchanged | L1 to L4 | ± | pass |
+| SQD-05 | the `studio-api` scenario / run on the fixes / every reply as expected | L5 | + | pass, 2026-10-31 |
+
+Commands run 2026-10-31, all passing: `mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify` through `mise exec`, the worker's two studio test modules (68), and `mise run benchmark:studio-api`.
+
+**The result**, medians, same machine, load average about 2.1 to 2.7 at each start:
+
+| Measure | before phase D, `4029bd0f` | phase D, `bd2a144d` | the fixes | against before phase D |
+|---|---|---|---|---|
+| save a part, 100 triples | 89.7 ms | 159.6 ms | 135.6 ms | +51% |
+| save a part, 1,000 triples | 128.1 ms | 220.0 ms | 168.6 ms | +32% |
+| save a part, 3,000 triples | 178.1 ms | 346.8 ms | 223.5 ms | +25% |
+| read a part, 100 triples | 8.8 ms | 14.9 ms | 12.5 ms | +42% |
+| read a part, 3,000 triples | 15.1 ms | 19.4 ms | 17.6 ms | +16% |
+| list workspaces | 2.9 ms | 3.0 ms | 2.5 ms | −15% |
+| a publish job, submitted to done | 151.6 ms | 290.3 ms | 147.9 ms | −2%, within noise |
+| publish | 90.4 ms | 666.3 ms | 308.9 ms | about 3.4 times |
+| list the registry | 3.7 ms | 2.5 ms | 2.8 ms | −25% |
+
+On Fuseki's in-memory dataset a save of 1,000 triples now takes 84 ms, against 225 ms before the fixes, so what is left on TDB2 is commits. **Not yet fixed**, each a question in the sketch's §6: a save still clears its part and writes it whole, 121 ms of TDB2's time for 1,000 triples where its delta is two (SQ-Q1), and a publish still waits for a refresh of two commits and a worker's turn (SQ-Q2). The read costs one more round trip than before phase D, for the version rows, which was left as it is.
+
+**Not covered.** Whether SQ2's reports of `bd2a144d` ran on jars with stale classes is not known. The writer's jar in this checkout held core classes compiled at 15:05 when the fault was found, and those reports ran at 16:34, so they may have measured part of an earlier commit. A run of `bd2a144d` from a clean build would settle it. The fixes were not measured on Linux, where a commit costs less, nor under concurrent load, which SQ6 covers.
+

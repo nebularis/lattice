@@ -91,11 +91,10 @@ def test_each_projection_carries_one_refresh_node_naming_the_job_and_the_time_re
         assert not any(isinstance(term, BNode) for triple in graph for term in triple)
 
 
-def test_a_refresh_job_hands_the_five_projections_to_the_writer_and_names_no_workspace():
+def test_a_refresh_job_hands_the_five_projections_to_the_writer_in_one_update_and_names_no_workspace():
     store = Store(small_store())
     ConfigStudioWorker(store, None, lambda: "2026-10-31T10:00:00Z").handle(JOB)
-    running, final = store.puts
-    assert (URIRef(JOB), CST.status, CST.Running) in running[1] and running[2] == {}
+    [final] = store.puts  # no update marks a refresh running, since only the service reads it and waits for its end
     assert (URIRef(JOB), CST.status, CST.Succeeded) in final[1]
     assert set(final[2]) == {PROJECTION + key for key in KEYS}
     assert not list(final[1].objects(URIRef(JOB), CST.workspace))

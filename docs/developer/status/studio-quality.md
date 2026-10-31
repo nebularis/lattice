@@ -3,7 +3,7 @@
 # Performance, integration and load testing for the studio - Status
 
 **Unit ID:** `studio-quality`
-**Status:** 🔴 SQ1 and SQ2 built 2026-10-31, phase D measured slower, causes not yet measured
+**Status:** 🔴 SQ1 and SQ2 built 2026-10-31, phase D's causes found and partly fixed, SQ-Q1 and SQ-Q2 open
 **Last updated:** 2026-10-31
 **Plan:** [studio-quality.md](../plans/studio-quality.md)
 **Sketch:** [studio-quality-kit.md](../sketches/studio-quality-kit.md)
@@ -20,7 +20,9 @@ SQ1 was built on 2026-10-31. `tools/testing/studio_harness` starts a declared to
 
 SQ2 was built on 2026-10-31. Reports are kept in `benchmark/reports/`, `mise run benchmark:compare` tables two of them, and `mise run benchmark:studio-api` drives the studio's API through the harness, on this checkout or another. Run on the commit before phase D and on the head, three pairs, it found phase D slower: saves 65% to 95%, reads 30% to 100%, publishing about 7.5 times, while the registry listing is a third faster and the workspace listing unchanged. The figures and their run are in the Validation Pack's SQ2 section. Written by a Sonnet subagent and reviewed.
 
-**Next action:** find the causes, with SQ3's component benchmarks and a profile of a save and a read, and fix them. For the maintainer, review ADR-A150 and SQ-D1 to SQ-D8.
+The maintainer asked on 2026-10-31 for the slowdown to be fixed. Traced the same day, the causes were commits, about 55 ms each on TDB2, four of them for every refresh that each save and publish queued, the writer parsing every payload it had written out as text, and a scan of the version rows on every read. The fixes are in the Validation Pack's last section: saves are now 25% to 51% slower than before phase D where they were 72% to 95%, a publish job is back to its old time, and a publish is 3.4 times slower where it was 7.4. What is left is commits, a save clearing and writing its whole part (SQ-Q1) and a publish waiting for its refresh (SQ-Q2).
+
+**Next action:** for the maintainer, answer SQ-Q1 and SQ-Q2 in the sketch's §6, and review ADR-A150, ADR-A149's addendum on the cost of a refresh, and SQ-D1 to SQ-D8. Then SQ3 to SQ6.
 
 ## Log
 
@@ -28,3 +30,4 @@ SQ2 was built on 2026-10-31. Reports are kept in `benchmark/reports/`, `mise run
 - 2026-10-31: Docker Compose added to the harness's design. SQ1 built.
 - 2026-10-31: SQ2 built. Phase D measured against the commit before it.
 - 2026-10-31: Clojure accepted, SQ-D2 answered with Jepsen, Knossos and Elle.
+- 2026-10-31: phase D's causes traced and four fixed. SQ-Q1 and SQ-Q2 raised.

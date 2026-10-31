@@ -46,6 +46,10 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 
 **Narrows decision 12.** The generated named-graph replace builds its payload once per stored triple, which took 28 s on Jena for a 3,000-triple part. Until a linear form is settled, the writer replaces a part and a document through a hand-written request that guards on the same version row and writes the same receipt and patch-log delta. It relies, as the writer did before this decision, on Fuseki applying one request in one transaction, and on the writer applying one command at a time. The writer runs the generated operations for every other family and every other operation (TD-136).
 
+## Addendum, 2026-10-31, the cost of a refresh
+
+**Narrows decision 14.** Measured after phase D, each refresh cost the writers four commits, about 55 ms each on TDB2, so a save was followed by four more commits that the next save queued behind. A refresh is now two commits: the worker no longer marks a refresh job running, and the update that succeeds it deletes the job and its receipts. A refresh that no reply waits for starts half a second after the first write that asked for it, so a burst of writes shares one, while a reply that must see its write starts one at once. A projection therefore lags its source by a job and up to half a second.
+
 ## Provenance
 
 Raised by the maintainer on 2026-10-31, while deciding how a source's codes reach a mapping (TD-133). The maintainer answered PB-Q1 to PB-Q3, PB-Q6 and PB-Q7 the same day, asked for authentication now, and left PB-Q4's timing of modes and PB-Q5 to the unit, which chose decisions 9 and 11. They answered PB-Q8 to PB-Q11 the same day, which became decisions 12 to 14, and accepted three projections beyond the two first proposed in decision 14. The [sketch](../../developer/sketches/studio-publication.md) holds the questions.

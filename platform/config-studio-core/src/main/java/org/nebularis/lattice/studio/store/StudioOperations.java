@@ -63,6 +63,8 @@ public final class StudioOperations {
     private static final Set<OperationKind> USED = Set.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE);
     private static final Pattern SLOT = Pattern.compile("\\{\\{\\{([A-Za-z]+)\\}\\}\\}");
     private static final Set<Var> SWEPT = Set.of(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
+    /** The namespace of the marker triple a payload slot is filled with before parsing, replaced by the payload's quads after. */
+    private static final String MARKER = "urn:lattice:studio:slot:";
 
     private record Operation(OperationContract contract, String text) {
     }
@@ -171,13 +173,24 @@ public final class StudioOperations {
 
     /**
      * The workspace {@code id} as the service sees it, or null when the store holds none. Its description is read from its graph,
-     * and its parts' and documents' revisions from their version rows, one query of each family's meta graph.
+     * then the version rows of its parts and of the documents it lists, by root, in one query.
      */
     public Workspace workspace(StudioStore store, String id) {
         String prefix = Graphs.workspace(id);
-        return Workspace.from(id, store.graph(graph(Family.DESCRIPTION, prefix)),
-            partRevisions(store.versionRows(metaGraph(Family.PART), prefix), id),
-            documentRevisions(store.versionRows(metaGraph(Family.DOCUMENT), prefix), id));
+        Model description = store.graph(graph(Family.DESCRIPTION, prefix));
+        Resource node = description.createResource(prefix);
+        if (!description.contains(node, org.apache.jena.vocabulary.RDF.type, Cst.Workspace)) {
+            return null;
+        }
+        Map<String, String> roots = new HashMap<>();
+        Workspace.GRAPHS.forEach(name -> roots.put(Graphs.partRoot(id, name), metaGraph(Family.PART)));
+        node.listProperties(Cst.document).forEachRemaining(st -> {
+            if (st.getObject().isURIResource()) {
+                roots.put(st.getResource().getURI(), metaGraph(Family.DOCUMENT));
+            }
+        });
+        Map<String, Long> rows = store.versionRows(roots);
+        return Workspace.from(id, description, partRevisions(rows, id), documentRevisions(rows, id));
     }
 
     private static Map<String, Long> partRevisions(Map<String, Long> rows, String id) {
@@ -230,10 +243,9 @@ public final class StudioOperations {
 
     /** Creates the aggregate at sequence 1, writing nothing when it has a version row or the transaction has a claim. */
     public List<Update> create(Family f, String root, Model payload, String txnId) {
-        Payload body = payload(payload);
         Operation op = operation(f, OperationKind.CREATE);
         Map<String, Object> values = common(f, root, txnId, 1);
-        values.put("payloadTriples", body);
+        values.put("payloadTriples", payload);
         return List.of(build(op, values));
     }
 
@@ -287,15 +299,16 @@ public final class StudioOperations {
     }
 
     private Update replaceUpdate(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId) {
-        Payload body = payload(payload);
-        Payload added = asserted == null ? Payload.of() : payload(asserted);
-        Payload removed = retracted == null ? Payload.of() : payload(retracted);
         Operation op = operation(f, OperationKind.REPLACE);
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
-        values.put("payloadTriples", body);
-        values.put("assertTriples", added);
-        values.put("retractTriples", removed);
+        values.put("payloadTriples", payload);
+        if (asserted != null) {
+            values.put("assertTriples", asserted);
+        }
+        if (retracted != null) {
+            values.put("retractTriples", retracted);
+        }
         return build(op, values);
     }
 
@@ -316,18 +329,22 @@ public final class StudioOperations {
     }
 
     /**
-     * Checks the request, binds its parameters as typed terms, fills its slots and parses it. The parameters are bound into the
-     * template before any slot is filled, so that a literal in a payload which reads like a variable is never rewritten, and the
-     * slots are filled in one pass, so that one reading like a slot is never filled again.
+     * Checks the request, binds its parameters as typed terms, fills its slots and parses it. A payload is given as a {@link Model}.
+     * Each payload slot is filled with one marker triple, and the parsed request's marker quads are then replaced by the payload's
+     * quads in the marker's graph, so a payload is never written out as text and parsed again, which cost a large part's save most of
+     * its time in the writer. The parameters are bound before any slot is filled, so nothing in a payload is ever read as a variable.
      */
     private Update build(Operation op, Map<String, Object> given) {
         OperationContract contract = op.contract;
         Map<String, Object> values = new HashMap<>();
+        Map<String, Model> payloads = new HashMap<>();
         for (ParameterContract p : contract.parameters()) {
-            if (given.containsKey(p.name())) {
+            if (p.kind().equals("Payload")) {
+                Model m = given.get(p.name()) instanceof Model model ? model : org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+                payloads.put(p.name(), m);
+                values.put(p.name(), payload(m));
+            } else if (given.containsKey(p.name())) {
                 values.put(p.name(), given.get(p.name()));
-            } else if (p.kind().equals("Payload")) {
-                values.put(p.name(), Payload.of());
             }
         }
         if (contract.parameter("requestDigest").isPresent()) {
@@ -345,7 +362,7 @@ public final class StudioOperations {
                 case "Iri" -> bound.setParam(p.name(), NodeFactory.createURI(((Iri) value).value()));
                 case "Long", "Position" -> bound.setParam(p.name(), NodeFactory.createLiteralDT(value.toString(), XSDDatatype.XSDlong));
                 case "Digest", "String" -> bound.setParam(p.name(), NodeFactory.createLiteralString((String) value));
-                case "Payload" -> slots.put(p.name(), ((Payload) value).sparql());
+                case "Payload" -> slots.put(p.name(), "<" + MARKER + p.name() + "> <" + MARKER + p.name() + "> <" + MARKER + p.name() + "> .");
                 default -> throw new IllegalStateException("parameter " + p.name() + " of kind " + p.kind() + " is not one the studio binds");
             }
         }
@@ -357,7 +374,37 @@ public final class StudioOperations {
             }
             return Matcher.quoteReplacement(slot);
         });
-        return UpdateFactory.create(text).getOperations().get(0);
+        return splice((UpdateModify) UpdateFactory.create(text).getOperations().get(0), payloads, contract.templateId());
+    }
+
+    /** The parsed request with each marker quad replaced by its payload's triples in the marker's graph, in the template's order. */
+    private static UpdateModify splice(UpdateModify parsed, Map<String, Model> payloads, String template) {
+        if (parsed.getWherePattern() != null && parsed.getWherePattern().toString().contains(MARKER)) {
+            throw new IllegalStateException(template + " has a payload slot in its WHERE clause, which the studio does not fill");
+        }
+        UpdateModify out = new UpdateModify();
+        out.setWithIRI(parsed.getWithIRI());
+        parsed.getUsing().forEach(out::addUsing);
+        parsed.getUsingNamed().forEach(out::addUsingNamed);
+        spliced(parsed.getDeleteQuads(), payloads).forEach(out.getDeleteAcc()::addQuad);
+        spliced(parsed.getInsertQuads(), payloads).forEach(out.getInsertAcc()::addQuad);
+        out.setHasDeleteClause(parsed.hasDeleteClause());
+        out.setHasInsertClause(parsed.hasInsertClause());
+        out.setElement(parsed.getWherePattern());
+        return out;
+    }
+
+    private static List<Quad> spliced(List<Quad> quads, Map<String, Model> payloads) {
+        List<Quad> out = new java.util.ArrayList<>();
+        for (Quad q : quads) {
+            String s = q.getSubject().isURI() ? q.getSubject().getURI() : "";
+            if (s.startsWith(MARKER)) {
+                payloads.get(s.substring(MARKER.length())).getGraph().find().forEachRemaining(t -> out.add(Quad.create(q.getGraph(), t)));
+            } else {
+                out.add(q);
+            }
+        }
+        return out;
     }
 
     /** A quad that deletes every triple of a graph, as {@code ?s ?p ?o}. */

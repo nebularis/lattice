@@ -78,10 +78,9 @@ public final class StudioStore implements AutoCloseable {
 
     private static final String VERSION_ROW_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } } }";
-    // ponytail: a scan of the meta graph for every row under a prefix, once for each workspace read. Read the rows by root if it matters.
+    /** The rows of given roots, which {@link #versionRows} binds by an inline VALUES ahead of the pattern, so each is an index lookup. */
     private static final String VERSION_ROWS_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
-        + "SELECT ?root ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } "
-        + "FILTER (STRSTARTS(STR(?root), ?prefix)) } }";
+        + "SELECT ?root ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } } }";
     private static final String CLAIM_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?rev WHERE { GRAPH ?txn { ?claim pat:rev ?rev } }";
 
@@ -162,13 +161,25 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
-    /** The {@code pat:seq} of every live row in {@code metaGraph} whose root starts with {@code prefix}, by root. */
-    public java.util.Map<String, Long> versionRows(String metaGraph, String prefix) {
-        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROWS_QUERY);
-        query.setIri("meta", metaGraph);
-        query.setLiteral("prefix", prefix);
+    /**
+     * The {@code pat:seq} of each live row among {@code roots}, by root, each root read in the meta graph it is keyed to, in one query.
+     * Its cost is one lookup a root, however many rows the meta graphs hold.
+     */
+    public java.util.Map<String, Long> versionRows(Map<String, String> roots) {
         java.util.Map<String, Long> out = new java.util.HashMap<>();
-        connection.querySelect(query.asQuery(), row -> {
+        if (roots.isEmpty()) {
+            return out;
+        }
+        Query query = constant(VERSION_ROWS_QUERY);
+        org.apache.jena.sparql.core.Var meta = org.apache.jena.sparql.core.Var.alloc("meta");
+        org.apache.jena.sparql.core.Var root = org.apache.jena.sparql.core.Var.alloc("root");
+        org.apache.jena.sparql.syntax.ElementData values = new org.apache.jena.sparql.syntax.ElementData();
+        values.add(meta);
+        values.add(root);
+        roots.forEach((r, g) -> values.add(org.apache.jena.sparql.engine.binding.BindingFactory.binding(
+            meta, org.apache.jena.graph.NodeFactory.createURI(g), root, org.apache.jena.graph.NodeFactory.createURI(r))));
+        ((ElementGroup) query.getQueryPattern()).getElements().add(0, values);
+        connection.querySelect(query, row -> {
             if (!(row.contains("deleted") && "true".equals(row.getLiteral("deleted").getLexicalForm()))) {
                 out.put(row.getResource("root").getURI(), row.getLiteral("seq").getLong());
             }

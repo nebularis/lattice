@@ -242,10 +242,15 @@ class ProjectionsTest {
         String job = submitRefresh();
         String registry = Graphs.projection("registry");
         assertEquals(200, refreshUpdate(job, Map.of(registry, one("urn:a", Projections.NS + "current", "urn:b"))).status());
+        assertTrue(f.store.graph(Graphs.job(job)).isEmpty() && f.store.graph(Graphs.jobReceipts(job)).isEmpty(),
+            "a refresh that succeeded is deleted with its receipts by the update that wrote its projections");
+        assertEquals(404, refreshUpdate(job, Map.of(registry, one("urn:c", Projections.NS + "current", "urn:d"))).status());
+        job = submitRefresh();
         assertEquals(200, refreshUpdate(job, Map.of(registry, one("urn:c", Projections.NS + "current", "urn:d"))).status());
         Model now = f.store.graph(registry);
         assertEquals(1, now.size(), "the second update replaced the first whole");
         assertTrue(now.contains(now.createResource("urn:c"), null, (RDFNode) null));
+        job = submitRefresh();
 
         Reply foreign = refreshUpdate(job, Map.of(Graphs.baseline(WS), one("urn:x", "urn:y", "urn:z")));
         assertEquals(400, foreign.status(), "a refresh may carry the projections and nothing else");

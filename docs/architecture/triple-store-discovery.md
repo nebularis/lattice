@@ -2048,6 +2048,8 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** The four forms above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
 
+**Addendum, 2026-10-31.** The studio's own updates, logged by Fuseki 6.2.0 run by the studio harness on the same kind of machine, took 52 ms to 104 ms each on TDB2 whatever their size up to 20,000 characters, and 1 ms to 9 ms each on Fuseki's in-memory dataset, which confirms the commit as the fixed cost. A save of 1,000 triples took 121 ms on TDB2. Still not measured on Linux, where a sync costs less, so the floor here is a hypothesis for a server.
+
 ### TSD-64. A cast lookup key joins a stored integer by value on both stores, and Oxigraph joins `xsd:long` with `xsd:integer` too
 
 **Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-10-29, with the probe below. Not read from either engine's source.
