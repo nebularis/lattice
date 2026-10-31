@@ -875,7 +875,7 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔴 sketched 2026-10-31, PM-Q1 to PM-Q4 open |
+| **Status** | 🔴 sketched 2026-10-31, PM-Q1, PM-Q5 and the slice order answered, PM-Q2 to PM-Q4 and PM-Q6 open |
 | **Unit ID** | `projection-maintenance` |
 | **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md) |
 
