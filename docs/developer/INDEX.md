@@ -838,6 +838,20 @@ Apache Jena joins rdflib and Oxigraph in every conformance run, engine probes ge
 
 A web application for authoring vocabulary, quantification, eligibility, persistence and surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
 
+## 8.25 Publication from the Configuration Studio — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 planned 2026-10-31, PB1 next |
+| **Unit ID** | `studio-publication` |
+| **Sketch** | [studio-publication.md](sketches/studio-publication.md) |
+| **Plan** | [studio-publication.md](plans/studio-publication.md) |
+| **Status Record** | [studio-publication.md](status/studio-publication.md) |
+| **Validation Packs** | none yet |
+| **ADRs** | A-149, Proposed |
+
+Explicit publication of each configuration unit as a version in a registry the studio keeps, with dependencies pinned, imports fenced, jobs reading the whole workspace, pluggable authentication and workspace modes.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |

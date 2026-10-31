@@ -4,7 +4,7 @@
 
 **Unit type:** Register, not a unit. It has no status record, no slices and no completion gate.
 **Sibling:** the [pending design decisions](pending-design-decisions.md) and the [technical debt register](technical-debt.md).
-**State:** collated 2026-10-30. Six ideas, none planned. BL-03 left for the `mork-transforms` plan the same day.
+**State:** collated 2026-10-30. Seven ideas, none planned. BL-03 left for the `mork-transforms` plan the same day.
 
 ## Purpose
 
@@ -28,3 +28,4 @@ Things we want built that no plan owns yet. Each is an idea with no sketch, or a
 | BL-05 | **A SHACL shape that holds a quantity's literal to its space's `qnt:valueDatatype`.** | 2026-10-30, the second ODRL proposal trial | a proposal or a configuration can hold a value its space's datatype refuses, and nothing says so | TD-125 records the gap and the likely shape. No shape exists | Idea |  | TD-125 |
 | BL-06 | **A published client SDK for the generated persistence operations, with generated code per language.** | 2026-10-10, H2-Q1 of the typed IR sketch | an adopter in another language would call the persistence operations without writing the typed payload by hand | the [sketch](sketches/persistence-client-sdk.md), held for the end of Track H. ADR-A132 builds the in-repository caller library only | Sketched | ADR-A132 | ADR-A132, ADR-A79 |
 | BL-07 | **The knowledge index in projects built on LATTICE, with a private project's own registers beside LATTICE's.** | 2026-10-25, KC-Q1 to KC-Q7 | a project built on LATTICE would ask the same questions of its own decisions and registers and of LATTICE's | the [sketch](sketches/knowledge-index-for-consumers.md). The consumer distribution plan does not cover it | Sketched | ADR-A134 | ADR-A134 |
+| BL-08 | **Storing a workspace's uploaded files that are not graph data, such as an XML or JSON sample source, beside its graphs.** | 2026-10-31, the maintainer | a sample or a source document a user uploads is lost when the browser closes, and a mapping's dry run cannot be repeated by anyone else | the studio stores RDF only, and a sample lives in the browser's memory. The [publication sketch](sketches/studio-publication.md) fences imports that are graph data | Idea | ADR-A149 | ADR-A136, ADR-A149 |
