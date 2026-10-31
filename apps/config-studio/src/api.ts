@@ -221,6 +221,12 @@ export const api = {
     return summary(Graph.parse(await response.text()), iri);
   },
 
+  /** A version and every version it pins, as TriG, each graph named by its version. */
+  async bundle(iri: string): Promise<string> {
+    const response = await request(`/api/registry/bundle?iri=${encodeURIComponent(iri)}`, { headers: { Accept: "application/trig" } });
+    return response.text();
+  },
+
   /** A published version's content. */
   async version(iri: string): Promise<Graph> {
     return (await turtle(`/api/registry/version?iri=${encodeURIComponent(iri)}`)).graph;

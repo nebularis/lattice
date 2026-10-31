@@ -4,7 +4,7 @@
 
 **Unit ID:** `studio-publication` (PB)
 **Unit type:** multi-slice unit in four phases, validation gate per slice
-**Status:** PB-Q1 to PB-Q7 answered 2026-10-31. ADR-A149 Proposed. Built autonomously at the maintainer's request, slice by slice
+**Status:** PB-Q1 to PB-Q7 answered 2026-10-31. ADR-A149 Proposed. PB1 to PB9 built 2026-10-31. PB10's brief raises PB-Q8 to PB-Q11
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
 **Status record:** [studio-publication.md](../status/studio-publication.md)
 **ADR:** [A-149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md), Proposed

@@ -140,3 +140,27 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 `workers/tests/test_config_studio_publish.py` and `ImportsTest`.
 
 **Not covered.** A workspace's export omits its imports' content, and nothing removes an import no workspace holds (TD-135). The browser's other imports, such as an ODRL policy or a proposer's source vocabulary, still copy what they read into a part.
+
+## PB8: artefacts that name their sources, and bundles
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB8-01 | a compile job reading a published version as context / run by the worker / each artefact a `fnd:DerivedArtefact` the job generated, derived from the job's input and the version | L4 | + | pass |
+| PB8-02 | a compile job naming a version / submitted / its input is the version's content, its description names it, and an unknown version `404` | L3 | ± | pass |
+| PB8-03 | a version pinning a second, which pins a third / bundled / three named graphs, each named by its version's IRI | L3 | + | pass |
+| PB8-04 | an unknown version / bundled / `404` | L3 | − | pass |
+
+`workers/tests/test_config_studio_worker.py` and `BundleTest`.
+
+**Not covered.** The browser offers a version's bundle to download, but compiles a version only through the API.
+
+## PB9: choosing what a workspace depends on, in its forms
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB9-01 | a workspace following a published `voc:ConceptScheme` / a binding's `voc:bindsScheme` field / offers the followed scheme by its lineage's IRI beside the layers' own schemes, from the browser's world, which holds the workspace's dependencies and imports | L6 | + | pass, 2026-10-31, by hand in the browser pane |
+| PB8-05 | a published scheme in a running studio / bundled / the TriG names the version as a graph | L5 | + | pass, 2026-10-31 |
+
+**Found live.** The binding's scheme field was a closed choice of the layers' own schemes, since its range has individuals in the served vocabulary, so the world never reached it. A choice built from a range's individuals now also offers the world's members of that range.
+
+**Not covered.** The browser's world holds each dependency as resolved when the workspace loads or its dependencies change, so a version published meanwhile is read at the next change or reload.

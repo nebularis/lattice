@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB7 built 2026-10-31, PB8 next
+**Status:** 🔴 PB1 to PB9 built 2026-10-31, PB10's questions wait for the maintainer
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -32,7 +32,11 @@ PB7 was built on 2026-10-31. A fence job digests an imported graph, and `POST /a
 
 The worker side of PB8, the provenance of compiled artefacts, went in with PB7's commit, since it shares the worker's file.
 
-**Next action:** build PB8.
+PB8 and PB9 were built on 2026-10-31. A compile job may compile a published version, and each compiled artefact is a `fnd:DerivedArtefact` derived from what it compiled and every version it read. `GET /api/registry/bundle` gives a version with every version it pins as TriG, each graph named by its version, and the Publish view downloads it. The browser's world now holds what the workspace depends on and imports, so a reference field offers a followed scheme by its lineage, and a choice built from a range's individuals offers the world's members too, found live when a binding's scheme field offered only the layers' own schemes. The Java side of PB8 was written by a Sonnet subagent and reviewed. Checks run 2026-10-31, all passing: `check:config-studio`, `check:workers` (175), `check:knowledge`, `check:identifiers`, and the service module's 136 tests. Checked live, and the test data removed.
+
+PB10's brief is the sketch's §9, PB-Q8 to PB-Q11: how the Java writer runs generated operations, what the studio's aggregates are, what its own surface contracts project, and how stores written before phase D move.
+
+**Next action, for the maintainer:** answer PB-Q8 to PB-Q11, and review ADR-A149 and PB-D1 to PB-D5.
 
 ## Log
 
@@ -43,3 +47,4 @@ The worker side of PB8, the provenance of compiled artefacts, went in with PB7's
 - 2026-10-31: PB4 and PB5 built. PB-D1 to PB-D3 revised to what was built. MEC-98 and MEC-99 added.
 - 2026-10-31: PB6 built.
 - 2026-10-31: PB7 built. TD-135 added.
+- 2026-10-31: PB8 and PB9 built. PB10's brief written, PB-Q8 to PB-Q11 raised.

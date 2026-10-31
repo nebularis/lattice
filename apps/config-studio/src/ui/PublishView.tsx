@@ -3,11 +3,11 @@
 // that publishes it. Nothing is published until someone presses it.
 
 import { useEffect, useMemo, useState } from "react";
-import { Link2, Pin, Send, Upload, X } from "lucide-react";
+import { Download, Link2, Pin, Send, Upload, X } from "lucide-react";
 import { CST, Graph, LABEL, SKOS, TYPE, localName } from "@lattice/authoring-domain";
 import { api, awaitJob, type WorkspaceSummary } from "../api";
 import { CONFIG_PARTS, type ConfigPart } from "../rdf/split";
-import { Spinner } from "./kit";
+import { Spinner, download } from "./kit";
 import { useStudio } from "./Workspace";
 
 interface Unit {
@@ -114,6 +114,11 @@ export function PublishView() {
                   {row.state === "failed" && <div className="error small">{row.message}</div>}
                 </td>
                 <td>
+                  {version && (
+                    <button className="btn ghost sm" title="The version and every version it pins, as TriG" onClick={() => void api.bundle(version).then((t) => download(`${u.label}.trig`, t, "application/trig"))}>
+                      <Download size={14} /> Bundle
+                    </button>
+                  )}
                   <button className="btn sm" disabled={row.state === "publishing"} title={unsaved ? "Publishes the part as saved, not your unsaved edits" : undefined} onClick={() => void publish(u)}>
                     {row.state === "publishing" ? <Spinner size={12} /> : <Send size={14} />} Publish
                   </button>

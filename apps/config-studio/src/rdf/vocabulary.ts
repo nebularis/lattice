@@ -43,6 +43,8 @@ export interface Field {
   datatype?: string;
   lang?: string;
   options: Option[];
+  /** The options are the layers' own individuals of the range, which the workspace's own, those it depends on and those it imports join (ADR-A149). */
+  openToWorld?: boolean;
   /** Shown but never written in the studio, with why, as for bound meaning in the builder. */
   readOnly?: string;
 }
@@ -238,7 +240,7 @@ export class Vocabulary {
     } else if (range === RDF("Property")) {
       field = { ...base, kind: "property", single: functional };
     } else if (range && this.individuals(range).length > 0) {
-      field = { ...base, kind: "choice", single: functional, options: this.individuals(range) };
+      field = { ...base, kind: "choice", single: functional, options: this.individuals(range), openToWorld: true };
     } else if (range) {
       field = { ...base, kind: "reference", single: functional };
     } else {

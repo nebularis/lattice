@@ -4,11 +4,11 @@
 // the service until saved. Validation runs on the edited graph, 600 ms after the last edit, with
 // at most one job in flight per configuration, and a result for an older graph is discarded.
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ApiError, Conflict, api, awaitJob, type WorkspaceSummary } from "./api";
 import { Baseline } from "./rdf/baseline";
 import { checkReferences } from "./rdf/editors";
-import { Graph } from "@lattice/authoring-domain";
+import { CST, Graph } from "@lattice/authoring-domain";
 import { bySeverity, type Issue, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart } from "./rdf/split";
 import type { Vocabulary } from "./rdf/vocabulary";
@@ -209,15 +209,42 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
   // A fixed number of calls in a fixed order, as the rules of hooks require.
   for (const part of PARTS) useValidation(id, part, state, dispatch); // eslint-disable-line react-hooks/rules-of-hooks
 
-  /** The baseline and every configuration as edited, for references that cross parts. */
+  // What the workspace depends on and imports, read only (ADR-A149 decisions 6 and 7). A followed lineage is read under
+  // the lineage's IRI, which a draft names, and a pinned version under its own.
+  const [context, setContext] = useState<Graph>(Graph.empty());
+  const dependsOn = state.summary?.dependsOn.join(" ") ?? "";
+  const imports = state.summary?.imports.map((i) => i.digest).join(" ") ?? "";
+  useEffect(() => {
+    let stale = false;
+    void (async () => {
+      let g = Graph.empty();
+      for (const d of dependsOn.split(" ").filter(Boolean)) {
+        const pinned = d.includes("/rev/1-");
+        const version = pinned ? d : (await api.lineage(d).catch(() => null))?.value(d, CST("current"));
+        if (!version) continue;
+        const content = await api.version(version).catch(() => null);
+        if (content) g = g.merge(pinned ? content : content.edit((e) => e.rename(version, d)));
+      }
+      for (const digest of imports.split(" ").filter(Boolean)) {
+        const content = await api.importGraph(id, digest).catch(() => null);
+        if (content) g = g.merge(content);
+      }
+      if (!stale) setContext(g);
+    })();
+    return () => {
+      stale = true;
+    };
+  }, [id, dependsOn, imports]);
+
+  /** The baseline, every configuration as edited and the context, for references that cross parts. */
   const world = useMemo(() => {
-    let g = state.baseline?.graph ?? Graph.empty();
+    let g = (state.baseline?.graph ?? Graph.empty()).merge(context);
     for (const part of PARTS) {
       const c = state.configs[part];
       if (c) g = g.merge(c.current);
     }
     return g;
-  }, [state.configs, state.baseline]);
+  }, [state.configs, state.baseline, context]);
 
   const issues = useMemo(() => {
     const out = Object.fromEntries(PARTS.map((p) => [p, [] as Issue[]])) as Record<Part, Issue[]>;

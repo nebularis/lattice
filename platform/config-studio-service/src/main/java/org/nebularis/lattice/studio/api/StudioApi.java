@@ -612,13 +612,23 @@ public final class StudioApi {
         if (ws == null) {
             return notFound();
         }
-        ApiResponse bad = checkBody(req);
-        if (bad != null) {
-            return bad;
-        }
-        Model config = parse(req);
-        if (config == null) {
-            return ApiResponse.text(400, "the body does not parse as its Content-Type");
+        String fromVersion = "compile".equals(kind) ? query.get("version") : null;
+        Model config;
+        if (fromVersion != null) {
+            // A published version is compiled as it stands, so the registry's content is the input (ADR-A149 decision 10).
+            config = versionContent(fromVersion);
+            if (config.isEmpty()) {
+                return ApiResponse.text(404, "the registry holds no such version");
+            }
+        } else {
+            ApiResponse bad = checkBody(req);
+            if (bad != null) {
+                return bad;
+            }
+            config = parse(req);
+            if (config == null) {
+                return ApiResponse.text(400, "the body does not parse as its Content-Type");
+            }
         }
         if ("odrl".equals(target) || "rml".equals(target) || ("dry-run".equals(kind) && "mapping".equals(target))) {
             // Each component validates what it receives (PRI-75, STD-298). A mapping's dry run reads its sample source from one.
@@ -647,6 +657,9 @@ public final class StudioApi {
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);
         Model description = jobDescription(jobIri, id, ws, kind, target, Graphs.jobInput(job));
+        if (fromVersion != null) {
+            description.createResource(jobIri).addProperty(Cst.fromVersion, description.createResource(fromVersion));
+        }
         return publishJob(id, job, description, config);
     }
 
@@ -979,6 +992,9 @@ public final class StudioApi {
             return ApiResponse.turtle(200, Turtle.write(store.registry()));
         }
         String iri = query(req.query()).get("iri");
+        if (what.equals("bundle")) {
+            return bundle(iri);
+        }
         Model m;
         if (what.equals("lineage") && Graphs.isUnitIri(iri)) {
             m = store.graph(Graphs.lineage(iri));
@@ -989,6 +1005,49 @@ public final class StudioApi {
             return notFound();
         }
         return m.isEmpty() ? notFound() : ApiResponse.turtle(200, Turtle.write(m));
+    }
+
+    private static final int BUNDLE_LIMIT = 1000;
+
+    /** A version's content from the registry, empty when {@code iri} is not a version it holds. */
+    private Model versionContent(String iri) {
+        var v = iri == null ? null : VERSION_IRI.matcher(iri);
+        return v != null && v.matches() && Graphs.isUnitIri(v.group(1))
+            ? store.graph(Graphs.version(v.group(1), v.group(2))) : org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+    }
+
+    /**
+     * A version and, transitively, every version it pins, each in a graph named by its own IRI so that the file stands
+     * apart from this studio (ADR-A149 decision 10). A pin the registry does not hold, or that names a member of a
+     * version, is left out.
+     */
+    private ApiResponse bundle(String iri) {
+        org.apache.jena.query.Dataset out = org.apache.jena.query.DatasetFactory.create();
+        java.util.ArrayDeque<String> queue = new java.util.ArrayDeque<>();
+        queue.add(iri == null ? "" : iri);
+        while (!queue.isEmpty()) {
+            String next = queue.poll();
+            if (out.containsNamedModel(next)) {
+                continue;
+            }
+            Model content = versionContent(next);
+            if (content.isEmpty()) {
+                if (out.isEmpty()) {
+                    return notFound();
+                }
+                continue;
+            }
+            if (out.asDatasetGraph().size() >= BUNDLE_LIMIT) {
+                return ApiResponse.text(422, "the bundle would hold more than " + BUNDLE_LIMIT + " versions");
+            }
+            out.addNamedModel(next, content);
+            content.listObjectsOfProperty(content.createResource(next), Cst.pins).forEachRemaining(o -> {
+                if (o.isURIResource()) {
+                    queue.add(o.asResource().getURI());
+                }
+            });
+        }
+        return new ApiResponse(200, new LinkedHashMap<>(Map.of("Content-Type", TRIG + "; charset=utf-8")), Turtle.writeTrig(out));
     }
 
     private ApiResponse getJob(String job) {

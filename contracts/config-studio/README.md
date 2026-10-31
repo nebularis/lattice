@@ -45,6 +45,7 @@ Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with
 | `GET /api/session` | | `200`, `application/json`, how to sign in: `provider` (`local` or `oidc`), with `principalOption` and `administrator` for `local`, or `issuer`, `clientId`, `scope`, `authorizationEndpoint` and `tokenEndpoint` for `oidc`, and `principal` and `admin` when the request authenticates |
 | `POST /api/workspaces/{ws}/access?mode=…&owner=…` | | `200`, the workspace's description with its new `cst:mode`, and `cst:owner` when an administrator named one. Only the owner or an administrator may change it, else `403`. `mode` is `locked`, `read-only` or `shared`. A workspace with no owner stays shared |
 | `POST /api/workspaces/{ws}/imports?job={job}&label={label}` | | `201`, the workspace's description, holding the import a finished `fence` job digested. A fence job, `POST /api/workspaces/{ws}/jobs?kind=fence&target=import`, takes the imported RDF as its body |
+| `GET /api/registry/bundle?iri={version}` | | `200`, `application/trig`, the version and every version it pins, transitively, each in a named graph named by the version's own IRI |
 | `GET /api/workspaces/{ws}/imports/{digest}` | | `200`, the import's graph, when the workspace holds it |
 | `DELETE /api/workspaces/{ws}/imports/{digest}` | | `204`. The workspace no longer holds it, and the graph stays for any other that does |
 | `PUT /api/workspaces/{ws}/dependencies` | `<urn:lattice:studio:ws:{ws}> cst:dependsOn <iri> , …`, each a published lineage, which the workspace follows, or a version, which it pins | `200`, the workspace's description. `422` naming an IRI the registry does not hold, `403` to a principal who may not write the workspace |
@@ -221,6 +222,8 @@ A unit's references to other units are pinned when it is published (decision 5).
     cst:publishedAt "2026-10-31T12:00:00Z"^^xsd:dateTime ;
     cst:previousPublication <{lineage}/evt/e1/000001> .
 ```
+
+A compile job may compile a published version, with `version={version}` in place of a body, and its description names it with `cst:fromVersion`. Each artefact a compile job writes is a `fnd:DerivedArtefact` of kind `fnd:Compiled`, `prov:wasGeneratedBy` the job and `prov:wasDerivedFrom` what it compiled, the version or the job's input, and every published version it read as context (decision 10). A deployment that takes an artefact can so say which versions it came from, and fetch them as a bundle.
 
 ### Mapping proposals
 

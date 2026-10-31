@@ -98,6 +98,10 @@ public final class Cst {
     public static final Property unitKind = p("unitKind");
     /** A lineage's latest version. */
     public static final Property current = p("current");
+    /** A version a version depends on, which its digest covers (ADR-A149 decision 5). */
+    public static final Property pins = p("pins");
+    /** The published version a compile job read in place of a body (ADR-A149 decision 10). */
+    public static final Property fromVersion = p("fromVersion");
     public static final Property sequence = p("sequence");
     public static final Property previousPublication = p("previousPublication");
     public static final Property publishedAt = p("publishedAt");

@@ -53,7 +53,7 @@ export function FieldControl(props: FieldProps) {
     case "boolean":
       return <BooleanValue value={values[0]?.value} onChange={(v) => set(v === undefined ? [] : [typed(String(v), XSD("boolean"))])} />;
     case "choice":
-      return <Choice field={field} selected={values.map((v) => v.value)} onChange={(vs) => set(vs.map((v) => iri(v)))} />;
+      return <Choice field={field.openToWorld ? withWorld(field, props) : field} selected={values.map((v) => v.value)} onChange={(vs) => set(vs.map((v) => iri(v)))} />;
     case "class":
       return (
         <TermPicker
@@ -162,6 +162,18 @@ function BooleanValue({ value, onChange }: { value?: string; onChange: (v?: bool
       )}
     </div>
   );
+}
+
+/** The field with the world's members of its range added to the layers' own, once each. */
+function withWorld(field: Field, props: FieldProps): Field {
+  const known = new Set(field.options.map((o) => o.iri));
+  const extra = props.world
+    .quads(null, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+    .filter((q) => q.subject.termType === "NamedNode" && !known.has(q.subject.value) && !!field.range && props.vocab.ancestors(q.object.value).includes(field.range))
+    .map((q) => q.subject.value)
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .map((iri) => ({ iri, label: props.world.value(iri, "http://www.w3.org/2004/02/skos/core#prefLabel") ?? localName(iri), comment: iri }));
+  return extra.length ? { ...field, options: [...field.options, ...extra] } : field;
 }
 
 function Choice({ field, selected, onChange }: { field: Field; selected: string[]; onChange: (v: string[]) => void }) {
