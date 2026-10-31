@@ -855,7 +855,8 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 planned 2026-10-31, after `studio-publication`'s PB17 |
+| **Status** | 🟡 SQ1 built 2026-10-31, SQ2 to SQ6 to come |
+| **Validation Packs** | [SQ1 to SQ6](validation/studio-quality.md) |
 | **Unit ID** | `studio-quality` |
 | **Sketch** | [studio-quality-kit.md](sketches/studio-quality-kit.md) |
 | **Plan** | [studio-quality.md](plans/studio-quality.md) |

@@ -116,3 +116,6 @@ benchmark/*/cross_family.json
 benchmark/*/cross_family.md
 benchmark/*/late_posting.json
 benchmark/*/late_posting.md
+
+# The Configuration Studio test harness's runs and caches (tools/testing/studio_harness)
+.build/studio-harness/

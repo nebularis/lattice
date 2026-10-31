@@ -265,6 +265,12 @@ path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
 
 [[tools]]
+name = "testing/studio_harness"
+path = "tools/testing/studio_harness"
+import-names = ["lattice_testing_studio_harness"]
+reaches = ["platform/config-studio-service", "platform/config-studio-writer", "deployment/compose/config-studio", "contracts/config-studio", "test/studio-integration"]
+
+[[tools]]
 name = "testing/sparql_probes"
 path = "tools/testing/sparql_probes"
 import-names = ["sparql_probes"]

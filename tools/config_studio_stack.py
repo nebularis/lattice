@@ -68,9 +68,9 @@ WRITER_ENV = {
 # RabbitMQ's stream plugin, for the writes super stream (ADR-A136), on its own port, advertised as the loopback address
 # so a client on this machine reaches the partitions' leader there.
 RABBITMQ_PLUGINS = "[rabbitmq_stream].\n"
-RABBITMQ_CONF = f"""stream.listeners.tcp.1 = 127.0.0.1:{STREAM_PORT}
+RABBITMQ_CONF = """stream.listeners.tcp.1 = 127.0.0.1:{port}
 stream.advertised_host = 127.0.0.1
-stream.advertised_port = {STREAM_PORT}
+stream.advertised_port = {port}
 """
 
 # One TDB2 database behind two services: `studio` reads only, for the service and the worker, and `studio-write`
@@ -95,6 +95,9 @@ PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 <#store> rdf:type tdb2:DatasetTDB2 ;
     tdb2:location "{location}" .
 """
+# The same two services over a dataset held in memory, which a test harness uses.
+FUSEKI_MEMORY_STORE = """<#store> rdf:type <http://jena.hpl.hp.com/2005/11/Assembler#MemoryDataset> .
+"""
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
 ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "transforms", "addin", "web")
@@ -110,6 +113,11 @@ class Stack:
         self.compose = root / catalogue.area("deployment") / "compose" / "config-studio" / "docker-compose.yml"
         self.platform = root / catalogue.area("platform")
         self.data = data_dir(os.environ)
+        # The test harness (tools/testing/studio_harness) points these at a run of its own, on its own ports.
+        self.cache = self.infra
+        self.fuseki_port, self.rabbitmq_port, self.stream_port, self.rabbitmq_node = FUSEKI_PORT, RABBITMQ_PORT, STREAM_PORT, RABBITMQ_NODE
+        self.rabbitmq_dist_port = RABBITMQ_PORT + 20000
+        self.memory = False
 
     # --- processes -------------------------------------------------------------------------------
 
@@ -143,7 +151,7 @@ class Stack:
             return False
         if name == "rabbitmq":
             ctl = self.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if WINDOWS else "rabbitmqctl")
-            subprocess.run(command([str(ctl), "-n", RABBITMQ_NODE, "shutdown"]), env={**os.environ, **self.rabbitmq_env()}, check=False)
+            subprocess.run(command([str(ctl), "-n", self.rabbitmq_node, "shutdown"]), env={**os.environ, **self.rabbitmq_env()}, check=False)
         stop_tree(pid)
         self._pid_file(name).unlink(missing_ok=True)
         return True
@@ -173,18 +181,22 @@ class Stack:
     # --- infrastructure --------------------------------------------------------------------------
 
     def fuseki(self) -> None:
-        jar = download(FUSEKI_URL, FUSEKI_SHA256, self.infra)
+        jar = download(FUSEKI_URL, FUSEKI_SHA256, self.cache)
         base = self.infra / "fuseki-base"
         base.mkdir(parents=True, exist_ok=True)
-        store = self.data / "tdb2"
-        store.mkdir(parents=True, exist_ok=True)
-        print(f"fuseki: workspaces kept in {store}")
         config = base / "studio.ttl"
-        config.write_text(FUSEKI_CONFIG.replace("{location}", store.resolve().as_posix()), encoding="utf-8", newline="\n")
-        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(FUSEKI_PORT), "--config", str(config)], {"FUSEKI_BASE": str(base)})
+        if self.memory:
+            text = FUSEKI_CONFIG.split("\n<#store>")[0] + "\n" + FUSEKI_MEMORY_STORE
+        else:
+            store = self.data / "tdb2"
+            store.mkdir(parents=True, exist_ok=True)
+            print(f"fuseki: workspaces kept in {store}")
+            text = FUSEKI_CONFIG.replace("{location}", store.resolve().as_posix())
+        config.write_text(text, encoding="utf-8", newline="\n")
+        self.spawn("fuseki", ["java", "-jar", str(jar), "--localhost", "--port", str(self.fuseki_port), "--config", str(config)], {"FUSEKI_BASE": str(base)})
 
     def rabbitmq_home(self) -> Path:
-        return self.infra / f"rabbitmq_server-{RABBITMQ_VERSION}"
+        return self.cache / f"rabbitmq_server-{RABBITMQ_VERSION}"
 
     def rabbitmq_env(self) -> Dict[str, str]:
         data = self.infra / "rabbitmq"
@@ -192,13 +204,13 @@ class Stack:
         plugins = data / "enabled_plugins"
         plugins.write_text(RABBITMQ_PLUGINS, encoding="utf-8", newline="\n")
         conf = data / "rabbitmq.conf"
-        conf.write_text(RABBITMQ_CONF, encoding="utf-8", newline="\n")
+        conf.write_text(RABBITMQ_CONF.format(port=self.stream_port), encoding="utf-8", newline="\n")
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_CONFIG_FILE": str(conf),
             "RABBITMQ_MNESIA_BASE": str(data / "mnesia"), "RABBITMQ_LOG_BASE": str(data / "log"),
-            "RABBITMQ_NODENAME": RABBITMQ_NODE, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
-            "RABBITMQ_NODE_PORT": str(RABBITMQ_PORT), "RABBITMQ_DIST_PORT": str(RABBITMQ_PORT + 20000),
+            "RABBITMQ_NODENAME": self.rabbitmq_node, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
+            "RABBITMQ_NODE_PORT": str(self.rabbitmq_port), "RABBITMQ_DIST_PORT": str(self.rabbitmq_dist_port),
         }
         erl = shutil.which("erl")
         if erl is None:
@@ -207,10 +219,10 @@ class Stack:
         return env
 
     def rabbitmq(self) -> None:
-        archive = download(f"{RABBITMQ_RELEASE}/{RABBITMQ_ARCHIVE[0]}", RABBITMQ_ARCHIVE[1], self.infra)
+        archive = download(f"{RABBITMQ_RELEASE}/{RABBITMQ_ARCHIVE[0]}", RABBITMQ_ARCHIVE[1], self.cache)
         home = self.rabbitmq_home()
         if not home.exists():
-            extract(archive, self.infra)
+            extract(archive, self.cache)
         self.spawn("rabbitmq", [str(home / "sbin" / ("rabbitmq-server.bat" if WINDOWS else "rabbitmq-server"))], self.rabbitmq_env())
 
     # --- the stack -------------------------------------------------------------------------------
@@ -347,7 +359,8 @@ def stop_tree(pid: int, grace: float = 60.0) -> None:
         return
     try:
         os.killpg(pid, signal.SIGTERM)
-    except ProcessLookupError:
+    except (ProcessLookupError, PermissionError):
+        # The group has gone, or the pid is another user's after the process exited and its number was reused.
         return
     deadline = time.monotonic() + grace
     while time.monotonic() < deadline and alive(pid):
