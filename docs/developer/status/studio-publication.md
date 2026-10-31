@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🔴 PB1 to PB12 built 2026-10-31, PB-Q12 and PB-Q13 wait for the maintainer
+**Status:** 🟡 PB1 to PB12 built 2026-10-31, PB13 to PB16 under way
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -44,7 +44,9 @@ PB12 was built on 2026-10-31. `contracts/config-studio/persistence-profile.ttl` 
 
 **Found while writing PB12.** The generated named-graph `cas-replace` fills its whole payload once per stored triple, as TD-42 found for the composite replace, and took 28 s on Jena in memory for a 3,000-triple part, where two guarded operations in one request took 0.11 s. That is PB-Q13 in the sketch's §9, and PB13 to PB15 wait for it.
 
-**Next action, for the maintainer:** answer PB-Q13, on which PB13 to PB15 wait, and PB-Q12, on which PB16 waits. Review ADR-A149 and PB-D1 to PB-D9.
+The maintainer answered PB-Q13 (b) and PB-Q12 (b) on 2026-10-31. The compiler is not changed until a linear replace is investigated, which the [linear replace sketch](../sketches/persistence-linear-named-graph-replace.md) briefs for another session. The writer replaces parts and documents by hand meanwhile, recorded as ADR-A149's addendum and TD-136. Projections are refreshed by worker jobs, and a surface backend that maintains them in the writer's request is BL-09.
+
+**Next action:** build PB13 to PB16 in order. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D9.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.
@@ -57,3 +59,4 @@ PB12 was built on 2026-10-31. `contracts/config-studio/persistence-profile.ttl` 
 - 2026-10-31: PB8 and PB9 built. PB10's brief written, PB-Q8 to PB-Q11 raised.
 - 2026-10-31: PB-Q8 to PB-Q11 answered, ADR-A149 decisions 12 to 14 added, phase D planned as PB11 to PB16, PB-Q12 raised.
 - 2026-10-31: PB11 and PB12 built. TD-42 extended with the named-graph replace's cost on Jena. PB-Q13 raised.
+- 2026-10-31: PB-Q12 and PB-Q13 answered (b). The linear replace sketch written, TD-136 and BL-09 added, ADR-A149 decision 12 narrowed by an addendum.

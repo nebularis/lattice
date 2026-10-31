@@ -630,6 +630,7 @@ reading.
 | **Status Record** | [formal-methods.md](status/formal-methods.md) |
 | **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](sketches/persistence-aggregate-ownership.md), from the [exploration note](notes/persistence-aggregate-ownership.md), its [spike](../../spikes/persistence-aggregate-ownership/README.md) and the [review](notes/persistence-aggregate-ownership-review.md). Slices HO0 to HO9 in [plan §3.5](plans/formal-methods-track-h.md#35-ho-aggregate-ownership), each with a [Validation Pack](validation/FMH-HO0.md) (`FMH-HO0` to `FMH-HO9`), merged and signed off 2026-10-10. [ADR-A122](../architecture/decisions/ADR-A122-aggregate-ownership.md), Accepted |
 | **Track H, H2 (typed IR)** | briefed 2026-10-10 in [formal-methods-track-h-typed-ir.md](sketches/formal-methods-track-h-typed-ir.md). H2.0 to H2.3 merged and signed off 2026-10-12. On branch `claude/nice-bohr-pmj43u`, every planned H2 slice built by 2026-10-21, each with its Validation Pack: H2.4a to H2.6g ([FMH-H2-6g](validation/FMH-H2-6g.md)), H2.7, H2.8a to H2.8c ([FMH-H2-8c](validation/FMH-H2-8c.md)), H2.9, Mustache retired ([FMH-H2-9](validation/FMH-H2-9.md)), and H2.11a and H2.11b, the Persistence README as a literate specification ([FMH-H2-11a](validation/FMH-H2-11a.md), [FMH-H2-11b](validation/FMH-H2-11b.md)), with W-65 and AIR-66. The persistence tests run on Oxigraph by default, with conformance on every engine before a merge ([FMH-TS-1](validation/FMH-TS-1.md), [FMH-TS-2](validation/FMH-TS-2.md)). Release 0.19.0 prepared for the merge. Live state in the [status record](status/formal-methods-track-h.md) |
+| **A linear replace** | briefed 2026-10-31 in [persistence-linear-named-graph-replace.md](sketches/persistence-linear-named-graph-replace.md), from the studio-publication unit's PB-Q13: the generated named-graph and composite replace are quadratic in an aggregate's size, and which linear form is safe on which store is to be investigated. TD-42, TD-136 |
 | **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Accepted), the typed operation IR (H, A-123, Accepted 2026-10-10, with a dated addendum to A-79), the caller library (H, A-132, Accepted), with addenda to A-79, A-123, A-125 and A-126 |
 
 Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
@@ -842,7 +843,7 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 PB1 to PB12 built 2026-10-31, PB13 to PB15 wait on PB-Q13 and PB16 on PB-Q12 |
+| **Status** | 🟡 PB1 to PB12 built 2026-10-31, PB13 to PB16 under way |
 | **Unit ID** | `studio-publication` |
 | **Sketch** | [studio-publication.md](sketches/studio-publication.md) |
 | **Plan** | [studio-publication.md](plans/studio-publication.md) |
