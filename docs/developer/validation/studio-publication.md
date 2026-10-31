@@ -193,3 +193,19 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** No write names a blank node with a skolem IRI yet. PB13 makes the writer do it. A cycle of blank nodes is named by its shape alone and told apart by a count, which no authored layer is known to hold.
 
+## PB13: the operations layer
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB13-01 | each of the six families / created, replaced at seq 1, then tombstoned / seq 1 with the payload and its claim, then seq 2 with the new payload alone, then an empty graph and no seq | L4 | + | pass, 6 runs |
+| PB13-02 | each family / a stale replace, a replayed transaction, a create over an existing row, a stale tombstone / every quad unchanged | L4 | − | pass |
+| PB13-03 | a part and a document of 300 triples replaced by 300 others with a delta / by the generated replace and by the linear one, on identical datasets / every quad equal but `pat:recordedAt`, and the linear one is two operations | L4 | + | pass, 2 runs |
+| PB13-04 | a part and a document / replaced either way / the revision's add and del graphs hold the delta given | L4 | + | pass, 2 runs |
+| PB13-05 | a payload or delta with a blank node / built / refused before any text is built, and its skolemised form accepted and read back as a blank node | L8 | − | pass |
+| PB13-06 | a root holding `:`, `/` and `~` / named / the graph SPARQL's own `ENCODE_FOR_URI` names, and the generated `sameTerm` guard accepts it | L3 | + | pass |
+| PB13-07 | a payload literal reading `$root ?g {{{assertTriples}}}` / written / stored as it is | L8 | − | pass |
+
+`StudioOperationsTest`, 15 tests, by `mise run check:config-studio`.
+
+**Found.** A tombstoned root keeps its version row, so it cannot be created again. A workspace, a part and a document are never created again under a deleted root, since their roots hold a new id, but an import released by every workspace and swept would be, so PB14 never tombstones an import.
+

@@ -58,6 +58,11 @@ public final class StudioStore implements AutoCloseable {
           FILTER (?finished < ?cutoff)
         }""";
 
+    private static final String VERSION_ROW_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
+        + "SELECT ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } } }";
+    private static final String CLAIM_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
+        + "SELECT ?rev WHERE { GRAPH ?txn { ?claim pat:rev ?rev } }";
+
     private static final String RECEIPTS_QUERY = PREFIXES
         + "SELECT ?id ?revision WHERE { GRAPH ?g { ?r cst:commandId ?id OPTIONAL { ?r cst:receiptRevision ?revision } } }";
 
@@ -91,6 +96,37 @@ public final class StudioStore implements AutoCloseable {
         ParameterizedSparqlString query = new ParameterizedSparqlString(GRAPH_QUERY);
         query.setIri("g", graphIri);
         return Skolem.unskolemise(connection.queryConstruct(query.asQuery()));
+    }
+
+    /** As {@link #graph}, with each skolem IRI kept, which is how the graph is stored and what a delta is computed against. */
+    public Model rawGraph(String graphIri) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(GRAPH_QUERY);
+        query.setIri("g", graphIri);
+        return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The {@code pat:seq} of {@code root}'s version row in {@code metaGraph}, empty when it has no row or the row is tombstoned. */
+    public java.util.Optional<Long> versionSeq(String metaGraph, String root) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROW_QUERY);
+        query.setIri("meta", metaGraph);
+        query.setIri("root", root);
+        List<Long> out = new ArrayList<>();
+        connection.querySelect(query.asQuery(), row -> {
+            if (!(row.contains("deleted") && "true".equals(row.getLiteral("deleted").getLexicalForm()))) {
+                out.add(row.getLiteral("seq").getLong());
+            }
+        });
+        return out.stream().findFirst();
+    }
+
+    /** The {@code pat:rev} that transaction {@code txnId} claimed in {@code txnGraph}, empty when it has not claimed one. */
+    public java.util.Optional<String> claimRev(String txnGraph, String txnId) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(CLAIM_QUERY);
+        query.setIri("txn", txnGraph);
+        query.setIri("claim", txnId);
+        List<String> out = new ArrayList<>();
+        connection.querySelect(query.asQuery(), row -> out.add(row.getResource("rev").getURI()));
+        return out.stream().findFirst();
     }
 
     public Model workspaces() {

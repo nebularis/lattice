@@ -5,6 +5,7 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
+    <module>../packages/persistence/java</module>
     <module>semantic-dataset-spi</module>
     <module>semantic-dataset-fuseki</module>
     <module>semantic-policy</module>

@@ -218,7 +218,7 @@ The ODRL mappings sample holds a mapping part of a few thousand triples, so ever
 | holders | the workspaces that follow or pin each lineage, and hold each import | nothing today. It answers who reads a version before a change is published, keeps a pinned version from being pruned, and finds an import no workspace holds (TD-135) |
 | terms of published versions | each term every version defines, with its label, kind and version | nothing today. It lets a binding's chooser and a proposer find a term across the registry |
 
-## 10. How the studio's projections stay fresh (PB16)
+## 10. How the studio's projections stay fresh (PB17)
 
 **The scene.** A surface contract is compiled by `tools/surface`, a Python generator that reads a graph and materialises a generated surface with the read set it was built from (the Surface README's "Derived records and staying fresh"). It is a batch compiler. It has no operation a writer runs per write, and nothing in the studio runs it today. Each projection of §9 is derived and can be rebuilt from the graph (PRI-52), so the question is when it is brought up to date, and what a reader sees in between.
 
