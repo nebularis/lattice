@@ -9,8 +9,9 @@ public final class Graphs {
     public static final String JOB_PREFIX = "urn:lattice:studio:job:";
     private static final Pattern UUID = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
-    /** The registry's graphs, a lineage's and each of its versions'. They belong to no workspace. */
-    public static final String PUBLICATION_PREFIX = "urn:lattice:studio:pub:";
+    /** The registry's graphs, a lineage's and each of its versions', named by the profile's rule. They belong to no workspace. */
+    public static final String LINEAGE_PREFIX = "urn:lattice:studio:lineage/";
+    public static final String VERSION_PREFIX = "urn:lattice:studio:version/";
 
     private Graphs() {
     }
@@ -121,19 +122,14 @@ public final class Graphs {
         return "urn:lattice:studio:receipt:" + command;
     }
 
-    /** The registry graph of the lineage {@code lineageIri}, named by a hash so the IRI stays a legal graph name. */
+    /** The graph of the lineage {@code lineageIri}, whose root is the lineage's IRI. */
     public static String lineage(String lineageIri) {
-        try {
-            byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(lineageIri.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return PUBLICATION_PREFIX + java.util.HexFormat.of().formatHex(hash).substring(0, 32);
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        return LINEAGE_PREFIX + encodeForUri(lineageIri);
     }
 
-    /** The immutable graph of a version, {@code digest16} the digest in its IRI. */
+    /** The immutable graph of a version, whose root is its IRI, the lineage's, {@code /rev/1-} and {@code digest16}. */
     public static String version(String lineageIri, String digest16) {
-        return lineage(lineageIri) + ":rev:" + digest16;
+        return VERSION_PREFIX + encodeForUri(lineageIri + "/rev/1-" + digest16);
     }
 
     /** Whether {@code iri} may name a published unit, an absolute http, https or urn IRI that the studio did not mint. */
@@ -149,7 +145,7 @@ public final class Graphs {
         }
     }
 
-    private static final Pattern VERSION_GRAPH = Pattern.compile(Pattern.quote(PUBLICATION_PREFIX) + "[0-9a-f]{32}:rev:[0-9a-f]{16}");
+    private static final Pattern VERSION_GRAPH = Pattern.compile(Pattern.quote(VERSION_PREFIX) + "[A-Za-z0-9%._~-]+%2Frev%2F1-[0-9a-f]{16}");
 
     /** Whether {@code iri} names a version's graph, which is immutable and readable by everyone. */
     public static boolean isVersionGraph(String iri) {

@@ -167,7 +167,7 @@ class DependenciesTest {
         assertEquals(200, ok.status(), ok.message());
         assertEquals(400, submitWith(Graphs.lineage(UNIT)).status(), "a lineage graph is not a version graph");
         assertEquals(400, submitWith(good + "0").status());
-        assertEquals(400, submitWith(Graphs.PUBLICATION_PREFIX + "ABC:rev:" + D1).status());
+        assertEquals(400, submitWith(Graphs.VERSION_PREFIX + "ABC%2Frev%2F1-" + D1.toUpperCase()).status());
         assertEquals(400, submitWith(Graphs.workspace(Fixture.id(2)) + ":surface").status());
     }
 

@@ -38,7 +38,7 @@ public final class StudioStore implements AutoCloseable {
     private static final String REGISTRY_QUERY = PREFIXES + """
         CONSTRUCT { ?lineage cst:current ?version } WHERE {
           GRAPH ?g { ?lineage cst:current ?version }
-          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:pub:"))
+          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:lineage/"))
         }""";
     private static final String COMPILE_JOBS_QUERY = PREFIXES + """
         CONSTRUCT {

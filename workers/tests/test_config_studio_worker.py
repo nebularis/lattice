@@ -17,6 +17,7 @@ from lattice_workers import config_studio_jobs as jobs
 from lattice_workers.config_studio_jobs import CST, SH
 from lattice_workers.config_studio_worker import ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore
 from lattice_workers.fuseki_gsp import GraphNotFound
+from lattice_workers.config_studio_publish import version_graph
 
 CATALOGUE = jobs.catalogue()
 ROOT = jobs.find_root()
@@ -840,7 +841,7 @@ def test_a_dependency_s_version_is_read_as_context_under_its_version_and_its_lin
     store = FakeStore()
     job_iri = submit(store, "validate", "vocabulary", None)
     job = URIRef(job_iri)
-    graph_iri = "urn:lattice:studio:pub:" + "a" * 32 + ":rev:" + "b" * 16
+    graph_iri = version_graph("https://example.org/perils/rev/1-" + "b" * 16)
     lineage, version = URIRef("https://example.org/perils"), URIRef("https://example.org/perils/rev/1-" + "b" * 16)
     v = Graph()
     v.add((version, URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity"), lineage))
@@ -857,7 +858,7 @@ def test_a_compiled_artefact_names_its_job_its_input_and_each_version_it_read():
     store = FakeStore()
     job_iri = submit(store, "compile", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
     job = URIRef(job_iri)
-    graph_iri = "urn:lattice:studio:pub:" + "c" * 32 + ":rev:" + "d" * 16
+    graph_iri = version_graph("https://example.org/scheme/rev/1-" + "d" * 16)
     version = URIRef("https://example.org/scheme/rev/1-" + "d" * 16)
     store.graphs[graph_iri] = Graph()
     store.graphs[graph_iri].add((version, URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity"), URIRef("https://example.org/scheme")))

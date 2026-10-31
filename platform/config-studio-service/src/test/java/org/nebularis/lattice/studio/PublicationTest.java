@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -27,6 +28,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.nebularis.lattice.studio.api.ApiResponse;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.store.StudioOperations;
+import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
 import org.nebularis.lattice.studio.writes.Writer;
@@ -217,5 +220,101 @@ class PublicationTest {
         assertTrue(Fixture.model(first).isIsomorphicWith(content(D1)), "a superseded version reads as it was published");
         assertEquals(404, f.send("GET", "/api/registry/lineage", "iri=https%3A%2F%2Fexample.org%2Fnever", reviewer, new byte[0]).status());
         assertEquals(404, f.send("GET", "/api/registry/version", "iri=" + enc + "%2Frev%2F1-" + "1111111111111111", reviewer, new byte[0]).status());
+    }
+
+    @Test
+    void theRegistryReadsTheLineageAndVersionGraphsTheProfileNames() {
+        assertEquals(201, publish(finished(D1)).status());
+        assertEquals(Graphs.LINEAGE_PREFIX + java.net.URLEncoder.encode(UNIT, StandardCharsets.UTF_8).replace("+", "%20"), Graphs.lineage(UNIT));
+        assertEquals(Fixture.OPS.graph(StudioOperations.Family.LINEAGE, UNIT), Graphs.lineage(UNIT));
+        assertEquals(Fixture.OPS.graph(StudioOperations.Family.VERSION, version(D1)), Graphs.version(UNIT, D1));
+        assertEquals(Optional.of(1L), Fixture.OPS.seq(f.store, StudioOperations.Family.LINEAGE, UNIT));
+        assertEquals(Optional.of(1L), Fixture.OPS.seq(f.store, StudioOperations.Family.VERSION, version(D1)));
+        Model listed = f.store.registry();
+        assertTrue(listed.contains(listed.createResource(UNIT), Cst.current, listed.createResource(version(D1))));
+        assertEquals(1, listed.size(), "the registry lists a lineage once, from its graph alone");
+        ApiResponse bundle = f.send("GET", "/api/registry/bundle", "iri=" + java.net.URLEncoder.encode(version(D1), StandardCharsets.UTF_8), Map.of(), new byte[0]);
+        assertEquals(200, bundle.status());
+        Dataset trig = DatasetFactory.create();
+        RDFDataMgr.read(trig, new java.io.ByteArrayInputStream(bundle.body()), Lang.TRIG);
+        assertTrue(trig.containsNamedModel(version(D1)), "the bundle names each graph by its version's IRI");
+    }
+
+    private static Model baseline() {
+        Model m = ModelFactory.createDefaultModel();
+        m.add(m.createResource("https://example.org/a"), m.createProperty("https://example.org/p"), m.createResource("https://example.org/b"));
+        return m;
+    }
+
+    /** A second store over the first's data whose first read of {@code graph} runs {@code interleave} after the read answers. */
+    private static StudioStore interleaving(org.apache.jena.rdfconnection.RDFConnection real, String graph, Runnable interleave) {
+        java.util.concurrent.atomic.AtomicBoolean fired = new java.util.concurrent.atomic.AtomicBoolean();
+        return new StudioStore(new org.apache.jena.rdfconnection.RDFConnectionWrapper(real) {
+            @Override
+            public Model queryConstruct(org.apache.jena.query.Query query) {
+                Model answer = super.queryConstruct(query);
+                if (query.toString().contains("<" + graph + ">") && fired.compareAndSet(false, true)) {
+                    interleave.run();
+                }
+                return answer;
+            }
+        });
+    }
+
+    @Test
+    void aPublishPlannedFromTheStateBeforeAnotherCommittedIsStaleAndLeavesNoReceipt() {
+        org.apache.jena.rdfconnection.RDFConnection real = org.apache.jena.rdfconnection.RDFConnection.connect(DatasetFactory.createTxnMem());
+        StudioStore plain = new StudioStore(real);
+        Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
+        Writer first = new Writer(plain, Fixture.OPS, clock);
+        assertEquals(200, first.apply(Command.create(WS, "Plan", Instant.parse("2026-10-27T10:00:00Z"), null,
+            baseline())).status());
+        Writer second = new Writer(interleaving(real, Graphs.lineage(UNIT), () -> assertEquals(200, first.apply(Command.publish(WS, UNIT, version(D1), content(D1))).status())),
+            Fixture.OPS, clock);
+        Command mine = Command.publish(WS, UNIT, version(D2), content(D2));
+        Reply r = second.apply(mine);
+        assertEquals(400, r.status());
+        assertEquals("the lineage was published meanwhile, so publish again", r.message());
+        Model lineage = plain.graph(Graphs.lineage(UNIT));
+        Resource unit = lineage.createResource(UNIT);
+        assertEquals(java.util.List.of(lineage.createResource(version(D1))), lineage.listObjectsOfProperty(unit, Cst.current).toList(), "one current version");
+        assertTrue(plain.receipts(java.util.List.of(mine.id())).isEmpty(), "the stale command has no receipt");
+        assertEquals(Optional.of(1L), Fixture.OPS.seq(plain, StudioOperations.Family.LINEAGE, UNIT));
+        // Sent again, it plans from the new state and applies.
+        assertEquals(200, second.apply(Command.publish(WS, UNIT, version(D2), content(D2))).status());
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(plain, StudioOperations.Family.LINEAGE, UNIT));
+    }
+
+    @Test
+    void aVersionOrphanedByALostRaceIsReusedByTheNextPublishOfTheSameContent() {
+        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        // The version's row and graph are there, as a publish that lost the race left them, and no lineage names it.
+        f.store.update(new org.apache.jena.update.UpdateRequest().add(
+            Fixture.OPS.create(StudioOperations.Family.VERSION, version(D1),
+                org.nebularis.lattice.studio.store.Skolem.skolemise(content(D1)), "urn:txn:orphan/1").get(0)));
+        Model before = f.store.rawGraph(Graphs.version(UNIT, D1));
+        assertFalse(before.isEmpty());
+        assertTrue(f.store.graph(Graphs.lineage(UNIT)).isEmpty());
+        assertEquals(200, w.apply(Command.publish(WS, UNIT, version(D1), content(D1))).status());
+        assertTrue(f.store.rawGraph(Graphs.version(UNIT, D1)).isIsomorphicWith(before), "the version's graph is as it was");
+        assertEquals(Optional.of(1L), Fixture.OPS.seq(f.store, StudioOperations.Family.VERSION, version(D1)), "its row did not move");
+        Model lineage = f.store.graph(Graphs.lineage(UNIT));
+        assertTrue(lineage.contains(lineage.createResource(UNIT), Cst.current, lineage.createResource(version(D1))));
+    }
+
+    @Test
+    void publishingAnUnchangedUnitAgainWritesNothingAndAnswersCurrent() {
+        assertEquals(201, publish(finished(D1)).status());
+        Model lineage = f.store.rawGraph(Graphs.lineage(UNIT));
+        Model version = f.store.rawGraph(Graphs.version(UNIT, D1));
+        Writer w = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
+        Command again = Command.publish(WS, UNIT, version(D1), content(D1));
+        Reply r = w.apply(again);
+        assertEquals(200, r.status());
+        assertEquals("current", r.message());
+        assertTrue(f.store.rawGraph(Graphs.lineage(UNIT)).isIsomorphicWith(lineage));
+        assertTrue(f.store.rawGraph(Graphs.version(UNIT, D1)).isIsomorphicWith(version));
+        assertEquals(Optional.of(1L), Fixture.OPS.seq(f.store, StudioOperations.Family.LINEAGE, UNIT));
+        assertTrue(f.store.receipts(java.util.List.of(again.id())).isEmpty(), "nothing was written, not even a receipt");
     }
 }

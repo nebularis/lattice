@@ -229,3 +229,17 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** A store written before PB14 reads as holding no workspace until PB16 migrates it. The workspace listing reads each description and scans each family's meta graph, which PB17's summary replaces. Not checked live, since a running studio needs PB16 first.
 
+## PB15: the registry on generated operations
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB15-01 | a publish planned from the lineage as it was before another writer's publish committed / applied / stale, no receipt, one current version, and applied when sent again | L4 | − | pass |
+| PB15-02 | a version orphaned by a lost race, its row and graph present and no lineage naming it / the same content published / the graph and row unchanged, and the lineage current at it | L4 | + | pass |
+| PB15-03 | a unit published unchanged / published again / `current`, nothing written and no receipt | L4 | + | pass |
+| PB15-04 | a published version / listed, read, its lineage read and bundled / from the graphs the profile names, the bundle naming the graph by the version's IRI | L3 | + | pass |
+| PB15-05 | a lineage IRI with non-ASCII characters and `?&# ` / named by the worker / the profile's prefix and SPARQL's `ENCODE_FOR_URI` of the root | L1 | + | pass |
+
+`PublicationTest`, `GraphsTest` and `workers/tests/test_config_studio_publish.py`, by `mise run check:config-studio` and `mise run check:workers`.
+
+**Not covered.** The worker restates the registry's prefixes in two modules, each held to the profile by a test. Not checked live, for the reason PB14 gives.
+

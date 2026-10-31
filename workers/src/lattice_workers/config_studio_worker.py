@@ -38,12 +38,14 @@ def _graph(prefix: str, root: str) -> str:
 
 
 _PART = "urn:lattice:studio:part/"
+_LINEAGE = "urn:lattice:studio:lineage/"
+_VERSION = "urn:lattice:studio:version/"
 # The configuration parts a job may read as context, beside its target (ADR-A149 decision 7).
 _FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")
 _PROV = Namespace("http://www.w3.org/ns/prov#")
 _HAS_IDENTITY = URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity")
 _IMPORT_GRAPH = re.compile(re.escape(_graph("urn:lattice:studio:imported/", "urn:lattice:studio:import:")) + "[0-9a-f]{64}")
-_VERSION_GRAPH = re.compile(r"urn:lattice:studio:pub:[0-9a-f]{32}:rev:[0-9a-f]{16}")
+_VERSION_GRAPH = re.compile(re.escape(_VERSION) + r"[A-Za-z0-9%._~-]+%2Frev%2F1-[0-9a-f]{16}")
 _PARTS = ("library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
@@ -249,7 +251,7 @@ class ConfigStudioWorker:
 
     def _registry(self, iri: str) -> Graph:
         """A registry graph, which everyone may read, or an empty one when the registry holds none."""
-        if not iri.startswith("urn:lattice:studio:pub:"):
+        if not iri.startswith((_LINEAGE, _VERSION)):
             raise ValueError(f"{iri} is not a registry graph")
         try:
             return self._get(iri)

@@ -10,7 +10,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import SKOS
 
 from lattice_workers.config_studio_jobs import CST
-from lattice_workers.config_studio_publish import HAS_IDENTITY, prepare
+from lattice_workers.config_studio_jobs import catalogue
+from lattice_workers.config_studio_publish import HAS_IDENTITY, prepare, registry_graph, version_graph
 
 JOB = URIRef("urn:lattice:studio:job:00000000-0000-0000-0000-0000000000cc")
 PERILS = URIRef("https://example.org/perils")
@@ -134,3 +135,22 @@ def test_a_fence_job_digests_an_import_so_equal_imports_name_one_graph():
     assert a == b and len(str(a)) == 64
     with pytest.raises(ValueError, match="no triple"):
         fence(JOB, Graph())
+
+
+def _encode_for_uri(text: str) -> str:
+    """SPARQL's ENCODE_FOR_URI, written out byte by byte so the test does not rest on the code it holds equal."""
+    return "".join(chr(b) if chr(b) in "-_.~" or chr(b).isascii() and chr(b).isalnum() else f"%{b:02X}" for b in text.encode("utf-8"))
+
+
+@pytest.mark.parametrize("lineage", ["https://example.org/perils", "urn:example:unit?a=b&c=\u00e9 #f"])
+def test_the_registry_graphs_are_named_by_the_profiles_rule(lineage):
+    """The persistence profile names a root's graph by a prefix and the root encoded, which the writer's operations apply."""
+    c = catalogue()
+    profile = Graph().parse(c.root / c.area("contracts") / "config-studio" / "persistence-profile.ttl", format="turtle")
+    dal = "https://www.nebularis.org/neuro-semantic/lattice/persistence#graphIriTemplate"
+    cst = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#"
+    lineage_prefix = str(profile.value(URIRef(cst + "LineageProfile"), URIRef(dal))).removesuffix("{id}")
+    version_prefix = str(profile.value(URIRef(cst + "VersionProfile"), URIRef(dal))).removesuffix("{id}")
+    version = f"{lineage}/rev/1-0123456789abcdef"
+    assert registry_graph(lineage) == lineage_prefix + _encode_for_uri(lineage)
+    assert version_graph(version) == version_prefix + _encode_for_uri(version)

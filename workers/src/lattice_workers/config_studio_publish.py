@@ -7,9 +7,9 @@ but the job. Publishing the version is the service's and the writer's, after the
 from __future__ import annotations
 
 import functools
-import hashlib
 from collections import deque
 from typing import Callable
+from urllib.parse import quote
 
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.namespace import RDF
@@ -78,9 +78,23 @@ def version_of(content: Graph, lineage: URIRef) -> tuple[URIRef, str, Graph]:
     return version, full, published
 
 
+LINEAGE_PREFIX = "urn:lattice:studio:lineage/"
+VERSION_PREFIX = "urn:lattice:studio:version/"
+
+
+def _encode(root: str) -> str:
+    """The root as SPARQL's ENCODE_FOR_URI writes it, which the persistence profile's graph rule applies."""
+    return quote(root, safe="-_.~")
+
+
 def registry_graph(lineage: str) -> str:
-    """The registry graph of `lineage`, as the writer names it."""
-    return "urn:lattice:studio:pub:" + hashlib.sha256(lineage.encode("utf-8")).hexdigest()[:32]
+    """The graph of the lineage `lineage`, as the writer names it by the profile's rule."""
+    return LINEAGE_PREFIX + _encode(lineage)
+
+
+def version_graph(version: str) -> str:
+    """The graph of the version `version`, whose root is the version's IRI."""
+    return VERSION_PREFIX + _encode(version)
 
 
 def pin(content: Graph, root: URIRef, context: Graph, registry: Callable[[str], Graph]) -> Graph:

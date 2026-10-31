@@ -27,8 +27,8 @@ Fuseki serves the one database as two services: `studio` reads only, through que
 | `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job` node, whose IRI is the graph's |
 | `urn:lattice:studio:job:{job}:input` | writer, once | the configuration as submitted |
 | `urn:lattice:studio:imported/{root}` | writer, once | a fenced import, whose root is `urn:lattice:studio:import:{digest}`, `{digest}` the SHA-256 of its RDFC-1.0 canonical N-Quads. `cst:holdsImport` names the root. Stored once, whichever workspaces hold it, and never edited or tombstoned (ADR-A149 decision 6) |
-| `urn:lattice:studio:pub:{lineage}` | writer | a published lineage, `{lineage}` the first 32 hexadecimal digits of the SHA-256 of its IRI: the `fnd:PersistentIdentity`, each `fnd:hasVersion`, the `cst:current` version, each `fnd:supersededBy`, and each `cst:Publication` event. Global, not a workspace's (ADR-A149) |
-| `urn:lattice:studio:pub:{lineage}:rev:{digest}` | writer, once | one version's content, `{digest}` the version IRI's 16 hexadecimal digits. Immutable |
+| `urn:lattice:studio:lineage/{root}` | writer | a published lineage, whose root is the lineage's IRI: the `fnd:PersistentIdentity`, each `fnd:hasVersion`, the `cst:current` version, each `fnd:supersededBy`, and each `cst:Publication` event. Its sequence counts the lineage's publications. Global, not a workspace's (ADR-A149) |
+| `urn:lattice:studio:version/{root}` | writer, once | one version's content, whose root is the version's IRI, `{lineage}/rev/1-{digest}`. Immutable, and created again as a no-op since the same digest is the same content |
 
 The version rows are in a meta graph of each family, which the persistence profile's generated operations keep, with the claim of each transaction, `urn:txn:{command id}/{n}`. A graph the writer writes from an author's statements holds no blank node, since a generated operation's payload cannot (ADR-A149 decision 13). Each is stored as a skolem IRI, `urn:lattice:studio:genid:{name}`, `{name}` the first 32 hexadecimal digits of the SHA-256 of what the node says and where it is named from, with `-{n}` telling identical nodes apart. The service and the worker read every skolem IRI back as a blank node. The studio's persistence profile, `persistence-profile.ttl`, declares its aggregates, which the stage compiles with the operations the writer runs.
 
@@ -212,7 +212,7 @@ Publishing a unit is two requests the browser sequences, as a transform is (ADR-
 
 A unit's references to other units are pinned when it is published (decision 5). A reference to a published lineage, which a draft follows, is rewritten to its current version, and a reference to a member of a published version, such as a concept of a scheme's edition, is kept. Either way the version names what it depends on with `cst:pins`, which the digest covers, so a new edition of what it pins makes a new version of it. A reference to the root of a unit nobody has published fails the job. A publish job may take its unit from a held import instead of a part, with `target=import&graph={digest}`. A validation, compilation, dry run or publish job also reads its workspace's held imports and, as context, the version each of its workspace's dependencies resolves to when it is submitted, under the version's IRI and under its lineage's.
 
-`POST /api/workspaces/{ws}/publications?job={job}` then publishes what a finished publish job named, through a `publish` command. The writer adds the version and a `cst:Publication` event to the lineage's registry graph, unless the version is already current, which changes nothing and answers `200`:
+`POST /api/workspaces/{ws}/publications?job={job}` then publishes what a finished publish job named, through a `publish` command. The writer creates the version, which is a no-op where it exists, then creates the lineage or replaces it at the sequence it read, with a `cst:Publication` event, `cst:current` and `fnd:supersededBy` (decision 13). A version orphaned by a publish that lost a race is reused by the next publish of the same content. A lineage replaced meanwhile leaves no receipt and the reply says to publish again. A version that is already current changes nothing and answers `200`. The event is, for example:
 
 ```turtle
 <{lineage}/evt/e1/000002> a cst:Publication , prov:Activity ;
@@ -266,7 +266,8 @@ A writer applies the commands waiting for it, up to 64, in one SPARQL Update req
 | `delete-document` | the description replaced without the document, then the document tombstoned and its patch log graphs dropped |
 | `set-access`, `set-dependencies`, `release` | the description replaced |
 | `fence` | the import created, which writes nothing when it exists since it is stored by its digest, then the description replaced. An import is never tombstoned, since a tombstoned root cannot be created again |
-| `submit-job`, `job-update`, `delete-job`, `publish` | jobs and the registry are written outside the profiles for now. The command's receipt is its first operation, only where its precondition holds, and its other operations require that receipt |
+| `publish` | the version created, then the lineage created or replaced, guarded on the lineage's version row, and the receipt guarded on the lineage's claim. A version that is already current writes nothing |
+| `submit-job`, `job-update`, `delete-job` | jobs are coordination data (PRI-52) and are written outside the profiles. The command's receipt is its first operation, only where its precondition holds, and its other operations require that receipt |
 
 A batch the store refuses is retried whole.
 

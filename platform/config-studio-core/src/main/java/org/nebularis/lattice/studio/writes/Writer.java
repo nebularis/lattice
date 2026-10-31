@@ -50,12 +50,12 @@ import org.nebularis.lattice.studio.store.StudioStore;
  * The writer of a partition is the only code that writes the graphs of the workspaces routed to it, and it checks every
  * command it receives, whatever its sender checked (STD-298).
  *
- * <p>A command on the workspace's aggregates, its description, parts and documents, runs one generated operation for
+ * <p>A command on the workspace's aggregates, its description, parts and documents, or on the registry's lineage and version, runs one generated operation for
  * each aggregate through {@link StudioOperations}, each guarded by the aggregate's version row and in a transaction of its
  * own, {@code urn:txn:{command id}/{n}}. Its {@code cst:Receipt}, with its cause, sender and transaction time (PRI-54), is
  * the last operation, guarded on the claim of the command's last operation, so a guard that fails part way leaves no
- * receipt and the order of the operations leaves nothing a reader acts on (ADR-A149 decision 13). A command on a job or the
- * registry inserts its receipt first, only where its precondition holds, and its other operations are conditional on that
+ * receipt and the order of the operations leaves nothing a reader acts on (ADR-A149 decision 13). A command on a job
+ * inserts its receipt first, only where its precondition holds, and its other operations are conditional on that
  * receipt. After the commit the receipts present are exactly the commands applied. A command whose receipt already exists
  * was applied before, and is answered from the receipt rather than applied again.
  */
@@ -703,10 +703,11 @@ public final class Writer {
         }
 
         /**
-         * One version of a lineage into the registry. The version's graph is immutable and stored once by its digest. The
-         * lineage's graph holds its identity, its versions, the current one and the chain of publication events. The
-         * guard is the current version the writer read, so a publication that lost a race is refused and the chain
-         * never forks. A version that is already current changes nothing and answers "current".
+         * One version of a lineage into the registry, as two generated operations and the receipt (ADR-A149 decision 13). The
+         * version's graph is created first and is immutable, so one that exists is reused. The lineage's graph holds its identity,
+         * its versions, the current one and the chain of publication events, and is created or replaced at the sequence the writer
+         * read, so a publication that lost a race gets no receipt and the chain never forks. A version that is already current
+         * changes nothing and answers "current".
          */
         private Reply publish(int index, Command c) {
             String lineage = c.part();
@@ -725,6 +726,9 @@ public final class Writer {
                 return Reply.notFound();
             }
             String lineageGraph = Graphs.lineage(lineage);
+            // The row is read before the graph, so a lineage replaced between the two reads fails the replace's guard
+            // and is never overwritten from a graph older than the row.
+            long rowSeq = seq(Family.LINEAGE, lineage);
             Model registry = lineages.computeIfAbsent(lineage, k -> store.graph(lineageGraph));
             Resource unit = registry.createResource(lineage);
             Resource previous = registry.listObjectsOfProperty(unit, Cst.current).toList().stream()
@@ -745,7 +749,7 @@ public final class Writer {
             String versionGraph = Graphs.version(lineage, digest);
             String event = lineage + "/evt/e1/" + String.format("%06d", next);
             Model add = ModelFactory.createDefaultModel();
-            Resource unitAdd = add.createResource(lineage).addProperty(RDF.type, Cst.Fnd.PersistentIdentity)
+            add.createResource(lineage).addProperty(RDF.type, Cst.Fnd.PersistentIdentity)
                 .addProperty(Cst.Fnd.hasVersion, add.createResource(version)).addProperty(Cst.current, add.createResource(version));
             Resource e = add.createResource(event).addProperty(RDF.type, Cst.Publication).addProperty(RDF.type, Cst.Prov.Activity)
                 .addLiteral(Cst.sequence, add.createTypedLiteral(next))
@@ -761,23 +765,22 @@ public final class Writer {
             if (previous != null) {
                 add.createResource(previous.getURI()).addProperty(Cst.Fnd.supersededBy, add.createResource(version));
             }
-            String receipts = Graphs.receipts(c.workspace());
-            Node unitNode = iri(lineage);
-            Element guard = previous == null
-                ? group(notExists(quad(lineageGraph, unitNode, Cst.current.asNode(), Var.alloc("current"))))
-                : quad(lineageGraph, unitNode, Cst.current.asNode(), previous.asNode());
-            receipt(c, receipts, guard, List.of(versionGraph, lineageGraph), next);
-            // The same digest is the same content, so a version graph that exists is left as it is.
-            request.add(insert(versionGraph, content, group(mine(c, receipts), notExists(quad(versionGraph, S, P, O)))));
-            request.add(deleteOf(lineageGraph, unitNode, Cst.current.asNode(), mine(c, receipts)));
             // A version published again after being superseded is no longer superseded.
-            request.add(deleteOf(lineageGraph, iri(version), Cst.Fnd.supersededBy.asNode(), mine(c, receipts)));
-            request.add(insert(lineageGraph, add, mine(c, receipts)));
             registry.removeAll(unit, Cst.current, null);
             registry.removeAll(registry.createResource(version), Cst.Fnd.supersededBy, null);
             registry.add(add);
+            Model body = Skolem.skolemise(registry);
+            Steps s = new Steps(c);
+            // The same digest is the same content, so a version whose row exists is left as it is and an orphan is reused.
+            s.op(versionGraph, txn -> ops.create(Family.VERSION, version, Skolem.skolemise(content), txn));
+            s.op(lineageGraph, txn -> rowSeq == 0
+                ? ops.create(Family.LINEAGE, lineage, body, txn)
+                : ops.replace(Family.LINEAGE, lineage, rowSeq, body, null, null, txn));
+            s.commit(Graphs.receipts(c.workspace()), next);
+            seqs.put(lineage, rowSeq + 1);
             return planned(index, c, Reply.ok(next), () -> {
                 lineages.remove(lineage);
+                seqs.remove(lineage);
                 return Reply.refused("the lineage was published meanwhile, so publish again");
             });
         }
@@ -872,15 +875,6 @@ public final class Writer {
         u.getDeleteAcc().addQuad(Quad.create(iri(graph), S, P, O));
         u.setHasDeleteClause(true);
         u.setElement(group(when, quad(graph, S, P, O)));
-        return u;
-    }
-
-    /** Deletes every {@code s p ?o} of a graph, where {@code when} holds. */
-    private static UpdateModify deleteOf(String graph, Node s, Node p, Element when) {
-        UpdateModify u = new UpdateModify();
-        u.getDeleteAcc().addQuad(Quad.create(iri(graph), s, p, O));
-        u.setHasDeleteClause(true);
-        u.setElement(group(when, quad(graph, s, p, O)));
         return u;
     }
 

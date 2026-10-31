@@ -14,6 +14,8 @@ import org.nebularis.lattice.studio.store.StudioOperations.Family;
 class GraphsTest {
     private static final String WS = "00000000-0000-0000-0000-00000000000a";
     private static final String DOC = "00000000-0000-0000-0000-00000000000b";
+    private static final String UNIT = "https://example.org/unit/scheme?a=b&c=\u00e9";
+    private static final String D16 = "0123456789abcdef";
     private static final String DIGEST = "d".repeat(64);
     private static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
 
@@ -26,6 +28,16 @@ class GraphsTest {
         assertEquals(OPS.graph(Family.PART, Graphs.partRoot(WS, "baseline")), Graphs.baseline(WS));
         assertEquals(OPS.graph(Family.DOCUMENT, Graphs.document(WS, DOC)), Graphs.documentGraph(WS, DOC));
         assertEquals(OPS.graph(Family.IMPORT, Graphs.importGraph(DIGEST)), Graphs.importedGraph(DIGEST));
+        assertEquals(OPS.graph(Family.LINEAGE, UNIT), Graphs.lineage(UNIT));
+        assertEquals(OPS.graph(Family.VERSION, UNIT + "/rev/1-" + D16), Graphs.version(UNIT, D16));
+    }
+
+    @Test
+    void aVersionGraphIsRecognisedApartFromALineageGraph() {
+        assertTrue(Graphs.isVersionGraph(Graphs.version(UNIT, D16)));
+        assertFalse(Graphs.isVersionGraph(Graphs.lineage(UNIT)));
+        assertFalse(Graphs.isVersionGraph(Graphs.version(UNIT, D16) + "x"));
+        assertFalse(Graphs.isVersionGraph(Graphs.config(WS, "surface")));
     }
 
     @Test
