@@ -82,6 +82,8 @@ public final class Cst {
             default -> null;
         };
     }
+    /** A published lineage a workspace follows, or a version it pins (ADR-A149 decision 5). */
+    public static final Property dependsOn = p("dependsOn");
     public static final Property job = p("job");
     /** The unit IRI a publish job versions, which becomes the lineage. */
     public static final Property unit = p("unit");

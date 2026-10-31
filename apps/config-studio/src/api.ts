@@ -47,6 +47,8 @@ export interface WorkspaceSummary {
   /** Who owns it, if anyone does, and who may read and write it (ADR-A149 decision 9). */
   owner?: string;
   mode: Mode;
+  /** The published lineages it follows and the versions it pins (ADR-A149 decision 7). */
+  dependsOn: string[];
 }
 
 export type Mode = "locked" | "read-only" | "shared";
@@ -69,6 +71,7 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
     sample: graph.value(iri, CST("fromSample"))?.replace("urn:lattice:studio:sample:", ""),
     owner: graph.value(iri, CST("owner")),
     mode: MODE_NODES[localName(graph.value(iri, CST("mode")) ?? "")] ?? "shared",
+    dependsOn: graph.objects(iri, CST("dependsOn")).map((d) => d.value).sort(),
     revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
 }
@@ -176,6 +179,20 @@ export const api = {
   async publish(id: string, job: string): Promise<Graph> {
     const response = await request(`/api/workspaces/${id}/publications?job=${job}`, { method: "POST" });
     return Graph.parse(await response.text());
+  },
+
+  /** Every published lineage, by its current version. */
+  async registry(): Promise<{ lineage: string; current: string }[]> {
+    const { graph } = await turtle("/api/registry");
+    return graph.quads(null, CST("current")).map((q) => ({ lineage: q.subject.value, current: q.object.value })).sort((a, b) => a.lineage.localeCompare(b.lineage));
+  },
+
+  /** Sets what the workspace depends on: lineages it follows and versions it pins. */
+  async setDependencies(id: string, iris: string[]): Promise<WorkspaceSummary> {
+    const iri = `urn:lattice:studio:ws:${id}`;
+    const body = iris.map((d) => `<${iri}> <${CST("dependsOn")}> <${d}> .`).join("\n");
+    const response = await request(`/api/workspaces/${id}/dependencies`, { method: "PUT", headers: { "Content-Type": TURTLE }, body });
+    return summary(Graph.parse(await response.text()), iri);
   },
 
   /** A lineage's registry graph: its versions, its current version and its publications. Null when it was never published. */

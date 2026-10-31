@@ -821,3 +821,20 @@ def test_a_publish_job_names_the_version_of_the_unit_it_names():
     g.set((job, CST.unit, URIRef("https://example.org/fire")))
     ConfigStudioWorker(store, ROOT, _clock()).handle(job_iri)
     assert store.graphs[job_iri].value(job, CST.status) == CST.Failed
+
+
+def test_a_dependency_s_version_is_read_as_context_under_its_version_and_its_lineage():
+    """ADR-A149: a draft that follows a lineage names the lineage, so its version is read under both IRIs."""
+    store = FakeStore()
+    job_iri = submit(store, "validate", "vocabulary", None)
+    job = URIRef(job_iri)
+    graph_iri = "urn:lattice:studio:pub:" + "a" * 32 + ":rev:" + "b" * 16
+    lineage, version = URIRef("https://example.org/perils"), URIRef("https://example.org/perils/rev/1-" + "b" * 16)
+    v = Graph()
+    v.add((version, URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity"), lineage))
+    v.add((URIRef("https://example.org/fire"), URIRef("http://www.w3.org/2004/02/skos/core#inScheme"), version))
+    store.graphs[graph_iri] = v
+    store.graphs[job_iri].add((job, CST.contextGraph, URIRef(graph_iri)))
+    context = ConfigStudioWorker(store, ROOT, _clock())._context(store.graphs[job_iri], job)
+    fire, in_scheme = URIRef("https://example.org/fire"), URIRef("http://www.w3.org/2004/02/skos/core#inScheme")
+    assert (fire, in_scheme, version) in context and (fire, in_scheme, lineage) in context

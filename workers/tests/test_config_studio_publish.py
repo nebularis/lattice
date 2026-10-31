@@ -77,3 +77,49 @@ def test_a_mapping_scheme_takes_its_mappings_and_their_blank_nodes():
 def test_a_root_that_is_no_unit_or_is_the_studio_s_own_fails(root, message):
     with pytest.raises(ValueError, match=message):
         prepare(JOB, Graph().parse(data=TURTLE, format="turtle"), root)
+
+
+def _version_of(turtle: str, root: URIRef) -> tuple[URIRef, Graph]:
+    out = prepare(JOB, Graph().parse(data=turtle, format="turtle"), root)
+    artefact = next(out.objects(JOB, CST.artefact))
+    return out.value(JOB, CST.version), Graph().parse(data=str(out.value(artefact, CST.content)), format="nt")
+
+
+BINDING = """
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> . @prefix ex: <https://example.org/> .
+ex:binding a voc:SchemeBinding ; voc:boundScheme ex:perils ; ex:default ex:fire .
+"""
+
+
+def test_a_reference_to_a_followed_lineage_is_pinned_to_its_current_version_and_a_member_pins_its_version():
+    """ADR-A149 decision 5: publishing resolves a followed reference and records every version the unit read."""
+    perils, perils_graph = _version_of(TURTLE, PERILS)
+    binding = URIRef("https://example.org/binding")
+    out = prepare(JOB, Graph().parse(data=BINDING, format="turtle"), binding, perils_graph)
+    version = out.value(JOB, CST.version)
+    content = Graph().parse(data=str(out.value(next(out.objects(JOB, CST.artefact)), CST.content)), format="nt")
+    assert (version, URIRef("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#boundScheme"), perils) in content
+    assert (URIRef("https://example.org/binding"), None, PERILS) not in content
+    assert set(out.objects(JOB, CST.pins)) == {perils}
+    assert (version, CST.pins, perils) in content
+    # A later edition of the scheme names another version of the binding, since what it pins changed.
+    changed = TURTLE.replace('"Fire"', '"Fire and lightning"')
+    later, later_graph = _version_of(changed, PERILS)
+    assert later != perils
+    assert prepare(JOB, Graph().parse(data=BINDING, format="turtle"), binding, later_graph).value(JOB, CST.version) != version
+
+
+def test_a_followed_lineage_is_found_in_the_registry_when_no_context_holds_it():
+    perils, perils_graph = _version_of(TURTLE, PERILS)
+    from lattice_workers.config_studio_publish import registry_graph
+
+    lineage_graph = Graph()
+    lineage_graph.add((PERILS, CST.current, perils))
+    read = {registry_graph(str(PERILS)): lineage_graph}
+    out = prepare(JOB, Graph().parse(data=BINDING, format="turtle"), URIRef("https://example.org/binding"), Graph(), lambda iri: read.get(iri, Graph()))
+    assert set(out.objects(JOB, CST.pins)) == {perils}
+
+
+def test_a_reference_to_an_unpublished_unit_fails():
+    with pytest.raises(ValueError, match="not published"):
+        prepare(JOB, Graph().parse(data=BINDING + TURTLE, format="turtle"), URIRef("https://example.org/binding"))

@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
@@ -229,6 +230,9 @@ public final class StudioApi {
             }
             if (s.length == 3 && s[2].equals("access")) {
                 return method.equals("POST") ? setAccess(req, ws) : notAllowed("POST");
+            }
+            if (s.length == 3 && s[2].equals("dependencies")) {
+                return method.equals("PUT") ? putDependencies(req, ws) : notAllowed("PUT");
             }
             if (s.length == 3 && s[2].equals("export")) {
                 return method.equals("GET") ? export(ws) : notAllowed("GET");
@@ -766,6 +770,22 @@ public final class StudioApi {
                 }
             }
         }
+        if (kind.equals("publish")) {
+            // A publish job's input is its saved part, and the other parts tell the worker what the workspace has not published.
+            for (String part : Workspace.CONFIGS) {
+                if (!part.equals(target)) {
+                    job.addProperty(Cst.contextGraph, m.createResource(Graphs.config(ws, part)));
+                }
+            }
+        }
+        if (List.of("validate", "compile", "dry-run", "publish").contains(kind)) {
+            for (String dependency : workspace.dependencies()) {
+                String graph = dependencyGraph(dependency);
+                if (graph != null) {
+                    job.addProperty(Cst.contextGraph, m.createResource(graph));
+                }
+            }
+        }
         job.addProperty(Cst.status, Cst.Queued);
         job.addProperty(Cst.submittedAt, m.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
         return m;
@@ -947,6 +967,49 @@ public final class StudioApi {
         }
         Reply reply = writes.send(Command.setAccess(id, mode, owner));
         return reply.applied() ? describe(id) : refusal(reply);
+    }
+
+    /** Replaces a workspace's dependencies with the {@code cst:dependsOn} triples of the body, each naming what the registry holds. */
+    private ApiResponse putDependencies(ApiRequest req, String id) {
+        if (load(id) == null) {
+            return notFound();
+        }
+        ApiResponse bad = checkBody(req);
+        if (bad != null) {
+            return bad;
+        }
+        Model body = parse(req);
+        if (body == null) {
+            return ApiResponse.text(400, "the body does not parse as its Content-Type");
+        }
+        for (RDFNode o : body.listObjectsOfProperty(Cst.dependsOn).toList()) {
+            if (o.isURIResource() && dependencyGraph(o.asResource().getURI()) == null && Graphs.isUnitIri(o.asResource().getURI().replaceFirst("/rev/1-[0-9a-f]{16}$", ""))) {
+                return ApiResponse.text(422, "the registry holds nothing named " + o.asResource().getURI());
+            }
+        }
+        Reply reply = writes.send(Command.setDependencies(id, body));
+        return reply.applied() ? describe(id) : refusal(reply);
+    }
+
+    private static final java.util.regex.Pattern VERSION_IRI = java.util.regex.Pattern.compile("(.+)/rev/1-([0-9a-f]{16})");
+
+    /**
+     * The graph a dependency resolves to now, a pinned version's own or a followed lineage's current version's, or null
+     * when the registry holds nothing for it.
+     */
+    private String dependencyGraph(String iri) {
+        var version = VERSION_IRI.matcher(iri);
+        if (version.matches()) {
+            String graph = Graphs.version(version.group(1), version.group(2));
+            return store.graph(graph).isEmpty() ? null : graph;
+        }
+        Model lineage = store.graph(Graphs.lineage(iri));
+        var current = lineage.getProperty(lineage.createResource(iri), Cst.current);
+        if (current == null || !current.getObject().isURIResource()) {
+            return null;
+        }
+        var v = VERSION_IRI.matcher(current.getResource().getURI());
+        return v.matches() && v.group(1).equals(iri) ? Graphs.version(iri, v.group(2)) : null;
     }
 
     private Instant now() {

@@ -111,4 +111,11 @@ public final class Graphs {
             return false;
         }
     }
+
+    private static final Pattern VERSION_GRAPH = Pattern.compile(Pattern.quote(PUBLICATION_PREFIX) + "[0-9a-f]{32}:rev:[0-9a-f]{16}");
+
+    /** Whether {@code iri} names a version's graph, which is immutable and readable by everyone. */
+    public static boolean isVersionGraph(String iri) {
+        return iri != null && VERSION_GRAPH.matcher(iri).matches();
+    }
 }

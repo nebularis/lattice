@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.TreeMap;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
@@ -24,7 +26,7 @@ import org.nebularis.lattice.studio.store.Graphs;
  * workspace's library with its title, template, revision and time, by the document's id.
  */
 public record Workspace(String id, String label, Instant createdAt, Instant modifiedAt, Map<String, Long> revisions, String sample,
-                        Map<String, Document> documents, String owner, String mode) {
+                        Map<String, Document> documents, String owner, String mode, Set<String> dependencies) {
 
     /** Read and written by its owner and administrators only (ADR-A149 decision 9). */
     public static final String LOCKED = "locked";
@@ -51,7 +53,12 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
 
     /** The same workspace with another owner and mode. */
     public Workspace withAccess(String newOwner, String newMode) {
-        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, newOwner, newMode);
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, newOwner, newMode, dependencies);
+    }
+
+    /** The same workspace depending on {@code iris}, each a published lineage it follows or a version it pins. */
+    public Workspace withDependencies(Set<String> iris) {
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, owner, mode, Set.copyOf(new TreeSet<>(iris)));
     }
 
     /** A document of the workspace, as its description holds it. */
@@ -78,7 +85,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         for (String name : GRAPHS) {
             revisions.put(name, name.equals("baseline") ? 1L : 0L);
         }
-        return new Workspace(id, label, at, at, Map.copyOf(revisions), sample, Map.of(), owner, SHARED);
+        return new Workspace(id, label, at, at, Map.copyOf(revisions), sample, Map.of(), owner, SHARED, Set.of());
     }
 
     public String baselineGraph() {
@@ -92,7 +99,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
     public Workspace revised(String name, long revision, Instant at) {
         Map<String, Long> next = new LinkedHashMap<>(revisions);
         next.put(name, revision);
-        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample, documents, owner, mode);
+        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample, documents, owner, mode, dependencies);
     }
 
     /** The revision of document {@code doc}, 0 when the workspace holds none. */
@@ -109,12 +116,12 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         } else {
             next.put(doc, document);
         }
-        return new Workspace(id, label, createdAt, at, revisions, sample, Map.copyOf(next), owner, mode);
+        return new Workspace(id, label, createdAt, at, revisions, sample, Map.copyOf(next), owner, mode, dependencies);
     }
 
     /** The same workspace under another id and label, as an import makes it, owned by who imports it and shared. */
     public Workspace as(String newId, String newLabel, Instant at, String newOwner) {
-        return new Workspace(newId, newLabel, createdAt, at, revisions, sample, documents, newOwner, SHARED);
+        return new Workspace(newId, newLabel, createdAt, at, revisions, sample, documents, newOwner, SHARED, dependencies);
     }
 
     public Model toModel() {
@@ -132,6 +139,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
             node.addProperty(Cst.owner, owner);
         }
         node.addProperty(Cst.mode, Cst.mode(mode));
+        new TreeSet<>(dependencies).forEach(d -> node.addProperty(Cst.dependsOn, model.createResource(d)));
         for (String name : GRAPHS) {
             node.addProperty(Cst.revision(name), model.createTypedLiteral(Long.toString(revision(name)), XSDDatatype.XSDinteger));
         }
@@ -178,9 +186,11 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
                 return null;
             }
             Statement owner = node.getProperty(Cst.owner);
+            Set<String> dependencies = new TreeSet<>();
+            node.listProperties(Cst.dependsOn).forEachRemaining(st -> dependencies.add(st.getResource().getURI()));
             return new Workspace(id, text(node, RDFS.label), Instant.parse(text(node, Cst.createdAt)),
                 Instant.parse(text(node, Cst.modifiedAt)), Map.copyOf(revisions), sample, Map.copyOf(documents),
-                owner == null ? null : owner.getString(), m);
+                owner == null ? null : owner.getString(), m, Set.copyOf(dependencies));
         } catch (RuntimeException e) {
             return null;
         }

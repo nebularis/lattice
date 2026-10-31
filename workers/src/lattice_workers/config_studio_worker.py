@@ -30,6 +30,8 @@ _UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _MESSAGE = re.compile(rf"urn:lattice:studio:job:{_UUID}")
 _BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
 # The configuration parts a job may read as context, beside its target (ADR-A149 decision 7).
+_HAS_IDENTITY = URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity")
+_VERSION_GRAPH = re.compile(r"urn:lattice:studio:pub:[0-9a-f]{32}:rev:[0-9a-f]{16}")
 _PARTS = ("library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
@@ -125,7 +127,7 @@ class ConfigStudioWorker:
             root = graph.value(job, CST.unit)
             if not isinstance(root, URIRef):
                 raise ValueError("a publish job names the root of its unit with cst:unit")
-            return prepare(job, input_("configuration"), root)
+            return prepare(job, input_("configuration"), root, self._context(graph, job), self._registry)
         if graph.value(job, CST.kind) == CST.DryRunJob:
             from . import config_studio_dryrun
             from .config_studio_jobs import _spec
@@ -206,13 +208,32 @@ class ConfigStudioWorker:
             self._root, str(submitted), self._context(graph, job),
         )
 
+    def _registry(self, iri: str) -> Graph:
+        """A registry graph, which everyone may read, or an empty one when the registry holds none."""
+        if not iri.startswith("urn:lattice:studio:pub:"):
+            raise ValueError(f"{iri} is not a registry graph")
+        try:
+            return self._store.get_graph(iri)
+        except GraphNotFound:
+            return Graph()
+
     def _context(self, graph: Graph, job: URIRef) -> Graph:
-        """The workspace's other configuration parts a job names as its context, each one of its own workspace's
-        parts (STD-298). A part never saved reads as empty."""
+        """The graphs a job names as its context: its own workspace's other configuration parts (STD-298), a part never
+        saved reading as empty, and the published versions its workspace depends on (ADR-A149 decision 7)."""
         workspace = str(graph.value(job, CST.workspace) or "")
         allowed = re.compile(re.escape(workspace) + ":(" + "|".join(_PARTS) + ")") if _WORKSPACE.fullmatch(workspace) else None
         context = Graph()
         for iri in sorted(graph.objects(job, CST.contextGraph), key=str):
+            # A published version is immutable and everyone's to read (ADR-A149 decision 4). A draft that follows its
+            # lineage names the lineage, so the version is read under its lineage's IRI too.
+            if _VERSION_GRAPH.fullmatch(str(iri)):
+                version = self._registry(str(iri))
+                context += version
+                for v, lineage in list(version.subject_objects(_HAS_IDENTITY)):
+                    for s, p, o in version:
+                        if p != _HAS_IDENTITY:
+                            context.add((lineage if s == v else s, p, lineage if o == v else o))
+                continue
             if allowed is None or not allowed.fullmatch(str(iri)):
                 raise ValueError(f"context graph {iri} is not one this job may read")
             try:

@@ -236,6 +236,8 @@ cst:version a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The ver
 cst:digest a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ; rdfs:comment "The SHA-256 of the RDFC-1.0 canonical N-Quads of a unit's aggregate as drafted, in lower-case hexadecimal (ADR-A143)." .
 cst:unitKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:range cst:PublicationUnit ; rdfs:comment "Which unit of publication a publish job's root is." .
 cst:current a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "A lineage's latest published version." .
+cst:pins a owl:ObjectProperty ; rdfs:comment "A published version this unit's version depends on: one it refers to, a followed lineage resolved when it was published, or the version holding a node it refers to (ADR-A149 decision 5)." .
+cst:dependsOn a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:comment "A published lineage the workspace follows, or a version it pins. Its jobs read the version it resolves to as context (ADR-A149 decision 7)." .
 cst:PublicationUnit a owl:Class ; rdfs:comment "A kind of unit a workspace publishes: its root classes, its part and the property naming its members (publication-units.ttl)." .
 cst:rootClass a owl:ObjectProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "A class whose members are roots of the unit." .
 cst:memberBy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "The property by which a member names its root, so it is part of the unit." .

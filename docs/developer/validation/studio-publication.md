@@ -48,7 +48,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 | PB2-06 | `oidc` with the audience in `client_id` / a matching token without `aud`, and one with another `client_id` / accepted, then `401` | L3 | ± | pass |
 | PB2-07 | a save made as `reviewer` / committed / its receipt's `cst:principal` is `reviewer` | L4 | + | pass |
 | PB2-08 | `oidc` / `/mcp` without a token / `401` | L8 | − | pass |
-| PB2-09 | the studio in a browser under `local` / switch from `developer` to `reviewer` in the header / the page reloads signed in as `reviewer` | L6 | + | see the status record |
+| PB2-09 | the studio in a browser under `local` / switch from `developer` to `reviewer` in the header / the page reloads signed in as `reviewer` | L6 | + | pass |
 
 `platform/config-studio-service/src/test/java/org/nebularis/lattice/studio/AuthTest.java`, written by a Sonnet subagent and reviewed.
 
@@ -102,3 +102,24 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 `PublicationTest.theRegistryIsReadByAnyPrincipalByLineageAndVersion` and `tools/test_config_studio_stage.py`.
 
 **Not covered.** A lineage whose IRI has a fragment, such as `…/employment#JobFamilyScheme`, names its versions inside the fragment, `…#JobFamilyScheme/rev/1-…`, which a deployment that dereferences IRIs cannot fetch apart from the lineage. The registry has no deletion, by design, so a live check removes its test lineage from the store by hand.
+
+## PB6: depending on published versions
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB6-01 | a binding that refers to a followed scheme's lineage and one of its concepts / published / the lineage rewritten to the scheme's current version, which the binding's version names with `cst:pins` | L1 | + | pass |
+| PB6-02 | a new edition of the scheme / the binding prepared again / a new version of the binding | L2 | + | pass |
+| PB6-03 | a lineage no context holds / prepared / found in the registry and pinned | L1 | + | pass |
+| PB6-04 | a reference to an unpublished unit / prepared / the job fails | L1 | − | pass |
+| PB6-05 | a dependency's version as context / read by the worker / under the version's IRI and the lineage's | L4 | + | pass |
+| PB6-06 | dependencies on a lineage and a version / set / stored and returned, an IRI the registry lacks `422`, another triple refused, a reader of a read-only workspace `403` | L3 | ± | pass |
+| PB6-07 | a workspace following a lineage, another pinning its first version / jobs submitted before and after a second version / the follower's jobs name the current version, the pinner's the first | L4 | + | pass |
+| PB6-08 | a context graph named under the registry but malformed / submitted / refused by the writer | L8 | − | pass |
+
+`workers/tests/test_config_studio_publish.py`, `workers/tests/test_config_studio_worker.py` and `DependenciesTest`.
+
+| PB6-09 | a scheme published in one workspace, a binding in another that follows it / the binding published in a running studio / its version's `voc:boundScheme` names the scheme's version, which it pins | L5 | + | pass, 2026-10-31 |
+
+**Not covered.** A job reads its dependencies as resolved when it is submitted, so a version published while it runs is read by the next job.
+
+**Found live.** The writer refused the publish job's update, since `cst:pins` was not among the predicates a worker may write, and the job stayed running. The unit tests had written job results without pins. `PublicationTest`'s finished job now carries one.

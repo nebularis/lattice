@@ -3,9 +3,9 @@
 // that publishes it. Nothing is published until someone presses it.
 
 import { useEffect, useMemo, useState } from "react";
-import { Send } from "lucide-react";
+import { Link2, Pin, Send, X } from "lucide-react";
 import { CST, Graph, LABEL, SKOS, TYPE, localName } from "@lattice/authoring-domain";
-import { api, awaitJob } from "../api";
+import { api, awaitJob, type WorkspaceSummary } from "../api";
 import { CONFIG_PARTS, type ConfigPart } from "../rdf/split";
 import { Spinner } from "./kit";
 import { useStudio } from "./Workspace";
@@ -67,6 +67,7 @@ export function PublishView() {
     }
   };
 
+  const summary = studio.model.state.summary!;
   if (error) return <div className="empty">{error}</div>;
   if (!table) return <div className="empty"><Spinner size={20} /></div>;
   return (
@@ -111,6 +112,68 @@ export function PublishView() {
           })}
         </tbody>
       </table>
+      <Dependencies summary={summary} onChange={studio.model.setSummary} />
     </div>
+  );
+}
+
+const shortVersion = (v: string) => v.slice(v.lastIndexOf("/rev/") + 5);
+const lineageOf = (v: string) => (v.includes("/rev/1-") ? v.slice(0, v.lastIndexOf("/rev/1-")) : v);
+
+/** What the workspace depends on, and the registry to choose from (ADR-A149 decisions 5 and 7). */
+function Dependencies({ summary, onChange }: { summary: WorkspaceSummary; onChange: (s: WorkspaceSummary) => void }) {
+  const [registry, setRegistry] = useState<{ lineage: string; current: string }[]>();
+  const [message, setMessage] = useState<string>();
+  useEffect(() => void api.registry().then(setRegistry, (e: Error) => setMessage(e.message)), []);
+  const set = (iris: string[]) =>
+    void api.setDependencies(summary.id, iris).then(
+      (s) => {
+        setMessage(undefined);
+        onChange(s);
+      },
+      (e: Error) => setMessage(e.message),
+    );
+  const held = new Set(summary.dependsOn.map(lineageOf));
+  return (
+    <>
+      <h3 style={{ marginTop: 24 }}>Depends on</h3>
+      <p className="muted">
+        A workspace reads what it depends on without copying it. Following a lineage reads its current version, and publishing pins it. Pinning a version
+        keeps it whatever is published later.
+      </p>
+      {message && <div className="error small">{message}</div>}
+      {summary.dependsOn.length === 0 && <div className="empty small">Nothing yet.</div>}
+      <ul className="list">
+        {summary.dependsOn.map((d) => (
+          <li key={d} title={d}>
+            {d.includes("/rev/1-") ? <Pin size={14} /> : <Link2 size={14} />} {lineageOf(d)}
+            {d.includes("/rev/1-") ? `, pinned to ${shortVersion(d)}` : ", following"}
+            <button className="btn ghost icon" aria-label={`Stop depending on ${d}`} onClick={() => set(summary.dependsOn.filter((x) => x !== d))}>
+              <X size={14} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <h4>Published</h4>
+      {!registry ? (
+        <Spinner size={14} />
+      ) : (
+        <ul className="list">
+          {registry
+            .filter((r) => !held.has(r.lineage))
+            .map((r) => (
+              <li key={r.lineage} title={r.lineage}>
+                {r.lineage} <span className="muted small">{shortVersion(r.current)}</span>
+                <button className="btn sm" onClick={() => set([...summary.dependsOn, r.lineage])}>
+                  <Link2 size={14} /> Follow
+                </button>
+                <button className="btn sm" onClick={() => set([...summary.dependsOn, r.current])}>
+                  <Pin size={14} /> Pin {shortVersion(r.current)}
+                </button>
+              </li>
+            ))}
+        </ul>
+      )}
+    </>
   );
 }

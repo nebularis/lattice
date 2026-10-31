@@ -59,10 +59,11 @@ public final class Writer {
     private static final Pattern SAMPLE_ID = Pattern.compile("[a-z0-9][a-z0-9-]*");
     private static final int MAX_LABEL = 500;
     private static final int MAX_TITLE = 200;
+    private static final int MAX_DEPENDENCIES = 200;
     /** What a job update may change. Anything else on the job node is the service's and must stay as it wrote it. */
     private static final Set<Property> WORKER_PREDICATES = Set.of(
         Cst.status, Cst.startedAt, Cst.finishedAt, Cst.failureMessage, p("conforms"), p("report"), p("artefact"),
-        Cst.lineage, Cst.version, Cst.digest, Cst.unitKind,
+        Cst.lineage, Cst.version, Cst.digest, Cst.unitKind, p("pins"),
         p("gap"), p("resolution"), p("expansion"), p("testResult"));
     private static final List<String> CONFIGS = Workspace.CONFIGS;
     private static final Var S = Var.alloc("s");
@@ -166,6 +167,7 @@ public final class Writer {
                 case DELETE_JOB -> deleteJob(index, c);
                 case SET_ACCESS -> setAccess(index, c);
                 case PUBLISH -> publish(index, c);
+                case SET_DEPENDENCIES -> setDependencies(index, c);
             };
         }
 
@@ -186,7 +188,7 @@ public final class Writer {
                 return Reply.notFound();
             }
             boolean allowed = switch (c.type()) {
-                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH -> ws.writableBy(c.principal(), c.admin());
+                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH, SET_DEPENDENCIES -> ws.writableBy(c.principal(), c.admin());
                 case DELETE_WORKSPACE, SET_ACCESS -> ws.managedBy(c.principal(), c.admin());
                 default -> true;
             };
@@ -216,6 +218,43 @@ public final class Writer {
             request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
             workspaces.put(ws.id(), Optional.of(updated));
             return planned(index, c, Reply.ok(), Reply::notFound);
+        }
+
+        /** A workspace's dependencies, replaced by the {@code cst:dependsOn} triples of the body. */
+        private Reply setDependencies(int index, Command c) {
+            Model body = c.body().getDefaultModel();
+            Resource node = body.createResource(Graphs.workspace(c.workspace()));
+            Set<String> iris = new java.util.TreeSet<>();
+            boolean clean = named(c).hasNext() == false && body.size() == body.listStatements(node, Cst.dependsOn, (RDFNode) null).toList().size();
+            for (Statement st : body.listStatements(node, Cst.dependsOn, (RDFNode) null).toList()) {
+                clean &= st.getObject().isURIResource();
+                if (clean) {
+                    iris.add(st.getResource().getURI());
+                }
+            }
+            if (!clean || iris.size() > MAX_DEPENDENCIES) {
+                return Reply.refused("a change of dependencies is at most " + MAX_DEPENDENCIES + " cst:dependsOn triples of the workspace");
+            }
+            for (String iri : iris) {
+                if (!Graphs.isUnitIri(iri) && !isVersionOfUnit(iri)) {
+                    return Reply.refused("a dependency is a published unit or one of its versions: " + iri);
+                }
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return Reply.notFound();
+            }
+            Workspace updated = found.get().withDependencies(iris);
+            String receipts = Graphs.receipts(updated.id());
+            receipt(c, receipts, exists(updated.id()), List.of(Graphs.workspace(updated.id())), null);
+            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(updated.id(), Optional.of(updated));
+            return planned(index, c, Reply.ok(), Reply::notFound);
+        }
+
+        private boolean isVersionOfUnit(String iri) {
+            int at = iri.lastIndexOf("/rev/1-");
+            return at > 0 && Graphs.isUnitIri(iri.substring(0, at)) && iri.substring(at + 7).matches("[0-9a-f]{16}");
         }
 
         private Reply create(int index, Command c) {
@@ -437,8 +476,9 @@ public final class Writer {
                 return Reply.refused("a job names its workspace, its own input, the workspace's baseline and the status Queued");
             }
             Set<RDFNode> contexts = Set.copyOf(description.listObjectsOfProperty(job, Cst.contextGraph).toList());
-            if (!CONFIGS.stream().map(part -> (RDFNode) description.createResource(Graphs.config(ws.id(), part))).collect(java.util.stream.Collectors.toSet()).containsAll(contexts)) {
-                return Reply.refused("a job's context graphs are configuration parts of its workspace");
+            Set<RDFNode> parts = CONFIGS.stream().map(part -> (RDFNode) description.createResource(Graphs.config(ws.id(), part))).collect(java.util.stream.Collectors.toSet());
+            if (!contexts.stream().allMatch(g -> parts.contains(g) || (g.isURIResource() && Graphs.isVersionGraph(g.asResource().getURI())))) {
+                return Reply.refused("a job's context graphs are configuration parts of its workspace, or versions in the registry");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");

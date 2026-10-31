@@ -85,6 +85,8 @@ class PublicationTest {
         node.addProperty(Cst.version, m.createResource(version(digest)));
         node.addProperty(Cst.digest, digest + digest + digest + digest);
         node.addProperty(Cst.unitKind, m.createResource("https://example.org/Kind"));
+        // What the version pins, which the worker writes on the job too (ADR-A149 decision 5).
+        node.addProperty(m.createProperty(Cst.NS + "pins"), m.createResource("https://example.org/other/rev/1-0000000000000000"));
         java.io.StringWriter nt = new java.io.StringWriter();
         RDFDataMgr.write(nt, content(digest), Lang.NTRIPLES);
         node.addProperty(Cst.artefact, m.createResource().addProperty(Cst.path, "version.nt")

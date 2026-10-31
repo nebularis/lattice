@@ -23,7 +23,8 @@ public record Command(String id, String sender, Type type, String workspace, Str
     public enum Type {
         CREATE("create"), SAVE("save"), IMPORT("import"), DELETE_WORKSPACE("delete-workspace"),
         SAVE_DOCUMENT("save-document"), DELETE_DOCUMENT("delete-document"), SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"),
-        DELETE_JOB("delete-job"), SET_ACCESS("set-access"), PUBLISH("publish");
+        DELETE_JOB("delete-job"), SET_ACCESS("set-access"), PUBLISH("publish"),
+        SET_DEPENDENCIES("set-dependencies");
 
         public final String wire;
 
@@ -82,6 +83,11 @@ public record Command(String id, String sender, Type type, String workspace, Str
     /** {@code content} is the version's graph, carried as the default graph. The lineage rides as the part and the version as the label. */
     public static Command publish(String ws, String lineage, String version, Model content) {
         return new Command(newId(), SERVICE, Type.PUBLISH, ws, null, lineage, null, null, version, null, withDefault(content), null, false);
+    }
+
+    /** {@code body} holds {@code <ws> cst:dependsOn <iri>} for each dependency, in the default graph. */
+    public static Command setDependencies(String ws, Model body) {
+        return new Command(newId(), SERVICE, Type.SET_DEPENDENCIES, ws, null, null, null, null, null, null, withDefault(body), null, false);
     }
 
     public static Command deleteJob(String ws, String job) {

@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB5 built 2026-10-31, PB6 next
+**Status:** 🟡 PB1 to PB6 built 2026-10-31, PB7 next
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -26,7 +26,9 @@ PB3 was built on 2026-10-31. A workspace's creator owns it and sets its mode, lo
 
 PB4 and PB5 were built on 2026-10-31. A publish job takes a unit's aggregate from the part as saved, by the units table `contracts/config-studio/publication-units.ttl`, digests it with RDFC-1.0 and names its version `{lineage}/rev/1-{digest}`. `POST /api/workspaces/{ws}/publications?job=…` sends a `publish` command, and the writer adds the version, its event and the current pointer to the lineage's registry graph, guarded on the current version, and changes nothing when the version is already current. The registry is read at `/api/registry`, `/api/registry/lineage` and `/api/registry/version` by any signed-in principal, and the browser's Publish view lists each part's units with their current version. The Java side was written by a Sonnet subagent and reviewed. It added the publish job's four result predicates to the writer's list of those a worker may write, without which no publish job could finish. Checks run 2026-10-31, all passing: `check:config-studio`, `check:workers` (169), `check:knowledge`, `check:identifiers`, and the service module's tests. Checked live: the employment sample's concept scheme published from the browser, republished unchanged with no second event, and read back with its six concepts. The test lineage was then dropped from the store by hand, since the registry has no deletion.
 
-**Next action:** build PB6.
+PB6 was built on 2026-10-31. A workspace depends on published lineages, which it follows, or versions, which it pins, with `PUT /api/workspaces/{ws}/dependencies`. Its validation, compilation, dry run and publish jobs read what each resolves to as context, under the version's IRI and its lineage's. Publishing rewrites a reference to a followed lineage to its current version, keeps a reference to a member of a version, records each with `cst:pins`, and fails on a reference to an unpublished unit. The Publish view lists the dependencies and the registry to follow or pin from. The Java side was written by a Sonnet subagent and reviewed. Checked live, which found that the writer refused a job update carrying `cst:pins`, now fixed with a test. Checks run 2026-10-31, all passing: `check:config-studio`, `check:workers` (173), `check:knowledge`, `check:identifiers`, and the service module's tests. The live check's two workspaces and four registry graphs were removed.
+
+**Next action:** build PB7.
 
 ## Log
 
@@ -35,3 +37,4 @@ PB4 and PB5 were built on 2026-10-31. A publish job takes a unit's aggregate fro
 - 2026-10-31: PB2 built. `nimbus-jose-jwt` 10.3 added to the service for token validation. TD-134 added.
 - 2026-10-31: PB3 built.
 - 2026-10-31: PB4 and PB5 built. PB-D1 to PB-D3 revised to what was built. MEC-98 and MEC-99 added.
+- 2026-10-31: PB6 built.
