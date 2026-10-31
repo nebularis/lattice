@@ -64,7 +64,7 @@ public final class RabbitWrites implements Writes {
         try {
             // A channel is not thread safe, so publishes and their confirms take turns.
             synchronized (channel) {
-                channel.basicPublish(Topology.WRITES, Topology.routingKey(command.workspace()), true, properties, Codec.body(command));
+                channel.basicPublish(Topology.WRITES, Topology.routingKey(command.routingId()), true, properties, Codec.body(command));
                 channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
             }
             return reply.get(timeout.toMillis(), TimeUnit.MILLISECONDS);

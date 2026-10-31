@@ -30,7 +30,7 @@ public final class Codec {
         h.put("id", c.id());
         put(h, "sender", c.sender());
         h.put("command", c.type().wire);
-        h.put("workspace", c.workspace());
+        put(h, "workspace", c.workspace());
         put(h, "job", c.job());
         put(h, "part", c.part());
         if (c.expect() != null) {

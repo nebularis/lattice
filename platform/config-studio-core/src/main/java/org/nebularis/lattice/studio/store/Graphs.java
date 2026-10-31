@@ -152,6 +152,19 @@ public final class Graphs {
         return iri != null && VERSION_GRAPH.matcher(iri).matches();
     }
 
+    /** The studio's projections, each one graph that a refresh job replaces whole (ADR-A149 decision 14). */
+    public static final String PROJECTION_PREFIX = "urn:lattice:studio:projection:";
+    public static final java.util.List<String> PROJECTIONS = java.util.List.of("registry", "jobs", "holders", "terms", "summaries");
+
+    public static String projection(String key) {
+        return PROJECTION_PREFIX + key;
+    }
+
+    /** Whether {@code iri} names one of the five projections. */
+    public static boolean isProjection(String iri) {
+        return iri != null && iri.startsWith(PROJECTION_PREFIX) && PROJECTIONS.contains(iri.substring(PROJECTION_PREFIX.length()));
+    }
+
     /** An import graph is global and immutable, stored once by the digest of its content whichever workspaces hold it. */
     public static final String IMPORT_PREFIX = "urn:lattice:studio:import:";
     private static final Pattern DIGEST = Pattern.compile("[0-9a-f]{64}");

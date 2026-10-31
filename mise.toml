@@ -643,7 +643,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets", "check:authoring-domain"]
 run = [
-  "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py -q",
+  "python -m pytest tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_refresh.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]

@@ -46,7 +46,7 @@ import org.nebularis.lattice.studio.model.Workspace;
  * {@link #load} reads the folder the stage tool wrote, and each operation method returns the {@link Update}s to add to one
  * request. Every parameter is checked by the caller library before anything is built, the request digest is the profile's,
  * and a payload with a blank node is refused (skolemise it first, {@link Skolem#skolemise}). The class sends nothing, and reads the store
- * only in {@link #seq}, {@link #claimed}, {@link #workspace}, {@link #workspaces} and {@link #asOf}.
+ * only in {@link #seq}, {@link #claimed}, {@link #workspace} and {@link #asOf}.
  */
 public final class StudioOperations {
     /** The studio's aggregate families, each the target of one persistence profile. */
@@ -178,23 +178,6 @@ public final class StudioOperations {
         return Workspace.from(id, store.graph(graph(Family.DESCRIPTION, prefix)),
             partRevisions(store.versionRows(metaGraph(Family.PART), prefix), id),
             documentRevisions(store.versionRows(metaGraph(Family.DOCUMENT), prefix), id));
-    }
-
-    /** Every workspace the store holds, with one scan of each meta graph for all of them. */
-    public List<Workspace> workspaces(StudioStore store) {
-        Map<String, Long> parts = store.versionRows(metaGraph(Family.PART), Graphs.WORKSPACE_PREFIX);
-        Map<String, Long> documents = store.versionRows(metaGraph(Family.DOCUMENT), Graphs.WORKSPACE_PREFIX);
-        List<Workspace> out = new java.util.ArrayList<>();
-        store.workspaces().listSubjects().forEachRemaining(node -> {
-            String root = node.getURI();
-            String id = root.startsWith(Graphs.WORKSPACE_PREFIX) ? root.substring(Graphs.WORKSPACE_PREFIX.length()) : "";
-            Workspace ws = Graphs.isId(id) ? Workspace.from(id, store.graph(graph(Family.DESCRIPTION, root)),
-                partRevisions(parts, id), documentRevisions(documents, id)) : null;
-            if (ws != null) {
-                out.add(ws);
-            }
-        });
-        return out;
     }
 
     private static Map<String, Long> partRevisions(Map<String, Long> rows, String id) {

@@ -40,6 +40,11 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
 
     /** Whether {@code principal} may read it. */
     public boolean readableBy(String principal, boolean admin) {
+        return readable(mode, owner, principal, admin);
+    }
+
+    /** As {@link #readableBy}, from a workspace's mode and owner alone, which a summary holds. */
+    public static boolean readable(String mode, String owner, String principal, boolean admin) {
         return admin || !LOCKED.equals(mode) || (owner != null && owner.equals(principal));
     }
 

@@ -9,7 +9,7 @@ import org.apache.jena.rdf.model.Model;
 
 /**
  * One write to the store, as the service or the worker asks the workspace's writer to make it. Every write names the
- * workspace it belongs to, which is the key that routes it to one writer. The graphs it carries are in {@code body}: the
+ * workspace it belongs to, which is the key that routes it to one writer. A refresh job's writes name none and route by the job's own id. The graphs it carries are in {@code body}: the
  * default graph for the one graph a creation or a save carries, named graphs for an import, a job's submission and a
  * job's update. The fields a type does not use are null. {@code id} names the command, so its receipt names it and a
  * redelivered command is applied once, and {@code sender} says which component sent it, unauthenticated (TD-99). {@code
@@ -102,6 +102,20 @@ public record Command(String id, String sender, Type type, String workspace, Str
 
     public static Command deleteJob(String ws, String job) {
         return new Command(newId(), SERVICE, Type.DELETE_JOB, ws, job, null, null, null, null, null, DatasetFactory.create(), null, false);
+    }
+
+    /** A refresh job's submission (ADR-A149 decision 14), which names no workspace. The job graph is its only graph. */
+    public static Command submitRefresh(String job, Dataset graphs) {
+        return new Command(newId(), SERVICE, Type.SUBMIT_JOB, null, job, null, null, null, null, null, graphs, null, false);
+    }
+
+    public static Command deleteRefresh(String job) {
+        return new Command(newId(), SERVICE, Type.DELETE_JOB, null, job, null, null, null, null, null, DatasetFactory.create(), null, false);
+    }
+
+    /** The id that routes the write to its writer: the workspace's, or a refresh job's own, which names no workspace. */
+    public String routingId() {
+        return workspace != null ? workspace : job;
     }
 
     /** This command as {@code principal} asked for it. */

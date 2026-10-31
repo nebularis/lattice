@@ -107,3 +107,13 @@ def test_the_studio_s_persistence_profile_is_compiled_with_its_operations(staged
     replace = (folder / "Part" / "cas-replace.rq").read_text(encoding="utf-8")
     assert "$g" in replace and "{{{assertTriples}}}" in replace and "{{{retractTriples}}}" in replace
     assert "{{{assertTriples}}}" not in (folder / "Workspace" / "cas-replace.rq").read_text(encoding="utf-8")
+
+
+def test_the_projections_are_staged_as_six_promotions_and_the_summaries_query(staged: Path) -> None:
+    from surface.model import read_contracts
+
+    contracts = Graph().parse(staged / "projections" / "projections.ttl", format="turtle")
+    assert sorted(c.key for c in read_contracts(contracts)) == [
+        "holders-follows", "holders-imports", "jobs", "registry", "terms-label", "terms-version"]
+    assert all(str(c.promotes_to).startswith("https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#") for c in read_contracts(contracts))
+    assert "CONSTRUCT" in (staged / "projections" / "workspace-summaries.rq").read_text(encoding="utf-8")

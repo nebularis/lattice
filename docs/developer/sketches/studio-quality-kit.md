@@ -73,6 +73,8 @@ flowchart TB
 
 `tools/testing/studio_harness`, a test-support package, starts a topology from a declared configuration and gives a client whose methods are the studio's actions over its HTTP API. A topology declares the number of writers (stream partitions), the number of workers, the store (Fuseki on TDB2, or Fuseki in memory), the authentication (`local`, or `oidc` against a test key the harness signs with) and whether RabbitMQ and Fuseki run as local processes or in Docker. It always runs on its own ports, its own dataset and its own run folder, so it never touches a developer's store, and it stops everything it started. It reuses the stack script's way of starting each process.
 
+A topology runs in one of two ways. **Processes:** each component a local process, as the stack script starts them, the quickest to start. **Docker Compose:** each component in its own container on its own network, from a compose file the harness generates for the topology, so a deployment that spans machines is rehearsed as containers that reach each other only over the network, and a fault, such as a container stopped or cut off, can be injected between them. The client and the checks are the same either way.
+
 ### 3.2 Component benchmarks
 
 `benchmark/studio-components` measures each component alone, in process, with no network:

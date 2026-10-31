@@ -188,7 +188,7 @@ class MigrationTest {
         assertTrue(OPS.seq(store, Family.PART, Graphs.partRoot(WS, "persistence")).isEmpty());
         assertTrue(held.isIsomorphicWith(store.graph(Graphs.importedGraph(HELD))));
         assertTrue(loose.isIsomorphicWith(store.graph(Graphs.importedGraph(LOOSE))));
-        Model registry = store.registry();
+        Model registry = store.graph(Graphs.lineage(LINEAGE));
         assertTrue(registry.contains(registry.createResource(LINEAGE), Cst.current, registry.createResource(V2)));
         assertTrue(version1.isIsomorphicWith(store.graph(Graphs.version(LINEAGE, "aaaaaaaaaaaaaaaa"))));
         assertTrue(version2.isIsomorphicWith(store.graph(Graphs.version(LINEAGE, "bbbbbbbbbbbbbbbb"))));

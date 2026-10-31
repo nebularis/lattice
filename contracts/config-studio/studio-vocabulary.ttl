@@ -226,9 +226,10 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall cst:Refresh ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+cst:Refresh a cst:JobKind ; rdfs:comment "Rebuild the studio's projections whole from the store. A refresh job names no workspace, target or input, and its update may carry the projection graphs (ADR-A149 decision 14)." .
 cst:Fence a cst:JobKind ; rdfs:comment "Digest what an import leaves in the graph, so the workspace holds it, stored once and read only (ADR-A149 decision 6)." .
 cst:holdsImport a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Graph ; rdfs:comment "A fenced import the workspace holds, urn:lattice:studio:import:{digest}, labelled with rdfs:label. Its jobs read it as context." .
 cst:Publish a cst:JobKind ; rdfs:comment "Name the version a unit of the saved part would be published as, under ADR-A149's rule, writing nothing but the job." .

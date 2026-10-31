@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB16 built 2026-10-31, PB17 under way
+**Status:** ✅ PB1 to PB17 built 2026-10-31, phase D done
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -58,7 +58,9 @@ Trying the surface compiler on the projections raised PB-Q14 in the sketch's §1
 
 The maintainer answered PB-Q14 (b) on 2026-10-31.
 
-**Next action:** build PB17. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
+PB17 was built on 2026-10-31. Four surface promotions and the summaries query are rebuilt by one coalesced refresh job, whose update the writer takes as the projection graphs, and the service waits for it after commands a listing shows. The registry, the workspace listing and the jobs of a workspace read projections, and holders and terms have routes. Written by a Sonnet subagent and reviewed. Checked live on the migrated studio, which found that setting dependencies did not wait for its refresh, now fixed. Checks run 2026-10-31, all passing: `check:config-studio` (service 158) and `check:workers` (187).
+
+**Next action, for the maintainer:** review ADR-A149 with its addendum and decision 14, PB-D1 to PB-D13, and TD-136. The linear replace sketch waits for its own session. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.
@@ -76,3 +78,4 @@ The maintainer answered PB-Q14 (b) on 2026-10-31.
 - 2026-10-31: PB14 built.
 - 2026-10-31: PB15 built.
 - 2026-10-31: PB16 built, and the maintainer's store migrated.
+- 2026-10-31: PB17 built, phase D done.

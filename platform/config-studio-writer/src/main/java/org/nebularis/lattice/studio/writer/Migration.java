@@ -172,7 +172,7 @@ public final class Migration {
         r.add(ops.create(Family.DESCRIPTION, root, Skolem.skolemise(ws.stored()), r.txn()));
         r.drop(root);
         // A job names old graphs and is coordination data (PRI-52), so it goes. The workspace's receipts stay.
-        store.jobsOf(root).listSubjects().forEachRemaining(job -> {
+        store.jobGraphsOf(root).listSubjects().forEachRemaining(job -> {
             String j = job.getURI();
             String id2 = j.substring(Graphs.JOB_PREFIX.length());
             r.drop(j);

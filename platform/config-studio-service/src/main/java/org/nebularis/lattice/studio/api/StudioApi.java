@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
@@ -34,6 +35,7 @@ import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
 import org.nebularis.lattice.studio.auth.Principal;
 import org.nebularis.lattice.studio.jobs.JobBus;
+import org.nebularis.lattice.studio.jobs.Refresher;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.authoring.Documents;
@@ -79,6 +81,11 @@ public final class StudioApi {
     /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
     private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
 
+    /** Rebuilds the projections after a write that changes a source (ADR-A149 decision 14). */
+    private final Refresher refresher;
+    private static final Duration AWAIT_REFRESH = Duration.ofSeconds(10);
+    private static final Duration REFRESH_TIMEOUT = Duration.ofSeconds(60);
+
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
 
@@ -100,13 +107,78 @@ public final class StudioApi {
         // Every write carries the principal of the request it serves (PRI-54), which handle() has authenticated.
         this.writes = c -> {
             Principal p = CURRENT.get();
-            return writes.send(p == null ? c : c.by(p.name(), p.admin()));
+            Reply reply = writes.send(p == null ? c : c.by(p.name(), p.admin()));
+            afterWrite(c, reply);
+            return reply;
         };
+        this.refresher = new Refresher(this::refreshOnce);
         this.bus = bus;
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
         this.mcp = new StudioMcp(store, ops, this.writes, clock, ids, assets, this::runTool);
+    }
+
+    /** Requests a refresh of every projection, as the service does when it starts. */
+    public void refresh() {
+        refresher.request();
+    }
+
+    /** Waits until no refresh is queued or running, which a test needs to read the projections a request left. */
+    public boolean awaitProjections(Duration timeout) {
+        return refresher.awaitIdle(timeout);
+    }
+
+    /**
+     * Marks the projections stale after a command that changes one's source. A reply that a listing read next must show waits
+     * for the refresh, a save or a job does not.
+     */
+    private void afterWrite(Command c, Reply reply) {
+        // A refresh job's own submission and deletion name no workspace and change no projection's source.
+        if (!reply.applied() || c.workspace() == null) {
+            return;
+        }
+        switch (c.type()) {
+            case CREATE, IMPORT, DELETE_WORKSPACE, SET_ACCESS, SET_DEPENDENCIES, PUBLISH, FENCE, RELEASE -> refresher.awaitFresh(AWAIT_REFRESH);
+            case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, SUBMIT_JOB, DELETE_JOB -> refresher.request();
+            default -> { }
+        }
+    }
+
+    /**
+     * One refresh: submits a refresh job, which names no workspace, hands it to the worker, waits for it to finish and deletes it.
+     * It throws when the job fails or the worker does not finish it in time.
+     */
+    private void refreshOnce() throws Exception {
+        String job = UUID.randomUUID().toString();
+        String jobIri = Graphs.job(job);
+        Model description = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+        description.createResource(jobIri).addProperty(RDF.type, Cst.Job).addProperty(Cst.kind, Cst.Refresh).addProperty(Cst.status, Cst.Queued)
+            .addProperty(Cst.submittedAt, description.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
+        org.apache.jena.query.Dataset graphs = org.apache.jena.query.DatasetFactory.create();
+        graphs.addNamedModel(jobIri, description);
+        Reply sent = writes.send(Command.submitRefresh(job, graphs));
+        if (!sent.applied()) {
+            throw new IllegalStateException("the refresh job was refused: " + sent.message());
+        }
+        try {
+            bus.publish(jobIri);
+            Resource node = ResourceFactory.createResource(jobIri);
+            long deadline = System.nanoTime() + REFRESH_TIMEOUT.toNanos();
+            while (System.nanoTime() < deadline) {
+                Model m = store.graph(jobIri);
+                if (m.contains(node, Cst.status, Cst.Succeeded)) {
+                    return;
+                }
+                if (m.contains(node, Cst.status, Cst.Failed)) {
+                    throw new IllegalStateException("the refresh job failed: " + m.getProperty(node, Cst.failureMessage).getString());
+                }
+                Thread.sleep(25);
+            }
+            throw new java.util.concurrent.TimeoutException("the worker did not finish the refresh job in " + REFRESH_TIMEOUT.toSeconds() + " s");
+        } finally {
+            writes.send(Command.deleteRefresh(job));
+        }
     }
 
     public ApiResponse handle(ApiRequest req) {
@@ -219,7 +291,7 @@ public final class StudioApi {
         }
         if (s.length == 1 && s[0].equals("workspaces")) {
             return switch (method) {
-                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store, ops)));
+                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store)));
                 case "POST" -> createWorkspace(req);
                 default -> notAllowed("GET, POST");
             };
@@ -1012,6 +1084,14 @@ public final class StudioApi {
         if (what.equals("bundle")) {
             return bundle(iri);
         }
+        if (what.equals("holders")) {
+            return holders(iri);
+        }
+        if (what.equals("terms")) {
+            String text = query(req.query()).get("q");
+            return text == null || text.isBlank() ? ApiResponse.text(400, "q is the text a concept's label contains")
+                : ApiResponse.turtle(200, Turtle.write(store.terms(text.strip())));
+        }
         Model m;
         if (what.equals("lineage") && Graphs.isUnitIri(iri)) {
             m = store.graph(Graphs.lineage(iri));
@@ -1022,6 +1102,26 @@ public final class StudioApi {
             return notFound();
         }
         return m.isEmpty() ? notFound() : ApiResponse.turtle(200, Turtle.write(m));
+    }
+
+    /**
+     * The workspaces that follow a lineage, pin one of its versions or a version, or hold an import, with their summaries,
+     * from the holders projection. A workspace the request's principal may not read is left out.
+     */
+    private ApiResponse holders(String iri) {
+        if (iri == null || !(Graphs.isImportGraph(iri) || Graphs.isUnitIri(iri.replaceFirst("/rev/1-[0-9a-f]{16}$", "")))) {
+            return ApiResponse.text(400, "iri is a lineage, a version or an import's root");
+        }
+        Model edges = store.holders(iri);
+        Model summaries = store.summaries();
+        Model out = readable(edges.listSubjects().toList().stream()
+            .map(w -> summaries.getResource(w.getURI())).filter(w -> w.hasProperty(RDF.type, Cst.Workspace)).toList());
+        edges.listStatements().forEachRemaining(st -> {
+            if (out.containsResource(st.getSubject())) {
+                out.add(st);
+            }
+        });
+        return ApiResponse.turtle(200, Turtle.write(out));
     }
 
     private static final int BUNDLE_LIMIT = 1000;
@@ -1099,11 +1199,26 @@ public final class StudioApi {
         return p == null || ws.readableBy(p.name(), p.admin());
     }
 
-    /** The service's view of each workspace the request's principal may read. */
-    static Model readableWorkspaces(StudioStore store, StudioOperations ops) {
-        Model all = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
-        ops.workspaces(store).stream().filter(StudioApi::readable).forEach(ws -> all.add(ws.toModel()));
-        return all;
+    /** The summary of each workspace the request's principal may read, from the summaries projection in one read. */
+    static Model readableWorkspaces(StudioStore store) {
+        Model all = store.summaries();
+        return readable(all.listSubjectsWithProperty(RDF.type, Cst.Workspace).toList());
+    }
+
+    /** The statements about those of {@code workspaces}, nodes of a summaries model, that the request's principal may read. */
+    private static Model readable(List<Resource> workspaces) {
+        Principal p = CURRENT.get();
+        Model out = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+        for (Resource w : workspaces) {
+            var mode = w.getPropertyResourceValue(Cst.mode);
+            var owner = w.getProperty(Cst.owner);
+            if (p == null || Workspace.readable(mode == null ? Workspace.SHARED : Cst.modeName(mode), owner == null ? null : owner.getString(), p.name(), p.admin())) {
+                out.add(w.listProperties());
+                w.listProperties(Cst.document).forEachRemaining(d -> out.add(d.getResource().listProperties()));
+                w.listProperties(Cst.holdsImport).forEachRemaining(h -> out.add(h.getResource().listProperties()));
+            }
+        }
+        return out;
     }
 
     /** Sets a workspace's mode, and its owner when an administrator names one, from {@code mode} and {@code owner}. */

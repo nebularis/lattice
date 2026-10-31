@@ -121,7 +121,10 @@ public final class Writer {
     }
 
     private static Reply check(Command c) {
-        if (c == null || c.type() == null || !Graphs.isId(c.workspace())) {
+        // A refresh job names no workspace, so its submission, updates and deletion name the job alone.
+        boolean refresh = c != null && c.workspace() == null && c.job() != null
+            && (c.type() == Command.Type.SUBMIT_JOB || c.type() == Command.Type.JOB_UPDATE || c.type() == Command.Type.DELETE_JOB);
+        if (c == null || c.type() == null || (!refresh && !Graphs.isId(c.workspace()))) {
             return Reply.refused("a write names a workspace by its id");
         }
         if (!Graphs.isId(c.id())) {
@@ -232,7 +235,7 @@ public final class Writer {
          * principal is the worker's, for a job it was given. A workspace a principal may not read is not found by them.
          */
         private Reply access(Command c) {
-            if (c.principal() == null || c.type() == Command.Type.CREATE || c.type() == Command.Type.IMPORT) {
+            if (c.principal() == null || c.workspace() == null || c.type() == Command.Type.CREATE || c.type() == Command.Type.IMPORT) {
                 return null;
             }
             Optional<Workspace> found = workspace(c.workspace());
@@ -599,7 +602,7 @@ public final class Writer {
             }
             ws.documents().forEach((doc, d) -> retire(s, c, Family.DOCUMENT, Graphs.document(id, doc), d.revision(), Graphs.documentGraph(id, doc)));
             List<String> cleared = new ArrayList<>();
-            store.jobsOf(Graphs.workspace(id)).listSubjects().forEachRemaining(job -> {
+            store.jobGraphsOf(Graphs.workspace(id)).listSubjects().forEachRemaining(job -> {
                 String jobId = job.getURI().substring(Graphs.JOB_PREFIX.length());
                 cleared.add(Graphs.job(jobId));
                 cleared.add(Graphs.jobInput(jobId));
@@ -616,7 +619,33 @@ public final class Writer {
             return planned(index, c, Reply.ok(), () -> changed(id));
         }
 
+        /** A refresh job names no workspace, target or input, and its graph is the only one it carries. */
+        private Reply submitRefresh(int index, Command c) {
+            String jobIri = Graphs.job(c.job());
+            if (!names(c).equals(Set.of(jobIri)) || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a refresh job's submission carries its job graph only");
+            }
+            Model description = c.body().getNamedModel(jobIri);
+            Resource job = description.createResource(jobIri);
+            if (!description.contains(job, RDF.type, Cst.Job) || !description.contains(job, Cst.kind, Cst.Refresh)
+                || !description.contains(job, Cst.status, Cst.Queued) || description.contains(job, Cst.workspace)
+                || description.contains(job, Cst.target) || description.contains(job, Cst.configGraph)) {
+                return Reply.refused("a refresh job is a cst:Job of kind cst:Refresh with the status Queued, and names no workspace, target or input");
+            }
+            if (job(c.job()).isPresent()) {
+                return Reply.refused("the job exists");
+            }
+            String receipts = Graphs.jobReceipts(c.job());
+            receipt(c, receipts, group(notExists(quad(jobIri, iri(jobIri), RDF.type.asNode(), Cst.Job.asNode()))), List.of(jobIri), null);
+            request.add(insert(jobIri, description, mine(c, receipts)));
+            jobs.put(c.job(), Optional.of(description));
+            return planned(index, c, Reply.ok(), () -> Reply.refused("the job exists"));
+        }
+
         private Reply submitJob(int index, Command c) {
+            if (c.workspace() == null) {
+                return submitRefresh(index, c);
+            }
             String jobIri = Graphs.job(c.job());
             String input = Graphs.jobInput(c.job());
             if (!names(c).equals(Set.of(jobIri, input)) || !c.body().getDefaultModel().isEmpty()) {
@@ -664,20 +693,30 @@ public final class Writer {
             String jobIri = Graphs.job(c.job());
             String recordIri = Graphs.jobRecord(c.job());
             Set<String> names = names(c);
-            if (!(names.equals(Set.of(jobIri)) || names.equals(Set.of(jobIri, recordIri))) || !c.body().getDefaultModel().isEmpty()) {
-                return Reply.refused("a job's update carries its job graph, and an assemble job's its record graph, only");
+            boolean refresh = c.workspace() == null;
+            // A refresh job's update may carry the projection graphs beside its own, and no other job's update may carry one.
+            boolean carries = refresh ? names.contains(jobIri) && names.stream().allMatch(n -> n.equals(jobIri) || Graphs.isProjection(n))
+                : names.equals(Set.of(jobIri)) || names.equals(Set.of(jobIri, recordIri));
+            if (!carries || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a job's update carries its job graph, an assemble job's its record graph, and a refresh job's the projection graphs, only");
             }
             Optional<Model> found = job(c.job());
             if (found.isEmpty()) {
                 return Reply.notFound();
             }
             Model existing = found.get();
-            if (!existing.contains(existing.createResource(jobIri), Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())))) {
-                return Reply.refused("the job is not this workspace's");
+            if (!ownsJob(existing, jobIri, c)) {
+                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
             }
             Model update = c.body().getNamedModel(jobIri);
             if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
                 return Reply.refused("a job's update may change only its status and results");
+            }
+            for (String name : names) {
+                if (Graphs.isProjection(name) && c.body().getNamedModel(name).listStatements().toList().stream()
+                    .anyMatch(st -> st.getSubject().isAnon() || st.getObject().isAnon())) {
+                    return Reply.refused("a projection holds IRIs and literals only: " + name);
+                }
             }
             Model record = names.contains(recordIri) ? c.body().getNamedModel(recordIri) : null;
             if (record != null) {
@@ -690,10 +729,15 @@ public final class Writer {
                 }
             }
             String receipts = Graphs.jobReceipts(c.job());
-            receipt(c, receipts, quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace()))),
-                record == null ? List.of(jobIri) : List.of(jobIri, recordIri), null);
+            receipt(c, receipts, ownerGuard(c, jobIri), names.stream().sorted().toList(), null);
             request.add(clear(jobIri, mine(c, receipts)));
             request.add(insert(jobIri, update, mine(c, receipts)));
+            for (String name : names) {
+                if (Graphs.isProjection(name)) {
+                    request.add(clear(name, mine(c, receipts)));
+                    request.add(insert(name, c.body().getNamedModel(name), mine(c, receipts)));
+                }
+            }
             if (record != null) {
                 request.add(clear(recordIri, mine(c, receipts)));
                 request.add(insert(recordIri, record, mine(c, receipts)));
@@ -792,15 +836,29 @@ public final class Writer {
                 return Reply.notFound();
             }
             Model existing = found.get();
-            if (!existing.contains(existing.createResource(jobIri), Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())))) {
-                return Reply.refused("the job is not this workspace's");
+            boolean refresh = c.workspace() == null;
+            if (!ownsJob(existing, jobIri, c)) {
+                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
             }
             List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), Graphs.jobReceipts(c.job()));
-            String receipts = Graphs.receipts(c.workspace());
-            receipt(c, receipts, quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace()))), graphs, null);
+            // A refresh job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
+            String receipts = refresh ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
+            receipt(c, receipts, ownerGuard(c, jobIri), graphs, null);
             graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
             jobs.put(c.job(), Optional.empty());
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            return planned(index, c, Reply.ok(), refresh ? () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound() : Reply::notFound);
+        }
+
+        /** Whether the job is the command's workspace's, or a refresh job when the command names no workspace. */
+        private boolean ownsJob(Model existing, String jobIri, Command c) {
+            Resource job = existing.createResource(jobIri);
+            return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Refresh)
+                : existing.contains(job, Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())));
+        }
+
+        private Element ownerGuard(Command c, String jobIri) {
+            return c.workspace() == null ? quad(jobIri, iri(jobIri), Cst.kind.asNode(), Cst.Refresh.asNode())
+                : quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace())));
         }
 
         private Reply planned(int index, Command c, Reply reply, Supplier<Reply> unapplied) {
@@ -816,7 +874,9 @@ public final class Writer {
             add(u, g, r, RDF.type.asNode(), Cst.Receipt.asNode());
             add(u, g, r, Cst.commandId.asNode(), NodeFactory.createLiteralString(c.id()));
             add(u, g, r, Cst.command.asNode(), NodeFactory.createLiteralString(c.type().wire));
-            add(u, g, r, Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace())));
+            if (c.workspace() != null) {
+                add(u, g, r, Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace())));
+            }
             if (c.job() != null) {
                 add(u, g, r, Cst.job.asNode(), iri(Graphs.job(c.job())));
             }

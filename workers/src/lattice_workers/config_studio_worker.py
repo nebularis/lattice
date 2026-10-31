@@ -71,6 +71,12 @@ class GraphStore(Protocol):
     def put_graph(self, graph_iri: str, graph: Graph, others: Optional[Mapping[str, Graph]] = None) -> None:
         """Write a named graph, replacing any prior content, with any `others` in the same write."""
 
+    def graph_names(self) -> list[str]:
+        """The name of every named graph that holds a triple, for a refresh job."""
+
+    def construct(self, query: str) -> Graph:
+        """The graph a constant CONSTRUCT query gives, for a refresh job."""
+
 
 def _time(value: str) -> Literal:
     return Literal(value, datatype=XSD.dateTime)
@@ -112,25 +118,31 @@ class ConfigStudioWorker:
         final = Graph() + running
         final.remove((job, CST.status, None))
         self._record: Optional[Graph] = None
+        self._projections: dict[str, Graph] = {}
         try:
             final += self._run(job, graph)
             final.add((job, CST.status, CST.Succeeded))
         except Exception as error:  # the job could not run, which the author reads as a failure
             self._record = None
+            self._projections = {}
             for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult):
                 final.remove((job, predicate, None))
             final.add((job, CST.status, CST.Failed))
             final.add((job, CST.failureMessage, Literal(str(error) or type(error).__name__)))
         final.add((job, CST.finishedAt, _time(self._clock())))
-        if self._record is not None and len(self._record):
-            self._store.put_graph(job_iri, final, {f"{job_iri}:record": self._record})
-        else:
-            self._store.put_graph(job_iri, final)
+        others = {f"{job_iri}:record": self._record} if self._record is not None and len(self._record) else {}
+        self._store.put_graph(job_iri, final, {**others, **self._projections})
 
     def _run(self, job: URIRef, graph: Graph) -> Graph:
         from . import config_studio_assembly
 
         input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
+        if graph.value(job, CST.kind) == CST.Refresh:
+            # A refresh job names no workspace, target or input. It rebuilds every projection, which the writer replaces whole.
+            from .config_studio_refresh import refresh
+
+            self._projections = refresh(self._store, self._root, str(job), self._clock())
+            return Graph()
         if graph.value(job, CST.kind) == CST.ToolCall:
             from .config_studio_mork_tools import run_tool
 
@@ -378,10 +390,18 @@ class WriterStore:
     def get_graph(self, graph_iri: str) -> Graph:
         return self._reader.get_graph(graph_iri)
 
+    def graph_names(self) -> list[str]:
+        return self._reader.graph_names()
+
+    def construct(self, query: str) -> Graph:
+        return self._reader.construct(query)
+
     def put_graph(self, graph_iri: str, graph: Graph, others: Optional[Mapping[str, Graph]] = None) -> None:
         job = _MESSAGE.fullmatch(graph_iri)
         workspace = _WORKSPACE.fullmatch(str(graph.value(URIRef(graph_iri), CST.workspace) or ""))
-        if job is None or workspace is None:
+        # A refresh job names no workspace, so its writes go to the partition of its own id.
+        refresh = workspace is None and (URIRef(graph_iri), CST.kind, CST.Refresh) in graph
+        if job is None or (workspace is None and not refresh):
             raise ValueError(f"{graph_iri} is not a job graph naming its workspace")
         dataset = Dataset()
         named = dataset.graph(URIRef(graph_iri))
@@ -392,11 +412,10 @@ class WriterStore:
             for triple in other:
                 added.add(triple)
         # The id names the command's receipt, so a publish repeated after a broker failure is applied once.
-        headers = {
-            "id": str(uuid.uuid4()), "sender": "worker", "command": "job-update",
-            "workspace": workspace.group(1), "job": graph_iri.rsplit(":", 1)[1],
-        }
-        key = routing_key(workspace.group(1))
+        headers = {"id": str(uuid.uuid4()), "sender": "worker", "command": "job-update", "job": graph_iri.rsplit(":", 1)[1]}
+        if workspace is not None:
+            headers["workspace"] = workspace.group(1)
+        key = routing_key(workspace.group(1) if workspace is not None else headers["job"])
         self._publisher.publish(WRITES["superStream"], key, headers, dataset.serialize(format="nquads").encode("utf-8"))
 
 

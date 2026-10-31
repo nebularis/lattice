@@ -71,6 +71,10 @@ public final class StudioMain {
         StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
+        if (config.amqpUri() != null) {
+            // The projections are rebuilt from the store on every start, since writes made while the service was down changed them.
+            api.refresh();
+        }
         return server;
     }
 

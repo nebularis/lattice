@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-publication PB1 to PB16
+# Validation Pack: studio-publication PB1 to PB17
 
 **Plan:** [studio-publication](../plans/studio-publication.md)
 **Status record:** [studio-publication](../status/studio-publication.md)
@@ -260,4 +260,22 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 **Found live.** The backup read the whole dataset through the graph store protocol, which Fuseki's update service refuses with `400`, so the first run stopped before writing anything. The backup now reads each named graph by a query.
 
 **Not covered.** The maintainer's five workspaces were opened and compared, never written, as agreed. The old jobs were dropped, since they named old graphs, so each workspace's compile history starts empty.
+
+## PB17: projections refreshed by worker jobs
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB17-01 | a sequence of create, save, set-access, publish, set-dependencies, submit-job, fence, release, delete-job and two workspace deletions / after each, the store dumped and the worker's refresh run on it / every projection equal to what is stored | L4 | + | pass |
+| PB17-02 | twenty refresh requests during one refresh / handled / one more refresh queued, never two at once, and a wait released only by a refresh that started after it | L2 | + | pass |
+| PB17-03 | a workspace created through the service / the listing read next / one query, and the workspace listed | L4 | + | pass |
+| PB17-04 | a refresh update naming a graph that is not a projection, a projection with a blank node, a workspace job's update carrying a projection, a refresh job naming a workspace / sent to the writer / refused | L8 | − | pass |
+| PB17-05 | a locked workspace depending on a lineage / the holders and terms routes read by another principal / hidden, and the terms matched case-insensitively, at most 50, bad input `400` | L8 | ± | pass |
+| PB17-06 | a small store / refreshed by the worker / each promotion's triples and the summaries expected, and a refresh job left out of the jobs projection | L4 | + | pass |
+| PB17-07 | the migrated studio restarted / a test workspace created, saved, published, given a dependency, locked and deleted, with `reviewer` reading / five projections built at start, the workspace listed at once, the registry, terms and holders showing it, `reviewer` seeing it in neither the listing nor the holders once locked, and the listing one call of 34 ms | L5 | ± | pass, 2026-10-31 |
+
+`ProjectionsTest`, `RefresherTest` and `workers/tests/test_config_studio_refresh.py`, by `mise run check:config-studio` and `mise run check:workers`. PB17-07 was run on the maintainer's studio, whose five workspaces were only read, and the test workspace, its versions, lineage and rows were removed afterwards.
+
+**Found live.** Setting dependencies did not wait for its refresh, so the holders route read just after did not show it. It now waits, as access and publishing do.
+
+**Not covered.** The terms projection holds `skos:Concept`s only, not the members of other unit kinds. A refresh reads every source graph whole, so it costs the size of the store. A refresh job left by a worker that stopped mid-refresh names no workspace, so the sweeper never expires it. The sweeper's expiry of jobs requests no refresh, so the jobs projection lists an expired job until the next write.
 

@@ -303,7 +303,7 @@ final class StudioMcp {
     }
 
     private String listWorkspaces() {
-        Model all = StudioApi.readableWorkspaces(store, ops);
+        Model all = StudioApi.readableWorkspaces(store);
         List<String> lines = new ArrayList<>();
         all.listResourcesWithProperty(RDF.type, Cst.Workspace).forEachRemaining(ws -> lines.add(
             ws.getURI().substring(Graphs.WORKSPACE_PREFIX.length()) + "  " + label(all, ws)));

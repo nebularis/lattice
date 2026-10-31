@@ -33,12 +33,17 @@ final class Fixture {
         + "@prefix ex: <https://example.org/> .\n";
     static final String TURTLE = "text/turtle; charset=utf-8";
 
+    /** How many queries the store has been asked, which a test reads to say how many reads a request made. */
+    static final java.util.concurrent.atomic.AtomicInteger QUERIES = new java.util.concurrent.atomic.AtomicInteger();
+
     final StudioStore store = textual(org.apache.jena.rdfconnection.RDFConnection.connect(
         org.apache.jena.query.DatasetFactory.createTxnMem()));
     /** The operations the stage tool wrote, loaded once. */
     static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
     final DirectWrites writes = new DirectWrites(new Writer(store, OPS, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
     final RecordingJobBus bus = new RecordingJobBus();
+    /** Stands in for the worker's refresh jobs, which every bus the api is given hands to it. */
+    final RefreshWorker refreshWorker = new RefreshWorker(store, writes);
     final Path assets;
     final StudioApi api;
     private final AtomicLong counter = new AtomicLong();
@@ -54,8 +59,21 @@ final class Fixture {
     Fixture(Path assets, JobBus busOverride, java.util.Set<String> features) {
         this.assets = assets;
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
-        this.api = new StudioApi(store, OPS, writes, busOverride == null ? bus : busOverride, clock,
-            () -> new UUID(0, counter.incrementAndGet()), assets, features);
+        bus.runWith(refreshWorker::handle);
+        JobBus given = busOverride == null ? bus : new JobBus() {
+            @Override
+            public void publish(String jobIri) throws Exception {
+                if (!refreshWorker.handle(jobIri)) {
+                    busOverride.publish(jobIri);
+                }
+            }
+
+            @Override
+            public byte[] transform(String id, String jobIri, String mediaType, byte[] sample, java.time.Duration timeout) throws Exception {
+                return busOverride.transform(id, jobIri, mediaType, sample, timeout);
+            }
+        };
+        this.api = new StudioApi(store, OPS, writes, given, clock, () -> new UUID(0, counter.incrementAndGet()), assets, features);
     }
 
     /**
@@ -66,6 +84,9 @@ final class Fixture {
         return new StudioStore((org.apache.jena.rdfconnection.RDFConnection) java.lang.reflect.Proxy.newProxyInstance(
             org.apache.jena.rdfconnection.RDFConnection.class.getClassLoader(),
             new Class<?>[] {org.apache.jena.rdfconnection.RDFConnection.class}, (self, method, args) -> {
+                if (method.getName().startsWith("query")) {
+                    QUERIES.incrementAndGet();
+                }
                 Object[] reparsed = args == null ? null : args.clone();
                 for (int i = 0; reparsed != null && i < reparsed.length; i++) {
                     if (reparsed[i] instanceof org.apache.jena.update.UpdateRequest u) {
@@ -91,7 +112,10 @@ final class Fixture {
     }
 
     ApiResponse send(String method, String path, String query, Map<String, String> headers, byte[] body) {
-        return api.handle(new ApiRequest(method, path, query, headers, body));
+        ApiResponse response = api.handle(new ApiRequest(method, path, query, headers, body));
+        // A write leaves the projections to a refresh job, so the next read waits for it and sees the write.
+        api.awaitProjections(java.time.Duration.ofSeconds(10));
+        return response;
     }
 
     ApiResponse get(String path) {

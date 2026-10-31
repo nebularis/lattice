@@ -29,17 +29,28 @@ import org.apache.jena.update.UpdateRequest;
 public final class StudioStore implements AutoCloseable {
     private static final String PREFIXES = "PREFIX cst: <" + Cst.NS + ">\n";
     private static final String GRAPH_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }";
-    private static final String WORKSPACES_QUERY = PREFIXES + """
-        CONSTRUCT { ?w a cst:Workspace } WHERE {
-          GRAPH ?g { ?w a cst:Workspace }
-          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:description/"))
+    private static final String PROJECTION_PREFIXES = PREFIXES + "PREFIX prj: <" + Projections.NS + ">\n";
+    /** The registry projection, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
+    private static final String REGISTRY_QUERY = PROJECTION_PREFIXES
+        + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prj:current ?version } }";
+    /** The summaries projection without its refresh node. */
+    private static final String SUMMARIES_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } FILTER (?s != ?g) }";
+    private static final String HOLDERS_QUERY = PROJECTION_PREFIXES + """
+        CONSTRUCT { ?w ?edge ?held } WHERE {
+          GRAPH ?g {
+            { ?w prj:dependsOn ?held . FILTER (?held = ?iri || STRSTARTS(STR(?held), CONCAT(STR(?iri), "/rev/"))) BIND (cst:dependsOn AS ?edge) }
+            UNION
+            { ?w prj:holdsImport ?held . FILTER (?held = ?iri) BIND (cst:holdsImport AS ?edge) }
+          }
         }""";
-    // ponytail: scans every graph for a current pointer, one triple per lineage. Keep an index graph if the registry grows large.
-    private static final String REGISTRY_QUERY = PREFIXES + """
-        CONSTRUCT { ?lineage cst:current ?version } WHERE {
-          GRAPH ?g { ?lineage cst:current ?version }
-          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:lineage/"))
-        }""";
+    private static final String TERMS_QUERY = PROJECTION_PREFIXES + """
+        SELECT ?concept ?label ?version WHERE {
+          GRAPH ?g {
+            ?concept prj:prefLabel ?label .
+            OPTIONAL { ?concept prj:inScheme ?version }
+            FILTER (CONTAINS(LCASE(STR(?label)), LCASE(?q)))
+          }
+        } ORDER BY ?label ?concept ?version LIMIT 50""";
     private static final String COMPILE_JOBS_QUERY = PREFIXES + """
         CONSTRUCT {
           ?job a cst:Job ; cst:kind cst:Compile ; cst:target ?target ; cst:status ?status ;
@@ -53,7 +64,11 @@ public final class StudioStore implements AutoCloseable {
           }
         }""";
 
-    private static final String JOBS_OF_QUERY = PREFIXES
+    /** The jobs projection, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
+    private static final String JOBS_OF_QUERY = PROJECTION_PREFIXES
+        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prj:workspace ?ws } }";
+    /** The jobs of a workspace as their graphs hold them, which the writer deletes with it and so cannot take from a projection that lags. */
+    private static final String JOB_GRAPHS_OF_QUERY = PREFIXES
         + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?job { ?job a cst:Job ; cst:workspace ?ws } }";
     private static final String EXPIRED_JOBS_QUERY = PREFIXES + """
         CONSTRUCT { ?job cst:workspace ?ws } WHERE {
@@ -63,7 +78,7 @@ public final class StudioStore implements AutoCloseable {
 
     private static final String VERSION_ROW_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } } }";
-    // ponytail: a scan of the meta graph for every row under a prefix, which PB17's workspace summary replaces.
+    // ponytail: a scan of the meta graph for every row under a prefix, once for each workspace read. Read the rows by root if it matters.
     private static final String VERSION_ROWS_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?root ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } "
         + "FILTER (STRSTARTS(STR(?root), ?prefix)) } }";
@@ -171,26 +186,74 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
-    /** The workspace nodes of the description graphs, as {@code ?w a cst:Workspace}. */
-    public Model workspaces() {
-        return connection.queryConstruct(constant(WORKSPACES_QUERY));
-    }
-
-    /** Every published lineage with its current version (ADR-A149). */
+    /** Every published lineage with its current version (ADR-A149), read from the registry projection. */
     public Model registry() {
-        return connection.queryConstruct(constant(REGISTRY_QUERY));
+        return construct(REGISTRY_QUERY, "registry");
     }
 
-    /** The compile jobs of one workspace, without their reports and artefacts. */
+    /** The summaries projection: each workspace's label, owner, mode, time and the sequence of each part and document. */
+    public Model summaries() {
+        return construct(SUMMARIES_QUERY, "summaries");
+    }
+
+    /** The workspaces that follow, pin or hold {@code iri}, as {@code ?w cst:dependsOn ?held} and {@code ?w cst:holdsImport ?held}. */
+    public Model holders(String iri) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(HOLDERS_QUERY);
+        query.setIri("g", Graphs.projection("holders"));
+        query.setIri("iri", iri);
+        return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The concepts whose label contains {@code text}, in any case, at most 50, as {@code skos:prefLabel} and {@code skos:inScheme}. */
+    public Model terms(String text) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(TERMS_QUERY);
+        query.setIri("g", Graphs.projection("terms"));
+        query.setLiteral("q", text);
+        Model out = ModelFactory.createDefaultModel();
+        connection.querySelect(query.asQuery(), row -> {
+            var concept = out.createResource(row.getResource("concept").getURI());
+            concept.addProperty(SKOS_LABEL, row.getLiteral("label"));
+            if (row.contains("version")) {
+                concept.addProperty(SKOS_IN_SCHEME, row.getResource("version"));
+            }
+        });
+        return out;
+    }
+
+    private static final org.apache.jena.rdf.model.Property SKOS_LABEL =
+        ModelFactory.createDefaultModel().createProperty("http://www.w3.org/2004/02/skos/core#prefLabel");
+    private static final org.apache.jena.rdf.model.Property SKOS_IN_SCHEME =
+        ModelFactory.createDefaultModel().createProperty("http://www.w3.org/2004/02/skos/core#inScheme");
+
+    private Model construct(String text, String projection) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(text);
+        query.setIri("g", Graphs.projection(projection));
+        return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The compile jobs of one workspace, without their reports and artefacts: its jobs from the jobs projection, each then read from its graph. */
     public Model compileJobs(String workspaceIri) {
-        ParameterizedSparqlString query = new ParameterizedSparqlString(COMPILE_JOBS_QUERY);
+        Model out = ModelFactory.createDefaultModel();
+        jobsOf(workspaceIri).listSubjects().forEachRemaining(job -> {
+            ParameterizedSparqlString query = new ParameterizedSparqlString(COMPILE_JOBS_QUERY);
+            query.setIri("ws", workspaceIri);
+            query.setIri("job", job.getURI());
+            out.add(connection.queryConstruct(query.asQuery()));
+        });
+        return out;
+    }
+
+    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}, from the jobs projection. A job just submitted may not be there yet. */
+    public Model jobsOf(String workspaceIri) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(JOBS_OF_QUERY);
+        query.setIri("g", Graphs.projection("jobs"));
         query.setIri("ws", workspaceIri);
         return connection.queryConstruct(query.asQuery());
     }
 
-    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}. */
-    public Model jobsOf(String workspaceIri) {
-        ParameterizedSparqlString query = new ParameterizedSparqlString(JOBS_OF_QUERY);
+    /** The jobs of one workspace as their graphs hold them, which are the store's own answer and never lag. */
+    public Model jobGraphsOf(String workspaceIri) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(JOB_GRAPHS_OF_QUERY);
         query.setIri("ws", workspaceIri);
         return connection.queryConstruct(query.asQuery());
     }
