@@ -525,6 +525,8 @@ public final class StudioApi {
 
     /** The part as saved, or as it was at {@code revision}, rebuilt from the patch log, with that revision as its ETag. */
     private ApiResponse getGraph(String id, String name, String revision) {
+        // The current graph is read beside the workspace, and dropped when the workspace refuses the read or another revision is asked.
+        var saved = revision == null ? StudioOperations.beside(() -> store.graph(Graphs.config(id, name))) : null;
         Workspace ws = load(id);
         if (ws == null) {
             return notFound();
@@ -541,8 +543,8 @@ public final class StudioApi {
                 return notFound();
             }
         }
-        Model graph = at == current ? store.graph(Graphs.config(id, name))
-            : ops.asOf(store, Family.PART, Graphs.partRoot(id, name), current, at);
+        Model graph = at != current ? ops.asOf(store, Family.PART, Graphs.partRoot(id, name), current, at)
+            : saved != null ? saved.join() : store.graph(Graphs.config(id, name));
         return ApiResponse.turtle(200, Turtle.write(graph)).with("ETag", etag(at));
     }
 

@@ -141,7 +141,7 @@ public final class Migration {
             String oldGraph = root + ":baseline:" + k;
             Model now = Skolem.skolemise(store.graph(oldGraph));
             r.add(k == 1 ? ops.create(Family.PART, baseline, now, r.txn())
-                : ops.replaceLinear(Family.PART, baseline, k - 1, now, now.difference(previous), previous.difference(now), r.txn()));
+                : ops.replaceDelta(Family.PART, baseline, k - 1, now, now.difference(previous), previous.difference(now), r.txn()));
             r.drop(oldGraph);
             previous = now;
         }

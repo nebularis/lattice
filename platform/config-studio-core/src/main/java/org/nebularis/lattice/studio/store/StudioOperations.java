@@ -171,25 +171,36 @@ public final class StudioOperations {
         return graphOf(operation(f, OperationKind.CREATE).contract, "metaGraphPrefix");
     }
 
+    /** Runs a read beside the caller's, so two reads of one request cost one round trip and not two. */
+    public static <T> java.util.concurrent.CompletableFuture<T> beside(java.util.function.Supplier<T> read) {
+        return java.util.concurrent.CompletableFuture.supplyAsync(read, BESIDE);
+    }
+
+    private static final java.util.concurrent.ExecutorService BESIDE = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
+
     /**
-     * The workspace {@code id} as the service sees it, or null when the store holds none. Its description is read from its graph,
-     * then the version rows of its parts and of the documents it lists, by root, in one query.
+     * The workspace {@code id} as the service sees it, or null when the store holds none. Its description and its parts' version rows
+     * are read at once, then the rows of the documents the description lists, when it lists any, each row by its root.
      */
     public Workspace workspace(StudioStore store, String id) {
         String prefix = Graphs.workspace(id);
+        Map<String, String> parts = new HashMap<>();
+        Workspace.GRAPHS.forEach(name -> parts.put(Graphs.partRoot(id, name), metaGraph(Family.PART)));
+        var partRows = beside(() -> store.versionRows(parts));
         Model description = store.graph(graph(Family.DESCRIPTION, prefix));
         Resource node = description.createResource(prefix);
         if (!description.contains(node, org.apache.jena.vocabulary.RDF.type, Cst.Workspace)) {
+            partRows.cancel(false);
             return null;
         }
-        Map<String, String> roots = new HashMap<>();
-        Workspace.GRAPHS.forEach(name -> roots.put(Graphs.partRoot(id, name), metaGraph(Family.PART)));
+        Map<String, String> documents = new HashMap<>();
         node.listProperties(Cst.document).forEachRemaining(st -> {
             if (st.getObject().isURIResource()) {
-                roots.put(st.getResource().getURI(), metaGraph(Family.DOCUMENT));
+                documents.put(st.getResource().getURI(), metaGraph(Family.DOCUMENT));
             }
         });
-        Map<String, Long> rows = store.versionRows(roots);
+        Map<String, Long> rows = new HashMap<>(partRows.join());
+        rows.putAll(store.versionRows(documents));
         return Workspace.from(id, description, partRevisions(rows, id), documentRevisions(rows, id));
     }
 
@@ -258,34 +269,36 @@ public final class StudioOperations {
     }
 
     /**
-     * The replace of a part or a document in two operations (TD-136, R1' of the linear replace sketch). The first deletes the graph
-     * under the generated guard. The second is the generated replace without its sweep, so the version row move, the claim, the receipt
-     * and the patch log are as generated. Both are derived from the generated syntax tree, never from its text.
+     * The replace of a part or a document as its delta (TD-136): the generated replace with its sweep taken out, the retracted
+     * triples deleted from the graph and the asserted ones inserted, so a save writes what changed and not the whole part. The version
+     * row move, the claim, the receipt, the patch log and the request digest are as generated, the digest over {@code payload}, the
+     * state the write leaves. It is derived from the generated syntax tree, never from its text. It is right only when the stored graph
+     * is the state {@code asserted} and {@code retracted} were computed from, which the guard on {@code expectedSeq} gives as long as
+     * every write of the graph is one of these operations.
      */
-    public List<Update> replaceLinear(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId) {
+    public List<Update> replaceDelta(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId) {
         if (f != Family.PART && f != Family.DOCUMENT) {
-            throw new IllegalArgumentException("a linear replace is for a part or a document, not " + f);
+            throw new IllegalArgumentException("a delta replace is for a part or a document, not " + f);
         }
-        UpdateModify generated = (UpdateModify) replaceUpdate(f, root, expectedSeq, payload, asserted, retracted, txnId);
+        UpdateModify generated = (UpdateModify) replaceUpdate(f, root, expectedSeq, payload, asserted, retracted, txnId,
+            Map.of("payloadTriples", asserted));
         List<Quad> sweeps = generated.getDeleteQuads().stream().filter(StudioOperations::isSweep).toList();
         ElementGroup where = generated.getWherePattern() instanceof ElementGroup g ? g : null;
         List<Element> optionals = where == null ? List.of() : where.getElements().stream().filter(StudioOperations::isSweep).toList();
         if (sweeps.size() != 1 || optionals.size() != 1) {
             throw new IllegalStateException("the generated replace has " + sweeps.size() + " sweep quads and " + optionals.size() + " sweep patterns, not one of each");
         }
-        UpdateModify clear = new UpdateModify();
-        clear.getDeleteAcc().addQuad(sweeps.get(0));
-        clear.setHasDeleteClause(true);
-        clear.setElement(where);
         UpdateModify write = new UpdateModify();
         generated.getDeleteQuads().stream().filter(q -> q != sweeps.get(0)).forEach(q -> write.getDeleteAcc().addQuad(q));
+        org.apache.jena.graph.Node graph = sweeps.get(0).getGraph();
+        retracted.getGraph().find().forEachRemaining(tr -> write.getDeleteAcc().addQuad(Quad.create(graph, tr)));
         generated.getInsertQuads().forEach(q -> write.getInsertAcc().addQuad(q));
         write.setHasDeleteClause(true);
         write.setHasInsertClause(true);
         ElementGroup rest = new ElementGroup();
         where.getElements().stream().filter(e -> e != optionals.get(0)).forEach(rest::addElement);
         write.setElement(rest);
-        return List.of(clear, write);
+        return List.of(write);
     }
 
     /** Deletes the aggregate and marks its version row deleted when the row is at {@code expectedSeq}. */
@@ -299,6 +312,11 @@ public final class StudioOperations {
     }
 
     private Update replaceUpdate(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId) {
+        return replaceUpdate(f, root, expectedSeq, payload, asserted, retracted, txnId, Map.of());
+    }
+
+    private Update replaceUpdate(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId,
+                                 Map<String, Model> written) {
         Operation op = operation(f, OperationKind.REPLACE);
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
@@ -309,7 +327,7 @@ public final class StudioOperations {
         if (retracted != null) {
             values.put("retractTriples", retracted);
         }
-        return build(op, values);
+        return build(op, values, written);
     }
 
     /** The parameters every operation has, with the revision it mints at {@code seq}. */
@@ -335,6 +353,11 @@ public final class StudioOperations {
      * its time in the writer. The parameters are bound before any slot is filled, so nothing in a payload is ever read as a variable.
      */
     private Update build(Operation op, Map<String, Object> given) {
+        return build(op, given, Map.of());
+    }
+
+    /** As {@link #build(Operation, Map)}, with each slot named in {@code written} filled with that graph rather than the one digested. */
+    private Update build(Operation op, Map<String, Object> given, Map<String, Model> written) {
         OperationContract contract = op.contract;
         Map<String, Object> values = new HashMap<>();
         Map<String, Model> payloads = new HashMap<>();
@@ -374,7 +397,9 @@ public final class StudioOperations {
             }
             return Matcher.quoteReplacement(slot);
         });
-        return splice((UpdateModify) UpdateFactory.create(text).getOperations().get(0), payloads, contract.templateId());
+        Map<String, Model> spliced = new HashMap<>(payloads);
+        spliced.putAll(written);
+        return splice((UpdateModify) UpdateFactory.create(text).getOperations().get(0), spliced, contract.templateId());
     }
 
     /** The parsed request with each marker quad replaced by its payload's triples in the marker's graph, in the template's order. */

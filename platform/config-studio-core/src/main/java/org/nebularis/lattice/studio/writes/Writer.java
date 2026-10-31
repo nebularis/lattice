@@ -369,7 +369,7 @@ public final class Writer {
             }
         }
 
-        /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced linearly with the delta from what the batch leaves it as. */
+        /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced by its delta from what the batch leaves it as, so only what changed is written. */
         private void write(Steps s, Family f, String root, long expect, Model body) {
             String graph = ops.graph(f, root);
             Model next = Skolem.skolemise(body);
@@ -379,7 +379,7 @@ public final class Writer {
                 Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
                 Model asserted = next.difference(old);
                 Model retracted = old.difference(next);
-                s.op(graph, txn -> ops.replaceLinear(f, root, expect, next, asserted, retracted, txn));
+                s.op(graph, txn -> ops.replaceDelta(f, root, expect, next, asserted, retracted, txn));
             }
             rawGraphs.put(graph, next);
         }

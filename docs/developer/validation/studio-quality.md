@@ -108,3 +108,17 @@ On Fuseki's in-memory dataset a save of 1,000 triples now takes 84 ms, against 2
 
 **Not covered.** Whether SQ2's reports of `bd2a144d` ran on jars with stale classes is not known. The writer's jar in this checkout held core classes compiled at 15:05 when the fault was found, and those reports ran at 16:34, so they may have measured part of an earlier commit. A run of `bd2a144d` from a clean build would settle it. The fixes were not measured on Linux, where a commit costs less, nor under concurrent load, which SQ6 covers.
 
+## Phase D, the delta save and the reads side by side
+
+After SQ-Q1 and SQ-Q2 were answered on 2026-10-31:
+- a part's or a document's save writes its delta, `StudioOperations.replaceDelta`, the generated replace with its sweep taken out, the retracted triples deleted and the asserted inserted, in one operation. It leaves exactly the quads the generated replace leaves, digest included, since it digests the whole next state as the generated one does
+- a workspace's description and its parts' version rows are read at once, then its documents' rows when it lists any, and a part's read fetches the part's graph beside the workspace, so a read costs two round trips one after the other, as before phase D.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| SQD-06 | a part and a document, 150 of 300 triples changed / a delta replace / one operation, carrying no unchanged triple, leaving the quads the generated replace leaves | L4 | + | pass |
+| SQD-07 | a delta replace at a stale or a replayed sequence / applied / nothing changes | L4 | − | pass |
+| SQD-08 | every service and writer test / reads side by side / all pass unchanged | L1 to L4 | ± | pass |
+
+Commands run 2026-10-31, all passing: the studio's Java modules with `verify`, and `mise run benchmark:studio-api`. The run on the committed code is the report of this section's commit, and its figures are below.
+

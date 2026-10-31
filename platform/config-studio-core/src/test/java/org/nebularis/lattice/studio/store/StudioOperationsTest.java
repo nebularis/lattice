@@ -115,7 +115,7 @@ class StudioOperationsTest {
 
     @ParameterizedTest
     @EnumSource(value = Family.class, names = {"PART", "DOCUMENT"})
-    void aLinearReplaceLeavesWhatTheGeneratedReplaceLeaves(Family f) {
+    void aDeltaReplaceLeavesWhatTheGeneratedReplaceLeaves(Family f) {
         String root = rootOf(f);
         Model old = model(root, "old", 300);
         Model next = model(root, "old", 150).add(model(root, "new", 300).difference(model(root, "new", 150)));
@@ -131,24 +131,25 @@ class StudioOperationsTest {
         assertEquals(generated.quads(), linear.quads());
 
         generated.run(ops.replace(f, root, 1, next, asserted, retracted, "urn:txn:l/2"));
-        List<Update> two = ops.replaceLinear(f, root, 1, next, asserted, retracted, "urn:txn:l/2");
-        assertEquals(2, two.size());
-        linear.run(two);
+        List<Update> one = ops.replaceDelta(f, root, 1, next, asserted, retracted, "urn:txn:l/2");
+        assertEquals(1, one.size());
+        assertFalse(one.get(0).toString().contains("\"old 0\""), "the delta's request carries no unchanged triple");
+        linear.run(one);
         assertEquals(Optional.of(2L), ops.seq(linear.store, f, root));
         assertEquals(generated.quads(), linear.quads());
         assertTrue(linear.store.graph(ops.graph(f, root)).isIsomorphicWith(next));
 
         Set<String> before = linear.quads();
-        linear.run(ops.replaceLinear(f, root, 1, old, retracted, asserted, "urn:txn:l/3"));
-        assertEquals(before, linear.quads(), "a stale linear replace deletes nothing");
-        linear.run(ops.replaceLinear(f, root, 2, old, retracted, asserted, "urn:txn:l/2"));
-        assertEquals(before, linear.quads(), "a replayed linear replace deletes nothing");
+        linear.run(ops.replaceDelta(f, root, 1, old, retracted, asserted, "urn:txn:l/3"));
+        assertEquals(before, linear.quads(), "a stale delta replace changes nothing");
+        linear.run(ops.replaceDelta(f, root, 2, old, retracted, asserted, "urn:txn:l/2"));
+        assertEquals(before, linear.quads(), "a replayed delta replace changes nothing");
     }
 
     @Test
-    void aLinearReplaceIsOnlyForPartsAndDocuments() {
+    void aDeltaReplaceIsOnlyForPartsAndDocuments() {
         assertThrows(IllegalArgumentException.class,
-            () -> ops.replaceLinear(Family.LINEAGE, "urn:ex:l", 1, model("urn:ex:l", "x", 1), null, null, "urn:txn:x/1"));
+            () -> ops.replaceDelta(Family.LINEAGE, "urn:ex:l", 1, model("urn:ex:l", "x", 1), null, null, "urn:txn:x/1"));
     }
 
     @ParameterizedTest
@@ -162,7 +163,7 @@ class StudioOperationsTest {
         for (boolean linear : new boolean[] {false, true}) {
             Fixture s = Fixture.create();
             s.run(ops.create(f, root, old, "urn:txn:d/1"));
-            s.run(linear ? ops.replaceLinear(f, root, 1, next, asserted, retracted, "urn:txn:d/2")
+            s.run(linear ? ops.replaceDelta(f, root, 1, next, asserted, retracted, "urn:txn:d/2")
                 : ops.replace(f, root, 1, next, asserted, retracted, "urn:txn:d/2"));
             String rev = ops.revision(f, root, 2);
             assertTrue(s.store.rawGraph(rev + "/add").isIsomorphicWith(asserted), "add graph, linear " + linear);
@@ -181,7 +182,7 @@ class StudioOperationsTest {
         s.run(ops.create(Family.PART, root, model(root, "x", 2), "urn:txn:b/2"));
         Model skolemised = Skolem.skolemise(blank);
         assertThrows(PayloadException.class, () -> ops.replace(Family.PART, root, 1, blank, null, null, "urn:txn:b/3"));
-        assertThrows(PayloadException.class, () -> ops.replaceLinear(Family.PART, root, 1, model(root, "x", 1), blank, null, "urn:txn:b/3"));
+        assertThrows(PayloadException.class, () -> ops.replaceDelta(Family.PART, root, 1, model(root, "x", 1), blank, null, "urn:txn:b/3"));
         s.run(ops.replace(Family.PART, root, 1, skolemised, null, null, "urn:txn:b/4"));
         assertTrue(s.store.graph(ops.graph(Family.PART, root)).isIsomorphicWith(Skolem.unskolemise(skolemised)));
         assertTrue(s.store.rawGraph(ops.graph(Family.PART, root)).listObjects().filterKeep(o -> o.isURIResource()

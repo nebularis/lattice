@@ -855,13 +855,29 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔴 SQ1 and SQ2 built 2026-10-31, phase D measured slower |
+| **Status** | 🔴 SQ1 and SQ2 built 2026-10-31, phase D's causes fixed but for publish |
 | **Validation Packs** | [SQ1 to SQ6](validation/studio-quality.md) |
 | **Unit ID** | `studio-quality` |
 | **Sketch** | [studio-quality-kit.md](sketches/studio-quality-kit.md) |
 | **Plan** | [studio-quality.md](plans/studio-quality.md) |
 | **Status Record** | [studio-quality.md](status/studio-quality.md) |
 | **ADRs** | A-150, Proposed |
+
+## 8.27 Writing only what changed, as a persistence mode — Sketched
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔴 sketched 2026-10-31, DR-Q1 to DR-Q4 open |
+| **Unit ID** | `persistence-delta-replace` |
+| **Sketch** | [persistence-delta-replace.md](sketches/persistence-delta-replace.md) |
+
+## 8.28 Projections maintained in the write, and replies that do not wait — Sketched
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔴 sketched 2026-10-31, PM-Q1 to PM-Q4 open |
+| **Unit ID** | `projection-maintenance` |
+| **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md) |
 
 Explicit publication of each configuration unit as a version in a registry the studio keeps, with dependencies pinned, imports fenced, jobs reading the whole workspace, pluggable authentication and workspace modes.
 

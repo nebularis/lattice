@@ -126,7 +126,7 @@ SQ-D6 changes what ADR-A124 says of reports, so ADR-A150 records it, Proposed.
 
 The phase D causes and the fixes made are in the Validation Pack's last section. Two costs remain, each a design question for the maintainer.
 
-**SQ-Q1. Should a save write its part's delta, under the same version-row guard, instead of clearing the part and writing it whole?** The hand-written replace (TD-136) clears the graph and inserts every triple, so TDB2 deletes and inserts N quads in six indexes for a change of one triple. The writer already computes the delta, for the patch log.
+**SQ-Q1. Should a save write its part's delta, under the same version-row guard, instead of clearing the part and writing it whole?** Answered 2026-10-31, (b), and more: a write writes only what changed unless the profile chose a whole replace, as a mode of persistence, sketched in [persistence-delta-replace.md](persistence-delta-replace.md). The studio's writer writes its parts' and documents' deltas now. The hand-written replace (TD-136) clears the graph and inserts every triple, so TDB2 deletes and inserts N quads in six indexes for a change of one triple. The writer already computes the delta, for the patch log.
 
 | Form | Quads written for a change of k triples in N | Request for N = 1,000, k = 2 | Fuseki's time on TDB2, measured or expected |
 |---|---|---|---|
@@ -135,7 +135,7 @@ The phase D causes and the fixes made are in the Validation Pack's last section.
 
 (b) is correct only if the stored graph is the base the writer computed its delta from. One writer owns a workspace's partition and the guard proves the row has not moved, so a part written only through these operations is its base. A graph changed outside them, for example by hand in Fuseki, would keep its drift under (b) and be healed by (a)'s next save. The patch log already assumes the same, since it rebuilds every past revision from the deltas. (b) changes our hand-written form only, not the compiler's, so it leaves the linear replace sketch's questions where they are. **Leaning (b).**
 
-**SQ-Q2. How should a publish stop paying for its refresh?** A publish waits for the refresh that makes its registry entry listable, two commits and a worker's turn after its own commit, about 320 ms against 90 ms before phase D.
+**SQ-Q2. How should a publish stop paying for its refresh?** Answered 2026-10-31, (a) now, with (b) kept as a pattern a client may choose, marking what is pending and learning of its completion by a WebSocket message, sketched in [projections-maintained-in-the-write.md](projections-maintained-in-the-write.md). A publish waits for the refresh that makes its registry entry listable, two commits and a worker's turn after its own commit, about 320 ms against 90 ms before phase D.
 - (a) build BL-09 now, so the writer maintains the projections in the request of the write that changes them. A publish is one commit again, and no write queues a refresh. It needs a surface backend that generates an incremental update for each promotion, the largest of the three.
 - (b) the publish replies without waiting, and the client shows its own publication until the listing has it. Decision 14's waiting reader goes, and every client must do the same.
 - (c) leave it, since a publish is rare and a third of a second is within what a person waits for an explicit action.

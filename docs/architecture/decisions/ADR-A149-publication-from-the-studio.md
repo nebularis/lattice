@@ -44,7 +44,7 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 
 ## Addendum, 2026-10-31
 
-**Narrows decision 12.** The generated named-graph replace builds its payload once per stored triple, which took 28 s on Jena for a 3,000-triple part. Until a linear form is settled, the writer replaces a part and a document through a hand-written request that guards on the same version row and writes the same receipt and patch-log delta. It relies, as the writer did before this decision, on Fuseki applying one request in one transaction, and on the writer applying one command at a time. The writer runs the generated operations for every other family and every other operation (TD-136).
+**Narrows decision 12.** The generated named-graph replace builds its payload once per stored triple, which took 28 s on Jena for a 3,000-triple part. Until a linear form is settled, the writer replaces a part and a document through a hand-written request that guards on the same version row and writes the same receipt and patch-log delta. It relies, as the writer did before this decision, on Fuseki applying one request in one transaction, and on the writer applying one command at a time. The writer runs the generated operations for every other family and every other operation (TD-136). From the same day the hand-written replace writes only the delta, the generated replace with its sweep taken out, the retracted triples deleted and the asserted inserted, so a save writes what changed.
 
 ## Addendum, 2026-10-31, the cost of a refresh
 

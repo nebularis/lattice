@@ -3,7 +3,7 @@
 # A replace that is linear in the aggregate's size (sketch)
 
 **Unit type:** a brief for investigation, then a decision
-**Status:** raised 2026-10-31 by the studio-publication unit's PB-Q13, waiting for an agent to investigate
+**Status:** raised 2026-10-31 by the studio-publication unit's PB-Q13, waiting for an agent to investigate. The maintainer decided the same day that a write writes only what changed unless the profile chose a whole replace ([persistence-delta-replace.md](persistence-delta-replace.md)), so this brief now bears on the whole-state replace alone, the opt-in one
 **Raised from:** the [studio-publication sketch](studio-publication.md) §9, where the maintainer answered PB-Q13 (b) on 2026-10-31, so the studio writes its large aggregates by hand until this is settled
 **Touches:** `tools/persistence` (the builders of the named-graph and composite replace and tombstone), the capability record of formal-methods track H, TD-42, PDD-17, TSD-01, TSD-06, TSD-50, TSD-Q13
 
