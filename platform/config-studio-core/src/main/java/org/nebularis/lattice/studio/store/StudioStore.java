@@ -31,6 +31,12 @@ public final class StudioStore implements AutoCloseable {
     private static final String GRAPH_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }";
     private static final String WORKSPACES_QUERY = PREFIXES
         + "CONSTRUCT { ?w ?p ?o } WHERE { GRAPH ?w { ?w a cst:Workspace ; ?p ?o } }";
+    // ponytail: scans every graph for a current pointer, one triple per lineage. Keep an index graph if the registry grows large.
+    private static final String REGISTRY_QUERY = PREFIXES + """
+        CONSTRUCT { ?lineage cst:current ?version } WHERE {
+          GRAPH ?g { ?lineage cst:current ?version }
+          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:pub:"))
+        }""";
     private static final String COMPILE_JOBS_QUERY = PREFIXES + """
         CONSTRUCT {
           ?job a cst:Job ; cst:kind cst:Compile ; cst:target ?target ; cst:status ?status ;
@@ -89,6 +95,11 @@ public final class StudioStore implements AutoCloseable {
 
     public Model workspaces() {
         return connection.queryConstruct(constant(WORKSPACES_QUERY));
+    }
+
+    /** Every published lineage with its current version (ADR-A149). */
+    public Model registry() {
+        return connection.queryConstruct(constant(REGISTRY_QUERY));
     }
 
     /** The compile jobs of one workspace, without their reports and artefacts. */

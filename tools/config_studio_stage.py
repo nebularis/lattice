@@ -108,6 +108,9 @@ def stage(root: Path, out: Path) -> None:
             if p != CST.part:
                 listing.add((sample, p, o))
     listing.serialize(out / "samples.ttl", format="turtle", encoding="utf-8")
+    # The units a workspace publishes (ADR-A149), which the service serves to the browser.
+    units = catalogue.root / catalogue.area("contracts") / "config-studio" / "publication-units.ttl"
+    (out / "publication-units.ttl").write_text(units.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     # MORK's teaching pack's first layer, which the service's MCP server offers as a prompt.
     (out / "prompts").mkdir(parents=True, exist_ok=True)
     mtp = catalogue.root / catalogue.module("mork").directory("mtp") / "out" / "l0.txt"

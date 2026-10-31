@@ -13,6 +13,10 @@ public final class Cst {
     public static final Resource Job = r("Job");
     public static final Resource Validate = r("Validate");
     public static final Resource Compile = r("Compile");
+    /** A job kind that versions a unit of a configuration part for publication (ADR-A149). */
+    public static final Resource Publish = r("Publish");
+    /** An event of a lineage's registry graph, the publication of one version. */
+    public static final Resource Publication = r("Publication");
     public static final Resource Persistence = r("Persistence");
     public static final Resource Surface = r("Surface");
     public static final Resource Queued = r("Queued");
@@ -79,6 +83,19 @@ public final class Cst {
         };
     }
     public static final Property job = p("job");
+    /** The unit IRI a publish job versions, which becomes the lineage. */
+    public static final Property unit = p("unit");
+    public static final Property lineage = p("lineage");
+    public static final Property version = p("version");
+    /** The first 64 hexadecimal digits of a version's digest, of which its IRI holds 16. */
+    public static final Property digest = p("digest");
+    public static final Property unitKind = p("unitKind");
+    /** A lineage's latest version. */
+    public static final Property current = p("current");
+    public static final Property sequence = p("sequence");
+    public static final Property previousPublication = p("previousPublication");
+    public static final Property publishedAt = p("publishedAt");
+    public static final Property fromWorkspace = p("fromWorkspace");
     public static final Property requestedAt = p("requestedAt");
     public static final Property committedAt = p("committedAt");
     public static final Property wrote = p("wrote");
@@ -127,6 +144,28 @@ public final class Cst {
     public static final Property suggestedKey = p("suggestedKey");
     public static final Property suggestedValueType = p("suggestedValueType");
     public static final Property suggestedTarget = p("suggestedTarget");
+
+    /** Foundation's terms for versions and identity. */
+    public static final class Fnd {
+        public static final String NS = "https://www.nebularis.org/neuro-semantic/lattice/foundation#";
+        public static final Resource PersistentIdentity = ResourceFactory.createResource(NS + "PersistentIdentity");
+        public static final Property hasVersion = ResourceFactory.createProperty(NS + "hasVersion");
+        public static final Property supersededBy = ResourceFactory.createProperty(NS + "supersededBy");
+        public static final Property hasIdentity = ResourceFactory.createProperty(NS + "hasIdentity");
+
+        private Fnd() {
+        }
+    }
+
+    /** PROV's terms for a publication. */
+    public static final class Prov {
+        public static final String NS = "http://www.w3.org/ns/prov#";
+        public static final Resource Activity = ResourceFactory.createResource(NS + "Activity");
+        public static final Property generated = ResourceFactory.createProperty(NS + "generated");
+
+        private Prov() {
+        }
+    }
 
     private Cst() {
     }

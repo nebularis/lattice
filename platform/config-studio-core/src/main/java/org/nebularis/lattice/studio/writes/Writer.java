@@ -62,6 +62,7 @@ public final class Writer {
     /** What a job update may change. Anything else on the job node is the service's and must stay as it wrote it. */
     private static final Set<Property> WORKER_PREDICATES = Set.of(
         Cst.status, Cst.startedAt, Cst.finishedAt, Cst.failureMessage, p("conforms"), p("report"), p("artefact"),
+        Cst.lineage, Cst.version, Cst.digest, Cst.unitKind,
         p("gap"), p("resolution"), p("expansion"), p("testResult"));
     private static final List<String> CONFIGS = Workspace.CONFIGS;
     private static final Var S = Var.alloc("s");
@@ -133,6 +134,8 @@ public final class Writer {
         final Map<String, Plan> planned = new LinkedHashMap<>();
         final Map<String, Optional<Workspace>> workspaces = new HashMap<>();
         final Map<String, Optional<Model>> jobs = new HashMap<>();
+        /** The registry graphs of lineages, as the batch would leave them, so two publishes of one lineage see each other. */
+        final Map<String, Model> lineages = new HashMap<>();
 
         Optional<Workspace> workspace(String id) {
             return workspaces.computeIfAbsent(id, k -> Optional.ofNullable(Workspace.from(k, store.graph(Graphs.workspace(k)))));
@@ -162,6 +165,7 @@ public final class Writer {
                 case JOB_UPDATE -> jobUpdate(index, c);
                 case DELETE_JOB -> deleteJob(index, c);
                 case SET_ACCESS -> setAccess(index, c);
+                case PUBLISH -> publish(index, c);
             };
         }
 
@@ -182,7 +186,7 @@ public final class Writer {
                 return Reply.notFound();
             }
             boolean allowed = switch (c.type()) {
-                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT -> ws.writableBy(c.principal(), c.admin());
+                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH -> ws.writableBy(c.principal(), c.admin());
                 case DELETE_WORKSPACE, SET_ACCESS -> ws.managedBy(c.principal(), c.admin());
                 default -> true;
             };
@@ -497,6 +501,86 @@ public final class Writer {
             return planned(index, c, Reply.ok(), Reply::notFound);
         }
 
+        /**
+         * One version of a lineage into the registry. The version's graph is immutable and stored once by its digest. The
+         * lineage's graph holds its identity, its versions, the current one and the chain of publication events. The
+         * guard is the current version the writer read, so a publication that lost a race is refused and the chain
+         * never forks. A version that is already current changes nothing and answers "current".
+         */
+        private Reply publish(int index, Command c) {
+            String lineage = c.part();
+            String version = c.label();
+            if (!Graphs.isUnitIri(lineage) || version == null || named(c).hasNext()) {
+                return Reply.refused("a publication names a lineage that is an absolute http, https or urn IRI the studio did not mint, a version, and carries the version's graph alone");
+            }
+            if (!version.matches(Pattern.quote(lineage) + "/rev/1-[0-9a-f]{16}")) {
+                return Reply.refused("a version is its lineage's IRI, /rev/1- and 16 lower-case hexadecimal digits");
+            }
+            Model content = c.body().getDefaultModel();
+            if (!content.contains(content.createResource(version), Cst.Fnd.hasIdentity, content.createResource(lineage))) {
+                return Reply.refused("a version's graph states that the version has the lineage as its identity");
+            }
+            if (workspace(c.workspace()).isEmpty()) {
+                return Reply.notFound();
+            }
+            String lineageGraph = Graphs.lineage(lineage);
+            Model registry = lineages.computeIfAbsent(lineage, k -> store.graph(lineageGraph));
+            Resource unit = registry.createResource(lineage);
+            Resource previous = registry.listObjectsOfProperty(unit, Cst.current).toList().stream()
+                .filter(RDFNode::isURIResource).map(RDFNode::asResource).findFirst().orElse(null);
+            long last = 0;
+            Resource lastEvent = null;
+            for (Statement s : registry.listStatements(null, Cst.sequence, (RDFNode) null).toList()) {
+                if (s.getObject().isLiteral() && s.getObject().asLiteral().getLong() > last) {
+                    last = s.getObject().asLiteral().getLong();
+                    lastEvent = s.getSubject();
+                }
+            }
+            if (previous != null && previous.getURI().equals(version)) {
+                return new Reply(200, last, "current");
+            }
+            long next = last + 1;
+            String digest = version.substring(version.length() - 16);
+            String versionGraph = Graphs.version(lineage, digest);
+            String event = lineage + "/evt/e1/" + String.format("%06d", next);
+            Model add = ModelFactory.createDefaultModel();
+            Resource unitAdd = add.createResource(lineage).addProperty(RDF.type, Cst.Fnd.PersistentIdentity)
+                .addProperty(Cst.Fnd.hasVersion, add.createResource(version)).addProperty(Cst.current, add.createResource(version));
+            Resource e = add.createResource(event).addProperty(RDF.type, Cst.Publication).addProperty(RDF.type, Cst.Prov.Activity)
+                .addLiteral(Cst.sequence, add.createTypedLiteral(next))
+                .addProperty(Cst.Prov.generated, add.createResource(version))
+                .addProperty(Cst.fromWorkspace, add.createResource(Graphs.workspace(c.workspace())))
+                .addProperty(Cst.publishedAt, add.createTypedLiteral(clock.instant().toString(), XSDDatatype.XSDdateTime));
+            if (c.principal() != null) {
+                e.addProperty(Cst.principal, c.principal());
+            }
+            if (lastEvent != null) {
+                e.addProperty(Cst.previousPublication, add.createResource(lastEvent.getURI()));
+            }
+            if (previous != null) {
+                add.createResource(previous.getURI()).addProperty(Cst.Fnd.supersededBy, add.createResource(version));
+            }
+            String receipts = Graphs.receipts(c.workspace());
+            Node unitNode = iri(lineage);
+            Element guard = previous == null
+                ? group(notExists(quad(lineageGraph, unitNode, Cst.current.asNode(), Var.alloc("current"))))
+                : quad(lineageGraph, unitNode, Cst.current.asNode(), previous.asNode());
+            receipt(c, receipts, guard, List.of(versionGraph, lineageGraph), next);
+            // The same digest is the same content, so a version graph that exists is left as it is.
+            request.add(insert(versionGraph, content, group(mine(c, receipts), notExists(quad(versionGraph, S, P, O)))));
+            request.add(deleteOf(lineageGraph, unitNode, Cst.current.asNode(), mine(c, receipts)));
+            // A version published again after being superseded is no longer superseded.
+            request.add(deleteOf(lineageGraph, iri(version), Cst.Fnd.supersededBy.asNode(), mine(c, receipts)));
+            request.add(insert(lineageGraph, add, mine(c, receipts)));
+            registry.removeAll(unit, Cst.current, null);
+            registry.removeAll(registry.createResource(version), Cst.Fnd.supersededBy, null);
+            registry.add(add);
+            return planned(index, c, Reply.ok(next), () -> {
+                lineages.remove(lineage);
+                return Reply.refused("the lineage was published meanwhile, so publish again");
+            });
+        }
+
         private Reply deleteJob(int index, Command c) {
             String jobIri = Graphs.job(c.job());
             Optional<Model> found = job(c.job());
@@ -607,6 +691,15 @@ public final class Writer {
         u.getDeleteAcc().addQuad(Quad.create(iri(graph), S, P, O));
         u.setHasDeleteClause(true);
         u.setElement(group(when, quad(graph, S, P, O)));
+        return u;
+    }
+
+    /** Deletes every {@code s p ?o} of a graph, where {@code when} holds. */
+    private static UpdateModify deleteOf(String graph, Node s, Node p, Element when) {
+        UpdateModify u = new UpdateModify();
+        u.getDeleteAcc().addQuad(Quad.create(iri(graph), s, p, O));
+        u.setHasDeleteClause(true);
+        u.setElement(group(when, quad(graph, s, p, O)));
         return u;
     }
 

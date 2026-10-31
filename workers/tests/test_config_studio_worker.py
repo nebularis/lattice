@@ -798,3 +798,26 @@ def test_an_odrl_party_named_as_a_workspace_role_reuses_that_role():
     assert len(set(parts["baseline.ttl"].subjects())) == 1, "only the licensor's role is new"
     payloads = [Graph().parse(data=str(o), format="turtle") for o in parts["review.ttl"].objects(None, CST.payload)]
     assert any((None, URIRef(INS_NS + "holder"), licensee) in p for p in payloads)
+
+
+def test_a_publish_job_names_the_version_of_the_unit_it_names():
+    """ADR-A149: the worker answers a publish job with the version, and fails one that names no unit."""
+    store = FakeStore()
+    job_iri = submit(store, "validate", "vocabulary", None)
+    job = URIRef(job_iri)
+    g = store.graphs[job_iri]
+    g.set((job, CST.kind, CST.Publish))
+    g.set((job, CST.unit, URIRef("https://example.org/perils")))
+    store.graphs[f"{job_iri}:input"] = Graph().parse(data="""
+        @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+        <https://example.org/perils> a skos:ConceptScheme . <https://example.org/fire> skos:inScheme <https://example.org/perils> .""",
+        format="turtle")
+    ConfigStudioWorker(store, ROOT, _clock()).handle(job_iri)
+    done = store.graphs[job_iri]
+    assert done.value(job, CST.status) == CST.Succeeded
+    assert str(done.value(job, CST.version)).startswith("https://example.org/perils/rev/1-")
+    g = store.graphs[job_iri]
+    g.set((job, CST.status, CST.Queued))
+    g.set((job, CST.unit, URIRef("https://example.org/fire")))
+    ConfigStudioWorker(store, ROOT, _clock()).handle(job_iri)
+    assert store.graphs[job_iri].value(job, CST.status) == CST.Failed

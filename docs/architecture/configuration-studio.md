@@ -115,6 +115,10 @@ A sample is copied into a new workspace that records which sample it came from, 
 
 **A part decides where a statement is saved, never what a job reads** ([ADR-A149](decisions/ADR-A149-publication-from-the-studio.md) decision 7). A validation, compilation or dry run names each of its workspace's other configuration parts as a `cst:contextGraph`. The worker reads them as it reads the baseline and reports only findings about the target part's subjects, and the writer refuses a context graph that is not one of the workspace's parts.
 
+## Publication
+
+A unit of a workspace, an aggregate the units table `contracts/config-studio/publication-units.ttl` describes, is published only when someone publishes it ([ADR-A149](decisions/ADR-A149-publication-from-the-studio.md)). A publish job names the version of the part as saved, `{lineage}/rev/1-{digest}` under ADR-A51, and the writer adds it to the lineage's registry graph with an event and the current pointer, guarded on the version it read as current. The registry is global, immutable and read by every signed-in principal, and its graph names are the studio's own, never part of a version's identity.
+
 ## A validation, end to end
 
 ```mermaid

@@ -81,3 +81,15 @@ def test_a_sample_naming_a_missing_file_is_refused(tmp_path: Path) -> None:
     manifest.add((part, CST.fileName, Literal("absent.ttl")))
     with pytest.raises(SystemExit, match="absent.ttl"):
         config_studio_stage.sample_files(catalogue, manifest, sample, tmp_path)
+
+
+def test_the_units_of_publication_are_staged_each_with_a_root_class_and_a_part(staged: Path) -> None:
+    """ADR-A149: the service serves the units table to the browser."""
+    from rdflib import Graph, Namespace
+    from rdflib.namespace import RDF
+
+    cst = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio#")
+    units = Graph().parse(staged / "publication-units.ttl", format="turtle")
+    kinds = list(units.subjects(RDF.type, cst.PublicationUnit))
+    assert len(kinds) >= 10
+    assert all(units.value(u, cst.rootClass) is not None and units.value(u, cst.authoredIn) is not None for u in kinds)

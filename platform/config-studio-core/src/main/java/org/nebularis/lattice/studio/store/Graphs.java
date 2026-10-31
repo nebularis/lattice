@@ -9,6 +9,9 @@ public final class Graphs {
     public static final String JOB_PREFIX = "urn:lattice:studio:job:";
     private static final Pattern UUID = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
+    /** The registry's graphs, a lineage's and each of its versions'. They belong to no workspace. */
+    public static final String PUBLICATION_PREFIX = "urn:lattice:studio:pub:";
+
     private Graphs() {
     }
 
@@ -79,5 +82,33 @@ public final class Graphs {
 
     public static String receipt(String command) {
         return "urn:lattice:studio:receipt:" + command;
+    }
+
+    /** The registry graph of the lineage {@code lineageIri}, named by a hash so the IRI stays a legal graph name. */
+    public static String lineage(String lineageIri) {
+        try {
+            byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(lineageIri.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return PUBLICATION_PREFIX + java.util.HexFormat.of().formatHex(hash).substring(0, 32);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** The immutable graph of a version, {@code digest16} the digest in its IRI. */
+    public static String version(String lineageIri, String digest16) {
+        return lineage(lineageIri) + ":rev:" + digest16;
+    }
+
+    /** Whether {@code iri} may name a published unit, an absolute http, https or urn IRI that the studio did not mint. */
+    public static boolean isUnitIri(String iri) {
+        if (iri == null || iri.length() > 500 || iri.startsWith("urn:lattice:studio:")) {
+            return false;
+        }
+        try {
+            java.net.URI u = new java.net.URI(iri);
+            return u.isAbsolute() && java.util.Set.of("http", "https", "urn").contains(u.getScheme());
+        } catch (java.net.URISyntaxException e) {
+            return false;
+        }
     }
 }

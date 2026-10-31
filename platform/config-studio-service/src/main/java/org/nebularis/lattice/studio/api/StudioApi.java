@@ -186,6 +186,12 @@ public final class StudioApi {
         if (s.length == 1 && s[0].equals("vocabulary")) {
             return method.equals("GET") ? vocabulary(req) : notAllowed("GET");
         }
+        if (s.length == 1 && s[0].equals("publication-units")) {
+            return method.equals("GET") ? asset("publication-units.ttl") : notAllowed("GET");
+        }
+        if (s[0].equals("registry") && s.length <= 2) {
+            return method.equals("GET") ? registry(req, s.length == 1 ? null : s[1]) : notAllowed("GET");
+        }
         if (s.length == 1 && s[0].equals("samples")) {
             return method.equals("GET") ? asset("samples.ttl") : notAllowed("GET");
         }
@@ -250,6 +256,9 @@ public final class StudioApi {
             }
             if (s.length == 3 && s[2].equals("transforms")) {
                 return method.equals("POST") ? transform(req, ws) : notAllowed("POST");
+            }
+            if (s.length == 3 && s[2].equals("publications")) {
+                return method.equals("POST") ? publish(req, ws) : notAllowed("POST");
             }
             if (s.length == 3 && s[2].equals("jobs")) {
                 return switch (method) {
@@ -570,6 +579,9 @@ public final class StudioApi {
         if ("analyse".equals(kind)) {
             return submitAnalysis(id, target);
         }
+        if ("publish".equals(kind)) {
+            return submitPublish(id, target, query.get("unit"));
+        }
         if ("propose".equals(kind) && "odrl".equals(target) && !features.contains("odrl")) {
             return notFound();
         }
@@ -657,6 +669,75 @@ public final class StudioApi {
         return publishJob(id, job, description, input);
     }
 
+    /**
+     * A publish job versions one unit of a saved part, so its input is the part as stored and the request has no body.
+     * Only a principal who may write the workspace submits one.
+     */
+    private ApiResponse submitPublish(String id, String target, String unit) {
+        if (!Workspace.CONFIGS.contains(target) || !Graphs.isUnitIri(unit)) {
+            return ApiResponse.text(400, "kind publish needs a target that is one of " + Workspace.CONFIGS
+                + " and a unit that is an absolute http, https or urn IRI the studio did not mint");
+        }
+        Workspace ws = load(id);
+        if (ws == null) {
+            return notFound();
+        }
+        Principal p = CURRENT.get();
+        if (p != null && !ws.writableBy(p.name(), p.admin())) {
+            return ApiResponse.text(403, p.name() + " may not publish from this workspace, which is " + ws.mode());
+        }
+        String job = ids.get().toString();
+        Model description = jobDescription(Graphs.job(job), id, ws, "publish", target, Graphs.jobInput(job));
+        description.createResource(Graphs.job(job)).addProperty(Cst.unit, description.createResource(unit));
+        return publishJob(id, job, description, store.graph(Graphs.config(id, target)));
+    }
+
+    /**
+     * Puts the version a finished publish job made into the registry. The writer decides whether it is new, current
+     * already, or lost a race, and answers 201 with the lineage's registry graph, or 200 when it was current already.
+     */
+    private ApiResponse publish(ApiRequest req, String id) {
+        String job = query(req.query()).get("job");
+        if (load(id) == null || job == null || !Graphs.isId(job)) {
+            return notFound();
+        }
+        Resource node = ResourceFactory.createResource(Graphs.job(job));
+        Model m = store.graph(Graphs.job(job));
+        if (!m.contains(node, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
+            return notFound();
+        }
+        Resource lineage = uri(m, node, Cst.lineage);
+        Resource version = uri(m, node, Cst.version);
+        String content = null;
+        for (Resource artefact : m.listObjectsOfProperty(node, Cst.artefact).toList().stream().filter(o -> o.isResource()).map(o -> o.asResource()).toList()) {
+            if (artefact.hasLiteral(Cst.path, "version.nt") && artefact.hasProperty(Cst.content)) {
+                content = artefact.getProperty(Cst.content).getString();
+            }
+        }
+        if (!m.contains(node, Cst.kind, Cst.Publish) || !m.contains(node, Cst.status, Cst.Succeeded) || lineage == null
+            || version == null || !m.contains(node, Cst.digest) || content == null) {
+            return ApiResponse.text(409, "the job is not a finished publish job with a version to publish");
+        }
+        Model graph;
+        try {
+            graph = Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
+        } catch (RiotException e) {
+            return ApiResponse.text(422, "the job's version.nt does not parse as N-Triples");
+        }
+        Reply reply = writes.send(Command.publish(id, lineage.getURI(), version.getURI(), graph));
+        if (!reply.applied()) {
+            return refusal(reply);
+        }
+        byte[] registry = Turtle.write(store.graph(Graphs.lineage(lineage.getURI())));
+        return ApiResponse.turtle("current".equals(reply.message()) ? 200 : 201, registry)
+            .with("Location", "/api/registry/lineage?iri=" + java.net.URLEncoder.encode(lineage.getURI(), StandardCharsets.UTF_8));
+    }
+
+    private static Resource uri(Model m, Resource s, org.apache.jena.rdf.model.Property p) {
+        var o = m.getProperty(s, p);
+        return o != null && o.getObject().isURIResource() ? o.getResource() : null;
+    }
+
     private Model jobDescription(String jobIri, String ws, Workspace workspace, String kind, String target, String input) {
         Model m = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
         Resource job = m.createResource(jobIri);
@@ -664,6 +745,7 @@ public final class StudioApi {
         job.addProperty(Cst.kind, switch (kind) {
             case "validate" -> Cst.Validate;
             case "compile" -> Cst.Compile;
+            case "publish" -> Cst.Publish;
             case "assemble" -> Cst.Assemble;
             case "propose" -> Cst.Propose;
             case "dry-run" -> Cst.DryRunJob;
@@ -783,6 +865,27 @@ public final class StudioApi {
             return notFound();
         }
         return ApiResponse.turtle(200, Turtle.write(store.compileJobs(Graphs.workspace(id))));
+    }
+
+    /**
+     * The registry, which every signed-in principal reads (ADR-A149 decision 4): its lineages with their current versions,
+     * one lineage's graph by {@code iri}, or one version's content by {@code iri}.
+     */
+    private ApiResponse registry(ApiRequest req, String what) {
+        if (what == null) {
+            return ApiResponse.turtle(200, Turtle.write(store.registry()));
+        }
+        String iri = query(req.query()).get("iri");
+        Model m;
+        if (what.equals("lineage") && Graphs.isUnitIri(iri)) {
+            m = store.graph(Graphs.lineage(iri));
+        } else if (what.equals("version") && iri != null && iri.matches(".+/rev/1-[0-9a-f]{16}")) {
+            String lineage = iri.substring(0, iri.lastIndexOf("/rev/1-"));
+            m = Graphs.isUnitIri(lineage) ? store.graph(Graphs.version(lineage, iri.substring(iri.length() - 16))) : org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+        } else {
+            return notFound();
+        }
+        return m.isEmpty() ? notFound() : ApiResponse.turtle(200, Turtle.write(m));
     }
 
     private ApiResponse getJob(String job) {

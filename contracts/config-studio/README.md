@@ -27,6 +27,8 @@ Fuseki serves the one database as two services: `studio` reads only, through que
 | `urn:lattice:studio:ws:{ws}:document:{doc}` | writer | a document of the workspace's library: its Wording graph, which the `document-to-wording` kit gives from its markup under the base `urn:lattice:studio:ws:{ws}/`, and the markup itself as `cst:markup`, a string, on the node whose IRI is the graph's. The workspace description names it with `cst:document`, and gives it `rdf:type` `cst:Document`, `rdfs:label` (the document's title), `cst:template`, `cst:revision` and `cst:modifiedAt` |
 | `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job` node, whose IRI is the graph's |
 | `urn:lattice:studio:job:{job}:input` | writer, once | the configuration as submitted |
+| `urn:lattice:studio:pub:{lineage}` | writer | a published lineage, `{lineage}` the first 32 hexadecimal digits of the SHA-256 of its IRI: the `fnd:PersistentIdentity`, each `fnd:hasVersion`, the `cst:current` version, each `fnd:supersededBy`, and each `cst:Publication` event. Global, not a workspace's (ADR-A149) |
+| `urn:lattice:studio:pub:{lineage}:rev:{digest}` | writer, once | one version's content, `{digest}` the version IRI's 16 hexadecimal digits. Immutable |
 
 `{ws}` and `{job}` are lower-case UUIDs. Only the writers write these graphs (see Writes). The service and the worker read them from the store.
 
@@ -197,6 +199,22 @@ A transform runs a finished compile job's stylesheets or chains over a sample so
 
 Each scheme with a transform of the sample's format runs, and each mapping's artefact is what it wrote, as a mapping dry run's at stratum 0. A node is a datum's when it has one of the datum's types, its IRI, or an IRI that starts with the constant text its identity starts with, and a triple two mappings could have written is in both artefacts. A scheme with no transform of that format is reported as information with `cst:code` `NotRun`, and a source the engine cannot read fails the run.
 
+### Publication
+
+Publishing a unit is two requests the browser sequences, as a transform is (ADR-A149). A publish job, `POST /api/workspaces/{ws}/jobs?kind=publish&target={part}&unit={root}`, reads the part as saved, not a request body, and names the version the unit's aggregate would be published as. The units, their root classes and the property that names a root's members are `publication-units.ttl`. The job's result names `cst:lineage` (the root), `cst:version` (`{lineage}/rev/1-{digest}`, the first 16 hexadecimal digits of the RDFC-1.0 SHA-256 of the aggregate as drafted), `cst:digest` (all 64), `cst:unitKind`, and one artefact, `version.nt`, the version's content: the aggregate with the root rewritten to the version, which names the lineage with `fnd:hasIdentity`. Only a principal who may write the workspace submits one.
+
+`POST /api/workspaces/{ws}/publications?job={job}` then publishes what a finished publish job named, through a `publish` command. The writer adds the version and a `cst:Publication` event to the lineage's registry graph, unless the version is already current, which changes nothing and answers `200`:
+
+```turtle
+<{lineage}/evt/e1/000002> a cst:Publication , prov:Activity ;
+    cst:sequence 2 ;
+    prov:generated <{lineage}/rev/1-{digest}> ;
+    cst:principal "developer" ;
+    cst:fromWorkspace <urn:lattice:studio:ws:{ws}> ;
+    cst:publishedAt "2026-10-31T12:00:00Z"^^xsd:dateTime ;
+    cst:previousPublication <{lineage}/evt/e1/000001> .
+```
+
 ### Mapping proposals
 
 A mapping proposal asks the deployment's language model, through the provider the worker is configured with (Chat Completions or Anthropic's Messages API, as the [operations guide](../../docs/operator/configuration-studio-operations.md#worker) describes), for a MORK mapping scheme from the source vocabulary. The worker offers the model `tools/mork`'s proposal tools as functions, the teaching pack, the target and source cards, candidate terms, one term in depth and the check, each bound to the job's own documents, and gives it the rules the workspace's own reviews teach. It calls them until it answers with a scheme in MCN, within `LATTICE_MAPPING_PROPOSER_ROUNDS` turns, 40 by default. The job's findings are the final check's, over the sample source when there is one. Its artefacts are `proposal.ttl`, grouped `mapping`, the decoded scheme with a `mork:ProposalRun` recording the model, its start and end and the tokens the provider counted, each mapping naming the run with `prov:wasGeneratedBy`, and `proposal.mcn`, the model's answer as it gave it. A scheme that names a node the workspace already holds is refused. The author reviews each mapping in mapping mode, which adds a `mork:MappingReview` to the mapping part.
@@ -219,6 +237,7 @@ A command's fields are AMQP headers, and the graphs it carries are its body, `co
 | `delete-document` | `workspace`, `part` (the document's id) | none | service |
 | `delete-job` | `workspace`, `job` | none | service, and the writer's sweep of jobs finished longer ago than the retention |
 | `set-access` | `workspace`, `part` (the mode, `locked`, `read-only` or `shared`), `label` (a new owner, from an administrator only) | none | service |
+| `publish` | `workspace` (the one it is published from), `part` (the lineage), `label` (the version) | the version's content, in the default graph | service |
 
 `workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service publishes with confirms and sets `reply_to` to `amq.rabbitmq.reply-to` and `correlation_id` to the command's id, and the writer answers with headers alone. The stream keeps `reply_to` as an AMQP 1.0 address, `/queues/` and the percent-encoded queue name, which the writer decodes. The reply's headers are `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
 

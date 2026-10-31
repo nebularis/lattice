@@ -70,3 +70,35 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 `platform/config-studio-service/src/test/java/org/nebularis/lattice/studio/AccessTest.java`, written by a Sonnet subagent and reviewed.
 
 **Not covered.** The browser does not disable editing in a workspace its principal may only read. A save is refused by the writer and the refusal shown. An administrator gives an ownerless workspace an owner through the API, not the browser.
+
+## PB4: a version, its event and its pointer
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB4-01 | a concept scheme with two concepts, a concept minted under it and another scheme / its publish job / a version `{lineage}/rev/1-{16 hex}` naming the lineage, holding the scheme's concepts in the version and nothing of the other scheme | L1 | + | pass |
+| PB4-02 | the same content twice, a change inside the aggregate, a change outside it / prepared / the same version, another, the same | L2 | ± | pass |
+| PB4-03 | a mapping scheme / prepared / its mappings and their blank nodes, each naming the version | L1 | + | pass |
+| PB4-04 | a root of no unit, or one the studio names / prepared / the job fails | L1 | − | pass |
+| PB4-05 | a publish job / run by the worker / succeeds naming the version, and one naming no unit fails | L4 | ± | pass |
+| PB4-06 | a publish job / submitted / its input is the part as saved and its description names the unit, and a reader of a read-only workspace or a malformed unit is refused | L3 | ± | pass |
+| PB4-07 | a finished publish job / published / the lineage graph holds the version as current with an event of sequence 1, its principal and workspace, and the version graph its content | L4 | + | pass |
+| PB4-08 | the same version again, then another / published / no second event and `200`, then the first superseded, current moved, sequence 2 | L4 | ± | pass |
+| PB4-09 | a version not under its lineage, content without its identity, a studio lineage, an unfinished job, another workspace's job / published / refused | L8 | − | pass |
+
+`workers/tests/test_config_studio_publish.py`, `workers/tests/test_config_studio_worker.py` and `PublicationTest`.
+
+**Not covered.** The writer does not recompute a version's digest (PB-D1). Two workspaces may publish one lineage, and both events record where they came from. Reading the registry is PB5.
+
+## PB5: reading the registry, and publishing from the browser
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB5-01 | the staged assets / staged / the units table, every unit with a root class and a part, which `GET /api/publication-units` serves | L1 | + | pass |
+| PB5-02 | a published lineage / `GET /api/registry/lineage?iri=…` by a principal of another workspace / its graph, and an unknown lineage `404` | L3 | ± | pass |
+| PB5-03 | a published version / `GET /api/registry/version?iri=…` / its content, unchanged by later publications, and a version of no lineage `404` | L3 | ± | pass |
+| PB5-04 | `GET /api/registry` / listed / every lineage with its current version | L3 | + | pass |
+| PB5-05 | the studio in a browser / a concept scheme published from the Publish view, then republished unchanged / one version and one event, shown as current, holding the scheme's six concepts | L6 | + | pass, 2026-10-31, by hand in the browser pane |
+
+`PublicationTest.theRegistryIsReadByAnyPrincipalByLineageAndVersion` and `tools/test_config_studio_stage.py`.
+
+**Not covered.** A lineage whose IRI has a fragment, such as `…/employment#JobFamilyScheme`, names its versions inside the fragment, `…#JobFamilyScheme/rev/1-…`, which a deployment that dereferences IRIs cannot fetch apart from the lineage. The registry has no deletion, by design, so a live check removes its test lineage from the store by hand.

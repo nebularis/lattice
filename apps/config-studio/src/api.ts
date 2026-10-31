@@ -161,6 +161,33 @@ export const api = {
     return response.headers.get("ETag") ?? revision;
   },
 
+  /** The units a workspace publishes (ADR-A149), `contracts/config-studio/publication-units.ttl`. */
+  async publicationUnits(): Promise<Graph> {
+    return (await turtle("/api/publication-units")).graph;
+  },
+
+  /** Names the version a unit of the saved part would be published as, as a job. */
+  async preparePublication(id: string, part: ConfigPart, unit: string): Promise<string> {
+    const response = await request(`/api/workspaces/${id}/jobs?kind=publish&target=${part}&unit=${encodeURIComponent(unit)}`, { method: "POST" });
+    return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+  },
+
+  /** Publishes what a finished publish job named, and gives the lineage's registry graph. */
+  async publish(id: string, job: string): Promise<Graph> {
+    const response = await request(`/api/workspaces/${id}/publications?job=${job}`, { method: "POST" });
+    return Graph.parse(await response.text());
+  },
+
+  /** A lineage's registry graph: its versions, its current version and its publications. Null when it was never published. */
+  async lineage(iri: string): Promise<Graph | null> {
+    try {
+      return (await turtle(`/api/registry/lineage?iri=${encodeURIComponent(iri)}`)).graph;
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+
   async submit(id: string, kind: "validate" | "compile" | "assemble" | "propose" | "dry-run", target: Target | "sentence-forms" | "language-model" | "odrl" | "mapping-language-model" | "rml", config: Graph): Promise<string> {
     const response = await request(`/api/workspaces/${id}/jobs?kind=${kind}&target=${target}`, {
       method: "POST",

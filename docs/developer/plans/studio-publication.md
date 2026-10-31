@@ -21,9 +21,9 @@ The answers are in the [sketch](../sketches/studio-publication.md) §8 and ADR-A
 
 | ID | Decision |
 |---|---|
-| PB-D1 | A version's digest is computed by the Python worker, which has RDFC-1.0 through the Persistence caller library, in a `publish` job. The writer commits what the job computed after checking it again |
-| PB-D2 | The registry's graphs are `urn:lattice:studio:pub:{hash of lineage}` for a lineage's events and current pointer, and `urn:lattice:studio:pub:{hash of lineage}:rev:{digest}` for a version's content. A publish command is keyed by its lineage, so one writer orders a lineage's publications |
-| PB-D3 | The units, their root classes and what each owns are one table in the contract, read by the browser, the service and the worker. Ownership is a root's blank nodes and the named nodes minted under its IRI, plus a scheme's concepts for a concept scheme |
+| PB-D1 | A version's digest is computed by the Python worker in a `publish` job, with pyoxigraph's RDFC-1.0, as MORK's own digest is. The writer checks the version's form and that it names its lineage, not the digest, since the worker is trusted (ADR-A35) and the JVM side has no RDFC-1.0 implementation |
+| PB-D2 | The registry's graphs are `urn:lattice:studio:pub:{hash of lineage}` for a lineage's versions, events and current pointer, and `…:rev:{digest}` for a version's content. A `publish` command is routed by the workspace it is published from, and the writer guards on the lineage's current version, so a race between two workspaces publishing one lineage is refused, not forked |
+| PB-D3 | The units, their root classes and what each owns are one table in the contract, read by the browser, the service and the worker. Ownership is the nodes naming the root by the unit's member property, the blank nodes reached from either, and the named nodes minted under the root's IRI. The table is `contracts/config-studio/publication-units.ttl` |
 | PB-D4 | A fenced import's graph is `urn:lattice:studio:import:{digest}`, shared by every workspace that holds it, and a workspace lists the imports it holds |
 | PB-D5 | `local` authentication sends the principal's name in a header, from a picker in the browser. `oidc` takes a bearer token, which the browser obtains by the authorization code flow with PKCE |
 

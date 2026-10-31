@@ -119,6 +119,13 @@ class ConfigStudioWorker:
             from .config_studio_mork_tools import run_tool
 
             return run_tool(job, input_("configuration"))
+        if graph.value(job, CST.kind) == CST.Publish:
+            from .config_studio_publish import prepare
+
+            root = graph.value(job, CST.unit)
+            if not isinstance(root, URIRef):
+                raise ValueError("a publish job names the root of its unit with cst:unit")
+            return prepare(job, input_("configuration"), root)
         if graph.value(job, CST.kind) == CST.DryRunJob:
             from . import config_studio_dryrun
             from .config_studio_jobs import _spec

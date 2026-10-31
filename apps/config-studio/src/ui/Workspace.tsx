@@ -2,6 +2,7 @@
 // The workspace shell: top bar, navigation, the view, the inspector and the problems drawer, all
 // sharing one selection, the route.
 
+import { PublishView } from "./PublishView";
 import { ModeControl, PrincipalMenu } from "./Session";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,6 +29,7 @@ import {
   Undo2,
   Workflow,
   X,
+  Send,
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
@@ -69,7 +71,7 @@ export function useStudio(): Studio {
   return studio;
 }
 
-const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "instrument", "vocabulary", "quantification", "eligibility", "persistence", "surface", "mapping", "build"] as const;
+const VIEWS = ["overview", "baseline", "library", "assembly", "meaning", "instrument", "vocabulary", "quantification", "eligibility", "persistence", "surface", "mapping", "build", "publish"] as const;
 
 /** The views of builder mode (ADR-A138), which share the workspace's state, inspector and problems drawer with the rest. */
 const BUILDER_VIEWS: readonly string[] = ["library", "assembly", "meaning", "instrument"];
@@ -228,6 +230,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               <NavLink to="mapping" view={view} id={id} icon={<Network size={16} />} label="Schemes" count={state.configs.mapping!.current.ofType(MORK("MappingScheme")).length} issues={model.issues.mapping} dirty={dirty.mapping} />
               <div className="group">Output</div>
               <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
+              <NavLink to="publish" view={view} id={id} icon={<Send size={16} />} label="Publish" />
             </>
           ) : builder ? (
             <>
@@ -236,6 +239,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               <NavLink to="assembly" view={view} id={id} icon={<Puzzle size={16} />} label="Assemblies" count={assembliesOf(state.configs.assembly!.current).length} issues={model.issues.assembly} dirty={dirty.assembly} />
               <NavLink to="meaning" view={view} id={id} icon={<Scale size={16} />} label="Meaning" count={termsOf(state.configs.meaning!.current).length} issues={model.issues.meaning} dirty={dirty.meaning || dirty.review} />
               <NavLink to="instrument" view={view} id={id} icon={<Workflow size={16} />} label="Instrument" count={state.configs.meaning!.current.ofType(INS("Term")).length} />
+              <div className="group">Output</div>
+              <NavLink to="publish" view={view} id={id} icon={<Send size={16} />} label="Publish" />
             </>
           ) : (
             <>
@@ -247,6 +252,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               ))}
               <div className="group">Output</div>
               <NavLink to="build" view={view} id={id} icon={<FileCode2 size={16} />} label="Build" />
+              <NavLink to="publish" view={view} id={id} icon={<Send size={16} />} label="Publish" />
             </>
           )}
         </nav>
@@ -261,6 +267,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "mapping" && <MappingView selected={node} />}
           {editing && mode === "configure" && <ConfigView part={activePart} selected={node} field={route[2]} />}
           {view === "build" && <BuildView />}
+          {view === "publish" && <PublishView />}
         </main>
 
         <aside className={`side${inspector ? "" : " closed"}`} aria-label="Inspector">

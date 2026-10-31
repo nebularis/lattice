@@ -23,7 +23,7 @@ public record Command(String id, String sender, Type type, String workspace, Str
     public enum Type {
         CREATE("create"), SAVE("save"), IMPORT("import"), DELETE_WORKSPACE("delete-workspace"),
         SAVE_DOCUMENT("save-document"), DELETE_DOCUMENT("delete-document"), SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"),
-        DELETE_JOB("delete-job"), SET_ACCESS("set-access");
+        DELETE_JOB("delete-job"), SET_ACCESS("set-access"), PUBLISH("publish");
 
         public final String wire;
 
@@ -77,6 +77,11 @@ public record Command(String id, String sender, Type type, String workspace, Str
     /** {@code mode} is one of {@code Workspace.MODES}, and {@code owner} the new owner or null to keep it. */
     public static Command setAccess(String ws, String mode, String owner) {
         return new Command(newId(), SERVICE, Type.SET_ACCESS, ws, null, mode, null, null, owner, null, DatasetFactory.create(), null, false);
+    }
+
+    /** {@code content} is the version's graph, carried as the default graph. The lineage rides as the part and the version as the label. */
+    public static Command publish(String ws, String lineage, String version, Model content) {
+        return new Command(newId(), SERVICE, Type.PUBLISH, ws, null, lineage, null, null, version, null, withDefault(content), null, false);
     }
 
     public static Command deleteJob(String ws, String job) {

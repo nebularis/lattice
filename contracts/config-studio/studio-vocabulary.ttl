@@ -6,6 +6,7 @@
 
 @prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -228,6 +229,22 @@ cst:JobKind a owl:Class ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+cst:Publish a cst:JobKind ; rdfs:comment "Name the version a unit of the saved part would be published as, under ADR-A149's rule, writing nothing but the job." .
+cst:unit a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:comment "The root of the unit a publish job publishes." .
+cst:lineage a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The lineage a publish job names, the root's own IRI, a fnd:PersistentIdentity." .
+cst:version a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The version a publish job names, {lineage}/rev/1-{digest}." .
+cst:digest a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ; rdfs:comment "The SHA-256 of the RDFC-1.0 canonical N-Quads of a unit's aggregate as drafted, in lower-case hexadecimal (ADR-A143)." .
+cst:unitKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:range cst:PublicationUnit ; rdfs:comment "Which unit of publication a publish job's root is." .
+cst:current a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "A lineage's latest published version." .
+cst:PublicationUnit a owl:Class ; rdfs:comment "A kind of unit a workspace publishes: its root classes, its part and the property naming its members (publication-units.ttl)." .
+cst:rootClass a owl:ObjectProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "A class whose members are roots of the unit." .
+cst:memberBy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "The property by which a member names its root, so it is part of the unit." .
+cst:authoredIn a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:range xsd:string ; rdfs:comment "The workspace part the unit is authored in." .
+cst:Publication a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:comment "One act of publishing a version of a lineage (ADR-A51's event)." .
+cst:sequence a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range xsd:integer ; rdfs:comment "The publication's place in its lineage's, from 1." .
+cst:previousPublication a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range cst:Publication .
+cst:publishedAt a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range xsd:dateTime .
+cst:fromWorkspace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range cst:Workspace ; rdfs:comment "The workspace the version was published from." .
 cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .
 
 cst:Target a owl:Class ;
