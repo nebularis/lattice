@@ -90,18 +90,18 @@ The other two pairs agree: saves 65% to 95% slower, reads 30% to 100% slower, pu
 
 Commands run 2026-10-31, all passing: `mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify` through `mise exec`, the worker's two studio test modules (68), and `mise run benchmark:studio-api`.
 
-**The result**, medians, same machine, load average about 2.1 to 2.7 at each start:
+**The result**, medians, same machine, load average about 2.3 to 2.7 at each start:
 
-| Measure | before phase D, `4029bd0f` | phase D, `bd2a144d` | the fixes | against before phase D |
+| Measure | before phase D, `4029bd0f` | phase D, `bd2a144d` | the fixes, `c83dd347` | against before phase D |
 |---|---|---|---|---|
-| save a part, 100 triples | 89.7 ms | 159.6 ms | 135.6 ms | +51% |
-| save a part, 1,000 triples | 128.1 ms | 220.0 ms | 168.6 ms | +32% |
-| save a part, 3,000 triples | 178.1 ms | 346.8 ms | 223.5 ms | +25% |
-| read a part, 100 triples | 8.8 ms | 14.9 ms | 12.5 ms | +42% |
-| read a part, 3,000 triples | 15.1 ms | 19.4 ms | 17.6 ms | +16% |
-| list workspaces | 2.9 ms | 3.0 ms | 2.5 ms | −15% |
-| a publish job, submitted to done | 151.6 ms | 290.3 ms | 147.9 ms | −2%, within noise |
-| publish | 90.4 ms | 666.3 ms | 308.9 ms | about 3.4 times |
+| save a part, 100 triples | 89.7 ms | 159.6 ms | 136.8 ms | +53% |
+| save a part, 1,000 triples | 128.1 ms | 220.0 ms | 182.8 ms | +43% |
+| save a part, 3,000 triples | 178.1 ms | 346.8 ms | 232.7 ms | +31% |
+| read a part, 100 triples | 8.8 ms | 14.9 ms | 12.0 ms | +36% |
+| read a part, 3,000 triples | 15.1 ms | 19.4 ms | 17.3 ms | +15% |
+| list workspaces | 2.9 ms | 3.0 ms | 2.2 ms | −25% |
+| a publish job, submitted to done | 151.6 ms | 290.3 ms | 152.0 ms | 0%, within noise |
+| publish | 90.4 ms | 666.3 ms | 320.7 ms | about 3.5 times |
 | list the registry | 3.7 ms | 2.5 ms | 2.8 ms | −25% |
 
 On Fuseki's in-memory dataset a save of 1,000 triples now takes 84 ms, against 225 ms before the fixes, so what is left on TDB2 is commits. **Not yet fixed**, each a question in the sketch's §6: a save still clears its part and writes it whole, 121 ms of TDB2's time for 1,000 triples where its delta is two (SQ-Q1), and a publish still waits for a refresh of two commits and a worker's turn (SQ-Q2). The read costs one more round trip than before phase D, for the version rows, which was left as it is.

@@ -135,9 +135,10 @@ The phase D causes and the fixes made are in the Validation Pack's last section.
 
 (b) is correct only if the stored graph is the base the writer computed its delta from. One writer owns a workspace's partition and the guard proves the row has not moved, so a part written only through these operations is its base. A graph changed outside them, for example by hand in Fuseki, would keep its drift under (b) and be healed by (a)'s next save. The patch log already assumes the same, since it rebuilds every past revision from the deltas. (b) changes our hand-written form only, not the compiler's, so it leaves the linear replace sketch's questions where they are. **Leaning (b).**
 
-**SQ-Q2. How should a publish stop paying for its refresh?** A publish waits for the refresh that makes its registry entry listable, two commits and a worker's turn after its own commit, about 309 ms against 90 ms before phase D.
+**SQ-Q2. How should a publish stop paying for its refresh?** A publish waits for the refresh that makes its registry entry listable, two commits and a worker's turn after its own commit, about 320 ms against 90 ms before phase D.
 - (a) build BL-09 now, so the writer maintains the projections in the request of the write that changes them. A publish is one commit again, and no write queues a refresh. It needs a surface backend that generates an incremental update for each promotion, the largest of the three.
 - (b) the publish replies without waiting, and the client shows its own publication until the listing has it. Decision 14's waiting reader goes, and every client must do the same.
 - (c) leave it, since a publish is rare and a third of a second is within what a person waits for an explicit action.
+
 **Leaning (c) now and (a) when load runs (SQ6) show the refresh limiting throughput**, since (a) is the fix that also removes the refresh's commits from every save.
 
