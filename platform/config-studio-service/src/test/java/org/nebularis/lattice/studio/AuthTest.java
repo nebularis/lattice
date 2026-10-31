@@ -85,7 +85,7 @@ class AuthTest {
     private StudioApi api(Authenticator auth) throws java.io.IOException {
         Fixture f = new Fixture(Fixture.assetsDir(dir));
         AtomicLong counter = new AtomicLong();
-        return new StudioApi(f.store, f.writes, f.bus, java.time.Clock.systemUTC(), () -> new UUID(0, counter.incrementAndGet()),
+        return new StudioApi(f.store, Fixture.OPS, f.writes, f.bus, java.time.Clock.systemUTC(), () -> new UUID(0, counter.incrementAndGet()),
             f.assets, java.util.Set.of(), auth);
     }
 

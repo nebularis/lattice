@@ -173,9 +173,9 @@ class PublicationTest {
 
     @Test
     void theWriterRefusesWhatIsNotAVersionOfItsLineage() {
-        Writer w = new Writer(f.store, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
         Model ok = content(D1);
-        assertEquals(200, new Writer(f.store, Clock.systemUTC()).apply(Command.publish(WS, UNIT, version(D1), ok)).status());
+        assertEquals(200, new Writer(f.store, Fixture.OPS, Clock.systemUTC()).apply(Command.publish(WS, UNIT, version(D1), ok)).status());
         assertEquals(400, w.apply(Command.publish(WS, UNIT, "https://example.org/other/rev/1-" + D1, ok)).status());
         assertEquals(400, w.apply(Command.publish(WS, UNIT, UNIT + "/rev/1-ABCDEF0123456789", ok)).status());
         Model noIdentity = ModelFactory.createDefaultModel();

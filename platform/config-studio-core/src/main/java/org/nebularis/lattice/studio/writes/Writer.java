@@ -25,16 +25,14 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.E_NotEquals;
 import org.apache.jena.sparql.expr.E_NotExists;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementNamedGraph;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -42,6 +40,9 @@ import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.store.Skolem;
+import org.nebularis.lattice.studio.store.StudioOperations;
+import org.nebularis.lattice.studio.store.StudioOperations.Family;
 import org.nebularis.lattice.studio.store.StudioStore;
 
 /**
@@ -49,11 +50,14 @@ import org.nebularis.lattice.studio.store.StudioStore;
  * The writer of a partition is the only code that writes the graphs of the workspaces routed to it, and it checks every
  * command it receives, whatever its sender checked (STD-298).
  *
- * <p>Each command's first operation inserts its receipt, a {@code cst:Receipt} with its cause, sender and transaction
- * time (PRI-54), only where the command's precondition holds in the store, such as a save's expected revision (PAT-21).
- * Its other operations are conditional on that receipt. So a command applies whole or not at all even if another writer
- * were to hold its workspace, and after the commit the receipts present are exactly the commands applied. A command whose
- * receipt already exists was applied before, and is answered from the receipt rather than applied again.
+ * <p>A command on the workspace's aggregates, its description, parts and documents, runs one generated operation for
+ * each aggregate through {@link StudioOperations}, each guarded by the aggregate's version row and in a transaction of its
+ * own, {@code urn:txn:{command id}/{n}}. Its {@code cst:Receipt}, with its cause, sender and transaction time (PRI-54), is
+ * the last operation, guarded on the claim of the command's last operation, so a guard that fails part way leaves no
+ * receipt and the order of the operations leaves nothing a reader acts on (ADR-A149 decision 13). A command on a job or the
+ * registry inserts its receipt first, only where its precondition holds, and its other operations are conditional on that
+ * receipt. After the commit the receipts present are exactly the commands applied. A command whose receipt already exists
+ * was applied before, and is answered from the receipt rather than applied again.
  */
 public final class Writer {
     private static final Pattern SAMPLE_ID = Pattern.compile("[a-z0-9][a-z0-9-]*");
@@ -70,11 +74,15 @@ public final class Writer {
     private static final Var P = Var.alloc("p");
     private static final Var O = Var.alloc("o");
 
+    private static final Node CLAIM = NodeFactory.createURI(org.nebularis.lattice.persistence.Namespaces.PAT + "rev");
+
     private final StudioStore store;
+    private final StudioOperations ops;
     private final Clock clock;
 
-    public Writer(StudioStore store, Clock clock) {
+    public Writer(StudioStore store, StudioOperations ops, Clock clock) {
         this.store = store;
+        this.ops = ops;
         this.clock = clock;
     }
 
@@ -137,9 +145,55 @@ public final class Writer {
         final Map<String, Optional<Model>> jobs = new HashMap<>();
         /** The registry graphs of lineages, as the batch would leave them, so two publishes of one lineage see each other. */
         final Map<String, Model> lineages = new HashMap<>();
+        /** The sequence of the descriptions the batch has moved, by root, so two commands on one workspace see each other. */
+        final Map<String, Long> seqs = new HashMap<>();
+        /** The parts and documents as stored, skolemised, as the batch would leave them, the base of the next delta. */
+        final Map<String, Model> rawGraphs = new HashMap<>();
 
         Optional<Workspace> workspace(String id) {
-            return workspaces.computeIfAbsent(id, k -> Optional.ofNullable(Workspace.from(k, store.graph(Graphs.workspace(k)))));
+            return workspaces.computeIfAbsent(id, k -> Optional.ofNullable(ops.workspace(store, k)));
+        }
+
+        long seq(Family f, String root) {
+            return seqs.computeIfAbsent(root, r -> ops.seq(store, f, r).orElse(0L));
+        }
+
+        /** The operations of one command in order, each in a transaction of its own (PB-D10), and its receipt after them. */
+        final class Steps {
+            final Command c;
+            final List<Update> updates = new ArrayList<>();
+            final List<String> wrote = new ArrayList<>();
+            String first;
+            String last;
+            private int n;
+
+            Steps(Command c) {
+                this.c = c;
+            }
+
+            /** Adds what {@code build} makes of the next transaction id, which writes {@code graph}. */
+            void op(String graph, java.util.function.Function<String, List<Update>> build) {
+                String txn = "urn:txn:" + c.id() + "/" + (++n);
+                updates.addAll(build.apply(txn));
+                wrote.add(graph);
+                first = first == null ? txn : first;
+                last = txn;
+            }
+
+            void raw(Update u) {
+                updates.add(u);
+            }
+
+            /** Adds the operations, then the receipt, guarded on the claim of the last operation. */
+            void commit(String receipts, Long revision) {
+                commit(receipts, last, revision);
+            }
+
+            void commit(String receipts, String claim, Long revision) {
+                updates.forEach(request::add);
+                Node claimed = iri(claim);
+                receipt(c, receipts, quad(ops.txnGraph(), claimed, CLAIM, Var.alloc("claimed")), wrote, revision);
+            }
         }
 
         Optional<Model> job(String id) {
@@ -214,12 +268,7 @@ public final class Writer {
             if (owner == null && !Workspace.SHARED.equals(c.part())) {
                 return Reply.refused("a workspace with no owner stays shared");
             }
-            Workspace updated = ws.withAccess(owner, c.part());
-            String receipts = Graphs.receipts(ws.id());
-            receipt(c, receipts, exists(ws.id()), List.of(Graphs.workspace(ws.id())), null);
-            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
-            workspaces.put(ws.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            return describeOnly(index, c, ws.withAccess(owner, c.part()));
         }
 
         /** A workspace's dependencies, replaced by the {@code cst:dependsOn} triples of the body. */
@@ -246,17 +295,12 @@ public final class Writer {
             if (found.isEmpty()) {
                 return Reply.notFound();
             }
-            Workspace updated = found.get().withDependencies(iris);
-            String receipts = Graphs.receipts(updated.id());
-            receipt(c, receipts, exists(updated.id()), List.of(Graphs.workspace(updated.id())), null);
-            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
-            workspaces.put(updated.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            return describeOnly(index, c, found.get().withDependencies(iris));
         }
 
         /**
-         * Imported RDF into the import graph of its digest, which is stored once since the same digest is the same
-         * content, and the workspace's holding of it with its label. Both happen with the receipt or neither.
+         * Imported RDF into the import of its digest, which is stored once since the same digest is the same content (a create
+         * over an existing import writes nothing), then the workspace's holding of it with its label.
          */
         private Reply fence(int index, Command c) {
             Model content = c.body().getDefaultModel();
@@ -271,33 +315,70 @@ public final class Writer {
             if (found.isEmpty()) {
                 return Reply.notFound();
             }
-            String graph = Graphs.importGraph(c.part());
-            Workspace updated = found.get().withImport(graph, label);
-            String receipts = Graphs.receipts(updated.id());
-            receipt(c, receipts, exists(updated.id()), List.of(graph, Graphs.workspace(updated.id())), null);
-            request.add(insert(graph, content, group(mine(c, receipts), notExists(quad(graph, S, P, O)))));
-            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
+            Workspace updated = found.get().withImport(Graphs.importGraph(c.part()), label);
+            Steps s = new Steps(c);
+            s.op(Graphs.importedGraph(c.part()), txn -> ops.create(Family.IMPORT, Graphs.importGraph(c.part()), Skolem.skolemise(content), txn));
+            describe(s, updated, false);
+            s.commit(Graphs.receipts(updated.id()), null);
             workspaces.put(updated.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            return planned(index, c, Reply.ok(), () -> changed(updated.id()));
         }
 
-        /** The workspace stops holding an import graph. The graph stays, since other workspaces may hold it. */
+        /** The workspace stops holding an import. The import stays, since other workspaces may hold it and it is never tombstoned. */
         private Reply release(int index, Command c) {
             Optional<Workspace> found = workspace(c.workspace());
             if (found.isEmpty() || !Graphs.isDigest(c.part()) || !found.get().imports().containsKey(Graphs.importGraph(c.part()))) {
                 return Reply.notFound();
             }
-            Workspace updated = found.get().withImport(Graphs.importGraph(c.part()), null);
-            String receipts = Graphs.receipts(updated.id());
-            receipt(c, receipts, exists(updated.id()), List.of(Graphs.workspace(updated.id())), null);
-            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
+            return describeOnly(index, c, found.get().withImport(Graphs.importGraph(c.part()), null));
+        }
+
+        /** A command that only changes the description. */
+        private Reply describeOnly(int index, Command c, Workspace updated) {
+            Steps s = new Steps(c);
+            describe(s, updated, false);
+            s.commit(Graphs.receipts(updated.id()), null);
             workspaces.put(updated.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            return planned(index, c, Reply.ok(), () -> changed(updated.id()));
+        }
+
+        /** The reply for a command whose receipt is absent although its precondition held when it was read, since another writer moved the workspace. */
+        private Reply changed(String id) {
+            return ops.workspace(store, id) == null ? Reply.notFound() : Reply.refused("the workspace changed while the command was applied, so send it again");
         }
 
         private boolean isVersionOfUnit(String iri) {
             int at = iri.lastIndexOf("/rev/1-");
             return at > 0 && Graphs.isUnitIri(iri.substring(0, at)) && iri.substring(at + 7).matches("[0-9a-f]{16}");
+        }
+
+        /** The description first created or replaced, as the last step of a command that writes one. */
+        private void describe(Steps s, Workspace updated, boolean create) {
+            String root = Graphs.workspace(updated.id());
+            Model body = Skolem.skolemise(updated.stored());
+            if (create) {
+                s.op(Graphs.description(updated.id()), txn -> ops.create(Family.DESCRIPTION, root, body, txn));
+                seqs.put(root, 1L);
+            } else {
+                long seq = seq(Family.DESCRIPTION, root);
+                s.op(Graphs.description(updated.id()), txn -> ops.replace(Family.DESCRIPTION, root, seq, body, null, null, txn));
+                seqs.put(root, seq + 1);
+            }
+        }
+
+        /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced linearly with the delta from what the batch leaves it as. */
+        private void write(Steps s, Family f, String root, long expect, Model body) {
+            String graph = ops.graph(f, root);
+            Model next = Skolem.skolemise(body);
+            if (expect == 0) {
+                s.op(graph, txn -> ops.create(f, root, next, txn));
+            } else {
+                Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
+                Model asserted = next.difference(old);
+                Model retracted = old.difference(next);
+                s.op(graph, txn -> ops.replaceLinear(f, root, expect, next, asserted, retracted, txn));
+            }
+            rawGraphs.put(graph, next);
         }
 
         private Reply create(int index, Command c) {
@@ -319,16 +400,15 @@ public final class Writer {
                 return Reply.refused("the workspace exists");
             }
             Workspace ws = Workspace.created(c.workspace(), c.label(), c.at(), c.sample(), c.principal());
-            Map<String, Model> graphs = new LinkedHashMap<>();
-            graphs.put(Graphs.workspace(ws.id()), ws.toModel());
-            graphs.put(ws.baselineGraph(), baseline);
-            String receipts = Graphs.receipts(ws.id());
-            receipt(c, receipts, absent(ws.id()), graphs.keySet(), 1L);
-            graphs.forEach((g, m) -> request.add(insert(g, m, mine(c, receipts))));
+            Steps s = new Steps(c);
+            write(s, Family.PART, Graphs.partRoot(ws.id(), "baseline"), 0, baseline);
+            describe(s, ws, true);
+            s.commit(Graphs.receipts(ws.id()), 1L);
             workspaces.put(ws.id(), Optional.of(ws));
             return planned(index, c, Reply.ok(1), () -> Reply.refused("the workspace exists"));
         }
 
+        /** A part is created or replaced, and its version row moves with it. The description is not written, so saves of two parts never contend. */
         private Reply save(int index, Command c) {
             String part = c.part();
             if (part == null || !Workspace.GRAPHS.contains(part) || c.expect() == null || c.at() == null || named(c).hasNext()) {
@@ -348,23 +428,18 @@ public final class Writer {
                 return Reply.stale(ws.revision(part));
             }
             long next = ws.revision(part) + 1;
-            Workspace updated = ws.revised(part, next, c.at());
-            String target = part.equals("baseline") ? updated.baselineGraph() : Graphs.config(ws.id(), part);
-            String receipts = Graphs.receipts(ws.id());
-            receipt(c, receipts, revisionIs(ws.id(), part, c.expect()), List.of(target, Graphs.workspace(ws.id())), next);
-            // The graph and the revision move in one request, so they never disagree.
-            request.add(clear(target, mine(c, receipts)));
-            request.add(insert(target, graph, mine(c, receipts)));
-            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
-            workspaces.put(ws.id(), Optional.of(updated));
+            Steps s = new Steps(c);
+            write(s, Family.PART, Graphs.partRoot(ws.id(), part), c.expect(), graph);
+            s.commit(Graphs.receipts(ws.id()), next);
+            workspaces.put(ws.id(), Optional.of(ws.revised(part, next)));
             String id = ws.id();
             return planned(index, c, Reply.ok(next), () -> {
-                Workspace now = Workspace.from(id, store.graph(Graphs.workspace(id)));
+                Workspace now = ops.workspace(store, id);
                 return now == null ? Reply.notFound() : Reply.stale(now.revision(part));
             });
         }
 
-        /** A document's graph and its node in the description move in one request, guarded by its revision. */
+        /** A document's graph, and its node in the description when it is new or its title or template changed. */
         private Reply saveDocument(int index, Command c) {
             String doc = c.part();
             if (!Graphs.isId(doc) || c.expect() == null || c.at() == null || c.label() == null || c.label().isBlank()
@@ -385,21 +460,30 @@ public final class Writer {
                 return Reply.stale(ws.documentRevision(doc));
             }
             long next = c.expect() + 1;
-            Workspace updated = ws.withDocument(doc, new Workspace.Document(c.label(), c.sample(), next, c.at()), c.at());
-            String target = Graphs.document(ws.id(), doc);
-            String receipts = Graphs.receipts(ws.id());
-            receipt(c, receipts, documentRevisionIs(ws.id(), doc, c.expect()), List.of(target, Graphs.workspace(ws.id())), next);
-            request.add(clear(target, mine(c, receipts)));
-            request.add(insert(target, graph, mine(c, receipts)));
-            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
+            Workspace.Document held = ws.documents().get(doc);
+            boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());
+            Workspace updated = described ? ws.documentRevised(doc, next)
+                : ws.withDocument(doc, new Workspace.Document(c.label(), c.sample(), next, c.at()), c.at());
+            Steps s = new Steps(c);
+            write(s, Family.DOCUMENT, Graphs.document(ws.id(), doc), c.expect(), graph);
+            if (!described) {
+                describe(s, updated, false);
+            }
+            s.commit(Graphs.receipts(ws.id()), next);
             workspaces.put(ws.id(), Optional.of(updated));
             String id = ws.id();
             return planned(index, c, Reply.ok(next), () -> {
-                Workspace now = Workspace.from(id, store.graph(Graphs.workspace(id)));
-                return now == null ? Reply.notFound() : Reply.stale(now.documentRevision(doc));
+                Workspace now = ops.workspace(store, id);
+                if (now == null) {
+                    return Reply.notFound();
+                }
+                // A deleted document's row stays tombstoned, so its id cannot be created again.
+                return now.documentRevision(doc) == c.expect() ? Reply.refused("the document was deleted, so its id cannot be used again")
+                    : Reply.stale(now.documentRevision(doc));
             });
         }
 
+        /** The description without the document, then the document tombstoned and its patch log dropped. */
         private Reply deleteDocument(int index, Command c) {
             String doc = c.part();
             if (!Graphs.isId(doc) || named(c).hasNext() || !c.body().getDefaultModel().isEmpty()) {
@@ -410,18 +494,31 @@ public final class Writer {
                 return Reply.notFound();
             }
             Workspace ws = found.get();
-            Workspace updated = ws.withDocument(doc, null, ws.modifiedAt());
-            String target = Graphs.document(ws.id(), doc);
-            String receipts = Graphs.receipts(ws.id());
-            Element guard = quad(Graphs.workspace(ws.id()), iri(Graphs.workspace(ws.id())), Cst.document.asNode(), iri(target));
-            receipt(c, receipts, guard, List.of(target, Graphs.workspace(ws.id())), null);
-            request.add(clear(target, mine(c, receipts)));
-            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
-            workspaces.put(ws.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            Steps s = new Steps(c);
+            describe(s, ws.withDocument(doc, null, ws.modifiedAt()), false);
+            retire(s, c, Family.DOCUMENT, Graphs.document(ws.id(), doc), ws.documentRevision(doc), Graphs.documentGraph(ws.id(), doc));
+            s.commit(Graphs.receipts(ws.id()), null);
+            workspaces.put(ws.id(), Optional.of(ws.withDocument(doc, null, ws.modifiedAt())));
+            return planned(index, c, Reply.ok(), () -> changed(ws.id()));
         }
 
-        /** An import's graphs are already under the new workspace's names, which {@code ImportedWorkspace} gave them. */
+        /** Tombstones a part or document that has a version row, at {@code revision}, then drops its patch log graphs, up to the tombstone's. */
+        private void retire(Steps s, Command c, Family f, String root, long revision, String graph) {
+            if (revision == 0) {
+                return;
+            }
+            s.op(graph, txn -> ops.tombstone(f, root, revision, txn, Graphs.receipt(c.id()), actor(c)));
+            retireLog(s, f, root, revision);
+        }
+
+        private void retireLog(Steps s, Family f, String root, long revision) {
+            for (long k = 1; k <= revision + 1; k++) {
+                s.raw(StudioStore.drop(ops.revision(f, root, k) + "/add"));
+                s.raw(StudioStore.drop(ops.revision(f, root, k) + "/del"));
+            }
+        }
+
+        /** An import's graphs are named by their roots, under the new workspace's id, which {@code ImportedWorkspace} gave them. */
         private Reply importing(int index, Command c) {
             String id = c.workspace();
             if (c.at() == null || c.label() == null || c.label().isBlank() || c.label().length() > MAX_LABEL
@@ -435,7 +532,8 @@ public final class Writer {
             if (ws == null) {
                 return Reply.refused("the import holds no workspace description");
             }
-            Map<String, Model> graphs = new LinkedHashMap<>();
+            Map<String, Model> parts = new LinkedHashMap<>();
+            Map<String, Model> documents = new LinkedHashMap<>();
             for (Iterator<Resource> it = named(c); it.hasNext(); ) {
                 String name = it.next().getURI();
                 String part = partOf(id, name, ws);
@@ -448,54 +546,74 @@ public final class Writer {
                     if (problem != null) {
                         return Reply.refused(problem);
                     }
+                    documents.put(Graphs.documentId(id, name), graph);
                 } else if (!part.equals("workspace")) {
                     List<String> strangers = Parts.strangers(graph, part, 5);
                     if (!strangers.isEmpty()) {
                         return Reply.refused("the " + part + " graph holds terms of another part: " + String.join(", ", strangers));
                     }
+                    parts.put(part, graph);
                 }
-                graphs.put(name, graph);
             }
+            // An export leaves out a graph with no triple, and a workspace always has its baseline.
+            parts.putIfAbsent("baseline", ModelFactory.createDefaultModel());
+            Steps s = new Steps(c);
+            Map<String, Long> partRevisions = new HashMap<>();
+            Map<String, Long> documentRevisions = new HashMap<>();
+            for (String name : Workspace.GRAPHS) {
+                if (parts.containsKey(name)) {
+                    write(s, Family.PART, Graphs.partRoot(id, name), 0, parts.get(name));
+                    partRevisions.put(name, 1L);
+                }
+            }
+            documents.forEach((doc, graph) -> {
+                write(s, Family.DOCUMENT, Graphs.document(id, doc), 0, graph);
+                documentRevisions.put(doc, 1L);
+            });
             Workspace stamped = ws.as(id, c.label(), c.at(), c.principal());
-            graphs.put(Graphs.workspace(id), stamped.toModel());
-            String receipts = Graphs.receipts(id);
-            receipt(c, receipts, absent(id), graphs.keySet(), null);
-            graphs.forEach((g, m) -> request.add(insert(g, m, mine(c, receipts))));
-            workspaces.put(id, Optional.of(stamped));
+            describe(s, stamped, true);
+            s.commit(Graphs.receipts(id), null);
+            workspaces.put(id, Optional.of(stamped.withRevisions(partRevisions, documentRevisions)));
             return planned(index, c, Reply.ok(), () -> Reply.refused("the workspace exists"));
         }
 
-        /** Its graphs and its jobs go, and the receipt of the deletion is kept in the store's own receipt graph. */
+        /**
+         * The description is tombstoned first, so the receipt, which is guarded on its claim, says the workspace is gone. Then each part
+         * and document with a version row is tombstoned and its patch log dropped, and the jobs and the workspace's receipts are
+         * cleared. The receipt is kept in the store's own receipt graph.
+         */
         private Reply deleteWorkspace(int index, Command c) {
             String id = c.workspace();
             Optional<Workspace> found = workspace(id);
             if (found.isEmpty()) {
                 return Reply.notFound();
             }
-            List<String> graphs = new ArrayList<>();
-            for (long n = 1; n <= found.get().revision("baseline"); n++) {
-                graphs.add(Graphs.baseline(id, n));
+            Workspace ws = found.get();
+            Steps s = new Steps(c);
+            String root = Graphs.workspace(id);
+            long described = seq(Family.DESCRIPTION, root);
+            s.op(Graphs.description(id), txn -> ops.tombstone(Family.DESCRIPTION, root, described, txn, Graphs.receipt(c.id()), actor(c)));
+            retireLog(s, Family.DESCRIPTION, root, described);
+            for (String name : Workspace.GRAPHS) {
+                retire(s, c, Family.PART, Graphs.partRoot(id, name), ws.revision(name), Graphs.config(id, name));
             }
-            for (String name : CONFIGS) {
-                graphs.add(Graphs.config(id, name));
-            }
-            for (String doc : found.get().documents().keySet()) {
-                graphs.add(Graphs.document(id, doc));
-            }
+            ws.documents().forEach((doc, d) -> retire(s, c, Family.DOCUMENT, Graphs.document(id, doc), d.revision(), Graphs.documentGraph(id, doc)));
+            List<String> cleared = new ArrayList<>();
             store.jobsOf(Graphs.workspace(id)).listSubjects().forEachRemaining(job -> {
                 String jobId = job.getURI().substring(Graphs.JOB_PREFIX.length());
-                graphs.add(Graphs.job(jobId));
-                graphs.add(Graphs.jobInput(jobId));
-                graphs.add(Graphs.jobRecord(jobId));
-                graphs.add(Graphs.jobReceipts(jobId));
+                cleared.add(Graphs.job(jobId));
+                cleared.add(Graphs.jobInput(jobId));
+                cleared.add(Graphs.jobRecord(jobId));
+                cleared.add(Graphs.jobReceipts(jobId));
                 jobs.put(jobId, Optional.empty());
             });
-            graphs.add(Graphs.receipts(id));
-            graphs.add(Graphs.workspace(id));
-            receipt(c, Graphs.STORE_RECEIPTS, exists(id), graphs, null);
-            graphs.forEach(g -> request.add(clear(g, mine(c, Graphs.STORE_RECEIPTS))));
+            cleared.add(Graphs.receipts(id));
+            s.wrote.addAll(cleared);
+            s.commit(Graphs.STORE_RECEIPTS, s.first, null);
+            cleared.forEach(g -> request.add(clear(g, mine(c, Graphs.STORE_RECEIPTS))));
             workspaces.put(id, Optional.empty());
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            seqs.remove(root);
+            return planned(index, c, Reply.ok(), () -> changed(id));
         }
 
         private Reply submitJob(int index, Command c) {
@@ -520,22 +638,21 @@ public final class Writer {
             }
             Set<RDFNode> contexts = Set.copyOf(description.listObjectsOfProperty(job, Cst.contextGraph).toList());
             Set<RDFNode> parts = CONFIGS.stream().map(part -> (RDFNode) description.createResource(Graphs.config(ws.id(), part))).collect(java.util.stream.Collectors.toSet());
+            Set<String> held = ws.imports().keySet().stream().map(Graphs::importedGraphOf).collect(java.util.stream.Collectors.toSet());
             if (!contexts.stream().allMatch(g -> parts.contains(g) || (g.isURIResource() && Graphs.isVersionGraph(g.asResource().getURI()))
-                || (g.isURIResource() && ws.imports().containsKey(g.asResource().getURI())))) {
+                || (g.isURIResource() && held.contains(g.asResource().getURI())))) {
                 return Reply.refused("a job's context graphs are configuration parts of its workspace, versions in the registry, or imports the workspace holds");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");
             }
             String receipts = Graphs.jobReceipts(c.job());
-            Element guard = group(
-                quad(Graphs.workspace(ws.id()), iri(Graphs.workspace(ws.id())), Cst.baselineGraph.asNode(), iri(ws.baselineGraph())),
-                notExists(quad(jobIri, iri(jobIri), RDF.type.asNode(), Cst.Job.asNode())));
+            Element guard = group(exists(ws.id()), notExists(quad(jobIri, iri(jobIri), RDF.type.asNode(), Cst.Job.asNode())));
             receipt(c, receipts, guard, List.of(jobIri, input), null);
             request.add(insert(jobIri, description, mine(c, receipts)));
             request.add(insert(input, c.body().getNamedModel(input), mine(c, receipts)));
             jobs.put(c.job(), Optional.of(description));
-            return planned(index, c, Reply.ok(), () -> Reply.refused("the workspace's baseline moved, or the job exists"));
+            return planned(index, c, Reply.ok(), () -> Reply.refused("the workspace is gone, or the job exists"));
         }
 
         /**
@@ -729,34 +846,14 @@ public final class Writer {
         return quad(receipts, iri(Graphs.receipt(c.id())), Cst.commandId.asNode(), NodeFactory.createLiteralString(c.id()));
     }
 
-    /** The stored revision of a part is {@code expect}. A description without one reads as 0, as {@link Workspace} reads it. */
-    private static Element revisionIs(String ws, String part, long expect) {
-        Node revision = Cst.revision(part).asNode();
-        if (expect > 0) {
-            return quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), revision,
-                NodeFactory.createLiteralDT(Long.toString(expect), XSDDatatype.XSDinteger));
-        }
-        Var r = Var.alloc("revision");
-        return group(exists(ws), notExists(group(quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), revision, r),
-            new ElementFilter(new E_NotEquals(new ExprVar(r), NodeValue.makeInteger(0))))));
-    }
-
-    /** Document {@code doc}'s stored revision is {@code expect}, where 0 means the workspace holds no such document. */
-    private static Element documentRevisionIs(String ws, String doc, long expect) {
-        Node node = iri(Graphs.document(ws, doc));
-        if (expect > 0) {
-            return quad(Graphs.workspace(ws), node, Cst.documentRevision.asNode(),
-                NodeFactory.createLiteralDT(Long.toString(expect), XSDDatatype.XSDinteger));
-        }
-        return group(exists(ws), notExists(quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), Cst.document.asNode(), node)));
-    }
-
     private static Element exists(String ws) {
-        return quad(Graphs.workspace(ws), iri(Graphs.workspace(ws)), RDF.type.asNode(), Cst.Workspace.asNode());
+        return quad(Graphs.description(ws), iri(Graphs.workspace(ws)), RDF.type.asNode(), Cst.Workspace.asNode());
     }
 
-    private static Element absent(String ws) {
-        return group(notExists(exists(ws)));
+    /** Who asked, as an IRI, for a tombstone's actor. */
+    private static String actor(Command c) {
+        return c.principal() != null ? "urn:lattice:studio:principal:" + Graphs.encodeForUri(c.principal())
+            : "urn:lattice:studio:sender:" + Graphs.encodeForUri(c.sender() == null ? "unknown" : c.sender());
     }
 
     /** INSERT where {@code when} holds. Its one solution mints each blank node of the graph once. */
@@ -825,18 +922,13 @@ public final class Writer {
 
     // --- checks ------------------------------------------------------------------------------------------------------
 
-    /** "workspace", "baseline" or a configuration's name for a graph of workspace {@code id}, or null. */
+    /** "workspace", a part's name or "document" for a graph, named by its root, of workspace {@code id}, or null. */
     private static String partOf(String id, String graph, Workspace ws) {
         if (graph.equals(Graphs.workspace(id))) {
             return "workspace";
         }
-        for (long n = 1; n <= ws.revision("baseline"); n++) {
-            if (graph.equals(Graphs.baseline(id, n))) {
-                return "baseline";
-            }
-        }
-        for (String name : CONFIGS) {
-            if (graph.equals(Graphs.config(id, name))) {
+        for (String name : Workspace.GRAPHS) {
+            if (graph.equals(Graphs.partRoot(id, name))) {
                 return name;
             }
         }

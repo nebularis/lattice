@@ -11,7 +11,7 @@ import org.nebularis.lattice.studio.settings.Secrets;
 /** The service's settings, read from the environment. A null field means the setting is absent. */
 public record StudioConfig(int port, String bind, Path assets, Path staticDir, String fusekiUrl,
                            String fusekiDataset, String fusekiUser, String fusekiPassword, String amqpUri,
-                           Set<String> features) {
+                           Set<String> features, long epoch) {
 
     public static StudioConfig fromEnv(Map<String, String> env) {
         int port;
@@ -29,7 +29,20 @@ public record StudioConfig(int port, String bind, Path assets, Path staticDir, S
             optional(env, "LATTICE_FUSEKI_URL"), env.getOrDefault("LATTICE_FUSEKI_DATASET", "studio"),
             optional(env, "LATTICE_FUSEKI_USER"), Secrets.secret(env, "LATTICE_FUSEKI_PASSWORD"),
             Secrets.secret(env, "LATTICE_AMQP_URI"),
-            features(env.getOrDefault("LATTICE_STUDIO_FEATURES", "")));
+            features(env.getOrDefault("LATTICE_STUDIO_FEATURES", "")), epoch(env));
+    }
+
+    /** The epoch the store's version rows are written at, 1 until the operator restores the store and raises it (PB-D9). */
+    static long epoch(Map<String, String> env) {
+        try {
+            long epoch = Long.parseLong(env.getOrDefault("LATTICE_STUDIO_EPOCH", "1").trim());
+            if (epoch < 1) {
+                throw new IllegalArgumentException("LATTICE_STUDIO_EPOCH is at least 1");
+            }
+            return epoch;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("LATTICE_STUDIO_EPOCH is not a number");
+        }
     }
 
     /** The comma-separated feature names, each a lower-case word with hyphens, so none needs escaping where it is shown. */

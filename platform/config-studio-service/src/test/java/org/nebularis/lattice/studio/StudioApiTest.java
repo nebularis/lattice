@@ -49,7 +49,7 @@ class StudioApiTest {
     }
 
     private Resource ws() {
-        return f.store.graph(Graphs.workspace(WS)).createResource(Graphs.workspace(WS));
+        return Fixture.OPS.workspace(f.store, WS).toModel().createResource(Graphs.workspace(WS));
     }
 
     @Test
@@ -64,9 +64,9 @@ class StudioApiTest {
         for (String name : List.of("vocabulary", "quantification", "eligibility", "surface", "persistence")) {
             assertEquals(0, node.getProperty(Cst.revision(name)).getInt(), name);
         }
-        assertEquals(Graphs.baseline(WS, 1), node.getProperty(Cst.baselineGraph).getResource().getURI());
+        assertEquals(Graphs.baseline(WS), node.getProperty(Cst.baselineGraph).getResource().getURI());
         assertEquals("2026-10-27T10:00:00Z", node.getProperty(Cst.createdAt).getLiteral().getLexicalForm());
-        assertEquals(1, f.store.graph(Graphs.baseline(WS, 1)).size());
+        assertEquals(1, f.store.graph(Graphs.baseline(WS)).size());
     }
 
     @Test
@@ -207,6 +207,30 @@ class StudioApiTest {
     }
 
     @Test
+    void anEarlierRevisionOfAPartIsRebuiltFromThePatchLogBlankNodesIncluded() {
+        f.createWorkspace("One");
+        List<String> saved = List.of(Fixture.PREFIXES + "ex:a ex:p ex:b .",
+            Fixture.PREFIXES + "ex:a ex:p ex:b , [ ex:q \"two\" ] .",
+            Fixture.PREFIXES + "ex:a ex:p [ ex:q \"three\" ; ex:r [ ex:s 1 ] ] .",
+            Fixture.PREFIXES + "ex:a ex:p [ ex:q \"three\" ; ex:r [ ex:s 2 ] ] , [ ex:q \"three\" ] .");
+        for (int n = 1; n < saved.size(); n++) {
+            assertEquals(204, f.put(WS_PATH + "/graphs/baseline", "\"" + n + "\"", saved.get(n)).status());
+        }
+        for (int n = 1; n <= saved.size(); n++) {
+            ApiResponse r = f.send("GET", WS_PATH + "/graphs/baseline", "revision=" + n, Map.of(), new byte[0]);
+            assertEquals(200, r.status(), "revision " + n);
+            assertEquals("\"" + n + "\"", r.headers().get("ETag"));
+            same(Fixture.model(saved.get(n - 1)), Fixture.model(r));
+        }
+        for (String bad : List.of("0", "5", "-1")) {
+            assertEquals(404, f.send("GET", WS_PATH + "/graphs/baseline", "revision=" + bad, Map.of(), new byte[0]).status(), bad);
+        }
+        assertEquals(400, f.send("GET", WS_PATH + "/graphs/baseline", "revision=one", Map.of(), new byte[0]).status());
+        assertEquals(404, f.send("GET", WS_PATH + "/graphs/surface", "revision=1", Map.of(), new byte[0]).status(), "a part never saved has none");
+        assertEquals(404, f.send("GET", "/api/workspaces/" + Fixture.id(9) + "/graphs/baseline", "revision=1", Map.of(), new byte[0]).status());
+    }
+
+    @Test
     void putWithoutIfMatchIs428() {
         f.createWorkspace("One");
         assertEquals(428, f.put(SURFACE, null, CONFIG).status());
@@ -214,14 +238,13 @@ class StudioApiTest {
     }
 
     @Test
-    void putBaselineWritesRevision2InANewGraphAndKeepsRevision1() {
+    void putBaselineReplacesTheGraphInPlaceAndMovesTheRevision() {
         f.createWorkspace("One");
         ApiResponse r = f.put(WS_PATH + "/graphs/baseline", "\"1\"", Fixture.PREFIXES + "ex:x ex:p ex:y , ex:z .");
         assertEquals(204, r.status());
         assertEquals("\"2\"", r.headers().get("ETag"));
-        assertEquals(2, f.store.graph(Graphs.baseline(WS, 2)).size());
-        assertEquals(1, f.store.graph(Graphs.baseline(WS, 1)).size());
-        assertEquals(Graphs.baseline(WS, 2), ws().getProperty(Cst.baselineGraph).getResource().getURI());
+        assertEquals(2, f.store.graph(Graphs.baseline(WS)).size());
+        assertEquals(Graphs.baseline(WS), ws().getProperty(Cst.baselineGraph).getResource().getURI());
         assertEquals(2, ws().getProperty(Cst.baselineRevision).getInt());
     }
 
@@ -262,11 +285,11 @@ class StudioApiTest {
               cst:kind cst:Compile ; cst:target cst:Persistence ;
               cst:workspace <urn:lattice:studio:ws:%2$s> ;
               cst:configGraph <urn:lattice:studio:job:%1$s:input> ;
-              cst:baselineGraph <urn:lattice:studio:ws:%2$s:baseline:1> ;
+              cst:baselineGraph <%4$s> ;
               %3$s
               cst:status cst:Queued ;
               cst:submittedAt "2026-10-27T10:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-            """.formatted(job, WS, contexts("persistence")));
+            """.formatted(job, WS, contexts("persistence"), Graphs.baseline(WS)));
         same(expected, f.store.graph(Graphs.job(job)));
         same(expected, Fixture.model(r));
         same(Fixture.model(CONFIG), f.store.graph(Graphs.jobInput(job)));
@@ -361,12 +384,10 @@ class StudioApiTest {
     }
 
     @Test
-    void aWorkspaceDescribedBeforeTheNewPartsReadsTheirRevisionsAsZero() {
+    void aPartWithNoVersionRowReadsAsRevisionZeroAndIsCreatedByASaveExpectingZero() {
         f.createWorkspace("One");
-        Model old = f.store.graph(Graphs.workspace(WS));
-        old.removeAll(null, Cst.revision("vocabulary"), null).removeAll(null, Cst.revision("eligibility"), null);
-        f.store.write(List.of(), Map.of(Graphs.workspace(WS), old));
         assertEquals("\"0\"", f.get(WS_PATH + "/graphs/vocabulary").headers().get("ETag"));
+        assertEquals(0, ws().getProperty(Cst.revision("eligibility")).getInt());
         assertEquals(204, f.put(WS_PATH + "/graphs/eligibility", "\"0\"", config("eligibility")).status());
     }
 
@@ -376,7 +397,7 @@ class StudioApiTest {
         f.put(WS_PATH + "/graphs/baseline", "\"1\"", Fixture.PREFIXES + "ex:x ex:p ex:y .");
         f.put(SURFACE, "\"0\"", CONFIG);
         assertEquals(204, f.send("DELETE", WS_PATH, Map.of(), null).status());
-        for (String graph : List.of(Graphs.workspace(WS), Graphs.baseline(WS, 1), Graphs.baseline(WS, 2),
+        for (String graph : List.of(Graphs.description(WS), Graphs.baseline(WS),
             Graphs.config(WS, "surface"), Graphs.config(WS, "persistence"), Graphs.config(WS, "vocabulary"),
             Graphs.config(WS, "quantification"), Graphs.config(WS, "eligibility"))) {
             assertTrue(f.store.graph(graph).isEmpty(), graph);

@@ -43,7 +43,7 @@ class WritesTest {
     @BeforeEach
     void setUp() throws IOException {
         f = new Fixture(Fixture.assetsDir(dir));
-        writer = new Writer(f.store, Clock.systemUTC());
+        writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
         assertEquals(201, f.createWorkspace("Plan").status());
     }
 
@@ -129,7 +129,7 @@ class WritesTest {
 
         Model moved = ModelFactory.createDefaultModel().add(running);
         moved.removeAll(node, Cst.configGraph, null);
-        moved.add(node, Cst.configGraph, moved.createResource(Graphs.baseline(WS, 1)));
+        moved.add(node, Cst.configGraph, moved.createResource(Graphs.baseline(WS)));
         assertEquals(400, writer.apply(Command.jobUpdate(WS, job, only(jobIri, moved))).status(), "a job pointed at another graph");
         assertEquals(400, writer.apply(Command.jobUpdate(Fixture.id(7), job, only(jobIri, running))).status(), "another workspace's job");
 
@@ -182,11 +182,11 @@ class WritesTest {
         assertEquals(201, imported.status());
         String copy = Fixture.id(2);
         assertEquals("/api/workspaces/" + copy, imported.headers().get("Location"));
-        Model description = f.store.graph(Graphs.workspace(copy));
-        Resource ws = description.createResource(Graphs.workspace(copy));
-        assertEquals("Copy", ws.getProperty(RDFS.label).getString());
-        assertEquals(1, ws.getProperty(Cst.surfaceRevision).getLong());
-        assertEquals(Graphs.baseline(copy, 1), ws.getProperty(Cst.baselineGraph).getResource().getURI());
+        org.nebularis.lattice.studio.model.Workspace copied = Fixture.OPS.workspace(f.store, copy);
+        assertEquals("Copy", copied.label());
+        assertEquals(1, copied.revision("surface"));
+        assertEquals(1, copied.revision("baseline"));
+        assertEquals(Graphs.baseline(copy), copied.baselineGraph());
         assertTrue(Fixture.model(CONFIG).isIsomorphicWith(f.store.graph(Graphs.config(copy, "surface"))));
         assertTrue(f.store.graph(Graphs.config(WS, "surface")).isIsomorphicWith(f.store.graph(Graphs.config(copy, "surface"))),
             "the original is untouched");
@@ -212,7 +212,7 @@ class WritesTest {
             (Fixture.PREFIXES + "ex:a ex:p ex:b .").getBytes(StandardCharsets.UTF_8));
         assertEquals(201, r.status());
         String id = r.headers().get("Location").substring("/api/workspaces/".length());
-        Resource ws = f.store.graph(Graphs.workspace(id)).createResource(Graphs.workspace(id));
+        Resource ws = f.store.graph(Graphs.description(id)).createResource(Graphs.workspace(id));
         assertEquals("urn:lattice:studio:sample:lending", ws.getProperty(Cst.fromSample).getResource().getURI());
         for (String bad : new String[] {"sample=missing", "sample=..%2Fx"}) {
             assertEquals(400, f.send("POST", "/api/workspaces", bad, Map.of("content-type", Fixture.TURTLE),

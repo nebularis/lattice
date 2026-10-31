@@ -6,6 +6,7 @@ import json
 import uuid
 from importlib import resources
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 from rdflib import Graph, Literal, URIRef
@@ -21,6 +22,15 @@ CATALOGUE = jobs.catalogue()
 ROOT = jobs.find_root()
 PERSISTENCE_EXAMPLES = CATALOGUE.module("persistence").directory("examples")
 SURFACE_EXAMPLES = CATALOGUE.module("surface").directory("examples")
+
+
+def part_graph(workspace: int, name: str) -> str:
+    """The graph the store gives part `name` of workspace `workspace`: the part profile's prefix, then the root percent-encoded."""
+    root = f"urn:lattice:studio:ws:00000000-0000-0000-0000-{workspace:012d}/part/{name}"
+    return "urn:lattice:studio:part/" + quote(root, safe="-_.~")
+
+
+BASELINE_1 = part_graph(1, "baseline")
 
 
 class FakeStore:
@@ -63,7 +73,7 @@ def submit(store: FakeStore, kind: str, target: str, config_file: Path | None, b
     if config_file is not None:
         config.parse(config_file, format="turtle")
     store.graphs[f"{iri}:input"] = config
-    store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"] = baseline or Graph()
+    store.graphs[BASELINE_1] = baseline or Graph()
     job = URIRef(iri)
     g = Graph()
     g.add((job, RDF.type, CST.Job))
@@ -71,7 +81,7 @@ def submit(store: FakeStore, kind: str, target: str, config_file: Path | None, b
     g.add((job, CST.target, CST[target.capitalize()]))
     g.add((job, CST.workspace, URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001")))
     g.add((job, CST.configGraph, URIRef(f"{iri}:input")))
-    g.add((job, CST.baselineGraph, URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1")))
+    g.add((job, CST.baselineGraph, URIRef(BASELINE_1)))
     g.add((job, CST.status, CST.Queued))
     g.add((job, CST.submittedAt, Literal("2026-10-27T10:00:00Z", datatype=XSD.dateTime)))
     store.graphs[iri] = g
@@ -277,11 +287,13 @@ def test_missing_input_graph_fails():
 
 @pytest.mark.parametrize("predicate, iri", [
     (CST.configGraph, "urn:lattice:studio:job:00000000-0000-0000-0000-000000000009:input"),
-    (CST.configGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:surface"),
-    (CST.baselineGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:surface"),
+    (CST.configGraph, part_graph(1, "surface")),
+    (CST.baselineGraph, part_graph(1, "surface")),
     (CST.baselineGraph, "https://example.org/elsewhere"),
-    (CST.contextGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000002:surface"),
-    (CST.contextGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"),
+    (CST.baselineGraph, part_graph(2, "baseline")),
+    (CST.contextGraph, part_graph(2, "surface")),
+    (CST.contextGraph, BASELINE_1),
+    (CST.contextGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:surface"),
 ])
 def test_a_job_naming_a_graph_outside_its_own_fails_without_reading_it(predicate, iri):
     store = FakeStore()
@@ -551,7 +563,7 @@ def _propose(target, env=None) -> tuple[FakeStore, URIRef]:
         for triple in sample.triples((role, None, None)):
             roles.add(triple)
     store.graphs[f"{iri}:input"] = sample - roles
-    store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"] = roles
+    store.graphs[BASELINE_1] = roles
     with mock.patch.dict(os.environ, env or {}, clear=False):
         ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     return store, job
@@ -790,7 +802,7 @@ def test_an_odrl_party_named_as_a_workspace_role_reuses_that_role():
     baseline = Graph()
     baseline.add((licensee, RDF.type, URIRef(pty + "Role")))
     baseline.add((licensee, RDFS.label, Literal("fernwood analytics ltd")))
-    store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"] = baseline
+    store.graphs[BASELINE_1] = baseline
     ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     g = store.graphs[iri]
     assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
@@ -874,3 +886,17 @@ def test_a_skolem_iri_the_writer_named_reads_back_as_a_blank_node():
     read = unskolemise(stored)
     assert isomorphic(read, authored)
     assert unskolemise(authored) is authored
+
+
+def test_a_job_reads_its_workspaces_parts_and_the_imports_it_holds_as_context():
+    store = FakeStore()
+    job_iri = submit(store, "validate", "persistence", None)
+    job = URIRef(job_iri)
+    example = URIRef("https://example.org/")
+    imported = "urn:lattice:studio:imported/" + quote("urn:lattice:studio:import:" + "a" * 64, safe="-_.~")
+    for name, text in ((part_graph(1, "mapping"), "part"), (imported, "import")):
+        store.graphs[name] = Graph()
+        store.graphs[name].add((example, example, Literal(text)))
+        store.graphs[job_iri].add((job, CST.contextGraph, URIRef(name)))
+    context = ConfigStudioWorker(store, ROOT, _clock())._context(store.graphs[job_iri], job)
+    assert {str(o) for o in context.objects(example, example)} == {"part", "import"}

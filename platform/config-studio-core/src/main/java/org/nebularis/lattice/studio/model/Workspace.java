@@ -20,11 +20,11 @@ import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 
 /**
- * The workspace description as read from, and written to, the workspace's own graph. Each named
- * graph has a revision, {@code cst:<name>Revision}, from 0 before its first save. A revision a
- * description lacks reads as 0, so a workspace made before a graph was added still opens. It names each document of the
- * workspace's library with its title, template, revision and time, by the document's id. {@code imports} maps the import
- * graphs it holds to their labels.
+ * A workspace as the service sees it. The description aggregate ({@link #stored}) holds its label, owner, mode,
+ * dependencies, the imports it holds with their labels and each document's title, template and time, and no revision. A
+ * part's revision is its version row's sequence and a document's likewise, 0 with no row, so the service's view
+ * ({@link #toModel}) adds {@code cst:<name>Revision}, each document's revision and the baseline part's graph.
+ * {@code imports} maps the roots of the imports it holds to their labels.
  */
 public record Workspace(String id, String label, Instant createdAt, Instant modifiedAt, Map<String, Long> revisions, String sample,
                         Map<String, Document> documents, String owner, String mode, Set<String> dependencies,
@@ -101,18 +101,41 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         return new Workspace(id, label, at, at, Map.copyOf(revisions), sample, Map.of(), owner, SHARED, Set.of(), Map.of());
     }
 
+    /** The graph of the baseline part, which jobs read as saved (PB-D12). */
     public String baselineGraph() {
-        return Graphs.baseline(id, revision("baseline"));
+        return Graphs.baseline(id);
     }
 
     public long revision(String name) {
         return revisions.getOrDefault(name, 0L);
     }
 
-    public Workspace revised(String name, long revision, Instant at) {
+    /** The same workspace with part {@code name} at {@code revision}. Its description is not written, so {@code modifiedAt} stays. */
+    public Workspace revised(String name, long revision) {
         Map<String, Long> next = new LinkedHashMap<>(revisions);
         next.put(name, revision);
-        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample, documents, owner, mode, dependencies, imports);
+        return new Workspace(id, label, createdAt, modifiedAt, Map.copyOf(next), sample, documents, owner, mode, dependencies, imports);
+    }
+
+    /** The same workspace with these revisions, those of its parts by name and of its documents by id, 0 for a name or an id they lack. */
+    public Workspace withRevisions(Map<String, Long> partRevisions, Map<String, Long> documentRevisions) {
+        Map<String, Long> parts = new LinkedHashMap<>();
+        GRAPHS.forEach(name -> parts.put(name, partRevisions.getOrDefault(name, 0L)));
+        Map<String, Document> docs = new TreeMap<>();
+        documents.forEach((doc, d) -> docs.put(doc, new Document(d.title(), d.template(), documentRevisions.getOrDefault(doc, 0L), d.modifiedAt())));
+        return new Workspace(id, label, createdAt, modifiedAt, Map.copyOf(parts), sample, Map.copyOf(docs), owner, mode, dependencies, imports);
+    }
+
+    /** The same workspace with document {@code doc} at {@code revision}, its description unchanged. */
+    public Workspace documentRevised(String doc, long revision) {
+        Document d = documents.get(doc);
+        return d == null ? this : withDocumentUnchanged(doc, new Document(d.title(), d.template(), revision, d.modifiedAt()));
+    }
+
+    private Workspace withDocumentUnchanged(String doc, Document document) {
+        Map<String, Document> next = new TreeMap<>(documents);
+        next.put(doc, document);
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, Map.copyOf(next), owner, mode, dependencies, imports);
     }
 
     /** The revision of document {@code doc}, 0 when the workspace holds none. */
@@ -137,14 +160,14 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         return new Workspace(newId, newLabel, createdAt, at, revisions, sample, documents, newOwner, SHARED, dependencies, imports);
     }
 
-    public Model toModel() {
+    /** What the description aggregate holds. It names no revision, and names the baseline part's graph nowhere. */
+    public Model stored() {
         Model model = ModelFactory.createDefaultModel();
         Resource node = model.createResource(Graphs.workspace(id));
         node.addProperty(RDF.type, Cst.Workspace);
         node.addProperty(RDFS.label, label);
         node.addProperty(Cst.createdAt, model.createTypedLiteral(createdAt.toString(), XSDDatatype.XSDdateTime));
         node.addProperty(Cst.modifiedAt, model.createTypedLiteral(modifiedAt.toString(), XSDDatatype.XSDdateTime));
-        node.addProperty(Cst.baselineGraph, model.createResource(baselineGraph()));
         if (sample != null) {
             node.addProperty(Cst.fromSample, model.createResource(SAMPLE_PREFIX + sample));
         }
@@ -157,32 +180,48 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
             node.addProperty(Cst.holdsImport, model.createResource(graph));
             model.createResource(graph).addProperty(RDFS.label, importLabel);
         });
-        for (String name : GRAPHS) {
-            node.addProperty(Cst.revision(name), model.createTypedLiteral(Long.toString(revision(name)), XSDDatatype.XSDinteger));
-        }
         new TreeMap<>(documents).forEach((doc, d) -> {
             Resource document = model.createResource(Graphs.document(id, doc));
             node.addProperty(Cst.document, document);
             document.addProperty(RDF.type, Cst.Document);
             document.addProperty(RDFS.label, d.title());
             document.addProperty(Cst.template, d.template());
-            document.addProperty(Cst.documentRevision, model.createTypedLiteral(Long.toString(d.revision()), XSDDatatype.XSDinteger));
             document.addProperty(Cst.modifiedAt, model.createTypedLiteral(d.modifiedAt().toString(), XSDDatatype.XSDdateTime));
         });
         return model;
     }
 
-    /** Reads a description, or null when the graph holds none or a malformed one. */
-    public static Workspace from(String id, Model model) {
+    /** The service's view: the stored description with every revision and the baseline part's graph. */
+    public Model toModel() {
+        Model model = stored();
         Resource node = model.createResource(Graphs.workspace(id));
+        node.addProperty(Cst.baselineGraph, model.createResource(baselineGraph()));
+        for (String name : GRAPHS) {
+            node.addProperty(Cst.revision(name), model.createTypedLiteral(Long.toString(revision(name)), XSDDatatype.XSDinteger));
+        }
+        documents.forEach((doc, d) -> model.createResource(Graphs.document(id, doc)).addProperty(Cst.documentRevision,
+            model.createTypedLiteral(Long.toString(d.revision()), XSDDatatype.XSDinteger)));
+        return model;
+    }
+
+    /** Reads a stored description alone, every revision 0. */
+    public static Workspace from(String id, Model description) {
+        return from(id, description, Map.of(), Map.of());
+    }
+
+    /**
+     * Reads a stored description with the revisions of its parts by name and of its documents by id, 0 for any they lack. It is
+     * null when the graph holds no {@code cst:Workspace} or a malformed one.
+     */
+    public static Workspace from(String id, Model description, Map<String, Long> partRevisions, Map<String, Long> documentRevisions) {
+        Resource node = description.createResource(Graphs.workspace(id));
+        if (!description.contains(node, RDF.type, Cst.Workspace)) {
+            return null;
+        }
         try {
             Map<String, Long> revisions = new LinkedHashMap<>();
             for (String name : GRAPHS) {
-                Statement s = node.getProperty(Cst.revision(name));
-                revisions.put(name, s == null ? 0L : s.getLong());
-            }
-            if (revisions.get("baseline") < 1) {
-                return null;
+                revisions.put(name, partRevisions.getOrDefault(name, 0L));
             }
             Statement from = node.getProperty(Cst.fromSample);
             String sample = from == null ? null : from.getResource().getURI().substring(SAMPLE_PREFIX.length());
@@ -193,7 +232,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
                 if (doc == null) {
                     throw new IllegalArgumentException("a document of another workspace");
                 }
-                documents.put(doc, new Document(text(d, RDFS.label), text(d, Cst.template), d.getProperty(Cst.documentRevision).getLong(),
+                documents.put(doc, new Document(text(d, RDFS.label), text(d, Cst.template), documentRevisions.getOrDefault(doc, 0L),
                     Instant.parse(text(d, Cst.modifiedAt))));
             });
             // A workspace from before modes has no owner and is shared.

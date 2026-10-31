@@ -68,7 +68,8 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset. `LATTICE_FUSEKI_P
 | `LATTICE_STUDIO_OIDC_JWKS_URL` | the discovery document's | The provider's published keys |
 | `LATTICE_STUDIO_OIDC_NAME_CLAIM` | `sub` | The claim that names the principal |
 | `LATTICE_STUDIO_OIDC_ADMIN_CLAIM`, `LATTICE_STUDIO_OIDC_ADMIN_VALUE` | `groups`, and none | A principal administers when the claim holds the value. With no value nobody administers |
-| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory `mise run build:config-studio-assets` fills with `vocabulary.ttl`, `samples.ttl` and `samples/`. A relative path is relative to the directory the service starts in, the repository root |
+| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory `mise run build:config-studio-assets` fills with `vocabulary.ttl`, `samples.ttl`, `samples/` and `persistence/`, the operations the persistence compiler generated for the studio's store, which the service and the writer both load. A relative path is relative to the directory the service starts in, the repository root |
+| `LATTICE_STUDIO_EPOCH` | `1` | The epoch the store's version rows are written at, a whole number from 1. Raise it when the store is restored from a backup, so a row written before the restore cannot be taken for a later one. The service and the writer must have the same value |
 | `LATTICE_STUDIO_STATIC` | none | The built browser application, served for any path outside `/api`. The stack sets it to `apps/config-studio/dist`. Without it the service answers `404` outside `/api` |
 | `LATTICE_FUSEKI_URL` | none | Fuseki's base URL. Unset means an in-memory dataset inside the service, lost on exit, with a warning in the log |
 | `LATTICE_FUSEKI_DATASET` | `studio` | The Fuseki service the service reads through, which cannot update |
@@ -77,7 +78,14 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset. `LATTICE_FUSEKI_P
 
 ### Store writer
 
-Read by `WriterConfig.fromEnv`. The variables are in the [writer's README](../../platform/config-studio-writer/README.md). `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write`, the stack's AMQP URI, and `LATTICE_STREAM_URI=rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f`. It is the only process given the update service.
+Read by `WriterConfig.fromEnv`. The variables are in the [writer's README](../../platform/config-studio-writer/README.md). It also reads `LATTICE_STUDIO_ASSETS` and `LATTICE_STUDIO_EPOCH` as the service does, from the same defaults, and both must agree with the service's.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory whose `persistence/` folder holds the generated operations the writer runs. A relative path is relative to the directory the writer starts in |
+| `LATTICE_STUDIO_EPOCH` | `1` | The epoch the version rows it writes carry, as the service's |
+
+ `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write`, the stack's AMQP URI, and `LATTICE_STREAM_URI=rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f`. It is the only process given the update service.
 
 ### Worker
 

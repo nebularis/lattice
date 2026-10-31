@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -54,11 +55,11 @@ class ReceiptsTest {
     }
 
     private static long revision(StudioStore store) {
-        return store.graph(Graphs.workspace(WS)).createResource(Graphs.workspace(WS)).getProperty(Cst.revision("surface")).getLong();
+        return Fixture.OPS.workspace(store, WS).revision("surface");
     }
 
     private static Writer created(StudioStore store) {
-        Writer writer = new Writer(store, CLOCK);
+        Writer writer = new Writer(store, Fixture.OPS, CLOCK);
         assertEquals(200, writer.apply(Command.create(WS, "Plan", AT, null, ModelFactory.createDefaultModel())).status());
         return writer;
     }
@@ -112,7 +113,7 @@ class ReceiptsTest {
         AtomicReference<Runnable> before = new AtomicReference<>();
         StudioStore store = interfered(real, before);
         Writer writer = created(store);
-        Writer other = new Writer(Fixture.textual(real), CLOCK);
+        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, CLOCK);
         // Between this writer's read of the revision and its update, another writer saves revision 1.
         before.set(() -> assertEquals(Reply.ok(1), other.apply(Command.save(WS, "surface", 0, AT, surface("theirs")))));
         Reply mine = writer.apply(Command.save(WS, "surface", 0, AT, surface("mine")));
@@ -124,13 +125,36 @@ class ReceiptsTest {
     }
 
     @Test
+    void aCommandsReceiptIsAbsentWhenItsLastOperationsGuardFailedAndARetryAppliesIt() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = interfered(real, before);
+        Writer writer = created(store);
+        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, CLOCK);
+        // Between this writer's read of the description's sequence and its update, another writer replaces the description.
+        before.set(() -> assertEquals(Reply.ok(), other.apply(Command.setAccess(WS, "shared", null))));
+        Model content = Fixture.model(Fixture.PREFIXES + "ex:term a ex:Term .");
+        Command fence = Command.fence(WS, "e".repeat(64), "Reference", content);
+        Reply mine = writer.apply(fence);
+        assertEquals(400, mine.status(), mine.message());
+        assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()) == false, "no receipt for the command");
+        assertTrue(Fixture.OPS.workspace(store, WS).imports().isEmpty(), "the description does not hold the import");
+        assertTrue(content.isIsomorphicWith(store.graph(Graphs.importedGraph("e".repeat(64)))), "the first operation applied, which reads as nothing");
+
+        assertEquals(Reply.ok(), writer.apply(fence), "the same command again completes it");
+        assertEquals(Set.of(Graphs.importGraph("e".repeat(64))), Fixture.OPS.workspace(store, WS).imports().keySet());
+        assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()));
+        assertTrue(content.isIsomorphicWith(store.graph(Graphs.importedGraph("e".repeat(64)))));
+    }
+
+    @Test
     void deletingAWorkspaceKeepsTheReceiptOfTheDeletion() {
         StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
         Writer writer = created(store);
         Command delete = Command.deleteWorkspace(WS);
         assertEquals(Reply.ok(), writer.apply(delete));
         assertTrue(store.graph(Graphs.receipts(WS)).isEmpty());
-        assertTrue(store.graph(Graphs.workspace(WS)).isEmpty());
+        assertTrue(store.graph(Graphs.description(WS)).isEmpty());
         Model kept = store.graph(Graphs.STORE_RECEIPTS);
         assertEquals("delete-workspace", kept.createResource(Graphs.receipt(delete.id())).getProperty(Cst.command).getString());
     }

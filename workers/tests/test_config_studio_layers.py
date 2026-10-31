@@ -9,7 +9,7 @@ import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
 
 from lattice_workers.config_studio_jobs import CST, SH
-from test_config_studio_worker import CATALOGUE, artefacts, results, run
+from test_config_studio_worker import BASELINE_1, CATALOGUE, artefacts, results, run
 
 VOCABULARY = CATALOGUE.module("vocabulary").directory("examples")
 QUANTIFICATION = CATALOGUE.module("quantification").directory("examples")
@@ -148,6 +148,6 @@ def test_a_missing_baseline_reads_as_empty():
 
     store = FakeStore()
     iri = submit(store, "validate", "vocabulary", VOCABULARY / "temporal-handover.ttl")
-    del store.graphs["urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"]
+    del store.graphs[BASELINE_1]
     ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     assert store.graphs[iri].value(URIRef(iri), CST.status) == CST.Succeeded

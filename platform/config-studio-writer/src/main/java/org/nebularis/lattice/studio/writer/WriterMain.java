@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.Duration;
 import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.Topology;
+import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.RabbitWrites;
 import org.nebularis.lattice.studio.writes.Writer;
@@ -35,7 +36,7 @@ public final class WriterMain {
         Channel replyChannel = replies.createChannel();
         Topology.declare(replyChannel);
         Environment environment = Environment.builder().uri(config.streamUri()).build();
-        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, Clock.systemUTC()));
+        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, StudioOperations.load(config.assets().resolve("persistence"), config.epoch()), Clock.systemUTC()));
         Sweeper sweeper = new Sweeper(store, new RabbitWrites(publishing, store, WRITE_TIMEOUT), Clock.systemUTC(),
             Duration.ofDays(config.jobRetentionDays())).start(SWEEP_EVERY);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

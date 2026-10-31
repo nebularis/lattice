@@ -23,18 +23,55 @@ public final class Graphs {
         return WORKSPACE_PREFIX + ws;
     }
 
-    public static String baseline(String ws, long revision) {
-        return workspace(ws) + ":baseline:" + revision;
+    // The graph of each aggregate is named by the profile's rule, the prefix and the encoded root, exactly as
+    // StudioOperations.graph names it (contracts/config-studio/persistence-profile.ttl). A test holds them equal.
+    public static final String DESCRIPTION_PREFIX = "urn:lattice:studio:description/";
+    public static final String PART_PREFIX = "urn:lattice:studio:part/";
+    public static final String DOCUMENT_GRAPH_PREFIX = "urn:lattice:studio:document/";
+    public static final String IMPORTED_PREFIX = "urn:lattice:studio:imported/";
+
+    /** As SPARQL's {@code ENCODE_FOR_URI}, which leaves the letters, the digits and {@code -_.~} and encodes every other UTF-8 byte. */
+    public static String encodeForUri(String text) {
+        StringBuilder out = new StringBuilder();
+        for (byte b : text.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            char c = (char) (b & 0xFF);
+            if (c < 128 && (Character.isLetterOrDigit(c) || "-_.~".indexOf(c) >= 0)) {
+                out.append(c);
+            } else {
+                out.append('%').append(String.format("%02X", b & 0xFF));
+            }
+        }
+        return out.toString();
     }
 
-    /** {@code name} is {@code surface} or {@code persistence}. */
+    /** The graph of the description aggregate of workspace {@code ws}, whose root is {@link #workspace}. */
+    public static String description(String ws) {
+        return DESCRIPTION_PREFIX + encodeForUri(workspace(ws));
+    }
+
+    /** The root of part {@code name} of workspace {@code ws}, for every name in {@code Workspace.GRAPHS}. */
+    public static String partRoot(String ws, String name) {
+        return workspace(ws) + "/part/" + name;
+    }
+
+    /** The graph of part {@code name} of workspace {@code ws}. */
     public static String config(String ws, String name) {
-        return workspace(ws) + ":" + name;
+        return PART_PREFIX + encodeForUri(partRoot(ws, name));
     }
 
-    /** The graph of document {@code doc} of workspace {@code ws}, whose IRI is also the document's. */
+    /** The baseline is a part like the others, read as saved (PB-D12). */
+    public static String baseline(String ws) {
+        return config(ws, "baseline");
+    }
+
+    /** The root of document {@code doc} of workspace {@code ws}, whose IRI is also the document's. */
     public static String document(String ws, String doc) {
         return workspace(ws) + ":document:" + doc;
+    }
+
+    /** The graph of document {@code doc} of workspace {@code ws}. */
+    public static String documentGraph(String ws, String doc) {
+        return DOCUMENT_GRAPH_PREFIX + encodeForUri(document(ws, doc));
     }
 
     /** The id of the document {@code iri} names in workspace {@code ws}, or null when it names none. */
@@ -127,8 +164,24 @@ public final class Graphs {
         return s != null && DIGEST.matcher(s).matches();
     }
 
+    /** The root of the import of {@code digest64}, which {@code cst:holdsImport} names. */
     public static String importGraph(String digest64) {
         return IMPORT_PREFIX + digest64;
+    }
+
+    /** The graph that holds the import of {@code digest64}. */
+    public static String importedGraph(String digest64) {
+        return importedGraphOf(importGraph(digest64));
+    }
+
+    /** The graph that holds the import whose root is {@code root}. */
+    public static String importedGraphOf(String root) {
+        return IMPORTED_PREFIX + encodeForUri(root);
+    }
+
+    public static boolean isImportedGraph(String iri) {
+        return iri != null && iri.startsWith(IMPORTED_PREFIX + encodeForUri(IMPORT_PREFIX))
+            && isDigest(iri.substring((IMPORTED_PREFIX + encodeForUri(IMPORT_PREFIX)).length()));
     }
 
     public static boolean isImportGraph(String iri) {

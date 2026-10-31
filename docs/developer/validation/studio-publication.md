@@ -209,3 +209,23 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Found.** A tombstoned root keeps its version row, so it cannot be created again. A workspace, a part and a document are never created again under a deleted root, since their roots hold a new id, but an import released by every workspace and swept would be, so PB14 never tombstones an import.
 
+## PB14: the writer's workspace commands on generated operations
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB14-01 | every graph `Graphs` names / against `StudioOperations.graph` for the same root / equal | L3 | + | pass |
+| PB14-02 | two saves of one part with one expectation in one batch / applied / the second stale, the part holding the first's payload | L4 | − | pass |
+| PB14-03 | two parts saved in one batch / applied / both apply, and the description's quads, row and `cst:modifiedAt` are unchanged | L4 | + | pass |
+| PB14-04 | a baseline with blank nodes saved three times / each revision read through `?revision=n` / isomorphic to what was saved then, with ETag n, and a revision out of range `404` | L5 | ± | pass |
+| PB14-05 | a workspace with parts, a document and history / deleted / no graph of its description, parts, documents or logs, and every row tombstoned | L4 | + | pass |
+| PB14-06 | an import fenced by two workspaces / released by one / one graph, still held by the other | L4 | + | pass |
+| PB14-07 | a fence whose description guard loses a race / applied / no receipt and the import unlisted, and a retry completes it | L4 | − | pass |
+| PB14-08 | a command of several operations / retried with its id / answered from its receipt, every quad unchanged | L4 | + | pass |
+| PB14-09 | a job naming another workspace's baseline / run by the worker / fails without reading it | L8 | − | pass |
+
+`GraphsTest`, `WorkspaceCommandsTest`, `ReceiptsTest`, `StudioApiTest` and `workers/tests/test_config_studio_worker.py`, by `mise run check:config-studio` and `mise run check:workers`. The service's earlier tests were changed only where they asserted the old layout.
+
+**Changed.** An export names each graph by its aggregate's root, so it does not depend on the profile, and an export made before PB14 is not accepted. A command that writes only the description answers `400` when its receipt is absent after the commit, since the workspace changed while it was applied. A document id or workspace id that was deleted cannot be used again, since a tombstoned root cannot be created again. The worker read any workspace's baseline for a job, which the writer had kept from happening, and now reads only the job's own (PB14-09, PRI-75).
+
+**Not covered.** A store written before PB14 reads as holding no workspace until PB16 migrates it. The workspace listing reads each description and scans each family's meta graph, which PB17's summary replaces. Not checked live, since a running studio needs PB16 first.
+

@@ -17,6 +17,7 @@ import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.jobs.RabbitJobBus;
 import org.nebularis.lattice.studio.jobs.RecordingJobBus;
+import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.DirectWrites;
 import org.nebularis.lattice.studio.writes.RabbitWrites;
@@ -44,19 +45,20 @@ public final class StudioMain {
         if (config.fusekiUrl() == null) {
             LOG.warn("LATTICE_FUSEKI_URL is not set, so workspaces live in memory and are lost on exit");
         }
+        StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         JobBus bus;
         Writes writes;
         if (config.amqpUri() == null) {
             // Tests and a demonstration without a broker only: the service writes the store through a writer of its own.
             LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker, and this service writes the store itself");
             bus = new RecordingJobBus();
-            writes = new DirectWrites(new Writer(store, Clock.systemUTC()));
+            writes = new DirectWrites(new Writer(store, ops, Clock.systemUTC()));
         } else {
             // Jobs and writes are published on connections of their own, so a broker holding one back does not stall the other.
             bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
             writes = new RabbitWrites(Amqp.connect(config.amqpUri(), "config-studio-service writes"), store, WRITE_TIMEOUT);
         }
-        StudioHttpServer server = serve(config, store, writes, bus, auth);
+        StudioHttpServer server = serve(config, store, ops, writes, bus, auth);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
             bus.close();
@@ -65,8 +67,8 @@ public final class StudioMain {
         LOG.info("Configuration Studio service listening on http://{}:{}/", config.bind(), server.port());
     }
 
-    private static StudioHttpServer serve(StudioConfig config, StudioStore store, Writes writes, JobBus bus, Authenticator auth) throws Exception {
-        StudioApi api = new StudioApi(store, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
+    private static StudioHttpServer serve(StudioConfig config, StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Authenticator auth) throws Exception {
+        StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
         return server;
@@ -74,9 +76,10 @@ public final class StudioMain {
 
     private static boolean selfCheck() throws Exception {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
-            "studio", null, null, null, java.util.Set.of());
+            "studio", null, null, null, java.util.Set.of(), 1L);
+        StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
+             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());

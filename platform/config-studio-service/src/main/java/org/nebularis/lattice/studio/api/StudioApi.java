@@ -39,6 +39,8 @@ import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.authoring.Documents;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.store.StudioOperations;
+import org.nebularis.lattice.studio.store.StudioOperations.Family;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
@@ -64,6 +66,7 @@ public final class StudioApi {
 
     /** Reads only. Every write goes through {@code writes}, to the writer of its workspace. */
     private final StudioStore store;
+    private final StudioOperations ops;
     private final Writes writes;
     private final JobBus bus;
     private final Clock clock;
@@ -79,19 +82,20 @@ public final class StudioApi {
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
 
-    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
-        this(store, writes, bus, clock, ids, assets, Set.of());
+    public StudioApi(StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets) {
+        this(store, ops, writes, bus, clock, ids, assets, Set.of());
     }
 
-    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
+    public StudioApi(StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
                      Set<String> features) {
-        this(store, writes, bus, clock, ids, assets, features, LocalAuthenticator.developers());
+        this(store, ops, writes, bus, clock, ids, assets, features, LocalAuthenticator.developers());
     }
 
-    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
+    public StudioApi(StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
                      Set<String> features, Authenticator auth) {
         this.features = Set.copyOf(features);
         this.store = store;
+        this.ops = ops;
         this.auth = auth;
         // Every write carries the principal of the request it serves (PRI-54), which handle() has authenticated.
         this.writes = c -> {
@@ -102,7 +106,7 @@ public final class StudioApi {
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
-        this.mcp = new StudioMcp(store, this.writes, clock, ids, assets, this::runTool);
+        this.mcp = new StudioMcp(store, ops, this.writes, clock, ids, assets, this::runTool);
     }
 
     public ApiResponse handle(ApiRequest req) {
@@ -215,7 +219,7 @@ public final class StudioApi {
         }
         if (s.length == 1 && s[0].equals("workspaces")) {
             return switch (method) {
-                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store)));
+                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store, ops)));
                 case "POST" -> createWorkspace(req);
                 default -> notAllowed("GET, POST");
             };
@@ -240,7 +244,7 @@ public final class StudioApi {
             }
             if (s.length == 4 && s[2].equals("graphs") && GRAPH_NAMES.contains(s[3])) {
                 return switch (method) {
-                    case "GET" -> getGraph(ws, s[3]);
+                    case "GET" -> getGraph(ws, s[3], query(req.query()).get("revision"));
                     case "PUT" -> putGraph(req, ws, s[3]);
                     default -> notAllowed("GET, PUT");
                 };
@@ -406,25 +410,23 @@ public final class StudioApi {
             return notFound();
         }
         org.apache.jena.query.Dataset out = org.apache.jena.query.DatasetFactory.create();
+        // Each graph is named by its aggregate's root, so an export does not depend on how the store names its graphs.
         out.addNamedModel(Graphs.workspace(id), ws.toModel());
-        for (long n = 1; n <= ws.revision("baseline"); n++) {
-            add(out, Graphs.baseline(id, n));
-        }
-        for (String name : TARGETS) {
-            add(out, Graphs.config(id, name));
+        for (String name : GRAPH_NAMES) {
+            add(out, Graphs.partRoot(id, name), Graphs.config(id, name));
         }
         for (String doc : ws.documents().keySet()) {
-            add(out, Graphs.document(id, doc));
+            add(out, Graphs.document(id, doc), Graphs.documentGraph(id, doc));
         }
         String file = ws.label().replaceAll("[^A-Za-z0-9._-]+", "-").replaceAll("^-+|-+$", "");
         return new ApiResponse(200, new LinkedHashMap<>(Map.of("Content-Type", TRIG + "; charset=utf-8",
             "Content-Disposition", "attachment; filename=\"" + (file.isEmpty() ? "workspace" : file) + ".trig\"")), Turtle.writeTrig(out));
     }
 
-    private void add(org.apache.jena.query.Dataset out, String graph) {
+    private void add(org.apache.jena.query.Dataset out, String name, String graph) {
         Model m = store.graph(graph);
         if (!m.isEmpty()) {
-            out.addNamedModel(graph, m);
+            out.addNamedModel(name, m);
         }
     }
 
@@ -439,13 +441,27 @@ public final class StudioApi {
         return reply.applied() ? ApiResponse.empty(204) : refusal(reply);
     }
 
-    private ApiResponse getGraph(String id, String name) {
+    /** The part as saved, or as it was at {@code revision}, rebuilt from the patch log, with that revision as its ETag. */
+    private ApiResponse getGraph(String id, String name, String revision) {
         Workspace ws = load(id);
         if (ws == null) {
             return notFound();
         }
-        String graph = name.equals("baseline") ? ws.baselineGraph() : Graphs.config(id, name);
-        return ApiResponse.turtle(200, Turtle.write(store.graph(graph))).with("ETag", etag(ws.revision(name)));
+        long current = ws.revision(name);
+        long at = current;
+        if (revision != null) {
+            try {
+                at = Long.parseLong(revision);
+            } catch (NumberFormatException e) {
+                return ApiResponse.text(400, "revision is a whole number");
+            }
+            if (at < 1 || at > current) {
+                return notFound();
+            }
+        }
+        Model graph = at == current ? store.graph(Graphs.config(id, name))
+            : ops.asOf(store, Family.PART, Graphs.partRoot(id, name), current, at);
+        return ApiResponse.turtle(200, Turtle.write(graph)).with("ETag", etag(at));
     }
 
     private ApiResponse putGraph(ApiRequest req, String id, String name) {
@@ -504,10 +520,11 @@ public final class StudioApi {
     // --- documents ---------------------------------------------------------------------------
 
     private ApiResponse listDocuments(String id) {
-        if (load(id) == null) {
+        Workspace ws = load(id);
+        if (ws == null) {
             return notFound();
         }
-        Model description = store.graph(Graphs.workspace(id));
+        Model description = ws.toModel();
         Model out = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
         description.listResourcesWithProperty(RDF.type, Cst.Document).forEachRemaining(d -> out.add(d.listProperties()));
         return ApiResponse.turtle(200, Turtle.write(out));
@@ -519,7 +536,7 @@ public final class StudioApi {
         if (ws == null || !ws.documents().containsKey(doc)) {
             return notFound();
         }
-        Model graph = store.graph(Graphs.document(id, doc));
+        Model graph = store.graph(Graphs.documentGraph(id, doc));
         String etag = etag(ws.documentRevision(doc));
         if (Turtle.prefers(req.header("accept"), "application/xml")) {
             org.apache.jena.rdf.model.Statement markup = graph.createResource(Graphs.documentNode(doc)).getProperty(Cst.markup);
@@ -534,7 +551,7 @@ public final class StudioApi {
         if (ws == null || !ws.documents().containsKey(doc)) {
             return notFound();
         }
-        Model graph = store.graph(Graphs.document(id, doc));
+        Model graph = store.graph(Graphs.documentGraph(id, doc));
         org.apache.jena.rdf.model.Statement markup = graph.createResource(Graphs.documentNode(doc)).getProperty(Cst.markup);
         if (markup == null) {
             return notFound();
@@ -695,7 +712,7 @@ public final class StudioApi {
         if (ws == null || doc == null || !Graphs.isId(doc) || !ws.documents().containsKey(doc)) {
             return notFound();
         }
-        Model input = store.graph(Graphs.document(id, doc));
+        Model input = store.graph(Graphs.documentGraph(id, doc));
         String job = ids.get().toString();
         String jobIri = Graphs.job(job);
         Model description = jobDescription(jobIri, id, ws, "analyse", null, Graphs.jobInput(job));
@@ -721,10 +738,10 @@ public final class StudioApi {
         if (p != null && !ws.writableBy(p.name(), p.admin())) {
             return ApiResponse.text(403, p.name() + " may not publish from this workspace, which is " + ws.mode());
         }
-        String graph = fromImport ? Graphs.importGraph(importDigest) : Graphs.config(id, target);
-        if (fromImport && !ws.imports().containsKey(graph)) {
+        if (fromImport && !ws.imports().containsKey(Graphs.importGraph(importDigest))) {
             return notFound();
         }
+        String graph = fromImport ? Graphs.importedGraph(importDigest) : Graphs.config(id, target);
         String job = ids.get().toString();
         Model description = jobDescription(Graphs.job(job), id, ws, "publish", target, Graphs.jobInput(job));
         description.createResource(Graphs.job(job)).addProperty(Cst.unit, description.createResource(unit));
@@ -818,7 +835,7 @@ public final class StudioApi {
         if (ws == null || !ws.imports().containsKey(Graphs.importGraph(digest))) {
             return notFound();
         }
-        return ApiResponse.turtle(200, Turtle.write(store.graph(Graphs.importGraph(digest))));
+        return ApiResponse.turtle(200, Turtle.write(store.graph(Graphs.importedGraph(digest))));
     }
 
     /** The workspace stops holding the import. The graph stays, since other workspaces may hold it. */
@@ -880,7 +897,7 @@ public final class StudioApi {
                     job.addProperty(Cst.contextGraph, m.createResource(graph));
                 }
             }
-            workspace.imports().keySet().forEach(graph -> job.addProperty(Cst.contextGraph, m.createResource(graph)));
+            workspace.imports().keySet().forEach(root -> job.addProperty(Cst.contextGraph, m.createResource(Graphs.importedGraphOf(root))));
         }
         job.addProperty(Cst.status, Cst.Queued);
         job.addProperty(Cst.submittedAt, m.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
@@ -1073,7 +1090,7 @@ public final class StudioApi {
 
     /** The workspace, or null when it does not exist or the request's principal may not read it (ADR-A149 decision 9). */
     private Workspace load(String id) {
-        Workspace ws = Workspace.from(id, store.graph(Graphs.workspace(id)));
+        Workspace ws = ops.workspace(store, id);
         return ws != null && readable(ws) ? ws : null;
     }
 
@@ -1082,18 +1099,10 @@ public final class StudioApi {
         return p == null || ws.readableBy(p.name(), p.admin());
     }
 
-    /** The descriptions of the workspaces the request's principal may read. */
-    static Model readableWorkspaces(StudioStore store) {
-        Model all = store.workspaces();
-        for (Resource node : all.listSubjectsWithProperty(RDF.type, Cst.Workspace).toList()) {
-            String id = node.getURI().substring(Graphs.WORKSPACE_PREFIX.length());
-            Workspace ws = Workspace.from(id, all);
-            if (ws == null || !readable(ws)) {
-                all.removeAll(node, null, null);
-                node.listProperties(Cst.document).toList().forEach(d -> all.removeAll(d.getResource(), null, null));
-                node.listProperties(Cst.holdsImport).toList().forEach(d -> all.removeAll(d.getResource(), RDFS.label, null));
-            }
-        }
+    /** The service's view of each workspace the request's principal may read. */
+    static Model readableWorkspaces(StudioStore store, StudioOperations ops) {
+        Model all = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
+        ops.workspaces(store).stream().filter(StudioApi::readable).forEach(ws -> all.add(ws.toModel()));
         return all;
     }
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from urllib.parse import quote
 from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol
@@ -28,12 +29,20 @@ JOBS_QUEUE = "lattice.studio.jobs"
 
 _UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _MESSAGE = re.compile(rf"urn:lattice:studio:job:{_UUID}")
-_BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
+
+
+def _graph(prefix: str, root: str) -> str:
+    """The graph the store gives an aggregate's root, by the profile's rule, the prefix and then the root with every byte but
+    the letters, the digits and `-_.~` percent-encoded, as SPARQL's ENCODE_FOR_URI does (contracts/config-studio/persistence-profile.ttl)."""
+    return prefix + quote(root, safe="-_.~")
+
+
+_PART = "urn:lattice:studio:part/"
 # The configuration parts a job may read as context, beside its target (ADR-A149 decision 7).
 _FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")
 _PROV = Namespace("http://www.w3.org/ns/prov#")
 _HAS_IDENTITY = URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity")
-_IMPORT_GRAPH = re.compile(r"urn:lattice:studio:import:[0-9a-f]{64}")
+_IMPORT_GRAPH = re.compile(re.escape(_graph("urn:lattice:studio:imported/", "urn:lattice:studio:import:")) + "[0-9a-f]{64}")
 _VERSION_GRAPH = re.compile(r"urn:lattice:studio:pub:[0-9a-f]{32}:rev:[0-9a-f]{16}")
 _PARTS = ("library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
@@ -139,7 +148,7 @@ class ConfigStudioWorker:
             from . import config_studio_dryrun
             from .config_studio_jobs import _spec
 
-            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_own_baseline(graph, job), empty_if_missing=True)
             if graph.value(job, CST.target) == CST.Mapping:
                 from .config_studio_jobs import run_mapping
 
@@ -159,7 +168,7 @@ class ConfigStudioWorker:
                 from . import config_studio_odrl
 
                 spec = _spec(str(Path(self._root).resolve()), "meaning")
-                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_own_baseline(graph, job), empty_if_missing=True)
                 config = input_("configuration") + baseline
                 documents = sorted(config.subjects(RDF.type, CST.ImportDocument), key=str)
                 if len(documents) != 1:
@@ -173,7 +182,7 @@ class ConfigStudioWorker:
                 from . import config_studio_mapping_proposer as mapping
                 from .llm_providers import provider_from_env
 
-                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+                baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_own_baseline(graph, job), empty_if_missing=True)
                 rounds = int(os.environ.get("LATTICE_MAPPING_PROPOSER_ROUNDS") or 40)
                 return mapping.propose_mapping(job, input_("configuration") + baseline, provider_from_env(os.environ),
                                                str(graph.value(job, CST.submittedAt)), rounds)
@@ -185,7 +194,7 @@ class ConfigStudioWorker:
                 raise ValueError(f"no proposer is named {target}")
             spec = _spec(str(Path(self._root).resolve()), "meaning")
             # Roles are the baseline's, so the job reads its baseline beside the configurations, as a validation does.
-            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True)
+            baseline = self._read(graph, job, CST.baselineGraph, "baseline", allowed=_own_baseline(graph, job), empty_if_missing=True)
             config = input_("configuration") + baseline
             return proposers.propose_all(job, config, spec, proposer, str(graph.value(job, CST.submittedAt)))
         if graph.value(job, CST.kind) == CST.Assemble:
@@ -211,7 +220,7 @@ class ConfigStudioWorker:
         out = run_job(
             job, kind, target,
             self._read(graph, job, CST.configGraph, "configuration", allowed=lambda iri: iri == f"{job}:input"),
-            self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True),
+            self._read(graph, job, CST.baselineGraph, "baseline", allowed=_own_baseline(graph, job), empty_if_missing=True),
             self._root, str(submitted), self._context(graph, job),
         )
         if kind == "compile":
@@ -251,7 +260,7 @@ class ConfigStudioWorker:
         """The graphs a job names as its context: its own workspace's other configuration parts (STD-298), a part never
         saved reading as empty, and the published versions its workspace depends on (ADR-A149 decision 7)."""
         workspace = str(graph.value(job, CST.workspace) or "")
-        allowed = re.compile(re.escape(workspace) + ":(" + "|".join(_PARTS) + ")") if _WORKSPACE.fullmatch(workspace) else None
+        allowed = re.compile(re.escape(_graph(_PART, workspace + "/part/")) + "(?:" + "|".join(_PARTS) + ")") if _WORKSPACE.fullmatch(workspace) else None
         context = Graph()
         for iri in sorted(graph.objects(job, CST.contextGraph), key=str):
             # A published version is immutable and everyone's to read (ADR-A149 decision 4). A draft that follows its
@@ -320,6 +329,13 @@ def analyse_document(job: URIRef, document: Graph) -> Graph:
     result.artefact("proposals.ttl", "text/turtle", proposal.serialize(format="turtle"), "analysis")
     result.conforms(True)
     return result.graph
+
+
+def _own_baseline(graph: Graph, job: URIRef) -> Callable[[str], bool]:
+    """Whether a graph is the baseline of the job's own workspace, the only baseline the job may read (PRI-75)."""
+    workspace = str(graph.value(job, CST.workspace) or "")
+    own = _graph(_PART, workspace + "/part/baseline") if _WORKSPACE.fullmatch(workspace) else None
+    return lambda iri: own is not None and iri == own
 
 
 SKOLEM = "urn:lattice:studio:genid:"

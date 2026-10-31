@@ -22,6 +22,7 @@ import org.nebularis.lattice.studio.api.ApiResponse;
 import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.jobs.RecordingJobBus;
+import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.DirectWrites;
 import org.nebularis.lattice.studio.writes.Writer;
@@ -34,7 +35,9 @@ final class Fixture {
 
     final StudioStore store = textual(org.apache.jena.rdfconnection.RDFConnection.connect(
         org.apache.jena.query.DatasetFactory.createTxnMem()));
-    final DirectWrites writes = new DirectWrites(new Writer(store, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
+    /** The operations the stage tool wrote, loaded once. */
+    static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
+    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
     final RecordingJobBus bus = new RecordingJobBus();
     final Path assets;
     final StudioApi api;
@@ -51,7 +54,7 @@ final class Fixture {
     Fixture(Path assets, JobBus busOverride, java.util.Set<String> features) {
         this.assets = assets;
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
-        this.api = new StudioApi(store, writes, busOverride == null ? bus : busOverride, clock,
+        this.api = new StudioApi(store, OPS, writes, busOverride == null ? bus : busOverride, clock,
             () -> new UUID(0, counter.incrementAndGet()), assets, features);
     }
 

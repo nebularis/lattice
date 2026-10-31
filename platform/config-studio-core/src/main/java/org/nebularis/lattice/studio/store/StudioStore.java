@@ -29,8 +29,11 @@ import org.apache.jena.update.UpdateRequest;
 public final class StudioStore implements AutoCloseable {
     private static final String PREFIXES = "PREFIX cst: <" + Cst.NS + ">\n";
     private static final String GRAPH_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }";
-    private static final String WORKSPACES_QUERY = PREFIXES
-        + "CONSTRUCT { ?w ?p ?o } WHERE { GRAPH ?w { ?w a cst:Workspace ; ?p ?o } }";
+    private static final String WORKSPACES_QUERY = PREFIXES + """
+        CONSTRUCT { ?w a cst:Workspace } WHERE {
+          GRAPH ?g { ?w a cst:Workspace }
+          FILTER (STRSTARTS(STR(?g), "urn:lattice:studio:description/"))
+        }""";
     // ponytail: scans every graph for a current pointer, one triple per lineage. Keep an index graph if the registry grows large.
     private static final String REGISTRY_QUERY = PREFIXES + """
         CONSTRUCT { ?lineage cst:current ?version } WHERE {
@@ -60,6 +63,10 @@ public final class StudioStore implements AutoCloseable {
 
     private static final String VERSION_ROW_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } } }";
+    // ponytail: a scan of the meta graph for every row under a prefix, which PB17's workspace summary replaces.
+    private static final String VERSION_ROWS_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
+        + "SELECT ?root ?seq ?deleted WHERE { GRAPH ?meta { ?root pat:seq ?seq OPTIONAL { ?root pat:deleted ?deleted } "
+        + "FILTER (STRSTARTS(STR(?root), ?prefix)) } }";
     private static final String CLAIM_QUERY = "PREFIX pat: <" + org.nebularis.lattice.persistence.Namespaces.PAT + ">\n"
         + "SELECT ?rev WHERE { GRAPH ?txn { ?claim pat:rev ?rev } }";
 
@@ -119,6 +126,20 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
+    /** The {@code pat:seq} of every live row in {@code metaGraph} whose root starts with {@code prefix}, by root. */
+    public java.util.Map<String, Long> versionRows(String metaGraph, String prefix) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROWS_QUERY);
+        query.setIri("meta", metaGraph);
+        query.setLiteral("prefix", prefix);
+        java.util.Map<String, Long> out = new java.util.HashMap<>();
+        connection.querySelect(query.asQuery(), row -> {
+            if (!(row.contains("deleted") && "true".equals(row.getLiteral("deleted").getLexicalForm()))) {
+                out.put(row.getResource("root").getURI(), row.getLiteral("seq").getLong());
+            }
+        });
+        return out;
+    }
+
     /** The {@code pat:rev} that transaction {@code txnId} claimed in {@code txnGraph}, empty when it has not claimed one. */
     public java.util.Optional<String> claimRev(String txnGraph, String txnId) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(CLAIM_QUERY);
@@ -129,6 +150,7 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
+    /** The workspace nodes of the description graphs, as {@code ?w a cst:Workspace}. */
     public Model workspaces() {
         return connection.queryConstruct(constant(WORKSPACES_QUERY));
     }
@@ -202,7 +224,8 @@ public final class StudioStore implements AutoCloseable {
         return new ParameterizedSparqlString(text).asQuery();
     }
 
-    private static Update drop(String graphIri) {
+    /** {@code DROP SILENT GRAPH}, built from the typed API. */
+    public static Update drop(String graphIri) {
         return new UpdateDrop(org.apache.jena.graph.NodeFactory.createURI(graphIri), true);
     }
 

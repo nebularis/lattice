@@ -44,6 +44,7 @@ import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
@@ -69,6 +70,7 @@ final class StudioMcp {
     private static final int MAX_SESSIONS = 1000;
 
     private final StudioStore store;
+    private final StudioOperations ops;
     private final Writes writes;
     private final Clock clock;
     private final Supplier<UUID> ids;
@@ -77,10 +79,11 @@ final class StudioMcp {
     private final Map<String, String> clients = new ConcurrentHashMap<>();
     private volatile Model vocabulary;
 
-    StudioMcp(StudioStore store, Writes writes, Clock clock, Supplier<UUID> ids, Path assets,
+    StudioMcp(StudioStore store, StudioOperations ops, Writes writes, Clock clock, Supplier<UUID> ids, Path assets,
               java.util.function.BiFunction<String, Model, Model> tools) {
         this.tools = tools;
         this.store = store;
+        this.ops = ops;
         this.writes = writes;
         this.clock = clock;
         this.ids = ids;
@@ -300,7 +303,7 @@ final class StudioMcp {
     }
 
     private String listWorkspaces() {
-        Model all = StudioApi.readableWorkspaces(store);
+        Model all = StudioApi.readableWorkspaces(store, ops);
         List<String> lines = new ArrayList<>();
         all.listResourcesWithProperty(RDF.type, Cst.Workspace).forEachRemaining(ws -> lines.add(
             ws.getURI().substring(Graphs.WORKSPACE_PREFIX.length()) + "  " + label(all, ws)));
@@ -379,7 +382,7 @@ final class StudioMcp {
         RDFDataMgr.write(turtle, payload, Lang.TURTLE);
         String proposer = session == null ? null : clients.get(session);
         for (int attempt = 0; attempt < 2; attempt++) {
-            Workspace now = Workspace.from(ws.id(), store.graph(Graphs.workspace(ws.id())));
+            Workspace now = ops.workspace(store, ws.id());
             Model review = store.graph(Graphs.config(ws.id(), "review"));
             Resource proposal = review.createResource(base).addProperty(RDF.type, cst("Proposal"))
                 .addProperty(cstp("span"), c).addProperty(cstp("proposer"), "assistant")
@@ -508,7 +511,7 @@ final class StudioMcp {
         List<Resource> mappings = proposal.listSubjectsWithProperty(proposal.createProperty(MORK + "mappingScheme")).toList();
         mappings.forEach(m -> m.addProperty(proposal.createProperty(PROV + "wasGeneratedBy"), run));
         for (int attempt = 0; attempt < 2; attempt++) {
-            Workspace now = Workspace.from(ws.id(), store.graph(Graphs.workspace(ws.id())));
+            Workspace now = ops.workspace(store, ws.id());
             Model mapping = store.graph(Graphs.config(ws.id(), "mapping")).add(proposal);
             Reply reply = writes.send(Command.save(ws.id(), "mapping", now.revision("mapping"), instant(), mapping));
             if (reply.applied()) {
@@ -529,7 +532,7 @@ final class StudioMcp {
 
     private Workspace workspace(JsonObject args) {
         String id = required(args, "workspace");
-        Workspace ws = Graphs.isId(id) ? Workspace.from(id, store.graph(Graphs.workspace(id))) : null;
+        Workspace ws = Graphs.isId(id) ? ops.workspace(store, id) : null;
         if (ws == null || !StudioApi.readable(ws)) {
             throw new Refusal("No workspace has the id " + id + ". list_workspaces lists them.");
         }

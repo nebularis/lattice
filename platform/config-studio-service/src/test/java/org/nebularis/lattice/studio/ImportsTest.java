@@ -35,6 +35,7 @@ class ImportsTest {
     private static final String OTHER = Fixture.id(2);
     private static final String DIGEST = "0123456789abcdef".repeat(4);
     private static final String GRAPH = Graphs.importGraph(DIGEST);
+    private static final String HELD = Graphs.importedGraph(DIGEST);
     private static final String IMPORTED = Fixture.PREFIXES + "ex:imported ex:p ex:o .";
     private static final String UNIT = "https://example.org/unit/imported";
 
@@ -114,18 +115,18 @@ class ImportsTest {
         ApiResponse r = fence(WS, finished(WS), "Reference data");
         assertEquals(201, r.status());
         assertTrue(Fixture.model(r).contains(Fixture.model(r).createResource(Graphs.workspace(WS)), Cst.holdsImport, Fixture.model(r).createResource(GRAPH)));
-        assertTrue(f.store.graph(GRAPH).isIsomorphicWith(imported()));
-        assertTrue(f.store.graph(Graphs.workspace(WS)).contains(f.store.graph(Graphs.workspace(WS)).createResource(GRAPH),
+        assertTrue(f.store.graph(HELD).isIsomorphicWith(imported()));
+        assertTrue(f.store.graph(Graphs.description(WS)).contains(f.store.graph(Graphs.description(WS)).createResource(GRAPH),
             org.apache.jena.vocabulary.RDFS.label, "Reference data"));
         assertEquals(201, fence(OTHER, finished(OTHER), null).status());
-        assertTrue(f.store.graph(GRAPH).isIsomorphicWith(imported()), "one graph, since one digest is one content");
-        assertEquals(1, f.store.graph(GRAPH).size());
+        assertTrue(f.store.graph(HELD).isIsomorphicWith(imported()), "one graph, since one digest is one content");
+        assertEquals(1, f.store.graph(HELD).size());
         assertTrue(holds(OTHER));
         assertEquals(404, fence(OTHER, finished(WS), null).status(), "another workspace's job");
     }
 
     private boolean holds(String ws) {
-        return org.nebularis.lattice.studio.model.Workspace.from(ws, f.store.graph(Graphs.workspace(ws))).imports().containsKey(GRAPH);
+        return org.nebularis.lattice.studio.model.Workspace.from(ws, f.store.graph(Graphs.description(ws))).imports().containsKey(GRAPH);
     }
 
     @Test
@@ -145,7 +146,7 @@ class ImportsTest {
         assertEquals(204, f.send("DELETE", base(WS) + "/imports/" + DIGEST, null, Map.of(), new byte[0]).status());
         assertEquals(404, held(WS).status());
         assertEquals(404, f.send("DELETE", base(WS) + "/imports/" + DIGEST, null, Map.of(), new byte[0]).status());
-        assertFalse(f.store.graph(GRAPH).isEmpty());
+        assertFalse(f.store.graph(HELD).isEmpty());
         assertEquals(200, held(OTHER).status());
     }
 
@@ -155,9 +156,9 @@ class ImportsTest {
         ApiResponse r = submit(WS, null, "kind=validate&target=surface", Fixture.PREFIXES + "ex:a ex:p ex:b .");
         assertEquals(202, r.status());
         Model m = Fixture.model(r);
-        assertTrue(m.contains(null, Cst.contextGraph, m.createResource(GRAPH)));
+        assertTrue(m.contains(null, Cst.contextGraph, m.createResource(HELD)));
         r = submit(OTHER, null, "kind=validate&target=surface", Fixture.PREFIXES + "ex:a ex:p ex:b .");
-        assertFalse(Fixture.model(r).contains(null, Cst.contextGraph, m.createResource(GRAPH)));
+        assertFalse(Fixture.model(r).contains(null, Cst.contextGraph, m.createResource(HELD)));
         String job = Fixture.id(99);
         String jobIri = Graphs.job(job);
         Model forged = ModelFactory.createDefaultModel();
@@ -165,13 +166,13 @@ class ImportsTest {
         fj.addProperty(org.apache.jena.vocabulary.RDF.type, Cst.Job);
         fj.addProperty(Cst.workspace, forged.createResource(Graphs.workspace(OTHER)));
         fj.addProperty(Cst.configGraph, forged.createResource(Graphs.jobInput(job)));
-        fj.addProperty(Cst.baselineGraph, forged.createResource(Graphs.baseline(OTHER, 1)));
+        fj.addProperty(Cst.baselineGraph, forged.createResource(Graphs.baseline(OTHER)));
         fj.addProperty(Cst.status, Cst.Queued);
-        fj.addProperty(Cst.contextGraph, forged.createResource(GRAPH));
+        fj.addProperty(Cst.contextGraph, forged.createResource(HELD));
         Dataset d = DatasetFactory.create();
         d.addNamedModel(jobIri, forged);
         d.addNamedModel(Graphs.jobInput(job), ModelFactory.createDefaultModel());
-        Writer w = new Writer(f.store, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
         assertEquals(400, w.apply(Command.submitJob(OTHER, job, d)).status());
     }
 

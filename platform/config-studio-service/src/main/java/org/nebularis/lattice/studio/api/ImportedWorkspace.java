@@ -44,7 +44,7 @@ record ImportedWorkspace(Dataset graphs, String label, String problem) {
         Dataset out = DatasetFactory.create();
         for (Iterator<Resource> it = source.listModelNames(); it.hasNext(); ) {
             String name = it.next().getURI();
-            if (!name.equals(from) && !name.startsWith(from + ":")) {
+            if (!moves(name, from)) {
                 return refused("the export holds a graph of another workspace: " + name);
             }
             Model graph = source.getNamedModel(name);
@@ -64,11 +64,16 @@ record ImportedWorkspace(Dataset graphs, String label, String problem) {
     private static RDFNode move(Model m, RDFNode node, String from, String to) {
         if (node.isURIResource()) {
             String iri = node.asResource().getURI();
-            if (iri.equals(from) || iri.startsWith(from + ":")) {
+            if (moves(iri, from)) {
                 return m.createResource(to + iri.substring(from.length()));
             }
         }
         return node;
+    }
+
+    /** Whether {@code iri} is the workspace's root or minted under it, as a document ({@code :}) or a part ({@code /}). */
+    private static boolean moves(String iri, String from) {
+        return iri.equals(from) || iri.startsWith(from + ":") || iri.startsWith(from + "/");
     }
 
     private static ImportedWorkspace refused(String problem) {

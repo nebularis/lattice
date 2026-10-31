@@ -180,7 +180,7 @@ class DependenciesTest {
         node.addProperty(RDF.type, Cst.Job);
         node.addProperty(Cst.workspace, job.createResource(Graphs.workspace(WS)));
         node.addProperty(Cst.configGraph, job.createResource(input));
-        node.addProperty(Cst.baselineGraph, job.createResource(Graphs.baseline(WS, 1)));
+        node.addProperty(Cst.baselineGraph, job.createResource(Graphs.baseline(WS)));
         node.addProperty(Cst.status, Cst.Queued);
         node.addProperty(Cst.contextGraph, job.createResource(contextGraph));
         Dataset d = DatasetFactory.create();

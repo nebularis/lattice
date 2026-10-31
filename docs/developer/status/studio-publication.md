@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB13 built 2026-10-31, PB14 to PB17 under way
+**Status:** 🟡 PB1 to PB14 built 2026-10-31, PB15 to PB17 under way
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -48,7 +48,9 @@ The maintainer answered PB-Q13 (b) and PB-Q12 (b) on 2026-10-31. The compiler is
 
 PB13 was built on 2026-10-31. `StudioOperations` loads the staged profile and operations, checks and binds each request through the Java caller library, and derives the linear replace of TD-136 from the generated replace's syntax tree, which leaves what the generated one leaves. A tombstoned root cannot be created again, so an import is never tombstoned. Written by a Sonnet subagent and reviewed. Checks run 2026-10-31, all passing: `check:config-studio`, with `StudioOperationsTest`'s 15 tests.
 
-**Next action:** build PB14 to PB17 in order. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
+PB14 was built on 2026-10-31. Every workspace command but publishing runs the generated operations in the order of ADR-A149 decision 13, with its receipt last and guarded on its last operation's claim. A part's revision is its version row's sequence, and an earlier revision is read from the patch log at `?revision=n`. Written by a Sonnet subagent and reviewed. The review tied the worker's reading of a job's baseline to the job's own workspace. Checks run 2026-10-31, all passing: `check:config-studio` (core 23, service 143, writer 3, browser 109) and `check:workers` (179). Not checked live, since the existing store needs PB16's migration to open.
+
+**Next action:** build PB15 to PB17 in order. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.
@@ -63,3 +65,4 @@ PB13 was built on 2026-10-31. `StudioOperations` loads the staged profile and op
 - 2026-10-31: PB11 and PB12 built. TD-42 extended with the named-graph replace's cost on Jena. PB-Q13 raised.
 - 2026-10-31: PB-Q12 and PB-Q13 answered (b). The linear replace sketch written, TD-136 and BL-09 added, ADR-A149 decision 12 narrowed by an addendum.
 - 2026-10-31: PB13 split from the writer's commands and built.
+- 2026-10-31: PB14 built.

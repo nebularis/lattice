@@ -25,7 +25,8 @@ All under `org.nebularis.lattice.studio`.
 |---|---|---|
 | `LATTICE_STUDIO_PORT` | `8090` | listening port |
 | `LATTICE_STUDIO_BIND` | `127.0.0.1` | bind address |
-| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | the directory `tools/config_studio_stage.py` fills with `vocabulary.ttl`, `samples.ttl` and `samples/` |
+| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | the directory `tools/config_studio_stage.py` fills with `vocabulary.ttl`, `samples.ttl`, `samples/` and `persistence/`, the generated operations the service reads revisions and earlier revisions through |
+| `LATTICE_STUDIO_EPOCH` | `1` | the epoch of the store's version rows, 1 until the store is restored and the operator raises it |
 | `LATTICE_STUDIO_STATIC` | none | directory of the built SPA, served for paths outside `/api` |
 | `LATTICE_FUSEKI_URL` | none | Fuseki base URL. Absent means an in-memory dataset |
 | `LATTICE_FUSEKI_DATASET` | `studio` | dataset name |

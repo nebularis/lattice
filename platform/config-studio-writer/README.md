@@ -18,6 +18,8 @@ The only component that writes the Configuration Studio's store ([ADR-A136](../.
 | `LATTICE_AMQP_URI` | required | RabbitMQ's AMQP URI, for replies and the sweep |
 | `LATTICE_STREAM_URI` | required | RabbitMQ's stream URI, for example `rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f` |
 | `LATTICE_STUDIO_JOB_RETENTION_DAYS` | `30` | days a finished job is kept |
+| `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | the directory whose `persistence/` folder holds the operations the persistence compiler generated, which `mise run build:config-studio-assets` stages |
+| `LATTICE_STUDIO_EPOCH` | `1` | the epoch of the version rows it writes, the service's too |
 
 `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may each be read from a file instead, by setting `NAME_FILE` to its path, as the [operations guide](../../docs/operator/configuration-studio-operations.md#secrets-in-files) describes.
 

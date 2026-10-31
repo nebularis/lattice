@@ -39,13 +39,14 @@ import org.nebularis.lattice.persistence.OperationKind;
 import org.nebularis.lattice.persistence.ParameterContract;
 import org.nebularis.lattice.persistence.Payload;
 import org.nebularis.lattice.persistence.RequestDigest;
+import org.nebularis.lattice.studio.model.Workspace;
 
 /**
  * The operations the persistence compiler generated for the studio's profiles (ADR-A149 decisions 12 and 13), ready to run.
  * {@link #load} reads the folder the stage tool wrote, and each operation method returns the {@link Update}s to add to one
  * request. Every parameter is checked by the caller library before anything is built, the request digest is the profile's,
- * and a payload with a blank node is refused (skolemise it first, {@link Skolem#skolemise}). The class makes no store call
- * except {@link #seq} and {@link #claimed}, and sends nothing.
+ * and a payload with a blank node is refused (skolemise it first, {@link Skolem#skolemise}). The class sends nothing, and reads the store
+ * only in {@link #seq}, {@link #claimed}, {@link #workspace}, {@link #workspaces} and {@link #asOf}.
  */
 public final class StudioOperations {
     /** The studio's aggregate families, each the target of one persistence profile. */
@@ -153,21 +154,84 @@ public final class StudioOperations {
         return String.format("urn:rev:studio/%s/e%019d/%019d", encodeForUri(root), epoch, seq);
     }
 
-    /** As SPARQL's {@code ENCODE_FOR_URI}, which leaves the letters, the digits and {@code -_.~} and encodes every other UTF-8 byte. */
     private static String encodeForUri(String text) {
-        StringBuilder out = new StringBuilder();
-        for (byte b : text.getBytes(StandardCharsets.UTF_8)) {
-            char c = (char) (b & 0xFF);
-            if (c < 128 && (Character.isLetterOrDigit(c) || "-_.~".indexOf(c) >= 0)) {
-                out.append(c);
-            } else {
-                out.append('%').append(String.format("%02X", b & 0xFF));
-            }
-        }
-        return out.toString();
+        return Graphs.encodeForUri(text);
     }
 
     // ---- reads
+
+    /** The graph that holds every transaction's claim, which a command's receipt is guarded on. */
+    public String txnGraph() {
+        return txnGraph;
+    }
+
+    private String metaGraph(Family f) {
+        return graphOf(operation(f, OperationKind.CREATE).contract, "metaGraphPrefix");
+    }
+
+    /**
+     * The workspace {@code id} as the service sees it, or null when the store holds none. Its description is read from its graph,
+     * and its parts' and documents' revisions from their version rows, one query of each family's meta graph.
+     */
+    public Workspace workspace(StudioStore store, String id) {
+        String prefix = Graphs.workspace(id);
+        return Workspace.from(id, store.graph(graph(Family.DESCRIPTION, prefix)),
+            partRevisions(store.versionRows(metaGraph(Family.PART), prefix), id),
+            documentRevisions(store.versionRows(metaGraph(Family.DOCUMENT), prefix), id));
+    }
+
+    /** Every workspace the store holds, with one scan of each meta graph for all of them. */
+    public List<Workspace> workspaces(StudioStore store) {
+        Map<String, Long> parts = store.versionRows(metaGraph(Family.PART), Graphs.WORKSPACE_PREFIX);
+        Map<String, Long> documents = store.versionRows(metaGraph(Family.DOCUMENT), Graphs.WORKSPACE_PREFIX);
+        List<Workspace> out = new java.util.ArrayList<>();
+        store.workspaces().listSubjects().forEachRemaining(node -> {
+            String root = node.getURI();
+            String id = root.startsWith(Graphs.WORKSPACE_PREFIX) ? root.substring(Graphs.WORKSPACE_PREFIX.length()) : "";
+            Workspace ws = Graphs.isId(id) ? Workspace.from(id, store.graph(graph(Family.DESCRIPTION, root)),
+                partRevisions(parts, id), documentRevisions(documents, id)) : null;
+            if (ws != null) {
+                out.add(ws);
+            }
+        });
+        return out;
+    }
+
+    private static Map<String, Long> partRevisions(Map<String, Long> rows, String id) {
+        Map<String, Long> out = new HashMap<>();
+        for (String name : Workspace.GRAPHS) {
+            Long seq = rows.get(Graphs.partRoot(id, name));
+            if (seq != null) {
+                out.put(name, seq);
+            }
+        }
+        return out;
+    }
+
+    private static Map<String, Long> documentRevisions(Map<String, Long> rows, String id) {
+        Map<String, Long> out = new HashMap<>();
+        rows.forEach((root, seq) -> {
+            String doc = Graphs.documentId(id, root);
+            if (doc != null) {
+                out.put(doc, seq);
+            }
+        });
+        return out;
+    }
+
+    /**
+     * {@code root}'s graph as it was at revision {@code at}, rebuilt from the current graph, at revision {@code current}, by
+     * undoing each later revision's delta from the newest back, with each skolem IRI read as a blank node.
+     */
+    public Model asOf(StudioStore store, Family f, String root, long current, long at) {
+        Model m = store.rawGraph(graph(f, root));
+        for (long k = current; k > at; k--) {
+            String rev = revision(f, root, k);
+            m.remove(store.rawGraph(rev + "/add"));
+            m.add(store.rawGraph(rev + "/del"));
+        }
+        return Skolem.unskolemise(m);
+    }
 
     /** The sequence of {@code root}'s version row, empty when it has no row or it is tombstoned. */
     public Optional<Long> seq(StudioStore store, Family f, String root) {

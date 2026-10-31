@@ -89,7 +89,7 @@ class AccessTest {
     @Test
     void aWorkspaceIsOwnedByItsCreatorAndShared() {
         developersWorkspace();
-        Workspace ws = Workspace.from(WS, f.store.graph(Graphs.workspace(WS)));
+        Workspace ws = Workspace.from(WS, f.store.graph(Graphs.description(WS)));
         assertEquals("developer", ws.owner());
         assertEquals(Workspace.SHARED, ws.mode());
     }
@@ -130,7 +130,7 @@ class AccessTest {
         ApiResponse made = as("reviewer", "POST", "/api/workspaces", null, Fixture.PREFIXES + "ex:a ex:p ex:b .");
         assertEquals(201, made.status());
         mode("reviewer", WS, "locked");
-        assertEquals("reviewer", Workspace.from(WS, f.store.graph(Graphs.workspace(WS))).owner());
+        assertEquals("reviewer", Workspace.from(WS, f.store.graph(Graphs.description(WS))).owner());
         assertEquals(200, as("reviewer", "GET", BASE, null, null).status());
         assertEquals(200, f.get(BASE).status());
         assertTrue(new String(f.get("/api/workspaces").body(), StandardCharsets.UTF_8).contains(WS));
@@ -140,14 +140,14 @@ class AccessTest {
     void aNonOwnerMayNotChangeAccessAndOnlyAnAdministratorGivesAnOwner() {
         developersWorkspace();
         assertEquals(403, as("reviewer", "POST", BASE + "/access", "mode=locked", null).status());
-        assertEquals(Workspace.SHARED, Workspace.from(WS, f.store.graph(Graphs.workspace(WS))).mode());
+        assertEquals(Workspace.SHARED, Workspace.from(WS, f.store.graph(Graphs.description(WS))).mode());
 
         String mine = Fixture.id(2);
         assertEquals(201, as("reviewer", "POST", "/api/workspaces", null, Fixture.PREFIXES + "ex:a ex:p ex:b .").status());
         assertEquals(403, as("reviewer", "POST", "/api/workspaces/" + mine + "/access", "mode=shared&owner=developer", null).status());
-        assertEquals("reviewer", Workspace.from(mine, f.store.graph(Graphs.workspace(mine))).owner());
+        assertEquals("reviewer", Workspace.from(mine, f.store.graph(Graphs.description(mine))).owner());
         assertEquals(200, as(null, "POST", "/api/workspaces/" + mine + "/access", "mode=read-only&owner=developer", null).status());
-        Workspace given = Workspace.from(mine, f.store.graph(Graphs.workspace(mine)));
+        Workspace given = Workspace.from(mine, f.store.graph(Graphs.description(mine)));
         assertEquals("developer", given.owner());
         assertEquals(Workspace.READ_ONLY, given.mode());
     }
@@ -163,7 +163,7 @@ class AccessTest {
     void aWriteWithNoPrincipalIsNotRefusedForAccess() {
         developersWorkspace();
         mode(null, WS, "locked");
-        Writer writer = new Writer(f.store, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
         Instant at = Instant.parse("2026-10-28T09:00:00Z");
         assertEquals(200, writer.apply(Command.save(WS, "surface", 0, at, Fixture.model(CONFIG))).status(), "a save with no principal");
 
@@ -183,7 +183,7 @@ class AccessTest {
     void aSaveAsAnotherPrincipalIsRefusedAtTheWriterToo() {
         developersWorkspace();
         mode(null, WS, "read-only");
-        Writer writer = new Writer(f.store, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
         Command save = Command.save(WS, "surface", 0, Instant.parse("2026-10-28T09:00:00Z"), Fixture.model(CONFIG));
         assertEquals(403, writer.apply(save.by("reviewer", false)).status());
         assertEquals(200, writer.apply(save.by("developer", false)).status());
@@ -201,10 +201,10 @@ class AccessTest {
         assertTrue(ws.writableBy("anyone", false));
         assertFalse(ws.managedBy("anyone", false));
 
-        Writer writer = new Writer(f.store, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
         assertEquals(200, writer.apply(Command.create(WS, "Plan", Instant.parse("2026-10-27T10:00:00Z"), null,
             Fixture.model(Fixture.PREFIXES + "ex:a ex:p ex:b ."))).status());
-        assertNull(Workspace.from(WS, f.store.graph(Graphs.workspace(WS))).owner(), "created with no principal");
+        assertNull(Workspace.from(WS, f.store.graph(Graphs.description(WS))).owner(), "created with no principal");
         assertEquals(400, writer.apply(Command.setAccess(WS, Workspace.LOCKED, null)).status());
     }
 
