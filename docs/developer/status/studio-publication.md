@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB15 built 2026-10-31, PB16 and PB17 under way
+**Status:** 🟡 PB1 to PB16 built 2026-10-31, PB17 under way
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -52,7 +52,9 @@ PB14 was built on 2026-10-31. Every workspace command but publishing runs the ge
 
 PB15 was built on 2026-10-31. Publishing creates the version, then creates or replaces the lineage under the sequence it read, then writes its receipt guarded on the lineage's claim, so a lost race is stale and its orphaned version is reused. Written by a Sonnet subagent and reviewed. Checks run 2026-10-31, all passing: `check:config-studio` (core 24, service 147, browser 109) and `check:workers` (181).
 
-**Next action:** build PB16 and PB17. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
+PB16 was built on 2026-10-31 and run on the maintainer's store. `mise run studio:migrate` backs the store up as TriG, then moves each workspace in one request, its baseline revisions replayed into the patch log, then the registry and the imports, and drops the old graphs and jobs. Its first live run stopped at the backup, which Fuseki's update service refused, and wrote nothing. Fixed, it moved 5 workspaces and 17 parts, every part isomorphic to the backup, and a second run found nothing. Saving, a stale save, an earlier revision and publishing were then checked live on a test workspace, since removed. Written by a Sonnet subagent and reviewed. Checks run 2026-10-31, all passing: `check:config-studio` (writer 10).
+
+**Next action:** build PB17. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.
@@ -69,3 +71,4 @@ PB15 was built on 2026-10-31. Publishing creates the version, then creates or re
 - 2026-10-31: PB13 split from the writer's commands and built.
 - 2026-10-31: PB14 built.
 - 2026-10-31: PB15 built.
+- 2026-10-31: PB16 built, and the maintainer's store migrated.

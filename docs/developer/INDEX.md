@@ -843,7 +843,7 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 PB1 to PB15 built 2026-10-31, PB16 and PB17 under way |
+| **Status** | 🟡 PB1 to PB16 built 2026-10-31, PB17 under way |
 | **Unit ID** | `studio-publication` |
 | **Sketch** | [studio-publication.md](sketches/studio-publication.md) |
 | **Plan** | [studio-publication.md](plans/studio-publication.md) |

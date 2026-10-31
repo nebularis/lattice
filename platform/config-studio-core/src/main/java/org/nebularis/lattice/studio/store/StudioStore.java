@@ -121,10 +121,12 @@ public final class StudioStore implements AutoCloseable {
         return out;
     }
 
-    /** A copy of the whole dataset, every graph as stored, for a backup. */
+    /**
+     * A copy of every named graph as stored, for a backup, each read by a query, since Fuseki's update service serves no
+     * read of the whole dataset. The studio writes no triple to the default graph.
+     */
     public org.apache.jena.query.Dataset snapshot() {
         org.apache.jena.query.Dataset copy = DatasetFactory.create();
-        copy.getDefaultModel().add(connection.fetch());
         for (String name : graphNames()) {
             copy.addNamedModel(name, rawGraph(name));
         }

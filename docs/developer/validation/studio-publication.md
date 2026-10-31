@@ -243,3 +243,21 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The worker restates the registry's prefixes in two modules, each held to the profile by a test. Not checked live, for the reason PB14 gives.
 
+## PB16: migrating a store written before phase D
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB16-01 | an old-layout store with two workspaces, three baseline revisions with blank nodes, parts, an empty part, a document, held and loose imports, a job and a lineage of two versions / migrated / each workspace as it was, its baseline at sequence 3 with each earlier revision isomorphic to its old graph, the parts, document, imports and versions isomorphic, the empty part with no row | L4 | + | pass |
+| PB16-02 | the same store / migrated / no old graph left but the receipts graphs, and the jobs gone | L4 | + | pass |
+| PB16-03 | a migrated store / migrated again, or a dry run of an old one / every quad unchanged, the dry run still reporting | L4 | + | pass |
+| PB16-04 | a migrated store / a part saved at its revision through the writer / applied | L4 | + | pass |
+| PB16-05 | the backup / read / every graph the store held before | L4 | + | pass |
+| PB16-06 | the maintainer's store of five workspaces / dry run, then migrated / 5 workspaces and 17 parts, a 1.4 MB backup of 52 graphs, every non-empty part of the 20 isomorphic to its graph in the backup, and a second run finding nothing | L5 | + | pass, 2026-10-31 |
+| PB16-07 | the migrated studio running / a test workspace created, its vocabulary saved twice, saved stale, read at revision 1, its scheme published twice / `412` for the stale save, revision 1 as first saved, `201` then `200` for the publishes, listed in the registry, and the five workspaces listed in the browser | L5 | ± | pass, 2026-10-31 |
+
+`MigrationTest`, by `mise run check:config-studio`. PB16-06 and PB16-07 were run on the maintainer's store, and the test workspace and its registry graphs and rows removed afterwards.
+
+**Found live.** The backup read the whole dataset through the graph store protocol, which Fuseki's update service refuses with `400`, so the first run stopped before writing anything. The backup now reads each named graph by a query.
+
+**Not covered.** The maintainer's five workspaces were opened and compared, never written, as agreed. The old jobs were dropped, since they named old graphs, so each workspace's compile history starts empty.
+
