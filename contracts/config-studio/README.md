@@ -34,9 +34,12 @@ Fuseki serves the one database as two services: `studio` reads only, through que
 
 Every request and response body is RDF in UTF-8, unless the table says otherwise: `text/turtle` by default, or `application/rdf+xml`. A request body may be either, named by its `Content-Type`. A response is RDF/XML when the request's `Accept` ranks `application/rdf+xml` above `text/turtle` (a range without `q` counts 1, `*/*` favours Turtle), and every RDF response carries `Vary: Accept`. RDF/XML is written plain, one `rdf:Description` per subject, so an XSLT reads one regular shape. A graph whose predicate RDF/XML cannot write, one whose IRI does not end in an XML name, answers `406` in RDF/XML and stays readable as Turtle. An ETag names a graph's revision, the same in either syntax. A request body with another content type is refused with `415`, a body over 5 MiB with `413`, a body that does not parse, or RDF/XML that declares a DTD, with `400`, an unknown workspace or job with `404`.
 
+Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with `WWW-Authenticate` to a request that does not authenticate: under `local`, one naming a principal the service does not offer in `X-Lattice-Principal`, and under `oidc`, one without a valid `Authorization: Bearer` token.
+
 | Method and path | Request | Response |
 |---|---|---|
 | `GET /api/health` | | `200`, `text/plain`, `ok` |
+| `GET /api/session` | | `200`, `application/json`, how to sign in: `provider` (`local` or `oidc`), with `principalOption` and `administrator` for `local`, or `issuer`, `clientId`, `scope`, `authorizationEndpoint` and `tokenEndpoint` for `oidc`, and `principal` and `admin` when the request authenticates |
 | `GET /api/features` | | `200`, `application/json`, `{"features": [...]}`, the optional features the deployment turned on with `LATTICE_STUDIO_FEATURES`, such as `odrl` |
 | `GET /api/vocabulary` | | `200`, the `dal:`, `srf:`, `fnd:` and `voc:` specifications and vocabularies merged, with an `ETag`. `304` for a matching `If-None-Match` |
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |

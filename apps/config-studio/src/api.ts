@@ -4,6 +4,7 @@
 import { COMMENT, CST, Graph, LABEL, localName } from "@lattice/authoring-domain";
 import { readJob, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
+import { authHeaders } from "./session";
 
 export type GraphName = Part;
 export type Target = ConfigPart;
@@ -23,7 +24,7 @@ export class ApiError extends Error {
 export class Conflict extends ApiError {}
 
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
-  const response = await fetch(path, { ...init, headers: { Accept: TURTLE, ...init.headers } });
+  const response = await fetch(path, { ...init, headers: { Accept: TURTLE, ...authHeaders(), ...init.headers } });
   if (response.status === 412) throw new Conflict(412, "The graph changed since it was loaded.");
   if (!response.ok) throw new ApiError(response.status, (await response.text()) || response.statusText);
   return response;
@@ -123,7 +124,7 @@ export const api = {
   /** The optional features the deployment turned on. An old service without the endpoint has none. */
   async features(): Promise<string[]> {
     try {
-      const response = await fetch("/api/features");
+      const response = await fetch("/api/features", { headers: authHeaders() });
       return response.ok ? ((await response.json()) as { features?: string[] }).features ?? [] : [];
     } catch {
       return [];

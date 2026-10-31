@@ -12,10 +12,12 @@ import org.apache.jena.rdf.model.Model;
  * workspace it belongs to, which is the key that routes it to one writer. The graphs it carries are in {@code body}: the
  * default graph for the one graph a creation or a save carries, named graphs for an import, a job's submission and a
  * job's update. The fields a type does not use are null. {@code id} names the command, so its receipt names it and a
- * redelivered command is applied once, and {@code sender} says which component sent it, unauthenticated (TD-99).
+ * redelivered command is applied once, and {@code sender} says which component sent it, unauthenticated (TD-99). {@code
+ * principal} names who asked for it, as the service authenticated them, and {@code admin} whether they administer the
+ * studio, both null and false for a write the worker makes for a job (PRI-54, ADR-A149 decision 8).
  */
 public record Command(String id, String sender, Type type, String workspace, String job, String part, Long expect,
-                      Instant at, String label, String sample, Dataset body) {
+                      Instant at, String label, String sample, Dataset body, String principal, boolean admin) {
     public static final String SERVICE = "service";
 
     public enum Type {
@@ -40,40 +42,45 @@ public record Command(String id, String sender, Type type, String workspace, Str
     }
 
     public static Command create(String ws, String label, Instant at, String sample, Model baseline) {
-        return new Command(newId(), SERVICE, Type.CREATE, ws, null, null, null, at, label, sample, withDefault(baseline));
+        return new Command(newId(), SERVICE, Type.CREATE, ws, null, null, null, at, label, sample, withDefault(baseline), null, false);
     }
 
     public static Command save(String ws, String part, long expect, Instant at, Model graph) {
-        return new Command(newId(), SERVICE, Type.SAVE, ws, null, part, expect, at, null, null, withDefault(graph));
+        return new Command(newId(), SERVICE, Type.SAVE, ws, null, part, expect, at, null, null, withDefault(graph), null, false);
     }
 
     /** {@code title} is the document's, and {@code template} its template's key, carried as the command's label and sample. */
     public static Command saveDocument(String ws, String doc, long expect, Instant at, String title, String template, Model graph) {
-        return new Command(newId(), SERVICE, Type.SAVE_DOCUMENT, ws, null, doc, expect, at, title, template, withDefault(graph));
+        return new Command(newId(), SERVICE, Type.SAVE_DOCUMENT, ws, null, doc, expect, at, title, template, withDefault(graph), null, false);
     }
 
     public static Command deleteDocument(String ws, String doc) {
-        return new Command(newId(), SERVICE, Type.DELETE_DOCUMENT, ws, null, doc, null, null, null, null, DatasetFactory.create());
+        return new Command(newId(), SERVICE, Type.DELETE_DOCUMENT, ws, null, doc, null, null, null, null, DatasetFactory.create(), null, false);
     }
 
     public static Command importing(String ws, Instant at, String label, Dataset graphs) {
-        return new Command(newId(), SERVICE, Type.IMPORT, ws, null, null, null, at, label, null, graphs);
+        return new Command(newId(), SERVICE, Type.IMPORT, ws, null, null, null, at, label, null, graphs, null, false);
     }
 
     public static Command deleteWorkspace(String ws) {
-        return new Command(newId(), SERVICE, Type.DELETE_WORKSPACE, ws, null, null, null, null, null, null, DatasetFactory.create());
+        return new Command(newId(), SERVICE, Type.DELETE_WORKSPACE, ws, null, null, null, null, null, null, DatasetFactory.create(), null, false);
     }
 
     public static Command submitJob(String ws, String job, Dataset graphs) {
-        return new Command(newId(), SERVICE, Type.SUBMIT_JOB, ws, job, null, null, null, null, null, graphs);
+        return new Command(newId(), SERVICE, Type.SUBMIT_JOB, ws, job, null, null, null, null, null, graphs, null, false);
     }
 
     public static Command jobUpdate(String ws, String job, Dataset graphs) {
-        return new Command(newId(), SERVICE, Type.JOB_UPDATE, ws, job, null, null, null, null, null, graphs);
+        return new Command(newId(), SERVICE, Type.JOB_UPDATE, ws, job, null, null, null, null, null, graphs, null, false);
     }
 
     public static Command deleteJob(String ws, String job) {
-        return new Command(newId(), SERVICE, Type.DELETE_JOB, ws, job, null, null, null, null, null, DatasetFactory.create());
+        return new Command(newId(), SERVICE, Type.DELETE_JOB, ws, job, null, null, null, null, null, DatasetFactory.create(), null, false);
+    }
+
+    /** This command as {@code principal} asked for it. */
+    public Command by(String principal, boolean admin) {
+        return new Command(id, sender, type, workspace, job, part, expect, at, label, sample, body, principal, admin);
     }
 
     private static String newId() {

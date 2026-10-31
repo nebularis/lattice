@@ -53,6 +53,8 @@ public final class Cst {
     public static final Property commandId = p("commandId");
     public static final Property command = p("command");
     public static final Property sender = p("sender");
+    /** Who asked for a write, as the service authenticated them (PRI-54). */
+    public static final Property principal = p("principal");
     public static final Property job = p("job");
     public static final Property requestedAt = p("requestedAt");
     public static final Property committedAt = p("committedAt");

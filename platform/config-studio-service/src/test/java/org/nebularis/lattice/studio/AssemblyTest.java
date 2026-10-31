@@ -180,7 +180,7 @@ class AssemblyTest {
         Model record = ModelFactory.createDefaultModel();
         record.createResource(Graphs.jobRecord(job) + "/record-1").addProperty(org.apache.jena.vocabulary.RDF.type, record.createResource(WRD + "AssembledWording"))
             .addProperty(record.createProperty(WRD + "includes"), record.createResource("https://example.org/c1"));
-        assertEquals(200, f.writes.send(new Command(java.util.UUID.randomUUID().toString(), "worker", Command.Type.JOB_UPDATE, WS, job, null, null, null, null, null, update(job, record))).status());
+        assertEquals(200, f.writes.send(new Command(java.util.UUID.randomUUID().toString(), "worker", Command.Type.JOB_UPDATE, WS, job, null, null, null, null, null, update(job, record), null, false)).status());
         assertTrue(f.store.graph(Graphs.jobRecord(job)).isIsomorphicWith(record));
         assertEquals(204, f.send("DELETE", "/api/jobs/" + job, null, Map.of(), new byte[0]).status());
         assertTrue(f.store.graph(Graphs.jobRecord(job)).isEmpty());

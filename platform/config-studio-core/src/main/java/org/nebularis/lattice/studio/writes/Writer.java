@@ -481,6 +481,9 @@ public final class Writer {
             if (c.sender() != null) {
                 add(u, g, r, Cst.sender.asNode(), NodeFactory.createLiteralString(c.sender()));
             }
+            if (c.principal() != null) {
+                add(u, g, r, Cst.principal.asNode(), NodeFactory.createLiteralString(c.principal()));
+            }
             if (c.at() != null) {
                 add(u, g, r, Cst.requestedAt.asNode(), NodeFactory.createLiteralDT(c.at().toString(), XSDDatatype.XSDdateTime));
             }

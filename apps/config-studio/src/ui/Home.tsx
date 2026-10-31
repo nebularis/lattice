@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // The workspace list, and the dialog that makes a workspace from a sample, uploaded Turtle or an exported workspace.
 
+import { PrincipalMenu } from "./Session";
 import { useEffect, useState } from "react";
 import { Download, FilePlus2, FolderOpen, Layers, Trash2, Upload } from "lucide-react";
 import { api, type Sample, type WorkspaceSummary } from "../api";
@@ -36,6 +37,8 @@ export function Home() {
               <Layers size={16} />
             </span>
             LATTICE Configuration Studio
+            <span className="spacer" style={{ flex: 1 }} />
+            <PrincipalMenu />
           </div>
           <h1 style={{ marginTop: 18 }}>Configure how your ontology is stored and surfaced</h1>
           <p>

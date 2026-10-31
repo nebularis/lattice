@@ -35,3 +35,21 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 `apps/config-studio/src/rdf/rdf.test.ts`, `StudioApiTest`, `WritesTest`, `workers/tests/test_config_studio_worker.py` and `workers/tests/test_config_studio_mork_tools.py`. PB1-08 was run by hand in the browser pane.
 
 **Not covered.** A job reads the other parts as saved, so an unsaved edit elsewhere is unseen until it is saved (MEC-97). The browser's cached compilation is keyed on the other parts' revisions, which PB1-08 exercises only through the first compilation.
+
+## PB2: who a request is from
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB2-01 | `local` / a request naming no principal, then one naming `reviewer` / `developer`, an administrator, then `reviewer`, not one | L3 | + | pass |
+| PB2-02 | `local` / a request naming an unknown principal / `401` with `WWW-Authenticate`, while `/api/health` and `/api/session` answer | L8 | − | pass |
+| PB2-03 | `local` / configured to bind `0.0.0.0` / the service refuses to start, and an unknown `LATTICE_STUDIO_AUTH` too | L8 | − | pass |
+| PB2-04 | `oidc` / an RS256 token with the issuer, audience and an unexpired `sub` / accepted as that name, an administrator when `groups` holds the value | L3 | + | pass |
+| PB2-05 | `oidc` / an expired token, another issuer, another audience, another key, HS256, an unsigned token, a malformed or missing header / `401` | L8 | − | pass |
+| PB2-06 | `oidc` with the audience in `client_id` / a matching token without `aud`, and one with another `client_id` / accepted, then `401` | L3 | ± | pass |
+| PB2-07 | a save made as `reviewer` / committed / its receipt's `cst:principal` is `reviewer` | L4 | + | pass |
+| PB2-08 | `oidc` / `/mcp` without a token / `401` | L8 | − | pass |
+| PB2-09 | the studio in a browser under `local` / switch from `developer` to `reviewer` in the header / the page reloads signed in as `reviewer` | L6 | + | see the status record |
+
+`platform/config-studio-service/src/test/java/org/nebularis/lattice/studio/AuthTest.java`, written by a Sonnet subagent and reviewed.
+
+**Not covered.** The browser's sign-in at a real OpenID Connect provider, by the authorization code flow with PKCE, which needs a provider and a registered client. The Word add-in under `oidc` (TD-134).

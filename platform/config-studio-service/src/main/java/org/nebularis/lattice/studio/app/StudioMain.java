@@ -10,6 +10,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.UUID;
 import org.nebularis.lattice.studio.api.StudioApi;
+import org.nebularis.lattice.studio.auth.Authenticator;
+import org.nebularis.lattice.studio.auth.LocalAuthenticator;
 import org.nebularis.lattice.studio.http.StudioHttpServer;
 import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.JobBus;
@@ -36,6 +38,7 @@ public final class StudioMain {
             System.exit(selfCheck() ? 0 : 1);
         }
         StudioConfig config = StudioConfig.fromEnv(System.getenv());
+        Authenticator auth = Authenticator.fromEnv(System.getenv(), config.bind());
         StudioStore store = config.fusekiUrl() == null ? StudioStore.inMemory()
             : StudioStore.fuseki(config.fusekiUrl(), config.fusekiDataset(), config.fusekiUser(), config.fusekiPassword());
         if (config.fusekiUrl() == null) {
@@ -53,7 +56,7 @@ public final class StudioMain {
             bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
             writes = new RabbitWrites(Amqp.connect(config.amqpUri(), "config-studio-service writes"), store, WRITE_TIMEOUT);
         }
-        StudioHttpServer server = serve(config, store, writes, bus);
+        StudioHttpServer server = serve(config, store, writes, bus, auth);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
             bus.close();
@@ -62,8 +65,8 @@ public final class StudioMain {
         LOG.info("Configuration Studio service listening on http://{}:{}/", config.bind(), server.port());
     }
 
-    private static StudioHttpServer serve(StudioConfig config, StudioStore store, Writes writes, JobBus bus) throws Exception {
-        StudioApi api = new StudioApi(store, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features());
+    private static StudioHttpServer serve(StudioConfig config, StudioStore store, Writes writes, JobBus bus, Authenticator auth) throws Exception {
+        StudioApi api = new StudioApi(store, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
         return server;
@@ -73,7 +76,7 @@ public final class StudioMain {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
             "studio", null, null, null, java.util.Set.of());
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus())) {
+             StudioHttpServer server = serve(config, store, new DirectWrites(new Writer(store, Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());

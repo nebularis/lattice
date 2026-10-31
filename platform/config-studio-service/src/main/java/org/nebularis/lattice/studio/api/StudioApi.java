@@ -28,6 +28,9 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.RDF;
+import org.nebularis.lattice.studio.auth.Authenticator;
+import org.nebularis.lattice.studio.auth.LocalAuthenticator;
+import org.nebularis.lattice.studio.auth.Principal;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
@@ -67,6 +70,10 @@ public final class StudioApi {
     /** The optional features the deployment turned on, from {@code LATTICE_STUDIO_FEATURES}. */
     private final Set<String> features;
 
+    private final Authenticator auth;
+    /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
+    private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
+
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
 
@@ -76,26 +83,63 @@ public final class StudioApi {
 
     public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
                      Set<String> features) {
+        this(store, writes, bus, clock, ids, assets, features, LocalAuthenticator.developers());
+    }
+
+    public StudioApi(StudioStore store, Writes writes, JobBus bus, Clock clock, Supplier<UUID> ids, Path assets,
+                     Set<String> features, Authenticator auth) {
         this.features = Set.copyOf(features);
         this.store = store;
-        this.writes = writes;
+        this.auth = auth;
+        // Every write carries the principal of the request it serves (PRI-54), which handle() has authenticated.
+        this.writes = c -> {
+            Principal p = CURRENT.get();
+            return writes.send(p == null ? c : c.by(p.name(), p.admin()));
+        };
         this.bus = bus;
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
-        this.mcp = new StudioMcp(store, writes, clock, ids, assets, this::runTool);
+        this.mcp = new StudioMcp(store, this.writes, clock, ids, assets, this::runTool);
     }
 
     public ApiResponse handle(ApiRequest req) {
         try {
-            if (req.path().equals("/mcp")) {
-                return secure(mcp.handle(req));
+            // Health and the session's description answer anyone, so a browser can learn how to sign in.
+            if (req.path().equals("/api/health") || req.path().equals("/api/session")) {
+                return secure(req.path().equals("/api/session") ? session(req) : negotiate(req, route(req)));
             }
-            return secure(negotiate(req, route(req)));
+            Principal principal = auth.authenticate(req);
+            if (principal == null) {
+                return secure(ApiResponse.text(401, "sign in first").with("WWW-Authenticate", "Bearer realm=\"lattice-studio\""));
+            }
+            CURRENT.set(principal);
+            try {
+                if (req.path().equals("/mcp")) {
+                    return secure(mcp.handle(req));
+                }
+                return secure(negotiate(req, route(req)));
+            } finally {
+                CURRENT.remove();
+            }
         } catch (RuntimeException e) {
             LOG.error("{} {} failed", req.method(), req.path(), e);
             return secure(ApiResponse.text(500, "internal error"));
         }
+    }
+
+    /** How to sign in, from the authenticator's settings, and who the request is when it authenticates (ADR-A149 decision 8). */
+    private ApiResponse session(ApiRequest req) {
+        if (!req.method().equals("GET")) {
+            return notAllowed("GET");
+        }
+        Map<String, Object> out = new java.util.LinkedHashMap<>(auth.settings());
+        Principal p = auth.authenticate(req);
+        if (p != null) {
+            out.put("principal", p.name());
+            out.put("admin", p.admin());
+        }
+        return new ApiResponse(200, Map.of("Content-Type", "application/json"), com.nimbusds.jose.util.JSONObjectUtils.toJSONString(out).getBytes(StandardCharsets.UTF_8));
     }
 
     /**

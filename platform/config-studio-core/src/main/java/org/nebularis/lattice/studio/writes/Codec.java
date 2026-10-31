@@ -41,6 +41,10 @@ public final class Codec {
         }
         put(h, "label", c.label());
         put(h, "sample", c.sample());
+        put(h, "principal", c.principal());
+        if (c.admin()) {
+            h.put("admin", true);
+        }
         return h;
     }
 
@@ -68,7 +72,8 @@ public final class Codec {
             return new Command(text(headers, "id"), text(headers, "sender"), type, text(headers, "workspace"),
                 text(headers, "job"), text(headers, "part"),
                 expect instanceof Number n ? n.longValue() : null, at == null ? null : Instant.parse(at),
-                text(headers, "label"), text(headers, "sample"), graphs);
+                text(headers, "label"), text(headers, "sample"), graphs, text(headers, "principal"),
+                Boolean.TRUE.equals(headers.get("admin")));
         } catch (RiotException | DateTimeParseException e) {
             return null;
         }

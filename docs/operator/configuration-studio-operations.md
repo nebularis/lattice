@@ -60,6 +60,14 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset. `LATTICE_FUSEKI_P
 |---|---|---|
 | `LATTICE_STUDIO_PORT` | `8090` | Listening port. A value that is not a number, or outside 0 to 65535, stops the service at start |
 | `LATTICE_STUDIO_BIND` | `127.0.0.1` | Bind address. Leave it |
+| `LATTICE_STUDIO_AUTH` | `local` | How a request is authenticated (ADR-A149). `local` offers named developer principals with no provider and refuses to start on an address other than loopback. `oidc` validates an OpenID Connect provider's bearer tokens |
+| `LATTICE_STUDIO_LOCAL_PRINCIPALS`, `LATTICE_STUDIO_LOCAL_ADMINS` | `developer,reviewer` and `developer` | With `local`, the names a request may give in `X-Lattice-Principal`, the first being a request that gives none, and those who administer |
+| `LATTICE_STUDIO_OIDC_ISSUER`, `LATTICE_STUDIO_OIDC_AUDIENCE` | none, required with `oidc` | The provider's issuer, whose discovery document names its keys and endpoints, and the audience a token must name |
+| `LATTICE_STUDIO_OIDC_AUDIENCE_CLAIM` | `aud` | The claim that holds the audience. AWS Cognito's access tokens carry it as `client_id` |
+| `LATTICE_STUDIO_OIDC_CLIENT_ID`, `LATTICE_STUDIO_OIDC_SCOPE` | the audience, and `openid profile email` | The public client the browser signs in as, by the authorization code flow with PKCE, and the scopes it asks for. Register the studio's address as the client's redirect URI |
+| `LATTICE_STUDIO_OIDC_JWKS_URL` | the discovery document's | The provider's published keys |
+| `LATTICE_STUDIO_OIDC_NAME_CLAIM` | `sub` | The claim that names the principal |
+| `LATTICE_STUDIO_OIDC_ADMIN_CLAIM`, `LATTICE_STUDIO_OIDC_ADMIN_VALUE` | `groups`, and none | A principal administers when the claim holds the value. With no value nobody administers |
 | `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory `mise run build:config-studio-assets` fills with `vocabulary.ttl`, `samples.ttl` and `samples/`. A relative path is relative to the directory the service starts in, the repository root |
 | `LATTICE_STUDIO_STATIC` | none | The built browser application, served for any path outside `/api`. The stack sets it to `apps/config-studio/dist`. Without it the service answers `404` outside `/api` |
 | `LATTICE_FUSEKI_URL` | none | Fuseki's base URL. Unset means an in-memory dataset inside the service, lost on exit, with a warning in the log |
@@ -375,11 +383,11 @@ RabbitMQ's data directory is read by the new version on its next start. If it wi
 
 ## Security
 
-The Configuration Studio is a single-author tool for one machine. **It must not be exposed on a network as it stands.**
+The Configuration Studio authenticates every request but `/api/health` and `/api/session`, which describes how to sign in. By default it is a tool for one machine, whose developers pick a name. **Exposing it on a network needs `oidc`, TLS in front of it, and a broker and store that listen on loopback or are otherwise protected.**
 
 | Aspect | State |
 |---|---|
-| Authentication | None. The service, the API and Fuseki accept any request. There are no users, sessions or permissions |
+| Authentication | `local` by default, which trusts the name a request gives and is allowed on loopback only, or `oidc`, which accepts a bearer token whose signature the provider's published keys verify with an asymmetric algorithm, naming the configured issuer and audience, unexpired. Every write carries its principal to the writer, which records it on the receipt. Fuseki and RabbitMQ still accept any client that reaches them |
 | Authorisation | None. Anyone who can reach `/api` can read, change and delete every workspace and job |
 | Network exposure | Every listener is bound to `127.0.0.1`. Fuseki has `--localhost`, RabbitMQ has `RABBITMQ_NODE_IP_ADDRESS=127.0.0.1`, and Docker publishes each port at `127.0.0.1`. Changing `LATTICE_STUDIO_BIND` opens the service, and nothing else protects it |
 | RabbitMQ user | The default `guest`/`guest`, which RabbitMQ accepts from the loopback address only, and the node listens on loopback alone. In Docker the container's own network is not loopback to the broker, so the compose file sets `loopback_users []` and relies on the loopback-only port publication instead |
@@ -391,4 +399,4 @@ The Configuration Studio is a single-author tool for one machine. **It must not 
 | Errors | An unexpected error returns `500` with the text `internal error` and logs the detail to the service log, not to the client |
 | Secrets | The AMQP and stream URIs, the Fuseki password and the proposer key are read from the environment or from a file it names ([Secrets in files](#secrets-in-files)). A value in the environment is visible to anyone who can read the process's environment, and a file only to whom its permissions allow. The local stack's compose file has the broker's default `guest` password in the clear |
 
-Reaching it from another machine needs authentication, TLS and a persistent store first, none of which the studio has yet.
+Reaching it from another machine needs `oidc`, TLS and a protected broker and store. The studio terminates no TLS itself.
