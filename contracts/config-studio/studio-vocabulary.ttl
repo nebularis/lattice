@@ -245,6 +245,10 @@ cst:PublicationUnit a owl:Class ; rdfs:comment "A kind of unit a workspace publi
 cst:rootClass a owl:ObjectProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "A class whose members are roots of the unit." .
 cst:memberBy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "The property by which a member names its root, so it is part of the unit." .
 cst:authoredIn a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:range xsd:string ; rdfs:comment "The workspace part the unit is authored in." .
+cst:Part a owl:Class ; rdfs:comment "A part of a workspace as an aggregate of the studio's store (ADR-A149 decision 13), rooted at {workspace}/part/{name}. Its graph holds the part's statements only, never this type." .
+cst:Lineage a owl:Class ; rdfs:comment "A published lineage as an aggregate of the studio's store, rooted at the lineage's IRI, holding its current version and its publications." .
+cst:PublishedVersion a owl:Class ; rdfs:comment "A published version as an aggregate of the studio's store, rooted at the version's IRI, created once and never replaced." .
+cst:FencedImport a owl:Class ; rdfs:comment "A fenced import as an aggregate of the studio's store, rooted at urn:lattice:studio:import:{digest}." .
 cst:Publication a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:comment "One act of publishing a version of a lineage (ADR-A51's event)." .
 cst:sequence a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range xsd:integer ; rdfs:comment "The publication's place in its lineage's, from 1." .
 cst:previousPublication a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range cst:Publication .

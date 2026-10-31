@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🔴 PB1 to PB9 built 2026-10-31, PB10's questions wait for the maintainer
+**Status:** 🔴 PB1 to PB12 built 2026-10-31, PB-Q12 and PB-Q13 wait for the maintainer
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -36,8 +36,15 @@ PB8 and PB9 were built on 2026-10-31. A compile job may compile a published vers
 
 PB10's brief is the sketch's §9, PB-Q8 to PB-Q11: how the Java writer runs generated operations, what the studio's aggregates are, what its own surface contracts project, and how stores written before phase D move.
 
-**Next action, for the maintainer:** answer PB-Q8 to PB-Q11, and review ADR-A149 and PB-D1 to PB-D5.
+The maintainer answered PB-Q8 to PB-Q11 on 2026-10-31: a Java port of the caller library, the aggregates of ADR-A149 decision 13 with operations ordered so a partial write is harmless and every part's history in the patch log, five projections including the terms of published versions now, and an in-place migration with no compatibility path. The answers are ADR-A149 decisions 12 to 14, and the plan's phase D is PB11 to PB16. PB-D6 and PB-D7 were taken alone. Working that through raised PB-Q12, when a projection is brought up to date, in the sketch's §10.
 
+PB11 was built on 2026-10-31. `packages/persistence/java` ports ADR-A132's caller library to Java, depending on the JDK and Jena 5.1.0 (PB-D6), and passes every vector on its first run. Python's `$` accepts a trailing line feed where Java's whole-string match does not, so the Python library accepts a digest, a language tag or an `xsd:long` lexical form ending in one. No vector covers it. The library was written by a Sonnet subagent and reviewed. Checks run 2026-10-31, all passing: `check:persistence-library` (Java 104, Python 113, vectors 91).
+
+PB12 was built on 2026-10-31. `contracts/config-studio/persistence-profile.ttl` declares six named-graph families, which the stage compiles with the caller naming each graph and instantiates for the service (PB-D7). A blank node is stored as a skolem IRI named by what it says and where it is named from (PB-D8), and the service and the worker read it back as a blank node. Checks run 2026-10-31, all passing: `check:config-studio` (browser 109), the stage tests, `SkolemTest`, the worker's tests, `persistence hygiene` over the profile, `check:knowledge` and `check:identifiers`.
+
+**Found while writing PB12.** The generated named-graph `cas-replace` fills its whole payload once per stored triple, as TD-42 found for the composite replace, and took 28 s on Jena in memory for a 3,000-triple part, where two guarded operations in one request took 0.11 s. That is PB-Q13 in the sketch's §9, and PB13 to PB15 wait for it.
+
+**Next action, for the maintainer:** answer PB-Q13, on which PB13 to PB15 wait, and PB-Q12, on which PB16 waits. Review ADR-A149 and PB-D1 to PB-D9.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.
@@ -48,3 +55,5 @@ PB10's brief is the sketch's §9, PB-Q8 to PB-Q11: how the Java writer runs gene
 - 2026-10-31: PB6 built.
 - 2026-10-31: PB7 built. TD-135 added.
 - 2026-10-31: PB8 and PB9 built. PB10's brief written, PB-Q8 to PB-Q11 raised.
+- 2026-10-31: PB-Q8 to PB-Q11 answered, ADR-A149 decisions 12 to 14 added, phase D planned as PB11 to PB16, PB-Q12 raised.
+- 2026-10-31: PB11 and PB12 built. TD-42 extended with the named-graph replace's cost on Jena. PB-Q13 raised.

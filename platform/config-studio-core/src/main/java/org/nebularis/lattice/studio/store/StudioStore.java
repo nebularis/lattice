@@ -86,11 +86,11 @@ public final class StudioStore implements AutoCloseable {
             .destination(base + "/" + dataset).httpClient(client.build()).build());
     }
 
-    /** The triples of one named graph, empty when the graph does not exist. */
+    /** The triples of one named graph, empty when the graph does not exist, with each skolem IRI read as a blank node. */
     public Model graph(String graphIri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(GRAPH_QUERY);
         query.setIri("g", graphIri);
-        return connection.queryConstruct(query.asQuery());
+        return Skolem.unskolemise(connection.queryConstruct(query.asQuery()));
     }
 
     public Model workspaces() {

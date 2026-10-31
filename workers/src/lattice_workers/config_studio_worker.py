@@ -13,7 +13,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol
 
-from rdflib import Dataset, Graph, Literal, Namespace, URIRef
+from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 from rdflib.namespace import XSD
 
@@ -85,7 +85,7 @@ class ConfigStudioWorker:
     def handle(self, job_iri: str) -> None:
         job = URIRef(job_iri)
         try:
-            written = self._store.get_graph(job_iri)
+            written = self._get(job_iri)
         except GraphNotFound as error:
             raise InvalidMessage(f"job graph {job_iri} not found") from error
         graph = Graph()
@@ -233,12 +233,17 @@ class ConfigStudioWorker:
             for source in sources:
                 out.add((artefact, _PROV.wasDerivedFrom, source))
 
+    def _get(self, iri: str) -> Graph:
+        """A graph of the store, with each skolem IRI the writer named a blank node with read back as a blank node
+        (ADR-A149 decision 13)."""
+        return unskolemise(self._store.get_graph(iri))
+
     def _registry(self, iri: str) -> Graph:
         """A registry graph, which everyone may read, or an empty one when the registry holds none."""
         if not iri.startswith("urn:lattice:studio:pub:"):
             raise ValueError(f"{iri} is not a registry graph")
         try:
-            return self._store.get_graph(iri)
+            return self._get(iri)
         except GraphNotFound:
             return Graph()
 
@@ -262,14 +267,14 @@ class ConfigStudioWorker:
             # A fenced import the workspace holds, which the writer checked when the job was submitted.
             if _IMPORT_GRAPH.fullmatch(str(iri)):
                 try:
-                    context += self._store.get_graph(str(iri))
+                    context += self._get(str(iri))
                 except GraphNotFound:
                     pass
                 continue
             if allowed is None or not allowed.fullmatch(str(iri)):
                 raise ValueError(f"context graph {iri} is not one this job may read")
             try:
-                context += self._store.get_graph(str(iri))
+                context += self._get(str(iri))
             except GraphNotFound:
                 pass
         return context
@@ -286,7 +291,7 @@ class ConfigStudioWorker:
         if not allowed(str(iri)):
             raise ValueError(f"{what} graph {iri} is not one this job may read")
         try:
-            return self._store.get_graph(str(iri))
+            return self._get(str(iri))
         except GraphNotFound as error:
             if empty_if_missing:
                 return Graph()
@@ -315,6 +320,23 @@ def analyse_document(job: URIRef, document: Graph) -> Graph:
     result.artefact("proposals.ttl", "text/turtle", proposal.serialize(format="turtle"), "analysis")
     result.conforms(True)
     return result.graph
+
+
+SKOLEM = "urn:lattice:studio:genid:"
+
+
+def unskolemise(graph: Graph) -> Graph:
+    """`graph` with every skolem IRI read as a blank node, the same IRI as the same node."""
+    if not any(str(t).startswith(SKOLEM) for s, _, o in graph for t in (s, o) if isinstance(t, URIRef)):
+        return graph
+    blank: dict = {}
+    swap = lambda t: blank.setdefault(t, BNode()) if isinstance(t, URIRef) and str(t).startswith(SKOLEM) else t
+    out = Graph()
+    for prefix, namespace in graph.namespaces():
+        out.bind(prefix, namespace, override=False)
+    for s, p, o in graph:
+        out.add((swap(s), p, swap(o)))
+    return out
 
 
 _WORKSPACE = re.compile(rf"urn:lattice:studio:ws:({_UUID})")

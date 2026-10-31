@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-publication PB1 to PB11
+# Validation Pack: studio-publication PB1 to PB16
 
 **Plan:** [studio-publication](../plans/studio-publication.md)
 **Status record:** [studio-publication](../status/studio-publication.md)
@@ -17,7 +17,7 @@ What a workspace refers to is read, never copied, and what leaves the studio is 
 mise run check:config-studio
 ```
 
-It stages the assets, then runs the stage and worker tests, the service's Maven build and tests, and the browser code's type check and unit tests. A pass is exit status 0. The worker's own suite runs with `mise run check:workers`.
+It stages the assets, then runs the stage and worker tests, the service's Maven build and tests, and the browser code's type check and unit tests. A pass is exit status 0. The worker's own suite runs with `mise run check:workers`, and the persistence caller libraries, PB11, with `mise run check:persistence-library`.
 
 ## PB1: what a job reads
 
@@ -164,3 +164,32 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 **Found live.** The binding's scheme field was a closed choice of the layers' own schemes, since its range has individuals in the served vocabulary, so the world never reached it. A choice built from a range's individuals now also offers the world's members of that range.
 
 **Not covered.** The browser's world holds each dependency as resolved when the workspace loads or its dependencies change, so a version published meanwhile is read at the next change or reload.
+
+## PB11: the Java caller library
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB11-01 | every vector of `contracts/persistence/vectors.json`, its canonical N-Triples, refusals, digests, payload, event, caller, audit, reference and checkpoint checks / run by `ConformanceTest` / each as the vector says, byte for byte where it gives text | L3 | ± | pass, every vector on the first run |
+| PB11-02 | the Python library's tests of contracts, payloads, checks and slot injection / ported to JUnit over the same compiled profiles / the same results | L1 | ± | pass, 92 tests |
+| PB11-03 | a line of an astral character beside one of a character above U+E000 / sorted / in UTF-8 byte order, not UTF-16's | L1 | + | pass |
+| PB11-04 | a blank node arriving as a Jena node / made a payload / refused | L8 | − | pass |
+
+`packages/persistence/java/src/test`, 104 tests, and the Python library's 113 and the vectors' 91 checks, by `mise run check:persistence-library`.
+
+**Found.** Python's `$` accepts a trailing line feed, so the Python library accepts a digest, a language tag or an `xsd:long` lexical form ending in one, which the Java library refuses. No vector covers it. **Not covered.** The vectors' schema test is not ported, since it needs a JSON Schema library, and `check:persistence-vectors` covers it.
+
+## PB12: the studio's persistence profile and its skolem IRIs
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB12-01 | `contracts/config-studio/persistence-profile.ttl` / staged / one target for each of the description, the part, the document, the lineage, the version and the import, each with its create, replace and tombstone, the caller naming each graph, and a part's replace writing the patch log's delta | L3 | + | pass |
+| PB12-02 | the same profile / `persistence hygiene` / no violation and no warning | L3 | + | pass, 2026-10-31 |
+| PB12-03 | shapes with nested property shapes, a list, two identical guards and a blank-node root / skolemised and read back / no blank node stored, the same size, and isomorphic to what was authored | L1 | + | pass |
+| PB12-04 | the same Turtle parsed twice / skolemised / the same IRIs | L2 | + | pass |
+| PB12-05 | one property shape's value changed / skolemised / only that shape's two triples and the edge naming it differ | L2 | + | pass |
+| PB12-06 | a stored graph with skolem IRIs / read by the worker / isomorphic to the graph authored, and a graph with none is returned as it is | L1 | + | pass |
+
+`tools/test_config_studio_stage.py`, `SkolemTest` and `workers/tests/test_config_studio_worker.py`.
+
+**Not covered.** No write names a blank node with a skolem IRI yet. PB13 makes the writer do it. A cycle of blank nodes is named by its shape alone and told apart by a count, which no authored layer is known to hold.
+

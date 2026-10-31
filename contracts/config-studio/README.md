@@ -31,6 +31,8 @@ Fuseki serves the one database as two services: `studio` reads only, through que
 | `urn:lattice:studio:pub:{lineage}` | writer | a published lineage, `{lineage}` the first 32 hexadecimal digits of the SHA-256 of its IRI: the `fnd:PersistentIdentity`, each `fnd:hasVersion`, the `cst:current` version, each `fnd:supersededBy`, and each `cst:Publication` event. Global, not a workspace's (ADR-A149) |
 | `urn:lattice:studio:pub:{lineage}:rev:{digest}` | writer, once | one version's content, `{digest}` the version IRI's 16 hexadecimal digits. Immutable |
 
+A graph the writer writes from an author's statements holds no blank node, since a generated operation's payload cannot (ADR-A149 decision 13). Each is stored as a skolem IRI, `urn:lattice:studio:genid:{name}`, `{name}` the first 32 hexadecimal digits of the SHA-256 of what the node says and where it is named from, with `-{n}` telling identical nodes apart. The service and the worker read every skolem IRI back as a blank node. The studio's persistence profile, `persistence-profile.ttl`, declares its aggregates, which the stage compiles with the operations the writer runs.
+
 `{ws}` and `{job}` are lower-case UUIDs. Only the writers write these graphs (see Writes). The service and the worker read them from the store.
 
 ## HTTP

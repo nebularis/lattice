@@ -26,6 +26,9 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 9. **A workspace has an owner and a mode.** Its creator owns it. A locked workspace is read and written by its owner and administrators, a read-only one is read by everyone signed in and written by its owner and administrators, and a shared one is read and written by everyone signed in. A workspace from before this decision has no owner and is shared. The revision check holds in every mode.
 10. **Artefacts name their sources.** A compiled artefact is a `fnd:DerivedArtefact` whose `fnd:DerivationRun` used the versions, or the draft revisions, it was compiled from.
 11. **The studio moves onto its own substrate after publication.** Its working store's layout is then declared as persistence profiles and its write path generated, in a later phase with its own questions.
+12. **The writer calls generated operations through a Java caller library.** `packages/persistence/java` ports ADR-A132's caller library, held to the same vectors, and the writer binds the operations the persistence compiler generates for the studio's profiles instead of building SPARQL Update by hand. The writer keeps what is not persistence, such as the access gate, the modes and the refusals of a publication.
+13. **The studio's aggregates.** The workspace description, each part of a workspace and each document are named-graph aggregates under optimistic concurrency, every part keeping its history in the patch log. A published version is created once and never replaced, and a lineage is replaced under the guard of its current version. A command that writes several aggregates orders its operations so that a guard failing part way leaves nothing a reader acts on: a version before its lineage, the parts before the description on creation, the description first on deletion. Jobs are coordination data (PRI-52), so they are written outside the profiles.
+14. **The studio reads through projections.** The registry listing, the workspace summaries, the jobs of each workspace, the holders of each lineage and import, and the terms of every published version are surface contracts over the store, derived and rebuilt from it, never authoritative.
 
 ## Consequences
 
@@ -35,7 +38,10 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 - The service needs an identity provider in production. The `local` provider keeps development free of one.
 - Rewriting a root's IRI and its pinned edges makes a published version differ from its draft by those terms, which a reader of both must expect.
 - Large drafts are stored whole. A draft held as a change over its base waits for a measured need.
+- Each save also reads the part it replaces, to write the patch log's delta, and confirms its write by reading the transaction's claim, so a save costs two reads and one update where it cost one read and one update.
+- Graph names change to the profiles' templates, so a store written before decision 13 is migrated once.
+- A part's payload holds no blank node, so the store skolemises on write and reads a skolem IRI back as a blank node.
 
 ## Provenance
 
-Raised by the maintainer on 2026-10-31, while deciding how a source's codes reach a mapping (TD-133). The maintainer answered PB-Q1 to PB-Q3, PB-Q6 and PB-Q7 the same day, asked for authentication now, and left PB-Q4's timing of modes and PB-Q5 to the unit, which chose decisions 9 and 11. The [sketch](../../developer/sketches/studio-publication.md) holds the questions.
+Raised by the maintainer on 2026-10-31, while deciding how a source's codes reach a mapping (TD-133). The maintainer answered PB-Q1 to PB-Q3, PB-Q6 and PB-Q7 the same day, asked for authentication now, and left PB-Q4's timing of modes and PB-Q5 to the unit, which chose decisions 9 and 11. They answered PB-Q8 to PB-Q11 the same day, which became decisions 12 to 14, and accepted three projections beyond the two first proposed in decision 14. The [sketch](../../developer/sketches/studio-publication.md) holds the questions.

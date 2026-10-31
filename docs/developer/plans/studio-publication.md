@@ -4,7 +4,7 @@
 
 **Unit ID:** `studio-publication` (PB)
 **Unit type:** multi-slice unit in four phases, validation gate per slice
-**Status:** PB-Q1 to PB-Q7 answered 2026-10-31. ADR-A149 Proposed. PB1 to PB9 built 2026-10-31. PB10's brief raises PB-Q8 to PB-Q11
+**Status:** PB-Q1 to PB-Q7 answered 2026-10-31. ADR-A149 Proposed. PB1 to PB9 built 2026-10-31. PB-Q8 to PB-Q11 answered 2026-10-31. PB-Q12 waits for the maintainer
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
 **Status record:** [studio-publication.md](../status/studio-publication.md)
 **ADR:** [A-149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md), Proposed
@@ -26,6 +26,10 @@ The answers are in the [sketch](../sketches/studio-publication.md) §8 and ADR-A
 | PB-D3 | The units, their root classes and what each owns are one table in the contract, read by the browser, the service and the worker. Ownership is the nodes naming the root by the unit's member property, the blank nodes reached from either, and the named nodes minted under the root's IRI. The table is `contracts/config-studio/publication-units.ttl` |
 | PB-D4 | A fenced import's graph is `urn:lattice:studio:import:{digest}`, shared by every workspace that holds it, and a workspace lists the imports it holds |
 | PB-D5 | `local` authentication sends the principal's name in a header, from a picker in the browser. `oidc` takes a bearer token, which the browser obtains by the authorization code flow with PKCE |
+| PB-D6 | The Java caller library depends on the JDK and Apache Jena 5.1.0, the version the platform uses, since it reads a compiled profile as RDF, as the Python one depends on rdflib. Its canonical N-Triples is its own encoder, never Jena's writer, so the vectors hold it byte for byte |
+| PB-D7 | The studio's persistence profile is a contract, `contracts/config-studio/persistence-profile.ttl`, compiled and instantiated by the stage tool into the directory the service reads, so the service never runs the compiler and a stale operation cannot outlive a restart |
+| PB-D8 | A blank node is stored as a skolem IRI named by the digest of what it says and where it is named from, never a random name, so a save that leaves a node and its ancestors unchanged names it as before and the patch log's delta holds only what changed. Every reader reads a skolem IRI back as a blank node |
+| PB-D9 | Every family guards on its row's epoch only, the epoch a setting of the service, 1 until a restore. The store keeps the epoch (`dal:StoreLocalEpoch`'s warning), since the studio is restored by its operator, who bumps the setting |
 
 ## 3. Phases and slices
 
@@ -57,11 +61,17 @@ The answers are in the [sketch](../sketches/studio-publication.md) §8 and ADR-A
 
 | Slice | What | Done when | Estimate |
 |---|---|---|---|
-| PB10 | a brief: the studio's working store declared as persistence profiles, and how the Java writer calls generated operations (BL-06) | the maintainer has answered its questions | 80k tokens |
-| PB11 | built as PB10 decides | decided in PB10 | decided in PB10 |
+| PB10 | a brief: the studio's working store declared as persistence profiles, and how the Java writer calls generated operations (BL-06) | the maintainer has answered its questions | 80k tokens, done |
+| PB11 | the Java caller library, `packages/persistence/java`, a port of ADR-A132's held to the same vectors | `check:persistence-library` passes every vector in both languages | 250k tokens |
+| PB12 | the studio's persistence profile for the description, the parts, the documents, the versions and the lineages, compiled and instantiated by the stage tool, and the store's skolemisation of blank nodes on write and its reverse on read | the stage writes every family's operations with no refusal, and a part holding blank nodes reads back as it was saved | 150k tokens |
+| PB13 | the writer's workspace commands on the generated operations: create, save with the patch log's delta, import, delete, documents, access, dependencies and imports, each confirmed by its claim, and ordered as ADR-A149 decision 13 says. A part's earlier revision read from the patch log | the service's tests pass with every guard in the generated SPARQL, a lost race reads as stale, and the baseline's earlier revisions read back from the log | 400k tokens |
+| PB14 | the registry on the generated operations: a version created once, a lineage replaced under its current version | two workspaces racing to publish one lineage leave one current version, and publishing again after a lost race reuses the orphaned version | 150k tokens |
+| PB15 | a task that migrates a store written before phase D in place, once | the five existing workspaces open, save and publish after the migration, and their baseline history reads back | 100k tokens |
+| PB16 | the projections of ADR-A149 decision 14, maintained as PB-Q12 decides | waits for PB-Q12 | waits for PB-Q12 |
 
 ## 4. Demonstrations
 
 - **Phase A.** The `policies` sample's XML and JSON runs show `Peril`.
 - **Phase B.** Two developer principals see a locked workspace differently.
 - **Phase C.** A scheme published in one workspace is followed by a mapping in another, the mapping is published pinned, and its bundle carries both.
+- **Phase D.** The migrated store's workspaces are edited, published and listed through generated operations and projections, and a baseline's earlier revision is read from the patch log.

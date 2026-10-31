@@ -857,3 +857,20 @@ def test_a_compiled_artefact_names_its_job_its_input_and_each_version_it_read():
     for artefact in g.objects(job, CST.artefact):
         assert (artefact, URIRef(prov + "wasGeneratedBy"), job) in g
         assert {URIRef(f"{job_iri}:input"), version} <= set(g.objects(artefact, URIRef(prov + "wasDerivedFrom")))
+
+
+def test_a_skolem_iri_the_writer_named_reads_back_as_a_blank_node():
+    """ADR-A149 decision 13: the store holds no blank node, and a job reads one as the author wrote it."""
+    from rdflib import BNode, Graph, URIRef
+    from rdflib.compare import isomorphic
+
+    from lattice_workers.config_studio_worker import SKOLEM, unskolemise
+
+    authored = Graph().parse(data="@prefix ex: <https://example.org/> . ex:s ex:p [ ex:q [ ex:r 1 ] ] .", format="turtle")
+    names: dict = {}
+    stored = Graph()
+    for s, p, o in authored:
+        stored.add(tuple(URIRef(SKOLEM + names.setdefault(t, str(len(names)))) if isinstance(t, BNode) else t for t in (s, p, o)))
+    read = unskolemise(stored)
+    assert isomorphic(read, authored)
+    assert unskolemise(authored) is authored

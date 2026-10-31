@@ -116,7 +116,29 @@ def stage(root: Path, out: Path) -> None:
     mtp = catalogue.root / catalogue.module("mork").directory("mtp") / "out" / "l0.txt"
     (out / "prompts" / "mtp-l0.txt").write_text(mtp.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     stage_mork(out / "mork")
+    stage_persistence(catalogue, out / "persistence")
     print(f"staged {out.as_posix()}")
+
+
+def stage_persistence(catalogue: lattice_repo_catalogue.Catalogue, folder: Path) -> None:
+    """The studio's own persistence profile, compiled, and the operations the writer runs, instantiated (ADR-A149
+    decision 12). Each root's graph is named by the caller (PDD-17). A profile the compiler refuses stops the stage."""
+    import shutil
+
+    from persistence.compiler import CompileError, compile_to_graph
+    from persistence.instantiate import instantiate_to_directory
+
+    contracts = catalogue.root / catalogue.area("contracts") / "config-studio"
+    spec = catalogue.root / catalogue.module("persistence").directory("spec") / "persistence.ttl"
+    config = _merge([spec, contracts / "studio-vocabulary.ttl", contracts / "persistence-profile.ttl"])
+    try:
+        compiled, targets = compile_to_graph(config, graph_names="caller")
+    except CompileError as e:
+        raise SystemExit(f"the studio's persistence profile does not compile: {e}")
+    shutil.rmtree(folder, ignore_errors=True)
+    folder.mkdir(parents=True)
+    compiled.serialize(folder / "profile.ttl", format="turtle", encoding="utf-8")
+    instantiate_to_directory(compiled, folder)
 
 
 def stage_mork(folder: Path) -> None:

@@ -93,3 +93,17 @@ def test_the_units_of_publication_are_staged_each_with_a_root_class_and_a_part(s
     kinds = list(units.subjects(RDF.type, cst.PublicationUnit))
     assert len(kinds) >= 10
     assert all(units.value(u, cst.rootClass) is not None and units.value(u, cst.authoredIn) is not None for u in kinds)
+
+
+def test_the_studio_s_persistence_profile_is_compiled_with_its_operations(staged: Path) -> None:
+    """ADR-A149 decisions 12 and 13: one target per family, each with the operations the writer runs."""
+    folder = staged / "persistence"
+    assert (folder / "profile.ttl").is_file()
+    targets = sorted(p.name for p in folder.iterdir() if p.is_dir())
+    assert targets == ["Document", "FencedImport", "Lineage", "Part", "PublishedVersion", "Workspace"]
+    for target in targets:
+        assert {"create-if-absent.rq", "cas-replace.rq", "tombstone-delete.rq"} <= {p.name for p in (folder / target).iterdir()}
+    # The caller names each root's graph, and a part's replace writes the patch log's delta.
+    replace = (folder / "Part" / "cas-replace.rq").read_text(encoding="utf-8")
+    assert "$g" in replace and "{{{assertTriples}}}" in replace and "{{{retractTriples}}}" in replace
+    assert "{{{assertTriples}}}" not in (folder / "Workspace" / "cas-replace.rq").read_text(encoding="utf-8")

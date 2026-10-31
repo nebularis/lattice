@@ -179,9 +179,60 @@ flowchart LR
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
-| PB-Q8 | How the Java writer runs generated operations | (a) a Java caller library for the typed operation IR, beside Python's, which is BL-06's first language. (b) the writer keeps its SPARQL, and a conformance test holds it equal to what the compiler generates, so the profile is the specification and the code is checked against it, which PRI-60 does not allow as it stands. (c) the writes move to a Python writer that uses the existing caller library, which changes ADR-A136's topology | (a), since it is what BL-06 needs for every Java adopter too, and keeps the topology |
-| PB-Q9 | What the studio's aggregates are | (a) each workspace part a named-graph aggregate whose root is the workspace description, carrying the part's revision, with optimistic concurrency on it. (b) the whole workspace one aggregate, which serialises edits of different parts. (c) the registry's lineages as aggregates too, with append-only versions | (a) and (c) |
-| PB-Q10 | What the studio's own surface contracts project | (a) the registry's listing and each workspace's summary, which today are a scan of every graph (`StudioStore.registry()`'s ponytail note). (b) none yet | (a) |
-| PB-Q11 | What happens to stores written before phase D | (a) migrated in place, once, by a task. (b) exported and imported again, which TD-135 shows loses held imports today | (a) |
+| PB-Q8 | How the Java writer runs generated operations | (a) a Java caller library for the typed operation IR, beside Python's, which is BL-06's first language. (b) the writer keeps its SPARQL, and a conformance test holds it equal to what the compiler generates, so the profile is the specification and the code is checked against it, which PRI-60 does not allow as it stands. (c) the writes move to a Python writer that uses the existing caller library, which changes ADR-A136's topology | Answered 2026-10-31, (a), now ADR-A149 decision 12 |
+| PB-Q9 | What the studio's aggregates are | (a) each workspace part a named-graph aggregate with optimistic concurrency. (b) the whole workspace one aggregate, which serialises edits of different parts. (c) the registry's lineages as aggregates too, with append-only versions | Answered 2026-10-31, (a) and (c), with two refinements below, now ADR-A149 decision 13 |
+| PB-Q10 | What the studio's own surface contracts project | (a) the registry's listing and each workspace's summary, which today are a scan of every graph (`StudioStore.registry()`'s ponytail note). (b) none yet | Answered 2026-10-31, (a), with three more below, now ADR-A149 decision 14 |
+| PB-Q11 | What happens to stores written before phase D | (a) migrated in place, once, by a task. (b) exported and imported again, which TD-135 shows loses held imports today | Answered 2026-10-31, (a). One machine holds a store, so no compatibility path is kept |
 
-PB-Q8 to PB-Q11 are the maintainer's. Phase D waits for them.
+**PB-Q9, as answered.** Walking (a) through showed that a named-graph family maps one root to one graph, so each part has a root of its own and the workspace description is an aggregate of its own, holding the name, owner, mode, dependencies, imports and document titles. A version is created once and never replaced, and a lineage is replaced under its current version's guard, since `dal:AppendVersions` keeps every version in one data graph and the bundle and the worker read a version by its graph. Two refinements were answered with it.
+
+- **A command that writes several aggregates orders its operations so a partial write is harmless.** One request runs as one transaction, but a guard that fails makes only its own operation a no-op. Publishing writes the version before the lineage, so a lost race leaves an orphan version that publishing again reuses. Creating and importing write the parts before the description, so a workspace is not listed until it is whole. Deleting tombstones the description first, so a half-deleted workspace is already hidden and a sweep finishes it.
+- **Every part keeps its history in the persistence patch log** (`dal:PatchLog`), replacing the full copy of the baseline written on each save. An earlier revision is read by replaying the deltas backward from the current state.
+
+| A 3,000-triple baseline after 50 saves of 20 changed triples | Stored | Reading an earlier revision |
+|---|---|---|
+| a copy per save, as before phase D | about 150,000 triples | one graph |
+| the patch log | about 3,000 + 50 x 40 = 5,000 triples | the current graph and k deltas |
+
+**A replace that is quadratic in the part's size.** The generated named-graph `cas-replace` has the form TD-42 measured for the composite replace. Its sweep gives one solution per stored triple, and the `INSERT` template, holding the whole payload, is filled once per solution. Measured on Jena in memory on 2026-10-31 with a scratch script, a part replaced by a payload of its own size, M = N:
+
+| M = N | the generated replace | two guarded operations in one request |
+|---|---|---|
+| 300 | 0.46 s | 0.12 s |
+| 1,000 | 2.5 s | 0.06 s |
+| 3,000 | 28 s | 0.11 s |
+
+The ODRL mappings sample holds a mapping part of a few thousand triples, so every save of it would take half a minute. The two-operation form is R1 of the [typed IR sketch](formal-methods-track-h-typed-ir.md), the first operation deleting the graph under the version row's guard and the second inserting the payload and moving the row under the same guard. It is safe only where a request whose second operation fails keeps nothing of the first (TSD-06). Jena in memory and Oxigraph do (TSD-50), rdflib does not, and Fuseki on TDB2, the studio's store, is untested (TSD-Q13). Track H's H5 was to select it from a store's capabilities.
+
+| ID | Question | Options | Leaning |
+|---|---|---|---|
+| PB-Q13 | How the studio's large aggregates are replaced | (a) the compiler gains R1 for the named-graph replace and tombstone now, selected where a deployment's capability spec declares that a failing request rolls back, with Fuseki on TDB2 probed first to close TSD-Q13 for it, and the persistence conformance run holding R1 equal to the generated form on every engine that has the capability. (b) the writer keeps its own replace for the parts and documents until H5, and runs generated operations only for the description, the versions and the lineages, recorded as debt against PRI-60. (c) accept the quadratic replace | (a), since the cost is measured, R1 is already the candidate track H names, the probe of Fuseki is owed anyway, and every adopter with a large named-graph aggregate needs it |
+
+**PB-Q10, as answered.** The maintainer accepted two more projections, jobs by workspace and holders, and asked for the terms of published versions now rather than later.
+
+| Projection | Answers | Replaces |
+|---|---|---|
+| the registry listing | every lineage and its current version | a scan of every registry graph |
+| workspace summaries | each workspace's name, owner, mode and part revisions | a read of the description and its version rows |
+| jobs by workspace | a workspace's jobs, and those past their expiry | `COMPILE_JOBS_QUERY`, `jobsOf` and `EXPIRED_JOBS_QUERY`, each a scan of every job graph |
+| holders | the workspaces that follow or pin each lineage, and hold each import | nothing today. It answers who reads a version before a change is published, keeps a pinned version from being pruned, and finds an import no workspace holds (TD-135) |
+| terms of published versions | each term every version defines, with its label, kind and version | nothing today. It lets a binding's chooser and a proposer find a term across the registry |
+
+## 10. How the studio's projections stay fresh (PB16)
+
+**The scene.** A surface contract is compiled by `tools/surface`, a Python generator that reads a graph and materialises a generated surface with the read set it was built from (the Surface README's "Derived records and staying fresh"). It is a batch compiler. It has no operation a writer runs per write, and nothing in the studio runs it today. Each projection of §9 is derived and can be rebuilt from the graph (PRI-52), so the question is when it is brought up to date, and what a reader sees in between.
+
+```mermaid
+flowchart LR
+  C[Command] --> W[Writer]
+  W --> S[(Store)]
+  W -. a .-> P1[Projection, same request]
+  S -. b .-> J[Refresh job in the worker] --> P2[Projection, after the write]
+  S -. c .-> Q[Generated query at read time]
+```
+
+| ID | Question | Options | Leaning |
+|---|---|---|---|
+| PB-Q12 | When a projection is brought up to date | (a) in the writer's own request, by maintenance updates generated from each contract, which needs a surface backend that does not exist and a Java port of it. (b) by a refresh job the writer queues after each write that changes a projection's source, which the worker runs with `tools/surface` over the changed aggregates, so a projection lags its source by a job's latency and records the read set it was built from. (c) never stored, each contract compiled to a query the service runs on read, which keeps the scans and moves them into generated text | (b), since the generator and the invalidation planning exist in Python, the worker already reads the store, and a reader that must see its own write, such as the Publish view after publishing, waits for the job as it waits for a publish job today |
+
+PB-Q12 is the maintainer's. PB16 waits for it. PB-Q13, in §9, is the maintainer's too, and PB13 to PB15 wait for it.
