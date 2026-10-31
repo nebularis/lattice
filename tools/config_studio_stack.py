@@ -254,6 +254,14 @@ class Stack:
         addin = "https://localhost:3443/addin/taskpane.html for Word" if docker else f"http://127.0.0.1:{ADDIN_PORT}/addin/harness.html"
         print(f"Configuration Studio: {url}. Word add-in: {addin}. Logs in {self.run}. Stop it with `mise run studio:down`")
 
+    def migrate(self, dry_run: bool) -> None:
+        """Runs the one-off migration of a store written before phase D, with the writer's environment, against the running Fuseki.
+        It backs the dataset up first, to the assets folder, and prints the path."""
+        run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-writer", "-am", "package", "-DskipTests"], self.root)
+        jar = self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar"
+        argv = ["java", "-cp", str(jar), "org.nebularis.lattice.studio.writer.MigrateMain", *(["--dry-run"] if dry_run else [])]
+        subprocess.run(command(argv), cwd=self.root, env={**os.environ, **WRITER_ENV}, check=True)
+
     def down(self) -> None:
         for name in reversed(ORDER):
             if self.stop(name):
@@ -404,7 +412,8 @@ def extract(archive: Path, into: Path) -> None:
 
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("action", choices=("up", "down", "status"))
+    parser.add_argument("action", choices=("up", "down", "status", "migrate"))
+    parser.add_argument("--dry-run", action="store_true", help="with migrate: write nothing and print what it would do")
     parser.add_argument("--docker", action="store_true", help="run Fuseki and RabbitMQ with docker compose")
     parser.add_argument("--dev", action="store_true", help="also serve the browser code with hot reload on 4175")
     parser.add_argument("--root", default=None)
@@ -412,6 +421,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     stack = Stack(lattice_repo_catalogue.find_root(args.root))
     if args.action == "up":
         stack.up(args.docker, args.dev)
+    elif args.action == "migrate":
+        stack.migrate(args.dry_run)
     elif args.action == "down":
         stack.down()
     else:

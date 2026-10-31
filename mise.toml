@@ -662,6 +662,11 @@ run = "python tools/config_studio_stack.py up"
 description = "Stop what studio:up started, each through its own shutdown"
 run = "python tools/config_studio_stack.py down"
 
+[tasks."studio:migrate"]
+description = "Migrate a Configuration Studio store written before phase D onto the generated persistence operations, once, after backing it up to .build/config-studio. `-- --dry-run` writes nothing and prints what it would do. Run it with the writer stopped"
+depends = ["build:config-studio-assets"]
+run = "python tools/config_studio_stack.py migrate"
+
 [tasks."studio:status"]
 description = "Show what studio:up started and which of the studio's ports are listening"
 run = "python tools/config_studio_stack.py status"

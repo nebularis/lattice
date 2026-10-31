@@ -73,6 +73,8 @@ public final class StudioStore implements AutoCloseable {
     private static final String RECEIPTS_QUERY = PREFIXES
         + "SELECT ?id ?revision WHERE { GRAPH ?g { ?r cst:commandId ?id OPTIONAL { ?r cst:receiptRevision ?revision } } }";
 
+    private static final String GRAPH_NAMES_QUERY = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }";
+
     private final RDFConnection connection;
 
     public StudioStore(RDFConnection connection) {
@@ -110,6 +112,23 @@ public final class StudioStore implements AutoCloseable {
         ParameterizedSparqlString query = new ParameterizedSparqlString(GRAPH_QUERY);
         query.setIri("g", graphIri);
         return connection.queryConstruct(query.asQuery());
+    }
+
+    /** The name of every named graph that holds a triple. */
+    public java.util.SortedSet<String> graphNames() {
+        java.util.SortedSet<String> out = new java.util.TreeSet<>();
+        connection.querySelect(constant(GRAPH_NAMES_QUERY), row -> out.add(row.getResource("g").getURI()));
+        return out;
+    }
+
+    /** A copy of the whole dataset, every graph as stored, for a backup. */
+    public org.apache.jena.query.Dataset snapshot() {
+        org.apache.jena.query.Dataset copy = DatasetFactory.create();
+        copy.getDefaultModel().add(connection.fetch());
+        for (String name : graphNames()) {
+            copy.addNamedModel(name, rawGraph(name));
+        }
+        return copy;
     }
 
     /** The {@code pat:seq} of {@code root}'s version row in {@code metaGraph}, empty when it has no row or the row is tombstoned. */

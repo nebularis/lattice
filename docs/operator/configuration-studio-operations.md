@@ -337,6 +337,21 @@ On Windows a detached console process can receive no termination request, so aft
 
 ---
 
+## Migrating a store written before phase D
+
+A store written before the store writer ran on generated persistence operations holds its workspaces and the registry in the old layout. Migrate it once, with the writer and the service stopped and Fuseki running.
+
+```bash
+mise run studio:migrate -- --dry-run
+mise run studio:migrate
+```
+
+The dry run writes nothing and prints what each workspace, the registry and the imports would move. The real run first writes every graph of the dataset as TriG to `migration-backup-{UTC time}.trig` in `LATTICE_STUDIO_ASSETS`, prints its path, and stops if it cannot write it. It then moves each workspace in one request, so a workspace moves whole or not at all, then the registry, then the imports no workspace held, and drops the old graphs, the workspaces' jobs and their graphs. A workspace's receipts stay.
+
+To restore, stop Fuseki, empty the dataset (or create a new one) and load the backup into it, for example with `tdb2.tdbloader --loc <dataset directory> <backup>.trig`. The command is idempotent. It moves only the old graphs it finds, so a second run finds none, changes nothing and writes no backup.
+
+---
+
 ## The MCP server
 
 The service is also an MCP server, at `http://127.0.0.1:8090/mcp` over the Streamable HTTP transport, as the [contract](../../contracts/config-studio/README.md#mcp) describes. An MCP host reads a workspace's clauses and proposes their stated meaning with its own model, and each proposal waits in the Meaning view for a person to decide. It needs nothing configured, since the host brings the model. To connect Claude Code, for example:
