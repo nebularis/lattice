@@ -168,6 +168,42 @@ qed
 
 end
 
+section \<open>An executable reading\<close>
+
+text \<open>The locale takes the broader relation as a predicate, so the reflexive-transitive closure in
+below_eq cannot be computed. An evaluator holds a scheme's broader relation as a finite set of
+pairs, and decide_rel is the locale's decide for that relation. Every law above holds of it as an
+instance of the locale, with no restatement.\<close>
+
+definition decide_rel :: "'c set \<Rightarrow> ('c \<times> 'c) set \<Rightarrow> 'c condition \<Rightarrow> 'c option \<Rightarrow> decision" where
+  "decide_rel M R = scheme.decide M (\<lambda>a b. (a, b) \<in> R)"
+
+lemma below_eq_rel: "scheme.below_eq (\<lambda>a b. (a, b) \<in> R) x c \<longleftrightarrow> x = c \<or> (x, c) \<in> R\<^sup>+"
+  by (auto simp: scheme.below_eq_def rtrancl_eq_or_trancl)
+
+lemma strictly_above_rel: "scheme.strictly_above (\<lambda>a b. (a, b) \<in> R) x e \<longleftrightarrow> (e, x) \<in> R\<^sup>+"
+  by (simp add: scheme.strictly_above_def)
+
+lemma flat_rel: "scheme.flat M (\<lambda>a b. (a, b) \<in> R) \<longleftrightarrow> (\<forall>(a, b) \<in> R. a \<notin> M)"
+  by (auto simp: scheme.flat_def)
+
+text \<open>The code equation is decide's decision flow with the closure as a transitive closure of a
+finite relation, which the code generator computes, and flatness as a check over the pairs.\<close>
+
+lemma decide_rel_code [code]:
+  "decide_rel M R cond cand =
+     (let m = (\<lambda>x c. if strat cond = HierarchicalMatch then x = c \<or> (x, c) \<in> R\<^sup>+ else x = c) in
+      case cand of
+        None \<Rightarrow> Undetermined
+      | Some x \<Rightarrow>
+          if x \<notin> M then Undetermined
+          else if \<exists>e \<in> excluded cond. m x e then Denied
+          else if strat cond = HierarchicalMatch \<and> (\<exists>e \<in> excluded cond. (e, x) \<in> R\<^sup>+) then Undetermined
+          else if strat cond = HierarchicalMatch \<and> (\<forall>(a, b) \<in> R. a \<notin> M) \<and> x \<notin> required cond \<and> x \<notin> excluded cond then Undetermined
+          else if (\<exists>r \<in> required cond. m x r) \<or> (required cond = {} \<and> excluded cond \<noteq> {}) then Permitted
+          else Denied)"
+  unfolding decide_rel_def scheme.decide_def scheme.matches_def below_eq_rel strictly_above_rel flat_rel Let_def ..
+
 section \<open>Composition, section 5.2\<close>
 
 text \<open>An admission profile combines its conditions' decisions by AllRequired or AnySufficient,

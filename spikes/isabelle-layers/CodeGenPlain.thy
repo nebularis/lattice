@@ -67,14 +67,14 @@ section \<open>Export under the default representations\<close>
 text \<open>The conversions between the target's Integer and String and the model's nat, char
 and string are exported so a driver can build arguments and read results.\<close>
 
-export_code
+export_code open
   contains meet closed_range add_months jan31 ccontains off_peak sum_like
   enc decimal pct dec norm_path dp lexlt val
   parts residual settle_at_position
   dconf wfc gate holds exit history
   due_at exercise tolled_end
   compose
-  guard guard_row commit confirm claim stale_store stale_request resolve resolve_dim
+  guard guard_row commit confirm claim stale_store stale_request resolve resolve_dim decide_rel
   nat_of_integer integer_of_nat char_of_integer integer_of_char String.explode String.implode
   in Haskell module_name Lattice file_prefix lattice_haskell_plain
 

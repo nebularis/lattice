@@ -117,50 +117,80 @@ value "resolve_dim True {\<lparr> prio = 2, needs_reasoning = False, cand.val = 
 value "resolve_dim True {\<lparr> prio = 2, needs_reasoning = False, cand.val = 10 :: nat \<rparr>,
                          \<lparr> prio = 2, needs_reasoning = False, cand.val = 40 \<rparr>}"
 
+text \<open>Eligibility's decision table, through decide_rel. A small scheme of vehicles: a car and a
+van are each a motor vehicle, an electric car is a car, and a boat stands alone.\<close>
+
+definition vehicles :: "string set" where
+  "vehicles = {''motor'', ''car'', ''van'', ''ecar'', ''boat''}"
+
+definition vehicle_broader :: "(string \<times> string) set" where
+  "vehicle_broader = {(''car'', ''motor''), (''van'', ''motor''), (''ecar'', ''car'')}"
+
+definition motor_cond :: "string set \<Rightarrow> string condition" where
+  "motor_cond E = \<lparr> required = {''motor''}, excluded = E, strat = HierarchicalMatch \<rparr>"
+
+text \<open>An electric car stands below a motor vehicle by two steps, so it is Permitted. A van that
+is excluded is Denied, though it also stands below the required concept (L10). A motor vehicle,
+when cars are excluded, may be a car, so it is Undetermined (L11). A boat matches nothing
+required and is Denied, a plane is outside the scheme and Undetermined, and so is an absent
+candidate.\<close>
+
+value "decide_rel vehicles vehicle_broader (motor_cond {}) (Some ''ecar'')"
+value "decide_rel vehicles vehicle_broader (motor_cond {''van''}) (Some ''van'')"
+value "decide_rel vehicles vehicle_broader (motor_cond {''car''}) (Some ''motor'')"
+value "decide_rel vehicles vehicle_broader (motor_cond {}) (Some ''boat'')"
+value "decide_rel vehicles vehicle_broader (motor_cond {}) (Some ''plane'')"
+value "decide_rel vehicles vehicle_broader (motor_cond {}) None"
+
+text \<open>Default inclusion under exact matching admits every member not excluded (L12). On a flat
+scheme a hierarchical condition decides only the concepts it names (L14).\<close>
+
+value "decide_rel vehicles vehicle_broader \<lparr> required = {}, excluded = {''van''}, strat = ExactMatch \<rparr> (Some ''car'')"
+value "decide_rel vehicles {} (motor_cond {}) (Some ''car'')"
+
+text \<open>A profile of two conditions, composed.\<close>
+
+value "compose AllRequired [decide_rel vehicles vehicle_broader (motor_cond {}) (Some ''ecar''),
+                            decide_rel vehicles vehicle_broader (motor_cond {''car''}) (Some ''ecar'')]"
+value "compose AnySufficient [decide_rel vehicles vehicle_broader (motor_cond {}) (Some ''ecar''),
+                              decide_rel vehicles vehicle_broader (motor_cond {''car''}) (Some ''ecar'')]"
+
 section \<open>Not executable as written\<close>
 
-text \<open>Eligibility's hierarchical match is a reflexive-transitive closure of the broader relation,
-given as a predicate inside the locale scheme, which has no interpretation. The code generator
-reports no code equations for scheme.decide or scheme.below_eq. Executing it needs the relation
-as a finite set of pairs, so that rtrancl's own code equations apply, and an interpretation or
-explicit parameters to give the generator a constant. Membership's definitions sit in a locale
-with no interpretation for the same reason. The tuple encoder took its length rendering as an
-argument for this reason, as enc decimal above shows.\<close>
+text \<open>Membership's definitions sit in a locale with no interpretation, so they have no constant
+to export until one is given, or until they take their parameters as arguments, as the tuple
+encoder and Eligibility's decide_rel do.\<close>
 
 section \<open>Export\<close>
 
-text \<open>The conversions between the target's Integer and String and the model's nat, char
-and string are exported so a driver can build arguments and read results.\<close>
+text \<open>Each export is open, so the generated module exports its datatypes' constructors and a
+caller can build arguments and read results. The conversions between the target's Integer and
+String and the model's nat, char and string are exported for the same reason.\<close>
 
-export_code
+export_code open
   contains meet closed_range add_months jan31 ccontains off_peak sum_like
   enc decimal pct dec norm_path dp lexlt val
   parts residual settle_at_position
   dconf wfc gate holds exit history
   due_at exercise tolled_end
-  compose
+  compose decide_rel
   guard guard_row commit confirm claim stale_store stale_request fresh_request resolve resolve_dim
   nat_of_integer integer_of_nat char_of_integer integer_of_char String.explode String.implode
   in Haskell module_name Lattice file_prefix lattice_haskell
 
-export_code
+export_code open
   contains meet closed_range add_months jan31 enc decimal pct dec dp lexlt val
-  guard guard_row commit confirm
+  guard guard_row commit confirm compose decide_rel
   in SML module_name Lattice file_prefix lattice_sml
 
 text \<open>Scala compiles each class to a file named after it, so a type and a constructor whose names
 differ only in case, such as nat and Nat, overwrite each other on a case-insensitive filesystem,
-which is macOS's default. The constructors are renamed for Scala alone.\<close>
+which is macOS's default. The target's case_insensitive option renames every such pair.\<close>
 
-code_identifier
-  constant Code_Target_Nat.Nat \<rightharpoonup> (Scala) "Lattice.Nat_of_integer"
-| constant Num.num.One \<rightharpoonup> (Scala) "Lattice.One_num"
-| constant Quantification.bound.Bound \<rightharpoonup> (Scala) "Lattice.Bound_of"
-
-export_code
+export_code open
   contains meet closed_range add_months jan31 enc decimal pct dec dp lexlt val
-  guard guard_row commit confirm stale_store stale_request
+  guard guard_row commit confirm stale_store stale_request compose decide_rel
   nat_of_integer integer_of_nat String.explode String.implode
-  in Scala module_name Lattice file_prefix lattice_scala
+  in Scala module_name Lattice file_prefix lattice_scala (case_insensitive)
 
 end
