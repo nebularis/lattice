@@ -13,6 +13,7 @@ import { api, awaitJob } from "../api";
 import type { Artefact, Job } from "../rdf/report";
 import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
+import { CONFIG_PARTS } from "../rdf/split";
 import { SAMPLE_FORMATS, exampleSources, reviewGraph, sampleFormat, schemesOf, written, type MappingNode, type RunCost, type SampleFormat, type Scheme } from "../rdf/mapping";
 import { Spinner, download, go } from "./kit";
 import { NodeEditor } from "./ConfigView";
@@ -37,7 +38,9 @@ export function MappingView({ selected }: { selected?: string }) {
   const open = (node: string) => go("w", studio.id, "mapping", node);
   const picked = scheme?.mappings.find((m) => m.iri === selected);
   const [busy, setBusy] = useState(false);
-  const sampleRun = useSampleRun(studio.id, graph);
+  // A job reads the other parts as saved, so their revisions say when a compilation is out of date (ADR-A149).
+  const context = CONFIG_PARTS.filter((p) => p !== "mapping").map((p) => studio.model.state.configs[p]?.revision ?? "").join(" ");
+  const sampleRun = useSampleRun(studio.id, graph, context);
   const [drawing, setDrawing] = useState<"tree" | "canvas">(() => {
     try {
       return localStorage.getItem("lattice-studio:mapping-drawing") === "canvas" ? "canvas" : "tree";
@@ -343,7 +346,7 @@ function runResult(job: Job): RunResult {
 /** The sample source and its format, kept in this browser for the workspace, and the run of the mapping part over it,
  * rerun 800 ms after the part or the sample last changed. A Turtle sample is a dry run. An XML or JSON one compiles the
  * part, once for each version of it, and runs the compiled transforms over the sample in the transforms worker. */
-function useSampleRun(workspace: string, graph: Graph): SampleRun {
+function useSampleRun(workspace: string, graph: Graph, context: string): SampleRun {
   const key = `lattice-studio:mapping-sample:${workspace}`;
   const [sample, setSampleState] = useState<string | undefined>(() => stored(key));
   const [format, setFormatState] = useState<SampleFormat>(() => (stored(`${key}:format`) as SampleFormat | undefined) ?? sampleFormat(sample ?? ""));
@@ -352,7 +355,7 @@ function useSampleRun(workspace: string, graph: Graph): SampleRun {
   const [result, setResult] = useState<RunResult>();
   const [step, setStep] = useState(0);
   const [transforms, setTransforms] = useState<Artefact[]>([]);
-  const compiled = useRef<{ graph: Graph; job: string } | undefined>(undefined);
+  const compiled = useRef<{ graph: Graph; context: string; job: string } | undefined>(undefined);
   const setFormat = (f: SampleFormat) => {
     setFormatState(f);
     store(`${key}:format`, f);
@@ -375,13 +378,13 @@ function useSampleRun(workspace: string, graph: Graph): SampleRun {
           job = await awaitJob(id);
           void api.deleteJob(id).catch(() => undefined);
         } else {
-          if (compiled.current?.graph !== graph) {
+          if (compiled.current?.graph !== graph || compiled.current.context !== context) {
             const id = await api.submit(workspace, "compile", "mapping", graph);
             const done = await awaitJob(id);
             if (done.status === "Failed") throw new Error(done.failure ?? "The compilation failed.");
             // The compilation this one replaces is no longer run, so it leaves the workspace's job history.
             if (compiled.current) void api.deleteJob(compiled.current.job).catch(() => undefined);
-            compiled.current = { graph, job: id };
+            compiled.current = { graph, context, job: id };
             setTransforms(done.artefacts.filter((a) => a.mediaType === "application/xslt+xml" || a.path.endsWith(".jolt.json")));
           }
           job = await api.transform(workspace, compiled.current.job, format, sample);
@@ -409,7 +412,7 @@ function useSampleRun(workspace: string, graph: Graph): SampleRun {
       stale = true;
       clearTimeout(timer);
     };
-  }, [workspace, graph, sample, format]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [workspace, graph, context, sample, format]); // eslint-disable-line react-hooks/exhaustive-deps
   const output = (mapping: string) => (result?.lines.get(mapping) ?? []).filter((o) => o.stratum <= step).flatMap((o) => o.lines);
   return { sample, setSample, format, setFormat, state, message, result, transforms, step, setStep, output };
 }

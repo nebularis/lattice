@@ -111,7 +111,9 @@ A save carries the revision it expects in `If-Match`. The workspace's writer com
 
 A sample is copied into a new workspace that records which sample it came from, so a later change to the sample does not reach it. A workspace exports as one TriG file of every graph but its jobs, and imports, here or elsewhere, as a new workspace with its revisions.
 
-**Which part a subject belongs to** is decided by one rule, which the browser applies when it sorts an imported graph and the service applies again to every graph it saves. A named subject belongs to the first of persistence, surface, eligibility, quantification and vocabulary whose namespace its `rdf:type` or its predicates use, a SKOS concept or scheme belongs to vocabulary, anything else to the baseline, and a blank node to the subject that refers to it. So an eligibility question that names a quantification range set stays with eligibility.
+**Which part a subject belongs to** is decided by one rule, which the browser applies when it sorts an imported graph and the service applies again to every graph it saves. A named subject belongs to the first of persistence, surface, eligibility, quantification and vocabulary whose namespace its `rdf:type` or its predicates use, a SKOS concept or scheme belongs to vocabulary, anything else to the baseline, and a blank node to the subject that refers to it. So an eligibility question that names a quantification range set stays with eligibility. A concept goes with its scheme when the scheme went to mapping, so a representation scheme's codes stay with the mapping that reads them.
+
+**A part decides where a statement is saved, never what a job reads** ([ADR-A149](decisions/ADR-A149-publication-from-the-studio.md) decision 7). A validation, compilation or dry run names each of its workspace's other configuration parts as a `cst:contextGraph`. The worker reads them as it reads the baseline and reports only findings about the target part's subjects, and the writer refuses a context graph that is not one of the workspace's parts.
 
 ## A validation, end to end
 

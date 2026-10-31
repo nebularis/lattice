@@ -18,7 +18,7 @@ import org.apache.jena.vocabulary.RDF;
 /**
  * Which part of a workspace each subject of a graph belongs to, by the rule of the browser's {@code src/rdf/split.ts}:
  * the first part whose namespace a named subject uses in its {@code rdf:type} or its predicates, a concept scheme or
- * concept for vocabulary, baseline otherwise, and a blank node with the subject that refers to it, as is a named node of a
+ * concept for vocabulary, unless its scheme went to mapping, where a concept goes with it, baseline otherwise, and a blank node with the subject that refers to it, as is a named node of a
  * mapping's own structure that uses no part's terms, such as a guard's shape, and the identity a versioned node names. The service checks a
  * saved graph with it, since it cannot know the browser sorted the graph (STD-298).
  */
@@ -72,6 +72,13 @@ public final class Parts {
                 owner.put(s, OWNERS.entrySet().stream().filter(e -> statements.stream().anyMatch(e.getValue()))
                     .map(Map.Entry::getKey).findFirst().orElse("baseline"));
                 pending.add(s);
+            }
+        });
+        // A concept goes with its scheme, so a representation scheme's codes stay with the mapping that reads them (ADR-A149).
+        graph.listStatements(null, graph.createProperty(SKOS + "inScheme"), (RDFNode) null).toList().forEach(st -> {
+            if (st.getSubject().isURIResource() && "vocabulary".equals(owner.get(st.getSubject())) && st.getObject().isResource()
+                && "mapping".equals(owner.get(st.getObject().asResource()))) {
+                owner.put(st.getSubject(), "mapping");
             }
         });
         // Blank nodes take their referrer's part, breadth first from the named subjects, and so do a mapping's own named nodes.

@@ -628,6 +628,14 @@ public final class StudioApi {
         job.addProperty(Cst.workspace, m.createResource(Graphs.workspace(ws)));
         job.addProperty(Cst.configGraph, m.createResource(input));
         job.addProperty(Cst.baselineGraph, m.createResource(workspace.baselineGraph()));
+        if (List.of("validate", "compile", "dry-run").contains(kind)) {
+            // A job reads the workspace's other parts as context, and validates only its target (ADR-A149).
+            for (String part : Workspace.CONFIGS) {
+                if (!part.equals(target)) {
+                    job.addProperty(Cst.contextGraph, m.createResource(Graphs.config(ws, part)));
+                }
+            }
+        }
         job.addProperty(Cst.status, Cst.Queued);
         job.addProperty(Cst.submittedAt, m.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
         return m;

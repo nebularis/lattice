@@ -29,6 +29,8 @@ JOBS_QUEUE = "lattice.studio.jobs"
 _UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _MESSAGE = re.compile(rf"urn:lattice:studio:job:{_UUID}")
 _BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
+# The configuration parts a job may read as context, beside its target (ADR-A149 decision 7).
+_PARTS = ("library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
 _TARGETS = {
     CST.Persistence: "persistence", CST.Surface: "surface", CST.Vocabulary: "vocabulary",
@@ -125,9 +127,11 @@ class ConfigStudioWorker:
             if graph.value(job, CST.target) == CST.Mapping:
                 from .config_studio_jobs import run_mapping
 
-                return run_mapping(job, input_("configuration"), baseline, str(Path(self._root).resolve()), str(graph.value(job, CST.submittedAt)))
+                return run_mapping(job, input_("configuration"), baseline + self._context(graph, job), str(Path(self._root).resolve()),
+                                   str(graph.value(job, CST.submittedAt)))
             spec = _spec(str(Path(self._root).resolve()), "meaning")
-            return config_studio_dryrun.dry_run(job, input_("configuration") + baseline, spec, str(graph.value(job, CST.submittedAt)))
+            return config_studio_dryrun.dry_run(job, input_("configuration") + baseline + self._context(graph, job), spec,
+                                                str(graph.value(job, CST.submittedAt)))
         if graph.value(job, CST.kind) == CST.Propose:
             import os
 
@@ -192,8 +196,23 @@ class ConfigStudioWorker:
             job, kind, target,
             self._read(graph, job, CST.configGraph, "configuration", allowed=lambda iri: iri == f"{job}:input"),
             self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True),
-            self._root, str(submitted),
+            self._root, str(submitted), self._context(graph, job),
         )
+
+    def _context(self, graph: Graph, job: URIRef) -> Graph:
+        """The workspace's other configuration parts a job names as its context, each one of its own workspace's
+        parts (STD-298). A part never saved reads as empty."""
+        workspace = str(graph.value(job, CST.workspace) or "")
+        allowed = re.compile(re.escape(workspace) + ":(" + "|".join(_PARTS) + ")") if _WORKSPACE.fullmatch(workspace) else None
+        context = Graph()
+        for iri in sorted(graph.objects(job, CST.contextGraph), key=str):
+            if allowed is None or not allowed.fullmatch(str(iri)):
+                raise ValueError(f"context graph {iri} is not one this job may read")
+            try:
+                context += self._store.get_graph(str(iri))
+            except GraphNotFound:
+                pass
+        return context
 
     def _read(
         self, graph: Graph, job: URIRef, predicate: URIRef, what: str, allowed: Callable[[str], Any], empty_if_missing: bool = False,

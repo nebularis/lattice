@@ -251,6 +251,8 @@ cst:status a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; 
 cst:workspace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Workspace .
 cst:configGraph a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Graph ;
     rdfs:comment "The job's input: the configuration as submitted, written once under the job's IRI." .
+cst:contextGraph a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Graph ;
+    rdfs:comment "A graph the job reads as context and never validates, one of its workspace's configuration parts other than its target. A validation, compilation or dry run has one for each such part." .
 cst:submittedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
 cst:startedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
 cst:finishedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .

@@ -63,7 +63,7 @@ public final class Writer {
     private static final Set<Property> WORKER_PREDICATES = Set.of(
         Cst.status, Cst.startedAt, Cst.finishedAt, Cst.failureMessage, p("conforms"), p("report"), p("artefact"),
         p("gap"), p("resolution"), p("expansion"), p("testResult"));
-    private static final List<String> CONFIGS = Workspace.GRAPHS.subList(1, Workspace.GRAPHS.size());
+    private static final List<String> CONFIGS = Workspace.CONFIGS;
     private static final Var S = Var.alloc("s");
     private static final Var P = Var.alloc("p");
     private static final Var O = Var.alloc("o");
@@ -377,6 +377,10 @@ public final class Writer {
                 || !description.contains(job, Cst.baselineGraph, description.createResource(ws.baselineGraph()))
                 || !description.contains(job, Cst.status, Cst.Queued)) {
                 return Reply.refused("a job names its workspace, its own input, the workspace's baseline and the status Queued");
+            }
+            Set<RDFNode> contexts = Set.copyOf(description.listObjectsOfProperty(job, Cst.contextGraph).toList());
+            if (!CONFIGS.stream().map(part -> (RDFNode) description.createResource(Graphs.config(ws.id(), part))).collect(java.util.stream.Collectors.toSet()).containsAll(contexts)) {
+                return Reply.refused("a job's context graphs are configuration parts of its workspace");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");

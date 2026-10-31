@@ -69,6 +69,7 @@ def submit(store: FakeStore, kind: str, target: str, config_file: Path | None, b
     g.add((job, RDF.type, CST.Job))
     g.add((job, CST.kind, CST[kind.capitalize()]))
     g.add((job, CST.target, CST[target.capitalize()]))
+    g.add((job, CST.workspace, URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001")))
     g.add((job, CST.configGraph, URIRef(f"{iri}:input")))
     g.add((job, CST.baselineGraph, URIRef("urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1")))
     g.add((job, CST.status, CST.Queued))
@@ -279,6 +280,8 @@ def test_missing_input_graph_fails():
     (CST.configGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:surface"),
     (CST.baselineGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:surface"),
     (CST.baselineGraph, "https://example.org/elsewhere"),
+    (CST.contextGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000002:surface"),
+    (CST.contextGraph, "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001:baseline:1"),
 ])
 def test_a_job_naming_a_graph_outside_its_own_fails_without_reading_it(predicate, iri):
     store = FakeStore()

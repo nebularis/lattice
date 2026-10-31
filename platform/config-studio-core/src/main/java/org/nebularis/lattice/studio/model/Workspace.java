@@ -36,6 +36,9 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
     public static final List<String> GRAPHS = List.of("baseline", "library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification",
         "eligibility", "surface", "persistence");
 
+    /** The configuration parts, which are the graphs but the baseline. */
+    public static final List<String> CONFIGS = GRAPHS.subList(1, GRAPHS.size());
+
     /** {@code sample} is the id of the sample it was made from, or null. */
     public static Workspace created(String id, String label, Instant at, String sample) {
         Map<String, Long> revisions = new LinkedHashMap<>();

@@ -139,6 +139,29 @@ class WritesTest {
     }
 
     @Test
+    void theWriterRefusesAJobWhoseContextGraphIsNotAConfigurationPartOfItsWorkspace() {
+        String job = job();
+        String fresh = Fixture.id(8);
+        Model description = ModelFactory.createDefaultModel();
+        f.store.graph(Graphs.job(job)).listStatements().forEachRemaining(s -> {
+            if (!s.getPredicate().equals(Cst.configGraph)) {
+                description.add(s.getSubject().isURIResource() ? description.createResource(Graphs.job(fresh)) : s.getSubject(), s.getPredicate(), s.getObject());
+            }
+        });
+        Resource node = description.createResource(Graphs.job(fresh));
+        node.addProperty(Cst.configGraph, description.createResource(Graphs.jobInput(fresh)));
+        Dataset good = only(Graphs.job(fresh), description);
+        good.addNamedModel(Graphs.jobInput(fresh), Fixture.model(CONFIG));
+        assertTrue(description.contains(node, Cst.contextGraph), "the service named the other parts");
+        Model foreign = ModelFactory.createDefaultModel().add(description);
+        foreign.add(node, Cst.contextGraph, foreign.createResource(Graphs.config(Fixture.id(7), "mapping")));
+        Dataset bad = only(Graphs.job(fresh), foreign);
+        bad.addNamedModel(Graphs.jobInput(fresh), Fixture.model(CONFIG));
+        assertEquals(400, writer.apply(Command.submitJob(WS, fresh, bad)).status(), "another workspace's graph as context");
+        assertEquals(200, writer.apply(Command.submitJob(WS, fresh, good)).status());
+    }
+
+    @Test
     void deletingAWorkspaceDeletesItsJobs() {
         String job = job();
         assertEquals(204, f.send("DELETE", "/api/workspaces/" + WS, Map.of(), null).status());

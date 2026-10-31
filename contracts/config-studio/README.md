@@ -113,6 +113,7 @@ As written by the service:
     cst:workspace <urn:lattice:studio:ws:{ws}> ;
     cst:configGraph <urn:lattice:studio:job:{job}:input> ;
     cst:baselineGraph <urn:lattice:studio:ws:{ws}:baseline:{n}> ;
+    cst:contextGraph <urn:lattice:studio:ws:{ws}:config:{part}> ;   # one per other configuration part, for a validation, compilation or dry run
     cst:status cst:Queued ;
     cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .
 ```

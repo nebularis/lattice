@@ -19,7 +19,7 @@ XJ6 and XJ7 were built on 2026-10-30 after the maintainer answered XJ-Q8 to XJ-Q
 
 Checked live on 2026-10-30 with the sample in a running studio: both examples run, each mapping's count shows, the compiled transforms download, and a warm transform answers in about 30 ms through the service and the worker. `Peril` writes nothing in either run, since its source concepts are sorted into the vocabulary part (TD-133).
 
-**Next action, for the maintainer:** decide TD-133, how a source concept that uses only SKOS's terms reaches the mapping part. Review ADR-A148, the facet values `xslt` and `jolt`, and PRI-77 and PRI-78, which record the principles stated on 2026-10-30.
+**Next action, for the maintainer:** review ADR-A148, the facet values `xslt` and `jolt`, and PRI-77 and PRI-78, which record the principles stated on 2026-10-30.
 
 ## Log
 
@@ -28,3 +28,4 @@ Checked live on 2026-10-30 with the sample in a running studio: both examples ru
 - 2026-10-30: XJ1 to XJ5 built. JOLT writes JSON-LD's keywords and IRIs as keys when `.`, `#`, `@` and its other syntax are escaped with a backslash in `shift` and `modify-overwrite-beta`, while `remove` matches keys unescaped.
 - 2026-10-30: the maintainer answered XJ-Q9 to XJ-Q12 and set the coordinator principle. The run was profiled, its cost is a cold JVM. XJ-Q8 reframed and XJ-Q13 added.
 - 2026-10-30: the maintainer answered XJ-Q8 (a) and XJ-Q13 (a). The engines cache compiled stylesheets and chains. XJ6 and XJ7 built.
+- 2026-10-31: TD-133 taken on by the `studio-publication` plan, and closed by its slice PB1.

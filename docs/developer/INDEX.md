@@ -842,12 +842,12 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 planned 2026-10-31, PB1 next |
+| **Status** | 🟡 PB1 built 2026-10-31, PB2 next |
 | **Unit ID** | `studio-publication` |
 | **Sketch** | [studio-publication.md](sketches/studio-publication.md) |
 | **Plan** | [studio-publication.md](plans/studio-publication.md) |
 | **Status Record** | [studio-publication.md](status/studio-publication.md) |
-| **Validation Packs** | none yet |
+| **Validation Packs** | [PB1 to PB11](validation/studio-publication.md) |
 | **ADRs** | A-149, Proposed |
 
 Explicit publication of each configuration unit as a version in a registry the studio keeps, with dependencies pinned, imports fenced, jobs reading the whole workspace, pluggable authentication and workspace modes.

@@ -146,6 +146,48 @@ class StudioApiTest {
     }
 
     @Test
+    void aConceptGoesWithItsSchemeWhenTheSchemeWentToMapping() {
+        String skos = "http://www.w3.org/2004/02/skos/core#";
+        Model m = Fixture.model(Fixture.PREFIXES
+            + "ex:rs a <http://www.nebularis.org/ontologies/Mork#RepresentationScheme> .\n"
+            + "ex:code a <" + skos + "Concept> ; <" + skos + "inScheme> ex:rs ; <" + skos + "notation> \"A\" .\n"
+            + "ex:cs a <" + skos + "ConceptScheme> .\n"
+            + "ex:c a <" + skos + "Concept> ; <" + skos + "inScheme> ex:cs .");
+        Map<Resource, String> owners = Parts.owners(m);
+        assertEquals("mapping", owners.get(m.getResource("https://example.org/code")));
+        assertEquals("vocabulary", owners.get(m.getResource("https://example.org/c")));
+        f.createWorkspace("One");
+        f.put(SURFACE, "\"0\"", CONFIG);
+        assertEquals(204, f.put(WS_PATH + "/graphs/mapping", "\"0\"", Fixture.PREFIXES
+            + "ex:rs a <http://www.nebularis.org/ontologies/Mork#RepresentationScheme> .\n"
+            + "ex:code a <" + skos + "Concept> ; <" + skos + "inScheme> ex:rs ; <" + skos + "notation> \"A\" .").status());
+    }
+
+    @Test
+    void aValidationJobNamesTheOtherPartsAsContextAndNotItsTarget() {
+        f.createWorkspace("One");
+        assertEquals(202, f.post(WS_PATH + "/jobs", "kind=validate&target=vocabulary", CONFIG).status());
+        Model job = f.store.graph(Graphs.job(Fixture.id(2)));
+        Resource node = job.getResource(Graphs.job(Fixture.id(2)));
+        java.util.Set<String> got = new java.util.TreeSet<>();
+        job.listObjectsOfProperty(node, Cst.contextGraph).forEachRemaining(o -> got.add(o.asResource().getURI()));
+        java.util.Set<String> want = new java.util.TreeSet<>();
+        org.nebularis.lattice.studio.model.Workspace.CONFIGS.stream().filter(p -> !p.equals("vocabulary")).forEach(p -> want.add(Graphs.config(WS, p)));
+        assertEquals(want, got);
+        assertTrue(!got.contains(Graphs.config(WS, "vocabulary")));
+    }
+
+    private static String contexts(String target) {
+        StringBuilder b = new StringBuilder();
+        for (String p : org.nebularis.lattice.studio.model.Workspace.CONFIGS) {
+            if (!p.equals(target)) {
+                b.append("cst:contextGraph <").append(Graphs.config(WS, p)).append("> ;\n");
+            }
+        }
+        return b.toString();
+    }
+
+    @Test
     void blankNodesSurviveASaveWithTheirStructure() {
         f.createWorkspace("One");
         String config = Fixture.PREFIXES + "ex:cfg a <" + LATTICE + "surface#IndexContract> ; ex:list ( \"a\" \"b\" ) ; ex:node [ ex:p [ ex:q 1 ] ] .";
@@ -221,9 +263,10 @@ class StudioApiTest {
               cst:workspace <urn:lattice:studio:ws:%2$s> ;
               cst:configGraph <urn:lattice:studio:job:%1$s:input> ;
               cst:baselineGraph <urn:lattice:studio:ws:%2$s:baseline:1> ;
+              %3$s
               cst:status cst:Queued ;
               cst:submittedAt "2026-10-27T10:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-            """.formatted(job, WS));
+            """.formatted(job, WS, contexts("persistence")));
         same(expected, f.store.graph(Graphs.job(job)));
         same(expected, Fixture.model(r));
         same(Fixture.model(CONFIG), f.store.graph(Graphs.jobInput(job)));

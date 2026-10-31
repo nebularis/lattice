@@ -230,6 +230,15 @@ describe("text", () => {
 describe("the new parts", () => {
   const ns = "https://example.org/x#";
 
+  it("sends a concept with its scheme, so a representation scheme's codes go to mapping and a vocabulary's stay", () => {
+    const parts = split(Graph.parse(`
+      @prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+      <urn:x:Source> a mork:RepresentationScheme . <urn:x:Fire> a skos:Concept ; skos:inScheme <urn:x:Source> ; skos:notation "FIRE" .
+      <urn:x:Perils> a skos:ConceptScheme . <urn:x:Flood> a skos:Concept ; skos:inScheme <urn:x:Perils> .`));
+    expect(parts.mapping.subjects(null).map((s) => s.value).sort()).toEqual(["urn:x:Fire", "urn:x:Source"]);
+    expect(parts.vocabulary.subjects(null).map((s) => s.value).sort()).toEqual(["urn:x:Flood", "urn:x:Perils"]);
+  });
+
   it("sorts the lending eligibility sample into eligibility, quantification and vocabulary", () => {
     const parts = split(Graph.parse(read("samples/lending-eligibility.ttl")));
     const e = "https://example.org/lattice/eligibility/";

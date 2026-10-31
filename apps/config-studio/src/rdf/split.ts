@@ -2,7 +2,7 @@
 // Sorts an imported graph into the graphs a workspace keeps, by the terms each named subject uses:
 // its rdf:type or its predicates. The first part in PARTS whose namespace a subject uses takes it,
 // so an elg:Question that names a qnt:RangeSet stays with eligibility. A concept scheme or concept
-// goes to vocabulary. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, a cst:Proposal to review, a subject using mork: terms to mapping, then any subject using ins: terms to meaning, and any
+// goes to vocabulary, unless its scheme went to mapping, where it follows. A cst:Assembly or wrd:VariableValue goes to assembly, before any other part, a cst:Proposal to review, a subject using mork: terms to mapping, then any subject using ins: terms to meaning, and any
 // other wrd: subject to library, after the rest. Everything else is baseline. A blank node goes wherever the subject that
 // refers to it went, so path steps written as blank nodes and RDF lists stay with their owner. So does a named node of a mapping's
 // own structure that uses no part's terms, such as a guard's SHACL shape or a scheme's prefix declaration, and so does the
@@ -61,6 +61,10 @@ export function split(graph: Graph): Record<Part, Graph> {
     if (q.subject.termType !== "NamedNode" || owner.has(q.subject.id)) continue;
     owner.set(q.subject.id, partOfNamed(graph, q.subject));
     pending.push(q.subject);
+  }
+  // A concept goes with its scheme, so a representation scheme's codes stay with the mapping that reads them (ADR-A149).
+  for (const q of graph.quads(undefined, SKOS("inScheme"))) {
+    if (q.subject.termType === "NamedNode" && owner.get(q.subject.id) === "vocabulary" && owner.get(q.object.id) === "mapping") owner.set(q.subject.id, "mapping");
   }
   // Blank nodes inherit their referrer's part, breadth first from the named subjects, and so do a mapping's own named nodes.
   while (pending.length) {

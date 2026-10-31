@@ -88,3 +88,31 @@ def test_a_mapping_compilation_writes_each_xml_and_json_schemes_transform_and_it
             ("json#Scheme", "Scheme.jolt.json", "application/json"), ("json#Scheme", "Scheme.jolt.json.attribution.json", "application/json")} <= files
     codes = {str(c) for c in compiled.objects(None, CST.code)}
     assert {"PositionalIdentity", "KeyNotEncoded"} <= codes
+
+
+def test_a_mapping_compilation_reads_the_source_codes_the_vocabulary_part_holds_as_context():
+    """ADR-A149 decision 7: a job reads the workspace's other parts, so a correspondence finds its source's codes."""
+    policies = ROOT / jobs.catalogue().area("tools") / "mork_transforms" / "tests" / "examples" / "policies"
+    schemes = Graph().parse(policies / "xml.mork.ttl")
+    codes = Graph()
+    for concept in (URIRef("urn:example:source/xml#Fire"), URIRef("urn:example:source/xml#Flood")):
+        for triple in list(schemes.triples((concept, None, None))):
+            schemes.remove(triple)
+            codes.add(triple)
+    alone = jobs.run_job(JOB, "compile", "mapping", schemes, Graph(), str(ROOT), "2026-10-31T00:00:00Z")
+    assert "CorrespondenceKey" in {str(c) for c in alone.objects(None, CST.code)}
+    read = jobs.run_job(JOB, "compile", "mapping", schemes, Graph(), str(ROOT), "2026-10-31T00:00:00Z", codes)
+    assert "CorrespondenceKey" not in {str(c) for c in read.objects(None, CST.code)}
+
+
+def test_a_validation_reports_on_its_target_part_never_on_the_context_it_reads():
+    """ADR-A149 decision 7: a finding about a subject only the context holds is that part's own validation's to report."""
+    scheme = Graph().parse(data="""
+        @prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+        <urn:x:Perils> a voc:ConceptScheme .""", format="turtle")
+    own = jobs.run_job(JOB, "validate", "vocabulary", scheme, Graph(), str(ROOT), "2026-10-31T00:00:00Z")
+    assert URIRef("urn:x:Perils") in set(own.objects(None, jobs.SH.focusNode))
+    assert own.value(JOB, CST.conforms) == Literal(False)
+    context = jobs.run_job(JOB, "validate", "vocabulary", Graph(), Graph(), str(ROOT), "2026-10-31T00:00:00Z", scheme)
+    assert URIRef("urn:x:Perils") not in set(context.objects(None, jobs.SH.focusNode))
+    assert context.value(JOB, CST.conforms) == Literal(True)

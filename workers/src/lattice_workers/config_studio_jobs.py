@@ -13,7 +13,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple
 
 import pyshacl
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
@@ -182,9 +182,9 @@ class _Result:
         add((node, CST.message, Literal(message)))
 
 
-def _copy_shacl_report(result: _Result, report: Graph) -> None:
-    """Copies pySHACL's results, sorted, with minted IRIs. Blank-node shape and path references are
-    dropped, since their identifiers differ between processes."""
+def _copy_shacl_report(result: _Result, report: Graph, keep: Callable[[Any], bool] = lambda focus: True) -> list:
+    """Copies pySHACL's results whose focus node `keep` accepts, sorted, with minted IRIs, and returns the severity of each
+    one copied. Blank-node shape and path references are dropped, since their identifiers differ between processes."""
     rows = []
     for node in report.subjects(RDF.type, SH.ValidationResult):
         def one(predicate: URIRef) -> Any:
@@ -197,7 +197,7 @@ def _copy_shacl_report(result: _Result, report: Graph) -> None:
             str(one(SH.sourceConstraintComponent)), messages, one(SH.focusNode), one(SH.resultPath),
             one(SH.resultSeverity), one(SH.sourceConstraintComponent), one(SH.value),
         ))
-    rows.sort(key=lambda row: row[:5])
+    rows = sorted((row for row in rows if keep(row[5])), key=lambda row: row[:5])
     for row in rows:
         _, _, _, _, messages, focus, path, severity, component, value = row
         node = result._mint("result")
@@ -210,9 +210,11 @@ def _copy_shacl_report(result: _Result, report: Graph) -> None:
                 add((node, predicate, obj))
         for message in messages:
             add((node, SH.resultMessage, Literal(message)))
+    return [row[7] for row in rows]
 
 
-def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root: str, now: datetime) -> None:
+def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root: str, now: datetime,
+              context: Optional[Graph] = None) -> None:
     if target == "mapping":
         result.conforms(_mapping_findings(result, config, baseline, root, now))
         return
@@ -220,7 +222,10 @@ def _validate(result: _Result, target: str, config: Graph, baseline: Graph, root
     conforms, report, _ = pyshacl.validate(
         data, shacl_graph=_shapes(root, target), inference="none", advanced=True, allow_warnings=True
     )
-    _copy_shacl_report(result, report)
+    # A finding about a subject only the context holds is that part's own validation's to report.
+    kept = _copy_shacl_report(result, report, lambda focus: not (
+        isinstance(focus, URIRef) and context is not None and (focus, None, None) in context and (focus, None, None) not in config))
+    conforms = not any(severity == SH.Violation for severity in kept)
     # The dal: shapes target the dimension classes, so a dal:DataAccessProfile that declares several
     # dimensions at once is checked only by the compiler. Its refusal and warnings join the report.
     compiled = True
@@ -441,10 +446,14 @@ def _compile_surface(result: _Result, config: Graph, baseline: Graph, root: str,
 
 
 def run_job(
-    job: URIRef, kind: str, target: str, config: Graph, baseline: Graph, root: Path | str, submitted_at: str
+    job: URIRef, kind: str, target: str, config: Graph, baseline: Graph, root: Path | str, submitted_at: str,
+    context: Optional[Graph] = None,
 ) -> Graph:
     """The triples a finished job adds. `kind` is `validate` or `compile`, `target` is `persistence`
-    or `surface`. `submitted_at` is the compile time of a surface, so two runs give the same files."""
+    or `surface`. `submitted_at` is the compile time of a surface, so two runs give the same files. `context` is the
+    workspace's other parts, read as the baseline is and never reported on (ADR-A149 decision 7)."""
+    context = context if context is not None else Graph()
+    baseline = _merge(baseline, context) if len(context) else baseline
     if kind not in ("validate", "compile") or target not in TARGETS:
         raise ValueError(f"unknown job kind {kind!r} or target {target!r}")
     if kind == "compile" and target in ("vocabulary", "quantification"):
@@ -453,7 +462,7 @@ def run_job(
     now = datetime.fromisoformat(submitted_at.replace("Z", "+00:00"))
     result = _Result(job)
     if kind == "validate":
-        _validate(result, target, config, baseline, base, now)
+        _validate(result, target, config, baseline, base, now, context)
     elif target == "persistence":
         _compile_persistence(result, config, baseline, base)
     elif target == "mapping":

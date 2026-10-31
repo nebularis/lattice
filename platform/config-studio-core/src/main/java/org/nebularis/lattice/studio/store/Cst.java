@@ -31,6 +31,8 @@ public final class Cst {
     public static final Property status = p("status");
     public static final Property workspace = p("workspace");
     public static final Property configGraph = p("configGraph");
+    /** A graph a job reads as context and never validates, one of its workspace's configuration parts other than its target. */
+    public static final Property contextGraph = p("contextGraph");
     public static final Property submittedAt = p("submittedAt");
     public static final Property startedAt = p("startedAt");
     public static final Property finishedAt = p("finishedAt");
