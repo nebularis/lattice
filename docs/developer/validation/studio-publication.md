@@ -53,3 +53,20 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 `platform/config-studio-service/src/test/java/org/nebularis/lattice/studio/AuthTest.java`, written by a Sonnet subagent and reviewed.
 
 **Not covered.** The browser's sign-in at a real OpenID Connect provider, by the authorization code flow with PKCE, which needs a provider and a registered client. The Word add-in under `oidc` (TD-134).
+
+## PB3: a workspace's owner and mode
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB3-01 | each mode / the owner, another principal and an administrator / read, write and manage as the sketch's §6 table says | L1 | ± | pass |
+| PB3-02 | a read-only workspace of `developer` / `reviewer` reads it, saves a part, deletes it / reads, then `403`, `403` | L4 | ± | pass |
+| PB3-03 | a locked workspace of `developer` / `reviewer` asks for it, its graphs, its export, a job of it, and the list / `404` each, and it is absent from the list | L8 | − | pass |
+| PB3-04 | a locked workspace of `reviewer` / `developer`, an administrator, lists and reads it / visible | L4 | + | pass |
+| PB3-05 | `reviewer` / changes the access of `developer`'s workspace, or names another owner of their own / `403` | L8 | − | pass |
+| PB3-06 | a workspace from before modes / read / shared with no owner, and locking it without an owner is refused | L3 | ± | pass |
+| PB3-07 | the worker's job update, with no principal / on a locked workspace / applied | L4 | + | pass |
+| PB3-08 | `reviewer` over MCP / `list_workspaces` / omits `developer`'s locked workspace | L8 | − | pass |
+
+`platform/config-studio-service/src/test/java/org/nebularis/lattice/studio/AccessTest.java`, written by a Sonnet subagent and reviewed.
+
+**Not covered.** The browser does not disable editing in a workspace its principal may only read. A save is refused by the writer and the refusal shown. An administrator gives an ownerless workspace an owner through the API, not the browser.

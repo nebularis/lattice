@@ -77,6 +77,7 @@ type Action =
   | { type: "saved"; part: Part; graph: Graph; revision: string }
   | { type: "conflict"; conflict?: Conflicted }
   | { type: "baseline"; graph: Graph; revision: string }
+  | { type: "summary"; summary: WorkspaceSummary }
   | { type: "error"; error?: string };
 
 const HISTORY = 200;
@@ -88,6 +89,8 @@ function update(state: State, part: Part, change: (c: Config) => Config): State 
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "summary":
+      return { ...state, summary: action.summary };
     case "loaded": {
       const configs: State["configs"] = {};
       for (const part of PARTS) {
@@ -238,6 +241,7 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
     undo: (part: Part) => dispatch({ type: "undo", part }),
     redo: (part: Part) => dispatch({ type: "redo", part }),
     dismissError: () => dispatch({ type: "error" }),
+    setSummary: (summary: WorkspaceSummary) => dispatch({ type: "summary", summary }),
   };
 }
 

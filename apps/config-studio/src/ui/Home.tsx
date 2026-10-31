@@ -94,6 +94,10 @@ export function Home() {
               </div>
               <div className="row small muted">Changed {ago(w.modifiedAt)}</div>
               <div className="row" style={{ flexWrap: "wrap" }}>
+                <span className="chip" title={w.owner ? `Owned by ${w.owner}` : "No owner"}>
+                  {w.mode}
+                  {w.owner ? `, ${w.owner}` : ""}
+                </span>
                 {w.sample && <span className="chip">from sample {w.sample}</span>}
                 <span className="chip baseline">baseline r{w.revisions.baseline}</span>
                 {CONFIG_PARTS.filter((p) => w.revisions[p] > 0).map((p) => (

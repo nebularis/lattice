@@ -147,6 +147,10 @@ public final class Writer {
 
         /** Null when the command is planned, otherwise the reply it gets without being applied. */
         Reply plan(int index, Command c) {
+            Reply denied = access(c);
+            if (denied != null) {
+                return denied;
+            }
             return switch (c.type()) {
                 case CREATE -> create(index, c);
                 case SAVE -> save(index, c);
@@ -157,7 +161,57 @@ public final class Writer {
                 case SUBMIT_JOB -> submitJob(index, c);
                 case JOB_UPDATE -> jobUpdate(index, c);
                 case DELETE_JOB -> deleteJob(index, c);
+                case SET_ACCESS -> setAccess(index, c);
             };
+        }
+
+        /**
+         * Null when the command's principal may make it, else the refusal (ADR-A149 decision 9). A command with no
+         * principal is the worker's, for a job it was given. A workspace a principal may not read is not found by them.
+         */
+        private Reply access(Command c) {
+            if (c.principal() == null || c.type() == Command.Type.CREATE || c.type() == Command.Type.IMPORT) {
+                return null;
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return null;
+            }
+            Workspace ws = found.get();
+            if (!ws.readableBy(c.principal(), c.admin())) {
+                return Reply.notFound();
+            }
+            boolean allowed = switch (c.type()) {
+                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT -> ws.writableBy(c.principal(), c.admin());
+                case DELETE_WORKSPACE, SET_ACCESS -> ws.managedBy(c.principal(), c.admin());
+                default -> true;
+            };
+            return allowed ? null : Reply.forbidden(c.principal() + " may not " + c.type().wire + " in this workspace, which is " + ws.mode());
+        }
+
+        /** A workspace's mode in {@code part}, and its owner in {@code label}, which only an administrator moves. */
+        private Reply setAccess(int index, Command c) {
+            if (!Workspace.MODES.contains(c.part()) || named(c).hasNext() || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a change of access names one of " + Workspace.MODES + " and carries no graph");
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return Reply.notFound();
+            }
+            Workspace ws = found.get();
+            String owner = c.label() == null ? ws.owner() : c.label();
+            if (!java.util.Objects.equals(owner, ws.owner()) && !c.admin()) {
+                return Reply.forbidden("only an administrator gives a workspace another owner");
+            }
+            if (owner == null && !Workspace.SHARED.equals(c.part())) {
+                return Reply.refused("a workspace with no owner stays shared");
+            }
+            Workspace updated = ws.withAccess(owner, c.part());
+            String receipts = Graphs.receipts(ws.id());
+            receipt(c, receipts, exists(ws.id()), List.of(Graphs.workspace(ws.id())), null);
+            request.add(replace(Graphs.workspace(ws.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(ws.id(), Optional.of(updated));
+            return planned(index, c, Reply.ok(), Reply::notFound);
         }
 
         private Reply create(int index, Command c) {
@@ -178,7 +232,7 @@ public final class Writer {
             if (workspace(c.workspace()).isPresent()) {
                 return Reply.refused("the workspace exists");
             }
-            Workspace ws = Workspace.created(c.workspace(), c.label(), c.at(), c.sample());
+            Workspace ws = Workspace.created(c.workspace(), c.label(), c.at(), c.sample(), c.principal());
             Map<String, Model> graphs = new LinkedHashMap<>();
             graphs.put(Graphs.workspace(ws.id()), ws.toModel());
             graphs.put(ws.baselineGraph(), baseline);
@@ -316,7 +370,7 @@ public final class Writer {
                 }
                 graphs.put(name, graph);
             }
-            Workspace stamped = ws.as(id, c.label(), c.at());
+            Workspace stamped = ws.as(id, c.label(), c.at(), c.principal());
             graphs.put(Graphs.workspace(id), stamped.toModel());
             String receipts = Graphs.receipts(id);
             receipt(c, receipts, absent(id), graphs.keySet(), null);

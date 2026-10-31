@@ -4,6 +4,7 @@
 import { createContext, useContext } from "react";
 import { LogIn, LogOut, User } from "lucide-react";
 import { chooseLocal, signIn, signOut, type Session } from "../session";
+import { api, MODES, type Mode, type WorkspaceSummary } from "../api";
 
 export const SessionContext = createContext<Session | undefined>(undefined);
 
@@ -50,5 +51,41 @@ export function SignIn({ session }: { session: Session }) {
         <LogIn size={14} /> Sign in
       </button>
     </div>
+  );
+}
+
+const MODE_TITLES: Record<Mode, string> = {
+  shared: "Everyone signed in reads and writes it",
+  "read-only": "Everyone signed in reads it, and its owner and administrators write it",
+  locked: "Only its owner and administrators read and write it",
+};
+
+/** A workspace's mode, which its owner or an administrator may change (ADR-A149 decision 9). */
+export function ModeControl({ summary, onChange }: { summary: WorkspaceSummary; onChange: (s: WorkspaceSummary) => void }) {
+  const session = useSession();
+  const manages = !!session?.admin || (!!summary.owner && summary.owner === session?.principal);
+  const label = `${summary.mode}${summary.owner ? `, owned by ${summary.owner}` : ""}`;
+  if (!manages || !summary.owner) {
+    return (
+      <span className="chip" title={MODE_TITLES[summary.mode]}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <select
+      className="btn ghost sm"
+      aria-label="Who may read and write this workspace"
+      title={MODE_TITLES[summary.mode]}
+      value={summary.mode}
+      onChange={(e) => void api.setMode(summary.id, e.target.value as Mode).then(onChange, (err: Error) => window.alert(err.message))}
+    >
+      {MODES.map((m) => (
+        <option key={m} value={m}>
+          {m}
+          {m === summary.mode ? `, owned by ${summary.owner}` : ""}
+        </option>
+      ))}
+    </select>
   );
 }

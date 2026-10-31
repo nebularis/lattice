@@ -44,7 +44,14 @@ export interface WorkspaceSummary {
   revisions: Record<GraphName, number>;
   /** The id of the sample it was made from, if it was. */
   sample?: string;
+  /** Who owns it, if anyone does, and who may read and write it (ADR-A149 decision 9). */
+  owner?: string;
+  mode: Mode;
 }
+
+export type Mode = "locked" | "read-only" | "shared";
+export const MODES: Mode[] = ["shared", "read-only", "locked"];
+const MODE_NODES: Record<string, Mode> = { Locked: "locked", ReadOnly: "read-only", Shared: "shared" };
 
 export interface Sample {
   id: string;
@@ -60,6 +67,8 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
     label: graph.value(iri, LABEL) ?? "Untitled workspace",
     modifiedAt: graph.value(iri, CST("modifiedAt")),
     sample: graph.value(iri, CST("fromSample"))?.replace("urn:lattice:studio:sample:", ""),
+    owner: graph.value(iri, CST("owner")),
+    mode: MODE_NODES[localName(graph.value(iri, CST("mode")) ?? "")] ?? "shared",
     revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
 }
@@ -115,6 +124,12 @@ export const api = {
   /** Every graph of a workspace but its jobs, as a TriG file to download. */
   exportUrl(id: string): string {
     return `/api/workspaces/${id}/export`;
+  },
+
+  /** Sets the workspace's mode. Only its owner or an administrator may. */
+  async setMode(id: string, mode: Mode): Promise<WorkspaceSummary> {
+    const response = await request(`/api/workspaces/${id}/access?mode=${mode}`, { method: "POST" });
+    return summary(Graph.parse(await response.text()), `urn:lattice:studio:ws:${id}`);
   },
 
   async deleteWorkspace(id: string): Promise<void> {

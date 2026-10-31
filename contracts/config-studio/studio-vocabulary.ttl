@@ -357,9 +357,19 @@ cst:Receipt a owl:Class ;
 cst:commandId a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The command's id, a lower-case UUID its sender chose. A command whose receipt exists is answered from it and not applied again." .
 cst:command a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
-    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, save-document, delete-document, submit-job, job-update or delete-job." .
+    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, save-document, delete-document, submit-job, job-update, delete-job or set-access." .
 cst:sender a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The component that says it sent the command, service or worker. Not authenticated." .
+cst:principal a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "Who asked for the write, as the service authenticated them. A worker's write has none." .
+cst:owner a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:string ;
+    rdfs:comment "The principal who made or imported the workspace, or whom an administrator gave it. A workspace from before owners has none." .
+cst:mode a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Mode ;
+    rdfs:comment "Who reads and writes the workspace. A workspace without one is shared." .
+cst:Mode a owl:Class ; rdfs:comment "Who may read and write a workspace (ADR-A149 decision 9)." .
+cst:Locked a cst:Mode ; rdfs:comment "Read and written by its owner and administrators only." .
+cst:ReadOnly a cst:Mode ; rdfs:comment "Read by everyone signed in, written by its owner and administrators." .
+cst:Shared a cst:Mode ; rdfs:comment "Read and written by everyone signed in." .
 cst:job a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Job ;
     rdfs:comment "The job a write concerned." .
 cst:requestedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:dateTime ;

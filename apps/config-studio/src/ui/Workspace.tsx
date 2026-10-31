@@ -2,7 +2,7 @@
 // The workspace shell: top bar, navigation, the view, the inspector and the problems drawer, all
 // sharing one selection, the route.
 
-import { PrincipalMenu } from "./Session";
+import { ModeControl, PrincipalMenu } from "./Session";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
@@ -184,6 +184,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
             <span>/</span>
             <strong>{state.summary.label}</strong>
           </div>
+          <ModeControl summary={state.summary} onChange={model.setSummary} />
           <div className="spacer" />
           <PrincipalMenu />
           <button className="btn ghost sm" onClick={() => setPalette(true)} aria-label="Go to anything">

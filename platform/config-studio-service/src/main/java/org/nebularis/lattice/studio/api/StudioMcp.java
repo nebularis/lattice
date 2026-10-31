@@ -300,7 +300,7 @@ final class StudioMcp {
     }
 
     private String listWorkspaces() {
-        Model all = store.workspaces();
+        Model all = StudioApi.readableWorkspaces(store);
         List<String> lines = new ArrayList<>();
         all.listResourcesWithProperty(RDF.type, Cst.Workspace).forEachRemaining(ws -> lines.add(
             ws.getURI().substring(Graphs.WORKSPACE_PREFIX.length()) + "  " + label(all, ws)));
@@ -530,7 +530,7 @@ final class StudioMcp {
     private Workspace workspace(JsonObject args) {
         String id = required(args, "workspace");
         Workspace ws = Graphs.isId(id) ? Workspace.from(id, store.graph(Graphs.workspace(id))) : null;
-        if (ws == null) {
+        if (ws == null || !StudioApi.readable(ws)) {
             throw new Refusal("No workspace has the id " + id + ". list_workspaces lists them.");
         }
         return ws;

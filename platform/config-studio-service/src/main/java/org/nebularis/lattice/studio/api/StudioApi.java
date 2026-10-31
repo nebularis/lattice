@@ -207,7 +207,7 @@ public final class StudioApi {
         }
         if (s.length == 1 && s[0].equals("workspaces")) {
             return switch (method) {
-                case "GET" -> ApiResponse.turtle(200, Turtle.write(store.workspaces()));
+                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store)));
                 case "POST" -> createWorkspace(req);
                 default -> notAllowed("GET, POST");
             };
@@ -220,6 +220,9 @@ public final class StudioApi {
                     case "DELETE" -> deleteWorkspace(ws);
                     default -> notAllowed("GET, DELETE");
                 };
+            }
+            if (s.length == 3 && s[2].equals("access")) {
+                return method.equals("POST") ? setAccess(req, ws) : notAllowed("POST");
             }
             if (s.length == 3 && s[2].equals("export")) {
                 return method.equals("GET") ? export(ws) : notAllowed("GET");
@@ -337,7 +340,7 @@ public final class StudioApi {
         if (!reply.applied()) {
             return refusal(reply);
         }
-        Workspace ws = Workspace.created(id, label, now, sample);
+        Workspace ws = Workspace.created(id, label, now, sample, CURRENT.get() == null ? null : CURRENT.get().name());
         return ApiResponse.turtle(201, Turtle.write(ws.toModel())).with("Location", "/api/workspaces/" + id);
     }
 
@@ -467,6 +470,7 @@ public final class StudioApi {
     /** A writer's refusal as the HTTP answer to the request that caused it. */
     private static ApiResponse refusal(Reply reply) {
         return switch (reply.status()) {
+            case 403 -> ApiResponse.text(403, reply.message());
             case 404 -> notFound();
             case 503 -> ApiResponse.text(503, reply.message());
             default -> ApiResponse.text(400, reply.message());
@@ -783,7 +787,10 @@ public final class StudioApi {
 
     private ApiResponse getJob(String job) {
         Model m = store.graph(Graphs.job(job));
-        return m.isEmpty() ? notFound() : ApiResponse.turtle(200, Turtle.write(m));
+        org.apache.jena.rdf.model.Statement ws = m.createResource(Graphs.job(job)).getProperty(Cst.workspace);
+        boolean visible = ws != null && ws.getObject().isURIResource()
+            && load(ws.getResource().getURI().substring(Graphs.WORKSPACE_PREFIX.length())) != null;
+        return visible ? ApiResponse.turtle(200, Turtle.write(m)) : notFound();
     }
 
     private ApiResponse deleteJob(String job) {
@@ -799,8 +806,44 @@ public final class StudioApi {
 
     // --- helpers ---------------------------------------------------------------------------
 
+    /** The workspace, or null when it does not exist or the request's principal may not read it (ADR-A149 decision 9). */
     private Workspace load(String id) {
-        return Workspace.from(id, store.graph(Graphs.workspace(id)));
+        Workspace ws = Workspace.from(id, store.graph(Graphs.workspace(id)));
+        return ws != null && readable(ws) ? ws : null;
+    }
+
+    static boolean readable(Workspace ws) {
+        Principal p = CURRENT.get();
+        return p == null || ws.readableBy(p.name(), p.admin());
+    }
+
+    /** The descriptions of the workspaces the request's principal may read. */
+    static Model readableWorkspaces(StudioStore store) {
+        Model all = store.workspaces();
+        for (Resource node : all.listSubjectsWithProperty(RDF.type, Cst.Workspace).toList()) {
+            String id = node.getURI().substring(Graphs.WORKSPACE_PREFIX.length());
+            Workspace ws = Workspace.from(id, all);
+            if (ws == null || !readable(ws)) {
+                all.removeAll(node, null, null);
+                node.listProperties(Cst.document).toList().forEach(d -> all.removeAll(d.getResource(), null, null));
+            }
+        }
+        return all;
+    }
+
+    /** Sets a workspace's mode, and its owner when an administrator names one, from {@code mode} and {@code owner}. */
+    private ApiResponse setAccess(ApiRequest req, String id) {
+        if (load(id) == null) {
+            return notFound();
+        }
+        Map<String, String> q = query(req.query());
+        String mode = q.get("mode");
+        String owner = q.get("owner");
+        if (mode == null || !Workspace.MODES.contains(mode) || (owner != null && !owner.matches("[^\\s]{1,200}"))) {
+            return ApiResponse.text(400, "mode is one of " + Workspace.MODES + ", and owner, when given, a principal's name");
+        }
+        Reply reply = writes.send(Command.setAccess(id, mode, owner));
+        return reply.applied() ? describe(id) : refusal(reply);
     }
 
     private Instant now() {

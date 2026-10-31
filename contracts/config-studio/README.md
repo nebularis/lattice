@@ -40,6 +40,7 @@ Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with
 |---|---|---|
 | `GET /api/health` | | `200`, `text/plain`, `ok` |
 | `GET /api/session` | | `200`, `application/json`, how to sign in: `provider` (`local` or `oidc`), with `principalOption` and `administrator` for `local`, or `issuer`, `clientId`, `scope`, `authorizationEndpoint` and `tokenEndpoint` for `oidc`, and `principal` and `admin` when the request authenticates |
+| `POST /api/workspaces/{ws}/access?mode=…&owner=…` | | `200`, the workspace's description with its new `cst:mode`, and `cst:owner` when an administrator named one. Only the owner or an administrator may change it, else `403`. `mode` is `locked`, `read-only` or `shared`. A workspace with no owner stays shared |
 | `GET /api/features` | | `200`, `application/json`, `{"features": [...]}`, the optional features the deployment turned on with `LATTICE_STUDIO_FEATURES`, such as `odrl` |
 | `GET /api/vocabulary` | | `200`, the `dal:`, `srf:`, `fnd:` and `voc:` specifications and vocabularies merged, with an `ETag`. `304` for a matching `If-None-Match` |
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |
@@ -204,7 +205,7 @@ A mapping proposal asks the deployment's language model, through the provider th
 
 Every write to the store is a command to the store writer, `config-studio-writer`, the only component that writes the store (ADR-A136). A command is published to the super stream `lattice.studio.writes`, a direct exchange with argument `x-super-stream` whose binding keys `0` to `7` route to the partition streams `lattice.studio.writes-0` to `-7`, each bound with `x-stream-partition-order` and declared with `x-queue-type` `stream`, `x-max-age` `7D` and `x-max-length-bytes` 1 GiB. A command's routing key is its workspace's partition: the id's first 8 hex digits, as an unsigned number, modulo 8. So a workspace's commands stay in order in one partition. The writers are one single-active-consumer group, `lattice.studio.writers`, so each partition is applied by one live writer at a time, and RabbitMQ spreads the partitions across the writers that run. The number of partitions is fixed here, since changing it moves workspaces between partitions.
 
-A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent. Every command carries `id`, a lower-case UUID its sender chooses, and `sender`, `service` or `worker`.
+A command's fields are AMQP headers, and the graphs it carries are its body, `content_type` `application/n-quads`, persistent. Every command carries `id`, a lower-case UUID its sender chooses, and `sender`, `service` or `worker`. A command the service sends for a request also carries `principal`, the name the service authenticated, and `admin`, `true` when they administer (ADR-A149 decision 8). The writer refuses with `403` a write the workspace's mode does not allow its principal, and answers `404` to one whose workspace the principal may not read (decision 9). A command without a principal is the worker's, for its job.
 
 | `command` | Other headers | Body | Sent by |
 |---|---|---|---|
@@ -217,6 +218,7 @@ A command's fields are AMQP headers, and the graphs it carries are its body, `co
 | `save-document` | `workspace`, `part` (the document's id), `expect`, `at`, `label` (its title), `sample` (its template's key) | the document's graph, in the default graph | service |
 | `delete-document` | `workspace`, `part` (the document's id) | none | service |
 | `delete-job` | `workspace`, `job` | none | service, and the writer's sweep of jobs finished longer ago than the retention |
+| `set-access` | `workspace`, `part` (the mode, `locked`, `read-only` or `shared`), `label` (a new owner, from an administrator only) | none | service |
 
 `workspace` and `job` are the ids, `at` an `xsd:dateTime`. The service publishes with confirms and sets `reply_to` to `amq.rabbitmq.reply-to` and `correlation_id` to the command's id, and the writer answers with headers alone. The stream keeps `reply_to` as an AMQP 1.0 address, `/queues/` and the percent-encoded queue name, which the writer decodes. The reply's headers are `status` (200 applied, 400 refused, 404 no such workspace or job, 412 a stale `expect`), `revision` (the new one, or the current one for 412) and `message`. The worker publishes with confirms and no reply.
 

@@ -55,6 +55,29 @@ public final class Cst {
     public static final Property sender = p("sender");
     /** Who asked for a write, as the service authenticated them (PRI-54). */
     public static final Property principal = p("principal");
+    /** The principal who owns a workspace (ADR-A149 decision 9). */
+    public static final Property owner = p("owner");
+    /** A workspace's mode, {@code cst:Locked}, {@code cst:ReadOnly} or {@code cst:Shared}. */
+    public static final Property mode = p("mode");
+
+    /** The mode node of {@code name}, one of {@code Workspace.MODES}. */
+    public static Resource mode(String name) {
+        return ResourceFactory.createResource(NS + switch (name) {
+            case "locked" -> "Locked";
+            case "read-only" -> "ReadOnly";
+            default -> "Shared";
+        });
+    }
+
+    /** The name of mode node {@code node}, or null when it names none. */
+    public static String modeName(Resource node) {
+        return switch (node.isURIResource() ? node.getURI() : "") {
+            case NS + "Locked" -> "locked";
+            case NS + "ReadOnly" -> "read-only";
+            case NS + "Shared" -> "shared";
+            default -> null;
+        };
+    }
     public static final Property job = p("job");
     public static final Property requestedAt = p("requestedAt");
     public static final Property committedAt = p("committedAt");
