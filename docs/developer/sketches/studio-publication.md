@@ -236,3 +236,18 @@ flowchart LR
 | PB-Q12 | When a projection is brought up to date | (a) in the writer's own request, by maintenance updates generated from each contract, which needs a surface backend that does not exist and a Java port of it. (b) by a refresh job the writer queues after each write that changes a projection's source, which the worker runs with `tools/surface` over the changed aggregates, so a projection lags its source by a job's latency and records the read set it was built from. (c) never stored, each contract compiled to a query the service runs on read, which keeps the scans and moves them into generated text | Answered 2026-10-31, (b), now ADR-A149 decision 14. A surface backend for (a) is BL-09 |
 
 PB-Q12 and PB-Q13 were answered on 2026-10-31.
+
+**How each projection is expressed.** A surface promotion restates a property of a carrier class, reached by a read path of edges, into a generated module with its read set and manifest. Tried on 2026-10-31 with `tools/surface` on the Surface layer's subscription example, it wrote an assertions module of the restated triples, a core module and a manifest, 123 lines for two carriers.
+
+| Projection | Carrier and read path | A promotion fits |
+|---|---|---|
+| the registry listing | `fnd:PersistentIdentity`, `cst:current` | yes |
+| jobs by workspace | `cst:Job`, `cst:workspace` | yes |
+| holders | `cst:Workspace`, `cst:dependsOn` and `cst:holdsImport` | yes |
+| terms of published versions | each unit's member class, such as `skos:Concept`, its label and the version its member property names | yes, one contract per unit kind of the units table |
+| workspace summaries | `cst:Workspace` to each part's version row | no. A part's row is joined to its workspace by its root's prefix, `{workspace}/part/{name}`, not by an edge, and the summary keys each sequence by the part's name |
+
+| ID | Question | Options | Leaning |
+|---|---|---|---|
+| PB-Q14 | How PB17 expresses its projections | (a) a surface promotion each, the description gaining a `cst:part` edge to each part's root so a read path reaches the rows, and the summary a projection contract that keys each sequence by its part. (b) a surface promotion each for the four that fit, and the workspace summary a query kept beside them in the contract, run by the same refresh job and recorded as a gap in Surface. (c) every projection a query kept in the contract, with no surface contract | (b), since four are what a promotion is for and the fifth needs a join Surface has no read path for, so forcing it adds an edge to the description that only the projection reads |
+
