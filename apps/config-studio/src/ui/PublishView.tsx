@@ -3,7 +3,7 @@
 // that publishes it. Nothing is published until someone presses it.
 
 import { useEffect, useMemo, useState } from "react";
-import { Link2, Pin, Send, X } from "lucide-react";
+import { Link2, Pin, Send, Upload, X } from "lucide-react";
 import { CST, Graph, LABEL, SKOS, TYPE, localName } from "@lattice/authoring-domain";
 import { api, awaitJob, type WorkspaceSummary } from "../api";
 import { CONFIG_PARTS, type ConfigPart } from "../rdf/split";
@@ -14,20 +14,23 @@ interface Unit {
   root: string;
   label: string;
   kind: string;
-  part: ConfigPart;
+  /** Where it is authored: a part, or a held import named by its digest. */
+  part: ConfigPart | "import";
+  importDigest?: string;
 }
 
-/** The roots of the units table's classes in each part as saved. */
-export function unitsIn(table: Graph, saved: Partial<Record<ConfigPart, Graph>>): Unit[] {
+/** The roots of the units table's classes in each part as saved, or, given `imported`, in that import whatever its part. */
+export function unitsIn(table: Graph, saved: Partial<Record<ConfigPart, Graph>>, imported?: { graph: Graph; digest: string }): Unit[] {
   const out: Unit[] = [];
   for (const unit of table.ofType(CST("PublicationUnit"))) {
-    const part = table.value(unit.value, CST("authoredIn")) as ConfigPart | undefined;
-    const graph = part && saved[part];
-    if (!graph) continue;
+    const authored = table.value(unit.value, CST("authoredIn")) as ConfigPart | undefined;
+    const part = imported ? "import" : authored;
+    const graph = imported ? imported.graph : authored && saved[authored];
+    if (!graph || !part) continue;
     const roots = new Set(table.objects(unit.value, CST("rootClass")).flatMap((c) => graph.subjects(TYPE, c.value).map((r) => r.value)));
     for (const root of roots) {
       if (root.startsWith("_:")) continue;
-      out.push({ root, part, kind: table.value(unit.value, LABEL) ?? localName(unit.value), label: graph.value(root, LABEL) ?? graph.value(root, SKOS("prefLabel")) ?? localName(root) });
+      out.push({ root, part, importDigest: imported?.digest, kind: table.value(unit.value, LABEL) ?? localName(unit.value), label: graph.value(root, LABEL) ?? graph.value(root, SKOS("prefLabel")) ?? localName(root) });
     }
   }
   return out.sort((a, b) => a.part.localeCompare(b.part) || a.label.localeCompare(b.label));
@@ -44,7 +47,15 @@ export function PublishView() {
   const [error, setError] = useState<string>();
   useEffect(() => void api.publicationUnits().then(setTable, (e: Error) => setError(e.message)), []);
   const saved = useMemo(() => Object.fromEntries(CONFIG_PARTS.map((p) => [p, configs[p]?.saved])) as Partial<Record<ConfigPart, Graph>>, [configs]);
-  const units = useMemo(() => (table ? unitsIn(table, saved) : []), [table, saved]);
+  const [imported, setImported] = useState<Record<string, Graph>>({});
+  const held = studio.model.state.summary!.imports;
+  useEffect(() => {
+    for (const i of held) if (!imported[i.digest]) void api.importGraph(studio.id, i.digest).then((g) => setImported((m) => ({ ...m, [i.digest]: g })), () => undefined);
+  }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
+  const units = useMemo(
+    () => (table ? [...unitsIn(table, saved), ...held.flatMap((i) => (imported[i.digest] ? unitsIn(table, {}, { graph: imported[i.digest], digest: i.digest }) : []))] : []),
+    [table, saved, held, imported],
+  );
   useEffect(() => {
     for (const u of units) {
       void api.lineage(u.root).then((g) => setCurrent((c) => ({ ...c, [u.root]: g?.value(u.root, CST("current")) ?? null })), () => undefined);
@@ -54,7 +65,7 @@ export function PublishView() {
   const publish = async (u: Unit) => {
     setRows((r) => ({ ...r, [u.root]: { state: "publishing" } }));
     try {
-      const id = await api.preparePublication(studio.id, u.part, u.root);
+      const id = await api.preparePublication(studio.id, u.part, u.root, u.importDigest);
       const job = await awaitJob(id);
       if (job.status === "Failed") throw new Error(job.failure ?? "The publish job failed.");
       const lineage = await api.publish(studio.id, id);
@@ -91,7 +102,7 @@ export function PublishView() {
         <tbody>
           {units.map((u) => {
             const row = rows[u.root] ?? { state: "idle" };
-            const unsaved = configs[u.part] && configs[u.part]!.current !== configs[u.part]!.saved;
+            const unsaved = u.part !== "import" && configs[u.part] && configs[u.part]!.current !== configs[u.part]!.saved;
             const version = current[u.root];
             return (
               <tr key={u.root}>
@@ -112,8 +123,55 @@ export function PublishView() {
           })}
         </tbody>
       </table>
+      <Imports summary={summary} onChange={studio.model.setSummary} />
       <Dependencies summary={summary} onChange={studio.model.setSummary} />
     </div>
+  );
+}
+
+/** The imports the workspace holds, read only, and a way to add one from a file (ADR-A149 decision 6). */
+function Imports({ summary, onChange }: { summary: WorkspaceSummary; onChange: (s: WorkspaceSummary) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string>();
+  const add = async (file: File) => {
+    setBusy(true);
+    try {
+      const xml = /\.(rdf|owl|xml)$/i.test(file.name);
+      onChange(await api.fenceImport(summary.id, await file.text(), xml ? "application/rdf+xml" : "text/turtle", file.name));
+      setMessage(undefined);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const release = (digest: string) =>
+    void api.releaseImport(summary.id, digest).then(
+      () => onChange({ ...summary, imports: summary.imports.filter((i) => i.digest !== digest) }),
+      (e: Error) => setMessage(e.message),
+    );
+  return (
+    <>
+      <h3 style={{ marginTop: 24 }}>Imports</h3>
+      <p className="muted">
+        An import is kept as it was read, stored once whichever workspaces hold it, and never edited. The workspace reads it, and its units can be published.
+      </p>
+      {message && <div className="error small">{message}</div>}
+      <ul className="list">
+        {summary.imports.map((i) => (
+          <li key={i.digest} title={i.graph}>
+            {i.label} <span className="muted small">{i.digest.slice(0, 16)}</span>
+            <button className="btn ghost icon" aria-label={`Release ${i.label}`} onClick={() => release(i.digest)}>
+              <X size={14} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <label className="btn sm">
+        {busy ? <Spinner size={12} /> : <Upload size={14} />} Import a Turtle or RDF/XML file
+        <input type="file" accept=".ttl,.rdf,.owl,.xml" hidden disabled={busy} onChange={(e) => e.target.files?.[0] && void add(e.target.files[0])} />
+      </label>
+    </>
   );
 }
 

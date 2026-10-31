@@ -16,6 +16,8 @@ public final class Cst {
     /** A job kind that versions a unit of a configuration part for publication (ADR-A149). */
     public static final Resource Publish = r("Publish");
     /** An event of a lineage's registry graph, the publication of one version. */
+    /** A job kind that reads imported RDF and gives the digest of its content (ADR-A149 decision 6). */
+    public static final Resource Fence = r("Fence");
     public static final Resource Publication = r("Publication");
     public static final Resource Persistence = r("Persistence");
     public static final Resource Surface = r("Surface");
@@ -84,6 +86,8 @@ public final class Cst {
     }
     /** A published lineage a workspace follows, or a version it pins (ADR-A149 decision 5). */
     public static final Property dependsOn = p("dependsOn");
+    /** An import graph a workspace holds, stored once by its digest. */
+    public static final Property holdsImport = p("holdsImport");
     public static final Property job = p("job");
     /** The unit IRI a publish job versions, which becomes the lineage. */
     public static final Property unit = p("unit");

@@ -229,6 +229,8 @@ cst:JobKind a owl:Class ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+cst:Fence a cst:JobKind ; rdfs:comment "Digest what an import leaves in the graph, so the workspace holds it, stored once and read only (ADR-A149 decision 6)." .
+cst:holdsImport a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Graph ; rdfs:comment "A fenced import the workspace holds, urn:lattice:studio:import:{digest}, labelled with rdfs:label. Its jobs read it as context." .
 cst:Publish a cst:JobKind ; rdfs:comment "Name the version a unit of the saved part would be published as, under ADR-A149's rule, writing nothing but the job." .
 cst:unit a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:comment "The root of the unit a publish job publishes." .
 cst:lineage a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The lineage a publish job names, the root's own IRI, a fnd:PersistentIdentity." .

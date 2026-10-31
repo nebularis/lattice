@@ -24,7 +24,7 @@ public record Command(String id, String sender, Type type, String workspace, Str
         CREATE("create"), SAVE("save"), IMPORT("import"), DELETE_WORKSPACE("delete-workspace"),
         SAVE_DOCUMENT("save-document"), DELETE_DOCUMENT("delete-document"), SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"),
         DELETE_JOB("delete-job"), SET_ACCESS("set-access"), PUBLISH("publish"),
-        SET_DEPENDENCIES("set-dependencies");
+        SET_DEPENDENCIES("set-dependencies"), FENCE("fence"), RELEASE("release");
 
         public final String wire;
 
@@ -88,6 +88,16 @@ public record Command(String id, String sender, Type type, String workspace, Str
     /** {@code body} holds {@code <ws> cst:dependsOn <iri>} for each dependency, in the default graph. */
     public static Command setDependencies(String ws, Model body) {
         return new Command(newId(), SERVICE, Type.SET_DEPENDENCIES, ws, null, null, null, null, null, null, withDefault(body), null, false);
+    }
+
+    /** The imported graph rides as the default graph, its digest as the part and its label as the label. */
+    public static Command fence(String ws, String digest, String label, Model content) {
+        return new Command(newId(), SERVICE, Type.FENCE, ws, null, digest, null, null, label, null, withDefault(content), null, false);
+    }
+
+    /** The workspace stops holding the import graph of {@code digest}, which stays in the store. */
+    public static Command release(String ws, String digest) {
+        return new Command(newId(), SERVICE, Type.RELEASE, ws, null, digest, null, null, null, null, DatasetFactory.create(), null, false);
     }
 
     public static Command deleteJob(String ws, String job) {

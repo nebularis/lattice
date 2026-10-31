@@ -148,3 +148,17 @@ def prepare(job: URIRef, config: Graph, root: URIRef, context: Graph | None = No
         result.graph.add((job, PINS, v))
     result.conforms(True)
     return result.graph
+
+
+def fence(job: URIRef, imported: Graph) -> Graph:
+    """A fence job's result (ADR-A149 decision 6): what an import leaves in the graph, digested so it is stored once,
+    whichever workspaces hold it, as an N-Triples artefact with the job's `cst:digest`."""
+    from mork_rdf.compile import digest
+
+    if not len(imported):
+        raise ValueError("an import holds no triple")
+    result = _Result(job)
+    result.artefact("import.nt", "application/n-triples", imported.serialize(format="nt"), "import")
+    result.graph.add((job, CST.digest, Literal(digest(imported))))
+    result.conforms(True)
+    return result.graph

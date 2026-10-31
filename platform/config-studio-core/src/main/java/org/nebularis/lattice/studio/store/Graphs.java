@@ -118,4 +118,20 @@ public final class Graphs {
     public static boolean isVersionGraph(String iri) {
         return iri != null && VERSION_GRAPH.matcher(iri).matches();
     }
+
+    /** An import graph is global and immutable, stored once by the digest of its content whichever workspaces hold it. */
+    public static final String IMPORT_PREFIX = "urn:lattice:studio:import:";
+    private static final Pattern DIGEST = Pattern.compile("[0-9a-f]{64}");
+
+    public static boolean isDigest(String s) {
+        return s != null && DIGEST.matcher(s).matches();
+    }
+
+    public static String importGraph(String digest64) {
+        return IMPORT_PREFIX + digest64;
+    }
+
+    public static boolean isImportGraph(String iri) {
+        return iri != null && iri.startsWith(IMPORT_PREFIX) && isDigest(iri.substring(IMPORT_PREFIX.length()));
+    }
 }

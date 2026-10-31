@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🟡 PB1 to PB6 built 2026-10-31, PB7 next
+**Status:** 🟡 PB1 to PB7 built 2026-10-31, PB8 next
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -28,7 +28,11 @@ PB4 and PB5 were built on 2026-10-31. A publish job takes a unit's aggregate fro
 
 PB6 was built on 2026-10-31. A workspace depends on published lineages, which it follows, or versions, which it pins, with `PUT /api/workspaces/{ws}/dependencies`. Its validation, compilation, dry run and publish jobs read what each resolves to as context, under the version's IRI and its lineage's. Publishing rewrites a reference to a followed lineage to its current version, keeps a reference to a member of a version, records each with `cst:pins`, and fails on a reference to an unpublished unit. The Publish view lists the dependencies and the registry to follow or pin from. The Java side was written by a Sonnet subagent and reviewed. Checked live, which found that the writer refused a job update carrying `cst:pins`, now fixed with a test. Checks run 2026-10-31, all passing: `check:config-studio`, `check:workers` (173), `check:knowledge`, `check:identifiers`, and the service module's tests. The live check's two workspaces and four registry graphs were removed.
 
-**Next action:** build PB7.
+PB7 was built on 2026-10-31. A fence job digests an imported graph, and `POST /api/workspaces/{ws}/imports` stores it once at `urn:lattice:studio:import:{digest}`, held by the workspace with a label and read only. The workspace's jobs read its held imports as context, a unit may be published from an import, and releasing one leaves the graph for any other workspace that holds it. The Publish view imports a Turtle or RDF/XML file and lists held imports and their units. TD-135 records that an export omits its imports' content and that nothing removes an import no workspace holds. The Java side was written by a Sonnet subagent and reviewed. It also hides the import labels of a workspace a principal may not read. Checks run 2026-10-31, all passing: `check:config-studio`, `check:workers` (175), `check:knowledge`, `check:identifiers`, and the service module's 132 tests. Checked live, and the test data removed.
+
+The worker side of PB8, the provenance of compiled artefacts, went in with PB7's commit, since it shares the worker's file.
+
+**Next action:** build PB8.
 
 ## Log
 
@@ -38,3 +42,4 @@ PB6 was built on 2026-10-31. A workspace depends on published lineages, which it
 - 2026-10-31: PB3 built.
 - 2026-10-31: PB4 and PB5 built. PB-D1 to PB-D3 revised to what was built. MEC-98 and MEC-99 added.
 - 2026-10-31: PB6 built.
+- 2026-10-31: PB7 built. TD-135 added.

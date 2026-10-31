@@ -123,3 +123,14 @@ def test_a_followed_lineage_is_found_in_the_registry_when_no_context_holds_it():
 def test_a_reference_to_an_unpublished_unit_fails():
     with pytest.raises(ValueError, match="not published"):
         prepare(JOB, Graph().parse(data=BINDING + TURTLE, format="turtle"), URIRef("https://example.org/binding"))
+
+
+def test_a_fence_job_digests_an_import_so_equal_imports_name_one_graph():
+    """ADR-A149 decision 6."""
+    from lattice_workers.config_studio_publish import fence
+
+    a = fence(JOB, Graph().parse(data=TURTLE, format="turtle")).value(JOB, CST.digest)
+    b = fence(JOB, Graph().parse(data=TURTLE, format="turtle")).value(JOB, CST.digest)
+    assert a == b and len(str(a)) == 64
+    with pytest.raises(ValueError, match="no triple"):
+        fence(JOB, Graph())

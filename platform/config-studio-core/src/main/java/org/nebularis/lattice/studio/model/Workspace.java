@@ -23,10 +23,12 @@ import org.nebularis.lattice.studio.store.Graphs;
  * The workspace description as read from, and written to, the workspace's own graph. Each named
  * graph has a revision, {@code cst:<name>Revision}, from 0 before its first save. A revision a
  * description lacks reads as 0, so a workspace made before a graph was added still opens. It names each document of the
- * workspace's library with its title, template, revision and time, by the document's id.
+ * workspace's library with its title, template, revision and time, by the document's id. {@code imports} maps the import
+ * graphs it holds to their labels.
  */
 public record Workspace(String id, String label, Instant createdAt, Instant modifiedAt, Map<String, Long> revisions, String sample,
-                        Map<String, Document> documents, String owner, String mode, Set<String> dependencies) {
+                        Map<String, Document> documents, String owner, String mode, Set<String> dependencies,
+                        Map<String, String> imports) {
 
     /** Read and written by its owner and administrators only (ADR-A149 decision 9). */
     public static final String LOCKED = "locked";
@@ -53,12 +55,23 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
 
     /** The same workspace with another owner and mode. */
     public Workspace withAccess(String newOwner, String newMode) {
-        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, newOwner, newMode, dependencies);
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, newOwner, newMode, dependencies, imports);
     }
 
     /** The same workspace depending on {@code iris}, each a published lineage it follows or a version it pins. */
     public Workspace withDependencies(Set<String> iris) {
-        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, owner, mode, Set.copyOf(new TreeSet<>(iris)));
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, owner, mode, Set.copyOf(new TreeSet<>(iris)), imports);
+    }
+
+    /** The same workspace holding import graph {@code graph} under {@code importLabel}, or no longer holding it when the label is null. */
+    public Workspace withImport(String graph, String importLabel) {
+        Map<String, String> next = new TreeMap<>(imports);
+        if (importLabel == null) {
+            next.remove(graph);
+        } else {
+            next.put(graph, importLabel);
+        }
+        return new Workspace(id, label, createdAt, modifiedAt, revisions, sample, documents, owner, mode, dependencies, Map.copyOf(next));
     }
 
     /** A document of the workspace, as its description holds it. */
@@ -85,7 +98,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         for (String name : GRAPHS) {
             revisions.put(name, name.equals("baseline") ? 1L : 0L);
         }
-        return new Workspace(id, label, at, at, Map.copyOf(revisions), sample, Map.of(), owner, SHARED, Set.of());
+        return new Workspace(id, label, at, at, Map.copyOf(revisions), sample, Map.of(), owner, SHARED, Set.of(), Map.of());
     }
 
     public String baselineGraph() {
@@ -99,7 +112,7 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
     public Workspace revised(String name, long revision, Instant at) {
         Map<String, Long> next = new LinkedHashMap<>(revisions);
         next.put(name, revision);
-        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample, documents, owner, mode, dependencies);
+        return new Workspace(id, label, createdAt, at, Map.copyOf(next), sample, documents, owner, mode, dependencies, imports);
     }
 
     /** The revision of document {@code doc}, 0 when the workspace holds none. */
@@ -116,12 +129,12 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         } else {
             next.put(doc, document);
         }
-        return new Workspace(id, label, createdAt, at, revisions, sample, Map.copyOf(next), owner, mode, dependencies);
+        return new Workspace(id, label, createdAt, at, revisions, sample, Map.copyOf(next), owner, mode, dependencies, imports);
     }
 
     /** The same workspace under another id and label, as an import makes it, owned by who imports it and shared. */
     public Workspace as(String newId, String newLabel, Instant at, String newOwner) {
-        return new Workspace(newId, newLabel, createdAt, at, revisions, sample, documents, newOwner, SHARED, dependencies);
+        return new Workspace(newId, newLabel, createdAt, at, revisions, sample, documents, newOwner, SHARED, dependencies, imports);
     }
 
     public Model toModel() {
@@ -140,6 +153,10 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
         }
         node.addProperty(Cst.mode, Cst.mode(mode));
         new TreeSet<>(dependencies).forEach(d -> node.addProperty(Cst.dependsOn, model.createResource(d)));
+        new TreeMap<>(imports).forEach((graph, importLabel) -> {
+            node.addProperty(Cst.holdsImport, model.createResource(graph));
+            model.createResource(graph).addProperty(RDFS.label, importLabel);
+        });
         for (String name : GRAPHS) {
             node.addProperty(Cst.revision(name), model.createTypedLiteral(Long.toString(revision(name)), XSDDatatype.XSDinteger));
         }
@@ -188,9 +205,17 @@ public record Workspace(String id, String label, Instant createdAt, Instant modi
             Statement owner = node.getProperty(Cst.owner);
             Set<String> dependencies = new TreeSet<>();
             node.listProperties(Cst.dependsOn).forEachRemaining(st -> dependencies.add(st.getResource().getURI()));
+            Map<String, String> imports = new TreeMap<>();
+            node.listProperties(Cst.holdsImport).forEachRemaining(st -> {
+                Resource g = st.getResource();
+                if (!Graphs.isImportGraph(g.getURI())) {
+                    throw new IllegalArgumentException("not an import graph");
+                }
+                imports.put(g.getURI(), text(g, RDFS.label));
+            });
             return new Workspace(id, text(node, RDFS.label), Instant.parse(text(node, Cst.createdAt)),
                 Instant.parse(text(node, Cst.modifiedAt)), Map.copyOf(revisions), sample, Map.copyOf(documents),
-                owner == null ? null : owner.getString(), m, Set.copyOf(dependencies));
+                owner == null ? null : owner.getString(), m, Set.copyOf(dependencies), Map.copyOf(imports));
         } catch (RuntimeException e) {
             return null;
         }

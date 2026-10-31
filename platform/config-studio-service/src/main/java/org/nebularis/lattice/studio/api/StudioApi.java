@@ -29,6 +29,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
 import org.nebularis.lattice.studio.auth.Principal;
@@ -263,6 +264,16 @@ public final class StudioApi {
             }
             if (s.length == 3 && s[2].equals("publications")) {
                 return method.equals("POST") ? publish(req, ws) : notAllowed("POST");
+            }
+            if (s.length == 3 && s[2].equals("imports")) {
+                return method.equals("POST") ? fence(req, ws) : notAllowed("POST");
+            }
+            if (s.length == 4 && s[2].equals("imports") && Graphs.isDigest(s[3])) {
+                return switch (method) {
+                    case "GET" -> getImport(ws, s[3]);
+                    case "DELETE" -> releaseImport(ws, s[3]);
+                    default -> notAllowed("GET, DELETE");
+                };
             }
             if (s.length == 3 && s[2].equals("jobs")) {
                 return switch (method) {
@@ -584,18 +595,18 @@ public final class StudioApi {
             return submitAnalysis(id, target);
         }
         if ("publish".equals(kind)) {
-            return submitPublish(id, target, query.get("unit"));
+            return submitPublish(id, target, query.get("unit"), query.get("graph"));
         }
         if ("propose".equals(kind) && "odrl".equals(target) && !features.contains("odrl")) {
             return notFound();
         }
         if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
-            && !("assemble".equals(kind) && "assembly".equals(target))
+            && !("assemble".equals(kind) && "assembly".equals(target)) && !("fence".equals(kind) && "import".equals(target))
             && !("propose".equals(kind) && PROPOSERS.containsKey(target))
             && !("dry-run".equals(kind) && ("meaning".equals(target) || "mapping".equals(target)))) {
             return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
                 + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet()
-                + ", dry-run, with target meaning or mapping, or analyse, with target a document");
+                + ", dry-run, with target meaning or mapping, fence, with target import, or analyse, with target a document");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -625,6 +636,12 @@ public final class StudioApi {
             if (sources != 1 || samples > 1 || documents.size() != sources + samples
                 || documents.stream().anyMatch(d -> !d.hasProperty(Cst.documentContent) || !d.hasProperty(Cst.documentMediaType))) {
                 return ApiResponse.text(422, "a mapping proposal needs one cst:ImportDocument of role cst:SourceVocabulary and at most one of role cst:SampleSource, each with a cst:documentContent and a cst:documentMediaType");
+            }
+        }
+        if ("fence".equals(kind)) {
+            Principal p = CURRENT.get();
+            if (p != null && !ws.writableBy(p.name(), p.admin())) {
+                return ApiResponse.text(403, p.name() + " may not import into this workspace, which is " + ws.mode());
             }
         }
         String job = ids.get().toString();
@@ -677,10 +694,11 @@ public final class StudioApi {
      * A publish job versions one unit of a saved part, so its input is the part as stored and the request has no body.
      * Only a principal who may write the workspace submits one.
      */
-    private ApiResponse submitPublish(String id, String target, String unit) {
-        if (!Workspace.CONFIGS.contains(target) || !Graphs.isUnitIri(unit)) {
+    private ApiResponse submitPublish(String id, String target, String unit, String importDigest) {
+        boolean fromImport = "import".equals(target);
+        if (!(Workspace.CONFIGS.contains(target) || (fromImport && Graphs.isDigest(importDigest))) || !Graphs.isUnitIri(unit)) {
             return ApiResponse.text(400, "kind publish needs a target that is one of " + Workspace.CONFIGS
-                + " and a unit that is an absolute http, https or urn IRI the studio did not mint");
+                + ", or import with the graph's digest, and a unit that is an absolute http, https or urn IRI the studio did not mint");
         }
         Workspace ws = load(id);
         if (ws == null) {
@@ -690,10 +708,14 @@ public final class StudioApi {
         if (p != null && !ws.writableBy(p.name(), p.admin())) {
             return ApiResponse.text(403, p.name() + " may not publish from this workspace, which is " + ws.mode());
         }
+        String graph = fromImport ? Graphs.importGraph(importDigest) : Graphs.config(id, target);
+        if (fromImport && !ws.imports().containsKey(graph)) {
+            return notFound();
+        }
         String job = ids.get().toString();
         Model description = jobDescription(Graphs.job(job), id, ws, "publish", target, Graphs.jobInput(job));
         description.createResource(Graphs.job(job)).addProperty(Cst.unit, description.createResource(unit));
-        return publishJob(id, job, description, store.graph(Graphs.config(id, target)));
+        return publishJob(id, job, description, store.graph(graph));
     }
 
     /**
@@ -737,6 +759,65 @@ public final class StudioApi {
             .with("Location", "/api/registry/lineage?iri=" + java.net.URLEncoder.encode(lineage.getURI(), StandardCharsets.UTF_8));
     }
 
+    /**
+     * Puts the import a finished fence job read into the store, once by its digest, and into this workspace's holdings.
+     * Answers 201 with the workspace's description.
+     */
+    private ApiResponse fence(ApiRequest req, String id) {
+        Map<String, String> query = query(req.query());
+        String job = query.get("job");
+        String label = query.get("label") == null ? "Import" : query.get("label").trim();
+        if (load(id) == null || job == null || !Graphs.isId(job)) {
+            return notFound();
+        }
+        if (label.isEmpty() || label.length() > 200) {
+            return ApiResponse.text(400, "label is 1 to 200 characters");
+        }
+        Resource node = ResourceFactory.createResource(Graphs.job(job));
+        Model m = store.graph(Graphs.job(job));
+        if (!m.contains(node, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
+            return notFound();
+        }
+        String content = null;
+        for (Resource artefact : m.listObjectsOfProperty(node, Cst.artefact).toList().stream().filter(o -> o.isResource()).map(o -> o.asResource()).toList()) {
+            if (artefact.hasLiteral(Cst.path, "import.nt") && artefact.hasProperty(Cst.content)) {
+                content = artefact.getProperty(Cst.content).getString();
+            }
+        }
+        var digest = m.getProperty(node, Cst.digest);
+        if (!m.contains(node, Cst.kind, Cst.Fence) || !m.contains(node, Cst.status, Cst.Succeeded) || digest == null || content == null) {
+            return ApiResponse.text(409, "the job is not a finished fence job with an import to hold");
+        }
+        Model graph;
+        try {
+            graph = Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
+        } catch (RiotException e) {
+            return ApiResponse.text(422, "the job's import.nt does not parse as N-Triples");
+        }
+        Reply reply = writes.send(Command.fence(id, digest.getString(), label, graph));
+        Workspace held = reply.applied() ? load(id) : null;
+        return held == null ? refusal(reply) : ApiResponse.turtle(201, Turtle.write(held.toModel()))
+            .with("Location", "/api/workspaces/" + id + "/imports/" + digest.getString());
+    }
+
+    private ApiResponse getImport(String id, String digest) {
+        Workspace ws = load(id);
+        if (ws == null || !ws.imports().containsKey(Graphs.importGraph(digest))) {
+            return notFound();
+        }
+        return ApiResponse.turtle(200, Turtle.write(store.graph(Graphs.importGraph(digest))));
+    }
+
+    /** The workspace stops holding the import. The graph stays, since other workspaces may hold it. */
+    private ApiResponse releaseImport(String id, String digest) {
+        Workspace ws = load(id);
+        if (ws == null || !ws.imports().containsKey(Graphs.importGraph(digest))) {
+            return notFound();
+        }
+        Reply reply = writes.send(Command.release(id, digest));
+        return reply.applied() ? ApiResponse.empty(204) : refusal(reply);
+    }
+
     private static Resource uri(Model m, Resource s, org.apache.jena.rdf.model.Property p) {
         var o = m.getProperty(s, p);
         return o != null && o.getObject().isURIResource() ? o.getResource() : null;
@@ -750,6 +831,7 @@ public final class StudioApi {
             case "validate" -> Cst.Validate;
             case "compile" -> Cst.Compile;
             case "publish" -> Cst.Publish;
+            case "fence" -> Cst.Fence;
             case "assemble" -> Cst.Assemble;
             case "propose" -> Cst.Propose;
             case "dry-run" -> Cst.DryRunJob;
@@ -785,6 +867,7 @@ public final class StudioApi {
                     job.addProperty(Cst.contextGraph, m.createResource(graph));
                 }
             }
+            workspace.imports().keySet().forEach(graph -> job.addProperty(Cst.contextGraph, m.createResource(graph)));
         }
         job.addProperty(Cst.status, Cst.Queued);
         job.addProperty(Cst.submittedAt, m.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
@@ -949,6 +1032,7 @@ public final class StudioApi {
             if (ws == null || !readable(ws)) {
                 all.removeAll(node, null, null);
                 node.listProperties(Cst.document).toList().forEach(d -> all.removeAll(d.getResource(), null, null));
+                node.listProperties(Cst.holdsImport).toList().forEach(d -> all.removeAll(d.getResource(), RDFS.label, null));
             }
         }
         return all;

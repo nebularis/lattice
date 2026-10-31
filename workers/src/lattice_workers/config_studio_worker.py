@@ -13,7 +13,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol
 
-from rdflib import Dataset, Graph, Literal, URIRef
+from rdflib import Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 from rdflib.namespace import XSD
 
@@ -30,7 +30,10 @@ _UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _MESSAGE = re.compile(rf"urn:lattice:studio:job:{_UUID}")
 _BASELINE = re.compile(rf"urn:lattice:studio:ws:{_UUID}:baseline:[1-9][0-9]*")
 # The configuration parts a job may read as context, beside its target (ADR-A149 decision 7).
+_FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")
+_PROV = Namespace("http://www.w3.org/ns/prov#")
 _HAS_IDENTITY = URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity")
+_IMPORT_GRAPH = re.compile(r"urn:lattice:studio:import:[0-9a-f]{64}")
 _VERSION_GRAPH = re.compile(r"urn:lattice:studio:pub:[0-9a-f]{32}:rev:[0-9a-f]{16}")
 _PARTS = ("library", "assembly", "meaning", "review", "mapping", "vocabulary", "quantification", "eligibility", "surface", "persistence")
 _KINDS = {CST.Validate: "validate", CST.Compile: "compile"}
@@ -121,6 +124,10 @@ class ConfigStudioWorker:
             from .config_studio_mork_tools import run_tool
 
             return run_tool(job, input_("configuration"))
+        if graph.value(job, CST.kind) == CST.Fence:
+            from .config_studio_publish import fence
+
+            return fence(job, input_("configuration"))
         if graph.value(job, CST.kind) == CST.Publish:
             from .config_studio_publish import prepare
 
@@ -201,12 +208,30 @@ class ConfigStudioWorker:
         if kind is None or target is None or submitted is None:
             raise ValueError("job lacks a known kind, a known target or a submission time")
         # The job graph is the service's, but the worker reads only what a job of its own may name (STD-298).
-        return run_job(
+        out = run_job(
             job, kind, target,
             self._read(graph, job, CST.configGraph, "configuration", allowed=lambda iri: iri == f"{job}:input"),
             self._read(graph, job, CST.baselineGraph, "baseline", allowed=_BASELINE.fullmatch, empty_if_missing=True),
             self._root, str(submitted), self._context(graph, job),
         )
+        if kind == "compile":
+            self._provenance(out, graph, job)
+        return out
+
+    def _provenance(self, out: Graph, graph: Graph, job: URIRef) -> None:
+        """Each compiled artefact is a fnd:DerivedArtefact the job generated, derived from what the job compiled, the
+        version its description names or its input as submitted, and from every published version it read (ADR-A149
+        decision 10)."""
+        sources = [graph.value(job, CST.fromVersion) or URIRef(f"{job}:input")]
+        for iri in sorted(graph.objects(job, CST.contextGraph), key=str):
+            if _VERSION_GRAPH.fullmatch(str(iri)):
+                sources += sorted(v for v in self._registry(str(iri)).subjects(_HAS_IDENTITY, None) if isinstance(v, URIRef))
+        for artefact in list(out.objects(job, CST.artefact)):
+            out.add((artefact, RDF.type, _FND.DerivedArtefact))
+            out.add((artefact, _FND.derivationKind, _FND.Compiled))
+            out.add((artefact, _PROV.wasGeneratedBy, job))
+            for source in sources:
+                out.add((artefact, _PROV.wasDerivedFrom, source))
 
     def _registry(self, iri: str) -> Graph:
         """A registry graph, which everyone may read, or an empty one when the registry holds none."""
@@ -233,6 +258,13 @@ class ConfigStudioWorker:
                     for s, p, o in version:
                         if p != _HAS_IDENTITY:
                             context.add((lineage if s == v else s, p, lineage if o == v else o))
+                continue
+            # A fenced import the workspace holds, which the writer checked when the job was submitted.
+            if _IMPORT_GRAPH.fullmatch(str(iri)):
+                try:
+                    context += self._store.get_graph(str(iri))
+                except GraphNotFound:
+                    pass
                 continue
             if allowed is None or not allowed.fullmatch(str(iri)):
                 raise ValueError(f"context graph {iri} is not one this job may read")

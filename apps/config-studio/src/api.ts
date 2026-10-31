@@ -49,6 +49,8 @@ export interface WorkspaceSummary {
   mode: Mode;
   /** The published lineages it follows and the versions it pins (ADR-A149 decision 7). */
   dependsOn: string[];
+  /** The imports it holds, fenced and stored once by digest (ADR-A149 decision 6). */
+  imports: { graph: string; digest: string; label: string }[];
 }
 
 export type Mode = "locked" | "read-only" | "shared";
@@ -72,6 +74,10 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
     owner: graph.value(iri, CST("owner")),
     mode: MODE_NODES[localName(graph.value(iri, CST("mode")) ?? "")] ?? "shared",
     dependsOn: graph.objects(iri, CST("dependsOn")).map((d) => d.value).sort(),
+    imports: graph
+      .objects(iri, CST("holdsImport"))
+      .map((g) => ({ graph: g.value, digest: g.value.replace("urn:lattice:studio:import:", ""), label: graph.value(g.value, LABEL) ?? "Import" }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
     revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
 }
@@ -169,9 +175,10 @@ export const api = {
     return (await turtle("/api/publication-units")).graph;
   },
 
-  /** Names the version a unit of the saved part would be published as, as a job. */
-  async preparePublication(id: string, part: ConfigPart, unit: string): Promise<string> {
-    const response = await request(`/api/workspaces/${id}/jobs?kind=publish&target=${part}&unit=${encodeURIComponent(unit)}`, { method: "POST" });
+  /** Names the version a unit of the saved part, or of a held import, would be published as, as a job. */
+  async preparePublication(id: string, part: ConfigPart | "import", unit: string, importDigest?: string): Promise<string> {
+    const from = part === "import" ? `import&graph=${importDigest}` : part;
+    const response = await request(`/api/workspaces/${id}/jobs?kind=publish&target=${from}&unit=${encodeURIComponent(unit)}`, { method: "POST" });
     return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
   },
 
@@ -179,6 +186,25 @@ export const api = {
   async publish(id: string, job: string): Promise<Graph> {
     const response = await request(`/api/workspaces/${id}/publications?job=${job}`, { method: "POST" });
     return Graph.parse(await response.text());
+  },
+
+  /** Fences an import: digested by a job, then held by the workspace, stored once whichever workspaces hold it. */
+  async fenceImport(id: string, text: string, mediaType: string, label: string): Promise<WorkspaceSummary> {
+    const response = await request(`/api/workspaces/${id}/jobs?kind=fence&target=import`, { method: "POST", headers: { "Content-Type": mediaType }, body: text });
+    const job = (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+    const done = await awaitJob(job);
+    if (done.status === "Failed") throw new Error(done.failure ?? "The import could not be read.");
+    const held = await request(`/api/workspaces/${id}/imports?job=${job}&label=${encodeURIComponent(label)}`, { method: "POST" });
+    void api.deleteJob(job).catch(() => undefined);
+    return summary(Graph.parse(await held.text()), `urn:lattice:studio:ws:${id}`);
+  },
+
+  async importGraph(id: string, digest: string): Promise<Graph> {
+    return (await turtle(`/api/workspaces/${id}/imports/${digest}`)).graph;
+  },
+
+  async releaseImport(id: string, digest: string): Promise<void> {
+    await request(`/api/workspaces/${id}/imports/${digest}`, { method: "DELETE" });
   },
 
   /** Every published lineage, by its current version. */
@@ -193,6 +219,11 @@ export const api = {
     const body = iris.map((d) => `<${iri}> <${CST("dependsOn")}> <${d}> .`).join("\n");
     const response = await request(`/api/workspaces/${id}/dependencies`, { method: "PUT", headers: { "Content-Type": TURTLE }, body });
     return summary(Graph.parse(await response.text()), iri);
+  },
+
+  /** A published version's content. */
+  async version(iri: string): Promise<Graph> {
+    return (await turtle(`/api/registry/version?iri=${encodeURIComponent(iri)}`)).graph;
   },
 
   /** A lineage's registry graph: its versions, its current version and its publications. Null when it was never published. */

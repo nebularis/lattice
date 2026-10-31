@@ -842,7 +842,7 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 PB1 to PB6 built 2026-10-31, PB7 next |
+| **Status** | 🟡 PB1 to PB7 built 2026-10-31, PB8 next |
 | **Unit ID** | `studio-publication` |
 | **Sketch** | [studio-publication.md](sketches/studio-publication.md) |
 | **Plan** | [studio-publication.md](plans/studio-publication.md) |

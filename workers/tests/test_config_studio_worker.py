@@ -838,3 +838,22 @@ def test_a_dependency_s_version_is_read_as_context_under_its_version_and_its_lin
     context = ConfigStudioWorker(store, ROOT, _clock())._context(store.graphs[job_iri], job)
     fire, in_scheme = URIRef("https://example.org/fire"), URIRef("http://www.w3.org/2004/02/skos/core#inScheme")
     assert (fire, in_scheme, version) in context and (fire, in_scheme, lineage) in context
+
+
+def test_a_compiled_artefact_names_its_job_its_input_and_each_version_it_read():
+    """ADR-A149 decision 10: a deployment that takes an artefact can say what it was compiled from."""
+    store = FakeStore()
+    job_iri = submit(store, "compile", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
+    job = URIRef(job_iri)
+    graph_iri = "urn:lattice:studio:pub:" + "c" * 32 + ":rev:" + "d" * 16
+    version = URIRef("https://example.org/scheme/rev/1-" + "d" * 16)
+    store.graphs[graph_iri] = Graph()
+    store.graphs[graph_iri].add((version, URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity"), URIRef("https://example.org/scheme")))
+    store.graphs[job_iri].add((job, CST.contextGraph, URIRef(graph_iri)))
+    ConfigStudioWorker(store, ROOT, _clock()).handle(job_iri)
+    g = store.graphs[job_iri]
+    assert g.value(job, CST.status) == CST.Succeeded
+    prov = "http://www.w3.org/ns/prov#"
+    for artefact in g.objects(job, CST.artefact):
+        assert (artefact, URIRef(prov + "wasGeneratedBy"), job) in g
+        assert {URIRef(f"{job_iri}:input"), version} <= set(g.objects(artefact, URIRef(prov + "wasDerivedFrom")))

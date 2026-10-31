@@ -123,3 +123,20 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 **Not covered.** A job reads its dependencies as resolved when it is submitted, so a version published while it runs is read by the next job.
 
 **Found live.** The writer refused the publish job's update, since `cst:pins` was not among the predicates a worker may write, and the job stayed running. The unit tests had written job results without pins. `PublicationTest`'s finished job now carries one.
+
+## PB7: fenced imports
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| PB7-01 | the same import twice, and an empty one / fenced by the worker / one digest, then the job fails | L1 | ± | pass |
+| PB7-02 | a fence job / submitted with a body / queued with the body as its input, and a reader of a read-only workspace refused | L3 | ± | pass |
+| PB7-03 | the same content fenced from two workspaces / held / one graph, held by both | L4 | + | pass |
+| PB7-04 | a held import / read by its workspace, and by one that does not hold it / its graph, then `404` | L3 | ± | pass |
+| PB7-05 | an import released by one workspace / read by the other / still there | L4 | + | pass |
+| PB7-06 | a workspace holding an import / a validation submitted / the import is a context graph, and a job naming an import the workspace does not hold is refused | L8 | ± | pass |
+| PB7-07 | a publish job with `target=import` / submitted / its input is the import's content | L3 | + | pass |
+| PB7-08 | a SKOS scheme imported into two workspaces in a running studio / fenced, published from the first, released by the second / one graph, a version, and still held by the first | L5 | + | pass, 2026-10-31 |
+
+`workers/tests/test_config_studio_publish.py` and `ImportsTest`.
+
+**Not covered.** A workspace's export omits its imports' content, and nothing removes an import no workspace holds (TD-135). The browser's other imports, such as an ODRL policy or a proposer's source vocabulary, still copy what they read into a part.

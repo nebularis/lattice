@@ -168,6 +168,8 @@ public final class Writer {
                 case SET_ACCESS -> setAccess(index, c);
                 case PUBLISH -> publish(index, c);
                 case SET_DEPENDENCIES -> setDependencies(index, c);
+                case FENCE -> fence(index, c);
+                case RELEASE -> release(index, c);
             };
         }
 
@@ -188,7 +190,7 @@ public final class Writer {
                 return Reply.notFound();
             }
             boolean allowed = switch (c.type()) {
-                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH, SET_DEPENDENCIES -> ws.writableBy(c.principal(), c.admin());
+                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH, SET_DEPENDENCIES, FENCE, RELEASE -> ws.writableBy(c.principal(), c.admin());
                 case DELETE_WORKSPACE, SET_ACCESS -> ws.managedBy(c.principal(), c.admin());
                 default -> true;
             };
@@ -245,6 +247,47 @@ public final class Writer {
                 return Reply.notFound();
             }
             Workspace updated = found.get().withDependencies(iris);
+            String receipts = Graphs.receipts(updated.id());
+            receipt(c, receipts, exists(updated.id()), List.of(Graphs.workspace(updated.id())), null);
+            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(updated.id(), Optional.of(updated));
+            return planned(index, c, Reply.ok(), Reply::notFound);
+        }
+
+        /**
+         * Imported RDF into the import graph of its digest, which is stored once since the same digest is the same
+         * content, and the workspace's holding of it with its label. Both happen with the receipt or neither.
+         */
+        private Reply fence(int index, Command c) {
+            Model content = c.body().getDefaultModel();
+            if (!Graphs.isDigest(c.part()) || content.isEmpty() || named(c).hasNext()) {
+                return Reply.refused("a fence names a digest of 64 lower-case hexadecimal digits and carries the imported graph alone, which is not empty");
+            }
+            String label = c.label() == null || c.label().isBlank() ? "Import" : c.label();
+            if (label.length() > MAX_TITLE) {
+                return Reply.refused("an import's label is at most " + MAX_TITLE + " characters");
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return Reply.notFound();
+            }
+            String graph = Graphs.importGraph(c.part());
+            Workspace updated = found.get().withImport(graph, label);
+            String receipts = Graphs.receipts(updated.id());
+            receipt(c, receipts, exists(updated.id()), List.of(graph, Graphs.workspace(updated.id())), null);
+            request.add(insert(graph, content, group(mine(c, receipts), notExists(quad(graph, S, P, O)))));
+            request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
+            workspaces.put(updated.id(), Optional.of(updated));
+            return planned(index, c, Reply.ok(), Reply::notFound);
+        }
+
+        /** The workspace stops holding an import graph. The graph stays, since other workspaces may hold it. */
+        private Reply release(int index, Command c) {
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty() || !Graphs.isDigest(c.part()) || !found.get().imports().containsKey(Graphs.importGraph(c.part()))) {
+                return Reply.notFound();
+            }
+            Workspace updated = found.get().withImport(Graphs.importGraph(c.part()), null);
             String receipts = Graphs.receipts(updated.id());
             receipt(c, receipts, exists(updated.id()), List.of(Graphs.workspace(updated.id())), null);
             request.add(replace(Graphs.workspace(updated.id()), updated.toModel(), mine(c, receipts)));
@@ -477,8 +520,9 @@ public final class Writer {
             }
             Set<RDFNode> contexts = Set.copyOf(description.listObjectsOfProperty(job, Cst.contextGraph).toList());
             Set<RDFNode> parts = CONFIGS.stream().map(part -> (RDFNode) description.createResource(Graphs.config(ws.id(), part))).collect(java.util.stream.Collectors.toSet());
-            if (!contexts.stream().allMatch(g -> parts.contains(g) || (g.isURIResource() && Graphs.isVersionGraph(g.asResource().getURI())))) {
-                return Reply.refused("a job's context graphs are configuration parts of its workspace, or versions in the registry");
+            if (!contexts.stream().allMatch(g -> parts.contains(g) || (g.isURIResource() && Graphs.isVersionGraph(g.asResource().getURI()))
+                || (g.isURIResource() && ws.imports().containsKey(g.asResource().getURI())))) {
+                return Reply.refused("a job's context graphs are configuration parts of its workspace, versions in the registry, or imports the workspace holds");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");
