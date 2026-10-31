@@ -17,7 +17,7 @@ A change to a write path, such as the studio's move onto generated persistence o
 1. **A benchmark's reports are kept in git**, one file per run, `benchmark/reports/{benchmark}/{date}-{commit}.json`, each naming its commit, its date and the kind of machine, never the machine's name or its owner (ADR-A124 decision 5). A compare task tables a run against a base and never fails on time (STD-290).
 2. **Components are measured alone**, in process, by benchmarks under `benchmark/`: JMH for the JVM, a timer of our own for Python.
 3. **A topology is started from a declared configuration** by a test-support harness under `tools/testing/`, always on its own ports, dataset and run folder, never a developer's store.
-4. **Integration suites under `test/` check each topology against a model**, sequentially with property-based state machines (Hypothesis), and concurrently by checking recorded histories for linearisability, each aggregate on its own. They run on demand, never inside `check`.
+4. **Integration suites under `test/` check each topology against a model**, sequentially with property-based state machines (Hypothesis), and concurrently by Jepsen tests in Clojure, which run the topology in Docker Compose, inject faults between its containers, and check the recorded histories with Knossos for linearisability, each aggregate on its own, and with Elle for anomalies across aggregates. They run on demand, never inside `check`.
 5. **Load runs under `benchmark/` drive a topology** with the same actions (Locust), only on demand, and report throughput and latency percentiles per action. A load run's histories may be checked as a correctness run's are.
 
 ## Consequences
@@ -25,6 +25,7 @@ A change to a write path, such as the studio's move onto generated persistence o
 - A slowdown is seen by comparing reports, and its cause by the component benchmarks.
 - Reports add a file per run to git, small JSON, so the repository grows by kilobytes a run.
 - Hypothesis and Locust become test dependencies of the Python toolchain, and JMH of a benchmark's own build.
+- Clojure joins the repository as a language for the distributed tests only, on the JVM the platform already runs. Jepsen, Knossos and Elle are its dependencies, and the Clojure toolchain is pinned through mise.
 - The model of the studio in the integration suite is a second description of its behaviour, kept honest by the suite failing when the two disagree.
 
 ## Provenance

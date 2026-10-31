@@ -26,7 +26,7 @@ The sketch's §5, SQ-D1 to SQ-D8.
 | SQ2 | reports in git, the compare task, the Python timer, and the `studio-api` scenario run on the commit before phase D and on the head | both reports are in `benchmark/reports/studio-api/`, and their comparison is in the status record | 150k tokens |
 | SQ3 | component benchmarks, JMH for the writer, the operations, skolemisation and the routes, the timer for the worker's jobs | each writes a report, and a second run compares with the first | 200k tokens |
 | SQ4 | the model and the Hypothesis state machine, run against each declared topology | it passes on both topologies, and a deliberately broken guard in a test build is found and shrunk | 250k tokens |
-| SQ5 | concurrent histories and the per-aggregate linearisability checker | concurrent runs pass on two writers, and a history with a lost update is reported | 200k tokens |
+| SQ5 | a Jepsen test in Clojure against the Compose topology, with a nemesis, Knossos per aggregate and Elle across aggregates | concurrent runs pass on two writers with faults injected, and a test build with a broken guard is reported as a lost update | 300k tokens |
 | SQ6 | Locust load runs with reports, their histories checkable | a load run of a declared length reports throughput and percentiles per action, and its history checks | 150k tokens |
 
 ## 4. Demonstration

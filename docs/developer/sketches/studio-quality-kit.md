@@ -56,7 +56,7 @@ flowchart TB
   end
   subgraph Integration["test/studio-integration"]
     M[Model and actions, Hypothesis state machine]
-    H[Concurrent history, checked per aggregate]
+    H[Jepsen in Clojure: faults, Knossos and Elle]
   end
   subgraph Load["benchmark/studio-load"]
     L[Locust users drawing the same actions]
@@ -89,11 +89,11 @@ The Java ones use JMH, the JVM's standard harness for microbenchmarks, which han
 
 `test/studio-integration` runs each declared topology and checks it in two ways.
 - **Sequential, against a model.** A Hypothesis state machine holds a model of the studio: workspaces with their parts and revisions, modes and owners, dependencies, held imports, and the registry's lineages and current versions. Its rules are the actions, each with a precondition and a postcondition comparing the reply and a following read with the model. Hypothesis searches sequences of actions and shrinks a failure to the shortest sequence that fails.
-- **Concurrent, against the same model.** Several clients run random actions at once, against a topology with several writers. Each records a history of invocations and completions with times. A checker then asks whether some order of the operations, consistent with real time, explains every reply under the model (linearisability, Wing and Gong's search). Each aggregate is checked on its own, since an operation on one part never reads another, which keeps the search small (P-compositionality).
+- **Concurrent and distributed, with Jepsen.** A Jepsen test in Clojure runs the topology in Docker Compose, with several writers. Several clients run random actions at once while a nemesis injects faults between containers, such as a writer killed or paused, or the network to Fuseki or RabbitMQ cut. Each client records a history of invocations and completions. Knossos then asks whether some order of the operations, consistent with real time, explains every reply under the model (linearisability). Each aggregate is checked on its own, since an operation on one part never reads another, which keeps the search small (P-compositionality). Elle checks what spans aggregates, such as a publish and the registry listing, for anomalies such as a lost update or a read of a write that never committed. The Jepsen test reaches the studio only through its HTTP API, so the model is written a second time in Clojure, kept small by covering the actions whose replies a history can check.
 
 ### 3.4 Load
 
-`benchmark/studio-load` drives a topology with Locust users, each drawing the same actions with declared weights, for example many reads, some saves, few publishes, at a declared rate and length. It runs only on demand, after the topology passed its correctness run, and reports throughput and the latency percentiles of each action, with errors. Its histories can be fed to the same checker, so a load run is also a correctness run.
+`benchmark/studio-load` drives a topology with Locust users, each drawing the same actions with declared weights, for example many reads, some saves, few publishes, at a declared rate and length. It runs only on demand, after the topology passed its correctness run, and reports throughput and the latency percentiles of each action, with errors. Its histories can be written in the form Jepsen records and checked by Knossos, so a load run is also a correctness run.
 
 ### 3.5 Reports and comparison
 
@@ -111,8 +111,8 @@ What it should show, as a hypothesis: a save costs more after phase D, since it 
 
 | ID | Choice | Why | Instead |
 |---|---|---|---|
-| SQ-D1 | Model-based testing with Hypothesis's state machines, in Python | the established property-based library for Python, with stateful testing and shrinking. The clients and the worker's tests are Python already, so no new language or platform | jqwik's action chains on the JVM, whose stateful API is still marked experimental. Jepsen in Clojure, a new language on the JVM, which adds fault injection and Elle's transaction checker, worth revisiting when a deployment spans machines |
-| SQ-D2 | Our own linearisability checker in Python, per aggregate | no maintained Python checker was found, and Wing and Gong's search is small when each aggregate is checked alone | Knossos or Porcupine, which are Clojure and Go |
+| SQ-D1 | Model-based testing with Hypothesis's state machines, in Python | the established property-based library for Python, with stateful testing and shrinking. The clients and the worker's tests are Python already, so no new language or platform | jqwik's action chains on the JVM, whose stateful API is still marked experimental. Jepsen covers the concurrent checks (SQ-D2) |
+| SQ-D2 | Jepsen in Clojure for the concurrent and distributed checks, with Knossos per aggregate and Elle across aggregates. Answered 2026-10-31 by the maintainer, Clojure accepted | most deployments span machines, and Jepsen injects the faults between them that a deployment meets. Knossos and Elle are maintained checkers, so none is written here | our own checker in Python with Docker fault injection, which the first draft chose, writing and assuring a checker of our own |
 | SQ-D3 | Locust for load, in Python | it draws the same actions the model uses, and reports throughput and percentiles per action | Gatling's Java DSL, a stronger load generator on the JVM, worth revisiting if Locust saturates first |
 | SQ-D4 | JMH for the Java components, a small timer for Python | JMH is the JVM's standard and guards against warm-up and dead-code effects | timing with JUnit, which those effects make wrong |
 | SQ-D5 | The harness under `tools/testing/`, integration suites under `test/`, component and load benchmarks under `benchmark/` | each goes where ADR-A124 and ADR-A125 already put its kind, so no new root | a new root for the whole kit, which an ADR would have to justify |
