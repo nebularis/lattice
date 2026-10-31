@@ -3,7 +3,7 @@
 # Performance, integration and load testing for the studio - Status
 
 **Unit ID:** `studio-quality`
-**Status:** 🔴 SQ1 and SQ2 built 2026-10-31, phase D's causes found and partly fixed, SQ-Q1 and SQ-Q2 open
+**Status:** 🔴 SQ1 and SQ2 built 2026-10-31, phase D's cost recovered but for publish, which waits on `projection-maintenance`
 **Last updated:** 2026-10-31
 **Plan:** [studio-quality.md](../plans/studio-quality.md)
 **Sketch:** [studio-quality-kit.md](../sketches/studio-quality-kit.md)
@@ -22,7 +22,9 @@ SQ2 was built on 2026-10-31. Reports are kept in `benchmark/reports/`, `mise run
 
 The maintainer asked on 2026-10-31 for the slowdown to be fixed. Traced the same day, the causes were commits, about 55 ms each on TDB2, four of them for every refresh that each save and publish queued, the writer parsing every payload it had written out as text, and a scan of the version rows on every read. The fixes are in the Validation Pack's last section: saves are now 31% to 53% slower than before phase D where they were 72% to 95%, a publish job is back to its old time, and a publish is 3.5 times slower where it was 7.4. What is left is commits, a save clearing and writing its whole part (SQ-Q1) and a publish waiting for its refresh (SQ-Q2).
 
-**Next action:** for the maintainer, answer SQ-Q1 and SQ-Q2 in the sketch's §6, and review ADR-A150, ADR-A149's addendum on the cost of a refresh, and SQ-D1 to SQ-D8. Then SQ3 to SQ6.
+The maintainer answered SQ-Q1 and SQ-Q2 on 2026-10-31. A save now writes its delta and a read runs its queries side by side, so every measure is at or under its time before phase D but a publish, about 3.3 times, which waits for its refresh until projections are maintained in the write. Two units were sketched, `persistence-delta-replace` and `projection-maintenance`.
+
+**Next action:** for the maintainer, answer DR-Q1 to DR-Q4 and PM-Q1 to PM-Q4, and review ADR-A150, ADR-A149's addendum on the cost of a refresh, and SQ-D1 to SQ-D8. Then PM1 and PM2, which bring a publish back, and SQ3 to SQ6.
 
 ## Log
 
@@ -31,3 +33,4 @@ The maintainer asked on 2026-10-31 for the slowdown to be fixed. Traced the same
 - 2026-10-31: SQ2 built. Phase D measured against the commit before it.
 - 2026-10-31: Clojure accepted, SQ-D2 answered with Jepsen, Knossos and Elle.
 - 2026-10-31: phase D's causes traced and four fixed. SQ-Q1 and SQ-Q2 raised.
+- 2026-10-31: SQ-Q1 and SQ-Q2 answered. Saves write their delta, reads run side by side. `persistence-delta-replace` and `projection-maintenance` sketched.

@@ -122,3 +122,18 @@ After SQ-Q1 and SQ-Q2 were answered on 2026-10-31:
 
 Commands run 2026-10-31, all passing: the studio's Java modules with `verify`, and `mise run benchmark:studio-api`. The run on the committed code is the report of this section's commit, and its figures are below.
 
+Medians on `2e8a02cc`, same machine, load average 1.5 at the start, against before phase D:
+
+| Measure | `4029bd0f` | `2e8a02cc` | Change |
+|---|---|---|---|
+| save a part, 100 triples | 89.7 ms | 94.7 ms | +6% |
+| save a part, 1,000 triples | 128.1 ms | 105.7 ms | −18%, within noise |
+| save a part, 3,000 triples | 178.1 ms | 112.6 ms | −37% |
+| read a part, 100 triples | 8.8 ms | 6.6 ms | −25% |
+| read a part, 1,000 triples | 10.6 ms | 9.4 ms | −12%, within noise |
+| read a part, 3,000 triples | 15.1 ms | 14.2 ms | −6% |
+| list workspaces | 2.9 ms | 2.6 ms | −9%, within noise |
+| a publish job, submitted to done | 151.6 ms | 142.1 ms | −6%, within noise |
+| publish | 90.4 ms | 294.3 ms | about 3.3 times, PM2 |
+| list the registry | 3.7 ms | 2.6 ms | −29% |
+
