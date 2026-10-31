@@ -3,7 +3,7 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** 🔴 PB1 to PB16 built 2026-10-31, PB17 waits on PB-Q14
+**Status:** 🟡 PB1 to PB16 built 2026-10-31, PB17 under way
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
@@ -56,7 +56,9 @@ PB16 was built on 2026-10-31 and run on the maintainer's store. `mise run studio
 
 Trying the surface compiler on the projections raised PB-Q14 in the sketch's §10, how each projection is expressed, since the workspace summary joins rows by a root's prefix, which no read path expresses.
 
-**Next action, for the maintainer:** answer PB-Q14, on which PB17 waits. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
+The maintainer answered PB-Q14 (b) on 2026-10-31.
+
+**Next action:** build PB17. For the maintainer, review ADR-A149 with its addendum, and PB-D1 to PB-D13.
 ## Log
 
 - 2026-10-31: the maintainer challenged the part rule (MEC-94) and set out publication. Sketch, plan and ADR-A149 written. BL-08 added for uploaded files that are not graph data.

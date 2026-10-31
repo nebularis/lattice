@@ -152,6 +152,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-147](ADR-A147-skolem-rule-for-mapped-sources.md) | How a MORK run names a source's blank nodes: from the node that reaches each and its description, with component-scoped canonical labels for the rest | Proposed, 2026-10-29 |
 | [A-148](ADR-A148-mork-transform-backends.md) | MORK mappings over XML and JSON compiled to an XSLT stylesheet writing N-Triples and a JOLT chain writing JSON-LD, from one logical plan read by `tools/mork_rdf`'s reader | Proposed, 2026-10-30 |
 | [A-149](ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a registry, dependencies pinned, imports fenced, parts deciding saving and not reading, pluggable authentication and workspace modes | Proposed, 2026-10-31 |
+| [A-150](ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from a declared configuration, checked against a model and under load on demand | Proposed, 2026-10-31 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's

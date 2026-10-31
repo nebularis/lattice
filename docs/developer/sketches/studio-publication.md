@@ -249,5 +249,5 @@ PB-Q12 and PB-Q13 were answered on 2026-10-31.
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
-| PB-Q14 | How PB17 expresses its projections | (a) a surface promotion each, the description gaining a `cst:part` edge to each part's root so a read path reaches the rows, and the summary a projection contract that keys each sequence by its part. (b) a surface promotion each for the four that fit, and the workspace summary a query kept beside them in the contract, run by the same refresh job and recorded as a gap in Surface. (c) every projection a query kept in the contract, with no surface contract | (b), since four are what a promotion is for and the fifth needs a join Surface has no read path for, so forcing it adds an edge to the description that only the projection reads |
+| PB-Q14 | How PB17 expresses its projections | (a) a surface promotion each, the description gaining a `cst:part` edge to each part's root so a read path reaches the rows, and the summary a projection contract that keys each sequence by its part. (b) a surface promotion each for the four that fit, and the workspace summary a query kept beside them in the contract, run by the same refresh job and recorded as a gap in Surface. (c) every projection a query kept in the contract, with no surface contract | Answered 2026-10-31, (b), now ADR-A149 decision 14 |
 
