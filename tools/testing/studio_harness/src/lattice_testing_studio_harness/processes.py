@@ -92,11 +92,19 @@ class ProcessStudio(Studio):
         stack.wait_for("service", service, READY_TIMEOUT)
         for i in range(1, t.workers + 1):
             name = f"worker-{i}"
-            stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], env)
+            stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env(env))
             self._track(name)
         self.url = f"http://127.0.0.1:{service}"
         self._wait_health()
         self._wait_workers()
+
+    def _worker_env(self, env: Dict[str, str]) -> Dict[str, str]:
+        """The worker's environment. With `LATTICE_STUDIO_HARNESS_WORKER_ROOT` set, that checkout's worker and tool packages come first on `PYTHONPATH` and it is the worker's repository root."""
+        other = _build.worker_root(self.root)
+        if other is None:
+            return env
+        path = os.pathsep.join([*_build.python_paths(other), *filter(None, [os.environ.get("PYTHONPATH")])])
+        return {**env, "PYTHONPATH": path, "LATTICE_ROOT": str(other)}
 
     def _track(self, name: str) -> None:
         pid = self.stack.pid(name)

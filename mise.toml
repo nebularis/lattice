@@ -338,6 +338,16 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure what a graph variable bound outside an OPTIONAL costs on rdflib, Oxigraph and Jena when it is available, in four forms, per engine version (ADR-A124, TSD-42, TSD-Q22). Run on demand, not part of check. Fails on a wrong count, never on time. STORE_PROBES_QUICK=1 uses a smaller store"
 run = "python -m pytest benchmark/persistence-store-probes -q -p no:cacheprovider && python benchmark/persistence-store-probes/check.py"
 
+[tasks."benchmark:studio-api"]
+depends = ["bootstrap:testing-studio-harness"]
+description = "Time the Configuration Studio's HTTP API on the single topology, started in isolation by the harness (ADR-A150): saving and reading parts of 100, 1,000 and 3,000 triples, listing the workspaces, publishing and listing the registry. Writes benchmark/reports/studio-api/{date}-{commit}.json. `-- --checkout PATH` measures another checkout whose jars are built and assets staged. Run on demand, not part of check. Fails on a wrong reply, never on time. Uses the jars already built under platform/*/target and never builds them"
+run = "python -m pytest benchmark/studio-api -q -p no:cacheprovider && python benchmark/studio-api/run.py"
+
+[tasks."benchmark:compare"]
+depends = ["bootstrap:testing-studio-harness"]
+description = "Table the measures of two reports of a benchmark under benchmark/reports (ADR-A150): `-- studio-api [--base REPORT] [--head REPORT]`. The base defaults to the report before the head, the head to the latest. Marks a change outside both runs' interquartile ranges, warns when the machines differ, and never fails on time"
+run = "python -m lattice_testing_studio_harness.compare"
+
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
@@ -648,7 +658,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets", "check:authoring-domain", "bootstrap:testing-studio-harness"]
 run = [
-  "python -m pytest tools/testing/studio_harness/tests tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_refresh.py workers/tests/test_config_studio_layers.py -q",
+  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_refresh.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]

@@ -44,8 +44,10 @@ In `compose` the service listens on loopback inside its container, as the `local
 ## What a run reads from the checkout
 
 - the staged assets in `.build/config-studio` (`mise run build:config-studio-assets`), copied into the run without the developer stack's `run` and `infra` folders and backups
-- the service's and the writer's jars from `platform/config-studio-{service,writer}/target`, copied by content hash to `.build/studio-harness/_cache/jars`. The harness only reads `target`, so a stack running from those jars is not disturbed. It runs Maven, which writes `target`, only when a jar is missing. `LATTICE_STUDIO_HARNESS_JARS` names a folder holding the two jars to use instead
+- the service's and the writer's jars from `platform/config-studio-{service,writer}/target`, copied by content hash to `.build/studio-harness/_cache/jars`. The harness only reads `target`, so a stack running from those jars is not disturbed. It runs Maven, which writes `target`, only when a jar is missing. `LATTICE_STUDIO_HARNESS_JARS` names a folder to use instead, holding the two jars or being another checkout's `platform` folder
 - the Fuseki jar and the RabbitMQ release, seeded from the developer stack's `infra` folder when present and otherwise downloaded and checked against the checksums the stack script pins, into the same cache
+
+To run an older checkout, as the `studio-api` benchmark's `--checkout` does, set `LATTICE_STUDIO_HARNESS_JARS` (its `platform` folder), `LATTICE_STUDIO_HARNESS_ASSETS` (its staged `.build/config-studio`) and `LATTICE_STUDIO_HARNESS_WORKER_ROOT` (the checkout). The `processes` runner then starts the worker from this checkout's interpreter with that checkout's `workers/src`, `tools` and package sources first on `PYTHONPATH`, and its root as `LATTICE_ROOT`. The `compose` runner ignores the worker root.
 
 A run folder is `.build/studio-harness/{run id}` (git-ignored). Setting `STUDIO_HARNESS_KEEP=1` keeps it after `stop()`, with the logs in `run/`.
 
@@ -55,6 +57,10 @@ A run folder is `.build/studio-harness/{run id}` (git-ignored). Setting `STUDIO_
 
 `smoke(client)` runs create, list, two saves, a stale save refused with `412`, a read of revision 1, a publish job and publish, the registry, lock and delete, and returns the steps with their times.
 
+## Reports, the timer and the comparison
+
+`reports` writes a benchmark's report, one JSON file per run in `benchmark/reports/{benchmark}/{UTC date and time}-{short commit}.json`, described by [report.schema.json](../../../benchmark/reports/report.schema.json). `reports.machine()` records the kind of machine, never its name or its user. `reports.measure()` gives a measure's median, interquartile range, minimum and maximum, and `reports.time_ms()` times a Python action on `time.perf_counter_ns` with warm-up repeats discarded. `compare` (`mise run benchmark:compare -- {benchmark} [--base REPORT] [--head REPORT]`) tables two reports, marks a change whose medians lie outside both runs' interquartile ranges, warns when the machines differ, and exits 1 only on a malformed or missing report (STD-290). They live here because the harness is the one consumer so far and is already installed where the checks run. Move them to their own package when a benchmark that does not use the harness needs them.
+
 ## Tests
 
-`tests/` holds the package's own tests (SH-T1 to SH-T8). They start nothing and run in `mise run check:config-studio`. The suite that starts studios is [`test/studio-integration`](../../../test/studio-integration/README.md).
+`tests/` holds the package's own tests (SH-T1 to SH-T8, and SR-T1 to SR-T12 for the reports). They start nothing and run in `mise run check:config-studio`. The suite that starts studios is [`test/studio-integration`](../../../test/studio-integration/README.md).
