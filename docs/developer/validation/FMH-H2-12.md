@@ -4,7 +4,7 @@
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.12, planned in [plan §4.20](../plans/formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01) from the [linear replace sketch](../sketches/persistence-linear-named-graph-replace.md), whose questions LR-Q1 to LR-Q4 the maintainer answered on 2026-11-01. Authored and run in autonomous mode on the branch `claude/persistence-linear-replace`, off the studio's branch. Versioning of the ontology is deferred on this branch, and the release note is written under Unreleased (STD-293).
 
-**For the maintainer:** re-approve the thirteen expected profiles (below), accept or change the ADR-A123 addendum of 2026-11-01, and decide when the studio's deployment declares the field (TD-136).
+**For the maintainer:** re-approve the thirteen expected profiles (below), accept or change the ADR-A123 addendum of 2026-11-01, and decide when the studio's deployment declares the field (TD-136). **Decided 2026-11-01.** The `replaceForm` node that every profile now carries, resolved by nobody with a candidate count of zero, stays, since the resolved dimension says whose choice a setting was and "nobody's, so by capability" is that answer. The addendum states the refusal of the opt-in against a declared false as its own decision, its fourth, rather than leaving it to the diagnostic. The studio's deployment waits for the delta replace unit, and declares the field in that unit's studio slice.
 
 ## Invariant
 

@@ -3,7 +3,7 @@
 # Writing only what changed, as a persistence mode (sketch)
 
 **Unit type:** a multi-slice unit, `persistence-delta-replace` (DR)
-**Status:** raised by the maintainer on 2026-10-31. Questions DR-Q1 to DR-Q4 open
+**Status:** raised by the maintainer on 2026-10-31. DR-Q4 to DR-Q8 were decided on 2026-11-01, and DR-Q1 to DR-Q3 are under discussion, the maintainer having asked what the leaning on DR-Q1 costs and forecloses, whether DR-Q2 chooses between existing behaviours, and whether DR-Q3's digest is what the caller alone can compute. The unit follows slice H2.12 of track H, whose rows form ([linear replace sketch](persistence-linear-named-graph-replace.md)) bears only on `dal:WholeState` families once this unit lands (DR-Q5)
 **Touches:** `ontology/persistence/` (the vocabulary), `tools/persistence` (the compiler), `packages/persistence/python` and `packages/persistence/java` (the callers), the conformance suites, `contracts/config-studio/persistence-profile.ttl`, ADR-A123, ADR-A149
 
 ## 1. The scene
@@ -49,7 +49,15 @@ Measured on the studio's parts on TDB2, through the harness, each save changing 
 
 **DR-Q3. What does a delta replace digest?** (a) the delta alone, `assertTriples` then `retractTriples`, which a caller always has. (b) the whole next state as today, which a caller may not hold, and which costs a sort of N triples a write. **Leaning (a).** The studio digests the whole state today so that its delta replace leaves exactly the quads the generated replace does, and moves to (a) with the compiler.
 
-**DR-Q4. What does a family without a patch log take?** Under `dal:ReceiptOnly` the replace takes no delta slots today. With `dal:ChangedTriples` it takes `assertTriples` and `retractTriples` and writes them to the aggregate only. **Leaning yes,** the slots are the same names whatever the receipt model.
+**DR-Q4. What does a family without a patch log take?** Under `dal:ReceiptOnly` the replace takes no delta slots today. With `dal:ChangedTriples` it takes `assertTriples` and `retractTriples` and writes them to the aggregate only. **Leaning yes,** the slots are the same names whatever the receipt model. **Answered 2026-11-01, yes.**
+
+**DR-Q5. Which encoding do the delta slots take?** A delta replace has no sweep. Its `WHERE` is the guard alone, so it yields one solution and its template is filled once, which makes it linear on every store, rdflib and RDF4J included, without the snapshot semantics the rows form needs (TSD-65), and a delta's deletions and insertions are disjoint by construction, so the order a store applies them in does not matter. The options are to keep `dal:GroundNTriples` for the delta slots, since there is nothing to multiply, or to use `dal:TripleRows` for uniformity with the whole-state rows form. **Answered 2026-11-01, ground N-Triples.** The common write keeps the simplest form, and the rows encoding, `dal:providesSnapshotUpdateSemantics` and `dal:replaceForm` bear on `dal:WholeState` families alone.
+
+**DR-Q6. Is `dal:replaceForm` on a `dal:ChangedTriples` family a warning?** The form axis has no meaning without a sweep. **Answered 2026-11-01, yes,** the `ReplaceFormNotApplicable` warning of H2.12 covers it.
+
+**DR-Q7. How is a composite family's boundary kept under a delta?** The payload contract checks a whole payload against the boundary shape, so the compiler knows every triple is within the owned tree, and a delta cannot be checked alone, since retracting one triple can orphan a member without the delta showing it. The options are (a) the caller checks the next state it holds against the shape and sends the delta, recorded as a caller obligation beside STD-299, (b) the delta replace is refused for a composite family until a check of the delta exists, (c) the operation's `WHERE` verifies the result, which brings back a sweep. **Answered 2026-11-01, (a).** A caller that computes a delta holds the next state by definition. The obligation is written as a standard in this unit, with the six of TD-137.
+
+**DR-Q8. How is the unit sliced?** Three slices, the vocabulary and the compiler, the callers and the conformance runs, and the studio, the third in the studio agent's session with a brief, since its writer and its tests are that session's, and the studio's deployment declares `dal:providesSnapshotUpdateSemantics` in that slice rather than before it. **Answered 2026-11-01, as stated.** H5 is briefed after this unit.
 
 ## 5. What follows
 
