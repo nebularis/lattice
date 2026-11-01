@@ -27,7 +27,7 @@ class ContractTest {
         var ops = OperationContract.read(TestSupport.profiles().get("baseline-single-class"));
         var kinds = ops.stream().map(OperationContract::kind).collect(Collectors.toSet());
         assertTrue(kinds.containsAll(List.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE, OperationKind.AUDIT)));
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-single-class-whole-state", REPLACE);
         assertEquals("Position", replace.parameter("expectedSeq").orElseThrow().kind());
         assertEquals("Digest", replace.parameter("requestDigest").orElseThrow().kind());
         assertEquals("payloadTriples", replace.payload().parameter());
@@ -36,7 +36,7 @@ class ContractTest {
     }
 
     @Test void digestPartsInOrder() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-single-class-whole-state", REPLACE);
         assertEquals(List.of("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "AddPart", "DelPart"),
             replace.digest().parts().stream().map(DigestPart::role).toList());
         assertEquals("SHA-256", replace.digest().algorithm());
@@ -48,7 +48,7 @@ class ContractTest {
     }
 
     @Test void replaceDigestFromAProfile() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-single-class-whole-state", REPLACE);
         Triple a = t("urn:example:r", "urn:example:p", "urn:example:a"), b = t("urn:example:r", "urn:example:p", "urn:example:b");
         var v = values("root", Iri.of("urn:example:r"), "expectedSeq", 3, "payloadTriples", Payload.of(a, b), "assertTriples", Payload.of(b), "retractTriples", Payload.of());
         String one = RequestDigest.requestDigest(replace, v);
@@ -72,14 +72,14 @@ class ContractTest {
     }
 
     @Test void aMissingSourceIsNamed() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-single-class-whole-state", REPLACE);
         var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
             values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", Payload.of(), "assertTriples", Payload.of())));
         assertTrue(e.getMessage().contains("retractTriples"));
     }
 
     @Test void aBareStringIsNotAPayload() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-single-class-whole-state", REPLACE);
         var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
             values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", "<urn:a> <urn:b> <urn:c> .", "assertTriples", Payload.of(), "retractTriples", Payload.of())));
         assertTrue(e.getMessage().contains("Payload"));

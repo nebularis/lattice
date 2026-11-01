@@ -407,7 +407,7 @@ def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *(_claim_binds() if receipt != "none" else ()),
-        sweep,
+        *((sweep,) if sweep is not None else ()),
     )
 
 
@@ -479,6 +479,35 @@ def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str
         Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas)), guards=guards,
         insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph"),
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _delta_params(receipt: str) -> tuple:
+    """A delta replace takes what the write adds and what it removes, whatever the receipt model (DR-Q4), and no whole payload."""
+    return (*_CAS_PARAMS, Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD))
+
+
+def _delta_insert(b: Bindings, data: Graph, *, receipt: str, log: str) -> tuple:
+    """The `INSERT` of a delta replace: the asserted triples into the aggregate, then what a replace writes besides its payload. A patch
+    log's add and del graphs take the same two slots."""
+    whole = _replace_insert(b, data, receipt=receipt, log=log)
+    return (GraphBlock(data, (PayloadSlot("assertTriples"),)), *whole[1:])
+
+
+def _replace_delta(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    """A named-graph family's replace under `dal:ChangedTriples` (DR1): the retracted triples deleted from the root's graph and the asserted
+    ones inserted, guarded on the version row as the whole replace is, with no sweep, so it costs what changed and not the aggregate's size.
+    The guard proves the graph is the state the caller computed the delta from, as long as only the family's operations write it."""
+    _check_receipt(receipt)
+    named = _Named(b, graph_names)
+    deltas = ("add", "del") if receipt == "patch-log" else ()
+    binds = (*named.binds(), *(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*deltas))
+    return Operation.build(
+        "cas-replace-named-graph-delta" + _suffix(dataset_guard, receipt),
+        (*_delta_params(receipt), *named.params()),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)), guards=guards,
+        insert=_delta_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph"),
+        delete=(GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt)),
     )
 
 
@@ -570,6 +599,20 @@ def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receip
         Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b), receipt=receipt)),
         guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2"),
         delete=_composite_delete(b, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _composite_replace_delta(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    """A composite family's replace under `dal:ChangedTriples` (DR1). The data graph is shared, so the delta must stay inside the
+    aggregate: the caller runs `payload-check` over the next state it computed the delta from, as it does over a whole payload."""
+    _check_composite_receipt(receipt)
+    binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
+    return Operation.build(
+        "cas-replace-composite-property-delta" + _suffix(dataset_guard, receipt),
+        _delta_params(receipt),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)),
+        guards=guards, insert=_delta_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2"),
+        delete=(GraphBlock(b.graph("dataGraph"), (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt)),
     )
 
 
@@ -953,6 +996,8 @@ BUILDERS: dict[str, Builder] = {
     "create-if-absent-named-graph-dataset-guard": lambda b, guards, names: _create(b, guards=guards, dataset_guard=True, graph_names=names),
     "cas-replace-named-graph": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=False, graph_names=names),
     "cas-replace-named-graph-dataset-guard": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=True, graph_names=names),
+    "cas-replace-named-graph-delta": lambda b, guards, names: _replace_delta(b, guards=guards, dataset_guard=False, graph_names=names),
+    "cas-replace-named-graph-delta-dataset-guard": lambda b, guards, names: _replace_delta(b, guards=guards, dataset_guard=True, graph_names=names),
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
@@ -984,6 +1029,7 @@ def _receipt_variants() -> dict:
             ("create-if-absent-named-graph", _create, True), ("cas-replace-named-graph", _replace, True),
             ("tombstone-delete-named-graph", _tombstone, True), ("create-if-absent-composite", _composite_create, False),
             ("cas-replace-composite-property", _composite_replace, False), ("tombstone-delete-composite", _composite_tombstone, False),
+            ("cas-replace-named-graph-delta", _replace_delta, True), ("cas-replace-composite-property-delta", _composite_replace_delta, False),
         ):
             for guard in (False, True):
                 key = stem + tag + ("-dataset-guard" if guard else "")

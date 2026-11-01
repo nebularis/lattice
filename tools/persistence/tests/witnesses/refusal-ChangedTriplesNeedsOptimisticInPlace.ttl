@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# dal:ChangedTriples with a family that appends versions. A replace states what changed only for an optimistic family that writes in place.
+# base: write-discipline-delta-membership.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+
+ex:QuoteWriteProfile dal:replaceEncoding dal:ChangedTriples .

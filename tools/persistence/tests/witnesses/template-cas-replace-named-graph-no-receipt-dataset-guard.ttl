@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# Generates the whole-state replace (named-graph-no-receipt-dataset-guard), which no shipped example reaches since an optimistic in-place family defaults to dal:ChangedTriples.
+# base: baseline-single-class.ttl
+# remove: ex:LoanApplicationStrongProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LoanApplicationStrongProfile dal:receiptModel dal:NoReceipt .
+
+ex:LoanApplicationEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:LoanApplicationClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:namedgraphWriteProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo        ex:LoanApplicationClass ;
+    dal:replaceEncoding  dal:WholeState .

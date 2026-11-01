@@ -803,6 +803,9 @@
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 0 ;
+            dal:dimension "replaceEncoding" ;
+            dal:resolvedValue dal:WholeState ],
+        [ dal:candidateCount 0 ;
             dal:dimension "retentionMode" ;
             dal:resolvedValue dal:PrefixOnlyRetention ],
         [ dal:candidateCount 0 ;

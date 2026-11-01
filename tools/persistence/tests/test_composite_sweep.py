@@ -37,7 +37,7 @@ DATA_GRAPH = URIRef("urn:g:orders")
 PLAIN = "cas-replace-composite-property-patch-log"
 DATASET_GUARD = "cas-replace-composite-property-patch-log-dataset-guard"
 FIXTURES = {
-    PLAIN: EXAMPLES_DIR / "composite-property-boundary-shacl.ttl",
+    PLAIN: witness.WITNESS_DIR / "composite-property-boundary-shacl-whole-state.ttl",
     DATASET_GUARD: witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl",
 }
 PAYLOAD = (

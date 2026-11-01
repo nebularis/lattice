@@ -113,6 +113,9 @@ dal:CapabilityRequirement a owl:Class ;
 dal:CapabilitySpec a owl:Class ;
     rdfs:comment "An adopter-authored, optional, static declaration of assumed backend capabilities. NEVER derived from a live SPI or a TCK run, and never required for compilation to succeed. Shares field shape with the guide's StoreCapabilities record (Chapter 25 §25.2) by design, not by identity, so a future SPI-integrated stage can populate one from a real TCK run without a second vocabulary." .
 
+dal:ChangedTriples a dal:ReplaceEncoding ;
+    rdfs:comment "The default under dal:Optimistic for a family written in place. The replace deletes the triples the write retracts and inserts the ones it asserts, guarded on the version row, and sweeps nothing, so it costs what changed and not the size of the aggregate. The guard proves the aggregate is the state the caller computed the delta from, as long as only the family's operations write it." .
+
 dal:ClaimScheme a owl:Class ;
     rdfs:comment "Versioned state for a keyed-hash claim (guide Chapter 6.1), so rotating the HMAC secret does not open a window where two scheme versions can each claim the same normalized key." .
 
@@ -680,6 +683,10 @@ dal:Reject a dal:ViolationPolicy ;
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
 
+dal:ReplaceEncoding a owl:Class ;
+    rdfs:comment "How an in-place family's replace writes a new state. One of dal:ChangedTriples, dal:WholeState." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:ChangedTriples dal:WholeState ) ] .
+
 dal:ResolvedDimension a owl:Class ;
     rdfs:comment "Provenance for one dimension's winning value at one target: which scope won, and how many candidates existed." .
 
@@ -841,12 +848,15 @@ dal:WeakEtag a dal:EtagForm ;
 dal:WholeAggregateRead a dal:AccessMode ;
     rdfs:comment "A read of an aggregate's every triple, through the owned path or of the root's graph." .
 
+dal:WholeState a dal:ReplaceEncoding ;
+    rdfs:comment "The default for every family that is not optimistic and in place. The replace sweeps the aggregate and inserts its whole new state, which heals a graph changed outside the family's operations." .
+
 dal:WriteDiscipline a owl:Class ;
     rdfs:comment "How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:InPlace dal:AppendVersions dal:AppendRecords ) ] .
 
 dal:WriteDisciplineProfile a owl:Class ;
-    rdfs:comment "Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery). Resolved like any dimension." .
+    rdfs:comment "Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery), and for a family written in place how a replace writes a new state (dal:replaceEncoding). Resolved like any dimension." .
 
 dal:WriterStartRefusal a dal:EpochAuthority ;
     rdfs:comment "Writers refuse to start, or fail in-flight, until their cached epoch matches a durable external watermark. Combinable with dal:ExternalHighWaterMark for defence in depth." .
@@ -1509,6 +1519,11 @@ dal:registryGraph a owl:DatatypeProperty ;
     rdfs:domain dal:MetaTopologyProfile ;
     rdfs:range xsd:string .
 
+dal:replaceEncoding a owl:ObjectProperty ;
+    rdfs:comment "Whether an in-place family's replace writes the triples that changed or the whole state. Absent means dal:ChangedTriples for a family under dal:Optimistic written in place, and dal:WholeState otherwise. compile refuses dal:ChangedTriples declared for a family that is not optimistic or not written in place (ChangedTriplesNeedsOptimisticInPlace), and any other value (ReplaceEncodingUnknown)." ;
+    rdfs:domain dal:WriteDisciplineProfile ;
+    rdfs:range dal:ReplaceEncoding .
+
 dal:reportsOutcome a owl:ObjectProperty ;
     rdfs:comment "An outcome an audit can report. Every audit declares all three." ;
     rdfs:domain dal:GeneratedOperation ;
@@ -1690,6 +1705,8 @@ dct:description a owl:AnnotationProperty .
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:BuilderDerived dal:HandDeclared ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ByIdentity dal:Pinned ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:ChangedTriples dal:WholeState ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 

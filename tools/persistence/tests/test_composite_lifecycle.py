@@ -31,7 +31,7 @@ from conftest import EXAMPLES_DIR
 
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 PX = "https://example.org/projects#"
-PROJECT_EXAMPLE = EXAMPLES_DIR / "composite-project-ownership.ttl"
+PROJECT_EXAMPLE = witness.WITNESS_DIR / "composite-project-ownership-whole-state.ttl"
 PROJECT_DATA = Path(__file__).resolve().parent / "fixtures" / "project-data.ttl"
 DATASET_GUARD_FIXTURE = witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl"
 DATA_GRAPH = URIRef("urn:g:projects")

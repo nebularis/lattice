@@ -92,6 +92,16 @@ def test_h2_2_t1_the_builders_are_the_operations_listed_and_every_one_is_generat
             for tag in ("-patch-log", "-no-receipt")
             for guard in ("", "-dataset-guard")
         ],
+        # dal:ChangedTriples: the replace that states what changed, for each receipt model and guard. The whole-state replaces above are generated under dal:WholeState.
+        *[
+            f"{base}{tag}{guard}"
+            for base, tags in (
+                ("cas-replace-named-graph-delta", ("", "-patch-log", "-no-receipt")),
+                ("cas-replace-composite-property-delta", ("-patch-log", "-no-receipt")),
+            )
+            for tag in tags
+            for guard in ("", "-dataset-guard")
+        ],
     ])
     assert {stem for _, _, stem, _ in _ported()} == set(PORTED)
 

@@ -70,6 +70,8 @@ DIMENSIONS = (
     # H2.6f (2026-10-20): how a family that appends versions states each version's members, and how often it lists them all.
     "membershipEncoding",
     "checkpointEvery",
+    # DR1 (2026-11-01): whether an in-place family's replace writes the triples that changed or the whole state.
+    "replaceEncoding",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
@@ -111,6 +113,8 @@ BASELINE_DEFAULTS: dict[str, str] = {
     # H2.6f: every version lists its members, and a checkpoint is every 16th version under dal:DeltaMembership.
     "membershipEncoding": "FullMembership",
     "checkpointEvery": RdfLiteral(16, datatype=XSD.long),
+    # DR1, DR-Q2: no static default for replaceEncoding. An optimistic in-place family writes what changed and any other writes its
+    # whole state, so the default follows the concurrency profile and the discipline (default_replace_encoding).
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
     # default for epochAuthority, privacyClass, erasureStrategy,
     # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile
@@ -205,3 +209,10 @@ __all__ = [
     "CrossAxisViolation",
     "BoundaryConflict",
 ]
+
+
+def default_replace_encoding(dimensions: dict) -> str:
+    """The replace encoding a family that declares none takes (DR-Q2): `ChangedTriples` under `dal:Optimistic` in place, where the version-row
+    guard proves the delta applies to the state it was computed from, and `WholeState` anywhere else."""
+    local = lambda dim: str(dimensions[dim].value).rsplit("#", 1)[-1] if dimensions.get(dim) and dimensions[dim].value is not None else None
+    return "ChangedTriples" if local("concurrencyProfile") == "Optimistic" and local("writeDiscipline") == "InPlace" else "WholeState"

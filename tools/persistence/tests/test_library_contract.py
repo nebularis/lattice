@@ -17,10 +17,22 @@ from rdflib.compare import isomorphic
 
 from expected_profiles import CONFIGURATIONS, emit
 from lattice_persistence import read_contracts
+from persistence import witness
 from persistence.contract_emit import contract_for
 
 LIBRARY_DATA = Path(__file__).resolve().parents[3] / "packages" / "persistence" / "python" / "tests" / "data"
-LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership", "composite-project-ownership")
+LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership", "composite-project-ownership",
+                    "baseline-single-class-whole-state", "composite-project-ownership-whole-state")
+# DR1: the libraries' tests of the whole replace read profiles that declare dal:WholeState, compiled from these witnesses.
+WHOLE_STATE_SOURCES = {
+    "baseline-single-class-whole-state": witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log.ttl",
+    "composite-project-ownership-whole-state": witness.WITNESS_DIR / "composite-project-ownership-whole-state.ttl",
+}
+
+
+def _library_profile(name: str) -> Graph:
+    source = WHOLE_STATE_SOURCES.get(name)
+    return emit(name, source=witness._load_fixture(source)) if source else emit(name)
 
 
 @pytest.mark.parametrize("name,example,options", CONFIGURATIONS, ids=[c[0] for c in CONFIGURATIONS])
@@ -49,4 +61,4 @@ def test_library_reads_the_reference_edges_of_a_composite_family():
 @pytest.mark.parametrize("name", LIBRARY_FIXTURES)
 def test_the_library_fixture_is_what_compile_emits(name):
     fixture = Graph().parse(LIBRARY_DATA / f"{name}.compiled.ttl")
-    assert isomorphic(fixture, emit(name)), f"{name}.compiled.ttl is stale, regenerate it with persistence compile"
+    assert isomorphic(fixture, _library_profile(name)), f"{name}.compiled.ttl is stale, regenerate it with persistence compile"

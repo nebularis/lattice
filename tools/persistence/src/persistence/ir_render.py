@@ -557,10 +557,10 @@ class _Checker:
                         self._tag(part)
                 target.add(self._access(block.graph, el, AccessMode.DELETE.value if deleting else AccessMode.INSERT.value))
             elif isinstance(el, PayloadSlot):
-                if deleting:
-                    raise IrError("SlotMisuse", f"{self.op.id}: a payload slot is for an INSERT template, not a DELETE template")
+                # A DELETE template takes a slot of ground triples, the triples a delta replace retracts (DR1). It deletes only those.
                 self._slot(el.param, Kind.PAYLOAD)
-                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, AccessMode.INSERT.value))
+                mode = AccessMode.DELETE.value if deleting else AccessMode.INSERT.value
+                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
             else:
                 raise IrError("UnsupportedInTemplate", f"{self.op.id}: a template holds triples and a payload slot only, got {el!r}")
 

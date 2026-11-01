@@ -60,7 +60,7 @@ def test_h2_9_t3_the_receipt_only_composite_writes_have_no_builder_and_a_named_g
 
     with pytest.raises(ValueError, match="snapshots are not built"):
         _composite_create(None, guards=True, dataset_guard=False, receipt="receipt")
-    (ct,) = compile_targets(witness._load_fixture(witness.WITNESS_DIR / "write-discipline-snapshot-named-graph.ttl"))
+    (ct,) = compile_targets(witness._load_fixture(witness.WITNESS_DIR / "write-discipline-snapshot-named-graph-whole-state.ttl"))
     assert "ReceiptModelNotHonoured" in {d.kind for d in ct.diagnostics}
     assert {o.operation: o.template_id for o in ct.operations}["cas-replace"] == "cas-replace-named-graph"
 

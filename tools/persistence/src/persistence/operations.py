@@ -22,7 +22,7 @@ from typing import Any
 
 from rdflib import URIRef
 
-from .model import ResolvedDimension
+from .model import ResolvedDimension, default_replace_encoding
 from .scopes import Target
 from .terms import Integer, Iri, Literal, PropertyPath
 
@@ -93,6 +93,10 @@ def select_operations(
     # guide §19.1's worked example. Not independently configurable in
     # this slice -- see persistence-compiler-iri-sync's status record.
     dataset_level_guard = _local(dimensions["epochGuardScope"].value) == "DatasetLevelGuard"
+    # dal:replaceEncoding (DR1). Under dal:ChangedTriples the replace writes what changed and sweeps nothing.
+    replace_encoding = dimensions.get("replaceEncoding")
+    replace_tag = "-delta" if ((_local(replace_encoding.value) if replace_encoding and replace_encoding.value is not None else None)
+                               or default_replace_encoding(dimensions)) == "ChangedTriples" else ""
     guard_suffix = "-dataset-guard" if dataset_level_guard else ""
     # dal:firstWrite (Slice 2): a pre-created row exists from id allocation,
     # so the target never gets create-if-absent. It gets the bootstrap
@@ -164,8 +168,8 @@ def select_operations(
     elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
-                f"cas-replace-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-named-graph{receipt_tag}"
+                f"cas-replace-named-graph{replace_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-named-graph{replace_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
@@ -191,8 +195,8 @@ def select_operations(
             data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
             bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
-                f"cas-replace-composite-property{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-composite-property{receipt_tag}"
+                f"cas-replace-composite-property{replace_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-composite-property{replace_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-composite{receipt_tag}-dataset-guard" if dataset_level_guard

@@ -17,7 +17,7 @@ from rdflib import RDF, RDFS, SKOS, Graph, Literal, URIRef
 from .functional import functional_value
 from .boundary import BY_IDENTITY, PINNED, REFERENCE, MissingBoundaryShapeError, walk_ownership
 from .capability import CapabilityCheckResult
-from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension
+from .model import BoundaryConflict, CrossAxisViolation, Diagnostic, ResolvedDimension, default_replace_encoding
 from .namespaces import DAL, FND, SH
 from .operations import PAYLOAD_TEMPLATES
 from .scopes import Target
@@ -112,6 +112,26 @@ def check_cross_axis(
             str(target),
             f"dal:checkpointEvery is {interval}, and it must be an integer of at least 1, the number of versions between full "
             "lists of members (H2.6f).",
+        )
+
+    # DR1, DR-Q2: the replace encoding. A delta is right only on the state it was computed from, which the version-row guard proves under
+    # optimistic concurrency, so a declared dal:ChangedTriples needs dal:Optimistic and a family written in place.
+    replace_encoding = _local(_value(dimensions, "replaceEncoding")) or default_replace_encoding(dimensions)
+    if replace_encoding not in ("ChangedTriples", "WholeState"):
+        raise CrossAxisViolation(
+            "ReplaceEncodingUnknown",
+            str(target),
+            f"dal:replaceEncoding is {replace_encoding}, and the encodings are dal:ChangedTriples and dal:WholeState (DR1).",
+        )
+    declared = dimensions.get("replaceEncoding")
+    if replace_encoding == "ChangedTriples" and declared is not None and declared.won_by is not None and (
+        concurrency_local != "Optimistic" or discipline != "InPlace"
+    ):
+        raise CrossAxisViolation(
+            "ChangedTriplesNeedsOptimisticInPlace",
+            str(target),
+            f"dal:ChangedTriples writes a delta, which is right only on the state its caller read, and only a version-row guard proves that. "
+            f"This family is dal:{concurrency_local} and dal:{discipline}. Declare dal:Optimistic and dal:InPlace, or dal:WholeState (DR-Q2).",
         )
 
     # H2.6d, VH-Q5a: a family that wants no receipt writes in place. A version or a record takes its position and its transaction time

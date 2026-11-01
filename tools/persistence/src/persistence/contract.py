@@ -106,6 +106,9 @@ _STEM_KIND: dict[str, OperationKind] = {
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,
     "cas-replace-composite-property": OperationKind.REPLACE,
+    # DR1: the replace of a family under dal:ChangedTriples, which writes the delta and sweeps nothing.
+    "cas-replace-named-graph-delta": OperationKind.REPLACE,
+    "cas-replace-composite-property-delta": OperationKind.REPLACE,
     "cas-replace-value-guard": OperationKind.VALUE_GUARDED_REPLACE,
     "tombstone-delete-named-graph": OperationKind.TOMBSTONE,
     "tombstone-delete-composite": OperationKind.TOMBSTONE,
@@ -127,10 +130,11 @@ for _stem, _kind in tuple(_STEM_KIND.items()):
         _STEM_KIND[_stem + "-patch-log"] = _kind
         _STEM_KIND[_stem + "-no-receipt"] = _kind
 # A composite family written in place has no receipt-only write (H2.9, D-12 (a)), so only its two variants are builders.
-for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"):
+for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite", "cas-replace-composite-property-delta"):
     del _STEM_KIND[_stem]
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
+DELTA_REPLACE_STEMS = ("cas-replace-named-graph-delta", "cas-replace-composite-property-delta")
 
 
 def stem_of(operation_id: str) -> str:
@@ -306,6 +310,9 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
     event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
     payload_name = None if kind is OperationKind.APPEND else payload_name
+    # A delta replace takes no whole payload. Its two slots are the delta, digested as the add and del parts (DR-Q3 (a)), and the next
+    # state its caller holds is what the boundary shape and the payload check run over.
+    payload_name = None if stem.startswith(DELTA_REPLACE_STEMS) else payload_name
     # The payload of a new version is rooted at the version, whose own triples it holds, and not at the identity (H2.8b).
     root_name = "newVersion" if kind is OperationKind.APPEND_VERSION else "root" if "root" in params else None
     payload = PayloadContract(payload_name, root_name, (), shape) if payload_name else None

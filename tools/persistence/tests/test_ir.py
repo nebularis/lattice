@@ -83,6 +83,15 @@ def test_h2_1_t1_the_base_operation_is_accepted_and_renders():
     assert render(valid()).startswith("PREFIX pat:")
 
 
+def test_dr1_a_payload_slot_in_a_delete_template_is_accepted_and_recorded_as_a_delete():
+    """DR1 (ADR-A123, addendum of 2026-11-01): a DELETE template takes a slot of ground triples, the triples a delta replace
+    retracts. It replaces the refusal of a payload slot in a DELETE template, which H2.1 had. A slot in WHERE is still refused."""
+    operation = valid(delete_=(*delete(), GraphBlock(DATA, (PayloadSlot("payloadTriples"),))))
+    sets = check(operation)
+    assert any(a.subject == "{payload}" and a.mode == "Delete" for a in sets.writes)
+    assert "{{{payloadTriples}}}" in render(operation).split("INSERT")[0]
+
+
 # ---- one refusal per rule -------------------------------------------------------------------------
 
 _PATH = Path(PropertyPath.encode(Step(__import__("rdflib").URIRef("urn:p:owns"))))
@@ -163,7 +172,6 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("ParameterGuardNotDerived", "a guard that is off and names parameters", lambda: replace(valid(), guard=replace(GUARDS_OFF, params=PARAMS[:1]))),
         ("ParameterGuardNotDerived", "a stray parameter", lambda: replace(valid(), guard=ParameterGuard(PARAMS[:6] + (Param("extra", Kind.IRI),)))),
         ("SlotMisuse", "payload in WHERE", lambda: valid(where_=(*where(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
-        ("SlotMisuse", "payload in DELETE", lambda: valid(delete_=(*delete(), GraphBlock(DATA, (PayloadSlot("payloadTriples"),))))),
         ("SlotMisuse", "slot naming a non-payload parameter", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("root"),))))),
         ("SlotMisuse", "slot bound as a term", lambda: valid(where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), ParamRef("payloadTriples")),))))),
         ("SlotMisuse", "registry slot naming a payload", lambda: valid(where_=(*where(), Values(Var("log"), (RegistrySlot("payloadTriples"),))))),

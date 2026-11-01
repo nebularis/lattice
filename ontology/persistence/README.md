@@ -203,7 +203,7 @@ classDiagram
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:ConcurrencyLevel", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:ConcurrencyLevel", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:ReplaceEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
 
 **Aggregate boundary, concurrency and write discipline**
 
@@ -267,6 +267,11 @@ classDiagram
         ByIdentity
         Pinned
     }
+    class ReplaceEncoding {
+        <<enumeration>>
+        ChangedTriples
+        WholeState
+    }
     class WriteDiscipline {
         <<enumeration>>
         AppendRecords
@@ -284,6 +289,7 @@ classDiagram
     ConcurrencyProfile --> EtagForm : etagForm
     ConcurrencyProfile --> EtagRepresentation : etagRepresentation
     WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
+    WriteDisciplineProfile --> ReplaceEncoding : replaceEncoding
     WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
     class ObjectProperty_ownership["Object Property - ownership"]
     class ObjectProperty_referenceMode["Object Property - referenceMode"]
@@ -1128,6 +1134,7 @@ declares it, its values, and the platform baseline default the compiler uses whe
 | First write | `dal:AggregateBoundaryProfile` (`dal:firstWrite`) | `dal:AbsentRow`, `dal:PreCreatedRow` | absent row | 5.6.1 |
 | Write discipline | `dal:WriteDisciplineProfile` (`dal:writeDiscipline`) | `dal:InPlace`, `dal:AppendVersions`, `dal:AppendRecords` | in place | 5.6.10 |
 | Membership encoding | `dal:WriteDisciplineProfile` (`dal:membershipEncoding`, `dal:checkpointEvery`) | `dal:FullMembership`, `dal:DeltaMembership`, and an interval of at least 1 | full, every 16 | 5.6.11 |
+| Replace encoding | `dal:WriteDisciplineProfile` (`dal:replaceEncoding`) | `dal:ChangedTriples`, `dal:WholeState` | changed triples under `dal:Optimistic` in place, whole state otherwise | 5.6.12 |
 | Concurrency | `dal:ConcurrencyProfile` (`dal:concurrencyProfile`) | `dal:ProvidedConcurrency`, `dal:Optimistic`, `dal:AppendOnly`, `dal:LockingConcurrency` (marker only) | provided | 5.6.2 |
 | Deadlock policy | `dal:ConcurrencyProfile` | `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`, `dal:PartitionedWriter` | engine detect and retry | 5.6.2 |
 | ETag form and representation | `dal:ConcurrencyProfile` | `dal:StrongEtag`/`dal:WeakEtag`, `dal:SingleRepresentation`/`dal:TaggedRepresentation` | strong, single | 5.6.2 |
@@ -1968,6 +1975,21 @@ A large set changed slightly costs a handful of triples instead of a full list, 
 chain, and domain shapes need the scratch graph, so the family trades read cost and validation convenience for write and storage cost. That
 is why it is a choice. The fixtures under `test/membership/` hold the stored triples of two sets of members, of 500 and of 150, under each encoding, and
 `benchmark/persistence-membership/` measures both against an in-place family with a patch log.
+
+#### 5.6.12 Replace encoding
+
+**The question.** When a family written in place replaces an aggregate, does the write state the whole new aggregate or only what changed?
+
+`dal:replaceEncoding`, declared beside `dal:writeDiscipline` and resolved like any dimension, picks `dal:ChangedTriples` or `dal:WholeState`. Absent means `dal:ChangedTriples` for a family under `dal:Optimistic` written in place, and `dal:WholeState` otherwise. `dal:ChangedTriples` is refused for a family that is not optimistic or not written in place (`ChangedTriplesNeedsOptimisticInPlace`), and any other value is refused (`ReplaceEncodingUnknown`).
+
+| | `dal:WholeState` | `dal:ChangedTriples` |
+|---|---|---|
+| quads changed in an aggregate of N triples with k changed | about 2N, a sweep then an insert of the whole state | k |
+| request size | N triples | k triples |
+| order on a store that is not snapshot | quadratic, M by N | linear in k |
+| a graph changed outside the family's operations | healed, since the sweep removes it | kept, since only the delta is written |
+
+The generated operations are `cas-replace-named-graph-delta` and `cas-replace-composite-property-delta`, each with its receipt and dataset-guard variants. They take the request-time slots `assertTriples` and `retractTriples` whatever the receipt model, and the request digest is over the delta, `assertTriples` then `retractTriples`. The guard on the version row proves the aggregate is the state the caller computed the delta from, as long as only the family's operations write it. A composite family's caller runs `payload-check` over the next state it computed the delta from, as it does over a whole payload.
 
 ### 5.7 Capability self-checks
 
@@ -3800,7 +3822,8 @@ set of named policies.
 #### `dal:WriteDisciplineProfile`
 
 **Definition.** Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends
-versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery). Resolved like any dimension.
+versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery), and for a family written in place how a replace writes a new state
+(dal:replaceEncoding). Resolved like any dimension.
 
 #### `dal:WriteDiscipline`
 
@@ -3813,6 +3836,12 @@ versions how a version states its members (dal:membershipEncoding, dal:checkpoin
 **Definition.** How a version of a root states its members. One of dal:FullMembership, dal:DeltaMembership.
 
 **Equivalent to.** { dal:FullMembership, dal:DeltaMembership }
+
+#### `dal:ReplaceEncoding`
+
+**Definition.** How an in-place family's replace writes a new state. One of dal:ChangedTriples, dal:WholeState.
+
+**Equivalent to.** { dal:ChangedTriples, dal:WholeState }
 
 #### `dal:ClaimScheme`
 
@@ -4642,6 +4671,17 @@ compile refuses dal:DeltaMembership for a family that does not declare dal:Appen
 **Domain.** `dal:WriteDisciplineProfile`
 
 **Range.** `dal:MembershipEncoding`
+
+#### `dal:replaceEncoding`
+
+**Definition.** Whether an in-place family's replace writes the triples that changed or the whole state. Absent means
+dal:ChangedTriples for a family under dal:Optimistic written in place, and dal:WholeState otherwise. compile refuses
+dal:ChangedTriples declared for a family that is not optimistic or not written in place
+(ChangedTriplesNeedsOptimisticInPlace), and any other value (ReplaceEncodingUnknown).
+
+**Domain.** `dal:WriteDisciplineProfile`
+
+**Range.** `dal:ReplaceEncoding`
 
 #### `dal:mergeRelation`
 
@@ -5649,6 +5689,13 @@ The individuals of `dal:MembershipEncoding`.
 | `dal:FullMembership` | `dal:MembershipEncoding` | The default. Each new version lists every member under the domain's own membership property, so a version is readable alone and a domain shape validates the stored data directly. |
 | `dal:DeltaMembership` | `dal:MembershipEncoding` | Each new version states only what changed, as pat:addsMember and pat:dropsMember beside pat:previousVersion, and the domain's membership property is not written for it. Every dal:checkpointEvery versions the write lists every member as under dal:FullMembership and the version carries pat:checkpoint true, so a chain read is never longer than that. Members are read with the generated members query, and a domain shape runs over its results and never over the stored delta. Applies to a family that declares dal:AppendVersions only. |
 
+The individuals of `dal:ReplaceEncoding`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:ChangedTriples` | `dal:ReplaceEncoding` | The default under dal:Optimistic for a family written in place. The replace deletes the triples the write retracts and inserts the ones it asserts, guarded on the version row, and sweeps nothing, so it costs what changed and not the size of the aggregate. The guard proves the aggregate is the state the caller computed the delta from, as long as only the family's operations write it. |
+| `dal:WholeState` | `dal:ReplaceEncoding` | The default for every family that is not optimistic and in place. The replace sweeps the aggregate and inserts its whole new state, which heals a graph changed outside the family's operations. |
+
 The individuals of `dal:SchemeState`.
 
 | Individual | Type | Definition |
@@ -5775,6 +5822,8 @@ The members of each enumeration of 6.1 are distinct individuals, so a reasoner c
 
 **All different.** dal:FullMembership, dal:DeltaMembership
 
+**All different.** dal:ChangedTriples, dal:WholeState
+
 **All different.** dal:Accepting, dal:Dual, dal:Retiring, dal:Retired
 
 ### 6.6 Other Axioms
@@ -5877,6 +5926,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ReferenceData` | Class |  |
 | `dal:ReferenceEdge` | Class |  |
 | `dal:ReferenceMode` | Class | Equivalent to {`dal:ByIdentity`, `dal:Pinned`}. |
+| `dal:ReplaceEncoding` | Class | Equivalent to {`dal:ChangedTriples`, `dal:WholeState`}. |
 | `dal:ResolvedDimension` | Class |  |
 | `dal:ResourceAccess` | Class |  |
 | `dal:ResourceKind` | Class | Equivalent to {`dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`}. |
@@ -5976,6 +6026,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:recordClass` | Object property | Range `owl:Class`. |
 | `dal:referenceEdge` | Object property | Range `dal:ReferenceEdge`. |
 | `dal:referenceMode` | Object property | Range `dal:ReferenceMode`. |
+| `dal:replaceEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:ReplaceEncoding`. |
 | `dal:reportsOutcome` | Object property | Domain `dal:GeneratedOperation`. Range `dal:AuditOutcome`. |
 | `dal:requiresCas` | Object property | Domain `dal:CapabilityRequirement`. Range `dal:ConcurrencyLevel`. |
 | `dal:requiresReasoningFor` | Object property | Domain `dal:CapabilityRequirement`. |
@@ -6090,6 +6141,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ByIdentity` | Individual | Type `dal:ReferenceMode`. Different from `dal:Pinned`. |
 | `dal:CallerNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:QueryNamed`. |
 | `dal:CallerSuppliedSurrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:UuidV4Surrogate`. |
+| `dal:ChangedTriples` | Individual | Type `dal:ReplaceEncoding`. Different from `dal:WholeState`. |
 | `dal:Clean` | Individual | Type `dal:AuditOutcome`. Different from `dal:Failed`, `dal:NothingExamined`. |
 | `dal:CommitGrain` | Individual | Type `dal:OrderingGrain`. Different from `dal:EventGrain`. |
 | `dal:ComponentRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
@@ -6243,6 +6295,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:WatermarkedRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:LagWindowRead`, `dal:NoGlobalRead`. |
 | `dal:WeakEtag` | Individual | Type `dal:EtagForm`. Different from `dal:StrongEtag`. |
 | `dal:WholeAggregateRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`. |
+| `dal:WholeState` | Individual | Type `dal:ReplaceEncoding`. Different from `dal:ChangedTriples`. |
 | `dal:WriterStartRefusal` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:StoreLocalEpoch`. |
 
 <!-- end -->
@@ -6735,6 +6788,9 @@ dal:WriteDisciplineProfileShape
     sh:property [ sh:path dal:membershipEncoding ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:in ( dal:FullMembership dal:DeltaMembership ) ;
                   sh:message "dal:membershipEncoding takes one of dal:FullMembership, dal:DeltaMembership." ] ;
+    sh:property [ sh:path dal:replaceEncoding ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:ChangedTriples dal:WholeState ) ;
+                  sh:message "dal:replaceEncoding takes one of dal:ChangedTriples, dal:WholeState." ] ;
     sh:property [ sh:path dal:checkpointEvery ; sh:maxCount 1 ;
                   sh:or ( [ sh:datatype xsd:long ] [ sh:datatype xsd:integer ] ) ;
                   sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] .
@@ -7543,6 +7599,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - Replace encoding. New: `dal:ReplaceEncoding`, `dal:ChangedTriples`, `dal:WholeState` and `dal:replaceEncoding`. A family under `dal:Optimistic` written in place now replaces by its delta, so its generated replace changes (changes meaning).
 - **0.21.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.20.0**.

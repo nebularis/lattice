@@ -213,9 +213,11 @@ class TestEpochGuardScopeTemplateSelection:
     def test_dataset_level_guard_selects_dataset_guard_templates(self):
         from rdflib import URIRef
 
+        from persistence import witness
+
         g = Graph()
         g.parse(SPEC_TTL, format="turtle")
-        g.parse(EXAMPLES_DIR / "epoch-dataset-level-guard.ttl", format="turtle")
+        g += witness._load_fixture(witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log-dataset-guard-epoch-example.ttl")
         target = URIRef("https://example.org/lending#LoanApplication")
 
         out, compiled = compile_to_graph(g, classes={target})
@@ -232,9 +234,11 @@ class TestEpochGuardScopeTemplateSelection:
     def test_baseline_selects_original_named_graph_template(self):
         from rdflib import URIRef
 
+        from persistence import witness
+
         g = Graph()
         g.parse(SPEC_TTL, format="turtle")
-        g.parse(EXAMPLES_DIR / "baseline-single-class.ttl", format="turtle")
+        g += witness._load_fixture(witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log.ttl")
         target = URIRef("https://example.org/lending#LoanApplication")
 
         _, compiled = compile_to_graph(g, classes={target})

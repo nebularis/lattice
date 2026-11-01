@@ -427,6 +427,16 @@ Built in slice H2.9. It carries out decision 8, and its clause "until then" is s
    That model is now refused for a composite family written in place (`CompositeBoundarySnapshotNotBuilt`) until snapshots are built. A named-graph family keeps its
    receipt-only writes, and keeps the `ReceiptModelNotHonoured` warning for the snapshot.
 
+## Addendum, 2026-11-01: the delta replace and a slot in a DELETE template (proposed, for the maintainer's review)
+
+Built in slice DR1 of the persistence delta replace unit. It extends the operation kinds of decision 4 and the slots of decision 6, and answers DR-Q1 to DR-Q4.
+
+1. **`cas-replace-named-graph-delta` and `cas-replace-composite-property-delta`,** with the receipt, patch-log, no-receipt and dataset-guard variants their whole-state forms have, are the replace of a family under `dal:ChangedTriples`. Their kind is `Replace`. They take two request-time payload slots, `assertTriples` and `retractTriples`, whatever the receipt model, and no `payloadTriples`. The `WHERE` is the whole replace's without its sweep, so the update costs what changed and not the size of the aggregate.
+2. **A `DELETE` template may hold a payload slot.** The slot is a set of ground triples, so the update deletes exactly those, and the access it records is a delete of `{payload}` in the slot's graph. A slot in a `WHERE` pattern is still refused.
+3. **The digest contract of a delta replace has no payload part.** Its add and del parts are `assertTriples` and `retractTriples`, so the request digest is over the delta (DR-Q3 (a)), and its payload contract is absent, since the boundary shape and the payload check run over the next state the caller holds and not over the delta.
+4. **A composite family's caller runs `payload-check` over the next state** it computed the delta from, as it does over a whole payload, since the data graph is shared and the update cannot tell one aggregate's triples from another's.
+5. **The new builders are at the versions the formula of `BUILDER_VERSIONS` gives a builder that writes the store vocabulary,** and every whole-state builder is unchanged.
+
 ## Provenance
 
 **Unit:** [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan)
@@ -442,3 +452,5 @@ The addendum of 2026-10-14 on event slots was drafted in slice H2.6b (plan secti
 The addenda built in slices H2.6d (plan section 4.10, question H2.6b-Q2, and Q5 (a) of H2.6b for the digest), H2.6e (section 4.11), H2.6f (section 4.12), H2.6g (section 4.17), H2.7 (section 4.7, questions H2.7-Q1 to Q4) and H2.8b (section 4.8) were accepted with their slice plans. The decisions taken alone in each are listed in the Validation Packs [FMH-H2-6d](../../developer/validation/FMH-H2-6d.md), [FMH-H2-6e](../../developer/validation/FMH-H2-6e.md), [FMH-H2-6f](../../developer/validation/FMH-H2-6f.md), [FMH-H2-6g](../../developer/validation/FMH-H2-6g.md), [FMH-H2-7](../../developer/validation/FMH-H2-7.md) and [FMH-H2-8b](../../developer/validation/FMH-H2-8b.md). TD-43 is the data graph for a family with no boundary (H2.7), TD-64 the version IRIs that did not move, and FMH-H2-6g holds the evidence for the `NotExistsWithoutGraph` rule beside TSD-34.
 
 The addendum of 2026-10-21 on the retired templates was built in slice H2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-H2-9](../../developer/validation/FMH-H2-9.md).
+
+The addendum of 2026-11-01 on the delta replace was built in slice DR1 of the [persistence delta replace plan](../../developer/plans/persistence-delta-replace.md), from questions DR-Q1 to DR-Q4 of its sketch.

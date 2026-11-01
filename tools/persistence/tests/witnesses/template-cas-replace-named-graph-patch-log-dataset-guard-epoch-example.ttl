@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The dataset-level guard example with the whole-state replace, which an optimistic in-place family no longer defaults to.
+# base: epoch-dataset-level-guard.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:LoanApplicationWriteProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:LoanApplicationScope ;
+    dal:replaceEncoding dal:WholeState .
