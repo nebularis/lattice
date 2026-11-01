@@ -4,7 +4,7 @@
 
 **Unit ID:** `projection-maintenance`
 **Status:** 🟢 planned 2026-10-31, PM0 next, PM1 after DR1
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-01
 **Plan:** [projection-maintenance.md](../plans/projection-maintenance.md)
 **Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md)
 
@@ -17,3 +17,4 @@ Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 
 ## Log
 
 - 2026-10-31: sketched, every question answered, planned.
+- 2026-11-01: PM-Q10 to PM-Q12 answered with the leanings, one event stream of CloudEvents with a notifier a transport, channels named by lifetime, and PM3 building the WebSocket notifier alone. BL-13 holds webhooks and AMQP grants. The maintainer asked for every planned slice on `claude/config-authoring-studio`, built autonomously.

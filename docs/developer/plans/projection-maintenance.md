@@ -4,7 +4,7 @@
 
 **Unit ID:** `projection-maintenance` (PM)
 **Unit type:** multi-slice unit, validation gate per slice
-**Status:** planned 2026-10-31, PM-Q1 to PM-Q9 answered
+**Status:** planned 2026-10-31, PM-Q1 to PM-Q12 answered
 **Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md)
 **Status record:** [projection-maintenance.md](../status/projection-maintenance.md)
 **ADRs:** ADR-A149 decision 14 and its addendum on the cost of a refresh, narrowed again by PM2. ADR-A16's realisation gains the placements of PM-Q9 by addendum in PM1
@@ -27,6 +27,9 @@ The studio's derived data is kept current by the write that changes its source, 
 | PM-Q7 (c) | a contract change is found additive by its contracts' digests first, built for new contracts alone where only new ones appear, and checked by effect, old rows a subset of new, only where an existing contract changed |
 | PM-Q8 (a) | derived data is named by the kind of contract that produces it, promotions, index entries, and "projection" is kept for `srf:ProjectionContract`'s output |
 | PM-Q9 | placement is the user's choice: `DefinitionOnly`, beside the source where every promoted property is in the contract's target namespace, a partition of its own a source as a derived family whose persistence profile mirrors the source's boundary by default, or one partition a contract for tier 2 only |
+| PM-Q10 (a) | completions travel as one event stream, a CloudEvent on one exchange, and one notifier a transport delivers them after checking its subscriber may read what the event names |
+| PM-Q11 (c) | a session's channel, a WebSocket, is named by a subscribe frame on the open socket. A durable channel, a webhook or an AMQP queue, is a subscription held in the store with its owner, to an allowlisted target |
+| PM-Q12 | events are CloudEvents in JSON on every transport, the WebSocket has no sub-protocol, and PM3 builds the exchange, the WebSocket notifier and the subscribe frame. Webhooks and AMQP grants wait as BL-13 |
 
 ## 3. Slices
 
@@ -35,12 +38,12 @@ The studio's derived data is kept current by the write that changes its source, 
 | PM0 | the rename of PM-Q8 across ADR-A149 (by addendum), the studio's contract and README, the code, the graph names and the register entries, with the studio's derived data rebuilt under the new names | no studio document, contract or class calls its derived data a projection, and the studio's tests pass | 100k tokens |
 | PM1 | the surface backend: for each promotion and index contract, the delete and insert operations that keep its rows from a source's delta, for placements (ii) and (iii), the derived family's partition resolved from its persistence profile, and each partition's record of the contracts that built it. The summaries become a template with the workspace bound | for each contract and placement, the operations run after a sequence of writes leave the rows a rebuild leaves, on rdflib and Oxigraph | 250k tokens |
 | PM2 | the studio's writer adds the maintenance to each command's request, the derived data moves to one partition a source, the service's reads follow, the `Refresher` and every wait for it go, the refresh job becomes the rebuild of PM-Q3 with PM-Q7's check, an admin route rebuilds on demand, and the studio shows a start's warnings | the studio's tests pass with no refresh, a publish is one commit, a non-additive contract change is refused at start with its warning shown, and the `studio-api` benchmark meets §1 | 250k tokens |
-| PM3 | the writers' commit events, about 300 bytes each and carrying no content, the service's WebSocket, and the browser's pending marks, jobs first, with polling kept for a client that opens none | a job's completion reaches a subscribed browser with no poll, and no event reaches a principal who may not read what it names | 200k tokens |
+| PM3 | the writers' and workers' events, CloudEvents of about 300 bytes carrying no content, on one exchange, the service's WebSocket notifier with its subscribe frame, and the browser's pending marks, jobs first, with polling kept for a client that opens no socket (PM-Q10 to PM-Q12) | a job's completion reaches a subscribed browser with no poll, and no event reaches a principal who may not read what it names | 200k tokens |
 | PM4 | the tier 2 maintainer: partitioned by scope, its dependency index from the surface compiler's invalidation planning, batching, a watermark a source, and the reader's three choices, with the check that its sources keep a patch log | a materialisation spanning two aggregates reaches each write, a reader waiting for its write is released when the watermark covers it, and a scope whose source keeps no patch log is reported | 300k tokens |
 
 ## 4. Not in this unit
 
-A store outside the RDF store (PM-Q5). The migration of a contract change that alters or removes rows (BL-12). The planning estimate and the configuration testing mode (BL-10, BL-11), which use what PM4 measures.
+A store outside the RDF store (PM-Q5). The migration of a contract change that alters or removes rows (BL-12). A webhook notifier and an AMQP queue grant (BL-13). The planning estimate and the configuration testing mode (BL-10, BL-11), which use what PM4 measures.
 
 ## 5. Demonstration
 

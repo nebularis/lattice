@@ -3,7 +3,7 @@
 # Projections maintained in the write, and replies that do not wait (sketch)
 
 **Unit type:** a multi-slice unit, `projection-maintenance` (PM)
-**Status:** raised by the maintainer on 2026-10-31, answering SQ-Q2 with (a) now and (b) as a supported pattern. PM-Q1 to PM-Q9 and the slice order answered the same day. PM-Q1, PM-Q7 and PM-Q8 are restated without assuming a named graph, since where surface output lands is a choice (PM-Q9)
+**Status:** raised by the maintainer on 2026-10-31, answering SQ-Q2 with (a) now and (b) as a supported pattern. PM-Q1 to PM-Q9 and the slice order answered the same day, and PM-Q10 to PM-Q12 on 2026-11-01. PM-Q1, PM-Q7 and PM-Q8 are restated without assuming a named graph, since where surface output lands is a choice (PM-Q9)
 **Touches:** `tools/surface`, `contracts/config-studio/projections.ttl` and `workspace-summaries.rq`, the studio's writer, service and worker, `apps/config-studio`, ADR-A149 decision 14, BL-09, BL-10, BL-11
 
 ## 1. The scene
@@ -151,6 +151,12 @@ Since an altered value is a triple removed and one added, the test for all three
 | (iv) one partition a contract | every source's rows in one shared partition | fine for one writer. Many writers contend for it, so only for tier 2, whose scope maintainer is the one writer |
 
 **Answered 2026-10-31: (iii) as the default, its derived family's boundary mirroring the source's unless its profile says otherwise, (ii) allowed where every promoted property is in the contract's target namespace, (i) where the read is not hot, and (iv) for tier 2 only, each the user's choice.** Treating materialised output as a derived family puts its grouping where every other grouping is decided, in a persistence profile, rather than in the surface layer or the studio.
+
+**PM-Q10. What topology delivers a completion?** (a) one event stream, a CloudEvent on one exchange for each commit and each finished job, consumed by one notifier a transport, each checking that its subscriber may read what the event names. (b) a pipeline a kind of client, each with its own publication and its own check. (c) clients subscribe at the broker over Web MQTT, Web STOMP, MQTT or AMQP, with the broker's topic permissions mirroring who may read each workspace, which changes as owners and modes change. **Answered 2026-11-01, (a).** The read check stays where the store can answer it (STD-279), and a new transport adds a notifier and changes nothing upstream. Polling a 5-second job costs about 9 reads, against one event of about 300 bytes and one frame a subscriber.
+
+**PM-Q11. How does a client name its completion channel?** AMQP headers cannot carry it, since a client of the service speaks HTTP. (a) on each request. (b) a standing subscription, registered once. (c) both, by the channel's lifetime. **Answered 2026-11-01, (c).** A channel that lives with a session, a WebSocket or server-sent events, is named on the request or by a subscribe frame on a socket already open. A durable channel, a webhook or an AMQP queue, is a subscription resource held in the store with its owning principal, and its targets are on an allowlist an administrator keeps, since a callback to any URL a client names is a request forgery.
+
+**PM-Q12. What does PM3 build, in what form?** **Answered 2026-11-01:** every event is a CloudEvent in JSON on every transport, using `platform-outbox`'s types. The WebSocket carries CloudEvents frames with no STOMP or MQTT sub-protocol, since the service ends the connection. PM3 builds the exchange, the WebSocket notifier and the subscribe frame. The webhook notifier and the AMQP queue grant wait as BL-13.
 
 ## 8. Slices
 

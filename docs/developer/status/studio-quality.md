@@ -24,7 +24,7 @@ The maintainer asked on 2026-10-31 for the slowdown to be fixed. Traced the same
 
 The maintainer answered SQ-Q1 and SQ-Q2 on 2026-10-31. A save now writes its delta and a read runs its queries side by side, so every measure is at or under its time before phase D but a publish, about 3.3 times, which waits for its refresh until projections are maintained in the write. Two units were sketched, `persistence-delta-replace` and `projection-maintenance`.
 
-**Next action:** for the maintainer, answer DR-Q1 to DR-Q4 and PM-Q1 to PM-Q4, and review ADR-A150, ADR-A149's addendum on the cost of a refresh, and SQ-D1 to SQ-D8. Then PM1 and PM2, which bring a publish back, and SQ3 to SQ6.
+**Next action:** SQ3 to SQ6, after `persistence-delta-replace` DR4 and `projection-maintenance` PM2, so they measure the new write path. For the maintainer, review ADR-A150, ADR-A149's addendum on the cost of a refresh, and SQ-D1 to SQ-D8.
 
 ## Log
 
