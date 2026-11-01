@@ -290,6 +290,18 @@ def wrapping(change: Change, touched: list[str]) -> list[str]:
             "entry on one line" for path, numbers in sorted(lines.items())]
 
 
+def studio_browser(change: Change, touched: list[str]) -> list[str]:
+    """Both of the studio's browser suites, the fake service's and the real stack's, at a merge only, since they take minutes."""
+    result = subprocess.run([sys.executable, "-m", "lattice_testing_studio_harness.browser"], cwd=change.root, capture_output=True,
+                            text=True, encoding="utf-8", errors="replace")
+    output = (result.stdout + result.stderr).splitlines()
+    if result.returncode == 0:
+        return []
+    if any("No module named 'lattice_testing_studio_harness'" in line for line in output):
+        raise Unavailable("the studio harness is not installed. Run `mise run bootstrap:testing-studio-harness`")
+    return [line for line in output if line.strip()][-20:] or [f"the browser suites failed with exit code {result.returncode}"]
+
+
 def whole(*args: str) -> Callable[[Change, list[str]], list[str]]:
     """A check that judges a set of files as a whole, once any of them is touched."""
     return lambda change, touched: run_tool(change, *args)
@@ -317,6 +329,9 @@ def checks() -> list[Check]:
         Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
                               "docs/architecture/triple-store-discovery.md"),
               whole("tools/knowledge/identifiers.py")),
+        Check("studio-browser", ("apps/config-studio/*", "platform/config-studio-*", "contracts/config-studio/*",
+                                 "workers/src/lattice_workers/config_studio*"),
+              studio_browser, merge_only=True),
         Check("ontology-versioning", ("ontology/*",),
               lambda change, touched: (run_tool(change, "tools/ontology_version_check.py")
                                        + run_tool(change, "tools/ontology_releases.py", "check")),

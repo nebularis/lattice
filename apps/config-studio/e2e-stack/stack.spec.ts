@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // The studio against the real service, worker, Fuseki and RabbitMQ: a workspace from a sample,
-// a refusal the compiler finds while the author edits, and a compilation's SPARQL. Run with the
-// stack up (the service's README), as `yarn workspace @lattice/config-studio run test:stack`.
+// a refusal the compiler finds while the author edits, and a compilation's SPARQL. `mise run test:config-studio-browser`
+// runs it against a stack the harness starts. With your own stack up, `yarn workspace @lattice/config-studio run test:stack`.
 
 import { expect, test } from "@playwright/test";
 

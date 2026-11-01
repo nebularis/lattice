@@ -505,8 +505,8 @@ test("the instrument view shows terms in their tier and regimes as state machine
   await dry.getByRole("button", { name: "Run" }).click();
   const outcome = dry.getByRole("status", { name: "Dry run outcome" });
   await expect(outcome.getByText("Undetermined")).toBeVisible();
-  await expect(outcome.getByText("No sample fact for more-than-one-lender")).toBeVisible();
-  await dry.getByLabel("Number for more than one lender").fill("3");
+  await expect(outcome.getByText("No sample fact for when-syndicated-more-than-one-lender")).toBeVisible();
+  await dry.getByLabel("Number for when syndicated more than one lender").fill("3");
   await dry.getByRole("button", { name: "Run" }).click();
   await expect(outcome.getByText("Permitted")).toBeVisible();
   const submitted = fake.submitted.filter((s) => s.kind === "dry-run");

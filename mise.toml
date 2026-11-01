@@ -675,6 +675,11 @@ description = "Run the Configuration Studio's browser tests against a fake servi
 depends = ["build:config-studio-assets"]
 run = "yarn workspace @lattice/config-studio run test"
 
+[tasks."test:config-studio-browser"]
+description = "Run both of the Configuration Studio's browser suites: the journeys against the in-memory fake service, then the real-stack suite against a single topology the harness starts in isolation (ADR-A150), never the developer's own stack. Builds the browser application. Part of the merge checks of a change to the studio"
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+run = "python -m lattice_testing_studio_harness.browser"
+
 [tasks."studio:up"]
 description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service, the worker and the transforms worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
 depends = ["build:config-studio-assets"]

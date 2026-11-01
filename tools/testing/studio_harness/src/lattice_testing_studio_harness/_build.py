@@ -68,6 +68,15 @@ def assets(root: Path, into: Path) -> Path:
     return into
 
 
+def web(root: Path, into: Path) -> Optional[Path]:
+    """A copy of the built browser application (`apps/config-studio/dist`) for the service to serve, or nothing when it is not built."""
+    built = root / catalogue.load(root).area("apps") / "config-studio" / "dist"
+    if not (built / "index.html").is_file():
+        return None
+    shutil.copytree(built, into)
+    return into
+
+
 def worker_root(root: Path) -> Optional[Path]:
     """The checkout whose worker code runs, when `LATTICE_STUDIO_HARNESS_WORKER_ROOT` names another than `root`, so a benchmark can measure an older commit."""
     named = os.environ.get(WORKER_ROOT_ENV)

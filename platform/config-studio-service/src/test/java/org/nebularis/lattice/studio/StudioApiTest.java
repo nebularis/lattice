@@ -404,6 +404,10 @@ class StudioApiTest {
         assertEquals(422, f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), "<urn:other> { <urn:a> <urn:b> <urn:c> . }").status());
         String blank = "<" + Command.PATCH_ADD + "> { <https://example.org/a> " + label + " [] . } <" + Command.PATCH_DEL + "> { }";
         assertEquals(400, f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), blank).status(), "a blank node is saved whole");
+        String onlyAdds = "<" + Command.PATCH_ADD + "> { <https://example.org/c> " + label + " \"added\" . } <" + Command.PATCH_DEL + "> { }";
+        ApiResponse added = f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), onlyAdds);
+        assertEquals(204, added.status(), "a dataset keeps no empty graph, so an empty side is absent: " + added);
+        assertEquals("\"3\"", added.headers().get("ETag"));
     }
 
     @Test

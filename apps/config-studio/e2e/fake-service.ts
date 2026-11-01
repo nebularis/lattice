@@ -107,16 +107,18 @@ m:fr-end a ins:RegimeTransition , bhv:TransitionDefinition ; bhv:fromState m:fr-
 m:act-for-lenders ins:appliesInState m:fr-in-force .
 `;
 
-/** A dry-run job decides the interval condition from the one number it is given, Permitted above one lender, and reports as
+/** A dry-run job decides the condition its facts name, so a renamed sample needs no change here, from the one number it is given, Permitted above one lender, and reports as
  * information a condition with no fact, which reads Undetermined, as the worker does. */
 function dryRunResults(job: string, body: string): string {
   const quads = new Parser().parse(body);
   const facts = quads.filter((q) => q.predicate.value === CST + "forCondition");
-  const condition = E_BUILDER + "more-than-one-lender";
+  const interval = quads.find((q) => q.predicate.value === RDF_TYPE && q.object.value === ELG + "IntervalCondition");
+  const condition = facts[0]?.object.value ?? interval?.subject.value ?? E_BUILDER + "more-than-one-lender";
+  const name = condition.slice(condition.lastIndexOf("/") + 1);
   const number = facts.map((f) => quads.find((q) => q.subject.value === f.subject.value && q.predicate.value === CST + "number")?.object.value).find((v) => v !== undefined);
   const decision = number === undefined ? "Undetermined" : Number(number) > 1 ? "Permitted" : "Denied";
   const node = `${job.slice(0, -1)}#t0>`;
-  const info = number === undefined ? `<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No sample fact for more-than-one-lender" ; cst:code "dry-run" ; sh:focusNode <${condition}> ] .\n` : "";
+  const info = number === undefined ? `<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No sample fact for ${name}" ; cst:code "dry-run" ; sh:focusNode <${condition}> ] .\n` : "";
   return `${job} cst:testResult ${node} . ${node} cst:condition <${condition}> ; cst:decision cst:${decision}${decision === "Undetermined" ? ' ; cst:diagnostic "no fact"' : ""} .\n${info}`;
 }
 

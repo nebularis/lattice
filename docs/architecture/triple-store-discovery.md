@@ -2087,6 +2087,18 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** `pyoxigraph.Store().update("PREFIX a: <urn:a#>\nINSERT DATA { GRAPH <urn:g> { a:x a:y a:z } } ;\nPREFIX b: <urn:b#>\nINSERT DATA { GRAPH <urn:g> { b:x b:y b:z } }")`.
 
+### TSD-69. Jena keeps no empty named graph from a TriG body
+
+**Evidence:** Observed on Jena 5 (the studio's shaded writer) on 2026-11-01, when the real-stack browser suite saved a part by a patch that only added triples. Not read from Jena's source.
+
+**Context.** The studio's `PATCH` of a part carries two named graphs in TriG, the triples added and the triples removed, and an empty side was written as `<urn:lattice:studio:patch:del> { }`.
+
+**What the store does.** Parsed into a Jena `Dataset`, an empty graph block leaves no graph behind, so `containsNamedModel` answers false for it. A dataset has no way to hold a named graph that holds no triple, and Fuseki's datasets behave the same.
+
+**What it means for LATTICE.** A reader of a body whose named graphs carry meaning takes an absent graph as an empty one, and never requires an empty graph to be present. The studio's writer reads an absent side of a patch as empty, and refuses a body with any other graph.
+
+**Reproduce it.** `RDFParser.fromString("<urn:g> { }", Lang.TRIG).toDataset().containsNamedModel("urn:g")` answers false.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)

@@ -175,6 +175,8 @@ def test_gh2_01_each_change_triggers_its_checks() -> None:
     assert names_for("AGENTS.md") == ["deny-terms", "agent-guidance", "links", "writing", "wrapping", "published-decisions"]
     assert "ontology-versioning" not in names_for("ontology/party/spec/party.ttl")
     assert "ontology-versioning" in names_for("ontology/party/spec/party.ttl", merge=True)
+    assert "studio-browser" not in names_for("apps/config-studio/src/api.ts")
+    assert "studio-browser" in names_for("platform/config-studio-service/src/main/java/A.java", merge=True)
     assert names_for("package.json") == ["deny-terms"]
 
 

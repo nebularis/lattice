@@ -71,3 +71,9 @@ Proposed on 2026-10-23, after the maintainer asked which checks should become ho
 10. **Identifiers at a commit and at a merge.** The identifier check runs over the registers, the decisions and the store record as a commit check and a merge gate, blocking at both. It fails when an identifier is defined twice, which happens when two branches each numbered a row and one is merged into the other. The rule is first in wins: the row whose line was committed earlier keeps its number, and the later row and every citation of it are renumbered. The check prints both sites with the date each line was committed, so the choice is mechanical and the index, rebuilt after the merge, holds one entry per identifier.
 
 Provenance of the addendum: the maintainer chose the uniqueness check as a merge hook with first in wins on 2026-10-28, over provisional identifiers on branches and over reserved ranges, in the ontology remediation unit.
+
+## Addendum, 2026-11-01
+
+11. **The studio's browser suites at a merge.** A merge into `main` that touches the Configuration Studio (its application, its services, its contracts or its worker) runs `mise run test:config-studio-browser`: the browser journeys against the in-memory fake service, then the real-stack suite against a single topology the studio harness starts in isolation (ADR-A150). It blocks. It runs at a merge only, since it takes a few minutes and builds the browser application and the jars. The fake service keeps the journeys fast, and the real stack catches a fake that has drifted from the service, as the fake had when it lacked the session route and accepted a patch the service refused (TSD-69).
+
+Provenance of the addendum: the maintainer chose on 2026-11-01 to keep the fake service for the journeys and to add the real stack to the merge gate, over moving every browser test onto the real stack.

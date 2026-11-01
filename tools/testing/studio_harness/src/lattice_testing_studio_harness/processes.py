@@ -81,6 +81,9 @@ class ProcessStudio(Studio):
         }
         writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": f"rabbitmq-stream://guest:guest@127.0.0.1:{stream}/%2f"}
         service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth}
+        static = _build.web(self.root, self.run_dir / "web")
+        if static is not None:
+            service_env["LATTICE_STUDIO_STATIC"] = str(static)
         for i in range(1, t.writers + 1):
             name = f"writer-{i}"
             stack.spawn(name, ["java", "-jar", str(jars["writer"])], writer_env)

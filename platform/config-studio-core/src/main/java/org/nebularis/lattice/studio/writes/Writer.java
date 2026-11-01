@@ -430,13 +430,19 @@ public final class Writer {
          * A part changed by a patch, what is added and what is removed against the revision the browser read (DR-Q5 (c)). The next state
          * is the stored part with the removed triples taken out and the added ones put in, and it is written by its delta as a save is, so
          * it passes the same checks. A patch cannot name a stored blank node, so one holding a blank node is refused, and the browser
-         * sends the whole part instead. Removing a triple the part does not hold, or adding one it holds, changes nothing.
+         * sends the whole part instead. Removing a triple the part does not hold, or adding one it holds, changes nothing. A dataset keeps
+         * no empty graph, so a side that is absent is empty.
          */
         private Reply patch(int index, Command c) {
             String part = c.part();
-            Model added = c.body().containsNamedModel(Command.PATCH_ADD) ? c.body().getNamedModel(Command.PATCH_ADD) : null;
-            Model removed = c.body().containsNamedModel(Command.PATCH_DEL) ? c.body().getNamedModel(Command.PATCH_DEL) : null;
-            if (part == null || !Workspace.GRAPHS.contains(part) || c.expect() == null || c.at() == null || added == null || removed == null
+            Model added = c.body().containsNamedModel(Command.PATCH_ADD) ? c.body().getNamedModel(Command.PATCH_ADD) : ModelFactory.createDefaultModel();
+            Model removed = c.body().containsNamedModel(Command.PATCH_DEL) ? c.body().getNamedModel(Command.PATCH_DEL) : ModelFactory.createDefaultModel();
+            boolean alone = true;
+            for (Iterator<Resource> names = c.body().listModelNames(); names.hasNext(); ) {
+                String name = names.next().getURI();
+                alone &= Command.PATCH_ADD.equals(name) || Command.PATCH_DEL.equals(name);
+            }
+            if (part == null || !Workspace.GRAPHS.contains(part) || c.expect() == null || c.at() == null || !alone
                 || !c.body().getDefaultModel().isEmpty()) {
                 return Reply.refused("a patch names a part, the revision it expects and a time, and carries an add graph and a del graph alone");
             }
@@ -458,7 +464,7 @@ public final class Writer {
             String root = Graphs.partRoot(ws.id(), part);
             String graph = ops.graph(Family.PART, root);
             Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
-            Model next = org.apache.jena.rdf.model.ModelFactory.createDefaultModel().add(old).remove(removed).add(added);
+            Model next = ModelFactory.createDefaultModel().add(old).remove(removed).add(added);
             long revision = ws.revision(part) + 1;
             Steps s = new Steps(c);
             write(s, Family.PART, root, c.expect(), next);
