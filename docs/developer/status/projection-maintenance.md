@@ -3,7 +3,7 @@
 # Derived data maintained in the write, and replies that do not wait - Status
 
 **Unit ID:** `projection-maintenance`
-**Status:** 🟡 PM0 to PM2 built 2026-11-01, PM3 next
+**Status:** 🟡 PM0 to PM3 built 2026-11-01, PM4 next
 **Last updated:** 2026-11-01
 **Plan:** [projection-maintenance.md](../plans/projection-maintenance.md)
 **Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md)
@@ -12,7 +12,7 @@
 
 Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 with BL-09 now and replies that do not wait as a pattern. PM-Q1 to PM-Q9 were answered the same day. BL-09 left the backlog for this plan. PM1 and PM2 need DR1, and PM3 waits for DR4 and PM2 (PM-Q4).
 
-**Next action:** PM3, the event exchange and the WebSocket notifier. For the maintainer, ADR-A149's addenda of 2026-11-01, ADR-A16's, and the Validation Packs of [PM1](../validation/PM1.md) and [PM0 and PM2](../validation/PM2.md).
+**Next action:** PM4, the tier 2 maintainer. For the maintainer, ADR-A149's addenda of 2026-11-01, ADR-A16's, and the Validation Packs of [PM1](../validation/PM1.md), [PM0 and PM2](../validation/PM2.md) and [PM3](../validation/PM3.md), whose decisions on the socket's authentication and origin check want review.
 
 ## Log
 
@@ -22,3 +22,4 @@ Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 
 - 2026-11-01: PM0 built after all, ahead of PM2's removal of the refresher, so the studio's contract, code, graph names and documents say promotions and a rebuild job. The unit's own names, here and in the sketch and plan, stay.
 - 2026-11-01: PM1 built. `surface.maintenance` and the `surface maintenance` command give each promotion a clear and a fill, typed operations of the persistence IR, that keep its rows from a write's delta beside the source or in a graph of their own. An index contract and a shared data graph wait as TD-138. 40 random writes on each of three paths, two placements and two engines leave the rows a rebuild gives.
 - 2026-11-01: PM2 built with DR4. Each write keeps its sources' promoted partitions in its own request, the refresher is gone, a publish is one commit and its registry entry is read at once. A start rebuilds only when the promotions grew, and warns without rebuilding when one changed, which a new test covers and a probe broke. PM-Q7's effect check is not built, a cautious deviation. A Sonnet subagent did PM0's rename.
+- 2026-11-01: PM3 built. The writer publishes a CloudEvent for each applied job update on `lattice.studio.events`, the service's notifier delivers it over the WebSocket `/api/events` to a subscribed session whose principal may read the job, checked at delivery, and the browser waits on a job's events between reads with polling as the fallback. The real-stack suite shows a compile's completion arriving on the socket.

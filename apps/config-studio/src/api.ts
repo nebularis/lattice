@@ -6,6 +6,7 @@ import { patchOf, patchTrig } from "./rdf/patch";
 import { readJob, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
 import { authHeaders } from "./session";
+import { connected, watch } from "./events";
 
 export type GraphName = Part;
 export type Target = ConfigPart;
@@ -300,14 +301,22 @@ export function jobId(iri: string): string {
   return iri.replace("urn:lattice:studio:job:", "");
 }
 
-/** Poll a job until it finishes. Each poll waits a little longer, up to a second. */
+/** How long a job is left between reads while the service's events reach the tab, which wake it as soon as the job changes (PM3). */
+export const EVENT_FALLBACK_MS = 5000;
+
+/** Read a job until it finishes, again on each of its events, or, with no events, after a wait that grows to a second. */
 export async function awaitJob(id: string, signal?: AbortSignal): Promise<Job> {
-  let delay = 150;
-  for (;;) {
-    const job = await api.job(id);
-    if (job.status === "Succeeded" || job.status === "Failed") return job;
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    if (signal?.aborted) throw new DOMException("aborted", "AbortError");
-    delay = Math.min(delay * 1.5, 1000);
+  const events = watch(`urn:lattice:studio:job:${id}`);
+  try {
+    let delay = 150;
+    for (;;) {
+      const job = await api.job(id);
+      if (job.status === "Succeeded" || job.status === "Failed") return job;
+      await events.next(connected() ? EVENT_FALLBACK_MS : delay);
+      if (signal?.aborted) throw new DOMException("aborted", "AbortError");
+      delay = Math.min(delay * 1.5, 1000);
+    }
+  } finally {
+    events.close();
   }
 }

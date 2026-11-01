@@ -80,13 +80,24 @@ public final class Writer {
     private final StudioOperations ops;
     private final org.nebularis.lattice.studio.store.Maintenance maintenance;
     private final Clock clock;
+    private final java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> events;
 
     /** {@code maintenance} keeps the promotions of each source a command writes, in the command's request (PM2). */
     public Writer(StudioStore store, StudioOperations ops, org.nebularis.lattice.studio.store.Maintenance maintenance, Clock clock) {
+        this(store, ops, maintenance, clock, e -> { });
+    }
+
+    /**
+     * {@code events} is given each completion event once the request that applied its write has committed (PM3). A failure to publish
+     * one is logged and never fails the write, since a subscriber that misses it still reads the job.
+     */
+    public Writer(StudioStore store, StudioOperations ops, org.nebularis.lattice.studio.store.Maintenance maintenance, Clock clock,
+                  java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> events) {
         this.store = store;
         this.ops = ops;
         this.maintenance = maintenance;
         this.clock = clock;
+        this.events = events;
     }
 
     public Reply apply(Command c) {
@@ -119,8 +130,25 @@ public final class Writer {
             store.update(b.request);
             Map<String, Long> applied = store.receipts(b.planned.keySet());
             b.planned.forEach((id, plan) -> replies[plan.index] = applied.containsKey(id) ? plan.reply : plan.unapplied.get());
+            for (Plan plan : b.planned.values()) {
+                if (applied.containsKey(batch.get(plan.index).id())) {
+                    publish(batch.get(plan.index));
+                }
+            }
         }
         return List.of(replies);
+    }
+
+    private void publish(Command c) {
+        org.nebularis.lattice.outbox.CloudEvent event = StudioEvents.of(c, clock.instant());
+        if (event == null) {
+            return;
+        }
+        try {
+            events.accept(event);
+        } catch (RuntimeException e) {
+            org.slf4j.LoggerFactory.getLogger(Writer.class).warn("the event for {} was not published: {}", event.subject(), e.getMessage());
+        }
     }
 
     private static Reply check(Command c) {

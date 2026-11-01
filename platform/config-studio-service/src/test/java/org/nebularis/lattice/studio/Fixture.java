@@ -41,7 +41,14 @@ final class Fixture {
     /** The operations the stage tool wrote, loaded once. */
     static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
     static final org.nebularis.lattice.studio.store.Maintenance MAINTENANCE = org.nebularis.lattice.studio.store.Maintenance.load(Path.of(System.getProperty("studio.assets"), "maintenance"));
-    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, MAINTENANCE, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
+    /** Every completion event the writer published, and a listener a test may set to hear the next ones (PM3). */
+    final java.util.List<org.nebularis.lattice.outbox.CloudEvent> events = new java.util.concurrent.CopyOnWriteArrayList<>();
+    volatile java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> listener = e -> { };
+    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, MAINTENANCE, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC),
+        e -> {
+            events.add(e);
+            listener.accept(e);
+        }));
     final RecordingJobBus bus = new RecordingJobBus();
     /** Stands in for the worker's rebuild jobs, which every bus the api is given hands to it. */
     final RebuildWorker rebuildWorker = new RebuildWorker(store, writes);

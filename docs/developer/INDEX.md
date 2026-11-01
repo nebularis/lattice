@@ -878,8 +878,8 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 PM0 to PM2 built 2026-11-01, PM3 next |
-| **Validation** | [PM1](validation/PM1.md), [PM0 and PM2](validation/PM2.md) |
+| **Status** | 🟡 PM0 to PM3 built 2026-11-01, PM4 next |
+| **Validation** | [PM1](validation/PM1.md), [PM0 and PM2](validation/PM2.md), [PM3](validation/PM3.md) |
 | **Unit ID** | `projection-maintenance` |
 | **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md) |
 | **Plan** | [projection-maintenance.md](plans/projection-maintenance.md) |

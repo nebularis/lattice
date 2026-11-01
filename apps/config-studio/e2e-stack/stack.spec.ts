@@ -8,6 +8,9 @@ import { expect, test } from "@playwright/test";
 const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
 
 test("an author edits, sees the compiler's refusal, fixes it and compiles", async ({ page }) => {
+  // A job's completion reaches the page as an event on the tab's one socket, which opens with the first job (PM3).
+  const events: string[] = [];
+  page.on("websocket", (socket) => socket.on("framereceived", (frame) => events.push(String(frame.payload))));
   await page.goto("/");
   await page.getByRole("button", { name: "New workspace" }).first().click();
   await page.getByRole("button", { name: /^Lending Loan/ }).click();
@@ -33,6 +36,8 @@ test("an author edits, sees the compiler's refusal, fixes it and compiles", asyn
   await page.goto(`/#/w/${ws}/build`);
   await page.getByRole("button", { name: "Compile persistence" }).click();
   await expect(page.getByLabel("Job state")).toContainText("Succeeded", { timeout: 60_000 });
+  const finished = events.map((e) => JSON.parse(e)).filter((e) => e.type === "org.nebularis.lattice.studio.job.updated" && e.data?.status === "Succeeded");
+  expect(finished.length, events.join("\n")).toBeGreaterThan(0);
   await expect(page.getByRole("option", { name: "compiled-profile.ttl" })).toBeVisible();
   await page.getByRole("option", { name: "cas-replace.rq" }).click();
   await expect(page.locator("main .code")).toContainText("DELETE");

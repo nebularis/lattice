@@ -9,6 +9,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import org.nebularis.lattice.studio.events.EventConsumer;
+import org.nebularis.lattice.studio.events.Notifier;
 import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
@@ -48,17 +51,25 @@ public final class StudioMain {
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         JobBus bus;
         Writes writes;
+        // The notifier needs the api, which needs the writes, so a writer of the service's own reaches it through this reference.
+        AtomicReference<Notifier> notifier = new AtomicReference<>();
+        com.rabbitmq.client.Connection events = null;
         if (config.amqpUri() == null) {
             // Tests and a demonstration without a broker only: the service writes the store through a writer of its own.
             LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker, and this service writes the store itself");
             bus = new RecordingJobBus();
-            writes = new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC()));
+            writes = new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC(),
+                event -> notifier.get().deliver(event)));
         } else {
             // Jobs and writes are published on connections of their own, so a broker holding one back does not stall the other.
             bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
             writes = new RabbitWrites(Amqp.connect(config.amqpUri(), "config-studio-service writes"), store, WRITE_TIMEOUT);
+            events = Amqp.connect(config.amqpUri(), "config-studio-service events");
         }
-        StudioHttpServer server = serve(config, store, ops, writes, bus, auth);
+        StudioHttpServer server = serve(config, store, ops, writes, bus, auth, notifier);
+        if (events != null) {
+            EventConsumer.start(events, notifier.get());
+        }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
             bus.close();
@@ -67,9 +78,11 @@ public final class StudioMain {
         LOG.info("Configuration Studio service listening on http://{}:{}/", config.bind(), server.port());
     }
 
-    private static StudioHttpServer serve(StudioConfig config, StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Authenticator auth) throws Exception {
+    private static StudioHttpServer serve(StudioConfig config, StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Authenticator auth,
+                                          AtomicReference<Notifier> notifier) throws Exception {
         StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
-        StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
+        notifier.set(new Notifier(api::authenticate, api::mayRead));
+        StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir(), notifier.get());
         server.start();
         if (config.amqpUri() != null) {
             // Writes keep their promotions, so a start rebuilds them only when the contracts grew since the last rebuild (PM-Q3).
@@ -83,7 +96,7 @@ public final class StudioMain {
             "studio", null, null, null, java.util.Set.of(), 1L);
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
+             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers(), new AtomicReference<>())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());

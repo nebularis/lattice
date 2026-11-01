@@ -59,6 +59,7 @@ Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with
 | `GET /api/features` | | `200`, `application/json`, `{"features": [...]}`, the optional features the deployment turned on with `LATTICE_STUDIO_FEATURES`, such as `odrl` |
 | `GET /api/status` | | `200`, `application/json`, `{"warnings": [...]}`, what the service's start found that an administrator should know, such as a promotion changed since the last rebuild (PM-Q3) |
 | `POST /api/admin/rebuild` | | `202`, a rebuild of every promoted partition is queued. `403` for a principal who is not an administrator |
+| `GET /api/events`, a WebSocket | | the completion events of the jobs a session subscribes to, below. The upgrade is refused when the `Origin` is not the service's host |
 | `GET /api/vocabulary` | | `200`, the `dal:`, `srf:`, `fnd:` and `voc:` specifications and vocabularies merged, with an `ETag`. `304` for a matching `If-None-Match` |
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |
 | `GET /api/samples/{id}` | | `200`, the sample's files merged into one graph |
@@ -157,6 +158,26 @@ The configuration a job checks is its input graph. The worker reads a missing ba
 Running a job twice gives the same graph but for its times, so a redelivered message is harmless.
 
 ### Assembly
+
+## Completion events
+
+The writer publishes a CloudEvent for each applied update of a job, of type `org.nebularis.lattice.studio.job.updated`, whose subject is the job's IRI and whose data is `{"status": ..., "workspace": ...}`, the job's status and its workspace's id, never its content. It goes on the topic exchange `lattice.studio.events`, with its type as the routing key and its attributes as `cloudEvents:` headers (the CloudEvents AMQP binding's binary mode), once the request that applied the update committed. Each service instance reads every event through a queue of its own, which lives as long as its connection, so an event published while no instance listens is lost, and a reader that missed one reads the job again.
+
+A WebSocket on `/api/events` carries the events to the browser, as CloudEvents in JSON with no sub-protocol. Its frames are JSON objects with a `type`.
+
+| From | Frame | Means |
+|---|---|---|
+| browser | `{"type":"auth","headers":{...}}` | first, the headers an HTTP request of the browser carries, such as `Authorization`, since a browser sets no header on a WebSocket and a credential in the URL is logged. Any other first frame, or headers that do not authenticate, close the socket with 1008 |
+| service | `{"type":"ready","principal":"..."}` | the session is authenticated |
+| browser | `{"type":"subscribe","subject":"<job IRI>"}` | wait for a job's events. At most 200 subjects at once |
+| service | `{"type":"subscribed","subject":"..."}` | the subscription holds |
+| service | `{"type":"error","message":"..."}` | a subscription refused. A job the principal may not read answers as one that does not exist |
+| browser | `{"type":"unsubscribe","subject":"..."}` | stop waiting |
+| service | an event, with `specversion` | a job changed |
+
+Whether the principal may read the job is checked at subscription and again at each delivery, by the rule of `GET /api/jobs/{job}`, so an event is withheld once its workspace is locked against the principal. A rebuild job's events reach an administrator only. The browser waits on an event between reads of a job, and reads again after five seconds without one, or polls as before when the socket is closed.
+
+## Promotions
 
 Each write keeps the promoted partitions of the sources it writes in its own request: the writer sends the staged `maintenance/partition-clear.rq` and each fill of the source's family over the whole source after the write (projection maintenance, PM2), so a read sees a write's promotions at once. The workspace summaries are not stored: the service evaluates `workspace-summaries.rq` as it reads them. A rebuild job (`cst:kind cst:Rebuild`) names no workspace, target or input. The service submits one at start when no rebuild has recorded the contracts, or when the staged promotions are the recorded ones and new ones alone, and when an administrator posts to `/api/admin/rebuild`. A promotion that changed or went since the last rebuild is not rebuilt, since its old rows would be lost (BL-12): the start logs it, and `/api/status` lists it among its warnings, which the studio shows. The worker rebuilds every source's partition with `tools/surface`, and finishes the job with an update that carries the partitions, an empty one for each whose source is gone, and the record, which the writer replaces whole. The update that succeeds a rebuild deletes the job with its receipts. A rebuild job's commands carry no workspace and route by the job's own id. The writer accepts a promoted partition or the record from a rebuild job's update only, and refuses one that holds a blank node.
 

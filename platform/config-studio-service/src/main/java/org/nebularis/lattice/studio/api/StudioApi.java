@@ -208,6 +208,34 @@ public final class StudioApi {
         }
     }
 
+    /** The principal that request headers name, as an HTTP request with them would be authenticated, or null. */
+    public Principal authenticate(Map<String, String> headers) {
+        return auth.authenticate(new ApiRequest("GET", "/api/events", "", headers, new byte[0]));
+    }
+
+    /**
+     * Whether {@code principal} may read the job, by the rule its HTTP route applies: a workspace's job when the principal may read the
+     * workspace, and a rebuild job, which names none, by an administrator only (PM-Q10 (a)).
+     */
+    public boolean mayRead(Principal principal, String jobIri) {
+        if (!jobIri.startsWith(Graphs.job("")) || !Graphs.isId(jobIri.substring(Graphs.job("").length()))) {
+            return false;
+        }
+        Model m = store.graph(jobIri);
+        if (m.isEmpty()) {
+            return false;
+        }
+        org.apache.jena.rdf.model.Statement ws = m.createResource(jobIri).getProperty(Cst.workspace);
+        if (ws == null) {
+            return principal.admin();
+        }
+        if (!ws.getObject().isURIResource()) {
+            return false;
+        }
+        Workspace found = ops.workspace(store, ws.getResource().getURI().substring(Graphs.WORKSPACE_PREFIX.length()));
+        return found != null && found.readableBy(principal.name(), principal.admin());
+    }
+
     public ApiResponse handle(ApiRequest req) {
         try {
             // Health and the session's description answer anyone, so a browser can learn how to sign in.

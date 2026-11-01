@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, Database, Download, FileText, Hammer, ListChecks, Network, Sparkles } from "lucide-react";
 import { Graph } from "@lattice/authoring-domain";
-import { api, jobId } from "../api";
+import { EVENT_FALLBACK_MS, api, jobId } from "../api";
+import { connected, watch } from "../events";
 import { nodeFor } from "../rdf/editors";
 import type { Issue, Job } from "../rdf/report";
 import { PARTS, type Part } from "../state";
@@ -29,14 +30,17 @@ export function BuildView() {
   useEffect(() => {
     if (!selected) return;
     let live = true;
-    let timer: ReturnType<typeof setTimeout>;
+    const events = watch(selected);
     const poll = async () => {
       try {
-        const job = await api.job(jobId(selected));
-        if (!live) return;
-        setDetail(job);
-        if (job.status === "Queued" || job.status === "Running") timer = setTimeout(poll, 500);
-        else void refresh();
+        for (;;) {
+          const job = await api.job(jobId(selected));
+          if (!live) return;
+          setDetail(job);
+          if (job.status !== "Queued" && job.status !== "Running") return void refresh();
+          await events.next(connected() ? EVENT_FALLBACK_MS : 500);
+          if (!live) return;
+        }
       } catch (e) {
         if (live) setError(e instanceof Error ? e.message : String(e));
       }
@@ -44,7 +48,7 @@ export function BuildView() {
     void poll();
     return () => {
       live = false;
-      clearTimeout(timer);
+      events.close();
     };
   }, [selected, refresh]);
 

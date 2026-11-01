@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.studio.http;
 
+import io.helidon.http.HeaderNames;
+import io.helidon.http.Headers;
+import io.helidon.http.HttpPrologue;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.websocket.WsRouting;
+import io.helidon.websocket.WsListener;
+import io.helidon.websocket.WsSession;
+import io.helidon.websocket.WsUpgradeException;
+import java.net.URI;
+import java.util.Optional;
+import org.nebularis.lattice.studio.events.Notifier;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
 import java.io.IOException;
@@ -35,9 +45,91 @@ public final class StudioHttpServer implements AutoCloseable {
 
     /** {@code staticDir} may be null. */
     public StudioHttpServer(StudioApi api, String bind, int port, Path staticDir) throws IOException {
+        this(api, bind, port, staticDir, null);
+    }
+
+    /** {@code notifier}, when given, serves the WebSocket {@code /api/events} (PM3). */
+    public StudioHttpServer(StudioApi api, String bind, int port, Path staticDir, Notifier notifier) throws IOException {
         this.api = api;
         this.staticRoot = staticDir == null ? null : realPath(staticDir);
-        this.server = WebServer.builder().host(bind).port(port).routing(r -> r.any(this::handle)).build();
+        var builder = WebServer.builder().host(bind).port(port).routing(r -> r.any(this::handle));
+        if (notifier != null) {
+            builder.addRouting(WsRouting.builder().endpoint(EVENTS, () -> new EventsListener(notifier)));
+        }
+        this.server = builder.build();
+    }
+
+    public static final String EVENTS = "/api/events";
+
+    /**
+     * One WebSocket session, handed to the notifier. The upgrade is refused when the browser's {@code Origin} is not the host it asked,
+     * so a page of another site cannot open a session with the credentials of the one signed in here.
+     */
+    private static final class EventsListener implements WsListener {
+        private final Notifier notifier;
+        private Notifier.Socket socket;
+
+        EventsListener(Notifier notifier) {
+            this.notifier = notifier;
+        }
+
+        @Override
+        public Optional<Headers> onHttpUpgrade(HttpPrologue prologue, Headers headers) throws WsUpgradeException {
+            String origin = headers.first(HeaderNames.ORIGIN).orElse(null);
+            String host = headers.first(HeaderNames.HOST).orElse(null);
+            if (origin != null && (host == null || !host.equalsIgnoreCase(authority(origin)))) {
+                throw new WsUpgradeException("the origin " + origin + " is not this service's");
+            }
+            return Optional.empty();
+        }
+
+        /** The host and port of an origin, or null for an opaque one such as {@code null}. */
+        private static String authority(String origin) {
+            try {
+                return URI.create(origin).getRawAuthority();
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        @Override
+        public void onOpen(WsSession session) {
+            socket = new Notifier.Socket() {
+                @Override
+                public void send(String text) {
+                    synchronized (session) {
+                        session.send(text, true);
+                    }
+                }
+
+                @Override
+                public void close(int code, String reason) {
+                    session.close(code, reason);
+                }
+            };
+            notifier.opened(socket);
+        }
+
+        @Override
+        public void onMessage(WsSession session, String text, boolean last) {
+            if (!last) {
+                // A client frame fits one message, so one split across several is refused.
+                socket.close(Notifier.POLICY, "a frame is one message");
+                notifier.closed(socket);
+                return;
+            }
+            notifier.message(socket, text);
+        }
+
+        @Override
+        public void onClose(WsSession session, int status, String reason) {
+            notifier.closed(socket);
+        }
+
+        @Override
+        public void onError(WsSession session, Throwable t) {
+            notifier.closed(socket);
+        }
     }
 
     private static Path realPath(Path dir) throws IOException {

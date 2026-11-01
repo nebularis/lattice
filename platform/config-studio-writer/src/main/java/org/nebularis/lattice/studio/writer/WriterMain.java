@@ -35,8 +35,17 @@ public final class WriterMain {
         Connection publishing = Amqp.connect(config.amqpUri(), "config-studio-writer sweep");
         Channel replyChannel = replies.createChannel();
         Topology.declare(replyChannel);
+        // Completion events go out on a channel of their own, after the request that applied their write committed (PM3).
+        Channel eventChannel = replies.createChannel();
+        eventChannel.exchangeDeclare(org.nebularis.lattice.studio.writes.StudioEvents.EXCHANGE, "topic", true);
+        org.nebularis.lattice.outbox.RabbitMqEventPublisher events = new org.nebularis.lattice.outbox.RabbitMqEventPublisher(eventChannel, org.nebularis.lattice.studio.writes.StudioEvents.EXCHANGE);
         Environment environment = Environment.builder().uri(config.streamUri()).build();
-        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, StudioOperations.load(config.assets().resolve("persistence"), config.epoch()), org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC()));
+        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, StudioOperations.load(config.assets().resolve("persistence"), config.epoch()), org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC(),
+            event -> {
+                synchronized (eventChannel) {
+                    events.publish(event);
+                }
+            }));
         Sweeper sweeper = new Sweeper(store, new RabbitWrites(publishing, store, WRITE_TIMEOUT), Clock.systemUTC(),
             Duration.ofDays(config.jobRetentionDays())).start(SWEEP_EVERY);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
