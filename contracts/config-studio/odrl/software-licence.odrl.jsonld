@@ -1,0 +1,29 @@
+{
+  "@context": "http://www.w3.org/ns/odrl.jsonld",
+  "@type": "Agreement",
+  "uid": "https://example.org/lattice/odrl/licence/fernwood",
+  "profile": "https://example.org/lattice/odrl/profile",
+  "assigner": {"@id": "https://example.org/lattice/odrl/party/corvid", "@type": "Party", "http://www.w3.org/2006/vcard/ns#fn": "Corvid Software Ltd"},
+  "assignee": {"@id": "https://example.org/lattice/odrl/party/fernwood", "@type": "Party", "http://www.w3.org/2006/vcard/ns#fn": "Fernwood Analytics Ltd"},
+  "target": "https://example.org/lattice/odrl/asset/analytics-suite",
+  "permission": [{
+    "action": "use",
+    "constraint": [{
+      "leftOperand": "spatial",
+      "operator": "eq",
+      "rightOperand": {"@id": "https://example.org/lattice/odrl/site/leeds"}
+    }, {
+      "leftOperand": "dateTime",
+      "operator": "lt",
+      "rightOperand": {"@value": "2030-01-01", "@type": "xsd:date"}
+    }],
+    "duty": [{"action": "compensate"}]
+  }],
+  "prohibition": [{
+    "action": "distribute",
+    "remedy": [{"action": "compensate"}]
+  }],
+  "obligation": [{
+    "action": "inform"
+  }]
+}

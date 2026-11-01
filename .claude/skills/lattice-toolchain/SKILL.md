@@ -18,6 +18,7 @@ are in [environment-lessons.md](environment-lessons.md), beside this file.
 - Every build, test and check runs through `mise` (ADR-A29). CI runs the same tasks. Maven, Yarn 4,
   Python tooling and Mix remain their own dependency authorities.
 - `mise install`, `mise run bootstrap`, `mise run check`, and `mise tasks` to list them.
+- Those two commands are all `check` needs. A `check:*` task that reads an artefact a build writes, such as the studio's staged assets under `.build/config-studio/` or the rendered Teaching Pack, names that build in its `depends` (STD-299). A suite failing on a missing generated file is an undeclared dependency to add in `mise.toml`, never a file to stage by hand. The developer guide's "What `check` needs first" lists them.
 - Task families are `bootstrap:*`, `check:*`, `build:*`, `clean:*` and `topology:*`. Some heavy
   checks are deliberately outside `check`, as the developer guide lists.
 - Run the checks a change needs, not only the aggregate. `mise run check` stops every sibling task as
@@ -106,6 +107,7 @@ Some networks reach public registries only through a mirror, or not at all.
 | a module's role directory, such as its examples | `catalogue.module("instrument").directory("examples")` | `python tools/lattice_repo_catalogue.py path instrument examples` |
 | a module's generated files, in order | `catalogue.module("wording").files("shapes")` | `python tools/lattice_repo_catalogue.py paths wording shapes` |
 | a root or documentation area, such as the registers' | `catalogue.area("developer")` | `python tools/lattice_repo_catalogue.py area developer` |
+| every file of a name a check should scan, such as each `pyproject.toml` or `pom.xml` | `catalogue.files("pom.xml")`, the root's own and those under the catalogued roots, never a nested worktree or build output |  |
 
 `load()` comes from `tools/lattice_repo_catalogue.py`, which a tool under `tools/` imports after putting `tools/` on `sys.path`. Each lookup returns a directory relative to the root, and a file's name is joined to it, as in `catalogue.root / catalogue.area("developer") / "facets.md"`. A name or role the catalogue lacks fails with an error naming where to declare it, so declare it there rather than writing the path. `check:catalogue` fails a tool under `tools/` that builds a path to a catalogued root itself. Its scan does not yet read tests (TD-54) or find a root counted from `__file__` (TD-87, TD-88), so there the rule holds only while it is followed.
 

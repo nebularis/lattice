@@ -84,6 +84,19 @@ def test_flags_mark_a_boundary_a_debt_and_a_proposed_entry(isolated, capsys):
     assert "! the entry states a case it does not cover" in out and "TD an open debt" in out and "? the entry is Proposed" in out
 
 
+def test_an_open_backlog_idea_flags_the_entry_it_bears_on(isolated, capsys):
+    """BL says an unbuilt idea on the backlog bears on the entry, and the line under the row names it."""
+    store = ox.Store()
+    entry(store, "CAP-1", "Capability", "compile a mapping to RML")
+    entry(store, "BL-1", "Backlog", "compile a mapping to XSLT")
+    fact(store, "BL-1", "status", ox.NamedNode(KI + "Open"))
+    fact(store, "BL-1", "bearsOn", at("CAP-1"))
+    embed.build(store, isolated)
+    ask.find(store, "mapping", {"Capability"}, set(), set(), 8)
+    out = capsys.readouterr().out
+    assert table(out)[0][4] == "BL" and "On the backlog, not built: BL-1." in under_row(out, "CAP-1")
+
+
 def test_a_closed_debt_does_not_flag_its_entry(isolated, capsys):
     store = ox.Store()
     entry(store, "MEC-1", "Mechanism", "a ledger account")

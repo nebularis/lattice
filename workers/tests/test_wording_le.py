@@ -20,10 +20,10 @@ from lattice_workers.wording_le import analyse, classify, forms, matcher, model,
 from lattice_workers.wording_le.model import Element
 
 REPO = Path(__file__).resolve().parents[2]
-WORDING_FIXTURES = REPO / "contracts" / "authoring" / "fixtures" / "wording"
+WORDING_FIXTURES = REPO / "contracts" / "xml" / "document-to-wording" / "1.0.0" / "expected"
 GOLDENS = Path(__file__).resolve().parent / "fixtures" / "wording_le"
 CONTRACTS = REPO / "contracts"
-VOCAB = REPO / "platform" / "authoring-service" / "src" / "main" / "resources" / "vocab" / "wording-provisional.ttl"
+VOCAB = GOLDENS / "wording-provisional.ttl"
 
 BASE = "https://example.org/lattice/authoring/"
 SAMPLES = {
@@ -35,7 +35,9 @@ SAMPLES = {
 
 def _load_sample(sample_id: str) -> model.Wording:
     graph = rdflib.Graph()
-    graph.parse(WORDING_FIXTURES / f"{sample_id}.nt", format="nt")
+    # The property policy has no markup sample, so its graph is kept here, where it exercises forms the others do not.
+    fixture = WORDING_FIXTURES / f"{sample_id}.nt"
+    graph.parse(fixture if fixture.exists() else GOLDENS / f"{sample_id}.nt", format="nt")
     wording_iri = f"{BASE}doc/{SAMPLES[sample_id]}/wording"
     return model.load_wording(graph, wording_iri)
 
@@ -307,9 +309,8 @@ def test_facility_proposal_graph_matches_the_golden():
 
 def _schema_registry() -> Registry:
     resources = []
-    for path in sorted((CONTRACTS / "authoring").glob("*.schema.json")):
-        schema = json.loads(path.read_text(encoding="utf-8"))
-        resources.append((schema["$id"], Resource.from_contents(schema)))
+    schema = json.loads((CONTRACTS / "config-studio" / "analysis.schema.json").read_text(encoding="utf-8"))
+    resources.append((schema["$id"], Resource.from_contents(schema)))
     return Registry().with_resources(resources)
 
 
@@ -320,7 +321,7 @@ def test_analysis_validates_against_the_common_schema(sample_id):
     analysis = _full_analysis(wording, profile)
 
     registry = _schema_registry()
-    common_id = "https://schemas.nebularis.org/lattice/authoring/common/0.1.0"
+    common_id = "https://schemas.nebularis.org/lattice/config-studio/analysis/0.1.0"
     validator = Draft202012Validator({"$ref": f"{common_id}#/$defs/Analysis"}, registry=registry)
     errors = list(validator.iter_errors(analysis))
     assert errors == [], errors

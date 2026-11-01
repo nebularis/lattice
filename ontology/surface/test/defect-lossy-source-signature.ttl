@@ -20,3 +20,6 @@ ex:bad a srf:PromotionContract ;
     srf:realisationMode srf:Materialised ;
     srf:targetNamespace "https://example.org/lattice/surface/defect/generated#"^^xsd:anyURI ;
     srf:surfaceProfile ex:profile .
+
+# Declared, so the refusal is the lossy promotion's and not the undeclared property's.
+ex:authoredProperty a <http://www.w3.org/2002/07/owl#DatatypeProperty> .

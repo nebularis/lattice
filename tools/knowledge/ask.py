@@ -182,13 +182,14 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
        (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences)
        (GROUP_CONCAT(DISTINCT ?ac) AS ?activities) (GROUP_CONCAT(DISTINCT ?qu) AS ?qualities)
        (GROUP_CONCAT(DISTINCT ?te) AS ?technologies) (SAMPLE(?dn) AS ?uncovered)
-       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (SAMPLE(?sp) AS ?successor) WHERE {
+       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (GROUP_CONCAT(DISTINCT ?idea) AS ?ideas) (SAMPLE(?sp) AS ?successor) WHERE {
   GRAPH ki:index {
     ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
     OPTIONAL { ?n ki:pointer ?pointer }
     OPTIONAL { ?n ki:status ?s }
     OPTIONAL { ?n ki:doesNotCover ?dn }
     OPTIONAL { ?d ki:bearsOn ?n ; a ki:Debt ; ki:status ki:Open ; ki:identifier ?debt }
+    OPTIONAL { ?b ki:bearsOn ?n ; a ki:Backlog ; ki:status ki:Open ; ki:identifier ?idea }
     OPTIONAL { ?n ki:supersededBy ?successorNode . ?successorNode ki:identifier ?sp }
     OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
     OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
@@ -224,7 +225,7 @@ SELECT ?n ?iri ?claim ?pointer ?module WHERE { GRAPH ki:terms {
 KINDS = {
     "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
-    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
+    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt", "backlog": "Backlog",
     "question": "Question", "term": "Term",
 }
 PHASES = {
@@ -423,6 +424,8 @@ def flags(r: dict) -> str:
         marks += "~"
     if r.get("debts"):
         marks += "TD"
+    if r.get("ideas"):
+        marks += "BL"
     if r.get("status") == "Proposed":
         marks += "?"
     return marks
@@ -444,6 +447,8 @@ def under(r: dict) -> str:
         text.append(f"Narrowed by {r['narrowed']}.")
     if r.get("debts"):
         text.append(f"Open debt: {', '.join(sorted(r['debts'].split()))}.")
+    if r.get("ideas"):
+        text.append(f"On the backlog, not built: {', '.join(sorted(r['ideas'].split()))}.")
     return " ".join(text)
 
 
@@ -533,9 +538,9 @@ def _show_found(db: ox.Store, rows: list[dict], facets: dict, best: float) -> No
     if also:
         print("\nlinked to the top answers by a declared edge:")
         show(also, ("via", "id", "kind", "status", "claim", "pointer"))
-    marks = {m for r in rows for m in ("!", "~", "TD", "?") if m in r["flags"]}
+    marks = {m for r in rows for m in ("!", "~", "TD", "BL", "?") if m in r["flags"]}
     if marks:
-        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "?") if m in marks) + ". The line under the row says which.")
+        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "BL", "?") if m in marks) + ". The line under the row says which.")
     if facets:
         print("\n+ marks each facet the entry matches, which raised it by", BOOST)
     if best < WEAK:
@@ -548,6 +553,7 @@ FLAG_WORDS = {
     "!": "! the entry states a case it does not cover",
     "~": "~ the text returned was superseded or reversed",
     "TD": "TD an open debt bears on the entry",
+    "BL": "BL an idea on the backlog, not built, bears on the entry",
     "?": "? the entry is Proposed, not ratified",
 }
 

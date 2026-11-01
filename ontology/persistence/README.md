@@ -26,9 +26,9 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.20.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> |
-| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.20.0> | none |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> |
+| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.21.0> | none |
 
 | Prefix | Namespace |
 |---|---|
@@ -7543,6 +7543,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **0.21.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.20.0**.
   - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - changes meaning. The store vocabulary, the `pat:` terms that the generated operations write into receipts, version rows, transaction claims and key claims, moves from the illustrative `example.org` namespace to the published `persistence-store` document, `spec/persistence-store.ttl`, with the namespace `https://www.nebularis.org/neuro-semantic/lattice/persistence-store#`. Data written under the old IRIs is stored under different IRIs and must be rewritten.

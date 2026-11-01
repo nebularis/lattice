@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The persistence configuration of the facility agreement sample, for two aggregates.
+#
+# A facility is a composite aggregate. It owns its drawdowns, so one write covers the facility and
+# its drawdowns, and it only references its borrower, lenders and branch. The boundary shape that
+# says so is in the baseline. Its concurrency and receipt profiles are separate dimensions of the
+# same class, as is its dataset-level epoch guard, and the facility reference is unique among the
+# facilities one branch arranges.
+#
+# A borrower is a party that may be a person, so its tax identifier is personal data. It has a
+# surrogate identity claimed by that tax identifier, which is unique within a region and so draws on
+# the region property the vocabulary configuration governs, an epoch guard whose erasure register
+# backs the privacy profile, and per-subject receipts. The privacy profile declares personal data
+# with per-subject graph drop and erasure wins, so an erasure request removes the borrower even from
+# a restore.
+
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# --- the facility aggregate ------------------------------------------------------------------------
+
+ex:FacilityClass a dal:ClassScope ;
+    dal:targetClass ex:Facility ;
+    dal:priority "20"^^xsd:integer .
+
+ex:FacilityBoundaryProfile a dal:AggregateBoundaryProfile ;
+    dal:appliesTo     ex:FacilityClass ;
+    dal:strategy      dal:CompositePropertyBoundary ;
+    dal:boundaryShape ex:FacilityShape ;
+    dal:dataGraph     <urn:g:facilities> .
+
+ex:FacilityConcurrencyProfile a dal:ConcurrencyProfile ;
+    dal:appliesTo           ex:FacilityClass ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable .
+
+ex:FacilityReceiptProfile a dal:ReceiptProfile ;
+    dal:appliesTo    ex:FacilityClass ;
+    dal:receiptModel dal:PatchLog .
+
+ex:FacilityEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:FacilityClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:FacilityReferencePerBranch a dal:UniquenessConstraint ;
+    dal:constraintId        "facility-reference-per-branch" ;
+    dal:appliesTo           ex:FacilityClass ;
+    dal:keyProperty         ( ex:facilityReference ) ;
+    dal:scopeProperty       ex:arrangedBy ;
+    dal:normalizePipeline   dal:NfkcTrimUppercase ;
+    dal:onViolation         dal:Reject ;
+    dal:minEnforcementLevel dal:Transactional .
+
+# --- the borrower aggregate ------------------------------------------------------------------------
+
+ex:BorrowerEntity a dal:ClassScope ;
+    dal:targetClass ex:Borrower ;
+    dal:priority "20"^^xsd:integer .
+
+ex:BorrowerAccessProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:BorrowerEntity ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:borrower/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:ReceiptOnly ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:perSubjectScoped    true .
+
+ex:BorrowerIdentity a dal:IdentityProfile ;
+    dal:appliesTo          ex:BorrowerEntity ;
+    dal:resourceRole       dal:EntityRole ;
+    dal:identityStrategy   dal:SurrogateClaimedIdentity ;
+    dal:surrogateKind      dal:UuidV4Surrogate ;
+    dal:mintedIriTemplate  "urn:borrower:{surrogate}" ;
+    dal:claimsConstraint   ex:BorrowerTaxIdentifierUnique ;
+    dal:namingAuthority    "adopter" .
+
+ex:BorrowerTaxIdentifierUnique a dal:UniquenessConstraint ;
+    dal:constraintId        "borrower-tax-identifier-unique" ;
+    dal:appliesTo           ex:BorrowerEntity ;
+    dal:keyProperty         ( ex:taxIdentifier ) ;
+    dal:scopeProperty       ex:borrowerRegion ;
+    dal:normalizePipeline   dal:NfkcTrimCasefold ;
+    dal:onViolation         dal:Reject ;
+    dal:minEnforcementLevel dal:Transactional ;
+    dal:claimScheme         ex:BorrowerTaxIdentifierSchemeV1 .
+
+ex:BorrowerTaxIdentifierSchemeV1 a dal:ClaimScheme ;
+    dal:schemeVersion      "v1" ;
+    dal:schemeState        dal:Accepting ;
+    dal:claimKeyId         "borrower-tax-identifier-key-v1" ;
+    dal:claimDigestScheme  ex:BorrowerTaxIdentifierMac ;
+    dal:claimIriTemplate   "urn:key:borrower-tax-identifier:{schemeVersion}:{mac}" .
+
+ex:BorrowerTaxIdentifierMac a dal:DigestScheme ;
+    dal:digestFunction   "HMAC-SHA-256" ;
+    dal:digestWidthBits  128 ;
+    dal:digestEncoding   "base32" .
+
+ex:BorrowerEpoch a dal:EpochProfile ;
+    dal:appliesTo               ex:BorrowerEntity ;
+    dal:epochAuthority          dal:ExternalHighWaterMark ;
+    dal:epochCoordinatorBinding "postgres://coord/epoch_watermark" ;
+    dal:epochGuardScope         dal:DatasetLevelGuard ;
+    dal:erasureRegisterBinding  "postgres://coord/erasure_register" ;
+    dal:erasureReplayOnRestore  true .
+
+ex:BorrowerPrivacy a dal:PrivacyProfile ;
+    dal:appliesTo          ex:BorrowerEntity ;
+    dal:privacyClass       dal:PersonalData ;
+    dal:erasureStrategy    dal:PerSubjectGraphDrop ;
+    dal:erasurePrecedence  dal:ErasureWins .

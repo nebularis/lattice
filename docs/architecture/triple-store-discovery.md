@@ -263,6 +263,9 @@ to the store or where it is a matter of capacity.
 | [TSD-55](#tsd-55-rdflibs-n3-writes-a-multi-line-literal-in-triple-quotes-which-n-quads-refuses) | `Literal.n3()` of a literal holding a newline, used as an N-Quads term | N-Quads has no triple-quoted form | triple quotes (Notation3). `serialize(format="nt")` escapes | refuses the line. Jena ARQ refuses it | Observed |
 | [TSD-56](#tsd-56-jena-arq-evaluates-a-sub-select-on-its-own-and-orders-iris-as-iris) | TSD-15 and TSD-16 on Jena | as TSD-15 and TSD-16 | as TSD-15 and TSD-16 | Jena ARQ: ✔ both, as Oxigraph | Observed |
 | [TSD-57](#tsd-57-jena-arq-shows-none-of-the-growth-that-tsd-25-to-tsd-27-record-on-rdflib) | the cost forms of TSD-25 to TSD-27 and TSD-22 on Jena | not specified | as TSD-25 to TSD-27 | Jena ARQ: no growth with size, a constant 2 to 3 times in E2 only | Observed |
+| [TSD-62](#tsd-62-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
+| [TSD-63](#tsd-63-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
+| [TSD-44](#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput) | many small updates to one TDB2 dataset, one request each or batched | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
 
 ## 6. The findings
 
@@ -1986,6 +1989,86 @@ This finding is recorded with [TSD-42](#tsd-42-oxigraph-reads-every-graph-for-a-
 **What it means for LATTICE.** A test or check that counts over a pattern with no variable cannot tell a match from a miss on RDF4J. Bind a variable and filter on it, as `benchmark/persistence-graph-naming-cost` now does, or use `ASK`. No generated operation counts this way, and the benchmark's checks were the only place it was found.
 
 **Reproduce it.** `mvn -q -f benchmark/persistence-graph-naming-cost-jvm/pom.xml compile exec:exec -Dexec.mainClass=org.nebularis.lattice.benchmark.graphnaming.Rdf4jCountProbe`.
+
+### TSD-62. Fuseki on TDB2 applies concurrent updates one at a time, and a read does not wait for them
+
+**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS, 2026-10-28, choosing how many store writers the Configuration Studio runs. Not read from Jena's source, though Jena documents TDB2's transactions as multiple readers and a single writer.
+
+**Context.** The studio routes every write through one writer per partition of workspaces (ADR-A136, amendment of 2026-10-28), and the number of writers is a setting. Whether more writers write faster depends on whether the store runs their updates in parallel.
+
+**How we found it.** Eight `INSERT DATA` requests of 20,000 triples each, into eight graphs of one dataset, sent one after another and then all at once from eight threads, twice, with the graphs dropped between runs. Then one read (`ASK`) sent while a 200,000-triple insert ran.
+
+| Run | Sequential | Concurrent | Ratio |
+|---|---|---|---|
+| 1 | 3.09 s | 2.91 s | 0.94 |
+| 2 | 2.66 s | 2.82 s | 1.06 |
+
+The read answered in 8 ms and 3 ms while the insert ran.
+
+**What the store does.** Concurrent updates to one dataset take as long as the same updates in sequence, so they are applied one at a time. A read is not blocked by a write in progress, which is what a reader working on the last committed state gives.
+
+**What it means for LATTICE.** On one TDB2 dataset, more writers do not write faster. They keep a busy workspace from delaying the others in the queue, and they parallelise what a writer does before its update, such as parsing and checking. Write throughput beyond one writer needs a dataset per group of partitions. Reads need no coordination with the writers.
+
+**Reproduce it.** The requests above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
+
+### TSD-63. rdflib rewrites an `xsd:dateTime`'s `Z` as `+00:00` when it parses
+
+**Evidence:** Observed on rdflib 7.6.0, 2026-10-28, when the studio's writer compared a job graph the worker sent back with the one the service wrote. Not tested on Oxigraph.
+
+**Context.** The service writes `cst:submittedAt "2026-10-28T08:37:17Z"^^xsd:dateTime`. The worker reads the job graph with rdflib and sends it back with its status. The writer refused the update as a change to the service's statements, which it was not.
+
+**How we found it.** Comparing the statements of the job node in the store and in the worker's message, term by term. Every statement was the same except the time, which came back as `"2026-10-28T08:37:17+00:00"`.
+
+**What the store does.** rdflib normalises the lexical form of an `xsd:dateTime` when it parses one, so a graph read and written by rdflib holds a different term with the same value. A comparison by term, such as Jena's isomorphism, sees a change.
+
+**What it means for LATTICE.** A check that a graph round-tripped through rdflib is unchanged compares literals by value (Jena's `Node.sameValueAs`), as the studio's writer now does, never by term. An identity, a hash or a canonical form taken over such a literal must fix its lexical form first, or it differs between a graph written by Jena and the same graph after rdflib.
+
+**Reproduce it.** `Graph().parse(data='<urn:a> <urn:p> "2026-10-28T08:37:17Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .', format="turtle")`, then serialise it.
+
+### TSD-44. A small update on Fuseki TDB2 costs its commit, so batching updates is the lever for write throughput
+
+**Evidence:** Observed on Apache Jena Fuseki 6.2.0 with a TDB2 dataset on macOS (APFS), 2026-10-28, following TSD-62. Not read from Jena's source. Not measured on Linux or Windows, whose file systems sync differently.
+
+**Context.** TSD-62 showed that TDB2 applies one update at a time. Whether the cost of each is the work or the commit decides whether batching helps.
+
+**How we found it.** 200 updates shaped like a studio save, each dropping one graph and inserting 50 triples into it, sent four ways, twice, with the graphs dropped between runs.
+
+| Form | Run 1 | Run 2 | Per save |
+|---|---|---|---|
+| one request each, in sequence | 13.25 s | 13.75 s | 66 to 69 ms |
+| one request each, from 8 threads | 12.85 s | 12.72 s | 64 ms |
+| 10 requests of 20 operations | 0.80 s | 0.84 s | 4 ms |
+| 1 request of 200 operations | 0.18 s | 0.18 s | 0.9 ms |
+
+**What the store does.** Nearly all of a small update's cost is fixed per request, which Fuseki runs as one write transaction and TDB2 commits to disk, about 65 ms here. The operations inside a request cost under a millisecond each.
+
+**Why.** A Jena dataset's transactions are multiple readers and a single writer, which is why concurrent updates queue (TSD-62), and that is Jena's transaction model, not TDB2's alone, since Jena's in-memory dataset has it too. The fixed cost is TDB2's: a commit makes its journal durable before it answers. We infer this from the measurements, and did not read the source or measure the in-memory dataset.
+
+**What it means for LATTICE.** On TDB2, write throughput is about 15 transactions a second, however many writers send them. A writer that merges the updates waiting for it into one request multiplies that by the batch size, so batching, not more writers, is the lever. A batch shares one transaction, so it commits or fails as one.
+
+**Reproduce it.** The four forms above against `mise run studio:up`'s Fuseki on `http://127.0.0.1:3130/studio/update`, into graphs no workspace uses.
+
+**Addendum, 2026-10-31.** The studio's own updates, logged by Fuseki 6.2.0 run by the studio harness on the same kind of machine, took 52 ms to 104 ms each on TDB2 whatever their size up to 20,000 characters, and 1 ms to 9 ms each on Fuseki's in-memory dataset, which confirms the commit as the fixed cost. A save of 1,000 triples took 121 ms on TDB2. Still not measured on Linux, where a sync costs less, so the floor here is a hypothesis for a server.
+
+### TSD-64. A cast lookup key joins a stored integer by value on both stores, and Oxigraph joins `xsd:long` with `xsd:integer` too
+
+**Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-10-29, with the probe below. Not read from either engine's source.
+
+**Context.** A MORK lookup's default comparison casts the source value with `STRDT` to the reference data's datatype and joins the result as a term, so an index can serve it (`tools/mork_rdf` README §7.3). Whether the join is by term or by value decides what the author must name as that datatype.
+
+**What the store does.** Two reference triples, `<urn:a> <urn:n> "7"^^xsd:integer` and `<urn:b> <urn:n> "7"^^xsd:long`, and a pattern `?s <urn:n> ?c` after `BIND (STRDT(text, datatype) AS ?c)`.
+
+| Cast | Oxigraph matches | rdflib matches |
+|---|---|---|
+| `"7"` to `xsd:integer` | a, b | a |
+| `"007"` to `xsd:integer` | a, b | a |
+| `"7"` to `xsd:long` | a, b | b |
+
+**Why.** Not read. Oxigraph stores every integer-derived literal as an `xsd:integer` value (TSD-07), so a cast to either type joins both. rdflib joins two literals of one numeric datatype by value, so `"007"` finds 7, and keeps the derived types apart.
+
+**What it means for LATTICE.** A cast lookup must name the reference data's own datatype in `mork:lookupDatatype`. Oxigraph forgives naming a sibling integer type and rdflib does not, so the rdflib run in the mork_rdf tests is the stricter one. Leading zeros never stop a numeric cast lookup from matching on either store.
+
+**Reproduce it.** The two triples above, and `SELECT ?s WHERE { BIND (STRDT("007", xsd:integer) AS ?c) ?s <urn:n> ?c }` with each cast, on each store.
 
 ## 7. Corrections, and what they taught us
 

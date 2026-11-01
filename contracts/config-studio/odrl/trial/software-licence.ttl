@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The sample policy software-licence.odrl.jsonld as Turtle, read with the bundled ODRL context, for checks that run offline.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/lattice/odrl/licence/fernwood> a odrl:Agreement ;
+    odrl:assignee <https://example.org/lattice/odrl/party/fernwood> ;
+    odrl:assigner <https://example.org/lattice/odrl/party/corvid> ;
+    odrl:obligation [ odrl:action odrl:inform ] ;
+    odrl:permission [ odrl:action odrl:use ;
+            odrl:constraint [ odrl:leftOperand odrl:spatial ;
+                    odrl:operator odrl:eq ;
+                    odrl:rightOperand <https://example.org/lattice/odrl/site/leeds> ],
+                [ odrl:leftOperand odrl:dateTime ;
+                    odrl:operator odrl:lt ;
+                    odrl:rightOperand "2030-01-01"^^xsd:date ] ;
+            odrl:duty [ odrl:action odrl:compensate ] ] ;
+    odrl:profile <https://example.org/lattice/odrl/profile> ;
+    odrl:prohibition [ odrl:action odrl:distribute ;
+            odrl:remedy [ odrl:action odrl:compensate ] ] ;
+    odrl:target <https://example.org/lattice/odrl/asset/analytics-suite> .
+
+<https://example.org/lattice/odrl/party/corvid> a odrl:Party ;
+    vcard:fn "Corvid Software Ltd" .
+
+<https://example.org/lattice/odrl/party/fernwood> a odrl:Party ;
+    vcard:fn "Fernwood Analytics Ltd" .
+

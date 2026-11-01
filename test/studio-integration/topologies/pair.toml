@@ -1,0 +1,7 @@
+# Two writers and two workers. The writes super stream's partitions spread across the writers.
+name = "pair"
+writers = 2
+workers = 2
+store = "tdb2"
+auth = "local"
+runner = "processes"

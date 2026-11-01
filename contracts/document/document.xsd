@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SPDX-License-Identifier: CC-BY-SA-4.0
+  
+  LATTICE's document markup, major version 1 (ADR-A137). The source we write and review.
+  document.xsd is generated from it with Trang (mise run build:document-schema) and never edited.
+  
+  Structure and marks only, never meaning. What the marked text means is the Wording layer's RDF,
+  produced from this markup by the document-to-wording kit in contracts/xml.
+  
+  The text of a clause or a definition is mixed content and is read exactly, so a document keeps
+  no indentation inside one. Each run of text between marks is one literal part.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="https://www.nebularis.org/neuro-semantic/lattice/document/1" xmlns:document="https://www.nebularis.org/neuro-semantic/lattice/document/1">
+  <xs:element name="document">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="document:meta"/>
+        <xs:element ref="document:body"/>
+      </xs:sequence>
+      <xs:attribute name="id" use="required" type="document:Uuid"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="meta">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="document:title"/>
+        <xs:element ref="document:template"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="document:variable"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="title">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:minLength value="1"/>
+        <xs:maxLength value="200"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="template" type="document:Key"/>
+  <!-- A variable the document declares. Its content is the label shown to a drafter. -->
+  <xs:element name="variable">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:restriction base="xs:anyType">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value="1"/>
+              <xs:maxLength value="200"/>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:attribute name="key" use="required" type="document:Key"/>
+          <xs:attribute name="type" use="required" type="document:ValueType"/>
+        </xs:restriction>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="body">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="document:section"/>
+        <xs:element ref="document:unmarked"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="section">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="document:clause"/>
+        <xs:element ref="document:definition"/>
+        <xs:element ref="document:unmarked"/>
+      </xs:choice>
+      <xs:attribute name="key" use="required" type="document:SectionKey"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="clause">
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="document:var"/>
+        <xs:element ref="document:ref"/>
+      </xs:choice>
+      <xs:attribute name="id" use="required" type="document:Uuid"/>
+    </xs:complexType>
+  </xs:element>
+  <!-- A definition names the term it defines. -->
+  <xs:element name="definition">
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="document:var"/>
+        <xs:element ref="document:ref"/>
+      </xs:choice>
+      <xs:attribute name="id" use="required" type="document:Uuid"/>
+      <xs:attribute name="term" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="100"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- A use of a declared variable. Its content is the text the document shows for it, on one line. -->
+  <xs:element name="var">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:restriction base="xs:anyType">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:maxLength value="1000"/>
+              <xs:pattern value="[^\n\r]*"/>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:attribute name="key" use="required" type="document:Key"/>
+        </xs:restriction>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <!-- A reference to another element of the document, by its identifier. -->
+  <xs:element name="ref">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:restriction base="xs:anyType">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value="1"/>
+              <xs:maxLength value="200"/>
+              <xs:pattern value="[^\n\r]*"/>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:attribute name="target" use="required" type="document:Uuid"/>
+        </xs:restriction>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <!-- Text in the document that no element marks, inside a section or outside every section. -->
+  <xs:element name="unmarked">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:minLength value="1"/>
+        <xs:maxLength value="10000"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:simpleType name="Uuid">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Key">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z][a-z0-9\-]{0,39}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="SectionKey">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z][a-z0-9\-]{0,31}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ValueType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="money"/>
+      <xs:enumeration value="percentage"/>
+      <xs:enumeration value="date"/>
+      <xs:enumeration value="duration"/>
+      <xs:enumeration value="number"/>
+      <xs:enumeration value="text"/>
+      <xs:enumeration value="party"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

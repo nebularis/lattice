@@ -1,0 +1,36 @@
+# Lessons from the ODRL proposal history: mapping | decision | target terms kept | note
+Map_Act | accepted | ins:activity | as the pack's Consequence_Activity
+Map_Binding | rejected | elg:EvidenceBinding, elg:bindsCondition | the pack maps nothing from this source
+Map_BoundValue | rejected | qnt:Quantity, qnt:boundValue | the pack maps nothing from this source
+Map_CondAny | corrected | elg:Condition, elg:hasCondition | proposed elg:SetMembershipCondition, elg:hasCondition. the pack's Constraint writes Condition, hasCondition
+Map_CondEq | corrected | elg:Condition, elg:hasCondition | proposed elg:ExactCondition, elg:hasCondition. the pack's Constraint writes Condition, hasCondition
+Map_CondInterval | corrected | elg:Condition, elg:hasCondition | proposed elg:IntervalCondition, elg:hasCondition. the pack's Constraint writes Condition, hasCondition
+Map_CondNeq | corrected | elg:Condition, elg:hasCondition | proposed elg:ExactCondition, elg:hasCondition. the pack's Constraint writes Condition, hasCondition
+Map_CondNone | corrected | elg:Condition, elg:hasCondition | proposed elg:SetMembershipCondition, elg:hasCondition. the pack's Constraint writes Condition, hasCondition
+Map_CondTarget | corrected | elg:requiredConcept | proposed elg:ExactCondition, elg:hasCondition. the pack maps this source with Asset_Required, to requiredConcept
+Map_Counterparty | accepted | ins:counterparty, pty:Role | as the pack's Permission_Counterparty
+Map_Excl | corrected | qnt:numericValue | proposed elg:excludedConcept. the pack maps this source with Bound_T_Value_Number, to numericValue
+Map_Holder | accepted | ins:holder, pty:Role | as the pack's Permission_Holder
+Map_Lower | rejected | qnt:Bound, qnt:lowerBound | the pack maps nothing from this source
+Map_Num | accepted | qnt:numericValue | as the pack's Bound_T_Value_Number
+Map_Obligee | accepted | ins:obligee, pty:Role | as the pack's Consequence_Obligee
+Map_Obligor | accepted | ins:obligor, pty:Role | as the pack's Consequence_Obligor
+Map_Policy | corrected | none | proposed ins:Instrument. the pack maps this source with Policy, to 
+Map_Range | rejected | qnt:Range, qnt:hasRange | the pack maps nothing from this source
+Map_RangeSet | rejected | elg:requiredRangeSet, qnt:RangeSet | the pack maps nothing from this source
+Map_Rel_Conseq | corrected | ins:Obligation, ins:Template, ins:arisesOnBreachOf | proposed ins:Obligation, ins:arisesOnBreachOf. the pack's Consequence writes Obligation, Template, arisesOnBreachOf
+Map_Rel_Duty | corrected | ins:OnAct, ins:arisesOn | proposed ins:Obligation. the pack maps this source with Duty, to OnAct, arisesOn
+Map_Rel_Oblig | corrected | ins:Template, ins:Term | proposed ins:Obligation. the pack maps this source with Obligation, to Template, Term
+Map_Rel_Perm | corrected | ins:Template, ins:Term | proposed ins:Permission. the pack maps this source with Permission, to Template, Term
+Map_Rel_Prohib | corrected | ins:Template, ins:Term | proposed ins:Prohibition. the pack maps this source with Prohibition, to Template, Term
+Map_Rel_Remedy | corrected | ins:Obligation, ins:Template, ins:arisesOnBreachOf | proposed ins:Obligation, ins:arisesOnBreachOf. the pack's Remedy writes Obligation, Template, arisesOnBreachOf
+Map_Req | accepted | elg:requiredConcept | as the pack's Constraint_Required
+Map_Scope | rejected | elg:AdmissionProfile, ins:scope | the pack maps nothing from this source
+Map_Step | rejected | elg:EvidenceStep, elg:evidenceStep | the pack maps nothing from this source
+Map_StepIdx | corrected | elg:ExactCondition, elg:hasCondition | proposed elg:stepIndex. the pack maps this source with Asset, to ExactCondition, hasCondition
+Map_StepProp | rejected | elg:stepProperty | the pack maps nothing from this source
+Map_TargetConcept | accepted | elg:requiredConcept | as the pack's Asset_Required
+Map_Term | rejected | ins:Template, ins:Term, ins:arisesUnder | the pack maps nothing from this source
+Map_Trigger | rejected | ins:OnAct, ins:arisesOn | the pack maps nothing from this source
+Map_TriggerAct | corrected | ins:OnAct, ins:arisesOn | proposed ins:activity. the pack maps this source with Duty, to OnAct, arisesOn
+Map_Upper | rejected | qnt:Bound, qnt:upperBound | the pack maps nothing from this source

@@ -24,7 +24,7 @@ The design, its principles, and laws, are located in [the capacity domain analys
 | Part | Namespace | File | State |
 |---|---|---|---|
 | source ontology: arrangements, resources, demands, draws, dependencies, rules | `cap:` | `spec/capacity.ttl` | **designed, not authored** (architecture overview §"Proposed applied ontology") |
-| runtime execution profile | `capx:` | [`spec/capacity-execution.ttl`](spec/capacity-execution.ttl) | authored, `0.18.0` |
+| runtime execution profile | `capx:` | [`spec/capacity-execution.ttl`](spec/capacity-execution.ttl) | authored, `0.19.0` |
 
 The execution profile's `capx:projectsFrom…` properties range over `cap:` classes that no document
 declares yet. They resolve when the source ontology is authored.
@@ -72,6 +72,8 @@ list of substrate layers puts Instrument below Behaviour, the order before ADR-A
 
 Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- **0.19.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.18.0**.
   - changes meaning ([ADR-A141](../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - no effect. The execution profile's document is `spec/capacity-execution.ttl`, renamed from a name that carried a `_Version2` suffix, and `spec/capacity.ttl` stays reserved for the source ontology. The module is not in the release register.

@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# A small applied ontology for loan origination, the baseline the persistence example
+# ontology/persistence/examples/baseline-single-class.ttl configures. Written for the
+# Configuration Studio's samples. Every IRI is a placeholder under example.org.
+
+@prefix ex:   <https://example.org/lending#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/lending> a owl:Ontology ;
+    rdfs:label "Lending" ;
+    rdfs:comment "Loan applications, the parties to them and the branches that take them." .
+
+ex:Party a owl:Class ;
+    rdfs:label "Party" ;
+    rdfs:comment "A person or organisation that takes part in an application." .
+
+ex:Borrower a owl:Class ;
+    rdfs:subClassOf ex:Party ;
+    rdfs:label "Borrower" ;
+    rdfs:comment "A party that applies to borrow." .
+
+ex:Guarantor a owl:Class ;
+    rdfs:subClassOf ex:Party ;
+    rdfs:label "Guarantor" ;
+    rdfs:comment "A party that guarantees a borrower's repayment." .
+
+ex:Branch a owl:Class ;
+    rdfs:label "Branch" ;
+    rdfs:comment "An office that receives applications." .
+
+ex:LoanApplication a owl:Class ;
+    rdfs:label "Loan application" ;
+    rdfs:comment "A request to borrow an amount, received by one branch." .
+
+ex:Decision a owl:Class ;
+    rdfs:label "Decision" ;
+    rdfs:comment "The outcome of assessing an application." .
+
+ex:applicationNumber a owl:DatatypeProperty ;
+    rdfs:label "application number" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range xsd:string .
+
+ex:requestedAmount a owl:DatatypeProperty ;
+    rdfs:label "requested amount" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range xsd:decimal .
+
+ex:branch a owl:ObjectProperty ;
+    rdfs:label "branch" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range ex:Branch .
+
+ex:applicant a owl:ObjectProperty ;
+    rdfs:label "applicant" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range ex:Borrower .
+
+ex:guarantor a owl:ObjectProperty ;
+    rdfs:label "guarantor" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range ex:Guarantor .
+
+ex:decision a owl:ObjectProperty ;
+    rdfs:label "decision" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range ex:Decision .
+
+ex:outcome a owl:ObjectProperty ;
+    rdfs:label "outcome" ;
+    rdfs:domain ex:Decision ;
+    rdfs:range skos:Concept .
+
+ex:branchCode a owl:DatatypeProperty ;
+    rdfs:label "branch code" ;
+    rdfs:domain ex:Branch ;
+    rdfs:range xsd:string .
+
+ex:taxIdentifier a owl:DatatypeProperty ;
+    rdfs:label "tax identifier" ;
+    rdfs:domain ex:Party ;
+    rdfs:range xsd:string .
+
+ex:OutcomeScheme a skos:ConceptScheme ;
+    skos:prefLabel "Decision outcomes"@en ;
+    skos:hasTopConcept ex:Approved, ex:Declined, ex:Referred .
+
+ex:Approved a skos:Concept ; skos:inScheme ex:OutcomeScheme ; skos:prefLabel "Approved"@en .
+ex:Declined a skos:Concept ; skos:inScheme ex:OutcomeScheme ; skos:prefLabel "Declined"@en .
+ex:Referred a skos:Concept ; skos:inScheme ex:OutcomeScheme ; skos:prefLabel "Referred"@en .
+ex:ReferredToUnderwriter a skos:Concept ; skos:inScheme ex:OutcomeScheme ; skos:prefLabel "Referred to an underwriter"@en ; skos:broader ex:Referred .

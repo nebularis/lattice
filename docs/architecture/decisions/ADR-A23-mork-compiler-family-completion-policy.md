@@ -29,3 +29,7 @@ The MORK enhancements analysis documents the gap directly: MORK's vocabulary alr
 **No native-IR compiler.** Neither the delivery plan nor any other document in this repository defines what a native artefact would be, so none was built and none is planned pending an actual definition. This ADR's "five targets" is reduced to four in practice: RML (`tools/mork/src/mork2rml.py`, pre-existing), SPARQL, SHACL, and SWRL (`tools/mork_compilers/`, new).
 
 SPARQL, SHACL, and SWRL are implemented for `elg:IntervalCondition` only, via the shared IR in `tools/mork_compilers/eligibility_ir.py`, per ADR-A24. Full details, including what was deliberately left out (profile-level aggregate artefacts, runtime result tracking, and the "Executable Projection Contract" domain-binding layer the MORK enhancements analysis also proposes), are in `ontology/mork/docs/eligibility-executable-compiler.md`. Not executed: no Python interpreter or SPARQL/SHACL/SWRL engine was available when this was written.
+
+## Addendum (2026-10-30, Proposed with ADR-A148): XSLT and JOLT
+
+ADR-A148 proposes XSLT and JOLT as targets for a mapping over an XML or JSON source, compiled from a logical plan read by `tools/mork_rdf`'s reader. It takes effect when ADR-A148 is accepted.

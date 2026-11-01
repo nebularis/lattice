@@ -1,0 +1,16 @@
+{
+ "decoded": false,
+ "triples": 0,
+ "schemes": [],
+ "findings": [
+  {
+   "stage": "decode",
+   "severity": "error",
+   "code": "shacl-unknown-target-mode-expected-c-o",
+   "about": "line 18",
+   "message": "line 18: malformed SHACL payload: unknown target mode ';' (expected c/o/s/n)"
+  }
+ ],
+ "errors": 1,
+ "output_triples": null
+}

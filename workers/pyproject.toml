@@ -15,14 +15,15 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8.0", "jsonschema>=4.23,<5"]
 authoring = ["rdflib>=7.1,<8"]
+studio = ["rdflib>=7.0,<8", "pyshacl>=0.26,<1", "jsonschema>=4.23,<5", "anthropic>=2.3,<3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"lattice_workers" = ["amqp-topology.json"]
+"lattice_workers" = ["config-studio-topology.json"]
 "lattice_workers.wording_le" = ["forms/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-cache_dir = "../.build/pytest-cache"
+cache_dir = ".build/pytest-cache"  # inside workers/, since pytest 9.2 refuses a cache directory reached through ..

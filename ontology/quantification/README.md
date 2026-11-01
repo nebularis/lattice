@@ -58,9 +58,9 @@ It imports Foundation and Vocabulary. It is imported by Party, Eligibility, Word
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/quantification>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> .
 ```
 
 ## 3. How to Read This Document

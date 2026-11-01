@@ -87,6 +87,7 @@ FAMILY_CLASS = {
     "decision": "Decision",
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
+    "backlog": "Backlog",
     "store-discovery": "Discovery",
     "store-question": "Discovery",
     "mechanism": "Mechanism",
@@ -136,14 +137,14 @@ SUPERSESSION_EDGE = {"Reverses": "supersededBy", "Narrows": "narrowedBy"}
 
 
 def tracked(*patterns: str) -> list[Path]:
-    """Tracked files matching any pattern, from git rather than the filesystem."""
+    """Tracked files matching any pattern, from git rather than the filesystem, skipping a tracked file deleted in the working tree."""
     listing = subprocess.run(
         ["git", "-C", str(ROOT), "ls-files", "-z", *patterns],
         capture_output=True,
         text=True,
         check=True,
     )
-    return sorted({ROOT / name for name in listing.stdout.split("\0") if name})
+    return sorted({ROOT / name for name in listing.stdout.split("\0") if name and (ROOT / name).exists()})
 
 
 def node(identifier: str) -> ox.NamedNode:
@@ -429,6 +430,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Claim": ("claim", "claim"),
     "Capability": ("claim", "claim"),
     "Debt": ("claim", "claim"),
+    "Idea": ("claim", "claim"),
     "Decision": ("claim", "claim"),
     "Question": ("claim", "claim"),
     "Why it matters": ("problemShape", "text"),
@@ -470,6 +472,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
+        "Why we want it", "What exists", "Status",
         "Next step",
     }
 )

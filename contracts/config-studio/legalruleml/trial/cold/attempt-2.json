@@ -1,0 +1,57 @@
+{
+ "decoded": true,
+ "triples": 249,
+ "schemes": [
+  {
+   "scheme": "http://example.org/lrml-mapping#MS",
+   "queries": 10,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_Filler",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:filledBy'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_ObAux",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:AuxiliaryParty'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_ObBearer",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:Bearer'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_PerAux",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:AuxiliaryParty'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_PerBearer",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:Bearer'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "http://example.org/lrml-mapping#Map_ProBearer",
+   "message": "undeclared prefix 'lrmlmm' at 0 in path 'lrmlmm:Bearer'"
+  }
+ ],
+ "errors": 6,
+ "output_triples": null
+}
