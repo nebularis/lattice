@@ -120,7 +120,7 @@ function EmptyBuild() {
   return (
     <div className="card empty">
       <Hammer size={28} />
-      <h3>Nothing compiled yet</h3>
+      <h2>Nothing compiled yet</h2>
       <p>Compile a configuration to see what your application would run.</p>
     </div>
   );
