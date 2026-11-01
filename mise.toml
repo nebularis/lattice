@@ -165,7 +165,7 @@ description = "Check local Markdown links under docs"
 run = "python tools/repository_topology_check.py --links"
 
 [tasks."check:python-root"]
-run = "python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
+run = "python -m unittest surface.test_surface surface.test_maintenance mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
