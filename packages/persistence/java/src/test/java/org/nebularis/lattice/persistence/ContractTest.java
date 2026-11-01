@@ -72,6 +72,16 @@ class ContractTest {
         assertNotEquals(RequestDigest.requestDigest(delta, v), RequestDigest.requestDigest(whole, with(v, "payloadTriples", Payload.of())));
     }
 
+    /** DR2: one prologue for a composed request, and the digest of a state, as the Python library gives them. */
+    @Test void composeHoistsOnePrologueAndAStateDigestIsOfItsLines() {
+        String joined = RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:a#>\nPREFIX b: <urn:b#>\nINSERT DATA { } ;"));
+        assertEquals(List.of("PREFIX a: <urn:a#>", "PREFIX b: <urn:b#>"), joined.lines().limit(2).toList());
+        assertThrows(IllegalArgumentException.class, () -> RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:b#>\nINSERT DATA { }")));
+        Triple b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        assertEquals("cc5c78894f9a048300351a2db7c1db372771b7c01f182a152a4b95d5dfc7974b", RequestDigest.stateDigest(Payload.of(b)), "the Python library's state_digest of the same triple");
+        assertEquals(RequestDigest.stateDigest(Payload.of(b, b)), RequestDigest.stateDigest(Payload.of(b)));
+    }
+
     @Test void appendDigestMergesRowsAndTriplesIntoOnePart() {
         var append = operation("append-stream-dataset-guard", "append-event-dataset-guard");
         var when = new Lit("2026-10-20T10:00:00Z", XSD_DATETIME, null);

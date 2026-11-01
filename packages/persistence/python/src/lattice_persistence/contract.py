@@ -41,6 +41,8 @@ class OperationKind(Enum):
     AUDIT = "Audit"
     MEMBERS_READ = "MembersRead"
     PAYLOAD_CHECK = "PayloadCheck"
+    STATE_DIGEST_RECORD = "StateDigestRecord"
+    STATE_DIGEST_READ = "StateDigestRead"
 
 
 @dataclass(frozen=True, order=True)

@@ -2070,6 +2070,23 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** The two triples above, and `SELECT ?s WHERE { BIND (STRDT("007", xsd:integer) AS ?c) ?s <urn:n> ?c }` with each cast, on each store.
 
+### TSD-68. Oxigraph refuses a prologue after the `;` of an update request
+
+**Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-11-01, with the probe below, while building DR2's bulk load. Jena ARQ in memory accepted the request in the same run. Not read from either engine's source. The numbers between it and TSD-64 are taken on the branch `claude/persistence-linear-replace`.
+
+**Context.** A bulk load and a write that records its state digest join several generated operations, each rendered with its own `PREFIX` lines, into one update request (`lattice_persistence.compose`).
+
+**What the store does.** SPARQL 1.1 Update's grammar lets each operation of a request carry a prologue (`Update ::= Prologue ( Update1 ( ';' Update )? )?`).
+
+| Request | Oxigraph | rdflib | Jena ARQ |
+|---|---|---|---|
+| `PREFIX a: <urn:a#> INSERT DATA {...} ; PREFIX b: <urn:b#> INSERT DATA {...}` | refused, "expected one of CREATE, DELETE, INSERT" at the second `PREFIX` | applies both | applies both |
+| the same with both prefixes before the first operation | applies both | applies both | applies both |
+
+**What it means for LATTICE.** A caller that composes operations hoists their prologues into one at the head of the request, and refuses a prefix two operations bind to different IRIs. Both caller libraries' `compose` do this.
+
+**Reproduce it.** `pyoxigraph.Store().update("PREFIX a: <urn:a#>\nINSERT DATA { GRAPH <urn:g> { a:x a:y a:z } } ;\nPREFIX b: <urn:b#>\nINSERT DATA { GRAPH <urn:g> { b:x b:y b:z } }")`.
+
 ## 7. Corrections, and what they taught us
 
 ### 7.1 rdflib and the order of an update (TSD-01)

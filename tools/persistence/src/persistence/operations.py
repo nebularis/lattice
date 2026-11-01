@@ -183,6 +183,7 @@ def select_operations(
                 ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
+            ops.extend(_whole_and_digest(dimensions, cas_template, "state-digest-audit-named-graph", common_bindings, common_bindings))
         elif boundary == "CompositePropertyBoundary":
             # A property path cannot be a variable, so the path that reaches the aggregate's
             # members is a compile-time slot, not a request-time $-variable. It is compiled from
@@ -212,6 +213,7 @@ def select_operations(
                 ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
+            ops.extend(_whole_and_digest(dimensions, composite_template, "state-digest-audit-composite", bindings, common_bindings))
         elif boundary == "NoBoundary":
             # The values live in the family's data graph, which the validator has required (MissingDataGraph, H2.7-Q1), and the
             # value guard property, which it has required too (NoBoundaryConcurrencyConflict).
@@ -315,6 +317,20 @@ def select_operations(
         ops.append(GeneratedOperation("payload-check", "payload-check", check_bindings))
 
     return ops
+
+
+def _whole_and_digest(dimensions: dict, replace_template: str, audit_template: str, bindings: list, row_bindings: list) -> list:
+    """What an optimistic in-place family gains beside its replace (DR2). Under dal:ChangedTriples, the whole replace as `replace-whole`,
+    which a bulk load composes with the create (DR-Q6). Under dal:recordsStateDigest, the write that records the digest of the state a
+    write left and the read that audits it (DR-Q3 (c))."""
+    out = []
+    if "-delta" in replace_template:
+        out.append(GeneratedOperation("replace-whole", replace_template.replace("-delta", "", 1), bindings))
+    digest = dimensions.get("recordsStateDigest")
+    if digest is not None and digest.value is not None and str(digest.value).lower() == "true":
+        out.append(GeneratedOperation("record-state-digest", "record-state-digest", row_bindings))
+        out.append(GeneratedOperation("state-digest-audit", audit_template, bindings))
+    return out
 
 
 PAYLOAD_GRAPH = "urn:g:payload"

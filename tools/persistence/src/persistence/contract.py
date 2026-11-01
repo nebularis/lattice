@@ -102,6 +102,10 @@ _STEM_KIND: dict[str, OperationKind] = {
     "append-version-delta": OperationKind.APPEND_VERSION,
     "members": OperationKind.MEMBERS_READ,
     "payload-check": OperationKind.PAYLOAD_CHECK,
+    # DR2: the recorded state digest, its write and its read.
+    "record-state-digest": OperationKind.STATE_DIGEST_RECORD,
+    "state-digest-audit-named-graph": OperationKind.STATE_DIGEST_READ,
+    "state-digest-audit-composite": OperationKind.STATE_DIGEST_READ,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,

@@ -1181,6 +1181,9 @@
             dal:resolvedValue dal:PatchLog ;
             dal:wonBy <https://example.org/projects#ProjectReceiptProfile> ],
         [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
+        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 1 ;
             dal:dimension "replaceEncoding" ;

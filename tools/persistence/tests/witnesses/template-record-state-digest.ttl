@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A named-graph family that records the digest of the state each write leaves, and so gains the record and the audit (DR2).
+# base: baseline-single-class.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:LoanApplicationStateDigest a dal:WriteDisciplineProfile ;
+    dal:appliesTo ex:LoanApplicationClass ;
+    dal:recordsStateDigest "true"^^xsd:boolean .

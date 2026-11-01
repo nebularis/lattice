@@ -468,7 +468,9 @@ dal:WriteDisciplineProfileShape
                   sh:message "dal:replaceEncoding takes one of dal:ChangedTriples, dal:WholeState." ] ;
     sh:property [ sh:path dal:checkpointEvery ; sh:maxCount 1 ;
                   sh:or ( [ sh:datatype xsd:long ] [ sh:datatype xsd:integer ] ) ;
-                  sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] .
+                  sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] ;
+    sh:property [ sh:path dal:recordsStateDigest ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "dal:recordsStateDigest is one boolean." ] .
 
 # dal:referenceMode on a property shape of a boundary shape, and on an edge of a compiled profile.
 dal:ReferenceModeShape
@@ -499,7 +501,7 @@ dal:OperationContractShape
     sh:property [ sh:path dal:operationKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:in ( dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite
                           dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:Quarantine
-                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ;
+                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ;
                   sh:message "A generated operation has exactly one dal:operationKind, an individual of dal:OperationKind." ] ;
     sh:property [ sh:path dal:templateVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
                   sh:message "A generated operation has exactly one dal:templateVersion, an integer." ] ;

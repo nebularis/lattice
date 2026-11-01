@@ -723,6 +723,49 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
     )
 
 
+def _record_state_digest(b: Bindings, *, guards: bool) -> Operation:
+    """The digest of the state a write left, recorded on the root's version row where the family declares `dal:recordsStateDigest`
+    (DR2, DR-Q3 (c)). The caller sends it in the same request after its create or replace. It applies only when the row is at the
+    write's sequence, is not deleted, and the transaction's claim names the write's revision, so a stale or refused write records nothing."""
+    root, meta = ParamRef("root"), b.graph("metaGraphPrefix")
+    return Operation.build(
+        "record-state-digest",
+        (Param("root", Kind.IRI), Param("nextSeq", Kind.POSITION), Param("newRev", Kind.IRI), Param("txnId", Kind.IRI),
+         Param("stateDigest", Kind.DIGEST)),
+        Group((
+            GraphBlock(meta, (
+                Triple(root, _pat("seq"), ParamRef("nextSeq")),
+                NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
+            )),
+            GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), ParamRef("newRev")),)),
+            Optional_(Group((GraphBlock(meta, (Triple(root, _pat("stateDigest"), Var("old")),)),))),
+        )),
+        guards=guards,
+        delete=(GraphBlock(meta, (Triple(root, _pat("stateDigest"), _optional("old")),)),),
+        insert=(GraphBlock(meta, (Triple(root, _pat("stateDigest"), ParamRef("stateDigest")),)),),
+    )
+
+
+def _state_digest_audit(b: Bindings, *, guards: bool, composite: bool, graph_names: str = "query") -> Operation:
+    """A root's recorded state digest and the triples of its aggregate, for a caller to recompute the digest and compare (DR2). A row
+    with no recorded digest returns nothing, and an aggregate with no triples returns the digest alone."""
+    root, meta = ParamRef("root"), b.graph("metaGraphPrefix")
+    digest, s, p, o = Var("stateDigest"), Var("s"), Var("p"), Var("o")
+    if composite:
+        binds, aggregate = (), GraphBlock(b.graph("dataGraph"), (Triple(root, b.path("ownedPath"), s), Triple(s, p, o)))
+        params, name = (Param("root", Kind.IRI),), "state-digest-audit-composite"
+    else:
+        named = _Named(b, graph_names)
+        binds, aggregate = named.binds(), GraphBlock(named.graph(), (Triple(s, p, o),))
+        params, name = (Param("root", Kind.IRI), *named.params()), "state-digest-audit-named-graph"
+    return Operation.build(
+        name, params,
+        Group((*binds, GraphBlock(meta, (Triple(root, _pat("stateDigest"), digest),)), Optional_(Group((aggregate,))))),
+        guards=guards,
+        select=Select((digest, s, p, o)),
+    )
+
+
 def _payload_check(b: Bindings, *, guards: bool) -> Operation:
     """The subjects of a payload outside the aggregate (formal-methods H2.8b, ADR-A123 decision 6, PL-B). A caller loads its payload into a local
     graph, binds `$root` to the node the payload starts at, and runs this. Every subject must be the root or be reached from it by the owned
@@ -1008,6 +1051,9 @@ BUILDERS: dict[str, Builder] = {
     "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
     "members": lambda b, guards, names: _members(b, guards=guards),
     "payload-check": lambda b, guards, names: _payload_check(b, guards=guards),
+    "record-state-digest": lambda b, guards, names: _record_state_digest(b, guards=guards),
+    "state-digest-audit-named-graph": lambda b, guards, names: _state_digest_audit(b, guards=guards, composite=False, graph_names=names),
+    "state-digest-audit-composite": lambda b, guards, names: _state_digest_audit(b, guards=guards, composite=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
     "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
     "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),

@@ -81,6 +81,8 @@ def test_h2_2_t1_the_builders_are_the_operations_listed_and_every_one_is_generat
         "append-version-delta", "append-version-delta-dataset-guard", "members",
         # H2.8b: the query that checks a payload against the boundary shape.
         "payload-check",
+        # DR2: the write that records the digest of a state, and its two reads.
+        "record-state-digest", "state-digest-audit-named-graph", "state-digest-audit-composite",
         # H2.6d: the patch-log and no-receipt variants of the six in-place writes, each with its dataset-guard variant. The receipt-only
         # create, replace and tombstone of a composite family were deleted in H2.9 (D-12 (a)), so the named-graph family keeps its plain three.
         *[

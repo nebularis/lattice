@@ -3249,6 +3249,8 @@ pat:current    a owl:ObjectProperty ;
     rdfs:comment "Snapshot-per-revision model only: the sealed payload graph that is the current state." .
 pat:deleted    a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
     rdfs:comment "Tombstone. Present and true when the target's payload has been deleted; the row and its counter survive (F10)." .
+pat:stateDigest a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The digest of the state the target's last write left, where its family declares dal:recordsStateDigest, so an audit finds a graph changed outside the family's operations." .
 pat:fence      a owl:DatatypeProperty ; rdfs:range xsd:long ;
     rdfs:comment "Fencing token from an external lease (§16.2). Writes with an older token fail the guard." .
 pat:lockedBy   a owl:ObjectProperty ;   rdfs:comment "Editorial lease holder (§16.3)." .

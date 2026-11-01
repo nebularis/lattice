@@ -72,13 +72,15 @@ DIMENSIONS = (
     "checkpointEvery",
     # DR1 (2026-11-01): whether an in-place family's replace writes the triples that changed or the whole state.
     "replaceEncoding",
+    # DR2 (2026-11-01): whether such a family records the digest of the state each write leaves.
+    "recordsStateDigest",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
 # ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
 LITERAL_DIMENSIONS = frozenset(
     {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph",
-     "perSubjectScoped", "checkpointEvery"}
+     "perSubjectScoped", "checkpointEvery", "recordsStateDigest"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
@@ -113,6 +115,8 @@ BASELINE_DEFAULTS: dict[str, str] = {
     # H2.6f: every version lists its members, and a checkpoint is every 16th version under dal:DeltaMembership.
     "membershipEncoding": "FullMembership",
     "checkpointEvery": RdfLiteral(16, datatype=XSD.long),
+    # DR2: no state digest is recorded unless a profile asks for it.
+    "recordsStateDigest": RdfLiteral(False),
     # DR1, DR-Q2: no static default for replaceEncoding. An optimistic in-place family writes what changed and any other writes its
     # whole state, so the default follows the concurrency profile and the discipline (default_replace_encoding).
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no

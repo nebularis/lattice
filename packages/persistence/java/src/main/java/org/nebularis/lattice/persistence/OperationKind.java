@@ -6,7 +6,9 @@ public enum OperationKind {
     CREATE("Create"), BOOTSTRAP("Bootstrap"), REPLACE("Replace"), TOMBSTONE("Tombstone"), APPEND("Append"), APPEND_VERSION("AppendVersion"),
     UNCONDITIONAL_WRITE("UnconditionalWrite"), VALUE_GUARDED_REPLACE("ValueGuardedReplace"), KEY_CLAIM_WRITE("KeyClaimWrite"),
     KEY_CLAIM_WRITE_DUAL("KeyClaimWriteDual"), KEY_CLAIM_RETIRE("KeyClaimRetire"), QUARANTINE("Quarantine"), MERGE_REWRITE("MergeRewrite"),
-    AUDIT("Audit"), MEMBERS_READ("MembersRead"), PAYLOAD_CHECK("PayloadCheck");
+    AUDIT("Audit"), MEMBERS_READ("MembersRead"), PAYLOAD_CHECK("PayloadCheck"),
+    STATE_DIGEST_RECORD("StateDigestRecord"),
+    STATE_DIGEST_READ("StateDigestRead");
 
     private final String value;
 
