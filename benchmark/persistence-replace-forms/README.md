@@ -24,6 +24,31 @@ The candidates are derived from `R0`'s rendered text inside `check.py`, each wit
 
 **Witness.** `R2-candidate` at M = 100 on rdflib under each of the seeds 0 to 11, each in a child process, recording for each seed whether the result is right or which kept triple was lost. It is evidence and never fails the run.
 
+## Two families
+
+| Family | What is replaced |
+|---|---|
+| `named-graph` | an aggregate held in a graph of its own, as above |
+| `composite` | a root and the members its owned path reaches, in one data graph shared with a **bystander** aggregate. The compiler's context is that of the project example, and the workload and the bystander are those of [benchmark/persistence-composite-cost](../persistence-composite-cost/check.py) |
+
+The composite forms are rendered or derived exactly as the named-graph ones, with the sweep to move grabbed from the rendered text (`OPTIONAL { GRAPH <data> { $root <path> ?s . ?s ?p ?o } }`) and never retyped. The composite receipt block names `?logGraph2` and stays as rendered. `R2-candidate` is not derived for the composite family, since it is refuted there. The workload is M triples of root and members, about half kept and half replaced per revision, with the delta in the slots. After every replace the aggregate holds exactly the payload, the bystander holds exactly what it held, and the checks above hold. `--family named-graph|composite|both` (default both, or `REPLACE_FORMS_FAMILY`) selects the families.
+
+## Edge cases
+
+For each family and for `R0`, `R1-candidate` and `R2-values-candidate`, small cases with no timing, each on a fresh store and each checked by the same `verify` as the sized runs. Each is reported as `pass`, `wrong: <reasons>` or `error: <message>`, and a store that refuses an update, an empty `VALUES` block for example, is an error that is not worked around.
+
+| Case | What it does |
+|---|---|
+| E1 | an empty aggregate (the create has an empty payload slot) replaced by 50 triples |
+| E2 | 50 triples replaced by nothing. The report also says whether the store still lists the aggregate's graph afterwards (TSD-50) |
+| E3 | an empty aggregate replaced by nothing. The row must still move, the claim and the receipt be written |
+| E4 | 50 triples replaced by the identical 50, so both deltas are empty |
+| E5 | composite only. E1 after checking that the root is in no triple of the data graph, and the bare sweep counted with and without `?s ?p ?o` (TSD-08 and TSD-51 record Jena and Oxigraph differing on a zero-length step) |
+
+## The bare sweep
+
+For the composite family at M = 3,000 and 10,000, the time of `SELECT (COUNT(*) AS ?n) WHERE { GRAPH <data> { $root <path> ?s . ?s ?p ?o } }` alone, best of three, with its count, so the path's own cost can be separated from the form's.
+
 ## Pass criterion
 
 After every replace the root's graph holds exactly the payload (compared as a set), the version row is at the next sequence with the new head and not at the expected sequence, the add and delete graphs hold exactly the delta, the txn graph holds the claim, and no other graph changed. **A wrong result from `R0` or `R0-nodelta` fails the run. Time never does.** A wrong result from a candidate is recorded as `wrong: <reason>`, since finding that out is the purpose of running it. No budget exists before H5, and a check that fails on time depends on the machine.
@@ -35,7 +60,9 @@ Each measurement runs in a child process with a wall-clock limit. One that does 
 ```bash
 mise run check:persistence-replace-forms                       # sizes up to 10,000, R0 up to 3,000
 REPLACE_FORMS_QUICK=1 mise run check:persistence-replace-forms  # sizes up to 1,000
+REPLACE_FORMS_QUICK=named-graph mise run check:persistence-replace-forms  # sizes up to 1,000 for that family only
 REPLACE_FORMS_MAX_R0=1000 mise run check:persistence-replace-forms
+mise exec -- python benchmark/persistence-replace-forms/check.py --family composite
 REPLACE_FORMS_TIMEOUT=300 mise run check:persistence-replace-forms
 ```
 
@@ -43,7 +70,7 @@ It is never a dependency of `check`. The task installs the Oxigraph test-support
 
 ## Other stores
 
-`check.py --emit <file>` writes every form's text for each size and replace, with every parameter substituted and every slot filled, the checks as count queries with their expected counts, and the expected triples as N-Triples lines. [benchmark/persistence-replace-forms-jvm](../persistence-replace-forms-jvm/README.md) runs them on Jena (in memory, TDB2 on disk and Fuseki over HTTP) and RDF4J.
+`check.py --emit <file>` writes, for each family, every form's text for each size and replace, with every parameter substituted and every slot filled, the checks as count queries with their expected counts, the expected triples as N-Triples lines, the edge-case scenarios and the bare sweep queries. The index is `operations.json` and each sized run is a file of its own in `operations/` beside it, since all of them in one file came to 100 MB. [benchmark/persistence-replace-forms-jvm](../persistence-replace-forms-jvm/README.md) runs them on Jena (in memory, TDB2 on disk and Fuseki over HTTP) and RDF4J.
 
 | File | Role |
 |---|---|

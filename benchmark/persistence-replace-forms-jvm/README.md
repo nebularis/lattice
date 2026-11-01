@@ -6,7 +6,7 @@ A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmar
 
 ## How it runs
 
-The Python benchmark renders the forms for each size and replace, and the checks that say each replace did what it should, with every parameter substituted and every payload slot filled, and writes them to `operations.json` (`check.py --emit`). This module reads that file and runs the same text on each store, so no store runs SPARQL that the compiler did not generate or that the candidate derivation in `check.py` did not write. The JSON is generated and git-ignored.
+The Python benchmark renders the forms of both families (named graph and composite) for each size and replace, and the checks that say each replace did what it should, with every parameter substituted and every payload slot filled, and writes them to `operations.json` and to one file per family and size in `operations/` beside it (`check.py --emit`). The edge-case scenarios and the composite family's bare sweep queries are in `operations.json`. This module reads that file and runs the same text on each store, so no store runs SPARQL that the compiler did not generate or that the candidate derivation in `check.py` did not write. The JSON is generated and git-ignored.
 
 | Store | How it is run |
 |---|---|
@@ -28,6 +28,10 @@ The probes run first for each store and are printed as a table before the forms.
 | P7 | Fuseki only. `R0` at M = 3,000 sent with a 50 ms client timeout, so the client abandons it. Is the graph then at the old state, the new state or neither, at 2 s and later? |
 
 `R2-candidate` and `R2-values-candidate` are run only on a store whose P1 says `snapshot`, since they are right only if the store removes every deletion before it adds any insertion.
+
+## Edge cases and the bare sweep
+
+For each family and for `R0`, `R1-candidate` and `R2-values-candidate`, five small cases with no timing, each on a fresh store and each checked by the same `verify` as the sized runs, reported as `pass`, `wrong: <reasons>` or `error: <message>`, one table per family with the stores as columns. E1 replaces an empty aggregate by 50 triples, E2 replaces 50 by nothing (and records whether the store lists the graph afterwards, TSD-50), E3 replaces an empty aggregate by nothing, E4 replaces 50 by the identical 50, and E5 (composite only) is E1 after checking that the root is in no triple of the data graph. A store that refuses an update is recorded as an error and not worked around. RDF4J runs `R0` only. The composite family also records how many solutions the bare sweep gives with the root in no triple, and, at M = 3,000 and 10,000, the time of the bare sweep alone, best of three.
 
 ## Limiting memory and time
 
@@ -61,4 +65,4 @@ It is never a dependency of `check`. The results go to `report.md` here, which i
 | File | Role |
 |---|---|
 | `pom.xml` | Jena 5.1.0 with `jena-fuseki-main` (the platform's version) and RDF4J 6.1.0 |
-| `src/main/java/org/nebularis/lattice/benchmark/replaceforms/ReplaceForms.java` | the stores, the probes, the forms, the checks and the report |
+| `src/main/java/org/nebularis/lattice/benchmark/replaceforms/ReplaceForms.java` | the stores, the probes, the forms of both families, the edge cases, the checks and the report |

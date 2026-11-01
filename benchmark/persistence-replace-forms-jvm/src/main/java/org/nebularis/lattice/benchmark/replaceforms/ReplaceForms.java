@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -409,7 +410,7 @@ public final class ReplaceForms {
      */
     static String p7(JsonObject doc) throws Exception {
         String size = "3000";
-        JsonObject run = doc.get("runs").getAsObject().get(size).getAsObject();
+        JsonObject run = loadRun(family(doc, "named-graph"), size);
         JsonObject step = run.get("forms").getAsObject().get("R0").getAsArray().get(0).getAsObject();
         try (FusekiEngine engine = new FusekiEngine()) {
             engine.update(run.get("create").getAsString().value());
@@ -488,11 +489,32 @@ public final class ReplaceForms {
 
     // ---- the forms --------------------------------------------------------------------------------------------------
 
+    static JsonObject family(JsonObject doc, String name) {
+        return doc.get("families").getAsObject().get(name).getAsObject();
+    }
+
+    /** The scenario of one size: a create and the replaces of every form. The sized runs are large, so each is a file of its own, named by the family's {@code runs} entry and read from beside operations.json. */
+    static JsonObject loadRun(JsonObject fam, String size) {
+        Path operations = Path.of(System.getProperty("replaceforms.operations", "benchmark/persistence-replace-forms/operations.json"));
+        try (InputStream in = Files.newInputStream(operations.resolveSibling(fam.get("runs").getAsObject().get(size).getAsString().value()))) {
+            return JSON.parse(in);
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
+    /** The store refused an update. For a generated form this fails the run, and for a candidate form it is recorded as an error. */
+    static final class UpdateFailed extends RuntimeException {
+        UpdateFailed(String message) {
+            super(message);
+        }
+    }
+
     /** The reasons a replace went wrong, empty when nothing did. */
     static List<String> verify(Engine engine, JsonObject step, long outsideBefore) {
         List<String> issues = new ArrayList<>();
         JsonObject expect = step.get("expect").getAsObject();
-        for (String[] item : new String[][] {{"the root's graph", "rootGraph", "root"}, {"the add graph", "addGraph", "add"}, {"the delete graph", "delGraph", "del"}}) {
+        for (String[] item : new String[][] {{"the aggregate's graph", "rootGraph", "root"}, {"the add graph", "addGraph", "add"}, {"the delete graph", "delGraph", "del"}}) {
             Set<String> expected = set(expect.get(item[2]).getAsArray());
             Set<String> got = engine.rows(step.get(item[1]).getAsString().value());
             if (!got.equals(expected)) {
@@ -520,35 +542,138 @@ public final class ReplaceForms {
         return issues;
     }
 
-    /** The best time in milliseconds of the form's replaces at one size. Raises WrongResult. */
-    static double runForm(Supplier<Engine> factory, JsonObject doc, String form, String size) {
-        JsonObject run = doc.get("runs").getAsObject().get(size).getAsObject();
-        JsonArray steps = run.get("forms").getAsObject().get(form).getAsArray();
+    /**
+     * Runs a scenario, a create and the replaces of one form, on a fresh store and returns the best time of a replace in milliseconds. Raises WrongResult when a check fails and UpdateFailed when the store refuses an update.
+     * {@code mentionsRoot}, when not null, is a count query that must give 0 before the first replace. {@code detail}, when not null, collects whether the store lists the aggregate's graph after the last replace.
+     */
+    static double runScenario(Supplier<Engine> factory, JsonObject fam, JsonObject scenario, String form, String label, String mentionsRoot, StringBuilder detail) {
+        JsonArray steps = scenario.get("forms").getAsObject().get(form).getAsArray();
+        String preload = fam.get("preload").getAsString().value();
+        String prefix = label.isEmpty() ? "" : label + " ";
         try (Engine engine = factory.get()) {
             try {
-                engine.update(run.get("create").getAsString().value());
+                if (!preload.isEmpty()) {
+                    engine.update(preload);
+                }
+                engine.update(scenario.get("create").getAsString().value());
             } catch (Exception e) {
-                throw new WrongResult(engine.name() + "/" + form + "/M=" + size + ": the create failed, " + brief(e));
+                throw new UpdateFailed(prefix + "the create failed, " + brief(e));
             }
             double best = Double.MAX_VALUE;
             int n = 0;
             for (var item : steps) {
                 n++;
                 JsonObject step = item.getAsObject();
+                if (n == 1 && mentionsRoot != null) {
+                    long mentions = engine.count(mentionsRoot);
+                    if (mentions != 0) {
+                        throw new WrongResult(prefix + "the root is in " + mentions + " triples of the data graph before the replace");
+                    }
+                }
                 long before = engine.count(step.get("outsideQuery").getAsString().value());
                 long start = System.nanoTime();
                 try {
                     engine.update(step.get("text").getAsString().value());
                 } catch (Exception e) {
-                    throw new WrongResult(engine.name() + "/" + form + "/M=" + size + " replace " + n + ": the update failed, " + brief(e));
+                    throw new UpdateFailed(prefix + "replace " + n + " failed, " + brief(e));
                 }
                 best = Math.min(best, (System.nanoTime() - start) / 1e6);
+                if (detail != null && n == steps.size()) {
+                    try {
+                        long listed = engine.count("SELECT (COUNT(*) AS ?n) WHERE { GRAPH ?g { } FILTER(?g = <" + step.get("rootGraph").getAsString().value() + ">) }");
+                        detail.append("graph listed after: ").append(listed > 0 ? "yes" : "no");
+                    } catch (RuntimeException e) {
+                        detail.append("graph listed after: unknown (").append(brief(e)).append(")");
+                    }
+                }
                 List<String> issues = verify(engine, step, before);
                 if (!issues.isEmpty()) {
-                    throw new WrongResult(engine.name() + "/" + form + "/M=" + size + " replace " + n + ": " + String.join("; ", issues));
+                    throw new WrongResult(prefix + "replace " + n + ": " + String.join("; ", issues));
                 }
             }
             return best;
+        }
+    }
+
+    static final String[] EDGE_FULL = {"R0", "R1-candidate", "R2-values-candidate"};
+
+    /** One edge case: pass, wrong with the verify's reasons, or error with the store's message. */
+    static String edgeCell(Supplier<Engine> factory, JsonObject fam, String caseId, String form, boolean full, boolean snapshot) {
+        if (!form.equals("R0") && !full) {
+            return form.equals("R2-values-candidate") ? "not run: per-solution store (P1)" : "not run: R0 only on this engine";
+        }
+        if (form.equals("R2-values-candidate") && !snapshot) {
+            return "not run: per-solution store (P1)";
+        }
+        StringBuilder detail = caseId.equals("E2") ? new StringBuilder() : null;
+        try {
+            JsonObject scenario = fam.get("edges").getAsObject().get(caseId).getAsObject();
+            runScenario(factory, fam, scenario, form, "", caseId.equals("E5") ? fam.get("mentionsRoot").getAsString().value() : null, detail);
+            return "pass" + (detail == null || detail.length() == 0 ? "" : " (" + detail + ")");
+        } catch (WrongResult e) {
+            return "wrong: " + e.getMessage().replace('\n', ' ');
+        } catch (UpdateFailed e) {
+            return "error: " + e.getMessage().replace('\n', ' ');
+        } catch (Throwable e) {
+            return "error: " + brief(e);
+        }
+    }
+
+    /** The child's side of an edge job: every case and form of one family on one store, then the bare sweep counts with the root in no triple. */
+    static void runEdges(String engineName, String familyName, JsonObject doc) {
+        Supplier<Engine> factory = ENGINES.get(engineName);
+        JsonObject fam = family(doc, familyName);
+        boolean snapshot;
+        try {
+            snapshot = p1(factory).startsWith("snapshot");
+        } catch (Throwable e) {
+            snapshot = false;
+        }
+        boolean full = !engineName.startsWith("rdf4j");
+        List<String> cases = new ArrayList<>(fam.get("edges").getAsObject().keys());
+        java.util.Collections.sort(cases);
+        for (String caseId : cases) {
+            for (var formItem : fam.get("edgeForms").getAsArray()) {
+                String form = formItem.getAsString().value();
+                System.out.println("EDGE\t" + caseId + "\t" + form + "\t" + edgeCell(factory, fam, caseId, form, full, snapshot));
+            }
+        }
+        if (!fam.get("sweep").isNull()) {
+            JsonObject sweep = fam.get("sweep").getAsObject();
+            JsonObject scenario = fam.get("edges").getAsObject().get("E5").getAsObject();
+            try (Engine engine = factory.get()) {
+                String preload = fam.get("preload").getAsString().value();
+                if (!preload.isEmpty()) {
+                    engine.update(preload);
+                }
+                engine.update(scenario.get("create").getAsString().value());
+                System.out.println("SWEEP\t" + engine.count(sweep.get("with").getAsString().value()) + "\t" + engine.count(sweep.get("without").getAsString().value()));
+            } catch (Throwable e) {
+                System.out.println("SWEEP\terror: " + brief(e) + "\t");
+            }
+        }
+    }
+
+    /** The best of three timings of the composite family's bare sweep over the aggregate at one size. Raises WrongResult if it does not count M. */
+    static String sweepTime(Supplier<Engine> factory, JsonObject fam, String size) throws Exception {
+        JsonObject sweep = fam.get("sweep").getAsObject();
+        try (Engine engine = factory.get()) {
+            String preload = fam.get("preload").getAsString().value();
+            if (!preload.isEmpty()) {
+                engine.update(preload);
+            }
+            engine.update(loadRun(fam, size).get("create").getAsString().value());
+            double best = Double.MAX_VALUE;
+            long seen = 0;
+            for (int i = 0; i < 3; i++) {
+                long start = System.nanoTime();
+                seen = engine.count(sweep.get("with").getAsString().value());
+                best = Math.min(best, (System.nanoTime() - start) / 1e6);
+            }
+            if (seen != Long.parseLong(size)) {
+                throw new WrongResult(engine.name() + ": the bare sweep counted " + seen + " at M=" + size);
+            }
+            return String.format("%.1f (count %d)", best, seen);
         }
     }
 
@@ -560,6 +685,7 @@ public final class ReplaceForms {
      */
 
     private static final int OUT_OF_MEMORY_EXIT = 3;
+    private static final String[] RESULT_LINES = {"RESULT\t", "WRONG\t", "ERROR\t", "PROBE\t", "EDGE\t", "SWEEP\t"};
 
     private static String heap() {
         return System.getProperty("replaceforms.heap", "4g");
@@ -590,7 +716,7 @@ public final class ReplaceForms {
             }
             reader.join();
             List<String> lines = Files.readAllLines(out, StandardCharsets.UTF_8);
-            if (lines.stream().noneMatch(l -> l.startsWith("RESULT\t") || l.startsWith("WRONG\t") || l.startsWith("PROBE\t"))) {
+            if (lines.stream().noneMatch(l -> Arrays.stream(RESULT_LINES).anyMatch(l::startsWith))) {
                 if (process.exitValue() == OUT_OF_MEMORY_EXIT) {
                     return List.of("END\tdid not finish: out of memory under -Xmx" + heap());
                 }
@@ -608,14 +734,27 @@ public final class ReplaceForms {
     /** The child's side: runs the one job and prints its lines. */
     static void runJob(String job, JsonObject doc) {
         String[] part = job.split("\\|", -1);
-        if (part[0].equals("probes")) {
-            runProbes(part[1], doc);
-            System.exit(0);
-        }
-        try {
-            System.out.println("RESULT\t" + String.format("%.1f", runForm(ENGINES.get(part[1]), doc, part[2], part[3])));
-        } catch (WrongResult e) {
-            System.out.println("WRONG\t" + e.getMessage().replace('\n', ' '));
+        switch (part[0]) {
+            case "probes" -> runProbes(part[1], doc);
+            case "edges" -> runEdges(part[1], part[2], doc);
+            default -> {
+                try {
+                    JsonObject fam = family(doc, part[2]);
+                    if (part[0].equals("sweep")) {
+                        System.out.println("RESULT\t" + sweepTime(ENGINES.get(part[1]), fam, part[4]));
+                    } else {
+                        JsonObject scenario = loadRun(fam, part[4]);
+                        double ms = runScenario(ENGINES.get(part[1]), fam, scenario, part[3], part[1] + "/" + part[2] + "/" + part[3] + "/M=" + part[4], null, null);
+                        System.out.println("RESULT\t" + String.format("%.1f", ms));
+                    }
+                } catch (WrongResult e) {
+                    System.out.println("WRONG\t" + e.getMessage().replace('\n', ' '));
+                } catch (UpdateFailed e) {
+                    System.out.println("ERROR\t" + e.getMessage().replace('\n', ' '));
+                } catch (Exception e) {
+                    System.out.println("ERROR\t" + brief(e));
+                }
+            }
         }
         System.exit(0);
     }
@@ -626,6 +765,19 @@ public final class ReplaceForms {
         } catch (Exception e) {
             return "unknown";
         }
+    }
+
+    static String cell(String line) {
+        if (line.startsWith("RESULT\t")) {
+            return line.substring(7);
+        }
+        if (line.startsWith("WRONG\t")) {
+            return "wrong: " + line.substring(6);
+        }
+        if (line.startsWith("ERROR\t")) {
+            return "error: " + line.substring(6);
+        }
+        return line.substring(line.indexOf('\t') + 1);
     }
 
     public static void main(String[] args) throws IOException {
@@ -647,10 +799,12 @@ public final class ReplaceForms {
             .append(org.apache.jena.Jena.VERSION).append(" (").append(jarOf(org.apache.jena.tdb2.TDB2Factory.class)).append("), fuseki ").append(jarOf(FusekiServer.class)).append(", rdf4j ")
             .append(jarOf(SailRepository.class)).append(", ").append(System.getProperty("os.arch")).append(", heap cap ").append(heap()).append(" for each measurement\n\n");
         StringBuilder probeTable = new StringBuilder("## Probes\n\n| Store | Probe | Result |\n|---|---|---|\n");
+        StringBuilder edgeSection = new StringBuilder();
         StringBuilder formTables = new StringBuilder();
+        StringBuilder sweepSection = new StringBuilder();
         Runnable flush = () -> {
             try {
-                Files.writeString(reportPath, header.toString() + probeTable + "\n" + formTables, StandardCharsets.UTF_8);
+                Files.writeString(reportPath, header.toString() + probeTable + "\n" + edgeSection + formTables + sweepSection, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new java.io.UncheckedIOException(e);
             }
@@ -673,49 +827,100 @@ public final class ReplaceForms {
             flush.run();
         }
         System.out.println(probeTable);
-        List<String> generatedWrong = new ArrayList<>();
-        JsonArray forms = doc.get("forms").getAsArray();
-        JsonArray sizes = doc.get("sizes").getAsArray();
-        for (String engine : ENGINES.keySet()) {
-            formTables.append("## ").append(engine).append(", best of ").append(doc.get("repeats").getAsNumber().value()).append(" replaces, milliseconds\n\n| Form | M (N equals M) | ms |\n|---|---|---|\n");
-            for (var formItem : forms) {
-                JsonObject form = formItem.getAsObject();
-                String id = form.get("id").getAsString().value();
-                boolean generated = form.get("generated").getAsBoolean().value();
-                boolean needsSnapshot = form.get("needsSnapshot").getAsBoolean().value();
-                boolean stopped = false;
-                for (var sizeItem : sizes) {
-                    long m = sizeItem.getAsNumber().value().longValue();
-                    if (m > maximum) {
-                        continue;
+        List<String> familyNames = new ArrayList<>(doc.get("families").getAsObject().keys());
+        familyNames.sort((a, b) -> Integer.compare(a.equals("named-graph") ? 0 : 1, b.equals("named-graph") ? 0 : 1));
+        // the edge cases, one table per family with the engines as columns
+        StringBuilder sweepCounts = new StringBuilder();
+        for (String familyName : familyNames) {
+            JsonObject fam = family(doc, familyName);
+            Map<String, Map<String, String>> cells = new LinkedHashMap<>();
+            for (String engine : ENGINES.keySet()) {
+                System.err.println("progress: edge cases " + familyName + " " + engine);
+                for (String line : inChild("edges|" + engine + "|" + familyName)) {
+                    if (line.startsWith("EDGE\t")) {
+                        String[] c = line.split("\t", 4);
+                        cells.computeIfAbsent(c[1] + "\t" + c[2], k -> new LinkedHashMap<>()).put(engine, c[3]);
+                    } else if (line.startsWith("SWEEP\t")) {
+                        String[] c = line.split("\t", -1);
+                        sweepCounts.append(String.format("| %s | %s | %s |%n", engine, c[1], c.length > 2 ? c[2] : ""));
+                    } else if (line.startsWith("END\t")) {
+                        cells.computeIfAbsent("all\tall", k -> new LinkedHashMap<>()).put(engine, line.substring(4));
                     }
-                    String cell;
-                    if (generated && m > maxR0) {
-                        cell = "not run: above replaceforms.maxr0 (" + maxR0 + ")";
-                    } else if (needsSnapshot && !snapshot.get(engine)) {
-                        cell = "not run: per-solution store (P1)";
-                    } else if (stopped) {
-                        cell = "not run: a smaller size did not finish";
-                    } else {
-                        System.err.println("progress: " + engine + " " + id + " " + m);
-                        String line = inChild("form|" + engine + "|" + id + "|" + m).get(0);
-                        if (line.startsWith("RESULT\t")) {
-                            cell = line.substring(7);
-                        } else if (line.startsWith("WRONG\t")) {
-                            cell = "wrong: " + line.substring(6);
-                            if (generated) {
-                                generatedWrong.add(engine + "/" + id + "/M=" + m + ": " + cell);
-                            }
-                        } else {
-                            cell = line.substring(4);
-                            stopped = true;
-                        }
-                    }
-                    formTables.append(String.format("| %s | %,d | %s |%n", form.get("label").getAsString().value(), m, cell));
-                    flush.run();
                 }
             }
-            formTables.append('\n');
+            edgeSection.append("## Edge cases, ").append(familyName).append(" family\n\n| Case | Form | ").append(String.join(" | ", ENGINES.keySet())).append(" |\n|---|---|").append("---|".repeat(ENGINES.size())).append("\n");
+            JsonObject edges = fam.get("edges").getAsObject();
+            for (var entry : cells.entrySet()) {
+                String[] key = entry.getKey().split("\t");
+                String title = key[0].equals("all") ? "all" : key[0] + " " + edges.get(key[0]).getAsObject().get("title").getAsString().value();
+                StringBuilder row = new StringBuilder("| " + title + " | " + key[1] + " |");
+                for (String engine : ENGINES.keySet()) {
+                    row.append(' ').append(entry.getValue().getOrDefault(engine, "")).append(" |");
+                }
+                edgeSection.append(row).append('\n');
+            }
+            edgeSection.append('\n');
+            flush.run();
+        }
+        if (sweepCounts.length() > 0) {
+            edgeSection.append("## Composite family, the bare sweep with the root in no triple\n\n| Store | Solutions of the sweep | Solutions without `?s ?p ?o` |\n|---|---|---|\n").append(sweepCounts).append('\n');
+            flush.run();
+        }
+        List<String> generatedWrong = new ArrayList<>();
+        for (String familyName : familyNames) {
+            JsonObject fam = family(doc, familyName);
+            JsonArray forms = fam.get("forms").getAsArray();
+            JsonArray sizes = fam.get("sizes").getAsArray();
+            for (String engine : ENGINES.keySet()) {
+                formTables.append("## ").append(familyName).append(" family, ").append(engine).append(", best of ").append(doc.get("repeats").getAsNumber().value()).append(" replaces, milliseconds\n\n| Form | M (N equals M) | ms |\n|---|---|---|\n");
+                for (var formItem : forms) {
+                    JsonObject form = formItem.getAsObject();
+                    String id = form.get("id").getAsString().value();
+                    boolean generated = form.get("generated").getAsBoolean().value();
+                    boolean needsSnapshot = form.get("needsSnapshot").getAsBoolean().value();
+                    boolean stopped = false;
+                    for (var sizeItem : sizes) {
+                        long m = sizeItem.getAsNumber().value().longValue();
+                        if (m > maximum) {
+                            continue;
+                        }
+                        String cell;
+                        if (generated && m > maxR0) {
+                            cell = "not run: above replaceforms.maxr0 (" + maxR0 + ")";
+                        } else if (needsSnapshot && !snapshot.get(engine)) {
+                            cell = "not run: per-solution store (P1)";
+                        } else if (stopped) {
+                            cell = "not run: a smaller size did not finish";
+                        } else {
+                            System.err.println("progress: " + familyName + " " + engine + " " + id + " " + m);
+                            String line = inChild("form|" + engine + "|" + familyName + "|" + id + "|" + m).get(0);
+                            cell = cell(line);
+                            stopped = line.startsWith("END\t");
+                            if (generated && (cell.startsWith("wrong:") || cell.startsWith("error:"))) {
+                                generatedWrong.add(familyName + "/" + engine + "/" + id + "/M=" + m + ": " + cell);
+                            }
+                        }
+                        formTables.append(String.format("| %s | %,d | %s |%n", form.get("label").getAsString().value(), m, cell));
+                        flush.run();
+                    }
+                }
+                formTables.append('\n');
+            }
+            if (!fam.get("sweep").isNull()) {
+                sweepSection.append("## ").append(familyName).append(" family, the bare sweep alone, best of three, milliseconds\n\n| Store | M | ms |\n|---|---|---|\n");
+                for (String engine : ENGINES.keySet()) {
+                    for (var sizeItem : fam.get("sweep").getAsObject().get("sizes").getAsArray()) {
+                        long m = sizeItem.getAsNumber().value().longValue();
+                        if (m > maximum) {
+                            continue;
+                        }
+                        System.err.println("progress: " + familyName + " " + engine + " bare sweep " + m);
+                        sweepSection.append(String.format("| %s | %,d | %s |%n", engine, m, cell(inChild("sweep|" + engine + "|" + familyName + "|sweep|" + m).get(0))));
+                        flush.run();
+                    }
+                }
+                sweepSection.append('\n');
+            }
         }
         flush.run();
         System.out.println(Files.readString(reportPath, StandardCharsets.UTF_8));
