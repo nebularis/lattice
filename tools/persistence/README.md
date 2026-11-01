@@ -196,6 +196,7 @@ text = payload.sparql()                  # the value of {{{payloadTriples}}}
 4. **Treat every transport failure as unknown**: resend the identical request with the same `$txnId` and payload, then confirm.
 5. **Keep txn claims at least as long as the longest redelivery horizon** before pruning them (guide §24.2).
 6. **Quiesce writers when you bump the dataset epoch** (guide §24.4).
+7. **Do not send a write whose delta is empty.** A compare-and-set moves the version row, writes a claim, a receipt, a log entry and two empty delta graphs whenever its guard holds, about 14 quads, and cannot tell that the payload equals the stored state without a sweep of one against the other. A caller that holds the delta, as the studio's writer does, sends nothing when it is empty and answers "already at this sequence". A writer whose delta was non-empty against the sequence it read still sends, is refused if the row moved, re-reads, and skips once its delta is empty, so the concurrency token is unchanged. A whole-state writer that never read the stored state cannot do this, and for it a revision is the honest record of what it asserted (STD-299, the linear replace sketch's LR-Q4).
 
 ## The typed operation IR (ADR-A123)
 
