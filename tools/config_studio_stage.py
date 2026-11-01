@@ -111,10 +111,10 @@ def stage(root: Path, out: Path) -> None:
     # The units a workspace publishes (ADR-A149), which the service serves to the browser.
     units = catalogue.root / catalogue.area("contracts") / "config-studio" / "publication-units.ttl"
     (out / "publication-units.ttl").write_text(units.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
-    # The studio's projections, which the worker compiles and the service's tests read (ADR-A149 decision 14).
-    (out / "projections").mkdir(parents=True, exist_ok=True)
-    for name in ("projections.ttl", "workspace-summaries.rq"):
-        (out / "projections" / name).write_text((catalogue.root / catalogue.area("contracts") / "config-studio" / name).read_text(encoding="utf-8"),
+    # The studio's promotions, which the worker compiles and the service's tests read (ADR-A149 decision 14).
+    (out / "promotions").mkdir(parents=True, exist_ok=True)
+    for name in ("promotions.ttl", "workspace-summaries.rq"):
+        (out / "promotions" / name).write_text((catalogue.root / catalogue.area("contracts") / "config-studio" / name).read_text(encoding="utf-8"),
                                                 encoding="utf-8", newline="\n")
     # MORK's teaching pack's first layer, which the service's MCP server offers as a prompt.
     (out / "prompts").mkdir(parents=True, exist_ok=True)
@@ -160,7 +160,7 @@ def stage_maintenance(catalogue: lattice_repo_catalogue.Catalogue, folder: Path)
     from surface.maintenance import fill_all, partition_clear
     from surface.model import read_contracts
 
-    declarations = Graph().parse(catalogue.root / catalogue.area("contracts") / "config-studio" / "projections.ttl")
+    declarations = Graph().parse(catalogue.root / catalogue.area("contracts") / "config-studio" / "promotions.ttl")
     family = URIRef("https://www.nebularis.org/neuro-semantic/lattice/config-studio#sourceFamily")
     shutil.rmtree(folder, ignore_errors=True)
     folder.mkdir(parents=True)

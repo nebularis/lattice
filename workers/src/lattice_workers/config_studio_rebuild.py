@@ -1,6 +1,6 @@
 """Rebuilds the studio's promoted partitions from its store (projection maintenance, PM2, PM-Q3).
 
-Each promotion of `contracts/config-studio/projections.ttl` reads one family of aggregates, its `cst:sourceFamily`, and its rows for one
+Each promotion of `contracts/config-studio/promotions.ttl` reads one family of aggregates, its `cst:sourceFamily`, and its rows for one
 source live in that source's own partition, `urn:lattice:studio:promoted:{source graph}`. A write keeps its sources' partitions in its
 own request, so a rebuild runs only at start when the contracts grew since the last one, or when an administrator asks. It returns
 every source's partition, an empty one for a partition whose source is gone, and the record of the contracts it built from, which the
@@ -59,7 +59,7 @@ class DatasetStore:
 def _declarations(root: str) -> Graph:
     """The studio's promotion contracts. Cached, so never modified."""
     found = catalogue(root)
-    return Graph().parse(Path(found.root) / found.area("contracts") / "config-studio" / "projections.ttl", format="turtle")
+    return Graph().parse(Path(found.root) / found.area("contracts") / "config-studio" / "promotions.ttl", format="turtle")
 
 
 def digests(declarations: Graph) -> dict[str, str]:
@@ -86,7 +86,7 @@ def _rows(declarations: Graph, source: Graph, family: str, read_at: str) -> Grap
     return out
 
 
-def refresh(store: Store, root: Optional[Path | str], job: str, read_at: str) -> dict[str, Graph]:
+def rebuild(store: Store, root: Optional[Path | str], job: str, read_at: str) -> dict[str, Graph]:
     """Every promoted partition by its graph name, rebuilt from `store`, an empty one for each whose source is gone, and the record."""
     declarations = _declarations(str(find_root(root)))
     names = store.graph_names()
@@ -106,13 +106,13 @@ def refresh(store: Store, root: Optional[Path | str], job: str, read_at: str) ->
 
 
 def main(argv: list[str]) -> None:
-    """`python -m lattice_workers.config_studio_refresh <store.nq> <promoted.nq>`: the promoted partitions and the record of a dump
+    """`python -m lattice_workers.config_studio_rebuild <store.nq> <promoted.nq>`: the promoted partitions and the record of a dump
     of the store, as a rebuild would write them."""
     if len(argv) != 2:
         raise SystemExit(main.__doc__)
     dataset = Dataset()
     dataset.parse(argv[0], format="nquads")
-    rebuilt = refresh(DatasetStore(dataset), None, "urn:lattice:studio:job:00000000-0000-0000-0000-000000000000", "2026-01-01T00:00:00Z")
+    rebuilt = rebuild(DatasetStore(dataset), None, "urn:lattice:studio:job:00000000-0000-0000-0000-000000000000", "2026-01-01T00:00:00Z")
     out = Dataset()
     for name, graph in rebuilt.items():
         target = out.graph(URIRef(name))

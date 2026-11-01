@@ -81,9 +81,9 @@ public final class StudioApi {
     /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
     private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
 
-    /** Rebuilds the projections after a write that changes a source (ADR-A149 decision 14). */
+    /** Rebuilds the promotions after a write that changes a source (ADR-A149 decision 14). */
     private static final Duration REBUILD_TIMEOUT = Duration.ofSeconds(60);
-    /** How long a refresh that nothing waits for gathers the writes after the first, so a burst of saves costs one refresh. */
+    /** How long a rebuild that nothing waits for gathers the writes after the first, so a burst of saves costs one rebuild. */
 
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
@@ -143,7 +143,7 @@ public final class StudioApi {
      * reads the record and the staged contracts only, so a start with nothing changed does no rebuild.
      */
     public void startUp() {
-        Map<String, String> staged = Promotions.digests(read("projections/projections.ttl"));
+        Map<String, String> staged = Promotions.digests(read("promotions/promotions.ttl"));
         Map<String, String> recorded = Promotions.recorded(store.graph(Graphs.PROMOTED_RECORD));
         List<String> changed = recorded.entrySet().stream()
             .filter(e -> !e.getValue().equals(staged.get(e.getKey()))).map(Map.Entry::getKey).sorted().toList();
@@ -173,11 +173,11 @@ public final class StudioApi {
         String job = UUID.randomUUID().toString();
         String jobIri = Graphs.job(job);
         Model description = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
-        description.createResource(jobIri).addProperty(RDF.type, Cst.Job).addProperty(Cst.kind, Cst.Refresh).addProperty(Cst.status, Cst.Queued)
+        description.createResource(jobIri).addProperty(RDF.type, Cst.Job).addProperty(Cst.kind, Cst.Rebuild).addProperty(Cst.status, Cst.Queued)
             .addProperty(Cst.submittedAt, description.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
         org.apache.jena.query.Dataset graphs = org.apache.jena.query.DatasetFactory.create();
         graphs.addNamedModel(jobIri, description);
-        Reply sent = writes.send(Command.submitRefresh(job, graphs));
+        Reply sent = writes.send(Command.submitRebuild(job, graphs));
         if (!sent.applied()) {
             throw new IllegalStateException("the rebuild job was refused: " + sent.message());
         }
@@ -203,7 +203,7 @@ public final class StudioApi {
             throw new java.util.concurrent.TimeoutException("the worker did not finish the rebuild job in " + REBUILD_TIMEOUT.toSeconds() + " s");
         } finally {
             if (!gone) {
-                writes.send(Command.deleteRefresh(job));
+                writes.send(Command.deleteRebuild(job));
             }
         }
     }
@@ -664,9 +664,9 @@ public final class StudioApi {
     static String summariesQuery(Path assets) {
         return SUMMARIES.computeIfAbsent(assets, a -> {
             try {
-                return java.nio.file.Files.readString(a.resolve("projections").resolve("workspace-summaries.rq"), StandardCharsets.UTF_8);
+                return java.nio.file.Files.readString(a.resolve("promotions").resolve("workspace-summaries.rq"), StandardCharsets.UTF_8);
             } catch (java.io.IOException e) {
-                throw new java.io.UncheckedIOException("the staged assets hold no projections/workspace-summaries.rq", e);
+                throw new java.io.UncheckedIOException("the staged assets hold no promotions/workspace-summaries.rq", e);
             }
         });
     }
@@ -1212,7 +1212,7 @@ public final class StudioApi {
 
     /**
      * The workspaces that follow a lineage, pin one of its versions or a version, or hold an import, with their summaries,
-     * from the holders projection. A workspace the request's principal may not read is left out.
+     * from the holders promotion. A workspace the request's principal may not read is left out.
      */
     private ApiResponse holders(String iri) {
         if (iri == null || !(Graphs.isImportGraph(iri) || Graphs.isUnitIri(iri.replaceFirst("/rev/1-[0-9a-f]{16}$", "")))) {

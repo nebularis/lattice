@@ -124,10 +124,10 @@ public final class Writer {
     }
 
     private static Reply check(Command c) {
-        // A refresh job names no workspace, so its submission, updates and deletion name the job alone.
-        boolean refresh = c != null && c.workspace() == null && c.job() != null
+        // A rebuild job names no workspace, so its submission, updates and deletion name the job alone.
+        boolean rebuild = c != null && c.workspace() == null && c.job() != null
             && (c.type() == Command.Type.SUBMIT_JOB || c.type() == Command.Type.JOB_UPDATE || c.type() == Command.Type.DELETE_JOB);
-        if (c == null || c.type() == null || (!refresh && !Graphs.isId(c.workspace()))) {
+        if (c == null || c.type() == null || (!rebuild && !Graphs.isId(c.workspace()))) {
             return Reply.refused("a write names a workspace by its id");
         }
         if (!Graphs.isId(c.id())) {
@@ -686,18 +686,18 @@ public final class Writer {
             return planned(index, c, Reply.ok(), () -> changed(id));
         }
 
-        /** A refresh job names no workspace, target or input, and its graph is the only one it carries. */
-        private Reply submitRefresh(int index, Command c) {
+        /** A rebuild job names no workspace, target or input, and its graph is the only one it carries. */
+        private Reply submitRebuild(int index, Command c) {
             String jobIri = Graphs.job(c.job());
             if (!names(c).equals(Set.of(jobIri)) || !c.body().getDefaultModel().isEmpty()) {
-                return Reply.refused("a refresh job's submission carries its job graph only");
+                return Reply.refused("a rebuild job's submission carries its job graph only");
             }
             Model description = c.body().getNamedModel(jobIri);
             Resource job = description.createResource(jobIri);
-            if (!description.contains(job, RDF.type, Cst.Job) || !description.contains(job, Cst.kind, Cst.Refresh)
+            if (!description.contains(job, RDF.type, Cst.Job) || !description.contains(job, Cst.kind, Cst.Rebuild)
                 || !description.contains(job, Cst.status, Cst.Queued) || description.contains(job, Cst.workspace)
                 || description.contains(job, Cst.target) || description.contains(job, Cst.configGraph)) {
-                return Reply.refused("a refresh job is a cst:Job of kind cst:Refresh with the status Queued, and names no workspace, target or input");
+                return Reply.refused("a rebuild job is a cst:Job of kind cst:Rebuild with the status Queued, and names no workspace, target or input");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");
@@ -711,7 +711,7 @@ public final class Writer {
 
         private Reply submitJob(int index, Command c) {
             if (c.workspace() == null) {
-                return submitRefresh(index, c);
+                return submitRebuild(index, c);
             }
             String jobIri = Graphs.job(c.job());
             String input = Graphs.jobInput(c.job());
@@ -761,9 +761,9 @@ public final class Writer {
             String jobIri = Graphs.job(c.job());
             String recordIri = Graphs.jobRecord(c.job());
             Set<String> names = names(c);
-            boolean refresh = c.workspace() == null;
+            boolean rebuild = c.workspace() == null;
             // A rebuild job's update may carry promoted partitions beside its own graph, and no other job's update may carry one.
-            boolean carries = refresh ? names.contains(jobIri) && names.stream().allMatch(n -> n.equals(jobIri) || Graphs.isPromoted(n) || n.equals(Graphs.PROMOTED_RECORD))
+            boolean carries = rebuild ? names.contains(jobIri) && names.stream().allMatch(n -> n.equals(jobIri) || Graphs.isPromoted(n) || n.equals(Graphs.PROMOTED_RECORD))
                 : names.equals(Set.of(jobIri)) || names.equals(Set.of(jobIri, recordIri));
             if (!carries || !c.body().getDefaultModel().isEmpty()) {
                 return Reply.refused("a job's update carries its job graph, an assemble job's its record graph, and a rebuild job's promoted partitions, only");
@@ -774,7 +774,7 @@ public final class Writer {
             }
             Model existing = found.get();
             if (!ownsJob(existing, jobIri, c)) {
-                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
+                return Reply.refused(rebuild ? "the job is not a rebuild job" : "the job is not this workspace's");
             }
             Model update = c.body().getNamedModel(jobIri);
             if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
@@ -810,9 +810,9 @@ public final class Writer {
                 request.add(clear(recordIri, mine(c, receipts)));
                 request.add(insert(recordIri, record, mine(c, receipts)));
             }
-            if (refresh && update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded)) {
-                // A refresh that succeeded has nothing left to read, so the update that writes its projections deletes the job
-                // and its receipts too, last, which saves the service a request and the store a commit for every refresh.
+            if (rebuild && update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded)) {
+                // A rebuild that succeeded has nothing left to read, so the update that writes its promotions deletes the job
+                // and its receipts too, last, which saves the service a request and the store a commit for every rebuild.
                 List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), receipts);
                 graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
                 jobs.put(c.job(), Optional.empty());
@@ -912,29 +912,29 @@ public final class Writer {
                 return Reply.notFound();
             }
             Model existing = found.get();
-            boolean refresh = c.workspace() == null;
+            boolean rebuild = c.workspace() == null;
             if (!ownsJob(existing, jobIri, c)) {
-                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
+                return Reply.refused(rebuild ? "the job is not a rebuild job" : "the job is not this workspace's");
             }
             List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), Graphs.jobReceipts(c.job()));
-            // A refresh job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
-            String receipts = refresh ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
+            // A rebuild job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
+            String receipts = rebuild ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
             receipt(c, receipts, ownerGuard(c, jobIri), graphs, null);
             graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
             keep(graphs);
             jobs.put(c.job(), Optional.empty());
-            return planned(index, c, Reply.ok(), refresh ? () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound() : Reply::notFound);
+            return planned(index, c, Reply.ok(), rebuild ? () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound() : Reply::notFound);
         }
 
-        /** Whether the job is the command's workspace's, or a refresh job when the command names no workspace. */
+        /** Whether the job is the command's workspace's, or a rebuild job when the command names no workspace. */
         private boolean ownsJob(Model existing, String jobIri, Command c) {
             Resource job = existing.createResource(jobIri);
-            return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Refresh)
+            return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Rebuild)
                 : existing.contains(job, Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())));
         }
 
         private Element ownerGuard(Command c, String jobIri) {
-            return c.workspace() == null ? quad(jobIri, iri(jobIri), Cst.kind.asNode(), Cst.Refresh.asNode())
+            return c.workspace() == null ? quad(jobIri, iri(jobIri), Cst.kind.asNode(), Cst.Rebuild.asNode())
                 : quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace())));
         }
 

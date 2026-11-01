@@ -29,23 +29,23 @@ import org.apache.jena.update.UpdateRequest;
 public final class StudioStore implements AutoCloseable {
     private static final String PREFIXES = "PREFIX cst: <" + Cst.NS + ">\n";
     private static final String GRAPH_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }";
-    private static final String PROJECTION_PREFIXES = PREFIXES + "PREFIX prj: <" + Projections.NS + ">\n";
-    /** The registry projection, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
-    private static final String REGISTRY_QUERY = PROJECTION_PREFIXES
-        + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prj:current ?version } }";
-    private static final String HOLDERS_QUERY = PROJECTION_PREFIXES + """
+    private static final String PROMOTION_PREFIXES = PREFIXES + "PREFIX prm: <" + Promotions.NS + ">\n";
+    /** The registry promotion, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
+    private static final String REGISTRY_QUERY = PROMOTION_PREFIXES
+        + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prm:current ?version } }";
+    private static final String HOLDERS_QUERY = PROMOTION_PREFIXES + """
         CONSTRUCT { ?w ?edge ?held } WHERE {
           GRAPH ?g {
-            { ?w prj:dependsOn ?held . FILTER (?held = ?iri || STRSTARTS(STR(?held), CONCAT(STR(?iri), "/rev/"))) BIND (cst:dependsOn AS ?edge) }
+            { ?w prm:dependsOn ?held . FILTER (?held = ?iri || STRSTARTS(STR(?held), CONCAT(STR(?iri), "/rev/"))) BIND (cst:dependsOn AS ?edge) }
             UNION
-            { ?w prj:holdsImport ?held . FILTER (?held = ?iri) BIND (cst:holdsImport AS ?edge) }
+            { ?w prm:holdsImport ?held . FILTER (?held = ?iri) BIND (cst:holdsImport AS ?edge) }
           }
         }""";
-    private static final String TERMS_QUERY = PROJECTION_PREFIXES + """
+    private static final String TERMS_QUERY = PROMOTION_PREFIXES + """
         SELECT ?concept ?label ?version WHERE {
           GRAPH ?g {
-            ?concept prj:prefLabel ?label .
-            OPTIONAL { ?concept prj:inScheme ?version }
+            ?concept prm:prefLabel ?label .
+            OPTIONAL { ?concept prm:inScheme ?version }
             FILTER (CONTAINS(LCASE(STR(?label)), LCASE(?q)))
           }
         } ORDER BY ?label ?concept ?version LIMIT 50""";
@@ -62,10 +62,10 @@ public final class StudioStore implements AutoCloseable {
           }
         }""";
 
-    /** The jobs projection, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
-    private static final String JOBS_OF_QUERY = PROJECTION_PREFIXES
-        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prj:workspace ?ws } }";
-    /** The jobs of a workspace as their graphs hold them, which the writer deletes with it and so cannot take from a projection that lags. */
+    /** The jobs promotion, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
+    private static final String JOBS_OF_QUERY = PROMOTION_PREFIXES
+        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prm:workspace ?ws } }";
+    /** The jobs of a workspace as their graphs hold them, which the writer deletes with it and so cannot take from a promotion that lags. */
     private static final String JOB_GRAPHS_OF_QUERY = PREFIXES
         + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?job { ?job a cst:Job ; cst:workspace ?ws } }";
     private static final String EXPIRED_JOBS_QUERY = PREFIXES + """

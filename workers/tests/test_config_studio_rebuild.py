@@ -1,4 +1,4 @@
-"""Tests for the Configuration Studio worker's refresh job (ADR-A149 decision 14), against an in-memory store."""
+"""Tests for the Configuration Studio worker's rebuild job (ADR-A149 decision 14), against an in-memory store."""
 
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, XSD
 
 from lattice_workers.config_studio_jobs import CST
-from lattice_workers.config_studio_refresh import PROMOTED, RECORD, DatasetStore, _declarations, digests, refresh
+from lattice_workers.config_studio_rebuild import PROMOTED, RECORD, DatasetStore, _declarations, digests, rebuild
 from lattice_workers.config_studio_worker import ConfigStudioWorker, WriterStore
 
 from test_config_studio_worker import FakePublisher, FakeStore
 
-PRJ = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#")
+PRM = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#")
 SRF = Namespace("https://www.nebularis.org/neuro-semantic/lattice/surface#")
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 SKOS = "http://www.w3.org/2004/02/skos/core#"
@@ -30,7 +30,7 @@ VERSION = f"{LINEAGE}/rev/1-0123456789abcdef"
 
 
 class Store(DatasetStore):
-    """A dataset that is also the worker's store, so a refresh job reads what it is given and the writes are recorded."""
+    """A dataset that is also the worker's store, so a rebuild job reads what it is given and the writes are recorded."""
 
     def __init__(self, dataset: Dataset) -> None:
         super().__init__(dataset)
@@ -56,7 +56,7 @@ def small_store() -> Dataset:
         <{LINEAGE}/other> a skos:ConceptScheme ; skos:prefLabel "Not a concept" .""")
     turtle("urn:lattice:studio:job:00000000-0000-0000-0000-0000000000a1", f"""
         <urn:lattice:studio:job:00000000-0000-0000-0000-0000000000a1> a cst:Job ; cst:workspace <{WS}> ; cst:status cst:Queued .""")
-    turtle(JOB, f"<{JOB}> a cst:Job ; cst:kind cst:Refresh ; cst:status cst:Running .")
+    turtle(JOB, f"<{JOB}> a cst:Job ; cst:kind cst:Rebuild ; cst:status cst:Running .")
     turtle("urn:lattice:studio:job:00000000-0000-0000-0000-0000000000a1:input", f"<{WS}> cst:workspace <urn:not-a-job> .")
     return ds
 
@@ -67,21 +67,21 @@ NOW = "2026-10-31T10:00:00Z"
 
 
 def rows(name: str, ds: Dataset | None = None) -> set:
-    return set(refresh(Store(ds or small_store()), None, JOB, NOW)[PROMOTED + name])
+    return set(rebuild(Store(ds or small_store()), None, JOB, NOW)[PROMOTED + name])
 
 
 def test_each_source_graph_has_its_own_partition_holding_only_its_promoted_rows():
-    assert rows(LINEAGE_GRAPH) == {(URIRef(LINEAGE), PRJ.current, URIRef(VERSION))}
-    assert rows(A1) == {(URIRef(A1), PRJ.workspace, URIRef(WS))}
+    assert rows(LINEAGE_GRAPH) == {(URIRef(LINEAGE), PRM.current, URIRef(VERSION))}
+    assert rows(A1) == {(URIRef(A1), PRM.workspace, URIRef(WS))}
     assert rows("urn:lattice:studio:description/a") == {
-        (URIRef(WS), PRJ.dependsOn, URIRef(LINEAGE)), (URIRef(WS), PRJ.holdsImport, URIRef(f"urn:lattice:studio:import:{'a' * 64}"))}
+        (URIRef(WS), PRM.dependsOn, URIRef(LINEAGE)), (URIRef(WS), PRM.holdsImport, URIRef(f"urn:lattice:studio:import:{'a' * 64}"))}
     concept = URIRef(f"{LINEAGE}/c1")
-    assert rows("urn:lattice:studio:version/v1") == {(concept, PRJ.prefLabel, Literal("Fire")), (concept, PRJ.inScheme, URIRef(VERSION))}
+    assert rows("urn:lattice:studio:version/v1") == {(concept, PRM.prefLabel, Literal("Fire")), (concept, PRM.inScheme, URIRef(VERSION))}
     assert rows(JOB) == set()
 
 
 def test_a_graph_that_is_no_family_source_has_no_partition():
-    out = refresh(Store(small_store()), None, JOB, NOW)
+    out = rebuild(Store(small_store()), None, JOB, NOW)
     assert set(out) == {PROMOTED + name for name in SOURCES} | {RECORD}
     assert PROMOTED + "urn:g:meta/part" not in out and PROMOTED + f"{A1}:input" not in out
 
@@ -89,14 +89,14 @@ def test_a_graph_that_is_no_family_source_has_no_partition():
 def test_a_partition_whose_source_is_gone_comes_back_empty_so_the_writer_clears_it():
     ds = small_store()
     gone = PROMOTED + "urn:lattice:studio:version/gone"
-    ds.graph(URIRef(gone)).add((URIRef("urn:x"), PRJ.prefLabel, Literal("stale")))
-    out = refresh(Store(ds), None, JOB, NOW)
+    ds.graph(URIRef(gone)).add((URIRef("urn:x"), PRM.prefLabel, Literal("stale")))
+    out = rebuild(Store(ds), None, JOB, NOW)
     assert gone in out and len(out[gone]) == 0
 
 
 def test_the_record_names_every_promotion_contract_with_a_digest_that_follows_its_triples():
     declarations = _declarations(str(Path(__file__).resolve().parents[2]))
-    record = refresh(Store(small_store()), None, JOB, NOW)[RECORD]
+    record = rebuild(Store(small_store()), None, JOB, NOW)[RECORD]
     contracts = digests(declarations)
     assert set(contracts) == {str(c) for c in declarations.subjects(RDF.type, SRF.PromotionContract)} and len(contracts) >= 6
     assert {(URIRef(c), CST.contractDigest, Literal(d)) for c, d in contracts.items()} == set(record)
@@ -113,14 +113,14 @@ def test_no_partition_holds_a_blank_node():
     ds = small_store()
     ds.graph(URIRef("urn:lattice:studio:description/b")).parse(
         data=f"@prefix cst: <{CST}> . <{WS}b> cst:dependsOn [ a cst:Thing ] .", format="turtle")
-    for graph in refresh(Store(ds), None, JOB, NOW).values():
+    for graph in rebuild(Store(ds), None, JOB, NOW).values():
         assert not any(isinstance(term, BNode) for triple in graph for term in triple)
 
 
 def test_a_refresh_job_hands_the_partitions_and_the_record_to_the_writer_in_one_update_and_names_no_workspace():
     store = Store(small_store())
     ConfigStudioWorker(store, None, lambda: NOW).handle(JOB)
-    [final] = store.puts  # no update marks a refresh running, since only the service reads it and waits for its end
+    [final] = store.puts  # no update marks a rebuild running, since only the service reads it and waits for its end
     assert (URIRef(JOB), CST.status, CST.Succeeded) in final[1]
     assert set(final[2]) == {PROMOTED + name for name in SOURCES} | {RECORD}
     assert not list(final[1].objects(URIRef(JOB), CST.workspace))
@@ -140,7 +140,7 @@ def test_a_refresh_job_goes_to_the_writer_of_its_own_id_with_the_partitions_besi
     job = str(uuid.UUID("ffffffff-0000-4000-8000-000000000000"))
     iri = f"urn:lattice:studio:job:{job}"
     graph = Graph()
-    graph.add((URIRef(iri), CST.kind, CST.Refresh))
+    graph.add((URIRef(iri), CST.kind, CST.Rebuild))
     publisher = FakePublisher()
     WriterStore(FakeStore(), publisher).put_graph(iri, graph, {RECORD: Graph()})
     _, key, headers, _ = publisher.sent[0]

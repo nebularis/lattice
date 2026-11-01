@@ -863,21 +863,23 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 | **Status Record** | [studio-quality.md](status/studio-quality.md) |
 | **ADRs** | A-150, Proposed |
 
-## 8.27 Writing only what changed, as a persistence mode — Planned
+## 8.27 Writing only what changed, as a persistence mode — In progress
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟢 planned 2026-10-31, DR1 next |
+| **Status** | 🟡 DR1 to DR4 built 2026-11-01, the benchmark to read |
+| **Validation** | [DR1](validation/DR1.md), [DR2](validation/DR2.md), [DR3](validation/DR3.md), [DR4](validation/DR4.md) |
 | **Unit ID** | `persistence-delta-replace` |
 | **Sketch** | [persistence-delta-replace.md](sketches/persistence-delta-replace.md) |
 | **Plan** | [persistence-delta-replace.md](plans/persistence-delta-replace.md) |
 | **Status Record** | [persistence-delta-replace.md](status/persistence-delta-replace.md) |
 
-## 8.28 Projections maintained in the write, and replies that do not wait — Planned
+## 8.28 Derived data maintained in the write, and replies that do not wait — In progress
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟢 planned 2026-10-31, PM0 next, PM1 after DR1 |
+| **Status** | 🟡 PM0 to PM2 built 2026-11-01, PM3 next |
+| **Validation** | [PM1](validation/PM1.md), [PM0 and PM2](validation/PM2.md) |
 | **Unit ID** | `projection-maintenance` |
 | **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md) |
 | **Plan** | [projection-maintenance.md](plans/projection-maintenance.md) |

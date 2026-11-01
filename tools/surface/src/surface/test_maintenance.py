@@ -172,7 +172,7 @@ class MaintenanceTest(unittest.TestCase):
         from pathlib import Path
 
         root = Path(__file__).resolve().parents[4]
-        contracts = read_contracts(Graph().parse(root / "contracts" / "config-studio" / "projections.ttl"))
+        contracts = read_contracts(Graph().parse(root / "contracts" / "config-studio" / "promotions.ttl"))
         self.assertTrue(contracts)
         for contract in contracts:
             m = maintenance(contract)

@@ -70,7 +70,7 @@ def smoke(client: Client) -> List[Step]:
     run.check("wait for publish job", "Succeeded" in done.text, f"the job failed: {done.text[:400]}")
     published = run.expect("publish", client.publish(ws, job), 200, 201)
 
-    # Publishing waits for its refresh (ADR-A149 decision 14), so the registry and the terms show it at once.
+    # Publishing waits for its rebuild (ADR-A149 decision 14), so the registry and the terms show it at once.
     listing = run.expect("list registry", client.registry(), 200)
     run.check("list registry", SCHEME in listing.text, f"the published scheme is not listed: {listing.text[:400]}")
     terms = run.expect("search terms", client.registry_terms("second concept"), 200)

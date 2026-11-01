@@ -17,7 +17,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
-import org.nebularis.lattice.studio.store.Projections;
+import org.nebularis.lattice.studio.store.Promotions;
 import org.nebularis.lattice.studio.store.Promotions;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.Command;
@@ -26,12 +26,12 @@ import org.nebularis.lattice.studio.writes.DirectWrites;
 /**
  * Stands in for the Python worker in the service's tests: it runs a rebuild job the bus hands it, computing every source's promoted
  * partition and the record from the store and sending the job's update through the writer, as the worker does. The promotions are
- * restated here in a few lines each, and {@code ProjectionsTest} holds them equal to what the real worker computes.
+ * restated here in a few lines each, and {@code PromotionsTest} holds them equal to what the real worker computes.
  */
-final class RefreshWorker {
+final class RebuildWorker {
     private static final String SKOS = "http://www.w3.org/2004/02/skos/core#";
 
-    /** A promotion restated, the carrier's type, the property read and the property of the projection namespace it is promoted to. */
+    /** A promotion restated, the carrier's type, the property read and the property of the promotion namespace it is promoted to. */
     private record Promotion(Resource carrier, Property read, String promoted) {
     }
 
@@ -47,7 +47,7 @@ final class RefreshWorker {
     private final DirectWrites writes;
     private final java.util.concurrent.atomic.AtomicInteger runs = new java.util.concurrent.atomic.AtomicInteger();
 
-    RefreshWorker(StudioStore store, DirectWrites writes) {
+    RebuildWorker(StudioStore store, DirectWrites writes) {
         this.store = store;
         this.writes = writes;
     }
@@ -61,7 +61,7 @@ final class RefreshWorker {
     boolean handle(String jobIri) {
         Resource job = ResourceFactory.createResource(jobIri);
         Model written = store.graph(jobIri);
-        if (!written.contains(job, Cst.kind, Cst.Refresh)) {
+        if (!written.contains(job, Cst.kind, Cst.Rebuild)) {
             return false;
         }
         String id = jobIri.substring(Graphs.JOB_PREFIX.length());
@@ -105,7 +105,7 @@ final class RefreshWorker {
             }
         }
         try {
-            byte[] contracts = Files.readAllBytes(Path.of(System.getProperty("studio.assets"), "projections", "projections.ttl"));
+            byte[] contracts = Files.readAllBytes(Path.of(System.getProperty("studio.assets"), "promotions", "promotions.ttl"));
             out.put(Graphs.PROMOTED_RECORD, Promotions.record(Promotions.digests(contracts)));
         } catch (java.io.IOException e) {
             throw new java.io.UncheckedIOException(e);
@@ -114,7 +114,7 @@ final class RefreshWorker {
     }
 
     private static void restate(Model source, Promotion p, Model into) {
-        Property to = into.createProperty(Projections.NS + p.promoted());
+        Property to = into.createProperty(Promotions.NS + p.promoted());
         source.listSubjectsWithProperty(RDF.type, p.carrier()).forEachRemaining(s -> s.listProperties(p.read()).forEachRemaining(st -> {
             if (!st.getObject().isAnon()) {
                 into.add(st.getSubject(), to, st.getObject());

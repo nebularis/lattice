@@ -21,19 +21,21 @@ import org.nebularis.lattice.persistence.Payload;
  * the state digest of its own triples, so a contract that changed in any way has another digest and one that did not has the same.
  */
 public final class Promotions {
+    /** The target namespace of the studio's promotions, {@code contracts/config-studio/promotions.ttl} (ADR-A149 decision 14). */
+    public static final String NS = "https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#";
     private static final String SRF = "https://www.nebularis.org/neuro-semantic/lattice/surface#";
 
     private Promotions() {
     }
 
-    /** Each promotion contract of the staged {@code projections.ttl}, by IRI, with its digest. Nothing when there is no file. */
-    public static Map<String, String> digests(byte[] projections) {
+    /** Each promotion contract of the staged {@code promotions.ttl}, by IRI, with its digest. Nothing when there is no file. */
+    public static Map<String, String> digests(byte[] promotions) {
         Map<String, String> out = new TreeMap<>();
-        if (projections == null) {
+        if (promotions == null) {
             return out;
         }
         Model m = ModelFactory.createDefaultModel();
-        RDFDataMgr.read(m, new ByteArrayInputStream(projections), Lang.TURTLE);
+        RDFDataMgr.read(m, new ByteArrayInputStream(promotions), Lang.TURTLE);
         Resource promotion = m.createResource(SRF + "PromotionContract");
         m.listSubjectsWithProperty(RDF.type, promotion).forEachRemaining(c -> {
             List<org.apache.jena.graph.Triple> own = new ArrayList<>();
