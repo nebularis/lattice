@@ -19,7 +19,7 @@ Standard library and rdflib only. It never imports the compiler, and the compile
 
 ```python
 from rdflib import Graph
-from lattice_persistence import Iri, Lit, Payload, Triple, read_contracts, request_digest
+from lattice_persistence import Iri, Lit, Payload, Triple, read_contracts, request_digest, slot_text
 
 profile = Graph().parse("compiled-profile.ttl")
 replace = next(o for o in read_contracts(profile) if o.template_id == "cas-replace-named-graph-patch-log")
@@ -28,7 +28,7 @@ payload = Payload.of(Triple(Iri.encode("urn:ex:a"), Iri.encode("urn:ex:name"), L
 values = {"root": "urn:ex:a", "expectedSeq": 3, "payloadTriples": payload,
           "assertTriples": Payload.of(), "retractTriples": Payload.of()}
 digest = request_digest(replace, values)     # the value of $requestDigest
-text = payload.sparql()                      # the value of {{{payloadTriples}}}
+text = slot_text(replace, "payloadTriples", payload)   # the value of {{{payloadTriples}}}
 ```
 
 Before sending, `check_request(replace, values)` raises `CallerCheckError` naming every reason a request is refused. The options of `refusals` are
@@ -37,9 +37,7 @@ and `membership` (a checkpoint's full list).
 
 The values are keyed by the names of the operation's parameters and slots. A slot is a `Payload`, or `Rows` for `eventRows`.
 
-In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`, for example `{{{payloadTriples}}}`. The caller replaces the marker with the
-`sparql()` text of the value, by substitution and with no template engine. `run_audit` does this for `logGraphs`. An unfilled marker is a syntax
-error, so a forgotten slot fails closed. The tests in `tests/test_slot_injection.py` run an adversarial corpus through this filling.
+In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`, for example `{{{payloadTriples}}}`. The caller replaces the marker with the `sparql()` text of the value, by substitution and with no template engine. `slot_text(operation, name, value)` gives the text the contract's encoding asks for, rows `(s p o)` under `dal:TripleRows` for the rows replace and triples under `dal:GroundNTriples`, and the request digest is over the canonical N-Triples lines whichever the encoding. `run_audit` does this for `logGraphs`. An unfilled marker is a syntax error, so a forgotten slot fails closed. The tests in `tests/test_slot_injection.py` run an adversarial corpus through this filling.
 
 `read_contracts` follows each payload contract's `dal:referenceEdge` to the edges its profile states once, and reads the record classes the
 profile names (`dal:recordClass`) into `payload.record_classes`.

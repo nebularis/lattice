@@ -1643,10 +1643,57 @@ Probe: a diagram with a syntax error (the render check fails), a narrative parag
 **Built 2026-10-21** ([FMH-H2-11b](../validation/FMH-H2-11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
 cross references are 5.15. The migration check passes with the same 137 reconciliations, both probes failed as expected, and D-64 is closed.
 
+### 4.20 H2.12: the rows replace, selected by capability (planned 2026-11-01)
+
+#### The scene
+
+The generated replace sweeps the aggregate in its `WHERE`, one solution per stored triple (M), and carries the payload (N) and the patch log's delta (D) in its `INSERT` template, which every engine fills once per solution, so a replace costs M × (N + D + k) template fills: 17 s at M = N = 3,000 on the studio's store, TDB2 under Fuseki ([TSD-65](../../architecture/triple-store-discovery.md#tsd-65-a-deleteinsert-fills-every-template-quad-once-per-solution-on-every-engine-measured-whether-or-not-the-quad-is-then-skipped-and-only-jena-applies-a-quad-with-no-variable-once-per-operation), TD-42). The [linear replace sketch](../sketches/persistence-linear-named-graph-replace.md) measured the forms and the maintainer answered its questions on 2026-11-01. This slice carries those answers out. ADR-A123 decision 7 left the selection to the capability record, and gains an addendum.
+
+#### Decisions, from the sketch
+
+| Decided | Answer |
+|---|---|
+| the form (the sketch's LR-Q1) | R2, the payload and the delta carried as `VALUES` rows in `UNION` branches of one operation, selected where the store declares snapshot update semantics. R1′ is not generated (LR-Q5, for H5) |
+| the timing (the sketch's LR-Q2) | ahead of H5. The field is a boolean of the capability spec, which H5's record extension later subsumes |
+| an undeclared store (the sketch's LR-Q3) | an undeclared store stays on the template form, and an operator may opt a family into the rows form on its profile, taking responsibility |
+| a write that changes nothing (the sketch's LR-Q4) | a caller does not send a write whose delta is empty (STD-299, the compiler README's seventh obligation). Nothing in the operation changes |
+
+#### Design, settled here
+
+- **The capability field** is `dal:providesSnapshotUpdateSemantics`, an `xsd:boolean` of `dal:CapabilitySpec` beside `dal:providesSingleWriter`, absent meaning unknown. True today for Jena in memory, TDB2, Fuseki over TDB2 and Oxigraph from 0.5.12 (TSD-53, TSD-66, TSD-01). `persistence.capability.CapabilitySpec` carries it as `provides_snapshot_update_semantics`.
+- **The opt-in** is `dal:replaceForm` on `dal:ConcurrencyProfile`, a value of the closed `dal:ReplaceForm`: `dal:RowsReplace` selects the rows form whatever the spec says, `dal:TemplateReplace` keeps the template form whatever the spec says, and absent means by capability. It is its own dimension, `replaceForm`, with no baseline default, since absence is the meaning. A closed set and not a boolean, so that the forced template form can be stated and compared. `compile` refuses `dal:RowsReplace` against a spec that declares the field false (`ReplaceFormContradictsCapability`), since a declared false is a fact and the opt-in is for an unknown, and warns `ReplaceFormNotApplicable` when the form is declared on a family that has no sweeping replace. The resolved dimension in the compiled profile records whose choice the form was.
+- **The builders** are `cas-replace-named-graph-rows` and `cas-replace-composite-property-rows`, each with the receipt variants its family has and a dataset-guard variant, ten in all, at version 1. The sweep becomes the first branch of a `UNION`, the payload a `VALUES (?newS ?newP ?newO)` branch, under a patch log the asserted and retracted triples two more, and an empty group the last, so a replace of an empty aggregate by an empty payload still moves the row. The `INSERT` holds one triple of row variables per block in place of each slot. Create and tombstone do not change, since neither fills a payload per sweep solution (a tombstone is M × k).
+- **The IR** gains `PayloadRows(vars, param)`, a `VALUES` of three variables filled from a `Payload` parameter. The checker takes its variables as definitely bound within the branch, holds the parameter to kind `Payload`, and records the `INSERT` triple made of its variables as the payload access, so the contract's access set reads as the template form's. No new parameter kind, so the caller check and the digest are unchanged.
+- **The contract** records how each payload slot is written: `dal:payloadEncoding` gains `dal:TripleRows` beside `dal:GroundNTriples`, one row `(s p o)` per triple, and the encoding applies to every `Payload` slot of the operation. The digest is over the same sorted N-Triples lines in both forms, so a request's digest does not depend on the form.
+- **The callers.** `Payload.rows()` in both libraries renders the row text, and a `slot_text` helper picks the text by the contract's encoding. The studio's writer fills template slots by splicing quads and is the studio's to move, its profile declares no spec, so it stays on the template form until it does (TD-136).
+- **The stores that stay on the template form:** rdflib and RDF4J apply each solution in turn (TSD-01, TSD-67), and RDF4J has no correct composite operation today for a reason of its own (TSD-Q36).
+
+#### Steps
+
+1. The IR element, its checker rules and its rendering, with refusals in `test_ir.py`.
+2. The ten builders, their stems, versions and goldens, rendered and checked.
+3. The capability field, the dimension and the vocabulary, in the Persistence README's section 6 and shapes, extracted to the spec, with an example `replace-form-rows.ttl` holding one family selected by a spec and one by the opt-in, and its expected profile.
+4. The selection in `select_operations`, the two diagnostics, the contract's encoding, and `templatecheck` filling rows stand-ins where the contract says rows.
+5. Behaviour tests on every engine where the form is safe: the rows replace leaves what the template replace leaves, for both families, both guards and each receipt model, the lost race and the retry write nothing, and the four empty cases of the sketch's §5.3. On rdflib the rows tests are skipped by name, with the reason.
+6. Both caller libraries render rows and read the encoding, with vectors that the digest is equal across the forms.
+7. The benchmark renders R2 from the builder instead of deriving it from R0's text.
+8. Documents: the compiler README, the Persistence README's §5.6.2, §5.7 and §5.8, the ADR-A123 addendum, TD-42 and TD-136, the sketch's §6, the release note.
+
+#### Planned validation
+
+`FMH-H2-12`. One command, `mise run check:persistence`, then `mise run check:persistence-conformance` on the three engines and the two library suites. Each expected profile that changes is listed for re-approval, and none of the existing twelve should, since no shipped example declares the field.
+
+#### Deliberate non-coverage
+
+R1′ (LR-Q5, H5). The studio's writer (TD-136). RDF4J (TSD-Q36). A probe of the field in `check:persistence-conformance` beyond P1, which already is its probe.
+
+#### Estimate
+
+About 400k tokens.
+
 ### 4.16 Order, from 2026-10-20
 
-H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
-Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9, then H2.11a and H2.11b, the Persistence README (§4.19). Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them. Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9, then H2.11a and H2.11b, the Persistence README (§4.19). Before the merge into `main`: TD-63, and one minor version bump (TD-64). H2.12 (§4.20) follows on 2026-11-01, on its own branch off the studio's, ahead of H5.
 
 ## 5. H4 onward, outline only
 

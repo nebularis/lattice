@@ -2,7 +2,7 @@
 
 # Replace forms
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures what the persistence compiler's generated named-graph replace costs on rdflib and Oxigraph against two candidate forms that are linear in the payload, and it probes how each engine applies an update, because one of the candidates is right only on an engine that applies every deletion before any insertion ([TSD-01](../../docs/architecture/triple-store-discovery.md)). The cost it follows up is TD-42 in the technical debt register.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It measures what the persistence compiler's generated named-graph replace costs on rdflib and Oxigraph against a candidate form and the generated rows replace, which are linear in the payload, and it probes how each engine applies an update, because both are right only on an engine that applies every deletion before any insertion ([TSD-01](../../docs/architecture/triple-store-discovery.md)). The cost it follows up is TD-42 in the technical debt register.
 
 ## What it measures
 
@@ -14,9 +14,9 @@ The generated `cas-replace-named-graph` (patch-log receipt, the caller names the
 | `R0-nodelta` | `R0` with empty `assertTriples` and `retractTriples`, to separate the payload's cost from the delta blocks' cost |
 | `R1-candidate` | **a candidate, not generated.** Two operations in one request. The first deletes the aggregate's graph under `R0`'s whole `WHERE`, the second is `R0` without the sweep |
 | `R2-candidate` | **a candidate, not generated.** One operation. The sweep becomes a `UNION` with one extra solution that alone binds every graph the `INSERT` writes to, so the `INSERT` is instantiated once |
-| `R2-values-candidate` | **a candidate, not generated.** One operation built from `R0`'s text. The sweep becomes a `UNION` of the sweep, the payload, the assertions and the retractions as `VALUES` rows, and an empty group. The `INSERT` template holds three single quads over the row variables beside `R0`'s row, claim and log blocks, so the solutions carry the payload |
+| `R2-values-candidate` | **generated.** The rows replace, rendered from `cas-replace-named-graph-rows-patch-log` and `cas-replace-composite-property-rows-patch-log` as `R0` is. One operation. The sweep is a `UNION` of the sweep, the payload, the assertions and the retractions as `VALUES` rows, and an empty group. The `INSERT` template holds three single quads over the row variables beside the row, claim and log blocks, so the solutions carry the payload. Its three payload slots are filled as rows `(s p o)` (`dal:TripleRows`), where `R0` fills them as N-Triples. The report labels it "R2 (generated rows)" |
 
-The candidates are derived from `R0`'s rendered text inside `check.py`, each with a comment saying so. Nothing in `tools/persistence` or `packages/` changes.
+`R1-candidate` and `R2-candidate` are derived from `R0`'s rendered text inside `check.py`, each with a comment saying so. Nothing in `tools/persistence` or `packages/` changes.
 
 **Workload.** For each size M in 100, 300, 1,000, 3,000 and 10,000 the stored state at revision r holds M triples. The first half is the same at every revision and the second half carries the revision, so each payload holds N = M triples and half of them are already stored. That is the case that shows whether an engine applies its deletions before its insertions. Three replaces per size, the best time kept.
 
@@ -51,7 +51,7 @@ For the composite family at M = 3,000 and 10,000, the time of `SELECT (COUNT(*) 
 
 ## Pass criterion
 
-After every replace the root's graph holds exactly the payload (compared as a set), the version row is at the next sequence with the new head and not at the expected sequence, the add and delete graphs hold exactly the delta, the txn graph holds the claim, and no other graph changed. **A wrong result from `R0` or `R0-nodelta` fails the run. Time never does.** A wrong result from a candidate is recorded as `wrong: <reason>`, since finding that out is the purpose of running it. No budget exists before H5, and a check that fails on time depends on the machine.
+After every replace the root's graph holds exactly the payload (compared as a set), the version row is at the next sequence with the new head and not at the expected sequence, the add and delete graphs hold exactly the delta, the txn graph holds the claim, and no other graph changed. **A wrong result from `R0`, `R0-nodelta` or the generated rows replace fails the run. Time never does.** A wrong result from a candidate is recorded as `wrong: <reason>`, since finding that out is the purpose of running it. No budget exists before H5, and a check that fails on time depends on the machine.
 
 Each measurement runs in a child process with a wall-clock limit. One that does not finish is recorded as `did not finish`, the larger sizes of that form as `not run`, and the run goes on.
 

@@ -1430,6 +1430,8 @@ That is the primitive, abbreviated: the production form adds the dataset epoch g
 
 Why whole-graph replace rather than a patch: if the previous version had three line items and the new one has two, a patch that forgets to delete the third leaves a dangling triple. Replacing the graph makes the write the complete state, which is what an aggregate is.
 
+**Its cost, and the rows form (2026-11-01).** With the payload in the template, a store fills the template once per solution of the sweep, so the write costs the old size times the new. The generated replace has a second form that carries the payload as `VALUES` rows in `UNION` branches beside the sweep, linear, and right only on a store that applies every deletion before any insertion, which SPARQL 1.1 defines and not every store does. The compiler selects it by the store's declared capability, and the Persistence README's §5.6.2 says how.
+
 ### 14.2 Variants
 
 **Create-if-absent.** The guard is inverted: the version row must *not* exist. The dataset epoch guard applies here as on every write, so a writer started under an older epoch cannot create a row after a restore. Abbreviated, with the full form in [§19.3](#193-the-create-path):

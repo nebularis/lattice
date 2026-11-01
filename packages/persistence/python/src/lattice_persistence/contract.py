@@ -78,6 +78,9 @@ class PayloadContract:
     record_classes: tuple = ()
     """The classes the profile names as records, whose instances are evidence of what they saw (``dal:recordClass``, H2.8c). An edge by
     identity from one to a versioned class is warned at compile, and a caller can read them here."""
+    encoding: str = "GroundNTriples"
+    """How every ``Payload`` slot of the operation is written (``dal:payloadEncoding``): ``GroundNTriples``, one triple per line with its
+    full stop, or ``TripleRows``, one row ``(s p o)`` per triple for a ``VALUES`` block (H2.12). :func:`slot_text` picks the text."""
 
 
 # The digest's content parts, in the fixed order of the contract: the payload of a write, or for an append the events, then for a
@@ -201,9 +204,10 @@ def _payload(g: Graph, node) -> PayloadContract:
     records = tuple(sorted(
         str(c) for op in g.subjects(DAL.payloadContract, node) for profile in g.subjects(DAL.generatedOperation, op) for c in g.objects(profile, DAL.recordClass)
     ))
+    encoding = next(iter(g.objects(node, DAL.payloadEncoding)), None)
     return PayloadContract(
         _param_name(g, _one(g, node, DAL.payloadParameter)), None if root is None else _param_name(g, root), edges,
-        None if shape == DAL.NoBoundaryShape else str(shape), records,
+        None if shape == DAL.NoBoundaryShape else str(shape), records, "GroundNTriples" if encoding is None else _local(encoding),
     )
 
 

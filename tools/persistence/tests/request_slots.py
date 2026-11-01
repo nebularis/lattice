@@ -22,12 +22,26 @@ ADDED_MEMBERS_SUBSTITUTE = '<urn:example:s> <urn:example:addsMember> <urn:exampl
 DROPPED_MEMBERS_SUBSTITUTE = '<urn:example:s> <urn:example:dropsMember> <urn:example:removed> .'
 
 
-def fill_request_slots(text: str) -> str:
+PAYLOAD_ROW_SUBSTITUTE = "(<urn:example:s> <urn:example:p> <urn:example:o>)"
+ASSERT_ROW_SUBSTITUTE = "(<urn:example:s> <urn:example:p> <urn:example:added>)"
+RETRACT_ROW_SUBSTITUTE = "(<urn:example:s> <urn:example:p> <urn:example:removed>)"
+
+
+ROWS_MARKER = "VALUES (?newS ?newP ?newO) {"
+"""What the rendered text of a rows replace holds, so a filler can tell the form without the contract (H2.12)."""
+
+
+def fill_request_slots(text: str, *, rows: bool | None = None) -> str:
+    """``rows`` fills the payload slots as rows, for an operation whose contract writes them so (dal:TripleRows, H2.12). Left unsaid, the
+    text decides: a rows replace carries :data:`ROWS_MARKER`."""
+    if rows is None:
+        rows = ROWS_MARKER in text
     return fill_slots(
         text, {
-            "payloadTriples": PAYLOAD_SUBSTITUTE, "logGraphs": LOG_GRAPHS_SUBSTITUTE,
+            "payloadTriples": PAYLOAD_ROW_SUBSTITUTE if rows else PAYLOAD_SUBSTITUTE, "logGraphs": LOG_GRAPHS_SUBSTITUTE,
             "eventRows": EVENT_ROWS_SUBSTITUTE, "eventTriples": EVENT_TRIPLES_SUBSTITUTE,
-            "assertTriples": ASSERT_TRIPLES_SUBSTITUTE, "retractTriples": RETRACT_TRIPLES_SUBSTITUTE,
+            "assertTriples": ASSERT_ROW_SUBSTITUTE if rows else ASSERT_TRIPLES_SUBSTITUTE,
+            "retractTriples": RETRACT_ROW_SUBSTITUTE if rows else RETRACT_TRIPLES_SUBSTITUTE,
             "addedMembers": ADDED_MEMBERS_SUBSTITUTE, "droppedMembers": DROPPED_MEMBERS_SUBSTITUTE,
         }
     )

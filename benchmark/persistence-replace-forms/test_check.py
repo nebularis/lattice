@@ -125,12 +125,15 @@ def test_bench_t9_the_emitted_operations_pass_their_own_checks_on_rdflib(family)
             assert rows == set(step["expect"][key])
 
 
-def test_bench_t10_the_values_rows_are_rendered_from_the_triples_the_slot_form_uses(family):
-    assert "{{{payloadTriples}}}" not in family.texts["R2-values-candidate"] and "OPTIONAL {" not in family.texts["R2-values-candidate"].split("WHERE {")[1].split("BIND(NOW()")[1]
+def test_bench_t10_the_rows_slots_are_filled_with_the_triples_the_slot_form_uses(family):
+    rows_text = family.texts["R2-values-candidate"]
+    assert all(f"{{{{{{{slot}}}}}}}" in rows_text for slot in ("payloadTriples", "assertTriples", "retractTriples"))
+    assert "OPTIONAL {" not in rows_text.split("WHERE {")[1].split("BIND(NOW()")[1]
     states = sized_states(family, 20, 1)
     values = build_run(family, "R2-values-candidate", states).steps[0]
     slots = build_run(family, "R0", states).steps[0]
-    for block, expected in (("ps pp po", set(states[1])), ("as ap ao", slots.expect_add), ("ds dp do", slots.expect_del)):
+    assert "{{{" not in values.text
+    for block, expected in (("newS newP newO", set(states[1])), ("addS addP addO", slots.expect_add), ("delS delP delO", slots.expect_del)):
         names = " ".join(f"\\?{v}" for v in block.split())
         body = re.search(r"VALUES \(" + names + r"\) \{(.*?)\} \}", values.text).group(1)
         found = set(re.findall(r'\(<([^>]+)> <([^>]+)> (?:<([^>]+)>|"([^"]*)")\)', body))
@@ -142,7 +145,7 @@ def test_bench_t10_the_values_rows_are_rendered_from_the_triples_the_slot_form_u
 def test_bench_t11_the_composite_sweep_is_grabbed_from_the_rendered_text(composite):
     r0 = composite.texts["R0"]
     assert composite.graph == "urn:g:projects" and composite.sweep in re.sub(r"\s+", " ", r0).replace("{ $root", "{ $root")
-    assert composite.sweep in composite.texts["R2-values-candidate"]
+    assert composite.sweep in re.sub(r"\s+", " ", composite.texts["R2-values-candidate"])
     assert "OPTIONAL" not in composite.texts["R2-values-candidate"].split("BIND(NOW() AS ?now)")[1]
     assert composite.texts["R1-candidate"].count(" ;\n") == 1 and "?logGraph2" in composite.texts["R2-values-candidate"]
     assert "R2-candidate" not in composite.texts and "R2-candidate" not in composite.forms
@@ -171,7 +174,7 @@ def test_bench_t13_the_five_edge_cases_have_the_stated_deltas(family):
         assert (len(step.expect_add), len(step.expect_del)) == expected[case], case
         assert step.seq == 2
     assert ("E5" in dict(family.edge_cases)) == (family.name == "composite")
-    assert "VALUES (?ps ?pp ?po) {  }" in build_run(family, "R2-values-candidate", check.edge_states(family, "E2")).steps[0].text
+    assert "VALUES (?newS ?newP ?newO) {  }" in build_run(family, "R2-values-candidate", check.edge_states(family, "E2")).steps[0].text
 
 
 @pytest.mark.parametrize("engine_class", check.available_engines(), ids=lambda c: c.name)

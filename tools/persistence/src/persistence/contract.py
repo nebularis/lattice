@@ -28,7 +28,7 @@ from lattice_persistence.contract import (  # the data classes moved to the call
     DigestContract, EdgeContract, OperationKind, ParameterContract, PayloadContract,
 )
 
-from .ir import AccessMode, Kind, Operation, Projected, SLOT_KINDS, Var
+from .ir import AccessMode, Group, GraphBlock, Kind, NotExists, Operation, Optional_, PayloadRows, Projected, SLOT_KINDS, Union_, Var
 from .ir_render import Access, access_sets
 from .namespaces import PAT
 
@@ -129,8 +129,29 @@ for _stem, _kind in tuple(_STEM_KIND.items()):
 # A composite family written in place has no receipt-only write (H2.9, D-12 (a)), so only its two variants are builders.
 for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"):
     del _STEM_KIND[_stem]
+# The rows replace of each family (H2.12), with the receipt variants its family has.
+_ROWS_STEMS = (
+    "cas-replace-named-graph-rows", "cas-replace-named-graph-rows-patch-log", "cas-replace-named-graph-rows-no-receipt",
+    "cas-replace-composite-property-rows-patch-log", "cas-replace-composite-property-rows-no-receipt",
+)
+for _stem in _ROWS_STEMS:
+    _STEM_KIND[_stem] = OperationKind.REPLACE
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
+
+
+def _carries_rows(group) -> bool:
+    """Whether an operation's ``WHERE`` carries a payload as rows (H2.12), which is how every ``Payload`` slot of it is then written."""
+    for el in group.elements:
+        if isinstance(el, PayloadRows):
+            return True
+        if isinstance(el, (GraphBlock, Group)) and _carries_rows(el):
+            return True
+        if isinstance(el, (Optional_, NotExists)) and _carries_rows(el.group):
+            return True
+        if isinstance(el, Union_) and any(_carries_rows(g) for g in el.groups):
+            return True
+    return False
 
 
 def stem_of(operation_id: str) -> str:
@@ -154,6 +175,8 @@ BUILDER_VERSIONS: dict[str, int] = {
     + (stem in _NOT_EXISTS_NAMES_ITS_GRAPH) + (stem not in _WRITES_NO_STORE_VOCABULARY)
     for stem in sorted(_STEM_KIND)
 }
+# The rows replaces were written after both increments above, so each starts at 1 (H2.12).
+BUILDER_VERSIONS.update({stem: 1 for stem in _ROWS_STEMS})
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
@@ -308,7 +331,8 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     payload_name = None if kind is OperationKind.APPEND else payload_name
     # The payload of a new version is rooted at the version, whose own triples it holds, and not at the identity (H2.8b).
     root_name = "newVersion" if kind is OperationKind.APPEND_VERSION else "root" if "root" in params else None
-    payload = PayloadContract(payload_name, root_name, (), shape) if payload_name else None
+    encoding = "TripleRows" if _carries_rows(operation.where) else "GroundNTriples"
+    payload = PayloadContract(payload_name, root_name, (), shape, (), encoding) if payload_name else None
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)

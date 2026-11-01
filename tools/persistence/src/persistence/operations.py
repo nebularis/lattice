@@ -69,12 +69,28 @@ def _shard_for(target: Target, shard_count: int) -> int:
     return int.from_bytes(digest[:4], "big") % max(shard_count, 1)
 
 
+def rows_replace(dimensions: dict[str, ResolvedDimension], spec) -> bool:
+    """Whether an optimistic family's replace carries its payload as rows (H2.12). `dal:replaceForm` on the profile decides where it is
+    declared, `dal:RowsReplace` or `dal:TemplateReplace`, the operator taking responsibility. Otherwise the capability spec decides: the rows
+    form where it declares `dal:providesSnapshotUpdateSemantics` true, and the template form where it declares false, declares nothing or
+    there is no spec, since an undeclared store cannot be assumed to follow the specification (the sketch's LR-Q3)."""
+    form = _local(dimensions["replaceForm"].value) if "replaceForm" in dimensions else None
+    if form == "RowsReplace":
+        return True
+    if form == "TemplateReplace":
+        return False
+    return spec is not None and getattr(spec, "provides_snapshot_update_semantics", None) is True
+
+
 def select_operations(
     target: Target,
     dimensions: dict[str, ResolvedDimension],
     uniqueness: list[dict],
+    spec=None,
 ) -> list[GeneratedOperation]:
     boundary = _local(dimensions["aggregateBoundary"].value)
+    # H2.12: the rows replace where the store applies deletions before insertions, by declaration or by the operator's opt-in.
+    rows_tag = "-rows" if rows_replace(dimensions, spec) else ""
     concurrency = _local(dimensions["concurrencyProfile"].value)
     ordering = _local(dimensions["orderingGrain"].value)
     # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
@@ -164,8 +180,8 @@ def select_operations(
     elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
-                f"cas-replace-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-named-graph{receipt_tag}"
+                f"cas-replace-named-graph{rows_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-named-graph{rows_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
@@ -191,8 +207,8 @@ def select_operations(
             data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
             bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
-                f"cas-replace-composite-property{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-composite-property{receipt_tag}"
+                f"cas-replace-composite-property{rows_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-composite-property{rows_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-composite{receipt_tag}-dataset-guard" if dataset_level_guard

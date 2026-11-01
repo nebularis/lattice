@@ -2,7 +2,7 @@
 
 # Replace forms on Jena, Fuseki and RDF4J
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/persistence-replace-forms](../persistence-replace-forms/README.md) on Jena (in memory, TDB2 on disk and Fuseki over HTTP on TDB2) and on RDF4J's `MemoryStore`, and it probes how each store applies an update. The forms are the generated named-graph replace (`R0` and `R0-nodelta`) and three **candidates the compiler does not generate yet** (`R1-candidate`, `R2-candidate` and `R2-values-candidate`). The finding it follows up is TD-42 in the technical debt register, and the update order it probes is [TSD-01](../../docs/architecture/triple-store-discovery.md).
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/persistence-replace-forms](../persistence-replace-forms/README.md) on Jena (in memory, TDB2 on disk and Fuseki over HTTP on TDB2) and on RDF4J's `MemoryStore`, and it probes how each store applies an update. The forms are the generated named-graph replace (`R0` and `R0-nodelta`), the generated rows replace (`R2-values-candidate`, labelled "R2 (generated rows)") and two **candidates the compiler does not generate yet** (`R1-candidate` and `R2-candidate`). The finding it follows up is TD-42 in the technical debt register, and the update order it probes is [TSD-01](../../docs/architecture/triple-store-discovery.md).
 
 ## How it runs
 
@@ -47,7 +47,7 @@ For each family and for `R0`, `R1-candidate` and `R2-values-candidate`, five sma
 
 ## Pass criterion
 
-After every replace the root's graph holds exactly the payload (compared as a set), the version row is at the next sequence with the new head, the add and delete graphs hold exactly the delta, the txn graph holds the claim, and no other graph changed. **A wrong result from `R0` or `R0-nodelta` fails the run. Time never does.** A wrong result from a candidate is recorded as `wrong: <reason>`.
+After every replace the root's graph holds exactly the payload (compared as a set), the version row is at the next sequence with the new head, the add and delete graphs hold exactly the delta, the txn graph holds the claim, and no other graph changed. **A wrong result from `R0`, `R0-nodelta` or the generated rows replace fails the run. Time never does.** A wrong result from a candidate is recorded as `wrong: <reason>`.
 
 ## Run it
 

@@ -156,6 +156,7 @@ classDiagram
         appliesToTarget
         providesReasoning (xsd:boolean)
         providesSingleWriter (xsd:boolean)
+        providesSnapshotUpdateSemantics (xsd:boolean)
         providesStatementLevelConflictDetection (xsd:boolean)
     }
     class ClassScope {
@@ -203,7 +204,7 @@ classDiagram
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:ConcurrencyLevel", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "Aggregate boundary, concurrency and write discipline", "classes": ["dal:AggregateBoundaryProfile", "dal:AggregateBoundaryStrategy", "dal:OwnershipKind", "dal:ReferenceMode", "dal:ReferenceData", "dal:ConcurrencyProfile", "dal:ConcurrencyStrategy", "dal:ConcurrencyLevel", "dal:WriteDisciplineProfile", "dal:WriteDiscipline", "dal:MembershipEncoding", "dal:FirstWriteMode", "dal:DeadlockPolicy", "dal:ReplaceForm"], "enumerations": "table"} -->
 
 **Aggregate boundary, concurrency and write discipline**
 
@@ -267,6 +268,11 @@ classDiagram
         ByIdentity
         Pinned
     }
+    class ReplaceForm {
+        <<enumeration>>
+        RowsReplace
+        TemplateReplace
+    }
     class WriteDiscipline {
         <<enumeration>>
         AppendRecords
@@ -283,6 +289,7 @@ classDiagram
     ConcurrencyProfile --> DeadlockPolicy : deadlockPolicy
     ConcurrencyProfile --> EtagForm : etagForm
     ConcurrencyProfile --> EtagRepresentation : etagRepresentation
+    ConcurrencyProfile --> ReplaceForm : replaceForm
     WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
     WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
     class ObjectProperty_ownership["Object Property - ownership"]
@@ -792,6 +799,7 @@ classDiagram
     class PayloadEncoding {
         <<enumeration>>
         GroundNTriples
+        TripleRows
     }
     class ResultColumn {
         columnName (xsd:string)
@@ -1337,6 +1345,8 @@ write's boundary, and the same shape can keep serving the adopter's own validati
 `dal:minConcurrencyLevel` (`dal:Linearizable`, `dal:BestEffort`) records the level the family needs,
 which a capability check compares with the store (§5.7). A family that needs no guarantee declares no level,
 so `dal:NoConcurrencyGuarantee` is the level a store can provide and never one a family requires.
+
+**The form of the replace.** The compare-and-set of a named-graph or composite family has two forms that leave the same state. The template replace carries the payload in the update's template, which a store fills once per stored triple of the aggregate, so a write costs the aggregate's size times the payload's and takes seconds at a few thousand triples. The rows replace carries the payload, and under a patch log the delta, as rows of the `WHERE`, so the template is filled once per payload triple and the write is linear, but it is right only on a store that applies every deletion before any insertion, which SPARQL 1.1 defines and not every store does. `compile` selects the rows replace where the deployment's capability spec declares `dal:providesSnapshotUpdateSemantics` true (§5.7), and the template replace otherwise, since a store that declares nothing cannot be assumed to follow the specification. `dal:replaceForm` on the concurrency profile overrides the selection: `dal:RowsReplace` asks for the rows replace on a store that declares nothing, the operator taking responsibility for its update order, and `dal:TemplateReplace` keeps the template replace whatever the spec says. `dal:RowsReplace` against a spec that declares the semantics false is refused (`ReplaceFormContradictsCapability`), and a form declared on a family with no sweeping replace is warned (`ReplaceFormNotApplicable`). Either form writes the version row and a receipt whenever its guard holds, so a caller does not send a write whose delta is empty, which is the caller library's obligation and not the operation's.
 
 **Choosing, by situation** (guide §16.6):
 
@@ -1986,8 +1996,11 @@ ex:MyFusekiEnvironment a dal:CapabilitySpec ;
     dal:appliesToTarget           ex:LoanApplication ;
     dal:providesCas               dal:Linearizable ;
     dal:providesReasoning         false ;
-    dal:providesCommitValidation  dal:NoCommitValidation .
+    dal:providesCommitValidation  dal:NoCommitValidation ;
+    dal:providesSnapshotUpdateSemantics true .
 ```
+
+`dal:providesSnapshotUpdateSemantics` says whether the store applies every deletion of a `DELETE`/`INSERT WHERE` before any insertion, as the specification defines. Jena in memory, TDB2, Fuseki over TDB2 and Oxigraph from 0.5.12 do, and rdflib and RDF4J apply each solution in turn. It selects the form of the replace (§5.6.2), and it is the one field the selection reads. Absent means unknown.
 
 A spec that says no reasoning is available also makes resolution drop reasoning-dependent scopes
 (§5.5.3). Without a spec, nothing is dropped or downgraded: the compiler assumes the most any backend
@@ -2034,7 +2047,7 @@ for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two comp
 | `dal:parameter` | each parameter's name, kind (`dal:ParameterKind`) and whether it is required. A caller-named graph's rule is `dal:GraphNameOfRoot`, which refers to `dal:graphIriTemplate`, and a registry list says it is sourced from the family's `dal:registryGraph` |
 | `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`) and the parameter that keys it |
 | `dal:resultColumn` | each column of an audit or of the members query, with its kind and a separator |
-| `dal:payloadContract` | the payload slot, its root (the new version, for an append of versions), its encoding (`dal:GroundNTriples`), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape, each with the shape it leads to (`dal:edgeTargetShape`), so that a caller can walk the owned edges |
+| `dal:payloadContract` | the payload slot, its root (the new version, for an append of versions), its encoding (`dal:GroundNTriples`, or `dal:TripleRows` for every payload slot of a rows replace), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape, each with the shape it leads to (`dal:edgeTargetShape`), so that a caller can walk the owned edges |
 | `dal:reportsOutcome`, `dal:examinedParameter` | on an audit, the outcomes it can report (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) and the parameter that lists the graphs it reads |
 | `dal:digestContract` | what the request digest is hashed over, in order: the operation kind, the target, the expected seq, and the payload, the events, or the added and dropped triples |
 | `dal:guardStatus`, `dal:graphNaming` | the run's choices, above |
@@ -2047,8 +2060,8 @@ in `shapes/constraints.ttl` check a compiled profile (§7.2), and the files of `
 
 | Configuration | Operations |
 |---|---|
-| `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete` |
-| `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph` |
+| `dal:Optimistic` with a named-graph boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace`, `tombstone-delete`. The replace is the rows form (`cas-replace-named-graph-rows`) where the capability spec declares snapshot update semantics or the profile opts in (§5.6.2), and the template form otherwise |
+| `dal:Optimistic` with a composite boundary | `create-if-absent` (or `bootstrap-version-row` under `dal:PreCreatedRow`), `cas-replace` and `tombstone-delete`, each sweeping the aggregate with one property path inside the family's `dal:dataGraph`. The replace takes the rows form (`cas-replace-composite-property-rows`) under the same selection |
 | `dal:Optimistic` with no boundary | `cas-replace` guarded on `dal:valueGuardProperty`, inside the family's `dal:dataGraph` |
 | `dal:AppendVersions` (composite boundary, or no boundary with a `dal:dataGraph`, under `dal:Optimistic`) | `bootstrap-version-row` and `append-version`, whatever `dal:firstWrite` says, and no `tombstone-delete` (§5.6.10) |
 | `dal:AppendRecords` | `bootstrap-version-row` and `append`, whatever the concurrency |
@@ -3446,6 +3459,12 @@ dal:SnapshotPerRevision, dal:NoReceipt.
 
 **Equivalent to.** { dal:ReceiptOnly, dal:PatchLog, dal:SnapshotPerRevision, dal:NoReceipt }
 
+#### `dal:ReplaceForm`
+
+**Definition.** The form of the compare-and-set replace of an optimistic named-graph or composite family: dal:TemplateReplace carries the payload in the update's template, which a store fills once per stored triple, and dal:RowsReplace carries it as rows of the WHERE, so the write is linear in the aggregate's size on a store that applies every deletion before any insertion. A profile that declares none is written in the form the capability spec allows.
+
+**Equivalent to.** { dal:TemplateReplace, dal:RowsReplace }
+
 #### `dal:MetaTopologyProfile`
 
 **Definition.** A profile that declares a family's meta topology, its shard counts and its registry graph.
@@ -3610,7 +3629,7 @@ target and the operation.
 
 **Definition.** How a payload is written into its slot.
 
-**Equivalent to.** { dal:GroundNTriples }
+**Equivalent to.** { dal:GroundNTriples, dal:TripleRows }
 
 #### `dal:BoundaryShapeAbsence`
 
@@ -3979,6 +3998,14 @@ replace and is rejected.
 **Domain.** `dal:ReceiptProfile`
 
 **Range.** `dal:ReceiptModel`
+
+#### `dal:replaceForm`
+
+**Definition.** The operator's choice of replace form for an optimistic family, overriding what the capability spec would select: dal:RowsReplace asks for the rows replace on a store that declares nothing, the operator taking responsibility for its update order, and dal:TemplateReplace keeps the template replace on a store that declares snapshot update semantics. Absent, the capability spec selects, and an undeclared store gets the template replace.
+
+**Domain.** `dal:ConcurrencyProfile`
+
+**Range.** `dal:ReplaceForm`
 
 #### `dal:metaTopology`
 
@@ -4805,6 +4832,14 @@ scope with committed history (guide §24.4).
 
 **Range.** `xsd:boolean`
 
+#### `dal:providesSnapshotUpdateSemantics`
+
+**Definition.** Whether the supplied store applies every deletion of a DELETE/INSERT WHERE before any insertion, as SPARQL 1.1 defines, rather than one solution at a time. True selects the rows replace for the families it applies to. Absent is unknown, which keeps the template replace.
+
+**Domain.** `dal:CapabilitySpec`
+
+**Range.** `xsd:boolean`
+
 #### `dal:providesStatementLevelConflictDetection`
 
 **Definition.** Whether the supplied environment detects write conflicts per statement.
@@ -5354,6 +5389,13 @@ The individuals of `dal:ReceiptModel`.
 | `dal:SnapshotPerRevision` | `dal:ReceiptModel` | A sealed payload graph per revision. Trivially as-of, highest storage cost. |
 | `dal:NoReceipt` | `dal:ReceiptModel` | No receipt and no head for a write, which still records its transaction claim, so a retry after a lost reply is confirmed. For a dal:InPlace family that wants no history, such as a derived artefact that can be regenerated. Refused with dal:AppendVersions, dal:AppendRecords and a stream, whose versions and records take their position and transaction time from the receipt. |
 
+The individuals of `dal:ReplaceForm`.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:TemplateReplace` | `dal:ReplaceForm` | The replace whose payload sits in the update's template, filled once per stored triple. Right on every store, and quadratic in the aggregate's size. |
+| `dal:RowsReplace` | `dal:ReplaceForm` | The replace whose payload and delta come as rows of the WHERE, filled once per payload triple. Linear, and right only on a store that applies every deletion before any insertion. |
+
 The individuals of `dal:MetaTopology`.
 
 | Individual | Type | Definition |
@@ -5469,6 +5511,7 @@ The individuals of `dal:PayloadEncoding`.
 | Individual | Type | Definition |
 |---|---|---|
 | `dal:GroundNTriples` | `dal:PayloadEncoding` | Ground N-Triples, with no blank node and no variable, as the caller's slot text. A blank node is skolemized before it is sent. |
+| `dal:TripleRows` | `dal:PayloadEncoding` | One row (s p o) per triple of the payload, for a VALUES block, with the same ground terms as the N-Triples form and no full stop. Every Payload slot of the operation takes this form. The request digest is over the N-Triples lines whichever encoding the slot takes. |
 
 The individuals of `dal:BoundaryShapeAbsence`.
 
@@ -5867,7 +5910,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ParameterDeclaration` | Class |  |
 | `dal:ParameterKind` | Class | Equivalent to {`dal:IriKind`, `dal:LongKind`, `dal:StringKind`, `dal:LangStringKind`, `dal:PositionKind`, `dal:DigestKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:RowsKind`, `dal:RegistryListKind`}. |
 | `dal:PayloadContract` | Class |  |
-| `dal:PayloadEncoding` | Class | Equivalent to {`dal:GroundNTriples`}. |
+| `dal:PayloadEncoding` | Class | Equivalent to {`dal:GroundNTriples`, `dal:TripleRows`}. |
 | `dal:PersistenceKeyed` | Class | Subclass of `fnd:NaturallyKeyed`. |
 | `dal:PrivacyClass` | Class | Equivalent to {`dal:PersonalData`, `dal:InternalData`, `dal:PublicData`}. |
 | `dal:PrivacyProfile` | Class |  |
@@ -5877,6 +5920,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ReferenceData` | Class |  |
 | `dal:ReferenceEdge` | Class |  |
 | `dal:ReferenceMode` | Class | Equivalent to {`dal:ByIdentity`, `dal:Pinned`}. |
+| `dal:ReplaceForm` | Class | Equivalent to {`dal:TemplateReplace`, `dal:RowsReplace`}. |
 | `dal:ResolvedDimension` | Class |  |
 | `dal:ResourceAccess` | Class |  |
 | `dal:ResourceKind` | Class | Equivalent to {`dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`}. |
@@ -5976,6 +6020,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:recordClass` | Object property | Range `owl:Class`. |
 | `dal:referenceEdge` | Object property | Range `dal:ReferenceEdge`. |
 | `dal:referenceMode` | Object property | Range `dal:ReferenceMode`. |
+| `dal:replaceForm` | Object property | Domain `dal:ConcurrencyProfile`. Range `dal:ReplaceForm`. |
 | `dal:reportsOutcome` | Object property | Domain `dal:GeneratedOperation`. Range `dal:AuditOutcome`. |
 | `dal:requiresCas` | Object property | Domain `dal:CapabilityRequirement`. Range `dal:ConcurrencyLevel`. |
 | `dal:requiresReasoningFor` | Object property | Domain `dal:CapabilityRequirement`. |
@@ -6051,6 +6096,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:priority` | Datatype property | Domain `dal:ProfileScope`. Range `xsd:integer`. |
 | `dal:providesReasoning` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
 | `dal:providesSingleWriter` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
+| `dal:providesSnapshotUpdateSemantics` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
 | `dal:providesStatementLevelConflictDetection` | Datatype property | Domain `dal:CapabilitySpec`. Range `xsd:boolean`. |
 | `dal:recipeDigest` | Datatype property | Domain `dal:MintingRecipe`. Range `xsd:string`. |
 | `dal:recipeDocument` | Datatype property | Domain `dal:MintingRecipe`. |
@@ -6215,6 +6261,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:Retiring` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retired`. |
 | `dal:RowLevelGuardOnly` | Individual | Type `dal:EpochGuardScope`. Different from `dal:DatasetLevelGuard`. |
 | `dal:RowsKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:StringKind`. |
+| `dal:RowsReplace` | Individual | Type `dal:ReplaceForm`. |
 | `dal:ScanRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:PointRead`, `dal:WholeAggregateRead`. |
 | `dal:SelfReferenceDisallowed` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:ExcludeHeaderSubgraph`, `dal:PlaceholderSubstitution`. |
 | `dal:ShaclCoreValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:CustomRulesValidation`, `dal:NoCommitValidation`, `dal:ShaclSparqlValidation`. |
@@ -6231,10 +6278,12 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:SurrogateClaimedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`. |
 | `dal:TaggedRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:SingleRepresentation`. |
 | `dal:TargetPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`. |
+| `dal:TemplateReplace` | Individual | Type `dal:ReplaceForm`. |
 | `dal:TermColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`. |
 | `dal:Tombstone` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:TransactionClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:VersionRow`. |
 | `dal:Transactional` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Advisory`, `dal:Strong`. |
+| `dal:TripleRows` | Individual | Type `dal:PayloadEncoding`. |
 | `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
 | `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:CallerSuppliedSurrogate`. |
 | `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
@@ -6397,6 +6446,7 @@ dal:CapabilitySpecShape
     sh:targetClass dal:CapabilitySpec ;
     sh:property [ sh:path dal:providesCas ; sh:maxCount 1 ] ;
     sh:property [ sh:path dal:providesReasoning ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path dal:providesSnapshotUpdateSemantics ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
     sh:property [ sh:path dal:providesCommitValidation ; sh:maxCount 1 ] .
 
 # The SharedClassProfileWarning convention (ADR-A78 point 5):
@@ -6847,7 +6897,7 @@ dal:PayloadContractShape
                   sh:message "A payload contract names exactly one dal:payloadParameter, a parameter declaration." ] ;
     sh:property [ sh:path dal:payloadRoot ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
                   sh:message "dal:payloadRoot names a parameter declaration by its IRI." ] ;
-    sh:property [ sh:path dal:payloadEncoding ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( dal:GroundNTriples ) ;
+    sh:property [ sh:path dal:payloadEncoding ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( dal:GroundNTriples dal:TripleRows ) ;
                   sh:message "A payload contract has exactly one dal:payloadEncoding, an individual of dal:PayloadEncoding." ] ;
     sh:property [ sh:path dal:boundaryShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:message "A payload contract names its boundary shape, or says dal:NoBoundaryShape. It never leaves the shape out." ] ;
@@ -6983,7 +7033,9 @@ dal:ConcurrencyProfileEnumerationsShape
     sh:property [ sh:path dal:etagRepresentation ; sh:nodeKind sh:IRI ; sh:in ( dal:SingleRepresentation dal:TaggedRepresentation ) ;
                   sh:message "dal:etagRepresentation takes one of dal:SingleRepresentation, dal:TaggedRepresentation." ] ;
     sh:property [ sh:path dal:minConcurrencyLevel ; sh:nodeKind sh:IRI ; sh:in ( dal:Linearizable dal:BestEffort ) ;
-                  sh:message "dal:minConcurrencyLevel takes one of dal:Linearizable, dal:BestEffort. A family that needs no guarantee declares no level." ] .
+                  sh:message "dal:minConcurrencyLevel takes one of dal:Linearizable, dal:BestEffort. A family that needs no guarantee declares no level." ] ;
+    sh:property [ sh:path dal:replaceForm ; sh:nodeKind sh:IRI ; sh:in ( dal:TemplateReplace dal:RowsReplace ) ;
+                  sh:message "dal:replaceForm takes one of dal:TemplateReplace, dal:RowsReplace. A family that leaves the choice to the capability spec declares none." ] .
 
 dal:CapabilityRequirementEnumerationsShape
     a sh:NodeShape ;
@@ -7543,6 +7595,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - The rows replace. New: `dal:ReplaceForm`, `dal:TemplateReplace`, `dal:RowsReplace`, `dal:replaceForm` on `dal:ConcurrencyProfile`, `dal:providesSnapshotUpdateSemantics` on `dal:CapabilitySpec`, and `dal:TripleRows` as a `dal:PayloadEncoding`. A configuration that declares none of them compiles as before, so the expected profiles do not change (no effect).
 - **0.20.0**.
   - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - changes meaning. The store vocabulary, the `pat:` terms that the generated operations write into receipts, version rows, transaction claims and key claims, moves from the illustrative `example.org` namespace to the published `persistence-store` document, `spec/persistence-store.ttl`, with the namespace `https://www.nebularis.org/neuro-semantic/lattice/persistence-store#`. Data written under the old IRIs is stored under different IRIs and must be rewritten.

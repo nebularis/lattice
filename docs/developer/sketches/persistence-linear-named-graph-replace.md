@@ -157,7 +157,8 @@ Three things the first run left out were run on 2026-11-01, in both benchmarks (
 5. **Decide the selection.** §7.
 6. **Check the callers.** R1′ changes neither. R2 adds rows slots for the payload and the delta to both, beside the rows they render for events.
 7. **Build and measure the composite family, run the empty cases, count the zero-length path.** **Done**, §5.3, TSD-65 and TSD-67. Both families, five edge cases per form per engine, the bare sweep counted and timed.
-8. **Left.** The cause of RDF4J's wrong composite R0 (TSD-Q36). The tombstone was not measured: its template is k quads and, with a patch log, one swept quad per solution, so it is M × k and not quadratic. Whether PDD-17's scan changes under either form is not measured. GraphDB, Virtuoso and Neptune are not probed.
+8. **Built.** Slice H2.12 of track H ([plan §4.20](../plans/formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01), [FMH-H2-12](../validation/FMH-H2-12.md)) generates the rows form, selected by `dal:providesSnapshotUpdateSemantics` or `dal:replaceForm`, on 2026-11-01.
+9. **Left.** The cause of RDF4J's wrong composite R0 (TSD-Q36). The tombstone was not measured: its template is k quads and, with a patch log, one swept quad per solution, so it is M × k and not quadratic. Whether PDD-17's scan changes under either form is not measured. GraphDB, Virtuoso and Neptune are not probed.
 
 ## 7. Questions for the maintainer
 

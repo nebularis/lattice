@@ -47,6 +47,22 @@
     "sha256": "802df56875f558916c9221abe10fe03d7c9f749f29f4fc7e613dac1146a526ff",
     "version": 3
   },
+  "cas-replace-composite-property-rows-no-receipt": {
+    "sha256": "d93edf9506dcaa2bc8c0c8392ab24a1bfab13e8a97923efa8aef9e81d8c15a69",
+    "version": 1
+  },
+  "cas-replace-composite-property-rows-no-receipt-dataset-guard": {
+    "sha256": "8af59a379589e702dd1dc0cf2fb7785acdd4ae07a488d7dcf6ee1acaa79a981a",
+    "version": 1
+  },
+  "cas-replace-composite-property-rows-patch-log": {
+    "sha256": "f136d527bc0fbc8471ad1a8113a0b10559c10e215b63592fb4a182ea0263546e",
+    "version": 1
+  },
+  "cas-replace-composite-property-rows-patch-log-dataset-guard": {
+    "sha256": "a6968bf9f0590002bfd13f92667fa8b9168b2ec09c3b2433427b9cc450dbd78c",
+    "version": 1
+  },
   "cas-replace-named-graph": {
     "sha256": "446e183250795ac2b34fa0cd60dfce61be1f10591774dbe5c70d581a82076bec",
     "version": 4
@@ -70,6 +86,30 @@
   "cas-replace-named-graph-patch-log-dataset-guard": {
     "sha256": "19f7e8765b02234e45fb756586ae737e2108f8c8dbd1e3267bcc37fec0de5ead",
     "version": 3
+  },
+  "cas-replace-named-graph-rows": {
+    "sha256": "cb53b5ef4b6945f6521fe34f106c13c917fcab3b612b7cd4685f62950d544775",
+    "version": 1
+  },
+  "cas-replace-named-graph-rows-dataset-guard": {
+    "sha256": "593230e3eacbaa172dcba39e7d531114e8f75a33848649f42d904abb4b1449b4",
+    "version": 1
+  },
+  "cas-replace-named-graph-rows-no-receipt": {
+    "sha256": "f4fc3b6ee0fe5eef081ac6faccf7e201a6d269c933bd98157054a12f313bc621",
+    "version": 1
+  },
+  "cas-replace-named-graph-rows-no-receipt-dataset-guard": {
+    "sha256": "b16c0bd74111870adc0f32819fe4ebf032d8388d7cade22bffb24ba9d52bfa81",
+    "version": 1
+  },
+  "cas-replace-named-graph-rows-patch-log": {
+    "sha256": "25cd4151279525515d36c42da6f6c3c5dc60ec69500e852affd64fd081e8a9c7",
+    "version": 1
+  },
+  "cas-replace-named-graph-rows-patch-log-dataset-guard": {
+    "sha256": "e895a4a24b86844240ba40e0513980865e291cd44cb675348dca9ff9b400b247",
+    "version": 1
   },
   "cas-replace-value-guard": {
     "sha256": "2a367fc0f34bc3bd749a5cc0fbec1939da131b7cdd28689a62b7d30fda8c7751",

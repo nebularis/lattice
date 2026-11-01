@@ -567,7 +567,7 @@ dal:PayloadContract a owl:Class ;
 
 dal:PayloadEncoding a owl:Class ;
     rdfs:comment "How a payload is written into its slot." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:GroundNTriples ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:GroundNTriples dal:TripleRows ) ] .
 
 dal:PayloadKind a dal:ParameterKind ;
     rdfs:comment "A request-time slot for a set of ground triples." .
@@ -680,6 +680,10 @@ dal:Reject a dal:ViolationPolicy ;
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
 
+dal:ReplaceForm a owl:Class ;
+    rdfs:comment "The form of the compare-and-set replace of an optimistic named-graph or composite family: dal:TemplateReplace carries the payload in the update's template, which a store fills once per stored triple, and dal:RowsReplace carries it as rows of the WHERE, so the write is linear in the aggregate's size on a store that applies every deletion before any insertion. A profile that declares none is written in the form the capability spec allows." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:TemplateReplace dal:RowsReplace ) ] .
+
 dal:ResolvedDimension a owl:Class ;
     rdfs:comment "Provenance for one dimension's winning value at one target: which scope won, and how many candidates existed." .
 
@@ -718,6 +722,9 @@ dal:RowLevelGuardOnly a dal:EpochGuardScope ;
 
 dal:RowsKind a dal:ParameterKind ;
     rdfs:comment "A request-time slot for rows of a VALUES clause." .
+
+dal:RowsReplace a dal:ReplaceForm ;
+    rdfs:comment "The replace whose payload and delta come as rows of the WHERE, filled once per payload triple. Linear, and right only on a store that applies every deletion before any insertion." .
 
 dal:Rule a owl:Class ;
     rdfs:comment "A rule a parameter's value must satisfy, named and never written as a SPARQL expression." ;
@@ -794,6 +801,9 @@ dal:TargetPart a dal:DigestPartRole ;
 dal:Template a owl:Class ;
     rdfs:comment "The builder that renders a generated operation, shared across every target resolving to the same dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix." .
 
+dal:TemplateReplace a dal:ReplaceForm ;
+    rdfs:comment "The replace whose payload sits in the update's template, filled once per stored triple. Right on every store, and quadratic in the aggregate's size." .
+
 dal:TermColumn a dal:ColumnKind ;
     rdfs:comment "Any RDF term." .
 
@@ -805,6 +815,9 @@ dal:TransactionClaim a dal:ResourceKind ;
 
 dal:Transactional a dal:UniquenessEnforcementLevel ;
     rdfs:comment "A dal:minEnforcementLevel ranked between dal:Advisory and dal:Strong, for a key claim written by one guarded update that the store applies atomically." .
+
+dal:TripleRows a dal:PayloadEncoding ;
+    rdfs:comment "One row (s p o) per triple of the payload, for a VALUES block, with the same ground terms as the N-Triples form and no full stop. Every Payload slot of the operation takes this form. The request digest is over the N-Triples lines whichever encoding the slot takes." .
 
 dal:UnconditionalWrite a dal:OperationKind ;
     rdfs:comment "Writes into a named graph with no guard on a version row." .
@@ -1469,6 +1482,11 @@ dal:providesSingleWriter a owl:DatatypeProperty ;
     rdfs:domain dal:CapabilitySpec ;
     rdfs:range xsd:boolean .
 
+dal:providesSnapshotUpdateSemantics a owl:DatatypeProperty ;
+    rdfs:comment "Whether the supplied store applies every deletion of a DELETE/INSERT WHERE before any insertion, as SPARQL 1.1 defines, rather than one solution at a time. True selects the rows replace for the families it applies to. Absent is unknown, which keeps the template replace." ;
+    rdfs:domain dal:CapabilitySpec ;
+    rdfs:range xsd:boolean .
+
 dal:providesStatementLevelConflictDetection a owl:DatatypeProperty ;
     rdfs:comment "Whether the supplied environment detects write conflicts per statement." ;
     rdfs:domain dal:CapabilitySpec ;
@@ -1508,6 +1526,11 @@ dal:registryGraph a owl:DatatypeProperty ;
     rdfs:comment "IRI of a small catalog graph listing every log bucket, txn shard, key shard and delta bucket this family uses, with its role and (epoch, seq) coverage. Integrity, ordering and as-of queries enumerate from this registry; they never rely on a STRSTARTS prefix scan over graph names, which is a diagnostic convenience, not an integrity mechanism." ;
     rdfs:domain dal:MetaTopologyProfile ;
     rdfs:range xsd:string .
+
+dal:replaceForm a owl:ObjectProperty ;
+    rdfs:comment "The operator's choice of replace form for an optimistic family, overriding what the capability spec would select: dal:RowsReplace asks for the rows replace on a store that declares nothing, the operator taking responsibility for its update order, and dal:TemplateReplace keeps the template replace on a store that declares snapshot update semantics. Absent, the capability spec selects, and an undeclared store gets the template replace." ;
+    rdfs:domain dal:ConcurrencyProfile ;
+    rdfs:range dal:ReplaceForm .
 
 dal:reportsOutcome a owl:ObjectProperty ;
     rdfs:comment "An outcome an audit can report. Every audit declares all three." ;

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""What the persistence compiler's named-graph replace costs against a candidate linear form on rdflib and Oxigraph, and what each store does with the update (ADR-A124, TSD-01, TSD-42, TD-42).
+"""What the persistence compiler's named-graph replace costs against candidate linear forms and the generated rows replace on rdflib and Oxigraph, and what each store does with the update (ADR-A124, TSD-01, TSD-42, TD-42).
 
 The generated `cas-replace-named-graph` (patch-log receipt, caller-named graph) sweeps the aggregate's graph with `OPTIONAL { GRAPH $g { ?s ?p ?o } }`. Its `WHERE` gives one
-solution per stored triple (M) and a store that fills the whole `INSERT` template for every solution pays M times the payload (N). Four forms are measured.
+solution per stored triple (M) and a store that fills the whole `INSERT` template for every solution pays M times the payload (N). Five forms are measured.
 
 | Form | What it is |
 |---|---|
@@ -12,7 +12,7 @@ solution per stored triple (M) and a store that fills the whole `INSERT` templat
 | `R0-nodelta` | `R0` with empty `assertTriples` and `retractTriples`, to separate the payload's cost from the delta blocks' cost |
 | `R1-candidate` | a candidate the compiler does not generate yet, two operations in one request, a delete that sweeps and then an insert with no sweep |
 | `R2-candidate` | a candidate the compiler does not generate yet, one operation whose sweep is a `UNION` with one extra solution that alone binds every graph the `INSERT` writes to |
-| `R2-values-candidate` | a candidate the compiler does not generate yet, one operation whose `WHERE` carries the payload and the delta as `VALUES` rows in `UNION` branches, so the `INSERT` template holds three single quads and the payload is carried by the solutions |
+| `R2-values-candidate` | the generated rows replace (`cas-replace-named-graph-rows-patch-log`, `cas-replace-composite-property-rows-patch-log`), one operation whose `WHERE` carries the payload and the delta as `VALUES` rows in `UNION` branches, so the `INSERT` template holds three single quads and the payload is carried by the solutions. Its three payload slots are filled as rows `(s p o)` |
 
 **Workload.** For each size M the stored state at revision r holds M triples, the first half unchanged across revisions (the kept half) and the second half carrying the revision. The
 payload of revision r+1 has the same shape, so N equals M and half of the payload is already stored. Three replaces per size, the best time kept.
@@ -21,7 +21,7 @@ payload of revision r+1 has the same shape, so N equals M and half of the payloa
 because they are right only if the store removes every deletion before it adds any insertion. rdflib's answer follows the process's hash seed, so P1 runs there in child processes under seeds 0 to 11, and a **witness**
 runs `R2-candidate` on rdflib under each seed to record which seeds go wrong. The witness is evidence and never fails the run.
 
-**Pass criterion.** After every replace the checks run, and a wrong result from `R0` or `R0-nodelta` fails the run. A candidate that is wrong is recorded in the report as `wrong: <reason>`. **Time never fails it.** A measurement runs in a child
+**Pass criterion.** After every replace the checks run, and a wrong result from `R0`, `R0-nodelta` or the generated rows replace fails the run. A candidate that is wrong is recorded in the report as `wrong: <reason>`. **Time never fails it.** A measurement runs in a child
 process with a wall-clock limit (`REPLACE_FORMS_TIMEOUT`, default 900 seconds), and one that does not finish is recorded as such, which is not a wrong result.
 
 **Two families.** `named-graph` replaces the aggregate held in a graph of its own. `composite` replaces a root and the members its owned path reaches, in one data graph shared with a bystander aggregate that no replace may touch.
@@ -72,12 +72,14 @@ FORMS = {
     "R0-nodelta": "R0 with empty delta slots",
     "R1-candidate": "R1 candidate (two operations)",
     "R2-candidate": "R2 candidate (one operation, UNION)",
-    "R2-values-candidate": "R2 candidate (one operation, VALUES rows)",
+    "R2-values-candidate": "R2 (generated rows)",
 }
-CANDIDATES = ("R1-candidate", "R2-candidate", "R2-values-candidate")
+CANDIDATES = ("R1-candidate", "R2-candidate")
 NEEDS_SNAPSHOT = ("R2-candidate", "R2-values-candidate")
 """The forms that are right only on an engine that removes every deletion before it adds any insertion (P1)."""
-GENERATED = ("R0", "R0-nodelta")
+GENERATED = ("R0", "R0-nodelta", "R2-values-candidate")
+ROWS_FORMS = ("R2-values-candidate",)
+"""The forms whose payload slots are filled as rows `(s p o)` (`dal:TripleRows`) and not as N-Triples."""
 """The forms whose wrong result fails the run. A candidate that is wrong is a finding, so it is recorded."""
 
 
@@ -183,7 +185,6 @@ def _grab(pattern: str, text: str) -> str:
 
 
 NAMED_SWEEP = "  OPTIONAL { GRAPH $g { ?s ?p ?o } }\n"
-NAMED_BRANCH = "{ GRAPH $g { ?s ?p ?o } }"
 COMPOSITE_SWEEP = re.compile(r"  OPTIONAL \{\n    GRAPH <([^>]+)> \{\n      \$root (.+?) \?s \.\n      \?s \?p \?o\n    \}\n  \}\n")
 """The composite replace's sweep as the renderer writes it. The data graph and the owned path are grabbed from the rendered text and never typed here."""
 
@@ -217,18 +218,6 @@ def candidate_r2(r0: str) -> str:
     text = _once(text, f"GRAPH <{meta}> {{ $root pat:epoch $epoch ;", "GRAPH ?metaW { $root pat:epoch $epoch ;")
     text = _once(text, f"GRAPH <{txn}> {{ $txnId pat:rev $newRev ;", "GRAPH ?txnW { $txnId pat:rev $newRev ;")
     return text
-
-
-def candidate_r2_values(r0: str, sweep: str = NAMED_SWEEP, branch: str = NAMED_BRANCH, payload_graph: str = "$g") -> str:
-    """A candidate the compiler does not generate yet. One operation. `R0`'s `DELETE`, its top-level binds and its `INSERT` blocks for the version row, the claim and the log stay as they are. The sweep becomes a `UNION` of the sweep,
-    the payload as `VALUES` rows, the assertions as `VALUES` rows, the retractions as `VALUES` rows and an empty group (one solution, so a replace of an empty aggregate by an empty payload still moves the row). The three
-    payload quads of the `INSERT` become single quads over the row variables. Right only on a store that removes every deletion before it adds any insertion (P1)."""
-    union = (f"  {branch} UNION {{ VALUES (?ps ?pp ?po) {{ {{{{{{payloadRows}}}}}} }} }} UNION {{ VALUES (?as ?ap ?ao) {{ {{{{{{assertRows}}}}}} }} }}"
-             " UNION { VALUES (?ds ?dp ?do) { {{{retractRows}}} } } UNION { }\n")
-    text = _once(r0, sweep, union)
-    text = _once(text, f"GRAPH {payload_graph} {{ {{{{{{payloadTriples}}}}}} }}", f"GRAPH {payload_graph} {{ ?ps ?pp ?po }}")
-    text = _once(text, "GRAPH ?addGraph { {{{assertTriples}}} }", "GRAPH ?addGraph { ?as ?ap ?ao }")
-    return _once(text, "GRAPH ?delGraph { {{{retractTriples}}} }", "GRAPH ?delGraph { ?ds ?dp ?do }")
 
 
 # ---- the families --------------------------------------------------------------------------------------------------------
@@ -337,6 +326,14 @@ def _rendered(context: dict, create: str, replace: str) -> tuple:
     return render(build(create, context, guards=False, graph_names="caller")), render(build(replace, context, guards=False, graph_names="caller"))
 
 
+def _generated(context: dict, template: str) -> str:
+    """The text of a replace the compiler generates, rendered as `R0` is."""
+    from persistence.builders import build
+    from persistence.ir_render import render
+
+    return render(build(template, context, guards=False, graph_names="caller"))
+
+
 def named_family() -> Family:
     """The rendered create and the text of each form, with the payload slots still in the text. `R0` is rendered by the compiler from the template `cas-replace-named-graph-patch-log` with `graph_names="caller"`
     and no guards, and the candidates are derived from it by text. (`persistence.builders.build` has no `receipt` keyword in this checkout, the receipt is part of the template's name.)"""
@@ -348,7 +345,7 @@ def named_family() -> Family:
         "eventGraphPrefix": Iri.encode("urn:g:events/order/"), "datasetGraph": Iri.encode("urn:g:dataset"), "datasetNode": Iri.encode("urn:g:dataset-node"),
     }
     create, r0 = _rendered(context, "create-if-absent-named-graph-patch-log", "cas-replace-named-graph-patch-log")
-    texts = {"create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0), "R2-candidate": candidate_r2(r0), "R2-values-candidate": candidate_r2_values(r0)}
+    texts = {"create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0), "R2-candidate": candidate_r2(r0), "R2-values-candidate": _generated(context, "cas-replace-named-graph-rows-patch-log")}
     return Family("named-graph", ROOT, root_graph(), META, TXN, LOG, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-candidate", "R2-values-candidate"), named_state)
 
 
@@ -380,10 +377,9 @@ def composite_family() -> Family:
     meta = _grab(r"GRAPH <([^>]+)> \{ \$root pat:epoch \$epoch", r0)
     txn = _grab(r"GRAPH <([^>]+)> \{ \$txnId pat:rev \$newRev ;", r0)
     log = _grab(r"STR\(<([^>]+)>\), SUBSTR", r0)
-    branch = f"{{ GRAPH <{data}> {{ $root {path} ?s . ?s ?p ?o }} }}"
     texts = {
         "create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0, sweep, f"  GRAPH <{data}> {{ ?s ?p ?o }}\n"),
-        "R2-values-candidate": candidate_r2_values(r0, sweep, branch, f"<{data}>"),
+        "R2-values-candidate": _generated(composite_context(), "cas-replace-composite-property-rows-patch-log"),
     }
     return Family("composite", COMPOSITE_ROOT, data, meta, txn, log, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-values-candidate"), composite_state, BYSTANDER, f"GRAPH <{data}> {{ $root {path} ?s . ?s ?p ?o }}")
 
@@ -466,8 +462,8 @@ def build_run(family: Family, form: str, states: list) -> Run:
         }
         delta = form != "R0-nodelta"
         assert_set, retract_set = (new - old, old - new) if delta else (set(), set())
-        text = texts[form].replace(SLOT % "payloadTriples", nt(new)).replace(SLOT % "assertTriples", nt(assert_set)).replace(SLOT % "retractTriples", nt(retract_set))
-        text = text.replace(SLOT % "payloadRows", rows(new)).replace(SLOT % "assertRows", rows(assert_set)).replace(SLOT % "retractRows", rows(retract_set))
+        fill = rows if form in ROWS_FORMS else nt
+        text = texts[form].replace(SLOT % "payloadTriples", fill(new)).replace(SLOT % "assertTriples", fill(assert_set)).replace(SLOT % "retractTriples", fill(retract_set))
         run.steps.append(Step(
             text=substitute(text, params), seq=seq + 1, new_rev=new_rev, txn=txn, root=root, root_graph=g, add_graph=new_rev + "/add", del_graph=new_rev + "/del",
             meta=family.meta, txn_graph=family.txn, log=family.log, expect_root=set(new) | set(family.bystander), expect_add=assert_set, expect_del=retract_set, bystander=family.bystander))

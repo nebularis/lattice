@@ -70,6 +70,8 @@ DIMENSIONS = (
     # H2.6f (2026-10-20): how a family that appends versions states each version's members, and how often it lists them all.
     "membershipEncoding",
     "checkpointEvery",
+    # H2.12 (2026-11-01): the replace form an operator opts a family into, or absent, which means by capability.
+    "replaceForm",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
