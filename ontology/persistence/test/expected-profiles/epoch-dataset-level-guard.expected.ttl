@@ -68,8 +68,7 @@
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-2>,
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-3>,
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-4>,
-        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5>,
-        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-6> .
+        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-1> a dal:DigestPart ;
     dal:partOrder 1 ;
@@ -88,16 +87,11 @@
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-4> a dal:DigestPart ;
     dal:partOrder 4 ;
-    dal:partRole dal:PayloadPart ;
-    dal:partSource dal:NoSource .
-
-<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> a dal:DigestPart ;
-    dal:partOrder 5 ;
     dal:partRole dal:AddPart ;
     dal:partSource <https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples> .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-6> a dal:DigestPart ;
-    dal:partOrder 6 ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> a dal:DigestPart ;
+    dal:partOrder 5 ;
     dal:partRole dal:DelPart ;
     dal:partSource <https://example.org/lending/LoanApplication/compiled/cas-replace#param-retractTriples> .
 

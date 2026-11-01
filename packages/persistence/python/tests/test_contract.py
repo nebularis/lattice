@@ -75,3 +75,14 @@ def test_a_bare_string_is_not_a_payload(profiles):
 def test_an_operation_without_a_digest_refuses(profiles):
     with pytest.raises(DigestError):
         request_digest(by_template(profiles["baseline-single-class"], "key-claim-write"), {})
+
+
+def test_a_delta_replace_digests_its_delta_alone_and_differs_from_a_whole_replace_of_nothing(profiles):
+    """DR3: the replace under dal:ChangedTriples takes the delta, and its digest has no payload part (DR-Q3 (a))."""
+    delta = by_template(profiles["baseline-single-class"], "cas-replace-named-graph-delta-patch-log")
+    whole = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    assert delta.kind is OperationKind.REPLACE and delta.payload is None
+    assert [p.role for p in delta.digest.parts] == ["OperationKindPart", "TargetPart", "ExpectedSeqPart", "AddPart", "DelPart"]
+    b = T("urn:example:r", "urn:example:p", "urn:example:b")
+    values = {"root": Iri.encode("urn:example:r"), "expectedSeq": 3, "assertTriples": Payload.of(b), "retractTriples": Payload.of()}
+    assert request_digest(delta, values) != request_digest(whole, {**values, "payloadTriples": Payload.of()})

@@ -3,7 +3,7 @@
 # Writing only what changed, as a persistence mode - Status
 
 **Unit ID:** `persistence-delta-replace`
-**Status:** 🟡 DR1 built 2026-11-01, DR2 next
+**Status:** 🟡 DR1 and DR3 built 2026-11-01, DR2 next
 **Last updated:** 2026-11-01
 **Plan:** [persistence-delta-replace.md](../plans/persistence-delta-replace.md)
 **Sketch:** [persistence-delta-replace.md](../sketches/persistence-delta-replace.md)
@@ -19,3 +19,4 @@ Sketched and planned on 2026-10-31 at the maintainer's request, after SQ-Q1 aske
 - 2026-10-31: sketched, every question answered, planned.
 - 2026-11-01: the maintainer asked for every planned slice on `claude/config-authoring-studio`, built autonomously, with the linear replace branch kept apart until later.
 - 2026-11-01: DR1 built. The vocabulary, the derived default, two refusals, twelve delta builders, a slot in a DELETE template, the contract with no payload part, whole-state fixtures for every test of the whole replace, and the studio pinned to the whole replace until DR4. `check:persistence` 4,312 passed, `check:persistence-conformance` 5,104 passed, `check:persistence-library` passed. Two Sonnet subagents wrote the vocabulary and the whole-state fixtures.
+- 2026-11-01: DR3 built before DR2, since DR1 left the libraries' tests reading the delta replace. A delta replace's digest has no payload part, `digest-replace-delta` is a vector, and both libraries read and digest the delta replace. TDB2 and Fuseki are covered through the studio in DR4.

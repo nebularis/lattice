@@ -59,6 +59,19 @@ class ContractTest {
         assertTrue(new String(RequestDigest.requestInput(replace, v), StandardCharsets.UTF_8).startsWith("7:Replace13:urn:example:r1:3"));
     }
 
+    /** DR3: the replace under dal:ChangedTriples takes the delta, and its digest has no payload part (DR-Q3 (a)). */
+    @Test void aDeltaReplaceDigestsItsDeltaAlone() {
+        var delta = operation("baseline-single-class", "cas-replace-named-graph-delta-patch-log");
+        var whole = operation("baseline-single-class-whole-state", REPLACE);
+        assertEquals(OperationKind.REPLACE, delta.kind());
+        assertNull(delta.payload());
+        assertEquals(List.of("OperationKindPart", "TargetPart", "ExpectedSeqPart", "AddPart", "DelPart"),
+            delta.digest().parts().stream().map(DigestPart::role).toList());
+        Triple b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        var v = values("root", Iri.of("urn:example:r"), "expectedSeq", 3, "assertTriples", Payload.of(b), "retractTriples", Payload.of());
+        assertNotEquals(RequestDigest.requestDigest(delta, v), RequestDigest.requestDigest(whole, with(v, "payloadTriples", Payload.of())));
+    }
+
     @Test void appendDigestMergesRowsAndTriplesIntoOnePart() {
         var append = operation("append-stream-dataset-guard", "append-event-dataset-guard");
         var when = new Lit("2026-10-20T10:00:00Z", XSD_DATETIME, null);

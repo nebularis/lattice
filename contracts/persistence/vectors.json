@@ -513,6 +513,58 @@
    "sha256": "f05e0ad9954e60def7f14dcd5ae5fef3b5935525a973e40ba6aee3d1f09036a2"
   },
   {
+   "id": "digest-replace-delta",
+   "description": "Replace under dal:ChangedTriples. The add and del parts alone, with no payload part, so it is not the digest of a whole replace of an empty payload with the same delta.",
+   "operationKind": "Replace",
+   "target": "urn:example:person/1",
+   "expected": 3,
+   "parts": [
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "36",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:nick"
+       },
+       "o": {
+        "literal": "Countess"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:age> \"36\"^^<http://www.w3.org/2001/XMLSchema#long> ."
+    ],
+    [
+     "<urn:example:person/1> <urn:example:nick> \"Countess\" ."
+    ]
+   ],
+   "encodedHex": "373a5265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a3339313a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223336225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e35373a35343a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6e69636b3e2022436f756e7465737322202e",
+   "sha256": "ff1f78fd4233e68e21d5533e0eab8700e27cfeb2a150d590eb5843e173894122"
+  },
+  {
    "id": "digest-same-triple-in-add",
    "description": "The triple C is in the add part and the del part is empty.",
    "operationKind": "Replace",
