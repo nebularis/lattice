@@ -245,6 +245,7 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 - **A `ClosureRelation` with no `closureBasis`, or a `closureBasis` with no `ClosureRelation`.** The two are required together (`srf:S3`), never one without the other.
 - **Choosing `NominalClass`/`MembershipAssertion` for a population that's actually open-ended.** This is what the population budget is for — if the count is unbounded or grows without a ceiling, it belongs in a `DirectProperty` promotion, not a per-value index.
 - **Promoting a lossy value onto an authored property.** A `DerivedSource` or `CrosswalkInexact` promotion may only mint its own property in its own namespace; pointing `srf:promotesTo` at a property the domain already declares requires exact or crosswalk-exact fidelity.
+- **Promoting onto a property no layer declares.** Outside its target namespace a promotion restates onto a property an authored layer declares, so the compiler refuses one whose property the source graph does not declare as a property. Compile against the layer that declares it, or promote into the target namespace.
 - **Assuming `LocalNameFromValue` is safe by default.** It's injective only until two schemes or namespaces collide on a local name — which happens exactly when a deployment grows to use more than one scheme for the same dimension. `QualifiedLocalName` or `DigestLocalName` avoid the failure mode outright.
 - **Treating a generated surface as evidence for a decision.** A surface accelerates a lookup; it is never itself the evidence for an admissibility decision or an execution record, and reaching an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on (§12).
 
@@ -342,10 +343,10 @@ A contract must be able to name any class or property in the estate without impo
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -1047,8 +1048,8 @@ Injectivity is not assumed. `LocalNameFromValue` is injective only while value l
 
 <https://www.nebularis.org/neuro-semantic/surface-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> .
 
 srf:NominalClass a srf:IndexForm ; rdfs:comment "One generated class per value, defined as the carrier restricted to that value." .
 srf:MembershipAssertion a srf:IndexForm ; rdfs:comment "Asserted typing of each carrier instance into the generated class for its value." .
@@ -1735,4 +1736,10 @@ ex:index-1 a srf:IndexContract ;
 
 ## 14. Release notes
 
-- **Next release** (clarifying). Every hash names its content triples and the substrate's digest rule, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (the substrate's digest rule, Persistence section 5.6), and the two promotion shapes say they check the structural condition of X5 and X6 rather than discharging them.
+- **0.21.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - no effect ([ADR-A143](../../docs/architecture/decisions/ADR-A143-one-canonicalisation.md)). Every hash names its content triples and the substrate's digest rule, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, and the two promotion shapes say they check the structural condition of X5 and X6 rather than discharging them.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

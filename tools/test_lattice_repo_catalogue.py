@@ -334,6 +334,18 @@ def test_rc3_t3_a_declared_path_that_is_missing_is_found_unless_it_is_generated(
     assert rc.check(rc.load(_tree(tmp_path, extra_root=generated))) == []
 
 
+def test_rc3_t3b_files_of_a_name_come_from_the_roots_alone(tmp_path: Path) -> None:
+    """A nested checkout, build output, a generated path and a directory outside every root are out of scope."""
+    extra = '[[roots]]\nname = "tools"\npath = "tools/"\nowns = "x"\nrow = "r"\n[generated]\npaths = ["tools/out/"]\n'
+    root = _tree(tmp_path, extra_root=extra)
+    for relative in ("pyproject.toml", "tools/t/pyproject.toml", "tools/t/node_modules/x/pyproject.toml",
+                     "tools/t/target/classes/pyproject.toml", "tools/out/pyproject.toml", ".claude/worktrees/w/pyproject.toml",
+                     ".build/pyproject.toml", "elsewhere/pyproject.toml", "tools/t/notpyproject.toml"):
+        _write(root, relative, "[project]\nname = \"x\"\n")
+    found = [p.relative_to(root).as_posix() for p in rc.load(root).files("pyproject.toml")]
+    assert found == ["pyproject.toml", "tools/t/pyproject.toml"]
+
+
 def test_rc3_t4_a_tool_package_on_disk_that_is_not_declared_is_found(tmp_path: Path) -> None:
     tool = '[[tools]]\nname = "t"\npath = "tools/t"\nimport-names = ["t"]\n'
     root = _tree(tmp_path, extra_root=AREA + tool)
@@ -466,7 +478,7 @@ def test_rc3_t15_tests_and_the_reader_are_not_scanned(tmp_path: Path) -> None:
 
 def test_rc3_t16_the_real_scan_lists_exactly_what_the_tools_build_and_the_reader_is_not_listed() -> None:
     scan = rc.bypass_scan(rc.load(ROOT))
-    assert scan.problems == [] and set(scan.found) == set(scan.known) and len(scan.known) == 12
+    assert scan.problems == [] and set(scan.found) == set(scan.known) and len(scan.known) == 13
     assert "tools/lattice_repo_catalogue.py" not in scan.known
     assert all(not rc._is_test(Path(p)) for p in scan.known)
 

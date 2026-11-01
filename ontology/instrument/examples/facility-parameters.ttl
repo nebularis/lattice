@@ -256,6 +256,33 @@ ex:lender-occ a pty:RoleOccupancy ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-11-01T00:00:00Z"^^xsd:dateTime ] ;
     pty:inRole ex:Lender ; pty:occupiedBy ex:ridgeway-bank .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:halden-wording-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:lender-occ-identity a fnd:PersistentIdentity .
+ex:halden-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-10-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:sec-7-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-10-1-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:cl-7-1-identity a fnd:PersistentIdentity .
+ex:cl-7-2-identity a fnd:PersistentIdentity .
+ex:var-commitment-identity a fnd:PersistentIdentity .
+ex:var-leverage-identity a fnd:PersistentIdentity .
+ex:var-repay-days-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:leverage-space fnd:hasIdentity ex:leverage-space-identity .
+ex:leverage-space-identity a fnd:PersistentIdentity .
+ex:money fnd:hasIdentity ex:money-identity .
+ex:money-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # Binding replaces each placeholder by the value its variable has in this

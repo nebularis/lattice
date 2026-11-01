@@ -35,7 +35,7 @@ ONTOLOGY = ROOT / "ontology"
 LAYER = ONTOLOGY / "instrument"
 SPEC, VOCAB = LAYER / "spec" / "instrument.ttl", LAYER / "vocab" / "instrument-vocab.ttl"
 NEW = ["framework-lots", "service-towers", "facility-definitions", "trial-definitions", "supply-classification"]
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "quantification/vocab/quantification-vocab.ttl", "party/spec/party.ttl", "party/vocab/party-vocab.ttl",
          "eligibility/spec/eligibility.ttl", "eligibility/vocab/eligibility-vocab.ttl", "wording/spec/wording.ttl",
          "wording/vocab/wording-vocab.ttl", "behaviour/spec/behaviour.ttl", "behaviour/vocab/behaviour-vocab.ttl",
@@ -43,7 +43,8 @@ LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "qu
 ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour",
                             "instrument")
-              for kind in ("structural", "constraints")]
+              for kind in ("structural", "constraints")
+              if (ONTOLOGY / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification and Party ship no empty shapes file (TD-110)
 
 
 def _graph(*sources) -> Graph:

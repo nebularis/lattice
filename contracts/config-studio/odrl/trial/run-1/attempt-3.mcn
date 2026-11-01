@@ -1,0 +1,51 @@
+@b <https://example.org/lattice/odrl/mapping#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+@p qnt=<https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+@t ins
+%R Src fm mork:RDF
+odrl:Agreement RE
+odrl:Assertion RE
+odrl:Offer RE
+odrl:Policy RE
+odrl:Privacy RE
+odrl:Request RE
+odrl:Set RE
+odrl:Ticket RE
+%K Shapes
+Shape_Exact SH "n odrl:eq; odrl:operator [1..1] = odrl:eq; odrl:rightOperand nk iri"
+%X
+C_Policy C cs MS ra odrl:Agreement,odrl:Assertion,odrl:Offer,odrl:Policy,odrl:Privacy,odrl:Request,odrl:Set,odrl:Ticket
+Cn_Perm C cs MS p odrl:permission
+Cn_Prohib C cs MS p odrl:prohibition
+Cn_Oblig C cs MS p odrl:obligation
+Cn_Duty C cs MS p odrl:duty
+Cn_Remedy C cs MS p odrl:remedy
+Cn_Conseq C cs MS p odrl:consequence
+C_Same C cs MS
+Cn_Assignee C cs MS p "odrl:assignee|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assignee"
+Cn_Assigner C cs MS p "odrl:assigner|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:assigner"
+Cn_Target C cs MS p "odrl:target|(^odrl:duty|^odrl:remedy|^odrl:consequence)*/(^odrl:permission|^odrl:prohibition|^odrl:obligation)/odrl:target"
+Cn_Constraint C cs MS p odrl:constraint
+Pfx_odrl rdfs:Resource sh:prefix "odrl" sh:namespace "http://www.w3.org/ns/odrl/2/"^xsd:anyURI
+%M MS md .draft sh:declare Pfx_odrl
+Map_Policy MD f C_Policy xt :Instrument cn Map_Rel_Perm,Map_Rel_Prohib,Map_Rel_Oblig
+Map_Term MD f C_Same xt :Term,:Template xi :arisesUnder
+Map_Act xr :activity r odrl:action
+Map_Role_Assignee MD f Cn_Assignee xt pty:Role ii Role_Assignee
+Map_Role_Assigner MD f Cn_Assigner xt pty:Role ii Role_Assigner
+Map_Holder MD ap Map_Rel_Perm f Cn_Assignee xt pty:Role ii Role_Assignee xi :holder
+Map_Counterparty MD f Cn_Assigner xt pty:Role ii Role_Assigner xi :counterparty
+Map_Obligor MD f Cn_Assignee xt pty:Role ii Role_Assignee xi :obligor
+Map_Obligee MD f Cn_Assigner xt pty:Role ii Role_Assigner xi :obligee
+Map_Scope MD f C_Same xt elg:AdmissionProfile xi :scope cn Map_CondTarget
+Map_CondTarget MD f Cn_Target xt elg:ExactCondition xi elg:hasCondition cn Map_TargetConcept
+Map_TargetConcept xr elg:requiredConcept r "odrl:target?"
+Map_Rel_Perm MD f Cn_Perm xt :Permission cn Map_Term,Map_Act,Map_Holder,Map_Counterparty,Map_Scope,Map_Rel_Duty
+Map_Rel_Prohib MD f Cn_Prohib xt :Prohibition cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Remedy
+Map_Rel_Oblig MD f Cn_Oblig xt :Obligation cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Duty MD f Cn_Duty xt :Obligation cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Remedy MD f Cn_Remedy xt :Obligation xr :arisesOnBreachOf cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope,Map_Rel_Conseq
+Map_Rel_Conseq MD f Cn_Conseq xt :Obligation xr :arisesOnBreachOf cn Map_Term,Map_Act,Map_Obligor,Map_Obligee,Map_Scope

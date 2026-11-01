@@ -1,0 +1,13 @@
+{
+  "subject": "TS4",
+  "statedAs": "SetComparison.intersects_decide_denied_eq",
+  "statementDigest": "sha256:b34af14e65483062edf0993ec64723e4db3dbf7647167316a8cc6622b041c503",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -372,6 +372,20 @@ wrd:W8RelianceShape a sh:NodeShape ;
 				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
 			}""" ] .
 
+# ---- WA1: an assembled wording names one assembly model --------------------------
+# Stated as at most one. That a wording drawn from a form names one is held by every
+# assembler's own record check, since hand-assembled wordings predate the model.
+
+wrd:WA1Shape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "WA1: an assembled wording names at most one assembly model version." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:assembledUnder ?value , ?other .
+				FILTER (STR(?value) < STR(?other))
+			}""" ] .
+
 # ---- Amendments -------------------------------------------------------------------
 
 wrd:AmendmentOperationShape a sh:NodeShape ;

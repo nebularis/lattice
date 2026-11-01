@@ -602,7 +602,7 @@ TURTLE_LITERAL_RE = re.compile(r'^"(?:[^"\\]|\\.)*"(?:@[A-Za-z][\w-]*|\^\^[A-Za-
 ANNOTATIONS = {
     "definition": "rdfs:comment", "utility": "fnd:utility", "label": "rdfs:label",
     "preferred label": "skos:prefLabel", "scope note": "skos:scopeNote",
-    # A property whose object is part of its subject's meaning (Foundation section 4, ADR-A137). Written as a
+    # A property whose object is part of its subject's meaning (Foundation section 4, ADR-A142). Written as a
     # typed literal, ``"true"^^xsd:boolean``, so the Persistence compiler's by-identity refusal reads it.
     "meaning bearing": "fnd:meaningBearing",
 }

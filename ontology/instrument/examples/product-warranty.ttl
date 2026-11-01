@@ -85,12 +85,12 @@ ex:manufacturing-defect a skos:Concept ; skos:inScheme ex:causes ; rdfs:label "m
 
 # The exclusion's scope: misuse, and not a manufacturing defect. The second
 # member is the carve-back, negated (ADR-A103).
-ex:caused-by-misuse a elg:Condition ;
+ex:misuse-not-defect-caused-by-misuse a elg:Condition ;
     elg:conditionKey "caused-by-misuse" ;
     elg:matchStrategy elg:ExactMatch ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:misuse .
-ex:caused-by-defect a elg:Condition ;
+ex:misuse-not-defect-caused-by-defect a elg:Condition ;
     elg:conditionKey "caused-by-manufacturing-defect" ;
     elg:matchStrategy elg:ExactMatch ;
     elg:wildcardSemantics elg:NoWildcard ;
@@ -99,16 +99,16 @@ ex:caused-by-defect a elg:Condition ;
 ex:misuse-not-defect a elg:AdmissionProfile ;
     elg:conditionKey "misuse-unless-manufacturing-defect" ;
     elg:compositionOperation elg:AllRequired ;
-    elg:hasCondition ex:caused-by-misuse , ex:caused-by-defect .
+    elg:hasCondition ex:misuse-not-defect-caused-by-misuse , ex:misuse-not-defect-caused-by-defect .
 
 # Both read the claim's cause, the case being a warranty claim.
 ex:misuse-binding a elg:EvidenceBinding ;
-    elg:bindsCondition ex:caused-by-misuse ;
+    elg:bindsCondition ex:misuse-not-defect-caused-by-misuse ;
     elg:subjectClass ex:WarrantyClaim ;
     elg:singleValued true ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:cause ; elg:stepDirection elg:Forward ] .
 ex:defect-binding a elg:EvidenceBinding ;
-    elg:bindsCondition ex:caused-by-defect ;
+    elg:bindsCondition ex:misuse-not-defect-caused-by-defect ;
     elg:subjectClass ex:WarrantyClaim ;
     elg:singleValued true ;
     elg:evidenceStep [ a elg:EvidenceStep ; elg:stepIndex 0 ; elg:stepProperty ex:cause ; elg:stepDirection elg:Forward ] .
@@ -181,3 +181,16 @@ ex:misuse-exclusion a ins:Exclusion ;
     ins:counterparty ex:owner-occ ;
     ins:excepts ex:repair ;
     ins:scope ex:misuse-not-defect .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:k2-55017-wording-identity a fnd:PersistentIdentity .
+ex:manufacturer-occ-identity a fnd:PersistentIdentity .
+ex:owner-occ-identity a fnd:PersistentIdentity .
+ex:k2-55017-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:sec-3-identity a fnd:PersistentIdentity .
+ex:misuse-not-defect fnd:hasIdentity ex:misuse-not-defect-identity .
+ex:misuse-not-defect-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-3-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

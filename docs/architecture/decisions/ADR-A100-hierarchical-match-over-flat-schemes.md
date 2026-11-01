@@ -87,8 +87,16 @@ Two consequences above are corrected here. They change no decision:
 - Adding a named individual is MINOR under the versioning policy, so Executable takes 0.5.0 →
   0.6.0, not a PATCH bump.
 
+## Addendum, 2026-10-27: the relation a condition walks
+
+Agreed by the maintainer. A condition under `elg:HierarchicalMatch` names the relation it walks with `elg:hierarchyRelation`, `skos:broader` or a declared sub-property of it, and `skos:broader` when it names none. A scheme may state more than one ordering, for example ISO 25964's generic ("a kind of") and partitive ("a part of") relations, and which one a clause relies on is the clause's question, so the choice sits on the condition rather than on the scheme or its binding. Decision 1 reads over that relation: a resolved scheme has a hierarchy for a condition when at least one member has a link of the condition's relation to another member. Laws L9, L11 and L14 say so.
+
+A hierarchical condition whose scheme binding does not apply at the resolution time has no closure to test a candidate against, so it is Undetermined for every candidate, as L9 states, reported with `exe:NoApplicableBinding`. A binding conflict still fails, as ADR-A85 decides. The OWL and SWRL backends refuse a hierarchical plan with no scheme, as decision 3 has the OWL backend refuse a scheme without a hierarchy.
+
 ## Provenance
 
 **Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (plan)
 
 Part of the [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) unit (AIR-0.1, epic decision D11). Published crosswalks are question MB-Q3, and the implementation note was written in AIR-3.1 planning.
+
+The 2026-10-27 addendum is from the [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) unit, slice C9b3c, answering substrate item S2 of the applied insurance reference substrate plan.

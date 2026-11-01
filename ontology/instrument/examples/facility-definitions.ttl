@@ -235,6 +235,25 @@ ex:borrower-membership a pty:GroupMembership ;
 ex:guarantor-membership a pty:GroupMembership ;
     pty:memberOf ex:obligors ; pty:memberOccupancy ex:guarantor-occ .
 
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:fenwick-wording-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:guarantor-occ-identity a fnd:PersistentIdentity .
+ex:lender-occ-identity a fnd:PersistentIdentity .
+ex:obligors-identity a fnd:PersistentIdentity .
+ex:fenwick-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-18-identity a fnd:PersistentIdentity .
+ex:sec-23-identity a fnd:PersistentIdentity .
+ex:sec-30-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-1-2-identity a fnd:PersistentIdentity .
+ex:cl-1-3-identity a fnd:PersistentIdentity .
+ex:cl-18-1-identity a fnd:PersistentIdentity .
+ex:cl-23-1-identity a fnd:PersistentIdentity .
+ex:cl-30-2-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
 # One section, the whole, so no bound term records ins:boundWithin. Each

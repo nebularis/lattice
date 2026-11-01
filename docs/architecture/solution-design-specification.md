@@ -487,40 +487,18 @@ Rules that apply uniformly:
 | External release stack | Rejects or fails to acknowledge a published artifact | Release Operator observes the release ledger has no corresponding external confirmation | LATTICE's own ledger already recorded the intent and receipt regardless, so the semantic evidence is not lost | Operator retries the external stack's own process, LATTICE's evidence does not need to be regenerated |
 | Calibration gate stale or missing | Bulk confirmation attempted for an untested pack/profile/model triple | `require_bulk_gate` raises `CalibrationRequiredError` | Bulk action is blocked outright, per-item review remains available | A new calibration run must pass before bulk action is re-enabled |
 
-### 4.7 Word Authoring Proof of Concept
+### 4.7 Word Authoring
 
-**Not a platform contract.** A spike (ADR-A118, Proposed) testing whether a drafter can mark a
-contract's text parts in Microsoft Word, with no local installation, and have the marked document
-read as Logical English and a proposed meaning. See
-[ADR-A118](decisions/ADR-A118-word-authoring-proof-of-concept.md) for the decision record. Its
-code, vocabulary and graph layout may be removed or rewritten without deprecation, and nothing
-outside `platform/authoring-service`, `workers/src/lattice_workers/wording_le`,
-`apps/word-authoring-addin` and `contracts/authoring` may depend on them.
+**Not a platform contract.** The Word add-in (ADR-A118) is a client of the Configuration Studio (ADR-A136). A drafter marks a contract's text parts in Microsoft Word, and the studio stores the document as LATTICE's markup (ADR-A137) with the Wording graph it gives, reports on it, and reads it as Logical English and a proposed meaning. The add-in's code may be removed or rewritten without deprecation. The studio's API is a contract, as ADR-A136 makes it.
 
 | Part | Where | Does |
 |---|---|---|
-| add-in | `apps/word-authoring-addin` | applies templates, marks parts, reads the body's OOXML into a snapshot, shows findings, LE and the proposed graph |
-| service | `platform/authoring-service` | validates the snapshot, maps it to `wrd:` RDF, stores it in Fuseki, runs SHACL and construct detection, checks template conformance, queues analysis, seeds samples |
-| worker | `workers/src/lattice_workers/wording_le` and `wording_analysis_worker.py` | reads the wording graph, matches sentence forms, classifies modality, writes spans, an LE program and a proposal graph |
-| contracts | `contracts/authoring`, `contracts/events`, `contracts/openapi` | JSON Schemas, templates, samples, fixtures shared by the three runtimes |
-| stack | `deployment/compose/authoring`, `tools/authoring_stage.py` | one command builds, stages and starts everything, with the samples seeded |
-
-The service's HTTP surface (Javalin, decision WA-D4), methods and paths only:
-
-| Method | Path |
-|---|---|
-| GET | `/api/health` |
-| GET | `/api/templates` |
-| GET | `/api/templates/{templateId}` |
-| GET | `/api/samples` |
-| GET | `/api/samples/{sampleId}` |
-| GET | `/api/documents/{documentId}` |
-| PUT | `/api/documents/{documentId}/snapshot` |
-| GET | `/api/jobs/{jobId}` |
-| GET | `/api/documents/{documentId}/revisions/{revision}/analysis` |
-| GET | `/api/documents/{documentId}/revisions/{revision}/graph/{kind}` |
-
----
+| add-in | `apps/word-authoring-addin` | applies templates, marks parts, reads the body's OOXML into the document model, saves it as markup, shows the report, the LE and the proposed graph |
+| domain package | `packages/authoring-domain` | the document model, the markup reader and writer, shared with the studio's browser code |
+| studio service | `platform/config-studio-service`, `platform/config-studio-authoring` | validates the markup, maps it to `wrd:` RDF with the `document-to-wording` kit, has the store writers save it, and reports the Wording shapes, template conformance and construct detection |
+| worker | `workers/src/lattice_workers/wording_le`, the studio's `analyse` job | reads the wording graph, matches sentence forms, classifies modality, writes spans, an LE program and a proposal graph |
+| contracts | `contracts/config-studio`, `contracts/document`, `contracts/xml` | the HTTP API, the markup and its schemas, the kit |
+| stack | `mise run studio:up` | starts the studio and the add-in's development server, and with `--docker` the add-in's HTTPS proxy |
 
 ## 5. Infrastructure Design
 

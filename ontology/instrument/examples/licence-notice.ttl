@@ -163,32 +163,35 @@ tmpl:terminated a bhv:State ;
 
 # Legal triggers. Each names the stated power, and fires on the exercise of any
 # power bound from it.
-tmpl:on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:give-notice-on-notice-given a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-on-notice .
-tmpl:on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
+tmpl:notice-runs-out-on-notice-expiry a ins:OnExpiry , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:ScheduledTrigger ;
     ins:after [ a qnt:Quantity ; qnt:onSpace ex:duration-space ;
                 qnt:numericValue "90"^^xsd:decimal ; qnt:inUnit ex:day ] .   # anchored at entering the notice period
-tmpl:on-termination-for-breach a ins:OnExercise , bhv:TriggerDefinition ;
+tmpl:terminate-from-in-force-on-termination-for-breach a ins:OnExercise , bhv:TriggerDefinition ;
+    bhv:triggerKind bhv:DerivedTrigger ;
+    ins:ofPower tmpl:end-for-breach .
+tmpl:terminate-during-notice-on-termination-for-breach a ins:OnExercise , bhv:TriggerDefinition ;
     bhv:triggerKind bhv:DerivedTrigger ;
     ins:ofPower tmpl:end-for-breach .
 
 tmpl:give-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:notice-period ;
-    bhv:hasTrigger tmpl:on-notice-given ;
+    bhv:hasTrigger tmpl:give-notice-on-notice-given ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:notice-runs-out a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-notice-expiry ;
+    bhv:hasTrigger tmpl:notice-runs-out-on-notice-expiry ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:terminate-from-in-force a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:in-force ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-termination-for-breach ;
+    bhv:hasTrigger tmpl:terminate-from-in-force-on-termination-for-breach ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 tmpl:terminate-during-notice a ins:RegimeTransition , bhv:TransitionDefinition ;
     bhv:fromState tmpl:notice-period ; bhv:toState tmpl:terminated ;
-    bhv:hasTrigger tmpl:on-termination-for-breach ;
+    bhv:hasTrigger tmpl:terminate-during-notice-on-termination-for-breach ;
     bhv:selectionPolicy bhv:SingleMatch ; bhv:activationPolicy bhv:ImmediateActivation .
 
 # ==== The licence for Fernwood ===============================================
@@ -246,3 +249,27 @@ ex:sublicensing-excluded a ins:Exclusion ;
     ins:holder ex:licensor-occ ; ins:counterparty ex:licensee-occ ;
     ins:excepts ex:grant-sublicences ;
     ins:appliesInState tmpl:notice-period .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:fernwood-wording-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+tmpl:give-notice fnd:hasIdentity tmpl:give-notice-identity .
+tmpl:give-notice-identity a fnd:PersistentIdentity .
+tmpl:notice-runs-out fnd:hasIdentity tmpl:notice-runs-out-identity .
+tmpl:notice-runs-out-identity a fnd:PersistentIdentity .
+tmpl:terminate-during-notice fnd:hasIdentity tmpl:terminate-during-notice-identity .
+tmpl:terminate-during-notice-identity a fnd:PersistentIdentity .
+tmpl:terminate-from-in-force fnd:hasIdentity tmpl:terminate-from-in-force-identity .
+tmpl:terminate-from-in-force-identity a fnd:PersistentIdentity .
+ex:fernwood-identity a fnd:PersistentIdentity .
+ex:sec-11-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+tmpl:notice-regime-identity a fnd:PersistentIdentity .
+ex:cl-11-1-identity a fnd:PersistentIdentity .
+ex:cl-11-2-identity a fnd:PersistentIdentity .
+ex:cl-11-3-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:duration-space fnd:hasIdentity ex:duration-space-identity .
+ex:duration-space-identity a fnd:PersistentIdentity .

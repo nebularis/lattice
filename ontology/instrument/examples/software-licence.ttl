@@ -191,3 +191,16 @@ ex:perpetual-immunity a ins:Exclusion ;
     ins:counterparty ex:licensor-occ ;
     ins:excepts ex:end-for-convenience ;
     ins:scope ex:perpetual-fee-paid .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:fernwood-wording-identity a fnd:PersistentIdentity .
+ex:licensee-occ-identity a fnd:PersistentIdentity .
+ex:licensor-occ-identity a fnd:PersistentIdentity .
+ex:fernwood-identity a fnd:PersistentIdentity .
+ex:sec-11-identity a fnd:PersistentIdentity .
+ex:sec-15-identity a fnd:PersistentIdentity .
+ex:cl-11-1-identity a fnd:PersistentIdentity .
+ex:cl-11-2-identity a fnd:PersistentIdentity .
+ex:cl-15-1-identity a fnd:PersistentIdentity .
+ex:sites-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .

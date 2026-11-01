@@ -253,6 +253,8 @@ The Activity, Quality and Technology values register entries are tagged with, ra
 | trig | TriG | format |  |  | TriG, Turtle with named graphs. |  | yes |
 | n-triples | N-Triples and N-Quads | format |  |  | N-Triples and N-Quads, the line-based RDF formats. |  | yes |
 | json-ld | JSON-LD | format standard |  |  | JSON-LD, RDF as JSON. |  | yes |
+| xslt | XSLT | language standard |  |  | XSLT and XPath, the W3C languages for transforming XML. |  | no |
+| jolt | JOLT | library |  |  | Bazaarvoice JOLT, a JSON to JSON transformation library and its chain specifications. |  | no |
 | json | JSON | format |  |  | JSON documents. |  | yes |
 | yaml | YAML | format |  |  | YAML documents. |  | yes |
 | toml | TOML | format |  |  | TOML configuration files. |  | yes |

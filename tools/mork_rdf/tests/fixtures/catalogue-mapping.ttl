@@ -1,0 +1,145 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A library catalogue read into a works vocabulary, one mapping per construct the compiler covers (README §15).
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:Catalogue a mork:MappingScheme ;
+    mork:compilationMode mork:DraftMode ;
+    sh:declare [ sh:prefix "src" ; sh:namespace "http://example.org/src#"^^xsd:anyURI ] ,
+               [ sh:prefix "tgt" ; sh:namespace "http://example.org/tgt#"^^xsd:anyURI ] .
+
+# --- the source side: the source vocabulary's own terms are the representations ------------------------------------
+
+src:Book a mork:Entity .
+src:Pamphlet a mork:Entity .
+mm:Concept_Item a mork:DataConcept ; mork:representedAs src:Book , src:Pamphlet .
+mm:Concept_Author a mork:DataConcept ; mork:path "src:author" .
+mm:Concept_Shelf a mork:DataConcept ; mork:representedAs src:Shelf .
+
+# --- classes: a reference, and a creation the items are typed with --------------------------------------------------
+
+mm:Map_ItemClass a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:broadTBoxCategoryMatch tgt:Work ;
+    mork:conceptName "CatalogueItem" .
+
+mm:Map_AgentClass a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactTBoxMatch tgt:Agent .
+
+# --- the root datum, its identity a concatenation over the ISBN ----------------------------------------------------
+
+mm:Map_Item a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:mappingFor mm:Concept_Item ;
+    mork:deferredMapping mm:Map_ItemClass ;
+    mork:identityTemplateMapping mm:ItemIri ;
+    mork:weighting 90 ;
+    mork:compositeNarrowerMapping mm:Map_Title , mm:Map_Medium , mm:Map_Genre , mm:Map_Status , mm:Map_Year , mm:Map_Author .
+
+mm:ItemIri a mork:ConcatExpression ; mork:concatLeft mm:ItemIri_l ; mork:concatRight mm:ItemIri_r .
+mm:ItemIri_l a mork:LiteralExpression ; mork:dataInline "http://example.org/work/" .
+mm:ItemIri_r a mork:RefExpression ; mork:dataRef "src:isbn" .
+
+# --- property assertions: through a template, a correspondence table, a constant and a generic match ---------------
+
+mm:LabelTemplate a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactRBoxMatch tgt:title .
+
+mm:Map_Title a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:templateMapping mm:LabelTemplate ;
+    mork:dataRef "src:title" ;
+    mork:weighting 80 .
+
+mm:Map_Medium a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactRBoxMatch tgt:medium ;
+    mork:dataRef "src:format" ;
+    mork:compositeNarrowerMapping mm:Map_Paperback , mm:Map_Hardback , mm:Map_Ebook .
+
+mm:Map_Paperback a mork:DataMapping ; mork:mappingScheme mm:Catalogue ; mork:mappingFor src:Paperback ; mork:exactABoxMatch tgt:Print .
+mm:Map_Hardback a mork:DataMapping ; mork:mappingScheme mm:Catalogue ; mork:mappingFor src:Hardback ; mork:exactABoxMatch tgt:Print .
+mm:Map_Ebook a mork:DataMapping ; mork:mappingScheme mm:Catalogue ; mork:mappingFor src:Ebook ; mork:broadABoxCategoryMatch tgt:Digital .
+
+mm:Map_StatusV1 a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:compositeBroaderMapping mm:Map_Item ;
+    mork:exactRBoxMatch tgt:status ;
+    mork:dataInline "catalogued" .
+
+mm:Map_Status a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:supersedes mm:Map_StatusV1 ;
+    mork:effectiveFrom "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+    mork:exactRBoxMatch tgt:status ;
+    mork:dataInline "listed" .
+
+mm:Map_Year a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:intransitiveExactMatch tgt:year ;
+    mork:dataRef "src:published" .
+
+# --- a lookup into reference data -----------------------------------------------------------------------------------
+
+mm:Map_Genre a mork:DataMapping , mork:Lookup ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactRBoxMatch tgt:genre ;
+    mork:exactTBoxMatch skos:Concept ;
+    mork:referenceDataPath skos:notation ;
+    mork:dataRef "src:genre" .
+
+# --- a contextual datum, glued to its parent by an inverse match, with an assertion of its own ----------------------
+
+mm:Map_Author a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:broaderApplicative mm:Map_Item ;
+    mork:mappingFor mm:Concept_Author ;
+    mork:deferredMapping mm:Map_AgentClass ;
+    mork:inverseRBoxMatch tgt:creator ;
+    mork:conceptName "agent" ;
+    mork:compositeNarrowerMapping mm:Map_AuthorName .
+
+mm:Map_AuthorName a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactRBoxMatch tgt:name ;
+    mork:dataRef "src:name" .
+
+# --- a second root, whose identity is a lookup, so its nodes are the reference concepts themselves ------------------
+
+mm:Map_Shelf a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:mappingFor mm:Concept_Shelf ;
+    mork:identityTemplateMapping mm:ShelfGenre ;
+    mork:compositeNarrowerMapping mm:Map_ShelfNumber .
+
+mm:ShelfGenre a mork:LookupExpression ; mork:lookupScheme tgt:Genres ; mork:lookupProperty skos:notation ; mork:lookupSource mm:ShelfGenre_s .
+mm:ShelfGenre_s a mork:RefExpression ; mork:dataRef "src:code" .
+
+mm:Map_ShelfNumber a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:exactRBoxMatch tgt:shelf ;
+    mork:dataRef "src:number" .
+
+# --- what is never compiled ------------------------------------------------------------------------------------------
+
+mm:Map_Maybe a mork:DataMapping , mork:UncertainMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:compositeBroaderMapping mm:Map_Item ;
+    mork:lexicalMatch tgt:subtitle ;
+    mork:dataRef "src:subtitle" .
+
+mm:Map_Retired a mork:DataMapping ;
+    mork:mappingScheme mm:Catalogue ;
+    mork:compositeBroaderMapping mm:Map_Item ;
+    mork:effectiveUntil "2025-01-01T00:00:00Z"^^xsd:dateTime ;
+    mork:exactRBoxMatch tgt:shelfmark ;
+    mork:dataRef "src:shelfmark" .

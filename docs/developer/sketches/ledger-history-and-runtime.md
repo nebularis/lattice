@@ -97,7 +97,7 @@ The usual objection to a running balance is that it serialises writers at an acc
 
 A running balance is also not a denormalisation in the pejorative sense. It is the running balance every bank statement carries, which matters for §6.
 
-**Open.** Whether a running balance is recorded along the recorded ordering only. It cannot be a running balance along both axes at once, so a reading as of an effective position still folds. That narrows its benefit to the common read, which is "the balance now".
+**Answered (LF-Q17, 2026-10-27).** A running balance is recorded along the recorded ordering only. It cannot be a running balance along both axes at once, so a reading as of an effective position still folds. That narrows its benefit to the common read, which is "the balance now". The same axis keys the period's unit of partition and its checkpoints, which [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s second addendum of that date states, and which the sealing rule forces: a unit keyed on effective position could never be complete, so it could never be sealed.
 
 ## 5. A model that carries both obligations
 
@@ -129,19 +129,35 @@ A purpose-counting account (`ldg:countsPurpose`) is not in the drawn account's s
 
 ### 5.2 Close the period
 
-Each account carries a closing recurrence. At each close, the account's balance at that point is written once as a checkpoint, and the detail before it is archived rather than deleted.
+Each account carries a closing recurrence. At each close the detail before it is archived rather than deleted, and the balance at that point is written as a checkpoint.
+
+**A checkpoint is written only where the balance moved** (MS-Q6, answered (a) 2026-10-27). An untouched account's previous checkpoint still stands, and a carry-forward keeps the lookup one hop rather than a search back through the closes that did nothing. On the tree the benchmark generates this is about a third of the checkpoint storage that writing one per account per close would cost, and it also makes a closing mean something: the accounts a close names are the accounts that moved.
+
+**A checkpoint's IRI is derived from the account and the close position**, never searched for (MS-Q8, answered (d) 2026-10-24). Computing the close position from the interval and naming the checkpoint directly is flat at 0.020 to 0.023 ms, where searching for the latest with a filter and a sort cost 0.04 ms at two closes and 1.06 ms at two hundred, growing with time. The mechanism is [TSD-36](../../architecture/triple-store-discovery.md#tsd-36-a-bound-object-does-not-give-the-seek-a-bound-subject-gives), and the carry-forward above is what keeps the derived name resolvable for an account that did not move.
 
 A balance as of a point is then the last checkpoint at or before it, plus the fold over the postings since. Both terms are bounded, the first by one lookup and the second by the closing interval.
 
-Storage in the hot store becomes O(accounts × checkpoints retained + postings since the last close) rather than O(every posting ever written). Read cost for an ancestor becomes O(subtree width × closing interval), which is the dial §5.1 needs.
+**Each period's postings live in their own named graph, and that is what flattens the fold.** The partitioned unit is the account's book for one period, a node the closing already produces, and it is itself an aggregate root, so the graph IRI template keeps its single slot and whole-graph replace keeps its meaning ([ADR-A13](../../architecture/decisions/ADR-A13-dataset-graph-role-model.md)'s addendum of 2026-10-27, STD-276). A read names the graphs of the periods since the last checkpoint rather than filtering a position over the whole history.
+
+Measured, this removes the scan floor (MS-Q1, answered (a), [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md) finding 7). The programme read is 0.40, 0.34, 0.34 and 0.54 ms at 1,000, 5,000, 20,000 and 100,000 events, so it does not grow with the history over a hundredfold range, where the same read against one graph grows from 2.19 ms to 217.53 ms. The postings folded and the stored triples are identical in both, since a posting's eight quads count the same in a named graph, so the whole gain is in postings the engine never visits. The shape replicates on Jena TDB2 (CAP-85), so it is a property of naming the graphs rather than of one engine.
+
+Storage in the hot store becomes O(accounts moved × checkpoints retained + postings since the last close) rather than O(every posting ever written). Read cost for an ancestor becomes O(subtree width × closing interval), which is the dial §5.1 needs.
 
 Closing recurrence is a property of the account definition, so a heavily drawn aggregate closes daily and a quiet one closes yearly, and the trade between storage and read cost is set per account rather than for the whole system. Quantification already models recurrence (`qnt:Recurrence`, `qnt:RecurrenceBin`, `qnt:AnchorBinding`), so this reuses declared machinery rather than adding any.
 
+A sealed book is registrable, and its registered content hash is the archive digest a restore checks ([ADR-A34](../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md)'s addendum of 2026-10-27). The close is therefore a registration event as well as a write, and a close that seals without registering is a reconciliation case rather than a loss, since the hash recomputes from the sealed content.
+
 ### 5.3 Committed and speculative evaluation
 
-A scenario run, a what-if and a dispute replay produce the same volume as a real pass. Where every evaluation is persisted, scenarios rather than economic events set the growth rate, and the ratio is unbounded.
+A speculative pass produces the same volume as a real one. Where every evaluation is persisted, scenarios rather than economic events set the growth rate, and the ratio is unbounded.
 
-Only a committed pass belongs in the system of record. A speculative pass is written to a graph that can be dropped, or is never written. This is a semantic distinction rather than a storage trick, since a scenario result is not a fact about the instrument.
+Only a committed pass belongs in the system of record. This is a semantic distinction rather than a storage trick, since a speculative result is not a fact about the instrument. Two cases need separating, because they are kept out of the record by different means (LF-Q21 and MS-Q11, both answered 2026-10-27).
+
+**Evaluation against committed record.** A replay of a past decision, a what-if over a committed arrangement, a dispute reconstruction. It runs in the record's own dataset, against the real accounts, because that is what it is a question about. It is written to a graph that can be dropped, and no read on the correctness path folds a droppable graph into a balance. This is the case the ledger has to carry.
+
+**Evaluation before commitment.** Exploring arrangements that do not yet exist, over options that mostly never will: the permutations of a structure under negotiation, a plan compared against alternatives, an application scored under several configurations before one is chosen. This volume dominates in such a domain, and almost none of it is ever record. It is kept out not by a flag but by being a different phase of work, with its own store and its own write rate, and only a committed result crosses into the record. §4.1 of the [multi-store sketch](multi-store-runtime.md) has the shape, and §4 lists the lifecycle phase among the boundaries an adopter may choose.
+
+**LATTICE implements no pre-commitment phase**, and should not. What it owes is what it owes for every boundary an adopter may draw: the vocabulary to declare it, and generated reads that respect it. A ledger that assumed every evaluation it sees is record would force the first case's mechanism onto the second and lose the larger reduction.
 
 ### 5.4 Ordering, stated without a global counter
 
@@ -191,7 +207,7 @@ A projection onto a second T-Box earns its keep where the optimisation has no do
 | **LF-Q18** | Post at the drawn account only, or at every level? | (a) drawn account only, ancestors derived. (b) every level, as today. (c) drawn account only, with declared exceptions for purpose-counting accounts | **answered (c)**, 2026-10-27, the maintainer. The drawn account only, with declared exceptions for purpose-counting accounts | answered |
 | **LF-Q19** | Does an account instance gain a minted IRI? | (a) yes, which reverses ADR-A131 decision 4. (b) no, postings keep account, owner and key | **answered (a)**, 2026-10-27, the maintainer. An account instance gains a minted IRI, reversing ADR-A131 decision 4. MS-Q2's graph template now rests on it | answered, needs an ADR-A131 addendum |
 | **LF-Q20** | Is closing recurrence declared per account definition? | (a) yes, on the definition. (b) one system-wide interval. (c) no closings, unbounded history | **answered (a)**, 2026-10-27, the maintainer. On the account definition, so the interval is per account | answered |
-| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | **answered (a)**, 2026-10-27, the maintainer, a droppable named graph. MS-Q11 argues the better frame is a lifecycle boundary, and that stays open | answered, MS-Q11 open |
+| **LF-Q21** | How is a speculative pass kept out of the record? | (a) a droppable named graph. (b) never written. (c) a flag on the pass, filtered by every query | **answered (a), narrowed**, 2026-10-27, the maintainer. A droppable named graph, for speculative evaluation against committed record. MS-Q11 is answered (a) and does not compete with this: evaluation *before* commitment is a lifecycle boundary whose volume never reaches the record, and LATTICE implements no such phase. So (a) governs the case that does reach the record, and §5.3 states both | answered, with MS-Q11 |
 | **LF-Q22** | Is a maximum magnitude declared per value space? | (a) yes, in Quantification. (b) no, rely on the 18-digit floor | **answered (a)**, 2026-10-27, the maintainer. Declared per value space in Quantification | answered |
 
 ## 8. What this changes elsewhere

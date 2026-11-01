@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The summaries projection (ADR-A149 decision 14, PB-Q14 (b)). For each workspace its label, owner, mode and cst:modifiedAt
+# from its description graph, and the sequence of each part's and each document's version row in the terms
+# Workspace.toModel() uses, cst:{name}Revision and cst:revision, 0 where there is no live row, and the sample it was made from, the
+# lineages and versions it depends on and the imports it holds with their labels, which the browser's listing shows. The refresh job runs it
+# over the store and writes its result to urn:lattice:studio:projection:summaries.
+#
+# A surface promotion restates a value reached by a read path of edges. A part's row is joined to its workspace by its root's IRI,
+# {workspace}/part/{name}, which is built here and is no edge, and the summary keys each sequence by the part's name. So this is
+# a query and not a promotion.
+#
+# ponytail: the join builds each root and asks the store for its row, O(workspaces x (parts + documents)) lookups. An engine that
+# does not use the bound root reads every meta graph once for each workspace. Keep a part edge in the description if it matters.
+
+PREFIX cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#>
+PREFIX pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+CONSTRUCT {
+  ?w a cst:Workspace ; rdfs:label ?label ; cst:modifiedAt ?modified ; cst:owner ?owner ; cst:mode ?mode .
+  ?w ?partRevision ?partSeq .
+  ?w cst:document ?doc .
+  ?doc cst:revision ?docSeq .
+  ?w ?edge ?held .
+  ?held rdfs:label ?heldLabel .
+}
+WHERE {
+  {
+    GRAPH ?d { ?w a cst:Workspace ; rdfs:label ?label ; cst:modifiedAt ?modified .
+               OPTIONAL { ?w cst:owner ?owner } OPTIONAL { ?w cst:mode ?mode } }
+    FILTER (STRSTARTS(STR(?d), "urn:lattice:studio:description/"))
+  } UNION {
+    GRAPH ?d { ?w a cst:Workspace }
+    FILTER (STRSTARTS(STR(?d), "urn:lattice:studio:description/"))
+    VALUES ?name { "baseline" "library" "assembly" "meaning" "review" "mapping" "vocabulary" "quantification" "eligibility" "surface" "persistence" }
+    BIND (IRI(CONCAT(STR(?w), "/part/", ?name)) AS ?root)
+    BIND (IRI(CONCAT(STR(cst:), ?name, "Revision")) AS ?partRevision)
+    OPTIONAL { GRAPH ?m { ?root pat:seq ?seq } FILTER NOT EXISTS { GRAPH ?m { ?root pat:deleted ?gone . FILTER (STR(?gone) = "true") } } }
+    BIND (xsd:integer(COALESCE(?seq, 0)) AS ?partSeq)
+  } UNION {
+    GRAPH ?d { ?w a cst:Workspace ; cst:document ?doc }
+    FILTER (STRSTARTS(STR(?d), "urn:lattice:studio:description/"))
+    OPTIONAL { GRAPH ?m { ?doc pat:seq ?dseq } FILTER NOT EXISTS { GRAPH ?m { ?doc pat:deleted ?gone . FILTER (STR(?gone) = "true") } } }
+    BIND (xsd:integer(COALESCE(?dseq, 0)) AS ?docSeq)
+  } UNION {
+    GRAPH ?d { ?w a cst:Workspace ; ?edge ?held . FILTER (?edge IN (cst:dependsOn, cst:holdsImport, cst:fromSample))
+               OPTIONAL { ?held rdfs:label ?heldLabel } }
+    FILTER (STRSTARTS(STR(?d), "urn:lattice:studio:description/"))
+  }
+}

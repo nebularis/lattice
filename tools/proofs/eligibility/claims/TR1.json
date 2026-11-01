@@ -1,0 +1,13 @@
+{
+  "subject": "TR1",
+  "statedAs": "Resolution.no_scheme_undetermined",
+  "statementDigest": "sha256:4cfc23034c8cc2ea3a3d06374dbe5a368dc6940dd0c76b10eebbf2844d9f6bd4",
+  "method": "Proof",
+  "scope": "EveryCandidate",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

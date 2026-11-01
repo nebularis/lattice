@@ -30,9 +30,11 @@ def test_violations_are_reported(tmp_path: Path) -> None:
     write(tmp_path, "platform/a/pom.xml", POM.format(DEP.format("com.github.galigator.openllet", "openllet-owlapi", "")))
     write(tmp_path, "platform/b/pom.xml", POM.format(DEP.format("org.nebularis.lattice", "reasoning-testkit", "")))
     write(tmp_path, "platform/c/pom.xml", POM.format(DEP.format("org.nebularis.lattice", "reasoning-testkit", "<scope>test</scope>")))
+    write(tmp_path, "platform/d/pom.xml", POM.format(DEP.format("org.nebularis.lattice", "sparql-testkit", "")))
     write(tmp_path, "tools/x/pyproject.toml", '[project]\nname = "x"\ndependencies = ["owlready2>=0.4"]\n')
     assert sorted(check(tmp_path)) == [
         "platform/a/pom.xml: declares openllet-owlapi",
         "platform/b/pom.xml: depends on reasoning-testkit outside test scope",
+        "platform/d/pom.xml: depends on sparql-testkit outside test scope",
         "tools/x/pyproject.toml: declares owlready2>=0.4",
     ]

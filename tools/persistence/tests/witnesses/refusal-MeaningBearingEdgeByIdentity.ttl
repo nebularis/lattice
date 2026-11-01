@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
-# A meaning-bearing edge from a versioned class, left as a reference by identity (Foundation section 4, ADR-A137).
+# A meaning-bearing edge from a versioned class, left as a reference by identity (Foundation section 4, ADR-A142).
 # base: composite-property-boundary-shacl.ttl
 @prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
 @prefix ex:   <https://example.org/lending#> .

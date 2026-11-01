@@ -62,12 +62,13 @@ def example():
 def pytest_configure(config):
     config.addinivalue_line("markers", "oxigraph: runs on Oxigraph, the default engine (needs tools/testing/oxigraph, mise run bootstrap:testing-oxigraph)")
     config.addinivalue_line("markers", "rdflib: runs on rdflib, which PERSISTENCE_ENGINES must name (check:persistence-conformance does)")
+    config.addinivalue_line("markers", "jena: runs on Jena ARQ in memory, which PERSISTENCE_ENGINES must name (check:persistence-conformance does, needs mise run bootstrap:testing-jena)")
     config.addinivalue_line("markers", "conformance: its subject is one engine's behaviour, not the generated SPARQL. check:persistence leaves it out and check:persistence-conformance runs it")
     if os.environ.get("PERSISTENCE_ENGINES_REQUIRED"):
         _require_engines_and_mem_check()
 
 
-_PACKAGES = {"oxigraph": ("lattice_testing_oxigraph", "bootstrap:testing-oxigraph")}
+_PACKAGES = {"oxigraph": ("lattice_testing_oxigraph", "bootstrap:testing-oxigraph"), "jena": ("lattice_testing_jena", "bootstrap:testing-jena")}
 
 
 def _require_engines_and_mem_check() -> None:
@@ -79,6 +80,8 @@ def _require_engines_and_mem_check() -> None:
 
     names = [p.values[0] if hasattr(p, "values") else p for p in engines.ENGINES]
     missing = [_PACKAGES[n] for n in names if n in _PACKAGES and importlib.util.find_spec(_PACKAGES[n][0]) is None]
+    if "jena" in names and not missing and not __import__("lattice_testing_jena").available():
+        missing.append(("the Jena testkit jar", "bootstrap:testing-jena"))
     if importlib.util.find_spec("mem_check") is None:
         missing.append(("mem_check", "bootstrap:testing-mem-check"))
     if missing:
@@ -94,6 +97,10 @@ def engine(request):
 
     if request.param == "oxigraph":
         pytest.importorskip("lattice_testing_oxigraph", reason="mise run bootstrap:testing-oxigraph")
+    if request.param == "jena":
+        jena = pytest.importorskip("lattice_testing_jena", reason="mise run bootstrap:testing-jena")
+        if not jena.available():
+            pytest.skip("the Jena testkit jar is not built, mise run bootstrap:testing-jena")
     previous, engines.CURRENT = engines.CURRENT, request.param
     yield request.param
     engines.CURRENT = previous

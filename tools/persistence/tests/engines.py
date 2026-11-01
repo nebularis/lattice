@@ -6,7 +6,7 @@
 A test that executes an update takes a dataset from :func:`dataset` and uses the small part of rdflib's ``Dataset`` API
 that these tests need. On rdflib it is the ``Dataset`` itself. On Oxigraph it is :class:`OxDataset`, which has the same
 methods, answers in rdflib terms, and runs the update on :class:`lattice_testing_oxigraph.OxigraphStore`, putting each
-`initBindings` parameter in the text as a caller with no initial-binding API would. The ``engine`` fixture in
+`initBindings` parameter in the text as a caller with no initial-binding API would. On Jena ARQ in memory it is :class:`JenaDataset`, on :class:`lattice_testing_jena.JenaStore`, with the parameters put in the text the same way. The ``engine`` fixture in
 ``conftest.py`` chooses the engine, and a test opts in with :data:`each_engine`.
 
 The engines a test marked :data:`each_engine` runs on come from the environment variable ``PERSISTENCE_ENGINES``, a comma-separated
@@ -24,7 +24,7 @@ import pytest
 from rdflib import BNode, Dataset, Literal, URIRef
 from rdflib.namespace import XSD
 
-REGISTRY = {"oxigraph": pytest.mark.oxigraph, "rdflib": pytest.mark.rdflib}
+REGISTRY = {"oxigraph": pytest.mark.oxigraph, "rdflib": pytest.mark.rdflib, "jena": pytest.mark.jena}
 """Every engine we have, by name, with the mark that selects it (``-m oxigraph``, ``-m rdflib``)."""
 DEFAULT = "oxigraph"
 
@@ -88,7 +88,90 @@ def dataset():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             return Dataset()
+    if CURRENT == "jena":
+        return JenaDataset()
     return OxDataset()
+
+
+# ---- Jena behind rdflib's vocabulary ---------------------------------------------------------------------------------
+
+
+class JenaGraph:
+    """One graph of a :class:`JenaDataset`, with the methods of an rdflib graph that the tests use. ``name`` is None for the default graph."""
+
+    def __init__(self, store, name) -> None:
+        self._store = store
+        self._name = name
+
+    @property
+    def identifier(self):
+        return DEFAULT_GRAPH if self._name is None else self._name
+
+    def _match(self, pattern):
+        s, p, o = pattern
+        return [q for q in self._store.quads(self._name, default=self._name is None)
+                if (s is None or q.subject == s) and (p is None or q.predicate == p) and (o is None or q.object == o)]
+
+    def add(self, triple) -> None:
+        self._store.add(*triple, self._name)
+
+    def remove(self, pattern) -> None:
+        for q in self._match(pattern):
+            if isinstance(q.subject, BNode) or isinstance(q.object, BNode):
+                raise NotImplementedError("remove of a blank node triple")
+            triple = f"{q.subject.n3()} {q.predicate.n3()} {q.object.n3()}"
+            self._store.update(f"DELETE DATA {{ {triple} }}" if self._name is None else f"DELETE DATA {{ GRAPH {self._name.n3()} {{ {triple} }} }}")
+
+    def __iter__(self):
+        for q in self._match((None, None, None)):
+            yield q.subject, q.predicate, q.object
+
+    def __contains__(self, triple) -> bool:
+        return bool(self._match(triple))
+
+    def __len__(self) -> int:
+        return len(self._match((None, None, None)))
+
+    def objects(self, subject=None, predicate=None):
+        for q in self._match((subject, predicate, None)):
+            yield q.object
+
+
+class JenaDataset:
+    """The part of rdflib's ``Dataset`` that the persistence tests use, on Jena ARQ through :class:`lattice_testing_jena.JenaStore` (MSC-2).
+    The store speaks rdflib terms, so there is no conversion here. In-memory ARQ, not TDB2."""
+
+    def __init__(self) -> None:
+        from lattice_testing_jena import JenaStore
+
+        self._store = JenaStore()
+
+    def graph(self, name) -> JenaGraph:
+        return JenaGraph(self._store, URIRef(str(name)))
+
+    @property
+    def default_context(self) -> JenaGraph:
+        return JenaGraph(self._store, None)
+
+    def graphs(self):
+        names = {q.graph for q in self._store.quads()}
+        for name in sorted(names, key=lambda n: "" if n is None else str(n)):
+            yield JenaGraph(self._store, name)
+
+    def quads(self, pattern=(None, None, None, None)):
+        s, p, o, g = pattern
+        for q in self._store.quads(None if g in (None, DEFAULT_GRAPH) else g, default=g == DEFAULT_GRAPH):
+            if (s is None or q.subject == s) and (p is None or q.predicate == p) and (o is None or q.object == o):
+                yield q.subject, q.predicate, q.object, JenaGraph(self._store, q.graph)
+
+    def update(self, text: str, initBindings=None) -> None:
+        self._store.update(text, {str(k): v for k, v in (initBindings or {}).items()}, strict=False)
+
+    def query(self, text: str, initBindings=None):
+        from lattice_testing_jena import bind_parameters
+
+        variables, rows = self._store.solutions(bind_parameters(text, {str(k): v for k, v in (initBindings or {}).items()}, strict=False))
+        return [tuple(row.get(v) for v in variables) for row in rows]
 
 
 # ---- Oxigraph behind rdflib's vocabulary ---------------------------------------------------------------------------

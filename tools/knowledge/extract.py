@@ -87,7 +87,9 @@ FAMILY_CLASS = {
     "decision": "Decision",
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
+    "backlog": "Backlog",
     "store-discovery": "Discovery",
+    "store-question": "Discovery",
     "mechanism": "Mechanism",
     "capability": "Capability",
     "pattern": "Pattern",
@@ -135,14 +137,14 @@ SUPERSESSION_EDGE = {"Reverses": "supersededBy", "Narrows": "narrowedBy"}
 
 
 def tracked(*patterns: str) -> list[Path]:
-    """Tracked files matching any pattern, from git rather than the filesystem."""
+    """Tracked files matching any pattern, from git rather than the filesystem, skipping a tracked file deleted in the working tree."""
     listing = subprocess.run(
         ["git", "-C", str(ROOT), "ls-files", "-z", *patterns],
         capture_output=True,
         text=True,
         check=True,
     )
-    return sorted({ROOT / name for name in listing.stdout.split("\0") if name})
+    return sorted({ROOT / name for name in listing.stdout.split("\0") if name and (ROOT / name).exists()})
 
 
 def node(identifier: str) -> ox.NamedNode:
@@ -428,7 +430,10 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Claim": ("claim", "claim"),
     "Capability": ("claim", "claim"),
     "Debt": ("claim", "claim"),
+    "Idea": ("claim", "claim"),
     "Decision": ("claim", "claim"),
+    "Question": ("claim", "claim"),
+    "Why it matters": ("problemShape", "text"),
     "Name": ("label", "label"),
     "Pointer": ("pointer", "text"),
     "Problem shape": ("problemShape", "text"),
@@ -439,6 +444,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Evidenced by": ("evidencedBy", "ids"),
     "Decided by": ("decidedBy", "ids"),
     "Refines": ("refines", "ids"),
+    "Answered by": ("answeredBy", "ids"),
     "Supports": ("supports", "ids"),
     "Enforced by": ("enforcedBy", "ids"),
     "Unchecked because": ("uncheckedBecause", "text"),
@@ -466,6 +472,8 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
+        "Why we want it", "What exists", "Status",
+        "Next step",
     }
 )
 
@@ -685,8 +693,11 @@ def register_rows(out: Extract) -> None:
                                 if other != canonical:
                                     add(prop, node(other))
                                     out.bump(prop)
+                                    if prop == "answeredBy":
+                                        status = "Answered"
                         elif kind == "ratified":
-                            value = CONTROLLED["ratified"].get(cell.lower())
+                            # The leading yes or no is the fact, and a tail such as "added 2026-10-27" is for the reader.
+                            value = CONTROLLED["ratified"].get(cell.split(",")[0].strip().lower())
                             if value is None:
                                 out.problems.append(f"{here} has Ratified '{cell}', not yes or no")
                             else:
@@ -709,6 +720,8 @@ def register_rows(out: Extract) -> None:
                                     continue
                                 add(prop, ki(CONTROLLED[kind][value]))
                     add("status", ki(status))
+                    # The defining row, kept apart from the Pointer column so `read` prints it first.
+                    add("row", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_pointer:
                         add("pointer", ox.Literal(f"{rel}:{number}-{number}"))
                     if not has_claim:

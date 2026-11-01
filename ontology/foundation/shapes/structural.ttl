@@ -2,14 +2,16 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 fnd:VersionedShape a sh:NodeShape ;
     sh:targetClass fnd:Versioned ;
-    sh:property [
-        sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ;
-        sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity."
-    ] .
+    sh:or (
+        [ sh:path fnd:hasIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:class fnd:PersistentIdentity ]
+        [ sh:path rdfs:isDefinedBy ; sh:minCount 1 ; sh:nodeKind sh:IRI ]
+    ) ;
+    sh:message "A versioned thing has exactly one fnd:hasIdentity, a fnd:PersistentIdentity, unless it is a published term, rdfs:isDefinedBy the ontology that declares it, whose identity is its IRI and whose versions are that ontology's releases." .
 
 fnd:EvidenceShape a sh:NodeShape ;
     sh:targetClass fnd:Evidence ;

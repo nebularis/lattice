@@ -44,6 +44,7 @@ section (ADR-A127 decision 4, ADR-A126 decision 11).
 - **Say what instead.** State the fact the identifier stood for. A term not yet specified is "not yet
   specified". A rule decided in an ADR cites the ADR. A modelling choice is stated as the choice, with
   its reason. A release note says what changed, never which slice changed it.
+- **A migrated README cites only published decisions** (ADR-A127). The published-decisions check reports such a citation in a README not yet migrated and fails one in a README migrated to the ADR-A126 layout, which blocks a merge into `main`. On a branch a release note may cite the Proposed decision its change rests on, and before the merge the maintainer accepts that decision, or the note cites the published text that states the rule instead (PDD-16).
 - **Working documents keep them.** Sketches, plans, status records, review requests, Validation Packs,
   the developer index, commit messages and agent memory use delivery identifiers freely, since that is
   what they are for.

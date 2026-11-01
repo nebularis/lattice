@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Blank nodes the tree rule cannot name: a cycle, a node two works share, and a node no named node reaches.
+@prefix s: <http://example.org/src#> .
+_:a s:knows _:b . _:b s:knows _:a .
+<http://example.org/records/one> s:series _:shared . <http://example.org/records/two> s:series _:shared . _:shared s:title "Dune Chronicles" .
+_:orphan s:name "Unattached" .

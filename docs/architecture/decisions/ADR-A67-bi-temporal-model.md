@@ -37,13 +37,13 @@ The query path split above rests on a premise: that bi-temporal queries over nam
 
 Measurement has found a third option the premise does not consider. **Naming the periods is itself the per-graph temporal index.** Where a record's postings are partitioned into a graph per account partition and closing period, "the records since the last close" is a graph selection rather than a filtered scan, and where a closing recurrence fixes the positions at which checkpoints exist, the checkpoint at or before a point is addressed by a derived IRI rather than searched for. Both were measured on the ledger's account tree in [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md), findings 7 and 9, with the supporting store behaviour in TSD-04, TSD-36 and TSD-40.
 
-An as-of read on that shape costs 0.36 ms over 20,000 events and 0.54 ms over 100,000, against 32.8 ms and 217.5 ms for the same read behind a position filter. It does not grow with the history. So an as-of query does not need relaxed SLOs, a materialised current projection or a second path, for the pattern where that partition is available.
+An as-of read on that shape costs 0.36 ms over 20,000 events and 0.54 ms over 100,000, against 32.8 ms and 217.5 ms for the same read behind a position filter. It does not grow with the history. **The measured read is the one as of a transaction time**, since the benchmark's stream carries one axis, so the figures do not speak for a read as of a valid time where facts are recorded after they take effect. So an as-of query does not need relaxed SLOs, a materialised current projection or a second path, for the pattern where that partition is available.
 
 **What this changes.** The split stops being a design rule and becomes one option among three, chosen per aggregate rather than for the platform.
 
 | Shape | As-of read |
 |---|---|
-| partitioned by period, checkpoints at declared closings | answered on the authoritative graphs, no projection, no relaxed SLO |
+| partitioned by period, checkpoints at declared closings | **as of a transaction time**, answered on the authoritative graphs, no projection, no relaxed SLO. As of a valid time it still folds, since the partition and its checkpoints are keyed on the recorded axis and a running balance cannot run along both at once |
 | not partitioned, a temporal filter on every query | the premise above holds, and the split is the right answer |
 | current state wanted at OLTP rates | a materialised projection, which [ADR-A13](ADR-A13-dataset-graph-role-model.md) already places in the Materialisation graph role and which is never the evidence for a decision |
 

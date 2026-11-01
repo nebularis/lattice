@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The Configuration Studio's own store as persistence profiles (ADR-A149 decisions 12 and 13). The stage tool compiles
+# this with ontology/persistence/spec/persistence.ttl and instantiates the operations the writer runs, so the service
+# never runs the compiler. Every family is a named-graph aggregate under optimistic concurrency. A root's graph is
+# named by the caller (`$g`), which PDD-17 measured as flat on every store. Jobs are coordination data (PRI-52), so they
+# have no family here.
+
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+cst:DescriptionScope a dal:ClassScope ; dal:targetClass cst:Workspace ; dal:priority "20"^^xsd:integer .
+cst:PartScope a dal:ClassScope ; dal:targetClass cst:Part ; dal:priority "20"^^xsd:integer .
+cst:DocumentScope a dal:ClassScope ; dal:targetClass cst:Document ; dal:priority "20"^^xsd:integer .
+cst:LineageScope a dal:ClassScope ; dal:targetClass cst:Lineage ; dal:priority "20"^^xsd:integer .
+cst:VersionScope a dal:ClassScope ; dal:targetClass cst:PublishedVersion ; dal:priority "20"^^xsd:integer .
+cst:ImportScope a dal:ClassScope ; dal:targetClass cst:FencedImport ; dal:priority "20"^^xsd:integer .
+
+# What a workspace is: its name, owner, mode, dependencies, imports and documents' titles.
+cst:DescriptionProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:DescriptionScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:description/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:ReceiptOnly .
+
+# A part of a workspace, keeping its history as deltas.
+cst:PartProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:PartScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:part/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:PatchLog .
+
+# A document of a workspace, with its history as a part has it.
+cst:DocumentProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:DocumentScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:document/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:PatchLog .
+
+# A published lineage: its current version and its publications, replaced under its current version's guard.
+cst:LineageProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:LineageScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:lineage/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:ReceiptOnly .
+
+# A published version, created once and never replaced. Its content names it, so a second create is a no-op.
+cst:VersionProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:VersionScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:version/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:ReceiptOnly .
+
+# A fenced import, stored once by its digest and removed only when no workspace holds it.
+cst:ImportProfile a dal:DataAccessProfile ;
+    dal:appliesTo cst:ImportScope ;
+    dal:strategy dal:NamedGraphBoundary ;
+    dal:graphIriTemplate "urn:lattice:studio:imported/{id}" ;
+    dal:concurrencyProfile dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain dal:EventGrain ;
+    dal:receiptModel dal:ReceiptOnly .

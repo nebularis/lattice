@@ -5,10 +5,11 @@ export default defineConfig({
   base: "/addin/",
   plugins: [react()],
   server: {
-    port: 4175,
+    host: "127.0.0.1",
+    port: 4176,
     strictPort: true,
     proxy: {
-      "/api": "http://127.0.0.1:8088",
+      "/api": "http://127.0.0.1:8090",
     },
   },
   build: {

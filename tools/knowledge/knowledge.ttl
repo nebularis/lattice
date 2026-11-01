@@ -54,6 +54,10 @@ ki:Debt
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "technical debt" ;
     rdfs:comment "A shortfall in something that exists, with no planned home. Removable, like a pending decision." .
 
+ki:Backlog
+    rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "backlog" ;
+    rdfs:comment "Something we want built that no plan owns yet, an idea or a sketch. Removable, like a debt. Earns its class from the query for what a thing under design depends on that is not built, and from the BL flag find shows beside an entry such an idea bears on." .
+
 ki:Discovery
     rdf:type owl:Class ; rdfs:subClassOf ki:Node ; rdfs:label "discovery" ;
     rdfs:comment "Something found out by probing, measuring or being surprised. Earns its class from the check that a principle has supporting evidence, which is a query for discoveries." .
@@ -208,6 +212,11 @@ ki:claim
     rdfs:label "claim" ;
     rdfs:comment "One sentence, at most 200 characters, extracted from the bolded lead sentence of the Markdown entry and never authored twice (ADR-A134 decision 3). It is what an agent reads to decide whether to open the document." .
 
+ki:row
+    rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
+    rdfs:label "row" ;
+    rdfs:comment "The register row that defines the entry, as a repository-relative path with a single line number. The pointer is where the full entry is and may be elsewhere, so `graph:ask -- read` prints the row first and the pointed-at text after it." .
+
 ki:pointer
     rdf:type owl:DatatypeProperty ; rdfs:domain ki:Node ; rdfs:range xsd:string ;
     rdfs:label "pointer" ;
@@ -293,6 +302,11 @@ ki:answers
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Question ;
     rdfs:label "answers" ;
     rdfs:comment "From the entry a question's answer was promoted to, a standard, mechanism or decision, to the question, read from the lead's 'now <ID>'. Earns its place from the query for a question's answer, and from the report of answered questions whose rule-shaped answer was never promoted (ADR-A134 decision 30)." .
+
+ki:answeredBy
+    rdf:type owl:ObjectProperty ; rdfs:domain ki:Discovery ; rdfs:range ki:Discovery ;
+    rdfs:label "answered by" ;
+    rdfs:comment "Read from the 'Answered by' column of the store-discovery record's open questions: the finding that answers the question in full, which makes the question's status Answered. A finding that answers in part is named in the row's next step and leaves the question Open." .
 
 ki:waitsOn
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;

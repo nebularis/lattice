@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The studio's projections (ADR-A149 decision 14, PB-Q14 (b)). Each is one graph, urn:lattice:studio:projection:{key}, rebuilt
+# whole from the store by a refresh job, derived and never authoritative (PRI-52). The registry, jobs, holders and terms
+# are surface promotions, compiled by the worker with tools/surface over the union of the graphs named below. The fifth
+# projection, summaries, joins a workspace to its parts' version rows, which no read path expresses, so it is the query
+# workspace-summaries.rq, kept beside this file.
+#
+# The terms projection covers skos:Concept only. The members of the other units of publication-units.ttl are not covered yet.
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix prj:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+prj:profile a srf:SurfaceProfile ;
+    fnd:hasIdentity prj:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# Every lineage graph of the registry, urn:lattice:studio:lineage/*. Answers each lineage's current version.
+prj:registry-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:registry-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "registry" ;
+    srf:carrier fnd:PersistentIdentity ;
+    srf:readProperty cst:current ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:current ;
+    srf:sourceFidelity srf:ExactSource .
+
+# Every job graph but a refresh job's, urn:lattice:studio:job:{id}. Membership only, a job's status stays in its own graph.
+prj:jobs-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:jobs-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "jobs" ;
+    srf:carrier cst:Job ;
+    srf:readProperty cst:workspace ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:workspace ;
+    srf:sourceFidelity srf:ExactSource .
+
+# Every description graph, urn:lattice:studio:description/*. Answers which workspaces follow a lineage or pin a version.
+prj:holders-follows-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:holders-follows-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "holders-follows" ;
+    srf:carrier cst:Workspace ;
+    srf:readProperty cst:dependsOn ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:dependsOn ;
+    srf:sourceFidelity srf:ExactSource .
+
+# Every description graph. Answers which workspaces hold an import.
+prj:holders-imports-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:holders-imports-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "holders-imports" ;
+    srf:carrier cst:Workspace ;
+    srf:readProperty cst:holdsImport ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:holdsImport ;
+    srf:sourceFidelity srf:ExactSource .
+
+# Every version graph, urn:lattice:studio:version/*. The label of each concept a version defines.
+prj:terms-label-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:terms-label-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "terms-label" ;
+    srf:carrier skos:Concept ;
+    srf:readProperty skos:prefLabel ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:prefLabel ;
+    srf:sourceFidelity srf:ExactSource .
+
+# Every version graph. The version each concept names.
+prj:terms-version-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prj:terms-version-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "terms-version" ;
+    srf:carrier skos:Concept ;
+    srf:readProperty skos:inScheme ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prj:profile ;
+    srf:promotesTo prj:inScheme ;
+    srf:sourceFidelity srf:ExactSource .

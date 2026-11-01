@@ -266,6 +266,43 @@ class OxigraphEngine:
     run_text = None
 
 
+class JenaEngine:
+    """Apache Jena ARQ 5.1 in memory through `tools/testing/jena` (ADR-A125, MSC-5): the focus node is substituted into the text, as for
+    Oxigraph. Each call crosses a pipe to the JVM, about 0.3 ms, which is added to every focus node. The JVM runs with its full compiler
+    unless `LATTICE_SPARQL_TESTKIT_JVM_OPTIONS` is already set, since the kit's default stops at C1 for a fast start."""
+
+    name = "jena"
+
+    def __init__(self) -> None:
+        sys.path.insert(0, str(HERE.parents[1] / "tools" / "testing" / "jena" / "src"))
+        os.environ.setdefault("LATTICE_SPARQL_TESTKIT_JVM_OPTIONS", "-XX:+UseSerialGC -Xlog:disable")
+        from lattice_testing_jena import JenaStore
+
+        self.store = JenaStore()
+
+    @staticmethod
+    def version() -> str:
+        return "5.1.0"  # ponytail: the package states no version, so this is the platform POM's Jena
+
+    def load(self, triples: list[Triple]) -> None:
+        from rdflib import Literal, URIRef
+
+        self.store.add_all(
+            (URIRef(s), URIRef(p), URIRef(o) if kind == "iri" else Literal(int(o)) if kind == "int" else Literal(o, lang="en") if kind == "en" else Literal(o))
+            for s, p, kind, o in triples
+        )
+
+    def prepare(self, text: str):
+        return PREFIX + text  # the text is parsed on every call
+
+    def run(self, prepared, focus: str) -> int:
+        from rdflib import URIRef
+
+        return int(self.store.select(prepared, {"this": URIRef(focus)})[0]["n"])
+
+    run_text = None
+
+
 def available_engines() -> list[type]:
     engines = [RdflibEngine]
     try:
@@ -273,6 +310,14 @@ def available_engines() -> list[type]:
 
         engines.append(OxigraphEngine)
     except ImportError:
+        pass
+    try:
+        sys.path.insert(0, str(HERE.parents[1] / "tools" / "testing" / "jena" / "src"))
+        import lattice_testing_jena
+
+        if lattice_testing_jena.available():
+            engines.append(JenaEngine)
+    except ImportError:  # an absent package is a skip, never a failure
         pass
     return engines
 

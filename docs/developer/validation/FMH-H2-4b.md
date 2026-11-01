@@ -49,7 +49,7 @@ rdflib 7.6.0 and Oxigraph 0.5.11, on 2026-10-12, Python 3.14.8, Linux x86_64.
 |---|---|---|---|
 | P1 `snapshotUpdateSemantics`: a `DELETE`/`INSERT` of one triple in two solutions, in both row orders | **corrected 2026-10-13: False.** rdflib applies one solution at a time, in an order that follows `PYTHONHASHSEED`, so the triple survives or is lost by process. The first reading, True, held only for some seeds ([TSD-01](../../architecture/triple-store-discovery.md#tsd-01-the-order-in-which-a-deleteinsertwhere-is-applied)) | lost when the inserting row comes first. **False** | TD-42's linear form R2 |
 | P2 request failure atomicity: `INSERT DATA` then a failing operation | `CREATE GRAPH` is not implemented and `DROP GRAPH` of an absent graph does not fail. A failing `LOAD` leaves the first insert in place. **Not atomic** | a failing `DROP GRAPH` (an error at run time) rolls the insert back. **Atomic** | R1, two operations in one request |
-| P3 correlated `GRAPH ?g`: 100 graphs of 3000 triples against 1 | ratio 1.1 | ratio 1.1 | the cost note of H2.3-Q2. Neither scans every graph |
+| P3 correlated `GRAPH ?g`: 100 graphs of 3000 triples against 1 | ratio 1.1 | ratio 1.1 on 0.5.11 for a constant `?g`. **Corrected 2026-10-28: about 85 on 0.5.13, and about 85 on every version for the computed `?g` the compiler emits** (TSD-45) | the cost note of H2.3-Q2. It holds for rdflib and not for Oxigraph. The Oxigraph T4 is a strict expected failure from 0.5.13, and T4b pins the computed form |
 | P4 unbound graph variable in a template | writes into a fresh blank-node graph | skips the quad, as the specification says | TD-44 |
 | P5 numeric datatypes: `"1"^^xsd:long` stored and `DATATYPE`d | `xsd:long` both | **`xsd:integer` both** | TD-45, and decision 1 |
 
@@ -165,3 +165,7 @@ Run on 2026-10-12, restored afterwards.
 - A form of the replace other than R0, and the choice between forms (H5).
 - Recording any of the probe answers in the compiled profile (H2.7), or a capability record (H5).
 - A third engine, and other versions of these two.
+
+## Identifiers renumbered before the merge into `main`, 2026-10-28
+
+Seven identifiers this slice defined were also taken on branches with earlier rows, so under first in wins (ADR-A133 addendum) this branch renumbered its own before merging `main`. The store finding on the graph variable passed into an `OPTIONAL` became TSD-45 and the RDF4J `COUNT(*)` finding became TSD-48, since ccs-trunk recorded its findings numbered 42 and 43 on 2026-10-27. The two open questions became TSD-Q24 and TSD-Q25, after ccs-trunk's questions 21 to 23. The run records became R-M and R-N, since ccs-trunk uses R-J to R-L. The pending decision on the compiler's default graph naming became PDD-17, since the ledger branch raised its pending decision numbered 13 on 2026-10-27 and `main` had already moved its own to PDD-16. ccs-trunk's finding numbered 42 describes the same phenomenon as TSD-45, and the two are reconciled when ccs-trunk merges `main`.

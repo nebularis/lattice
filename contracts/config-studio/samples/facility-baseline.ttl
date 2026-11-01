@@ -1,0 +1,166 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The baseline of the facility agreement sample, which extends lending-baseline.ttl in the same
+# namespace. A facility is arranged by a branch for one borrower and funded by lenders, and the
+# borrower draws on it in drawdowns. The borrower's sector and region are values of concept
+# schemes the vocabulary configuration governs, and the facility's boundary shape tells the
+# persistence configuration which parts the facility owns and which it only references.
+#
+# The boundary shape is a SHACL shape and uses no persistence term on its own subject, so the
+# browser's split rule keeps it, with the property shapes it holds, in the baseline. The instance
+# data at the end is the carrier data the surface compiler reads. Every IRI is a placeholder under
+# example.org.
+
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# --- classes -------------------------------------------------------------------------------------
+
+ex:Facility a owl:Class ;
+    rdfs:label "Facility" ;
+    rdfs:comment "A facility agreement, under which lenders commit to lend to one borrower." .
+
+ex:Lender a owl:Class ;
+    rdfs:subClassOf ex:Party ;
+    rdfs:label "Lender" ;
+    rdfs:comment "A party that commits to lend under a facility." .
+
+ex:Drawdown a owl:Class ;
+    rdfs:label "Drawdown" ;
+    rdfs:comment "An amount the borrower draws under a facility on one date." .
+
+# --- properties of a facility ----------------------------------------------------------------------
+
+ex:facilityReference a owl:DatatypeProperty ;
+    rdfs:label "facility reference" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range xsd:string .
+
+ex:arrangedBy a owl:ObjectProperty ;
+    rdfs:label "arranged by" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Branch .
+
+ex:borrower a owl:ObjectProperty ;
+    rdfs:label "borrower" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Borrower .
+
+ex:lender a owl:ObjectProperty ;
+    rdfs:label "lender" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Lender .
+
+ex:commitment a owl:DatatypeProperty ;
+    rdfs:label "commitment" ;
+    rdfs:comment "The total amount committed, in the facility currency." ;
+    rdfs:domain ex:Facility ;
+    rdfs:range xsd:decimal .
+
+ex:margin a owl:DatatypeProperty ;
+    rdfs:label "margin" ;
+    rdfs:comment "The margin over the reference rate, in percent." ;
+    rdfs:domain ex:Facility ;
+    rdfs:range xsd:decimal .
+
+ex:hasDrawdown a owl:ObjectProperty ;
+    rdfs:label "has drawdown" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Drawdown .
+
+# --- properties of a drawdown ----------------------------------------------------------------------
+
+ex:drawnUnder a owl:ObjectProperty ;
+    rdfs:label "drawn under" ;
+    rdfs:domain ex:Drawdown ;
+    rdfs:range ex:Facility .
+
+ex:drawnAmount a owl:DatatypeProperty ;
+    rdfs:label "drawn amount" ;
+    rdfs:domain ex:Drawdown ;
+    rdfs:range xsd:decimal .
+
+ex:drawdownDate a owl:DatatypeProperty ;
+    rdfs:label "drawdown date" ;
+    rdfs:domain ex:Drawdown ;
+    rdfs:range xsd:date .
+
+# --- properties of a party, two of them valued from concept schemes --------------------------------
+
+ex:legalName a owl:DatatypeProperty ;
+    rdfs:label "legal name" ;
+    rdfs:domain ex:Party ;
+    rdfs:range xsd:string .
+
+ex:borrowerSector a owl:ObjectProperty ;
+    rdfs:label "borrower sector" ;
+    rdfs:domain ex:Borrower ;
+    rdfs:range skos:Concept .
+
+ex:borrowerRegion a owl:ObjectProperty ;
+    rdfs:label "borrower region" ;
+    rdfs:domain ex:Borrower ;
+    rdfs:range skos:Concept .
+
+# --- the facility's aggregate boundary -------------------------------------------------------------
+#
+# A facility owns its drawdowns, which have no life of their own. It only references its borrower,
+# lenders and arranging branch.
+
+ex:FacilityShape a sh:NodeShape ;
+    sh:targetClass ex:Facility ;
+    sh:property [ sh:path ex:facilityReference ; sh:datatype xsd:string ] ,
+                [ sh:path ex:commitment ; sh:datatype xsd:decimal ] ,
+                [ sh:path ex:margin ; sh:datatype xsd:decimal ] ,
+                [ sh:path ex:arrangedBy ; sh:class ex:Branch ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:borrower ; sh:class ex:Borrower ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:lender ; sh:class ex:Lender ; dal:ownership dal:Reference ] ,
+                [ sh:path ex:hasDrawdown ; sh:node ex:DrawdownShape ; dal:ownership dal:Owned ] .
+
+ex:DrawdownShape a sh:NodeShape ;
+    sh:targetClass ex:Drawdown ;
+    sh:property [ sh:path ex:drawnAmount ; sh:datatype xsd:decimal ] ,
+                [ sh:path ex:drawdownDate ; sh:datatype xsd:date ] .
+
+# --- carrier data ----------------------------------------------------------------------------------
+
+ex:branch-london a ex:Branch ; ex:branchCode "LDN" .
+
+ex:acme-foods a ex:Borrower ;
+    ex:legalName "Acme Foods" ;
+    ex:taxIdentifier "GB-100200300" ;
+    ex:borrowerSector ex:FoodProcessing ;
+    ex:borrowerRegion ex:UnitedKingdom .
+
+ex:fjord-retail a ex:Borrower ;
+    ex:legalName "Fjord Retail" ;
+    ex:taxIdentifier "DE-400500600" ;
+    ex:borrowerSector ex:Retail ;
+    ex:borrowerRegion ex:Germany .
+
+ex:lender-north a ex:Lender ; ex:legalName "North Bank" .
+ex:lender-south a ex:Lender ; ex:legalName "South Bank" .
+
+ex:facility-1 a ex:Facility ;
+    ex:facilityReference "FAC-2026-001" ;
+    ex:arrangedBy ex:branch-london ;
+    ex:borrower ex:acme-foods ;
+    ex:lender ex:lender-north , ex:lender-south ;
+    ex:commitment 120000000.0 ;
+    ex:margin 3.25 ;
+    ex:hasDrawdown ex:drawdown-1 , ex:drawdown-2 .
+
+ex:drawdown-1 a ex:Drawdown ;
+    ex:drawnUnder ex:facility-1 ;
+    ex:drawnAmount 40000000.0 ;
+    ex:drawdownDate "2026-03-15"^^xsd:date .
+
+ex:drawdown-2 a ex:Drawdown ;
+    ex:drawnUnder ex:facility-1 ;
+    ex:drawnAmount 25000000.0 ;
+    ex:drawdownDate "2026-09-01"^^xsd:date .

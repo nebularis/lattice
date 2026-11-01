@@ -60,7 +60,7 @@ ex:money a qnt:ValueSpace ;
     qnt:spaceKey "money" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
     qnt:spaceHash "money-v1" ;
     qnt:additivity qnt:Extensive ;
-    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+    qnt:unitContract [ a qnt:UnitContract ; fnd:hasIdentity ex:money-units-identity ; qnt:requiresUnit true ;
                        qnt:unitFamily ex:currencies ; qnt:canonicalUnit ex:EUR ] ;
     qnt:hasOperationCapability ex:money-compare , ex:money-sum .
 
@@ -180,7 +180,7 @@ ex:written-E a qnt:Quantity ; qnt:onSpace ex:line-share ; qnt:numericValue 0.3 ;
 ex:signing-factor a qnt:DerivedValueSpace ;
     qnt:spaceKey "signing-factor" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
     qnt:spaceHash "signing-factor-v1" ;
-    qnt:numeratorSpace ex:line-share ; qnt:denominatorSpace ex:line-share ;
+    qnt:numeratorSpace ex:line-share ; qnt:denominatorSpace ex:line-share ; qnt:baseRole ex:the-order ;
     qnt:additivity qnt:Intensive ;
     qnt:hasOperationCapability ex:sign-down .
 
@@ -231,3 +231,47 @@ ex:severity-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
 ex:severity-count a qnt:OperationCapability ; qnt:operationKind qnt:Count ;
     qnt:hasOperand [ a qnt:OperationOperand ; qnt:operandIndex 0 ; qnt:operandSpace ex:severity ] ;
     qnt:resultSpace ex:headcount .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:dates fnd:hasIdentity ex:dates-identity .
+ex:dates-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:headcount fnd:hasIdentity ex:headcount-identity .
+ex:headcount-identity a fnd:PersistentIdentity .
+ex:money fnd:hasIdentity ex:money-identity .
+ex:money-identity a fnd:PersistentIdentity .
+ex:severity fnd:hasIdentity ex:severity-identity .
+ex:severity-identity a fnd:PersistentIdentity .
+ex:gbp-to-eur fnd:hasIdentity ex:gbp-to-eur-identity .
+ex:gbp-to-eur-identity a fnd:PersistentIdentity .
+ex:usd-to-eur fnd:hasIdentity ex:usd-to-eur-identity .
+ex:usd-to-eur-identity a fnd:PersistentIdentity .
+ex:roles-identity a fnd:PersistentIdentity .
+ex:date-plus-duration fnd:hasIdentity ex:date-plus-duration-identity .
+ex:date-plus-duration-identity a fnd:PersistentIdentity .
+ex:duration-sum fnd:hasIdentity ex:duration-sum-identity .
+ex:duration-sum-identity a fnd:PersistentIdentity .
+ex:line-amount fnd:hasIdentity ex:line-amount-identity .
+ex:line-amount-identity a fnd:PersistentIdentity .
+ex:line-ratio fnd:hasIdentity ex:line-ratio-identity .
+ex:line-ratio-identity a fnd:PersistentIdentity .
+ex:line-sum fnd:hasIdentity ex:line-sum-identity .
+ex:line-sum-identity a fnd:PersistentIdentity .
+ex:money-compare fnd:hasIdentity ex:money-compare-identity .
+ex:money-compare-identity a fnd:PersistentIdentity .
+ex:money-sum fnd:hasIdentity ex:money-sum-identity .
+ex:money-sum-identity a fnd:PersistentIdentity .
+ex:severity-compare fnd:hasIdentity ex:severity-compare-identity .
+ex:severity-compare-identity a fnd:PersistentIdentity .
+ex:severity-count fnd:hasIdentity ex:severity-count-identity .
+ex:severity-count-identity a fnd:PersistentIdentity .
+ex:sign-down fnd:hasIdentity ex:sign-down-identity .
+ex:sign-down-identity a fnd:PersistentIdentity .
+ex:line-share fnd:hasIdentity ex:line-share-identity .
+ex:line-share-identity a fnd:PersistentIdentity .
+ex:signing-factor fnd:hasIdentity ex:signing-factor-identity .
+ex:signing-factor-identity a fnd:PersistentIdentity .
+ex:fx-spot fnd:hasIdentity ex:fx-spot-identity .
+ex:fx-spot-identity a fnd:PersistentIdentity .
+ex:money-units-identity a fnd:PersistentIdentity .

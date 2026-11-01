@@ -161,6 +161,14 @@ FAMILIES: tuple[Family, ...] = (
         note="removed from the register when an item gains a home in a plan",
     ),
     Family(
+        name="backlog",
+        mention=re.compile(r"\b(BL-\d+)\b"),
+        definition="table-row",
+        defines=((DEVELOPER / "backlog.md").as_posix(),),
+        removable=True,
+        note="removed from the register when a plan takes the idea on",
+    ),
+    Family(
         name="mechanism",
         mention=re.compile(r"\b(MEC-\d+)\b"),
         definition="table-row",
@@ -207,6 +215,15 @@ FAMILIES: tuple[Family, ...] = (
         defines=((ARCHITECTURE / "triple-store-discovery.md").as_posix(),),
         note="what a triple store actually does, found by probing it. An entry is never removed, "
         "so an unresolved mention is rot",
+    ),
+    Family(
+        name="store-question",
+        mention=re.compile(r"\b(TSD-Q\d+)\b"),
+        definition="table-row",
+        defines=((ARCHITECTURE / "triple-store-discovery.md").as_posix(),),
+        removable=True,
+        note="a question the store-discovery record holds open, in its open questions table. A row "
+        "may be removed once a finding answers it, so an unresolved mention is reported, never failed",
     ),
     # Inventoried only. Their definition rules come from the corpus sweep that seeds the knowledge
     # index, and each family moves up as its rule is written.

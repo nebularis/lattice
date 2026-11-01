@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A sample source for the LegalRuleML trials: the terms of a made-up supply agreement, written by the team in
+# LegalRuleML's metamodel (legalruleml-metamodel.ttl) with no text taken from the standard. It gives the check a run to
+# validate, so a proposal's output is held to the target layers' laws.
+@prefix lrmlmm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <https://example.org/lattice/legalruleml/supply/> .
+
+ex:harbour a lrmlmm:Agent ; rdfs:label "Harbour Supplies Ltd" .
+ex:fenwick a lrmlmm:Agent ; rdfs:label "Fenwick Foods Ltd" .
+
+ex:seller a lrmlmm:Role ; rdfs:label "seller" ; lrmlmm:filledBy ex:harbour .
+ex:buyer a lrmlmm:Role ; rdfs:label "buyer" ; lrmlmm:filledBy ex:fenwick .
+
+ex:delivery-clause a lrmlmm:PrescriptiveStatement ; rdfs:label "Delivery of the goods within thirty days of an order" .
+
+ex:deliver a lrmlmm:Obligation ; rdfs:label "deliver the goods ordered" ;
+    lrmlmm:Bearer ex:harbour ; lrmlmm:AuxiliaryParty ex:fenwick .
+ex:inspect a lrmlmm:Permission ; rdfs:label "inspect the goods on delivery" ;
+    lrmlmm:Bearer ex:fenwick ; lrmlmm:AuxiliaryParty ex:harbour .
+ex:resell a lrmlmm:Prohibition ; rdfs:label "resell the goods under the seller's brand" ;
+    lrmlmm:Bearer ex:fenwick .
+ex:refund a lrmlmm:Right ; rdfs:label "a refund for defective goods" ;
+    lrmlmm:Bearer ex:fenwick ; lrmlmm:AuxiliaryParty ex:harbour .
+
+ex:late-credit a lrmlmm:PenaltyStatement ; rdfs:label "A credit of two per cent of the price for each week of late delivery" .
+ex:late-delivery a lrmlmm:Reparation ; lrmlmm:appliesPenalty ex:late-credit ; lrmlmm:toPrescriptiveStatement ex:delivery-clause .
+ex:missed-delivery a lrmlmm:Violation ; rdfs:label "delivery later than thirty days" .
+
+ex:sale-of-goods a lrmlmm:LegalReference ; lrmlmm:refID "supply-terms-4.1" .
+ex:england a lrmlmm:Jurisdiction ; rdfs:label "England and Wales" .

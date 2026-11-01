@@ -1,0 +1,36 @@
+{
+ "decoded": true,
+ "triples": 343,
+ "schemes": [
+  {
+   "scheme": "http://example.org/lrml-mapping#MS",
+   "queries": 17,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "Uncertain",
+   "about": "http://example.org/lrml-mapping#Map_Authority",
+   "message": "an uncertain or incomplete mapping is a question for review, never compiled"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "Uncertain",
+   "about": "http://example.org/lrml-mapping#Map_Jurisdiction",
+   "message": "an uncertain or incomplete mapping is a question for review, never compiled"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "Uncertain",
+   "about": "http://example.org/lrml-mapping#Map_LegalSource",
+   "message": "an uncertain or incomplete mapping is a question for review, never compiled"
+  }
+ ],
+ "errors": 3,
+ "output_triples": null
+}

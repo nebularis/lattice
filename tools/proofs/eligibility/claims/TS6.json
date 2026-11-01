@@ -1,0 +1,13 @@
+{
+  "subject": "TS6",
+  "statedAs": "SetComparison.intersects_decide_symmetric_when_closed",
+  "statementDigest": "sha256:a92ea2d7546d14528d5126e8b48412cd3f9ae5720cab39def661e1ebfcef76a6",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

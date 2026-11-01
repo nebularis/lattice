@@ -38,7 +38,7 @@ SPEC, VOCAB = LAYER / "spec" / "instrument.ttl", LAYER / "vocab" / "instrument-v
 EXAMPLES = sorted((LAYER / "examples").glob("*.ttl"))
 REGIME_EXAMPLES = [LAYER / "examples" / f"{name}.ttl"
                    for name in ("licence-notice", "supply-suspension", "facility-cure-period", "service-dispute")]
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "quantification/vocab/quantification-vocab.ttl", "party/spec/party.ttl", "party/vocab/party-vocab.ttl",
          "eligibility/spec/eligibility.ttl", "eligibility/vocab/eligibility-vocab.ttl", "wording/spec/wording.ttl",
          "wording/vocab/wording-vocab.ttl", "behaviour/spec/behaviour.ttl", "behaviour/vocab/behaviour-vocab.ttl",
@@ -46,7 +46,8 @@ LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "qu
 ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour",
                             "instrument")
-              for kind in ("structural", "constraints")]
+              for kind in ("structural", "constraints")
+              if (ONTOLOGY / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification and Party ship no empty shapes file (TD-110)
 TRIGGERS = (INS.OnExercise, INS.OnBreach, INS.OnAct, INS.OnCondition, INS.OnExpiry)
 FIXED_KIND = {INS.OnExercise: BHV.DerivedTrigger, INS.OnAct: BHV.ExternalStimulus,  # OnExercise derived since C9b1
               INS.OnBreach: BHV.DerivedTrigger,
@@ -205,7 +206,7 @@ def test_c7a_03_regime_examples_are_consistent(example: Path) -> None:
     ("", ((LN["notice-regime"], RDF.type, INS.Template),), "/notice-regime", "stated meaning only"),
     ("tmpl:notice-regime ins:boundFrom tmpl:notice-regime .", (), "/notice-regime", "never bound"),
     ("tmpl:plain a bhv:TriggerDefinition ; bhv:triggerKind bhv:ExternalStimulus . tmpl:give-notice bhv:hasTrigger tmpl:plain .",
-     ((LN["give-notice"], BHV.hasTrigger, LN["on-notice-given"]),), "/give-notice", "legal triggers"),
+     ((LN["give-notice"], BHV.hasTrigger, LN["give-notice-on-notice-given"]),), "/give-notice", "legal triggers"),
     ("tmpl:give-notice bhv:selectionPolicy bhv:AllMatches .", ((LN["give-notice"], BHV.selectionPolicy, BHV.SingleMatch),),
      "/give-notice", "bhv:SingleMatch, fixed"),
     ("tmpl:give-notice bhv:activationPolicy bhv:DeferredActivation .",
@@ -219,23 +220,23 @@ def test_c7a_04_regime_shapes_report(add: str, remove: tuple, focus: str, messag
 # ---- C7a-05: each trigger's required value and kind -------------------------
 
 @pytest.mark.parametrize("name, add, remove, focus, message", [
-    ("licence-notice", "", ((LN["on-notice-given"], INS.ofPower, LN["end-on-notice"]),), "/on-notice-given", "exactly one power"),
-    ("licence-notice", "tmpl:on-notice-given ins:ofPower tmpl:end-for-breach .", (), "/on-notice-given", "exactly one power"),
+    ("licence-notice", "", ((LN["give-notice-on-notice-given"], INS.ofPower, LN["end-on-notice"]),), "/give-notice-on-notice-given", "exactly one power"),
+    ("licence-notice", "tmpl:give-notice-on-notice-given ins:ofPower tmpl:end-for-breach .", (), "/give-notice-on-notice-given", "exactly one power"),
     ("licence-notice", "tmpl:bad a ins:OnBreach , bhv:TriggerDefinition ; bhv:triggerKind bhv:DerivedTrigger ; ins:ofPower tmpl:end-on-notice .",
      (), "/bad", "exactly one obligation"),
     ("licence-notice", "tmpl:bad a ins:OnBreach , bhv:TriggerDefinition ; bhv:triggerKind bhv:DerivedTrigger ; ins:ofObligation tmpl:end-on-notice .",
      (), "/bad", "exactly one obligation"),
-    ("licence-notice", "", ((LN["on-notice-expiry"], INS.after, None),), "/on-notice-expiry", "exactly one of a length"),
-    ("facility-cure-period", "", ((FC["on-leverage-exceeded"], INS.condition, FC_EX["leverage-exceeded"]),),
-     "/on-leverage-exceeded", "exactly one Eligibility condition"),
-    ("service-dispute", "", ((SD["on-dispute"], INS.activity, INSV.Dispute),), "/on-dispute", "exactly one act"),
-    ("service-dispute", "tmpl:on-dispute ins:by ins-voc:Dispute .", (), "/on-dispute", "names parties"),
-    ("licence-notice", "", ((LN["on-notice-given"], BHV.triggerKind, BHV.DerivedTrigger),), "/on-notice-given",
+    ("licence-notice", "", ((LN["notice-runs-out-on-notice-expiry"], INS.after, None),), "/notice-runs-out-on-notice-expiry", "exactly one of a length"),
+    ("facility-cure-period", "", ((FC["enter-cure-period-on-leverage-exceeded"], INS.condition, FC_EX["leverage-exceeded"]),),
+     "/enter-cure-period-on-leverage-exceeded", "exactly one Eligibility condition"),
+    ("service-dispute", "", ((SD["raise-dispute-on-dispute"], INS.activity, INSV.Dispute),), "/raise-dispute-on-dispute", "exactly one act"),
+    ("service-dispute", "tmpl:raise-dispute-on-dispute ins:by ins-voc:Dispute .", (), "/raise-dispute-on-dispute", "names parties"),
+    ("licence-notice", "", ((LN["give-notice-on-notice-given"], BHV.triggerKind, BHV.DerivedTrigger),), "/give-notice-on-notice-given",
      "bhv:DerivedTrigger, fixed"),
-    ("licence-notice", "tmpl:on-notice-expiry bhv:triggerKind bhv:ExternalStimulus .",
-     ((LN["on-notice-expiry"], BHV.triggerKind, BHV.ScheduledTrigger),), "/on-notice-expiry", "bhv:ScheduledTrigger, fixed"),
-    ("facility-cure-period", "tmpl:on-leverage-exceeded bhv:triggerKind bhv:ScheduledTrigger .",
-     ((FC["on-leverage-exceeded"], BHV.triggerKind, BHV.DerivedTrigger),), "/on-leverage-exceeded", "bhv:DerivedTrigger, fixed"),
+    ("licence-notice", "tmpl:notice-runs-out-on-notice-expiry bhv:triggerKind bhv:ExternalStimulus .",
+     ((LN["notice-runs-out-on-notice-expiry"], BHV.triggerKind, BHV.ScheduledTrigger),), "/notice-runs-out-on-notice-expiry", "bhv:ScheduledTrigger, fixed"),
+    ("facility-cure-period", "tmpl:enter-cure-period-on-leverage-exceeded bhv:triggerKind bhv:ScheduledTrigger .",
+     ((FC["enter-cure-period-on-leverage-exceeded"], BHV.triggerKind, BHV.DerivedTrigger),), "/enter-cure-period-on-leverage-exceeded", "bhv:DerivedTrigger, fixed"),
 ])
 def test_c7a_05_trigger_shapes_report(name: str, add: str, remove: tuple, focus: str, message: str) -> None:
     g = _example(name)
@@ -250,7 +251,7 @@ def test_c7a_05_trigger_shapes_report(name: str, add: str, remove: tuple, focus:
 # ---- C7a-06: the explicit Behaviour type (law B4) ---------------------------
 
 @pytest.mark.parametrize("name, remove, focus", [
-    ("service-dispute", (SD["on-dispute"], RDF.type, BHV.TriggerDefinition), "/on-dispute"),
+    ("service-dispute", (SD["raise-dispute-on-dispute"], RDF.type, BHV.TriggerDefinition), "/raise-dispute-on-dispute"),
     ("licence-notice", (LN["notice-regime"], RDF.type, BHV.StateSpace), "/notice-regime"),
     ("licence-notice", (LN["give-notice"], RDF.type, BHV.TransitionDefinition), "/give-notice"),
 ])
@@ -290,7 +291,7 @@ def test_c7a_08_arising_through_a_trigger_reaches_the_occasion() -> None:
 
 def test_c7a_08_no_arising_or_ending_on_an_expiry() -> None:
     for prop in ("arisesOn", "endsOn"):
-        data = _changed("licence-notice", f"ex:sublicensing-excluded ins:{prop} tmpl:on-notice-expiry .")
+        data = _changed("licence-notice", f"ex:sublicensing-excluded ins:{prop} tmpl:notice-runs-out-on-notice-expiry .")
         assert _reported(data, "/sublicensing-excluded", "moves only regimes"), prop
 
 
@@ -303,9 +304,9 @@ def test_c7a_08_arising_tiers() -> None:
 # ---- C7a-09: tolling --------------------------------------------------------
 
 def test_c7a_09_tolled_by_its_own_state_space() -> None:
-    data = _changed("facility-cure-period", "tmpl:on-cure-expiry ins:tolledIn tmpl:performing .")
-    assert _reported(data, "/on-cure-expiry", "the state space it runs in")
-    assert not _reported(_example("facility-cure-period"), "/on-cure-expiry", "the state space it runs in")
+    data = _changed("facility-cure-period", "tmpl:enter-default-on-cure-expiry ins:tolledIn tmpl:performing .")
+    assert _reported(data, "/enter-default-on-cure-expiry", "the state space it runs in")
+    assert not _reported(_example("facility-cure-period"), "/enter-default-on-cure-expiry", "the state space it runs in")
 
 
 # ---- C7a-10: an act trigger is no legal relation (C7a-Q2) -------------------
@@ -392,8 +393,9 @@ def test_c7a_16_lean_licence_fails_b4_without_a_reasoner() -> None:
     messages = _messages(_lean(_example("licence-notice")))
     b4 = {f for f, m in messages if "law B4" in m}
     assert b4 == {str(LN[n]) for n in ("notice-regime", "give-notice", "notice-runs-out", "terminate-from-in-force",
-                                       "terminate-during-notice", "on-notice-given", "on-notice-expiry",
-                                       "on-termination-for-breach")}
+                                       "terminate-during-notice", "give-notice-on-notice-given", "notice-runs-out-on-notice-expiry",
+                                       "terminate-from-in-force-on-termination-for-breach",
+                                       "terminate-during-notice-on-termination-for-breach")}
     assert not [m for _, m in messages if ", fixed" in m and "Assert it" not in m]
 
 
@@ -408,8 +410,8 @@ def test_c7a_17_wrong_policy_is_reported_where_stated_and_spreads_once_closed() 
 
 def test_c7a_18_a_trigger_from_its_property_alone() -> None:
     data = _lean(_example("licence-notice"))
-    data.remove((LN["on-notice-given"], RDF.type, INS.OnExercise))
+    data.remove((LN["give-notice-on-notice-given"], RDF.type, INS.OnExercise))
     closed = _closed(data)
-    trigger = LN["on-notice-given"]
+    trigger = LN["give-notice-on-notice-given"]
     assert {INS.OnExercise, BHV.TriggerDefinition} <= set(closed.objects(trigger, RDF.type))
     assert set(closed.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}

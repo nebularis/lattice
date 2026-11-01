@@ -198,3 +198,19 @@ form:sec-5-v2 a wrd:Element ;
 form:form-v2 a wrd:Wording ;
     fnd:hasIdentity form:form-identity ; fnd:hasGovernanceState fnd:Draft ;
     wrd:directlyComprises form:sec-5-v2 , form:sec-9 , form:sec-12 , form:gv-lender-count .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+form:acme-facility-identity a fnd:PersistentIdentity .
+form:slot-5-2-identity a fnd:PersistentIdentity .
+form:sec-5-identity a fnd:PersistentIdentity .
+ex:acme-cl-12-2-identity a fnd:PersistentIdentity .
+ex:acme-cl-5-1-identity a fnd:PersistentIdentity .
+ex:acme-cl-5-2-identity a fnd:PersistentIdentity .
+ex:confirmation-para-1-identity a fnd:PersistentIdentity .
+ex:letter-para-1-identity a fnd:PersistentIdentity .
+ex:letter-para-2-identity a fnd:PersistentIdentity .
+ex:letter-para-3-identity a fnd:PersistentIdentity .
+form:cl-5-2c-identity a fnd:PersistentIdentity .
+ex:confirmation-identity a fnd:PersistentIdentity .
+ex:letter-identity a fnd:PersistentIdentity .
+form:form-identity a fnd:PersistentIdentity .

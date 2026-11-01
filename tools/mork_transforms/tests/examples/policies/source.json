@@ -1,0 +1,4 @@
+{"policies": [
+  {"number": "P-1", "holder": "Ann \"Annie\" Lee", "covers": [{"code": "FIRE"}, {"code": "FLOOD"}]},
+  {"number": "P-2", "holder": "Bo", "covers": [{"code": "FIRE"}, {"code": "QUAKE"}]}
+]}

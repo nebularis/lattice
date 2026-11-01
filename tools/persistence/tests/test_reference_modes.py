@@ -233,7 +233,7 @@ def test_h2_8c_t11_the_vocabulary_declares_record_class_with_no_domain():
     assert list(g.objects(DAL.recordClass, URIRef("http://www.w3.org/2000/01/rdf-schema#domain"))) == []
 
 
-# OR-7 (ADR-A137): a meaning-bearing edge from a versioned class is owned or pinned, never by identity.
+# OR-7 (ADR-A142): a meaning-bearing edge from a versioned class is owned or pinned, never by identity.
 _VERSIONED_ROOT = "ex:Order rdfs:subClassOf fnd:Versioned . ex:customer fnd:meaningBearing true ."
 
 

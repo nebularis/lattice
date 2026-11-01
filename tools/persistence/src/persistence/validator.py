@@ -415,7 +415,7 @@ def _check_tree(graph: Graph, target: Target, boundary: ResolvedDimension, tree,
             "Use dal:ByIdentity, or dal:Pinned on an edge to a versioned class.",
         )
     for edge in tree.edges:
-        # A meaning-bearing edge from a versioned class is owned or pinned, never by identity (Foundation §4, ADR-A137).
+        # A meaning-bearing edge from a versioned class is owned or pinned, never by identity (Foundation §4, ADR-A142).
         source_class = tree.root_class if edge.source_shape == tree.root_shape else graph.value(edge.source_shape, SH.targetClass)
         if (edge.kind == REFERENCE and edge.reference_mode == BY_IDENTITY
                 and (edge.step.predicate, FND.meaningBearing, Literal(True)) in graph

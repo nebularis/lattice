@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
-"""A binding ends by a closure record, never by editing its validity (ADR-A137, ontology remediation OR-7b)."""
+"""A binding ends by a closure record, never by editing its validity (ADR-A142, ontology remediation OR-7b)."""
 
 from __future__ import annotations
 

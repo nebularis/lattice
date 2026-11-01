@@ -84,6 +84,19 @@ def test_flags_mark_a_boundary_a_debt_and_a_proposed_entry(isolated, capsys):
     assert "! the entry states a case it does not cover" in out and "TD an open debt" in out and "? the entry is Proposed" in out
 
 
+def test_an_open_backlog_idea_flags_the_entry_it_bears_on(isolated, capsys):
+    """BL says an unbuilt idea on the backlog bears on the entry, and the line under the row names it."""
+    store = ox.Store()
+    entry(store, "CAP-1", "Capability", "compile a mapping to RML")
+    entry(store, "BL-1", "Backlog", "compile a mapping to XSLT")
+    fact(store, "BL-1", "status", ox.NamedNode(KI + "Open"))
+    fact(store, "BL-1", "bearsOn", at("CAP-1"))
+    embed.build(store, isolated)
+    ask.find(store, "mapping", {"Capability"}, set(), set(), 8)
+    out = capsys.readouterr().out
+    assert table(out)[0][4] == "BL" and "On the backlog, not built: BL-1." in under_row(out, "CAP-1")
+
+
 def test_a_closed_debt_does_not_flag_its_entry(isolated, capsys):
     store = ox.Store()
     entry(store, "MEC-1", "Mechanism", "a ledger account")
@@ -220,6 +233,23 @@ def test_read_refuses_a_pointer_to_a_whole_long_file(tmp_path, monkeypatch, caps
     out = capsys.readouterr().out
     assert "pointer defect" in out and "row 1\n" not in out
     assert ask.whole_file("short.md:1-10") is None
+
+
+def test_read_prints_an_entry_with_a_register_row_and_a_pointer(tmp_path, monkeypatch, capsys):
+    """An entry with its defining register row and a pointer, as every register entry has, prints
+    both under their labels, rather than reading the label as a path."""
+    monkeypatch.setattr(ask, "ROOT", tmp_path)
+    monkeypatch.setattr(ask, "ASK_LOG", tmp_path / "asks.log")
+    (tmp_path / "register.md").write_text("| MEC-1 | a row |", encoding="utf-8")
+    (tmp_path / "short.md").write_text("\n".join(f"line {n}" for n in range(1, 11)), encoding="utf-8")
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a mechanism")
+    fact(store, "MEC-1", "row", "register.md:1-1")
+    fact(store, "MEC-1", "pointer", "short.md:2-3")
+    ask.read(store, "MEC-1")
+    out = capsys.readouterr().out
+    assert "== row register.md:1-1\n| MEC-1 | a row |" in out
+    assert "== pointed-at short.md:2-3\nline 2\nline 3" in out
 
 
 def test_every_find_and_read_is_logged_with_its_best_score(isolated, capsys):

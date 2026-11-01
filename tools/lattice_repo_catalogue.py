@@ -46,7 +46,7 @@ ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
 EXCEPTIONS_FILE = "tools/lattice_repo_catalogue_exceptions.txt"
 DEBT_FILE = "docs/developer/technical-debt.md"
-SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist"}
+SCAN_SKIP_DIRS = {"node_modules", "__pycache__", "build", "dist", "target"}
 
 # The schema. A key not listed here is an error, so later keys (for example a downstream
 # catalogue's ``extends``, ADR-A121 decision 7) can be added without ambiguity.
@@ -178,6 +178,18 @@ class Catalogue:
 
     def modules_of_kind(self, kind: str) -> List[Module]:
         return [m for m in self.modules.values() if m.kind == kind]
+
+    def files(self, name: str) -> List[Path]:
+        """Every file called ``name`` in the catalogue's scope: a direct child of the root, or under a root the
+        catalogue names, outside hidden, build and cache directories and the paths marked generated. A check
+        scans these rather than the whole checkout, so a worktree nested in it or build output left in it is
+        never taken for the tree (ADR-A121 decision 5)."""
+        found = {p for p in self.root.iterdir() if p.is_file() and p.name == name}
+        for area in self.roots:
+            directory = self.root / area.path.rstrip("/")
+            if directory.is_dir():
+                found |= {p for p in _walk(directory, (name,)) if p.name == name}
+        return sorted(p for p in found if not self.is_generated(p.relative_to(self.root).as_posix()))
 
 
 def find_root(root: Path | str | None = None) -> Path:

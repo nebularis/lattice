@@ -34,12 +34,13 @@ EX = Namespace("https://example.org/lattice/quantification/additivity/")
 ONTOLOGY = ROOT / "ontology"
 QLAYER = ONTOLOGY / "quantification"
 EXAMPLE = QLAYER / "examples" / "additivity.ttl"
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "quantification/vocab/quantification-vocab.ttl"]
 ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour",
                             "instrument")
-              for kind in ("structural", "constraints")]
+              for kind in ("structural", "constraints")
+              if (ONTOLOGY / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification and Party ship no empty shapes file (TD-110)
 
 
 def _graph(*sources) -> Graph:

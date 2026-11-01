@@ -19,17 +19,8 @@ A hand-written, independent Python reference for Eligibility's logic kernel and 
   this module is verified by test (`tests/test_kernel.py`), reproducing the same claims by
   exhaustive enumeration over the three-valued domain where the domain is small enough to make
   that a complete check, not merely an example.
-- **`denotation.py`** is the single-candidate decision procedure for `elg:ExactMatch`,
-  `elg:SetMembership` and `elg:HierarchicalMatch` (laws L9-L12, L14), and the set-reading and
-  negation composition on top of it (L15, L16), deciding on completeness only for a binding
-  that names a closure (L17, ADR-A105). `decide_condition_with_reliance` also reports whether
-  that decision relied on the closure (HQ6a2-Q3). It was written directly from
-  `ontology/eligibility/README.md` §6's law prose, then cross-checked against
-  `tools/mork_compilers/src/mork_compilers/eligibility_ir.py`'s `_expand` function only to confirm
-  no case was missed — not copied from it. `_expand` is what every compiler backend (SPARQL,
-  SHACL, SWRL, OWL) ultimately reads (directly or via its "Expanded" form, ADR-A89), so an
-  independent reference that imported it would be comparing `_expand` against itself: B2's
-  differential tests would never be able to catch a mistake in `_expand` shared by every backend.
+- **`denotation.py`** is the single-candidate decision procedure for `elg:ExactMatch`, `elg:SetMembership` and `elg:HierarchicalMatch` (laws L9-L12, L14), and the set-reading and negation composition on top of it (L15, L16), deciding on completeness only for a binding that names a closure (L17, ADR-A105). `decide_condition_with_reliance` also reports whether that decision relied on the closure (HQ6a2-Q3). L9, L11 and L14 are stated over the ordering of one hierarchy relation, the condition's own (`elg:hierarchyRelation`, `skos:broader` when it names none). `Scheme.over` builds a scheme from the links of that one relation, and the differential tests build it from the graph's links of the named relation, not from the compiler's plan, so a compiler that walked another relation would disagree. It was written directly from `ontology/eligibility/README.md` §6's law prose, then cross-checked against `tools/mork_compilers/src/mork_compilers/eligibility_ir.py`'s `_expand` function only to confirm no case was missed — not copied from it. `_expand` is what every compiler backend (SPARQL, SHACL, SWRL, OWL) ultimately reads (directly or via its "Expanded" form, ADR-A89), so an independent reference that imported it would be comparing `_expand` against itself: B2's differential tests would never be able to catch a mistake in `_expand` shared by every backend.
+- **`decide_set_comparison`** (L18) decides each tested value against the reference values (`decide_member`), then reads the outcomes as every value for Subset, some value for Intersects and some value negated for Disjoint, under the tested set's closure. `decide_set_comparison_with_reliance` also reports which closures decided. `TestSetComparisonSweep` runs 48 cases (three comparisons, both closures each, exact and hierarchical match, negated or not) against SPARQL and SHACL, builds the scheme from the graph's part-of links, and checks the compilers' `?closure` column against the reliance.
 - **Not implemented here**: `elg:IntervalContainment` (L4-L5, a different plan kind,
   `IntervalPlan`, not in track B1's scope per the plan), evidence-path reading from RDF, profile
   aggregation (`elg:AllRequired`/`elg:AnySufficient`, L6-L8). B1 decides a condition's outcome from

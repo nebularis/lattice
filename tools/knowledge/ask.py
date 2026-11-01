@@ -158,7 +158,7 @@ SELECT ?subject ?direction ?id ?kind ?status ?claim WHERE {
 POINTERS = (
     PREFIXES
     + """
-SELECT ?subject ?pointer WHERE { GRAPH ?g { ?subject ki:pointer ?pointer } }"""
+SELECT ?subject ?p ?pointer WHERE { GRAPH ?g { ?subject ?p ?pointer . VALUES ?p { ki:row ki:pointer } } }"""
 )
 
 # What read prints before the text: the entry's own fields that find does not show, then each entry
@@ -182,13 +182,14 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
        (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences)
        (GROUP_CONCAT(DISTINCT ?ac) AS ?activities) (GROUP_CONCAT(DISTINCT ?qu) AS ?qualities)
        (GROUP_CONCAT(DISTINCT ?te) AS ?technologies) (SAMPLE(?dn) AS ?uncovered)
-       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (SAMPLE(?sp) AS ?successor) WHERE {
+       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (GROUP_CONCAT(DISTINCT ?idea) AS ?ideas) (SAMPLE(?sp) AS ?successor) WHERE {
   GRAPH ki:index {
     ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
     OPTIONAL { ?n ki:pointer ?pointer }
     OPTIONAL { ?n ki:status ?s }
     OPTIONAL { ?n ki:doesNotCover ?dn }
     OPTIONAL { ?d ki:bearsOn ?n ; a ki:Debt ; ki:status ki:Open ; ki:identifier ?debt }
+    OPTIONAL { ?b ki:bearsOn ?n ; a ki:Backlog ; ki:status ki:Open ; ki:identifier ?idea }
     OPTIONAL { ?n ki:supersededBy ?successorNode . ?successorNode ki:identifier ?sp }
     OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
     OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
@@ -224,7 +225,7 @@ SELECT ?n ?iri ?claim ?pointer ?module WHERE { GRAPH ki:terms {
 KINDS = {
     "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
-    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
+    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt", "backlog": "Backlog",
     "question": "Question", "term": "Term",
 }
 PHASES = {
@@ -423,6 +424,8 @@ def flags(r: dict) -> str:
         marks += "~"
     if r.get("debts"):
         marks += "TD"
+    if r.get("ideas"):
+        marks += "BL"
     if r.get("status") == "Proposed":
         marks += "?"
     return marks
@@ -444,6 +447,8 @@ def under(r: dict) -> str:
         text.append(f"Narrowed by {r['narrowed']}.")
     if r.get("debts"):
         text.append(f"Open debt: {', '.join(sorted(r['debts'].split()))}.")
+    if r.get("ideas"):
+        text.append(f"On the backlog, not built: {', '.join(sorted(r['ideas'].split()))}.")
     return " ".join(text)
 
 
@@ -533,9 +538,9 @@ def _show_found(db: ox.Store, rows: list[dict], facets: dict, best: float) -> No
     if also:
         print("\nlinked to the top answers by a declared edge:")
         show(also, ("via", "id", "kind", "status", "claim", "pointer"))
-    marks = {m for r in rows for m in ("!", "~", "TD", "?") if m in r["flags"]}
+    marks = {m for r in rows for m in ("!", "~", "TD", "BL", "?") if m in r["flags"]}
     if marks:
-        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "?") if m in marks) + ". The line under the row says which.")
+        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "BL", "?") if m in marks) + ". The line under the row says which.")
     if facets:
         print("\n+ marks each facet the entry matches, which raised it by", BOOST)
     if best < WEAK:
@@ -548,6 +553,7 @@ FLAG_WORDS = {
     "!": "! the entry states a case it does not cover",
     "~": "~ the text returned was superseded or reversed",
     "TD": "TD an open debt bears on the entry",
+    "BL": "BL an idea on the backlog, not built, bears on the entry",
     "?": "? the entry is Proposed, not ratified",
 }
 
@@ -560,18 +566,29 @@ def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
     is answered by rebuilding."""
     subject = ox.NamedNode(KI + "node/" + identifiers.normalise(identifier))
     found: list[tuple[str, str]] = []
-    for row in db.query(POINTERS, substitutions={ox.Variable("subject"): subject}):
+    # The defining register row first, then what the row points at, labelled as such.
+    rows = sorted(db.query(POINTERS, substitutions={ox.Variable("subject"): subject}), key=lambda r: r["p"].value != KI + "row")
+    for row in rows:
         for part in str(row["pointer"].value).split(","):
             path, start, end = anchors.parse_range(part)
             lines = (ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines()
             last = len(lines) if end is None else min(end, len(lines))
-            found.append((f"{path}:{start}-{last}", "\n".join(lines[start - 1 : last])))
+            where = f"{path}:{start}-{last}"
+            if row["p"].value == KI + "row":
+                where = f"row {where}"
+            elif any(w == f"row {where}" for w, _ in found):
+                continue
+            else:
+                where = f"pointed-at {where}" if found else where
+            found.append((where, "\n".join(lines[start - 1 : last])))
     return found
 
 
 def whole_file(where: str) -> int | None:
-    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None."""
-    path, start, end = anchors.parse_range(where)
+    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None.
+
+    ``where`` is a label from read_ranges, so the row and pointed-at prefixes are dropped first."""
+    path, start, end = anchors.parse_range(where.removeprefix("row ").removeprefix("pointed-at "))
     total = len((ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines())
     return total if start == 1 and end in (None, total) and total > WHOLE_FILE else None
 

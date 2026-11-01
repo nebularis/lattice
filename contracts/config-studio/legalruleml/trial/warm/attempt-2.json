@@ -1,0 +1,14 @@
+{
+ "decoded": true,
+ "triples": 304,
+ "schemes": [
+  {
+   "scheme": "https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme",
+   "queries": 33,
+   "strata": 1
+  }
+ ],
+ "findings": [],
+ "errors": 0,
+ "output_triples": null
+}

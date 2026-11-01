@@ -10,8 +10,6 @@ carries these answers with a probe each, and these are the probes. The engines d
 
 from __future__ import annotations
 
-import time
-
 import pytest
 from rdflib import Literal, URIRef
 
@@ -97,6 +95,9 @@ def test_h2_4b_t1_p1_how_an_engine_applies_the_result_of_a_delete_insert_where(o
     elif _snapshot_updates():
         # From pyoxigraph 0.5.12, every deletion and then every insertion, as the specification says, in either row order (TSD-01).
         assert _p1(_ROWS[order]) is True
+    elif _current() == "jena":
+        # Every deletion and then every insertion, in either row order (TSD-53).
+        assert _p1(_ROWS[order]) is True
     else:
         # Up to 0.5.11, one solution at a time, in the order the VALUES block gives (the mutations are collected, then applied in order).
         assert _p1(_ROWS[order]) == {"insert row first": False, "delete row first": True}[order]
@@ -110,6 +111,8 @@ def test_h2_4b_t2_p1_snapshot_update_semantics_holds_on_oxigraph_from_0_5_12_and
     if _current() == "rdflib":
         snapshot = all(all(_p1_rdflib_by_seed(rows)) for rows in _ROWS.values())
         assert snapshot is False
+    elif _current() == "jena":
+        assert all(_p1(rows) for rows in _ROWS.values()) is True
     else:
         snapshot = all(_p1(rows) for rows in _ROWS.values())
         assert snapshot is _snapshot_updates()
@@ -136,36 +139,18 @@ def test_h2_4b_t3_p2_a_request_that_fails_at_its_second_operation_keeps_or_loses
         # CREATE GRAPH is not implemented, and DROP GRAPH of an absent graph does not fail. LOAD of an absent source does.
         assert _p2("LOAD <urn:no-such>") == (True, True)
         assert _p2("DROP GRAPH <urn:absent>") == (False, True)
+    elif _current() == "jena":
+        # In-memory ARQ, not TDB2 (TSD-Q13). Each update request runs in one write transaction, so a failure rolls the first operation back (TSD-50).
+        # DROP of an absent graph succeeds, and CLEAR GRAPH of one fails, which is the departure TSD-50 records.
+        assert _p2("DROP GRAPH <urn:absent>") == (False, True)
+        assert _p2("CLEAR GRAPH <urn:absent>") == (True, False)
+        assert _p2("LOAD <urn:no-such>") == (True, False)
     else:
         assert _p2("DROP GRAPH <urn:absent>") == (True, False)  # an error at run time, and the first insert is rolled back
 
 
-# ---- P3 a correlated GRAPH ?g in an inner group -------------------------------------------------------------------------
-
-
-def _p3_ratio(triples: int = 3000, graphs: int = 100) -> float:
-    def timed(count: int) -> float:
-        ds = engines.dataset()
-        for i in range(count):
-            g = ds.graph(U(f"urn:g:{i}"))
-            for j in range(triples):
-                g.add((U(f"urn:s{j}"), U("urn:p"), Literal(j)))
-        best = float("inf")
-        for _ in range(3):
-            start = time.perf_counter()
-            rows = ds.query("SELECT (COUNT(*) AS ?n) WHERE { BIND(<urn:g:0> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } } }")
-            best = min(best, time.perf_counter() - start)
-            assert int(list(rows)[0][0]) == triples
-        return best
-
-    return timed(graphs) / timed(1)
-
-
-def test_h2_4b_t4_p3_a_graph_variable_bound_outside_does_not_make_the_query_scan_every_graph():
-    """100 graphs of equal size, against 1. A store that evaluated the inner group before the join would take about 100
-    times as long. Both engines pass the binding in (the cost note of H2.3-Q2), so `compile` has no reason yet to choose
-    the caller-named graph for a store. The bound is wide, since the measure is a ratio of two timings of one machine."""
-    assert _p3_ratio() < 8
+# ---- P3 a correlated GRAPH ?g in an inner group is a cost measure (STD-290). benchmark/persistence-store-probes and
+# benchmark/persistence-graph-naming-cost measure it, with ?g bound by a constant and as the compiler computes it (TSD-42) ----
 
 
 # ---- P4 an unbound graph variable in a template ------------------------------------------------------------------------
@@ -179,6 +164,8 @@ def test_h2_4b_t5_p4_a_template_quad_whose_graph_variable_is_unbound_is_skipped_
     names = [str(g.identifier) for g in ds.graphs() if len(g)]
     if _current() == "rdflib":
         assert len(names) == 1 and not names[0].startswith("urn:")  # a fresh blank-node graph holds the triple
+    elif _current() == "jena":
+        assert names == []  # skipped, as the specification says (TSD-53)
     else:
         assert names == []
 
@@ -194,7 +181,7 @@ def test_h2_4b_t6_p5_an_integer_derived_literal_keeps_its_datatype_on_rdflib_and
     ds.update(f'INSERT DATA {{ GRAPH <urn:g> {{ <urn:s> <urn:p> "1"^^<{LONG}> }} }}')
     (stored,) = [o.datatype for _, _, o in ds.graph(U("urn:g"))]
     reported = list(ds.query(f'SELECT (DATATYPE("1"^^<{LONG}>) AS ?d) WHERE {{}}'))[0][0]
-    expected = _pick(rdflib=LONG, oxigraph="http://www.w3.org/2001/XMLSchema#integer")
+    expected = _pick(rdflib=LONG, jena=LONG, oxigraph="http://www.w3.org/2001/XMLSchema#integer")
     assert (str(stored), str(reported)) == (expected, expected)
 
 
@@ -229,7 +216,7 @@ def test_h2_5_t1_p5_a_long_has_one_datatype_in_every_form_on_each_engine_so_guar
     treating the two alike. If an engine ever reports different datatypes for them, guard D refuses every write there, and the
     slice stops for the maintainer (plan 4.3, gate 1)."""
     forms = _datatype_forms(f'"1"^^<{LONG}>')
-    expected = _pick(rdflib=LONG, oxigraph="http://www.w3.org/2001/XMLSchema#integer")
+    expected = _pick(rdflib=LONG, jena=LONG, oxigraph="http://www.w3.org/2001/XMLSchema#integer")
     assert set(forms) == {"constant", "parameter", "values", "stored", "stored equals constant"}
     assert {k: v for k, v in forms.items() if k != "stored equals constant"} == dict.fromkeys(("constant", "parameter", "values", "stored"), expected)
     assert forms["stored equals constant"] == "true"
@@ -271,7 +258,7 @@ def test_h2_5_t4_guard_d_refuses_a_missing_or_non_numeric_epoch_on_each_engine_a
     assert not _bootstrap_written({"target": target, "epoch": U("urn:epoch")}, guards=True)
     # The addendum's second point: on a store that keeps datatypes only an xsd:long passes, on one that turns every integer
     # into xsd:integer any integer passes and the mismatch cannot arise.
-    assert _bootstrap_written({"target": target, "epoch": Literal(3, datatype=XSD.integer)}, guards=True) == _pick(rdflib=False, oxigraph=True)
+    assert _bootstrap_written({"target": target, "epoch": Literal(3, datatype=XSD.integer)}, guards=True) == _pick(rdflib=False, jena=False, oxigraph=True)
     assert _bootstrap_written({"target": target, "epoch": LONG_TERM(3)}, guards=True)
 
 
@@ -340,7 +327,7 @@ def test_tsd_34_a_filter_not_exists_in_a_graph_block_with_a_sub_select_and_a_uni
     if _current() == "rdflib":
         assert _tsd34_rdflib_by_seed(with_sub) == {"bc", "abc"}
         assert _tsd34_rdflib_by_seed(without) == {"bc"}
-    else:
+    else:  # Oxigraph and Jena (TSD-53)
         assert _tsd34_here(with_sub) == "bc"
         assert _tsd34_here(without) == "bc"
 
