@@ -55,6 +55,21 @@ def test_a_port_another_process_holds_is_refused_before_anything_starts(tmp_path
     assert studio.claim("service", port)
 
 
+def test_a_component_runs_from_a_copy_that_a_later_build_leaves_alone(tmp_path: Path) -> None:
+    studio = stack.Stack(lattice_repo_catalogue.find_root())
+    studio.run = tmp_path / "run"
+    jar, dist = tmp_path / "target" / "service.jar", tmp_path / "dist"
+    jar.parent.mkdir()
+    dist.mkdir()
+    jar.write_bytes(b"first build")
+    (dist / "index.html").write_text("first", encoding="utf-8")
+    pinned_jar, pinned_dist = studio.pinned("service", jar), studio.pinned("web", dist)
+    jar.write_bytes(b"second build")
+    (dist / "index.html").write_text("second", encoding="utf-8")
+    assert pinned_jar.read_bytes() == b"first build" and (pinned_dist / "index.html").read_text(encoding="utf-8") == "first"
+    assert studio.pinned("web", dist) == pinned_dist and (pinned_dist / "index.html").read_text(encoding="utf-8") == "second"
+
+
 def test_workspaces_live_in_the_platform_data_folder_unless_told_otherwise() -> None:
     home = {"HOME": "/h", "USERPROFILE": "C:/Users/a"}
     assert stack.data_dir({"LATTICE_STUDIO_DATA": "/x", **home}) == Path("/x")

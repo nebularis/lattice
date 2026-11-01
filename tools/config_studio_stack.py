@@ -245,16 +245,17 @@ class Stack:
         if not dev:
             run(["yarn", "workspace", "@lattice/config-studio", "run", "build"], self.root)
         run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer,config-studio-transforms", "-am", "package", "-DskipTests"], self.root)
-        jar = self.platform / "config-studio-service" / "target" / "config-studio-service.jar"
+        built = lambda module: self.platform / module / "target" / f"{module}.jar"
         if self.pid("writer") is None:
-            self.spawn("writer", ["java", "-jar", str(self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar")], WRITER_ENV)
+            self.spawn("writer", ["java", "-jar", str(self.pinned("writer", built("config-studio-writer")))], WRITER_ENV)
         if self.claim("service", SERVICE_PORT):
-            self.spawn("service", ["java", "-jar", str(jar)], STUDIO_ENV)
+            static = {} if dev else {"LATTICE_STUDIO_STATIC": str(self.pinned("web", self.root / STUDIO_ENV["LATTICE_STUDIO_STATIC"]))}
+            self.spawn("service", ["java", "-jar", str(self.pinned("service", built("config-studio-service")))], {**STUDIO_ENV, **static})
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
         if self.pid("transforms") is None:
-            self.spawn("transforms", ["java", "-jar", str(self.platform / "config-studio-transforms" / "target" / "config-studio-transforms.jar")], STUDIO_ENV)
+            self.spawn("transforms", ["java", "-jar", str(self.pinned("transforms", built("config-studio-transforms")))], STUDIO_ENV)
         if self.claim("addin", ADDIN_PORT):
             self.spawn("addin", ["yarn", "workspace", "@lattice/word-authoring-addin", "run", "dev"])
             self.wait_for("addin", ADDIN_PORT)
@@ -265,6 +266,19 @@ class Stack:
             url = f"http://127.0.0.1:{WEB_PORT}"
         addin = "https://localhost:3443/addin/taskpane.html for Word" if docker else f"http://127.0.0.1:{ADDIN_PORT}/addin/harness.html"
         print(f"Configuration Studio: {url}. Word add-in: {addin}. Logs in {self.run}. Stop it with `mise run studio:down`")
+
+    def pinned(self, name: str, built: Path) -> Path:
+        """A copy of a build output for one component to run from, made just before it starts. A JVM reads its jar for as
+        long as it runs, so a build that rewrote the jar in `target`, as `mise run check` does, would break it (STD-300)."""
+        copy = self.run / "pinned" / name / built.name
+        if copy.is_dir():
+            shutil.rmtree(copy)
+        copy.parent.mkdir(parents=True, exist_ok=True)
+        if built.is_dir():
+            shutil.copytree(built, copy)
+        else:
+            shutil.copy2(built, copy)
+        return copy
 
     def migrate(self, dry_run: bool) -> None:
         """Runs the one-off migration of a store written before phase D, with the writer's environment, against the running Fuseki.
