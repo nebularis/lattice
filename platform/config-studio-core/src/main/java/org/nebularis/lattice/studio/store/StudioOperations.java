@@ -23,12 +23,12 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.core.Var;
+
 import org.apache.jena.sparql.modify.request.UpdateModify;
-import org.apache.jena.sparql.syntax.Element;
-import org.apache.jena.sparql.syntax.ElementGroup;
-import org.apache.jena.sparql.syntax.ElementOptional;
-import org.apache.jena.sparql.syntax.PatternVars;
+
+
+
+
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.nebularis.lattice.persistence.CallerCheck;
@@ -61,8 +61,9 @@ public final class StudioOperations {
     }
 
     private static final Set<OperationKind> USED = Set.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE);
+    /** The operations every family has, by name. A family under dal:ChangedTriples also has replace-whole (DR2). */
+    private static final List<String> NAMES = List.of("create-if-absent", "cas-replace", "tombstone-delete");
     private static final Pattern SLOT = Pattern.compile("\\{\\{\\{([A-Za-z]+)\\}\\}\\}");
-    private static final Set<Var> SWEPT = Set.of(Var.alloc("s"), Var.alloc("p"), Var.alloc("o"));
     /** The namespace of the marker triple a payload slot is filled with before parsing, replaced by the payload's quads after. */
     private static final String MARKER = "urn:lattice:studio:slot:";
 
@@ -70,10 +71,10 @@ public final class StudioOperations {
     }
 
     private final long epoch;
-    private final Map<Family, Map<OperationKind, Operation>> operations;
+    private final Map<Family, Map<String, Operation>> operations;
     private final String txnGraph;
 
-    private StudioOperations(long epoch, Map<Family, Map<OperationKind, Operation>> operations, String txnGraph) {
+    private StudioOperations(long epoch, Map<Family, Map<String, Operation>> operations, String txnGraph) {
         this.epoch = epoch;
         this.operations = operations;
         this.txnGraph = txnGraph;
@@ -89,7 +90,7 @@ public final class StudioOperations {
         Property generated = profile.createProperty(Namespaces.DAL + "generatedOperation");
         Property forTarget = profile.createProperty(Namespaces.DAL + "forTarget");
         Property forOperation = profile.createProperty(Namespaces.DAL + "forOperation");
-        Map<Family, Map<OperationKind, Operation>> found = new EnumMap<>(Family.class);
+        Map<Family, Map<String, Operation>> found = new EnumMap<>(Family.class);
         for (OperationContract contract : OperationContract.read(profile)) {
             if (!USED.contains(contract.kind()) || contract.node() == null) {
                 continue;
@@ -112,10 +113,10 @@ public final class StudioOperations {
             String name = contract.node().asResource().getProperty(forOperation).getString();
             Path file = folder.resolve(target).resolve(name + ".rq");
             try {
-                Operation previous = found.computeIfAbsent(family, k -> new EnumMap<>(OperationKind.class))
-                    .put(contract.kind(), new Operation(contract, Files.readString(file, StandardCharsets.UTF_8)));
+                Operation previous = found.computeIfAbsent(family, k -> new HashMap<>())
+                    .put(name, new Operation(contract, Files.readString(file, StandardCharsets.UTF_8)));
                 if (previous != null) {
-                    throw new IllegalStateException(target + " has two " + contract.kind() + " operations");
+                    throw new IllegalStateException(target + " has two " + name + " operations");
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException("cannot read " + file, e);
@@ -123,7 +124,7 @@ public final class StudioOperations {
         }
         Set<String> txnGraphs = new HashSet<>();
         for (Family f : Family.values()) {
-            for (OperationKind k : USED) {
+            for (String k : NAMES) {
                 Operation op = found.getOrDefault(f, Map.of()).get(k);
                 if (op == null) {
                     throw new IllegalStateException("the staged profile has no " + k + " operation for " + f.target);
@@ -142,13 +143,13 @@ public final class StudioOperations {
         return text.substring(1, text.length() - 1);
     }
 
-    private Operation operation(Family f, OperationKind kind) {
-        return operations.get(f).get(kind);
+    private Operation operation(Family f, String name) {
+        return operations.get(f).get(name);
     }
 
     /** The graph of {@code root} in family {@code f}, by the profile's naming rule. */
     public String graph(Family f, String root) {
-        return CallerCheck.graphName(operation(f, OperationKind.CREATE).contract, Iri.of(root));
+        return CallerCheck.graphName(operation(f, "create-if-absent").contract, Iri.of(root));
     }
 
     /** The revision named by the root, the epoch and the sequence, 19 digits each (PB-D10). */
@@ -168,7 +169,7 @@ public final class StudioOperations {
     }
 
     private String metaGraph(Family f) {
-        return graphOf(operation(f, OperationKind.CREATE).contract, "metaGraphPrefix");
+        return graphOf(operation(f, "create-if-absent").contract, "metaGraphPrefix");
     }
 
     /** Runs a read beside the caller's, so two reads of one request cost one round trip and not two. */
@@ -242,7 +243,7 @@ public final class StudioOperations {
 
     /** The sequence of {@code root}'s version row, empty when it has no row or it is tombstoned. */
     public Optional<Long> seq(StudioStore store, Family f, String root) {
-        return store.versionSeq(graphOf(operation(f, OperationKind.CREATE).contract, "metaGraphPrefix"), root);
+        return store.versionSeq(graphOf(operation(f, "create-if-absent").contract, "metaGraphPrefix"), root);
     }
 
     /** The revision that transaction {@code txnId} claimed, empty when it has claimed none. */
@@ -254,7 +255,7 @@ public final class StudioOperations {
 
     /** Creates the aggregate at sequence 1, writing nothing when it has a version row or the transaction has a claim. */
     public List<Update> create(Family f, String root, Model payload, String txnId) {
-        Operation op = operation(f, OperationKind.CREATE);
+        Operation op = operation(f, "create-if-absent");
         Map<String, Object> values = common(f, root, txnId, 1);
         values.put("payloadTriples", payload);
         return List.of(build(op, values));
@@ -269,41 +270,25 @@ public final class StudioOperations {
     }
 
     /**
-     * The replace of a part or a document as its delta (TD-136): the generated replace with its sweep taken out, the retracted
-     * triples deleted from the graph and the asserted ones inserted, so a save writes what changed and not the whole part. The version
-     * row move, the claim, the receipt, the patch log and the request digest are as generated, the digest over {@code payload}, the
-     * state the write leaves. It is derived from the generated syntax tree, never from its text. It is right only when the stored graph
-     * is the state {@code asserted} and {@code retracted} were computed from, which the guard on {@code expectedSeq} gives as long as
-     * every write of the graph is one of these operations.
+     * The replace of a part or a document as its delta, the generated replace of a family under {@code dal:ChangedTriples} (DR4): the
+     * retracted triples deleted and the asserted ones inserted, guarded on {@code expectedSeq}, with no sweep, and the request digest
+     * over the delta (DR-Q3 (a)). {@code next} is the state the write leaves, which the caller's checks read and the update does not.
      */
-    public List<Update> replaceDelta(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId) {
-        if (f != Family.PART && f != Family.DOCUMENT) {
-            throw new IllegalArgumentException("a delta replace is for a part or a document, not " + f);
+    public List<Update> replaceDelta(Family f, String root, long expectedSeq, Model next, Model asserted, Model retracted, String txnId) {
+        Operation op = operation(f, "cas-replace");
+        if (op.contract.parameter("assertTriples").isEmpty() || op.contract.parameter("payloadTriples").isPresent()) {
+            throw new IllegalArgumentException(f + "'s replace is " + op.contract.templateId() + ", which is not a delta replace, so its profile is not dal:ChangedTriples");
         }
-        UpdateModify generated = (UpdateModify) replaceUpdate(f, root, expectedSeq, payload, asserted, retracted, txnId,
-            Map.of("payloadTriples", asserted));
-        List<Quad> sweeps = generated.getDeleteQuads().stream().filter(StudioOperations::isSweep).toList();
-        ElementGroup where = generated.getWherePattern() instanceof ElementGroup g ? g : null;
-        List<Element> optionals = where == null ? List.of() : where.getElements().stream().filter(StudioOperations::isSweep).toList();
-        if (sweeps.size() != 1 || optionals.size() != 1) {
-            throw new IllegalStateException("the generated replace has " + sweeps.size() + " sweep quads and " + optionals.size() + " sweep patterns, not one of each");
-        }
-        UpdateModify write = new UpdateModify();
-        generated.getDeleteQuads().stream().filter(q -> q != sweeps.get(0)).forEach(q -> write.getDeleteAcc().addQuad(q));
-        org.apache.jena.graph.Node graph = sweeps.get(0).getGraph();
-        retracted.getGraph().find().forEachRemaining(tr -> write.getDeleteAcc().addQuad(Quad.create(graph, tr)));
-        generated.getInsertQuads().forEach(q -> write.getInsertAcc().addQuad(q));
-        write.setHasDeleteClause(true);
-        write.setHasInsertClause(true);
-        ElementGroup rest = new ElementGroup();
-        where.getElements().stream().filter(e -> e != optionals.get(0)).forEach(rest::addElement);
-        write.setElement(rest);
-        return List.of(write);
+        Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
+        values.put("expectedSeq", expectedSeq);
+        values.put("assertTriples", asserted);
+        values.put("retractTriples", retracted);
+        return List.of(build(op, values));
     }
 
     /** Deletes the aggregate and marks its version row deleted when the row is at {@code expectedSeq}. */
     public List<Update> tombstone(Family f, String root, long expectedSeq, String txnId, String cause, String actor) {
-        Operation op = operation(f, OperationKind.TOMBSTONE);
+        Operation op = operation(f, "tombstone-delete");
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
         values.put("cause", Iri.of(cause));
@@ -317,7 +302,8 @@ public final class StudioOperations {
 
     private Update replaceUpdate(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId,
                                  Map<String, Model> written) {
-        Operation op = operation(f, OperationKind.REPLACE);
+        // the whole replace: a family under dal:ChangedTriples has it as replace-whole beside its delta replace (DR2)
+        Operation op = Optional.ofNullable(operation(f, "replace-whole")).orElse(operation(f, "cas-replace"));
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
         values.put("payloadTriples", payload);
@@ -430,15 +416,5 @@ public final class StudioOperations {
             }
         }
         return out;
-    }
-
-    /** A quad that deletes every triple of a graph, as {@code ?s ?p ?o}. */
-    private static boolean isSweep(Quad q) {
-        return q.getSubject().isVariable() && q.getPredicate().isVariable() && q.getObject().isVariable();
-    }
-
-    /** The {@code OPTIONAL} that binds every triple of the graph for the sweep to delete. */
-    private static boolean isSweep(Element e) {
-        return e instanceof ElementOptional o && PatternVars.vars(o.getOptionalElement()).equals(SWEPT);
     }
 }

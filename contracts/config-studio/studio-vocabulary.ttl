@@ -23,6 +23,12 @@ cst:baselineGraph a owl:ObjectProperty ;
     rdfs:comment "The graph holding the current baseline revision of a workspace, or the baseline a job read. A baseline revision is written once and never changed." ;
     rdfs:range cst:Graph .
 
+cst:contractDigest a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The digest of a promotion contract's own triples when the last rebuild of the promoted partitions read it, so a start finds a contract added, changed or removed since (PM-Q3)." .
+
+cst:sourceFamily a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The family of aggregates a promotion of the studio reads, one of description, lineage, version and job, so the write of such an aggregate keeps the promotion's rows (PM2)." .
+
 cst:baselineRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
     rdfs:comment "The number of the current baseline revision, from 1. The ETag of the baseline." .
 

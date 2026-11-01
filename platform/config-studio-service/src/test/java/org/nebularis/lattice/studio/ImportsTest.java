@@ -172,7 +172,7 @@ class ImportsTest {
         Dataset d = DatasetFactory.create();
         d.addNamedModel(jobIri, forged);
         d.addNamedModel(Graphs.jobInput(job), ModelFactory.createDefaultModel());
-        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        Writer w = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
         assertEquals(400, w.apply(Command.submitJob(OTHER, job, d)).status());
     }
 

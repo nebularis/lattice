@@ -2,6 +2,7 @@
 // The service's HTTP API (contracts/config-studio/README.md). Every body is Turtle.
 
 import { COMMENT, CST, Graph, LABEL, localName } from "@lattice/authoring-domain";
+import { patchOf, patchTrig } from "./rdf/patch";
 import { readJob, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
 import { authHeaders } from "./session";
@@ -145,6 +146,16 @@ export const api = {
     await request(`/api/workspaces/${id}`, { method: "DELETE" });
   },
 
+  /** What the service's start found that an administrator should know (PM-Q3). An old service without the endpoint has none. */
+  async warnings(): Promise<string[]> {
+    try {
+      const response = await fetch("/api/status", { headers: authHeaders() });
+      return response.ok ? ((await response.json()) as { warnings?: string[] }).warnings ?? [] : [];
+    } catch {
+      return [];
+    }
+  },
+
   /** The optional features the deployment turned on. An old service without the endpoint has none. */
   async features(): Promise<string[]> {
     try {
@@ -160,13 +171,15 @@ export const api = {
     return { graph, revision: etag ?? '"0"' };
   },
 
-  /** Returns the new revision's ETag. Throws Conflict when `revision` is stale. */
-  async save(id: string, name: GraphName, graph: Graph, revision: string): Promise<string> {
-    const response = await request(`/api/workspaces/${id}/graphs/${name}`, {
-      method: "PUT",
-      headers: { "Content-Type": TURTLE, "If-Match": revision },
-      body: graph.toTurtle(),
-    });
+  /**
+   * Returns the new revision's ETag. Throws Conflict when `revision` is stale. Given `saved`, the graph as stored at `revision`, it
+   * sends what changed as a patch (DR-Q5 (c)), and the whole graph when the change names a blank node or there is no base.
+   */
+  async save(id: string, name: GraphName, graph: Graph, revision: string, saved?: Graph): Promise<string> {
+    const patch = saved && revision !== '"0"' ? patchOf(saved, graph) : undefined;
+    const response = await request(`/api/workspaces/${id}/graphs/${name}`, patch
+      ? { method: "PATCH", headers: { "Content-Type": "application/trig", "If-Match": revision }, body: patchTrig(patch, graph.prefixes) }
+      : { method: "PUT", headers: { "Content-Type": TURTLE, "If-Match": revision }, body: graph.toTurtle() });
     return response.headers.get("ETag") ?? revision;
   },
 

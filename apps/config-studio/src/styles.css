@@ -414,4 +414,4 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 .canvas-terms { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .canvas-review { position: absolute; left: 2px; top: 6px; bottom: 6px; width: 4px; border-radius: 999px; }
 .react-flow { --xy-background-color: var(--bg); --xy-edge-stroke: var(--border-strong); --xy-controls-button-background-color: var(--surface); --xy-controls-button-color: var(--text); }
-
+.start-warnings { position: fixed; top: 60px; right: 16px; z-index: 70; max-width: 520px; margin: 0; box-shadow: var(--shadow-lg); }

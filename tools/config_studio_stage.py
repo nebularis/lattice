@@ -122,6 +122,7 @@ def stage(root: Path, out: Path) -> None:
     (out / "prompts" / "mtp-l0.txt").write_text(mtp.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     stage_mork(out / "mork")
     stage_persistence(catalogue, out / "persistence")
+    stage_maintenance(catalogue, out / "maintenance")
     print(f"staged {out.as_posix()}")
 
 
@@ -144,6 +145,34 @@ def stage_persistence(catalogue: lattice_repo_catalogue.Catalogue, folder: Path)
     folder.mkdir(parents=True)
     compiled.serialize(folder / "profile.ttl", format="turtle", encoding="utf-8")
     instantiate_to_directory(compiled, folder)
+
+
+def stage_maintenance(catalogue: lattice_repo_catalogue.Catalogue, folder: Path) -> None:
+    """The operations that keep each of the studio's promotions from the write that changes its source (PM2). The writer writes such a
+    source whole, so it sends the partition clear and each promotion's fill over the whole source. `manifest.json` names each promotion's
+    key, its source family (`cst:sourceFamily`) and its fill."""
+    import json
+    import shutil
+
+    from rdflib import Graph, Literal, URIRef
+
+    from persistence.ir_render import render
+    from surface.maintenance import fill_all, partition_clear
+    from surface.model import read_contracts
+
+    declarations = Graph().parse(catalogue.root / catalogue.area("contracts") / "config-studio" / "projections.ttl")
+    family = URIRef("https://www.nebularis.org/neuro-semantic/lattice/config-studio#sourceFamily")
+    shutil.rmtree(folder, ignore_errors=True)
+    folder.mkdir(parents=True)
+    (folder / "partition-clear.rq").write_text(render(partition_clear()), encoding="utf-8", newline="\n")
+    manifest = []
+    for contract in read_contracts(declarations):
+        source = declarations.value(contract.iri, family)
+        if not isinstance(source, Literal):
+            raise SystemExit(f"{contract.iri} names no cst:sourceFamily, so no write would keep its rows")
+        (folder / f"{contract.key}-fill-all.rq").write_text(render(fill_all(contract)), encoding="utf-8", newline="\n")
+        manifest.append({"key": contract.key, "family": str(source), "fill": f"{contract.key}-fill-all.rq"})
+    (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def stage_mork(folder: Path) -> None:

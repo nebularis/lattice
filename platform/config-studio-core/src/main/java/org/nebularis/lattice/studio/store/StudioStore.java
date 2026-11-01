@@ -33,8 +33,6 @@ public final class StudioStore implements AutoCloseable {
     /** The registry projection, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
     private static final String REGISTRY_QUERY = PROJECTION_PREFIXES
         + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prj:current ?version } }";
-    /** The summaries projection without its refresh node. */
-    private static final String SUMMARIES_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } FILTER (?s != ?g) }";
     private static final String HOLDERS_QUERY = PROJECTION_PREFIXES + """
         CONSTRUCT { ?w ?edge ?held } WHERE {
           GRAPH ?g {
@@ -197,20 +195,25 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
-    /** Every published lineage with its current version (ADR-A149), read from the registry projection. */
+    /**
+     * Every published lineage with its current version (ADR-A149), from the promoted partitions of the lineages, which the write of
+     * each lineage keeps (PM2). A promoted property appears in promoted partitions alone, so the read names no graph.
+     */
     public Model registry() {
-        return construct(REGISTRY_QUERY, "registry");
+        return connection.queryConstruct(new ParameterizedSparqlString(REGISTRY_QUERY).asQuery());
     }
 
-    /** The summaries projection: each workspace's label, owner, mode, time and the sequence of each part and document. */
-    public Model summaries() {
-        return construct(SUMMARIES_QUERY, "summaries");
+    /**
+     * Each workspace's label, owner, mode, time and the sequence of each part and document, by {@code query}, the staged
+     * {@code workspace-summaries.rq}, evaluated as it is read (PM2), since a summary joins a workspace to its parts' version rows.
+     */
+    public Model summaries(String query) {
+        return connection.queryConstruct(new ParameterizedSparqlString(query).asQuery());
     }
 
     /** The workspaces that follow, pin or hold {@code iri}, as {@code ?w cst:dependsOn ?held} and {@code ?w cst:holdsImport ?held}. */
     public Model holders(String iri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(HOLDERS_QUERY);
-        query.setIri("g", Graphs.projection("holders"));
         query.setIri("iri", iri);
         return connection.queryConstruct(query.asQuery());
     }
@@ -218,7 +221,6 @@ public final class StudioStore implements AutoCloseable {
     /** The concepts whose label contains {@code text}, in any case, at most 50, as {@code skos:prefLabel} and {@code skos:inScheme}. */
     public Model terms(String text) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(TERMS_QUERY);
-        query.setIri("g", Graphs.projection("terms"));
         query.setLiteral("q", text);
         Model out = ModelFactory.createDefaultModel();
         connection.querySelect(query.asQuery(), row -> {
@@ -236,13 +238,7 @@ public final class StudioStore implements AutoCloseable {
     private static final org.apache.jena.rdf.model.Property SKOS_IN_SCHEME =
         ModelFactory.createDefaultModel().createProperty("http://www.w3.org/2004/02/skos/core#inScheme");
 
-    private Model construct(String text, String projection) {
-        ParameterizedSparqlString query = new ParameterizedSparqlString(text);
-        query.setIri("g", Graphs.projection(projection));
-        return connection.queryConstruct(query.asQuery());
-    }
-
-    /** The compile jobs of one workspace, without their reports and artefacts: its jobs from the jobs projection, each then read from its graph. */
+    /** The compile jobs of one workspace, without their reports and artefacts: its jobs from their promoted partitions, each then read from its graph. */
     public Model compileJobs(String workspaceIri) {
         Model out = ModelFactory.createDefaultModel();
         jobsOf(workspaceIri).listSubjects().forEachRemaining(job -> {
@@ -254,10 +250,9 @@ public final class StudioStore implements AutoCloseable {
         return out;
     }
 
-    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}, from the jobs projection. A job just submitted may not be there yet. */
+    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}, from the promoted partitions of the jobs, kept by each job's write. */
     public Model jobsOf(String workspaceIri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(JOBS_OF_QUERY);
-        query.setIri("g", Graphs.projection("jobs"));
         query.setIri("ws", workspaceIri);
         return connection.queryConstruct(query.asQuery());
     }

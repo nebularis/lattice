@@ -126,4 +126,37 @@ def maintenance(contract: Contract, *, guards: bool = True) -> Maintenance:
     return Maintenance(contract.iri, contract.key, clear, fill)
 
 
-__all__ = ["Maintenance", "MaintenanceRefused", "PLACEMENTS", "check", "maintenance"]
+def fill_all(contract: Contract, *, guards: bool = True) -> Operation:
+    """Every row of ``contract`` over its whole source, for a write that replaces the source whole and sends the partition clear first.
+    It reads the source as the request leaves it, so the rows are right whether the guarded write applied or found its row stale."""
+    check(contract)
+    source, derived = Graph(GraphRole.DATA, ParamRef("source")), Graph(GraphRole.DERIVED, ParamRef("derived"))
+    carrier, value = Var("c"), Var("v")
+    bound = lambda v: Var(v.name, binding=Binding.BOUND)
+    promoted = _iri(contract.promotes_to)
+    return Operation.build(
+        f"maintain-{contract.key}-fill-all", (Param("source", Kind.IRI), Param("derived", Kind.IRI)),
+        Group((GraphBlock(source, (
+            Triple(carrier, _iri(RDF.type), _iri(contract.carrier)),
+            Triple(carrier, _path(_seq(contract.path)), value),
+        )),)),
+        guards=guards,
+        insert=(GraphBlock(derived, (Triple(bound(carrier), promoted, bound(value)),)),),
+    )
+
+
+def partition_clear(*, guards: bool = True) -> Operation:
+    """Every row of one source's derived partition, deleted. A write that replaces its source whole sends it before the fills, whose
+    touched nodes are then every node of the new state, so a carrier the write removed loses its rows too."""
+    s, p, o = Var("s"), Var("p"), Var("o")
+    derived = Graph(GraphRole.DERIVED, ParamRef("derived"))
+    bound = lambda v: Var(v.name, binding=Binding.BOUND)
+    return Operation.build(
+        "partition-clear", (Param("derived", Kind.IRI),),
+        Group((GraphBlock(derived, (Triple(s, p, o),)),)),
+        guards=guards,
+        delete=(GraphBlock(derived, (Triple(bound(s), bound(p), bound(o)),)),),
+    )
+
+
+__all__ = ["Maintenance", "MaintenanceRefused", "PLACEMENTS", "check", "fill_all", "maintenance", "partition_clear"]

@@ -231,7 +231,7 @@ class MigrationTest {
     @Test
     void aSaveAppliesAfterwards() {
         migrate(false);
-        DirectWrites writes = new DirectWrites(new Writer(store, OPS, CLOCK));
+        DirectWrites writes = new DirectWrites(new Writer(store, OPS, org.nebularis.lattice.studio.store.Maintenance.load(java.nio.file.Path.of(System.getProperty("studio.assets"), "maintenance")), CLOCK));
         Model wording = ModelFactory.createDefaultModel();
         wording.createResource("urn:xx:a").addProperty(ResourceFactoryHolder.p("https://www.nebularis.org/neuro-semantic/lattice/wording#label"), "saved");
         assertEquals(200, writes.send(Command.save(WS, "library", 1, AT, wording)).status());

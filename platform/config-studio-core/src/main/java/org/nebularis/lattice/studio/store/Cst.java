@@ -29,6 +29,7 @@ public final class Cst {
     public static final Resource Succeeded = r("Succeeded");
 
     public static final Property baselineGraph = p("baselineGraph");
+    public static final Property contractDigest = p("contractDigest");
     public static final Property baselineRevision = p("baselineRevision");
     public static final Property surfaceRevision = p("surfaceRevision");
     public static final Property persistenceRevision = p("persistenceRevision");

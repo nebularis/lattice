@@ -52,7 +52,7 @@ public final class StudioMain {
             // Tests and a demonstration without a broker only: the service writes the store through a writer of its own.
             LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker, and this service writes the store itself");
             bus = new RecordingJobBus();
-            writes = new DirectWrites(new Writer(store, ops, Clock.systemUTC()));
+            writes = new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC()));
         } else {
             // Jobs and writes are published on connections of their own, so a broker holding one back does not stall the other.
             bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
@@ -72,8 +72,8 @@ public final class StudioMain {
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
         if (config.amqpUri() != null) {
-            // The projections are rebuilt from the store on every start, since writes made while the service was down changed them.
-            api.refresh();
+            // Writes keep their promotions, so a start rebuilds them only when the contracts grew since the last rebuild (PM-Q3).
+            api.startUp();
         }
         return server;
     }
@@ -83,7 +83,7 @@ public final class StudioMain {
             "studio", null, null, null, java.util.Set.of(), 1L);
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
+             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());

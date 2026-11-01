@@ -40,7 +40,8 @@ final class Fixture {
         org.apache.jena.query.DatasetFactory.createTxnMem()));
     /** The operations the stage tool wrote, loaded once. */
     static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
-    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
+    static final org.nebularis.lattice.studio.store.Maintenance MAINTENANCE = org.nebularis.lattice.studio.store.Maintenance.load(Path.of(System.getProperty("studio.assets"), "maintenance"));
+    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, MAINTENANCE, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
     final RecordingJobBus bus = new RecordingJobBus();
     /** Stands in for the worker's refresh jobs, which every bus the api is given hands to it. */
     final RefreshWorker refreshWorker = new RefreshWorker(store, writes);
@@ -113,8 +114,6 @@ final class Fixture {
 
     ApiResponse send(String method, String path, String query, Map<String, String> headers, byte[] body) {
         ApiResponse response = api.handle(new ApiRequest(method, path, query, headers, body));
-        // A write leaves the projections to a refresh job, so the next read waits for it and sees the write.
-        api.awaitProjections(java.time.Duration.ofSeconds(10));
         return response;
     }
 
@@ -159,6 +158,12 @@ final class Fixture {
         Files.writeString(dir.resolve("samples.ttl"), PREFIXES
             + "<urn:lattice:studio:sample:lending> a cst:Sample ; <http://www.w3.org/2000/01/rdf-schema#label> \"Lending\" .\n");
         Files.writeString(dir.resolve("samples/lending.ttl"), "@prefix ex: <https://example.org/> .\nex:loan ex:p ex:o .\n");
+        // the summaries are a query read as they are listed (PM2), the staged one
+        Files.createDirectories(dir.resolve("projections"));
+        Path staged = Path.of(System.getProperty("studio.assets"), "projections");
+        for (String name : new String[] {"workspace-summaries.rq", "projections.ttl"}) {
+            Files.copy(staged.resolve(name), dir.resolve("projections").resolve(name), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
         return dir;
     }
 }

@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Page, Route } from "@playwright/test";
-import { Parser } from "n3";
+import { DataFactory, Parser, Store, Writer } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
@@ -225,6 +225,11 @@ export class FakeService {
     const turtle = (body: string, status = 200, headers: Record<string, string> = {}) =>
       route.fulfill({ status, body, headers: { "Content-Type": "text/turtle", ...headers } });
 
+    // the service's local authentication with one developer signed in, as `mise run studio:up` gives (ADR-A149 decision 9)
+    const json = (body: unknown) => route.fulfill({ status: 200, body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
+    if (parts[0] === "session") return json({ provider: "local", principal: "developer", admin: true, principalOption: ["developer"], administrator: ["developer"] });
+    if (parts[0] === "status") return json({ warnings: [] });
+    if (parts[0] === "features") return json({ features: [] });
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
     if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8") + (parts[1] === "builder" ? REGIME : ""));
@@ -246,11 +251,13 @@ export class FakeService {
       if (parts.length === 2) return turtle(PREFIX + this.describe(parts[1]));
       if (parts[2] === "graphs") {
         const name = parts[3];
-        if (method === "PUT") {
+        if (method === "PUT" || method === "PATCH") {
           const ifMatch = request.headers()["if-match"] ?? null;
-          this.saves.push({ name, ifMatch, body: request.postData() ?? "" });
+          // a patch is applied to the stored part, so a test reads the part a save of the same change would leave (DR-Q5 (c))
+          const body = method === "PATCH" ? applyPatch(ws.graphs[name], request.postData() ?? "") : request.postData() ?? "";
+          this.saves.push({ name, ifMatch, body });
           if (ifMatch !== `"${ws.revisions[name]}"`) return route.fulfill({ status: 412, body: "stale" });
-          ws.graphs[name] = request.postData() ?? "";
+          ws.graphs[name] = body;
           ws.revisions[name] += 1;
           return route.fulfill({ status: 204, headers: { ETag: `"${ws.revisions[name]}"` } });
         }
@@ -278,4 +285,22 @@ export class FakeService {
     }
     return route.fulfill({ status: 404, body: "not found" });
   }
+}
+
+/** The Turtle `stored` with the patch's removed triples taken out and its added ones put in, as the service applies one. */
+function applyPatch(stored: string, trig: string): string {
+  const { namedNode, quad, defaultGraph } = DataFactory;
+  const prefixes: Record<string, string> = {};
+  const store = new Store(new Parser().parse(stored, null, (prefix, iri) => (prefixes[prefix] = iri.value)));
+  new Parser({ format: "application/trig" }).parse(trig, null, (prefix, iri) => (prefixes[prefix] ??= iri.value));
+  for (const q of new Parser({ format: "application/trig" }).parse(trig)) {
+    const triple = quad(q.subject, q.predicate, q.object, defaultGraph());
+    if (q.graph.equals(namedNode("urn:lattice:studio:patch:add"))) store.addQuad(triple);
+    else store.removeQuad(triple);
+  }
+  const writer = new Writer({ prefixes });
+  writer.addQuads(store.getQuads(null, null, null, null));
+  let out = "";
+  writer.end((_, result) => (out = result ?? ""));
+  return out;
 }

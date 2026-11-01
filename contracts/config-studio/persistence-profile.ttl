@@ -77,11 +77,9 @@ cst:ImportProfile a dal:DataAccessProfile ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:ReceiptOnly .
 
-# Every family keeps the whole replace its writer fills today, until the writer moves onto the generated delta replace
-# (persistence delta replace, DR4). Without these an optimistic family written in place replaces by its delta (DR-Q2).
+# A part and a document are written as their delta, the default of an optimistic family written in place (DR-Q2). Every other
+# family is small and written whole, which also heals a graph changed outside the writer, so it declares dal:WholeState.
 cst:DescriptionWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:DescriptionScope ; dal:replaceEncoding dal:WholeState .
-cst:PartWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:PartScope ; dal:replaceEncoding dal:WholeState .
-cst:DocumentWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:DocumentScope ; dal:replaceEncoding dal:WholeState .
 cst:LineageWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:LineageScope ; dal:replaceEncoding dal:WholeState .
 cst:VersionWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:VersionScope ; dal:replaceEncoding dal:WholeState .
 cst:ImportWrites a dal:WriteDisciplineProfile ; dal:appliesTo cst:ImportScope ; dal:replaceEncoding dal:WholeState .

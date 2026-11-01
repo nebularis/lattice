@@ -49,7 +49,7 @@ class WorkspaceCommandsTest {
     void setUp() {
         dataset = DatasetFactory.createTxnMem().asDatasetGraph();
         store = Fixture.textual(RDFConnection.connect(DatasetFactory.wrap(dataset)));
-        writer = new Writer(store, Fixture.OPS, CLOCK);
+        writer = new Writer(store, Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
         assertEquals(Reply.ok(1), writer.apply(Command.create(WS, "Plan", AT, null, model("baseline"))));
     }
 

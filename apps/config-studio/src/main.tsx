@@ -44,8 +44,29 @@ function App() {
   if (!session.principal) return <SignIn session={session} />;
   return (
     <SessionContext.Provider value={session}>
+      <StartWarnings />
       <Page route={route} vocab={vocab} />
     </SessionContext.Provider>
+  );
+}
+
+/** The warnings of the service's start, such as a promotion contract out of date, shown until dismissed (PM-Q3). */
+function StartWarnings() {
+  const [warnings, setWarnings] = useState<string[]>([]);
+  useEffect(() => {
+    void api.warnings().then(setWarnings);
+  }, []);
+  if (warnings.length === 0) return null;
+  return (
+    <div className="construction start-warnings" role="status">
+      <div className="grow">
+        <strong>The studio's start had warnings</strong>
+        {warnings.map((w) => (
+          <div key={w} className="small">{w}</div>
+        ))}
+      </div>
+      <button className="btn ghost sm" onClick={() => setWarnings([])}>Dismiss</button>
+    </div>
   );
 }
 

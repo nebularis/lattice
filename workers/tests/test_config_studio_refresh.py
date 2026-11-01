@@ -4,21 +4,27 @@ from __future__ import annotations
 
 import uuid
 
-from rdflib import BNode, Dataset, Graph, Literal, URIRef
+import re
+from pathlib import Path
+
+from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, XSD
 
 from lattice_workers.config_studio_jobs import CST
-from lattice_workers.config_studio_refresh import KEYS, PRJ, PROJECTION, DatasetStore, refresh
+from lattice_workers.config_studio_refresh import PROMOTED, RECORD, DatasetStore, _declarations, digests, refresh
 from lattice_workers.config_studio_worker import ConfigStudioWorker, WriterStore
 
 from test_config_studio_worker import FakePublisher, FakeStore
 
+PRJ = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio/projection#")
+SRF = Namespace("https://www.nebularis.org/neuro-semantic/lattice/surface#")
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 SKOS = "http://www.w3.org/2004/02/skos/core#"
 FND = "https://www.nebularis.org/neuro-semantic/lattice/foundation#"
 JOB = "urn:lattice:studio:job:00000000-0000-0000-0000-0000000000f1"
 WS = "urn:lattice:studio:ws:00000000-0000-0000-0000-000000000001"
 DOC = f"{WS}:document:00000000-0000-0000-0000-000000000009"
+A1 = "urn:lattice:studio:job:00000000-0000-0000-0000-0000000000a1"
 LINEAGE = "https://example.org/scheme"
 VERSION = f"{LINEAGE}/rev/1-0123456789abcdef"
 
@@ -55,67 +61,87 @@ def small_store() -> Dataset:
     return ds
 
 
-def content(graph: Graph) -> set:
-    return {t for t in graph if not str(t[0]).startswith(PROJECTION)}
+LINEAGE_GRAPH = f"urn:lattice:studio:lineage/{LINEAGE}"
+SOURCES = ["urn:lattice:studio:description/a", LINEAGE_GRAPH, "urn:lattice:studio:version/v1", A1, JOB]
+NOW = "2026-10-31T10:00:00Z"
 
 
-def test_each_promotion_restates_its_property_and_nothing_of_a_refresh_job():
-    out = refresh(Store(small_store()), None, JOB, "2026-10-31T10:00:00Z")
-    assert set(out) == {PROJECTION + key for key in KEYS}
-    assert content(out[PROJECTION + "registry"]) == {(URIRef(LINEAGE), PRJ.current, URIRef(VERSION))}
-    assert content(out[PROJECTION + "jobs"]) == {(URIRef("urn:lattice:studio:job:00000000-0000-0000-0000-0000000000a1"), PRJ.workspace, URIRef(WS))}
-    assert content(out[PROJECTION + "holders"]) == {
+def rows(name: str, ds: Dataset | None = None) -> set:
+    return set(refresh(Store(ds or small_store()), None, JOB, NOW)[PROMOTED + name])
+
+
+def test_each_source_graph_has_its_own_partition_holding_only_its_promoted_rows():
+    assert rows(LINEAGE_GRAPH) == {(URIRef(LINEAGE), PRJ.current, URIRef(VERSION))}
+    assert rows(A1) == {(URIRef(A1), PRJ.workspace, URIRef(WS))}
+    assert rows("urn:lattice:studio:description/a") == {
         (URIRef(WS), PRJ.dependsOn, URIRef(LINEAGE)), (URIRef(WS), PRJ.holdsImport, URIRef(f"urn:lattice:studio:import:{'a' * 64}"))}
     concept = URIRef(f"{LINEAGE}/c1")
-    assert content(out[PROJECTION + "terms"]) == {(concept, PRJ.prefLabel, Literal("Fire")), (concept, PRJ.inScheme, URIRef(VERSION))}
+    assert rows("urn:lattice:studio:version/v1") == {(concept, PRJ.prefLabel, Literal("Fire")), (concept, PRJ.inScheme, URIRef(VERSION))}
+    assert rows(JOB) == set()
 
 
-def test_the_summaries_give_the_workspace_and_the_sequence_of_each_live_row_or_nought():
-    summary = content(refresh(Store(small_store()), None, JOB, "2026-10-31T10:00:00Z")[PROJECTION + "summaries"])
-    ws, cst = URIRef(WS), lambda name: URIRef(str(CST) + name)
-    revision = lambda name: next(o for s, p, o in summary if s == ws and p == cst(name + "Revision"))
-    assert (ws, RDFS.label, Literal("Alpha")) in summary
-    assert (ws, cst("owner"), Literal("ann")) in summary and (ws, cst("mode"), CST.locked) in summary
-    assert (revision("baseline"), revision("library"), revision("persistence")) == (Literal(3), Literal(0), Literal(0))
-    assert (ws, cst("dependsOn"), URIRef(LINEAGE)) in summary and (ws, cst("holdsImport"), URIRef(f"urn:lattice:studio:import:{'a' * 64}")) in summary
-    assert (URIRef(DOC), cst("revision"), Literal(5)) in summary and (ws, cst("document"), URIRef(DOC)) in summary
-    assert len(summary) == 1 + 4 + 11 + 2 + 2 and not any(s == URIRef(f"{WS}/part/baseline") for s, _, _ in summary)
+def test_a_graph_that_is_no_family_source_has_no_partition():
+    out = refresh(Store(small_store()), None, JOB, NOW)
+    assert set(out) == {PROMOTED + name for name in SOURCES} | {RECORD}
+    assert PROMOTED + "urn:g:meta/part" not in out and PROMOTED + f"{A1}:input" not in out
 
 
-def test_each_projection_carries_one_refresh_node_naming_the_job_and_the_time_read():
-    for name, graph in refresh(Store(small_store()), None, JOB, "2026-10-31T10:00:00Z").items():
-        node = URIRef(name)
-        assert (node, RDF.type, PRJ.Refresh) in graph
-        assert list(graph.objects(node, PRJ.job)) == [URIRef(JOB)]
-        assert [o.toPython().isoformat() for o in graph.objects(node, PRJ.readAt)] == ["2026-10-31T10:00:00+00:00"]
+def test_a_partition_whose_source_is_gone_comes_back_empty_so_the_writer_clears_it():
+    ds = small_store()
+    gone = PROMOTED + "urn:lattice:studio:version/gone"
+    ds.graph(URIRef(gone)).add((URIRef("urn:x"), PRJ.prefLabel, Literal("stale")))
+    out = refresh(Store(ds), None, JOB, NOW)
+    assert gone in out and len(out[gone]) == 0
+
+
+def test_the_record_names_every_promotion_contract_with_a_digest_that_follows_its_triples():
+    declarations = _declarations(str(Path(__file__).resolve().parents[2]))
+    record = refresh(Store(small_store()), None, JOB, NOW)[RECORD]
+    contracts = digests(declarations)
+    assert set(contracts) == {str(c) for c in declarations.subjects(RDF.type, SRF.PromotionContract)} and len(contracts) >= 6
+    assert {(URIRef(c), CST.contractDigest, Literal(d)) for c, d in contracts.items()} == set(record)
+    assert all(re.fullmatch(r"[0-9a-f]{64}", d) for d in contracts.values())
+    changed = Graph() + declarations
+    contract = URIRef(next(iter(contracts)))
+    changed.add((contract, URIRef("urn:x:changed"), Literal(1)))
+    after = digests(changed)
+    assert after[str(contract)] != contracts[str(contract)]
+    assert {c: d for c, d in after.items() if c != str(contract)} == {c: d for c, d in contracts.items() if c != str(contract)}
+
+
+def test_no_partition_holds_a_blank_node():
+    ds = small_store()
+    ds.graph(URIRef("urn:lattice:studio:description/b")).parse(
+        data=f"@prefix cst: <{CST}> . <{WS}b> cst:dependsOn [ a cst:Thing ] .", format="turtle")
+    for graph in refresh(Store(ds), None, JOB, NOW).values():
         assert not any(isinstance(term, BNode) for triple in graph for term in triple)
 
 
-def test_a_refresh_job_hands_the_five_projections_to_the_writer_in_one_update_and_names_no_workspace():
+def test_a_refresh_job_hands_the_partitions_and_the_record_to_the_writer_in_one_update_and_names_no_workspace():
     store = Store(small_store())
-    ConfigStudioWorker(store, None, lambda: "2026-10-31T10:00:00Z").handle(JOB)
+    ConfigStudioWorker(store, None, lambda: NOW).handle(JOB)
     [final] = store.puts  # no update marks a refresh running, since only the service reads it and waits for its end
     assert (URIRef(JOB), CST.status, CST.Succeeded) in final[1]
-    assert set(final[2]) == {PROJECTION + key for key in KEYS}
+    assert set(final[2]) == {PROMOTED + name for name in SOURCES} | {RECORD}
     assert not list(final[1].objects(URIRef(JOB), CST.workspace))
 
 
-def test_a_refresh_that_cannot_read_fails_the_job_and_sends_no_projection():
+def test_a_refresh_that_cannot_read_fails_the_job_and_sends_no_partition():
     class Broken(Store):
         def graph_names(self):
             raise OSError("store down")
 
     store = Broken(small_store())
-    ConfigStudioWorker(store, None, lambda: "2026-10-31T10:00:00Z").handle(JOB)
+    ConfigStudioWorker(store, None, lambda: NOW).handle(JOB)
     assert (URIRef(JOB), CST.status, CST.Failed) in store.puts[-1][1] and store.puts[-1][2] == {}
 
 
-def test_a_refresh_job_goes_to_the_writer_of_its_own_id_with_the_projections_beside_it():
+def test_a_refresh_job_goes_to_the_writer_of_its_own_id_with_the_partitions_beside_it():
     job = str(uuid.UUID("ffffffff-0000-4000-8000-000000000000"))
     iri = f"urn:lattice:studio:job:{job}"
     graph = Graph()
     graph.add((URIRef(iri), CST.kind, CST.Refresh))
     publisher = FakePublisher()
-    WriterStore(FakeStore(), publisher).put_graph(iri, graph, {PROJECTION + "registry": Graph()})
+    WriterStore(FakeStore(), publisher).put_graph(iri, graph, {RECORD: Graph()})
     _, key, headers, _ = publisher.sent[0]
     assert key == "7" and "workspace" not in headers and headers["job"] == job

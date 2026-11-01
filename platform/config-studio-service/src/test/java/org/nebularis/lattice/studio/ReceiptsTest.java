@@ -59,7 +59,7 @@ class ReceiptsTest {
     }
 
     private static Writer created(StudioStore store) {
-        Writer writer = new Writer(store, Fixture.OPS, CLOCK);
+        Writer writer = new Writer(store, Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
         assertEquals(200, writer.apply(Command.create(WS, "Plan", AT, null, ModelFactory.createDefaultModel())).status());
         return writer;
     }
@@ -113,7 +113,7 @@ class ReceiptsTest {
         AtomicReference<Runnable> before = new AtomicReference<>();
         StudioStore store = interfered(real, before);
         Writer writer = created(store);
-        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, CLOCK);
+        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
         // Between this writer's read of the revision and its update, another writer saves revision 1.
         before.set(() -> assertEquals(Reply.ok(1), other.apply(Command.save(WS, "surface", 0, AT, surface("theirs")))));
         Reply mine = writer.apply(Command.save(WS, "surface", 0, AT, surface("mine")));
@@ -130,7 +130,7 @@ class ReceiptsTest {
         AtomicReference<Runnable> before = new AtomicReference<>();
         StudioStore store = interfered(real, before);
         Writer writer = created(store);
-        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, CLOCK);
+        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
         // Between this writer's read of the description's sequence and its update, another writer replaces the description.
         before.set(() -> assertEquals(Reply.ok(), other.apply(Command.setAccess(WS, "shared", null))));
         Model content = Fixture.model(Fixture.PREFIXES + "ex:term a ex:Term .");

@@ -36,7 +36,7 @@ public final class WriterMain {
         Channel replyChannel = replies.createChannel();
         Topology.declare(replyChannel);
         Environment environment = Environment.builder().uri(config.streamUri()).build();
-        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, StudioOperations.load(config.assets().resolve("persistence"), config.epoch()), Clock.systemUTC()));
+        StreamWriter writer = new StreamWriter(environment, replyChannel, new Writer(store, StudioOperations.load(config.assets().resolve("persistence"), config.epoch()), org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC()));
         Sweeper sweeper = new Sweeper(store, new RabbitWrites(publishing, store, WRITE_TIMEOUT), Clock.systemUTC(),
             Duration.ofDays(config.jobRetentionDays())).start(SWEEP_EVERY);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

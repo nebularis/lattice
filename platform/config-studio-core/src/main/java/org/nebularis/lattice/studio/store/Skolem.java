@@ -35,6 +35,11 @@ public final class Skolem {
     }
 
     /** {@code model} with every blank node replaced by its skolem IRI. */
+    /** Whether {@code model} holds a blank node anywhere in a triple. */
+    public static boolean hasBlank(Model model) {
+        return model.getGraph().find().filterKeep(t -> t.getSubject().isBlank() || t.getObject().isBlank()).hasNext();
+    }
+
     public static Model skolemise(Model model) {
         List<Triple> triples = model.getGraph().find().toList();
         Map<Node, List<Triple>> out = new HashMap<>();

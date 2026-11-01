@@ -10,12 +10,10 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -23,7 +21,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.RDF;
@@ -37,7 +34,7 @@ import org.nebularis.lattice.studio.store.Projections;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
 
-/** The studio's projections (ADR-A149 decision 14): rebuilt after each command, read in one read, and written only by a refresh job. */
+/** The studio's promoted partitions (ADR-A149 decision 14, PM2): kept by the write that changes their source, and rebuilt only by a rebuild job. */
 class ProjectionsTest {
     private static final String WS = Fixture.id(1);
     private static final String BASE = "/api/workspaces/" + WS;
@@ -53,7 +50,7 @@ class ProjectionsTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        f = new Fixture(Fixture.assetsDir(dir));
+        f = new Fixture(Fixture.assetsDir(dir.resolve("assets")));
     }
 
     private ApiResponse as(String principal, String method, String path, String query, String body) {
@@ -64,12 +61,12 @@ class ProjectionsTest {
         return f.send(method, path, query, headers, body == null ? new byte[0] : body.getBytes(StandardCharsets.UTF_8));
     }
 
-    // --- 1. each projection equals a rebuild from the store, by the real worker ------------------------------------
+    // --- 1. each partition equals a rebuild from the store, by the real worker -------------------------------------
 
-    /** The projections the Python worker computes over a dump of the store, as Jena datasets by graph. */
+    /** The partitions and record the Python worker computes over a dump of the store, as Jena datasets by graph. */
     private Dataset workerRebuild() throws Exception {
         Path in = dir.resolve("store.nq");
-        Path out = dir.resolve("projections.nq");
+        Path out = dir.resolve("promoted.nq");
         Files.deleteIfExists(out);
         try (OutputStream os = Files.newOutputStream(in)) {
             RDFDataMgr.write(os, f.store.snapshot(), Lang.NQUADS);
@@ -83,32 +80,27 @@ class ProjectionsTest {
         return fresh;
     }
 
-    /** What a projection says, without its refresh node and with each time as the instant it names, which rdflib writes another way. */
-    private static Model said(Model projection, String graph) {
-        Model out = ModelFactory.createDefaultModel();
-        for (Statement st : projection.listStatements().toList()) {
-            if (st.getSubject().getURI() != null && st.getSubject().getURI().equals(graph)) {
-                continue;
-            }
-            RDFNode o = st.getObject();
-            if (o.isLiteral() && XSDDatatype.XSDdateTime.getURI().equals(o.asLiteral().getDatatypeURI())) {
-                o = out.createTypedLiteral(OffsetDateTime.parse(o.asLiteral().getLexicalForm()).toInstant().toString(), XSDDatatype.XSDdateTime);
-            }
-            out.add(st.getSubject(), st.getPredicate(), o);
-        }
-        return out;
+    private static String summariesQuery() throws IOException {
+        return Files.readString(Path.of(System.getProperty("studio.assets"), "projections", "workspace-summaries.rq"));
     }
 
-    private void everyProjectionEqualsARebuild(String after) throws Exception {
+    private static Model nonEmpty(Dataset d, String name) {
+        return d.containsNamedModel(name) ? d.getNamedModel(name) : ModelFactory.createDefaultModel();
+    }
+
+    private void everyPartitionEqualsARebuild(String after) throws Exception {
         Dataset fresh = workerRebuild();
-        for (String key : Graphs.PROJECTIONS) {
-            String graph = Graphs.projection(key);
-            Model stored = said(f.store.graph(graph), graph);
-            Model rebuilt = said(fresh.getNamedModel(graph), graph);
-            assertTrue(stored.isIsomorphicWith(rebuilt), "after " + after + ", the " + key + " projection differs from the worker's rebuild.\nstored:\n"
+        java.util.TreeSet<String> names = new java.util.TreeSet<>(f.store.graphNames().stream().filter(g -> g.startsWith(Graphs.PROMOTED_PREFIX)).toList());
+        fresh.listNames().forEachRemaining(g -> {
+            if (g.startsWith(Graphs.PROMOTED_PREFIX) && !fresh.getNamedModel(g).isEmpty()) {
+                names.add(g);
+            }
+        });
+        for (String graph : names) {
+            Model stored = f.store.graph(graph);
+            Model rebuilt = nonEmpty(fresh, graph);
+            assertTrue(stored.isIsomorphicWith(rebuilt), "after " + after + ", the partition " + graph + " differs from the worker's rebuild.\nstored:\n"
                 + stored.write(new java.io.StringWriter(), "N-TRIPLES") + "\nrebuilt:\n" + rebuilt.write(new java.io.StringWriter(), "N-TRIPLES"));
-            assertTrue(f.store.graph(graph).contains(f.store.graph(graph).createResource(graph), RDF.type,
-                f.store.graph(graph).createResource(Projections.NS + "Refresh")), key + " names the refresh that wrote it");
         }
     }
 
@@ -152,49 +144,49 @@ class ProjectionsTest {
     }
 
     @Test
-    void afterEachCommandEveryProjectionEqualsWhatTheWorkerRebuildsFromTheStore() throws Exception {
+    void everyPromotedPartitionTheWritesKeepEqualsWhatTheWorkerRebuildsFromTheStore() throws Exception {
         assertEquals(201, f.createWorkspace("Plan").status());
-        everyProjectionEqualsARebuild("create");
+        everyPartitionEqualsARebuild("create");
         assertEquals(201, as("reviewer", "POST", "/api/workspaces", null, Fixture.PREFIXES + "ex:a ex:p ex:b .").status());
         assertEquals(204, f.put(BASE + "/graphs/surface", "\"0\"", CONFIG).status());
-        everyProjectionEqualsARebuild("save");
+        everyPartitionEqualsARebuild("save");
         assertEquals(200, as(null, "POST", BASE + "/access", "mode=read-only", null).status());
-        everyProjectionEqualsARebuild("set-access");
+        everyPartitionEqualsARebuild("set-access");
 
         String published = finishedJob(WS, "kind=publish&target=surface&unit=" + UNIT, CONFIG, concepts(), "version.nt",
             Map.of("lineage", UNIT, "version", VERSION, "unitKind", "https://example.org/Kind", "digest", DIGEST.repeat(4)));
         assertEquals(201, as(null, "POST", BASE + "/publications", "job=" + published, null).status());
-        everyProjectionEqualsARebuild("publish");
+        everyPartitionEqualsARebuild("publish");
 
         assertEquals(200, as(null, "PUT", BASE + "/dependencies", null, Fixture.PREFIXES
             + "<urn:lattice:studio:ws:" + WS + "> cst:dependsOn <" + UNIT + "> , <" + VERSION + "> .").status());
-        everyProjectionEqualsARebuild("set-dependencies");
+        everyPartitionEqualsARebuild("set-dependencies");
 
         String job = as(null, "POST", BASE + "/jobs", "kind=validate&target=surface", CONFIG).headers().get("Location").substring("/api/jobs/".length());
-        everyProjectionEqualsARebuild("submit-job");
+        everyPartitionEqualsARebuild("submit-job");
         assertTrue(f.store.jobsOf(Graphs.workspace(WS)).contains(f.store.jobsOf(Graphs.workspace(WS)).createResource(Graphs.job(job)), Cst.workspace));
 
         String fence = finishedJob(WS, "kind=fence&target=import", Fixture.PREFIXES + "ex:imported ex:p ex:o .",
             Fixture.model(Fixture.PREFIXES + "ex:imported ex:p ex:o ."), "import.nt", Map.of("digest", IMPORT_DIGEST));
         assertEquals(201, as(null, "POST", BASE + "/imports", "job=" + fence + "&label=Held", null).status());
-        everyProjectionEqualsARebuild("fence");
+        everyPartitionEqualsARebuild("fence");
         assertEquals(204, as(null, "DELETE", BASE + "/imports/" + IMPORT_DIGEST, null, null).status());
-        everyProjectionEqualsARebuild("release");
+        everyPartitionEqualsARebuild("release");
 
         assertEquals(204, as(null, "DELETE", "/api/jobs/" + job, null, null).status());
-        everyProjectionEqualsARebuild("delete-job");
+        everyPartitionEqualsARebuild("delete-job");
         assertEquals(204, as("reviewer", "DELETE", "/api/workspaces/" + Fixture.id(2), null, null).status());
-        everyProjectionEqualsARebuild("delete-workspace");
+        everyPartitionEqualsARebuild("delete-workspace");
         assertEquals(204, as(null, "DELETE", BASE, null, null).status());
-        everyProjectionEqualsARebuild("delete-workspace of the last");
-        assertTrue(f.store.summaries().isEmpty() && f.store.jobsOf(Graphs.workspace(WS)).isEmpty());
-        assertEquals(List.of(), f.store.graphNames().stream().filter(g -> g.startsWith(Graphs.JOB_PREFIX)).toList(), "no refresh job is left behind");
+        everyPartitionEqualsARebuild("delete-workspace of the last");
+        assertTrue(f.store.summaries(summariesQuery()).isEmpty() && f.store.jobsOf(Graphs.workspace(WS)).isEmpty());
+        assertEquals(List.of(), f.store.graphNames().stream().filter(g -> g.startsWith(Graphs.JOB_PREFIX)).toList(), "no job graph is left behind");
     }
 
-    // --- 3. the listing reads one graph -----------------------------------------------------------------------------
+    // --- 3. the listing reads the summaries query once -----------------------------------------------------------------------------
 
     @Test
-    void theWorkspaceListingIsOneReadOfTheSummariesAndShowsAWorkspaceJustCreated() {
+    void theWorkspaceListingIsOneReadOfTheSummariesQueryAndShowsAWorkspaceJustCreated() {
         assertEquals(201, f.createWorkspace("One").status());
         assertEquals(201, f.createWorkspace("Two").status());
         assertEquals(204, f.put(BASE + "/graphs/surface", "\"0\"", CONFIG).status());
@@ -209,7 +201,7 @@ class ProjectionsTest {
         assertTrue(list.contains(list.getResource(Graphs.workspace(Fixture.id(2))), RDF.type, Cst.Workspace));
     }
 
-    // --- 4. who may write a projection ------------------------------------------------------------------------------
+    // --- 4. who may write a promoted partition ------------------------------------------------------------------------------
 
     private String submitRefresh() {
         String job = UUID.randomUUID().toString();
@@ -237,40 +229,47 @@ class ProjectionsTest {
     }
 
     @Test
-    void aRefreshUpdateReplacesTheProjectionsItNamesWholeAndNothingElse() {
+    void aRebuildUpdateReplacesThePartitionsAndTheRecordItNamesWholeAndNothingElse() {
         assertEquals(201, f.createWorkspace("One").status());
         String job = submitRefresh();
-        String registry = Graphs.projection("registry");
-        assertEquals(200, refreshUpdate(job, Map.of(registry, one("urn:a", Projections.NS + "current", "urn:b"))).status());
+        String partition = Graphs.promoted(Graphs.lineage(UNIT));
+        assertEquals(200, refreshUpdate(job, Map.of(partition, one("urn:a", Projections.NS + "current", "urn:b"))).status());
         assertTrue(f.store.graph(Graphs.job(job)).isEmpty() && f.store.graph(Graphs.jobReceipts(job)).isEmpty(),
-            "a refresh that succeeded is deleted with its receipts by the update that wrote its projections");
-        assertEquals(404, refreshUpdate(job, Map.of(registry, one("urn:c", Projections.NS + "current", "urn:d"))).status());
+            "a rebuild that succeeded is deleted with its receipts by the update that wrote its partitions");
+        assertEquals(404, refreshUpdate(job, Map.of(partition, one("urn:c", Projections.NS + "current", "urn:d"))).status());
         job = submitRefresh();
-        assertEquals(200, refreshUpdate(job, Map.of(registry, one("urn:c", Projections.NS + "current", "urn:d"))).status());
-        Model now = f.store.graph(registry);
+        assertEquals(200, refreshUpdate(job, Map.of(partition, one("urn:c", Projections.NS + "current", "urn:d"))).status());
+        Model now = f.store.graph(partition);
         assertEquals(1, now.size(), "the second update replaced the first whole");
         assertTrue(now.contains(now.createResource("urn:c"), null, (RDFNode) null));
-        job = submitRefresh();
 
+        job = submitRefresh();
+        Model record = ModelFactory.createDefaultModel();
+        record.add(record.createResource("urn:contract"), Cst.contractDigest, "abc");
+        assertEquals(200, refreshUpdate(job, Map.of(Graphs.PROMOTED_RECORD, record)).status(), "a rebuild may carry the record");
+        assertTrue(f.store.graph(Graphs.PROMOTED_RECORD).contains(record.createResource("urn:contract"), Cst.contractDigest, "abc"));
+
+        job = submitRefresh();
         Reply foreign = refreshUpdate(job, Map.of(Graphs.baseline(WS), one("urn:x", "urn:y", "urn:z")));
-        assertEquals(400, foreign.status(), "a refresh may carry the projections and nothing else");
-        assertEquals(400, refreshUpdate(job, Map.of(Graphs.PROJECTION_PREFIX + "elsewhere", one("urn:x", "urn:y", "urn:z"))).status());
+        assertEquals(400, foreign.status(), "a rebuild may carry the promoted partitions and the record and nothing else");
+        assertEquals(400, refreshUpdate(job, Map.of(Graphs.PROMOTED_PREFIX + "elsewhere", one("urn:x", "urn:y", "urn:z"))).status());
         Model blank = ModelFactory.createDefaultModel();
         blank.add(blank.createResource("urn:s"), blank.createProperty("urn:p"), blank.createResource());
-        assertEquals(400, refreshUpdate(job, Map.of(registry, blank)).status(), "a projection holds IRIs and literals only");
-        assertEquals(1, f.store.graph(registry).size());
+        assertEquals(400, refreshUpdate(job, Map.of(partition, blank)).status(), "a partition holds IRIs and literals only");
+        assertEquals(1, f.store.graph(partition).size());
     }
 
     @Test
-    void noOtherUpdateMayCarryAProjectionAndARefreshJobNamesNoWorkspace() {
+    void noOtherUpdateMayCarryAPromotedPartitionAndARebuildJobNamesNoWorkspace() {
         assertEquals(201, f.createWorkspace("One").status());
         String jobId = as(null, "POST", BASE + "/jobs", "kind=validate&target=surface", CONFIG).headers().get("Location").substring("/api/jobs/".length());
         Model m = ModelFactory.createDefaultModel().add(f.store.graph(Graphs.job(jobId)));
         Dataset d = DatasetFactory.create();
         d.addNamedModel(Graphs.job(jobId), m);
-        d.addNamedModel(Graphs.projection("registry"), one("urn:a", Projections.NS + "current", "urn:b"));
-        assertEquals(400, f.writes.send(Command.jobUpdate(WS, jobId, d)).status(), "a workspace job's update carries no projection");
-        assertTrue(f.store.graph(Graphs.projection("registry")).isEmpty() || f.store.graph(Graphs.projection("registry")).size() == 3);
+        String partition = Graphs.promoted(Graphs.lineage(UNIT));
+        d.addNamedModel(partition, one("urn:a", Projections.NS + "current", "urn:b"));
+        assertEquals(400, f.writes.send(Command.jobUpdate(WS, jobId, d)).status(), "a workspace job's update carries no promoted partition");
+        assertTrue(f.store.graph(partition).isEmpty());
 
         String refresh = UUID.randomUUID().toString();
         Model named = ModelFactory.createDefaultModel();
@@ -278,7 +277,7 @@ class ProjectionsTest {
             .addProperty(Cst.workspace, named.createResource(Graphs.workspace(WS)));
         Dataset submitted = DatasetFactory.create();
         submitted.addNamedModel(Graphs.job(refresh), named);
-        assertEquals(400, f.writes.send(Command.submitRefresh(refresh, submitted)).status(), "a refresh job names no workspace");
+        assertEquals(400, f.writes.send(Command.submitRefresh(refresh, submitted)).status(), "a rebuild job names no workspace");
         assertEquals(400, f.writes.send(new Command(UUID.randomUUID().toString(), "service", Command.Type.SAVE, null, null, "surface", 0L, null,
             null, null, DatasetFactory.create(), null, false)).status(), "only a job's commands may name no workspace");
         // A workspace's command cannot reach a refresh job, and a refresh command cannot reach a workspace's job.
@@ -361,7 +360,29 @@ class ProjectionsTest {
             many.createResource(UNIT + "/c" + i).addProperty(many.createProperty(Projections.NS + "prefLabel"), "Peril " + i);
         }
         String job = submitRefresh();
-        assertEquals(200, refreshUpdate(job, Map.of(Graphs.projection("terms"), many)).status());
+        assertEquals(200, refreshUpdate(job, Map.of(Graphs.promoted(Graphs.version(UNIT, DIGEST)), many)).status());
         assertEquals(50, get(null, "/api/registry/terms", "q=peril").listSubjects().toList().size());
+    }
+
+    @Test
+    void aPublishIsOneCommitAndItsRegistryEntryIsReadableAtOnceWithNoJobRun() {
+        assertEquals(201, f.createWorkspace("Open").status());
+        int rebuilds = f.refreshWorker.runs();
+        publishScheme();
+        Model registry = f.store.registry();
+        assertTrue(registry.containsResource(registry.getResource(UNIT)) && registry.containsResource(registry.getResource(VERSION)),
+            "the lineage and its current version are listed at once");
+        Model api = get(null, "/api/registry", null);
+        assertTrue(api.containsResource(api.getResource(UNIT)));
+        assertEquals(rebuilds, f.refreshWorker.runs(), "no rebuild ran");
+    }
+
+    @Test
+    void theJavaDigestsOfThePromotionContractsEqualTheRecordThePythonWorkerWrites() throws Exception {
+        Model record = workerRebuild().getNamedModel(Graphs.PROMOTED_RECORD);
+        Map<String, String> staged = org.nebularis.lattice.studio.store.Promotions.digests(
+            Files.readAllBytes(Path.of(System.getProperty("studio.assets"), "projections", "projections.ttl")));
+        assertFalse(staged.isEmpty());
+        assertEquals(staged, org.nebularis.lattice.studio.store.Promotions.recorded(record));
     }
 }

@@ -50,6 +50,12 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 
 **Narrows decision 14.** Measured after phase D, each refresh cost the writers four commits, about 55 ms each on TDB2, so a save was followed by four more commits that the next save queued behind. A refresh is now two commits: the worker no longer marks a refresh job running, and the update that succeeds it deletes the job and its receipts. A refresh that no reply waits for starts half a second after the first write that asked for it, so a burst of writes shares one, while a reply that must see its write starts one at once. A projection therefore lags its source by a job and up to half a second.
 
+## Addendum, 2026-11-01, the delta replace and promotions kept by the write
+
+**Narrows decisions 12 and 14.** The writer replaces a part and a document through the generated replace again, the delta replace of a family under `dal:ChangedTriples`, so no write of the studio is hand-written any more (TD-136 closed). A browser that holds the part it read sends what it changed as a patch, which the writer applies to the stored part and writes by the same delta.
+
+The studio's derived data is no longer five graphs rebuilt by a job after writes. Each promotion reads one family of aggregates, a workspace description, a lineage, a published version or a job, and keeps its rows for each source in that source's own partition. The write of a source keeps its partition in the same request, by clearing it and filling it from the source as the request leaves it, so a reader sees a write's derived data as soon as the write, and a publish is one commit. The workspace summaries are not stored and are evaluated as they are read. A rebuild of every partition remains, run at start when the promotions grew since the last rebuild, which records the digests of the contracts it read, or when an administrator asks. A promotion that changed or went since is not rebuilt, since that would lose its old rows, and the studio shows the start's warning.
+
 ## Provenance
 
 Raised by the maintainer on 2026-10-31, while deciding how a source's codes reach a mapping (TD-133). The maintainer answered PB-Q1 to PB-Q3, PB-Q6 and PB-Q7 the same day, asked for authentication now, and left PB-Q4's timing of modes and PB-Q5 to the unit, which chose decisions 9 and 11. They answered PB-Q8 to PB-Q11 the same day, which became decisions 12 to 14, and accepted three projections beyond the two first proposed in decision 14. The [sketch](../../developer/sketches/studio-publication.md) holds the questions.
