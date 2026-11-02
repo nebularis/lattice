@@ -629,6 +629,80 @@ def build_roadmap(repo: Repo, check: bool) -> int:
     return 0
 
 
+# ---- presence ------------------------------------------------------------------------------------
+
+PRESENCE_DIR = Path(".local") / "agents"
+PRESENCE_HOURS = 12
+ROLES = ("build", "review", "read")
+
+
+def session_from_environment(environ: dict[str, str]) -> tuple[str, str]:
+    """(session, client) as the client exposes them. Claude Code sets CLAUDE_CODE_SESSION_ID and
+    AI_AGENT in every command it runs. Another client is read the same way when it names them."""
+    session = environ.get("CLAUDE_CODE_SESSION_ID") or environ.get("AGENT_SESSION_ID") or ""
+    client = environ.get("AI_AGENT") or environ.get("CLAUDE_CODE_ENTRYPOINT") or ""
+    return session, client
+
+
+def write_presence(root: Path, session: str, client: str, model: str, role: str, on: Sequence[str], now: str) -> Path:
+    """Write or refresh this session's presence file (plan work-board, WB-6). The file's modification
+    time is the fact the listing compares, so a later run with the same arguments touches it."""
+    if role not in ROLES:
+        raise ValueError(f"role is one of {', '.join(ROLES)}, not {role!r}")
+    directory = root / PRESENCE_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{session or 'unnamed'}.toml"
+    since = now
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("since = "):
+                since = line.split("=", 1)[1].strip().strip('"')
+    slices = ", ".join(f'"{s}"' for s in on)
+    path.write_text(f'session = "{session}"\nclient = "{client}"\nmodel = "{model}"\nrole = "{role}"\n'
+                    f'on = [{slices}]\nsince = "{since}"\n', encoding="utf-8")
+    os_utime = __import__("os").utime
+    os_utime(path, None)
+    return path
+
+
+def list_presence(root: Path, now_epoch: float) -> list[dict[str, str]]:
+    """Every session whose file was touched within PRESENCE_HOURS of ``now_epoch``, oldest first. A
+    crashed session ages out, a left one is gone, and no lock is ever held."""
+    import tomllib
+    directory = root / PRESENCE_DIR
+    found: list[dict[str, str]] = []
+    for path in sorted(directory.glob("*.toml")) if directory.is_dir() else []:
+        age = max(0.0, now_epoch - path.stat().st_mtime)
+        if age > PRESENCE_HOURS * 3600:
+            continue
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+        found.append({"session": str(data.get("session", path.stem)), "client": str(data.get("client", "")),
+                      "model": str(data.get("model", "")), "role": str(data.get("role", "")),
+                      "on": ", ".join(data.get("on", [])), "since": str(data.get("since", "")),
+                      "touched": f"{int(age // 60)} min ago"})
+    return found
+
+
+def leave_presence(root: Path, session: str) -> bool:
+    path = root / PRESENCE_DIR / f"{session or 'unnamed'}.toml"
+    if path.exists():
+        path.unlink()
+        return True
+    return False
+
+
+def presence_text(found: list[dict[str, str]], me: str) -> str:
+    if not found:
+        return "nobody here. Run `mise run work:here -- --role build|review|read --model <model>` before your first edit.\n"
+    rows = [(("you " if f["session"] == me else "") + f["session"][:8], f["client"], f["model"], f["role"], f["on"], f["since"], f["touched"]) for f in found]
+    lines = table(("Session", "Client", "Model", "Role", "On", "Since", "Touched"), rows)
+    builders = [f for f in found if f["role"] == "build" and f["session"] != me]
+    if builders:
+        lines.append("")
+        lines.append("another session is building here. Say who is here and ask the maintainer before writing.")
+    return "\n".join(lines) + "\n"
+
+
 # ---- entry ---------------------------------------------------------------------------------------
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -645,6 +719,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     road = sub.add_parser("roadmap", help="write ROADMAP.md's generated regions from every branch")
     road.add_argument("--check", action="store_true")
     road.add_argument("--fetch", action="store_true")
+    here = sub.add_parser("here", help="who is in this worktree: write your presence, or list the live sessions")
+    here.add_argument("--role", choices=ROLES, help="write your presence with this role")
+    here.add_argument("--model", default="", help="the model you run on, stated by hand since no client names it")
+    here.add_argument("--on", default="", help="the slices you are on, comma separated")
+    here.add_argument("--leave", action="store_true", help="remove your presence")
+    here.add_argument("--now", default="", help="the clock, as an ISO timestamp, for tests. The wall clock otherwise")
     parsed = sub.add_parser("parse", help="print a status record's board as read")
     parsed.add_argument("record", type=Path)
     args = parser.parse_args(argv)
@@ -660,6 +740,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.fetch:
             git(repo.root, "fetch", "--all", "--prune", "--quiet", check=False)
         return build_roadmap(repo, args.check)
+    if args.command == "here":
+        import datetime
+        import os
+        session, client = session_from_environment(dict(os.environ))
+        now = datetime.datetime.fromisoformat(args.now) if args.now else datetime.datetime.now(datetime.timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=datetime.timezone.utc)
+        if args.leave:
+            print("left" if leave_presence(repo.root, session) else "no presence to leave")
+            return 0
+        if args.role:
+            write_presence(repo.root, session, client, args.model, args.role,
+                           [s.strip() for s in args.on.split(",") if s.strip()], now.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        sys.stdout.write(presence_text(list_presence(repo.root, now.timestamp()), session))
+        return 0
     unit = parse_unit(args.record.stem, args.record.read_text(encoding="utf-8"))
     if not unit.board:
         print(f"{args.record}: no board. Unit state {unit.state or '?'} {unit.day}".strip())

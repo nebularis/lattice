@@ -540,6 +540,10 @@ run = "python tools/work_migrate.py rename"
 description = "Rewrite every status record's slice board into the standard columns and state words, remove Branch lines, declare prefixes, idempotent. Reports without --apply (plan work-board, WB-2)"
 run = "python tools/work_migrate.py normalise"
 
+[tasks."work:here"]
+description = "Who is in this worktree: write your presence (--role build|review|read, --model, --on) into .local/agents/, list the sessions touched in the last twelve hours, or --leave (plan work-board, WB-6)"
+run = "python tools/work_board.py here"
+
 [tasks."build:roadmap"]
 description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch (plan work-board)"
 run = "python tools/work_board.py roadmap"

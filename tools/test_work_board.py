@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -329,3 +332,76 @@ def test_wb3_05_build_roadmap_checks_then_writes(repo: wb.Repo, capsys: pytest.C
     assert wb.build_roadmap(repo, check=False) == 0
     assert wb.ROADMAP_BEGIN.format(name="glance") in path.read_text(encoding="utf-8")
     assert wb.build_roadmap(repo, check=True) == 0
+
+
+# ---- WB-6 presence ----------------------------------------------------------------------------
+
+def _touch(path: Path, epoch: float) -> None:
+    os.utime(path, (epoch, epoch))
+
+
+def test_wb6_01_the_session_and_client_come_from_the_environment() -> None:
+    assert wb.session_from_environment({"CLAUDE_CODE_SESSION_ID": "abc", "AI_AGENT": "claude-code_2-1-309_agent"}) == ("abc", "claude-code_2-1-309_agent")
+    assert wb.session_from_environment({"CLAUDE_CODE_ENTRYPOINT": "cli"}) == ("", "cli")
+    assert wb.session_from_environment({}) == ("", "")
+
+
+def test_wb6_02_write_presence_keeps_the_first_since(tmp_path: Path) -> None:
+    path = wb.write_presence(tmp_path, "abc", "client", "fable-5.1", "build", ["CCS-9b.3b"], "2026-11-02T10:00:00Z")
+    assert path == tmp_path / ".local" / "agents" / "abc.toml"
+    expected = {"session": "abc", "client": "client", "model": "fable-5.1", "role": "build", "on": ["CCS-9b.3b"], "since": "2026-11-02T10:00:00Z"}
+    assert tomllib.loads(path.read_text(encoding="utf-8")) == expected
+    wb.write_presence(tmp_path, "abc", "client", "fable-5.1", "build", ["CCS-9b.3b"], "2026-11-02T11:00:00Z")
+    assert tomllib.loads(path.read_text(encoding="utf-8"))["since"] == "2026-11-02T10:00:00Z"
+    with pytest.raises(ValueError):
+        wb.write_presence(tmp_path, "abc", "client", "m", "boss", [], "2026-11-02T10:00:00Z")
+    assert wb.write_presence(tmp_path, "", "", "", "read", [], "2026-11-02T10:00:00Z").name == "unnamed.toml"
+
+
+def test_wb6_03_list_presence_ages_out_and_never_goes_negative(tmp_path: Path) -> None:
+    assert wb.list_presence(tmp_path, 1_000_000.0) == []
+    now_epoch = 1_000_000.0
+    for name, touched in (("fresh", now_epoch - 300), ("stale", now_epoch - wb.PRESENCE_HOURS * 3600 - 60), ("future", now_epoch + 600)):
+        _touch(wb.write_presence(tmp_path, name, "c", "m", "read", [], "2026-11-02T10:00:00Z"), touched)
+    touched_by = {f["session"]: f["touched"] for f in wb.list_presence(tmp_path, now_epoch)}
+    assert touched_by == {"fresh": "5 min ago", "future": "0 min ago"}
+
+
+def test_wb6_04_leave_presence_removes_the_file(tmp_path: Path) -> None:
+    path = wb.write_presence(tmp_path, "abc", "c", "m", "read", [], "2026-11-02T10:00:00Z")
+    assert wb.leave_presence(tmp_path, "abc") is True
+    assert not path.exists()
+    assert wb.leave_presence(tmp_path, "abc") is False
+
+
+def test_wb6_05_presence_text_warns_only_of_another_builder() -> None:
+    def one(session: str, role: str) -> list[dict[str, str]]:
+        return [{"session": session, "client": "c", "model": "m", "role": role, "on": "A-1", "since": "s", "touched": "1 min ago"}]
+    empty = wb.presence_text([], "abc")
+    assert "nobody here" in empty and "mise run work:here" in empty
+    other = wb.presence_text(one("zzz", "build"), "abc")
+    assert "| Session |" in other and "build" in other and "another session is building here" in other
+    mine = wb.presence_text(one("abc", "build"), "abc")
+    assert any(line.startswith("| you abc") for line in mine.splitlines())
+    assert "another session is building here" not in mine
+    assert "another session is building here" not in wb.presence_text(one("zzz", "review"), "abc")
+
+
+def test_wb6_06_the_here_subcommand_writes_lists_and_leaves(tmp_path: Path) -> None:
+    real = Path(__file__).resolve().parents[1]
+    shutil.copy(real / "repository-catalogue.md", tmp_path / "repository-catalogue.md")
+    for readme in (real / "ontology").glob("**/README.md"):
+        target = tmp_path / readme.relative_to(real)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(readme, target)
+    env = {**os.environ, "CLAUDE_CODE_SESSION_ID": "sess1"}
+
+    def here(*args: str) -> str:
+        done = subprocess.run([sys.executable, str(real / "tools" / "work_board.py"), "--root", str(tmp_path), "here", *args],
+                              cwd=real, env=env, capture_output=True, text=True, check=True)
+        return done.stdout
+    out = here("--role", "review", "--model", "m", "--on", "A-1", "--now", "2026-11-02T10:00:00+00:00")
+    assert "sess1" in out and "review" in out
+    assert (tmp_path / ".local" / "agents" / "sess1.toml").exists()
+    assert "left" in here("--leave")
+    assert not (tmp_path / ".local" / "agents" / "sess1.toml").exists()
