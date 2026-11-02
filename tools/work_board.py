@@ -624,9 +624,11 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
     found = branches(repo.root)
     boards = {b.name: units_at(repo, b.tip) for b in found}
     joined = join(boards)
-    main_units = boards.get(MAIN, {})
+    # A unit's own state and its documents come from the tree the roadmap is built in, which is main
+    # after a merge, so a branch sees its own records rather than main's older copy of them.
+    main_units = units_here(repo)
     newest = max((d for j in joined.values() for r in j.rows.values() for _, d in r.trail if d), default="")
-    glance = [f"Built from the status records on {len(found)} branches, the newest board day {newest or 'unknown'}.", ""]
+    glance = [f"Built from the status records on {len(found)} branches, the units' own state from this tree, the newest board day {newest or 'unknown'}.", ""]
     unit_rows = []
     done_rows = []
     open_units: list[str] = []

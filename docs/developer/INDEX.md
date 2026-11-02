@@ -37,7 +37,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
 | implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
-| improved-ontology-documentation | unit | OD | verified 2026-10-17 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 16 Validation Packs |
+| improved-ontology-documentation | unit | OD | verified 2026-10-17 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 17 Validation Packs |
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
@@ -339,11 +339,11 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | OD-RC4 | downstream extension | improved-ontology-documentation | planned | OD-RC3 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC5 | package promotion | improved-ontology-documentation | planned | OD-RC4 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC6 | XML catalogue folded in | improved-ontology-documentation | planned | OD-RC5, a new ADR on ADR-A88 | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-ELC | composition operation | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-ELC1 | composition operation | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-MC1 | migration check labels | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-VER1 | one release for the substrate | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC2b | working documents out of published pages | improved-ontology-documentation | built 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-REL | first release, 0.18.0 | improved-ontology-documentation | verified 2026-10-20 | the tags, on `main` after the merge | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-REL1 | first release, 0.18.0 | improved-ontology-documentation | verified 2026-10-20 | the tags, on `main` after the merge | docs/developer/status/improved-ontology-documentation.md#slices |
 | IMA-0.1 | engagement brief | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.2 | licence and publication record | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.3 | ADR, profile | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |

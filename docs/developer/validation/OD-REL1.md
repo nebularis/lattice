@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: OD-REL, release 0.18.0
+# Validation Pack: OD-REL1, release 0.18.0
 
-**Unit:** [`improved-ontology-documentation`](../status/improved-ontology-documentation.md), slice OD-REL
+**Unit:** [`improved-ontology-documentation`](../status/improved-ontology-documentation.md), slice OD-REL1
 ([plan](../plans/improved-ontology-documentation.md#od-rel-the-first-release)).
 **Implements:** the first release on [ADR-A129](../../architecture/decisions/ADR-A129-one-release-for-the-substrate.md)'s
 model (OD-D43, OD-D55 to OD-D59, OD-D63). **Built autonomously**, 2026-10-19 (OD-D62). The tag is the

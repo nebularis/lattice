@@ -74,7 +74,7 @@ and Eligibility suites: 204 passed.
 ## Deliberate non-coverage
 
 - The class diagram was not rendered in a browser. It uses only constructs OD-5 and OD-6 rendered.
-- Versions. OD-REL releases the layer at 0.18.0.
+- Versions. OD-REL1 releases the layer at 0.18.0.
 
 ## Decisions answered
 

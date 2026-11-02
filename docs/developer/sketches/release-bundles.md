@@ -123,5 +123,5 @@ apps when a deployment needs them. GHCR for images when they come, and serving t
 
 ## 7. Next
 
-🔴 PLAN FIRST. BUN-Q2 and BUN-Q4 shape the first release's tooling. The RDF bundle could ship with OD-REL, as a
+🔴 PLAN FIRST. BUN-Q2 and BUN-Q4 shape the first release's tooling. The RDF bundle could ship with OD-REL1, as a
 step of its release task, if the answers come before it.

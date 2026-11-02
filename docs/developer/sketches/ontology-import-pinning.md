@@ -190,8 +190,8 @@ This is a hypothesis to test against the reasoning harness and the downstream co
   for example as a section of `ontology-releases.md`?
 - **IMP-Q4. How do downstream consumers learn of a breaking change below,** once their imports no longer pin?
   For example, from the release notes, the manifest, or a check in the consumer's own gate (ADR-A88 decision 4).
-- **IMP-Q5. When does it land, relative to this unit's release slice (OD-REL)?** If B lands first, OD-REL
-  re-versions only the documents that changed. If after, OD-REL performs one last full cascade.
+- **IMP-Q5. When does it land, relative to this unit's release slice (OD-REL1)?** If B lands first, OD-REL1
+  re-versions only the documents that changed. If after, OD-REL1 performs one last full cascade.
 
 ## 6. What to check before deciding
 
@@ -203,5 +203,5 @@ This is a hypothesis to test against the reasoning harness and the downstream co
 
 ## 7. Next
 
-🔴 PLAN FIRST. IMP-Q1 to IMP-Q5 need answers, IMP-Q1 and IMP-Q5 first, since IMP-Q5 decides how much of OD-REL
+🔴 PLAN FIRST. IMP-Q1 to IMP-Q5 need answers, IMP-Q1 and IMP-Q5 first, since IMP-Q5 decides how much of OD-REL1
 is a cascade.

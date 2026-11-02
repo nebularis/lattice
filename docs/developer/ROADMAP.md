@@ -27,72 +27,48 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 16 branches, the newest board day 2026-11-02.
+Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-02.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
-| DESIGN_SKETCHES_INDEX | unit | ? |  | no board |  |
-| [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | ? |  | 55 planned, 10 built, 5 merged, 1 ? | docs/work-board |
-| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | ? |  | 18 built | docs/work-board |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | ? | C16c | 35 merged, 15 planned, 7 blocked, 6 ?, 5 briefed, 3 verified, 2 built | claude/fix-topology-links, claude/nice-bohr-pmj43u-wwhgle, docs/work-board, spikes/pol-map, tutorial/guide |
-| [config-studio](plans/config-studio.md) | unit | ? |  | no board |  |
-| design-sketches-validation-summary | unit | ? |  | no board |  |
-| [documentation-link-repair](plans/documentation-link-repair.md) | unit | ? |  | no board |  |
-| [eligibility-compiler](plans/eligibility-compiler.md) | unit | ? |  | no board |  |
-| [formal-methods](plans/formal-methods.md) | epic | ? |  | 8 built, 6 ? | docs/work-board |
-| [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | ? |  | 7 ?, 5 built, 1 planned, 1 building | docs/work-board |
-| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | ? |  | 6 ?, 3 built, 3 planned | docs/work-board |
-| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | ? |  | 6 ?, 5 planned, 3 built, 1 dropped | docs/work-board |
-| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | ? | H2.1 | 32 built, 31 ?, 15 merged, 14 planned, 5 verified, 2 briefed, 1 building | claude/persistence-delta-replace, claude/persistence-linear-replace, docs/work-board, realign/config-authoring-studio |
-| [git-hooks](plans/git-hooks.md) | unit | ? | GH-0 | 5 built | docs/work-board |
-| governance-surfaces | unit | ? |  | no board |  |
-| [identity-minting](plans/identity-minting.md) | unit | ? |  | 5 ?, 4 built, 1 planned | docs/work-board |
-| implementation-handover-historical | unit | ? |  | no board |  |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | ? | OD2 | 13 built, 11 ?, 10 planned, 10 verified, 1 merged | docs/work-board |
-| [insurml-alignment](plans/insurml-alignment.md) | epic | ? |  | 24 planned | docs/work-board |
-| iri-patterns-post-3866b21-remediation | unit | ? |  | no board |  |
-| knowledge-index | unit | ? |  | no board |  |
-| [ledger](plans/ledger.md) | unit | ? |  | 3 built, 3 planned | docs/work-board |
-| llm-training-mtp | unit | ? |  | no board |  |
-| mork-package-split | unit | ? |  | no board |  |
-| [mork-transforms](plans/mork-transforms.md) | multi-slice unit | ? |  | no board |  |
-| mtp-execution | unit | ? |  | no board |  |
-| [multi-store-conformance](plans/multi-store-conformance.md) | unit | ? | MSC-1 | 5 built |  |
-| [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | ? |  | 13 ?, 7 blocked, 4 planned, 2 dropped | docs/work-board |
-| [ontology-remediation](plans/ontology-remediation.md) | phase | ? | OR-1 | 21 built | docs/work-board |
-| ontology-root-relocation | unit | ? |  | no board |  |
-| [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | ? |  | no board |  |
-| [persistence-compiler-iri-sync](plans/persistence-compiler-iri-sync.md) | unit | ? |  | 7 ?, 6 built | docs/work-board, persistence-mbt |
-| [persistence-delta-replace](plans/persistence-delta-replace.md) | multi-slice unit | ? |  | 3 built, 1 ? | claude/persistence-delta-replace, realign/config-authoring-studio |
-| phase-0-1-handoff | unit | ? |  | no board |  |
-| phase-0-status | unit | ? |  | 16 ?, 13 built, 3 planned | docs/work-board |
-| phase-1-status | unit | ? |  | no board |  |
-| phase-2-handoff | unit | ? |  | no board |  |
-| phase-2-status | unit | ? |  | no board |  |
-| phase-3-handoff | unit | ? |  | no board |  |
-| phase-3-status | unit | ? |  | no board |  |
-| phase-4-handoff | unit | ? |  | no board |  |
-| phase-4-status | unit | ? |  | no board |  |
-| phase-5-handoff | unit | ? |  | no board |  |
-| phase-6-handoff | unit | ? |  | no board |  |
-| platform-continuation | unit | ? |  | no board |  |
-| [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | ? |  | no board |  |
-| [python-test-melting](plans/python-test-melting.md) | unit | ? |  | no board |  |
-| [rdf-sparql-patterns-remediation](plans/rdf-sparql-patterns-remediation.md) | plan | ? |  | no board |  |
-| rdf-sparql-patterns-status | unit | ? |  | 3 ?, 2 built, 1 planned | docs/work-board |
-| repository-topology-a77 | unit | ? |  | no board |  |
-| spc-package-split | unit | ? |  | no board |  |
-| [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | ? |  | no board |  |
-| [studio-quality](plans/studio-quality.md) | multi-slice unit | ? |  | no board |  |
-| surface-mork-unified-projection | unit | ? |  | no board |  |
-| surface-outstanding-items | unit | ? |  | no board |  |
-| [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | ? |  | no board |  |
-| [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | ? |  | no board |  |
-| validation-pause-handover | unit | ? |  | no board |  |
-| validation-status | unit | ? |  | no board |  |
-| vocabulary-temporal-binding | unit | ? |  | 4 ?, 2 built, 2 verified | docs/work-board |
-| [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | ? |  | 13 built, 13 ? | docs/work-board |
-| [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | ? |  | no board |  |
+| [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | planned | AIR-3.3 | 55 planned, 10 built, 5 merged, 1 ? | docs/work-board |
+| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built | docs/work-board |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 35 merged, 15 planned, 7 blocked, 6 ?, 5 briefed, 3 verified, 2 built | docs/work-board, spikes/pol-map, tutorial/guide |
+| [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
+| [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
+| [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | built 2026-10-09 | FMB-1 | 7 ?, 5 built, 1 planned, 1 building | docs/work-board |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-08 | FMC-1 | 6 ?, 3 built, 3 planned | docs/work-board |
+| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 6 ?, 5 planned, 3 built, 1 dropped | docs/work-board |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | verified 2026-10-09 | FMH-1.1 | 32 built, 31 ?, 15 merged, 14 planned, 5 verified, 2 briefed, 1 building | claude/persistence-delta-replace, claude/persistence-linear-replace, docs/work-board, realign/config-authoring-studio |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-10-06 | FM-D0 | 8 built, 6 ? | docs/work-board |
+| [git-hooks](plans/git-hooks.md) | unit | built 2026-10-24 | GH-0 | 5 built | docs/work-board |
+| [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 5 ?, 4 built, 1 planned | docs/work-board |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | verified 2026-10-17 | OD-0 | 13 built, 11 ?, 10 planned, 10 verified, 1 merged | docs/work-board |
+| [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned | docs/work-board |
+| knowledge-index | unit | building 2026-10-26 |  | no board |  |
+| [ledger](plans/ledger.md) | unit | building 2026-10-29 | LG-0 | 3 built, 3 planned | docs/work-board |
+| [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
+| [multi-store-conformance](plans/multi-store-conformance.md) | unit | built 2026-10-27 | MSC-1 | 5 built |  |
+| [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 13 ?, 7 blocked, 4 planned, 2 dropped | docs/work-board |
+| [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built | docs/work-board |
+| [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-09-25 |  | no board |  |
+| [persistence-compiler-iri-sync](plans/persistence-compiler-iri-sync.md) | unit | built 2026-09-23 | PCI-1 | 7 ?, 6 built | docs/work-board, persistence-mbt |
+| [persistence-delta-replace](plans/persistence-delta-replace.md) | multi-slice unit | planned |  | 3 built, 1 ? | claude/persistence-delta-replace, realign/config-authoring-studio |
+| phase-0-status | unit | built 2026-09-23 | PLT-0.1.1 | 16 ?, 13 built, 3 planned | docs/work-board |
+| phase-1-status | unit | blocked 2026-09-22 |  | no board |  |
+| phase-2-status | unit | planned |  | no board |  |
+| phase-3-status | unit | planned |  | no board |  |
+| phase-4-status | unit | planned |  | no board |  |
+| [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | planned |  | no board |  |
+| [python-test-melting](plans/python-test-melting.md) | unit | built 2026-10-27 |  | no board |  |
+| rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 3 ?, 2 built, 1 planned | docs/work-board |
+| [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 |  | no board |  |
+| [studio-quality](plans/studio-quality.md) | multi-slice unit | building 2026-10-31 |  | no board |  |
+| [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
+| vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 4 ?, 2 built, 2 verified | docs/work-board |
+| [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-02 | WA-0 | 13 built, 13 ? | docs/work-board |
+| [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-02 | WB-0 | 7 built, 1 briefed | docs/work-board |
+| [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
 
 One chart per epic, or per unit outside an epic with five dated slices or more, from the first day it has to the newest, every dated slice in the state its board gives.
 
@@ -438,6 +414,23 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
+    title Work-board
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section work-board
+    WB-0 the sketch the plan this rec :wb0, 2026-11-02, 2026-11-03
+    WB-1 tools work board.py work b :wb1, 2026-11-02, 2026-11-03
+    WB-2 the slice grammar work renam :wb2, 2026-11-02, 2026-11-03
+    WB-3 INDEX.md replaced ROADMAP.md :wb3, 2026-11-02, 2026-11-03
+    WB-4 the work check and the post- :wb4, 2026-11-02, 2026-11-03
+    WB-5 AGENTS.md the skills the sta :wb5, 2026-11-02, 2026-11-03
+    WB-6 work here :wb6, 2026-11-02, 2026-11-03
+    WB-7 the branches marked or deleted :wb7, 2026-11-02, 2026-11-03
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
     title The smaller units
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -668,7 +661,7 @@ flowchart LR
 
 **Documents.** [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md). ADR-A121, ADR-A126 and ADR-A129 published, ADR-A127 accepted.
 
-**Where it is.** The record reads verified, in progress. OD-0, OD-RC2, OD-RC3, OD-1, OD-7, OD-DOC1, OD-ELC, OD-MC1, OD-VER1 and OD-REL are verified on its board, OD-RC1, OD-2 to OD-6 and OD-DOC2b are built, and OD-DOC2 is merged. `docs/literate-v2` was squash-merged into `main` on 2026-10-20 (`cf1b8eb`). That brought the repository catalogue and its reader (OD-RC1 to OD-RC3), the literate README layout and its compilers to OWL and SHACL (OD-1 to OD-5), the Eligibility and Vocabulary pilots (OD-6, OD-7), published decisions and the site sections (OD-DOC1, OD-DOC2, OD-DOC2b), and one release number for the substrate and standalone ontologies, 0.18.0 (OD-VER1, OD-REL). `GOVERNANCE.md` and the validation and test plan were retired in the same change.
+**Where it is.** The record reads verified, in progress. OD-0, OD-RC2, OD-RC3, OD-1, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-VER1 and OD-REL1 are verified on its board, OD-RC1, OD-2 to OD-6 and OD-DOC2b are built, and OD-DOC2 is merged. `docs/literate-v2` was squash-merged into `main` on 2026-10-20 (`cf1b8eb`). That brought the repository catalogue and its reader (OD-RC1 to OD-RC3), the literate README layout and its compilers to OWL and SHACL (OD-1 to OD-5), the Eligibility and Vocabulary pilots (OD-6, OD-7), published decisions and the site sections (OD-DOC1, OD-DOC2, OD-DOC2b), and one release number for the substrate and standalone ontologies, 0.18.0 (OD-VER1, OD-REL1). `GOVERNANCE.md` and the validation and test plan were retired in the same change.
 
 **Next.** The tag `ontologies-v0.18.0` is on the merge commit and the line has since reached `ontologies-v0.21.0`, but the board rows have not moved to merged. OD-8 onward is planned and migrates the remaining layers one at a time, after OD-7 and, for Foundation and Party, their part of TD-16. OD-RC4 to OD-RC6 are planned and extend the catalogue downstream, promote packages and fold in the XML catalogue (OD-RC6 needs a new ADR on ADR-A88). OD-DOC3 is planned and reviews the tutorial once it is merged.
 
@@ -732,13 +725,10 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-10-29 | 53 | pushed | no mark |
-| `claude/config-authoring-studio` | 2026-11-02 | 151 | remote only | no mark |
-| `claude/fix-topology-links` | 2026-10-23 | 1 | remote only | C9b3 |
-| `claude/nice-bohr-pmj43u-wwhgle` | 2026-10-20 | 45 | remote only | C9b3 |
 | `claude/persistence-delta-replace` | 2026-11-02 | 137 | pushed | DR1, DR2, DR3, H2.12 |
 | `claude/persistence-linear-replace` | 2026-11-01 | 135 | pushed | H2.12 |
 | `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | no mark |
-| `docs/work-board` | 2026-11-02 | 18 | pushed | AIR-0.1, AIR-1.1, AIR-1.2, AIR-2.0, AIR-2.1, AIR-2.2, AIR-2.3, AIR-2.4, AIR-2.5, AIR-2.6, AIR-2.7, AIR-3.1, AIR-3.2, AIR-3.3, AIR-3.4, AIR-3.5, AIR-4.1, AIR-4.2, AIR-4.2a, AIR-4.2b, AIR-4.3, AIR-4.4, AIR-4.5, AIR-4.6, AIR-5.1, AIR-5.2, AIR-5.3, AIR-5.4, AIR-5.5, AIR-5.6, AIR-5.7, AIR-5.8, AIR-5.9, AIR-6.1, AIR-6.10, AIR-6.11, AIR-6.12, AIR-6.2, AIR-6.3, AIR-6.4, AIR-6.5, AIR-6.6, AIR-6.7, AIR-6.8, AIR-6.9, AIR-6.W0, AIR-6.W1, AIR-6.W2, AIR-6.W3, AIR-6.W4, AIR-6.W5, AIR-6.W6, AIR-6.W7, AIR-7.0, AIR-7.1, AIR-7.10, AIR-7.2, AIR-7.3, AIR-7.4, AIR-7.5, AIR-7.6, AIR-7.7, AIR-7.8, AIR-7.9, AIR-DT1, AIR-S1, AIR-S2, AIR-S4, AIR-S5, AIR-S7, AOR-1, AOR-10, AOR-11, AOR-12, AOR-13, AOR-14, AOR-15, AOR-16, AOR-17, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-10, CCS-10a, CCS-11, CCS-11a, CCS-12, CCS-13, CCS-13a, CCS-14, CCS-15, CCS-16, CCS-16c, CCS-17, CCS-2, CCS-3, CCS-4, CCS-5, CCS-6, CCS-7a, CCS-7b, CCS-7c, CCS-8, CCS-8a, CCS-8b, CCS-9a, CCS-9b.0, CCS-9b.1, CCS-9b.2, CCS-9b.3, CCS-9b.3a, CCS-9b.3c, CCS-9b.4, CCS-9c, CCS-9d, CCS-F1, FM-0, FM-4, FM-D0, FM-D1, FM-D2, FM-D3, FM-D4, FM-PF1, FMB-1, FMB-2, FMB-2.1, FMB-2.2, FMB-3, FMB-4, FMB-5, FMC-1, FMC-2, FMC-2.1, FMC-2.2, FMC-2.3, FMC-3, FME-1.0, FME-1.1, FME-1.2, FME-1.3, FME-1.4, FME-2, FME-3, FME-4, FME-5, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-1.2d, FMH-1.3, FMH-1.4a, FMH-1.4b, FMH-1.4c, FMH-1.5, FMH-10, FMH-2, FMH-2.0, FMH-2.1, FMH-2.11a, FMH-2.11b, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6c, FMH-2.6d, FMH-2.6e, FMH-2.6f, FMH-2.6g, FMH-2.7, FMH-2.8, FMH-2.8a, FMH-2.8b, FMH-2.8c, FMH-2.9, FMH-3, FMH-4, FMH-5, FMH-6, FMH-7, FMH-8, FMH-9, FMH-HO0, FMH-HO1, FMH-HO2, FMH-HO3, FMH-HO4, FMH-HO5, FMH-HO6, FMH-HO7, FMH-HO8, FMH-HO9, FMH-W65, GH-0, GH-1, GH-2, GH-3, GH-4, HQ-1, HQ-10, HQ-11, HQ-12, HQ-2, HQ-3, HQ-4, HQ-5, HQ-6, HQ-6a.1, HQ-6a.2, HQ-7, HQ-8, HQ-9, IM-0, IM-1, IM-2, IM-3, IM-4, IMA-0.1, IMA-0.2, IMA-0.3, IMA-0.4, IMA-0.5, IMA-0.6, IMA-0.7, IMA-0.8, IMA-1.1, IMA-1.2, IMA-1.3, IMA-2.1, IMA-2.2, IMA-2.3, IMA-3.1, IMA-3.2, IMA-3.3, IMA-4.1, IMA-4.1a, IMA-4.1b, IMA-4.2, IMA-4.3, IMA-4.4, IMA-4.5, LG-0, LG-1, LG-2, LG-3, LG-4, LG-5, NRS-1, NRS-10, NRS-11, NRS-12, NRS-13, NRS-2, NRS-3, NRS-4, NRS-5, NRS-6, NRS-7, NRS-8, NRS-9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-8, OD-DOC1, OD-DOC2, OD-DOC2b, OD-DOC3, OD-ELC, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-RC4, OD-RC5, OD-RC6, OD-REL, OD-VER1, OR-0, OR-1, OR-10, OR-11, OR-12, OR-13, OR-14, OR-15, OR-16, OR-17, OR-18, OR-19, OR-2, OR-3, OR-4, OR-5, OR-6, OR-7, OR-7b, OR-8, OR-9, PCI-1, PCI-2, PCI-3, PCI-4, PCI-5, PCI-6, PLT-0.1.1, PLT-0.1.10, PLT-0.1.11, PLT-0.1.12, PLT-0.1.13, PLT-0.1.14, PLT-0.1.15, PLT-0.1.2, PLT-0.1.3, PLT-0.1.4, PLT-0.1.5, PLT-0.1.6, PLT-0.1.7, PLT-0.1.8, PLT-0.1.9, PLT-0.2r, RSP-1, RSP-2, RSP-3, VTB-1, VTB-2, VTB-3, VTB-4, WA-0, WA-1, WA-10, WA-11, WA-2, WA-3, WA-4, WA-5, WA-6, WA-7, WA-8, WA-9, WA-9a, WB-0, WB-1, WB-2, WB-3, WB-4, WB-5, WB-6, WB-7 |
+| `docs/work-board` | 2026-11-02 | 19 | pushed | AIR-0.1, AIR-1.1, AIR-1.2, AIR-2.0, AIR-2.1, AIR-2.2, AIR-2.3, AIR-2.4, AIR-2.5, AIR-2.6, AIR-2.7, AIR-3.1, AIR-3.2, AIR-3.3, AIR-3.4, AIR-3.5, AIR-4.1, AIR-4.2, AIR-4.2a, AIR-4.2b, AIR-4.3, AIR-4.4, AIR-4.5, AIR-4.6, AIR-5.1, AIR-5.2, AIR-5.3, AIR-5.4, AIR-5.5, AIR-5.6, AIR-5.7, AIR-5.8, AIR-5.9, AIR-6.1, AIR-6.10, AIR-6.11, AIR-6.12, AIR-6.2, AIR-6.3, AIR-6.4, AIR-6.5, AIR-6.6, AIR-6.7, AIR-6.8, AIR-6.9, AIR-6.W0, AIR-6.W1, AIR-6.W2, AIR-6.W3, AIR-6.W4, AIR-6.W5, AIR-6.W6, AIR-6.W7, AIR-7.0, AIR-7.1, AIR-7.10, AIR-7.2, AIR-7.3, AIR-7.4, AIR-7.5, AIR-7.6, AIR-7.7, AIR-7.8, AIR-7.9, AIR-DT1, AIR-S1, AIR-S2, AIR-S4, AIR-S5, AIR-S7, AOR-1, AOR-10, AOR-11, AOR-12, AOR-13, AOR-14, AOR-15, AOR-16, AOR-17, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-10, CCS-10a, CCS-11, CCS-11a, CCS-12, CCS-13, CCS-13a, CCS-14, CCS-15, CCS-16, CCS-16c, CCS-17, CCS-2, CCS-3, CCS-4, CCS-5, CCS-6, CCS-7a, CCS-7b, CCS-7c, CCS-8, CCS-8a, CCS-8b, CCS-9a, CCS-9b.0, CCS-9b.1, CCS-9b.2, CCS-9b.3, CCS-9b.3a, CCS-9b.3c, CCS-9b.4, CCS-9c, CCS-9d, CCS-F1, FM-0, FM-4, FM-D0, FM-D1, FM-D2, FM-D3, FM-D4, FM-PF1, FMB-1, FMB-2, FMB-2.1, FMB-2.2, FMB-3, FMB-4, FMB-5, FMC-1, FMC-2, FMC-2.1, FMC-2.2, FMC-2.3, FMC-3, FME-1.0, FME-1.1, FME-1.2, FME-1.3, FME-1.4, FME-2, FME-3, FME-4, FME-5, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-1.2d, FMH-1.3, FMH-1.4a, FMH-1.4b, FMH-1.4c, FMH-1.5, FMH-10, FMH-2, FMH-2.0, FMH-2.1, FMH-2.11a, FMH-2.11b, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6c, FMH-2.6d, FMH-2.6e, FMH-2.6f, FMH-2.6g, FMH-2.7, FMH-2.8, FMH-2.8a, FMH-2.8b, FMH-2.8c, FMH-2.9, FMH-3, FMH-4, FMH-5, FMH-6, FMH-7, FMH-8, FMH-9, FMH-HO0, FMH-HO1, FMH-HO2, FMH-HO3, FMH-HO4, FMH-HO5, FMH-HO6, FMH-HO7, FMH-HO8, FMH-HO9, FMH-W65, GH-0, GH-1, GH-2, GH-3, GH-4, HQ-1, HQ-10, HQ-11, HQ-12, HQ-2, HQ-3, HQ-4, HQ-5, HQ-6, HQ-6a.1, HQ-6a.2, HQ-7, HQ-8, HQ-9, IM-0, IM-1, IM-2, IM-3, IM-4, IMA-0.1, IMA-0.2, IMA-0.3, IMA-0.4, IMA-0.5, IMA-0.6, IMA-0.7, IMA-0.8, IMA-1.1, IMA-1.2, IMA-1.3, IMA-2.1, IMA-2.2, IMA-2.3, IMA-3.1, IMA-3.2, IMA-3.3, IMA-4.1, IMA-4.1a, IMA-4.1b, IMA-4.2, IMA-4.3, IMA-4.4, IMA-4.5, LG-0, LG-1, LG-2, LG-3, LG-4, LG-5, NRS-1, NRS-10, NRS-11, NRS-12, NRS-13, NRS-2, NRS-3, NRS-4, NRS-5, NRS-6, NRS-7, NRS-8, NRS-9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-8, OD-DOC1, OD-DOC2, OD-DOC2b, OD-DOC3, OD-ELC, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-RC4, OD-RC5, OD-RC6, OD-REL, OD-VER1, OR-0, OR-1, OR-10, OR-11, OR-12, OR-13, OR-14, OR-15, OR-16, OR-17, OR-18, OR-19, OR-2, OR-3, OR-4, OR-5, OR-6, OR-7, OR-7b, OR-8, OR-9, PCI-1, PCI-2, PCI-3, PCI-4, PCI-5, PCI-6, PLT-0.1.1, PLT-0.1.10, PLT-0.1.11, PLT-0.1.12, PLT-0.1.13, PLT-0.1.14, PLT-0.1.15, PLT-0.1.2, PLT-0.1.3, PLT-0.1.4, PLT-0.1.5, PLT-0.1.6, PLT-0.1.7, PLT-0.1.8, PLT-0.1.9, PLT-0.2r, RSP-1, RSP-2, RSP-3, VTB-1, VTB-2, VTB-3, VTB-4, WA-0, WA-1, WA-10, WA-11, WA-2, WA-3, WA-4, WA-5, WA-6, WA-7, WA-8, WA-9, WA-9a, WB-0, WB-1, WB-2, WB-3, WB-4, WB-5, WB-6, WB-7 |
 | `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | 7 |
 | `realign/config-authoring-studio` | 2026-11-02 | 154 | pushed | DR1, DR2, DR3, DR4, H2.12 |
@@ -875,6 +865,31 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 
 | Unit | Kind | State | Slices | Last day |
 |---|---|---|---|---|
+| DESIGN_SKETCHES_INDEX | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
+| [config-studio](plans/config-studio.md) | unit | merged 2026-10-30 | 0 | 2026-10-30 |
+| design-sketches-validation-summary | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| governance-surfaces | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| implementation-handover-historical | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
+| iri-patterns-post-3866b21-remediation | unit | merged 2026-09-23 | 0 | 2026-09-23 |
+| llm-training-mtp | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| mork-package-split | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| mtp-execution | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| ontology-root-relocation | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-0-1-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-2-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-3-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-4-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-5-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| phase-6-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| platform-continuation | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| [rdf-sparql-patterns-remediation](plans/rdf-sparql-patterns-remediation.md) | plan | merged 2026-09-25 | 0 | 2026-09-25 |
+| repository-topology-a77 | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| spc-package-split | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| surface-mork-unified-projection | unit | merged 2026-09-22 | 0 | 2026-09-22 |
+| surface-outstanding-items | unit | merged 2026-09-22 | 0 | 2026-09-22 |
+| [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | merged 2026-09-23 | 0 | 2026-09-23 |
+| validation-pause-handover | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
+| validation-status | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 
 ```mermaid
 flowchart LR

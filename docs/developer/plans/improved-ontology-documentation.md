@@ -93,7 +93,7 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D51 | The bypass scan covers tools under `tools/` and not their tests until after RC4. ADR-A121 decision 5 is clarified to say so (RC3-Q3, option c) |
 | OD-D52 | Each `roots` and `docs` entry in the root file carries its row's text for AGENTS.md and an optional group. The table is generated between region markers in AGENTS.md, and `build:agent-guidance` then writes Copilot's file as before (RC3-Q4) |
 | OD-D53 | The `generated` block lists paths a check may find missing, for example `.build/`, `docs/_site/` and the reasoner jar. Files a README generates stay under `extract` (RC3-Q5) |
-| OD-D54 | The branch is cut after OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL, and merged into `main`. The other layers migrate on later branches (NX-Q1, option a) |
+| OD-D54 | The branch is cut after OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL1, and merged into `main`. The other layers migrate on later branches (NX-Q1, option a) |
 | OD-D55 | One release for the substrate's ontologies: every versioned document and every shape and projection directory of the substrate carries the release's number, and a change anywhere is a new release of all of them. Each release note classes every change by its effect on a graph valid under the previous release (no effect, may invalidate, changes meaning). A "changes meaning" change ships a migration once an adopter holds production data. Supersedes ADR-A86's per-document versions, by a new ADR (REL-Q1, option C with D's classification, REL-Q6) |
 | OD-D56 | The applied ontologies are not in the substrate's release and pin a substrate release (REL-Q2, option b). Whether the standalone modules join it is REL-Q2a, open, since MORK, Surface and Persistence import or use substrate terms today |
 | OD-D57 | Imports name the same release's version IRIs, rewritten by the release task, so a document says what it was released with and the import guard keeps working (REL-Q3) |
@@ -101,7 +101,7 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D59 | The `.version` files of shape and projection directories go, and the release number is read from one place, the repository catalogue's conventions (REL-Q5) |
 | OD-D60 | Vocabulary's README takes its spec file's graph where the two disagree: the ontology header, `rdf:Property a owl:Class`, the order of one disjointness list and the direction of one `disjointWith` (NX-Q3) |
 | OD-D61 | Later migrations, on later branches, take the order Foundation, Party (closing TD-16), Quantification, Wording, Behaviour, then Instrument in two slices, one per spec document. Each includes the publication pass for the ADRs its README cites. Surface and the other literate standalone modules follow. Amends OD-D23's order (NX-Q4) |
-| OD-D62 | OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL are built autonomously with local commits, using Sonnet sub-agents where a slice is mechanical or separate (NX-Q5) |
+| OD-D62 | OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL1 are built autonomously with local commits, using Sonnet sub-agents where a slice is mechanical or separate (NX-Q5) |
 | OD-D63 | MORK, SPC, Surface and Persistence join the substrate's release, since they are tested at the same commit. MORK's `Executable.ttl` imports Eligibility explicitly, rather than using its terms undeclared (REL-Q2a, option a) |
 
 ## The README layout
@@ -210,10 +210,10 @@ Estimates are in tokens.
 | OD-RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
 | OD-RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
 | OD-RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
-| ELC | The composition operation (OD-D44, OD-D45). Built 2026-10-19, [Validation Pack](../validation/ELC.md). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
+| ELC | The composition operation (OD-D44, OD-D45). Built 2026-10-19, [Validation Pack](../validation/OD-ELC1.md). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
 | OD-MC1 | The migration check labels each blank node by its own subtree (TD-55), so a reconciliation lists only what changed. Brief below Built 2026-10-19, [Validation Pack](../validation/OD-MC1.md) | `tools/` | L1 | 20k |
 | VER1 | One release for the substrate (OD-D55 to OD-D59): the ADR, the release number in the catalogue, the versioning check and the release register by release, the release task that rewrites the number, the `.version` files removed, and release notes with each change's data class. Brief below Built 2026-10-19, [Validation Pack](../validation/VER1.md) | `tools/`, `docs/architecture/`, `repository-catalogue.md` | L1, L3 | 90k |
-| OD-REL | The first release, 0.18.0, made with VER1's task (OD-D43, OD-D55). Every substrate document takes 0.18.0, the applied modules re-pin to it, release notes per layer with each change's data class, Eligibility's laws L1 to L8 gain `elg:lawRegister elg:StaticConstraint`, and every check passes again. The maintainer creates the tag. Brief below. Built 2026-10-20, [Validation Pack](../validation/OD-REL.md) | every substrate module, the applied modules | L3, L4 | 60k |
+| OD-REL1 | The first release, 0.18.0, made with VER1's task (OD-D43, OD-D55). Every substrate document takes 0.18.0, the applied modules re-pin to it, release notes per layer with each change's data class, Eligibility's laws L1 to L8 gain `elg:lawRegister elg:StaticConstraint`, and every check passes again. The maintainer creates the tag. Brief below. Built 2026-10-20, [Validation Pack](../validation/OD-REL1.md) | every substrate module, the applied modules | L3, L4 | 60k |
 | OD-DOC2b | TD-60's cleaning, before the merge: the 12 architecture documents the site publishes and the developer and formal methods lifecycle guides lose their references to working documents (31 today), moved to a Provenance note or dropped, so the sources check reports none, and the two guides join the Contributing section. TD-60 closes Built 2026-10-20, [Validation Pack](../validation/OD-DOC2b.md) | `docs/` | L1 | 30k |
 
 ```mermaid
@@ -235,7 +235,7 @@ flowchart TB
     ELC --> OD-MC1["OD-MC1 migration check labels"]
     OD-MC1 --> OD-7
     OD-7 --> VER1["VER1 one release"]
-    VER1 --> REL["OD-REL release 0.18.0"]
+    VER1 --> REL["OD-REL1 release 0.18.0"]
     OD-DOC1 --> OD-DOC2
     OD-DOC2 --> REL
     OD-7 --> MIG["OD-8 onward, per layer"]
@@ -251,9 +251,9 @@ OD-DOC1 runs before the migrations reach their narrative sections, since OD-D21 
 sections may cite. Slice sizing follows the lifecycle rule. A slice that grows past about 15 tests or two
 modules splits.
 
-## Briefs for OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL (2026-10-19)
+## Briefs for OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL1 (2026-10-19)
 
-The order is OD-MC1, OD-7, VER1 and OD-REL, with OD-DOC2 alongside in its own worktree. The branch is then merged into
+The order is OD-MC1, OD-7, VER1 and OD-REL1, with OD-DOC2 alongside in its own worktree. The branch is then merged into
 `main` (OD-D54). The [release model sketch](../sketches/ontology-release-model.md) and the
 [release bundles sketch](../sketches/release-bundles.md) explain VER1 and what follows it.
 
@@ -306,7 +306,7 @@ As its row says (OD-D29 to OD-D31), plus the decisions index page linking only p
 `docs/`, the root catalogue's site block and a copy task, and runs in a Sonnet sub-agent's worktree cut from
 this branch.
 
-### OD-REL, the first release
+### OD-REL1, the first release
 
 **Scope.** VER1's task at 0.18.0 over the substrate. Eligibility's L1 to L8 gain their register. Each layer's
 release notes gain an entry for 0.18.0 with every change since its last release and each change's data class.
@@ -383,7 +383,7 @@ The order is OD-6, then OD-DOC1 and OD-RC3 in either order. This branch is merge
    semantics follows.
 4. **Docs.** The glossary and the remaining architecture mentions.
 
-**Versions.** None on this branch (OD-D43). The change is breaking, and OD-REL releases it with the migration.
+**Versions.** None on this branch (OD-D43). The change is breaking, and OD-REL1 releases it with the migration.
 
 **Validation.** The migration check against OD-6's commit, with the renamed and removed triples as reconciliations,
 every Eligibility, Instrument and compiler suite, and `check:full-sweep` with only OD-D43's unbumped files

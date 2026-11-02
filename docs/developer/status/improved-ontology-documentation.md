@@ -49,11 +49,11 @@ and the versioning check passes against `main`.
 | OD-RC4 | downstream extension | planned | OD-RC3 |
 | OD-RC5 | package promotion | planned | OD-RC4 |
 | OD-RC6 | XML catalogue folded in | planned | OD-RC5, a new ADR on ADR-A88 |
-| OD-ELC | composition operation | verified 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) |  |
+| OD-ELC1 | composition operation | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-ELC1.md) |  |
 | OD-MC1 | migration check labels | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-MC1.md) |  |
 | OD-VER1 | one release for the substrate | verified 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) |  |
 | OD-DOC2b | working documents out of published pages | built 2026-10-20 autonomously 2026-10-20, committed locally, [Validation Pack](../validation/OD-DOC2b.md) |  |
-| OD-REL | first release, 0.18.0 | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | the tags, on `main` after the merge |
+| OD-REL1 | first release, 0.18.0 | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL1.md) | the tags, on `main` after the merge |
 
 ## Open questions
 
@@ -179,7 +179,7 @@ and the versioning check passes against `main`.
   pass. Two findings stopped the migration for a decision: 32 of Eligibility's 52 terms have no definition, and
   any migration changes a layer's graphs (Dublin Core in the header), so each needs a version that cascades
   through 11 documents in 5 modules. Answered: definitions are drafted and reviewed (OD-D42), and versions are
-  left inconsistent on this branch until one release slice, OD-REL, bumps and re-pins everything before the merge
+  left inconsistent on this branch until one release slice, OD-REL1, bumps and re-pins everything before the merge
   (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD-6 to continue
   autonomously with local commits.
 - 2026-10-18: OD-6 finished. Eligibility's README is in the layout, and the migration check against `dab1c790`
@@ -209,7 +209,7 @@ and the versioning check passes against `main`.
 
 - 2026-10-19: ELC, OD-DOC1 and OD-RC3 approved. OD-RC3's `reaches` audited and now checked by RC3-T17. Two entries
   corrected, and TD-56 records SPC's pipeline script writing into a missing directory.
-- 2026-10-19: next slices proposed (OD-MC1, OD-7, OD-DOC2, OD-REL). NX-Q1 answered (a), the branch is cut after OD-REL.
+- 2026-10-19: next slices proposed (OD-MC1, OD-7, OD-DOC2, OD-REL1). NX-Q1 answered (a), the branch is cut after OD-REL.
   The import pinning checks were run, and the maintainer asked to rethink versioning first. The
   [release model sketch](../sketches/ontology-release-model.md) proposes one release for every ontology,
   REL-Q1 to REL-Q6 open.
@@ -228,10 +228,10 @@ and the versioning check passes against `main`.
 - 2026-10-19: OD-DOC2 built by a Sonnet sub-agent in its own worktree and merged. Site sections declared in the
   catalogue, working documents off the site, which shrinks from 836 files to 96. Stray notes in `docs/` left for
   the maintainer.
-- 2026-10-20: OD-REL built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
+- 2026-10-20: OD-REL1 built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
   modules bumped in two rounds, release notes with each change's data class, and tests reading the release
   number. The full sweep passes, all 15 checks.
-- 2026-10-20: OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL approved, and ADR-A129 accepted. OD-DOC2's decision 5 stands on condition
+- 2026-10-20: OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL1 approved, and ADR-A129 accepted. OD-DOC2's decision 5 stands on condition
   that TD-60's cleaning happens before the merge.
 - 2026-10-20: OD-DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
   so the 0.18.0 release notes cite it. The full sweep passes all 17 checks.

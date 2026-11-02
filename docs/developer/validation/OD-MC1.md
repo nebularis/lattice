@@ -17,7 +17,7 @@ reconciliation lists what changed and nothing else.
 - `tools/literate_migration_check.py`. `labelled()` writes a graph's triples with subtree labels, and
   `differences()` compares those sets in place of `graph_diff` over `to_isomorphic`.
 - `tools/test_literate_migration_check.py`. MC1-T1 and MC1-T2.
-- `docs/developer/validation/ELC-reconciliations.txt`, regenerated in the new labels: 102 differences where there
+- `docs/developer/validation/OD-ELC1-reconciliations.txt`, regenerated in the new labels: 102 differences where there
   were 126. The unchanged SPARQL shapes are gone from it.
 - TD-55 removed from the register, its home being this slice.
 
@@ -48,7 +48,7 @@ mise exec -- python -m pytest tools/test_literate_migration_check.py -q
 ```
 
 ```bash
-mise run check:literate-migration -- eligibility 82fc2b25 --reconciliations docs/developer/validation/ELC-reconciliations.txt
+mise run check:literate-migration -- eligibility 82fc2b25 --reconciliations docs/developer/validation/OD-ELC1-reconciliations.txt
 ```
 
 ## Results

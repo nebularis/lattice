@@ -59,12 +59,12 @@ Neither test is weakened for an unmigrated README.
    properties. They are listed as an open issue in the README's §13, and are a short addition if wanted.
 3. **L1 to L8 name no register**, though the laws diagram places them under `elg:StaticConstraint`. We kept the
    graph as it is and recorded this in §13. Adding `elg:lawRegister elg:StaticConstraint` to each is a vocab
-   change for OD-REL or a later slice.
+   change for OD-REL1 or a later slice.
 4. **Section 1 stays one sentence**, today's, so the `dct:description` says what Eligibility models and nothing
    more. The imports sentence moved to §11.
 5. **§10 names no tool.** The paragraph on how the block is extracted, and which files hold the hand-written
    proofs, moved to §3, where the generation is described. The truth tables and the L15 readings stay.
-6. **One release note, "Not yet released",** describes the migration, for OD-REL to turn into a version. The
+6. **One release note, "Not yet released",** describes the migration, for OD-REL1 to turn into a version. The
    older notes lost their slice references (CCS, FM-EP, FMB-2.2) and kept their ADRs.
 7. **No individual or law changed text.** L9's comment keeps its semicolon, since rewording it changes the
    graph.
@@ -153,7 +153,7 @@ The adversarial probes were not run beyond OD6-T2.
 
 ## Deliberate non-coverage
 
-- Version bumps and re-pins. OD-REL (OD-D43).
+- Version bumps and re-pins. OD-REL1 (OD-D43).
 - The class diagram was not rendered in a browser for this README. OD-5's render check covered the same
   constructs.
 - Vocabulary's migration. OD7.
@@ -168,4 +168,4 @@ The adversarial probes were not run beyond OD6-T2.
 - **`elg:CompatibilityOperation`'s name** is questioned, since what it describes is a composition. Answered
   2026-10-19 as OD-D44 (renamed, and declared on profiles only) and OD-D45 (`elg:DimensionConsistent` and
   `elg:E6` retired), for slice ELC.
-- **Decision 3** (L1 to L8 name no register). OD-REL adds the register.
+- **Decision 3** (L1 to L8 name no register). OD-REL1 adds the register.

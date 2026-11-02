@@ -393,3 +393,8 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | WA8 | WA-8 | word-authoring-poc |
 | WA9 | WA-9 | word-authoring-poc |
 | WA9a | WA-9a | word-authoring-poc |
+| ELC | OD-ELC1 | improved-ontology-documentation |
+| OD-ELC | OD-ELC1 | improved-ontology-documentation |
+| OD-REL | OD-REL1 | improved-ontology-documentation |
+| ELC.md | OD-ELC1.md | validation pack |
+| OD-REL.md | OD-REL1.md | validation pack |

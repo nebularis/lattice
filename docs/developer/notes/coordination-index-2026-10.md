@@ -725,7 +725,7 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 | **Plan** | [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md) |
 | **Status Record** | [improved-ontology-documentation.md](../status/improved-ontology-documentation.md) |
 | **ADRs** | A-121, A-126 and A-127, accepted 2026-10-17 |
-| **Validation Packs** | [OD-0](../validation/OD-0.md), [OD-1](../validation/OD-1.md), [OD-RC1](../validation/OD-RC1.md), [OD-RC2](../validation/OD-RC2.md), [OD-2](../validation/OD-2.md), [OD-3](../validation/OD-3.md), [OD-4](../validation/OD-4.md), [OD-5](../validation/OD-5.md), [OD-6](../validation/OD-6.md), [ELC](../validation/ELC.md), [OD-DOC1](../validation/OD-DOC1.md), [OD-RC3](../validation/OD-RC3.md) |
+| **Validation Packs** | [OD-0](../validation/OD-0.md), [OD-1](../validation/OD-1.md), [OD-RC1](../validation/OD-RC1.md), [OD-RC2](../validation/OD-RC2.md), [OD-2](../validation/OD-2.md), [OD-3](../validation/OD-3.md), [OD-4](../validation/OD-4.md), [OD-5](../validation/OD-5.md), [OD-6](../validation/OD-6.md), [ELC](../validation/OD-ELC1.md), [OD-DOC1](../validation/OD-DOC1.md), [OD-RC3](../validation/OD-RC3.md) |
 
 One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents

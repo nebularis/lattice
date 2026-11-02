@@ -91,7 +91,7 @@ Run from the repository root. A pass is each exiting 0, except the sweep, which 
 unbumped files.
 
 ```bash
-mise run check:literate-migration -- eligibility 82fc2b25 --reconciliations docs/developer/validation/ELC-reconciliations.txt
+mise run check:literate-migration -- eligibility 82fc2b25 --reconciliations docs/developer/validation/OD-ELC1-reconciliations.txt
 ```
 
 ```bash
@@ -114,7 +114,7 @@ mise run check:full-sweep
 
 ## Deliberate non-coverage
 
-- Versions. OD-REL releases ELC's breaking change with the migration (OD-D43).
+- Versions. OD-REL1 releases ELC's breaking change with the migration (OD-D43).
 - A reasoner run over the new domain. The reasoning tests run in the sweep where the reasoner jar is built.
 
 ## Decisions answered
