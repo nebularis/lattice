@@ -3,7 +3,7 @@
 # Where the work is: marking units and slices across branches — Sketch
 
 **Unit ID:** `work-board`
-**Status:** Sketch, planned 2026-11-02 as [plans/work-board.md](../plans/work-board.md). WB-Q1 to WB-Q8 answered, WB-Q9 open. Kept until the ADR of WB-5 records the reasoning.
+**Status:** Sketch, planned 2026-11-02 as [plans/work-board.md](../plans/work-board.md). WB-Q1 to WB-Q9 answered. Kept until the ADR of WB-5 records the reasoning.
 **Date:** 2026-11-02
 **Bears on:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) (the hooks and their four moments), [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) (what the index reads), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (a generated region in a hand-written file), the lifecycle and branching skills, [ROADMAP.md](../ROADMAP.md) §12, [INDEX.md](../INDEX.md).
 
@@ -374,24 +374,23 @@ sequenceDiagram
 
 Measured on 2026-11-02 after fetching, over every local branch and every remote-tracking ref of `origin-ssh`, with a local branch and its remote folded into one row where their tips were the same commit, which they were for every branch but `main`, itself one commit behind its remote by the evening. 24 local branches, 17 remote refs, 9 worktrees under `lattice-wt/` and 7 under `.claude/worktrees/`. Share is the branching skill's content measure, the branch's added lines since its merge-base that are on `main` today, computed by the prototype of `--measure` in about three minutes for the set. Marks says which status records and plans the branch changes. The table is a snapshot, and the tool's Branches table with `--fetch` is what replaces it.
 
-| Branch | Tip | Ahead | Share on `main` | Marks | Proposed disposition |
-|---|---|---|---|---|---|
-| `claude/persistence-delta-replace` | 11-02 | 137 | 88% | 8 records, 7 plans | live. The persistence replace work. Marks its slices in WB-7 |
-| `claude/persistence-linear-replace` | 11-01 | 135 | 93%, and 100% inside delta-replace | the same | superseded by delta-replace. Delete |
-| `realign/config-authoring-studio` | 11-02 | 154 | 0%, and 61% inside delta-replace | FM-H, PDR, PM records | 5,000 of its 12,844 added lines are on no other ref. Live or abandoned, the maintainer says |
-| `claude/config-authoring-studio` | 11-02 | 151 | 0%, and 75% inside realign | PM, PDR, SQ | 1,500 lines on no other ref. As above |
-| `ccs-trunk` | 10-29 | 53 | 99% | CCS, MSC | merged. Delete once the 43 lines are confirmed noise |
-| the four CS12 subagent branches, `claude/config-studio-shape-forms`, `-showcase-sample`, `cs12b-authoring-domain`, `cs9-studio-operations` | 10-28 | 7 to 18 | 89% to 91% | config-studio, WA | residue of about 1,000 lines each. Confirm, then delete with their `.claude/worktrees/agent-*` worktrees |
-| `claude/nice-bohr-pmj43u-wwhgle` | 10-20 | 45 | 88% | AIR, FM-H, PDD, TD | 2,000 lines not on `main`, remote and local. Ask |
-| `docs/placement-vehicles-structure` | 11-02 | 112 | all. Its tree is `main`'s tree, so it holds nothing `main` lacks | none | merged by content. Ask what it was for, then delete |
-| `fml/isabelle-layers` | 11-01 | 31 | 100% | none | squash-merged as `df0ddd1a`. Delete the branch, keep the worktree only while H3.1 continues there |
-| `claude/fix-topology-links` | 10-23 | 1 | 56% | 8 old records | 80 lines. Ask |
-| `persistence-mbt` | 09-23 | 1 | 1% | EC, PCI | 463 lines from September. Ask |
-| `spikes/pol-map` | 10-16 | 2 | 0% | none | a spike of 4,205 lines. Keep as a spike |
-| `origin-ssh/tutorial/guide` | 10-16 | 5 | 0% | lattice-tutorial | remote only, 2,208 lines. Ask |
-| `origin-ssh/main-xg1czj`, `origin-ssh/config_studio_GD` | | 1, 0 | | none | one line, and at `main`'s parent. Delete |
-| `docs/work-board` | 11-02 | 1 | | this sketch | live |
-| `claude/epic-noyce-e09046`, `claude/happy-jones-abb1c4`, `claude/ontology-config-authoring-cc050f`, `worktree-agent-*` x 4 | | 0 | | | nothing ahead. Delete the branches and their worktrees |
+| Branch | Measured | The maintainer's disposition, 2026-11-02 |
+|---|---|---|
+| `realign/config-authoring-studio` | 154 ahead, its own content | live. The studio and persistence-delta work consolidated here, with `claude/persistence-linear-replace` and `claude/persistence-delta-replace` merged in as `f65398b9` and `b69eee37`. Its fork's standards were renumbered there onto the eight numbers from STD-301 upward, which this branch's STD-300 to STD-306 collide with, so one side renumbers at the merge, first in wins |
+| `claude/config-authoring-studio` | 151 ahead, 75% inside realign | subsumed by the realign branch. Delete |
+| `claude/persistence-linear-replace`, `claude/persistence-delta-replace` | merged into realign | delete once the realign branch is on `main` |
+| `ccs-trunk` | 53 ahead, 99% on `main` | live, the CCS worktree. Brings `main` in once its agent has the conflicts worked out |
+| the four CS12 subagent branches | 88% to 92% on `main` and on realign, 0% on `ccs-trunk`. The residue is the same four Java files in all four, `StudioStore`, `AuthoringHttpServer`, `Parts` and `Workspace`, which the async rewrite on `main` replaced, plus 184 lines of `graph.ts` on `cs9` and 57 of `types.ts` on `cs12b` | measured 2026-11-02: not divergent, superseded by the rewrite. Delete after the maintainer glances at the two TypeScript residues |
+| `claude/nice-bohr-pmj43u-wwhgle` | 88% on `main`. Its commits are track H's H2.8c and H2.11 of 2026-10-20, which reached `main` through the release branch. The residue is a generated `persistence.ttl` and six mustache templates since renamed | measured 2026-11-02: squash-merged, superseded. Delete |
+| `docs/placement-vehicles-structure` | up to date with `main` | live, the ledger work |
+| `fml/isabelle-layers` | 100% on `main` as `df0ddd1a`, the code-generation spike under `spikes/isabelle-layers`, proved code equations and Haskell, SML and Scala exports, with Eligibility's decision table executing | stays while H3.1 completes there. The plan's H3 is the specification registry, so this spike is not that H3, and its home is the formal-methods epic's code-generation decision FM-D10 rather than track H |
+| `claude/fix-topology-links` | 56% on `main`, residue in two notes. The whole-tree link check `mise run topology:links` passes on this branch | its problem is solved. Delete |
+| `persistence-mbt` | a 421-line sketch of September, with INDEX rows. It proposes ADR-A84, a number since taken, and a `tools/persistence_mbt` library driving a store with compiler-generated SPARQL against a model built from the resolved profile, with a workload specification, expected concurrency behaviour and a growth oracle. Since then `check:persistence-conformance` runs 5,686 cases on three engines, `benchmark/persistence-store-probes` holds the probes, and the test-suite-performance and python-test-melting sketches cover the suites | the maintainer reviews §5.5 and §5.6 against the conformance suite. Adopt as a sketch only if they add a check the suite lacks, else drop |
+| `spikes/pol-map` | 0% on `main`, 4,205 lines | keep. Update to the current ontology before merging or adding |
+| `origin-ssh/tutorial/guide` | 2,208 lines, Gareth's | untouched |
+| `origin-ssh/main-xg1czj` and `origin/origin-ssh/main-xg1czj` | one row, PDD-18, a number `main` already uses | brought onto this branch as PDD-19, both refs deleted |
+| `docs/work-board` | this | live |
+| `claude/happy-jones-abb1c4`, `claude/epic-noyce-e09046`, `claude/ontology-config-authoring-cc050f`, `worktree-agent-*` x 4 | nothing ahead | deleted 2026-11-02 with their worktrees |
 
 **The migration, slice WB-7.** For each branch the maintainer names live, its agent, or the maintainer, merges `main` once the check is on it, runs `work:normalise`, `work:rename` and `build:work`, sets every slice the branch is building to `building <date>` in its home unit's record, with the date the work actually started, commits the mark on its own and pushes. Every other branch is deleted, locally and on the remote, with its worktree, by the maintainer. Done when `mise run work:board` shows no `no mark` row and no branch the maintainer did not name. From then on rule 2 of §6 keeps it so.
 
@@ -423,8 +422,8 @@ Needed now: the state set, the standard board, the slice grammar and the crosswa
 - **WB-Q6. The check's strictness.** Answered 2026-11-02, block at a commit on a malformed touched board, on the conditions in §10a. The cell carries a day and not a commit, §5.
 - **WB-Q7. The unit prefixes.** Answered 2026-11-02, the table in §9a, with the segment's optional capitals admitted.
 - **WB-Q8. Presence in a shared worktree.** Answered 2026-11-02, (a), the task and the rule, with the Claude Code hook (b) as a later slice, §11.
-- **WB-Q9. Which branches are live.** The dispositions in §12 are proposed from content measurement, and the branching skill says the maintainer names the live set. Which rows are wrong?
+- **WB-Q9. Which branches are live.** Answered 2026-11-02, the table in §12, with the content measurements of the same day beside each disposition.
 
 Estimate, in tokens: the tool and its tests about 70k, the slice sweep and the crosswalk about 30k, the boards and Branch lines about 40k, AGENTS.md, the skills, standards and ADR about 35k, the INDEX and ROADMAP regions about 20k, the branch migration about 25k. Total about 220k.
 
-🔴 PLAN FIRST: WB-Q9, then a plan on this branch and the slices in §12's order.
+Every question is answered, and the plan holds the slices.

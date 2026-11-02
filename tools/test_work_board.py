@@ -285,7 +285,7 @@ def gantt(newest: str) -> list[str]:
 
 def test_wb3_01_gantt_text_draws_one_bar_per_dated_slice() -> None:
     lines = gantt("2026-11-02")
-    assert lines[:2] == ["```mermaid", "gantt"] and lines[-1] == "```"
+    assert lines[:3] == ["```mermaid", wb.GANTT_THEME, "gantt"] and lines[-1] == "```"
     assert "    section alpha" in lines
     bars = [l for l in lines if ":done," in l or ":active," in l or ":crit," in l]
     assert len(bars) == 3

@@ -539,34 +539,48 @@ def build(repo: Repo, check: bool) -> int:
 
 # ---- the roadmap ---------------------------------------------------------------------------------
 
-def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str) -> list[str]:
-    """One bar per dated slice, from the earliest day in its trail to the latest, grouped by unit.
-    A slice whose latest day is more than RECENT_DAYS before the newest day on any board is left
-    out unless it is building or blocked, so the chart stays readable, and an undated slice is
-    never drawn, since a bar invented for it would be a plan nobody made."""
+GANTT_THEME = ('%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", '
+               '"activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", '
+               '"doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", '
+               '"taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%')
+GANTT_KEY = ["```mermaid", "flowchart LR",
+             '    K1["building"]:::active --- K2["built or verified"]:::open --- K3["merged or tagged"]:::done --- K4["blocked"]:::crit',
+             "    classDef active fill:#4e9af1,stroke:#1f5fbf,color:#000", "    classDef open fill:#f2c14e,stroke:#b8860b,color:#000",
+             "    classDef done fill:#8fcf8f,stroke:#2f7d32,color:#000", "    classDef crit fill:#f28b82,stroke:#b23a30,color:#000", "```"]
+
+
+def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str, completed: bool = False) -> list[str]:
+    """One bar per dated slice, from the earliest day in its trail to the latest, grouped by unit,
+    coloured by state as the key under it says. The open chart holds every building, built, verified
+    or blocked slice and the merged ones of the last RECENT_DAYS, and the completed chart holds every
+    merged, tagged or dropped slice whatever its age. An undated slice is never drawn, since a bar
+    invented for it would be a plan nobody made."""
     import datetime
     cutoff = (datetime.date.fromisoformat(newest) - datetime.timedelta(days=RECENT_DAYS)).isoformat() if newest else ""
-    lines = ["```mermaid", "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
+    lines = ["```mermaid", GANTT_THEME, "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
     by_unit: dict[str, list[str]] = {}
     for (unit, slice_id), j in joined.items():
         _, row = j.winner
         days = sorted(d for _, d in row.trail if d)
         if not days or row.state is None:
             continue
-        if days[-1] < cutoff and row.state not in ("building", "blocked"):
+        closed = row.state in ("merged", "tagged", "dropped")
+        if completed and not closed:
             continue
-        tag = "done" if row.state in ("merged", "tagged") else "crit" if row.state == "blocked" else "active"
+        if not completed and closed and days[-1] < cutoff:
+            continue
+        tag = "done" if closed else "crit" if row.state == "blocked" else "active" if row.state == "building" else ""
         start, end = days[0], days[-1]
         if start == end:
             end = (datetime.date.fromisoformat(end) + datetime.timedelta(days=1)).isoformat()
         label = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 .-]", " ", re.sub(r"'s\b", "", f"{slice_id} {row.deliverable[:30]}"))).strip()
         ident = re.sub(r"[^a-z0-9]", "", slice_id.lower()) or "s"
-        by_unit.setdefault(unit, []).append(f"    {label} :{tag}, {ident}, {start}, {end}")
+        by_unit.setdefault(unit, []).append(f"    {label} :{tag + ', ' if tag else ''}{ident}, {start}, {end}")
     for unit, bars in sorted(by_unit.items()):
         lines.append(f"    section {unit}")
         lines += bars
     lines.append("```")
-    return lines
+    return lines + [""] + GANTT_KEY
 
 
 def roadmap_regions(repo: Repo) -> dict[str, str]:
@@ -579,9 +593,13 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
     newest = max((d for j in joined.values() for r in j.rows.values() for _, d in r.trail if d), default="")
     glance = [f"Built from the status records on {len(found)} branches, the newest board day {newest or 'unknown'}.", ""]
     unit_rows = []
+    done_rows = []
     for name, unit in main_units.items():
         slices = [j for (u, _), j in joined.items() if u == name]
         if unit.state in ("merged", "tagged", "dropped") and not any(j.moved for j in slices):
+            last = max((d for j in slices for _, d in j.winner[1].trail if d), default=unit.day)
+            done_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
+                              unit.kind, f"{unit.state} {unit.day}".strip(), str(len(slices)), last))
             continue
         counts = {}
         for j in slices:
@@ -591,7 +609,10 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
         unit_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
                           unit.kind, f"{unit.state or '?'} {unit.day}".strip(), unit.next, summary, ", ".join(on)))
     glance += table(("Unit", "Kind", "State", "Next", "Slices", "Moved on"), unit_rows)
-    glance += [""] + gantt_text(joined, newest, f"Dated slices, newest day {newest}")
+    glance += [""] + gantt_text(joined, newest, f"Open work and the last {RECENT_DAYS} days, newest day {newest}")
+    completed = ["Every unit whose Status line reads merged, tagged or dropped and that no branch moves, with its slices, and every merged, tagged or dropped slice with a day, whatever its age.", ""]
+    completed += table(("Unit", "Kind", "State", "Slices", "Last day"), done_rows)
+    completed += [""] + gantt_text(joined, newest, "Completed slices", completed=True)
     branch_rows = []
     for b in found:
         if b.name == MAIN or b.ahead_of_main == 0:
@@ -600,7 +621,7 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
         branch_rows.append((f"`{b.name}`", b.day, str(b.ahead_of_main), b.drift, ", ".join(moved) or "no mark"))
     branches_text = [f"Branches with a commit `main` lacks, from the same reading.", ""]
     branches_text += table(("Branch", "Tip", "Ahead of main", "Upstream", "Moves"), branch_rows)
-    return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n"}
+    return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n", "completed": "\n".join(completed) + "\n"}
 
 
 def render_regions(existing: str, regions: dict[str, str]) -> str:

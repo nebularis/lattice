@@ -6,7 +6,7 @@
 **Plan:** [work-board.md](../plans/work-board.md)
 **Sketch:** [work-board.md](../sketches/work-board.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-02. WB-0 to WB-6 built, WB-7 waits on WB-Q9. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
+**Status:** built 2026-11-02. WB-0 to WB-6 built, WB-7 briefed and waiting on the merge of this branch into `main`. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
 
 ## Position
 
@@ -19,7 +19,7 @@
 | WB-4 | the `work` check and the post-merge regeneration | built 2026-11-02, building 2026-11-02 |  |
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | built 2026-11-02, building 2026-11-02 |  |
 | WB-6 | `work:here` | built 2026-11-02, building 2026-11-02 |  |
-| WB-7 | the branches marked or deleted | planned | WB-4, WB-Q9 |
+| WB-7 | the branches marked or deleted | briefed 2026-11-02 | the merge of this branch into `main` |
 
 ## History
 
@@ -34,3 +34,4 @@
 - 2026-11-02: handoff. WB-0 to WB-6 built and committed on `docs/work-board`, each slice marked building before its first edit and built at its commit. WB-7 waits on WB-Q9. The Sonnet sessions wrote the four test modules' additions and the Status lines of the 42 boardless records. Not run: `mise run check` whole, and the post-merge hook on `main` itself, which the tests exercise in a temporary repository.
 - 2026-11-02: after the maintainer's review of the handoff. `config-studio`'s Status line reads `merged`, since its code is on `main`. The lifecycle skill's description and its row in AGENTS.md name picking up a slice before the first edit, so the skill loads for it. `mise run work:adopt` is new: it brings onto a unit's board the slices its record's other tables, its Validation Packs and its plans' tables name, each in the state its source gives, a pack meaning built on the day it was added, and adds a board to a record that has none. It adopted 107 of the 172 baselined slices, and the 65 named only in prose stay in the exceptions file grouped by unit, 34 of them track H sub-slices. TD-137 says so. 37 tests pass.
 - 2026-11-02: the maintainer asked whether the git log showed the prose-only slices as done. A survey of every ref in every spelling found no commit on `main` naming any of them as built or merged. 34 of the 65 were the packs' own historic spelling of boarded track H slices, the prefix followed by the old H number, from 8 October, so the crosswalk gained that spelling and the sweep took it, with the two mentions outside its scope fixed by hand. The identifiers check no longer reads the crosswalk note, which holds old spellings by design. 34 ids remain in the baseline, each with its reason, and the git-log survey is this record's finding.
+- 2026-11-02: WB-Q9 answered. The sketch's §12 holds the maintainer's disposition per branch beside the day's measurements. Found on the way: the four CS12 subagent branches share one residue, four Java files the async rewrite replaced, and are superseded. `claude/nice-bohr-pmj43u-wwhgle` holds H2.8c and H2.11, on `main` through the release branch. `claude/fix-topology-links` is solved, since `mise run topology:links` passes on this branch. The Isabelle branch's H3.1 is the code-generation spike already on `main` as `df0ddd1a`, which is the formal-methods epic's FM-D10 work rather than track H's H3. `origin-ssh/main-xg1czj`'s PDD-18 is on this branch as PDD-19, since `main` already has a PDD-18. The seven branches with nothing ahead of `main` are deleted with their worktrees. The realign branch renumbered its standards onto the eight numbers from STD-301 upward and closed a TD-137 of its own, so this branch's STD-300 to STD-306 and TD-137 are renumbered at whichever merge comes second. ROADMAP.md's gantt is coloured by state with a key under it, and section 11 is a generated region of every completed unit and slice.

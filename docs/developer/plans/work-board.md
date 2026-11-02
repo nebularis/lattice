@@ -8,7 +8,7 @@
 **Sketch:** [work-board.md](../sketches/work-board.md), the options, the measurements and the questions
 **Status record:** [work-board.md](../status/work-board.md)
 **ADR:** drafted in WB-5 as Proposed, at the next free number
-**Status:** planned 2026-11-02. WB-Q1 to WB-Q8 answered in the sketch, WB-Q9 open.
+**Status:** built 2026-11-02, WB-0 to WB-6. WB-7 waits on the merge of this branch into `main`. Every question answered in the sketch.
 
 ## Scope
 
@@ -54,7 +54,7 @@ WB-2, WB-3 and WB-4 merge into `main` together, since the check must never prece
 
 ## Open
 
-- **WB-Q9. Which branches are live.** The sketch's §12 proposes a disposition per branch from content measurement. The maintainer names the live set before WB-7.
+Nothing. WB-Q9 was answered on 2026-11-02, and the sketch's §12 holds each branch's disposition beside its measurement. WB-7 runs once this branch is on `main`, since a live branch marks its slices after merging `main` with the `work` check on it. The live set is `realign/config-authoring-studio`, `ccs-trunk`, `docs/placement-vehicles-structure`, `fml/isabelle-layers` while H3.1 completes, and `spikes/pol-map` as a spike.
 
 ## Done when
 
