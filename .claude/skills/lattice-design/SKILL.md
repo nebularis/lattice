@@ -38,6 +38,7 @@ hard-codes one domain's practice as the only way is wrong at the substrate.
 - Check each modelling consequence against the ontologies themselves. To find the terms a design would reuse or collide with, ask `find <what the term means> --kind term`, separately from the questions about rules and decisions, which never take `--kind term`.
 - Check the design against the roadmap: the epic plans, the held design questions, which `find <the design> --kind pending-decision` returns, and the slices waiting on this one. A design that works now and makes a roadmap item harder is wrong.
 - Say a design decision once, and cross-reference it.
+- A plan's header declares the unit's slice prefix, `**Prefix:** CCS`, and never names a branch, since the board derives the branch from where it finds a slice's row (STD-303, STD-304). Every slice the plan names has a row on the unit's board from the day the plan is written, `planned` until it moves.
 - A design that depends on how a triple store evaluates SPARQL cites the finding in
   [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on, or probes the
   store and adds one first (skill `lattice-triple-stores`). The specification and a store often differ.

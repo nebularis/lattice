@@ -6,7 +6,7 @@
 **Plan:** [work-board.md](../plans/work-board.md)
 **Sketch:** [work-board.md](../sketches/work-board.md)
 **Mode:** default. Write, then hand off.
-**Status:** building 2026-11-02. WB-0 to WB-4 built, WB-5 and WB-6 building, WB-Q9 open. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
+**Status:** built 2026-11-02. WB-0 to WB-6 built, WB-7 waits on WB-Q9. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
 
 ## Position
 
@@ -17,8 +17,8 @@
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | built 2026-11-02, building 2026-11-02 |  |
 | WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | built 2026-11-02, building 2026-11-02 |  |
 | WB-4 | the `work` check and the post-merge regeneration | built 2026-11-02, building 2026-11-02 |  |
-| WB-5 | AGENTS.md, the skills, the standards, the ADR | building 2026-11-02 |  |
-| WB-6 | `work:here` | building 2026-11-02 |  |
+| WB-5 | AGENTS.md, the skills, the standards, the ADR | built 2026-11-02, building 2026-11-02 |  |
+| WB-6 | `work:here` | built 2026-11-02, building 2026-11-02 |  |
 | WB-7 | the branches marked or deleted | planned | WB-4, WB-Q9 |
 
 ## History
@@ -29,3 +29,6 @@
 - 2026-11-02: WB-2 built. `tools/work_migrate.py` with `work:normalise` and `work:rename`, both idempotent. The sweep on this branch: 63 records normalised, every board row and every Status line now opens with a state word, 21 records had boards, 174 ids crossed over 11 units, 193 files rewritten, 137 Validation Packs renamed, 26 left as they were, 3 ids claimed by two units (C1, C2, C3 of CCS and track C) left outside their own documents. The `slice` identifier family is built from the plans' Prefix lines and defined by INDEX.md's Work table. 169 slices a plan names with no board row are baselined in the exceptions file as TD-137. Status lines of the 42 records without a board were set by reading each record, in a Sonnet session, and the ones it was unsure of are listed in this slice's handoff. The state cell's day where the record gave none is the day git last changed that cell's text. Dead links in the renamed Validation Packs, to the authoring service that has since moved, became plain text, and their semicolons commas, since a renamed file is judged whole by the hooks. 25 tests pass under `mise run check:work-board`.
 - 2026-11-02: WB-3 built. INDEX.md is a preamble and the generated region, its hand-written parts archived whole as `notes/coordination-index-2026-10.md` with their links re-rooted. ROADMAP.md's §1 and §7 are generated regions, the programme at a glance with a gantt of the dated slices of the last 30 days and the open ones, and the branches, written by `mise run build:roadmap` from every branch. The index gains the class Slice with the properties unit and state, the Work table's columns are mapped, and each row points at its board's section anchor, so `graph:ask -- find ... --kind slice` and `read <slice id>` answer. `check:knowledge` 123 passed, `check:work-board` 30 passed, every diagram in ROADMAP.md parses.
 - 2026-11-02: WB-4 built. The `work` check in `tools/hooks.py` refuses a commit or a merge when a touched status record's Status line or a board row opens with no state word, a row from `building` on has no day, a slice id is outside the grammar, or INDEX.md's region is stale, each message naming the task that fixes it. The post-merge hook regenerates INDEX.md's region after the knowledge index, and ROADMAP.md's regions on `main`, never failing. 8 tests in `tools/test_hooks.py`, written in a Sonnet session, `check:hooks` 40 passed.
+- 2026-11-02: WB-6 built. `mise run work:here` writes a session's presence into the worktree's git-ignored `.local/agents/` from `CLAUDE_CODE_SESSION_ID` and `AI_AGENT` with the role, model and slices given, lists the sessions touched in the last twelve hours, and `--leave` removes it. The clock is `--now` in tests. 6 tests, `check:work-board` 36 passed.
+- 2026-11-02: WB-5 built. AGENTS.md's contract gains mark before you touch, know who is here, and ask the board, rebuilt into the Copilot copy. The lifecycle skill gains Picking up and finishing, the branching skill the three tasks after merging `main` and the presence file, the design skill the Prefix line and no Branch line. STD-300 to STD-306 and CAP-103 and CAP-104 are in the registers, ADR-A151 is drafted as Proposed and catalogued, and the developer guide lists the tasks and the `work` check. `check:agent-guidance` 9 passed, `check:identifiers` passed, and the index answers `find how do I take over a slice from another plan` with STD-301 and STD-300 first.
+- 2026-11-02: handoff. WB-0 to WB-6 built and committed on `docs/work-board`, each slice marked building before its first edit and built at its commit. WB-7 waits on WB-Q9. The Sonnet sessions wrote the four test modules' additions and the Status lines of the 42 boardless records. Not run: `mise run check` whole, and the post-merge hook on `main` itself, which the tests exercise in a temporary repository.

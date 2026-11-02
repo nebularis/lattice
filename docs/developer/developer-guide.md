@@ -77,6 +77,8 @@ A commit that touches none of these runs the deny-list alone, in well under a se
 
 **No hook runs at a push**, so a branch, and a cloud agent's work, always reaches the maintainer.
 
+**The work board.** The `work` check refuses a commit whose touched status record has a malformed board or Status line, a slice id outside the grammar, or a stale INDEX.md region, and names the task that fixes it. After a merge the hook regenerates INDEX.md's region, and ROADMAP.md's regions on `main`, leaving them changed in the tree to commit (ADR-A151).
+
 **Running and skipping.** `mise run hooks:run` runs the commit checks over what is staged without committing. `LATTICE_HOOKS_SKIP=links,writing git commit …` skips named checks, and `git commit --no-verify` skips every check. Record a skip, and why, in the slice's Validation Pack. The hooks are a floor: `mise run check` remains the full gate. `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
 
 ### Task families
@@ -316,6 +318,13 @@ is generated from `AGENTS.md`, never edited by hand.
 | `hooks:run` | runs the commit checks over what is staged, as the commit hook does |
 | `hooks:merge` | runs the merge checks for the current branch against `main`, for example before merging on GitHub |
 | `check:hooks` | tests the hooks dispatcher and the writing rules |
+| `work:board` | where every unit and slice is, across every local and remote branch, from the status records' slice boards. `--all`, `--fetch`, `--measure`, `--commits` (ADR-A151) |
+| `work:here` | who is in this worktree: write your presence with `--role` and `--model`, or list the live sessions |
+| `build:work` | writes INDEX.md's generated register from the status records in the working tree |
+| `build:roadmap` | writes ROADMAP.md's generated regions from every branch |
+| `work:normalise` | rewrites every board into the standard columns and state words, reporting without `--apply` |
+| `work:rename` | builds the slice id crosswalk and sweeps every mention and Validation Pack name onto the grammar, reporting without `--apply` |
+| `check:work-board` | tests the work board, the crosswalk and the normaliser |
 
 Claude Code users elsewhere install the skills with `/plugin marketplace add nebularis/lattice` and
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the

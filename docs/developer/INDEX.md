@@ -81,7 +81,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-02 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
-| work-board | multi-slice unit | WB | building 2026-11-02 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
+| work-board | multi-slice unit | WB | built 2026-11-02 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
 
 ## Work
@@ -353,8 +353,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-4 | the `work` check and the post-merge regeneration | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
-| WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
-| WB-6 | `work:here` | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-6 | `work:here` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-7 | the branches marked or deleted | work-board | planned | WB-4, WB-Q9 | docs/developer/status/work-board.md#position |
 
 <!-- END GENERATED work-board -->
