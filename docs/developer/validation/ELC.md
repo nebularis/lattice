@@ -59,8 +59,8 @@ shapes report each declared in the wrong place. No graph in the repository names
    individuals still have none (README §13).
 5. **The warranty carve-back is typed a profile**, which makes it versioned (`fnd:Versioned`), as every profile
    is. Nothing else in that example changed.
-6. **The reconciliations are against `82fc2b25`**, the commit before ELC. OD6's command against `dab1c790`
-   with OD6's file no longer passes on this branch, since ELC changed the graphs after it. It passed at
+6. **The reconciliations are against `82fc2b25`**, the commit before ELC. OD-6's command against `dab1c790`
+   with OD-6's file no longer passes on this branch, since ELC changed the graphs after it. It passed at
    `a177bda7`.
 
 ## Tests changed, for countersigning

@@ -245,7 +245,7 @@ def test_wb1_12_build_checks_then_writes(repo: wb.Repo, capsys: pytest.CaptureFi
     for slice_id in ("A-1", "A-2", "A-3"):
         number = next(i for i, l in enumerate(lines, 1) if l.startswith(f"| {slice_id} |"))
         assert f"status/alpha.md:{number} |" in region
-    assert "| A-2 | alpha | the join | building 2026-10-30 |" in region
+    assert "| A-2 | the join | alpha | building 2026-10-30 |" in region
 
 
 def test_wb1_13_board_text_shows_what_differs_from_main(repo: wb.Repo) -> None:

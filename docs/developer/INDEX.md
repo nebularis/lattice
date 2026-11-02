@@ -47,7 +47,7 @@ Is it complete? **Almost.** The documentation is complete and every review is cl
 | `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing; follow-ons listed in its [status](status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
 | `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | ✅ Slices 1–5 done (Slice 5 validated 2026-09-25, 774 passed) | Slice 6 close-out, in progress. Gap table in its [status](status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
 | `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
-| P0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
+| PLT-0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
 | `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M3 of M0–M4 done: [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
 | `toolchain-jdk25-python314` (JDK 25 LTS, Python 3.14, Unicode 16.0) | ✅ Complete: [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) | — | — |
 | `identity-minting-shared-core` (one Rust minting engine, WebAssembly-hosted in each runtime) | 🅿️ [Sketch](sketches/identity-minting-shared-core.md), deferred | `persistence-compiler-iri-sync` is now complete (2026-09-25); this sketch can be revisited. M2 and M3 proceed with native libraries meanwhile | none — the thing it was waiting on is done |
@@ -96,18 +96,18 @@ Epic decomposition into phase plans is **no longer blocked**: the required Phase
 | **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](sketches/persistence-compiler-iri-sync.md) |
 | **Plan** | [persistence-compiler-iri-sync.md](plans/persistence-compiler-iri-sync.md) |
 | **Status Record** | [persistence-compiler-iri-sync.md](status/persistence-compiler-iri-sync.md) |
-| **Validation Packs** | [Slice 1](validation/persistence-compiler-iri-sync-slice-1.md), [Slice 2](validation/persistence-compiler-iri-sync-slice-2.md), [Slice 3](validation/persistence-compiler-iri-sync-slice-3.md), [Slice 4](validation/persistence-compiler-iri-sync-slice-4.md), [Slice 5](validation/persistence-compiler-iri-sync-slice-5.md) |
+| **Validation Packs** | [Slice 1](validation/PCI-1.md), [Slice 2](validation/PCI-2.md), [Slice 3](validation/PCI-3.md), [Slice 4](validation/PCI-4.md), [Slice 5](validation/PCI-5.md) |
 | **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
 
 ### Gap summary
 Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:PrivacyProfile`), extensions to six existing ones, and eight new SHACL shapes were added to `ontology/persistence`, none consumed by `tools/persistence`. One finding (G1) is a live correctness issue, not just missing coverage: the compiler's CAS/tombstone templates generate the epoch-guard shape the vocabulary now documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, with no way to configure the safe `dal:DatasetLevelGuard` alternative.
 
 ### Slices
-1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/persistence-compiler-iri-sync-slice-1.md).
-2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/persistence-compiler-iri-sync-slice-2.md).
-3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](validation/persistence-compiler-iri-sync-slice-3.md).
-4. **✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](validation/persistence-compiler-iri-sync-slice-4.md).
-5. **✅ Complete, validated 2026-09-25 (774 passed).** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. One issue found by the run itself, fixed: a mustache-comment quoted its own tag syntax as prose, which this compiler's renderer does not treat as inert. See the [VP](validation/persistence-compiler-iri-sync-slice-5.md).
+1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](validation/PCI-1.md).
+2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](validation/PCI-2.md).
+3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](validation/PCI-3.md).
+4. **✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](validation/PCI-4.md).
+5. **✅ Complete, validated 2026-09-25 (774 passed).** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. One issue found by the run itself, fixed: a mustache-comment quoted its own tag syntax as prose, which this compiler's renderer does not treat as inert. See the [VP](validation/PCI-5.md).
 6. 🚧 Documentation close-out, in progress this session
 
 ## 1b. IRI and RDF Patterns, Post-3866b21 Remediation
@@ -247,8 +247,8 @@ See [rdf-sparql-patterns-phase-plan.md](plans/rdf-sparql-patterns-phase-plan.md)
 ### Optional Phase 0.2–0.4 Integration — ✅ Done (2026-09-22)
 Per [COORDINATION_REORG_HANDOFF.md](COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
 - **Pattern C (CAS)** ↔ `dal:ConcurrencyStrategy`, cross-referenced at P0.5.2 (`conditionalWrite`/`guardSatisfied`) and P0.5.6 (concurrency TCK).
-- **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at P0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
-- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at P0.1.3 through the configurable minting and identity profiles described by ADR-A82.
+- **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at PLT-0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
+- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at PLT-0.1.3 through the configurable minting and identity profiles described by ADR-A82.
 - **Pattern O (dense ordering)** ↔ `dal:OrderingGrain`/`dal:DatasetTierModel`, cross-referenced at P0.4.4 (canonicalisation) and P0.5.7 (`CommitSequence` + ordering TCK).
 - New slice **P0.3.9** (documentation only) produces `ontology/persistence/docs/platform-vocabulary-alignment.md`, proving no namespace/semantic collision between the six `dal:` dimensions and the platform vocabulary P0.3 defines.
 - New guardrail **G11** (§0.4): no `dal:`-governed write path may hand-construct SPARQL, reserved at P0.2.7 and enforced in full once P0.5.2's write surface exists.
@@ -275,7 +275,7 @@ No code was written and no new Phase 0→Phase 2 dependency was introduced — t
 
 ### IRI and Identity Patterns — Proposed (2026-09-23)
 
-The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The `dal:IdentityProfile` vocabulary is specified in `ontology/persistence`, and the compiler resolves it per resource role (`persistence-compiler-iri-sync` Slice 3, complete). The guide and ADR-A82 were revised on 2026-09-23 by `iri-patterns-post-3866b21-remediation` and await ratification (P0.1.3). `iri-policy.md` is now a short historical record.
+The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The `dal:IdentityProfile` vocabulary is specified in `ontology/persistence`, and the compiler resolves it per resource role (`persistence-compiler-iri-sync` Slice 3, complete). The guide and ADR-A82 were revised on 2026-09-23 by `iri-patterns-post-3866b21-remediation` and await ratification (PLT-0.1.3). `iri-policy.md` is now a short historical record.
 
 ---
 
@@ -522,7 +522,7 @@ bounds, one obligation in several provisions).
 
 ### Slices
 
-1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](validation/applied-ontology-readiness-aor-2.md)
+1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](validation/AOR-2.md)
 2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend and its checks) — implemented, [VP](validation/applied-ontology-readiness-aor-10-11.md)
 3. Phase C, substrate extensions: AOR-12 (Foundation derived-artefact contract) and AOR-13 (Executable to PROV-O) — implemented. AOR-14 to AOR-16 (one Quantification change) and AOR-17 — implemented, [VPs](validation/applied-ontology-readiness-aor-14-16.md)
 
@@ -544,7 +544,7 @@ longer exist. Five slices, about 180k tokens.
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/applied-insurance-reference-0.1.md) |
+| **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](review/applied-insurance-reference-review.md), [VP](validation/AIR-0.1.md) |
 | **Unit ID** | `applied-insurance-reference` (epic) |
 | **Sketches** | [insurance-claims-ontology.md](sketches/insurance-claims-ontology.md), [claims-sketch-references.md](sketches/claims-sketch-references.md), [claims-wire-formats.md](sketches/claims-wire-formats.md), [peril-vocabulary.md](sketches/peril-vocabulary.md), [asset-exposure-ontology.md](sketches/asset-exposure-ontology.md), [term-parameters.md](sketches/term-parameters.md), [mork-bridge.md](sketches/mork-bridge.md), [peril-structure-whitepaper.md](sketches/peril-structure-whitepaper.md) |
 | **Plan** | [applied-insurance-reference.md](plans/applied-insurance-reference.md), with phase plans 0 to 7 (7 [proposed](plans/applied-insurance-reference-phase-7.md)), a [claims plan](plans/applied-insurance-reference-claims.md) (2026-10-16, subsuming AIR-6.2 to AIR-6.4), a substrate track, and [lanes and merge order](plans/applied-insurance-reference-lanes.md) |
@@ -589,13 +589,13 @@ The remaining work is mostly ratification rather than code, of the drafted regis
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07, C9a merged, C9b0 to C9b2 merged 2026-10-10, HQ-6a.1 merged 2026-10-12 and HQ-6a.2 2026-10-16 |
+| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07, C9a merged, CCS-9b.0 to CCS-9b.2 merged 2026-10-10, HQ-6a.1 merged 2026-10-12 and HQ-6a.2 2026-10-16 |
 | **Unit ID** | `computable-contract-substrate` |
 | **Sketches** | [computable-contract-substrate.md](sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](sketches/logical-english-alignment.md) (unplanned), [change-materiality.md](sketches/change-materiality.md) (C9-Q3), [consent-and-group-powers.md](sketches/consent-and-group-powers.md) (C9b) |
 | **Plan** | [computable-contract-substrate.md](plans/computable-contract-substrate.md) |
 | **Status Record** | [computable-contract-substrate.md](status/computable-contract-substrate.md) |
 | **ADRs** | A-104, A-105, A-106, A-112, A-113 accepted, with addenda |
-| **Validation Packs** | [C8](validation/computable-contract-substrate-c8.md), [C8b](validation/computable-contract-substrate-c8b.md), [C9a](validation/computable-contract-substrate-c9a.md), [C9b0](validation/computable-contract-substrate-c9b0.md), [C9b1](validation/computable-contract-substrate-c9b1.md), [C9b2](validation/computable-contract-substrate-c9b2.md), [HQ-6a.1](validation/computable-contract-substrate-hq6a1.md) and [HQ-6a.2](validation/computable-contract-substrate-hq6a2.md), accepted 2026-10-12 |
+| **Validation Packs** | [C8](validation/CCS-8.md), [C8b](validation/CCS-8b.md), [C9a](validation/CCS-9a.md), [CCS-9b.0](validation/CCS-9b.0.md), [CCS-9b.1](validation/CCS-9b.1.md), [CCS-9b.2](validation/CCS-9b.2.md), [HQ-6a.1](validation/computable-contract-substrate-hq6a1.md) and [HQ-6a.2](validation/computable-contract-substrate-hq6a2.md), accepted 2026-10-12 |
 
 A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
 relations, and Behaviour extended with occasions and records, tested against a package policy, an
@@ -628,8 +628,8 @@ reading.
 | **Sketches** | [formal-methods.md](sketches/formal-methods.md), [formal-adequacy-and-architecture.md](sketches/formal-adequacy-and-architecture.md), [assurance-records.md](sketches/assurance-records.md), [instrument-assurance.md](sketches/instrument-assurance.md), [reference-evaluator.md](sketches/reference-evaluator.md), [formal-toolchain-workers.md](sketches/formal-toolchain-workers.md). Per-track sketches under `sketches/formal-methods-track-*.md` (B, C, E, H) |
 | **Plan** | [formal-methods.md](plans/formal-methods.md), with [the prover spike](plans/formal-methods-phase-0.md) and per-track plans (`plans/formal-methods-track-*.md`, B, C, E, H). Other tracks rolling-wave |
 | **Status Record** | [formal-methods.md](status/formal-methods.md) |
-| **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](sketches/persistence-aggregate-ownership.md), from the [exploration note](notes/persistence-aggregate-ownership.md), its [spike](../../spikes/persistence-aggregate-ownership/README.md) and the [review](notes/persistence-aggregate-ownership-review.md). Slices HO0 to HO9 in [plan §3.5](plans/formal-methods-track-h.md#35-ho-aggregate-ownership), each with a [Validation Pack](validation/FMH-HO0.md) (`FMH-HO0` to `FMH-HO9`), merged and signed off 2026-10-10. [ADR-A122](../architecture/decisions/ADR-A122-aggregate-ownership.md), Accepted |
-| **Track H, H2 (typed IR)** | briefed 2026-10-10 in [formal-methods-track-h-typed-ir.md](sketches/formal-methods-track-h-typed-ir.md). H2.0 to H2.3 merged and signed off 2026-10-12. On branch `claude/nice-bohr-pmj43u`, every planned H2 slice built by 2026-10-21, each with its Validation Pack: H2.4a to H2.6g ([FMH-H2-6g](validation/FMH-H2-6g.md)), H2.7, H2.8a to H2.8c ([FMH-H2-8c](validation/FMH-H2-8c.md)), H2.9, Mustache retired ([FMH-H2-9](validation/FMH-H2-9.md)), and H2.11a and H2.11b, the Persistence README as a literate specification ([FMH-H2-11a](validation/FMH-H2-11a.md), [FMH-H2-11b](validation/FMH-H2-11b.md)), with W-65 and AIR-66. The persistence tests run on Oxigraph by default, with conformance on every engine before a merge ([FMH-TS-1](validation/FMH-TS-1.md), [FMH-TS-2](validation/FMH-TS-2.md)). Release 0.19.0 prepared for the merge. Live state in the [status record](status/formal-methods-track-h.md) |
+| **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](sketches/persistence-aggregate-ownership.md), from the [exploration note](notes/persistence-aggregate-ownership.md), its [spike](../../spikes/persistence-aggregate-ownership/README.md) and the [review](notes/persistence-aggregate-ownership-review.md). Slices FMH-HO0 to FMH-HO9 in [plan §3.5](plans/formal-methods-track-h.md#35-ho-aggregate-ownership), each with a [Validation Pack](validation/FMH-HO0.md) (`FMH-HO0` to `FMH-HO9`), merged and signed off 2026-10-10. [ADR-A122](../architecture/decisions/ADR-A122-aggregate-ownership.md), Accepted |
+| **Track H, H2 (typed IR)** | briefed 2026-10-10 in [formal-methods-track-h-typed-ir.md](sketches/formal-methods-track-h-typed-ir.md). FMH-2.0 to FMH-2.3 merged and signed off 2026-10-12. On branch `claude/nice-bohr-pmj43u`, every planned H2 slice built by 2026-10-21, each with its Validation Pack: FMH-2.4a to H2.6g ([FMH-H2-6g](validation/FMH-2.6g.md)), FMH-2.7, H2.8a to FMH-2.8c ([FMH-H2-8c](validation/FMH-2.8c.md)), FMH-2.9, Mustache retired ([FMH-H2-9](validation/FMH-2.9.md)), and FMH-2.11a and FMH-2.11b, the Persistence README as a literate specification ([FMH-H2-11a](validation/FMH-2.11a.md), [FMH-H2-11b](validation/FMH-2.11b.md)), with W-65 and AIR-66. The persistence tests run on Oxigraph by default, with conformance on every engine before a merge ([FMH-TS-1](validation/FMH-TS-1.md), [FMH-TS-2](validation/FMH-TS-2.md)). Release 0.19.0 prepared for the merge. Live state in the [status record](status/formal-methods-track-h.md) |
 | **A linear replace** | briefed 2026-10-31 in [persistence-linear-named-graph-replace.md](sketches/persistence-linear-named-graph-replace.md), from the studio-publication unit's PB-Q13: the generated named-graph and composite replace are quadratic in an aggregate's size, and which linear form is safe on which store is to be investigated. TD-42, TD-136 |
 | **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Accepted), the typed operation IR (H, A-123, Accepted 2026-10-10, with a dated addendum to A-79), the caller library (H, A-132, Accepted), with addenda to A-79, A-123, A-125 and A-126 |
 
@@ -653,12 +653,12 @@ LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skil
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 WA0 to WA11 done. Awaiting the maintainer's manual Word checklist, see the status record |
+| **Status** | 🟡 WA-0 to WA-11 done. Awaiting the maintainer's manual Word checklist, see the status record |
 | **Unit ID** | `word-authoring-poc` |
 | **Sketch** | [word-authoring-poc.md](sketches/word-authoring-poc.md) |
 | **Plan** | [word-authoring-poc.md](plans/word-authoring-poc.md) |
 | **Status Record** | [word-authoring-poc.md](status/word-authoring-poc.md) |
-| **Validation Packs** | [WA1](validation/word-authoring-poc-wa1.md), [WA2](validation/word-authoring-poc-wa2.md), [WA3](validation/word-authoring-poc-wa3.md), [WA4](validation/word-authoring-poc-wa4.md), [WA5](validation/word-authoring-poc-wa5.md), [WA6](validation/word-authoring-poc-wa6.md), [WA7](validation/word-authoring-poc-wa7.md), [WA8](validation/word-authoring-poc-wa8.md), [WA9](validation/word-authoring-poc-wa9.md), [WA9a](validation/word-authoring-poc-wa9a.md), [WA10](validation/word-authoring-poc-wa10.md), [WA11](validation/word-authoring-poc-wa11.md) |
+| **Validation Packs** | [WA-1](validation/WA-1.md), [WA-2](validation/WA-2.md), [WA-3](validation/WA-3.md), [WA-4](validation/WA-4.md), [WA-5](validation/WA-5.md), [WA-6](validation/WA-6.md), [WA-7](validation/WA-7.md), [WA-8](validation/WA-8.md), [WA-9](validation/WA-9.md), [WA-9a](validation/WA-9a.md), [WA-10](validation/WA-10.md), [WA-11](validation/WA-11.md) |
 | **ADRs** | A-118, Proposed |
 | **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the maintainer's decisions |
 
@@ -717,20 +717,20 @@ that code and documents agree with it. Shares work with `python-test-melting` (s
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD0 accepted 2026-10-17. OD1, RC1 and RC2 done. OD2 to OD6, ELC, DOC1 and RC3 committed locally (2026-10-18 and 19), not pushed. Eligibility is the first README in the layout |
+| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD-0 accepted 2026-10-17. OD-1, OD-RC1 and OD-RC2 done. OD-2 to OD-6, ELC, OD-DOC1 and OD-RC3 committed locally (2026-10-18 and 19), not pushed. Eligibility is the first README in the layout |
 | **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
 | **Sketches** | [improved-ontology-documentation.md](sketches/improved-ontology-documentation.md), [repository-catalogue.md](sketches/repository-catalogue.md) |
 | **Plan** | [improved-ontology-documentation.md](plans/improved-ontology-documentation.md) |
 | **Status Record** | [improved-ontology-documentation.md](status/improved-ontology-documentation.md) |
 | **ADRs** | A-121, A-126 and A-127, accepted 2026-10-17 |
-| **Validation Packs** | [OD0](validation/OD0.md), [OD1](validation/OD1.md), [RC1](validation/RC1.md), [RC2](validation/RC2.md), [OD2](validation/OD2.md), [OD3](validation/OD3.md), [OD4](validation/OD4.md), [OD5](validation/OD5.md), [OD6](validation/OD6.md), [ELC](validation/ELC.md), [DOC1](validation/DOC1.md), [RC3](validation/RC3.md) |
+| **Validation Packs** | [OD-0](validation/OD-0.md), [OD-1](validation/OD-1.md), [OD-RC1](validation/OD-RC1.md), [OD-RC2](validation/OD-RC2.md), [OD-2](validation/OD-2.md), [OD-3](validation/OD-3.md), [OD-4](validation/OD-4.md), [OD-5](validation/OD-5.md), [OD-6](validation/OD-6.md), [ELC](validation/ELC.md), [OD-DOC1](validation/OD-DOC1.md), [OD-RC3](validation/OD-RC3.md) |
 
 One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
 repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
 built on published ADRs. Piloted on Eligibility, then Vocabulary.
 
 **Unplanned backlog** (the plan's own section): grammar support for a union of datatypes, for the property
-characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` was added in OD6).
+characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` was added in OD-6).
 Multilingual support is a pending design decision, PDD-10.
 
 **Sketch raised by this unit:** [ontology-import-pinning.md](sketches/ontology-import-pinning.md), how imports pin
@@ -747,7 +747,7 @@ ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
 | **Sketches** | [evaluation-context.md](sketches/evaluation-context.md) §5, [contract-amounts.md](sketches/contract-amounts.md), [persistence-history-and-versioning.md](sketches/persistence-history-and-versioning.md) §6.1, [ledger-folds-and-stores.md](sketches/ledger-folds-and-stores.md) (exactness, folds and where they run, LF-Q1 to LF-Q8 open), [ledger-history-and-runtime.md](sketches/ledger-history-and-runtime.md) (2026-10-24, defensible history against the runtime, LF-Q17 to LF-Q22 open), [multi-store-runtime.md](sketches/multi-store-runtime.md) (2026-10-24, boundaries, archiving and projection, MS-Q1 answered by measurement, MS-Q2 to MS-Q9 open) |
 | **Plan** | [ledger.md](plans/ledger.md) |
 | **Status Record** | [ledger.md](status/ledger.md) |
-| **Validation Packs** | [LG-0](validation/ledger-lg-0.md), [LG-1](validation/ledger-lg-1.md) |
+| **Validation Packs** | [LG-0](validation/LG-0.md), [LG-1](validation/LG-1.md) |
 | **ADRs** | [A-131](../architecture/decisions/ADR-A131-ledger-layer.md), Accepted |
 
 A substrate layer above Quantification for amounts consumed and restored over time: account trees,
@@ -820,7 +820,7 @@ and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX
 | **Plan** | [multi-store-conformance.md](plans/multi-store-conformance.md) |
 | **Status Record** | [multi-store-conformance.md](status/multi-store-conformance.md) |
 | **ADRs** | builds on A-83, A-124, A-125 and its 2026-10-21 addendum, A-128. A-125 addendum accepted 2026-10-27 |
-| **Validation Packs** | [MSC-1](validation/multi-store-conformance-msc1.md), [MSC-2](validation/multi-store-conformance-msc2.md), [MSC-3](validation/multi-store-conformance-msc3.md), [MSC-4](validation/multi-store-conformance-msc4.md), [MSC-5](validation/multi-store-conformance-msc5.md) |
+| **Validation Packs** | [MSC-1](validation/MSC-1.md), [MSC-2](validation/MSC-2.md), [MSC-3](validation/MSC-3.md), [MSC-4](validation/MSC-4.md), [MSC-5](validation/MSC-5.md) |
 
 Apache Jena joins rdflib and Oxigraph in every conformance run, engine probes get a home of their own, and cost assertions move out of `check` into benchmarks.
 
@@ -1050,20 +1050,20 @@ A slice is marked in its home unit's status record before the first edit, one to
 
 ## Validation Packs (VPACKS)
 - [persistence-substrate-and-compiler.md](validation/persistence-substrate-and-compiler.md) — RDF patterns Slice 2
-- [persistence-compiler-iri-sync-slice-1.md](validation/persistence-compiler-iri-sync-slice-1.md) — compiler sync Slice 1
-- [persistence-compiler-iri-sync-slice-2.md](validation/persistence-compiler-iri-sync-slice-2.md) — compiler sync Slice 2
-- [persistence-compiler-iri-sync-slice-3.md](validation/persistence-compiler-iri-sync-slice-3.md) — compiler sync Slice 3
-- [persistence-compiler-iri-sync-slice-4.md](validation/persistence-compiler-iri-sync-slice-4.md) — compiler sync Slice 4
-- [persistence-compiler-iri-sync-slice-5.md](validation/persistence-compiler-iri-sync-slice-5.md) — compiler sync Slice 5
-- [applied-ontology-readiness-aor-2.md](validation/applied-ontology-readiness-aor-2.md) to [aor-9](validation/applied-ontology-readiness-aor-9.md), [aor-3b](validation/applied-ontology-readiness-aor-3b.md), [aor-12](validation/applied-ontology-readiness-aor-12.md), [aor-13](validation/applied-ontology-readiness-aor-13.md) — applied ontology readiness
-- [OD0.md](validation/OD0.md) — improved ontology documentation, OD0 (the three ADRs, the agent rule, the conventions document)
-- [OD1.md](validation/OD1.md) — improved ontology documentation, OD1 (the fence-aware scanner, markers and the layout check)
-- [RC1.md](validation/RC1.md) — improved ontology documentation, RC1 (the repository catalogue and its reader)
-- [RC2.md](validation/RC2.md) — improved ontology documentation, RC2 (the tools read the repository catalogue)
-- [OD2.md](validation/OD2.md) — improved ontology documentation, OD2 (sections 1 to 3 of a README in the layout)
-- [OD3.md](validation/OD3.md) — improved ontology documentation, OD3 (section 6 to OWL)
-- [OD4.md](validation/OD4.md) — improved ontology documentation, OD4 (section 6 to SHACL)
-- [OD5.md](validation/OD5.md) — improved ontology documentation, OD5 (the generated regions)
+- [persistence-compiler-iri-sync-slice-1.md](validation/PCI-1.md) — compiler sync Slice 1
+- [persistence-compiler-iri-sync-slice-2.md](validation/PCI-2.md) — compiler sync Slice 2
+- [persistence-compiler-iri-sync-slice-3.md](validation/PCI-3.md) — compiler sync Slice 3
+- [persistence-compiler-iri-sync-slice-4.md](validation/PCI-4.md) — compiler sync Slice 4
+- [persistence-compiler-iri-sync-slice-5.md](validation/PCI-5.md) — compiler sync Slice 5
+- [applied-ontology-readiness-aor-2.md](validation/AOR-2.md) to [aor-9](validation/AOR-9.md), [aor-3b](validation/AOR-3b.md), [aor-12](validation/AOR-12.md), [aor-13](validation/AOR-13.md) — applied ontology readiness
+- [OD0.md](validation/OD-0.md) — improved ontology documentation, OD-0 (the three ADRs, the agent rule, the conventions document)
+- [OD1.md](validation/OD-1.md) — improved ontology documentation, OD-1 (the fence-aware scanner, markers and the layout check)
+- [RC1.md](validation/OD-RC1.md) — improved ontology documentation, OD-RC1 (the repository catalogue and its reader)
+- [RC2.md](validation/OD-RC2.md) — improved ontology documentation, OD-RC2 (the tools read the repository catalogue)
+- [OD2.md](validation/OD-2.md) — improved ontology documentation, OD-2 (sections 1 to 3 of a README in the layout)
+- [OD3.md](validation/OD-3.md) — improved ontology documentation, OD-3 (section 6 to OWL)
+- [OD4.md](validation/OD-4.md) — improved ontology documentation, OD-4 (section 6 to SHACL)
+- [OD5.md](validation/OD-5.md) — improved ontology documentation, OD-5 (the generated regions)
 - More to be created as each slice/phase completes
 
 ## Test Taxonomy (L0–L8)
@@ -1122,312 +1122,341 @@ Every unit with a status record, its state from the record's Status line, and it
 
 | ID | Kind | Prefix | State | Next | Documents |
 |---|---|---|---|---|---|
-| DESIGN_SKETCHES_INDEX | unit |  | ? |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
-| applied-insurance-reference | epic |  | ? |  | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md) |
-| applied-ontology-readiness | unit |  | ? |  | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md) |
-| computable-contract-substrate | multi-slice unit |  | ? | C16c | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md) |
-| config-studio | unit |  | ? |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
-| design-sketches-validation-summary | unit |  | ? |  | [status](status/design-sketches-validation-summary.md) |
-| documentation-link-repair | unit |  | ? |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
-| eligibility-compiler | unit |  | ? |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
-| formal-methods-track-b | phase |  | ? |  | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
-| formal-methods-track-c | phase |  | ? |  | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
-| formal-methods-track-e | phase |  | ? |  | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
-| formal-methods-track-h | phase |  | ? | H2.1 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md) |
-| formal-methods | epic |  | ? |  | [plan](plans/formal-methods.md), [status](status/formal-methods.md) |
-| git-hooks | unit |  | ? | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
-| governance-surfaces | unit |  | ? |  | [status](status/governance-surfaces.md) |
-| identity-minting | unit |  | ? |  | [plan](plans/identity-minting.md), [status](status/identity-minting.md) |
-| implementation-handover-historical | unit |  | ? |  | [status](status/implementation-handover-historical.md) |
-| improved-ontology-documentation | unit |  | ? | OD2 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md) |
-| insurml-alignment | epic |  | ? |  | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
-| iri-patterns-post-3866b21-remediation | unit |  | ? |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
-| knowledge-index | unit |  | ? |  | [status](status/knowledge-index.md) |
-| ledger | unit |  | ? |  | [plan](plans/ledger.md), [status](status/ledger.md) |
-| llm-training-mtp | unit |  | ? |  | [status](status/llm-training-mtp.md) |
-| mork-package-split | unit |  | ? |  | [status](status/mork-package-split.md) |
-| mork-transforms | multi-slice unit |  | ? |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
-| mtp-execution | unit |  | ? |  | [status](status/mtp-execution.md) |
-| multi-store-conformance | unit |  | ? | MSC-1 | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md) |
-| normative-rule-substrate | multi-slice unit |  | ? |  | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
-| ontology-remediation | phase |  | ? | OR-1 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
-| ontology-root-relocation | unit |  | ? |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
-| ontology-semantic-versioning | unit |  | ? |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
-| persistence-compiler-iri-sync | unit |  | ? |  | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md) |
-| persistence-delta-replace | multi-slice unit |  | ? |  | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md) |
-| phase-0-1-handoff | unit |  | ? |  | [status](status/phase-0-1-handoff.md) |
-| phase-0-status | unit |  | ? |  | [status](status/phase-0-status.md) |
-| phase-1-status | unit |  | ? |  | [status](status/phase-1-status.md) |
-| phase-2-handoff | unit |  | ? |  | [status](status/phase-2-handoff.md) |
-| phase-2-status | unit |  | ? |  | [status](status/phase-2-status.md) |
-| phase-3-handoff | unit |  | ? |  | [status](status/phase-3-handoff.md) |
-| phase-3-status | unit |  | ? |  | [status](status/phase-3-status.md) |
-| phase-4-handoff | unit |  | ? |  | [status](status/phase-4-handoff.md) |
-| phase-4-status | unit |  | ? |  | [status](status/phase-4-status.md) |
-| phase-5-handoff | unit |  | ? |  | [status](status/phase-5-handoff.md) |
-| phase-6-handoff | unit |  | ? |  | [status](status/phase-6-handoff.md) |
-| platform-continuation | unit |  | ? |  | [status](status/platform-continuation.md), [review](review/platform-continuation-review.md) |
-| projection-maintenance | multi-slice unit |  | ? |  | [plan](plans/projection-maintenance.md), [status](status/projection-maintenance.md) |
-| python-test-melting | unit |  | ? |  | [plan](plans/python-test-melting.md), [status](status/python-test-melting.md) |
-| rdf-sparql-patterns-remediation | plan |  | ? |  | [plan](plans/rdf-sparql-patterns-remediation.md), [status](status/rdf-sparql-patterns-remediation.md) |
-| rdf-sparql-patterns-status | unit |  | ? |  | [status](status/rdf-sparql-patterns-status.md) |
-| repository-topology-a77 | unit |  | ? |  | [status](status/repository-topology-a77.md), [review](review/repository-topology-a77-review.md) |
-| spc-package-split | unit |  | ? |  | [status](status/spc-package-split.md) |
-| studio-publication | multi-slice unit in four phases |  | ? |  | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
-| studio-quality | multi-slice unit |  | ? |  | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| surface-mork-unified-projection | unit |  | ? |  | [status](status/surface-mork-unified-projection.md) |
-| surface-outstanding-items | unit |  | ? |  | [status](status/surface-outstanding-items.md) |
-| temporal-binding-consumer-hardening | unit |  | ? |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
-| toolchain-jdk25-python314 | unit |  | ? |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
-| validation-pause-handover | unit |  | ? |  | [status](status/validation-pause-handover.md) |
-| validation-status | unit |  | ? |  | [status](status/validation-status.md) |
-| vocabulary-temporal-binding | unit |  | ? |  | [status](status/vocabulary-temporal-binding.md) |
-| word-authoring-poc | multi-slice unit |  | ? |  | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md) |
+| DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
+| applied-insurance-reference | epic | AIR | planned | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
+| applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
+| computable-contract-substrate | multi-slice unit |  | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md) |
+| config-studio | unit |  | built 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
+| design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
+| documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
+| eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
+| formal-methods-track-b | phase | FMB | built 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
+| formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
+| formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
+| formal-methods-track-h | phase | FMH | verified 2026-10-09 | FMH-1.1 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 44 Validation Packs |
+| formal-methods | epic | FM | built 2026-10-06 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
+| git-hooks | unit | GH | built 2026-10-24 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
+| governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
+| identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
+| implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
+| improved-ontology-documentation | unit | OD | verified 2026-10-17 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 16 Validation Packs |
+| insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
+| iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
+| knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
+| ledger | unit | LG | building 2026-10-29 |  | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
+| llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
+| mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
+| mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
+| mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
+| multi-store-conformance | unit | MSC | built 2026-10-27 | MSC-1 | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
+| normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
+| ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
+| ontology-root-relocation | unit |  | merged 2026-09-20 |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
+| ontology-semantic-versioning | unit |  | built 2026-09-25 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
+| persistence-compiler-iri-sync | unit | PCI | built 2026-09-23 | PCI-1 | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md), 5 Validation Packs |
+| persistence-delta-replace | multi-slice unit |  | planned |  | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md) |
+| phase-0-1-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-0-1-handoff.md) |
+| phase-0-status | unit |  | built 2026-09-23 | PLT-0.1.1 | [status](status/phase-0-status.md) |
+| phase-1-status | unit |  | blocked 2026-09-22 |  | [status](status/phase-1-status.md) |
+| phase-2-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-2-handoff.md) |
+| phase-2-status | unit |  | planned |  | [status](status/phase-2-status.md) |
+| phase-3-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-3-handoff.md) |
+| phase-3-status | unit |  | planned |  | [status](status/phase-3-status.md) |
+| phase-4-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-4-handoff.md) |
+| phase-4-status | unit |  | planned |  | [status](status/phase-4-status.md) |
+| phase-5-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-5-handoff.md) |
+| phase-6-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-6-handoff.md) |
+| platform-continuation | unit |  | merged 2026-09-20 |  | [status](status/platform-continuation.md), [review](review/platform-continuation-review.md) |
+| projection-maintenance | multi-slice unit |  | planned |  | [plan](plans/projection-maintenance.md), [status](status/projection-maintenance.md) |
+| python-test-melting | unit |  | built 2026-10-27 |  | [plan](plans/python-test-melting.md), [status](status/python-test-melting.md) |
+| rdf-sparql-patterns-remediation | plan |  | merged 2026-09-25 |  | [plan](plans/rdf-sparql-patterns-remediation.md), [status](status/rdf-sparql-patterns-remediation.md) |
+| rdf-sparql-patterns-status | unit |  | built 2026-09-22 | RSP-1 | [status](status/rdf-sparql-patterns-status.md) |
+| repository-topology-a77 | unit |  | merged 2026-09-20 |  | [status](status/repository-topology-a77.md), [review](review/repository-topology-a77-review.md) |
+| spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
+| studio-publication | multi-slice unit in four phases |  | built 2026-10-31 |  | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
+| studio-quality | multi-slice unit |  | building 2026-10-31 |  | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
+| surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
+| surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
+| temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
+| toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
+| validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
+| validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
+| vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
+| word-authoring-poc | multi-slice unit | WA | built 2026-10-02 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | building 2026-11-02 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
-| xslt-sidecar | multi-slice unit |  | ? |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
+| xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
 
 ## Work
 
 Every slice on a board, keyed by its id, with the record and line it was read from.
 
-| ID | Unit | Deliverable | State | Blocked on | Record |
+| ID | Claim | Unit | State | Blocked on | Pointer |
 |---|---|---|---|---|---|
-| AIR-3.1 | applied-insurance-reference |  | merged |  | status/applied-insurance-reference.md:44 |
-| AIR-3.2 | applied-insurance-reference |  | merged |  | status/applied-insurance-reference.md:45 |
-| AIR-3.3 | applied-insurance-reference |  | ? waiting |  | status/applied-insurance-reference.md:46 |
-| substrate | applied-insurance-reference |  | ? waiting |  | status/applied-insurance-reference.md:47 |
-| AOR-1 | applied-ontology-readiness |  | ? Done (`6b2a577`) |  | status/applied-ontology-readiness.md:36 |
-| AOR-2 | applied-ontology-readiness |  | ? Committed (`6e36586`), commands passed |  | status/applied-ontology-readiness.md:37 |
-| AOR-5 | applied-ontology-readiness |  | ? Committed (`6e9acb1`), commands passed |  | status/applied-ontology-readiness.md:38 |
-| AOR-3b | applied-ontology-readiness |  | ? Committed (`54caeb6`) |  | status/applied-ontology-readiness.md:39 |
-| AOR-12 | applied-ontology-readiness |  | ? Committed (`54caeb6`) |  | status/applied-ontology-readiness.md:40 |
-| AOR-13 | applied-ontology-readiness |  | ? Committed (`54caeb6`) |  | status/applied-ontology-readiness.md:41 |
-| AOR-10 | applied-ontology-readiness |  | ? Implemented, self-validated |  | status/applied-ontology-readiness.md:42 |
-| AOR-14 | applied-ontology-readiness |  | ? Implemented, self-validated |  | status/applied-ontology-readiness.md:43 |
-| AOR-17 | applied-ontology-readiness |  | ? Implemented, self-validated |  | status/applied-ontology-readiness.md:44 |
-| C0 | computable-contract-substrate | A-112, A-113, A-01 and ADR-A-C2 addenda | ? accepted |  | status/computable-contract-substrate.md:32 |
-| C1 | computable-contract-substrate | A-104 | ? accepted |  | status/computable-contract-substrate.md:33 |
-| C2 | computable-contract-substrate | A-106 | ? accepted |  | status/computable-contract-substrate.md:34 |
-| C3 | computable-contract-substrate | Wording spec, vocab and shapes | merged |  | status/computable-contract-substrate.md:35 |
-| C4 | computable-contract-substrate | Wording tables, assembly, variable values | merged |  | status/computable-contract-substrate.md:36 |
-| C5 | computable-contract-substrate | Wording amendments, law shapes, how-to | merged |  | status/computable-contract-substrate.md:37 |
-| C10 | computable-contract-substrate | Behaviour split and layer flip | merged |  | status/computable-contract-substrate.md:38 |
-| C10a | computable-contract-substrate | import guard | merged |  | status/computable-contract-substrate.md:39 |
-| C11 | computable-contract-substrate | runtime records, occasions, initial states | merged |  | status/computable-contract-substrate.md:40 |
-| C11a | computable-contract-substrate | nested states, history, concurrent regimes | merged |  | status/computable-contract-substrate.md:41 |
-| F1 | computable-contract-substrate | external and natural keys (ADR-A114) | merged |  | status/computable-contract-substrate.md:42 |
-| C6 | computable-contract-substrate | instrument, terms, the five relations, parties, content | merged |  | status/computable-contract-substrate.md:43 |
-| C7b | computable-contract-substrate | terms in time | merged |  | status/computable-contract-substrate.md:44 |
-| C7c | computable-contract-substrate | what terms are, and who they bind (split from C7b) | merged | done | status/computable-contract-substrate.md:45 |
-| C8 | computable-contract-substrate | values in stated meaning, Wording references by identity | merged |  | status/computable-contract-substrate.md:46 |
-| C9a | computable-contract-substrate | amendments, assents and taking effect | merged |  | status/computable-contract-substrate.md:47 |
-| C9b0 | computable-contract-substrate | Eligibility sources, legal acts, additivity | merged |  | status/computable-contract-substrate.md:48 |
-| HQ-6a.1 | computable-contract-substrate | untimed closures (ADR-A105): the model and reference semantics, then the compilers | merged |  | status/computable-contract-substrate.md:49 |
-| C9b3 | computable-contract-substrate | set comparisons, qualifying rules, materiality, incorporation, template library | ? C9b3 briefed 2026-10-27, delivered on `c | C9b4 on C9b3 | status/computable-contract-substrate.md:50 |
-| C16c | computable-contract-substrate | remove Party's shares | planned | C9b4 | status/computable-contract-substrate.md:51 |
-| C7a | computable-contract-substrate | regimes and gating, split from C7 | merged |  | status/computable-contract-substrate.md:52 |
-| C12 | computable-contract-substrate | runtime evaluator, relation plans | ? waiting | C9, C11, C11a, AIR-3.3, NRS N1 | status/computable-contract-substrate.md:53 |
-| C13a | computable-contract-substrate | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from C5) | ? waiting | C5, NRS N1 | status/computable-contract-substrate.md:54 |
-| C14 | computable-contract-substrate | examples, docs, handoff | ? waiting | C8a, C9, C12 | status/computable-contract-substrate.md:55 |
-| B1 | formal-methods-track-b |  | ? **done** | nothing | status/formal-methods-track-b.md:97 |
-| B2 | formal-methods-track-b |  | ? **done** | nothing | status/formal-methods-track-b.md:98 |
-| B2.1 | formal-methods-track-b |  | ? **done**, 2026-10-09 | nothing | status/formal-methods-track-b.md:99 |
-| B2.2 | formal-methods-track-b |  | ? **done**, 2026-10-09, defect confirmed a | nothing | status/formal-methods-track-b.md:100 |
-| B3 | formal-methods-track-b |  | ? **done** | nothing | status/formal-methods-track-b.md:101 |
-| B4 | formal-methods-track-b |  | ? not started, outline only | CCS's C12, not yet briefable | status/formal-methods-track-b.md:102 |
-| B5 | formal-methods-track-b |  | ? attempted 2026-10-09, blocked (`mutmut`' | the mirror gap, or a hand-seeded fallback | status/formal-methods-track-b.md:103 |
-| C1 | formal-methods-track-c |  | ? **done** | nothing | status/formal-methods-track-c.md:62 |
-| C2 | formal-methods-track-c |  | ? **done**, results recorded | nothing — the overlap-rule *decision* is the maintainer's, not a blocker on this slice's own completion | status/formal-methods-track-c.md:63 |
-| C2.1 | formal-methods-track-c |  | ? **done**, 2026-10-08 | nothing | status/formal-methods-track-c.md:64 |
-| C2.2 | formal-methods-track-c |  | ? not started, queued 2026-10-08 | nothing | status/formal-methods-track-c.md:65 |
-| C2.3 | formal-methods-track-c |  | ? not started, queued 2026-10-08, recommen | nothing | status/formal-methods-track-c.md:66 |
-| C3 | formal-methods-track-c |  | ? not started, outline only | C2 (done) | status/formal-methods-track-c.md:67 |
-| E1.0 | formal-methods-track-e |  | ? **done** | nothing | status/formal-methods-track-e.md:96 |
-| E1.1 | formal-methods-track-e |  | ? **done**, folded into E1.0's pass | nothing | status/formal-methods-track-e.md:97 |
-| E1.2 | formal-methods-track-e |  | ? **retired from this track's E1** — its r | track B's B4, which waits on CCS's C12 | status/formal-methods-track-e.md:98 |
-| E1.3 | formal-methods-track-e |  | ? not started | track C's C2 is **done**, but the overlap-rule decision it surfaced, and the Vocabulary ADR IMA-D4a names, are not yet made/drafted (track C's own status) | status/formal-methods-track-e.md:99 |
-| E1.4 | formal-methods-track-e |  | ? **done**, 2026-10-09 | nothing | status/formal-methods-track-e.md:100 |
-| E2 | formal-methods-track-e |  | ? not started, outline only | E1 | status/formal-methods-track-e.md:101 |
-| H1.1 | formal-methods-track-h |  | ? **signed off.** Validation Pack |  | status/formal-methods-track-h.md:100 |
-| H1.2a | formal-methods-track-h |  | ? **signed off.** Validation Pack |  | status/formal-methods-track-h.md:101 |
-| H1.2b | formal-methods-track-h |  | ? **signed off.** Validation Pack |  | status/formal-methods-track-h.md:102 |
-| H1.2c | formal-methods-track-h |  | ? **signed off.** Validation Pack |  | status/formal-methods-track-h.md:103 |
-| H1.2d | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:104 |
-| H1.3 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:105 |
-| H1.4a | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:106 |
-| H1.4b | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:107 |
-| H1.4c | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:108 |
-| H1.5 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:109 |
-| HO0 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:110 |
-| HO1 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:111 |
-| HO2 | formal-methods-track-h |  | ? **done** 2026-10-10. ADR-A122, **accepte |  | status/formal-methods-track-h.md:112 |
-| HO3 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:113 |
-| HO4 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:114 |
-| HO5 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:115 |
-| HO6 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:116 |
-| HO7 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:117 |
-| HO8 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:118 |
-| HO9 | formal-methods-track-h |  | ? **signed off** 2026-10-10, merged. Valid |  | status/formal-methods-track-h.md:119 |
-| H2.0 | formal-methods-track-h |  | ? **done** 2026-10-10. Validation Pack. A1 | merged and signed off 2026-10-12 | status/formal-methods-track-h.md:120 |
-| H2.1 | formal-methods-track-h |  | built | merged and signed off 2026-10-12 | status/formal-methods-track-h.md:121 |
-| H2.2 | formal-methods-track-h |  | built | merged and signed off 2026-10-12 | status/formal-methods-track-h.md:122 |
-| H2 | formal-methods-track-h |  | briefed |  | status/formal-methods-track-h.md:123 |
-| H2.3 | formal-methods-track-h |  | built | merged and signed off 2026-10-12 | status/formal-methods-track-h.md:124 |
-| H2.4a | formal-methods-track-h |  | built | the maintainer's merge | status/formal-methods-track-h.md:125 |
-| H2.4b | formal-methods-track-h |  | built | the maintainer's merge | status/formal-methods-track-h.md:126 |
-| H2.5 | formal-methods-track-h |  | built | the maintainer's merge | status/formal-methods-track-h.md:127 |
-| H2.6 | formal-methods-track-h |  | built 2026-10-13 | the maintainer's merge. H2.7 waits for RQ4 to RQ6 | status/formal-methods-track-h.md:128 |
-| H2.6b | formal-methods-track-h |  | ? **event half built 2026-10-14, approved  | the merge | status/formal-methods-track-h.md:129 |
-| H2.6c | formal-methods-track-h |  | built 2026-10-20 | the review tranche below | status/formal-methods-track-h.md:130 |
-| H2.6d | formal-methods-track-h |  | planned 2026-10-20 | H2.6c's review | status/formal-methods-track-h.md:131 |
-| H2.8c | formal-methods-track-h |  | ? **signed off 2026-10-20**, with decision | the merge | status/formal-methods-track-h.md:132 |
-| H2.9 | formal-methods-track-h |  | built 2026-10-21 | the review | status/formal-methods-track-h.md:133 |
-| H2.11a | formal-methods-track-h |  | built 2026-10-21 | the review | status/formal-methods-track-h.md:134 |
-| H2.11b | formal-methods-track-h |  | built 2026-10-21 | the review, and D-59's split | status/formal-methods-track-h.md:135 |
-| H2.7 | formal-methods-track-h |  | planned | H2.7-Q1 to Q4, and H2.6b's merge | status/formal-methods-track-h.md:136 |
-| H2.8 | formal-methods-track-h |  | planned | H2.8-Q1 to Q3, and H2.7's merge | status/formal-methods-track-h.md:137 |
-| H3 | formal-methods-track-h |  | ? not started, outlined in the plan | H2 preferred first (smaller, more self-contained), not a hard blocker | status/formal-methods-track-h.md:138 |
-| H4 | formal-methods-track-h |  | ? not started, outline only | H3 | status/formal-methods-track-h.md:139 |
-| H5 | formal-methods-track-h |  | ? not started, outline only | H2 (read/write sets from the IR). ADR-A-FM4 is accepted | status/formal-methods-track-h.md:140 |
-| H6 | formal-methods-track-h |  | ? not started, outline only | H1, H5 for `Outcomes.thy` | status/formal-methods-track-h.md:141 |
-| H7 | formal-methods-track-h |  | ? not started, outline only | H5, H6 | status/formal-methods-track-h.md:142 |
-| H8 | formal-methods-track-h |  | ? not started, outline only | H7 | status/formal-methods-track-h.md:143 |
-| H9 | formal-methods-track-h |  | ? not started, outline only | H3, H4 | status/formal-methods-track-h.md:144 |
-| H10 | formal-methods-track-h |  | ? not started, outline only | H9 | status/formal-methods-track-h.md:145 |
-| D0 | formal-methods |  | ? done (commit `efa2469`): image and nativ |  | status/formal-methods.md:97 |
-| D1 | formal-methods |  | ? done (commit `bb86f17`): written semanti |  | status/formal-methods.md:98 |
-| D2 | formal-methods |  | ? done (commits `f4a6db4`, `17f05d9`, `57f |  | status/formal-methods.md:99 |
-| D3 | formal-methods |  | ? done (commits `c7b399a`, `2a115b1`, `5dd |  | status/formal-methods.md:100 |
-| D4 | formal-methods |  | ? done: formal-prover-experiment.md, M0-M8 |  | status/formal-methods.md:101 |
-| PF1/PF4 | formal-methods |  | ? done (commit `c4075a6`), found by the ma |  | status/formal-methods.md:102 |
-| GH-0 | git-hooks |  | built |  | status/git-hooks.md:17 |
-| GH-1 | git-hooks |  | built |  | status/git-hooks.md:18 |
-| GH-2 | git-hooks |  | built |  | status/git-hooks.md:19 |
-| GH-3 | git-hooks |  | built |  | status/git-hooks.md:20 |
-| GH-4 | git-hooks |  | built |  | status/git-hooks.md:21 |
-| M0 | identity-minting | ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton | ? ✅ Complete — see VP |  | status/identity-minting.md:16 |
-| M1 | identity-minting | Vocabulary, compiler recipe emission, `dal:claimsConstraint` checks, `export-recipes` | ? ✅ Complete, 629/629 `tools/persistence`  |  | status/identity-minting.md:17 |
-| M2 | identity-minting | Pinned Unicode 16.0 tables, Python library, vector generation | ? ✅ Complete, 51/51 library tests, 7 gener |  | status/identity-minting.md:18 |
-| M3 | identity-minting | Java library, vector coverage of every recipe feature | ? ✅ Complete, 43/43 Java tests, 66/66 Pyth |  | status/identity-minting.md:19 |
-| M4 | identity-minting | Specification completion, READMEs, human walk-through | ? ⏳ Not started |  | status/identity-minting.md:20 |
-| OD0 | improved-ontology-documentation |  | ? accepted 2026-10-17, committed, Validati |  | status/improved-ontology-documentation.md:35 |
-| RC1 | improved-ontology-documentation |  | ? committed 2026-10-17, tests pass, choice |  | status/improved-ontology-documentation.md:36 |
-| RC2 | improved-ontology-documentation |  | ? passed and committed 2026-10-18, Validat |  | status/improved-ontology-documentation.md:37 |
-| RC3 | improved-ontology-documentation |  | ? approved 2026-10-19 after the `reaches`  |  | status/improved-ontology-documentation.md:38 |
-| OD1 | improved-ontology-documentation |  | ? passed 2026-10-17, choices agreed, Valid | the maintainer's merge | status/improved-ontology-documentation.md:39 |
-| OD2 | improved-ontology-documentation |  | built |  | status/improved-ontology-documentation.md:40 |
-| OD3 | improved-ontology-documentation |  | built |  | status/improved-ontology-documentation.md:41 |
-| OD4 | improved-ontology-documentation |  | built | the maintainer's review of six decisions taken alone | status/improved-ontology-documentation.md:42 |
-| OD5 | improved-ontology-documentation |  | built | the maintainer's review of six decisions taken alone | status/improved-ontology-documentation.md:43 |
-| OD6 | improved-ontology-documentation |  | built | the maintainer's review of seven decisions, 32 definitions and two changed tests | status/improved-ontology-documentation.md:44 |
-| OD7 | improved-ontology-documentation |  | ? approved 2026-10-20, committed locally,  |  | status/improved-ontology-documentation.md:45 |
-| OD8 | improved-ontology-documentation |  | planned | OD7, and for Foundation and Party their part of TD-16 | status/improved-ontology-documentation.md:46 |
-| DOC1 | improved-ontology-documentation |  | ? approved 2026-10-19, committed locally,  |  | status/improved-ontology-documentation.md:47 |
-| DOC2 | improved-ontology-documentation |  | ? approved 2026-10-20, merged, Validation  |  | status/improved-ontology-documentation.md:48 |
-| DOC3 | improved-ontology-documentation |  | planned | DOC2, `lattice-tutorial` merged | status/improved-ontology-documentation.md:49 |
-| RC4 | improved-ontology-documentation |  | planned | RC3 | status/improved-ontology-documentation.md:50 |
-| RC5 | improved-ontology-documentation |  | planned | RC4 | status/improved-ontology-documentation.md:51 |
-| RC6 | improved-ontology-documentation |  | planned | RC5, a new ADR on ADR-A88 | status/improved-ontology-documentation.md:52 |
-| ELC | improved-ontology-documentation |  | ? approved 2026-10-19, committed locally,  |  | status/improved-ontology-documentation.md:53 |
-| MC1 | improved-ontology-documentation |  | ? approved 2026-10-20, committed locally,  |  | status/improved-ontology-documentation.md:54 |
-| VER1 | improved-ontology-documentation |  | ? approved 2026-10-20, committed locally,  |  | status/improved-ontology-documentation.md:55 |
-| DOC2b | improved-ontology-documentation |  | built |  | status/improved-ontology-documentation.md:56 |
-| OD-REL | improved-ontology-documentation |  | ? approved 2026-10-20, committed locally,  | the tags, on `main` after the merge | status/improved-ontology-documentation.md:57 |
-| IMA-0.1 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:46 |
-| IMA-0.2 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:47 |
-| IMA-0.3 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:48 |
-| IMA-0.4 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:49 |
-| IMA-0.5 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:50 |
-| IMA-0.6 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:51 |
-| IMA-0.8 | insurml-alignment |  | ? not started |  | status/insurml-alignment.md:52 |
-| IMA-0.7 | insurml-alignment |  | ? not started. Pointers added on 2026-10-0 |  | status/insurml-alignment.md:53 |
-| MSC-1 | multi-store-conformance |  | built 2026-10-27 |  | status/multi-store-conformance.md:14 |
-| MSC-2 | multi-store-conformance |  | built 2026-10-27 |  | status/multi-store-conformance.md:15 |
-| MSC-3 | multi-store-conformance |  | built 2026-10-27 |  | status/multi-store-conformance.md:16 |
-| MSC-4 | multi-store-conformance |  | built 2026-10-27 |  | status/multi-store-conformance.md:17 |
-| MSC-5 | multi-store-conformance |  | built 2026-10-27 |  | status/multi-store-conformance.md:18 |
-| N2 | normative-rule-substrate | Declare the importable rule-body fragment (A-109), revised for stratified state reads (ADR-A104 decision 15) | ? waiting | D1, NQ-2 | status/normative-rule-substrate.md:71 |
-| N4 | normative-rule-substrate | Deontic extension of Instrument (A-104, R1) | ? moved to CCS 2026-09-30, delivered | CCS C1, C6 to C9 | status/normative-rule-substrate.md:72 |
-| N1 | normative-rule-substrate | Condition composition acyclicity (R4). CCS C13 and C13a wait on it | ? waiting | AIR-3.3 merge, NQ-2 | status/normative-rule-substrate.md:73 |
-| N6 | normative-rule-substrate | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | ? waiting | CCS C12, NQ-3 | status/normative-rule-substrate.md:74 |
-| N3 | normative-rule-substrate | Self-contradiction design-time check | ? waiting | CCS C13a, NQ-2 | status/normative-rule-substrate.md:75 |
-| N5 | normative-rule-substrate | Closure declarations (A-105, R2) | ? moved to CCS 2026-10-10 | CCS HQ-6a before C9b3, HQ-6b before C12 | status/normative-rule-substrate.md:76 |
-| N7 | normative-rule-substrate | Measure the OASIS conformance corpus | ? waiting | CCS C9, N1 | status/normative-rule-substrate.md:77 |
-| N8 | normative-rule-substrate | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | ? waiting | CCS HQ-6b, C12, C13, NQ-3 | status/normative-rule-substrate.md:78 |
-| N9 | normative-rule-substrate | Multi-axis temporal scope (A-108) | ? waiting | **D4, Phase 2 complete** | status/normative-rule-substrate.md:79 |
-| N10 | normative-rule-substrate | Norm priority and defeasibility (A-107) | ? deferred | D5 | status/normative-rule-substrate.md:80 |
-| N11 | normative-rule-substrate | Controlled-English rendering (R5) | ? deferred | ingestion vision Phase 2 | status/normative-rule-substrate.md:81 |
-| N12 | normative-rule-substrate | LegalRuleML and ODRL interchange (A-111) | ? conditional | a trigger from the plan's §2 | status/normative-rule-substrate.md:82 |
-| N13 | normative-rule-substrate | US Code §504 acceptance milestone | ? deferred | all of the above | status/normative-rule-substrate.md:83 |
-| OR-0 | ontology-remediation |  | ? placed: the plan, this record, the revie |  | status/ontology-remediation.md:15 |
-| OR-1 | ontology-remediation |  | built |  | status/ontology-remediation.md:16 |
-| OR-2 | ontology-remediation |  | built |  | status/ontology-remediation.md:17 |
-| OR-4 | ontology-remediation |  | built |  | status/ontology-remediation.md:18 |
-| OR-3 | ontology-remediation |  | built |  | status/ontology-remediation.md:19 |
-| OR-5 | ontology-remediation |  | built |  | status/ontology-remediation.md:20 |
-| OR-7 | ontology-remediation |  | ? part built, OR-7a: `fnd:meaningBearing`, |  | status/ontology-remediation.md:21 |
-| OR-6 | ontology-remediation |  | built |  | status/ontology-remediation.md:22 |
-| OR-8 | ontology-remediation |  | built |  | status/ontology-remediation.md:23 |
-| OR-9 | ontology-remediation |  | built |  | status/ontology-remediation.md:24 |
-| OR-12 | ontology-remediation |  | built |  | status/ontology-remediation.md:25 |
-| OR-18 | ontology-remediation |  | built |  | status/ontology-remediation.md:26 |
-| OR-7b | ontology-remediation |  | built |  | status/ontology-remediation.md:27 |
-| OR-10 | ontology-remediation |  | built |  | status/ontology-remediation.md:28 |
-| OR-11 | ontology-remediation |  | built |  | status/ontology-remediation.md:29 |
-| OR-13 | ontology-remediation |  | built |  | status/ontology-remediation.md:30 |
-| OR-15 | ontology-remediation |  | built |  | status/ontology-remediation.md:31 |
-| OR-16 | ontology-remediation |  | built |  | status/ontology-remediation.md:32 |
-| OR-17 | ontology-remediation |  | built |  | status/ontology-remediation.md:33 |
-| OR-19 | ontology-remediation |  | ? the release notes are written in every c |  | status/ontology-remediation.md:34 |
-| 1 | persistence-compiler-iri-sync | Dataset-level epoch guard (G1 — correctness) | ? ✅ Complete, 290/290 passing — see VP |  | status/persistence-compiler-iri-sync.md:56 |
-| 2 | persistence-compiler-iri-sync | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ? ✅ Complete, 526/526 passing — see VP |  | status/persistence-compiler-iri-sync.md:57 |
-| 3 | persistence-compiler-iri-sync | Identity minting profile resolution (G2) | ? ✅ Complete, 570/570 passing — see VP |  | status/persistence-compiler-iri-sync.md:58 |
-| 4 | persistence-compiler-iri-sync | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ? ✅ Complete, validated 2026-09-25 (669 pa |  | status/persistence-compiler-iri-sync.md:59 |
-| 5 | persistence-compiler-iri-sync | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ? ✅ Complete, validated 2026-09-25 (774 pa |  | status/persistence-compiler-iri-sync.md:60 |
-| 6 | persistence-compiler-iri-sync | Documentation close-out | ? ✅ Complete, 2026-09-25 |  | status/persistence-compiler-iri-sync.md:61 |
-| P0.1.1 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:44 |
-| P0.1.2 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:45 |
-| P0.1.3 | phase-0-status |  | ? Drafted, Proposed, pending review |  | status/phase-0-status.md:46 |
-| P0.1.4 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:47 |
-| P0.1.5 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:48 |
-| P0.1.6 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:49 |
-| P0.1.7 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:50 |
-| P0.1.8 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:51 |
-| P0.1.9 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:52 |
-| P0.1.10 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:53 |
-| P0.1.11 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:54 |
-| P0.1.12 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:55 |
-| P0.1.13 | phase-0-status |  | ? Drafted, Proposed |  | status/phase-0-status.md:56 |
-| P0.1.14 | phase-0-status |  | ? Not started |  | status/phase-0-status.md:57 |
-| P0.1.15 | phase-0-status |  | ? Not started |  | status/phase-0-status.md:58 |
-| P0.2+ | phase-0-status |  | ? Not started |  | status/phase-0-status.md:59 |
-| 1. | rdf-sparql-patterns-status |  | ? ✅ Complete (fulfilled by the guide) |  | status/rdf-sparql-patterns-status.md:86 |
-| 2. | rdf-sparql-patterns-status |  | ? ✅ Complete |  | status/rdf-sparql-patterns-status.md:87 |
-| 3. | rdf-sparql-patterns-status |  | ? Scoped, not started |  | status/rdf-sparql-patterns-status.md:88 |
-| 1. | vocabulary-temporal-binding | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | ? Done (prior session) |  | status/vocabulary-temporal-binding.md:50 |
-| 2. | vocabulary-temporal-binding | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | ? Verified, 14/14 package tests pass |  | status/vocabulary-temporal-binding.md:51 |
-| 3. | vocabulary-temporal-binding | `tools/vocabulary` resolver + determinism/precedence/conflict tests | ? Verified, included in 14/14 package test |  | status/vocabulary-temporal-binding.md:52 |
-| 4. | vocabulary-temporal-binding | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve to, both proven against dedicated fixtures | ? Complete, verified |  | status/vocabulary-temporal-binding.md:53 |
-| WA0 | word-authoring-poc | Preflight | ? done |  | status/word-authoring-poc.md:203 |
-| WA1 | word-authoring-poc | Contracts, templates and samples | ? done |  | status/word-authoring-poc.md:204 |
-| WA2 | word-authoring-poc | Service model, mapping and shapes | ? done |  | status/word-authoring-poc.md:205 |
-| WA3 | word-authoring-poc | Detection, templates and conformance | ? done |  | status/word-authoring-poc.md:206 |
-| WA4 | word-authoring-poc | API and HTTP adapter | ? done |  | status/word-authoring-poc.md:207 |
-| WA5 | word-authoring-poc | Fuseki, RabbitMQ and the runnable service | ? done |  | status/word-authoring-poc.md:208 |
-| WA6 | word-authoring-poc | Logical English reading | ? done |  | status/word-authoring-poc.md:209 |
-| WA7 | word-authoring-poc | Worker runtime | ? done |  | status/word-authoring-poc.md:210 |
-| WA8 | word-authoring-poc | Add-in domain | ? done | WA1 | status/word-authoring-poc.md:211 |
-| WA9 | word-authoring-poc | Add-in task pane and harness | ? done | WA8 | status/word-authoring-poc.md:212 |
-| WA9a | word-authoring-poc | Ribbon and right-click commands | ? done | WA9, WA-D13 | status/word-authoring-poc.md:213 |
-| WA10 | word-authoring-poc | Compose stack | ? done | WA5, WA7, WA9a | status/word-authoring-poc.md:214 |
-| WA11 | word-authoring-poc | Documentation and close-out | ? done, pending the maintainer's sign-off | WA10 | status/word-authoring-poc.md:215 |
-| WB-0 | work-board | the sketch, the plan, this record, the INDEX.md entry | built 2026-11-02 |  | status/work-board.md:15 |
-| WB-1 | work-board | `tools/work_board.py`, `work:board`, `build:work` | built 2026-11-02 |  | status/work-board.md:16 |
-| WB-2 | work-board | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | building 2026-11-02 |  | status/work-board.md:17 |
-| WB-3 | work-board | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | planned | WB-2 | status/work-board.md:18 |
-| WB-4 | work-board | the `work` check and the post-merge regeneration | planned | WB-3 | status/work-board.md:19 |
-| WB-5 | work-board | AGENTS.md, the skills, the standards, the ADR | planned | WB-4 | status/work-board.md:20 |
-| WB-6 | work-board | `work:here` | planned | WB-1 | status/work-board.md:21 |
-| WB-7 | work-board | the branches marked or deleted | planned | WB-4, WB-Q9 | status/work-board.md:22 |
+| AIR-3.1 | AIR-3.1 | applied-insurance-reference | merged 2026-10-14 |  | docs/developer/status/applied-insurance-reference.md:44 |
+| AIR-3.2 | AIR-3.2 | applied-insurance-reference | merged 2026-10-14 |  | docs/developer/status/applied-insurance-reference.md:45 |
+| AIR-3.3 | AIR-3.3 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:46 |
+| AIR-S1 | substrate ADRs, S1 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:47 |
+| AIR-S2 | substrate ADRs, S2 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:48 |
+| AIR-S4 | substrate ADRs, S4 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:49 |
+| AIR-S5 | substrate ADRs, S5 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:50 |
+| AIR-S7 | substrate ADRs, S7 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md:51 |
+| AOR-1 | AOR-1 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:36 |
+| AOR-2 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:37 |
+| AOR-3 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:38 |
+| AOR-4 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:39 |
+| AOR-5 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:40 |
+| AOR-6 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:41 |
+| AOR-7 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:42 |
+| AOR-8 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:43 |
+| AOR-9 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:44 |
+| AOR-3b | AOR-3b | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:45 |
+| AOR-12 | AOR-12 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:46 |
+| AOR-13 | AOR-13 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:47 |
+| AOR-10 | AOR-11 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:48 |
+| AOR-11 | AOR-11 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:49 |
+| AOR-14 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:50 |
+| AOR-15 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:51 |
+| AOR-16 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:52 |
+| AOR-17 | AOR-17 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md:53 |
+| CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md:32 |
+| CCS-1 | A-104 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md:33 |
+| CCS-2 | A-106 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md:34 |
+| CCS-3 | Wording spec, vocab and shapes | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:35 |
+| CCS-4 | Wording tables, assembly, variable values | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:36 |
+| CCS-5 | Wording amendments, law shapes, how-to | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:37 |
+| CCS-10 | Behaviour split and layer flip | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:38 |
+| CCS-10a | import guard | computable-contract-substrate | merged 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md:39 |
+| CCS-11 | runtime records, occasions, initial states | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:40 |
+| CCS-11a | nested states, history, concurrent regimes | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:41 |
+| CCS-F1 | external and natural keys (ADR-A114) | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:42 |
+| CCS-6 | instrument, terms, the five relations, parties, content | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:43 |
+| CCS-7b | terms in time | computable-contract-substrate | merged 2026-10-06 |  | docs/developer/status/computable-contract-substrate.md:44 |
+| CCS-7c | what terms are, and who they bind (split from CCS-7b) | computable-contract-substrate | merged 2026-10-27 | done | docs/developer/status/computable-contract-substrate.md:45 |
+| CCS-8 | values in stated meaning, Wording references by identity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:46 |
+| CCS-8b | values in stated meaning, Wording references by identity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:47 |
+| CCS-9a | amendments, assents and taking effect | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:48 |
+| CCS-9b.0 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:49 |
+| CCS-9b.1 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:50 |
+| CCS-9b.2 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md:51 |
+| HQ-6a.1 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | computable-contract-substrate | merged 2026-10-27 |  | docs/developer/status/computable-contract-substrate.md:52 |
+| HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | computable-contract-substrate | merged 2026-10-27 |  | docs/developer/status/computable-contract-substrate.md:53 |
+| CCS-9b.3 | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md:54 |
+| CCS-9b.4 | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md:55 |
+| CCS-9d | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md:56 |
+| CCS-9c | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md:57 |
+| CCS-8a | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md:58 |
+| CCS-16c | remove Party's shares | computable-contract-substrate | planned | CCS-9b.4 | docs/developer/status/computable-contract-substrate.md:59 |
+| CCS-7a | regimes and gating, split from C7 | computable-contract-substrate | merged 2026-10-05 |  | docs/developer/status/computable-contract-substrate.md:60 |
+| CCS-12 | runtime evaluator, relation plans | computable-contract-substrate | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | docs/developer/status/computable-contract-substrate.md:61 |
+| CCS-13 | runtime evaluator, relation plans | computable-contract-substrate | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | docs/developer/status/computable-contract-substrate.md:62 |
+| CCS-13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from CCS-5) | computable-contract-substrate | blocked | CCS-5, NRS N1 | docs/developer/status/computable-contract-substrate.md:63 |
+| CCS-14 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md:64 |
+| CCS-15 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md:65 |
+| CCS-16 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md:66 |
+| CCS-17 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md:67 |
+| FMB-1 | kernel and denotation | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md:97 |
+| FMB-2 | differential tests against the compilers | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md:98 |
+| FMB-2.1 | harden the differential harness, seed a compiler-side fault | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md:99 |
+| FMB-2.2 | verify/fix the scheme-less hierarchical-match branch | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md:100 |
+| FMB-3 | Surface's regeneration property test, MORK and MCN deferred | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md:101 |
+| FMB-4 | evaluation context, CCS C12's conformance kit | formal-methods-track-b | planned | CCS's C12, not yet briefable | docs/developer/status/formal-methods-track-b.md:102 |
+| FMB-5 | measured mutation score | formal-methods-track-b | building 2026-10-09 | the mirror gap, or a hand-seeded fallback | docs/developer/status/formal-methods-track-b.md:103 |
+| FMC-1 | Alloy skeleton | formal-methods-track-c | built 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md:62 |
+| FMC-2 | scheme composition | formal-methods-track-c | built 2026-10-07 | nothing — the overlap-rule *decision* is the maintainer's, not a blocker on this slice's own completion | docs/developer/status/formal-methods-track-c.md:63 |
+| FMC-2.1 | well-formedness facts, re-run | formal-methods-track-c | built 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md:64 |
+| FMC-2.2 | model the composed scheme, decision-level check | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md:65 |
+| FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md:66 |
+| FMC-3 | slot exclusivity, SMT | formal-methods-track-c | planned | FMC-2 (done) | docs/developer/status/formal-methods-track-c.md:67 |
+| FME-1.0 | home, generation tooling | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md:96 |
+| FME-1.1 | the kernel, for real | formal-methods-track-e | built 2026-10-06 |  | docs/developer/status/formal-methods-track-e.md:97 |
+| FME-1.2 | rounding and residual theorem | formal-methods-track-e | dropped 2026-10-07 | track B's B4, which waits on CCS's C12 | docs/developer/status/formal-methods-track-e.md:98 |
+| FME-1.3 | binding resolution | formal-methods-track-e | planned | track C's C2 is **done**, but the overlap-rule decision it surfaced, and the Vocabulary ADR IMA-D4a names, are not yet made/drafted (track C's own status) | docs/developer/status/formal-methods-track-e.md:99 |
+| FME-1.4 | harden the gate and the kernel theory | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md:100 |
+| FME-2 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md:101 |
+| FME-3 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md:102 |
+| FME-4 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md:103 |
+| FME-5 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md:104 |
+| FMH-1.1 | prefix antichain and overlap check | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md:100 |
+| FMH-1.2a | witness harness, audit witnesses, measured gap list | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md:101 |
+| FMH-1.2b | witnesses for the refusals and warnings | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md:102 |
+| FMH-1.2c | witnesses for the 13 remaining shapes | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md:103 |
+| FMH-1.2d | refuse a multi-valued single-valued property, TD-25 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:104 |
+| FMH-1.3 | static template checks S-3 and S-4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:105 |
+| FMH-1.4a | refuse a composite boundary with several node properties, H-D4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:106 |
+| FMH-1.4b | the declaration/implementation gap report | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:107 |
+| FMH-1.4c | a declaration the compiler cannot honour is a warning or a refusal | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:108 |
+| FMH-1.5 | stable labels | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:109 |
+| FMH-HO0 | correct the ownership note and its spike | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:110 |
+| FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:111 |
+| FMH-HO2 | draft ADR-A122, Proposed | formal-methods-track-h | built 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:112 |
+| FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:113 |
+| FMH-HO4 | ownership tree and path compiler, added beside the old walk | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:114 |
+| FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:115 |
+| FMH-HO6 | ownership refusals and the roots-only warning | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:116 |
+| FMH-HO7 | composite create and tombstone delete, TD-04 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:117 |
+| FMH-HO8 | injective graph naming within and across families, TD-38 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:118 |
+| FMH-HO9 | ownership documentation and close-out | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md:119 |
+| FMH-2.0 | ADR-A123 | formal-methods-track-h | built 2026-10-10 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md:120 |
+| FMH-2.1 | the typed IR and its renderer | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md:121 |
+| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md:122 |
+| FMH-2 | typed IR | formal-methods-track-h | briefed |  | docs/developer/status/formal-methods-track-h.md:123 |
+| FMH-2.3 | named-graph row writers | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md:124 |
+| FMH-2.4a | the composite ports | formal-methods-track-h | built 2026-10-13 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md:125 |
+| FMH-2.4b | Oxigraph, probes, benchmark | formal-methods-track-h | built 2026-10-13 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md:126 |
+| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment | formal-methods-track-h | built 2026-10-23 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md:127 |
+| FMH-2.6 | expected compiled profiles, paper check | formal-methods-track-h | built 2026-10-13 | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 | docs/developer/status/formal-methods-track-h.md:128 |
+| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | building 2026-10-14 | the merge | docs/developer/status/formal-methods-track-h.md:129 |
+| FMH-2.6c | write disciplines | formal-methods-track-h | built 2026-10-20 | the review tranche below | docs/developer/status/formal-methods-track-h.md:130 |
+| FMH-2.6d | patch log for in-place families | formal-methods-track-h | planned 2026-10-20 | FMH-2.6c's review | docs/developer/status/formal-methods-track-h.md:131 |
+| FMH-2.8c | edges once, faster `members`, record classes, member parts | formal-methods-track-h | verified 2026-10-20 | the merge | docs/developer/status/formal-methods-track-h.md:132 |
+| FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md:133 |
+| FMH-2.11a | the Persistence README as a literate specification, graph for graph | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md:134 |
+| FMH-2.11b | the narrative, the pictures, the gotchas | formal-methods-track-h | built 2026-10-21 | the review, and D-59's split | docs/developer/status/formal-methods-track-h.md:135 |
+| FMH-2.7 | vocabulary and emission | formal-methods-track-h | planned | H2.7-Q1 to Q4, and FMH-2.6b's merge | docs/developer/status/formal-methods-track-h.md:136 |
+| FMH-2.8 | typed payload, caller checks | formal-methods-track-h | planned | H2.8-Q1 to Q3, and FMH-2.7's merge | docs/developer/status/formal-methods-track-h.md:137 |
+| FMH-3 | specification registry | formal-methods-track-h | planned | FMH-2 preferred first (smaller, more self-contained), not a hard blocker | docs/developer/status/formal-methods-track-h.md:138 |
+| FMH-4 | exhaustive cross-axis validation, BDD/SMT | formal-methods-track-h | planned | FMH-3 | docs/developer/status/formal-methods-track-h.md:139 |
+| FMH-5 | capability-record extension, TLA+/Quint toolchain spike, protocol models A-D | formal-methods-track-h | planned | FMH-2 (read/write sets from the IR). ADR-A-FM4 is accepted | docs/developer/status/formal-methods-track-h.md:140 |
+| FMH-6 | Isabelle theories: Resolution, Positions, Encoding, Outcomes | formal-methods-track-h | planned | H1, FMH-5 for `Outcomes.thy` | docs/developer/status/formal-methods-track-h.md:141 |
+| FMH-7 | protocol models E-J | formal-methods-track-h | planned | FMH-5, FMH-6 | docs/developer/status/formal-methods-track-h.md:142 |
+| FMH-8 | protocol models K-N, grounding | formal-methods-track-h | planned | FMH-7 | docs/developer/status/formal-methods-track-h.md:143 |
+| FMH-9 | detection-coverage closure, generated audits | formal-methods-track-h | planned | FMH-3, FMH-4 | docs/developer/status/formal-methods-track-h.md:144 |
+| FMH-10 | runtime monitors | formal-methods-track-h | planned | FMH-9 | docs/developer/status/formal-methods-track-h.md:145 |
+| FM-D0 | environments | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md:97 |
+| FM-D1 | brief | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md:98 |
+| FM-D2 | Rocq track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md:99 |
+| FM-D3 | Isabelle track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md:100 |
+| FM-D4 | report | formal-methods | built 2026-10-10 |  | docs/developer/status/formal-methods.md:101 |
+| FM-PF1 | fixes | formal-methods | built 2026-10-07 |  | docs/developer/status/formal-methods.md:102 |
+| GH-0 | GH-0 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md:17 |
+| GH-1 | GH-1 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md:18 |
+| GH-2 | GH-2 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md:19 |
+| GH-3 | GH-3 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md:20 |
+| GH-4 | GH-4 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md:21 |
+| IM-0 | ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md:16 |
+| IM-1 | Vocabulary, compiler recipe emission, `dal:claimsConstraint` checks, `export-recipes` | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md:17 |
+| IM-2 | Pinned Unicode 16.0 tables, Python library, vector generation | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md:18 |
+| IM-3 | Java library, vector coverage of every recipe feature | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md:19 |
+| IM-4 | Specification completion, READMEs, human walk-through | identity-minting | planned |  | docs/developer/status/identity-minting.md:20 |
+| OD-0 | ADRs, the AGENTS.md rule, the conventions document | improved-ontology-documentation | verified 2026-10-17 |  | docs/developer/status/improved-ontology-documentation.md:34 |
+| OD-RC1 | catalogue and reader | improved-ontology-documentation | built 2026-10-17 |  | docs/developer/status/improved-ontology-documentation.md:35 |
+| OD-RC2 | consumers use the reader | improved-ontology-documentation | verified 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md:36 |
+| OD-RC3 | roots, AGENTS.md table, bypass scan | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md:37 |
+| OD-1 | scanner and markers | improved-ontology-documentation | verified 2026-10-17 | the maintainer's merge | docs/developer/status/improved-ontology-documentation.md:38 |
+| OD-2 | sections 1 to 3 | improved-ontology-documentation | built 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md:39 |
+| OD-3 | section 6 to OWL | improved-ontology-documentation | built 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md:40 |
+| OD-4 | section 6 to SHACL | improved-ontology-documentation | built 2026-10-18 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md:41 |
+| OD-5 | generated regions | improved-ontology-documentation | built 2026-10-18 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md:42 |
+| OD-6 | Eligibility pilot | improved-ontology-documentation | built 2026-10-20 | the maintainer's review of seven decisions, 32 definitions and two changed tests | docs/developer/status/improved-ontology-documentation.md:43 |
+| OD-7 | Vocabulary | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md:44 |
+| OD-8 | onward, one per layer | improved-ontology-documentation | planned | OD-7, and for Foundation and Party their part of TD-16 | docs/developer/status/improved-ontology-documentation.md:45 |
+| OD-DOC1 | published decisions | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md:46 |
+| OD-DOC2 | site sections | improved-ontology-documentation | merged 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md:47 |
+| OD-DOC3 | tutorial and Field Guide review | improved-ontology-documentation | planned | OD-DOC2, `lattice-tutorial` merged | docs/developer/status/improved-ontology-documentation.md:48 |
+| OD-RC4 | downstream extension | improved-ontology-documentation | planned | OD-RC3 | docs/developer/status/improved-ontology-documentation.md:49 |
+| OD-RC5 | package promotion | improved-ontology-documentation | planned | OD-RC4 | docs/developer/status/improved-ontology-documentation.md:50 |
+| OD-RC6 | XML catalogue folded in | improved-ontology-documentation | planned | OD-RC5, a new ADR on ADR-A88 | docs/developer/status/improved-ontology-documentation.md:51 |
+| OD-ELC | composition operation | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md:52 |
+| OD-MC1 | migration check labels | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md:53 |
+| OD-VER1 | one release for the substrate | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md:54 |
+| OD-DOC2b | working documents out of published pages | improved-ontology-documentation | built 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md:55 |
+| OD-REL | first release, 0.18.0 | improved-ontology-documentation | verified 2026-10-20 | the tags, on `main` after the merge | docs/developer/status/improved-ontology-documentation.md:56 |
+| IMA-0.1 | engagement brief | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:46 |
+| IMA-0.2 | licence and publication record | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:47 |
+| IMA-0.3 | ADR, profile | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:48 |
+| IMA-0.4 | ADR, bridge tooling and kits | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:49 |
+| IMA-0.5 | ADR, transclusion | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:50 |
+| IMA-0.6 | ADR, inline parts | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:51 |
+| IMA-0.8 | ADR, assembly interface | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md:52 |
+| IMA-0.7 | alignment edits | insurml-alignment | planned 2026-10-05 |  | docs/developer/status/insurml-alignment.md:53 |
+| MSC-1 | MSC-1 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md:14 |
+| MSC-2 | MSC-2 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md:15 |
+| MSC-3 | MSC-3 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md:16 |
+| MSC-4 | MSC-4 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md:17 |
+| MSC-5 | MSC-5 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md:18 |
+| NRS-2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads (ADR-A104 decision 15) | normative-rule-substrate | blocked | D1, NQ-2 | docs/developer/status/normative-rule-substrate.md:71 |
+| NRS-4 | Deontic extension of Instrument (A-104, R1) | normative-rule-substrate | dropped 2026-09-30 | CCS C1, C6 to C9 | docs/developer/status/normative-rule-substrate.md:72 |
+| NRS-1 | Condition composition acyclicity (R4). CCS C13 and C13a wait on it | normative-rule-substrate | blocked | AIR-3.3 merge, NQ-2 | docs/developer/status/normative-rule-substrate.md:73 |
+| NRS-6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | normative-rule-substrate | blocked | CCS C12, NQ-3 | docs/developer/status/normative-rule-substrate.md:74 |
+| NRS-3 | Self-contradiction design-time check | normative-rule-substrate | blocked | CCS C13a, NQ-2 | docs/developer/status/normative-rule-substrate.md:75 |
+| NRS-5 | Closure declarations (A-105, R2) | normative-rule-substrate | dropped 2026-10-10 | CCS HQ-6a before CCS-9b.3, HQ-6b before C12 | docs/developer/status/normative-rule-substrate.md:76 |
+| NRS-7 | Measure the OASIS conformance corpus | normative-rule-substrate | blocked | CCS C9, NRS-1 | docs/developer/status/normative-rule-substrate.md:77 |
+| NRS-8 | Breach-chain checks (Behaviour records and evaluator moved to CCS C11, C12) | normative-rule-substrate | blocked | CCS HQ-6b, C12, C13, NQ-3 | docs/developer/status/normative-rule-substrate.md:78 |
+| NRS-9 | Multi-axis temporal scope (A-108) | normative-rule-substrate | blocked | **D4, Phase 2 complete** | docs/developer/status/normative-rule-substrate.md:79 |
+| NRS-10 | Norm priority and defeasibility (A-107) | normative-rule-substrate | planned | D5 | docs/developer/status/normative-rule-substrate.md:80 |
+| NRS-11 | Controlled-English rendering (R5) | normative-rule-substrate | planned | ingestion vision Phase 2 | docs/developer/status/normative-rule-substrate.md:81 |
+| NRS-12 | LegalRuleML and ODRL interchange (A-111) | normative-rule-substrate | planned | a trigger from the plan's §2 | docs/developer/status/normative-rule-substrate.md:82 |
+| NRS-13 | US Code §504 acceptance milestone | normative-rule-substrate | planned | all of the above | docs/developer/status/normative-rule-substrate.md:83 |
+| OR-0 | OR-0 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:15 |
+| OR-1 | OR-1 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:16 |
+| OR-2 | OR-2 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:17 |
+| OR-4 | OR-4 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:18 |
+| OR-3 | OR-3 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:19 |
+| OR-5 | OR-5 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:20 |
+| OR-7 | OR-7 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:21 |
+| OR-6 | OR-6 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:22 |
+| OR-8 | OR-14 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:23 |
+| OR-14 | OR-14 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:24 |
+| OR-9 | OR-9 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:25 |
+| OR-12 | OR-12 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:26 |
+| OR-18 | OR-18 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:27 |
+| OR-7b | OR-7b | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:28 |
+| OR-10 | OR-10 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:29 |
+| OR-11 | OR-11 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:30 |
+| OR-13 | OR-13 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:31 |
+| OR-15 | OR-15 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:32 |
+| OR-16 | OR-16 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:33 |
+| OR-17 | OR-17 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:34 |
+| OR-19 | OR-19 | ontology-remediation | built 2026-10-28 |  | docs/developer/status/ontology-remediation.md:35 |
+| PCI-1 | Dataset-level epoch guard (G1 — correctness) | persistence-compiler-iri-sync | built 2026-09-23 |  | docs/developer/status/persistence-compiler-iri-sync.md:56 |
+| PCI-2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | persistence-compiler-iri-sync | built 2026-09-23 |  | docs/developer/status/persistence-compiler-iri-sync.md:57 |
+| PCI-3 | Identity minting profile resolution (G2) | persistence-compiler-iri-sync | built 2026-09-23 |  | docs/developer/status/persistence-compiler-iri-sync.md:58 |
+| PCI-4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md:59 |
+| PCI-5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md:60 |
+| PCI-6 | Documentation close-out | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md:61 |
+| PLT-0.1.1 | PLT-0.1.1 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:44 |
+| PLT-0.1.2 | PLT-0.1.2 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:45 |
+| PLT-0.1.3 | PLT-0.1.3 | phase-0-status | built 2026-10-10 |  | docs/developer/status/phase-0-status.md:46 |
+| PLT-0.1.4 | PLT-0.1.4 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:47 |
+| PLT-0.1.5 | PLT-0.1.5 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:48 |
+| PLT-0.1.6 | PLT-0.1.6 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:49 |
+| PLT-0.1.7 | PLT-0.1.7 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:50 |
+| PLT-0.1.8 | PLT-0.1.8 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:51 |
+| PLT-0.1.9 | PLT-0.1.9 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:52 |
+| PLT-0.1.10 | PLT-0.1.10 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:53 |
+| PLT-0.1.11 | PLT-0.1.11 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:54 |
+| PLT-0.1.12 | PLT-0.1.12 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:55 |
+| PLT-0.1.13 | PLT-0.1.13 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md:56 |
+| PLT-0.1.14 | PLT-0.1.14 | phase-0-status | planned |  | docs/developer/status/phase-0-status.md:57 |
+| PLT-0.1.15 | PLT-0.1.15 | phase-0-status | planned |  | docs/developer/status/phase-0-status.md:58 |
+| PLT-0.2r | PLT-0.2r | phase-0-status | planned |  | docs/developer/status/phase-0-status.md:59 |
+| RSP-1 | Core patterns | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md:88 |
+| RSP-2 | Substrate and compiler | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md:89 |
+| RSP-3 | Housekeeping first cut | rdf-sparql-patterns-status | planned |  | docs/developer/status/rdf-sparql-patterns-status.md:90 |
+| VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md:50 |
+| VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md:51 |
+| VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md:52 |
+| VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve to, both proven against dedicated fixtures | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md:53 |
+| WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:203 |
+| WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:204 |
+| WA-2 | Service model, mapping and shapes | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:205 |
+| WA-3 | Detection, templates and conformance | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:206 |
+| WA-4 | API and HTTP adapter | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:207 |
+| WA-5 | Fuseki, RabbitMQ and the runnable service | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:208 |
+| WA-6 | Logical English reading | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:209 |
+| WA-7 | Worker runtime | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md:210 |
+| WA-8 | Add-in domain | word-authoring-poc | built 2026-10-02 | WA-1 | docs/developer/status/word-authoring-poc.md:211 |
+| WA-9 | Add-in task pane and harness | word-authoring-poc | built 2026-10-02 | WA-8 | docs/developer/status/word-authoring-poc.md:212 |
+| WA-9a | Ribbon and right-click commands | word-authoring-poc | built 2026-10-02 | WA-9, WA-D13 | docs/developer/status/word-authoring-poc.md:213 |
+| WA-10 | Compose stack | word-authoring-poc | built 2026-10-02 | WA-5, WA-7, WA-9a | docs/developer/status/word-authoring-poc.md:214 |
+| WA-11 | Documentation and close-out | word-authoring-poc | built 2026-10-10 | WA-10 | docs/developer/status/word-authoring-poc.md:215 |
+| WB-0 | the sketch, the plan, this record, the INDEX.md entry | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:15 |
+| WB-1 | `tools/work_board.py`, `work:board`, `build:work` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:16 |
+| WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:17 |
+| WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | work-board | planned | WB-2 | docs/developer/status/work-board.md:18 |
+| WB-4 | the `work` check and the post-merge regeneration | work-board | planned | WB-3 | docs/developer/status/work-board.md:19 |
+| WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | planned | WB-4 | docs/developer/status/work-board.md:20 |
+| WB-6 | `work:here` | work-board | planned | WB-1 | docs/developer/status/work-board.md:21 |
+| WB-7 | the branches marked or deleted | work-board | planned | WB-4, WB-Q9 | docs/developer/status/work-board.md:22 |
 
 <!-- END GENERATED work-board -->

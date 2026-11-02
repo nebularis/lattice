@@ -1091,7 +1091,7 @@ otherwise be walked, is illustrative, not a measured benchmark result.
 - LATTICE: `docs/architecture/decisions/ADR-A54-dataset-topology.md`,
   `docs/developer/review/Architecture Review.md` (findings G-10, G-11, G-13, G-16),
   `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` (P1.7.2 tenancy provisioning
-  saga, P0.1.15 NFR/SLO catalogue).
+  saga, PLT-0.1.15 NFR/SLO catalogue).
 - W3C. SPARQL 1.1 Federated Query. W3C Recommendation, 2013.
 - Schwarte, Haase, Hose, Schenkel, Schmidt. FedX: optimization techniques for federated query
   processing on linked data. ISWC 2011 *(verify)*.

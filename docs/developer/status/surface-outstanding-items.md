@@ -2,8 +2,10 @@
 
 # Surface Layer — Outstanding Items
 
+**Unit ID:** `surface-outstanding-items`
+
 **Source:** Consolidated from the Surface layer's earlier outstanding items document (2026-09-18)  
-**Status:** Living reference document; all items tracked in [surface-mork-unified-projection.md](surface-mork-unified-projection.md)  
+**Status:** merged 2026-09-22. Living reference document, all items tracked in [surface-mork-unified-projection.md](surface-mork-unified-projection.md)  
 **Last updated:** 2026-09-22
 
 ---

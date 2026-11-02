@@ -3,6 +3,7 @@
 # Plan: Ledger, amounts consumed and restored over time
 
 **Unit ID:** `ledger`
+**Prefix:** LG
 **Status:** proposed 2026-10-19, amended 2026-10-21 (two phases, exactness, LG-Q6 to LG-Q8). LG-Q1 to LG-Q8 answered 2026-10-21. LG-0 to LG-2 briefed below. ADR-A131 and ADR-A01's 2026-10-19 addendum accepted 2026-10-21, ADR-A131 published 2026-10-26. Amended 2026-10-27: LG-0 and LG-1 built, LG-5 part built ahead of its dependency, and the runtime questions LF-Q17 to LF-Q22 answered, so LG-2 is unblocked. An ADR-A131 addendum is owed for LF-Q19's reversal of decision 4 and for the two orderings.
 **ADRs:** [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) and ADR-A01's 2026-10-19
 addendum, both Accepted 2026-10-21
@@ -185,7 +186,7 @@ nodes in records.
 
 **Machine:** R or S, as the maintainer assigns. **Branch:** `ledger/lg-0-examples`, from `main`
 after this branch merges. **Commits are the maintainer's.**
-**Validation Pack:** [ledger-lg-0](../validation/ledger-lg-0.md).
+**Validation Pack:** [ledger-lg-0](../validation/LG-0.md).
 **Decisions:** ADR-A131 (decisions 3 to 6), LG-Q1 to LG-Q8.
 
 **Invariant:** the model accepts every arrangement below and refuses each refusal, before any term is
@@ -221,7 +222,7 @@ per example.
 ### LG-1 in detail: the configuration document
 
 **Machine:** R or S. **Branch:** `ledger/lg-1-configuration`. **Validation Pack:**
-[ledger-lg-1](../validation/ledger-lg-1.md). **Decisions:** ADR-A131 decisions 1 to 3, 5, 6 and 8,
+[ledger-lg-1](../validation/LG-1.md). **Decisions:** ADR-A131 decisions 1 to 3, 5, 6 and 8,
 LG-Q1, LG-Q2, LG-Q6, LG-Q7, LG-Q8.
 
 **Invariant:** account definitions, their tree, owner kinds, merge rules, rounding, reset, keys,
@@ -263,7 +264,7 @@ tree, before any runtime record exists.
 ### LG-2 in detail: the runtime document
 
 **Machine:** R. **Branch:** `ledger/lg-2-runtime`. **Validation Pack:**
-[ledger-lg-2](../validation/ledger-lg-2.md). **Decisions:** ADR-A131 decisions 4 and 6, LG-Q3 to
+[ledger-lg-2](../validation/LG-2.md). **Decisions:** ADR-A131 decisions 4 and 6, LG-Q3 to
 LG-Q8.
 
 **Invariant:** postings, balance records and merge records are derived artefacts with natural keys,

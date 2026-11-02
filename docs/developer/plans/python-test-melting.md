@@ -304,4 +304,4 @@ The Validation Packs add each slice's own new tests, a slice-specific adversaria
 - Version literals in tests, which TD-26 covers. The support module is a natural home for a
   `current_version(module)` helper, but where a version is stated once is an ontology decision, not a
   test one.
-- The repository catalogue itself. Its RC3 slice replaces this plan's path constants (sketch §8.1).
+- The repository catalogue itself. Its OD-RC3 slice replaces this plan's path constants (sketch §8.1).

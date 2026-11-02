@@ -171,7 +171,7 @@ sequenceDiagram
 |---|---|---|---|
 | C9b3a | set comparison, the plan and shapes | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
 | C9b3b | aggregate bindings | building 2026-10-30, briefed 2026-10-27 | |
-| C9b4 | qualifying rules | planned | C9b3 |
+| CCS-9b.4 | qualifying rules | planned | CCS-9b.3 |
 ```
 
 ## 6. Picking up and finishing
@@ -267,7 +267,7 @@ The leaning is (i). Two records of one unit diverge, and the lifecycle skill's "
 
 ### 9a. The slice grammar and the crosswalk, WB-Q4
 
-Slice ids take about a dozen shapes today, counted on 2026-11-02 over the boards and plans: `AIR-4.2a`, `AOR-3b`, `C9b3b`, `C10a`, `F1`, `HQ-6a.1`, `H2.6d`, `B2.1`, `P0.1.1`, `MSC-3`, `OD0`, `DOC1`, `WA1`, `M0`, `CS12a`, `CS-B12`. The `slice` family in `tools/knowledge/identifiers.py` matches nine prefixes with a hyphen and has no definition rule, so it is counted and never checked (ADR-A134, CAP-10). The 177 Validation Packs are named in ten shapes, `applied-insurance-reference-0.1.md`, `FMH-H1-2b.md`, `computable-contract-substrate-c10a.md` among them. Neither `read` nor the identifiers check can work on this, which is the cost of the irregularity, and the crosswalk is mechanical because every shape is a regular expression over a unit's own documents.
+Slice ids take about a dozen shapes today, counted on 2026-11-02 over the boards and plans: `AIR-4.2a`, `AOR-3b`, `C9b3b`, `C10a`, `F1`, `HQ-6a.1`, `FMH-2.6d`, `FMB-2.1`, `PLT-0.1.1`, `MSC-3`, `OD-0`, `OD-DOC1`, `WA-1`, `M0`, `CS12a`, `CS-B12`. The `slice` family in `tools/knowledge/identifiers.py` matches nine prefixes with a hyphen and has no definition rule, so it is counted and never checked (ADR-A134, CAP-10). The 177 Validation Packs are named in ten shapes, `applied-insurance-reference-0.1.md`, `FMH-H1-2b.md`, `computable-contract-substrate-c10a.md` among them. Neither `read` nor the identifiers check can work on this, which is the cost of the irregularity, and the crosswalk is mechanical because every shape is a regular expression over a unit's own documents.
 
 **The grammar.**
 
@@ -284,20 +284,20 @@ A mention pattern is built from the declared prefixes, never from `[A-Z]+`, so `
 | applied-insurance-reference | `AIR-4.2a` | AIR | unchanged |
 | applied-ontology-readiness | `AOR-3b` | AOR | unchanged |
 | computable-contract-substrate | `C9b3b`, `C10a`, `F1`, `HQ-6a.1` | CCS, and HQ stays its own | `CCS-9b.3b`, `CCS-10a`, `CCS-F1`, `HQ-6a.1` |
-| formal-methods tracks B, C, E, H | `B2.1`, `C2.1`, `E1.0`, `H2.6d` | FMB, FMC, FME, FMH | `FMH-2.6d` |
+| formal-methods tracks B, C, E, H | `FMB-2.1`, `FMC-2.1`, `FME-1.0`, `FMH-2.6d` | FMB, FMC, FME, FMH | `FMH-2.6d` |
 | multi-store-conformance, git-hooks | `MSC-3`, `GH-2` | MSC, GH | unchanged |
 | config-studio | `CS12a`, `CS-B12` | CS | `CS-12a`. The `CS-B` rows are a defect list, not slices, and are not read |
-| word-authoring-poc | `WA1` | WA | `WA-1` |
-| improved-ontology-documentation | `OD0`, `DOC1`, `MC1` | OD | `OD-0`, `OD-DOC1`, `OD-MC1` |
+| word-authoring-poc | `WA-1` | WA | `WA-1` |
+| improved-ontology-documentation | `OD-0`, `OD-DOC1`, `OD-MC1` | OD | `OD-0`, `OD-DOC1`, `OD-MC1` |
 | identity-minting | `M0` | IM | `IM-0` |
-| lattice-platform-agentic-development | `P0.1.1` | PLT | `PLT-0.1.1` |
+| lattice-platform-agentic-development | `PLT-0.1.1` | PLT | `PLT-0.1.1` |
 | ledger | `LG1-05b` | LG | `LG-1.5b` |
 | persistence-compiler-iri-sync | `slice-1` | PCI | `PCI-1` |
 | work-board | | WB | `WB-1` |
 
-The segment's optional capitals exist for `F1`, `DOC1`, `MC1` and `CS-B12`. Without them about 70 ids are renumbered by hand, and a hand renumbering is a second record of the slice for as long as anyone remembers the old number. With them the crosswalk stays mechanical, which was the point, at the cost of a grammar that admits `CCS-F1` beside `CCS-1`. The leaning is to admit them.
+The segment's optional capitals exist for `F1`, `OD-DOC1`, `OD-MC1` and `CS-B12`. Without them about 70 ids are renumbered by hand, and a hand renumbering is a second record of the slice for as long as anyone remembers the old number. With them the crosswalk stays mechanical, which was the point, at the cost of a grammar that admits `CCS-F1` beside `CCS-1`. The leaning is to admit them.
 
-**The crosswalk.** `mise run work:rename` builds `docs/developer/notes/slice-crosswalk-2026-11.md`, a table of `Was`, `Is` and `Unit`, from each unit's prefix and one regular expression per old shape, for the maintainer to read before anything moves. Then it applies it, replacing whole-word mentions longest first (`C9b3b` before `C9b3` before `C9`) in `docs/developer/`, `docs/architecture/`, `.claude/skills/` and the identifier exceptions baseline, and renaming the Validation Packs with `git mv`. A unit's own documents are rewritten with that unit's rules. Elsewhere only an old id that one unit's crosswalk claims is replaced, and an old id two units claim is listed for the hand. By shape the overlap is small, since CCS writes `C9b` where track C writes `C2.1`, and the sweep reports the count. The task is idempotent, so a live branch runs it once after merging `main` and is then on the new ids, as a branch renumbers a colliding register row today (skill `lattice-branching`). The crosswalk file stays, so an old commit message or a tag note still resolves, and its first column is `Was`, not `ID`, so the index does not read it as a second entry per slice.
+**The crosswalk.** `mise run work:rename` builds `docs/developer/notes/slice-crosswalk-2026-11.md`, a table of `Was`, `Is` and `Unit`, from each unit's prefix and one regular expression per old shape, for the maintainer to read before anything moves. Then it applies it, replacing whole-word mentions longest first (`C9b3b` before `CCS-9b.3` before `C9`) in `docs/developer/`, `docs/architecture/`, `.claude/skills/` and the identifier exceptions baseline, and renaming the Validation Packs with `git mv`. A unit's own documents are rewritten with that unit's rules. Elsewhere only an old id that one unit's crosswalk claims is replaced, and an old id two units claim is listed for the hand. By shape the overlap is small, since CCS writes `C9b` where track C writes `FMC-2.1`, and the sweep reports the count. The task is idempotent, so a live branch runs it once after merging `main` and is then on the new ids, as a branch renumbers a colliding register row today (skill `lattice-branching`). The crosswalk file stays, so an old commit message or a tag note still resolves, and its first column is `Was`, not `ID`, so the index does not read it as a second entry per slice.
 
 | | Count |
 |---|---|

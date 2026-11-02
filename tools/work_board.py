@@ -40,6 +40,9 @@ SEPARATOR_RE = re.compile(r"^\|[\s:|-]*\|$")
 MAIN = "main"
 REGION_BEGIN = "<!-- BEGIN GENERATED work-board. Written by `mise run build:work` from the status records. Edit a status record, never this region. -->"
 REGION_END = "<!-- END GENERATED work-board -->"
+ROADMAP_BEGIN = "<!-- BEGIN GENERATED work-board-{name}. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->"
+ROADMAP_END = "<!-- END GENERATED work-board-{name} -->"
+RECENT_DAYS = 30
 
 
 # ---- the repository ----------------------------------------------------------------------------
@@ -49,13 +52,17 @@ class Repo:
     """The root, and the developer area relative to it, which the catalogue names (STD-273)."""
     root: Path
     developer: Path
+    architecture: Optional[Path] = None
+    skills: Optional[Path] = None
+    exceptions: tuple[Path, ...] = ()
 
     @classmethod
     def here(cls, root: Optional[Path] = None) -> "Repo":
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import lattice_repo_catalogue as rc  # noqa: E402
         catalogue = rc.load(root)
-        return cls(catalogue.root, catalogue.area("developer"))
+        return cls(catalogue.root, catalogue.area("developer"), catalogue.area("architecture"), catalogue.area("skills"),
+                   tuple(catalogue.files("identifier-exceptions.txt")))
 
     @property
     def status(self) -> Path:
@@ -68,6 +75,10 @@ class Repo:
     @property
     def index(self) -> Path:
         return self.developer / "INDEX.md"
+
+    @property
+    def roadmap(self) -> Path:
+        return self.developer / "ROADMAP.md"
 
 
 def git(root: Path, *args: str, check: bool = True) -> str:
@@ -486,8 +497,9 @@ def region_text(repo: Repo) -> str:
     work_rows = []
     for name, unit in units.items():
         for row in (unit.board.rows if unit.board else ()):
-            work_rows.append((row.id, name, plain(row.deliverable), state_text(row), plain(row.blocked_on), f"status/{name}.md:{row.line}"))
-    lines += table(("ID", "Unit", "Deliverable", "State", "Blocked on", "Record"), work_rows)
+            work_rows.append((row.id, plain(row.deliverable) or row.id, name, state_text(row), plain(row.blocked_on),
+                              f"{(repo.status / name).as_posix()}.md:{row.line}"))
+    lines += table(("ID", "Claim", "Unit", "State", "Blocked on", "Pointer"), work_rows)
     return "\n".join(lines) + "\n"
 
 
@@ -513,6 +525,97 @@ def build(repo: Repo, check: bool) -> int:
     return 0
 
 
+# ---- the roadmap ---------------------------------------------------------------------------------
+
+def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str) -> list[str]:
+    """One bar per dated slice, from the earliest day in its trail to the latest, grouped by unit.
+    Merged and tagged work older than RECENT_DAYS before the newest day on any board is left out,
+    so the chart stays readable, and an undated slice is never drawn, since a bar invented for it
+    would be a plan nobody made."""
+    import datetime
+    cutoff = (datetime.date.fromisoformat(newest) - datetime.timedelta(days=RECENT_DAYS)).isoformat() if newest else ""
+    lines = ["```mermaid", "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
+    by_unit: dict[str, list[str]] = {}
+    for (unit, slice_id), j in joined.items():
+        _, row = j.winner
+        days = sorted(d for _, d in row.trail if d)
+        if not days or row.state is None:
+            continue
+        if row.state in ("merged", "tagged", "dropped") and days[-1] < cutoff:
+            continue
+        tag = "done" if row.state in ("merged", "tagged") else "crit" if row.state == "blocked" else "active"
+        start, end = days[0], days[-1]
+        if start == end:
+            end = (datetime.date.fromisoformat(end) + datetime.timedelta(days=1)).isoformat()
+        label = re.sub(r"[^A-Za-z0-9 .-]", "", f"{slice_id} {row.deliverable[:30]}").strip()
+        ident = re.sub(r"[^a-z0-9]", "", slice_id.lower()) or "s"
+        by_unit.setdefault(unit, []).append(f"    {label} :{tag}, {ident}, {start}, {end}")
+    for unit, bars in sorted(by_unit.items()):
+        lines.append(f"    section {unit}")
+        lines += bars
+    lines.append("```")
+    return lines
+
+
+def roadmap_regions(repo: Repo) -> dict[str, str]:
+    """The two regions ROADMAP.md carries: the programme at a glance (units and the gantt) and the
+    branches, both from every branch, dated by the newest day any board holds."""
+    found = branches(repo.root)
+    boards = {b.name: units_at(repo, b.tip) for b in found}
+    joined = join(boards)
+    main_units = boards.get(MAIN, {})
+    newest = max((d for j in joined.values() for r in j.rows.values() for _, d in r.trail if d), default="")
+    glance = [f"Built from the status records on {len(found)} branches, the newest board day {newest or 'unknown'}.", ""]
+    unit_rows = []
+    for name, unit in main_units.items():
+        slices = [j for (u, _), j in joined.items() if u == name]
+        counts = {}
+        for j in slices:
+            counts[j.winner[1].state or "?"] = counts.get(j.winner[1].state or "?", 0) + 1
+        summary = ", ".join(f"{n} {st}" for st, n in sorted(counts.items(), key=lambda kv: -kv[1])) or "no board"
+        on = sorted({b for j in slices for b in j.moved})
+        unit_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
+                          unit.kind, f"{unit.state or '?'} {unit.day}".strip(), unit.next, summary, ", ".join(on)))
+    glance += table(("Unit", "Kind", "State", "Next", "Slices", "Moved on"), unit_rows)
+    glance += [""] + gantt_text(joined, newest, f"Dated slices, newest day {newest}")
+    branch_rows = []
+    for b in found:
+        if b.name == MAIN or b.ahead_of_main == 0:
+            continue
+        moved = sorted(s for (u, s), j in joined.items() if b.name in j.moved)
+        branch_rows.append((f"`{b.name}`", b.day, str(b.ahead_of_main), b.drift, ", ".join(moved) or "no mark"))
+    branches_text = [f"Branches with a commit `main` lacks, from the same reading.", ""]
+    branches_text += table(("Branch", "Tip", "Ahead of main", "Upstream", "Moves"), branch_rows)
+    return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n"}
+
+
+def render_regions(existing: str, regions: dict[str, str]) -> str:
+    out = existing
+    for name, body in regions.items():
+        begin, end = ROADMAP_BEGIN.format(name=name), ROADMAP_END.format(name=name)
+        block = f"{begin}\n\n{body}\n{end}"
+        if begin in out and end in out:
+            head, _, rest = out.partition(begin)
+            _, _, tail = rest.partition(end)
+            out = head + block + tail
+        else:
+            out = out.rstrip("\n") + "\n\n" + block + "\n"
+    return out
+
+
+def build_roadmap(repo: Repo, check: bool) -> int:
+    path = repo.root / repo.roadmap
+    existing = path.read_text(encoding="utf-8") if path.exists() else ""
+    wanted = render_regions(existing, roadmap_regions(repo))
+    if wanted == existing:
+        return 0
+    if check:
+        print(f"{repo.roadmap.as_posix()}: the work-board regions are stale. Run `mise run build:roadmap`")
+        return 1
+    path.write_text(wanted, encoding="utf-8")
+    return 0
+
+
 # ---- entry ---------------------------------------------------------------------------------------
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -526,6 +629,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     board.add_argument("--commits", action="store_true", help="add the commit that set each printed row")
     built = sub.add_parser("build", help="write INDEX.md's generated region from the working tree")
     built.add_argument("--check", action="store_true", help="fail if the region is stale, write nothing")
+    road = sub.add_parser("roadmap", help="write ROADMAP.md's generated regions from every branch")
+    road.add_argument("--check", action="store_true")
+    road.add_argument("--fetch", action="store_true")
     parsed = sub.add_parser("parse", help="print a status record's board as read")
     parsed.add_argument("record", type=Path)
     args = parser.parse_args(argv)
@@ -537,6 +643,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0
     if args.command == "build":
         return build(repo, args.check)
+    if args.command == "roadmap":
+        if args.fetch:
+            git(repo.root, "fetch", "--all", "--prune", "--quiet", check=False)
+        return build_roadmap(repo, args.check)
     unit = parse_unit(args.record.stem, args.record.read_text(encoding="utf-8"))
     if not unit.board:
         print(f"{args.record}: no board. Unit state {unit.state or '?'} {unit.day}".strip())

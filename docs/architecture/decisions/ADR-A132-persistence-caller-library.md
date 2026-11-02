@@ -105,7 +105,7 @@ Taken while building the library core, for the maintainer's review.
 
 **Unit:** [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan)
 
-Raised in the Track H plan's slice H2.8, where the maintainer decided on 2026-10-20 that the caller-side code is usable library
+Raised in the Track H plan's slice FMH-2.8, where the maintainer decided on 2026-10-20 that the caller-side code is usable library
 code under `packages/` with its own ADR (H2.8-Q1 (b)), that an event's triples are bounded by the event's own IRI space
 (H2.8-Q2 (c)), and that an audit over no graph reports "nothing examined" (H2.8-Q3 (c)). The options are those of the
 [client SDK sketch](../../developer/sketches/persistence-client-sdk.md), and the slice is in

@@ -225,7 +225,7 @@ SELECT ?n ?iri ?claim ?pointer ?module WHERE { GRAPH ki:terms {
 KINDS = {
     "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
-    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt", "backlog": "Backlog",
+    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt", "backlog": "Backlog", "slice": "Slice",
     "question": "Question", "term": "Term",
 }
 PHASES = {

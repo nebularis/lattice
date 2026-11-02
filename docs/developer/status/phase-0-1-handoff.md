@@ -2,7 +2,9 @@
 
 # Phase 0 and 1 Validation Handoff
 
-**Status:** Accepted
+**Unit ID:** `phase-0-1-handoff`
+
+**Status:** merged 2026-09-20. Accepted
 **Governing ADRs:** [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md), [ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)
 
 ## Source and ownership

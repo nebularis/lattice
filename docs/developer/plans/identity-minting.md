@@ -3,9 +3,10 @@
 # Identity Minting — Plan
 
 **Unit ID:** `identity-minting`
+**Prefix:** IM
 **Status record:** [identity-minting.md](../status/identity-minting.md)
 **Sketch:** [identity-minting.md](../sketches/identity-minting.md) (decisions A–E, Q1–Q7, all settled 2026-09-23)
-**Governing ADRs:** ADR-A82 (point 5 amended by M0), ADR-A84 (new, M0), ADR-A79, ADR-A78, ADR-A77, ADR-A71, ADR-A29
+**Governing ADRs:** ADR-A82 (point 5 amended by IM-0), ADR-A84 (new, IM-0), ADR-A79, ADR-A78, ADR-A77, ADR-A71, ADR-A29
 **Depends on:** [`toolchain-jdk25-python314`](../status/toolchain-jdk25-python314.md) (✅ done), `persistence-compiler-iri-sync` Slice 3 (✅ done)
 **Mode:** autonomous (granted 2026-09-23), pausing only for genuinely new design decisions
 
@@ -21,10 +22,10 @@ Turn a resolved `dal:IdentityProfile` into a self-contained minting recipe, publ
 | P2 | `dal:tuplePrefix` (an `rdf:List` of strings) replaces the sketch's single `dal:domainSeparationLabel` | The guide's own derived-hash example prefixes three literal components (`"iri"`, `"v1"`, `"sku"`). A list is the general form |
 | P3 | New terms `dal:epochWidth` and `dal:sequenceWidth` on `dal:IdentityProfile`, both required for `dal:PositionDerivedEvent` | `iri-identity-patterns.md` §10.2 requires one exact width per profile, and the vocabulary has no term for it |
 | P4 | A natural key renders into its IRI template's `{key}` slot as its normalized components, each percent-encoded (RFC 3986 unreserved characters kept, everything else `%XX` in uppercase hex, from UTF-8), joined by `/` | Reversible and unambiguous: a `/` inside a component is itself percent-encoded (`iri-identity-patterns.md` §7.2) |
-| P6 | *(taken in M1)* Derived-hash and natural-key identities name their key through **`dal:keyConstraint`**, pointing at the `dal:UniquenessConstraint` whose key properties, scope and pipeline they use, just as a claimed identity uses `dal:claimsConstraint`. A key with a scope property puts the scope value first, as given | The plan listed "key properties" in the recipe without saying where they come from. Reusing the constraint makes the derived IRI and the uniqueness check normalize the key identically, and including the scope stops two tenants' identical natural keys minting one IRI |
+| P6 | *(taken in IM-1)* Derived-hash and natural-key identities name their key through **`dal:keyConstraint`**, pointing at the `dal:UniquenessConstraint` whose key properties, scope and pipeline they use, just as a claimed identity uses `dal:claimsConstraint`. A key with a scope property puts the scope value first, as given | The plan listed "key properties" in the recipe without saying where they come from. Reusing the constraint makes the derived IRI and the uniqueness check normalize the key identically, and including the scope stops two tenants' identical natural keys minting one IRI |
 | P5 | Recipes contain only strings, integers, booleans, `null`, arrays and objects with ASCII keys. The recipe digest is SHA-256 over RFC 8785 (JCS) canonical JSON of the recipe with `recipeDigest` removed | Under those restrictions JCS needs no number-formatting code, so every implementation, including one written from the specification alone, can compute it |
 
-## Recipe format (normative content fixed in M0, schema `contracts/identity/recipe.schema.json`)
+## Recipe format (normative content fixed in IM-0, schema `contracts/identity/recipe.schema.json`)
 
 ```text
 recipe = {
@@ -63,19 +64,19 @@ Named errors (the negative vectors use them): `UnassignedCodePoint`, `EmptyKeyCo
 
 ## Slices
 
-### M0 — Decisions, contracts and anchors
+### IM-0 — Decisions, contracts and anchors
 
 1. **ADR-A82**: amend point 5 in place, with a dated amendment note: "compiles them to minting recipes, conformance vectors, validation and runtime requirements. Executing a recipe is a runtime concern, served by the standalone minting libraries (ADR-A84) and by the normative specification for implementors who use neither."
 2. **ADR-A84** (Proposed): standalone minting libraries. Placement `packages/minting/{java,python}`. Standalone builds with no runtime dependency beyond JDK 25 or the Python 3.14 standard library. Pinned Unicode 16.0 tables. MPL-2.0. Conformance by vectors and anchors. Recipes as the only input. The shared-core alternative recorded as deferred.
 3. **Licence tracking**: `REUSE.toml` annotating `contracts/**` as MPL-2.0 (JSON files cannot carry comment headers); `README.md` Licensing and `CONTRIBUTING.md`'s licence table extended to cover `contracts/`, `packages/` and `platform/` (MPL-2.0, the last per ADR-A71).
 4. **`contracts/identity/`**: `README.md`; `recipe.schema.json` and `vectors.schema.json` (JSON Schema 2020-12, following `contracts/events` conventions); `anchors.schema.json`; `anchor-vectors.json`; `verify-anchors.py` (Python standard library plus the `openssl` command line tool), which recomputes every anchor byte and reports each failure, sharing no code with the libraries.
 5. **Anchor corpus**: one recipe per deterministic strategy (derived hash, claim, natural key, position-derived event, content-addressed on given bytes), plus pipeline anchors whose expected normalized strings each cite the UCD 16.0 line that justifies them (for example `FB01; NFKC_CF; 0066 0069`).
-6. **Specification skeleton**: `docs/architecture/identity-minting-specification.md` with the normative sections M0 can already fix (recipe format, pipelines and steps, tuple encoding, output encodings, templates, named errors, vector format, verification procedure, caller obligations for content-addressed identity). The worked example and pitfalls are completed in M4.
+6. **Specification skeleton**: `docs/architecture/identity-minting-specification.md` with the normative sections IM-0 can already fix (recipe format, pipelines and steps, tuple encoding, output encodings, templates, named errors, vector format, verification procedure, caller obligations for content-addressed identity). The worked example and pitfalls are completed in M4.
 7. **`mise` task** `check:minting-anchors` running `verify-anchors.py`, included in the aggregate `check` task.
 
 Validation: the schemas validate the anchor file; `verify-anchors.py` passes with OpenSSL 3 and with LibreSSL; corrupted anchors fail it (probes).
 
-### M1 — Vocabulary and compiler emission
+### IM-1 — Vocabulary and compiler emission
 
 1. **Vocabulary** (`ontology/persistence/spec/persistence.ttl` §12 and §11): `dal:mintedIriTemplate`, `dal:claimsConstraint`, `dal:tuplePrefix`, `dal:surrogateKind` with `dal:UuidV4Surrogate` and `dal:CallerSuppliedSurrogate`, `dal:callerSuppliedPattern`, `dal:acceptedIriPattern`, `dal:epochWidth`, `dal:sequenceWidth`, `dal:unicodeVersion` on the three pipeline individuals (all `"16.0.0"`), and on `dal:ClaimScheme`: `dal:claimKeyId`, `dal:claimDigestScheme`, `dal:claimIriTemplate`. Compiled output: `dal:MintingRecipe`, `dal:mintingRecipe`, `dal:recipeDocument`, `dal:recipeDigest`, `dal:forRole`, `dal:recipeStrategy`. The `dal:ContentAddressedIdentity` comment states the caller obligations.
 2. **Shapes**: required members per strategy (template; tuple prefix and digest for derived hash; surrogate kind for claimed; pattern for caller-supplied; widths for position-derived; claim scheme completeness).
@@ -83,7 +84,7 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 4. **`persistence export-recipes <compiled.ttl> --out <dir>`**: writes one JSON recipe per `dal:MintingRecipe`. Vector generation is added in M2.
 5. **Fixtures and tests**: one positive fixture per strategy; negatives for each new refusal; recipe JSON validated against `contracts/identity/recipe.schema.json`; recipe digest recomputed independently in the test; determinism under triple reordering.
 
-### M2 — Python library and vector generation
+### IM-2 — Python library and vector generation
 
 1. **`packages/minting/python`**: `pyproject.toml` with no dependencies, package `lattice_minting`: recipe parsing and digest check, the steps, tuple encoding, digest and MAC, output encodings, templates, `mint`, `trace`, `Conformance.verify`, a start-up check that the runtime's `unicodedata` is at least 16.0.0 (`RuntimeUnicodeTooOld`).
 2. **Pinned tables**: a generator script fetching UCD 16.0.0 (`DerivedNormalizationProps.txt`, `UnicodeData.txt`, `SpecialCasing.txt`, `PropList.txt`, `DerivedAge.txt` or equivalent for assignment), recording source URLs and SHA-256 of each file, and emitting data modules for Python and data resources for Java from the same run.
@@ -91,14 +92,14 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 4. **Tests**: anchors, generated vectors, negative vectors, and a property test that every pipeline is idempotent.
 5. **`mise` tasks** `bootstrap:minting-python`, `check:minting-python`.
 
-### M3 — Java library
+### IM-3 — Java library
 
-1. **`packages/minting/java`**: standalone `pom.xml` (not a child of `platform/pom.xml`), JDK 25, no runtime dependencies, JUnit test-scope only. Package `org.nebularis.lattice.minting`, same concepts and names as Python. Tables loaded from the resources M2 generated. A minimal JSON reader inside the library, since there is no JDK JSON API.
+1. **`packages/minting/java`**: standalone `pom.xml` (not a child of `platform/pom.xml`), JDK 25, no runtime dependencies, JUnit test-scope only. Package `org.nebularis.lattice.minting`, same concepts and names as Python. Tables loaded from the resources IM-2 generated. A minimal JSON reader inside the library, since there is no JDK JSON API.
 2. **Tests**: the same anchor and generated vector files, run through a JUnit harness, and UTF-8 byte-length tests with non-BMP input.
 3. **`mise` tasks** `check:minting-java`; an aggregate `check:minting`.
-4. **Coverage fixture** (added during M3): `identity-minting-coverage.ttl`, so that the generated vectors exercise every pipeline, encoding, surrogate kind, namespace derivation and rotation state, not only one recipe per strategy.
+4. **Coverage fixture** (added during IM-3): `identity-minting-coverage.ttl`, so that the generated vectors exercise every pipeline, encoding, surrogate kind, namespace derivation and rotation state, not only one recipe per strategy.
 
-### M4 — Specification completion and walk-through
+### IM-4 — Specification completion and walk-through
 
 1. Complete `identity-minting-specification.md`: a fully worked example per deterministic strategy with every intermediate byte, the pitfalls section (UTF-16 lengths, whitespace sets, `toLowerCase` is not case folding, NFC versus NFKC, base32 padding and case, secrets in vectors, canonicalization obligations), and "implementing without our code" as a step-by-step procedure.
 2. READMEs: `packages/minting/README.md`, one per library, `contracts/identity/README.md`, each with the content-addressed obligations section before the API.
@@ -109,7 +110,7 @@ Validation: the schemas validate the anchor file; `verify-anchors.py` passes wit
 
 | # | Item | Raised by | When |
 |---|---|---|---|
-| FU-F1a | an exact normalisation pipeline, with no case folding or compatibility mapping (identity or NFC only, decided then), for key components that are already-minted IRIs (a uniqueness constraint on `fnd:naturalKey`). A fourth pipeline in the specification, both libraries and the vectors. The three existing pipelines are harmless on such IRIs | CCS F1 ([keys impact](../sketches/keys-impact.md) P1, CCS plan F1 follow-ups) | when a scheme needs it, or with M4 |
+| FU-F1a | an exact normalisation pipeline, with no case folding or compatibility mapping (identity or NFC only, decided then), for key components that are already-minted IRIs (a uniqueness constraint on `fnd:naturalKey`). A fourth pipeline in the specification, both libraries and the vectors. The three existing pipelines are harmless on such IRIs | CCS F1 ([keys impact](../sketches/keys-impact.md) P1, CCS plan F1 follow-ups) | when a scheme needs it, or with IM-4 |
 
 ## Validation approach
 
@@ -119,7 +120,7 @@ Each slice has a validation pack at `docs/developer/validation/identity-minting-
 
 | Risk | Mitigation |
 |---|---|
-| Both libraries share a mistake because vectors come from one of them | Anchors verified with `openssl` and UCD citations (M0) |
+| Both libraries share a mistake because vectors come from one of them | Anchors verified with `openssl` and UCD citations (IM-0) |
 | Platform NFC differs from the pinned tables for a newly assigned code point | Unicode 16.0 pinned, runtimes verified at 16.0; unassigned code points rejected; start-up version check |
 | A hand-written JSON reader in Java mis-parses a recipe | Recipes are schema-restricted (P5); the reader is tested against every recipe the compiler emits, and the digest check catches any change |
 | Content-addressed callers canonicalize differently | Obligations surfaced in seven places (sketch §6a); vectors labelled as already canonical |

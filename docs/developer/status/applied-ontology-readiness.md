@@ -3,7 +3,7 @@
 # Applied Ontology Readiness - Status
 
 **Unit ID:** `applied-ontology-readiness`
-**Status:** AOR-1 to AOR-9, AOR-3b, AOR-12 and AOR-13 committed (`6e36586`,
+**Status:** built 2026-09-25. AOR-1 to AOR-9, AOR-3b, AOR-12 and AOR-13 committed (`6e36586`,
 `6e9acb1`, `54caeb6`).
 AOR-10, AOR-11 and AOR-14 to AOR-17 implemented and self-validated, awaiting
 the maintainer's commands (uncommitted). Every slice is now implemented.
@@ -31,17 +31,26 @@ checks listed under Validation below. The maintainer has not yet run them.
 
 ## Slices
 
-| Slice | State | Validation Pack |
-|---|---|---|
-| AOR-1 | Done (`6b2a577`) | n/a |
-| AOR-2 to AOR-4 | Committed (`6e36586`), commands passed | [aor-2](../validation/applied-ontology-readiness-aor-2.md), [aor-3](../validation/applied-ontology-readiness-aor-3.md), [aor-4](../validation/applied-ontology-readiness-aor-4.md) |
-| AOR-5 to AOR-9 | Committed (`6e9acb1`), commands passed | [aor-5](../validation/applied-ontology-readiness-aor-5.md) to [aor-9](../validation/applied-ontology-readiness-aor-9.md) |
-| AOR-3b | Committed (`54caeb6`) | [aor-3b](../validation/applied-ontology-readiness-aor-3b.md) |
-| AOR-12 | Committed (`54caeb6`) | [aor-12](../validation/applied-ontology-readiness-aor-12.md) |
-| AOR-13 | Committed (`54caeb6`) | [aor-13](../validation/applied-ontology-readiness-aor-13.md) |
-| AOR-10, AOR-11 | Implemented, self-validated | [aor-10-11](../validation/applied-ontology-readiness-aor-10-11.md) |
-| AOR-14 to AOR-16 | Implemented, self-validated | [aor-14-16](../validation/applied-ontology-readiness-aor-14-16.md) |
-| AOR-17 | Implemented, self-validated | [aor-17](../validation/applied-ontology-readiness-aor-17.md) |
+| Slice | Deliverable | State | Blocked on | Validation Pack |
+|---|---|---|---|---|
+| AOR-1 |  | built 2026-09-25, `6b2a577` |  | n/a |
+| AOR-2 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-3 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-4 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-5 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-6 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-7 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-8 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-9 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-3b |  | built 2026-09-25, `54caeb6` |  | [aor-3b](../validation/AOR-3b.md) |
+| AOR-12 |  | built 2026-09-25, `54caeb6` |  | [aor-12](../validation/AOR-12.md) |
+| AOR-13 |  | built 2026-09-25, `54caeb6` |  | [aor-13](../validation/AOR-13.md) |
+| AOR-10 | AOR-11 | built 2026-09-25, self-validated |  | [aor-10-11](../validation/applied-ontology-readiness-aor-10-11.md) |
+| AOR-11 | AOR-11 | built 2026-09-25, self-validated |  | [aor-10-11](../validation/applied-ontology-readiness-aor-10-11.md) |
+| AOR-14 | to AOR-16 | built 2026-09-25, self-validated |  | [aor-14-16](../validation/applied-ontology-readiness-aor-14-16.md) |
+| AOR-15 | to AOR-16 | built 2026-09-25, self-validated |  | [aor-14-16](../validation/applied-ontology-readiness-aor-14-16.md) |
+| AOR-16 | to AOR-16 | built 2026-09-25, self-validated |  | [aor-14-16](../validation/applied-ontology-readiness-aor-14-16.md) |
+| AOR-17 |  | built 2026-09-25, self-validated |  | [aor-17](../validation/AOR-17.md) |
 
 AOR-4's Protégé step has a walkthrough:
 [Loading LATTICE in Protégé](../protege-import-walkthrough.md).

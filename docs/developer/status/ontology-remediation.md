@@ -3,35 +3,36 @@
 # Ontology remediation: status
 
 **Unit ID:** `ontology-remediation`
+**Status:** built 2026-10-28.
 **Plan:** [ontology-remediation.md](../plans/ontology-remediation.md)
 **Review:** [ontology-design-review.md](../review/ontology-design-review.md)
-**Branch:** `main`, from `52686215`
 **Mode:** autonomous, at the maintainer's request on 2026-10-28. Each slice is committed to `main`. Nothing is pushed and no branch is merged by this unit.
 
 ## Position
 
-| Slice | State |
-|---|---|
-| OR-0 | placed: the plan, this record, the review, TD-101 to TD-113 |
-| OR-1 | built: `identifiers.py` reports a duplicate definition with both sites and their commit dates, the hooks run it at a commit and a merge, `post-merge` rebuilds the index, ADR-A133 addendum, 4 tests |
-| OR-2 | built: the skill `lattice-branching`, listed in `AGENTS.md` and the Copilot copy |
-| OR-4 | built: `fnd:Version` is `fnd:Versioned` in 100 files, ADR-A141 (Proposed), the Foundation release note, TD-20 closed, PDD-16 raised for the ADR-A113 and ADR-A127 conflict |
-| OR-3 | built: twelve deprecated Surface documents, three duplicates and the stale migration index deleted, links rehomed, the misnamed execution README renamed, 25 working-document references out of user-facing text, the names outside the project reworded in 14 files, prompt residue and the vendor identifier removed |
-| OR-5 | built: the overview retired (TD-114 for the table the import guard reads), the version lines in three READMEs, the versioning policy's two regimes scoped, Party's unused import, MORK's unmeasured figures and unproven claims reworded, the SPC companion marked non-normative. Not done: the release register's ledger row, which the maintainer's bump regenerates |
-| OR-7 | part built, OR-7a: `fnd:meaningBearing`, the Foundation shape, the compiler refusal `MeaningBearingEdgeByIdentity` with 3 tests, ADR-A142 (Proposed), STD-284. Pending: the four instances in Eligibility, Behaviour, Vocabulary (the closure record) and Party, and Foundation's governance state |
-| OR-6 | built: SPC and the store vocabulary under the lattice root, `persistence-store` published with 43 terms, the applied insurance root gains the lattice segment, ADR-A62 executed |
-| OR-8, OR-14 | built: supersession acyclic, validity periods half-open and zoned, `fnd:estimatedStart`, Q14 |
-| OR-9 | built: ADR-A143, Surface, Quantification and MCN name their content and rule |
-| OR-12 | built: the allowance classes deprecated with warning shapes, TD-115 |
-| OR-18 | built: the Instrument README pruned by a subagent, 6,342 to 5,512 lines |
-| OR-7b | built: the closure record in Vocabulary with its resolver and shape, meaning-bearing edges in Behaviour and Eligibility, the versioned fill of an occupancy in Party, the governance state in Foundation. Ledger's definition is LG-2's (TD-102) |
-| OR-10 | built in part: the uniqueness and concurrency claims reworded, the closing patterns marked as not generated, the vacuous namespace comparison fixed. The dataset-level baseline was tried and reverted, TD-118 |
-| OR-11 | built: laws as individuals, Q8's operation, Q13's shape, Q14, Surface's X5 and X6 wording, SPC's three uniqueness shapes. Discharges of Q1 to Q8 remain (TD-116) |
-| OR-13 | built by a subagent: five rules, four named errors, vectors in both libraries and the anchors |
-| OR-15 | built in part: `check:owl-profile` with its baseline (TD-117). The placement of the three-way names waits on OR-Q12 |
-| OR-16 | built: Capacity withdrawn from release, its performance note routed through Persistence. The file rename waits for the bump |
-| OR-17 | built in part: Foundation's structural shapes, six empty files deleted, Eligibility's AllDifferent, Persistence's namespace comparison. Quantification's twelve obligations and the Wording and Vocabulary shape defects remain (TD-110) |
-| OR-19 | the release notes are written in every changed README. The bump and the tags are the maintainer's |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| OR-0 |  | built 2026-10-28, the plan, this record, the review, TD-101 to TD-113 |  |
+| OR-1 |  | built 2026-10-28: `identifiers.py` reports a duplicate definition with both sites and their commit dates, the hooks run it at a commit and a merge, `post-merge` rebuilds the index, ADR-A133 addendum, 4 tests |  |
+| OR-2 |  | built 2026-10-28: the skill `lattice-branching`, listed in `AGENTS.md` and the Copilot copy |  |
+| OR-4 |  | built 2026-10-28: `fnd:Version` is `fnd:Versioned` in 100 files, ADR-A141 (Proposed), the Foundation release note, TD-20 closed, PDD-16 raised for the ADR-A113 and ADR-A127 conflict |  |
+| OR-3 |  | built 2026-10-28: twelve deprecated Surface documents, three duplicates and the stale migration index deleted, links rehomed, the misnamed execution README renamed, 25 working-document references out of user-facing text, the names outside the project reworded in 14 files, prompt residue and the vendor identifier removed |  |
+| OR-5 |  | built 2026-10-28: the overview retired (TD-114 for the table the import guard reads), the version lines in three READMEs, the versioning policy's two regimes scoped, Party's unused import, MORK's unmeasured figures and unproven claims reworded, the SPC companion marked non-normative. Not done: the release register's ledger row, which the maintainer's bump regenerates |  |
+| OR-7 |  | built 2026-10-28, part, OR-7a: `fnd:meaningBearing`, the Foundation shape, the compiler refusal `MeaningBearingEdgeByIdentity` with 3 tests, ADR-A142 (Proposed), STD-284. Pending: the four instances in Eligibility, Behaviour, Vocabulary (the closure record) and Party, and Foundation's governance state |  |
+| OR-6 |  | built 2026-10-28: SPC and the store vocabulary under the lattice root, `persistence-store` published with 43 terms, the applied insurance root gains the lattice segment, ADR-A62 executed |  |
+| OR-8 | OR-14 | built 2026-10-28: supersession acyclic, validity periods half-open and zoned, `fnd:estimatedStart`, Q14 |  |
+| OR-14 | OR-14 | built 2026-10-28: supersession acyclic, validity periods half-open and zoned, `fnd:estimatedStart`, Q14 |  |
+| OR-9 |  | built 2026-10-28: ADR-A143, Surface, Quantification and MCN name their content and rule |  |
+| OR-12 |  | built 2026-10-28: the allowance classes deprecated with warning shapes, TD-115 |  |
+| OR-18 |  | built 2026-10-28: the Instrument README pruned by a subagent, 6,342 to 5,512 lines |  |
+| OR-7b |  | built 2026-10-28: the closure record in Vocabulary with its resolver and shape, meaning-bearing edges in Behaviour and Eligibility, the versioned fill of an occupancy in Party, the governance state in Foundation. Ledger's definition is LG-2's (TD-102) |  |
+| OR-10 |  | built 2026-10-28 in part: the uniqueness and concurrency claims reworded, the closing patterns marked as not generated, the vacuous namespace comparison fixed. The dataset-level baseline was tried and reverted, TD-118 |  |
+| OR-11 |  | built 2026-10-28: laws as individuals, Q8's operation, Q13's shape, Q14, Surface's X5 and X6 wording, SPC's three uniqueness shapes. Discharges of Q1 to Q8 remain (TD-116) |  |
+| OR-13 |  | built 2026-10-28 by a subagent: five rules, four named errors, vectors in both libraries and the anchors |  |
+| OR-15 |  | built 2026-10-28 in part: `check:owl-profile` with its baseline (TD-117). The placement of the three-way names waits on OR-Q12 |  |
+| OR-16 |  | built 2026-10-28: Capacity withdrawn from release, its performance note routed through Persistence. The file rename waits for the bump |  |
+| OR-17 |  | built 2026-10-28 in part: Foundation's structural shapes, six empty files deleted, Eligibility's AllDifferent, Persistence's namespace comparison. Quantification's twelve obligations and the Wording and Vocabulary shape defects remain (TD-110) |  |
+| OR-19 |  | built 2026-10-28, the release notes are  in every changed README. The bump and the tags are the maintainer's |  |
 
 ## History
 

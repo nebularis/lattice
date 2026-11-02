@@ -3,22 +3,22 @@
 # Git hooks: status
 
 **Unit ID:** `git-hooks`
+**Status:** built 2026-10-24.
 **Plan:** [git-hooks.md](../plans/git-hooks.md)
 **ADR:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md), Proposed
-**Branch:** `hooks-impl`, from `main` at `04f6f9ae`
 **Mode:** autonomous, at the maintainer's request on 2026-10-23. Each slice is committed locally, and the branch is handed back for review before the merge into `main`.
 
 **Validation Pack:** [git-hooks](../validation/git-hooks.md)
 
 ## Position
 
-| Slice | State |
-|---|---|
-| GH-0 | built |
-| GH-1 | built: `tools/hooks.py`, its tests (12), the tasks, bootstrap |
-| GH-2 | built: the commit checks and merge gates wired, 19 tests |
-| GH-3 | built: `tools/writing_rules.py`, wired as the writing and wrapping checks, 30 tests in all |
-| GH-4 | built: `AGENTS.md` and its Copilot copy, the toolchain, publication-hygiene and lifecycle skills, the developer guide (task table and a Git hooks section), the ADR index |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| GH-0 |  | built 2026-10-24 |  |
+| GH-1 |  | built 2026-10-24: `tools/hooks.py`, its tests (12), the tasks, bootstrap |  |
+| GH-2 |  | built 2026-10-24: the commit checks and merge gates wired, 19 tests |  |
+| GH-3 |  | built 2026-10-24: `tools/writing_rules.py`, wired as the writing and wrapping checks, 30 tests in all |  |
+| GH-4 |  | built 2026-10-24: `AGENTS.md` and its Copilot copy, the toolchain, publication-hygiene and lifecycle skills, the developer guide (task table and a Git hooks section), the ADR index |  |
 
 ## History
 

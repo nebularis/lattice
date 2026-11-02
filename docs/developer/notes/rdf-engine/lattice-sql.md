@@ -673,10 +673,10 @@ per target, whether RDF or SQL is the system of record. That would be a new `dal
 ontology change under ADR-A86 with a minor version bump and the full versioning cascade. Until an
 ADR decides it, the choice lives in deployment configuration (decision RS-D5).
 
-### 9.1 Gaps found by the paper check of formal-methods H2.6 (2026-10-13)
+### 9.1 Gaps found by the paper check of formal-methods FMH-2.6 (2026-10-13)
 
-Formal-methods Track H slice H2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
-and checked them against this section ([Validation Pack FMH-H2-6](../../validation/FMH-H2-6.md), the paper check). The resources and operation kinds all have
+Formal-methods Track H slice FMH-2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
+and checked them against this section ([Validation Pack FMH-H2-6](../../validation/FMH-2.6.md), the paper check). The resources and operation kinds all have
 a relational reading. These are the places where §9 is silent or incomplete, recorded here for a later revision of this paper. They are *judgement*: no relational
 compiler exists, so each is a reading of the text and not a measurement.
 
@@ -687,7 +687,7 @@ compiler exists, so each is a reading of the text and not a measurement.
 | tombstone | no row | whether a tombstone is a flag on the root row or a physical delete with the cascade, and how a version row keeps counting after it | add a row for the tombstone, since `Gone` is a distinct outcome of the write protocol |
 | `ProvidedConcurrency` | `concurrencyProfile` lists `Optimistic`, `LockingConcurrency` and `AppendOnly` | the unconditional write, which takes no version check | add a row. Likely a plain insert or upsert in one transaction |
 | `NoBoundary` value guard | no row. The aggregate boundary row covers the transaction scope | the value-based compare-and-set, a single `UPDATE … WHERE col = $old` | add a row, and note that the SPARQL form reads the default graph today (TD-43) |
-| the patch log's change table | "a change table written by the generated operation, or logical decoding of the base tables" | which one, and what the table holds | open on the SPARQL side too: no generated operation writes the patch content today ([H2.6 review questions](../track-h-h26-review-questions.md), RQ6) |
+| the patch log's change table | "a change table written by the generated operation, or logical decoding of the base tables" | which one, and what the table holds | open on the SPARQL side too: no generated operation writes the patch content today ([FMH-2.6 review questions](../track-h-h26-review-questions.md), RQ6) |
 | `SnapshotPerRevision`, erasure by cascade or key shredding, deadlock-ordered multi-aggregate locks | rows exist | nothing yet: no template generates a snapshot, an erasure or a multi-aggregate operation | outside the contract until a template does |
 
 Two consequences for this paper's reading of the persistence guide. The five audits (duplicate claim, fork, revision with several transactions, transaction on

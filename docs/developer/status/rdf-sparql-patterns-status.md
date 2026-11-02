@@ -2,8 +2,10 @@
 
 # RDF/SPARQL Implementation Patterns — Status Record
 
+**Unit ID:** `rdf-sparql-patterns-status`
+
 **Unit:** `rdf-sparql-patterns-phase`
-**Status:** Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is **complete** in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–5 done, validated, 774/774 passing; Slice 6 documentation close-out in progress). Slice 3 (housekeeping first cut) not started.
+**Status:** built 2026-09-22. Slices 1 and 2 complete. ADR-A78/A79/A80 ratified. The compiler's re-sync with the vocabulary extended on 2026-09-23 is **complete** in [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md) (Slices 1–5 done, validated, 774/774 passing, Slice 6 documentation close-out in progress). Slice 3 (housekeeping first cut) not started.
 **Last updated:** 2026-09-25 (persistence-compiler-iri-sync re-sync complete)
 **Owner:** Agent (autonomous execution authorised; Slice 2 delivered without further pause)
 
@@ -81,11 +83,11 @@ Python package (`persistence`), `pyproject.toml`, installable via `mise run boot
 
 ## Slice status
 
-| Slice | Identifier | Status |
-|---|---|---|
-| 1. Core patterns | `rdf-sparql-core-patterns` | ✅ Complete (fulfilled by the guide) |
-| 2. Substrate and compiler | `persistence-substrate-and-compiler` | ✅ Complete |
-| 3. Housekeeping first cut | `housekeeping-first-cut` | Scoped, not started |
+| Slice | Deliverable | State | Blocked on | Identifier |
+|---|---|---|---|---|
+| RSP-1 | Core patterns | built 2026-09-22, fulfilled by the guide |  | `rdf-sparql-core-patterns` |
+| RSP-2 | Substrate and compiler | built 2026-09-22 |  | `persistence-substrate-and-compiler` |
+| RSP-3 | Housekeeping first cut | planned, not started |  | `housekeeping-first-cut` |
 
 ---
 

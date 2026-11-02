@@ -5,7 +5,7 @@
 **Status:** Sketch, 2026-10-18. Widened on 2026-10-19 by the [release model sketch](ontology-release-model.md),
 which records the checks of §6 and would replace this sketch's questions. Not planned.
 **Question prefix:** IMP
-**Raised by:** the maintainer, during `improved-ontology-documentation` OD6 (OD6-Q6, option d), because regular
+**Raised by:** the maintainer, during `improved-ontology-documentation` OD-6 (OD6-Q6, option d), because regular
 re-pinning has become a burden.
 **Would amend:** [ADR-A86](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md)'s import pinning
 bullet, which left "a dependency-range import mechanism" open "if the cascade cost becomes a real source of

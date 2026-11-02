@@ -3,12 +3,11 @@
 # Performance, integration and load testing for the studio - Status
 
 **Unit ID:** `studio-quality`
-**Status:** 🔴 SQ1 and SQ2 built 2026-10-31, phase D's cost recovered but for publish, which waits on `projection-maintenance`
+**Status:** building 2026-10-31. SQ1 and SQ2 built 2026-10-31, phase D's cost recovered but for publish, which waits on `projection-maintenance`
 **Last updated:** 2026-10-31
 **Plan:** [studio-quality.md](../plans/studio-quality.md)
 **Sketch:** [studio-quality-kit.md](../sketches/studio-quality-kit.md)
 **ADR:** [A-150](../../architecture/decisions/ADR-A150-performance-integration-and-load-testing.md), Proposed
-**Branch:** `claude/config-authoring-studio`
 
 ## Current position
 

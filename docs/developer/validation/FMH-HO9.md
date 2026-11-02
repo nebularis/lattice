@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO9, documentation and close-out
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO9
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO9
 ([plan §3.5](../plans/formal-methods-track-h.md#ho9-documentation-and-close-out)). Documents only.
 **Decisions needing confirmation:** accepting ADR-A122, which is the maintainer's.
 

@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: CCS F1, external and natural keys
+# Validation Pack: CCS-F1, external and natural keys
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** R. **Branch:** `ccs/f1-keys`. Commits are the maintainer's
-**Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (F1 in detail)
+**Plan and test cases:** [CCS plan](../plans/computable-contract-substrate.md) (CCS-F1 in detail)
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md) (Accepted 2026-10-03, at the phase 0 gate), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113
 
 ## Invariant
@@ -33,7 +33,7 @@ mise run build:ontology-catalog && mise run check:ontology-versioning && mise ru
 
 ## Deliberate non-coverage
 
-Normalisations outside the minting specification's three pipelines (a change to that specification), including the exact pipeline of follow-up FU-F1a. The compiler deriving the natural-key constraint from `dal:PersistenceKeyed` (FU-F1b). Both are in the plan's F1 follow-ups table. Keys on instruments, made in C6. Revising AIR-4.1's rows that name `aeo:Identifier`, done when F1 merges. Open CBAA's migration of `agr:umr`. NRS N9's Foundation change, which keeps its own window.
+Normalisations outside the minting specification's three pipelines (a change to that specification), including the exact pipeline of follow-up FU-F1a. The compiler deriving the natural-key constraint from `dal:PersistenceKeyed` (FU-F1b). Both are in the plan's CCS-F1 follow-ups table. Keys on instruments, made in C6. Revising AIR-4.1's rows that name `aeo:Identifier`, done when CCS-F1 merges. Open CBAA's migration of `agr:umr`. NRS N9's Foundation change, which keeps its own window.
 
 ## Open questions
 
@@ -51,7 +51,7 @@ Written by the building machine when the work is ready for the maintainer to com
   - Foundation 0.4.0: the keys of ADR-A114 and the G2 property chain (README §8), and Foundation's
     first shapes, `shapes/constraints.ttl` 0.2.0, with F1-Q1's warning. The README is again the
     literate source of `spec/foundation.ttl`: its ontology header became a block in §2, and the spec
-    is regenerated from it (semantically unchanged before F1, two `owl:disjointWith` axioms now stated
+    is regenerated from it (semantically unchanged before CCS-F1, two `owl:disjointWith` axioms now stated
     from the other side).
   - `persistent-foundation` 0.1.0 (`spec/persistent-foundation.ttl`, importing Foundation 0.4.0 and
     Persistence 0.2.1) and `shapes/persistent-foundation.ttl` (persistence-shapes 0.2.0): the key
@@ -64,7 +64,7 @@ Written by the building machine when the work is ready for the maintainer to com
   - `tools/test_keys.py`, F1-01 to F1-15 and F1-Q1, 30 tests, added to `check:ontology-catalog`.
   - Elsewhere: the architecture doc's Foundation section, AIR-4.1's `aeo:LegalEntity` row, C6-Q2
     and the plan's Open CBAA `agr` row.
-- **Not run:** the Java and frontend checks of `mise run check`, which F1 does not touch.
+- **Not run:** the Java and frontend checks of `mise run check`, which CCS-F1 does not touch.
 - **Check first:** the 28 tags `mise run check:ontology-versioning` lists, created after commit.
   The Foundation spec diff is large because it is now generated from the README.
 - **Deviations from the plan:**
@@ -97,7 +97,7 @@ were installed from another clone on this machine, so they ran with this checkou
 | `mise run check:persistence` | 778 passed |
 | `mise run check:python-root` (Surface, Phase 8 conformance) | 84 passed |
 | `mise run check:vocabulary`, `check:mork-compilers`, `check:reasoning-isolation` | 16, 114 passed, isolated |
-| `mise run build:mtp`, `check:mtp` | passed. `pins.lock.json`'s ontology hash regenerated for MORK 0.5.0 (C3), every term hash unchanged |
+| `mise run build:mtp`, `check:mtp` | passed. `pins.lock.json`'s ontology hash regenerated for MORK 0.5.0 (CCS-3), every term hash unchanged |
 | literate checks: Foundation, Wording, Behaviour, Surface | consistent |
 | Mermaid: the new diagrams in Foundation §8 and Persistence §14 | parse |
 | adversarial probe: F1-Q1's warning severity removed | `test_f1_q1` fails, as it should |

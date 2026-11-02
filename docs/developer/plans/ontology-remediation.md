@@ -3,6 +3,7 @@
 # Plan: ontology remediation
 
 **Unit ID:** `ontology-remediation`
+**Prefix:** OR
 **Unit type:** Phase, three groups of slices under one plan
 **Review:** [ontology-design-review.md](../review/ontology-design-review.md), the design review of 2026-10-28 whose findings this plan remediates
 **ADRs:** none yet. OR-1 adds an addendum to [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md). OR-6, OR-7, OR-9 and OR-15 each propose one

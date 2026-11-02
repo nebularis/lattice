@@ -529,8 +529,20 @@ description = "Write INDEX.md's generated work-board region, the Units and Work 
 run = "python tools/work_board.py build"
 
 [tasks."check:work-board"]
-description = "Test the work board: the board parser, the join across branches, the fold of remotes and the generated region (plan work-board)"
-run = "python -m pytest tools/test_work_board.py -q"
+description = "Test the work board: the board parser, the join across branches, the fold of remotes, the generated regions, the slice crosswalk and the board normaliser (plan work-board)"
+run = "python -m pytest tools/test_work_board.py tools/test_work_migrate.py -q"
+
+[tasks."work:rename"]
+description = "Build the slice id crosswalk from the historic ids and sweep every mention and Validation Pack name onto the grammar, idempotent. Reports without --apply (plan work-board, WB-2)"
+run = "python tools/work_migrate.py rename"
+
+[tasks."work:normalise"]
+description = "Rewrite every status record's slice board into the standard columns and state words, remove Branch lines, declare prefixes, idempotent. Reports without --apply (plan work-board, WB-2)"
+run = "python tools/work_migrate.py normalise"
+
+[tasks."build:roadmap"]
+description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch (plan work-board)"
+run = "python tools/work_board.py roadmap"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). Oxigraph is the default engine (STD-153), since the whole suite, the reasoner tests included, passed on both engines first (STD-274, 2026-10-27). check:mork-compilers-conformance runs the same suite on rdflib. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"

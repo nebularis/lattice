@@ -4,7 +4,7 @@
 
 **Unit type:** Phase
 **Unit ID:** `phase-1`
-**Status:** ⏳ Not started — blocked on Phase 0 exit gate
+**Status:** blocked 2026-09-22. Not started, blocked on Phase 0 exit gate
 **Last updated:** 2026-09-22
 **Plan:** [phase-1-plan.md](../plans/phase-1-plan.md)
 **Sketch:** [phase-1-sketch.md](../sketches/phase-1-sketch.md)

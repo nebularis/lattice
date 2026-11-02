@@ -3,13 +3,13 @@
 # Plan: Literate specifications, the repository catalogue, and published documentation
 
 **Unit ID:** `improved-ontology-documentation` (slice prefixes `OD`, `RC` and `DOC`, questions `OD-Qn`)
+**Prefix:** OD
 **Status:** Planned, rewritten 2026-10-16 after the design discussion of 2026-10-15 and 2026-10-16. Not
 started. Every design question is answered.
-**Branch:** `docs/literate-v2`
 **Sketches:** [improved-ontology-documentation.md](../sketches/improved-ontology-documentation.md),
 [repository-catalogue.md](../sketches/repository-catalogue.md), which this unit absorbs
 **Status record:** [improved-ontology-documentation.md](../status/improved-ontology-documentation.md)
-**ADRs to draft as Proposed (OD0):** A121 *Repository catalogue*, A126 *Literate specification layout and
+**ADRs to draft as Proposed (OD-0):** A121 *Repository catalogue*, A126 *Literate specification layout and
 grammar* (with an addendum to ADR-A120), A127 *Published architecture decisions*. A121 is the number the
 catalogue sketch reserved. Every number is re-checked against the
 [catalogue](../../architecture/decisions/README.md) before filing. The last slice needs a further ADR that
@@ -70,14 +70,14 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D28 | Durable developer guidance (for example `getting-started.md`, `formal-methods-lifecycle.md`) may be linked from user-facing documents. It stays under `docs/developer/`, where a reader of the repository looks for it. The sources rule of OD-D21 forbids working documents only. Its check reads every line of a user-facing document, HTML comments and hidden blocks included, since a reader of the file on GitHub sees them and a hidden block's Turtle reaches a generated file |
 | OD-D29 | The root catalogue declares the site's sections, each with a title, a page, a layout, an order and its sources. A `mise` task copies sources from outside `docs/` into `docs/_includes/<section>/`, tracked and checked (OD-Q15a option A). Moving to a Pages workflow later is TD-50 |
 | OD-D30 | The site publishes declared sections only. Working documents are excluded in `_config.yml`, Proposed ADRs carry `published: false` until A127 publishes them, and durable developer guidance forms a Contributing section (OD-Q15b option c) |
-| OD-D31 | Sections: Home, Tutorial, Field Guide, Theory, Layer specifications, Architecture, Decisions, Operations, Glossary, Contributing. Every page in a section takes its layout through Jekyll `defaults`. Once the tutorial merges, it is reviewed against the Field Guide, which may become an operations guide (setting up services and databases, using the design-time and runtime tools) while the tutorial explains what everything is (DOC3) |
+| OD-D31 | Sections: Home, Tutorial, Field Guide, Theory, Layer specifications, Architecture, Decisions, Operations, Glossary, Contributing. Every page in a section takes its layout through Jekyll `defaults`. Once the tutorial merges, it is reviewed against the Field Guide, which may become an operations guide (setting up services and databases, using the design-time and runtime tools) while the tutorial explains what everything is (OD-DOC3) |
 | OD-D32 | This branch is merged into `main` before the pilot, and work continues on it once it sits on `main`'s commit (B-Q1) |
 | OD-D33 | A reusable task proves a migration leaves each generated file the same graph as at a git ref (OD6-Q1) |
 | OD-D34 | Enumeration, Manchester's `{ a, b }`, joins the grammar. In OWL it is an enumerated class (`[ a owl:Class ; owl:oneOf ( a b ) ]`, for example in `**Equivalent to.**`) or, for literals, an enumerated data range. In SHACL, `only { a, b }` maps to `sh:in`. Eligibility's two `sh:in` shapes migrate as rows checked in SHACL only, so no OWL axiom is added (OD6-Q2) |
 | OD-D35 | An individual needing more than the 6.4 table's columns is written whole in a section 6.6 `turtle-vocab` block (OD6-Q3) |
 | OD-D36 | Eligibility's creators and contributors table names the maintainer's GitHub profile, `https://github.com/hyperthunk`, with the display name "T. R. Watson", given with the maintainer's express permission on 2026-10-18. The display name stays in the README and is never written to a generated file (OD6-Q4) |
 | OD-D37 | Unpublished ADRs are hidden from the site by a Jekyll `defaults` entry setting `published: false` for the decisions directory, and each published ADR says `published: true`. Most directories of `docs/` should be unpublished unless the site uses them, recorded as technical debt for a website sketch (DOC1-Q1) |
-| OD-D38 | DOC1 prepares and publishes only the ADRs the migrated Eligibility README cites. The rest are published as each layer migrates (DOC1-Q2) |
+| OD-D38 | OD-DOC1 prepares and publishes only the ADRs the migrated Eligibility README cites. The rest are published as each layer migrates (DOC1-Q2) |
 | OD-D39 | A published ADR names the architecture documents that describe it in a `**Described in:**` header field. Moving ADR metadata from header fields to a table is technical debt (DOC1-Q3) |
 | OD-D40 | AGENTS.md's "Where things are" table keeps its columns, Root and Owns, and is generated from the root file (RC3-Q1) |
 | OD-D41 | The bypass scan's known exceptions are a text file beside the reader, `tools/lattice_repo_catalogue_exceptions.txt`, each with a reason, in a list that may only shrink. One technical debt row names the file and gives its count, which the scan checks (RC3-Q2, option b) |
@@ -89,11 +89,11 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D47 | A published ADR may cite an Accepted one. Its link then points at the ADR on GitHub at the release tag, since the site hides unpublished ADRs. READMEs and site pages still cite only published ADRs. ADR-A127 decision 4 is amended (DOC1-Q4, option a) |
 | OD-D48 | A layer README counts as an architecture document in a published ADR's Described in field (DOC1-Q5) |
 | OD-D49 | A published ADR's status line reads `**Status:** Published, YYYY-MM-DD. Accepted YYYY-MM-DD.`, and an ADR written with a Status section moves to the header form when published (DOC1-Q6) |
-| OD-D50 | We prepare the ADRs to publish, and the maintainer approves the list. For DOC1 the maintainer approved in advance on 2026-10-19, subject to review before the branch is pushed (DOC1-Q7, option a) |
+| OD-D50 | We prepare the ADRs to publish, and the maintainer approves the list. For OD-DOC1 the maintainer approved in advance on 2026-10-19, subject to review before the branch is pushed (DOC1-Q7, option a) |
 | OD-D51 | The bypass scan covers tools under `tools/` and not their tests until after RC4. ADR-A121 decision 5 is clarified to say so (RC3-Q3, option c) |
 | OD-D52 | Each `roots` and `docs` entry in the root file carries its row's text for AGENTS.md and an optional group. The table is generated between region markers in AGENTS.md, and `build:agent-guidance` then writes Copilot's file as before (RC3-Q4) |
 | OD-D53 | The `generated` block lists paths a check may find missing, for example `.build/`, `docs/_site/` and the reasoner jar. Files a README generates stay under `extract` (RC3-Q5) |
-| OD-D54 | The branch is cut after MC1, OD7, VER1, DOC2 and OD-REL, and merged into `main`. The other layers migrate on later branches (NX-Q1, option a) |
+| OD-D54 | The branch is cut after OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL, and merged into `main`. The other layers migrate on later branches (NX-Q1, option a) |
 | OD-D55 | One release for the substrate's ontologies: every versioned document and every shape and projection directory of the substrate carries the release's number, and a change anywhere is a new release of all of them. Each release note classes every change by its effect on a graph valid under the previous release (no effect, may invalidate, changes meaning). A "changes meaning" change ships a migration once an adopter holds production data. Supersedes ADR-A86's per-document versions, by a new ADR (REL-Q1, option C with D's classification, REL-Q6) |
 | OD-D56 | The applied ontologies are not in the substrate's release and pin a substrate release (REL-Q2, option b). Whether the standalone modules join it is REL-Q2a, open, since MORK, Surface and Persistence import or use substrate terms today |
 | OD-D57 | Imports name the same release's version IRIs, rewritten by the release task, so a document says what it was released with and the import guard keeps working (REL-Q3) |
@@ -101,7 +101,7 @@ Decided by the maintainer on 2026-10-15 and 2026-10-16. The status record's log 
 | OD-D59 | The `.version` files of shape and projection directories go, and the release number is read from one place, the repository catalogue's conventions (REL-Q5) |
 | OD-D60 | Vocabulary's README takes its spec file's graph where the two disagree: the ontology header, `rdf:Property a owl:Class`, the order of one disjointness list and the direction of one `disjointWith` (NX-Q3) |
 | OD-D61 | Later migrations, on later branches, take the order Foundation, Party (closing TD-16), Quantification, Wording, Behaviour, then Instrument in two slices, one per spec document. Each includes the publication pass for the ADRs its README cites. Surface and the other literate standalone modules follow. Amends OD-D23's order (NX-Q4) |
-| OD-D62 | MC1, OD7, VER1, DOC2 and OD-REL are built autonomously with local commits, using Sonnet sub-agents where a slice is mechanical or separate (NX-Q5) |
+| OD-D62 | OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL are built autonomously with local commits, using Sonnet sub-agents where a slice is mechanical or separate (NX-Q5) |
 | OD-D63 | MORK, SPC, Surface and Persistence join the substrate's release, since they are tested at the same commit. MORK's `Executable.ttl` imports Eligibility explicitly, rather than using its terms undeclared (REL-Q2a, option a) |
 
 ## The README layout
@@ -180,10 +180,10 @@ hidden block with both `output-file` forms, a hidden block containing `-->`, and
   Quantification asserts 50 in OWL with no shape.
 - **CCS C6 has already merged** (2026-10-04, Instrument 0.9.0) without markers. Its plan's note that markers
   wait for this plan is now moot. The Instrument README (6,322 lines) migrates in this unit. CCS slices still
-  planned that touch migrated READMEs (C9b3 and C9b4 on Eligibility, C8a, C9c and C9d on Instrument, C16c on
+  planned that touch migrated READMEs (CCS-9b.3 and CCS-9b.4 on Eligibility, C8a, C9c and C9d on Instrument, C16c on
   Party) are coordinated in the status record. Whichever lands second adopts the other's format.
 - **Release notes** exist in six layers. Party, SPC, Vocabulary and Surface have none. Existing notes cite
-  developer slices (for example "CCS C9b2"), which OD-D21 forbids.
+  developer slices (for example "CCS-9b.2"), which OD-D21 forbids.
 
 ## Slices
 
@@ -192,72 +192,72 @@ Estimates are in tokens.
 
 | Slice | Scope | Modules | Levels | Estimate |
 |---|---|---|---|---|
-| OD0 | Draft A121, A126 and A127 as Proposed. The AGENTS.md rule of OD-D21, regenerated with `build:agent-guidance`. `literate-specifications.md` started | `docs/`, AGENTS.md | L0 | 60k |
-| RC1 | Root `repository-catalogue.md` (conventions, modules, import order), the reader `tools/lattice_repo_catalogue.py`, a section 3 entry for every module, literate or not, and the check that entries match the tree | `tools/`, module READMEs (section 3 only) | L1, L3 | 80k |
-| RC2 | Consumers move to the reader: `literate_extract.py` reads its contract from section 3 (no `--shapes`), the per-layer tests, `import_guard.py`, `ontology_version_check.py`, `check_formal_freshness.py` | `tools/` | L1, L4 | 70k |
-| RC3 | Roots, tool packages, docs and generated outputs in the root file, AGENTS.md's table generated from it, and the bypass scan, report-only. Brief below Built 2026-10-19, [Validation Pack](../validation/RC3.md) | `tools/`, AGENTS.md | L1, L3 | 60k |
-| OD1 | A fence-aware scanner, sections by title with the numeral warning, markers and hidden blocks, both `output-file` forms. Every current README extracts byte for byte as before | `tools/` | L1, L3 | 60k |
-| OD2 | Section 1 and 2: the header and prefix tables, the contributors table, the Dublin Core declarations, `dct:description` rendered as plain text with tag links, and the layout check's rule that a migrated README's catalogue entry sits in section 3 (RC1-C5) | `tools/` | L1, L2 | 50k |
-| OD3 | Section 6 to OWL: entries, labels, a Manchester parser for the subset in use, sorted output | `tools/` | L1, L2, L3 | 90k |
-| OD4 | Section 6 to SHACL: restriction rows into the structural shapes file, OWL only and SHACL only | `tools/` | L1, L3 | 50k |
-| OD5 | Generated regions: the Axiom Index and the Overview's class diagram (ORM verbalisation, no composition arrows), written in place and checked | `tools/` | L1, L4 | 50k |
-| OD6 | Pilot: Eligibility migrated to the layout and grammar, with the migration check and the grammar's enumeration. Brief below | `ontology/eligibility`, `tools/` | L3, L4, L5 | 110k |
-| OD7 | Vocabulary migrated, with its TD-16 reconciliation listed and approved, and release notes rebuilt from git history, plans and status records Built 2026-10-19, [Validation Pack](../validation/OD7.md) | `ontology/vocabulary` | L4, L5 | 80k |
-| OD8 onward | One slice per layer in the order of OD-D23. A layer with no release notes gets them rebuilt from history in its slice (Party, SPC, Surface). Instrument is split into two or three slices | one module each | L4, L5 | 50k to 150k each |
-| DOC1 | Published decisions (A127): the Published status, the generated list, the sources check, unpublished ADRs hidden from the site, and the ADRs Eligibility cites published. Brief below Built 2026-10-19, [Validation Pack](../validation/DOC1.md) | `docs/`, `tools/` | L1, L3 | 80k |
-| DOC2 | Site sections (OD-D29 to OD-D31): the `site` block in the root catalogue, the copy task and its check, `_config.yml` exclusions and `defaults`, `published: false` on Proposed ADRs, the tutorial spine's authoring note repointed from its plan to the conventions document, and the stray working notes in `docs/` moved or retired with the maintainer's say on each | `docs/`, `tools/` | L1, L3 | 70k |
-| DOC3 | Tutorial and Field Guide review, after `lattice-tutorial` merges: overlap mapped chapter by chapter, and options put to the maintainer, including the Field Guide as an operations guide | `docs/` | L0 | 40k |
-| RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
-| RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
-| RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
+| OD-0 | Draft A121, A126 and A127 as Proposed. The AGENTS.md rule of OD-D21, regenerated with `build:agent-guidance`. `literate-specifications.md` started | `docs/`, AGENTS.md | L0 | 60k |
+| OD-RC1 | Root `repository-catalogue.md` (conventions, modules, import order), the reader `tools/lattice_repo_catalogue.py`, a section 3 entry for every module, literate or not, and the check that entries match the tree | `tools/`, module READMEs (section 3 only) | L1, L3 | 80k |
+| OD-RC2 | Consumers move to the reader: `literate_extract.py` reads its contract from section 3 (no `--shapes`), the per-layer tests, `import_guard.py`, `ontology_version_check.py`, `check_formal_freshness.py` | `tools/` | L1, L4 | 70k |
+| OD-RC3 | Roots, tool packages, docs and generated outputs in the root file, AGENTS.md's table generated from it, and the bypass scan, report-only. Brief below Built 2026-10-19, [Validation Pack](../validation/OD-RC3.md) | `tools/`, AGENTS.md | L1, L3 | 60k |
+| OD-1 | A fence-aware scanner, sections by title with the numeral warning, markers and hidden blocks, both `output-file` forms. Every current README extracts byte for byte as before | `tools/` | L1, L3 | 60k |
+| OD-2 | Section 1 and 2: the header and prefix tables, the contributors table, the Dublin Core declarations, `dct:description` rendered as plain text with tag links, and the layout check's rule that a migrated README's catalogue entry sits in section 3 (RC1-C5) | `tools/` | L1, L2 | 50k |
+| OD-3 | Section 6 to OWL: entries, labels, a Manchester parser for the subset in use, sorted output | `tools/` | L1, L2, L3 | 90k |
+| OD-4 | Section 6 to SHACL: restriction rows into the structural shapes file, OWL only and SHACL only | `tools/` | L1, L3 | 50k |
+| OD-5 | Generated regions: the Axiom Index and the Overview's class diagram (ORM verbalisation, no composition arrows), written in place and checked | `tools/` | L1, L4 | 50k |
+| OD-6 | Pilot: Eligibility migrated to the layout and grammar, with the migration check and the grammar's enumeration. Brief below | `ontology/eligibility`, `tools/` | L3, L4, L5 | 110k |
+| OD-7 | Vocabulary migrated, with its TD-16 reconciliation listed and approved, and release notes rebuilt from git history, plans and status records Built 2026-10-19, [Validation Pack](../validation/OD-7.md) | `ontology/vocabulary` | L4, L5 | 80k |
+| OD-8 onward | One slice per layer in the order of OD-D23. A layer with no release notes gets them rebuilt from history in its slice (Party, SPC, Surface). Instrument is split into two or three slices | one module each | L4, L5 | 50k to 150k each |
+| OD-DOC1 | Published decisions (A127): the Published status, the generated list, the sources check, unpublished ADRs hidden from the site, and the ADRs Eligibility cites published. Brief below Built 2026-10-19, [Validation Pack](../validation/OD-DOC1.md) | `docs/`, `tools/` | L1, L3 | 80k |
+| OD-DOC2 | Site sections (OD-D29 to OD-D31): the `site` block in the root catalogue, the copy task and its check, `_config.yml` exclusions and `defaults`, `published: false` on Proposed ADRs, the tutorial spine's authoring note repointed from its plan to the conventions document, and the stray working notes in `docs/` moved or retired with the maintainer's say on each | `docs/`, `tools/` | L1, L3 | 70k |
+| OD-DOC3 | Tutorial and Field Guide review, after `lattice-tutorial` merges: overlap mapped chapter by chapter, and options put to the maintainer, including the Field Guide as an operations guide | `docs/` | L0 | 40k |
+| OD-RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
+| OD-RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
+| OD-RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
 | ELC | The composition operation (OD-D44, OD-D45). Built 2026-10-19, [Validation Pack](../validation/ELC.md). Brief below | `ontology/eligibility`, `ontology/instrument`, other modules' examples, `tools/mork_compilers`, `test/` | L3, L4 | 70k |
-| MC1 | The migration check labels each blank node by its own subtree (TD-55), so a reconciliation lists only what changed. Brief below Built 2026-10-19, [Validation Pack](../validation/MC1.md) | `tools/` | L1 | 20k |
+| OD-MC1 | The migration check labels each blank node by its own subtree (TD-55), so a reconciliation lists only what changed. Brief below Built 2026-10-19, [Validation Pack](../validation/OD-MC1.md) | `tools/` | L1 | 20k |
 | VER1 | One release for the substrate (OD-D55 to OD-D59): the ADR, the release number in the catalogue, the versioning check and the release register by release, the release task that rewrites the number, the `.version` files removed, and release notes with each change's data class. Brief below Built 2026-10-19, [Validation Pack](../validation/VER1.md) | `tools/`, `docs/architecture/`, `repository-catalogue.md` | L1, L3 | 90k |
 | OD-REL | The first release, 0.18.0, made with VER1's task (OD-D43, OD-D55). Every substrate document takes 0.18.0, the applied modules re-pin to it, release notes per layer with each change's data class, Eligibility's laws L1 to L8 gain `elg:lawRegister elg:StaticConstraint`, and every check passes again. The maintainer creates the tag. Brief below. Built 2026-10-20, [Validation Pack](../validation/OD-REL.md) | every substrate module, the applied modules | L3, L4 | 60k |
-| DOC2b | TD-60's cleaning, before the merge: the 12 architecture documents the site publishes and the developer and formal methods lifecycle guides lose their references to working documents (31 today), moved to a Provenance note or dropped, so the sources check reports none, and the two guides join the Contributing section. TD-60 closes Built 2026-10-20, [Validation Pack](../validation/DOC2b.md) | `docs/` | L1 | 30k |
+| OD-DOC2b | TD-60's cleaning, before the merge: the 12 architecture documents the site publishes and the developer and formal methods lifecycle guides lose their references to working documents (31 today), moved to a Provenance note or dropped, so the sources check reports none, and the two guides join the Contributing section. TD-60 closes Built 2026-10-20, [Validation Pack](../validation/OD-DOC2b.md) | `docs/` | L1 | 30k |
 
 ```mermaid
 flowchart TB
-    OD0["OD0 ADRs and rule"] --> RC1["RC1 catalogue and reader"]
-    OD0 --> OD1["OD1 scanner and markers"]
-    RC1 --> RC2["RC2 consumers"]
-    RC2 --> RC3["RC3 roots and AGENTS.md"]
-    OD1 --> OD2["OD2 sections 1 and 2"]
-    OD1 --> OD3["OD3 section 6 to OWL"]
-    OD3 --> OD4["OD4 section 6 to SHACL"]
-    OD3 --> OD5["OD5 generated regions"]
-    RC2 --> OD6
-    OD2 --> OD6["OD6 Eligibility pilot"]
-    OD4 --> OD6
-    OD5 --> OD6
-    OD6 --> OD7["OD7 Vocabulary"]
-    OD6 --> ELC["ELC composition operation"]
-    ELC --> MC1["MC1 migration check labels"]
-    MC1 --> OD7
-    OD7 --> VER1["VER1 one release"]
+    OD-0["OD-0 ADRs and rule"] --> OD-RC1["OD-RC1 catalogue and reader"]
+    OD-0 --> OD-1["OD-1 scanner and markers"]
+    OD-RC1 --> OD-RC2["OD-RC2 consumers"]
+    OD-RC2 --> OD-RC3["OD-RC3 roots and AGENTS.md"]
+    OD-1 --> OD-2["OD-2 sections 1 and 2"]
+    OD-1 --> OD-3["OD-3 section 6 to OWL"]
+    OD-3 --> OD-4["OD-4 section 6 to SHACL"]
+    OD-3 --> OD-5["OD-5 generated regions"]
+    OD-RC2 --> OD-6
+    OD-2 --> OD-6["OD-6 Eligibility pilot"]
+    OD-4 --> OD-6
+    OD-5 --> OD-6
+    OD-6 --> OD-7["OD-7 Vocabulary"]
+    OD-6 --> ELC["ELC composition operation"]
+    ELC --> OD-MC1["OD-MC1 migration check labels"]
+    OD-MC1 --> OD-7
+    OD-7 --> VER1["VER1 one release"]
     VER1 --> REL["OD-REL release 0.18.0"]
-    DOC1 --> DOC2
-    DOC2 --> REL
-    OD7 --> MIG["OD8 onward, per layer"]
-    OD0 --> DOC1["DOC1 published decisions"]
-    DOC1 --> DOC2["DOC2 site sections"]
-    DOC2 --> DOC3["DOC3 tutorial and Field Guide review"]
-    RC3 --> RC4["RC4 downstream extension"]
-    RC4 --> RC5["RC5 package"]
-    RC5 --> RC6["RC6 XML catalogue folded in"]
+    OD-DOC1 --> OD-DOC2
+    OD-DOC2 --> REL
+    OD-7 --> MIG["OD-8 onward, per layer"]
+    OD-0 --> OD-DOC1["OD-DOC1 published decisions"]
+    OD-DOC1 --> OD-DOC2["OD-DOC2 site sections"]
+    OD-DOC2 --> OD-DOC3["OD-DOC3 tutorial and Field Guide review"]
+    OD-RC3 --> OD-RC4["OD-RC4 downstream extension"]
+    OD-RC4 --> OD-RC5["OD-RC5 package"]
+    OD-RC5 --> OD-RC6["OD-RC6 XML catalogue folded in"]
 ```
 
-DOC1 runs before the migrations reach their narrative sections, since OD-D21 and OD-D22 decide what those
+OD-DOC1 runs before the migrations reach their narrative sections, since OD-D21 and OD-D22 decide what those
 sections may cite. Slice sizing follows the lifecycle rule. A slice that grows past about 15 tests or two
 modules splits.
 
-## Briefs for MC1, OD7, VER1, DOC2 and OD-REL (2026-10-19)
+## Briefs for OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL (2026-10-19)
 
-The order is MC1, OD7, VER1 and OD-REL, with DOC2 alongside in its own worktree. The branch is then merged into
+The order is OD-MC1, OD-7, VER1 and OD-REL, with OD-DOC2 alongside in its own worktree. The branch is then merged into
 `main` (OD-D54). The [release model sketch](../sketches/ontology-release-model.md) and the
 [release bundles sketch](../sketches/release-bundles.md) explain VER1 and what follows it.
 
-### MC1, blank nodes labelled by their subtree
+### OD-MC1, blank nodes labelled by their subtree
 
 **Scope.** `tools/literate_migration_check.py` labels each blank node by a digest of its own subtree, the triples
 reachable from it, rather than by `to_isomorphic`'s whole-graph labels. A change to one shape then leaves every
@@ -266,14 +266,14 @@ ELC changed.
 **Validation.** A test adding one shape to a file of several shows only that shape's triples. OD6-T6 and OD6-T7
 still pass. A blank node shared by two subjects keeps one label.
 
-### OD7, Vocabulary
+### OD-7, Vocabulary
 
-**Scope.** Vocabulary's README in the layout, as Eligibility's (OD6). Its graph is the spec file's (OD-D60).
+**Scope.** Vocabulary's README in the layout, as Eligibility's (OD-6). Its graph is the spec file's (OD-D60).
 Its three shape files come from the README: structural shapes from the §6 tables where they fit, and the rest,
 with `rules.ttl`'s comment-only body, as hidden §7 blocks naming their files. The catalogue entry gains the
 shapes. Its 11 terms all have definitions. It cites one ADR, ADR-A121, which is published. Release notes are
 rebuilt from git history, plans and status records, without slice references.
-**Validation.** The migration check against the commit before OD7, with the reconciliations listed, Vocabulary's
+**Validation.** The migration check against the commit before OD-7, with the reconciliations listed, Vocabulary's
 tests and examples, the sources check failing on nothing, and `--check` for the layer added to the per-layer
 extraction test.
 
@@ -300,7 +300,7 @@ extraction test.
 **Validation.** A rehearsal on a copy of the tree: the release task at 0.18.0, then every check passing. Tests
 for the versioning check (a changed member without a new number fails, a stray number fails) and for the task.
 
-### DOC2, site sections
+### OD-DOC2, site sections
 
 As its row says (OD-D29 to OD-D31), plus the decisions index page linking only published ADRs. It touches
 `docs/`, the root catalogue's site block and a copy task, and runs in a Sonnet sub-agent's worktree cut from
@@ -315,11 +315,11 @@ release. The applied modules re-pin to 0.18.0. The versioning, catalogue and pub
 and the full sweep with them.
 **Not covered.** Bundles, until the release bundles sketch is answered. The tag, which is the maintainer's.
 
-## Briefs for OD6, DOC1 and RC3 (2026-10-18)
+## Briefs for OD-6, OD-DOC1 and OD-RC3 (2026-10-18)
 
-The order is OD6, then DOC1 and RC3 in either order. This branch is merged into `main` first (OD-D32).
+The order is OD-6, then OD-DOC1 and OD-RC3 in either order. This branch is merged into `main` first (OD-D32).
 
-### OD6, the Eligibility pilot
+### OD-6, the Eligibility pilot
 
 **Scope.**
 
@@ -365,7 +365,7 @@ The order is OD6, then DOC1 and RC3 in either order. This branch is merged into 
   listed reconciliation passes).
 - **Probe:** change one restriction row in the migrated README and show the migration check fail.
 
-**Not covered.** Vocabulary's migration (OD7), and TD-20's rename.
+**Not covered.** Vocabulary's migration (OD-7), and TD-20's rename.
 
 ### ELC, the composition operation (2026-10-19)
 
@@ -385,14 +385,14 @@ The order is OD6, then DOC1 and RC3 in either order. This branch is merged into 
 
 **Versions.** None on this branch (OD-D43). The change is breaking, and OD-REL releases it with the migration.
 
-**Validation.** The migration check against OD6's commit, with the renamed and removed triples as reconciliations,
+**Validation.** The migration check against OD-6's commit, with the renamed and removed triples as reconciliations,
 every Eligibility, Instrument and compiler suite, and `check:full-sweep` with only OD-D43's unbumped files
 failing.
 
 ELC-Q1 and ELC-Q2 are answered as OD-D46, so a profile also stops declaring a match strategy and a wildcard
 policy, and L1 and L3 are restated for conditions that are not profiles.
 
-### DOC1, published decisions
+### OD-DOC1, published decisions
 
 **Scope.**
 
@@ -418,10 +418,10 @@ policy, and L1 and L3 are restated for conditions that are not profiles.
   reported.
 - **The site:** a local `serve:jekyll` build hides an unpublished ADR and shows a published one.
 
-**Not covered.** Site sections and the wider exclusion of working documents (DOC2, and the website sketch of
+**Not covered.** Site sections and the wider exclusion of working documents (OD-DOC2, and the website sketch of
 TD-53). Publishing ADRs no migrated README cites.
 
-### RC3, the rest of the catalogue
+### OD-RC3, the rest of the catalogue
 
 **Scope.**
 
@@ -446,20 +446,20 @@ TD-53). Publishing ADRs no migrated README cites.
   list, and a technical debt row whose count is wrong failing.
 
 **Not covered.** The scan failing rather than reporting, which comes once tools have moved. Downstream
-extension (RC4).
+extension (OD-RC4).
 
 ## Validation
 
 - **No migration changes meaning.** Each migrated layer's generated graph is isomorphic to its current one
   (`rdflib.compare`), except for listed reconciliations the maintainer approves.
-- **No output change before migration.** OD1 to OD5 leave every current README's extraction byte for byte
+- **No output change before migration.** OD-1 to OD-5 leave every current README's extraction byte for byte
   unchanged.
 - **Determinism.** Extraction is idempotent, and the output does not depend on the order of entries in a
   README.
 - **Negative cases first.** Each slice's tests include refusals: an unknown label or key, an unterminated
   region, a nested expression asserted in SHACL, a hidden block holding `-->`, a contract that disagrees with
   the tree, a citation of an unpublished ADR or a developer document.
-- **Non-weakening.** The per-layer `--check` tests are kept until RC2 replaces their arguments, and then
+- **Non-weakening.** The per-layer `--check` tests are kept until OD-RC2 replaces their arguments, and then
   test the same property.
 - **Commands.** Every command runs through mise, for example
   `mise exec -- python -m pytest tools/test_literate_extract.py`. Each Validation Pack gives its one command
@@ -476,18 +476,18 @@ layer can state it in a `turtle-spec` block in section 6.6.
 
 | Item | From | Note |
 |---|---|---|
-| A union of datatypes in a property's range | OD3, decision 10 | today it would be written as a class union. Needs `rdfs:Datatype` with `owl:unionOf` |
-| The property characteristics asymmetric, reflexive and irreflexive | OD3, decision 10 | no layer uses them |
+| A union of datatypes in a property's range | OD-3, decision 10 | today it would be written as a class union. Needs `rdfs:Datatype` with `owl:unionOf` |
+| The property characteristics asymmetric, reflexive and irreflexive | OD-3, decision 10 | no layer uses them |
 
 ## Deliberate non-coverage
 
 - Untracking generated Turtle (OD-D1).
-- Converting diagrams to Turtle. A Turtle-to-mermaid generator beyond OD5's class diagram would need its own
+- Converting diagrams to Turtle. A Turtle-to-mermaid generator beyond OD-5's class diagram would need its own
   sketch.
 - Making Persistence, MORK, the applied modules and Governance literate. They get catalogue entries only.
 - Closing TD-16 and TD-20, beyond Vocabulary's reconciliation in OD7.
 
 ## Token estimate
 
-About 1.8M tokens across the unit: about 570k for OD0 to OD5 and RC1 to RC3, about 170k for the two
-pilots, about 700k for the remaining migrations, and about 370k for DOC1 to DOC3 and RC4 to RC6.
+About 1.8M tokens across the unit: about 570k for OD-0 to OD-5 and OD-RC1 to OD-RC3, about 170k for the two
+pilots, about 700k for the remaining migrations, and about 370k for OD-DOC1 to OD-DOC3 and OD-RC4 to RC6.

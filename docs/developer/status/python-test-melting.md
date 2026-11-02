@@ -3,7 +3,7 @@
 # Python Test Speed - Status
 
 **Unit ID:** `python-test-melting`
-**Status:** Done, 2026-10-09, branch `test/slow-py`. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built and validated. TM4 and TM5 deferred, with reasoning recorded below. Reopened 2026-10-21 for TM9 to TM12, **all four built and verified 2026-10-27 on `py-test-xtra`**, not yet reviewed by the maintainer.
+**Status:** built 2026-10-27. Done, 2026-10-09, branch `test/slow-py`. TM0, TM1, TM2, TM3a/b/c, TM6, TM7 and TM8 built and validated. TM4 and TM5 deferred, with reasoning recorded below. Reopened 2026-10-21 for TM9 to TM12, **all four built and verified 2026-10-27 on `py-test-xtra`**, not yet reviewed by the maintainer.
 **Last updated:** 2026-10-27 (TM12 built, the follow-on complete)
 **Plan:** [python-test-melting.md](../plans/python-test-melting.md)
 **Sketch:** [python-test-melting.md](../sketches/python-test-melting.md)

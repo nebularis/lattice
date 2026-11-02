@@ -27,17 +27,17 @@
 
 | Epic or unit | Kind | State | Next |
 |---|---|---|---|
-| [Computable contract substrate](plans/computable-contract-substrate.md) (CCS) | epic | 🚧 tranche D. C0 to C9b2 and HQ-6a merged and tagged | C9b3, then C9b4, C9d, C9c, C8a |
+| [Computable contract substrate](plans/computable-contract-substrate.md) (CCS) | epic | 🚧 tranche D. C0 to CCS-9b.2 and HQ-6a merged and tagged | CCS-9b.3, then CCS-9b.4, C9d, C9c, C8a |
 | [Applied insurance reference](plans/applied-insurance-reference.md) (AIR) | epic | 🚧 phases 0 and 1 done, 2 to 4 largely built, round 3 | AIR-3.3, the remaining trip slices, Phase 7 proposed on a branch |
 | [Formal methods](plans/formal-methods.md) (FM) | epic | 🚧 tracks B, C, D, E in part, H well advanced | merge Track H's 0.19.0, then H3 onward |
-| [Improved ontology documentation](plans/improved-ontology-documentation.md) (IOD) | unit | 🚧 most slices merged by squash 2026-10-20 | release tags for 0.18.0, OD8 onward, RC4 onward |
+| [Improved ontology documentation](plans/improved-ontology-documentation.md) (IOD) | unit | 🚧 most slices merged by squash 2026-10-20 | release tags for 0.18.0, OD-8 onward, OD-RC4 onward |
 | Ensemble (plan on branch) | proposed unit | 📝 ADR-A130 Proposed | review of the plan and ADR |
 | Ledger (plan on branch) | proposed unit | 📝 ADR-A131 Proposed | review of the plan and ADR |
 | [InsurML alignment](plans/insurml-alignment.md) (IMA) | epic | 📝 proposed, nothing built | the maintainer's review and gate-0 decisions |
 | [Normative rule substrate](plans/normative-rule-substrate.md) (NRS) | unit | 📝 most slices moved to CCS | the rule-language work, D1, D4, D5 |
 | LATTICE tutorial (on `tutorial/guide`) | unit | 🟡 all four chapter slices written | the maintainer reads TUT-4 and accepts |
 | [Identity minting](plans/identity-minting.md) | unit | 🚧 M0 to M3 done | M4, the walk-through from the specification |
-| [Word authoring proof of concept](plans/word-authoring-poc.md) | unit | 🟡 WA0 to WA11 done | the manual Word checklist |
+| [Word authoring proof of concept](plans/word-authoring-poc.md) | unit | 🟡 WA-0 to WA-11 done | the manual Word checklist |
 | [XSLT sidecar](plans/xslt-sidecar.md) | unit | 🔵 drafted | decisions XS-D1 to XS-D7 |
 | [Documentation link repair](plans/documentation-link-repair.md) | unit | ⏳ not started | scheduling |
 | [Platform programme](plans/lattice-platform-agentic-development-v0.2.md), phases 0 to 4 | epic | ⏳ Phase 0 decision pack Proposed | ratifying 17 Proposed ADRs |
@@ -73,7 +73,7 @@ flowchart LR
     TUT["Tutorial"]
     CBAA["Open CBAA, downstream"]
 
-    FM -->|"Eligibility pass for C9b3"| CCS
+    FM -->|"Eligibility pass for CCS-9b.3"| CCS
     CCS -->|"HQ-6a closures for AIR-3.3"| AIR
     CCS -->|"C12 evaluator for track B4"| FM
     NRS -->|"N1 for C12 and C13"| CCS
@@ -86,7 +86,7 @@ flowchart LR
     LDG -.->|"allocation for phase 7"| AIR
     IOD -->|"literate layout and one release"| CCS
     IOD -->|"literate layout and one release"| AIR
-    IOD -->|"DOC3 reviews it"| TUT
+    IOD -->|"OD-DOC3 reviews it"| TUT
 ```
 
 ## 3. The layers, now and proposed
@@ -119,7 +119,7 @@ Persistence, Surface and MORK sit beside the substrate. They are versioned on th
 
 **Documents.** [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), [sketch](sketches/computable-contract-substrate.md). ADRs A-104 to A-106 and A-112 to A-115 and A-120 accepted.
 
-**Where it is.** Gate A passed on 2026-10-01. Tranches B (Wording) and C (Behaviour split, nested states) are merged and tagged. In tranche D, C6 to C9b2 and the closures work HQ-6a.1 and HQ-6a.2 (ADR-A105) are merged, and `executable-v0.7.0` is tagged. The status record's own header still names the HQ-6a.2 merge as the next action. Its branch has no commit left that `main` lacks, so that action is done.
+**Where it is.** Gate A passed on 2026-10-01. Tranches B (Wording) and C (Behaviour split, nested states) are merged and tagged. In tranche D, C6 to CCS-9b.2 and the closures work HQ-6a.1 and HQ-6a.2 (ADR-A105) are merged, and `executable-v0.7.0` is tagged. The status record's own header still names the HQ-6a.2 merge as the next action. Its branch has no commit left that `main` lacks, so that action is done.
 
 ```mermaid
 flowchart LR
@@ -133,9 +133,9 @@ flowchart LR
         C10["C10, C10a, C11, C11a"]
     end
     subgraph D["Tranche D, Instrument"]
-        C6["C6 to C8b"] --> C9a["C9a"] --> C9b["C9b0 to C9b2"] --> HQ6["HQ-6a.1, HQ-6a.2"]
-        HQ6 --> C9b3["C9b3"] --> C9b4["C9b4"]
-        C9b4 --> C9rest["C9d, C9c, C8a"]
+        C6["C6 to C8b"] --> C9a["C9a"] --> C9b["CCS-9b.0 to CCS-9b.2"] --> HQ6["HQ-6a.1, HQ-6a.2"]
+        HQ6 --> CCS-9b.3["CCS-9b.3"] --> CCS-9b.4["CCS-9b.4"]
+        CCS-9b.4 --> C9rest["C9d, C9c, C8a"]
     end
     subgraph E["Tranche E, evaluation"]
         C12["C12, C13"]
@@ -147,18 +147,18 @@ flowchart LR
     end
     A --> B --> C --> D
     C9rest --> C12
-    C9b4 --> C16c
+    CCS-9b.4 --> C16c
     C12 --> C14
 
     classDef done fill:#d8f0d8,stroke:#3a7d3a
     classDef next fill:#fff1c2,stroke:#a07800
     classDef wait fill:#eeeeee,stroke:#888888
     class C0,C3,C10,C6,C9a,C9b,HQ6 done
-    class C9b3 next
-    class C9b4,C9rest,C12,C13a,C16c,C14 wait
+    class CCS-9b.3 next
+    class CCS-9b.4,C9rest,C12,C13a,C16c,C14 wait
 ```
 
-**What it waits on.** C9b3 waits on HQ-6 (NRS N5, ADR-A105), and the formal-methods Eligibility pass it named is built. C12 and C13 wait on C9, C11a, AIR-3.3 and NRS N1. C13a waits on C5 and NRS N1. C16c, removing Party's shares, must land before the epic closes.
+**What it waits on.** CCS-9b.3 waits on HQ-6 (NRS N5, ADR-A105), and the formal-methods Eligibility pass it named is built. C12 and C13 wait on C9, C11a, AIR-3.3 and NRS N1. C13a waits on C5 and NRS N1. C16c, removing Party's shares, must land before the epic closes.
 
 **Held questions.** HQ-1 to HQ-12, in the plan. Three are proposed for hand-over to the Ensemble unit (HQ-2's second case, HQ-7, HQ-12) once ADR-A130 is accepted.
 
@@ -216,12 +216,12 @@ flowchart LR
 |---|---|---|
 | D | prover spike | ✅ done, two Gate D criteria open |
 | A | ledger and harness | ⏳ not started, waits on Gate D and its ADR |
-| B | reference semantics and oracle | 🚧 B1 to B3, B2.1, B2.2 done. B4 waits on CCS C12. B5 blocked |
-| C | design-time models | 🚧 C1, C2, C2.1 done. C3 is next. ADR-A116 Proposed |
-| E | prover programme | 🚧 E1.0, E1.1, E1.4 done. E1.3 waits on track C2's overlap-rule ADR |
+| B | reference semantics and oracle | 🚧 B1 to B3, FMB-2.1, FMB-2.2 done. B4 waits on CCS C12. B5 blocked |
+| C | design-time models | 🚧 C1, C2, FMC-2.1 done. C3 is next. ADR-A116 Proposed |
+| E | prover programme | 🚧 FME-1.0, FME-1.1, FME-1.4 done. FME-1.3 waits on track C2's overlap-rule ADR |
 | F | native tooling | ⏳ not started |
 | G | instrument assurance | ⏳ waits on B4 and C3 |
-| H | Persistence | 🚧 H1, HO0 to HO9, H2.0 to H2.6b on `main`. Every other planned H2 slice built on `claude/nice-bohr-pmj43u` |
+| H | Persistence | 🚧 H1, FMH-HO0 to FMH-HO9, FMH-2.0 to FMH-2.6b on `main`. Every other planned H2 slice built on `claude/nice-bohr-pmj43u` |
 
 ```mermaid
 flowchart LR
@@ -243,15 +243,15 @@ flowchart LR
     class A,B4,C3,G,F,H3,CCS12 todo
 ```
 
-**Track H, the release branch.** `claude/nice-bohr-pmj43u` holds 54 commits beyond `main`: H2.6c to H2.6g, H2.7, H2.8a to H2.8c, H2.9, H2.11a and H2.11b (the Persistence README in the literate layout), the test-suite work FMH-TS-1 and FMH-TS-2, a new `packages/persistence/python`, Oxigraph as the Persistence tests' default engine, and the release prepared as 0.19.0 with the applied modules re-pinned. Six review items (Q1 to Q6 in its status record) wait on the maintainer before the merge. `claude/nice-bohr-pmj43u-wwhgle` is an earlier point of the same line, with nothing the release branch lacks.
+**Track H, the release branch.** `claude/nice-bohr-pmj43u` holds 54 commits beyond `main`: FMH-2.6c to H2.6g, FMH-2.7, H2.8a to FMH-2.8c, FMH-2.9, FMH-2.11a and FMH-2.11b (the Persistence README in the literate layout), the test-suite work FMH-TS-1 and FMH-TS-2, a new `packages/persistence/python`, Oxigraph as the Persistence tests' default engine, and the release prepared as 0.19.0 with the applied modules re-pinned. Six review items (Q1 to Q6 in its status record) wait on the maintainer before the merge. `claude/nice-bohr-pmj43u-wwhgle` is an earlier point of the same line, with nothing the release branch lacks.
 
 ### 4.4 Improved ontology documentation (IOD)
 
 **Documents.** [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md). ADR-A126 and ADR-A129 published, ADR-A127 accepted.
 
-**Where it is.** `docs/literate-v2` was squash-merged into `main` on 2026-10-20 (`cf1b8eb`). That brought the repository catalogue and its reader (RC1 to RC3), the literate README layout and its compilers to OWL and SHACL (OD1 to OD5), the Eligibility and Vocabulary pilots (OD6, OD7), published decisions and the site sections (DOC1, DOC2, DOC2b), and one release number for the substrate and standalone ontologies, 0.18.0 (VER1, OD-REL). `GOVERNANCE.md` and the validation and test plan were retired in the same change.
+**Where it is.** `docs/literate-v2` was squash-merged into `main` on 2026-10-20 (`cf1b8eb`). That brought the repository catalogue and its reader (OD-RC1 to OD-RC3), the literate README layout and its compilers to OWL and SHACL (OD-1 to OD-5), the Eligibility and Vocabulary pilots (OD-6, OD-7), published decisions and the site sections (OD-DOC1, OD-DOC2, OD-DOC2b), and one release number for the substrate and standalone ontologies, 0.18.0 (VER1, OD-REL). `GOVERNANCE.md` and the validation and test plan were retired in the same change.
 
-**Next.** The tag `ontologies-v0.18.0` and the applied modules' ten tags do not exist on the remote yet. OD8 onward migrates the remaining layers one at a time. RC4 to RC6 extend the catalogue downstream, promote packages and fold in the XML catalogue (RC6 needs a new ADR on ADR-A88). DOC3 reviews the tutorial once it is merged.
+**Next.** The tag `ontologies-v0.18.0` and the applied modules' ten tags do not exist on the remote yet. OD-8 onward migrates the remaining layers one at a time. OD-RC4 to OD-RC6 extend the catalogue downstream, promote packages and fold in the XML catalogue (OD-RC6 needs a new ADR on ADR-A88). OD-DOC3 reviews the tutorial once it is merged.
 
 ### 4.5 Ensemble and Ledger, proposed substrate layers
 
@@ -283,7 +283,7 @@ Nothing is built in this unit. CCS took N1, N2, N4, N5 and the Behaviour part of
 |---|---|---|---|
 | LATTICE tutorial | `docs/developer/plans/lattice-tutorial.md` on `tutorial/guide` | TUT-0 to TUT-3 committed on the branch, TUT-4 written | the maintainer reads chapters 10 to 13 and the tutorial end to end, adds the AI disclosure trailer to the branch's commits, and pushes |
 | Identity minting | [plan](plans/identity-minting.md), [status](status/identity-minting.md) | M0 to M3 complete (Python and Java libraries, anchor vectors) | M4, the specification completed and walked through by hand. ADR-A84 Proposed |
-| Word authoring proof of concept | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md) | WA0 to WA11 done | the manual Word checklist M1 to M14. ADR-A118 Proposed |
+| Word authoring proof of concept | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md) | WA-0 to WA-11 done | the manual Word checklist M1 to M14. ADR-A118 Proposed |
 | XSLT sidecar | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) | drafted | XS-D1 to XS-D7. ADR-A119 Proposed |
 | Documentation link repair | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) | not started. Baseline 419 broken links, 290 in ignored site output | scheduling. The IOD site work may have moved the baseline |
 | Eligibility compiler | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) | implemented, awaiting validation in a networked environment | validation |
@@ -356,15 +356,15 @@ The longest chain of dependencies now runs through CCS's tranche D into its eval
 ```mermaid
 flowchart LR
     Q1["AIR-3.3-Q1 decided"] --> AIR33["AIR-3.3 readings in SWRL and OWL"]
-    C9b3["CCS C9b3 set comparisons"] --> C9b4["C9b4 qualifying rules"]
-    C9b4 --> C9["C9d, C9c, C8a"]
+    CCS-9b.3["CCS-9b.3 set comparisons"] --> CCS-9b.4["CCS-9b.4 qualifying rules"]
+    CCS-9b.4 --> C9["C9d, C9c, C8a"]
     N1["NRS N1, now in CCS"] --> C12["CCS C12 and C13 evaluator"]
     C9 --> C12
     AIR33 --> C12
     C12 --> B4["FM track B4"]
     B4 --> G["FM track G instrument assurance"]
     C12 --> C14["CCS C14 to C17, epic close"]
-    C9b4 --> C16c["C16c Party shares removed"]
+    CCS-9b.4 --> C16c["C16c Party shares removed"]
     C16c --> C14
     C9 --> IMA3["IMA phase 3"]
     A130["ADR-A130 and ADR-A131 accepted"] --> AIR7["AIR phase 7"]
@@ -374,7 +374,7 @@ flowchart LR
 
 **Reading it.**
 
-- **CCS C9b3 and C9b4** gate the most work. Every CCS slice after them, the evaluator, the epic's close, FM tracks B4 and G, and IMA Phase 3 sit downstream.
+- **CCS-9b.3 and CCS-9b.4** gate the most work. Every CCS slice after them, the evaluator, the epic's close, FM tracks B4 and G, and IMA Phase 3 sit downstream.
 - **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It must land before CCS C12.
 - **ADR-A130 and ADR-A131** gate AIR Phase 7 and the three CCS held questions they take over.
 - **AIR Phase 5** waits on two things outside this repository's slices: Open CBAA's integration of phases 1 to 4, and a plan for the evaluation context (PDD-08), which the Ledger plan partly supplies.
@@ -445,5 +445,5 @@ These are findings from building this roadmap, offered as hypotheses for the mai
 - **Several status records lag their branches.** CCS's next action names a merge that has happened, and IOD's record on `main` predates its own squash merge. AIR's record on `main` is older than its copy on the Track H branch.
 - **Two branches hold the same line of work.** `claude/nice-bohr-pmj43u-wwhgle` is contained in `claude/nice-bohr-pmj43u`.
 - **Release tags lag merges.** Release 0.18.0 is merged and untagged. Track H prepares 0.19.0 on top of it, so the 0.18.0 tags should exist before 0.19.0 merges, or the register's order will not match the tags'.
-- **Machine R carries three streams.** AIR verification, CCS and, through CCS, most of NRS. CCS C9b3 and C9b4 are on the critical path of all three.
+- **Machine R carries three streams.** AIR verification, CCS and, through CCS, most of NRS. CCS-9b.3 and CCS-9b.4 are on the critical path of all three.
 - **This page will go stale.** Under the lifecycle skill, `docs/developer/` holds durable guidance only. A roadmap is a snapshot. Options are to regenerate it from the status records with a tool, to keep it as a dated snapshot and replace it on each refresh, or to fold its overview into `INDEX.md`.

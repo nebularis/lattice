@@ -51,7 +51,7 @@ S2 also changes Eligibility, and rebases onto AIR-3.2. AIR-3.3 merges before
 ## AIR-3.1 in detail
 
 **Machine:** R. **Branch:** `air/3.1-flat-hierarchy`. **Validation Pack:**
-[applied-insurance-reference-3.1](../validation/applied-insurance-reference-3.1.md).
+[applied-insurance-reference-3.1](../validation/AIR-3.1.md).
 **Decision:** ADR-A100, with its implementation note.
 
 **Invariant:** under `elg:HierarchicalMatch`, a resolved scheme in which no member has a
@@ -128,7 +128,7 @@ Disabling it in `sparql_backend.concept_select` fails AIR31-03, 04, 06 and 07.
 ## AIR-3.2 in detail
 
 **Machine:** R. **Branch:** `air/3.2-set-readings`. **Validation Pack:**
-[applied-insurance-reference-3.2](../validation/applied-insurance-reference-3.2.md).
+[applied-insurance-reference-3.2](../validation/AIR-3.2.md).
 **Decision:** ADR-A103.
 
 **Invariant:** a bound condition reads several values by the reading its binding declares, a
@@ -201,7 +201,7 @@ Authored in ADR-A-C2 order: examples, then laws and README, then code.
 ## AIR-3.3 in detail
 
 **Machine:** R. **Branch:** `air/3.3-readings-swrl-owl`. **Validation Pack:**
-[applied-insurance-reference-3.3](../validation/applied-insurance-reference-3.3.md).
+[applied-insurance-reference-3.3](../validation/AIR-3.3.md).
 **Decision:** ADR-A103 decisions 3 and 4.
 
 **Blocked (2026-10-13).** Do not start until CCS slice HQ-6a.2 (`ccs/hq6a2-closures-compilers`) has
@@ -282,7 +282,7 @@ No ontology changes, so no version bumps, catalog rows or tags. The examples are
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-3.4] …`, the
 last being `[AIR-3.4] Handoff`. **Validation Pack:**
-[applied-insurance-reference-3.4](../validation/applied-insurance-reference-3.4.md). **Decisions:**
+[applied-insurance-reference-3.4](../validation/AIR-3.4.md). **Decisions:**
 ADR-A100 (decisions 4 and 5), ADR-A13 (MORK review). **Sketch:** MORK bridge §3, §4.1, §6, §7,
 peril vocabulary §9.2. **Decided 2026-10-14:** AIR-3.4-Q1 and AIR-3.4-Q2 (below), at their
 leanings.
@@ -392,7 +392,7 @@ This slice declares `aeo:liftedPeril` in the exposure spec's `losses-requirement
 
 **Machine:** S (Copilot Business, moved from R on 2026-10-13). **Branch:** `air/applied-reference`,
 commits `[AIR-3.5] …`, the last being `[AIR-3.5] Handoff`. **Validation Pack:**
-[applied-insurance-reference-3.5](../validation/applied-insurance-reference-3.5.md). **Decisions:**
+[applied-insurance-reference-3.5](../validation/AIR-3.5.md). **Decisions:**
 ADR-A100, ADR-A103. **Sketch:** MORK bridge §4.2, §4.3, peril vocabulary §6.8. **Milestone:** M2.
 
 **Invariant:** a reference concept lowers to a list's code only through an exact mapping, a

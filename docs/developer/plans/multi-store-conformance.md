@@ -3,6 +3,7 @@
 # Multi-store conformance: plan
 
 **Unit ID:** `multi-store-conformance` (slice prefix MSC)
+**Prefix:** MSC
 **Status record:** [multi-store-conformance.md](../status/multi-store-conformance.md)
 **Decisions it builds on:** ADR-A124 (benchmarks measure, never fail on time), ADR-A125 and its 2026-10-21 addendum (test-support packages, Oxigraph the default engine, conformance before a merge, "each engine added later, for example Jena, joins this run and adds nothing to `check`"), ADR-A83 (the reasoning test kit, the precedent for a Java engine driven from Python tests), ADR-A128 (efficient queries and shapes), STD-153, STD-173, STD-176, STD-274, the replacement for STD-279 and R9 (2026-10-27).
 **Placement:** open. Test support, engine findings and benchmarks, nothing domain-specific.

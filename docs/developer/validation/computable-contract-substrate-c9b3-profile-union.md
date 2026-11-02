@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: CCS C9b3, the profile union on both engines
+# Validation Pack: CCS-9b.3, the profile union on both engines
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** a macOS arm64 laptop (run R-J of the [discovery record](../../architecture/triple-store-discovery.md)). **Branch:** `ccs/c9b3-profile-union`

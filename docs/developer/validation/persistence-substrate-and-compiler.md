@@ -57,15 +57,15 @@ Equivalent to `python -m pytest tools/persistence/tests -q` from the repository 
 ## Deliberate non-coverage
 
 - **No live SPARQL execution against any store.** No store SPI exists in this plan to execute against (out of scope, proposed A75).
-- **No runtime parameter binding.** The genuine SPARQL variables (`$root`, `$expectedSeq`, the payload) in instantiated templates are never bound here; that is Request Query Mapping, explicitly deferred (see [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, rows 11-12).
+- **No runtime parameter binding.** The genuine SPARQL variables (`$root`, `$expectedSeq`, the payload) in instantiated templates are never bound here, that is Request Query Mapping, explicitly deferred (see [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) Part 13, rows 11-12).
 - **No store-specific dialect rewriting.** Query Execution is explicitly deferred alongside the SPI.
 - **`platform/housekeeping` (Slice 3).** Not built in this slice. Its contracts and configuration model are designed in ADR-A80 but not yet implemented.
 - **Multi-property, multi-level `CompositePropertyBoundary` closures.** The `cas-replace-composite-property` template uses only the first composite property found, with `+` traversal. A shape with several sibling composite properties at one level needs a property-path alternation this first cut does not generate (documented in `tools/persistence/README.md`, "Known limitations").
-- **`unconditional-write` for non-`NamedGraphBoundary` targets.** Documented as a known limitation; not covered by a passing test because no fixture currently exercises that combination.
+- **`unconditional-write` for non-`NamedGraphBoundary` targets.** Documented as a known limitation, not covered by a passing test because no fixture currently exercises that combination.
 
 ## Adversarial probe (for the validation gate)
 
 Two suggested probes:
 
 1. Temporarily replace `Iri.encode`'s forbidden-character check body with `pass` (drop the rejection) and re-run `test_terms.py`. Verified: 8 of 164 cases fail, each on an adversarial value that previously raised `SparqlTermError` and now raises a raw `pyparsing.ParseException` deep inside the SPARQL parser instead of being cleanly refused at the encoder boundary, demonstrating the corpus is not vacuous.
-2. Temporarily retarget `dal:CompositePropertyBoundaryRequiresShapeShape`'s `sh:targetClass` away from `dal:AggregateBoundaryProfile` (to a class nothing matches) in `shapes/constraints.ttl`, and re-run `test_compiler_integration.py::TestShaclSelfValidation::test_does_not_conform`. Verified: it fails (`assert not True`, the fixture now conforms when it should not), demonstrating the SHACL-level defence-in-depth is load-bearing, not decorative. (A naive line-by-line comment-out of the shape corrupts the embedded multi-line SPARQL string literal instead of disabling the shape; retargeting `sh:targetClass` is the clean way to disable one shape for this probe.)
+2. Temporarily retarget `dal:CompositePropertyBoundaryRequiresShapeShape`'s `sh:targetClass` away from `dal:AggregateBoundaryProfile` (to a class nothing matches) in `shapes/constraints.ttl`, and re-run `test_compiler_integration.py::TestShaclSelfValidation::test_does_not_conform`. Verified: it fails (`assert not True`, the fixture now conforms when it should not), demonstrating the SHACL-level defence-in-depth is load-bearing, not decorative. (A naive line-by-line comment-out of the shape corrupts the embedded multi-line SPARQL string literal instead of disabling the shape, retargeting `sh:targetClass` is the clean way to disable one shape for this probe.)

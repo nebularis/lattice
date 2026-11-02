@@ -3,7 +3,7 @@
 # InsurML Alignment: Status
 
 **Unit ID:** `insurml-alignment` (epic)
-**Status:** 📝 Proposed. Vision, sketches, epic plan and Phase 0 plan drafted, awaiting the maintainer's review
+**Status:** planned . 📝 Proposed. Vision, sketches, epic plan and Phase 0 plan drafted, awaiting the maintainer's review
 **Last updated:** 2026-10-06
 **Plan:** [insurml-alignment.md](../plans/insurml-alignment.md), [phase 0](../plans/insurml-alignment-phase-0.md)
 **Vision:** [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md)
@@ -41,16 +41,16 @@ IMA-D16, IMA-D17 (the assembly interface). **Answered by InsurML's owner, 2026-1
 
 ## Phase 0
 
-| Slice | State |
-|---|---|
-| IMA-0.1 engagement brief | not started |
-| IMA-0.2 licence and publication record | not started |
-| IMA-0.3 ADR, profile | not started |
-| IMA-0.4 ADR, bridge tooling and kits | not started |
-| IMA-0.5 ADR, transclusion | not started |
-| IMA-0.6 ADR, inline parts | not started |
-| IMA-0.8 ADR, assembly interface | not started |
-| IMA-0.7 alignment edits | not started. Pointers added on 2026-10-05, final edits after gate 0 |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| IMA-0.1 | engagement brief | planned |  |
+| IMA-0.2 | licence and publication record | planned |  |
+| IMA-0.3 | ADR, profile | planned |  |
+| IMA-0.4 | ADR, bridge tooling and kits | planned |  |
+| IMA-0.5 | ADR, transclusion | planned |  |
+| IMA-0.6 | ADR, inline parts | planned |  |
+| IMA-0.8 | ADR, assembly interface | planned |  |
+| IMA-0.7 | alignment edits | planned 2026-10-05, Pointers added on, final edits after gate 0 |  |
 
 ### Licence and publication record
 
