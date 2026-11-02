@@ -40,6 +40,7 @@ from rdflib.plugins.sparql.parser import parseQuery, parseUpdate
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Node
 
+from .contract import contract_of
 from .hygiene import VIOLATION, Finding
 from .instantiate import build_operation
 from .ir import SLOT_KINDS
@@ -90,6 +91,22 @@ for _base in (
             **({"s": _NOTHING_SWEPT, "p": _NOTHING_SWEPT, "o": _NOTHING_SWEPT} if _base.startswith("tombstone") else {}),
         }
 
+_ROW_BRANCH = (
+    "the variable is bound in the UNION branch that carries its slot's rows and in no other solution, so the triple made of the row "
+    "variables is written once per row of the slot and skipped in every other solution by design (H2.12, TSD-65)"
+)
+_ROW_VARIABLES = {"payloadTriples": ("newS", "newP", "newO"), "assertTriples": ("addS", "addP", "addO"), "retractTriples": ("delS", "delP", "delO")}
+# The rows replaces (H2.12) carry their payload, and under a patch log their delta, as rows of UNION branches, so every row variable is
+# optional in the INSERT by design, and the receipt variants keep the first-write allowance of their base operation.
+for _family, _tags in (("cas-replace-named-graph-rows", ("", "-patch-log", "-no-receipt")), ("cas-replace-composite-property-rows", ("-patch-log", "-no-receipt"))):
+    for _tag in _tags:
+        for _guard in ("", "-dataset-guard"):
+            _slots = ("payloadTriples", "assertTriples", "retractTriples") if _tag == "-patch-log" else ("payloadTriples",)
+            OPTIONAL_INSERT_VARIABLES[f"{_family}{_tag}{_guard}"] = {
+                **({"prevRev": _FIRST_CAS} if _tag != "-no-receipt" else {}),
+                **{name: _ROW_BRANCH for slot in _slots for name in _ROW_VARIABLES[slot]},
+            }
+
 # Stand-ins for the request-time slots, so the text parses as SPARQL. The
 # payload is a ground triple. A real payload is skolemized by the caller.
 _SLOT_STAND_INS = {
@@ -102,6 +119,10 @@ _SLOT_STAND_INS = {
     "addedMembers": "<urn:x-check:s> <urn:x-check:addsMember> <urn:x-check:added> .",
     "droppedMembers": "<urn:x-check:s> <urn:x-check:dropsMember> <urn:x-check:removed> .",
 }
+_ROW_STAND_INS = {
+    name: "(<urn:x-check:s> <urn:x-check:p> <urn:x-check:o>)" for name in ("payloadTriples", "assertTriples", "retractTriples")
+}
+"""The stand-ins of the payload slots of an operation whose contract writes them as rows (dal:TripleRows, H2.12)."""
 
 
 
@@ -129,7 +150,11 @@ def operations(compiled: Graph) -> list[Operation]:
             name, built = build_operation(compiled, node)
             builder = str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId))
             parameters = frozenset(p.name for p in built.params if p.kind not in SLOT_KINDS)
-            out.append(Operation(target, name, builder, fill_slots(render(built), _SLOT_STAND_INS), parameters))
+            contract = contract_of(built)
+            stand_ins = dict(_SLOT_STAND_INS)
+            if contract.payload is not None and contract.payload.encoding == "TripleRows":
+                stand_ins.update(_ROW_STAND_INS)
+            out.append(Operation(target, name, builder, fill_slots(render(built), stand_ins), parameters))
     return out
 
 

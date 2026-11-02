@@ -22,7 +22,7 @@ from typing import Any
 
 from rdflib import URIRef
 
-from .model import ResolvedDimension, default_replace_encoding
+from .model import ResolvedDimension
 from .scopes import Target
 from .terms import Integer, Iri, Literal, PropertyPath
 
@@ -69,12 +69,28 @@ def _shard_for(target: Target, shard_count: int) -> int:
     return int.from_bytes(digest[:4], "big") % max(shard_count, 1)
 
 
+def rows_replace(dimensions: dict[str, ResolvedDimension], spec) -> bool:
+    """Whether an optimistic family's replace carries its payload as rows (H2.12). `dal:replaceForm` on the profile decides where it is
+    declared, `dal:RowsReplace` or `dal:TemplateReplace`, the operator taking responsibility. Otherwise the capability spec decides: the rows
+    form where it declares `dal:providesSnapshotUpdateSemantics` true, and the template form where it declares false, declares nothing or
+    there is no spec, since an undeclared store cannot be assumed to follow the specification (the sketch's LR-Q3)."""
+    form = _local(dimensions["replaceForm"].value) if "replaceForm" in dimensions else None
+    if form == "RowsReplace":
+        return True
+    if form == "TemplateReplace":
+        return False
+    return spec is not None and getattr(spec, "provides_snapshot_update_semantics", None) is True
+
+
 def select_operations(
     target: Target,
     dimensions: dict[str, ResolvedDimension],
     uniqueness: list[dict],
+    spec=None,
 ) -> list[GeneratedOperation]:
     boundary = _local(dimensions["aggregateBoundary"].value)
+    # H2.12: the rows replace where the store applies deletions before insertions, by declaration or by the operator's opt-in.
+    rows_tag = "-rows" if rows_replace(dimensions, spec) else ""
     concurrency = _local(dimensions["concurrencyProfile"].value)
     ordering = _local(dimensions["orderingGrain"].value)
     # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
@@ -93,10 +109,6 @@ def select_operations(
     # guide §19.1's worked example. Not independently configurable in
     # this slice -- see persistence-compiler-iri-sync's status record.
     dataset_level_guard = _local(dimensions["epochGuardScope"].value) == "DatasetLevelGuard"
-    # dal:replaceEncoding (DR1). Under dal:ChangedTriples the replace writes what changed and sweeps nothing.
-    replace_encoding = dimensions.get("replaceEncoding")
-    replace_tag = "-delta" if ((_local(replace_encoding.value) if replace_encoding and replace_encoding.value is not None else None)
-                               or default_replace_encoding(dimensions)) == "ChangedTriples" else ""
     guard_suffix = "-dataset-guard" if dataset_level_guard else ""
     # dal:firstWrite (Slice 2): a pre-created row exists from id allocation,
     # so the target never gets create-if-absent. It gets the bootstrap
@@ -168,8 +180,8 @@ def select_operations(
     elif concurrency == "Optimistic" and discipline != "AppendRecords":
         if boundary == "NamedGraphBoundary":
             cas_template = (
-                f"cas-replace-named-graph{replace_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-named-graph{replace_tag}{receipt_tag}"
+                f"cas-replace-named-graph{rows_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-named-graph{rows_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-named-graph{receipt_tag}-dataset-guard" if dataset_level_guard
@@ -183,7 +195,6 @@ def select_operations(
                 ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
-            ops.extend(_whole_and_digest(dimensions, cas_template, "state-digest-audit-named-graph", common_bindings, common_bindings))
         elif boundary == "CompositePropertyBoundary":
             # A property path cannot be a variable, so the path that reaches the aggregate's
             # members is a compile-time slot, not a request-time $-variable. It is compiled from
@@ -196,8 +207,8 @@ def select_operations(
             data_graph = ParameterBinding("dataGraph", "Iri", Iri.encode(str(boundary_dim.extra["dataGraph"])))
             bindings = common_bindings + [ParameterBinding("ownedPath", "PropertyPath", PropertyPath.encode(owned_path)), data_graph]
             composite_template = (
-                f"cas-replace-composite-property{replace_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
-                else f"cas-replace-composite-property{replace_tag}{receipt_tag}"
+                f"cas-replace-composite-property{rows_tag}{receipt_tag}-dataset-guard" if dataset_level_guard
+                else f"cas-replace-composite-property{rows_tag}{receipt_tag}"
             )
             tombstone_template = (
                 f"tombstone-delete-composite{receipt_tag}-dataset-guard" if dataset_level_guard
@@ -213,7 +224,6 @@ def select_operations(
                 ))
             ops.append(GeneratedOperation("cas-replace", composite_template, bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
-            ops.extend(_whole_and_digest(dimensions, composite_template, "state-digest-audit-composite", bindings, common_bindings))
         elif boundary == "NoBoundary":
             # The values live in the family's data graph, which the validator has required (MissingDataGraph, H2.7-Q1), and the
             # value guard property, which it has required too (NoBoundaryConcurrencyConflict).
@@ -317,20 +327,6 @@ def select_operations(
         ops.append(GeneratedOperation("payload-check", "payload-check", check_bindings))
 
     return ops
-
-
-def _whole_and_digest(dimensions: dict, replace_template: str, audit_template: str, bindings: list, row_bindings: list) -> list:
-    """What an optimistic in-place family gains beside its replace (DR2). Under dal:ChangedTriples, the whole replace as `replace-whole`,
-    which a bulk load composes with the create (DR-Q6). Under dal:recordsStateDigest, the write that records the digest of the state a
-    write left and the read that audits it (DR-Q3 (c))."""
-    out = []
-    if "-delta" in replace_template:
-        out.append(GeneratedOperation("replace-whole", replace_template.replace("-delta", "", 1), bindings))
-    digest = dimensions.get("recordsStateDigest")
-    if digest is not None and digest.value is not None and str(digest.value).lower() == "true":
-        out.append(GeneratedOperation("record-state-digest", "record-state-digest", row_bindings))
-        out.append(GeneratedOperation("state-digest-audit", audit_template, bindings))
-    return out
 
 
 PAYLOAD_GRAPH = "urn:g:payload"

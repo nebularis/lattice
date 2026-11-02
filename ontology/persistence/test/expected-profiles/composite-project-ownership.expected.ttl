@@ -17,6 +17,11 @@
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-10> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/projects/Project/compiled/cas-replace#access-11> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -27,35 +32,35 @@
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-3> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:resourceKind dal:PatchContent .
+    dal:accessMode dal:WholeAggregateRead ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
+    dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-5> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
+    dal:accessMode dal:Insert ;
+    dal:resourceKind dal:Receipt .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-7> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
+    dal:resourceKind dal:TransactionClaim .
+
+<https://example.org/projects/Project/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/projects/Project/compiled/cas-replace#access-8> a dal:ResourceAccess ;
-    dal:accessMode dal:Delete ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
 <https://example.org/projects/Project/compiled/cas-replace#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
@@ -65,7 +70,8 @@
         <https://example.org/projects/Project/compiled/cas-replace#digest-part-2>,
         <https://example.org/projects/Project/compiled/cas-replace#digest-part-3>,
         <https://example.org/projects/Project/compiled/cas-replace#digest-part-4>,
-        <https://example.org/projects/Project/compiled/cas-replace#digest-part-5> .
+        <https://example.org/projects/Project/compiled/cas-replace#digest-part-5>,
+        <https://example.org/projects/Project/compiled/cas-replace#digest-part-6> .
 
 <https://example.org/projects/Project/compiled/cas-replace#digest-part-1> a dal:DigestPart ;
     dal:partOrder 1 ;
@@ -84,11 +90,16 @@
 
 <https://example.org/projects/Project/compiled/cas-replace#digest-part-4> a dal:DigestPart ;
     dal:partOrder 4 ;
-    dal:partRole dal:AddPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/cas-replace#param-assertTriples> .
+    dal:partRole dal:PayloadPart ;
+    dal:partSource <https://example.org/projects/Project/compiled/cas-replace#param-payloadTriples> .
 
 <https://example.org/projects/Project/compiled/cas-replace#digest-part-5> a dal:DigestPart ;
     dal:partOrder 5 ;
+    dal:partRole dal:AddPart ;
+    dal:partSource <https://example.org/projects/Project/compiled/cas-replace#param-assertTriples> .
+
+<https://example.org/projects/Project/compiled/cas-replace#digest-part-6> a dal:DigestPart ;
+    dal:partOrder 6 ;
     dal:partRole dal:DelPart ;
     dal:partSource <https://example.org/projects/Project/compiled/cas-replace#param-retractTriples> .
 
@@ -111,6 +122,23 @@
     dal:parameterKind dal:DigestKind ;
     dal:parameterName "requestDigest" ;
     dal:required true .
+
+<https://example.org/projects/Project/compiled/cas-replace#payload> a dal:PayloadContract ;
+    dal:boundaryShape <https://example.org/projects#ProjectShape> ;
+    dal:payloadEncoding dal:GroundNTriples ;
+    dal:payloadParameter <https://example.org/projects/Project/compiled/cas-replace#param-payloadTriples> ;
+    dal:payloadRoot <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
+        <https://example.org/projects/Project/compiled/profile#edge-01>,
+        <https://example.org/projects/Project/compiled/profile#edge-02>,
+        <https://example.org/projects/Project/compiled/profile#edge-03>,
+        <https://example.org/projects/Project/compiled/profile#edge-04>,
+        <https://example.org/projects/Project/compiled/profile#edge-05>,
+        <https://example.org/projects/Project/compiled/profile#edge-06>,
+        <https://example.org/projects/Project/compiled/profile#edge-07>,
+        <https://example.org/projects/Project/compiled/profile#edge-08>,
+        <https://example.org/projects/Project/compiled/profile#edge-09>,
+        <https://example.org/projects/Project/compiled/profile#edge-10> .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
@@ -270,135 +298,6 @@
     dal:columnName "s" ;
     dal:columnPosition 1 .
 
-<https://example.org/projects/Project/compiled/replace-whole#access-1> a dal:ResourceAccess ;
-    dal:accessMode dal:Delete ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:Aggregate .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-10> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-11> a dal:ResourceAccess ;
-    dal:accessMode dal:PointRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-2> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:Aggregate .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-3> a dal:ResourceAccess ;
-    dal:accessMode dal:WholeAggregateRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:Aggregate .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-4> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:resourceKind dal:PatchContent .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-5> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-7> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-8> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/projects/Project/compiled/replace-whole#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Delete ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest> a dal:DigestContract ;
-    dal:digestAlgorithm "SHA-256" ;
-    dal:digestPart <https://example.org/projects/Project/compiled/replace-whole#digest-part-1>,
-        <https://example.org/projects/Project/compiled/replace-whole#digest-part-2>,
-        <https://example.org/projects/Project/compiled/replace-whole#digest-part-3>,
-        <https://example.org/projects/Project/compiled/replace-whole#digest-part-4>,
-        <https://example.org/projects/Project/compiled/replace-whole#digest-part-5>,
-        <https://example.org/projects/Project/compiled/replace-whole#digest-part-6> .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-1> a dal:DigestPart ;
-    dal:partOrder 1 ;
-    dal:partRole dal:OperationKindPart ;
-    dal:partSource dal:NoSource .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-2> a dal:DigestPart ;
-    dal:partOrder 2 ;
-    dal:partRole dal:TargetPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/replace-whole#param-root> .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-3> a dal:DigestPart ;
-    dal:partOrder 3 ;
-    dal:partRole dal:ExpectedSeqPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/replace-whole#param-expectedSeq> .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-4> a dal:DigestPart ;
-    dal:partOrder 4 ;
-    dal:partRole dal:PayloadPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/replace-whole#param-payloadTriples> .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-5> a dal:DigestPart ;
-    dal:partOrder 5 ;
-    dal:partRole dal:AddPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/replace-whole#param-assertTriples> .
-
-<https://example.org/projects/Project/compiled/replace-whole#digest-part-6> a dal:DigestPart ;
-    dal:partOrder 6 ;
-    dal:partRole dal:DelPart ;
-    dal:partSource <https://example.org/projects/Project/compiled/replace-whole#param-retractTriples> .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-epoch> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:LongKind ;
-    dal:parameterName "epoch" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-newRev> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "newRev" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-nextSeq> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PositionKind ;
-    dal:parameterName "nextSeq" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-requestDigest> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:DigestKind ;
-    dal:parameterName "requestDigest" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#payload> a dal:PayloadContract ;
-    dal:boundaryShape <https://example.org/projects#ProjectShape> ;
-    dal:payloadEncoding dal:GroundNTriples ;
-    dal:payloadParameter <https://example.org/projects/Project/compiled/replace-whole#param-payloadTriples> ;
-    dal:payloadRoot <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
-        <https://example.org/projects/Project/compiled/profile#edge-01>,
-        <https://example.org/projects/Project/compiled/profile#edge-02>,
-        <https://example.org/projects/Project/compiled/profile#edge-03>,
-        <https://example.org/projects/Project/compiled/profile#edge-04>,
-        <https://example.org/projects/Project/compiled/profile#edge-05>,
-        <https://example.org/projects/Project/compiled/profile#edge-06>,
-        <https://example.org/projects/Project/compiled/profile#edge-07>,
-        <https://example.org/projects/Project/compiled/profile#edge-08>,
-        <https://example.org/projects/Project/compiled/profile#edge-09>,
-        <https://example.org/projects/Project/compiled/profile#edge-10> .
-
 <https://example.org/projects/Project/compiled/revision-multi-txn-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
     dal:resourceKind dal:Receipt .
@@ -553,21 +452,6 @@
     dal:required true ;
     dal:sourcedFrom dal:RegistryGraph .
 
-<https://example.org/projects/Project/compiled/replace-whole#param-assertTriples> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PayloadKind ;
-    dal:parameterName "assertTriples" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-expectedSeq> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PositionKind ;
-    dal:parameterName "expectedSeq" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-retractTriples> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PayloadKind ;
-    dal:parameterName "retractTriples" ;
-    dal:required true .
-
 <https://example.org/projects/Project/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
     dal:parameterKind dal:RegistryListKind ;
     dal:parameterName "logGraphs" ;
@@ -584,6 +468,11 @@
     dal:parameterName "logGraphs" ;
     dal:required true ;
     dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/projects/Project/compiled/cas-replace#param-payloadTriples> a dal:ParameterDeclaration ;
+    dal:parameterKind dal:PayloadKind ;
+    dal:parameterName "payloadTriples" ;
+    dal:required true .
 
 <https://example.org/projects/Project/compiled/cas-replace#param-txnId> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -699,16 +588,6 @@
     dal:edgeTargetClass skos:Concept ;
     dal:referenceMode dal:ByIdentity .
 
-<https://example.org/projects/Project/compiled/replace-whole#param-payloadTriples> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PayloadKind ;
-    dal:parameterName "payloadTriples" ;
-    dal:required true .
-
-<https://example.org/projects/Project/compiled/replace-whole#param-txnId> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "txnId" ;
-    dal:required true .
-
 <https://example.org/projects/Project/compiled/tombstone-delete#param-txnId> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "txnId" ;
@@ -719,17 +598,12 @@
     dal:parameterName "root" ;
     dal:required true .
 
-<https://example.org/projects/Project/compiled/cas-replace#param-root> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:IriKind ;
-    dal:parameterName "root" ;
-    dal:required true .
-
 <https://example.org/projects/Project/compiled/tombstone-delete#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
 
-<https://example.org/projects/Project/compiled/replace-whole#param-root> a dal:ParameterDeclaration ;
+<https://example.org/projects/Project/compiled/cas-replace#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
@@ -817,6 +691,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/projects/Project/compiled/cas-replace#access-1>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-10>,
+                <https://example.org/projects/Project/compiled/cas-replace#access-11>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-2>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-3>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-4>,
@@ -887,13 +762,15 @@
                 <https://example.org/projects/Project/compiled/cas-replace#param-expectedSeq>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-newRev>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-nextSeq>,
+                <https://example.org/projects/Project/compiled/cas-replace#param-payloadTriples>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-requestDigest>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-retractTriples>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-root>,
                 <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
-            dal:templateVersion 2 ;
+            dal:payloadContract <https://example.org/projects/Project/compiled/cas-replace#payload> ;
+            dal:templateVersion 3 ;
             dal:usesTemplate [ a dal:Template ;
-                    dal:templateId "cas-replace-composite-property-delta-patch-log" ] ],
+                    dal:templateId "cas-replace-composite-property-patch-log" ] ],
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/projects/Project/compiled/tombstone-delete#access-1>,
                 <https://example.org/projects/Project/compiled/tombstone-delete#access-10>,
@@ -974,89 +851,6 @@
             dal:templateVersion 3 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "tombstone-delete-composite-patch-log" ] ],
-        [ a dal:GeneratedOperation ;
-            dal:access <https://example.org/projects/Project/compiled/replace-whole#access-1>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-10>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-11>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-2>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-3>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-4>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-5>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-6>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-7>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-8>,
-                <https://example.org/projects/Project/compiled/replace-whole#access-9> ;
-            dal:declarationSource dal:BuilderDerived ;
-            dal:digestContract <https://example.org/projects/Project/compiled/replace-whole#digest> ;
-            dal:forOperation "replace-whole" ;
-            dal:guardStatus dal:Guarded ;
-            dal:hasParameterBinding [ a dal:ParameterBinding ;
-                    dal:paramName "dataGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:projects>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "datasetGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:dataset>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "datasetNode" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:dataset>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "eventGraphPrefix" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:events/project/>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "keyQuarantineGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:key-quarantine>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "keysGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:keys>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "logGraphPrefix" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:txlog/>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "metaGraphPrefix" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:meta/38>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "ownedPath" ;
-                    dal:paramType "PropertyPath" ;
-                    dal:paramValue "(<https://example.org/projects#hasMilestone>|<https://example.org/projects#hasMilestone>/<https://example.org/projects#hasTask>/(<https://example.org/projects#hasSubtask>)*/(<https://example.org/projects#attachment>|^<https://example.org/projects#onTask>)?|<https://example.org/projects#hasPlan>)?" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "pinnedGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:txlog/pinned>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "retentionGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:retention>" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "shard" ;
-                    dal:paramType "Integer" ;
-                    dal:paramValue "38" ],
-                [ a dal:ParameterBinding ;
-                    dal:paramName "txnGraph" ;
-                    dal:paramType "Iri" ;
-                    dal:paramValue "<urn:g:txn>" ] ;
-            dal:operationKind dal:Replace ;
-            dal:parameter <https://example.org/projects/Project/compiled/replace-whole#param-assertTriples>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-epoch>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-expectedSeq>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-newRev>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-nextSeq>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-payloadTriples>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-requestDigest>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-retractTriples>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-root>,
-                <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
-            dal:payloadContract <https://example.org/projects/Project/compiled/replace-whole#payload> ;
-            dal:templateVersion 3 ;
-            dal:usesTemplate [ a dal:Template ;
-                    dal:templateId "cas-replace-composite-property-patch-log" ] ],
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/projects/Project/compiled/gap-scan-audit#access-1>,
                 <https://example.org/projects/Project/compiled/gap-scan-audit#access-2>,
@@ -1393,13 +1187,9 @@
             dal:resolvedValue dal:PatchLog ;
             dal:wonBy <https://example.org/projects#ProjectReceiptProfile> ],
         [ dal:candidateCount 0 ;
-            dal:dimension "recordsStateDigest" ;
-            dal:resolvedLiteral false ],
-        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 0 ;
-            dal:dimension "replaceEncoding" ;
-            dal:resolvedValue dal:ChangedTriples ],
+            dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;
             dal:dimension "retentionMode" ;
             dal:resolvedValue dal:PrefixOnlyRetention ],

@@ -10,7 +10,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistence> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> ;
     dct:description """A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in tools/persistence turns that record into generated, portable SPARQL and identity minting recipes.
 
 Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional persistent-foundation document imports a layer.""" ;
@@ -112,9 +112,6 @@ dal:CapabilityRequirement a owl:Class ;
 
 dal:CapabilitySpec a owl:Class ;
     rdfs:comment "An adopter-authored, optional, static declaration of assumed backend capabilities. NEVER derived from a live SPI or a TCK run, and never required for compilation to succeed. Shares field shape with the guide's StoreCapabilities record (Chapter 25 §25.2) by design, not by identity, so a future SPI-integrated stage can populate one from a real TCK run without a second vocabulary." .
-
-dal:ChangedTriples a dal:ReplaceEncoding ;
-    rdfs:comment "The default under dal:Optimistic for a family written in place. The replace deletes the triples the write retracts and inserts the ones it asserts, guarded on the version row, and sweeps nothing, so it costs what changed and not the size of the aggregate. The guard proves the aggregate is the state the caller computed the delta from, as long as only the family's operations write it." .
 
 dal:ClaimScheme a owl:Class ;
     rdfs:comment "Versioned state for a keyed-hash claim (guide Chapter 6.1), so rotating the HMAC secret does not open a window where two scheme versions can each claim the same normalized key." .
@@ -521,7 +518,7 @@ dal:OccurrenceNamespaceDerivation a owl:Class ;
 
 dal:OperationKind a owl:Class ;
     rdfs:comment "The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a no-receipt variant have the kind of their base operation." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
 
 dal:OperationKindPart a dal:DigestPartRole ;
     rdfs:comment "The operation's kind." .
@@ -570,7 +567,7 @@ dal:PayloadContract a owl:Class ;
 
 dal:PayloadEncoding a owl:Class ;
     rdfs:comment "How a payload is written into its slot." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:GroundNTriples ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:GroundNTriples dal:TripleRows ) ] .
 
 dal:PayloadKind a dal:ParameterKind ;
     rdfs:comment "A request-time slot for a set of ground triples." .
@@ -683,9 +680,9 @@ dal:Reject a dal:ViolationPolicy ;
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
 
-dal:ReplaceEncoding a owl:Class ;
-    rdfs:comment "How an in-place family's replace writes a new state. One of dal:ChangedTriples, dal:WholeState." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:ChangedTriples dal:WholeState ) ] .
+dal:ReplaceForm a owl:Class ;
+    rdfs:comment "The form of the compare-and-set replace of an optimistic named-graph or composite family: dal:TemplateReplace carries the payload in the update's template, which a store fills once per stored triple, and dal:RowsReplace carries it as rows of the WHERE, so the write is linear in the aggregate's size on a store that applies every deletion before any insertion. A profile that declares none is written in the form the capability spec allows." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:TemplateReplace dal:RowsReplace ) ] .
 
 dal:ResolvedDimension a owl:Class ;
     rdfs:comment "Provenance for one dimension's winning value at one target: which scope won, and how many candidates existed." .
@@ -725,6 +722,9 @@ dal:RowLevelGuardOnly a dal:EpochGuardScope ;
 
 dal:RowsKind a dal:ParameterKind ;
     rdfs:comment "A request-time slot for rows of a VALUES clause." .
+
+dal:RowsReplace a dal:ReplaceForm ;
+    rdfs:comment "The replace whose payload and delta come as rows of the WHERE, filled once per payload triple. Linear, and right only on a store that applies every deletion before any insertion." .
 
 dal:Rule a owl:Class ;
     rdfs:comment "A rule a parameter's value must satisfy, named and never written as a SPARQL expression." ;
@@ -770,12 +770,6 @@ dal:Source a owl:Class ;
     rdfs:comment "Where a caller obtains a value, or the statement that there is no source." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:RegistryGraph dal:NoSource ) ] .
 
-dal:StateDigestRead a dal:OperationKind ;
-    rdfs:comment "Reads a root's recorded state digest and the triples of its aggregate, for a caller to recompute the digest and compare." .
-
-dal:StateDigestRecord a dal:OperationKind ;
-    rdfs:comment "Records on a root's version row the digest of the state its write left, guarded on the row being at the write's sequence and the transaction's claim, so it applies only after that write." .
-
 dal:StoreLocalEpoch a dal:EpochAuthority ;
     rdfs:comment "The epoch lives only inside the dataset being restored. Unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated. Warned, not refused (dal:StoreLocalEpochWarningShape): acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier leaves the dataset." .
 
@@ -807,6 +801,9 @@ dal:TargetPart a dal:DigestPartRole ;
 dal:Template a owl:Class ;
     rdfs:comment "The builder that renders a generated operation, shared across every target resolving to the same dimension combination. Its dal:templateId is the builder's identity, the operation id without a suffix." .
 
+dal:TemplateReplace a dal:ReplaceForm ;
+    rdfs:comment "The replace whose payload sits in the update's template, filled once per stored triple. Right on every store, and quadratic in the aggregate's size." .
+
 dal:TermColumn a dal:ColumnKind ;
     rdfs:comment "Any RDF term." .
 
@@ -818,6 +815,9 @@ dal:TransactionClaim a dal:ResourceKind ;
 
 dal:Transactional a dal:UniquenessEnforcementLevel ;
     rdfs:comment "A dal:minEnforcementLevel ranked between dal:Advisory and dal:Strong, for a key claim written by one guarded update that the store applies atomically." .
+
+dal:TripleRows a dal:PayloadEncoding ;
+    rdfs:comment "One row (s p o) per triple of the payload, for a VALUES block, with the same ground terms as the N-Triples form and no full stop. Every Payload slot of the operation takes this form. The request digest is over the N-Triples lines whichever encoding the slot takes." .
 
 dal:UnconditionalWrite a dal:OperationKind ;
     rdfs:comment "Writes into a named graph with no guard on a version row." .
@@ -854,15 +854,12 @@ dal:WeakEtag a dal:EtagForm ;
 dal:WholeAggregateRead a dal:AccessMode ;
     rdfs:comment "A read of an aggregate's every triple, through the owned path or of the root's graph." .
 
-dal:WholeState a dal:ReplaceEncoding ;
-    rdfs:comment "The default for every family that is not optimistic and in place. The replace sweeps the aggregate and inserts its whole new state, which heals a graph changed outside the family's operations." .
-
 dal:WriteDiscipline a owl:Class ;
     rdfs:comment "How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:InPlace dal:AppendVersions dal:AppendRecords ) ] .
 
 dal:WriteDisciplineProfile a owl:Class ;
-    rdfs:comment "Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery), and for a family written in place how a replace writes a new state (dal:replaceEncoding). Resolved like any dimension." .
+    rdfs:comment "Declares how a scope's families write a new state (dal:writeDiscipline), and for a family that appends versions how a version states its members (dal:membershipEncoding, dal:checkpointEvery). Resolved like any dimension." .
 
 dal:WriterStartRefusal a dal:EpochAuthority ;
     rdfs:comment "Writers refuse to start, or fail in-flight, until their cached epoch matches a durable external watermark. Combinable with dal:ExternalHighWaterMark for defence in depth." .
@@ -1485,6 +1482,11 @@ dal:providesSingleWriter a owl:DatatypeProperty ;
     rdfs:domain dal:CapabilitySpec ;
     rdfs:range xsd:boolean .
 
+dal:providesSnapshotUpdateSemantics a owl:DatatypeProperty ;
+    rdfs:comment "Whether the supplied store applies every deletion of a DELETE/INSERT WHERE before any insertion, as SPARQL 1.1 defines, rather than one solution at a time. True selects the rows replace for the families it applies to. Absent is unknown, which keeps the template replace." ;
+    rdfs:domain dal:CapabilitySpec ;
+    rdfs:range xsd:boolean .
+
 dal:providesStatementLevelConflictDetection a owl:DatatypeProperty ;
     rdfs:comment "Whether the supplied environment detects write conflicts per statement." ;
     rdfs:domain dal:CapabilitySpec ;
@@ -1512,11 +1514,6 @@ dal:recordClass a owl:ObjectProperty ;
     rdfs:comment "On a profile, a class whose instances are records: evidence of what they saw, cited for what they said at a time, beside the subclasses of fnd:Evidence and fnd:DerivedArtefact. Its subclasses, as the configuration asserts them, are records too. compile warns EvidenceEdgeByIdentity for an edge by identity from a record class to a versioned one, and NoReceiptForRecord for dal:NoReceipt on a family whose target is a record class or versioned. On a dal:CompiledProfile, the record classes the family touches, its target class and the subject classes of its edges, so a caller reads them without the configuration. No rdfs:domain is declared, since any profile may name one." ;
     rdfs:range owl:Class .
 
-dal:recordsStateDigest a owl:DatatypeProperty ;
-    rdfs:comment "Whether a family written in place under dal:Optimistic records, on its version row, the digest of the state each write leaves, so an audit finds a graph changed outside the family's operations. Absent means false. The caller computes the digest over the sorted canonical N-Triples of the next state and records it with the generated record-state-digest operation in the same request as its write." ;
-    rdfs:domain dal:WriteDisciplineProfile ;
-    rdfs:range xsd:boolean .
-
 dal:referenceEdge a owl:ObjectProperty ;
     rdfs:comment "On a dal:CompiledProfile, an edge of the family's boundary shape, stated there once with an IRI. On a dal:PayloadContract, a pointer to an edge of its own profile, which the payload's caller check follows. No rdfs:domain is declared, since the property has two." ;
     rdfs:range dal:ReferenceEdge .
@@ -1530,10 +1527,10 @@ dal:registryGraph a owl:DatatypeProperty ;
     rdfs:domain dal:MetaTopologyProfile ;
     rdfs:range xsd:string .
 
-dal:replaceEncoding a owl:ObjectProperty ;
-    rdfs:comment "Whether an in-place family's replace writes the triples that changed or the whole state. Absent means dal:ChangedTriples for a family under dal:Optimistic written in place, and dal:WholeState otherwise. compile refuses dal:ChangedTriples declared for a family that is not optimistic or not written in place (ChangedTriplesNeedsOptimisticInPlace), and any other value (ReplaceEncodingUnknown)." ;
-    rdfs:domain dal:WriteDisciplineProfile ;
-    rdfs:range dal:ReplaceEncoding .
+dal:replaceForm a owl:ObjectProperty ;
+    rdfs:comment "The operator's choice of replace form for an optimistic family, overriding what the capability spec would select: dal:RowsReplace asks for the rows replace on a store that declares nothing, the operator taking responsibility for its update order, and dal:TemplateReplace keeps the template replace on a store that declares snapshot update semantics. Absent, the capability spec selects, and an undeclared store gets the template replace." ;
+    rdfs:domain dal:ConcurrencyProfile ;
+    rdfs:range dal:ReplaceForm .
 
 dal:reportsOutcome a owl:ObjectProperty ;
     rdfs:comment "An outcome an audit can report. Every audit declares all three." ;
@@ -1717,8 +1714,6 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ByIdentity dal:Pinned ) ] .
 
-[ a owl:AllDifferent ; owl:distinctMembers ( dal:ChangedTriples dal:WholeState ) ] .
-
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:CommitGrain dal:EventGrain ) ] .
@@ -1769,7 +1764,7 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ] .
 
-[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ] .
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:QueryNamed dal:CallerNamed ) ] .
 

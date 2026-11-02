@@ -89,7 +89,8 @@ ENUMERATIONS = {
     "ParameterKind": {f"{k.value}Kind" for k in Kind},
     "ColumnKind": {f"{n}Column" for n in ("Iri", "Position", "String", "Term", "Count", "Concatenation")},
     "DigestPartRole": {"OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "EventPart", "AddPart", "DelPart"},
-    "PayloadEncoding": {"GroundNTriples"},
+    "PayloadEncoding": {"GroundNTriples", "TripleRows"},
+    "ReplaceForm": {"TemplateReplace", "RowsReplace"},
     "Rule": {"GraphNameOfRoot"},
     "Source": {"RegistryGraph", "NoSource"},
     "BoundaryShapeAbsence": {"NoBoundaryShape"},
@@ -123,6 +124,7 @@ CLOSED_BY = {
     ("ResourceAccessShape", "accessMode"): "AccessMode", ("ResultColumnShape", "columnKind"): "ColumnKind",
     ("PayloadContractShape", "payloadEncoding"): "PayloadEncoding", ("DigestPartShape", "partRole"): "DigestPartRole",
     ("ReceiptProfileShape", "receiptModel"): "ReceiptModel", ("WriteDisciplineProfileShape", "writeDiscipline"): "WriteDiscipline",
+    ("ConcurrencyProfileEnumerationsShape", "replaceForm"): "ReplaceForm",
     ("WriteDisciplineProfileShape", "membershipEncoding"): "MembershipEncoding", ("ReferenceModeShape", "referenceMode"): "ReferenceMode",
 }
 

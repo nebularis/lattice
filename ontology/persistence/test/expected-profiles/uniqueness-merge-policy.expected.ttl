@@ -805,13 +805,9 @@
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:ReceiptOnly ],
         [ dal:candidateCount 0 ;
-            dal:dimension "recordsStateDigest" ;
-            dal:resolvedLiteral false ],
-        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 0 ;
-            dal:dimension "replaceEncoding" ;
-            dal:resolvedValue dal:WholeState ],
+            dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;
             dal:dimension "retentionMode" ;
             dal:resolvedValue dal:PrefixOnlyRetention ],

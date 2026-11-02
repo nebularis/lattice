@@ -4,7 +4,7 @@
 
 **Unit ID:** `formal-methods-track-h` (phase, within the `formal-methods` epic)
 **Status:** In progress. H1 (H1.1 to H1.5, with H1.4c), the aggregate-ownership slices HO0 to HO9 and H2.0 to H2.3 are merged to `main` and signed off (H1 and HO 2026-10-10, H2.0 to H2.3 2026-10-12). H2.4a and H2.4b are built and reviewed, and every decision in their Validation Packs is taken (2026-10-13), awaiting the maintainer's merge with the triple-store record. ADR-A123 is accepted with five addenda, ADR-A124 and ADR-A125 are accepted. H2.5 and H2.6 are built (2026-10-13). Every decision of H2.5 is taken, and the maintainer approved H2.6 on 2026-10-13 with three design questions open (RQ4 to RQ6), awaiting the merge. H2.6b's event half is built, approved and merged to `main` (2026-10-14), with its six regenerated expected profiles re-approved and the change to `test_ho6_t14` countersigned. Its ADR-A123 addendum is a draft. Its patch-log half is held (H-D33).
-**Last updated:** 2026-10-21 (every planned H2 slice built, the test defaults)
+**Last updated:** 2026-11-01 (H2.12, the rows replace, built on the branch `claude/persistence-linear-replace`)
 **Plan:** [formal-methods-track-h.md](../plans/formal-methods-track-h.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md),
@@ -97,6 +97,7 @@ Left for the maintainer:
 
 | Slice | State | Blocked on |
 |---|---|---|
+| H2.12 (the rows replace, selected by capability, LR-Q1 to LR-Q4) | **built 2026-11-01, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-H2-12.md), [plan §4.20](../plans/formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01). Thirteen expected profiles for re-approval, the ADR-A123 addendum of 2026-11-01 for acceptance | the review, and the studio's deployment declaring `dal:providesSnapshotUpdateSemantics` (TD-136) |
 | H1.1 (prefix antichain and overlap check) | **signed off.** [Validation Pack](../validation/FMH-H1-1.md) | |
 | H1.2a (witness harness, audit witnesses, measured gap list) | **signed off.** [Validation Pack](../validation/FMH-H1-2.md) | |
 | H1.2b (witnesses for the refusals and warnings) | **signed off.** [Validation Pack](../validation/FMH-H1-2b.md) | |
@@ -914,4 +915,5 @@ Left for the maintainer:
   no longer passes its classes in by hand, and a comment in `test_h1_2_t23` follows, both countersigned by the maintainer 2026-10-23. No expected profile changed.
   Reverting the fix fails both tests. TD-23 is removed from the register. `check:persistence` has no expected failure left.
 - 2026-10-23: the maintainer countersigned TD-23's test changes. Nothing on the branch awaits review.
-
+- 2026-11-01: H2.12 built autonomously on `claude/persistence-linear-replace`, off the studio's branch, from the linear replace sketch's answers (LR-Q1 R2 by capability, LR-Q2 ahead of H5, LR-Q3 R0 for an undeclared store with the operator's opt-in kept, LR-Q4 the caller withholds an empty delta, STD-301). Ten rows builders, the field `dal:providesSnapshotUpdateSemantics`, the opt-in `dal:replaceForm`, the encoding `dal:TripleRows`, both caller libraries, the example `replace-form-rows`, and the benchmark on the generated form ([FMH-H2-12](../validation/FMH-H2-12.md)). LR-Q5, R1′ as H5's slice for a store with request atomicity and no snapshot semantics, is open.
+- 2026-11-01, later: the maintainer kept the `replaceForm` node in every expected profile, had the opt-in's refusal against a declared false stated in the ADR-A123 addendum as its fourth decision, and set the order of what follows. The branch waits. The delta replace unit ([sketch](../sketches/persistence-delta-replace.md), DR-Q1 to DR-Q8) comes next, the studio's deployment declares the field in that unit's studio slice, and H5 is briefed after it, with R1′ as its slice (LR-Q5).

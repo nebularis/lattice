@@ -19,7 +19,7 @@ from rdflib import URIRef
 
 from .ir import (
     A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, Kind, NotExists, Op, Operation,
-    Optional_, Param, ParamRef, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
+    Optional_, Param, ParamRef, PayloadRows, PayloadSlot, Path, Projected, RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .paths import Star, Step
 from .namespaces import PAT
@@ -411,20 +411,44 @@ def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt
     )
 
 
-def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: str = "receipt", deltas: tuple = ()) -> tuple:
-    sweep = Optional_(Group((GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),)),)))
+ROWS = {"payloadTriples": ("newS", "newP", "newO"), "assertTriples": ("addS", "addP", "addO"), "retractTriples": ("delS", "delP", "delO")}
+"""The row variables of each payload slot of the rows replace (formal-methods H2.12)."""
+
+
+def _rows_triple(slot: str) -> Triple:
+    """The template triple that writes one row of the slot. Its variables are bound in the slot's branch alone."""
+    s, p, o = ROWS[slot]
+    return Triple(_optional(s), _optional(p), _optional(o))
+
+
+def _rows_sweep(sweep: GraphBlock, *, patch: bool) -> Union_:
+    """The `WHERE` tail of the rows replace: the sweep as the first branch of a `UNION`, the payload as rows in the second, under a patch
+    log the asserted and the retracted triples as rows in two more, and an empty group last, one solution, so that a replace of an empty
+    aggregate by an empty payload still moves the row. Each branch binds its own variables, so the template is filled once per stored triple
+    for the sweep and once per payload triple for the payload, never once per stored triple for the payload (TSD-65). The form needs a store
+    that applies every deletion before any insertion, which is the specification's order and which the capability spec declares."""
+    slots = ("payloadTriples", *(("assertTriples", "retractTriples") if patch else ()))
+    branches = tuple(Group((PayloadRows(tuple(Var(n) for n in ROWS[slot]), slot),)) for slot in slots)
+    return Union_((Group((sweep,)), *branches, Group(())))
+
+
+def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: str = "receipt", deltas: tuple = (), rows: bool = False) -> tuple:
+    block = GraphBlock(named.graph(), (Triple(Var("s"), Var("p"), Var("o")),))
+    sweep = _rows_sweep(block, patch=receipt == "patch-log") if rows else Optional_(Group((block,)))
     binds = (*named.binds(), *(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*deltas))
     return _row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)
 
 
-def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str) -> tuple:
+def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str, rows: bool = False) -> tuple:
     """The `INSERT` of a replace, whichever family. A patch log writes the caller's delta, in two slots, into the two graphs the receipt
-    names (H2.6b-Q1 and Q2)."""
+    names (H2.6b-Q1 and Q2). Under `rows` each slot's triples come as rows of the `WHERE` and the template holds one triple of row
+    variables in the slot's place (H2.12)."""
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
     has_receipt, patch = receipt != "none", receipt == "patch-log"
+    content = _rows_triple if rows else PayloadSlot
     return (
-        GraphBlock(data, (PayloadSlot("payloadTriples"),)),
-        *((_delta_block("add", PayloadSlot("assertTriples")), _delta_block("del", PayloadSlot("retractTriples"))) if patch else ()),
+        GraphBlock(data, (content("payloadTriples"),)),
+        *((_delta_block("add", content("assertTriples")), _delta_block("del", content("retractTriples"))) if patch else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
             *((Triple(root, _pat("head"), new_rev),) if has_receipt else ()),
@@ -469,15 +493,15 @@ def _tombstone_params(receipt: str) -> tuple:
     return (*_CAS_PARAMS, *((Param("cause", Kind.IRI), Param("actor", Kind.IRI)) if receipt != "none" else ()))
 
 
-def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt", rows: bool = False) -> Operation:
     _check_receipt(receipt)
     named = _Named(b, graph_names)
     deltas = ("add", "del") if receipt == "patch-log" else ()
     return Operation.build(
-        "cas-replace-named-graph" + _suffix(dataset_guard, receipt),
+        "cas-replace-named-graph" + ("-rows" if rows else "") + _suffix(dataset_guard, receipt),
         (*_replace_params(receipt), *named.params()),
-        Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas)), guards=guards,
-        insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph"),
+        Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas, rows=rows)), guards=guards,
+        insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph", rows=rows),
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard, receipt=receipt),
     )
 
@@ -537,13 +561,17 @@ def _unconditional(b: Bindings, *, guards: bool, graph_names: str) -> Operation:
 # ---- the composite family
 
 
-def _composite_sweep(b: Bindings) -> Optional_:
+def _composite_sweep_block(b: Bindings) -> GraphBlock:
     """The root and every member the owned path reaches, in the data graph. The path can match no steps, so the first
     `?s` is the root itself."""
-    return Optional_(Group((GraphBlock(b.graph("dataGraph"), (
+    return GraphBlock(b.graph("dataGraph"), (
         Triple(ParamRef("root"), b.path("ownedPath"), Var("s")),
         Triple(Var("s"), Var("p"), Var("o")),
-    )),)))
+    ))
+
+
+def _composite_sweep(b: Bindings) -> Optional_:
+    return Optional_(Group((_composite_sweep_block(b),)))
 
 
 def _composite_delete(b: Bindings, *, dataset_guard: bool, receipt: str) -> tuple:
@@ -589,15 +617,16 @@ def _composite_create(b: Bindings, *, guards: bool, dataset_guard: bool, receipt
     )
 
 
-def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str, rows: bool = False) -> Operation:
     _check_composite_receipt(receipt)
     # the receipt goes to ?logGraph2, a copy of ?logGraph that the templates have always had (plan 4.2, fact 4)
     binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
+    sweep = _rows_sweep(_composite_sweep_block(b), patch=receipt == "patch-log") if rows else _composite_sweep(b)
     return Operation.build(
-        "cas-replace-composite-property" + _suffix(dataset_guard, receipt),
+        "cas-replace-composite-property" + ("-rows" if rows else "") + _suffix(dataset_guard, receipt),
         _replace_params(receipt),
-        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=_composite_sweep(b), receipt=receipt)),
-        guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2"),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)),
+        guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2", rows=rows),
         delete=_composite_delete(b, dataset_guard=dataset_guard, receipt=receipt),
     )
 
@@ -1086,7 +1115,25 @@ def _receipt_variants() -> dict:
     return out
 
 
+def _rows_variants() -> dict:
+    """The rows replace of each family (formal-methods H2.12), with each receipt model its family has and its dataset-guard variant, keyed by
+    stem. `compile` selects one where the store declares snapshot update semantics or the profile opts in (`dal:replaceForm`)."""
+    out: dict = {}
+    for receipt, tag in (("receipt", ""), ("patch-log", "-patch-log"), ("none", "-no-receipt")):
+        for guard in (False, True):
+            suffix = tag + ("-dataset-guard" if guard else "")
+            out["cas-replace-named-graph-rows" + suffix] = lambda b, guards, names, g=guard, r=receipt: _replace(
+                b, guards=guards, dataset_guard=g, graph_names=names, receipt=r, rows=True
+            )
+            if receipt != "receipt":
+                out["cas-replace-composite-property-rows" + suffix] = lambda b, guards, names, g=guard, r=receipt: _composite_replace(
+                    b, guards=guards, dataset_guard=g, receipt=r, rows=True
+                )
+    return out
+
+
 BUILDERS.update(_receipt_variants())
+BUILDERS.update(_rows_variants())
 """Every generated operation, keyed by its builder identity (`dal:templateId`)."""
 
 
@@ -1109,4 +1156,4 @@ def build_recording(
     return BUILDERS[template](bindings, guards, graph_names), bindings.read
 
 
-__all__ = ["BUILDERS", "GRAPH_ROLES", "Bindings", "build", "build_recording", "graph_var"]
+__all__ = ["BUILDERS", "GRAPH_ROLES", "ROWS", "Bindings", "build", "build_recording", "graph_var"]

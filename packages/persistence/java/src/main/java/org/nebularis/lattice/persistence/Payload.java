@@ -66,6 +66,26 @@ public record Payload(Set<Triple> triples) {
         return String.join("\n", Text.sortedUnique(all));
     }
 
+    /** The text that fills a slot whose encoding is {@code TripleRows}, one sorted row per triple with no duplicate. */
+    public String rows() {
+        List<String> all = new ArrayList<>();
+        for (Triple t : triples) all.add(t.row());
+        return String.join("\n", Text.sortedUnique(all));
+    }
+
+    /**
+     * The text that fills the slot {@code name} of {@code operation} with {@code value}, by the operation's contract. A {@link Payload} is
+     * written as rows where the payload contract's encoding is {@code TripleRows} and as triples otherwise, and {@link Rows} as its rows.
+     */
+    public static String slotText(OperationContract operation, String name, Object value) {
+        if (value instanceof Rows r) return r.sparql();
+        if (!(value instanceof Payload p)) {
+            throw new PayloadException("slot '" + name + "' takes a Payload or Rows, got " + (value == null ? "null" : value.getClass().getSimpleName()));
+        }
+        PayloadContract c = operation == null ? null : operation.payload();
+        return c != null && "TripleRows".equals(c.encoding()) ? p.rows() : p.sparql();
+    }
+
     /** The subjects of the triples. */
     public Set<Iri> subjects() {
         Set<Iri> out = new HashSet<>();

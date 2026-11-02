@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A replace form that is neither dal:TemplateReplace nor dal:RowsReplace (H2.12).
+# base: replace-form-rows.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:InvoiceProfile dal:replaceForm ex:Sideways .

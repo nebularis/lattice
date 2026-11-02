@@ -26,7 +26,7 @@ from rdflib.namespace import XSD
 from .ir import (
     AccessMode, Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind,
     Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
-    RegistrySlot, RowValues,
+    PayloadRows, RegistrySlot, RowValues,
     SLOT_KINDS, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
@@ -190,6 +190,7 @@ class _Checker:
         self.untagged: set[str] = set()
         self.clock_vars: set[str] = set()
         self.slot_uses: list[str] = []
+        self.payload_rows: dict[str, frozenset] = {}
         self.reads: set[Access] = set()
         self.writes: set[Access] = set()
         self.subselects: list[SubSelect] = []
@@ -210,6 +211,7 @@ class _Checker:
             raise IrError("InvalidForm", f"{op.id}: an operation is a SELECT or an update with an INSERT or DELETE template, not both and not neither")
         self._guard()
         self._find_clock_vars(op.where)
+        self._find_payload_rows(op.where)
         for block in op.delete:
             self._template(block, deleting=True)
         for block in op.insert:
@@ -408,6 +410,18 @@ class _Checker:
             self._slot(el.slot.param, Kind.ROWS)
             scope.definite |= {v.name for v in el.vars}
             return {v.name for v in el.vars}
+        if isinstance(el, PayloadRows):
+            if len(el.vars) != 3 or not all(isinstance(v, Var) for v in el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: payload rows need exactly three Vars, a subject, a predicate and an object")
+            for v in el.vars:
+                self._var(v)
+            names = {v.name for v in el.vars}
+            if len(names) != 3:
+                raise IrError("InvalidName", f"{self.op.id}: payload rows name a variable twice")
+            self._slot(el.param, Kind.PAYLOAD)
+            self.payload_rows[el.param] = frozenset(names)
+            scope.definite |= names
+            return names
         if isinstance(el, Values):
             if not isinstance(el.var, Var):
                 raise IrError("InvalidName", f"{self.op.id}: VALUES needs a Var")
@@ -505,7 +519,7 @@ class _Checker:
                 names.add(el.var.name)
             elif isinstance(el, Values):
                 names.add(el.var.name)
-            elif isinstance(el, RowValues):
+            elif isinstance(el, (RowValues, PayloadRows)):
                 names |= {v.name for v in el.vars}
         return names
 
@@ -555,7 +569,13 @@ class _Checker:
                 for part in (el.subject, el.predicate, el.object):
                     if isinstance(part, Var):
                         self._tag(part)
-                target.add(self._access(block.graph, el, AccessMode.DELETE.value if deleting else AccessMode.INSERT.value))
+                mode = AccessMode.DELETE.value if deleting else AccessMode.INSERT.value
+                row_vars = frozenset(p.name for p in (el.subject, el.predicate, el.object) if isinstance(p, Var))
+                if not deleting and len(row_vars) == 3 and row_vars in self.payload_rows.values():
+                    # the triple of a payload's row variables writes the payload, as a payload slot does (H2.12)
+                    target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
+                else:
+                    target.add(self._access(block.graph, el, mode))
             elif isinstance(el, PayloadSlot):
                 # A DELETE template takes a slot of ground triples, the triples a delta replace retracts (DR1). It deletes only those.
                 self._slot(el.param, Kind.PAYLOAD)
@@ -588,6 +608,26 @@ class _Checker:
                     raise IrError("OptionalTagOnBoundVariable", f"{self.op.id}: ?{name} is tagged OptionalAllowed and WHERE always binds it")
                 if name not in scope.possible:
                     raise IrError("UnboundTemplateVariable", f"{self.op.id}: ?{name} is tagged OptionalAllowed and WHERE never binds it")
+
+    def _find_payload_rows(self, group: Group) -> None:
+        """The row variables of each payload carried as rows, found before the templates are checked, so that the template triple
+        made of them is recorded as the payload's access (H2.12). The WHERE walk checks each element again."""
+
+        def walk(elements) -> None:
+            for el in elements:
+                if isinstance(el, PayloadRows) and len(el.vars) == 3 and all(isinstance(v, Var) for v in el.vars):
+                    self.payload_rows[el.param] = frozenset(v.name for v in el.vars)
+                elif isinstance(el, GraphBlock):
+                    walk(el.elements)
+                elif isinstance(el, (Optional_, NotExists)):
+                    walk(el.group.elements)
+                elif isinstance(el, Group):
+                    walk(el.elements)
+                elif isinstance(el, Union_):
+                    for g in el.groups:
+                        walk(g.elements)
+
+        walk(group.elements)
 
     # ---- expressions
 
@@ -985,6 +1025,9 @@ class _Out:
         if isinstance(el, RowValues):
             names = " ".join(f"?{v.name}" for v in el.vars)
             return ["VALUES (" + names + ") { " + slot_marker(el.slot.param) + " }"]
+        if isinstance(el, PayloadRows):
+            names = " ".join(f"?{v.name}" for v in el.vars)
+            return ["VALUES (" + names + ") { " + slot_marker(el.param) + " }"]
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):

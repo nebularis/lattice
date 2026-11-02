@@ -7,12 +7,12 @@ from .audit import AuditOutcome, AuditResult, SparqlClient, audit_outcome, run_a
 from .bound import outside_bound, outside_events
 from .check import CallerCheckError, Membership, Refusal, check_request, refusals
 from .contract import DigestContract, DigestSpec, OperationKind, ProfileOperation, read_contracts
-from .digest import DigestError, compose, request_digest, state_digest
-from .payload import EventRow, Lit, Payload, PayloadError, Rows, Triple
+from .digest import DigestError, request_digest
+from .payload import EventRow, Lit, Payload, PayloadError, Rows, Triple, slot_text
 from .terms import Iri, Literal, SparqlTermError
 
 __all__ = [
-    "DigestContract", "DigestSpec", "OperationKind", "ProfileOperation", "read_contracts", "DigestError", "request_digest", "state_digest", "compose",
+    "DigestContract", "DigestSpec", "OperationKind", "ProfileOperation", "read_contracts", "DigestError", "request_digest",
     "AuditOutcome", "AuditResult", "SparqlClient", "audit_outcome", "run_audit", "outside_bound", "outside_events", "CallerCheckError", "Membership",
-    "Refusal", "check_request", "refusals", "EventRow", "Lit", "Payload", "PayloadError", "Rows", "Triple", "Iri", "Literal", "SparqlTermError",
+    "Refusal", "check_request", "refusals", "EventRow", "Lit", "Payload", "PayloadError", "Rows", "Triple", "slot_text", "Iri", "Literal", "SparqlTermError",
 ]

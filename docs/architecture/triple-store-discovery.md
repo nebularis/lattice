@@ -266,6 +266,9 @@ to the store or where it is a matter of capacity.
 | [TSD-62](#tsd-62-fuseki-on-tdb2-applies-concurrent-updates-one-at-a-time-and-a-read-does-not-wait-for-them) | concurrent SPARQL updates to one TDB2 dataset on Fuseki | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
 | [TSD-63](#tsd-63-rdflib-rewrites-an-xsddatetimes-z-as-0000-when-it-parses) | the lexical form of an `xsd:dateTime` ending in `Z` | kept, a literal is its lexical form | ✘ rewritten as `+00:00` on parse | not tested | Observed |
 | [TSD-44](#tsd-44-a-small-update-on-fuseki-tdb2-costs-its-commit-so-batching-updates-is-the-lever-for-write-throughput) | many small updates to one TDB2 dataset, one request each or batched | not specified | not applicable | not applicable | Observed (Fuseki 6.2.0, TDB2) |
+| [TSD-65](#tsd-65-a-deleteinsert-fills-every-template-quad-once-per-solution-on-every-engine-measured-whether-or-not-the-quad-is-then-skipped-and-only-jena-applies-a-quad-with-no-variable-once-per-operation) | what the generated replace and four other forms cost at M = N up to 10,000, on six engines, for both families, with the empty cases and the zero-length path | each template filled once per solution | quadratic for every form that keeps the payload in the template | the same, and Jena applies a quad with no variable once | Source (Jena, Oxigraph) and Observed (six engines) |
+| [TSD-66](#tsd-66-jena-tdb2-and-fuseki-over-it-apply-an-update-as-arq-in-memory-does-roll-back-a-request-whose-second-operation-fails-and-apply-a-request-the-client-abandoned) | TSD-53's order and skip, TSD-06's failing request, a blank node in a template, and an abandoned request, on TDB2 and Fuseki | all deletions then all insertions, the quad skipped, a request should be atomic, a blank node minted per solution | not applicable | not applicable | Source and Observed (Jena 5.1.0, TDB2 on disk, Fuseki main over HTTP) |
+| [TSD-67](#tsd-67-rdf4j-610s-memorystore-applies-a-deleteinsert-one-solution-at-a-time-writes-a-template-quad-whose-graph-is-unbound-and-rolls-back-a-request-whose-second-operation-fails) | TSD-01, TSD-05 and TSD-06 on RDF4J, and the generated composite replace | as those, and the replace should leave only the payload | not applicable | not applicable | Observed (RDF4J 6.1.0 MemoryStore): ✘ per solution, ✘ the quad written, rolls back. ✘ the composite replace leaves the old members and the old head (addendum) |
 
 ## 6. The findings
 
@@ -593,6 +596,8 @@ one. We did not read `get_context` itself.
 paragraph says so.
 
 **Reproduce it.** Run the update above on an empty `Dataset` and list `ds.graphs()` with at least one triple.
+
+**Addendum, 2026-10-31.** What this costs a form that relies on the skip. A replace whose `INSERT` blocks name their graphs by variables bound in one branch of a `UNION`, so that the sweep's solutions leave them unbound (the form R2′ of the [linear replace sketch](../developer/sketches/persistence-linear-named-graph-replace.md)), wrote the whole `INSERT` once per sweep solution on rdflib 7.6.0: at M = 100 stored triples the quads outside the replace's own graphs went from 100 to 21,300, which is 100 solutions times the template's 213 quads, each into a fresh blank-node graph, under every one of twelve hash seeds (`benchmark/persistence-replace-forms`, the witness run). A form that depends on the skip therefore needs it probed, P4, beside the order, P1.
 
 ---
 
@@ -1797,6 +1802,8 @@ SELECT ?x WHERE { GRAPH <urn:h> { <urn:lonely> <urn:p>+ ?x } }
 
 **Reproduce it.** The two queries on each store.
 
+**Addendum, 2026-11-01.** The composite sweep's path alone, with its root in no triple, yields the root on Jena TDB2, Fuseki over TDB2 and RDF4J 6.1.0 too, and still nothing on Oxigraph 0.5.13 (TSD-65). Five engines of six match the term. The sweep is still unaffected, since with `?s ?p ?o` it yields nothing on all six.
+
 ---
 
 ### TSD-52. Jena ARQ keeps xsd:long, counts distinct terms, groups arithmetic from the left and divides integers into a decimal
@@ -2070,33 +2077,133 @@ The read answered in 8 ms and 3 ms while the insert ran.
 
 **Reproduce it.** The two triples above, and `SELECT ?s WHERE { BIND (STRDT("007", xsd:integer) AS ?c) ?s <urn:n> ?c }` with each cast, on each store.
 
-### TSD-68. Oxigraph refuses a prologue after the `;` of an update request
+### TSD-65. A `DELETE`/`INSERT` fills every template quad once per solution on every engine measured, whether or not the quad is then skipped, and only Jena applies a quad with no variable once per operation
 
-**Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-11-01, with the probe below, while building DR2's bulk load. Jena ARQ in memory accepted the request in the same run. Not read from either engine's source. The numbers between it and TSD-64 are taken on the branch `claude/persistence-linear-replace`.
+**Evidence:** Observed on Apache Jena 5.1.0 in memory, TDB2 5.1.0 on disk, Fuseki main 5.1.0 over HTTP on TDB2, RDF4J 6.1.0 MemoryStore, Oxigraph 0.5.13 and rdflib 7.6.0, 2026-10-31, run by `benchmark/persistence-replace-forms` and `benchmark/persistence-replace-forms-jvm` on an Apple arm64 laptop. Source for Jena: `org.apache.jena.sparql.modify.UpdateEngineWorker.visit(UpdateModify)` and `TemplateLib.calcQuads` at the tag `jena-5.1.0`. Source for Oxigraph: TSD-01. Extends TSD-02, which measured the composite replace on rdflib and Oxigraph. This measures the named-graph replace on six engines and separates the payload's cost from the patch log's.
 
-**Context.** A bulk load and a write that records its state digest join several generated operations, each rendered with its own `PREFIX` lines, into one update request (`lattice_persistence.compose`).
+**Context.** The generated replace R0 sweeps the aggregate's graph in its `WHERE`, one solution per stored triple (M), and its `INSERT` template holds the payload (N), the patch log's delta (D, in two blocks whose graphs are computed by `BIND`) and the row, claim and receipt (k, about 12). The [linear replace sketch](../developer/sketches/persistence-linear-named-graph-replace.md) asked which of four forms is linear and where. Each form replaced M stored triples by a payload of N = M that kept half of them and changed half, with the real delta in the slots, three times, best time kept, and the result checked as sets after each.
 
-**What the store does.** SPARQL 1.1 Update's grammar lets each operation of a request carry a prologue (`Update ::= Prologue ( Update1 ( ';' Update )? )?`).
+**How we found it.**
 
-| Request | Oxigraph | rdflib | Jena ARQ |
+1. *Source, Jena.* `visit(UpdateModify)` collects every binding into a `DataBag`, runs `execDelete` over all of them and then `execInsert` over all of them. Each splits its template into quads with no variable, applied once when the `WHERE` has a solution, and quads with a variable, instantiated once per binding by `calcQuads`, which substitutes the binding into every template quad and drops a quad that is not concrete.
+2. *Observed.* Four forms, R0 with its real delta, R0 with empty delta slots, R2′ (the payload and every other `INSERT` block under a graph variable bound in one branch of a `UNION`, so that the sweep's solutions leave them unbound and the specification skips them), R1′ (two operations, the guarded delete and then the guarded insert) and R2 (one operation, the payload and the delta carried as `VALUES` rows in `UNION` branches, so the template holds three single quads and k).
+
+**What the store does.** Milliseconds, best of three, at M = N.
+
+| Form | M | Jena in memory | Jena TDB2 on disk | Fuseki over HTTP | Oxigraph 0.5.13 | rdflib 7.6.0 | RDF4J 6.1.0 |
+|---|---|---|---|---|---|---|---|
+| R0, real delta | 1,000 | 2,313 | 1,821 | 2,205 | 527 | 10,785 | 328 |
+| R0, real delta | 3,000 | 27,986 | 17,380 | 17,172 | 6,466 | 95,133 | 2,397 |
+| R0, empty delta | 1,000 | 62 | 128 | 127 | 253 | 5,722 | 124 |
+| R0, empty delta | 3,000 | 155 | 209 | 239 | 2,647 | 49,314 | 1,084 |
+| R2′, payload under a variable graph | 3,000 | 878 | 1,007 | 1,039 | 1,296 | not run, per solution | not run, per solution |
+| R2′ | 10,000 | 8,829 | 9,113 | 10,962 | 14,235 | | |
+| R1′, two operations | 3,000 | 168 | 184 | 180 | 12 | 16,794 | 142 |
+| R1′ | 10,000 | 278 | 385 | 401 | 44 | 186,344 | 1,368 |
+| R2, `VALUES` rows | 3,000 | 425 | 438 | 504 | 78 | not run, per solution | not run, per solution |
+| R2 | 10,000 | 907 | 1,245 | 1,178 | 271 | | |
+
+R0 at 10,000 was not run, since TSD-02 recorded it not finishing on Oxigraph in 8 GB. Every run that ran left exactly the payload, the delta in the add and del graphs, the row at the next sequence and nothing else changed. The second run of the JVM table moved two cells by more than a factor of two, Jena in memory R0 with an empty delta at 3,000 (155 to 338 ms) and R2′ at 1,000 (159 to 408 ms), so the small Jena cells are a hypothesis about one machine (STD-176), and the growth from 1,000 to 3,000 and from 3,000 to 10,000 is what the table shows.
+
+*The composite family, 2026-11-01.* `cas-replace-composite-property-patch-log` over the project example's owned path, with a bystander aggregate in the same data graph, M = 2 + 2K triples, half the members kept. The same three forms, derived by the same split. Every form left the bystander untouched at every size. The RDF4J column is TSD-67's addendum.
+
+| Form | M | Jena in memory | Jena TDB2 on disk | Fuseki over HTTP | Oxigraph 0.5.13 | rdflib 7.6.0 | RDF4J 6.1.0 |
+|---|---|---|---|---|---|---|---|
+| R0, real delta | 1,000 | 1,974 | 1,863 | 1,824 | 821 | 10,219 | wrong |
+| R0, real delta | 3,000 | 24,824 | 16,705 | 15,828 | 7,872 | 89,737 | wrong |
+| R0, empty delta | 3,000 | 165 | 231 | 266 | 3,450 | 47,560 | wrong |
+| R1′ | 3,000 | 187 | 251 | 264 | 16 | 16,976 | wrong |
+| R1′ | 10,000 | 469 | 664 | 654 | 54 | not finished in 900 s | wrong |
+| R2 | 3,000 | 346 | 430 | 460 | 81 | not run, per solution | not run, per solution |
+| R2 | 10,000 | 1,021 | 1,361 | 1,408 | 271 | | |
+| the sweep alone, `SELECT`, with the root's members | 3,000 | 18 | 12 | 19 | 2 | 34 | 38 |
+| the sweep alone | 10,000 | 41 | 22 | 35 | 6 | 102 | 92 |
+
+The sweep is never the cost. At 10,000 it is under 1% of R0 at 3,000 on every engine.
+
+*The empty cases, 2026-11-01.* Five cases per form per family, each on a fresh store, checked as sets: E1 from an empty aggregate to 50 triples, E2 from 50 to empty, E3 from empty to empty, E4 an identical re-save of 50, E5 the composite's create with its root in no triple. R0, R1′ and R2 each left the same result wherever the form runs, on all six engines for R0 and on the four snapshot engines for the candidates: E1 and E5 create, E2 leaves the graph empty, E3 and E4 move the row and write a receipt and two empty delta graphs. The one exception is RDF4J on the composite family's R0 in E2 and E4, the failure of TSD-67's addendum, and E1, E3 and E5 are right there. After E2 the three Jena engines no longer list the data graph, since the dataset does not record an empty graph (TSD-50), and Oxigraph and rdflib still do.
+
+*The zero-length path, 2026-11-01.* With the root in no triple, the composite sweep yields 0 solutions on all six engines. The path alone, without `?s ?p ?o`, yields the root on Jena in memory, TDB2, Fuseki, rdflib and RDF4J, and nothing on Oxigraph 0.5.13 (TSD-08, TSD-51).
+
+**Why.**
+
+- *R0 is quadratic on every engine, and on Jena it is the delta that costs.* On rdflib, Oxigraph and RDF4J the whole `INSERT` template is filled once per solution, as TSD-02 found, so R0 is M × (N + D + k). On Jena the payload is ground once the parameters are substituted, so it is applied once, and R0 with an empty delta is linear (155 ms at 3,000, a growth of 2.5 for 3.3 times the size). The two delta blocks name their graphs by `?addGraph` and `?delGraph`, computed by `BIND`, so they are template quads and are instantiated once per binding: M × D, which at D = N is 28 s at 3,000, the scratch figure of the sketch's §3.1 reproduced exactly.
+- *R2′ is quadratic on every engine.* The specification's definition is that each template is filled once per solution. A quad whose graph is unbound is skipped, as TSD-53 and TSD-66 say, but it is substituted and tested first. R2′ makes every `INSERT` quad a template quad, so every engine does M × (N + D + k) substitutions and discards them, at about 45 ns each on Jena and 70 ns on Oxigraph (8.8 s and 14.2 s at 10,000, which is 200 million). That is 20 to 70 times cheaper than R0's insertions and still quadratic. A form that keeps the payload in a template filled by M solutions cannot be linear on an engine that follows the definition, whatever names its graphs.
+- *R1′ and R2 are linear, because neither fills the payload per sweep solution.* R1′'s first operation has M solutions and one template quad, and its second has one solution. R2 carries the payload in the solutions, so its template is 3 + k quads filled M + N + 2D + 1 times. R2 costs three to six times R1′ at 10,000, which is those k quads per solution and the parse of three `VALUES` blocks, and both grow linearly from 3,000 to 10,000 on every engine.
+
+**What it means for LATTICE.**
+
+- TD-42's cause is now the same on every engine and named: the payload, or on Jena the patch log's delta, sits in a template that M solutions fill.
+- The two linear forms are R1′, which needs the request to be one transaction (TSD-66 for Jena's family, TSD-06 for Oxigraph's failure half), and R2, which needs every deletion applied before any insertion (P1, TSD-53, TSD-66, TSD-01 from Oxigraph 0.5.12). Neither is safe on rdflib or RDF4J, which stay on R0. The choice is the sketch's LR-Q1.
+- On Jena alone, R0 with the delta's graphs ground would be linear, but that is Jena's shortcut and not the specification, so it is not a form.
+
+**Reproduce it.** `mise run check:persistence-replace-forms` (about 45 minutes for both families, most of it rdflib, `REPLACE_FORMS_QUICK` and `REPLACE_FORMS_FAMILY` narrow it) and `mise run check:persistence-replace-forms-jvm` (about 20 minutes, each measurement in a child JVM capped at 4 GB). Both write `report.md` beside themselves and fail only on a wrong result from the generated form, which the JVM run does today on RDF4J's composite rows.
+
+---
+
+### TSD-66. Jena TDB2 and Fuseki over it apply an update as ARQ in memory does, roll back a request whose second operation fails, and apply a request the client abandoned
+
+**Evidence:** Observed on Apache Jena 5.1.0, the in-memory dataset, TDB2 on disk in a temporary directory, and Fuseki main 5.1.0 in process over that TDB2 store driven over HTTP, 2026-10-31, run by `benchmark/persistence-replace-forms-jvm`. Source for the first claim: `org.apache.jena.tdb2.modify.UpdateEngineTDB` at the tag `jena-5.1.0` extends `UpdateEngineMain` and overrides nothing but its constructor and its factory's `accept`, so TDB2 runs ARQ's `UpdateEngineWorker`, and Fuseki serves the dataset's engine. Answers the Jena half of TSD-Q13.
+
+**Context.** TSD-50 and TSD-53 recorded ARQ in memory, and the studio's store is Fuseki over TDB2. A linear replace that is one operation needs the order (P1) and the skip (P4) there, and one that is two operations needs the request to be one transaction (P2).
+
+**What the store does.** Each probe gave the same answer on all three.
+
+| Probe | In memory | TDB2 on disk | Fuseki over HTTP |
 |---|---|---|---|
+| P1, `DELETE { ?d } INSERT { ?i } WHERE { VALUES ... }`, both row orders | the triple survives in both | the same | the same |
+| P4, `INSERT { GRAPH ?g { ... } } WHERE { }` with `?g` unbound | nothing written | nothing written | nothing written |
+| P2, `INSERT DATA { ... } ; LOAD <urn:no-such>` | the request fails and the insert is rolled back | the same | HTTP 500, and the insert is rolled back |
+| P6, a blank node in an `INSERT` template over 3 solutions | 3 distinct blank nodes, 6 triples | the same | the same |
+| P7, the generated replace at M = 3,000 sent over HTTP and abandoned by the client after 52 ms | | | at 2 s the graph is the old state, and at 22 s the new state |
+
+The Jena engines ran P2 inside `Txn.executeWrite`, as the platform's store layer runs every request.
+
+**Why.** The engine is the same class on all three (source). P2 and P7 are the transaction, a request is one write transaction that an exception aborts and that a client going away does not, which TDB2's documentation says and the source was not read for. P6 is `TemplateLib.calcQuads`, which maps the template's blank nodes afresh for each binding, as the specification says.
+
+**What it means for LATTICE.**
+
+- What TSD-53 found for ARQ in memory holds for the studio's store, by source and by observation. A one-operation linear replace that needs P1 and P4 is safe there, and a two-operation one that needs the request to be one transaction is too.
+- A client that loses its connection during an update learns nothing from the failure. The update is applied all the same, 22 seconds later at this size, so the caller's obligation to confirm a write by reading its transaction claim, and never from the reply, is what makes the outcome known. That is the caller library's third obligation already.
+- A payload with a blank node is written once per solution of the operation that carries it, so the generated replace, whose `WHERE` has one solution per stored triple, would leave M copies of each blank node's structure. The callers refuse a blank node in a payload, which this shows to be a correctness rule and not a convenience.
+
+**Reproduce it.** `mise run check:persistence-replace-forms-jvm`, whose report opens with the probe table. The quick form, `-Dreplaceforms.quick=1`, runs the probes too.
+
+---
+
+### TSD-67. RDF4J 6.1.0's MemoryStore applies a `DELETE`/`INSERT` one solution at a time, writes a template quad whose graph is unbound, and rolls back a request whose second operation fails
+
+**Evidence:** Observed on RDF4J 6.1.0, `MemoryStore` through `SailRepository`, 2026-10-31, run by `benchmark/persistence-replace-forms-jvm`, with no transaction opened by the caller, so under the store's own default. Its source was not read: `SailUpdateExecutor` could not be fetched at that tag.
+
+**What the store does.**
+
+| Probe | RDF4J 6.1.0 MemoryStore |
+|---|---|
+| P1, both row orders | the triple is lost with the inserting row first and kept with the deleting row first, as Oxigraph 0.5.11 did (TSD-01) |
+| P4, `?g` unbound in a template | one quad written, as rdflib does (TSD-05) |
+| P2, `INSERT DATA { ... } ; LOAD <urn:no-such>` | the request fails and the insert is rolled back |
+
+**What it means for LATTICE.** The generated named-graph replace R0 is right on RDF4J, since it relies on neither the order nor the skip, and it is quadratic there as on every per-solution store (TSD-65). A one-operation linear form is not safe on RDF4J. A two-operation form has the failure half of request atomicity, and its isolation half is not probed.
+
+**Addendum, 2026-11-01. The generated composite replace R0 is wrong on RDF4J 6.1.0.** Every composite R0 of a non-empty aggregate, at M = 100 to 3,000 and in the edge cases E2 and E4 (TSD-65), leaves the old members in the data graph beside the new, the old `pat:head` beside the new, and the add and del graphs empty, while the new payload, the new row and the claim are written. R1′ on the same store deletes nothing in its first operation and is otherwise right, and the named-graph family, whose sweep has no property path, is right in every row. The same `WHERE` run as a `SELECT *` binds every variable in every solution, the four sweep rows and `?addGraph`, `?delGraph`, `?prevRev`, `?txnKey` and `?now` among them. The update behaves as if every variable were unbound in every solution: the template quads with a variable in a triple are skipped, and the two blocks under `GRAPH ?addGraph` and `GRAPH ?delGraph` and the constant triples of the `GRAPH ?logGraph2` block are written into the default graph, which is where P4's quad goes. A diagnostic at M = 4 isolated the trigger. Removing the `OPTIONAL` around the sweep changes nothing, and running the update inside `begin()` and `commit()` changes nothing. Replacing the owned path by a plain `?s ?p ?o`, or by its first alternative alone, `$root ex:hasMilestone ?s`, gives the right result in every graph. So the trigger is a property path with `?` or `*` in an update's `WHERE`, on RDF4J 6.1.0, and `+` was not tested. The cause inside RDF4J is open (TSD-Q36). RDF4J is not an engine the conformance run covers, so no supported path is affected, but no generated composite operation, whose sweep is such a path, is right on RDF4J today, and the named-graph family is right because its sweep has none.
+
+**Reproduce it.** As TSD-66.
+
+---
+### TSD-68. Oxigraph refuses a prologue after the `;` of an update request
+**Evidence:** Observed on Oxigraph 0.5.13 and rdflib 7.6.0, 2026-11-01, with the probe below, while building DR2's bulk load. Jena ARQ in memory accepted the request in the same run. Not read from either engine's source. The numbers between it and TSD-64 are taken on the branch `claude/persistence-linear-replace`.
+**Context.** A bulk load and a write that records its state digest join several generated operations, each rendered with its own `PREFIX` lines, into one update request (`lattice_persistence.compose`).
+**What the store does.** SPARQL 1.1 Update's grammar lets each operation of a request carry a prologue (`Update ::= Prologue ( Update1 ( ';' Update )? )?`).
+| Request | Oxigraph | rdflib | Jena ARQ |
 | `PREFIX a: <urn:a#> INSERT DATA {...} ; PREFIX b: <urn:b#> INSERT DATA {...}` | refused, "expected one of CREATE, DELETE, INSERT" at the second `PREFIX` | applies both | applies both |
 | the same with both prefixes before the first operation | applies both | applies both | applies both |
-
 **What it means for LATTICE.** A caller that composes operations hoists their prologues into one at the head of the request, and refuses a prefix two operations bind to different IRIs. Both caller libraries' `compose` do this.
-
 **Reproduce it.** `pyoxigraph.Store().update("PREFIX a: <urn:a#>\nINSERT DATA { GRAPH <urn:g> { a:x a:y a:z } } ;\nPREFIX b: <urn:b#>\nINSERT DATA { GRAPH <urn:g> { b:x b:y b:z } }")`.
-
 ### TSD-69. Jena keeps no empty named graph from a TriG body
-
 **Evidence:** Observed on Jena 5 (the studio's shaded writer) on 2026-11-01, when the real-stack browser suite saved a part by a patch that only added triples. Not read from Jena's source.
-
 **Context.** The studio's `PATCH` of a part carries two named graphs in TriG, the triples added and the triples removed, and an empty side was written as `<urn:lattice:studio:patch:del> { }`.
-
 **What the store does.** Parsed into a Jena `Dataset`, an empty graph block leaves no graph behind, so `containsNamedModel` answers false for it. A dataset has no way to hold a named graph that holds no triple, and Fuseki's datasets behave the same.
-
 **What it means for LATTICE.** A reader of a body whose named graphs carry meaning takes an absent graph as an empty one, and never requires an empty graph to be present. The studio's writer reads an absent side of a patch as empty, and refuses a body with any other graph.
-
 **Reproduce it.** `RDFParser.fromString("<urn:g> { }", Lang.TRIG).toDataset().containsNamedModel("urn:g")` answers false.
 
 ## 7. Corrections, and what they taught us
@@ -2173,12 +2280,12 @@ What we take from it. A probe stands in for a generated query only if it has the
 |---|---|---|---|---|
 | TSD-Q1 | does rdflib order a lazy join's solutions deterministically | only non-lazy joins go through a `set`, so some updates may have a fixed order | read `evalLazyJoin` and probe a lazy form |  |
 | TSD-Q2 | what Oxigraph does with initial bindings, if `pyoxigraph` offers them for updates | TSD-12 holds for rdflib only | probe it |  |
-| TSD-Q3 | whether the specification's zero-length path includes a constant endpoint in no triple | TSD-08 names one store as right without checking the text | re-read SPARQL 1.1 §18.4 |  |
+| TSD-Q3 | whether the specification's zero-length path includes a constant endpoint in no triple | TSD-08 names one store as right without checking the text. Five engines of six include it (TSD-51's addendum, 2026-11-01), Oxigraph 0.5.13 alone does not | re-read SPARQL 1.1 §18.4 |  |
 | TSD-Q4 | the isolation half of request atomicity, and whether inserting an identical statement conflicts | H5's models branch on both | H5, with concurrent writers |  |
 | TSD-Q5 | why Oxigraph turns `xsd:long` into `xsd:integer` | TSD-07 is observed, not explained | read Oxigraph's literal encoding |  |
 | TSD-Q11 | whether Oxigraph groups a chain of same-precedence operators from the right in a later version, and why in 0.5.11 | TSD-17 is observed, not explained, and the renderer works around it | read the parser, try the newer releases, and report it upstream if it still holds |  |
 | TSD-Q12 | whether Fuseki, which `platform/semantic-dataset-fuseki` targets, shows TSD-15 to TSD-18 | they are measured on three in-process stores, and Fuseki adds an HTTP layer and perhaps a different dataset implementation | Narrowed 2026-10-27 (MSC-5, R-X): in-process Jena ARQ 5.1.0 shows none of them departing (TSD-15, TSD-16 in TSD-56, TSD-17 and TSD-18 in TSD-52). run the same probes against Fuseki, which `MSC5-01` to `MSC5-06` can do through its endpoint if MSC-Q1 ever chooses Fuseki |  |
-| TSD-Q13 | whether Virtuoso applies even one `DELETE`/`INSERT` atomically under `log_enable(2)` or `(2,1)`, and whether Jena TDB2 and Neptune make a multi-operation request one transaction | the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06) | Jena ARQ in memory does (TSD-50, 2026-10-27), and TDB2 is untested. probe each store, with a failing operation and with a large update interrupted, starting with Fuseki (TSD-Q12) |  |
+| TSD-Q13 | whether Virtuoso applies even one `DELETE`/`INSERT` atomically under `log_enable(2)` or `(2,1)`, and whether Jena TDB2 and Neptune make a multi-operation request one transaction | the guarded writes assume a single operation is atomic, and a two-operation form assumes the request is (TSD-06) | Jena ARQ in memory does (TSD-50, 2026-10-27), and TDB2 and Fuseki do (TSD-66, 2026-10-31, with a failing operation and with an abandoned request). Virtuoso and Neptune remain. probe each with a failing operation and a large update interrupted | Jena's half by TSD-66 |
 | TSD-Q14 | whether Jena SHACL, TopBraid or another validator runs a SPARQL constraint once per focus node, and what a node shape costs there | TSD-23 and the choice of targets (rule R6) are measured on pySHACL only | run the same shapes on another validator |  |
 | TSD-Q15 | why moving W8's identity lookup ahead of its pair enumeration halved its cost | TSD-26 does not explain it | trace the join order and the sizes of the operands |  |
 | TSD-Q16 | what `inplace=True` saves, and whether it is safe with shared graphs | TSD-31's 9% is a fixed cost per validation | run the suite with a copy per test and `inplace=True`, and with the mutation guard on |  |
@@ -2195,3 +2302,4 @@ What we take from it. A probe stands in for a generated query only if it has the
 | TSD-Q31 | whether a Jena release after 5.1.0 makes `CLEAR GRAPH` of an absent graph succeed on a dataset that does not record empty graphs, and whether it is reported upstream | TSD-50 expects the failure, so a fix shows as a test failure | Its report is in [the upstream reports note](../developer/notes/upstream-sparql-engine-reports.md). Searched 2026-10-27 (MSC-5, R-Y): `repo:apache/jena CLEAR GRAPH No such graph` gave 35 results, of which the first 15 were read and none is about this, so no report exists that we found. rerun `Repro.java` and the persistence conformance run on each new Jena |  |
 | TSD-Q32 | whether to file the unfiled upstream reports, in what order, and whether RDFLib/rdflib#3498 covers the grouped query over no rows with a constant projection | a report is the maintainer's to make | The reports are in [the upstream reports note](../developer/notes/upstream-sparql-engine-reports.md). Updated 2026-10-27: the maintainer filed [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008) and [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009). the maintainer decides. Check #3498 against the `rdflib-grouped-query-over-no-rows` reproduction first |  |
 | TSD-Q35 | whether the two rdflib departures drafted in MSC-3 (TSD-60, TSD-61) are filed upstream, and whether a release after 7.6.0 fixes them | both are written up with a failing test in [the upstream reports note](../developer/notes/upstream-sparql-engine-reports.md) and not filed | Searched 2026-10-27 (MSC-5, R-Y): `repo:RDFLib/rdflib SUM IF aggregate SPARQLTypeError` and `SPARQL comparison string number type error` gave 0 results each, so no report exists that we found. file them with their smallest query, and re-run `check:sparql-probes-conformance` on each rdflib release. MSC3-11 and MSC3-14 fail when one is fixed |  |
+| TSD-Q36 | why RDF4J 6.1.0 fills an update's templates with every variable unbound when its `WHERE` holds a path with `?` or `*`, and whether `+`, a later release or an upstream report bears on it | every generated composite operation is wrong on RDF4J (TSD-67's addendum). Isolated 2026-11-01 to the path, with `OPTIONAL` and the transaction ruled out | read `SailUpdateExecutor` and the path evaluation at the tag `6.1.0`, probe `+` and the smallest update that fails, search the upstream tracker, and rerun the JVM benchmark on a later RDF4J |  |

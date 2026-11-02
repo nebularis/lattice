@@ -46,6 +46,9 @@ class CapabilitySpec:
     provides_commit_validation: Optional[str] = None  # the IRI of a dal:CommitValidationLevel
     provides_single_writer: Optional[bool] = None
     provides_statement_level_conflict_detection: Optional[bool] = None
+    provides_snapshot_update_semantics: Optional[bool] = None
+    """Whether the store applies every deletion of a ``DELETE``/``INSERT`` before any insertion, as SPARQL 1.1 says (probe P1,
+    TSD-01, TSD-53, TSD-66). ``None`` is unknown, which selects the template replace (H2.12, the sketch's LR-Q3)."""
 
 
 def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optional[CapabilitySpec]:
@@ -64,6 +67,7 @@ def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optio
         commit = functional_value(graph, iri, DAL.providesCommitValidation)
         single_writer = functional_value(graph, iri, DAL.providesSingleWriter)
         stmt_level = functional_value(graph, iri, DAL.providesStatementLevelConflictDetection)
+        snapshot = functional_value(graph, iri, DAL.providesSnapshotUpdateSemantics)
         return CapabilitySpec(
             iri=str(iri),
             provides_cas=str(cas) if cas is not None else None,
@@ -73,6 +77,7 @@ def load_capability_spec(graph: Graph, target: Optional[Target] = None) -> Optio
             provides_statement_level_conflict_detection=(
                 bool(stmt_level) if stmt_level is not None else None
             ),
+            provides_snapshot_update_semantics=bool(snapshot) if snapshot is not None else None,
         )
 
     if target is not None:

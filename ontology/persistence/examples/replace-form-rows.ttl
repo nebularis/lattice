@@ -1,0 +1,59 @@
+# The replace that carries its payload as rows (formal-methods H2.12), selected two ways.
+# ex:Invoice gets it because its deployment's dal:CapabilitySpec declares that the store applies
+# every deletion before any insertion (dal:providesSnapshotUpdateSemantics). ex:Note gets it because
+# its profile opts in with dal:replaceForm dal:RowsReplace, the operator taking responsibility, since
+# no spec applies to it. ex:Memo declares no spec and no form, so it keeps the template replace.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:InvoiceClass a dal:ClassScope ;
+    dal:targetClass ex:Invoice ;
+    dal:priority "20"^^xsd:integer .
+
+ex:InvoiceProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:InvoiceClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:invoice/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:FusekiOverTdb2 a dal:CapabilitySpec ;
+    dal:appliesToTarget               ex:Invoice ;
+    dal:providesCas                   dal:Linearizable ;
+    dal:providesSnapshotUpdateSemantics true .
+
+ex:NoteClass a dal:ClassScope ;
+    dal:targetClass ex:Note ;
+    dal:priority "20"^^xsd:integer .
+
+ex:NoteProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:NoteClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:note/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceForm         dal:RowsReplace ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:ReceiptOnly ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:MemoClass a dal:ClassScope ;
+    dal:targetClass ex:Memo ;
+    dal:priority "20"^^xsd:integer .
+
+ex:MemoProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:MemoClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:memo/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .

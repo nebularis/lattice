@@ -853,6 +853,37 @@ def check_identity(
     return out
 
 
+def check_replace_form(target: Target, dimensions: dict[str, ResolvedDimension], spec, operations) -> list[Diagnostic]:
+    """H2.12: `dal:replaceForm`, the operator's opt-in to the rows replace, or out of it. `dal:RowsReplace` against a capability spec that
+    declares `dal:providesSnapshotUpdateSemantics` false is refused (`ReplaceFormContradictsCapability`), since a declared false is a fact
+    about the store and the opt-in is for a store that declares nothing. A form declared on a family that has no sweeping replace, so no
+    generated operation can take it, is recorded and warned (`ReplaceFormNotApplicable`)."""
+    form = _local(_value(dimensions, "replaceForm")) if "replaceForm" in dimensions else None
+    if form is None:
+        return []
+    if form not in ("RowsReplace", "TemplateReplace"):
+        raise CrossAxisViolation(
+            "ReplaceFormUnknown", str(target),
+            f"dal:replaceForm is dal:{form}, and the forms are dal:RowsReplace and dal:TemplateReplace (H2.12).",
+        )
+    declared = getattr(spec, "provides_snapshot_update_semantics", None) if spec is not None else None
+    if form == "RowsReplace" and declared is False:
+        raise CrossAxisViolation(
+            "ReplaceFormContradictsCapability", str(target),
+            "dal:replaceForm dal:RowsReplace asks for the replace that carries its payload as rows, which is right only on a store that "
+            "applies every deletion before any insertion, and the capability spec declares dal:providesSnapshotUpdateSemantics false. "
+            "The opt-in is for a store that declares nothing. Remove the opt-in, or correct the spec.",
+        )
+    if not any(op.operation == "cas-replace" and ("named-graph" in op.template_id or "composite" in op.template_id) for op in operations):
+        return [_warning(
+            "ReplaceFormNotApplicable", target,
+            f"dal:replaceForm dal:{form} chooses the form of the replace that sweeps an aggregate, and this family has no such operation. "
+            "Only the compare-and-set of an optimistic named-graph or composite family written in place takes a form. The declaration is "
+            "recorded in the compiled profile and not applied.",
+        )]
+    return []
+
+
 def check_patch_log_written(target: Target, dimensions: dict[str, ResolvedDimension], operations) -> list[Diagnostic]:
     """D-10 (H2.8b): a family that declares dal:PatchLog but has no generated operation that writes a patch log. Only the in-place writes of
     an optimistic named-graph or composite family do. An append discipline, an append-only concurrency, an unconditional write and a value-guarded

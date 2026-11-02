@@ -369,6 +369,16 @@ depends = ["bootstrap:persistence"]
 description = "Measure a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace with the query and caller graph naming, on Jena (in-memory and TDB2) and RDF4J (ADR-A124, TSD-42, PDD-17). Python renders the operations and the JVM runs them. Run on demand, not part of check. Fails on a wrong result, never on time. Add -Dgraphnaming.max=<quads> or -Dgraphnaming.quick=1 to the mvn command to shorten it"
 run = "python benchmark/persistence-graph-naming-cost/check.py --emit benchmark/persistence-graph-naming-cost/operations.json && mvn -q -f benchmark/persistence-graph-naming-cost-jvm/pom.xml compile exec:exec"
 
+[tasks."check:persistence-replace-forms"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on rdflib and Oxigraph (ADR-A124, TSD-01, TD-42). R2 is the generated rows replace, and R1 and the UNION form of R2 are candidates the compiler does not generate. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. REPLACE_FORMS_MAX_R0 caps the size of the generated forms, REPLACE_FORMS_QUICK=1 (or a family name) runs sizes up to 1,000, REPLACE_FORMS_TIMEOUT limits each measurement in seconds"
+run = "python -m pytest benchmark/persistence-replace-forms -q -p no:cacheprovider && python benchmark/persistence-replace-forms/check.py"
+
+[tasks."check:persistence-replace-forms-jvm"]
+depends = ["bootstrap:persistence"]
+description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on Jena (in-memory, TDB2 on disk and Fuseki over HTTP) and RDF4J (ADR-A124, TSD-01, TD-42). Python renders the operations, including the generated rows replace (R2), and the JVM runs them. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. Add -Dreplaceforms.maxr0=<size> or -Dreplaceforms.quick=1 to the mvn command to shorten it"
+run = "python benchmark/persistence-replace-forms/check.py --emit benchmark/persistence-replace-forms/operations.json && mvn -q -f benchmark/persistence-replace-forms-jvm/pom.xml compile exec:exec"
+
 [tasks."check:sparql-constraint-query-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib, Oxigraph and Jena when its test kit is built (ADR-A124, ADR-A128, TSD-Q18). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"

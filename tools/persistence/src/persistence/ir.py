@@ -366,6 +366,18 @@ class RowValues:
 
 
 @dataclass(frozen=True)
+class PayloadRows:
+    """``VALUES (?s ?p ?o) { rows }`` with one row per triple of a ``Payload`` parameter, supplied by the caller as rows
+    (``dal:TripleRows``). It carries the payload in the solutions instead of the template, so a write fills its template
+    once per payload triple and never once per sweep solution (TSD-65, formal-methods H2.12). An empty slot gives no
+    solution from its branch, which is why the rows replace keeps an empty branch beside it. The parameter keeps kind
+    ``Payload``, so the caller check and the request digest do not change with the form."""
+
+    vars: tuple
+    param: str
+
+
+@dataclass(frozen=True)
 class Union_:
     groups: tuple = ()
 
@@ -455,6 +467,6 @@ class Operation:
 __all__ = [
     "IrError", "Kind", "SLOT_KINDS", "Compare", "AccessMode", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
-    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "RowValues", "RowsSlot", "Union_",
+    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "RowValues", "RowsSlot", "PayloadRows", "Union_",
     "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

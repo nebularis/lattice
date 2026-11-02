@@ -114,9 +114,11 @@ public record OperationContract(
             }
         }
         records.sort(Text.ORDER);
+        RDFNode encoding = first(m, node, "payloadEncoding");
         return new PayloadContract(
             paramName(m, one(m, node, "payloadParameter")), root == null ? null : paramName(m, root), edges,
-            shape.isURIResource() && shape.asResource().getURI().equals(Namespaces.DAL + "NoBoundaryShape") ? null : text(shape), records);
+            shape.isURIResource() && shape.asResource().getURI().equals(Namespaces.DAL + "NoBoundaryShape") ? null : text(shape), records,
+            encoding == null ? "GroundNTriples" : local(encoding));
     }
 
     /**
