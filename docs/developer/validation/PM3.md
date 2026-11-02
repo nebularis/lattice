@@ -4,6 +4,8 @@
 
 **Unit:** [`projection-maintenance`](../status/projection-maintenance.md), slice PM3 of the [plan](../plans/projection-maintenance.md), built on 2026-11-01 in autonomous mode.
 
+**Superseded in part:** the service's WebSocket, its first-frame authentication and its Origin check are replaced by the broker's Web MQTT in [PM3b](PM3b.md), which carries PM3-T3, PM3-T7 and PM3-T8 over to what now does their job.
+
 **For countersignature (non-weakening rule):** no test was weakened or removed. The browser's job reads keep polling as their fallback.
 
 ## Invariant

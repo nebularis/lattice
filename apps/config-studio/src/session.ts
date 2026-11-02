@@ -14,6 +14,8 @@ export interface Session {
   scope?: string;
   authorizationEndpoint?: string;
   tokenEndpoint?: string;
+  /** Where the broker's MQTT serves events, when the studio offers them. */
+  events?: string;
 }
 
 const LOCAL = "lattice-studio:principal";

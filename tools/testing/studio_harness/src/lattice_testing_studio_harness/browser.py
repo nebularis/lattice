@@ -31,7 +31,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     subprocess.run(["mvn", "-q", "-f", str(platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer", "-am", "package", "-DskipTests"],
                    cwd=root, check=True)
     with Topology(name="browser").start(root=root) as studio:
-        return yarn(root, "test:stack", {"LATTICE_STUDIO_URL": studio.url})
+        return yarn(root, "test:stack", {"LATTICE_STUDIO_URL": studio.url, "LATTICE_STUDIO_EVENTS_TLS": "1"})
 
 
 if __name__ == "__main__":

@@ -878,10 +878,10 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 PM0 to PM3 built 2026-11-01, PM4 next |
-| **Validation** | [PM1](validation/PM1.md), [PM0 and PM2](validation/PM2.md), [PM3](validation/PM3.md) |
+| **Status** | 🟡 PM0 to PM3 built 2026-11-01, PM3a and PM3b built 2026-11-02, PM3c and PM4 next |
+| **Validation** | [PM1](validation/PM1.md), [PM0 and PM2](validation/PM2.md), [PM3](validation/PM3.md), [PM3a and PM3b](validation/PM3b.md) |
 | **Unit ID** | `projection-maintenance` |
-| **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md) |
+| **Sketch** | [projections-maintained-in-the-write.md](sketches/projections-maintained-in-the-write.md), [browser-events-over-web-mqtt.md](sketches/browser-events-over-web-mqtt.md) (PM3's rework, PM-Q19, PM-Q21 and PM-Q22 open) |
 | **Plan** | [projection-maintenance.md](plans/projection-maintenance.md) |
 | **Status Record** | [projection-maintenance.md](status/projection-maintenance.md) |
 

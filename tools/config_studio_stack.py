@@ -29,7 +29,7 @@ import time
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
@@ -52,6 +52,8 @@ RABBITMQ_ARCHIVE = {
 # The same addresses as the studio:service and studio:worker tasks in mise.toml.
 FUSEKI_PORT, RABBITMQ_PORT, SERVICE_PORT, WEB_PORT, ADDIN_PORT = 3130, 5673, 8090, 4175, 4176
 STREAM_PORT = 5553
+# The broker's MQTT over WebSockets, which carries the studio's events to the browser (PM-Q20 (d)).
+WEB_MQTT_PORT = 15675
 STUDIO_ENV = {
     "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{FUSEKI_PORT}",
     "LATTICE_FUSEKI_DATASET": "studio",
@@ -67,10 +69,30 @@ WRITER_ENV = {
 
 # RabbitMQ's stream plugin, for the writes super stream (ADR-A136), on its own port, advertised as the loopback address
 # so a client on this machine reaches the partitions' leader there.
-RABBITMQ_PLUGINS = "[rabbitmq_stream].\n"
+# Web MQTT carries the studio's events to the browser, and the HTTP auth backend asks the service who a browser is and what
+# topics it may use, after the broker's own users (PM-Q20 (d)). The plain MQTT listener is not opened.
+RABBITMQ_PLUGINS = "[rabbitmq_stream,rabbitmq_web_mqtt,rabbitmq_auth_backend_http].\n"
 RABBITMQ_CONF = """stream.listeners.tcp.1 = 127.0.0.1:{port}
 stream.advertised_host = 127.0.0.1
 stream.advertised_port = {port}
+auth_backends.1 = internal
+auth_backends.2 = http
+auth_http.http_method = post
+auth_http.user_path = http://127.0.0.1:{service}/api/broker/user
+auth_http.vhost_path = http://127.0.0.1:{service}/api/broker/vhost
+auth_http.resource_path = http://127.0.0.1:{service}/api/broker/resource
+auth_http.topic_path = http://127.0.0.1:{service}/api/broker/topic
+mqtt.allow_anonymous = false
+mqtt.listeners.tcp = none
+web_mqtt.tcp.ip = 127.0.0.1
+web_mqtt.tcp.port = {web_mqtt}
+"""
+# Web MQTT over TLS as well, with a certificate the caller made, as a test harness does.
+RABBITMQ_TLS_CONF = """web_mqtt.ssl.ip = 127.0.0.1
+web_mqtt.ssl.port = {port}
+web_mqtt.ssl.certfile = {cert}
+web_mqtt.ssl.keyfile = {key}
+web_mqtt.ssl.cacertfile = {ca}
 """
 
 # One TDB2 database behind two services: `studio` reads only, for the service and the worker, and `studio-write`
@@ -117,6 +139,9 @@ class Stack:
         self.cache = self.infra
         self.fuseki_port, self.rabbitmq_port, self.stream_port, self.rabbitmq_node = FUSEKI_PORT, RABBITMQ_PORT, STREAM_PORT, RABBITMQ_NODE
         self.rabbitmq_dist_port = RABBITMQ_PORT + 20000
+        self.service_port, self.web_mqtt_port = SERVICE_PORT, WEB_MQTT_PORT
+        # Web MQTT's TLS listener as (port, certificate, key, CA), or None for none.
+        self.web_mqtt_tls: Optional[Tuple[int, Path, Path, Path]] = None
         self.memory = False
 
     # --- processes -------------------------------------------------------------------------------
@@ -204,7 +229,12 @@ class Stack:
         plugins = data / "enabled_plugins"
         plugins.write_text(RABBITMQ_PLUGINS, encoding="utf-8", newline="\n")
         conf = data / "rabbitmq.conf"
-        conf.write_text(RABBITMQ_CONF.format(port=self.stream_port), encoding="utf-8", newline="\n")
+        text = RABBITMQ_CONF.format(port=self.stream_port, service=self.service_port, web_mqtt=self.web_mqtt_port)
+        if self.web_mqtt_tls is not None:
+            port, cert, key, ca = self.web_mqtt_tls
+            # The broker's configuration takes forward slashes on every platform.
+            text += RABBITMQ_TLS_CONF.format(port=port, cert=cert.resolve().as_posix(), key=key.resolve().as_posix(), ca=ca.resolve().as_posix())
+        conf.write_text(text, encoding="utf-8", newline="\n")
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_CONFIG_FILE": str(conf),
@@ -250,7 +280,9 @@ class Stack:
             self.spawn("writer", ["java", "-jar", str(self.pinned("writer", built("config-studio-writer")))], WRITER_ENV)
         if self.claim("service", SERVICE_PORT):
             static = {} if dev else {"LATTICE_STUDIO_STATIC": str(self.pinned("web", self.root / STUDIO_ENV["LATTICE_STUDIO_STATIC"]))}
-            self.spawn("service", ["java", "-jar", str(self.pinned("service", built("config-studio-service")))], {**STUDIO_ENV, **static})
+            # The broker this script starts serves events over Web MQTT on loopback. The compose broker does not, so there the browser polls.
+            events = {} if docker else {"LATTICE_STUDIO_EVENTS_URL": f"ws://127.0.0.1:{WEB_MQTT_PORT}/ws"}
+            self.spawn("service", ["java", "-jar", str(self.pinned("service", built("config-studio-service")))], {**STUDIO_ENV, **static, **events})
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)

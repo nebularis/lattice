@@ -3,16 +3,16 @@
 # Derived data maintained in the write, and replies that do not wait - Status
 
 **Unit ID:** `projection-maintenance`
-**Status:** 🟡 PM0 to PM3 built 2026-11-01, PM4 next
-**Last updated:** 2026-11-01
+**Status:** 🟡 PM0 to PM3 built 2026-11-01, PM3a and PM3b, events over the broker's Web MQTT, built 2026-11-02
+**Last updated:** 2026-11-02
 **Plan:** [projection-maintenance.md](../plans/projection-maintenance.md)
-**Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md)
+**Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md), and PM3's rework in [browser-events-over-web-mqtt.md](../sketches/browser-events-over-web-mqtt.md)
 
 ## Current position
 
 Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 with BL-09 now and replies that do not wait as a pattern. PM-Q1 to PM-Q9 were answered the same day. BL-09 left the backlog for this plan. PM1 and PM2 need DR1, and PM3 waits for DR4 and PM2 (PM-Q4).
 
-**Next action:** PM4, the tier 2 maintainer. For the maintainer, ADR-A149's addenda of 2026-11-01, ADR-A16's, and the Validation Packs of [PM1](../validation/PM1.md), [PM0 and PM2](../validation/PM2.md) and [PM3](../validation/PM3.md), whose decisions on the socket's authentication and origin check want review.
+**Next action:** the maintainer reviews [PM3b](../validation/PM3b.md) and answers PM-Q19, PM-Q21 and PM-Q22, then PM3c, the proxy run. PM4's questions, PM-Q13 to PM-Q17, were put in chat on 2026-11-02 and are not yet written into the plan.
 
 ## Log
 
@@ -23,3 +23,5 @@ Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 
 - 2026-11-01: PM1 built. `surface.maintenance` and the `surface maintenance` command give each promotion a clear and a fill, typed operations of the persistence IR, that keep its rows from a write's delta beside the source or in a graph of their own. An index contract and a shared data graph wait as TD-138. 40 random writes on each of three paths, two placements and two engines leave the rows a rebuild gives.
 - 2026-11-01: PM2 built with DR4. Each write keeps its sources' promoted partitions in its own request, the refresher is gone, a publish is one commit and its registry entry is read at once. A start rebuilds only when the promotions grew, and warns without rebuilding when one changed, which a new test covers and a probe broke. PM-Q7's effect check is not built, a cautious deviation. A Sonnet subagent did PM0's rename.
 - 2026-11-01: PM3 built. The writer publishes a CloudEvent for each applied job update on `lattice.studio.events`, the service's notifier delivers it over the WebSocket `/api/events` to a subscribed session whose principal may read the job, checked at delivery, and the browser waits on a job's events between reads with polling as the fallback. The real-stack suite shows a compile's completion arriving on the socket.
+- 2026-11-02: the maintainer questioned PM3's own WebSocket as a protocol we would have to keep, and asked for the broker's Web MQTT with or without a proxy. Sketched in [browser-events-over-web-mqtt.md](../sketches/browser-events-over-web-mqtt.md), with PM-Q18 to PM-Q22 open. The broker's behaviour there is from RabbitMQ 4.4's documentation, not yet probed. The diagrams render with mermaid 11.4.1.
+- 2026-11-02: PM-Q18 (a) and PM-Q20 (d) answered by the maintainer, who refuted (a) to (c) as copies of a permission in the broker that fail open. PM3a probed RabbitMQ 4.4's Web MQTT and HTTP auth backend (recorded in [PM3b](../validation/PM3b.md)), and PM3b built the broker's checks of identity, the relay in place of the WebSocket, `events.ts` over mqtt.js 5.16.1, and TLS in the real-stack run. PM-Q19 (c) and PM-Q21 (a) with (b) built as leanings while open.

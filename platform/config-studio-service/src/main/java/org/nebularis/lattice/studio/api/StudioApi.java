@@ -78,6 +78,8 @@ public final class StudioApi {
     private final Set<String> features;
 
     private final Authenticator auth;
+    /** Where a browser's MQTT client connects for events, or null when the studio offers none (PM-Q20 (d)). */
+    private volatile String eventsUrl;
     /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
     private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
 
@@ -236,8 +238,22 @@ public final class StudioApi {
         return found != null && found.readableBy(principal.name(), principal.admin());
     }
 
+    /** Offers events over the broker's MQTT at {@code url}, which the session names and the broker's checks ask about. */
+    public void events(String url) {
+        this.eventsUrl = url;
+    }
+
+    public String eventsUrl() {
+        return eventsUrl;
+    }
+
     public ApiResponse handle(ApiRequest req) {
         try {
+            // The broker's checks of who connected answer the broker, which authenticates as no principal (PM-Q20 (d)).
+            if (req.path().startsWith(org.nebularis.lattice.studio.events.BrokerAuth.PREFIX)) {
+                return eventsUrl == null ? secure(ApiResponse.text(404, "not found"))
+                    : secure(new org.nebularis.lattice.studio.events.BrokerAuth(this::authenticate).handle(req.method(), req.path(), req.body()));
+            }
             // Health and the session's description answer anyone, so a browser can learn how to sign in.
             if (req.path().equals("/api/health") || req.path().equals("/api/session")) {
                 return secure(req.path().equals("/api/session") ? session(req) : negotiate(req, route(req)));
@@ -268,6 +284,9 @@ public final class StudioApi {
         }
         Map<String, Object> out = new java.util.LinkedHashMap<>(auth.settings());
         Principal p = auth.authenticate(req);
+        if (eventsUrl != null) {
+            out.put("events", eventsUrl);
+        }
         if (p != null) {
             out.put("principal", p.name());
             out.put("admin", p.admin());
