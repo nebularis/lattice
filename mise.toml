@@ -520,6 +520,18 @@ run = "python tools/hooks.py merge"
 description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
+[tasks."work:board"]
+description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards (plan work-board). --all, --fetch, --measure, --commits"
+run = "python tools/work_board.py board"
+
+[tasks."build:work"]
+description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree (plan work-board)"
+run = "python tools/work_board.py build"
+
+[tasks."check:work-board"]
+description = "Test the work board: the board parser, the join across branches, the fold of remotes and the generated region (plan work-board)"
+run = "python -m pytest tools/test_work_board.py -q"
+
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). Oxigraph is the default engine (STD-153), since the whole suite, the reasoner tests included, passed on both engines first (STD-274, 2026-10-27). check:mork-compilers-conformance runs the same suite on rdflib. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
