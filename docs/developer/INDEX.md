@@ -501,5 +501,6 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-7 | the branches marked or deleted | work-board | briefed 2026-11-02 | the merge of this branch into `main` | docs/developer/status/work-board.md#position |
 | WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-10 | a unit's state joined across branches, rolled up from its board, and the Status word held to the roll-up | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
 
 <!-- END GENERATED work-board -->
