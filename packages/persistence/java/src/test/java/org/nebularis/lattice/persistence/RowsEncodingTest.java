@@ -31,14 +31,14 @@ class RowsEncodingTest {
     }
 
     @Test void aGroundFixtureFillsAsTriples() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         assertEquals("GroundNTriples", replace.payload().encoding());
         Payload p = Payload.of(t("urn:example:a"), t("urn:example:b"));
         assertEquals(p.sparql(), Payload.slotText(replace, "payloadTriples", p));
     }
 
     @Test void aRowsContractFillsAsRows() {
-        var ground = operation("baseline-single-class", REPLACE);
+        var ground = operation("baseline-whole-state", REPLACE);
         var c = ground.payload();
         var rows = ground.withPayload(new PayloadContract(c.parameter(), c.root(), c.edges(), c.shape(), c.recordClasses(), "TripleRows"));
         Payload p = Payload.of(t("urn:example:a"), t("urn:example:b"));
@@ -50,7 +50,7 @@ class RowsEncodingTest {
     }
 
     @Test void theDigestDoesNotDependOnTheEncoding() {
-        var ground = operation("baseline-single-class", REPLACE);
+        var ground = operation("baseline-whole-state", REPLACE);
         var c = ground.payload();
         var rows = ground.withPayload(new PayloadContract(c.parameter(), c.root(), c.edges(), c.shape(), c.recordClasses(), "TripleRows"));
         var v = values("root", R, "expectedSeq", 3, "payloadTriples", Payload.of(t("urn:example:a"), t("urn:example:b")),

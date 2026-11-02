@@ -21,7 +21,9 @@ public record DigestContract(String target, String expected, String payload, Lis
         out.add(Map.entry("OperationKindPart", List.of()));
         out.add(Map.entry("TargetPart", target != null ? List.of(target) : List.of()));
         out.add(Map.entry("ExpectedSeqPart", expected != null ? List.of(expected) : List.of()));
-        out.add(!event.isEmpty() ? Map.entry("EventPart", event) : Map.entry("PayloadPart", payload != null ? List.of(payload) : List.<String>of()));
+        // A delta replace has add and del parts and no payload or event, and digests the change alone, with no payload part (DR-Q3).
+        boolean changeOnly = payload == null && event.isEmpty() && (add != null || delete != null);
+        if (!changeOnly) out.add(!event.isEmpty() ? Map.entry("EventPart", event) : Map.entry("PayloadPart", payload != null ? List.of(payload) : List.<String>of()));
         if (add != null) out.add(Map.entry("AddPart", List.of(add)));
         if (delete != null) out.add(Map.entry("DelPart", List.of(delete)));
         return out;

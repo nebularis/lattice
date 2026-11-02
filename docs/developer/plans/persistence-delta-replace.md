@@ -63,3 +63,19 @@ One Validation Pack per slice, `DR1` and `DR2` in [docs/developer/validation/per
 ## 7. Deliberate non-coverage
 
 A merge model for a delta under a family with no guard. Healing a graph changed outside the family's operations, which is a whole replace under an operation of its own. A delta of a `dal:NoBoundary` family, whose value guard already writes one property. RDF4J, beyond the observation that the delta has no path (TSD-Q36).
+
+## 8. DR3, the brief for the studio slice
+
+For the studio agent's session, on the studio's branch once this unit's branch is in it. Done when the studio's integration and benchmark runs pass with no hand-written replace and TD-136 is closed.
+
+**The scene.** Since DR1 the generated `cas-replace` of every optimistic family is the delta replace, kind `dal:DeltaReplace`, whose contract declares `assertTriples` and `retractTriples` and no `payloadTriples`. The studio's six profiles in `contracts/config-studio/persistence-profile.ttl` are pinned to `dal:WholeState` so that nothing changed under the studio before this slice. The writer, `platform/config-studio-core/.../store/StudioOperations.java`, has `replace`, which fills the contract's payload parameters from what it is given and runs the caller check, and `replaceDelta`, which derives a delta write for a part or a document from the generated whole-state replace's syntax tree (TD-136). Since DR2 the Java caller library's `CallerCheck` refuses an overlapping or empty delta and, given `Options.nextState(payload)`, checks the next state against the bound and the delta against it.
+
+**Steps.**
+
+1. Remove the six `dal:replaceEncoding dal:WholeState` declarations and their comment from `contracts/config-studio/persistence-profile.ttl`, and add a `dal:CapabilitySpec` for the studio's deployment declaring `dal:providesCas dal:Linearizable` and `dal:providesSnapshotUpdateSemantics true`, which is true of Fuseki over TDB2 (TSD-66) and is what a family that later declares `dal:WholeState` would select the rows form by. Recompile and check which operations each family now has: every family's `cas-replace` is a delta builder.
+2. Delete `replaceDelta` and its sweep helpers, and route a part's and a document's save through `replace`, which already fills `assertTriples` and `retractTriples` from the delta it is given and ignores a `payloadTriples` the contract no longer declares. Pass the next state to the check, `CallerCheck.check(contract, values, Options.none().nextState(payload))`, so the boundary is checked over the state and not the slot (obligation 8). Keep the digest as the contract says, which is now over the delta alone, so the receipts of saves made before this slice were digested over the whole state and later ones over the change, which is fine, since a digest is compared only with the request that made it.
+3. Make sure a save whose delta is empty is not sent and answers "already at this sequence" (STD-299). The writer computes the delta already, so this is a guard before `replace`.
+4. Run the studio's unit tests, `mise run studio:integration`, and the `studio-api` benchmark against the head before the slice, and record the save times in the Validation Pack beside the 121 ms the hand-written delta gave at 3,000 triples.
+5. Close TD-136 naming this slice, and add the release note to the studio's own notes if it keeps any. ADR-A149 decision 12's addendum, which recorded the hand-written replace, gains a dated line saying the generated delta replace replaced it.
+
+**Not in this slice.** The projection refresh a publish waits for, which is `projection-maintenance`. Any change to LATTICE's compiler or libraries, which this unit's DR1 and DR2 made.

@@ -82,4 +82,58 @@ Run 2026-11-02 on this laptop (macOS, Python 3.14, rdflib, pyoxigraph with snaps
 
 ## DR2: the callers, the conformance run, the obligations as standards
 
-Planned. Written with the slice.
+**For the maintainer:** the seven caller obligations become standards for ratification, and both caller libraries gain the delta checks.
+
+### Invariant
+
+A caller library refuses a delta that cannot be right, overlapping or empty slots, and, given the next state, a delta that does not lead from the state read to that state or a next state outside the bound, before anything is sent. Both libraries digest a delta replace identically and as the vectors say (ADR-A132 decisions 2 and 4, ADR-A123 addendum of 2026-11-02 decisions 3 and 4).
+
+### Tests
+
+`packages/persistence/python/tests/test_delta_encoding.py` and the Java `DeltaEncodingTest`, level L3. Positive unless said.
+
+| ID | Given / When / Then | Invariant | Pass criterion |
+|---|---|---|---|
+| DR2-T1 | the `replace-encoding` fixture / read / the ticket's replace is `DeltaReplace`, its digest parts are kind, target, expected, add, del | decision 4 | the parts match, no payload part |
+| DR2-T2 (negative) | a delta with a triple in both slots / checked / `DeltaOverlap` | the invariant | the refusal, by code |
+| DR2-T3 (negative) | two empty slots / checked / `EmptyDelta` | STD-299 | the refusal, by code |
+| DR2-T4 (negative) | a next state, an asserted triple not in it / checked / `AssertOutsideNextState` | decision 3 | the refusal, by code |
+| DR2-T5 (negative) | a next state, a retracted triple in it / checked / `RetractInNextState` | decision 3 | the refusal, by code |
+| DR2-T6 (negative) | a next state with a subject outside the bound / checked / `PayloadOutsideBound` over the next state | decision 3 | the refusal, by code |
+| DR2-T7 | a sound delta with and without the next state / checked / no refusal | the invariant | empty refusals |
+| DR2-T8 | the delta vector / digested in Python and in Java / the vector's digest | decision 4 | equal hex |
+| DR2-T9 | the whole-state fixtures / the existing contract, check and rows tests / unchanged behaviour | regression | both suites pass |
+
+### One command
+
+```bash
+mise run check:persistence-library
+```
+
+Then `mise run check:persistence-vectors` and `mise run check:persistence-conformance`.
+
+### Artefacts to inspect
+
+`contracts/persistence/vectors.json`, the `digest-delta-replace` entry. The seven standards of the caller obligations in `docs/developer/standards.md`, numbered when minted, and the closed TD-137.
+
+### Deliberate non-coverage
+
+The studio's writer, DR3. A check that reads the state from the store, which no library does.
+
+### Results
+
+Run 2026-11-02, every figure read from the full output, and re-run here after the subagent's report.
+
+| Check | Result |
+|---|---|
+| `mise run check:persistence-library` | exit 0: vectors 94 passed, Python 127 passed, Java 118 tests with 0 failures and 0 errors, summed from the surefire reports |
+| `mise run check:persistence` | 4,721 passed, exit 0 |
+| `mise run check:persistence-conformance`, by the subagent after its change | 5,577 passed, 16 skipped, exit 0 |
+| `mise run build:knowledge`, `mise run check:identifiers` | built, 12 passed |
+| `mise run hooks:run` | ok |
+
+**Standards minted, for ratification.** STD-300 to STD-305 for obligations 1 to 6, STD-306 for obligation 8, each pointing at the compiler README's obligations section, with STD-299 as obligation 7. TD-137 is closed by them.
+
+**Not done.** A caller-check vector for `DeltaOverlap` or `EmptyDelta`, since the vector format carries no payload slots for a caller check and extending it is its own change. The two refusals are held by both libraries' tests instead.
+
+**Deviations.** None from the plan. The Java tests of the whole-state replace read the two whole-state fixtures DR1 added, since the baseline and composite fixtures now hold the delta.
