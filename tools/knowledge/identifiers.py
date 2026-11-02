@@ -43,7 +43,7 @@ Usage, from the repository root::
 
 The check also fails when a family defines one identifier twice, which a merge of two branches that
 each numbered a row produces. First in wins: the row committed earlier keeps the number, and the
-check prints both sites with the date each line was committed (ADR-A133 addendum).
+check prints every site with the time its line was committed, to the second, and names the one that keeps the number (ADR-A133 addendum).
 """
 
 from __future__ import annotations
@@ -451,13 +451,14 @@ def duplicates(family: Family) -> dict[str, list[tuple[Path, int, str]]]:
 
 
 def committed_on(path: Path, line: int) -> str:
-    """The date the line was committed, from git blame, "uncommitted" for a line not yet committed,
-    or "unknown" where git cannot say. Line 0 dates the file's first commit."""
+    """When the line was committed, to the second in UTC as 2026-11-02T14:13:37Z, from git blame,
+    "uncommitted" for a line not yet committed, or "unknown" where git cannot say. Line 0 dates the
+    file's first commit. Two branches often number rows on the same day, so a day cannot order them."""
     try:
         if line == 0:
-            out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%cs", "--", str(path)],
+            out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%ct", "--", str(path)],
                                  cwd=ROOT, capture_output=True, text=True, check=True).stdout
-            return out.strip().splitlines()[-1] if out.strip() else "uncommitted"
+            return _utc(int(out.strip().splitlines()[-1])) if out.strip() else "uncommitted"
         out = subprocess.run(["git", "blame", "--line-porcelain", f"-L{line},{line}", "--", str(path)],
                              cwd=ROOT, capture_output=True, text=True, check=True).stdout
     except (subprocess.CalledProcessError, OSError, IndexError):
@@ -466,8 +467,21 @@ def committed_on(path: Path, line: int) -> str:
         return "uncommitted"
     for row in out.splitlines():
         if row.startswith("committer-time "):
-            return datetime.date.fromtimestamp(int(row.split()[1])).isoformat()
+            return _utc(int(row.split()[1]))
     return "unknown"
+
+
+def _utc(seconds: int) -> str:
+    return datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def first_in(dates: list[str]) -> int | None:
+    """The index of the site committed first, or None where two share the earliest time or one has
+    no time, since then the rule cannot pick and the maintainer does."""
+    known = [d for d in dates if d[:1].isdigit()]
+    if len(known) != len(dates) or known.count(min(known)) > 1:
+        return None
+    return dates.index(min(known))
 
 
 def excepted() -> set[str]:
@@ -616,8 +630,12 @@ def main() -> int:
         )
 
     for family, _, sites in findings.duplicated:
-        where = ", ".join(f"{_name(path)}:{line} ({committed_on(path, line)})" for path, line, _ in sites)
-        print(f"ERROR: {sites[0][2]} ({family.name}) is defined {len(sites)} times: {where}")
+        dates = [committed_on(path, line) for path, line, _ in sites]
+        where = ", ".join(f"{_name(path)}:{line} ({date})" for (path, line, _), date in zip(sites, dates))
+        first = first_in(dates)
+        keeps = (f" {_name(sites[first][0])}:{sites[first][1]} keeps the number." if first is not None
+                 else " No one site was committed first, so the maintainer decides which keeps it.")
+        print(f"ERROR: {sites[0][2]} ({family.name}) is defined {len(sites)} times: {where}.{keeps}")
 
     if findings.duplicated:
         print(

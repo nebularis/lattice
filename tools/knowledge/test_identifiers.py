@@ -135,6 +135,16 @@ def test_or1_a_family_defining_one_identifier_twice_is_reported(tmp_path, monkey
     assert identifiers.definitions(family) == {"TD7": "TD-7", "TD8": "TD-8"}
 
 
+def test_wb8_first_in_is_decided_to_the_second_and_a_tie_goes_to_the_maintainer():
+    """Two branches numbered STD-300 on 2026-11-02, at 14:21 and at 19:19. To the day they tie, to the
+    second the earlier wins. A true tie, or a site with no time, names no winner."""
+    assert identifiers.first_in(["2026-11-02T19:19:10Z", "2026-11-02T14:21:04Z"]) == 1
+    assert identifiers.first_in(["2026-11-01T16:04:19Z", "2026-11-02T19:19:10Z"]) == 0
+    assert identifiers.first_in(["2026-11-02T14:21:04Z", "2026-11-02T14:21:04Z"]) is None
+    assert identifiers.first_in(["2026-11-02T14:21:04Z", "uncommitted"]) is None
+    assert identifiers._utc(1793629270) == "2026-11-02T14:21:10Z"
+
+
 def test_or1_the_corpus_defines_no_identifier_twice():
     twice = {f.name: sorted(k for k in identifiers.duplicates(f)) for f in identifiers.FAMILIES}
     assert not any(twice.values()), {k: v for k, v in twice.items() if v}

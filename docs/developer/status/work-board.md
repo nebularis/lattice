@@ -20,8 +20,8 @@
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | built 2026-11-02, building 2026-11-02 |  |
 | WB-6 | `work:here` | built 2026-11-02, building 2026-11-02 |  |
 | WB-7 | the branches marked or deleted | briefed 2026-11-02 | the merge of this branch into `main` |
-| WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | building 2026-11-02 |  |
-| WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | building 2026-11-02 |  |
+| WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | built 2026-11-02, building 2026-11-02 |  |
+| WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | built 2026-11-02, building 2026-11-02 |  |
 
 ## History
 
@@ -42,3 +42,4 @@
 - 2026-11-02: rows the roadmap refresh found lagging `main` or disagreeing within a record, for WB-7, since a unit's own agent corrects its rows after merging `main`. AIR-2.0 to AIR-4.4 read `built` though their commits are on `main`. The IOD rows read `verified` though the squash merge and the tags from `ontologies-v0.18.0` exist. The Track H rows read `built` though `persistence-v0.19.0` is tagged. FMH-2.6d, FMH-2.7 and FMH-2.8 read `planned` though the record's next action lists them built. FM-4 reads `built` on the epic's board and `briefed` in track C's record. LG-2 reads `built` on the board while the record's Status line says not started, and LG-5 the reverse. The AIR record's position and blockers still say AIR-3.3 waits on HQ-6a.2. The NRS record says A-107 to A-111 are not drafted, though A-108 and A-109 exist as Proposed, and NRS-1's arrow into CCS is named by the CCS board though the NRS log moved it to CCS.
 - 2026-11-02: before the merge. The roadmap's units table and completed section read each unit's state from the tree the roadmap is built in rather than from `main`'s older copy of its record, which had left section 11 empty on this branch. The merge gate, `mise run hooks:merge`, refused two ids of this branch's own making, `OD-ELC` and `OD-REL`, which have no digit, so they are `OD-ELC1` and `OD-REL1` with their packs renamed and the crossings recorded. The gate then passed its ten checks, and a trial merge against `main` at 383af2e5 is clean.
 - 2026-11-02: WB-8 and WB-9 picked up, from the realign branch's merge of `main`. A collision of two rows committed the same day was a tie at the day, and `work:rename` crossed two exceptions whose mentions it left, breaking `check:identifiers`.
+- 2026-11-02: WB-8 and WB-9 built. The identifier check prints each site of a collision to the second and names the site that keeps the number, by ADR-A133's addendum of 2026-11-02, Proposed. `work:rename` crosses an exception after the sweep, keeping the old line beside the new one while a tracked file still spells it, which on the realign branch keeps FMH-H1.4a and FMH-H2. `check:identifiers`, `tools/test_work_migrate.py` and `tools/knowledge/test_identifiers.py` pass, 27 tests.

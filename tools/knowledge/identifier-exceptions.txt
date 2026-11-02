@@ -69,7 +69,9 @@ ES-9  # named in prose only, no board row yet
 # unit formal-methods-track-h, 3 slice(s)
 FMH-H1  # named in prose only, no board row yet
 FMH-H1.4a  # named in prose only, no board row yet
+FMH-1.4a  # named in prose only, no board row yet
 FMH-H2  # the H2 phase of track H, not a slice
+FMH-2  # the H2 phase of track H, not a slice
 # unit ledger, 2 slice(s)
 LG-1.5b  # named in prose only, no board row yet
 LG-6  # named in prose only, no board row yet

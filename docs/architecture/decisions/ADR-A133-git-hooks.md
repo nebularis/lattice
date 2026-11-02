@@ -77,3 +77,11 @@ Provenance of the addendum: the maintainer chose the uniqueness check as a merge
 11. **The studio's browser suites at a merge.** A merge into `main` that touches the Configuration Studio (its application, its services, its contracts or its worker) runs `mise run test:config-studio-browser`: the browser journeys against the in-memory fake service, then the real-stack suite against a single topology the studio harness starts in isolation (ADR-A150). It blocks. It runs at a merge only, since it takes a few minutes and builds the browser application and the jars. The fake service keeps the journeys fast, and the real stack catches a fake that has drifted from the service, as the fake had when it lacked the session route and accepted a patch the service refused (TSD-69).
 
 Provenance of the addendum: the maintainer chose on 2026-11-01 to keep the fake service for the journeys and to add the real stack to the merge gate, over moving every browser test onto the real stack.
+
+## Addendum, 2026-11-02
+
+**Narrows decision 10.**
+
+12. **First in wins is decided to the second.** The check prints each site with the time its line was committed, in UTC to the second, and names the site that keeps the number. Two branches often number rows on the same day, which a date cannot order. Where two sites share the earliest second, or one has no commit, it names none and the maintainer decides.
+
+Provenance of the addendum: two branches numbered STD-300 upward on 2026-11-02, five hours apart, and the check printed the same day for both. The maintainer asked for the rule to go by the time on 2026-11-02 (slice WB-8 of `work-board`).
