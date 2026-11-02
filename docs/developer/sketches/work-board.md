@@ -3,7 +3,7 @@
 # Where the work is: marking units and slices across branches — Sketch
 
 **Unit ID:** `work-board`
-**Status:** Sketch. WB-Q1 to WB-Q8 answered 2026-11-02. WB-Q9 open. Nothing built.
+**Status:** Sketch, planned 2026-11-02 as [plans/work-board.md](../plans/work-board.md). WB-Q1 to WB-Q8 answered, WB-Q9 open. Kept until the ADR of WB-5 records the reasoning.
 **Date:** 2026-11-02
 **Bears on:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) (the hooks and their four moments), [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) (what the index reads), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (a generated region in a hand-written file), the lifecycle and branching skills, [ROADMAP.md](../ROADMAP.md) §12, [INDEX.md](../INDEX.md).
 

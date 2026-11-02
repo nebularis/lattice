@@ -885,6 +885,19 @@ A web application for authoring vocabulary, quantification, eligibility, persist
 
 Explicit publication of each configuration unit as a version in a registry the studio keeps, with dependencies pinned, imports fenced, jobs reading the whole workspace, pluggable authentication and workspace modes.
 
+## 8.29 The Work Board — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Planned 2026-11-02, WB-0 built, WB-1 next, WB-Q9 open |
+| **Unit ID** | `work-board` |
+| **Sketch** | [work-board.md](sketches/work-board.md) |
+| **Plan** | [work-board.md](plans/work-board.md) |
+| **Status Record** | [work-board.md](status/work-board.md) |
+| **ADRs** | builds on A-121, A-133, A-134. Its own ADR is drafted in WB-5 |
+
+A slice is marked in its home unit's status record before the first edit, one tool reads every branch and says where everything is, INDEX.md and ROADMAP.md's summary are generated from the marks, slice ids take one grammar, and a check keeps the boards well formed. Slices WB-0 to WB-7.
+
 ## 8. Phase Handoff Documents (0-6)
 
 | Phase | Status Record | Key Outcome |
