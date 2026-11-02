@@ -3,7 +3,7 @@
 # Where the work is: marking units and slices across branches — Sketch
 
 **Unit ID:** `work-board`
-**Status:** Sketch. WB-Q1 to WB-Q6 answered 2026-11-02. WB-Q7 to WB-Q9 open. Nothing built.
+**Status:** Sketch. WB-Q1 to WB-Q8 answered 2026-11-02. WB-Q9 open. Nothing built.
 **Date:** 2026-11-02
 **Bears on:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) (the hooks and their four moments), [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) (what the index reads), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (a generated region in a hand-written file), the lifecycle and branching skills, [ROADMAP.md](../ROADMAP.md) §12, [INDEX.md](../INDEX.md).
 
@@ -11,7 +11,7 @@
 
 ## 1. Why
 
-Agents build in parallel, each in its own worktree on its own branch, pushing its own branch and never merging, and nobody merges into `main` but the maintainer. The question "where is slice X being built, and what is on branch Y" is answered today by reading, which is slow and goes stale.
+Agents build in parallel, each in its own worktree on its own branch, pushing its own branch and never merging unless the maintainer says so, and nobody merges into `main` but the maintainer or an agent the maintainer tells to. The question "where is slice X being built, and what is on branch Y" is answered today by reading, which is slow and goes stale.
 
 The facts, measured on 2026-11-02 from this checkout after a fetch.
 
@@ -26,7 +26,7 @@ The facts, measured on 2026-11-02 from this checkout after a fetch.
 
 | | Need | Why |
 |---|---|---|
-| R1 | An agent marks work **on its own branch, in its own worktree**, pushes only that branch and never merges | two agents merging or pushing one branch is the disaster to avoid |
+| R1 | An agent marks work **on its own branch, in its own worktree**, pushes only that branch and never merges, unless the maintainer says otherwise, as the contract in AGENTS.md already has it | two agents merging or pushing one branch is the disaster to avoid |
 | R1a | An agent marks **before its first edit**, never after | a mark written at handoff is invisible to the board for the whole build, and the board is then wrong exactly when it is needed |
 | R2 | The mark is at a **fixed path**, readable with `git show <ref>:<path>` on every local and remote ref, so no checkout is needed to read it | one script reads every branch from one checkout |
 | R3 | A mark is a **row keyed by a stable identifier** with a **state from a closed set** and a date | a script can join rows across refs. Free text cannot be compared (design standards) |
@@ -124,7 +124,7 @@ B's cost crosses A's at the merge. Every one of the 18 branches would conflict o
 
 ## 5. The state set and the join, WB-Q3
 
-A state cell opens with a word from a closed, ordered set and the date the state was reached. The rest of the cell is free.
+A state cell opens with a word from a closed, ordered set and the day the state was reached. The rest of the cell is free.
 
 ```mermaid
 flowchart LR
@@ -161,6 +161,8 @@ sequenceDiagram
     Note over C: C still says built 2026-10-25
     Note over M,C: board: C9b3a merged (main). C is behind on C9b3a, not building it
 ```
+
+**A day, not a commit.** The cell could carry the commit at which the state was reached instead of the day. For three states it cannot, because the commit that carries the mark does not exist when the mark is written. `built` is set in the commit that carries the handoff and `merged` in the merge commit, so a commit written in the cell is always one commit late, and recording the right one costs a second commit whose only content is a number. A commit written in a cell also stops resolving once its branch is squash-merged and deleted, which is this repository's habit, while a day always means what it says. What a commit would add is derivable. `work:board --commits` runs `git log -1 -S<cell> <ref> -- <record>` for each row it prints, 30 ms each on this laptop, and gives the commit that set the row's current state on that ref, which for a `building` row is the pick-up commit. So the day is the fact written, the order the join and the gantt need, and the commit is read from git, where it already is (STD-016). Dozens of commits on one day change nothing, since a slice reaches a state once, and a slice that goes `building`, `built` and `verified` in one day keeps all three in its trail, ordered by the ladder, not the day. Two refs holding the same state on the same day for one slice are not a tie to break, they are a double claim, and the board prints that row once with both refs and never chooses.
 
 **The row.** The tool finds the first table in a status record whose header has a `Slice` and a `State` column, by name, never by position. Other columns, such as CCS's `Tranche`, are kept and ignored. A `Blocked on` column is read where present. The state cell may keep a trail, newest first, which costs about 25 characters a transition and is what the gantt's bars are drawn from.
 
@@ -204,7 +206,7 @@ flowchart LR
 
 | Task | Does | Reads | Writes |
 |---|---|---|---|
-| `work:board` | the live board, filtered to rows that differ from `main` and branches that mark nothing. `--all` prints every row, `--fetch` fetches first, `--measure` adds merged-by-content per branch | every local branch and every remote-tracking ref, through one `git cat-file --batch` | stdout, Markdown |
+| `work:board` | the live board, filtered to rows that differ from `main` and branches that mark nothing. `--all` prints every row, `--fetch` fetches every remote first, `--measure` adds merged-by-content per branch, `--commits` the commit that set each printed row | every local branch and every remote-tracking ref, through one `git cat-file --batch` | stdout, Markdown |
 | `build:work` | INDEX.md's generated region from `HEAD` | the working tree | INDEX.md |
 | `build:roadmap` | ROADMAP.md's generated regions from the board, dated | every ref | ROADMAP.md |
 | `check:work` | every touched board is well formed and INDEX.md agrees with the tree | the working tree | nothing |
@@ -212,7 +214,7 @@ flowchart LR
 | `work:rename` | builds the slice crosswalk, then applies it, §9a | the working tree | working documents, Validation Pack names |
 | `work:here` | writes or lists presence files, §11 | `.local/agents/` | `.local/agents/` |
 
-**The board's output.** Three tables. Units, one row each, with the joined state and the next slice. Work, one row per slice that is further along on some ref than on `main`, with the ref and the date, and a `stale` column listing refs behind `main` on it. Branches, one row per ref with a commit `main` lacks, with its tip date, its local worktree path if any, the slices it moves, and `no mark` where it moves none. `--measure` adds the branching skill's content measure, the share of a branch's added lines present on `main`, which costs one blob comparison per changed file per branch and is the slow part, seconds for 18 branches.
+**The board's output.** Three tables. Units, one row each, with the joined state and the next slice. Work, one row per slice that is further along on some ref than on `main`, with the ref and the date, and a `stale` column listing refs behind `main` on it. Branches, one row per branch with a commit `main` lacks, with its tip date, its local worktree path if any, how far the local branch is ahead of and behind its upstream, the slices it moves, and `no mark` where it moves none. Remotes that share a URL are folded into one, which here is `origin`, `origin-ssh` and `upstream`, and a branch that exists locally and remotely is one branch with an upstream, measured at whichever tip is further on, so a worktree that has not pushed, or has not pulled, is reported as such and never mistaken for the branch. `--measure` adds the branching skill's content measure, the share of a branch's added lines present on `main`, which costs one blob comparison per changed file per branch and is the slow part, seconds for 18 branches.
 
 **Merged by content, not by ancestry.** The board never reports "ahead by n commits" as a state. The branching skill says why.
 
@@ -348,10 +350,9 @@ model = "fable-5.1"
 role = "review"            # build, review or read
 on = ["CCS-9b.3b"]
 since = "2026-11-02T13:40:00Z"
-last = "2026-11-02T14:02:00Z"
 ```
 
-`mise run work:here -- --role review --model fable-5.1 --on CCS-9b.3b` writes it, filling session and client from the environment, and refreshes `last` on every later run. `mise run work:here` alone prints the sessions whose file is under twelve hours old, so a crashed session ages out and no lock is ever held. `--leave` stamps the file and it drops from the list. The role is the fact a reader compares, so it is a closed set.
+`mise run work:here -- --role review --model fable-5.1 --on CCS-9b.3b` writes it, filling session and client from the environment, and touches it on every later run. `mise run work:here` alone prints the sessions whose file was touched in the last twelve hours, so a crashed session ages out and no lock is ever held. The question here is liveness, which only a clock answers and no commit can, so the fact compared is the file's modification time, nothing written in the file, and `since` is there for the reader to see how long the builder has been at it. The clock is an input, `--now` for the tests (PRI-56). `--leave` stamps the file and it drops from the list. The role is the fact a reader compares, so it is a closed set.
 
 ```mermaid
 sequenceDiagram
@@ -371,7 +372,7 @@ sequenceDiagram
 
 ## 12. The branches today, WB-Q9
 
-Measured on 2026-11-02 after a fetch. 24 local branches, 17 remote refs, 9 worktrees under `lattice-wt/` and 7 under `.claude/worktrees/`. Share is the branching skill's content measure, the branch's added lines since its merge-base that are on `main` today, computed by the prototype of `--measure` in about three minutes for the set. Marks says which status records and plans the branch changes.
+Measured on 2026-11-02 after fetching, over every local branch and every remote-tracking ref of `origin-ssh`, with a local branch and its remote folded into one row where their tips were the same commit, which they were for every branch but `main`, itself one commit behind its remote by the evening. 24 local branches, 17 remote refs, 9 worktrees under `lattice-wt/` and 7 under `.claude/worktrees/`. Share is the branching skill's content measure, the branch's added lines since its merge-base that are on `main` today, computed by the prototype of `--measure` in about three minutes for the set. Marks says which status records and plans the branch changes. The table is a snapshot, and the tool's Branches table with `--fetch` is what replaces it.
 
 | Branch | Tip | Ahead | Share on `main` | Marks | Proposed disposition |
 |---|---|---|---|---|---|
@@ -382,7 +383,7 @@ Measured on 2026-11-02 after a fetch. 24 local branches, 17 remote refs, 9 workt
 | `ccs-trunk` | 10-29 | 53 | 99% | CCS, MSC | merged. Delete once the 43 lines are confirmed noise |
 | the four CS12 subagent branches, `claude/config-studio-shape-forms`, `-showcase-sample`, `cs12b-authoring-domain`, `cs9-studio-operations` | 10-28 | 7 to 18 | 89% to 91% | config-studio, WA | residue of about 1,000 lines each. Confirm, then delete with their `.claude/worktrees/agent-*` worktrees |
 | `claude/nice-bohr-pmj43u-wwhgle` | 10-20 | 45 | 88% | AIR, FM-H, PDD, TD | 2,000 lines not on `main`, remote and local. Ask |
-| `docs/placement-vehicles-structure` | 11-02 | 112 | all, after merging `main`. Against `main` it is 8 files, 13 lines added and 426 removed | none | a documentation branch whose net is deletions. Ask whether the deletions are wanted |
+| `docs/placement-vehicles-structure` | 11-02 | 112 | all. Its tree is `main`'s tree, so it holds nothing `main` lacks | none | merged by content. Ask what it was for, then delete |
 | `fml/isabelle-layers` | 11-01 | 31 | 100% | none | squash-merged as `df0ddd1a`. Delete the branch, keep the worktree only while H3.1 continues there |
 | `claude/fix-topology-links` | 10-23 | 1 | 56% | 8 old records | 80 lines. Ask |
 | `persistence-mbt` | 09-23 | 1 | 1% | EC, PCI | 463 lines from September. Ask |
@@ -419,11 +420,11 @@ Needed now: the state set, the standard board, the slice grammar and the crosswa
 - **WB-Q3. The state set.** Answered 2026-11-02, the seven-step ladder with `blocked` and `dropped` aside, joined by furthest-then-latest.
 - **WB-Q4. Slice identifiers.** Answered 2026-11-02, standardise, with a mechanical crosswalk from the historic ids. The grammar and the sweep are §9a, and the prefixes are WB-Q7.
 - **WB-Q5. The roadmap snapshot.** Answered 2026-11-02, the post-merge hook regenerates on `main`, the maintainer commits, and `build:roadmap` serves on demand.
-- **WB-Q6. The check's strictness.** Answered 2026-11-02, block at a commit on a malformed touched board, on the conditions in §10a.
-- **WB-Q7. The unit prefixes.** The table in §9a proposes one per unit that has slices. Which change?
-- **WB-Q8. Presence in a shared worktree.** The task and the rule alone, (a), or with the Claude Code hook that writes the file and injects who else is here, (b). The leaning is (a) now and (b) as a slice once (a) has run for a few weeks, §11.
+- **WB-Q6. The check's strictness.** Answered 2026-11-02, block at a commit on a malformed touched board, on the conditions in §10a. The cell carries a day and not a commit, §5.
+- **WB-Q7. The unit prefixes.** Answered 2026-11-02, the table in §9a, with the segment's optional capitals admitted.
+- **WB-Q8. Presence in a shared worktree.** Answered 2026-11-02, (a), the task and the rule, with the Claude Code hook (b) as a later slice, §11.
 - **WB-Q9. Which branches are live.** The dispositions in §12 are proposed from content measurement, and the branching skill says the maintainer names the live set. Which rows are wrong?
 
 Estimate, in tokens: the tool and its tests about 70k, the slice sweep and the crosswalk about 30k, the boards and Branch lines about 40k, AGENTS.md, the skills, standards and ADR about 35k, the INDEX and ROADMAP regions about 20k, the branch migration about 25k. Total about 220k.
 
-🔴 PLAN FIRST: WB-Q7 to WB-Q9, then a plan on this branch and the slices in §12's order.
+🔴 PLAN FIRST: WB-Q9, then a plan on this branch and the slices in §12's order.
