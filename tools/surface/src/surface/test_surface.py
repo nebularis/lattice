@@ -1016,6 +1016,10 @@ class DefectFixtureTests(unittest.TestCase):
         with self.assertRaisesRegex(CompileError, "srf:X6"):
             self.compile_fixture("defect-lossy-source-signature.ttl", "lossy-promotion")
 
+    def test_promotion_onto_an_undeclared_authored_property_is_refused(self) -> None:
+        with self.assertRaisesRegex(CompileError, "does not declare"):
+            self.compile_fixture("defect-undeclared-source-property.ttl", "undeclared-promotion")
+
     def test_both_read_path_forms_is_refused(self) -> None:
         with self.assertRaisesRegex(ContractError, "exactly one read-path form"):
             read_contracts(parse_files([str(FIXTURES / "defect-both-read-path-forms.ttl")]))

@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import base64
+import json
 import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Optional
 
 import rdflib
+
+
+_GRAPH_NAMES = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }"
 
 
 class GraphNotFound(Exception):
@@ -55,6 +59,27 @@ class FusekiGraphStore:
         )
         with urllib.request.urlopen(request, timeout=self._timeout) as response:
             response.read()
+
+    def graph_names(self) -> list[str]:
+        """The name of every named graph that holds a triple. The query is a constant, and nothing is joined into it."""
+        rows = self._query(_GRAPH_NAMES, "application/sparql-results+json")
+        return sorted(row["g"]["value"] for row in json.loads(rows)["results"]["bindings"])
+
+    def construct(self, query: str) -> rdflib.Graph:
+        """The graph a constant CONSTRUCT query gives. `query` is a module constant, never built from strings (PRI-55)."""
+        graph = rdflib.Graph()
+        graph.parse(data=self._query(query, "text/turtle"), format="turtle")
+        return graph
+
+    def _query(self, query: str, accept: str) -> bytes:
+        request = urllib.request.Request(
+            f"{self._base_url}/{self._dataset}/query",
+            data=query.encode("utf-8"),
+            method="POST",
+            headers=self._headers({"Content-Type": "application/sparql-query", "Accept": accept}),
+        )
+        with urllib.request.urlopen(request, timeout=self._timeout) as response:
+            return response.read()
 
     def _data_url(self, graph_iri: str) -> str:
         query = urllib.parse.urlencode({"graph": graph_iri})

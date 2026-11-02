@@ -141,13 +141,13 @@ scheme (§7, §8):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.0> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
     rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are
@@ -346,11 +346,11 @@ by `skos:editorialNote "Reference edition published by LATTICE. Not a market sta
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -3981,9 +3981,9 @@ authority to cite, and its note says so.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.8.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.9.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> .
 
 prl-voc:IntensityMeasureScheme a voc:ConceptScheme ;
     fnd:hasIdentity prl-voc:IntensityMeasureScheme-identity ;
@@ -4793,6 +4793,8 @@ upstream changes (substrate track S1, S2). Neither blocks this module's first re
 
 ## 11. Release notes
 
+- **0.9.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.8.0**.
   - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - changes meaning (ADR-A98 decision 6, under ADR-A113). The module's namespace and version IRI gain the `lattice` segment, `https://www.nebularis.org/neuro-semantic/lattice/insurance/<module>#`, as the applied README's table records. Data and imports under the old root re-key.

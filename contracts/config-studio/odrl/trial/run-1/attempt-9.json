@@ -1,0 +1,43 @@
+{
+ "decoded": true,
+ "triples": 492,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/odrl/mapping#MS",
+   "queries": 379,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "info",
+   "code": "Evidence",
+   "about": "https://example.org/lattice/odrl/mapping#Hyp_Logical",
+   "message": "a hypothesis or weighted match is evidence for review, and writes nothing"
+  },
+  {
+   "stage": "compile",
+   "severity": "info",
+   "code": "Evidence",
+   "about": "https://example.org/lattice/odrl/mapping#Hyp_Policy",
+   "message": "a hypothesis or weighted match is evidence for review, and writes nothing"
+  },
+  {
+   "stage": "compile",
+   "severity": "info",
+   "code": "Evidence",
+   "about": "https://example.org/lattice/odrl/mapping#Hyp_Refinement",
+   "message": "a hypothesis or weighted match is evidence for review, and writes nothing"
+  },
+  {
+   "stage": "compile",
+   "severity": "info",
+   "code": "Evidence",
+   "about": "https://example.org/lattice/odrl/mapping#Hyp_SetOps",
+   "message": "a hypothesis or weighted match is evidence for review, and writes nothing"
+  }
+ ],
+ "errors": 0,
+ "output_triples": 85
+}

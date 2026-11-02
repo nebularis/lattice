@@ -1,0 +1,148 @@
+# SPDX-License-Identifier: MPL-2.0
+"""Cards: an ontology or vocabulary in one line per term, generated from its RDF, so a proposing model reads a layer in a
+few thousand tokens and never the layer's whole specification. A card is deterministic, built in milliseconds, and never
+stored, so it cannot drift from the graph it is read from."""
+
+from __future__ import annotations
+
+import functools
+import re
+from dataclasses import dataclass
+from typing import Iterable, Optional
+
+from rdflib import Graph, URIRef
+from rdflib.namespace import OWL, RDF, RDFS, SKOS
+
+_KINDS = ((OWL.Class, "class"), (RDFS.Class, "class"), (OWL.ObjectProperty, "object property"),
+          (OWL.DatatypeProperty, "datatype property"), (RDF.Property, "property"), (OWL.AnnotationProperty, None),
+          (SKOS.Concept, "concept"), (OWL.NamedIndividual, "individual"))
+_DEFINITIONS = (RDFS.comment, SKOS.definition)
+_UTILITY = (URIRef("https://www.nebularis.org/neuro-semantic/lattice/foundation#utility"),)
+_LABELS = (RDFS.label, SKOS.prefLabel)
+
+
+@dataclass(frozen=True)
+class Card:
+    """One term: its CURIE, its kind, its label, its definition or its utility, whichever says more, and what places it."""
+
+    iri: URIRef
+    curie: str
+    kind: str
+    label: str
+    definition: str
+    places: tuple[str, ...]  # "sub X", "domain X", "range X", "broader X", "type X"
+
+    def line(self) -> str:
+        return " | ".join([self.curie, self.kind, self.label, self.definition, ", ".join(self.places)])
+
+
+def _text(g: Graph, s) -> str:
+    """A term's rdfs:comment or skos:definition, which says what it is, or its fnd:utility, which says how to use it and
+    often states the law that governs it, whichever is longer, in full on one line. A term with neither has none."""
+    found = [_one(g, s, _DEFINITIONS) or "", _one(g, s, _UTILITY) or ""]
+    return " ".join(max(found, key=len).split()).replace(" | ", " / ")
+
+
+def _one(g: Graph, s, predicates) -> Optional[str]:
+    for p in predicates:
+        values = sorted((str(o) for o in g.objects(s, p)), key=lambda v: (len(v) == 0, v))
+        english = [str(o) for o in g.objects(s, p) if getattr(o, "language", None) in (None, "en")]
+        if english:
+            return sorted(english)[0]
+        if values:
+            return values[0]
+    return None
+
+
+def cards(g: Graph, within: Optional[Iterable[str]] = None) -> list[Card]:
+    """The cards of every named class, property, concept and individual of `g`, those under the namespaces `within`
+    when it is given, sorted by CURIE."""
+    nm = g.namespace_manager
+    spaces = tuple(within) if within else None
+    curie = lambda t: t.n3(nm) if isinstance(t, URIRef) else str(t)
+    out = {}
+    for rdf_type, kind in _KINDS:
+        for s in g.subjects(RDF.type, rdf_type):
+            if not isinstance(s, URIRef) or s in out or (spaces and not str(s).startswith(spaces)):
+                continue
+            if kind is None:
+                out[s] = None
+                continue
+            places = [f"sub {curie(o)}" for o in sorted(g.objects(s, RDFS.subClassOf), key=str) if isinstance(o, URIRef)]
+            places += [f"sub {curie(o)}" for o in sorted(g.objects(s, RDFS.subPropertyOf), key=str) if isinstance(o, URIRef)]
+            places += [f"domain {curie(o)}" for o in sorted(g.objects(s, RDFS.domain), key=str) if isinstance(o, URIRef)]
+            places += [f"range {curie(o)}" for o in sorted(g.objects(s, RDFS.range), key=str) if isinstance(o, URIRef)]
+            places += [f"broader {curie(o)}" for o in sorted(g.objects(s, SKOS.broader), key=str)]
+            if kind in ("individual", "concept"):
+                places += [f"type {curie(o)}" for o in sorted(g.objects(s, RDF.type), key=str)
+                           if isinstance(o, URIRef) and o not in (OWL.NamedIndividual, SKOS.Concept)]
+            label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            out[s] = Card(s, curie(s), kind, label, _text(g, s), tuple(places))
+    # An individual a vocabulary types only with one of its classes, such as qnt:Upper a qnt:BoundSense.
+    classes = {c for c in g.subjects(RDF.type, OWL.Class)} | {c for c in g.subjects(RDF.type, RDFS.Class)}
+    for s, cls in g.subject_objects(RDF.type):
+        if isinstance(s, URIRef) and s not in out and cls in classes and (not spaces or str(s).startswith(spaces)):
+            label = _one(g, s, _LABELS) or str(s).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            types = tuple(f"type {curie(o)}" for o in sorted(g.objects(s, RDF.type), key=str) if o in classes)
+            out[s] = Card(s, curie(s), "individual", label, _text(g, s), types)
+    return sorted((c for c in out.values() if c is not None), key=lambda c: c.curie)
+
+
+def namespaces(entries: list[Card]) -> list[str]:
+    """The prefix of each CURIE the cards use, with its namespace, so a proposal can declare them."""
+    seen = {}
+    for c in entries:
+        prefix, _, local = c.curie.partition(":")
+        if local and not c.curie.startswith("<"):
+            seen.setdefault(prefix, str(c.iri)[: len(str(c.iri)) - len(local)])
+    return [f"# prefix {p}: <{ns}>" for p, ns in sorted(seen.items())]
+
+
+def render(title: str, entries: list[Card]) -> str:
+    return "\n".join([f"# {title}", *namespaces(entries), "# curie | kind | label | definition | placement", *(c.line() for c in entries)]) + "\n"
+
+
+@functools.lru_cache(maxsize=None)
+def _layer_graph(module: str) -> Graph:
+    import lattice_repo_catalogue as reader
+
+    catalogue = reader.load()
+    g = Graph()
+    entry = catalogue.module(module)
+    for role in ("spec", "vocab"):
+        try:
+            folder = catalogue.root / entry.directory(role)
+        except (KeyError, ValueError):
+            continue  # a module with no vocab directory
+        for path in sorted(folder.glob("*.ttl")):
+            g.parse(path, format="turtle")
+    return g
+
+
+def layer_card(module: str) -> list[Card]:
+    """The cards of one LATTICE module's specification and vocabulary, its own terms only, its individuals among them."""
+    g = _layer_graph(module)
+    # A module's own namespaces are those of the terms it declares, which a reference to another layer's term is not.
+    w3c = ("http://www.w3.org/", "http://purl.org/dc/", "http://xmlns.com/")
+    declared = set()
+    for kind in (OWL.Class, OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty, RDF.Property, OWL.NamedIndividual):
+        for t in g.subjects(RDF.type, kind):
+            if isinstance(t, URIRef) and not str(t).startswith(w3c):
+                text = str(t)
+                declared.add(text[: max(text.rfind("#"), text.rfind("/")) + 1])
+    return cards(g, declared or None)
+
+
+def source_card(g: Graph, within: Optional[Iterable[str]] = None) -> list[Card]:
+    """The cards of a source vocabulary, such as ODRL's, read from its RDF."""
+    return cards(g, within)
+
+
+def codebook_card() -> str:
+    """MCN's codebook in one line per code, the codes a proposal is written in."""
+    import mcn_codebook as cb
+
+    lines = ["# MCN codebook", "# code | term | family or group"]
+    lines += [f"{code} | {spec.curie} | type, {spec.family}" for code, spec in sorted(cb.TYPES.items())]
+    lines += [f"{code} | {spec.curie} | {spec.group or 'property'}" for code, spec in sorted(cb.PROPERTIES.items())]
+    return "\n".join(lines) + "\n"

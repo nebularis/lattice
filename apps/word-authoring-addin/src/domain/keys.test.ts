@@ -3,11 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { guessValueType, suggestKey } from "./keys";
-import type { ValueType } from "./types";
+import type { ValueType } from "@lattice/authoring-domain";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../../..");
-const FIXTURE = path.join(REPO_ROOT, "contracts/authoring/fixtures/suggested-keys.json");
+const FIXTURE = path.join(REPO_ROOT, "contracts/document/fixtures/suggested-keys.json");
 
 interface Case {
   text: string;

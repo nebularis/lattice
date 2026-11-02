@@ -1,0 +1,6 @@
+<http://example.org/records/one> <http://example.org/src#series> <urn:mork-rdf:skolem:v1:c:e386c3a6b66c448ca297f8bbabde740b964dec183eab33906d160783527fc110:c14n0> .
+<http://example.org/records/two> <http://example.org/src#series> <urn:mork-rdf:skolem:v1:c:e386c3a6b66c448ca297f8bbabde740b964dec183eab33906d160783527fc110:c14n0> .
+<urn:mork-rdf:skolem:v1:c:58adf7d0778c74bf4b6701692c143040dca9323212a5dc28a1cd289a667a585e:c14n0> <http://example.org/src#name> "Unattached" .
+<urn:mork-rdf:skolem:v1:c:cd7c77fee29fb2192241b18429e0384e2d5b5d623f124773234ff8b62dd14a0d:c14n0> <http://example.org/src#knows> <urn:mork-rdf:skolem:v1:c:cd7c77fee29fb2192241b18429e0384e2d5b5d623f124773234ff8b62dd14a0d:c14n1> .
+<urn:mork-rdf:skolem:v1:c:cd7c77fee29fb2192241b18429e0384e2d5b5d623f124773234ff8b62dd14a0d:c14n1> <http://example.org/src#knows> <urn:mork-rdf:skolem:v1:c:cd7c77fee29fb2192241b18429e0384e2d5b5d623f124773234ff8b62dd14a0d:c14n0> .
+<urn:mork-rdf:skolem:v1:c:e386c3a6b66c448ca297f8bbabde740b964dec183eab33906d160783527fc110:c14n0> <http://example.org/src#title> "Dune Chronicles" .

@@ -43,6 +43,19 @@ mise run check           # run every validation task
 mise tasks               # list every task mise.toml declares, with its description
 ```
 
+### What `check` needs first
+
+`mise run check` is self-sufficient after two commands. `mise install` puts the toolchains `mise.toml` declares on the path, which is how `check:java` gets Maven and `check:spc` gets Mix. `mise run bootstrap` installs every package's dependencies in this checkout's `.venv` and the Yarn workspace, installs the git hooks and derives the knowledge index. Nothing else is run by hand. A check that reads an artefact a build writes names that build in its `depends`, so the aggregate stages what it reads in the right order and `mise run clean:build` can never leave `check` failing on a missing file (STD-299). The checks that read a built artefact today:
+
+| Check | Reads | Built by |
+|---|---|---|
+| `check:java`, `check:frontend` | `.build/config-studio/`, the Configuration Studio's staged vocabulary and samples, which the studio's Maven modules and its vitest suites load | `build:config-studio-assets` |
+| `check:mtp` | `ontology/mork/mtp/out/`, the rendered MORK Teaching Pack, whose manifest the check compares | `build:mtp` |
+| `check:mork-transforms` | the `mork-transforms` jar | `bootstrap:mork-transforms` |
+| `check:persistence` | Persistence's compiled expected profiles | `check:persistence-expected-profiles` |
+
+A suite that fails with a missing file under `.build/` or a generated directory is a check whose dependency is undeclared, never something to stage by hand. Add the `depends` line and the table row.
+
 ### Git hooks
 
 `mise run bootstrap` installs two git hooks, `pre-commit` and `pre-merge-commit` ([ADR-A133](../architecture/decisions/ADR-A133-git-hooks.md)). They live in the repository's shared hooks directory, so one install covers the main checkout and every worktree. `mise run hooks:install` installs them alone. It never replaces a hook it did not write: it stops and says how to add the dispatcher to yours, and under bootstrap it warns and carries on.
@@ -184,6 +197,7 @@ ordinary Turtle.
 |---|---|---|
 | [`tools/mork_compilers/`](../../tools/mork_compilers/README.md) | Compiles Eligibility conditions into SPARQL, SHACL, SWRL and an OWL design-time-checking backend, through one shared IR (ADR-A23, ADR-A24, ADR-A89) | `mise run check:mork-compilers` |
 | [`tools/vocabulary/`](../../tools/vocabulary/README.md) | The scoped and temporal concept-scheme binding resolver (ADR-A85) | `mise run check:vocabulary` |
+| [`tools/wording_assembler/`](../../tools/wording_assembler/README.md) | Assembles a wording from a form, settings and choices under Wording's baseline model, and renders it in the document markup (ADR-A139, ADR-A140) | `mise run check:wording-assembler` |
 | [`tools/surface/`](../../tools/surface/README.md) | Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27) | `mise run check:python-root` (its tests run under `surface.test_surface`) |
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |

@@ -163,15 +163,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.4.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.5.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.20.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
 
 #################################################################
 #    Identity classes. Each versioned class below has
@@ -1574,13 +1574,13 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.4.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.4.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.8.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.5.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.5.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.5.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0> .
 
 #################################################################
 #    Reference schemes, each the unscoped fallback
@@ -5238,6 +5238,8 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 ## 10. Release notes
 
+- **0.5.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.4.0**.
   - changes meaning ([ADR-A141](../../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - no effect. Annotation and comment text no longer names delivery identifiers, and no axiom or shape changes.

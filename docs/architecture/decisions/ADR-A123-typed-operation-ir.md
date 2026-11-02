@@ -67,12 +67,7 @@ reason, so it is kept as it is for now.
    applies to the solutions of its whole group, after the group's patterns have matched. As a top-level `FILTER`, a
    missing `$root` would be bound from the data by a pattern such as `$root pat:seq $expectedSeq`, and the guard would
    pass for every aggregate (found in the H2.1 review, 2026-10-10, before acceptance).
-6. **The payload is typed, as ground triples bounded by the boundary shape (PL-B).** A `Payload` is a set of
-   subject, predicate and object terms passed through the encoders. It renders as sorted canonical N-Triples,
-   and the same lines feed `$requestDigest`. Every subject must be the root or be reached from the root within
-   the payload by the owned edges of the boundary shape, in their declared direction. The slot in the rendered
-   query is still written `{{{payloadTriples}}}`, so an unrendered slot is a syntax error. Its declared type is
-   `dal:GroundNTriples`. `logGraphs` becomes a `RegistryList` of encoded IRIs.
+6. **The payload is typed, as ground triples bounded by the boundary shape (PL-B).** A `Payload` is a set of subject, predicate and object terms passed through the encoders. It renders as sorted canonical N-Triples, and the same lines feed `$requestDigest`. Every subject must be the root or be reached from the root within the payload by the owned edges of the boundary shape, in their declared direction. The slot in the rendered query is still written `{% raw %}{{{payloadTriples}}}{% endraw %}`, so an unrendered slot is a syntax error. Its declared type is `dal:GroundNTriples`. `logGraphs` becomes a `RegistryList` of encoded IRIs.
    - The store cannot check the payload, because a guard in an update's `WHERE` sees stored data and a property
      path cannot walk `VALUES` rows. The check runs in the caller. A caller using the Python package gets it
      inside `Payload`. A caller in another language runs a generated `payload-check` query over a local graph.
@@ -224,10 +219,7 @@ Decided by the maintainer on the design review of slices H2.5 and H2.6. It exten
 Drafted in slice H2.6b for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
 request-time slots.
 
-1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{{{eventRows}}}` holds the rows of
-   `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{{{eventTriples}}}` holds the data written beside each event. The IR has a `Rows`
-   slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed. Like every
-   slot, neither is parameter-guarded.
+1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{% raw %}{{{eventRows}}}{% endraw %}` holds the rows of `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{% raw %}{{{eventTriples}}}{% endraw %}` holds the data written beside each event. The IR has a `Rows` slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed. Like every slot, neither is parameter-guarded.
 2. **An append takes its events from the rows.** One request still steps the seq once and writes one receipt and one claim. Each event's
    `pat:revision` is that receipt, so its position is (epoch, seq, `opSeq`). Every solution writes the same version row, claim and receipt,
    which makes the batch independent of the order in which a store applies solutions (TSD-01). `append-event` is builder version 2.
@@ -310,13 +302,7 @@ occurrence ([iri-identity-patterns](../iri-identity-patterns.md) §5.10). It rec
 Built in slice H2.6d. It extends the builders of decision 1 and the addenda of 2026-10-14 and 2026-10-20 (the write
 disciplines).
 
-1. **`dal:PatchLog` selects patch-log variants** of create, replace and tombstone, for a `dal:NamedGraphBoundary` and a
-   `dal:CompositePropertyBoundary` family under `dal:InPlace` and `dal:Optimistic`, each with its dataset-guard variant. The update writes two
-   delta graphs, named from the receipt by `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, so no parameter names one. The receipt
-   names a graph with `pat:asserts` or `pat:retracts` where the write puts content in it. A create's add graph holds its payload, which the
-   payload slot fills twice. A replace's add and del graphs hold the caller's delta in two new request-time slots, `{{{assertTriples}}}` and
-   `{{{retractTriples}}}`. A tombstone's del graph is copied from its own sweep and has no slot. `$assertGraph` and `$retractGraph` are removed,
-   so `cas-replace-named-graph` is at builder version 2.
+1. **`dal:PatchLog` selects patch-log variants** of create, replace and tombstone, for a `dal:NamedGraphBoundary` and a `dal:CompositePropertyBoundary` family under `dal:InPlace` and `dal:Optimistic`, each with its dataset-guard variant. The update writes two delta graphs, named from the receipt by `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, so no parameter names one. The receipt names a graph with `pat:asserts` or `pat:retracts` where the write puts content in it. A create's add graph holds its payload, which the payload slot fills twice. A replace's add and del graphs hold the caller's delta in two new request-time slots, `{% raw %}{{{assertTriples}}}{% endraw %}` and `{% raw %}{{{retractTriples}}}{% endraw %}`. A tombstone's del graph is copied from its own sweep and has no slot. `$assertGraph` and `$retractGraph` are removed, so `cas-replace-named-graph` is at builder version 2.
 2. **The contract names the patch content.** A `PatchContent` resource, keyed by (target, epoch, seq, direction), is realised by the delta
    graphs, and the IR has a graph role `patch` for the two graph variables. A replace under a patch log has a digest of the operation kind,
    the target, the expected seq, the payload, the asserted triples and the retracted triples, in that order. A create and a
@@ -431,10 +417,7 @@ Built in slice H2.9. It carries out decision 8, and its clause "until then" is s
 1. **Every generated operation is rendered from its builder.** The Mustache templates, `persistence.render` and the `chevron` dependency are removed, and with them
    the equivalence harness, the template checks and the `instantiate` option that read a template library. `dal:templateId` is the identity of the builder,
    with no suffix, in the compiled profile and in memory. `instantiate` refuses an operation that names a builder that does not exist.
-2. **The request-time slot marker is a plain-text convention.** A slot stays the marker `{{{name}}}` in the rendered text. A caller fills it by substitution, in one pass, so
-   a value that holds another slot's marker is not filled again, and a marker with no value stays and makes the request a syntax error. The `REQUEST_TIME_SLOTS` list that the renderer kept is gone,
-   and the static checks keep a stand-in for each slot name. A set of triples cannot be a
-   SPARQL variable, so a SPARQL-native form could not replace it. The caller library fills `logGraphs` this way, and `persistence.ir_render.fill_slots` does it for tests and checks.
+2. **The request-time slot marker is a plain-text convention.** A slot stays the marker `{% raw %}{{{name}}}{% endraw %}` in the rendered text. A caller fills it by substitution, in one pass, so a value that holds another slot's marker is not filled again, and a marker with no value stays and makes the request a syntax error. The `REQUEST_TIME_SLOTS` list that the renderer kept is gone, and the static checks keep a stand-in for each slot name. A set of triples cannot be a SPARQL variable, so a SPARQL-native form could not replace it. The caller library fills `logGraphs` this way, and `persistence.ir_render.fill_slots` does it for tests and checks.
 3. **What holds the builders in place of the harness.** The recorded builder outputs are keyed by the operation and rendered from one canonical context, so adding or
    changing a fixture moves no builder's record. The expected compiled profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 run over the
    builders' output. S-3 reads the parameters an operation declares, where it read the `$name` convention in the text.

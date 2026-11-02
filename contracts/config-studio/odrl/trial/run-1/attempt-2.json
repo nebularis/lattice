@@ -1,0 +1,14 @@
+{
+ "decoded": true,
+ "triples": 83,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/odrl/mapping#MS",
+   "queries": 7,
+   "strata": 1
+  }
+ ],
+ "findings": [],
+ "errors": 0,
+ "output_triples": 11
+}

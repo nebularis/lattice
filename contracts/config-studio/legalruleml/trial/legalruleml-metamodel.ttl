@@ -1,0 +1,926 @@
+# The twelve files of ../rdfs/ merged as Turtle, for the proposal tools, which read one file.
+# LegalRuleML Core Specification Version 1.0, an OASIS Standard. Copyright OASIS Open 2021. All Rights Reserved. See ../README.md for the notice.
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix lrmlmm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rulemm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/rule-metamodel#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+lrmlmm:Actor a rdfs:Class ;
+    rdfs:label "actor" ;
+    rdfs:comment "an Agent or a Figure." .
+
+lrmlmm:Agent a rdfs:Class ;
+    rdfs:label "agent" ;
+    rdfs:comment "an entity that acts or has the capability to act." ;
+    rdfs:subClassOf lrmlmm:Actor,
+        dcterms:Agent ;
+    rdfs:type dcterms:AgentClass .
+
+lrmlmm:Agents a rdfs:Class ;
+    rdfs:label "agent collection" ;
+    rdfs:comment "a collection where every member is an Agent " ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Alternative a rdfs:Class ;
+    rdfs:label "alternative" ;
+    rdfs:comment "a LegalRuleML rendering of one or more Legal Norms." ;
+    rdfs:subClassOf lrmlmm:Expression .
+
+lrmlmm:Alternatives a rdfs:Class ;
+    rdfs:label "alternative collection" ;
+    rdfs:comment "a mutually exclusive collection where every member is a LegalRuleML rendering of one or more Legal Norms." ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Associable a rdfs:Class ;
+    rdfs:label "associable" ;
+    rdfs:comment "an entity that can be applied by an association",
+        "an entity that can be applied to other entities." ;
+    rdfs:subClassOf lrmlmm:Commentable .
+
+lrmlmm:Association a rdfs:Class ;
+    rdfs:label "association" ;
+    rdfs:comment "a partial description of the extension of some relations where each non-target entity is paired with every target entity." ;
+    rdfs:subClassOf lrmlmm:Associable,
+        lrmlmm:Associator .
+
+lrmlmm:Associations a rdfs:Class ;
+    rdfs:label "association collection" ;
+    rdfs:comment "a collection where every member is an Assocation." ;
+    rdfs:subClassOf lrmlmm:Associable,
+        lrmlmm:Collection .
+
+lrmlmm:Associator a rdfs:Class ;
+    rdfs:label "associator" ;
+    rdfs:comment "an entity that can apply properties to other entities." ;
+    rdfs:subClassOf lrmlmm:Commentable .
+
+lrmlmm:Authorities a rdfs:Class ;
+    rdfs:label "authority collection" ;
+    rdfs:comment "a collection where every member is an Authority" ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Authority a rdfs:Class ;
+    rdfs:label "authority" ;
+    rdfs:comment "a person or organization with the power to create, endorse, or enforce Legal Norms." ;
+    rdfs:subClassOf lrmlmm:Associable .
+
+lrmlmm:Collectable a rdfs:Class ;
+    rdfs:label "collectable" ;
+    rdfs:comment "an entity that can be a member of a LegalRuleML collection" .
+
+lrmlmm:Collection a rdfs:Class ;
+    rdfs:label "collection" ;
+    rdfs:subClassOf lrmlmm:Commentable,
+        rdf:List .
+
+lrmlmm:Collector a rdfs:Class ;
+    rdfs:label "collector" ;
+    rdfs:comment "an entity that can have a collection" ;
+    rdfs:subClassOf lrmlmm:Commentable .
+
+lrmlmm:Comment a rdfs:Class ;
+    rdfs:label "comment" ;
+    rdfs:comment "a comment, which has no semantic effect." ;
+    rdfs:subClassOf lrmlmm:XMLLiteralWrapper .
+
+lrmlmm:Commentable a rdfs:Class ;
+    rdfs:label "commentable" ;
+    rdfs:comment "an entity that can have an attached comment" .
+
+lrmlmm:Compliance a rdfs:Class ;
+    rdfs:label "compliance" ;
+    rdfs:comment "an indication that an Obligation has been fulfilled or a Prohibition has not been violated." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:ConstitutiveStatement a rdfs:Class ;
+    rdfs:label "constitutive statement" ;
+    rdfs:comment "a Legal Statement that defines concepts and does not prescribe behaviours." ;
+    rdfs:subClassOf lrmlmm:RuleStatement .
+
+lrmlmm:Context a rdfs:Class ;
+    rdfs:label "context" ;
+    rdfs:comment "an application of Associations to their target entities within a Scope." ;
+    rdfs:subClassOf lrmlmm:Associator .
+
+lrmlmm:Creatable a rdfs:Class ;
+    rdfs:label "creatable" ;
+    rdfs:comment "an entity that can have a creation date" ;
+    rdfs:subClassOf lrmlmm:Commentable .
+
+lrmlmm:DefeasibleStrength a rdfs:Class ;
+    rdfs:label "defeasible strength" ;
+    rdfs:comment "an indication that, in the absence of information to the contrary and where the antecedent of a Legal Rule holds, the conclusion of the Legal Rule holds." ;
+    rdfs:subClassOf lrmlmm:Strength .
+
+lrmlmm:Defeater a rdfs:Class ;
+    rdfs:label "defeater" ;
+    rdfs:comment "an indication that, in the absence of information to the contrary and where the antecedent of a Legal Rule holds, the opposite of the conclusion of the Legal Rule does not hold." ;
+    rdfs:subClassOf lrmlmm:Strength .
+
+lrmlmm:DeonticModality a rdfs:Class ;
+    rdfs:label "deontic modality" ;
+    rdfs:comment "a modality pertaining to Deontic Specifications." ;
+    rdfs:subClassOf lrmlmm:Modality .
+
+lrmlmm:DeonticSpecification a rdfs:Class ;
+    rdfs:label "deontic specification" ;
+    rdfs:comment "an Obligation, Permission, Prohibition, Right, ...." ;
+    rdfs:subClassOf rulemm:LogicalFormula .
+
+lrmlmm:Expression a rdfs:Class ;
+    rdfs:label "expression" ;
+    rdfs:comment "a rendering of one or more Legal Norms or a fragment of a Legal Norm" ;
+    rdfs:subClassOf lrmlmm:Commentable .
+
+lrmlmm:FactualStatement a rdfs:Class ;
+    rdfs:label "factual statement" ;
+    rdfs:comment "an expression of fact." ;
+    rdfs:subClassOf lrmlmm:LogicalFormulaStatement .
+
+lrmlmm:Figure a rdfs:Class ;
+    rdfs:label "figure" ;
+    rdfs:comment "an instantiation of a function by an Actor." ;
+    rdfs:subClassOf lrmlmm:Actor .
+
+lrmlmm:Figures a rdfs:Class ;
+    rdfs:label "figure collection" ;
+    rdfs:comment "a collection where every member is a Figure" ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Function a rdfs:Class ;
+    rdfs:label "function" ;
+    rdfs:comment "TBD" ;
+    rdfs:subClassOf lrmlmm:Thing .
+
+lrmlmm:Jurisdiction a rdfs:Class ;
+    rdfs:label "jurisdiction" ;
+    rdfs:comment "a geographic area or subject-matter over which an Authority applies its legal power." ;
+    rdfs:subClassOf lrmlmm:Associable,
+        dcterms:Jurisdiction,
+        <http://purl.org/vocab/frbr/core#Concept> .
+
+lrmlmm:Jurisdictions a rdfs:Class ;
+    rdfs:label "jursidiction collection" ;
+    rdfs:comment "a collection where every member is a Jurisdiction." ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:LegalReference a rdfs:Class ;
+    rdfs:label "legal reference" ;
+    rdfs:comment "a Reference whose Source is a LegalSource." ;
+    rdfs:subClassOf lrmlmm:Reference .
+
+lrmlmm:LegalReferences a rdfs:Class ;
+    rdfs:label "legal reference collection" ;
+    rdfs:comment "a collection where every member is a LegalReference." ;
+    rdfs:subClassOf lrmlmm:References .
+
+lrmlmm:LegalRuleMLDocument a rdfs:Class ;
+    rdfs:label "LegalRuleML document" ;
+    rdfs:comment "a formal representation of one or more LegalSources using the LegalRuleML Specifications." ;
+    rdfs:subClassOf lrmlmm:Collector,
+        lrmlmm:Creatable,
+        <http://purl.org/vocab/frbr/core#Expression> .
+
+lrmlmm:LegalSource a rdfs:Class ;
+    rdfs:label "legal source" ;
+    rdfs:comment "a source of one or more Legal Norms formulated in any format and endorsed by an Authority." ;
+    rdfs:subClassOf lrmlmm:Source .
+
+lrmlmm:LegalSources a rdfs:Class ;
+    rdfs:label "legal source collection" ;
+    rdfs:comment "a collection where every member is a LegalSource." ;
+    rdfs:subClassOf lrmlmm:Sources .
+
+lrmlmm:LegalStatus a rdfs:Class ;
+    rdfs:label "legal status" ;
+    rdfs:comment "a standing that can apply to a Legal Norm at a Time, e.g.,  \"is applicable\", \"is in force\", \"has efficacy\", \"is valid\"." ;
+    rdfs:subClassOf lrmlmm:Standing .
+
+lrmlmm:LogicalFormulaStatement a rdfs:Class ;
+    rdfs:label "logical formula statement" ;
+    rdfs:comment "a statement modelled by a logical formula." ;
+    rdfs:subClassOf lrmlmm:Statement ;
+    owl:disjointWith lrmlmm:RuleStatement .
+
+lrmlmm:Obligation a rdfs:Class ;
+    rdfs:label "obligation" ;
+    rdfs:comment "a Deontic Specification for a state, an act, or a course of action to which a Bearer is legally bound, and which, if it is not achieved or performed, results in a Violation." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:Override a rdfs:Class ;
+    rdfs:label "override" ;
+    rdfs:comment "an indication that a Legal Rule takes precedence over another Legal Rule. The ordered pair of Legal Rules is an instance in a defeasible priority relation." ;
+    rdfs:subClassOf rulemm:Atom .
+
+lrmlmm:OverrideStatement a rdfs:Class ;
+    rdfs:label "override statement" ;
+    rdfs:comment "a Legal Statement of an Override." ;
+    rdfs:subClassOf lrmlmm:LogicalFormulaStatement ;
+    owl:disjointWith lrmlmm:FactualStatement,
+        lrmlmm:PenaltyStatement,
+        lrmlmm:ReparationStatement .
+
+lrmlmm:Paraphrase a rdfs:Class ;
+    rdfs:label "paraphrase" ;
+    rdfs:comment "a natural language rendering of a Legal Rule or fragment of it that is an alternative to its Legal Source(s)." ;
+    rdfs:subClassOf lrmlmm:XMLLiteralWrapper .
+
+lrmlmm:PenaltyStatement a rdfs:Class ;
+    rdfs:label "penalty statement" ;
+    rdfs:comment "a Legal Statement of a sanction (e.g. a punishment or a correction)." ;
+    rdfs:subClassOf lrmlmm:LogicalFormulaStatement ;
+    owl:disjointWith lrmlmm:FactualStatement .
+
+lrmlmm:Permission a rdfs:Class ;
+    rdfs:label "permission" ;
+    rdfs:comment "a Deontic Specification for a state, an act, or a course of action where the Bearer has no Obligation or Prohibition to the contrary. A weak Permission is the absence of the Obligation or Prohibition to the contrary; a strong Permission is an exception or derogation of the Obligation or Prohibition to the contrary." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:PrescriptiveStatement a rdfs:Class ;
+    rdfs:label "prescriptive statement" ;
+    rdfs:comment "a Legal Statement which prescribes behaviours, e.g. with Permissions, Obligations, or Prohibitions on states, actions, or courses of actions." ;
+    rdfs:subClassOf lrmlmm:RuleStatement ;
+    owl:disjointWith lrmlmm:ConstitutiveStatement .
+
+lrmlmm:Prohibition a rdfs:Class ;
+    rdfs:label "prohibition" ;
+    rdfs:comment "a Deontic Specification for a state, an act, or a course of action to which a Bearer is legally bound, and which, if it is achieved or performed, results in a Violation." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:Reference a rdfs:Class ;
+    rdfs:label "reference" ;
+    rdfs:comment "a pair consisting of an internal ID and an enriched non-IRI identifier, where the non-IRI is paired with some additional information that is sufficient to disambiguate the non-IRI to a unique Source." ;
+    rdfs:subClassOf lrmlmm:Collectable .
+
+lrmlmm:References a rdfs:Class ;
+    rdfs:label "reference collection" ;
+    rdfs:comment "a collection where every member is a Reference." ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Reparation a rdfs:Class ;
+    rdfs:label "reparation" ;
+    rdfs:comment "an indication that a PenaltyStatement is linked with a PrescriptiveStatement. It indicates that a sanction may apply where the PrescriptiveStatement entails a Deontic Specification and when there is a Violation of the Deontic Specification." ;
+    rdfs:subClassOf rulemm:Atom .
+
+lrmlmm:ReparationStatement a rdfs:Class ;
+    rdfs:label "reparation statement" ;
+    rdfs:comment "a Legal Statement of a Reparation." ;
+    rdfs:subClassOf lrmlmm:LogicalFormulaStatement ;
+    owl:disjointWith lrmlmm:FactualStatement,
+        lrmlmm:PenaltyStatement .
+
+lrmlmm:Right a rdfs:Class ;
+    rdfs:label "right" ;
+    rdfs:comment "(see also Permission) a Deontic Specification that gives a Permission to a party (the Bearer) and implies there are Obligations or Prohibitions on other parties (the AuxiliaryParty) such that the Bearer can (eventually) exercise the Right." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:Role a rdfs:Class ;
+    rdfs:label "role" ;
+    rdfs:comment "a function of or part played by an Actor relative to a LegalRuleML expression." ;
+    rdfs:subClassOf lrmlmm:Thing .
+
+lrmlmm:Roles a rdfs:Class ;
+    rdfs:label "role collection" ;
+    rdfs:comment "a collection where every member is a Role." ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:RuleStatement a rdfs:Class ;
+    rdfs:label "rule statement" ;
+    rdfs:comment "a Legal Statement modelled by a Legal Rule." ;
+    rdfs:subClassOf lrmlmm:Statement .
+
+lrmlmm:Scope a rdfs:Class ;
+    rdfs:label "scope" ;
+    rdfs:comment "a Statement or Collection of Statements",
+        "a statement or statement collection" ;
+    rdfs:subClassOf lrmlmm:Expression .
+
+lrmlmm:Source a rdfs:Class ;
+    rdfs:label "source" ;
+    rdfs:comment "a source formulated in any format." ;
+    rdfs:subClassOf lrmlmm:Associable,
+        lrmlmm:Collectable .
+
+lrmlmm:Sources a rdfs:Class ;
+    rdfs:label "source collection" ;
+    rdfs:comment "a collection where every member is a Source." ;
+    rdfs:subClassOf lrmlmm:Collection,
+        lrmlmm:Collector .
+
+lrmlmm:Statement a rdfs:Class ;
+    rdfs:label "statement" ;
+    rdfs:comment "a Legal Statement or a FactualStatement." ;
+    rdfs:subClassOf lrmlmm:Alternative,
+        lrmlmm:Scope .
+
+lrmlmm:Statements a rdfs:Class ;
+    rdfs:label "statement collection" ;
+    rdfs:comment "a collection where every member is a Legal Statement or a FactualStatement." ;
+    rdfs:subClassOf lrmlmm:Alternative,
+        lrmlmm:Collection,
+        lrmlmm:Collector,
+        lrmlmm:Scope .
+
+lrmlmm:StatusDevelopment a rdfs:Class ;
+    rdfs:label "status development" ;
+    rdfs:comment "a kind of event (e.g., start, end) that changes the Legal Status of a Legal Norm, e.g. making a Legal Norm in force." ;
+    rdfs:subClassOf rulemm:Event .
+
+lrmlmm:Strength a rdfs:Class ;
+    rdfs:label "strength" ;
+    rdfs:comment "the quality of a Legal Rule to resist or not to resist a rebuttal." ;
+    rdfs:subClassOf lrmlmm:Associable .
+
+lrmlmm:StrictStrength a rdfs:Class ;
+    rdfs:label "strict strength" ;
+    rdfs:comment "an indication that where the antecedent of a Legal Rule is indisputable, the conclusion of the Legal Rule is indisputable." ;
+    rdfs:subClassOf lrmlmm:Strength .
+
+lrmlmm:SuborderList a rdfs:Class ;
+    rdfs:label "suborder list" ;
+    rdfs:comment "a Deontic Specification for a sequence of Deontic Specifications, i.e., Obligations, Prohibitions, Permissions, Rights and/or Suborder Lists. When a SuborderList holds, a Deontic Specification in the SuborderList holds if all Deontic Specifications that precede it in the SuborderList have been violated." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:Template a rdfs:Class ;
+    rdfs:label "template" ;
+    rdfs:comment "an entity wrapping an XML literal with root element in the RuleML or LegalRuleML namespace." ;
+    rdfs:subClassOf lrmlmm:XMLLiteralWrapper .
+
+lrmlmm:TemporalCharacteristic a rdfs:Class ;
+    rdfs:label "temporal characteristic" ;
+    rdfs:comment "a pair of Time with a qualification, which consists of a Legal Status and a Status Development, such that the qualification holds at the Time." ;
+    rdfs:subClassOf lrmlmm:Associable .
+
+lrmlmm:TemporalCharacteristics a rdfs:Class ;
+    rdfs:label "temporal characteristic collection" ;
+    rdfs:comment "a collection where every member is a TemporalCharacteristic" ;
+    rdfs:subClassOf lrmlmm:Associable,
+        lrmlmm:Collection .
+
+lrmlmm:Times a rdfs:Class ;
+    rdfs:label "temporal entity collection" ;
+    rdfs:comment "a collection where every member is a Time." ;
+    rdfs:subClassOf lrmlmm:Collection .
+
+lrmlmm:Violation a rdfs:Class ;
+    rdfs:label "violation" ;
+    rdfs:comment "an indication that an Obligation or Prohibition has been violated." ;
+    rdfs:subClassOf lrmlmm:DeonticSpecification .
+
+lrmlmm:Wrapper a rdfs:Class ;
+    rdfs:label "wrapper" ;
+    rdfs:comment "a conceptual container." ;
+    rdfs:subClassOf lrmlmm:Thing .
+
+lrmlmm:XMLLiteralWrapper a rdfs:Class ;
+    rdfs:label "XML literal wrapper" ;
+    rdfs:comment "a container for an XMLLiteral." ;
+    rdfs:subClassOf lrmlmm:Wrapper .
+
+rulemm:Atom a rdfs:Class ;
+    rdfs:subClassOf rulemm:Formula .
+
+rulemm:AtomicFormula a rdfs:Class ;
+    rdfs:subClassOf rulemm:LogicalFormula .
+
+rulemm:Data a rdfs:Class ;
+    rdfs:subClassOf rulemm:Term .
+
+rulemm:DataWrapper a rdfs:Class ;
+    rdfs:label "data wrapper" ;
+    rdfs:comment "TBD" ;
+    rdfs:subClassOf rulemm:Expression,
+        rulemm:Wrapper .
+
+rulemm:Formula a rdfs:Class ;
+    rdfs:subClassOf rulemm:WellFormedExpression .
+
+rulemm:LogicalFormula a rdfs:Class ;
+    rdfs:subClassOf rulemm:Formula .
+
+rulemm:MetaFormula a rdfs:Class ;
+    rdfs:subClassOf rulemm:Formula .
+
+rulemm:Term a rdfs:Class ;
+    rdfs:subClassOf rulemm:WellFormedExpression .
+
+rulemm:TimeTerm a rdfs:Class ;
+    rdfs:subClassOf rulemm:Term .
+
+rulemm:WellFormedExpression a rdfs:Class ;
+    rdfs:subClassOf rulemm:Thing .
+
+rulemm:Wrapper a rdfs:Class ;
+    rdfs:label "wrapper" ;
+    rdfs:comment "TBD" .
+
+rulemm:XMLLiteralWrapper a rdfs:Class ;
+    rdfs:label "XML literal wrapper" ;
+    rdfs:comment "TBD" ;
+    rdfs:subClassOf rulemm:Wrapper .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Author> a rdfs:Class ;
+    rdfs:subClassOf lrmlmm:Role .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Editor> a rdfs:Class ;
+    rdfs:subClassOf lrmlmm:Role .
+
+dcterms:Jurisdiction a rdfs:Class .
+
+lrmlmm:AuxiliaryParty a rdf:Property ;
+    rdfs:label "auxiliary party" ;
+    rdfs:comment "a role in a Deontic Specification to which the Deontic Specification is related." ;
+    rdfs:subPropertyOf lrmlmm:DeonticRole .
+
+lrmlmm:Bearer a rdf:Property ;
+    rdfs:label "bearer" ;
+    rdfs:comment "a role in a Deontic Specification to which the Deontic Specification is primarily directed." ;
+    rdfs:subPropertyOf lrmlmm:DeonticRole .
+
+lrmlmm:appliesAlternatives a rdf:Property ;
+    rdfs:label "applies alternatives" ;
+    rdfs:comment "a collection of Alternatives applied by the Context." ;
+    rdfs:domain lrmlmm:Context ;
+    rdfs:range lrmlmm:Alternatives ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesAssociation a rdf:Property ;
+    rdfs:label "applies association" ;
+    rdfs:comment "an Association applied by the Context." ;
+    rdfs:domain lrmlmm:Context ;
+    rdfs:range lrmlmm:Association ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesAssociations a rdf:Property ;
+    rdfs:label "applies association collection" ;
+    rdfs:comment "a collection of Associations applied by the Context." ;
+    rdfs:domain lrmlmm:Context ;
+    rdfs:range lrmlmm:Associations ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesAuthority a rdf:Property ;
+    rdfs:label "applies authority" ;
+    rdfs:comment "an Authority applied by the Context or Association." ;
+    rdfs:range lrmlmm:Authority ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesJurisdiction a rdf:Property ;
+    rdfs:label "applies jurisdiction" ;
+    rdfs:comment "a Jurisdiction applied by the Context or Association." ;
+    rdfs:range lrmlmm:Jurisdiction ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesModality a rdf:Property ;
+    rdfs:label "applies modality" ;
+    rdfs:comment "the deontic mode that applies to a Deontic Specification in a Context or 	Association." ;
+    rdfs:range lrmlmm:Modality ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesPenalty a rdf:Property ;
+    rdfs:label "applies penalty" ;
+    rdfs:comment "the PenaltyStatement that is linked to a LegalRule in a Reparation." ;
+    rdfs:domain lrmlmm:Reparation ;
+    rdfs:range lrmlmm:PenaltyStatement .
+
+lrmlmm:appliesSource a rdf:Property ;
+    rdfs:label "applies source" ;
+    rdfs:comment "a Source or Reference applied by the Context or Association." ;
+    rdfs:range lrmlmm:Source ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesStrength a rdf:Property ;
+    rdfs:label "applies strength" ;
+    rdfs:comment "a Strength applied by the Context or Association." ;
+    rdfs:range lrmlmm:Strength ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesTemporalCharacteristic a rdf:Property ;
+    rdfs:label "applies temporal characteristic" ;
+    rdfs:comment "a TemporalCharacteristic applied by the Context or Association." ;
+    rdfs:range lrmlmm:TemporalCharacteristic ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:appliesTemporalCharacteristics a rdf:Property ;
+    rdfs:label "applies temporal characteristic collection" ;
+    rdfs:comment "a collection of TemporalCharacteristics applied by the Context or  Association." ;
+    rdfs:range lrmlmm:TemporalCharacteristics ;
+    rdfs:subPropertyOf lrmlmm:applies .
+
+lrmlmm:atTime a rdf:Property ;
+    rdfs:label "at time" ;
+    rdfs:comment "the Time of the qualification of a TemporalCharacteristic." ;
+    rdfs:domain lrmlmm:TemporalCharacteristic ;
+    rdfs:range rulemm:Time .
+
+lrmlmm:filledBy a rdf:Property ;
+    rdfs:label "filled by" ;
+    rdfs:comment "an Actor that fills the Role." ;
+    rdfs:domain lrmlmm:Role ;
+    rdfs:range lrmlmm:Actor .
+
+lrmlmm:forExpression a rdf:Property ;
+    rdfs:label "for expression" ;
+    rdfs:comment "a LegalRuleML expression for which the Role is responsible (e.g., the expression was created or endorsed by the role)." ;
+    rdfs:domain lrmlmm:Role ;
+    rdfs:range lrmlmm:Expression .
+
+lrmlmm:forStatus a rdf:Property ;
+    rdfs:label "for status" ;
+    rdfs:comment "the Legal Status of the qualification in a TemporalCharacteristic." ;
+    rdfs:domain lrmlmm:TemporalCharacteristic ;
+    rdfs:range lrmlmm:LegalStatus .
+
+lrmlmm:fromLegalSources a rdf:Property ;
+    rdfs:label "from legal source collection" ;
+    rdfs:comment "the LegalSources from which the Alternatives are derived." ;
+    rdfs:domain lrmlmm:Alternatives ;
+    rdfs:range lrmlmm:LegalSources .
+
+lrmlmm:hasActor a rdf:Property ;
+    rdf:label "has actor" ;
+    rdfs:comment "an Actor that has the responsibility to fulfill the function of a Figure." ;
+    rdfs:domain lrmlmm:Figure ;
+    rdfs:range lrmlmm:Actor .
+
+lrmlmm:hasAgent a rdf:Property ;
+    rdf:label "has member agent" ;
+    rdfs:comment "an Agent in the collection." ;
+    rdfs:domain lrmlmm:Agents ;
+    rdfs:range lrmlmm:Agent ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasAgents a rdf:Property ;
+    rdfs:label "has agent collection" ;
+    rdfs:comment "a collection of Agents." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Agents ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasAlternative a rdf:Property ;
+    rdfs:label "has member alternative" ;
+    rdfs:comment "an Alternative in the collection." ;
+    rdfs:domain lrmlmm:Alternatives ;
+    rdfs:range lrmlmm:Alternative ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasAlternatives a rdf:Property ;
+    rdfs:label "has alternative collection" ;
+    rdfs:comment "a collection of Alternatives." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Alternatives ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasAssociation a rdf:Property ;
+    rdfs:label "has member association" ;
+    rdfs:comment "an Association in the collection." ;
+    rdfs:domain lrmlmm:Associations ;
+    rdfs:range lrmlmm:Association ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasAssociations a rdf:Property ;
+    rdfs:label "has association collection" ;
+    rdfs:comment "a collection of Associations." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Associations ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasAuthorities a rdf:Property ;
+    rdfs:label "has authority collection" ;
+    rdfs:comment """A collection of authorities associated with the
+      subject LegalRuleML document.""" ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Authorities ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasAuthority a rdf:Property ;
+    rdf:label "has member authority" ;
+    rdfs:comment "An authority which is a member of the subject collection." ;
+    rdfs:domain lrmlmm:Authorities ;
+    rdfs:range lrmlmm:Authority ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasComment a rdf:Property ;
+    rdfs:label "has comment" ;
+    rdfs:comment "a Comment on the parent Node Element." ;
+    rdfs:domain lrmlmm:Commentable ;
+    rdfs:range lrmlmm:Comment .
+
+lrmlmm:hasContext a rdf:Property ;
+    rdfs:label "has context" ;
+    rdfs:comment "a Context described in the LegalRuleML document." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Context .
+
+lrmlmm:hasCreationDate a rdf:Property ;
+    rdfs:label "has creation date" ;
+    rdfs:comment "the creation date of the Context or LegalRuleML document." ;
+    rdfs:domain lrmlmm:Creatable ;
+    rdfs:range rulemm:Time ;
+    rdfs:subPropertyOf dcterms:created .
+
+lrmlmm:hasFigure a rdf:Property ;
+    rdf:label "has member figure" ;
+    rdfs:comment "a Figure in the collection." ;
+    rdfs:domain lrmlmm:Figures ;
+    rdfs:range lrmlmm:Figure ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasFigures a rdf:Property ;
+    rdfs:label "has figure collection" ;
+    rdfs:comment "a collection of Figures." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Figures ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasFunction a rdf:Property ;
+    rdf:label "has function" ;
+    rdfs:comment "the function of a Figure." ;
+    rdfs:domain lrmlmm:Figure ;
+    rdfs:range lrmlmm:Function .
+
+lrmlmm:hasJurisdiction a rdf:Property ;
+    rdf:label "has member jurisdiction" ;
+    rdfs:comment "a Jurisdiction in the collection." ;
+    rdfs:domain lrmlmm:Jurisdictions ;
+    rdfs:range lrmlmm:Jurisdiction ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasJurisdictions a rdf:Property ;
+    rdfs:label "has jurisdiction collection" ;
+    rdfs:comment "a collection of Jurisdictions." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Jurisdictions ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasLegalReference a rdf:Property ;
+    rdfs:label "has member legal reference" ;
+    rdfs:comment "a LegalReference in the collection." ;
+    rdfs:domain lrmlmm:LegalReferences ;
+    rdfs:range lrmlmm:LegalReference ;
+    rdfs:subPropertyOf lrmlmm:hasReference .
+
+lrmlmm:hasLegalReferences a rdf:Property ;
+    rdfs:label "has legal reference collection" ;
+    rdfs:comment "a collection of LegalReferences." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:LegalReferences ;
+    rdfs:subPropertyOf lrmlmm:hasReferences .
+
+lrmlmm:hasLegalSource a rdf:Property ;
+    rdfs:label "has member legal source" ;
+    rdfs:comment "a LegalSource in the collection of LegalSources." ;
+    rdfs:domain lrmlmm:LegalSources ;
+    rdfs:range lrmlmm:LegalSource ;
+    rdfs:subPropertyOf lrmlmm:hasSource .
+
+lrmlmm:hasLegalSources a rdf:Property ;
+    rdfs:label "has legal source collection" ;
+    rdfs:comment "Ta collection of LegalSources." ;
+    rdfs:range lrmlmm:LegalSources ;
+    rdfs:subPropertyOf lrmlmm:hasSources .
+
+lrmlmm:hasMemberType a rdf:Property ;
+    rdfs:label "has member type" ;
+    rdfs:comment "the type or class of members of the collection." ;
+    rdfs:domain lrmlmm:Collection .
+
+lrmlmm:hasParaphrase a rdf:Property ;
+    rdfs:label "has paraphrase" ;
+    rdfs:comment "a Paraphrase of the parent Node Element (e.g. a Legal Rule)." ;
+    rdfs:domain lrmlmm:Expression ;
+    rdfs:range lrmlmm:Paraphrase .
+
+lrmlmm:hasQualification a rdf:Property ;
+    rdfs:label "has qualifications" ;
+    rdfs:comment """a qualification (e.g. an Override) of the Statements.
+    """ ;
+    rdfs:domain lrmlmm:Statements ;
+    rdfs:range rulemm:Formula .
+
+lrmlmm:hasRole a rdf:Property ;
+    rdf:label "has member role" ;
+    rdfs:comment "a Role in the collection." ;
+    rdfs:domain lrmlmm:Roles ;
+    rdfs:range lrmlmm:Role ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasRoles a rdf:Property ;
+    rdfs:label "has role collection" ;
+    rdfs:comment "a collection of Roles." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Roles ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasStatement a rdf:Property ;
+    rdfs:label "has member statement" ;
+    rdfs:comment "a Legal Statement in the collection." ;
+    rdfs:domain lrmlmm:Statements ;
+    rdfs:range lrmlmm:Statement ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasStatements a rdf:Property ;
+    rdfs:label "has statement collection" ;
+    rdfs:comment "a collection of Legal Statements." ;
+    rdfs:range lrmlmm:Statements ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasStatusDevelopment a rdf:Property ;
+    rdfs:label "has status development" ;
+    rdfs:comment "the Status Development of the qualification in a TemporalCharacteristic." ;
+    rdfs:domain lrmlmm:TemporalCharacteristic ;
+    rdfs:range lrmlmm:StatusDevelopment .
+
+lrmlmm:hasStrength a rdf:Property ;
+    rdfs:label "hasStrength" ;
+    rdfs:comment "the Strength of the Legal Rule." ;
+    rdfs:domain lrmlmm:Statement ;
+    rdfs:range lrmlmm:Strength .
+
+lrmlmm:hasTemplate a rdf:Property ;
+    rdfs:label "has template" ;
+    rdfs:comment "the template of a Legal Statement." ;
+    rdfs:domain lrmlmm:Statement ;
+    rdfs:range lrmlmm:Template .
+
+lrmlmm:hasTemporalCharacteristic a rdf:Property ;
+    rdfs:label "has member  temporal characteristic" ;
+    rdfs:comment "a TemporalCharacteristic in the collection." ;
+    rdfs:domain lrmlmm:TemporalCharacteristics ;
+    rdfs:range lrmlmm:TemporalCharacteristic ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasTemporalCharacteristics a rdf:Property ;
+    rdfs:label "has temporal characteristic collection" ;
+    rdfs:comment "a collection of TemporalCharacteristics." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:TemporalCharacteristics ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasTime a rdf:Property ;
+    rdfs:label "has time" ;
+    rdfs:comment "a Time in the collection." ;
+    rdfs:domain lrmlmm:Times ;
+    rdfs:range rulemm:Time ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasTimes a rdf:Property ;
+    rdfs:label "has time collection" ;
+    rdfs:comment "a collection of Times." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:Times ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:inScope a rdf:Property ;
+    rdfs:label "in scope" ;
+    rdfs:comment "the Statement or (collection of) Statements that the Context is applied to." ;
+    rdfs:domain lrmlmm:Context ;
+    rdfs:range lrmlmm:Scope .
+
+lrmlmm:memberReferenceType a rdf:Property ;
+    rdfs:label "has member reference type" ;
+    rdfs:comment "the conceptual type of references contained by the References collection)." ;
+    rdfs:domain lrmlmm:References ;
+    rdfs:range rdfs:Class .
+
+lrmlmm:over a rdf:Property ;
+    rdfs:label "over" ;
+    rdfs:comment "the Legal Rule with higher priority." ;
+    rdfs:domain lrmlmm:Override ;
+    rdfs:range lrmlmm:Statement .
+
+lrmlmm:refID a rdf:Property ;
+    rdfs:label "reference ID" ;
+    rdfs:comment "the external ID of the Reference." ;
+    rdfs:domain lrmlmm:Reference ;
+    rdfs:range xsd:string .
+
+lrmlmm:refIDSystemName a rdf:Property ;
+    rdfs:label "reference ID system name" ;
+    rdfs:comment "the name of the ID system of the Reference (or of References contained by the References collection)." ;
+    rdfs:domain lrmlmm:Reference ;
+    rdfs:range xsd:string .
+
+lrmlmm:refIDSystemSource a rdf:Property ;
+    rdfs:label "reference ID system source" ;
+    rdfs:comment "the IRI source of the ID system of the Reference (or of References contained by the References collection)." ;
+    rdfs:domain lrmlmm:Reference ;
+    rdfs:range lrmlmm:Source .
+
+lrmlmm:refersTo a rdf:Property ;
+    rdfs:label "refersTo" ;
+    rdfs:comment "the internal ID of the Reference." ;
+    rdfs:domain lrmlmm:Reference ;
+    rdfs:range lrmlmm:Source .
+
+lrmlmm:symbol a rdf:Property ;
+    rdfs:label "symbol" ;
+    rdfs:comment "an XML literal that is the symbolic representation of the XMLLiteral wrapper." ;
+    rdfs:domain lrmlmm:XMLLiteralWrapper ;
+    rdfs:range <rdfs:XMLLiteral> ;
+    rdfs:subPropertyOf lrmlmm:wraps .
+
+lrmlmm:toPrescriptiveStatement a rdf:Property ;
+    rdfs:label "to prescriptive statement" ;
+    rdfs:comment "Athe PrescriptiveStatement that is linked to a PenaltyStatement in a Reparation." ;
+    rdfs:domain lrmlmm:Reparation ;
+    rdfs:range lrmlmm:PrescriptiveStatement .
+
+lrmlmm:toTarget a rdf:Property ;
+    rdfs:label "to target" ;
+    rdfs:comment "the target to which properties are applied by the Association." ;
+    rdfs:domain lrmlmm:Association ;
+    rdfs:range lrmlmm:Expression .
+
+lrmlmm:under a rdf:Property ;
+    rdfs:label "under" ;
+    rdfs:comment "the Legal Rule with lower priority." ;
+    rdfs:domain lrmlmm:Override ;
+    rdfs:range lrmlmm:Statement .
+
+rulemm:content a rdf:Property ;
+    rdfs:label "content" ;
+    rdfs:comment "An entity wrapped by the subject wrapper" ;
+    rdfs:domain rulemm:DataWrapper ;
+    rdfs:range rulemm:Data ;
+    rdfs:subPropertyOf rulemm:wraps .
+
+rulemm:symbolForData a rdf:Property ;
+    rdfs:label "symbol for data" ;
+    rdfs:comment "A literal that is the symbolic representation of the subject data entity." ;
+    rdfs:domain rulemm:Data ;
+    rdfs:range <rdfs:Literal> ;
+    rdfs:subPropertyOf rulemm:wraps .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Applicable> a lrmlmm:LegalStatus .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Efficacious> a lrmlmm:LegalStatus .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Ends> a lrmlmm:StatusDevelopment .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#InForce> a lrmlmm:LegalStatus .
+
+<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#Starts> a lrmlmm:StatusDevelopment .
+
+lrmlmm:hasReference a rdf:Property ;
+    rdfs:label "has member reference" ;
+    rdfs:comment "a Reference in the collection." ;
+    rdfs:domain lrmlmm:References ;
+    rdfs:range lrmlmm:Reference ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasReferences a rdf:Property ;
+    rdfs:label "has reference collection" ;
+    rdfs:comment "a collection of References." ;
+    rdfs:domain lrmlmm:LegalRuleMLDocument ;
+    rdfs:range lrmlmm:References ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:hasSource a rdf:Property ;
+    rdfs:label "has member source" ;
+    rdfs:comment "a Source in the collection." ;
+    rdfs:domain lrmlmm:Sources ;
+    rdfs:range lrmlmm:Source ;
+    rdfs:subPropertyOf lrmlmm:hasMember .
+
+lrmlmm:hasSources a rdf:Property ;
+    rdfs:label "has legal source collection" ;
+    rdfs:comment "Ta collection of LegalSources." ;
+    rdfs:range lrmlmm:Sources ;
+    rdfs:subPropertyOf lrmlmm:hasCollection .
+
+lrmlmm:wraps a rdf:Property ;
+    rdfs:label "wraps" ;
+    rdfs:comment "an entity contained by the wrapper." ;
+    rdfs:domain lrmlmm:Wrapper ;
+    rdfs:range lrmlmm:Thing .
+
+dcterms:created a rdf:Property ;
+    rdfs:isDefinedBy <http://dublincore.org/documents/2012/06/14/dcmi-terms/> .
+
+lrmlmm:DeonticRole a rdf:Property ;
+    rdfs:label "deontic role" ;
+    rdfs:comment "a role in a Deontic Specification" ;
+    rdfs:domain lrmlmm:DeonticSpecification ;
+    rdfs:range rulemm:Term .
+
+lrmlmm:applies a rdf:Property ;
+    rdfs:label "applies" ;
+    rdfs:comment "an entity applied by the associator." ;
+    rdfs:domain lrmlmm:Associator ;
+    rdfs:range lrmlmm:Associable .
+
+lrmlmm:hasMember a rdf:Property ;
+    rdfs:label "has member" ;
+    rdfs:comment "an entity in the collection." ;
+    rdfs:domain lrmlmm:Collection ;
+    rdfs:range lrmlmm:Collectable .
+
+lrmlmm:hasCollection a rdf:Property ;
+    rdfs:label "has collection" ;
+    rdfs:comment "a collection." ;
+    rdfs:domain lrmlmm:Collector ;
+    rdfs:range lrmlmm:Collection .
+

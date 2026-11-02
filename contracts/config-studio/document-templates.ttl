@@ -1,0 +1,169 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# The document templates the studio serves at GET /api/document-templates (contracts/config-studio/README.md).
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<urn:lattice:studio:document-template:facility-agreement> a cst:DocumentTemplate ;
+    cst:templateKey "facility-agreement" ;
+    rdfs:label "Facility Agreement" ;
+    cst:section <urn:lattice:studio:document-template:facility-agreement:section:definitions> , <urn:lattice:studio:document-template:facility-agreement:section:commitment> , <urn:lattice:studio:document-template:facility-agreement:section:interest> , <urn:lattice:studio:document-template:facility-agreement:section:repayment> , <urn:lattice:studio:document-template:facility-agreement:section:undertakings> , <urn:lattice:studio:document-template:facility-agreement:section:events-of-default> ;
+    cst:variable <urn:lattice:studio:document-template:facility-agreement:variable:facility-amount> , <urn:lattice:studio:document-template:facility-agreement:variable:margin> , <urn:lattice:studio:document-template:facility-agreement:variable:notice-period> , <urn:lattice:studio:document-template:facility-agreement:variable:repayment-period> .
+
+<urn:lattice:studio:document-template:facility-agreement:section:definitions> a cst:TemplateSection ;
+    cst:sectionKey "definitions" ;
+    cst:order 1 ;
+    rdfs:label "Definitions" ;
+    cst:elementKind "definition" ;
+    cst:termKind "Definition" ;
+    cst:required true ;
+    rdfs:comment "Define each defined term used elsewhere in the agreement." .
+
+<urn:lattice:studio:document-template:facility-agreement:section:commitment> a cst:TemplateSection ;
+    cst:sectionKey "commitment" ;
+    cst:order 2 ;
+    rdfs:label "Commitment" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Obligation" , "Permission" ;
+    cst:required true ;
+    rdfs:comment "State the lender's commitment to lend and the borrower's right to cancel it." .
+
+<urn:lattice:studio:document-template:facility-agreement:section:interest> a cst:TemplateSection ;
+    cst:sectionKey "interest" ;
+    cst:order 3 ;
+    rdfs:label "Interest" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Obligation" ;
+    cst:required true ;
+    rdfs:comment "State how interest is calculated and paid." .
+
+<urn:lattice:studio:document-template:facility-agreement:section:repayment> a cst:TemplateSection ;
+    cst:sectionKey "repayment" ;
+    cst:order 4 ;
+    rdfs:label "Repayment" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Obligation" ;
+    cst:required true ;
+    rdfs:comment "State when and how the loan is repaid." .
+
+<urn:lattice:studio:document-template:facility-agreement:section:undertakings> a cst:TemplateSection ;
+    cst:sectionKey "undertakings" ;
+    cst:order 5 ;
+    rdfs:label "Undertakings" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Obligation" , "Prohibition" ;
+    cst:required true ;
+    rdfs:comment "State what the borrower must do and must not do while the facility is outstanding." .
+
+<urn:lattice:studio:document-template:facility-agreement:section:events-of-default> a cst:TemplateSection ;
+    cst:sectionKey "events-of-default" ;
+    cst:order 6 ;
+    rdfs:label "Events of Default" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Power" , "Deeming" ;
+    cst:required false ;
+    rdfs:comment "State the lender's powers on default and when a default is deemed to occur." .
+
+<urn:lattice:studio:document-template:facility-agreement:variable:facility-amount> a cst:TemplateVariable ;
+    cst:variableKey "facility-amount" ;
+    rdfs:label "Facility amount" ;
+    cst:valueType "money" .
+
+<urn:lattice:studio:document-template:facility-agreement:variable:margin> a cst:TemplateVariable ;
+    cst:variableKey "margin" ;
+    rdfs:label "Margin" ;
+    cst:valueType "percentage" .
+
+<urn:lattice:studio:document-template:facility-agreement:variable:notice-period> a cst:TemplateVariable ;
+    cst:variableKey "notice-period" ;
+    rdfs:label "Notice period" ;
+    cst:valueType "duration" .
+
+<urn:lattice:studio:document-template:facility-agreement:variable:repayment-period> a cst:TemplateVariable ;
+    cst:variableKey "repayment-period" ;
+    rdfs:label "Repayment period" ;
+    cst:valueType "duration" .
+
+<urn:lattice:studio:document-template:software-licence> a cst:DocumentTemplate ;
+    cst:templateKey "software-licence" ;
+    rdfs:label "Software Licence" ;
+    cst:section <urn:lattice:studio:document-template:software-licence:section:definitions> , <urn:lattice:studio:document-template:software-licence:section:grant> , <urn:lattice:studio:document-template:software-licence:section:restrictions> , <urn:lattice:studio:document-template:software-licence:section:fees> , <urn:lattice:studio:document-template:software-licence:section:warranty-exclusions> , <urn:lattice:studio:document-template:software-licence:section:termination> ;
+    cst:variable <urn:lattice:studio:document-template:software-licence:variable:licence-fee> , <urn:lattice:studio:document-template:software-licence:variable:payment-days> , <urn:lattice:studio:document-template:software-licence:variable:user-limit> .
+
+<urn:lattice:studio:document-template:software-licence:section:definitions> a cst:TemplateSection ;
+    cst:sectionKey "definitions" ;
+    cst:order 1 ;
+    rdfs:label "Definitions" ;
+    cst:elementKind "definition" ;
+    cst:termKind "Definition" ;
+    cst:required true ;
+    rdfs:comment "Define each defined term used elsewhere in the licence." .
+
+<urn:lattice:studio:document-template:software-licence:section:grant> a cst:TemplateSection ;
+    cst:sectionKey "grant" ;
+    cst:order 2 ;
+    rdfs:label "Grant" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Permission" ;
+    cst:required true ;
+    rdfs:comment "State what the licensee is permitted to do with the software." .
+
+<urn:lattice:studio:document-template:software-licence:section:restrictions> a cst:TemplateSection ;
+    cst:sectionKey "restrictions" ;
+    cst:order 3 ;
+    rdfs:label "Restrictions" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Prohibition" ;
+    cst:required true ;
+    rdfs:comment "State what the licensee must not do with the software." .
+
+<urn:lattice:studio:document-template:software-licence:section:fees> a cst:TemplateSection ;
+    cst:sectionKey "fees" ;
+    cst:order 4 ;
+    rdfs:label "Fees" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Obligation" ;
+    cst:required true ;
+    rdfs:comment "State the fees payable and when they are due." .
+
+<urn:lattice:studio:document-template:software-licence:section:warranty-exclusions> a cst:TemplateSection ;
+    cst:sectionKey "warranty-exclusions" ;
+    cst:order 5 ;
+    rdfs:label "Warranty Exclusions" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Exclusion" ;
+    cst:required false ;
+    rdfs:comment "State what the licensor excludes from its warranty." .
+
+<urn:lattice:studio:document-template:software-licence:section:termination> a cst:TemplateSection ;
+    cst:sectionKey "termination" ;
+    cst:order 6 ;
+    rdfs:label "Termination" ;
+    cst:elementKind "clause" ;
+    cst:termKind "Power" ;
+    cst:required true ;
+    rdfs:comment "State when the licensor may terminate the licence." .
+
+<urn:lattice:studio:document-template:software-licence:variable:licence-fee> a cst:TemplateVariable ;
+    cst:variableKey "licence-fee" ;
+    rdfs:label "Licence fee" ;
+    cst:valueType "money" .
+
+<urn:lattice:studio:document-template:software-licence:variable:payment-days> a cst:TemplateVariable ;
+    cst:variableKey "payment-days" ;
+    rdfs:label "Payment days" ;
+    cst:valueType "duration" .
+
+<urn:lattice:studio:document-template:software-licence:variable:user-limit> a cst:TemplateVariable ;
+    cst:variableKey "user-limit" ;
+    rdfs:label "User limit" ;
+    cst:valueType "number" .
+
+<urn:lattice:studio:document-sample:facility-agreement> a cst:DocumentSample ;
+    cst:sampleKey "facility-agreement" ;
+    rdfs:label "Facility Agreement (sample)" .
+
+<urn:lattice:studio:document-sample:software-licence> a cst:DocumentSample ;
+    cst:sampleKey "software-licence" ;
+    rdfs:label "Software Licence (sample)" .

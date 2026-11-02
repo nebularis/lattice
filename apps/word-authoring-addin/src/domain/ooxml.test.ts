@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { readMarkup, writeMarkup } from "@lattice/authoring-domain";
 import { parseBody } from "./ooxml";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,11 +53,40 @@ describe("parseBody: unmarked text and the zero-parts case (S8-04)", () => {
     const parsed = parseBody(xml);
 
     expect(parsed.unmarked).toEqual([
-      { sectionKey: null, text: "Preamble text." },
-      { sectionKey: "definitions", text: "Note: see the schedule." },
+      { sectionKey: null, text: "Preamble text.", position: 0 },
+      { sectionKey: "definitions", text: "Note: see the schedule.", position: 0 },
     ]);
     expect(parsed.sections).toEqual([{ sectionKey: "definitions", elements: [] }]);
     expect(parsed.warnings.some((warning) => warning.includes("00000009-0000-4000-8000-000000000005"))).toBe(true);
+  });
+});
+
+describe("parseBody: where unmarked text sits", () => {
+  const para = (text: string) => `<w:p><w:r><w:t>${text}</w:t></w:r></w:p>`;
+  const clause = (n: number) =>
+    `<w:sdt><w:sdtPr><w:tag w:val="lat:e:00000009-0000-4000-8000-00000000000${n}"/></w:sdtPr><w:sdtContent><w:p><w:r><w:t>c${n}</w:t></w:r></w:p></w:sdtContent></w:sdt>`;
+  const section = (key: string, inner: string) =>
+    `<w:sdt><w:sdtPr><w:tag w:val="lat:s:${key}"/></w:sdtPr><w:sdtContent>` +
+    `<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>H</w:t></w:r></w:p>${inner}</w:sdtContent></w:sdt>`;
+
+  it("records the position, and a markup round trip keeps the text between elements and between sections", () => {
+    const parsed = parseBody(
+      wrapBareDocument(
+        para("top") + section("a", para("one") + clause(1) + para("two") + clause(2)) + para("middle") + section("b", clause(3)) + para("end"),
+      ),
+    );
+    expect(parsed.unmarked).toEqual([
+      { sectionKey: null, text: "top", position: 0 },
+      { sectionKey: "a", text: "one", position: 0 },
+      { sectionKey: "a", text: "two", position: 1 },
+      { sectionKey: null, text: "middle", position: 1 },
+      { sectionKey: null, text: "end", position: 2 },
+    ]);
+    const xml = writeMarkup({ schemaVersion: "0.1.0", documentId: "d", templateId: "t", title: "T", variables: [], ...parsed });
+    const order = ["top", "one", ">c1<", "two", ">c2<", "middle", ">c3<", "end"].map((needle) => xml.indexOf(needle));
+    expect(order).not.toContain(-1);
+    expect(order).toEqual([...order].sort((x, y) => x - y));
+    expect(readMarkup(xml).unmarked).toEqual(parsed.unmarked);
   });
 });
 

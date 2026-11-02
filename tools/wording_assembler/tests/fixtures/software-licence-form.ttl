@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A vendor publishes one software licence form. The grant and the fees appear in every
+# licence. An audit right is added only when asked for. The hosting terms are a slot of two variants,
+# one for a hosted deployment and one for a hosted or hybrid deployment, each admitted by the
+# deployment the licence's particulars state. A hosted deployment admits both, which the baseline
+# model refuses, and an on-premises one admits neither.
+#
+# | Clause | Inclusion | Text |
+# |--------|-----------|------|
+# | 1.1    | mandatory | the licensee may install the software |
+# | 1.2    | optional  | the vendor may audit use once a year |
+# | 1.3    | mandatory | the licence is non-transferable |
+# | 2.1    | mandatory | the licensee pays {fee} |
+# | 2.2    | a slot of two variants | the vendor hosts the software, or hosts it with a local component |
+
+@prefix wrd:     <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix elg:     <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/wording/software-licence/> .
+
+ex:form a wrd:Wording ;
+    fnd:hasIdentity ex:form-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    wrd:directlyComprises ex:sec-grant , ex:sec-fees , ex:gv-deployment .
+
+ex:sec-grant a wrd:Element ;
+    fnd:hasIdentity ex:sec-grant-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:rankKey "a0" ;
+    wrd:directlyComprises ex:cl-install , ex:cl-audit , ex:cl-transfer .
+
+ex:cl-install a wrd:Text ;
+    fnd:hasIdentity ex:cl-install-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:rankKey "a0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The licensee may install the software." ] .
+
+ex:cl-audit a wrd:Text ;
+    fnd:hasIdentity ex:cl-audit-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:rankKey "b0" ;
+    wrd:inclusionMode wrd-voc:Optional ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The vendor may audit the licensee's use once a year." ] .
+
+ex:cl-transfer a wrd:Text ;
+    fnd:hasIdentity ex:cl-transfer-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:rankKey "c0" ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The licence is not transferable." ] .
+
+ex:sec-fees a wrd:Element ;
+    fnd:hasIdentity ex:sec-fees-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:rankKey "b0" ;
+    wrd:directlyComprises ex:cl-fee , ex:slot-hosting , ex:var-fee .
+
+ex:cl-fee a wrd:Text ;
+    fnd:hasIdentity ex:cl-fee-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:rankKey "a0" ;
+    wrd:hasTextPart ex:cl-fee-p0 , ex:cl-fee-p1 , ex:cl-fee-p2 .
+ex:cl-fee-p0 a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The licensee pays " .
+ex:cl-fee-p1 a wrd:TextPart ; wrd:partIndex 1 ; wrd:refersToVariable ex:var-fee-identity .
+ex:cl-fee-p2 a wrd:TextPart ; wrd:partIndex 2 ; wrd:partText " each year." .
+
+ex:var-fee a wrd:EmbeddedVariable ;
+    fnd:hasIdentity ex:var-fee-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "annual-fee" ; wrd:rankKey "z0" ;
+    wrd:populationMethod wrd-voc:FreeEntry ;
+    wrd:multiValued false .
+
+ex:slot-hosting a wrd:VariationSlot ;
+    fnd:hasIdentity ex:slot-hosting-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ; wrd:rankKey "b0" ;
+    wrd:hasVariant ex:cl-hosted , ex:cl-hosted-local .
+
+ex:cl-hosted a wrd:Text ;
+    fnd:hasIdentity ex:cl-hosted-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:inclusionMode wrd-voc:Variation ;
+    wrd:includedWhen ex:when-hosted ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The vendor hosts the software." ] .
+
+ex:cl-hosted-local a wrd:Text ;
+    fnd:hasIdentity ex:cl-hosted-local-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Clause ;
+    wrd:inclusionMode wrd-voc:Variation ;
+    wrd:includedWhen ex:when-hosted-or-hybrid ;
+    wrd:hasTextPart [ a wrd:TextPart ; wrd:partIndex 0 ; wrd:partText "The vendor hosts the software, and the licensee runs a local component." ] .
+
+# ---- The deployment, and the conditions that read it ------------------------------------
+
+ex:gv-deployment a wrd:GoverningVariable ;
+    fnd:hasIdentity ex:gv-deployment-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:variableKey "deployment" ; wrd:rankKey "z0" ;
+    wrd:valueContract ex:deployment-contract ;
+    wrd:populationMethod wrd-voc:PickList ;
+    wrd:multiValued false .
+
+ex:deployments a voc:ConceptScheme ;
+    fnd:hasIdentity ex:deployments-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Deployments"@en .
+ex:hosted a skos:Concept ; skos:prefLabel "Hosted"@en ; skos:inScheme ex:deployments .
+ex:hybrid a skos:Concept ; skos:prefLabel "Hybrid"@en ; skos:inScheme ex:deployments .
+ex:on-premises a skos:Concept ; skos:prefLabel "On premises"@en ; skos:inScheme ex:deployments .
+
+ex:deployment-contract a voc:SchemeContract ;
+    fnd:hasIdentity ex:deployment-contract-identity ; fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty wrd:value ;
+    voc:boundScheme ex:deployments .
+
+ex:is-hosted a elg:SetMembershipCondition ;
+    elg:matchStrategy elg:SetMembership ; elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:hosted ;
+    wrd:readsVariable ex:gv-deployment .
+
+ex:is-hybrid a elg:SetMembershipCondition ;
+    elg:matchStrategy elg:SetMembership ; elg:wildcardSemantics elg:NoWildcard ;
+    elg:requiredConcept ex:hybrid ;
+    wrd:readsVariable ex:gv-deployment .
+
+ex:when-hosted a elg:AdmissionProfile ;
+    elg:hasCondition ex:is-hosted ;
+    elg:compositionOperation elg:AllRequired .
+
+ex:when-hosted-or-hybrid a elg:AdmissionProfile ;
+    elg:hasCondition ex:is-hosted , ex:is-hybrid ;
+    elg:compositionOperation elg:AnySufficient .

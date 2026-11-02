@@ -29,7 +29,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -53,7 +53,7 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test]\""
 [tasks."bootstrap:workers"]
 depends = ["bootstrap:pip"]
 description = "Install the worker package with test dependencies"
-run = "python -m pip install -e \"./workers[test,authoring]\""
+run = "python -m pip install -e \"./workers[test,authoring,studio]\""
 
 [tasks."bootstrap:mork"]
 depends = ["bootstrap:pip"]
@@ -64,6 +64,11 @@ run = "python -m pip install -e ./tools/mork"
 depends = ["bootstrap:pip", "bootstrap:vocabulary"]
 description = "Install the MORK backend compiler package"
 run = "python -m pip install -e \"./tools/mork_compilers[test]\""
+
+[tasks."bootstrap:wording-assembler"]
+depends = ["bootstrap:pip", "bootstrap:mork-compilers"]
+description = "Install the Wording assembler package"
+run = "python -m pip install -e \"./tools/wording_assembler[test]\""
 
 [tasks."bootstrap:surface"]
 depends = ["bootstrap:pip", "bootstrap:vocabulary"]
@@ -79,6 +84,11 @@ run = "python -m pip install -e ./packages/persistence/python -e \"./tools/persi
 depends = ["bootstrap:pip"]
 description = "Install the Oxigraph test-support package, the default engine of the persistence tests (ADR-A125)"
 run = "python -m pip install -e \"./tools/testing/oxigraph[test]\""
+
+[tasks."bootstrap:testing-studio-harness"]
+depends = ["bootstrap:pip"]
+description = "Install the Configuration Studio test harness (ADR-A125, ADR-A150)"
+run = "python -m pip install -e \"./tools/testing/studio_harness[test]\""
 
 [tasks."bootstrap:testing-jena"]
 depends = ["bootstrap:pip", "bootstrap:sparql-testkit"]
@@ -136,7 +146,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:authoring-tools", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -160,16 +170,9 @@ run = "python -m unittest surface.test_surface mork_compilers.test_mork_compiler
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
 
-[tasks."check:authoring-contracts"]
-description = "Validate the word authoring POC contracts, templates, samples and fixtures"
-run = "python -m pytest workers/tests/test_authoring_contracts.py -q"
-
-[tasks."check:authoring-worker"]
-description = "Test the word authoring POC worker (ADR-A114)"
-run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_wording_analysis_worker.py workers/tests/test_authoring_contracts.py -q"
-
 [tasks."check:mtp"]
 description = "Check the committed MORK Teaching Pack structure and pins"
+depends = ["build:mtp"]
 run = "python -m mtp.cli check --out ontology/mork/mtp/out"
 
 [tasks."build:mtp"]
@@ -177,13 +180,20 @@ description = "Regenerate committed MORK Teaching Pack output"
 run = "python -m mtp.cli facts-report; python -m mtp.cli build --out ontology/mork/mtp/out"
 
 [tasks."check:java"]
+depends = ["build:config-studio-assets"]
 run = "mvn -f platform/pom.xml verify"
 
 [tasks."check:frontend"]
+depends = ["build:config-studio-assets"]
 run = "yarn check"
+
+[tasks."check:authoring-domain"]
+description = "Type-check and unit-test the authoring domain package shared by the add-in and the studio"
+run = "yarn workspace @lattice/authoring-domain run check"
 
 [tasks."check:authoring-addin"]
 description = "Type-check and unit-test the Word authoring add-in"
+depends = ["check:authoring-domain"]
 run = "yarn workspace @lattice/word-authoring-addin run check"
 
 [tasks."test:authoring-addin"]
@@ -205,6 +215,22 @@ run = "python contracts/identity/verify-anchors.py"
 depends = ["bootstrap:pip"]
 description = "Install the standalone Python minting library (ADR-A84) with its test extra"
 run = "python -m pip install -e \"./packages/minting/python[test]\""
+
+[tasks."mork:propose"]
+description = "Run one MORK mapping proposal tool from the command line, as the MCP server offers it: teaching-pack, target-cards, source-cards, candidates or check. mise run mork:propose -- --help lists them"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.cli"
+
+[tasks."mork:propose-trial"]
+description = "Score a mapping proposal run against a reference pack and record it, with the pack's review of each mapping, in a proposal history: mise run mork:propose-trial -- <run folder> --pack <pack> --pack-scheme <IRI> --history <file> [--sample <file>]"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.trial"
+
+[tasks."mork:propose-mcp"]
+description = "Serve the MORK mapping proposal tools over MCP on standard input and output, for an agent such as Claude Desktop: the teaching pack and codebook, cards of LATTICE's layers and of a source vocabulary, candidate target terms, and the check of a proposal in MCN"
+raw = true  # an MCP host speaks over the task's own standard input and output
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.server"
 
 [tasks."check:mork"]
 description = "Run the MORK tooling's tests under tools/mork/src, the compiler agent's among them"
@@ -231,9 +257,13 @@ depends = ["bootstrap:pip"]
 description = "Install the persistence caller library (ADR-A132) with its test extra"
 run = "python -m pip install -e \"./packages/persistence/python[test]\""
 
+[tasks."check:persistence-library-java"]
+description = "Build the standalone Java persistence caller library and run it against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+run = "mvn -q -f packages/persistence/java/pom.xml verify"
+
 [tasks."check:persistence-library"]
-depends = ["check:persistence-vectors"]
-description = "Run the persistence caller library against the conformance vectors in contracts/persistence and its own tests (ADR-A132)"
+depends = ["check:persistence-vectors", "check:persistence-library-java"]
+description = "Run both persistence caller libraries, Python and Java, against the conformance vectors in contracts/persistence and their own tests (ADR-A132)"
 run = "python -m pytest packages/persistence/python/tests -q"
 
 [tasks."build:persistence-execution"]
@@ -311,6 +341,16 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure what a graph variable bound outside an OPTIONAL costs on rdflib, Oxigraph and Jena when it is available, in four forms, per engine version (ADR-A124, TSD-42, TSD-Q22). Run on demand, not part of check. Fails on a wrong count, never on time. STORE_PROBES_QUICK=1 uses a smaller store"
 run = "python -m pytest benchmark/persistence-store-probes -q -p no:cacheprovider && python benchmark/persistence-store-probes/check.py"
 
+[tasks."benchmark:studio-api"]
+depends = ["bootstrap:testing-studio-harness"]
+description = "Time the Configuration Studio's HTTP API on the single topology, started in isolation by the harness (ADR-A150): saving and reading parts of 100, 1,000 and 3,000 triples, listing the workspaces, publishing and listing the registry. Writes benchmark/reports/studio-api/{date}-{commit}.json. `-- --checkout PATH` measures another checkout whose jars are built and assets staged. Run on demand, not part of check. Fails on a wrong reply, never on time. Uses the jars already built under platform/*/target and never builds them"
+run = "python -m pytest benchmark/studio-api -q -p no:cacheprovider && python benchmark/studio-api/run.py"
+
+[tasks."benchmark:compare"]
+depends = ["bootstrap:testing-studio-harness"]
+description = "Table the measures of two reports of a benchmark under benchmark/reports (ADR-A150): `-- studio-api [--base REPORT] [--head REPORT]`. The base defaults to the report before the head, the head to the latest. Marks a change outside both runs' interquartile ranges, warns when the machines differ, and never fails on time"
+run = "python -m lattice_testing_studio_harness.compare"
+
 [tasks."check:persistence-composite-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the composite replace on rdflib and Oxigraph (ADR-A124, TD-42). Run on demand, not part of check. Fails on a wrong result, never on time. COMPOSITE_COST_MAX caps the size"
@@ -349,6 +389,21 @@ run = "python -m pytest benchmark/ledger-posting-cost/test_late_posting.py -q -p
 [tasks."check:ledger-store-comparison"]
 description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
 run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"
+
+[tasks."check:mork-rdf-run-cost"]
+description = "Measure a MORK run's peak memory and time on the catalogue mapping over 10,000 and 100,000 synthetic records, kept in memory and streamed to a sink (ADR-A124, MP-Q1). Run on demand, not part of check. Fails on a wrong count, never on time or memory. MORK_RUN_COST_QUICK=1 runs 2,000 records, MORK_RUN_COST_LARGE=1 adds 1,000,000, which needs about 15 GB"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m pytest benchmark/mork-rdf-run-cost -q -p no:cacheprovider && python benchmark/mork-rdf-run-cost/check.py"
+
+[tasks."mork:communities-baseline"]
+description = "Write contracts/config-studio/communities-baseline.ttl: section observations, communities and projections drawn from the ODRL pack and the mappings the ODRL and LegalRuleML trials' reviews accepted (MORK README §5.18). Deterministic for the same reviews"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m mork_propose.baseline"
+
+[tasks."check:mork-candidate-ranking"]
+description = "Measure how often BM25, BM25 with MTP's translation table, MORK's recognition engine and the two fused put the confirmed target term in their first five and first ten, on the ODRL pack and the LegalRuleML history (ADR-A124). Run on demand, not part of check. Fails on a source with no confirmed pair or a method that ranks nothing, never on a hit rate"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m pytest benchmark/mork-candidate-ranking -q -p no:cacheprovider && python benchmark/mork-candidate-ranking/check.py"
 
 [tasks."check:ledger-posting-cost"]
 depends = ["bootstrap:testing-oxigraph"]
@@ -467,6 +522,18 @@ description = "Run the MORK backend compiler tests, including generated SPARQL e
 run = "python -m pytest tools/mork_compilers -q -n auto"
 env = { MORK_SPARQL_ENGINE = "oxigraph" }
 
+[tasks."bootstrap:mork-rdf"]
+depends = ["bootstrap:pip"]
+description = "Install the MORK RDF-to-RDF compiler package"
+run = "python -m pip install -e \"./tools/mork_rdf[test]\""
+
+[tasks."check:mork-rdf"]
+description = "Run the MORK RDF-to-RDF compiler's tests: property paths, every construct of the catalogue example, the checks, determinism over shuffled inputs, rdflib against Oxigraph, time and governance, and one refusal per code. Needs the package installed, which bootstrap:python does"
+run = "python -m pytest tools/mork_rdf -q"
+
+[tasks."check:wording-assembler"]
+description = "Run the Wording assembler's tests: the baseline model's decisions, slots, optional elements, determinism (WA5), refusal without a record (WA6), re-assembly and the rendered document (ADR-A139, ADR-A140). Needs the package installed, which bootstrap:python does"
+run = "python -m pytest tools/wording_assembler -q"
 [tasks."check:mork-compilers-conformance:rdflib"]
 description = "Run the MORK backend compiler tests on rdflib. Part of check:mork-compilers-conformance, so a query that depends on one engine's reading of the specification stays visible (TSD-41)"
 run = "python -m pytest tools/mork_compilers -q -n auto"
@@ -548,54 +615,29 @@ run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am package -DskipTests"
 description = "Run the Jena harness self-tests and build its jar (ADR-A125)"
 run = "mvn -q -f platform/pom.xml -pl sparql-testkit -am verify"
 
+[tasks."bootstrap:mork-transforms"]
+description = "Build the MORK transform backends jar, Saxon-HE for XSLT and Bazaarvoice JOLT for JOLT chains (ADR-A148). Tests that need it skip without it"
+run = "mvn -q -f platform/pom.xml -pl mork-transforms -am package -DskipTests"
+
+[tasks."check:mork-transforms"]
+description = "Run the MORK transform backends' tests: the engines' own, then each example compiled and run on Saxon-HE and JOLT (ADR-A148)"
+depends = ["bootstrap:mork-transforms"]
+run = ["mvn -q -f platform/pom.xml -pl mork-transforms -am verify", "python -m pytest tools/mork_transforms -q"]
+
 [tasks."check:reasoning-isolation"]
 description = "Fail when a reasoner, rules engine or JVM bridge is declared outside platform/reasoning-testkit (ADR-A83)"
 run = "python tools/reasoning_isolation_check.py"
 
-[tasks."check:authoring-service"]
-description = "Build and unit-test the word authoring POC service (ADR-A114)"
-run = "mvn -f platform/pom.xml -pl authoring-service -am verify"
-
-[tasks."check:authoring-service-it"]
-description = "Integration-test the word authoring POC service against Fuseki and RabbitMQ containers"
-run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
-
-[tasks."build:authoring-fixtures"]
-description = "Regenerate the word authoring POC's generated wording fixtures from the samples (ADR-A114)"
-run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && java -cp platform/authoring-service/target/authoring-service.jar org.nebularis.lattice.authoring.app.FixtureWriter contracts/authoring"
-
-[tasks."build:authoring"]
-description = "Build the POC service jar and add-in, and stage the image inputs"
-run = "mvn -q -f platform/pom.xml -pl authoring-service -am package -DskipTests && yarn workspace @lattice/word-authoring-addin run build && python tools/authoring_stage.py"
-
-[tasks."authoring:up"]
-description = "Start the Word authoring POC stack and seed the samples"
-depends = ["build:authoring"]
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml up -d --build --wait"
-
-[tasks."authoring:down"]
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml down"
-
-[tasks."authoring:reset"]
-description = "Stop the POC stack and delete its data and local CA"
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml down -v"
-
-[tasks."authoring:ca"]
-description = "Copy the POC proxy's local root certificate to .build/authoring"
-run = "docker compose -f deployment/compose/authoring/docker-compose.yml cp authoring-proxy:/data/caddy/pki/authorities/local/root.crt .build/authoring/lattice-authoring-root.crt"
-
-[tasks."check:authoring-tools"]
-description = "Test the word authoring POC staging script (ADR-A114)"
-run = "python -m pytest tools/test_authoring_stage.py -q"
-
-[tasks."check:authoring-stack"]
-description = "Start the POC stack and run its end-to-end suite"
-depends = ["authoring:up"]
-run = "yarn workspace @lattice/word-authoring-addin run test:stack"
+[tasks."build:document-schema"]
+description = "Generate the document markup's XSD from its RELAX NG source with Trang (ADR-A137). The tests of `config-studio-authoring` fail while it is stale"
+run = [
+  "mvn -q -f platform/pom.xml dependency:copy -Dartifact=org.relaxng:trang:20241231 -DoutputDirectory={{config_root}}/platform/target/tools",
+  "java -jar platform/target/tools/trang-20241231.jar -I rnc -O xsd contracts/document/document.rnc contracts/document/document.xsd",
+]
 
 [tasks."check:authoring"]
-description = "All Word authoring POC checks that need no running stack"
-depends = ["check:authoring-contracts", "check:authoring-service", "check:authoring-worker", "check:authoring-addin", "test:authoring-addin", "check:authoring-tools"]
+description = "Every check of the Word add-in and the authoring domain package that needs no running stack"
+depends = ["check:authoring-addin", "test:authoring-addin"]
 
 [tasks."services:up"]
 description = "Start the reference platform services"
@@ -604,6 +646,86 @@ run = "docker compose -f deployment/compose/docker-compose.yml up -d"
 [tasks."services:down"]
 description = "Stop the reference platform services"
 run = "docker compose -f deployment/compose/docker-compose.yml down"
+
+# --- Configuration Studio (ADR-A136), a proof of concept ---------------------------------------
+# Fuseki on 127.0.0.1:3130 with a dataset "studio", and RabbitMQ on 127.0.0.1:5673, from
+# `mise run studio:infra` (Docker) or started by hand (the service's README). Then studio:service,
+# studio:worker and studio:web, each in its own terminal, and browse http://127.0.0.1:4175.
+# studio:up and studio:down do all of it in the background, on every platform.
+
+[tasks."build:config-studio-assets"]
+description = "Stage the Configuration Studio's vocabulary and samples into .build/config-studio"
+run = "python tools/config_studio_stage.py"
+
+[tasks."check:config-studio"]
+description = "Test the Configuration Studio: its staging, worker, service, and browser code"
+depends = ["build:config-studio-assets", "check:authoring-domain", "bootstrap:testing-studio-harness"]
+run = [
+  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_refresh.py workers/tests/test_config_studio_layers.py -q",
+  "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
+  "yarn workspace @lattice/config-studio run check",
+]
+
+[tasks."test:config-studio"]
+description = "Run the Configuration Studio's browser tests against a fake service"
+depends = ["build:config-studio-assets"]
+run = "yarn workspace @lattice/config-studio run test"
+
+[tasks."studio:up"]
+description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service, the worker and the transforms worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
+depends = ["build:config-studio-assets"]
+run = "python tools/config_studio_stack.py up"
+
+[tasks."studio:down"]
+description = "Stop what studio:up started, each through its own shutdown"
+run = "python tools/config_studio_stack.py down"
+
+[tasks."studio:migrate"]
+description = "Migrate a Configuration Studio store written before phase D onto the generated persistence operations, once, after backing it up to .build/config-studio. `-- --dry-run` writes nothing and prints what it would do. Run it with the writer stopped"
+depends = ["build:config-studio-assets"]
+run = "python tools/config_studio_stack.py migrate"
+
+[tasks."studio:integration"]
+description = "Start each declared studio topology of test/studio-integration on ports, data and names of its own, run the smoke scenario and stop it, leaving nothing behind (ADR-A150). `-- --runner compose` runs each component in Docker Compose instead of as a process. Uses the jars already built under platform/*/target and never builds them, so it cannot disturb a stack running from them. On demand, never a dependency of check (SQ-D7)"
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+run = "python -m pytest test/studio-integration -q -s -m studio_integration"
+
+[tasks."studio:status"]
+description = "Show what studio:up started and which of the studio's ports are listening"
+run = "python tools/config_studio_stack.py status"
+
+[tasks."studio:infra"]
+description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"
+run = "docker compose -f deployment/compose/config-studio/docker-compose.yml up -d --wait"
+
+[tasks."studio:service"]
+description = "Build and run the Configuration Studio's service on 127.0.0.1:8090 against Fuseki and RabbitMQ"
+depends = ["build:config-studio-assets"]
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STUDIO_STATIC = "apps/config-studio/dist" }
+run = "mvn -q -f platform/pom.xml -pl config-studio-service -am package -DskipTests && java -jar platform/config-studio-service/target/config-studio-service.jar"
+
+[tasks."studio:ca"]
+description = "Copy the Word add-in proxy's local root certificate to .build/config-studio, to trust it for https://localhost:3443"
+run = "docker compose -f deployment/compose/config-studio/docker-compose.yml cp addin-proxy:/data/caddy/pki/authorities/local/root.crt .build/config-studio/addin-root.crt"
+
+[tasks."studio:writer"]
+description = "Build and run the Configuration Studio's store writer against Fuseki's update service and RabbitMQ's writes super stream. Run several to spread the partitions"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_WRITE_DATASET = "studio-write", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STREAM_URI = "rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f" }
+run = "mvn -q -f platform/pom.xml -pl config-studio-writer -am package -DskipTests && java -jar platform/config-studio-writer/target/config-studio-writer.jar"
+
+[tasks."studio:worker"]
+description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+run = "python -m lattice_workers.config_studio_main"
+
+[tasks."studio:transforms"]
+description = "Build and run the Configuration Studio's transforms worker, which runs the mapping part's XSLT stylesheets and JOLT chains, against Fuseki and RabbitMQ"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+run = "mvn -q -f platform/pom.xml -pl config-studio-transforms -am package -DskipTests && java -jar platform/config-studio-transforms/target/config-studio-transforms.jar"
+
+[tasks."studio:web"]
+description = "Serve the Configuration Studio's browser code with hot reload on 127.0.0.1:4175, proxying /api to the service"
+run = "yarn workspace @lattice/config-studio run dev"
 
 [tasks.clean]
 description = "Clean all build artifacts and caches"
@@ -623,7 +745,7 @@ run = "rm -rf node_modules .yarn apps/*/node_modules apps/*/dist .build/yarn-cac
 
 [tasks."clean:build"]
 description = "Clean generated build outputs"
-run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring"
+run = "rm -rf build/ ontology/mork/mtp/out/ .build/authoring .build/config-studio"
 
 [tasks."clean:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (never the committed Gemfile/Gemfile.lock)"
@@ -668,7 +790,7 @@ exit 0
 [tasks."clean-win:build"]
 description = "Clean generated build outputs (Windows)"
 shell = "powershell -c"
-run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring; exit 0'
+run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force build, ontology/mork/mtp/out, .build/authoring, .build/config-studio; exit 0'
 
 [tasks."clean-win:docs"]
 description = "Clean local Jekyll/Bundler artifacts under docs/ (Windows, never the committed Gemfile/Gemfile.lock)"

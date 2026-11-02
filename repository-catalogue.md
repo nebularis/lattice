@@ -66,7 +66,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.20.0"
+version = "0.21.0"
 kinds = ["substrate"]
 ```
 
@@ -217,8 +217,8 @@ be absent.
 [[tools]]
 name = "mork"
 path = "tools/mork"
-import-names = ["mork_communities", "mtp", "mcn"]
-reaches = ["ontology/mork"]
+import-names = ["mork_communities", "mtp", "mcn", "mork_propose"]
+reaches = ["ontology/mork", "contracts/config-studio", "docs/architecture"]
 
 [[tools]]
 name = "mork_compilers"
@@ -265,6 +265,12 @@ path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
 
 [[tools]]
+name = "testing/studio_harness"
+path = "tools/testing/studio_harness"
+import-names = ["lattice_testing_studio_harness"]
+reaches = ["benchmark/reports", "packages/minting", "packages/persistence", "test/studio-integration"]
+
+[[tools]]
 name = "testing/sparql_probes"
 path = "tools/testing/sparql_probes"
 import-names = ["sparql_probes"]
@@ -274,6 +280,22 @@ name = "vocabulary"
 path = "tools/vocabulary"
 import-names = ["vocabulary"]
 reaches = ["ontology/vocabulary"]
+
+[[tools]]
+name = "wording_assembler"
+path = "tools/wording_assembler"
+import-names = ["wording_assembler"]
+
+[[tools]]
+name = "mork_rdf"
+path = "tools/mork_rdf"
+import-names = ["mork_rdf"]
+
+[[tools]]
+name = "mork_transforms"
+path = "tools/mork_transforms"
+import-names = ["mork_transforms"]
+reaches = ["platform/mork-transforms"]
 ```
 
 ## Documentation areas
@@ -370,6 +392,7 @@ layout = "architecture"
 order = 6
 sources = [
     "docs/architecture/capacity-domain-analysis-and-design.md",
+    "docs/architecture/configuration-studio.md",
     "docs/architecture/conformance-levels.md",
     "docs/architecture/data-architecture.md",
     "docs/architecture/deferred-scope-and-boundaries.md",
@@ -420,6 +443,8 @@ layout = "architecture"
 order = 8
 sources = [
     "docs/operational-guidance.md",
+    "docs/operator/configuration-studio-operations.md",
+    "docs/operator/configuration-studio-runbook.md",
     "docs/operator/release-stack-reference.md",
     "docs/operator/surface-invalidation-runbook.md",
     "docs/operator/surface-revision-lifecycle.md",
