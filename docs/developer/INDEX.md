@@ -1423,7 +1423,7 @@ Every slice on a board, keyed by its id, with the record and line it was read fr
 | WA11 | word-authoring-poc | Documentation and close-out | ? done, pending the maintainer's sign-off | WA10 | status/word-authoring-poc.md:215 |
 | WB-0 | work-board | the sketch, the plan, this record, the INDEX.md entry | built 2026-11-02 |  | status/work-board.md:15 |
 | WB-1 | work-board | `tools/work_board.py`, `work:board`, `build:work` | built 2026-11-02 |  | status/work-board.md:16 |
-| WB-2 | work-board | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | planned | WB-1 | status/work-board.md:17 |
+| WB-2 | work-board | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | building 2026-11-02 |  | status/work-board.md:17 |
 | WB-3 | work-board | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | planned | WB-2 | status/work-board.md:18 |
 | WB-4 | work-board | the `work` check and the post-merge regeneration | planned | WB-3 | status/work-board.md:19 |
 | WB-5 | work-board | AGENTS.md, the skills, the standards, the ADR | planned | WB-4 | status/work-board.md:20 |
