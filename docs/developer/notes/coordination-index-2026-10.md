@@ -1,0 +1,1117 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+**Archived 2026-11-02.** This is the hand-written coordination index as it stood when [INDEX.md](../INDEX.md) became the generated register of units and slices (plan work-board, WB-3). It is history, kept for its narrative of each unit, and is not maintained. The state of every unit and slice is on its status record's board and in INDEX.md.
+
+# LATTICE Developer Coordination Index, archived 2026-11-02
+
+**Last updated:** 2026-10-24 — `knowledge-index` KI-1 to KI-3 and KI-5 built, ADR-A134 Accepted, TSD-37 and TSD-38 recorded. ADR-A133 git hooks and merge gates added. A-130 (Ensemble) and A-131 (Ledger) drafted on `docs/placement-vehicles-structure`  
+**Purpose:** Single source of truth for all active units of work: sketches, plans, status, reviews, and validation packs.  
+**Format:** By unit identifier, with links to all related documents and current status.
+
+---
+
+## How to read this index
+
+Each work unit has:
+- **Status** (✅ complete, 🚧 in-progress, ⏳ planned, 🗄️ archived)
+- **Unit ID** (referenced in reviews and handoffs)
+- **Documents** (sketch, plan, status, review, validation pack)
+- **Blockers** (if any)
+- **Key findings** (major discoveries or decisions)
+
+**Navigation:** Use Ctrl/Cmd+F to search by topic (e.g., "RDF", "MTP", "housekeeping") or by unit ID.
+
+**New here?** This index tracks active units of work, not how to use the repository day to day.
+For that: [Getting Started](../getting-started.md) (bootstrap a clean clone),
+[Developer Guide](../developer-guide.md) (every tool and script, when to use it),
+[Formal Methods in the Development Lifecycle](../formal-methods-lifecycle.md) (how formalising a law
+hooks into sketch, plan and implementation), and [`docs/diagrams/`](../../diagrams/README.md) (the
+whole architecture, pictured, five ways).
+
+---
+
+# Registers
+
+The registers hold entries that are not units of work. [Pending design decisions](../pending-design-decisions.md), [technical debt](../technical-debt.md) and the [backlog](../backlog.md) are removable, each row leaving when a document takes it on. [Capabilities](../capabilities.md), [mechanisms](../mechanisms.md), [patterns](../patterns.md), [principles](../principles.md) and [standards](../standards.md) are kept. All are read by the knowledge index.
+
+---
+
+# Part I — Completed Work
+
+## Persistence and IRI patterns: the change package at a glance
+
+Is it complete? **Almost.** The documentation is complete and every review is closed. The compiler is five slices into a six-slice re-sync, and the sixth (documentation close-out) is in progress this session. Housekeeping has not started, and the identity decisions await ratification. Row by row (as of 2026-09-25):
+
+| Unit | State | Remaining | Blocked on |
+|---|---|---|---|
+| `rdf-sparql-patterns-phase` Slices 1–2 (guide, `ontology/persistence`, `tools/persistence`) | ✅ Complete | — | — |
+| `rdf-sparql-patterns-remediation` (first review of the guide) | ✅ Complete, closed | nothing, deferred items handed to the units below | — |
+| `iri-patterns-post-3866b21-remediation` (second review, plus template alignment) | ✅ Complete, closed | nothing, follow-ons listed in its [status](../status/iri-patterns-post-3866b21-remediation.md#is-this-unit-complete) | — |
+| `persistence-compiler-iri-sync` (compiler catches up with the vocabulary) | ✅ Slices 1–5 done (Slice 5 validated 2026-09-25, 774 passed) | Slice 6 close-out, in progress. Gap table in its [status](../status/persistence-compiler-iri-sync.md#is-this-unit-complete) | — |
+| `rdf-sparql-patterns-phase` Slice 3 / `platform-housekeeping` | ⏳ Not started | the whole slice, including the retention and audit changes noted in its plan | — |
+| PLT-0.1.3: ADR-A82 and `iri-identity-patterns.md` | 📝 Drafted and revised, Proposed | ratification, and the point 5 amendment proposed by `identity-minting` | Phase 0 ratification pass |
+| `identity-minting` (minting recipes, conformance vectors, standalone Java and Python libraries, `dal:claimsConstraint`) | 🚧 M0–M3 of M0–M4 done: [plan](../plans/identity-minting.md), [status](../status/identity-minting.md) | M4 specification and human walk-through. One open question: default-ignorables in the upper- and lowercase pipelines | — |
+| `toolchain-jdk25-python314` (JDK 25 LTS, Python 3.14, Unicode 16.0) | ✅ Complete: [plan](../plans/toolchain-jdk25-python314.md), [status](../status/toolchain-jdk25-python314.md) | — | — |
+| `identity-minting-shared-core` (one Rust minting engine, WebAssembly-hosted in each runtime) | 🅿️ [Sketch](../sketches/identity-minting-shared-core.md), deferred | `persistence-compiler-iri-sync` is now complete (2026-09-25), this sketch can be revisited. M2 and M3 proceed with native libraries meanwhile | none — the thing it was waiting on is done |
+| `mork-run-planner` (bounding a MORK run's memory, from SDM-RDFizer's planning and string pooling) | 🅿️ [Sketch](../sketches/mork-run-planner.md), 2026-10-29 | MP-Q1 to MP-Q3, and a benchmark before any option is built | PDD-06 for options E and F |
+
+## 1. RDF/SPARQL Implementation Patterns and Persistence Compiler
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Slices 1 and 2 complete, compiler re-sync with the extended vocabulary in progress (unit 1a), Slice 3 not started |
+| **Unit ID** | `rdf-sparql-patterns-phase` |
+| **Sketch** | [persistence-profile-substrate.md](../sketches/persistence-profile-substrate.md) |
+| **Plan** | [rdf-sparql-patterns-phase-plan.md](../plans/rdf-sparql-patterns-phase-plan.md) |
+| **Status Record** | [rdf-sparql-patterns-status.md](../status/rdf-sparql-patterns-status.md) |
+| **Architecture Guide** | [docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) (Slice 1) |
+| **ADRs** | ADR-A78 (persistence substrate), ADR-A79 (compiler), ADR-A80 (housekeeping) — all Accepted |
+| **Implementation** | `ontology/persistence` (Turtle vocabulary + SHACL shapes + 22 example fixtures, extended 2026-09-23), `tools/persistence` (Python compiler, 570 tests passing, privacy and claim-scheme profiles not yet wired, see unit 1a) |
+| **Validation Pack** | [persistence-substrate-and-compiler.md](../validation/persistence-substrate-and-compiler.md) |
+| **Sync gap** | See unit 1a below |
+| **Earlier review** | `rdf-sparql-patterns-remediation`: [plan](../plans/rdf-sparql-patterns-remediation.md), [status](../status/rdf-sparql-patterns-remediation.md) — ✅ complete, closed |
+
+### Slice Completion Status
+| Slice | Deliverable | Status |
+|-------|------------|--------|
+| **1** | [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) — consolidated 4 source notes into authoritative reference (30 chapters covering K/O/C/T/QP patterns) | ✅ Complete |
+| **2** | `ontology/persistence` + `tools/persistence` compiler + policy enforcement + doc deltas | ✅ Complete |
+| **3** | `platform/housekeeping` module (scaffolding, not execution) | 🚧 Planned, not started |
+
+### Key Findings
+- **Target model discovery:** Classes need paired `(class, deployment)` targets within each graph scope, added `dal:coversClass` property
+- **SPARQL validity bugs fixed:** Property paths invalid in DELETE/INSERT blocks, payload triples need a text slot instead of SPARQL variables (originally `#PAYLOAD#`, since `persistence-compiler-iri-sync` Slice 2 the Mustache slot `{{{payloadTriples}}}`)
+- **Mustache parsing gotcha:** Comments cannot contain bare `}}` without breaking parsing. Extends to a full `{{{name}}}` tag quoted as prose inside a `{{! ... }}` comment (found in `persistence-compiler-iri-sync` Slice 5's `key-claim-merge-rewrite.mustache`) — describe a slot in words in template comments, never quote its Mustache syntax.
+- **pyshacl semantics:** `allow_warnings=True` needed for non-blocking `sh:Warning` severity
+
+### Blocks
+- Housekeeping module first cut (Slice 3, depends on Slice 2 compiler)
+
+Epic decomposition into phase plans is **no longer blocked**: the required Phase 2 (P2.1/P2.3/P2.4) revision integrating this compiler is complete — see Part II, §6.
+
+## 1a. Persistence Compiler / IRI-Patterns Sync (new, tracks the 2026-09-23 gap)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Slices 1–5 complete (Slice 5 validated 2026-09-25: 774 passed). 🚧 Slice 6 (documentation close-out) in progress |
+| **Unit ID** | `persistence-compiler-iri-sync` |
+| **Sketch (gap analysis)** | [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md) |
+| **Plan** | [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md) |
+| **Status Record** | [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md) |
+| **Validation Packs** | [Slice 1](../validation/PCI-1.md), [Slice 2](../validation/PCI-2.md), [Slice 3](../validation/PCI-3.md), [Slice 4](../validation/PCI-4.md), [Slice 5](../validation/PCI-5.md) |
+| **Triggering commit** | `c276afb` "[iri-patterns] remediate docs and update persistence ontology vocabulary" |
+
+### Gap summary
+Three new profile dimensions (`dal:IdentityProfile`, `dal:EpochProfile`, `dal:PrivacyProfile`), extensions to six existing ones, and eight new SHACL shapes were added to `ontology/persistence`, none consumed by `tools/persistence`. One finding (G1) is a live correctness issue, not just missing coverage: the compiler's CAS/tombstone templates generate the epoch-guard shape the vocabulary now documents as unsafe (`dal:RowLevelGuardOnly`), unconditionally, with no way to configure the safe `dal:DatasetLevelGuard` alternative.
+
+### Slices
+1. **✅ Complete, 290/290 passing.** Dataset-level epoch guard — `dal:epochGuardScope` resolvable, `dal:DatasetLevelGuard` template variant for the three named write shapes, warning diagnostic fires even on the platform baseline default. See the [VP](../validation/PCI-1.md).
+2. **✅ Complete, 526/526 passing.** Extension properties resolved one dimension each, baseline defaults, two refusals and six warnings mirroring the SHACL shapes, `dal:PreCreatedRow` emits `bootstrap-version-row`, request-time values as Mustache slots. See the [VP](../validation/PCI-2.md).
+3. **✅ Complete, 570/570 passing.** Identity resolved per resource role (`identity:<Role>`), winning profile node as a unit, emitted to the compiled profile, five refusals and one warning. See the [VP](../validation/PCI-3.md).
+4. **✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked).** Privacy/erasure profile (`dal:privacyClass`/`dal:erasureStrategy`/`dal:erasurePrecedence`/`dal:perSubjectScoped`, one dimension each) plus the G3 remainder (`dal:epochAuthority` promoted to its own dimension, carrying the remaining restore-surface properties as its extras), two refusals mirroring `dal:PersonalDataRequiresErasureShape` and `dal:PersonalDataReceiptCompatibilityShape`, and Worked example 4's privacy profile now resolving and emitting cleanly. See the [VP](../validation/PCI-4.md).
+5. **✅ Complete, validated 2026-09-25 (774 passed).** Uniqueness `dal:onViolation` selects a reconciler operation, never the guarded write itself (decision 1, Option A — guide §7.5, not §6): `key-claim-duplicate-audit` (`dal:Reject`, the default), `key-claim-merge-rewrite` (`dal:Merge`, with `MergeRelationRequired`), `key-claim-quarantine` (`dal:Quarantine`). `dal:ClaimScheme` `dal:Dual` rotation selects `key-claim-write-dual.mustache`. The registry-token digest-scheme relaxation (found in `identity-minting` M3) is also folded in: `dal:DigestSchemeRequiredShape` now exempts `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only. `ontology/persistence` bumped PATCH, 0.2.0 → 0.2.1. One issue found by the run itself, fixed: a mustache-comment quoted its own tag syntax as prose, which this compiler's renderer does not treat as inert. See the [VP](../validation/PCI-5.md).
+6. 🚧 Documentation close-out, in progress this session
+
+## 1b. IRI and RDF Patterns, Post-3866b21 Remediation
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Documentation remediation complete, and `tools/persistence` templates aligned (2026-09-23), 471/471 tests passing |
+| **Unit ID** | `iri-patterns-post-3866b21-remediation` |
+| **Review** | [iri-patterns-post-3866b21-review.md](../review/iri-patterns-post-3866b21-review.md) |
+| **Status Record** | [iri-patterns-post-3866b21-remediation.md](../status/iri-patterns-post-3866b21-remediation.md) |
+| **Documents** | [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) (Appendix D.3), [iri-identity-patterns.md](../../architecture/iri-identity-patterns.md), [iri-policy.md](../../architecture/iri-policy.md) (body removed) |
+
+All 7 critical (A), 14 major (B), 9 safety (C), 7 cross-document (D) and 10 editorial (E) findings are fixed in the documents. The main design choices (lazy epoch rebase, request digest, pinned heads, row-driven gap audit, `NFKC_Casefold`) are recorded once in the status record. The compiler templates now generate the corrected write shapes and audits. A pre-existing bug that wrote key claims into the txn graph is fixed.
+
+---
+
+## 2. LLM Training and MORK Teaching Pack (MTP) Generation
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Complete and production-ready |
+| **Unit ID** | `llm-training-mtp` |
+| **Sketch** | [llm-training.md](../sketches/llm-training.md), [MTP L2 Generator Sketch.md](../sketches/MTP%20L2%20Generator%20Sketch.md) |
+| **Plan** | [mtp-implementation-plan.md](../sketches/mtp-implementation-plan.md) → [mtp-execution.md](../status/mtp-execution.md) |
+| **Status Record** | [llm-training-mtp.md](../status/llm-training-mtp.md), [mtp-execution.md](../status/mtp-execution.md) |
+| **Implementation** | `tools/mork/src/mtp/` (Python package) |
+| **Tests** | 346 tests passing under `mise run check:mtp` |
+| **Deliverables** | L0-L5 curriculum: 258 terms, 895 axioms, 9 lenses, 30+ cassettes, 20 output files |
+
+### Completion Status
+- ✅ Facts extraction (S1)
+- ✅ Doctrine pinning (S2)
+- ✅ Axiom ownership (S3-S5)
+- ✅ Lensing (S6)
+- ✅ Mutation-derived ground truth (S7-S9)
+- ✅ Cassette validation (S10)
+- ✅ Rendering (S11-S13)
+- ✅ Test determinism (L2), roundtrip validation, mutation checks
+
+### Blocks
+- Phase 7 backend integration (runtime API for MTP consumption)
+
+---
+
+## 3. Repository Topology and Documentation Governance
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Accepted (ADR-A77) |
+| **Unit ID** | `repository-topology-a77` |
+| **Status Record** | [repository-topology-a77.md](../status/repository-topology-a77.md) |
+| **ADR** | [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) |
+| **Implementation** | Relocation of semantic assets to `ontology/`, tools to `tools/`, restructuring of `docs/developer/` |
+| **Doc Reference** | [AGENTS.md](../../../AGENTS.md) and the [lattice-lifecycle skill](../../../.claude/skills/lattice-lifecycle/SKILL.md) (ADR-A117) |
+
+### Deliverables
+- ✅ Folder structure relocated per ADR-A77
+- ✅ `mise` remains sole orchestration entry point
+- ✅ Epic Decomposition Model documented in copilot-instructions
+- ✅ Validation Pack and traceability model specified
+
+---
+
+## 4. MORK Eligibility Compiler
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 A1, A3, A4 covered by `check:mork-compilers`. Part B delivered and A2's reasoner half passes after ADR-A97's Mork repairs. A5 verified for builtin-free rules (2026-09-25, [VP](../validation/eligibility-compiler-part-b.md)) |
+| **Unit ID** | `eligibility-compiler` |
+| **Plan** | [eligibility-compiler.md](../plans/eligibility-compiler.md) — verification (Part A) + shared test-only reasoning/rules-engine infrastructure (Part B) |
+| **Status Record** | [eligibility-compiler.md](../status/eligibility-compiler.md) |
+| **Implementation** | `tools/mork_compilers/` — SPARQL, SHACL, SWRL, and the design-time OWL backend (ADR-A90). `platform/reasoning-testkit` (ADR-A83), test-only |
+| **Coverage** | IntervalCondition only (other condition types deferred), positive-only per ADR-A24 |
+| **Tests** | Unit tests present, need runtime validation. SPARQL (`rdflib`) and SHACL (`pyshacl`) validation need no new dependency, SWRL/OWL-reasoner validation is gated on Part B's new shared test-only module |
+
+### Deliberate Non-Coverage
+- No native backend
+- No Executable Projection Contract layer
+- No profile-level aggregate artifact
+- SWRL positive-only per ADR-A24
+
+### Blocks
+- Interval SWRL rules use `swrlb` builtins, which HermiT does not evaluate. They wait on an Openllet adapter (AGPL-3.0, usable only behind the ADR-A83 isolation, [plan](../plans/eligibility-compiler.md) §B.4).
+
+---
+
+## 5. Governance Surfaces (MORK Review Workbench, Surface Studio)
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 Skeleton UI complete, backend integration pending |
+| **Unit ID** | `governance-surfaces-integration` |
+| **Sketch** | [governance-and-versioning-migration.md](../sketches/governance-and-versioning-migration.md) |
+| **Status Record** | [governance-surfaces.md](../status/governance-surfaces.md) |
+| **Plan** | [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md) |
+| **Implementation** | `apps/mork-review-workbench/`, `apps/surface-contract-studio/` (Vite + React) |
+
+### Deliverables
+- ✅ Review Workbench: 6 decision buttons (Confirm/Retarget/Reshape/Decline/Teach/Defer), evidence ribbon (Witness/Coverage/Alternative)
+- ✅ Studio: 4 fixture contracts with lifecycle transitions and diff viewer
+- ⏳ Role model demonstrated (enforcement not wired)
+- ⏳ Token ribbon partial (needs MCN source view)
+
+### Remaining Work (3 slices per plan)
+1. **Phase 2 Slice:** Studio backend wiring (MORK mapping integration)
+2. **Phase 5 Slice:** Bench permission model + enforcement
+3. **Phase 5 Slice:** Evidence projection state
+
+---
+
+# Part II — Active/Planned Work
+
+## 6. Epic Decomposition: Lattice Platform Agentic Development
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Decomposed into 5 phase chunks (2026-09-22). Phase 0 ready to execute, pending one pre-execution decision (below) |
+| **Unit ID** | `lattice-platform-development` (epic) |
+| **Plan** | [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md) |
+| **Description** | Decomposed into Phase 0-4 plans with dependency DAG and milestones |
+| **Blockers** | See "Pre-execution decision points" under Phase 0 below |
+
+### Scope
+- 16 tracks (T-DEC through T-SEC) with hard orderings
+- 9 milestones (M0: walking skeleton through M9)
+- 25+ modules in Part 1
+- Phases 0-1 at slice granularity, Phases 2-4 lighter initially
+
+### Required Epic Plan Revision — ✅ Done (2026-09-22)
+Part 6 (Phase 2) of the epic plan now integrates the persistence compiler instead of constructing SPARQL ad hoc:
+- **P2.1 (C-05, mapping plan compiler):** new slice P2.1.4a resolves each `writeTarget`'s `ontology/persistence` profile and emits a `dal:CompiledProfile` plus instantiated (still-unbound) SPARQL Update text via `tools/persistence`, as part of `CompiledMappingSet`.
+- **P2.3 (C-04, ingestion gateway):** the `assert` step (P2.3.1) and commit step (P2.3.6) bind request-scoped parameters into those pre-instantiated templates — never construct SPARQL at request time. Deliberately scoped narrower than the still-deferred Request Query Mapping library (Part 13, open question 11).
+- **P2.4 (C-12, query plane):** the typed read API (P2.4.1) reuses the same resolved profile (ordering grain, receipt model) to shape read queries, consistent with the write path by construction.
+
+See [rdf-sparql-patterns-phase-plan.md](../plans/rdf-sparql-patterns-phase-plan.md) and [persistence-profile-substrate.md](../sketches/persistence-profile-substrate.md) for the underlying substrate, no new ADR was needed (refinement of ADR-A78/A79 within existing guardrail G5).
+
+### Optional Phase 0.2–0.4 Integration — ✅ Done (2026-09-22)
+Per [COORDINATION_REORG_HANDOFF.md](../COORDINATION_REORG_HANDOFF.md), Phase 0 of the epic plan (Part 4) now carries a "Persistence-pattern coherence" note plus cross-references so its vocabulary is `dal:`-nameable from day one, without Phase 0 depending on `tools/persistence`:
+- **Pattern C (CAS)** ↔ `dal:ConcurrencyStrategy`, cross-referenced at P0.5.2 (`conditionalWrite`/`guardSatisfied`) and P0.5.6 (concurrency TCK).
+- **Pattern T (named-graph-per-batch)** ↔ `dal:MetaTopologyProfile`/`dal:ReceiptModel`, cross-referenced at PLT-0.1.5 (ADR-A65) and P0.3.6 (`provenance.ttl`).
+- **Pattern K (uniqueness)** ↔ `dal:UniquenessConstraint`, cross-referenced at PLT-0.1.3 through the configurable minting and identity profiles described by ADR-A82.
+- **Pattern O (dense ordering)** ↔ `dal:OrderingGrain`/`dal:DatasetTierModel`, cross-referenced at P0.4.4 (canonicalisation) and P0.5.7 (`CommitSequence` + ordering TCK).
+- New slice **P0.3.9** (documentation only) produces `ontology/persistence/docs/platform-vocabulary-alignment.md`, proving no namespace/semantic collision between the six `dal:` dimensions and the platform vocabulary P0.3 defines.
+- New guardrail **G11** (§0.4): no `dal:`-governed write path may hand-construct SPARQL, reserved at P0.2.7 and enforced in full once P0.5.2's write surface exists.
+
+### Epic Decomposition — ✅ Done (2026-09-22)
+
+| Phase | Plan | Status | Sketch | Depth |
+|---|---|---|---|---|
+| 0 — Decisions and foundations | [phase-0-plan.md](../plans/phase-0-plan.md) | [phase-0-status.md](../status/phase-0-status.md) | [phase-0-sketch.md](../sketches/phase-0-sketch.md) | Full slice detail (epic Part 4, referenced not duplicated) |
+| 1 — Graph-primary core and deployment plane | [phase-1-plan.md](../plans/phase-1-plan.md) | [phase-1-status.md](../status/phase-1-status.md) | [phase-1-sketch.md](../sketches/phase-1-sketch.md) | Full slice detail (epic Part 5) |
+| 2 — Ingestion and query planes | [phase-2-plan.md](../plans/phase-2-plan.md) | [phase-2-status.md](../status/phase-2-status.md) | [phase-2-sketch.md](../sketches/phase-2-sketch.md) | Rolling-wave placeholder, expands at P1.11.3 |
+| 3 — Operation plane | [phase-3-plan.md](../plans/phase-3-plan.md) | [phase-3-status.md](../status/phase-3-status.md) | [phase-3-sketch.md](../sketches/phase-3-sketch.md) | Rolling-wave placeholder, expands at P2.11.4 |
+| 4 — Maturity | [phase-4-plan.md](../plans/phase-4-plan.md) | [phase-4-status.md](../status/phase-4-status.md) | [phase-4-sketch.md](../sketches/phase-4-sketch.md) | Placeholder, sized after Phase 3 measurement |
+
+Each phase plan adds three obligations the epic's slice tables name but never tabulate: a `docs/architecture` deliverables table, a subproject-README table, and a `solution-design-specification.md` delta table (which SDS section changes, and at which slice).
+
+**Three mechanical corrections made to the epic during decomposition** (not architectural decisions — corrections against already-established convention): `deploy/` → `deployment/` (root already exists under that name), `make`/`just` → `mise` tasks (copilot-instructions mandates `mise` as sole orchestrator, ADR-A29 not superseded), `docs/adr/` → `docs/architecture/decisions/`.
+
+**Pre-execution decision points surfaced, not resolved** (see [phase-0-plan.md §2](../plans/phase-0-plan.md#2-pre-execution-decision-points-resolve-before-the-named-slice-starts)):
+- Relationship between the epic's proposed `platform/graph-spi` family and the existing `platform/semantic-dataset-spi`/`semantic-dataset-fuseki` — blocks P0.5.1.
+- `apps/surface-studio`/`apps/mork-bench` (epic's Part 1 names) vs existing `apps/surface-contract-studio`/`apps/mork-review-workbench` — blocks P1.10, lower urgency.
+
+No code was written and no new Phase 0→Phase 2 dependency was introduced — this is cross-referencing and one new documentation-only slice.
+
+### IRI and Identity Patterns — Proposed (2026-09-23)
+
+The unratified universal IRI policy in ADR-A51 was superseded by [ADR-A82](../../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). The new [IRI and Identity Patterns](../../architecture/iri-identity-patterns.md) guide treats entity, aggregate, component, lineage, content-revision, graph-locator, key-claim, and event-occurrence identities as independently configurable patterns. It crosswalks those choices to the K/O/C/T/QP RDF and SPARQL patterns and specifies the future `dal:` identity-profile vocabulary boundary. The `dal:IdentityProfile` vocabulary is specified in `ontology/persistence`, and the compiler resolves it per resource role (`persistence-compiler-iri-sync` Slice 3, complete). The guide and ADR-A82 were revised on 2026-09-23 by `iri-patterns-post-3866b21-remediation` and await ratification (PLT-0.1.3). `iri-policy.md` is now a short historical record.
+
+---
+
+## 7. Surface Projection and MORK Unified Compiler (Phases 0–10)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Phases 0–8 complete, Phases 9–10 planned |
+| **Unit ID** | `surface-mork-unified-projection` (Epic) |
+| **Sketch** | [surface-projection.md](../sketches/surface-projection.md) |
+| **Plan** | [surface-mork-unified-projection-plan.md](../plans/surface-mork-unified-projection-plan.md) |
+| **Status Records** | [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md), [surface-outstanding-items.md](../status/surface-outstanding-items.md) |
+| **Implementation** | `tools/surface/` (compiler), `tools/mork_compilers/` (backends), `ontology/surface/` (vocabulary + shapes + examples) |
+| **ADRs** | A16–A28 (13 decisions covering projection, lowering, governance, compilers, parity, conformance, invalidation) |
+| **Tests** | 61/61 Surface tests, 15/15 MORK backend tests, 346/346 LLM/MTP tests |
+
+### Phase Completion Status
+
+| Phase | Scope | Status | Tests | Key Document |
+|-------|-------|--------|-------|---|
+| **0** | Vocabulary and layer semantics | ✅ Complete | ontology conforms | [Status §0](../status/surface-mork-unified-projection.md#phase-0--architecture-lock-and-adr-updates) |
+| **1** | Projection, promotion, index contracts | ✅ Complete | all validate | [Status §1](../status/surface-mork-unified-projection.md#phase-1--surface-projection-specification) |
+| **2** | Surface compiler architecture | ✅ Complete | 61/61 | [Status §2](../status/surface-mork-unified-projection.md#phase-2--surface-compiler-refactor-and-entailment-policy) |
+| **3** | Surface-to-MORK lowering | ✅ Complete | 61/61 | [Status §3](../status/surface-mork-unified-projection.md#phase-3--surface-to-mork-lowering-engine) |
+| **4** | MORK governance and versioning | ✅ Complete | governance shapes | [Status §4](../status/surface-mork-unified-projection.md#phase-4--mork-governance-and-versioning-enhancements) |
+| **5** | MORK compiler backends | ✅ Complete | 15/15 (SPARQL, SHACL, SWRL, Eligibility IR) | [Status §5](../status/surface-mork-unified-projection.md#phase-5--compiler-family-implementation--eligibility-tranche) |
+| **6** | LLM training curriculum generation | ✅ Complete | 346/346 | [Status §6](../status/surface-mork-unified-projection.md#phase-6--eligibility-tranche) |
+| **7** | Invalidation and minimal-scope regeneration | ✅ Complete | 60+ invalidation tests | [Status §7](../status/surface-mork-unified-projection.md#phase-7--provenance-and-invalidation-hardening) |
+| **8** | Conformance, parity, and CI gates | ✅ Complete | parity ≥99%, 7/8 verification items, 1 SWRL integration pending | [Status §8](../status/surface-mork-unified-projection.md#phase-8--conformance-and-parity-framework) |
+| **9** | Migration guides and phased rollout | ⏳ Planned | — | [Plan §9](../plans/surface-mork-unified-projection-plan.md#phase-9--migration-and-rollout) |
+| **10** | Scale, performance, optimization | ⏳ Planned | — | [Plan §10](../plans/surface-mork-unified-projection-plan.md#phase-10--scale-and-optimization) |
+
+### Key Findings
+- **Projection mechanism:** Unified abstraction for promotion (restating as direct properties) and shadow indexing (generating lookup symbols)
+- **Deterministic lowering:** Surface contracts lower to MORK with full provenance tracking and minimal-scope regeneration
+- **Compiler family:** Four production backends (SPARQL, SHACL, SWRL, Eligibility IR) + one deferred native backend
+- **Parity guarantees:** Generated output matches source contract semantics at ≥99% fidelity
+- **Verification checklist:** 7/8 items passing, SWRL reasoner integration (Phase 8, item 7) remains open
+
+### Completed Slices
+
+| Slice ID | Deliverable | Status | Reference |
+|----------|-------------|--------|-----------|
+| `surface-projection` | Design sketch + plan + status | ✅ | [Status §§1–2](../status/surface-mork-unified-projection.md) |
+| `surface-to-mork-lowering` | Lowering engine (Phase 3) | ✅ | [Plan §3](../plans/surface-mork-unified-projection-plan.md#phase-3--surface-to-mork-lowering-engine) |
+| `mork-governance-and-versioning` | Foundation integration (Phase 4) | ✅ | [Plan §4](../plans/surface-mork-unified-projection-plan.md#phase-4--mork-governance-and-versioning-enhancements) |
+| `mork-compiler-family` | All backends (Phase 5) | ✅ | [Plan §5](../plans/surface-mork-unified-projection-plan.md#phase-5--compiler-family-implementation) |
+| `surface-invalidation-and-regeneration` | Read-set tracking (Phase 7) | ✅ | [Plan §7](../plans/surface-mork-unified-projection-plan.md#phase-7--provenance-and-invalidation-hardening) |
+| `surface-conformance-and-parity` | CI gates (Phase 8) | ✅ | [Plan §8](../plans/surface-mork-unified-projection-plan.md#phase-8--conformance-and-parity-framework) |
+
+### Operational Documentation
+- [Invalidation Runbook](../../operator/surface-invalidation-runbook.md) — 4 operational scenarios with release gates
+- [Revision Lifecycle](../../operator/surface-revision-lifecycle.md) — State machine, versioning, canonicalisation cutover procedures
+
+### Outstanding Items
+| Item | Status | Link |
+|------|--------|------|
+| Signature scope and law X6 | ✅ Closed | [Outstanding items §1.1](../status/surface-outstanding-items.md#11-signature-scope-and-law-x6---closed) |
+| Foundation migration (`srf:DerivedArtefact`) | ✅ Done (ADR-A92) | [Outstanding items §3.1](../status/surface-outstanding-items.md#31-foundation-migration-for-derived-artefact-contract---closed-2026-09-25) |
+| Profile identity assertion | ⏳ Blocked | [Outstanding items §3.3](../status/surface-outstanding-items.md#33-profile-identity-is-computed-not-modelled---unblocked-not-started) |
+| MORK toolchain join assumptions | ⏳ Needed | [Outstanding items §5](../status/surface-outstanding-items.md#5-mork-toolchain-join-assumptions---decision-needed) |
+
+### Deferred Items (Explicit Scoping)
+- `srf:RangePartitionPopulation` (bucketing) — blocked on Quantification layer
+- Stacking beyond depth 1 — composition laws drafted, full support deferred
+- Other eligibility strategies beyond IntervalContainment — deferred to broader Eligibility expansion
+- `srf:ExternalIndex` — admitted but deferred, no criteria yet
+- Entailment regimes beyond NoEntailment — deferred to Phase TBD
+
+### Blockers
+- Phase 8 SWRL verification: Reasoner integration for generated SWRL rules (1/8 checklist item remaining)
+- Phase 9 decomposition: Awaits Phase 8 sign-off
+
+---
+
+## 8. Housekeeping First Cut
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 Slice 3 of RDF patterns, scoped, not started |
+| **Unit ID** | `platform-housekeeping` |
+| **Slice** | Part 2, Slice 3 of [rdf-sparql-patterns-phase-plan.md](../plans/rdf-sparql-patterns-phase-plan.md) |
+| **ADR** | [ADR-A80](../../architecture/decisions/ADR-A80-housekeeping-component-boundary.md) |
+| **Depends On** | `tools/persistence` compiler (Slice 2) ✅ |
+
+### Deliverables (planned)
+- `platform/housekeeping` module scaffolding (not execution)
+- Contracts and configuration model
+- Generated queries per ADR-A80: the row-driven gap scan, the txn-cardinality fork audit and the two receipt-side duplicate audits
+- The retention job's own write queries: advance the low-water mark, carry live heads into the pinned-head graph, prefix-only drops (guide §24.2). See the plan's Slice 3 "Changes since this slice was scoped" note
+
+### Blockers
+- None. The compiler dependency is met
+
+---
+
+# Vocabulary Scoped and Temporal Binding — Closed (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Closed. Vocabulary suite, Surface, and Eligibility consumers all verified green. ADR-A85 Accepted |
+| **Unit ID** | `vocabulary-temporal-binding` |
+| **Trigger** | `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d` (`[vocabulary] time-bound binding`) |
+| **Sketch** | [vocabulary-temporal-binding.md](../sketches/vocabulary-temporal-binding.md) |
+| **Plan** | [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md) |
+| **Status Record** | [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md) |
+| **Validation Pack** | [vocabulary-temporal-binding.md](../validation/vocabulary-temporal-binding.md) |
+| **ADR** | [ADR-A85](../../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Accepted |
+
+The conformance package (12 fixtures, populated Vocabulary SHACL files, a
+deterministic reference resolver) is authored and verified: `mise run
+check:vocabulary` passes 14/14. Both real consumers now resolve scoped
+bindings instead of reading `voc:boundScheme` directly: Surface's compiler
+calls the resolver in `enumerate_population`, and Eligibility's
+`HierarchyWellFoundednessShape` checks every scheme a contract could resolve
+to. `python -m unittest surface.test_surface -q` passes 62/62 (including a new
+scoped-binding fixture and test), and `mise run check:python-root` passes
+77/77 plus Phase 8 conformance. See the status record for exact findings.
+
+### Slices
+
+1. ADR-A85, architecture mirror, fixture and traceability skeleton — done
+2. Examples plus structural and SHACL-SPARQL validation — done, verified
+3. Reference resolver and deterministic test suite — done, verified
+4. Consumer/provenance checks and documentation close-out — done, verified (Surface and Eligibility both resolve scoped bindings)
+
+### Closure cross-reference (2026-09-25)
+
+A cross-reference of this unit's Surface/Eligibility integration against
+[docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
+found the work internally consistent, with four follow-on hardening items and
+one accepted terminology note. None block closure. See
+[Vocabulary Consumer Hardening](#vocabulary-consumer-hardening--implemented-2026-09-25)
+below.
+
+## 8.5 Vocabulary Conformance — Closed
+
+See the unit record above. This heading is intentionally a navigation anchor
+between active platform work and archived material.
+
+---
+
+# Ontology Semantic Versioning — Implemented, ADR pending ratification (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Slices 1-4 implemented (autonomous implementation, as we directed, 2026-09-25). ADR-A86 remains Proposed pending ratification |
+| **Unit ID** | `ontology-semantic-versioning` |
+| **Trigger** | Request, 2026-09-25 — adopt SemVer 2.0.0 for ontology documents |
+| **Sketch** | [ontology-semantic-versioning.md](../sketches/ontology-semantic-versioning.md) |
+| **Plan** | [ontology-semantic-versioning.md](../plans/ontology-semantic-versioning.md) |
+| **Status Record** | [ontology-semantic-versioning.md](../status/ontology-semantic-versioning.md) |
+| **Policy** | [ontology-versioning-policy.md](../../architecture/ontology-versioning-policy.md) |
+| **ADR** | [ADR-A86](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed |
+
+Every `owl:Ontology` document under `ontology/` carried an ungoverned
+`owl:versionIRI`, or none, with no documented rule for when it changed. The
+sketch's inventory found four distinct problems: no bump rule beyond one ad
+hoc note in `vocabulary/README.md`, an already-inconsistent versioning unit
+(`spec/*.ttl` vs `vocab/*.ttl` independently versioned and already drifted),
+two ontologies (MORK, SPC) with no version identity at all, and one
+(`applied/insurance/contract.ttl`) with two disagreeing version signals and a
+namespace base outside the `lattice/` tree. ADR-A86 adopted SemVer 2.0.0 per
+`owl:Ontology` document, a MAJOR/MINOR/PATCH mapping table, a one-time
+baseline reset to `0.2.0`, and a narrow "changed but not bumped" check.
+
+### Slices
+
+1. ADR-A86, sketch, plan, status record, ADR-index and INDEX.md entries — done
+2. Developer/agent guidance (`ontology-versioning-policy.md` + `CONTRIBUTING.md`/`ontology-architecture.md` cross-references) — done
+3. Baseline reset (every in-scope document to `0.2.0`, `lattice/` base-URI normalisation, full `owl:imports` cascade, one discovered non-ontology importer fixed: `tools/surface`'s `SURFACE_ONTOLOGY` constant) — done, with one recorded deviation (README⇄spec extraction was not re-run, see status record)
+4. Narrow "changed but not bumped" enforcement tooling (`tools/ontology_version_check.py`, `mise run check:ontology-versioning`) — done, validated by mutation probe
+
+**Discovered while implementing, not yet acted on:** `tools/literate_extract.py --check`
+does not currently pass for any of the seven core literate-spec layers
+(pre-existing README⇄spec drift, unrelated to this unit). Recorded in the
+policy document as a candidate future remediation unit.
+
+## 8.6 Ontology Semantic Versioning — Implemented, ADR pending ratification
+
+See the unit record above. This heading is intentionally a navigation anchor
+between active platform work and archived material.
+
+# Vocabulary Consumer Hardening — Implemented (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ All 4 findings implemented (we directed "proceed with the attached plan", 2026-09-25). Not yet executed in this sandbox (no rdflib) — authored and statically verified, hand-off for `mise run check:vocabulary` / `python -m unittest surface.test_surface` |
+| **Unit ID** | `temporal-binding-consumer-hardening` |
+| **Trigger** | Cross-reference of `vocabulary-temporal-binding`'s Surface/Eligibility integration against [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) |
+| **Plan** | [temporal-binding-consumer-hardening.md](../plans/temporal-binding-consumer-hardening.md) |
+| **Status Record** | [temporal-binding-consumer-hardening.md](../status/temporal-binding-consumer-hardening.md) |
+
+Four items carried forward from the `vocabulary-temporal-binding` closure
+review, all implemented:
+
+1. **Finding 3 (docs).** `vvp:resolvedAt` clarified as a valid-time "as-of"
+   point, not a transaction-time "recorded when" timestamp, in
+   `ontology/vocabulary/shapes/constraints.ttl`, `tools/vocabulary/README.md`,
+   and the validation pack.
+2. **Finding 4 (test).** `tools/vocabulary/tests/test_architecture.py`: no
+   module under `tools/vocabulary/src/vocabulary/` may call a wall-clock
+   function, mirroring `tools/persistence`. Mutation-probed in this session
+   (fails when a `datetime.now()` call is introduced, passes otherwise).
+3. **Finding 1, Option B (compiler + CLI + law text).** `tools/surface`'s CLI
+   (`command_compile`/`command_check`/`command_parity`/`command_mork`) now
+   refuses to default `produced_at` to wall-clock time for any contract whose
+   population could resolve a caller-scoped `voc:SchemeBinding`
+   (`contracts_needing_explicit_resolution_time` in `cli.py`), `srf:R1`'s law
+   text and `compile.py`'s module docstring updated to state the
+   determinism guarantee precisely. The parity command's `--shared-corpus`
+   path is not guarded (deliberate non-coverage, no scoped fixture is in that
+   corpus today).
+4. **Finding 2 (ontology + compiler + manifest).** New `srf:resolvedAt`,
+   `srf:resolvedBindingScope`, `srf:resolvedBinding`, `srf:resolvedViaFallback`
+   on `srf:ReadSetEntry`, populated on every `BoundSchemeSource` entry via a
+   `vocabulary.Resolution` object now threaded through `enumerate_population`
+   instead of discarded, a new `srf:BoundSchemeSourceResolutionRecordedShape`
+   SHACL-SPARQL check, new tests proving the recorded trace changes when the
+   caller's context does.
+
+Finding 5 (terminology overload of "scope") remains accepted, no action.
+
+# Applied Ontology Readiness — all slices implemented (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 AOR-2 to AOR-9, AOR-3b, AOR-12, AOR-13 committed. AOR-10, AOR-11, AOR-14 to AOR-17 implemented and self-validated, awaiting the maintainer's commands |
+| **Unit ID** | `applied-ontology-readiness` |
+| **Trigger** | Request, 2026-09-25 — close the gaps an applied (domain) ontology meets when built on LATTICE |
+| **Sketch** | [applied-ontology-readiness.md](../sketches/applied-ontology-readiness.md) |
+| **Plan** | [applied-ontology-readiness.md](../plans/applied-ontology-readiness.md) |
+| **Status Record** | [applied-ontology-readiness.md](../status/applied-ontology-readiness.md) |
+| **Review** | [applied-ontology-readiness-review.md](../review/applied-ontology-readiness-review.md) |
+| **ADRs** | [A-87](../../architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [A-88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [A-89](../../architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md), [A-90](../../architecture/decisions/ADR-A90-eligibility-design-time-owl-class-backend.md), [A-91](../../architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md), [A-92](../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md), [A-93](../../architecture/decisions/ADR-A93-quantification-derived-rate-spaces.md) to [A-96](../../architecture/decisions/ADR-A96-instrument-provision-attachment.md), [A-83](../../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) and the [A-86 addendum](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md#addendum-2026-09-25-guarantees-consumers-rely-on), all Accepted |
+
+Thirteen gaps (AO1 to AO13) that any applied ontology meets: Eligibility
+examples that warn or violate since `9a12da4`, no reproducible way to load
+LATTICE's import closure, versioning guarantees not enforced in CI, compilers
+limited to interval conditions and to candidates held on questions, no OWL
+backend for design-time checks, provenance not aligned with PROV-O, and four
+substrate extensions (derived rates, calendar binding, per-unit alternative
+bounds, one obligation in several provisions).
+
+### Slices
+
+1. Phase A, consumable baseline: AOR-1 governance records — done. AOR-2 examples and the declaration warning, AOR-3 versioning guarantees, AOR-4 import catalog — implemented, [VPs](../validation/AOR-2.md)
+2. Phase B, executable coverage: AOR-5 to AOR-9 (concept conditions, hierarchical match, SHACL and SWRL, diagnostics, profile aggregation, conformance corpus, evidence bindings) — implemented. AOR-10 and AOR-11 (OWL backend and its checks) — implemented, [VP](../validation/applied-ontology-readiness-aor-10-11.md)
+3. Phase C, substrate extensions: AOR-12 (Foundation derived-artefact contract) and AOR-13 (Executable to PROV-O) — implemented. AOR-14 to AOR-16 (one Quantification change) and AOR-17 — implemented, [VPs](../validation/applied-ontology-readiness-aor-14-16.md)
+
+# Documentation Link Repair — Pending (2026-09-25)
+
+| Field | Value |
+|-------|-------|
+| **Status** | ⏳ Pending. Not started |
+| **Unit ID** | `documentation-link-repair` |
+| **Plan** | [documentation-link-repair.md](../plans/documentation-link-repair.md) |
+| **Status Record** | [documentation-link-repair.md](../status/documentation-link-repair.md) |
+
+`mise run topology:links` reports 419 broken links (340 distinct). 290 are in
+the ignored Jekyll output `docs/_site/`, which the checker should not scan.
+The other 50 are wrong relative depths, moved targets, and targets that no
+longer exist. Five slices, about 180k tokens.
+
+## 8.7 Applied Insurance Reference (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 Rounds 1 and 2 complete (AIR-3.1, 1.1, 2.1, 3.2, 1.2), Phase 1 complete. Round 3 under way. Machine S builds AIR-2.2, then AIR-4.1, on one branch, `air/applied-reference` (trip 1, 2026-10-13). AIR-3.3 waits for CCS HQ-6a.2 and AIR-3.3-Q1. Trip 2 briefs (AIR-2.3, 2.4, 4.2, 4.4) to draft. Phase 0 complete, AIR-0.1 merged (`3377a71`), A-98, A-99, A-100, A-102, A-103 Accepted. [Review](../review/applied-insurance-reference-review.md), [VP](../validation/AIR-0.1.md) |
+| **Unit ID** | `applied-insurance-reference` (epic) |
+| **Sketches** | [insurance-claims-ontology.md](../sketches/insurance-claims-ontology.md), [claims-sketch-references.md](../sketches/claims-sketch-references.md), [claims-wire-formats.md](../sketches/claims-wire-formats.md), [peril-vocabulary.md](../sketches/peril-vocabulary.md), [asset-exposure-ontology.md](../sketches/asset-exposure-ontology.md), [term-parameters.md](../sketches/term-parameters.md), [mork-bridge.md](../sketches/mork-bridge.md), [peril-structure-whitepaper.md](../sketches/peril-structure-whitepaper.md) |
+| **Plan** | [applied-insurance-reference.md](../plans/applied-insurance-reference.md), with phase plans 0 to 7 (7 [proposed](../plans/applied-insurance-reference-phase-7.md)), a [claims plan](../plans/applied-insurance-reference-claims.md) (2026-10-16, subsuming AIR-6.2 to AIR-6.4), a substrate track, and [lanes and merge order](../plans/applied-insurance-reference-lanes.md) |
+| **Status Record** | [applied-insurance-reference.md](../status/applied-insurance-reference.md) |
+| **ADRs** | A-98 (with addendum), A-99, A-100, A-102, A-103 Accepted. A-101 reserved for Phase 5 |
+
+Reference implementation of the applied insurance domain: module split, reference peril
+vocabulary, Eligibility over flat lists and several values with reviewed crosswalks for flat or taxonomic peril lists, exposure
+ontology, term parameters with derived liability direction, and optional compilation into
+Capacity. Seven substrate items (L-P1 to L-P5, spatial guidance, evidence resolution) run as a
+non-blocking track.
+
+## 8.12 Knowledge Index — Building (2026-10-24)
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 KI-1 and KI-2 complete, KI-3 and KI-5 built. `mise run check:identifiers`, `mise run check:knowledge`, `mise run build:knowledge`, `mise run graph:ask`. KI-4, the mechanism register, is the next and highest-value slice. KI-6 waits on the registers and KI-7 on the shape vocabulary. KI-8 was dropped by measurement |
+| **Unit ID** | `knowledge-index` |
+| **Sketch** | [knowledge-index.md](../sketches/knowledge-index.md), and for consumers [knowledge-index-for-consumers.md](../sketches/knowledge-index-for-consumers.md) (KC-Q1 to KC-Q7) |
+| **Status Record** | [knowledge-index.md](../status/knowledge-index.md), which lists what remains before agents use it |
+| **ADRs** | [A-134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
+| **Discoveries** | TSD-37 (a strict parser refuses IRIs rdflib accepts), TSD-38 (a read-only open is six times cheaper, and the queries are not the cost) |
+
+A derived graph over this repository's own working documents, so an agent can retrieve what the project already knows by meaning and by facet as well as by identifier, instead of reading whole plans. A live view of the AIR, CCS and FML epics is 89 files and about 463,000 tokens today, against about 4,000 for an indexed lookup. Markdown stays the source of truth and the index holds no content of its own, so deleting it loses nothing but speed.
+
+The remaining work is mostly ratification rather than code, of the drafted register rows and their facet tags. Sketch §8 states the row shape per register, the five tagging rules and about 20 hours of maintainer time, almost all of it ratifying drafted rows rather than writing them. §9.1 is the measurement that makes the mechanism register the first backfill: `graph:ask -- exists version` finds Foundation's class, and `exists versioning` finds nothing, because an identifier is a noun and a question is a gerund.
+
+# Part III — Archived/Historical Work
+
+## 8.8 Normative Rule Substrate — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed. D2 and D3 answered 2026-09-30, D7 answered 2026-10-10. N4 and N5 moved to the computable contract substrate unit (N5 as HQ-6, 2026-10-10). Remaining scope open (NQ-1 to NQ-4) |
+| **Unit ID** | `normative-rule-substrate` |
+| **Sketches** | [legalruleml-mapping.md](../sketches/legalruleml-mapping.md), [rule-layers.md](../sketches/rule-layers.md), [rule-layers-cross-check.md](../sketches/rule-layers-cross-check.md), [normative-rules-ensembles-and-ledgers.md](../sketches/normative-rules-ensembles-and-ledgers.md) (2026-10-21, NE-Q1 to NE-Q8: outside rules, precedence, one stratification graph) |
+| **Plan** | [normative-rule-substrate.md](../plans/normative-rule-substrate.md) |
+| **Status Record** | [normative-rule-substrate.md](../status/normative-rule-substrate.md) |
+| **ADRs** | A-104 and A-106 accepted in CCS. A-105 moved to CCS HQ-6a. A-107 to A-111 to be drafted |
+
+## 8.9 Computable Contract Substrate — In progress
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔨 In progress. Gate A passed 2026-10-01. Tranches B and C merged, tranche D merged to C8b (Instrument 0.14.0, Wording 0.7.0). C9 briefed 2026-10-07, C9a merged, CCS-9b.0 to CCS-9b.2 merged 2026-10-10, HQ-6a.1 merged 2026-10-12 and HQ-6a.2 2026-10-16 |
+| **Unit ID** | `computable-contract-substrate` |
+| **Sketches** | [computable-contract-substrate.md](../sketches/computable-contract-substrate.md) (design, scenarios S1 to S101), [contract-amounts.md](../sketches/contract-amounts.md) (A1 to A58), [instrument-terms-and-legal-relations.md](../sketches/instrument-terms-and-legal-relations.md) (superseded), [logical-english-alignment.md](../sketches/logical-english-alignment.md) (unplanned), [change-materiality.md](../sketches/change-materiality.md) (C9-Q3), [consent-and-group-powers.md](../sketches/consent-and-group-powers.md) (C9b) |
+| **Plan** | [computable-contract-substrate.md](../plans/computable-contract-substrate.md) |
+| **Status Record** | [computable-contract-substrate.md](../status/computable-contract-substrate.md) |
+| **ADRs** | A-104, A-105, A-106, A-112, A-113 accepted, with addenda |
+| **Validation Packs** | [C8](../validation/CCS-8.md), [C8b](../validation/CCS-8b.md), [C9a](../validation/CCS-9a.md), [CCS-9b.0](../validation/CCS-9b.0.md), [CCS-9b.1](../validation/CCS-9b.1.md), [CCS-9b.2](../validation/CCS-9b.2.md), [HQ-6a.1](../validation/computable-contract-substrate-hq6a1.md) and [HQ-6a.2](../validation/computable-contract-substrate-hq6a2.md), accepted 2026-10-12 |
+
+A new Wording layer (from Open CBAA's `wim:`), Instrument rewritten around terms and legal
+relations, and Behaviour extended with occasions and records, tested against a package policy, an
+IUA binding authority and the Lloyd's CBAA.
+
+## 8.10 InsurML Alignment (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-05. Awaiting the maintainer's review and gate-0 decisions |
+| **Unit ID** | `insurml-alignment` (epic) |
+| **Vision** | [insurml-alignment-vision.md](../../architecture/insurml-alignment-vision.md) |
+| **Sketches** | [insurml-bridge.md](../sketches/insurml-bridge.md), [insurml-toolchain-and-ai.md](../sketches/insurml-toolchain-and-ai.md), [insurml-typing.md](../sketches/insurml-typing.md), [wording-assembly-interface.md](../sketches/wording-assembly-interface.md) |
+| **Analysis** | [insurml-and-lattice.md](../notes/insurml-and-lattice.md), [insurml-integration.md](../notes/insurml-integration.md), [insurml-identity.md](../notes/insurml-identity.md) (for the InsurML team) |
+| **Plan** | [insurml-alignment.md](../plans/insurml-alignment.md), with [phase 0](../plans/insurml-alignment-phase-0.md). Later phases rolling-wave |
+| **Status Record** | [insurml-alignment.md](../status/insurml-alignment.md) |
+| **ADRs** | five to be drafted in Phase 0: the profile, bridge tooling and kits, the Wording assembly interface, transclusion, inline parts |
+
+InsurML as the document standard for insurance wording and LATTICE as the substrate for its
+meaning, execution and governance, joined by an applied profile (absorbing AIR-5.9) and published
+lift and lower kits. Covers authoring, compilation, libraries, placement, exchange and AI-assisted
+reading.
+
+## 8.11 Formal Methods (Epic) — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Proposed, 2026-10-06. Re-sequenced into tracks after review ([response](../notes/formal-methods-review-response.md)), then again 2026-10-08 after an implementation-level review ([response](../notes/formal-methods-more-feedback-response.md)) and the addition of track H (Persistence). The prover spike is the first step |
+| **Unit ID** | `formal-methods` (epic) |
+| **Sketches** | [formal-methods.md](../sketches/formal-methods.md), [formal-adequacy-and-architecture.md](../sketches/formal-adequacy-and-architecture.md), [assurance-records.md](../sketches/assurance-records.md), [instrument-assurance.md](../sketches/instrument-assurance.md), [reference-evaluator.md](../sketches/reference-evaluator.md), [formal-toolchain-workers.md](../sketches/formal-toolchain-workers.md). Per-track sketches under `sketches/formal-methods-track-*.md` (B, C, E, H) |
+| **Plan** | [formal-methods.md](../plans/formal-methods.md), with [the prover spike](../plans/formal-methods-phase-0.md) and per-track plans (`plans/formal-methods-track-*.md`, B, C, E, H). Other tracks rolling-wave |
+| **Status Record** | [formal-methods.md](../status/formal-methods.md) |
+| **Track H, aggregate ownership** | design [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md), from the [exploration note](../notes/persistence-aggregate-ownership.md), its [spike](../../../spikes/persistence-aggregate-ownership/README.md) and the [review](../notes/persistence-aggregate-ownership-review.md). Slices FMH-HO0 to FMH-HO9 in [plan §3.5](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership), each with a [Validation Pack](../validation/FMH-HO0.md) (`FMH-HO0` to `FMH-HO9`), merged and signed off 2026-10-10. [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), Accepted |
+| **Track H, H2 (typed IR)** | briefed 2026-10-10 in [formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md). FMH-2.0 to FMH-2.3 merged and signed off 2026-10-12. On branch `claude/nice-bohr-pmj43u`, every planned H2 slice built by 2026-10-21, each with its Validation Pack: FMH-2.4a to H2.6g ([FMH-H2-6g](../validation/FMH-2.6g.md)), FMH-2.7, H2.8a to FMH-2.8c ([FMH-H2-8c](../validation/FMH-2.8c.md)), FMH-2.9, Mustache retired ([FMH-H2-9](../validation/FMH-2.9.md)), and FMH-2.11a and FMH-2.11b, the Persistence README as a literate specification ([FMH-H2-11a](../validation/FMH-2.11a.md), [FMH-H2-11b](../validation/FMH-2.11b.md)), with W-65 and AIR-66. The persistence tests run on Oxigraph by default, with conformance on every engine before a merge ([FMH-TS-1](../validation/FMH-TS-1.md), [FMH-TS-2](../validation/FMH-TS-2.md)). Release 0.19.0 prepared for the merge. Live state in the [status record](../status/formal-methods-track-h.md) |
+| **A linear replace** | briefed 2026-10-31 in [persistence-linear-named-graph-replace.md](../sketches/persistence-linear-named-graph-replace.md), from the studio-publication unit's PB-Q13: the generated named-graph and composite replace are quadratic in an aggregate's size, and which linear form is safe on which store is to be investigated. TD-42, TD-136 |
+| **ADRs** | per track: the assurance profile (A), the reference semantics (B, A-FM3), toolchain workers (F), the formal stack with its home after the spike (E, A-FM1/A-FM2), and Persistence's own home and scope (H, A-FM4, Accepted), aggregate ownership (H, A-122, Accepted), the typed operation IR (H, A-123, Accepted 2026-10-10, with a dated addendum to A-79), the caller library (H, A-132, Accepted), with addenda to A-79, A-123, A-125 and A-126 |
+
+Formal methods in LATTICE's development lifecycle and compilation toolchains: mechanised semantics
+and proofs, lightweight models, adequacy against the fixture corpus, assurance records, guaranteed
+instrument behaviour, and generated tools run as workers, never against the live graph.
+
+## 8.12 Agent Skills — Built
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ Built, 2026-10-07. ADR-A117 accepted. Open CBAA's adoption is that project's own change |
+| **Unit ID** | `agent-skills` |
+| **Sketches** | [agent-skills.md](../sketches/agent-skills.md) |
+| **ADRs** | [A-117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Accepted |
+
+LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in
+`.claude/skills/`, shared with projects built on LATTICE as a Claude Code plugin. Takes over TD-21.
+
+## 8.13 Word Authoring Proof of Concept — Awaiting validation
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 WA-0 to WA-11 done. Awaiting the maintainer's manual Word checklist, see the status record |
+| **Unit ID** | `word-authoring-poc` |
+| **Sketch** | [word-authoring-poc.md](../sketches/word-authoring-poc.md) |
+| **Plan** | [word-authoring-poc.md](../plans/word-authoring-poc.md) |
+| **Status Record** | [word-authoring-poc.md](../status/word-authoring-poc.md) |
+| **Validation Packs** | [WA-1](../validation/WA-1.md), [WA-2](../validation/WA-2.md), [WA-3](../validation/WA-3.md), [WA-4](../validation/WA-4.md), [WA-5](../validation/WA-5.md), [WA-6](../validation/WA-6.md), [WA-7](../validation/WA-7.md), [WA-8](../validation/WA-8.md), [WA-9](../validation/WA-9.md), [WA-9a](../validation/WA-9a.md), [WA-10](../validation/WA-10.md), [WA-11](../validation/WA-11.md) |
+| **ADRs** | A-118, Proposed |
+| **Follow-on tranche** | drafted 2026-10-02, not started: richer nested sample data (deferred on CCS), a web authoring app, add-in parity. Decisions WA-D14 to WA-D20 and slices WA12 to WA20 in the plan, design in sketch §8. Awaiting the maintainer's decisions |
+
+A Word add-in, loaded without installation, for writing wordings into templates with marked text
+parts, backed by a Java and Jena service and a Python Logical English job over RabbitMQ, run as a
+local compose stack.
+
+## 8.14 Bidirectional XSLT Transformation Sidecar — Drafted, not started
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketch and plan drafted 2026-10-02. Decisions XS-D1 to XS-D7 awaiting the maintainer, see the status record |
+| **Unit ID** | `xslt-sidecar` |
+| **Sketch** | [xslt-sidecar.md](../sketches/xslt-sidecar.md) |
+| **Plan** | [xslt-sidecar.md](../plans/xslt-sidecar.md) |
+| **Status Record** | [xslt-sidecar.md](../status/xslt-sidecar.md) |
+| **ADRs** | A-119, Proposed |
+
+A Saxon-hosted XSLT 3.0 engine, published as a Java library and a standalone sidecar process,
+projecting known-shape SPI data (from the persistence and Surface compilers) to documents on
+egress, and lifting external, non-OWL XML into canonical triples on ingress, with a new MORK
+compiler backend compiling a mapping graph into an ingress kit's stylesheet. Builds on
+[xml-egress-and-transformation-kits.md](../sketches/xml-egress-and-transformation-kits.md) without
+revising it. A utility meant to be glued into other stacks, not a vertical proof of concept.
+
+## 8.15 Python Test Speed — Done
+
+| Field | Value |
+|-------|-------|
+| **Status** | Reopened 2026-10-21 for TM9 to TM12, every suite on the test defaults, planned. ✅ Done 2026-10-09, branch `test/slow-py`. All 16 modules with a `validate()` call site adopted a shared graph/validation cache (`tools/conftest.py`), the five `git grep` call sites replaced with a Python scan, `pytest-xdist` wired into `check:ontology-catalog`. 456s serial to 123.6s (`pytest-xdist`), identical outcomes. TM4 and TM5 deferred, reasoning recorded. Held ready for the maintainer to review and merge |
+| **Unit ID** | `python-test-melting` |
+| **Sketches** | [python-test-melting.md](../sketches/python-test-melting.md), [test-suite-performance.md](../sketches/test-suite-performance.md) (both superseded, kept until the maintainer decides) |
+| **Plan** | [python-test-melting.md](../plans/python-test-melting.md) |
+| **Status Record** | [python-test-melting.md](../status/python-test-melting.md) |
+| **Skill** | [lattice-testing](../../../.claude/skills/lattice-testing/SKILL.md) |
+| **ADRs** | none |
+
+Took on TD-18 and TD-29 (both removed from the technical debt register). Measured the Python test
+suites, then shared parsed ontology graphs and SHACL validation results across test modules in a
+session-scoped cache, found and fixed a real identity-vs-content cache-key bug along the way, and
+added `pytest-xdist` as the dominant speed lever.
+
+## 8.16 Repository Catalogue — Sketch, absorbed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔵 Sketched 2026-10-09. RC-Q1 to RC-Q8 answered 2026-10-16. Absorbed into `improved-ontology-documentation` (§8.17) |
+| **Unit ID** | `repository-catalogue` |
+| **Sketch** | [repository-catalogue.md](../sketches/repository-catalogue.md) |
+| **ADRs** | A-121 to be drafted as Proposed once RC-Q3 and RC-Q7 are answered |
+
+One catalogue of where things live in the repository, one interface module that reads it, and a check
+that code and documents agree with it. Shares work with `python-test-melting` (sketch §8.1).
+
+## 8.17 Improved Ontology Documentation — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 In progress, branch `docs/literate-v2`. OD-0 accepted 2026-10-17. OD-1, OD-RC1 and OD-RC2 done. OD-2 to OD-6, ELC, OD-DOC1 and OD-RC3 committed locally (2026-10-18 and 19), not pushed. Eligibility is the first README in the layout |
+| **Unit ID** | `improved-ontology-documentation` (absorbs `repository-catalogue`) |
+| **Sketches** | [improved-ontology-documentation.md](../sketches/improved-ontology-documentation.md), [repository-catalogue.md](../sketches/repository-catalogue.md) |
+| **Plan** | [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md) |
+| **Status Record** | [improved-ontology-documentation.md](../status/improved-ontology-documentation.md) |
+| **ADRs** | A-121, A-126 and A-127, accepted 2026-10-17 |
+| **Validation Packs** | [OD-0](../validation/OD-0.md), [OD-1](../validation/OD-1.md), [OD-RC1](../validation/OD-RC1.md), [OD-RC2](../validation/OD-RC2.md), [OD-2](../validation/OD-2.md), [OD-3](../validation/OD-3.md), [OD-4](../validation/OD-4.md), [OD-5](../validation/OD-5.md), [OD-6](../validation/OD-6.md), [ELC](../validation/ELC.md), [OD-DOC1](../validation/OD-DOC1.md), [OD-RC3](../validation/OD-RC3.md) |
+
+One README layout whose normative sections compile to Turtle and SHACL from a markdown grammar, the
+repository catalogue with each module's entry in its README, and a sources rule for user-facing documents
+built on published ADRs. Piloted on Eligibility, then Vocabulary.
+
+**Unplanned backlog** (the plan's own section): grammar support for a union of datatypes, for the property
+characteristics asymmetric, reflexive and irreflexive, each added when a layer needs it (`oneOf` was added in OD-6).
+Multilingual support is a pending design decision, PDD-10.
+
+**Sketch raised by this unit:** [ontology-import-pinning.md](../sketches/ontology-import-pinning.md), how imports pin
+their versions, widened by [ontology-release-model.md](../sketches/ontology-release-model.md), one release for every
+ontology (REL-Q1 to REL-Q6 answered 2026-10-19, REL-Q2a open), and
+[release-bundles.md](../sketches/release-bundles.md), what a release ships and where (BUN-Q1 to BUN-Q7 open).
+
+## 8.18 Ledger — 🚧 LG-0, LG-1 built
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🚧 LG-0 (examples) and LG-1 (configuration document, registered in the root catalogue at substrate release 0.19.0) built and verified on `docs/placement-vehicles-structure` 2026-10-22, not yet committed. LG-2 briefed, not started. ADR-A131 and ADR-A01's 2026-10-19 addendum Accepted 2026-10-21, not yet Published (blocks `check:published-decisions` until the maintainer publishes them) |
+| **Unit ID** | `ledger` |
+| **Sketches** | [evaluation-context.md](../sketches/evaluation-context.md) §5, [contract-amounts.md](../sketches/contract-amounts.md), [persistence-history-and-versioning.md](../sketches/persistence-history-and-versioning.md) §6.1, [ledger-folds-and-stores.md](../sketches/ledger-folds-and-stores.md) (exactness, folds and where they run, LF-Q1 to LF-Q8 open), [ledger-history-and-runtime.md](../sketches/ledger-history-and-runtime.md) (2026-10-24, defensible history against the runtime, LF-Q17 to LF-Q22 open), [multi-store-runtime.md](../sketches/multi-store-runtime.md) (2026-10-24, boundaries, archiving and projection, MS-Q1 answered by measurement, MS-Q2 to MS-Q9 open) |
+| **Plan** | [ledger.md](../plans/ledger.md) |
+| **Status Record** | [ledger.md](../status/ledger.md) |
+| **Validation Packs** | [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md) |
+| **ADRs** | [A-131](../../architecture/decisions/ADR-A131-ledger-layer.md), Accepted |
+
+A substrate layer above Quantification for amounts consumed and restored over time: account trees,
+postings, balances and merge rules. Behaviour's allowances become a shorthand for it. Slices LG-0 to
+LG-4, questions LG-Q1 to LG-Q8. CCS C12, AIR Phase 5 and AIR-6.8 wait on LG-3. Ensemble's ES-3 waits on
+LG-2, and ES-4 on LG-Q3. AIR-7.4 is LG-4, and AIR-7.5 waits on it.
+
+## 8.19 Ensemble — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-20, no slice briefed. ADR-A130, amended 2026-10-20 and 2026-10-21, and ADR-A01's 2026-10-18 addendum Proposed |
+| **Unit ID** | `ensemble` |
+| **Sketches** | [instrument-relations.md](../sketches/instrument-relations.md), [normative-rules-ensembles-and-ledgers.md](../sketches/normative-rules-ensembles-and-ledgers.md) (how outside rules, precedence and closures meet composition) |
+| **Plan** | [ensemble.md](../plans/ensemble.md) |
+| **ADRs** | [A-130](../../architecture/decisions/ADR-A130-ensemble-layer.md), Proposed |
+
+A substrate layer above Instrument and Behaviour for sets of instruments forming one operation:
+ensembles, reified relations K1 to K8, and evaluation by composition. Takes over CCS HQ-2's second
+case, HQ-7 and HQ-12. Slices ES-0 to ES-9, questions ES-Q1 to ES-Q9 (answered 2026-10-21). Formal methods C4, B4b and E4b.
+C12's composition step and AIR-6.8 follow ES-3, AIR-6.8's contribution follows ES-8, and phase 7's
+programme, vehicle and MRC modules follow ES-4 to ES-7.
+
+## 8.20 Consumer Distribution — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. CD-Q1 to CD-Q6 open |
+| **Unit ID** | `consumer-distribution` |
+| **Sketch** | [consumer-distribution.md](../sketches/consumer-distribution.md) |
+| **Plan** | [consumer-distribution.md](../plans/consumer-distribution.md) |
+| **ADRs** | A-88, A-117, A-129 |
+
+Using LATTICE from another repository at a pinned release, with nothing copied: agent guidance and
+skills first (CD-1 to CD-3), then ontologies, tools, a consumer gate and upgrades (CD-4 to CD-7),
+then the conformance kit, minting in more languages, a guide and the first consumer (CD-8 to CD-11).
+
+## 8.21 Evaluator Implementation — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. EV-Q11 decided, EV-Q2 to EV-Q10 and EV-Q12 open |
+| **Unit ID** | `evaluator-implementation` |
+| **Plan** | [evaluator-implementation.md](../plans/evaluator-implementation.md) |
+| **ADRs** | A-FM1, A-FM3, A-130 and A-131 (Proposed). EV-3 drafts an ADR revising formal methods §13.1 |
+
+The evaluator as a pure core behind the codec and the conformance kit, generated for several hosts
+from one model and held together by an N-version gate. Slices EV-0 to EV-10, from the interface and a
+three-way spike to generated cores and the terms digest.
+
+## 8.22 Interval-Normal Scopes — Proposed
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Plan proposed 2026-10-21, no slice briefed. IX-Q1 to IX-Q7 open |
+| **Unit ID** | `interval-normal-scopes` |
+| **Sketch** | [interval-normal-scopes.md](../sketches/interval-normal-scopes.md) |
+| **Plan** | [interval-normal-scopes.md](../plans/interval-normal-scopes.md) |
+
+Concept schemes read as lines, with interval labels or closure bitsets as Surface index forms, and
+conditions in the interval-normal fragment decided by arithmetic: joint satisfiability, entailment
+and coverage, as C13a's first path and NRS N3's overlap check. Slices IX-0 to IX-6.
+
+## 8.23 Multi-Store Conformance — Built, awaiting review
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔨 Built 2026-10-27 on `multi-store-conformance`, MSC-1 to MSC-5, awaiting the maintainer's review before `main` |
+| **Unit ID** | `multi-store-conformance` |
+| **Plan** | [multi-store-conformance.md](../plans/multi-store-conformance.md) |
+| **Status Record** | [multi-store-conformance.md](../status/multi-store-conformance.md) |
+| **ADRs** | builds on A-83, A-124, A-125 and its 2026-10-21 addendum, A-128. A-125 addendum accepted 2026-10-27 |
+| **Validation Packs** | [MSC-1](../validation/MSC-1.md), [MSC-2](../validation/MSC-2.md), [MSC-3](../validation/MSC-3.md), [MSC-4](../validation/MSC-4.md), [MSC-5](../validation/MSC-5.md) |
+
+Apache Jena joins rdflib and Oxigraph in every conformance run, engine probes get a home of their own, and cost assertions move out of `check` into benchmarks.
+
+## 8.24 Configuration Studio — Awaiting review
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟡 CS0 to CS6 built and verified 2026-10-27. Decisions CS-D1 to CS-D14 await ratification |
+| **Unit ID** | `config-studio` |
+| **Sketch** | [config-studio.md](../sketches/config-studio.md) |
+| **Plan** | [config-studio.md](../plans/config-studio.md) |
+| **Status Record** | [config-studio.md](../status/config-studio.md) |
+| **Validation Packs** | [CS0 to CS6](../validation/config-studio.md) |
+| **ADRs** | A-136, Proposed |
+| **Mapping packs and trials** | where the ODRL and LegalRuleML packs, trials and sample sources live, and how to try them in mapping mode: [mapping-packs-and-trials.md](../notes/mapping-packs-and-trials.md). The review of the proposer's inputs: [mapping-proposer-review.md](../notes/mapping-proposer-review.md) |
+
+A web application for authoring vocabulary, quantification, eligibility, persistence and surface configuration against an applied ontology, with forms derived from the LATTICE vocabularies, live SHACL and compiler findings, optimistic concurrency, and compilation to SPARQL and surfaces. A React application, a Java and Jena service, and a Python job over RabbitMQ and Fuseki, exchanging Turtle only.
+
+## 8.25 Publication from the Configuration Studio — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | ✅ PB1 to PB17 built 2026-10-31, phase D done |
+| **Unit ID** | `studio-publication` |
+| **Sketch** | [studio-publication.md](../sketches/studio-publication.md) |
+| **Plan** | [studio-publication.md](../plans/studio-publication.md) |
+| **Status Record** | [studio-publication.md](../status/studio-publication.md) |
+| **Validation Packs** | [PB1 to PB17](../validation/studio-publication.md) |
+| **ADRs** | A-149, Proposed |
+
+## 8.26 Performance, integration and load testing for the studio — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🔴 SQ1 and SQ2 built 2026-10-31, phase D's causes fixed but for publish |
+| **Validation Packs** | [SQ1 to SQ6](../validation/studio-quality.md) |
+| **Unit ID** | `studio-quality` |
+| **Sketch** | [studio-quality-kit.md](../sketches/studio-quality-kit.md) |
+| **Plan** | [studio-quality.md](../plans/studio-quality.md) |
+| **Status Record** | [studio-quality.md](../status/studio-quality.md) |
+| **ADRs** | A-150, Proposed |
+
+## 8.27 Writing only what changed, as a persistence mode — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟢 planned 2026-10-31, DR1 next |
+| **Unit ID** | `persistence-delta-replace` |
+| **Sketch** | [persistence-delta-replace.md](../sketches/persistence-delta-replace.md) |
+| **Plan** | [persistence-delta-replace.md](../plans/persistence-delta-replace.md) |
+| **Status Record** | [persistence-delta-replace.md](../status/persistence-delta-replace.md) |
+
+## 8.28 Projections maintained in the write, and replies that do not wait — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 🟢 planned 2026-10-31, PM0 next, PM1 after DR1 |
+| **Unit ID** | `projection-maintenance` |
+| **Sketch** | [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md) |
+| **Plan** | [projection-maintenance.md](../plans/projection-maintenance.md) |
+| **Status Record** | [projection-maintenance.md](../status/projection-maintenance.md) |
+
+Explicit publication of each configuration unit as a version in a registry the studio keeps, with dependencies pinned, imports fenced, jobs reading the whole workspace, pluggable authentication and workspace modes.
+
+## 8.29 The Work Board — Planned
+
+| Field | Value |
+|-------|-------|
+| **Status** | 📝 Planned 2026-11-02, WB-0 built, WB-1 next, WB-Q9 open |
+| **Unit ID** | `work-board` |
+| **Sketch** | [work-board.md](../sketches/work-board.md) |
+| **Plan** | [work-board.md](../plans/work-board.md) |
+| **Status Record** | [work-board.md](../status/work-board.md) |
+| **ADRs** | builds on A-121, A-133, A-134. Its own ADR is drafted in WB-5 |
+
+A slice is marked in its home unit's status record before the first edit, one tool reads every branch and says where everything is, INDEX.md and ROADMAP.md's summary are generated from the marks, slice ids take one grammar, and a check keeps the boards well formed. Slices WB-0 to WB-7.
+
+## 8. Phase Handoff Documents (0-6)
+
+| Phase | Status Record | Key Outcome |
+|-------|---|---|
+| Phase 0-1 | [phase-0-1-handoff.md](../status/phase-0-1-handoff.md) | 🗄️ Archived, refer to individual status docs |
+| Phase 2 | [phase-2-handoff.md](../status/phase-2-handoff.md) | 🗄️ Archived |
+| Phase 3 | [phase-3-handoff.md](../status/phase-3-handoff.md) | 🗄️ Archived |
+| Phase 4 | [phase-4-handoff.md](../status/phase-4-handoff.md) | 🗄️ Archived |
+| Phase 5 | [phase-5-handoff.md](../status/phase-5-handoff.md) | 🗄️ Archived |
+| Phase 6 | [phase-6-handoff.md](../status/phase-6-handoff.md) | 🗄️ Archived |
+
+**Reference:** [platform-continuation.md](../status/platform-continuation.md) describes current platform state post-Phase-6.
+
+---
+
+## 9. Other Completed Units
+
+| Unit | Status | Link |
+|------|--------|------|
+| **MORK Package Split** | ✅ Complete | [mork-package-split.md](../status/mork-package-split.md) |
+| **SPC Package Split** | ✅ Complete | [spc-package-split.md](../status/spc-package-split.md) |
+| **Ontology Root Relocation** | ✅ Complete | [ontology-root-relocation.md](../status/ontology-root-relocation.md) |
+| **Validation Pause Handover** | ✅ Complete | [validation-pause-handover.md](../status/validation-pause-handover.md) |
+| **Validation Status** | ✅ Track record | [validation-status.md](../status/validation-status.md) |
+| **Implementation Handover (Phases 0-6)** | 🗄️ Archived | [implementation-handover-historical.md](../status/implementation-handover-historical.md) |
+| **Design Sketches (earlier batch)** | ✅ Catalogued | [DESIGN_SKETCHES_INDEX.md](../status/DESIGN_SKETCHES_INDEX.md) and [design-sketches-validation-summary.md](../status/design-sketches-validation-summary.md) |
+
+---
+
+# Part IV — How to Navigate This Index
+
+## By Topic
+
+### Surface Projection and MORK Compiler
+- Sketch: [surface-projection.md](../sketches/surface-projection.md)
+- Plan: [surface-mork-unified-projection-plan.md](../plans/surface-mork-unified-projection-plan.md)
+- Status: [surface-mork-unified-projection.md](../status/surface-mork-unified-projection.md), [surface-outstanding-items.md](../status/surface-outstanding-items.md)
+- ADRs: A16–A28 (13 decisions)
+- Implementation: `tools/surface/` (compiler), `tools/mork_compilers/` (backends), `ontology/surface/` (vocab + shapes)
+- Tests: 61/61 Surface, 15/15 MORK backends, 346/346 LLM/MTP
+- Operations: [surface-invalidation-runbook.md](../../operator/surface-invalidation-runbook.md), [surface-revision-lifecycle.md](../../operator/surface-revision-lifecycle.md)
+
+### RDF/SPARQL & Persistence
+- Guide: [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
+- ADRs: A78, A79, A80
+- Slice 2 (complete): `ontology/persistence` + `tools/persistence`
+- Slice 3 (planned): Housekeeping
+
+### Vocabulary Binding
+- Sketch: [vocabulary-temporal-binding.md](../sketches/vocabulary-temporal-binding.md)
+- Plan: [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
+- Status: [vocabulary-temporal-binding.md](../status/vocabulary-temporal-binding.md)
+- Validation pack: [vocabulary-temporal-binding.md](../validation/vocabulary-temporal-binding.md)
+- Implementation: `ontology/vocabulary/shapes/`, `ontology/vocabulary/examples/` (12 fixtures), `tools/vocabulary/` (reference resolver + pytest suite) — verified, 14/14 tests passing
+- ADR: [A85](../../architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md), Accepted
+- Follow-on: [temporal-binding-consumer-hardening.md](../plans/temporal-binding-consumer-hardening.md) — implemented (2026-09-25), see its own INDEX entry
+
+### Ontology Semantic Versioning
+- Sketch: [ontology-semantic-versioning.md](../sketches/ontology-semantic-versioning.md)
+- Plan: [ontology-semantic-versioning.md](../plans/ontology-semantic-versioning.md)
+- Status: [ontology-semantic-versioning.md](../status/ontology-semantic-versioning.md)
+- Policy: [ontology-versioning-policy.md](../../architecture/ontology-versioning-policy.md)
+- ADR: [A86](../../architecture/decisions/ADR-A86-ontology-semantic-versioning.md), Proposed
+
+### Applied Ontology Readiness
+- Sketch: [applied-ontology-readiness.md](../sketches/applied-ontology-readiness.md)
+- Plan: [applied-ontology-readiness.md](../plans/applied-ontology-readiness.md)
+- Status: [applied-ontology-readiness.md](../status/applied-ontology-readiness.md)
+- ADRs: A87 to A92 and the A86 addendum, Proposed
+- Implementation: `docs/architecture/ontology-versioning-policy.md`, `tools/ontology_version_check.py` (`mise run check:ontology-versioning`), every in-scope `.ttl` document reset to `0.2.0` — done, ADR ratification still pending
+
+### MTP & LLM Training
+- Status: [llm-training-mtp.md](../status/llm-training-mtp.md)
+- Execution: [mtp-execution.md](../status/mtp-execution.md)
+- 346 tests passing
+
+### Architecture Decisions
+- All ADRs: [docs/architecture/decisions/](../../architecture/decisions/)
+- Traceability: Referenced in each unit's plan/status/validation-pack
+
+### Sketches & Plans
+- Previous batch (llm-training, governance, eligibility): [DESIGN_SKETCHES_INDEX.md](../status/DESIGN_SKETCHES_INDEX.md)
+- Current batch (persistence): [persistence-profile-substrate.md](../sketches/persistence-profile-substrate.md) + [rdf-sparql-patterns-phase-plan.md](../plans/rdf-sparql-patterns-phase-plan.md)
+- Epic: [lattice-platform-agentic-development-v0.2.md](../plans/lattice-platform-agentic-development-v0.2.md)
+
+### Validation Packs
+- Location: `docs/developer/validation/<unit-id>.md`
+- Most recent: [persistence-substrate-and-compiler.md](../validation/persistence-substrate-and-compiler.md)
+
+## By Phase
+
+- **Phase 0:** Awaiting decomposition, blocks on RDF patterns integration
+- **Phase 2:** Governance surfaces backend integration (3 slices planned)
+- **Phase 7:** MTP backend integration (runtime API for curriculum delivery)
+
+## By Status
+
+### ✅ Complete (Ready for Handoff or Integration)
+1. RDF/SPARQL patterns guide (Slice 1)
+2. Persistence compiler (Slice 2) — 774 tests passing after `persistence-compiler-iri-sync`'s Slices 1–5 (complete, validated 2026-09-25), that unit's Slice 6 (documentation close-out) is its own final pass
+3. LLM training / MTP generation — 346 tests passing
+4. Repository topology (ADR-A77)
+5. MORK eligibility compiler (awaiting runtime validation, not handoff)
+6. Surface Projection Phases 0–8 — 61/61 Surface tests, 15/15 MORK backends, 7/8 verification items
+7. Phase 0-6 handoff documents
+
+### 🚧 In Progress
+1. Epic decomposition (Phase 0-9 plans)
+2. Persistence compiler / IRI-patterns sync (`persistence-compiler-iri-sync`) — Slices 1–5 of 6 done (774/774 passing, validated), Slice 6 (documentation close-out) in progress
+3. Housekeeping first cut (Slice 3, scoped but not started)
+4. Surface MORK Phase 8 verification (SWRL reasoner integration, 1/8 items pending)
+
+### ⏳ Planned
+1. Housekeeping execution (tied to future store SPI)
+2. Governance surfaces backend integration (Phase 2/5)
+3. Phase 0-9 implementation
+4. Surface MORK Phase 9 — Migration guides and phased rollout
+5. Surface MORK Phase 10 — Scale and performance optimization
+6. Vocabulary scoped and temporal binding conformance — closed 2026-09-25
+7. Vocabulary consumer hardening (`temporal-binding-consumer-hardening`) — implemented, not yet executed in this sandbox
+8. Ontology semantic versioning (ADR-A86) — implemented, ADR accepted 2026-09-25
+9. Applied ontology readiness (`applied-ontology-readiness`) — AOR-2 to AOR-9, AOR-3b, AOR-12/13 committed, the rest implemented, review requested
+10. Documentation link repair (`documentation-link-repair`) — pending
+
+### 🗄️ Archived
+1. Phase 0-6 handoff documents (refer to individual status records)
+2. Implementation handover from earlier phases
+
+---
+
+# Part V — Key Decision Points (Awaiting Ratification or Decomposition)
+
+| Item | What | Why | Next |
+|------|------|-----|------|
+| **Epic decomposition** | Break `lattice-platform-agentic-development-v0.2.md` into Phase 0-9 plans | Required Phase 2 (P2.1/P2.3/P2.4) revision and the optional Phase 0.2-0.4 coherence note are both complete (2026-09-22) | Begin Phase 0 decomposition |
+| **Surface MORK Phase 8 verification** | SWRL rule load into OWL reasoner (final verification item) | 7/8 verification items complete, SWRL backend generates rules but integration needed | Resolve before Phase 9 sign-off |
+| **Surface MORK Phase 9 decomposition** | Break migration and phased rollout into slices | Phase 8 complete (except SWRL integration), Phase 9 is planned but not decomposed | Decompose after Phase 8 verification complete |
+| **Housekeeping first cut (Slice 3)** | Scaffold `platform/housekeeping` module | Compiler ready, module contracts defined in ADR-A80, job duties extended by the 2026-09-23 guide remediation | Author Slice 3 (housekeeping scaffolding) |
+| **Store SPI** | Design runtime SPI for query execution | Compiler produces templates, runtime binding TBD | Separate epic/phase after housekeeping |
+| **MTP backend integration (Phase 7)** | Runtime API for LLM curriculum delivery | MTP generation complete, needs HTTP endpoint | Post-Phase-6 work |
+| **Vocabulary temporal binding conformance** | Examples, SHACL, resolver, consumer provenance checks | Closed 2026-09-25: executed and verified, ADR-A85 Accepted | None. Follow-on hardening tracked as `temporal-binding-consumer-hardening` |
+| **Vocabulary consumer hardening** | `produced_at`/hash conflation, missing resolution trace, `vvp:resolvedAt` naming, vocabulary architecture test | Implemented 2026-09-25 (all 4 findings), not yet executed in this sandbox (no rdflib) | Run `mise run check:vocabulary` and `python -m unittest surface.test_surface -v`, then close out |
+| **Ontology semantic versioning** | ADR-A86, versioning-policy doc, baseline reset, narrow enforcement check | Implemented (2026-09-25): policy doc, `0.2.0` baseline reset across 29 ontology documents, `check:ontology-versioning` tooling | Decide whether the discovered `literate_extract.py` drift becomes its own unit |
+| **Applied ontology readiness** | ADRs A-83, A-86 addendum, A-87 to A-96, 17 slices in three phases | Gaps any applied ontology meets when built on LATTICE (loading, examples, compilation, provenance, substrate extensions) | Run the review's commands, record sign-off in `LOG.md` |
+| **Applied insurance reference** | Epic: applied insurance module split, peril vocabulary, Eligibility readings and crosswalks, exposure, term parameters | Sketches consolidated into an epic, 2026-09-26. Legacy contract module dropped, new one deferred until Open CBAA integration | Round 0 of the lanes plan: create branches 1.1, 2.1 and 3.1 on the runtime machine |
+
+---
+
+# Part VI — Traceability and Validation
+
+## Validation Packs (VPACKS)
+- [persistence-substrate-and-compiler.md](../validation/persistence-substrate-and-compiler.md) — RDF patterns Slice 2
+- [persistence-compiler-iri-sync-slice-1.md](../validation/PCI-1.md) — compiler sync Slice 1
+- [persistence-compiler-iri-sync-slice-2.md](../validation/PCI-2.md) — compiler sync Slice 2
+- [persistence-compiler-iri-sync-slice-3.md](../validation/PCI-3.md) — compiler sync Slice 3
+- [persistence-compiler-iri-sync-slice-4.md](../validation/PCI-4.md) — compiler sync Slice 4
+- [persistence-compiler-iri-sync-slice-5.md](../validation/PCI-5.md) — compiler sync Slice 5
+- [applied-ontology-readiness-aor-2.md](../validation/AOR-2.md) to [aor-9](../validation/AOR-9.md), [aor-3b](../validation/AOR-3b.md), [aor-12](../validation/AOR-12.md), [aor-13](../validation/AOR-13.md) — applied ontology readiness
+- [OD0.md](../validation/OD-0.md) — improved ontology documentation, OD-0 (the three ADRs, the agent rule, the conventions document)
+- [OD1.md](../validation/OD-1.md) — improved ontology documentation, OD-1 (the fence-aware scanner, markers and the layout check)
+- [RC1.md](../validation/OD-RC1.md) — improved ontology documentation, OD-RC1 (the repository catalogue and its reader)
+- [RC2.md](../validation/OD-RC2.md) — improved ontology documentation, OD-RC2 (the tools read the repository catalogue)
+- [OD2.md](../validation/OD-2.md) — improved ontology documentation, OD-2 (sections 1 to 3 of a README in the layout)
+- [OD3.md](../validation/OD-3.md) — improved ontology documentation, OD-3 (section 6 to OWL)
+- [OD4.md](../validation/OD-4.md) — improved ontology documentation, OD-4 (section 6 to SHACL)
+- [OD5.md](../validation/OD-5.md) — improved ontology documentation, OD-5 (the generated regions)
+- More to be created as each slice/phase completes
+
+## Test Taxonomy (L0–L8)
+- **L0:** Build smoke
+- **L1:** Unit / pure-function
+- **L2:** Property & determinism
+- **L3:** Contract validation
+- **L4:** Component integration
+- **L5:** System E2E
+- **L6:** UI E2E
+- **L7:** Non-functional (SLO, benchmark)
+- **L8:** Hostile / security
+
+## Test Coverage Status
+| Unit | Tests | Command |
+|------|-------|---------|
+| Surface compiler | 61 passing | `pytest tools/surface/src/surface/test_surface.py -v` |
+| MORK compiler backends | 74 passing (2026-09-25) | `mise run check:mork-compilers` |
+| LLM/MTP | 346 passing | `mise run check:mtp` |
+| Persistence compiler | 774 passing (confirmed 2026-09-25, after Slice 5) | `mise run check:persistence` |
+| Ontology tools (catalog, versioning, Eligibility examples, PROV-O alignment) | 35 passing | `mise run check:ontology-catalog` |
+| Ontology versioning | tool run | `mise run check:ontology-versioning` |
+
+---
+
+# Part VII — Open Questions (Blocking or Deferred)
+
+1. **Store SPI design** — How does runtime connect compiled templates to live backend? (Deferred to separate SPI phase. The caller contract it must honour is now documented in `tools/persistence/README.md`, "Using the generated SPARQL directly")
+2. ~~Phase 0.2–0.4 walking-skeleton pattern integration~~ — done (2026-09-22): Part 4 of the epic plan carries the Pattern C/T/K/O ↔ `dal:` cross-references, new slice P0.3.9, and guardrail G11. See Part II, §6 and Part V.
+3. **MTP backend integration** — What HTTP API shape for LLM curriculum consumption? (Phase 7, post-Phase-6)
+4. **Housekeeping execution** — When is the housekeeping component itself executed (real-time vs. batch)? (ADR-A80 defers to future phase)
+5. **Surface MORK Phase 9 decomposition** — How to slice migration guides and phased rollout? (Blocking Phase 9, needs decomposition after Phase 8 SWRL verification)
+6. ~~**Foundation migration for `srf:DerivedArtefact`**~~ — resolved 2026-09-25 by ADR-A92 (AOR-12). Original question: Should profile identity be a Foundation concept or Surface-only? (Blocking profile identity assertion in Surface, see [surface-outstanding-items.md](../status/surface-outstanding-items.md#33-profile-identity-is-computed-not-modelled---unblocked-not-started)). Proposed resolution: [ADR-A92](../../architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)
+7. **MORK toolchain join assumptions** — Pre-production verification checklist for join operations in mapping compilation (see [surface-outstanding-items.md](../status/surface-outstanding-items.md#5-mork-toolchain-join-assumptions---decision-needed))
+
+---
+
+## Document Maintenance
+
+This index is updated when:
+- A new sketch is commissioned
+- A plan is created or revised
+- A status record is completed
+- A validation pack is accepted
+- A unit transitions between status states (🚧 → ✅, etc.)
+
+**Last updated:** 2026-09-25 — `persistence-compiler-iri-sync` Slices 4 and 5 validated (774/774 passing), Slice 6 documentation close-out in progress
+**Last reviewed:** 2026-09-22  
+**Next review:** Upon Phase 8 SWRL verification completion and Phase 9 decomposition

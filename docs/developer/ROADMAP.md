@@ -55,6 +55,255 @@ pie showData
 
 The counts treat each epic as one unit and include the completed units of [section 11](#11-completed-units). In progress are CCS, AIR, FM, IOD and identity minting. Awaiting review are the tutorial, Word authoring, the Eligibility compiler and the governance surfaces. Proposed are Ensemble, Ledger, IMA, NRS and the platform programme. Planned are the XSLT sidecar, documentation link repair and the housekeeping first cut.
 
+
+<!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
+
+Built from the status records on 28 branches, the newest board day 2026-11-02.
+
+| Unit | Kind | State | Next | Slices | Moved on |
+|---|---|---|---|---|---|
+| DESIGN_SKETCHES_INDEX | unit | ? |  | no board |  |
+| [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | ? |  | 6 planned, 2 merged, 1 ? | docs/work-board |
+| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | ? |  | 18 built | docs/work-board |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | ? | C16c | 35 merged, 7 blocked, 6 ?, 5 briefed, 3 planned, 3 verified | claude/config-studio-shape-forms, claude/config-studio-showcase-sample, claude/fix-topology-links, claude/nice-bohr-pmj43u-wwhgle, claude/ontology-config-authoring-cc050f, cs12b-authoring-domain, cs9-studio-operations, docs/work-board, spikes/pol-map, tutorial/guide, worktree-agent-a2c0b17126baf153a, worktree-agent-a410b8a2fd5d06b1a, worktree-agent-aa238440e880a9443, worktree-agent-ab5d87ccfb6876dee |
+| [config-studio](plans/config-studio.md) | unit | ? |  | no board |  |
+| design-sketches-validation-summary | unit | ? |  | no board |  |
+| [documentation-link-repair](plans/documentation-link-repair.md) | unit | ? |  | no board |  |
+| [eligibility-compiler](plans/eligibility-compiler.md) | unit | ? |  | no board |  |
+| [formal-methods](plans/formal-methods.md) | epic | ? |  | 6 ?, 6 built | docs/work-board |
+| [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | ? |  | 7 ?, 5 built, 1 planned, 1 building | docs/work-board |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | ? |  | 6 ?, 3 built, 3 planned | docs/work-board |
+| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | ? |  | 6 ?, 5 planned, 3 built, 1 dropped | docs/work-board |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | ? | H2.1 | 31 ?, 25 built, 15 merged, 14 planned, 5 verified, 2 briefed, 1 building | claude/persistence-delta-replace, claude/persistence-linear-replace, docs/work-board, realign/config-authoring-studio |
+| [git-hooks](plans/git-hooks.md) | unit | ? | GH-0 | 5 built | docs/work-board |
+| governance-surfaces | unit | ? |  | no board |  |
+| [identity-minting](plans/identity-minting.md) | unit | ? |  | 5 ?, 4 built, 1 planned | docs/work-board |
+| implementation-handover-historical | unit | ? |  | no board |  |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | ? | OD2 | 13 built, 11 ?, 10 planned, 10 verified, 1 merged | docs/work-board |
+| [insurml-alignment](plans/insurml-alignment.md) | epic | ? |  | 8 planned | docs/work-board |
+| iri-patterns-post-3866b21-remediation | unit | ? |  | no board |  |
+| knowledge-index | unit | ? |  | no board |  |
+| [ledger](plans/ledger.md) | unit | ? |  | no board |  |
+| llm-training-mtp | unit | ? |  | no board |  |
+| mork-package-split | unit | ? |  | no board |  |
+| [mork-transforms](plans/mork-transforms.md) | multi-slice unit | ? |  | no board |  |
+| mtp-execution | unit | ? |  | no board |  |
+| [multi-store-conformance](plans/multi-store-conformance.md) | unit | ? | MSC-1 | 5 built |  |
+| [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | ? |  | 13 ?, 7 blocked, 4 planned, 2 dropped | docs/work-board |
+| [ontology-remediation](plans/ontology-remediation.md) | phase | ? | OR-1 | 21 built | docs/work-board |
+| ontology-root-relocation | unit | ? |  | no board |  |
+| [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | ? |  | no board |  |
+| [persistence-compiler-iri-sync](plans/persistence-compiler-iri-sync.md) | unit | ? |  | 7 ?, 6 built | docs/work-board, persistence-mbt |
+| [persistence-delta-replace](plans/persistence-delta-replace.md) | multi-slice unit | ? |  | 3 built, 1 ? | claude/persistence-delta-replace, realign/config-authoring-studio |
+| phase-0-1-handoff | unit | ? |  | no board |  |
+| phase-0-status | unit | ? |  | 16 ?, 13 built, 3 planned | docs/work-board |
+| phase-1-status | unit | ? |  | no board |  |
+| phase-2-handoff | unit | ? |  | no board |  |
+| phase-2-status | unit | ? |  | no board |  |
+| phase-3-handoff | unit | ? |  | no board |  |
+| phase-3-status | unit | ? |  | no board |  |
+| phase-4-handoff | unit | ? |  | no board |  |
+| phase-4-status | unit | ? |  | no board |  |
+| phase-5-handoff | unit | ? |  | no board |  |
+| phase-6-handoff | unit | ? |  | no board |  |
+| platform-continuation | unit | ? |  | no board |  |
+| [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | ? |  | no board |  |
+| [python-test-melting](plans/python-test-melting.md) | unit | ? |  | no board |  |
+| [rdf-sparql-patterns-remediation](plans/rdf-sparql-patterns-remediation.md) | plan | ? |  | no board |  |
+| rdf-sparql-patterns-status | unit | ? |  | 3 ?, 2 built, 1 planned | docs/work-board |
+| repository-topology-a77 | unit | ? |  | no board |  |
+| spc-package-split | unit | ? |  | no board |  |
+| [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | ? |  | no board |  |
+| [studio-quality](plans/studio-quality.md) | multi-slice unit | ? |  | no board |  |
+| surface-mork-unified-projection | unit | ? |  | no board |  |
+| surface-outstanding-items | unit | ? |  | no board |  |
+| [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | ? |  | no board |  |
+| [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | ? |  | no board |  |
+| validation-pause-handover | unit | ? |  | no board |  |
+| validation-status | unit | ? |  | no board |  |
+| vocabulary-temporal-binding | unit | ? |  | 4 ?, 2 built, 2 verified | docs/work-board |
+| [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | ? |  | 13 built, 13 ? | docs/work-board |
+| [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | ? |  | no board |  |
+
+```mermaid
+gantt
+    title Dated slices, newest day 2026-11-02
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section applied-insurance-reference
+    AIR-3.1 :done, air31, 2026-10-14, 2026-10-15
+    AIR-3.2 :done, air32, 2026-10-14, 2026-10-15
+    section computable-contract-substrate
+    C9b0 Eligibility sources legal act :done, c9b0, 2026-10-10, 2026-10-11
+    CCS-0 A-112 A-113 A-01 and ADR-A-C :active, ccs0, 2026-10-29, 2026-10-30
+    CCS-1 A-104 :active, ccs1, 2026-10-29, 2026-10-30
+    CCS-10 Behaviour split and layer flip :done, ccs10, 2026-10-10, 2026-10-11
+    CCS-10a import guard :done, ccs10a, 2026-10-29, 2026-10-30
+    CCS-11 runtime records occasions in :done, ccs11, 2026-10-10, 2026-10-11
+    CCS-11a nested states history concur :done, ccs11a, 2026-10-10, 2026-10-11
+    CCS-2 A-106 :active, ccs2, 2026-10-29, 2026-10-30
+    CCS-3 Wording spec vocab and shapes :done, ccs3, 2026-10-10, 2026-10-11
+    CCS-4 Wording tables assembly vari :done, ccs4, 2026-10-10, 2026-10-11
+    CCS-5 Wording amendments law shapes :done, ccs5, 2026-10-10, 2026-10-11
+    CCS-6 instrument terms the five re :done, ccs6, 2026-10-10, 2026-10-11
+    CCS-7a regimes and gating split from :done, ccs7a, 2026-10-05, 2026-10-06
+    CCS-7b terms in time :done, ccs7b, 2026-10-06, 2026-10-07
+    CCS-7c what terms are and who they b :done, ccs7c, 2026-10-27, 2026-10-28
+    CCS-8 values in stated meaning Word :done, ccs8, 2026-10-10, 2026-10-11
+    CCS-8a set comparisons qualifying ru :active, ccs8a, 2026-10-27, 2026-10-28
+    CCS-8b values in stated meaning Word :done, ccs8b, 2026-10-10, 2026-10-11
+    CCS-9a amendments assents and taking :done, ccs9a, 2026-10-10, 2026-10-11
+    CCS-9b.0 Eligibility sources legal act :done, ccs9b0, 2026-10-10, 2026-10-11
+    CCS-9b.1 Eligibility sources legal act :done, ccs9b1, 2026-10-10, 2026-10-11
+    CCS-9b.2 Eligibility sources legal act :done, ccs9b2, 2026-10-10, 2026-10-11
+    CCS-9b.3 set comparisons qualifying ru :active, ccs9b3, 2026-10-27, 2026-10-28
+    CCS-9b.4 set comparisons qualifying ru :active, ccs9b4, 2026-10-27, 2026-10-28
+    CCS-9c set comparisons qualifying ru :active, ccs9c, 2026-10-27, 2026-10-28
+    CCS-9d set comparisons qualifying ru :active, ccs9d, 2026-10-27, 2026-10-28
+    CCS-F1 external and natural keys ADR :done, ccsf1, 2026-10-10, 2026-10-11
+    HQ-6a.1 untimed closures ADR-A105 t :done, hq6a1, 2026-10-27, 2026-10-28
+    HQ-6a.2 untimed closures ADR-A105 t :done, hq6a2, 2026-10-27, 2026-10-28
+    section formal-methods
+    FM-D0 environments :active, fmd0, 2026-10-06, 2026-10-07
+    FM-D1 brief :active, fmd1, 2026-10-06, 2026-10-07
+    FM-D2 Rocq track :active, fmd2, 2026-10-06, 2026-10-07
+    FM-D3 Isabelle track :active, fmd3, 2026-10-06, 2026-10-07
+    FM-D4 report :active, fmd4, 2026-10-10, 2026-10-11
+    FM-PF1 fixes :active, fmpf1, 2026-10-07, 2026-10-08
+    section formal-methods-track-b
+    FMB-1 kernel and denotation :active, fmb1, 2026-10-09, 2026-10-10
+    FMB-2 differential tests against the :active, fmb2, 2026-10-09, 2026-10-10
+    FMB-2.1 harden the differential harnes :active, fmb21, 2026-10-09, 2026-10-10
+    FMB-2.2 verify fix the scheme-less hie :active, fmb22, 2026-10-09, 2026-10-10
+    FMB-3 Surface regeneration propert :active, fmb3, 2026-10-09, 2026-10-10
+    FMB-5 measured mutation score :active, fmb5, 2026-10-09, 2026-10-10
+    section formal-methods-track-c
+    FMC-1 Alloy skeleton :active, fmc1, 2026-10-08, 2026-10-09
+    FMC-2 scheme composition :active, fmc2, 2026-10-07, 2026-10-08
+    FMC-2.1 well-formedness facts re-run :active, fmc21, 2026-10-08, 2026-10-09
+    FMC-2.2 model the composed scheme dec :active, fmc22, 2026-10-08, 2026-10-09
+    FMC-2.3 model ADR-A116 own rule ag :active, fmc23, 2026-10-08, 2026-10-09
+    section formal-methods-track-e
+    FME-1.0 home generation tooling :active, fme10, 2026-10-09, 2026-10-10
+    FME-1.1 the kernel for real :active, fme11, 2026-10-06, 2026-10-07
+    FME-1.2 rounding and residual theorem :active, fme12, 2026-10-07, 2026-10-08
+    FME-1.4 harden the gate and the kernel :active, fme14, 2026-10-09, 2026-10-10
+    section formal-methods-track-h
+    FMH-1.1 prefix antichain and overlap c :active, fmh11, 2026-10-09, 2026-10-10
+    FMH-1.2a witness harness audit witness :active, fmh12a, 2026-10-09, 2026-10-10
+    FMH-1.2b witnesses for the refusals and :active, fmh12b, 2026-10-09, 2026-10-10
+    FMH-1.2c witnesses for the 13 remaining :active, fmh12c, 2026-10-09, 2026-10-10
+    FMH-1.2d refuse a multi-valued single-v :done, fmh12d, 2026-10-10, 2026-10-11
+    FMH-1.3 static template checks S-3 and :done, fmh13, 2026-10-10, 2026-10-11
+    FMH-1.4a refuse a composite boundary wi :done, fmh14a, 2026-10-10, 2026-10-11
+    FMH-1.4b the declaration implementation :done, fmh14b, 2026-10-10, 2026-10-11
+    FMH-1.4c a declaration the compiler can :done, fmh14c, 2026-10-10, 2026-10-11
+    FMH-1.5 stable labels :done, fmh15, 2026-10-10, 2026-10-11
+    FMH-2.0 ADR-A123 :active, fmh20, 2026-10-10, 2026-10-11
+    FMH-2.1 the typed IR and its renderer :active, fmh21, 2026-10-12, 2026-10-13
+    FMH-2.11a the Persistence README as a li :active, fmh211a, 2026-10-21, 2026-10-22
+    FMH-2.11b the narrative the pictures t :active, fmh211b, 2026-10-21, 2026-10-22
+    FMH-2.2 equivalence harness bootstra :active, fmh22, 2026-10-12, 2026-10-13
+    FMH-2.3 named-graph row writers :active, fmh23, 2026-10-12, 2026-10-13
+    FMH-2.4a the composite ports :active, fmh24a, 2026-10-13, 2026-10-14
+    FMH-2.4b Oxigraph probes benchmark :active, fmh24b, 2026-10-13, 2026-10-14
+    FMH-2.5 key claims audits guard D t :active, fmh25, 2026-10-23, 2026-10-24
+    FMH-2.6 expected compiled profiles pa :active, fmh26, 2026-10-13, 2026-10-14
+    FMH-2.6b event slots patch-log half he :active, fmh26b, 2026-10-14, 2026-10-15
+    FMH-2.6c write disciplines :active, fmh26c, 2026-10-20, 2026-10-21
+    FMH-2.6d patch log for in-place familie :active, fmh26d, 2026-10-20, 2026-10-21
+    FMH-2.8c edges once faster members :active, fmh28c, 2026-10-20, 2026-10-21
+    FMH-2.9 Mustache retired D-12 a go :active, fmh29, 2026-10-21, 2026-10-22
+    FMH-HO0 correct the ownership note and :done, fmhho0, 2026-10-10, 2026-10-11
+    FMH-HO1 composite replace payload to :done, fmhho1, 2026-10-10, 2026-10-11
+    FMH-HO2 draft ADR-A122 Proposed :active, fmhho2, 2026-10-10, 2026-10-11
+    FMH-HO3 dal vocabulary 0.3.0 dal :done, fmhho3, 2026-10-10, 2026-10-11
+    FMH-HO4 ownership tree and path compil :done, fmhho4, 2026-10-10, 2026-10-11
+    FMH-HO5 switch the compiler to the tre :done, fmhho5, 2026-10-10, 2026-10-11
+    FMH-HO6 ownership refusals and the roo :done, fmhho6, 2026-10-10, 2026-10-11
+    FMH-HO7 composite create and tombstone :done, fmhho7, 2026-10-10, 2026-10-11
+    FMH-HO8 injective graph naming within :done, fmhho8, 2026-10-10, 2026-10-11
+    FMH-HO9 ownership documentation and cl :done, fmhho9, 2026-10-10, 2026-10-11
+    H2.11a :active, h211a, 2026-10-21, 2026-10-22
+    H2.11b :active, h211b, 2026-10-21, 2026-10-22
+    H2.12 :active, h212, 2026-11-01, 2026-11-02
+    H2.6 :active, h26, 2026-10-13, 2026-10-14
+    H2.6c :active, h26c, 2026-10-20, 2026-10-21
+    H2.6d :active, h26d, 2026-10-20, 2026-10-21
+    H2.9 :active, h29, 2026-10-21, 2026-10-22
+    section git-hooks
+    GH-0 :active, gh0, 2026-10-24, 2026-10-25
+    GH-1 :active, gh1, 2026-10-24, 2026-10-25
+    GH-2 :active, gh2, 2026-10-24, 2026-10-25
+    GH-3 :active, gh3, 2026-10-24, 2026-10-25
+    GH-4 :active, gh4, 2026-10-24, 2026-10-25
+    section improved-ontology-documentation
+    OD-0 ADRs the AGENTS.md rule the :active, od0, 2026-10-17, 2026-10-18
+    OD-1 scanner and markers :active, od1, 2026-10-17, 2026-10-18
+    OD-2 sections 1 to 3 :active, od2, 2026-10-18, 2026-10-19
+    OD-3 section 6 to OWL :active, od3, 2026-10-18, 2026-10-19
+    OD-4 section 6 to SHACL :active, od4, 2026-10-18, 2026-10-19
+    OD-5 generated regions :active, od5, 2026-10-18, 2026-10-19
+    OD-6 Eligibility pilot :active, od6, 2026-10-20, 2026-10-21
+    OD-7 Vocabulary :active, od7, 2026-10-20, 2026-10-21
+    OD-DOC1 published decisions :active, oddoc1, 2026-10-19, 2026-10-20
+    OD-DOC2 site sections :done, oddoc2, 2026-10-20, 2026-10-21
+    OD-DOC2b working documents out of publi :active, oddoc2b, 2026-10-20, 2026-10-21
+    OD-ELC composition operation :active, odelc, 2026-10-19, 2026-10-20
+    OD-MC1 migration check labels :active, odmc1, 2026-10-20, 2026-10-21
+    OD-RC1 catalogue and reader :active, odrc1, 2026-10-17, 2026-10-18
+    OD-RC2 consumers use the reader :active, odrc2, 2026-10-18, 2026-10-19
+    OD-RC3 roots AGENTS.md table bypass :active, odrc3, 2026-10-19, 2026-10-20
+    OD-REL first release 0.18.0 :active, odrel, 2026-10-20, 2026-10-21
+    OD-VER1 one release for the substrate :active, odver1, 2026-10-20, 2026-10-21
+    section insurml-alignment
+    IMA-0.7 alignment edits :active, ima07, 2026-10-05, 2026-10-06
+    section multi-store-conformance
+    MSC-1 :active, msc1, 2026-10-27, 2026-10-28
+    MSC-2 :active, msc2, 2026-10-27, 2026-10-28
+    MSC-3 :active, msc3, 2026-10-27, 2026-10-28
+    MSC-4 :active, msc4, 2026-10-27, 2026-10-28
+    MSC-5 :active, msc5, 2026-10-27, 2026-10-28
+    section normative-rule-substrate
+    NRS-5 Closure declarations A-105 R :active, nrs5, 2026-10-10, 2026-10-11
+    section ontology-remediation
+    OR-0 :active, or0, 2026-10-28, 2026-10-29
+    OR-1 :active, or1, 2026-10-28, 2026-10-29
+    OR-10 :active, or10, 2026-10-28, 2026-10-29
+    OR-11 :active, or11, 2026-10-28, 2026-10-29
+    OR-12 :active, or12, 2026-10-28, 2026-10-29
+    OR-13 :active, or13, 2026-10-28, 2026-10-29
+    OR-14 OR-14 :active, or14, 2026-10-28, 2026-10-29
+    OR-15 :active, or15, 2026-10-28, 2026-10-29
+    OR-16 :active, or16, 2026-10-28, 2026-10-29
+    OR-17 :active, or17, 2026-10-28, 2026-10-29
+    OR-18 :active, or18, 2026-10-28, 2026-10-29
+    OR-19 :active, or19, 2026-10-28, 2026-10-29
+    OR-2 :active, or2, 2026-10-28, 2026-10-29
+    OR-3 :active, or3, 2026-10-28, 2026-10-29
+    OR-4 :active, or4, 2026-10-28, 2026-10-29
+    OR-5 :active, or5, 2026-10-28, 2026-10-29
+    OR-6 :active, or6, 2026-10-28, 2026-10-29
+    OR-7 :active, or7, 2026-10-28, 2026-10-29
+    OR-7b :active, or7b, 2026-10-28, 2026-10-29
+    OR-8 OR-14 :active, or8, 2026-10-28, 2026-10-29
+    OR-9 :active, or9, 2026-10-28, 2026-10-29
+    section persistence-delta-replace
+    DR1 :active, dr1, 2026-11-02, 2026-11-03
+    DR2 :active, dr2, 2026-11-02, 2026-11-03
+    section phase-0-status
+    PLT-0.1.3 :active, plt013, 2026-10-10, 2026-10-11
+    section word-authoring-poc
+    WA-11 Documentation and close-out :active, wa11, 2026-10-10, 2026-10-11
+    section work-board
+    WB-0 the sketch the plan this rec :active, wb0, 2026-11-02, 2026-11-03
+    WB-1 tools work board.py work b :active, wb1, 2026-11-02, 2026-11-03
+    WB-2 the slice grammar work renam :active, wb2, 2026-11-02, 2026-11-03
+    WB-3 INDEX.md replaced ROADMAP.md :active, wb3, 2026-11-02, 2026-11-03
+```
+
+<!-- END GENERATED work-board-glance -->
+
 ## 2. How the epics depend on one another
 
 Arrows point from the work that must come first. A dashed arrow is a dependency that is planned or proposed, not yet in force.
@@ -348,6 +597,34 @@ flowchart RL
 ```
 
 About 30 further branches have no commit that `main` lacks. They are merged slice branches (the AIR round 1 and 2 branches, the CCS slice branches, the FM branches, `test/slow-py`, `ux/auth-le`, `poc/word-ux`, `agents/private-overlay`, `cloud-setup-apt-fix`) or older experiments, and can be deleted when the maintainer chooses.
+
+
+<!-- BEGIN GENERATED work-board-branches. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
+
+Branches with a commit `main` lacks, from the same reading.
+
+| Branch | Tip | Ahead of main | Upstream | Moves |
+|---|---|---|---|---|
+| `ccs-trunk` | 2026-10-29 | 53 | pushed | no mark |
+| `claude/config-authoring-studio` | 2026-11-02 | 151 | pushed | no mark |
+| `claude/config-studio-shape-forms` | 2026-10-28 | 18 | local only | C9b3 |
+| `claude/config-studio-showcase-sample` | 2026-10-28 | 18 | local only | C9b3 |
+| `claude/fix-topology-links` | 2026-10-23 | 1 | pushed | C9b3 |
+| `claude/nice-bohr-pmj43u-wwhgle` | 2026-10-20 | 45 | pushed | C9b3 |
+| `claude/persistence-delta-replace` | 2026-11-02 | 137 | pushed | DR1, DR2, DR3, H2.12 |
+| `claude/persistence-linear-replace` | 2026-11-01 | 135 | pushed | H2.12 |
+| `cs12b-authoring-domain` | 2026-10-28 | 7 | local only | C9b3 |
+| `cs9-studio-operations` | 2026-10-28 | 8 | local only | C9b3 |
+| `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | no mark |
+| `docs/work-board` | 2026-11-02 | 8 | local ahead 1, not pushed | AIR-3.1, AIR-3.2, AIR-3.3, AIR-S1, AIR-S2, AIR-S4, AIR-S5, AIR-S7, AOR-1, AOR-10, AOR-11, AOR-12, AOR-13, AOR-14, AOR-15, AOR-16, AOR-17, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-10, CCS-10a, CCS-11, CCS-11a, CCS-12, CCS-13, CCS-13a, CCS-14, CCS-15, CCS-16, CCS-16c, CCS-17, CCS-2, CCS-3, CCS-4, CCS-5, CCS-6, CCS-7a, CCS-7b, CCS-7c, CCS-8, CCS-8a, CCS-8b, CCS-9a, CCS-9b.0, CCS-9b.1, CCS-9b.2, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, CCS-F1, FM-D0, FM-D1, FM-D2, FM-D3, FM-D4, FM-PF1, FMB-1, FMB-2, FMB-2.1, FMB-2.2, FMB-3, FMB-4, FMB-5, FMC-1, FMC-2, FMC-2.1, FMC-2.2, FMC-2.3, FMC-3, FME-1.0, FME-1.1, FME-1.2, FME-1.3, FME-1.4, FME-2, FME-3, FME-4, FME-5, FMH-1.1, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-1.2d, FMH-1.3, FMH-1.4a, FMH-1.4b, FMH-1.4c, FMH-1.5, FMH-10, FMH-2, FMH-2.0, FMH-2.1, FMH-2.11a, FMH-2.11b, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6c, FMH-2.6d, FMH-2.7, FMH-2.8, FMH-2.8c, FMH-2.9, FMH-3, FMH-4, FMH-5, FMH-6, FMH-7, FMH-8, FMH-9, FMH-HO0, FMH-HO1, FMH-HO2, FMH-HO3, FMH-HO4, FMH-HO5, FMH-HO6, FMH-HO7, FMH-HO8, FMH-HO9, GH-0, GH-1, GH-2, GH-3, GH-4, HQ-6a.1, HQ-6a.2, IM-0, IM-1, IM-2, IM-3, IM-4, IMA-0.1, IMA-0.2, IMA-0.3, IMA-0.4, IMA-0.5, IMA-0.6, IMA-0.7, IMA-0.8, NRS-1, NRS-10, NRS-11, NRS-12, NRS-13, NRS-2, NRS-3, NRS-4, NRS-5, NRS-6, NRS-7, NRS-8, NRS-9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-8, OD-DOC1, OD-DOC2, OD-DOC2b, OD-DOC3, OD-ELC, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-RC4, OD-RC5, OD-RC6, OD-REL, OD-VER1, OR-0, OR-1, OR-10, OR-11, OR-12, OR-13, OR-14, OR-15, OR-16, OR-17, OR-18, OR-19, OR-2, OR-3, OR-4, OR-5, OR-6, OR-7, OR-7b, OR-8, OR-9, PCI-1, PCI-2, PCI-3, PCI-4, PCI-5, PCI-6, PLT-0.1.1, PLT-0.1.10, PLT-0.1.11, PLT-0.1.12, PLT-0.1.13, PLT-0.1.14, PLT-0.1.15, PLT-0.1.2, PLT-0.1.3, PLT-0.1.4, PLT-0.1.5, PLT-0.1.6, PLT-0.1.7, PLT-0.1.8, PLT-0.1.9, PLT-0.2r, RSP-1, RSP-2, RSP-3, VTB-1, VTB-2, VTB-3, VTB-4, WA-0, WA-1, WA-10, WA-11, WA-2, WA-3, WA-4, WA-5, WA-6, WA-7, WA-8, WA-9, WA-9a, WB-0, WB-1, WB-2, WB-3, WB-4, WB-5, WB-6, WB-7 |
+| `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | no mark |
+| `main-xg1czj` | 2026-10-31 | 1 | remote only | no mark |
+| `persistence-mbt` | 2026-09-23 | 1 | pushed | 7 |
+| `realign/config-authoring-studio` | 2026-11-02 | 154 | pushed | DR1, DR2, DR3, DR4, H2.12 |
+| `spikes/pol-map` | 2026-10-16 | 2 | pushed | C9b3 |
+| `tutorial/guide` | 2026-10-16 | 5 | remote only | C9b3 |
+
+<!-- END GENERATED work-board-branches -->
 
 ## 8. The critical path
 

@@ -119,6 +119,14 @@ class Board:
     columns: tuple[str, ...]
     rows: tuple[Row, ...]
     line: int
+    heading: str = ""
+
+    @property
+    def anchor(self) -> str:
+        """The slug of the heading above the board, as GitHub renders it, so a pointer names a
+        section that survives an edit rather than a line number (STD-015)."""
+        slug = re.sub(r"[^a-z0-9 -]", "", self.heading.lower()).strip().replace(" ", "-")
+        return f"#{slug}" if slug else ""
 
 
 @dataclass(frozen=True)
@@ -167,7 +175,10 @@ def find_board(unit: str, text: str) -> Optional[Board]:
     ``Slice, Deliverable, State, Blocked on``. A board headed ``#`` keeps its ids there, and its
     ``Slice`` column is then the deliverable, which is how the older boards are written."""
     lines = text.splitlines()
+    heading = ""
     for number, line in enumerate(lines, 1):
+        if line.startswith("#"):
+            heading = line.lstrip("#").strip()
         if not line.startswith("|") or number >= len(lines) or not SEPARATOR_RE.match(lines[number].strip()):
             continue
         header = cells(line)
@@ -197,7 +208,7 @@ def find_board(unit: str, text: str) -> Optional[Board]:
             rows.append(Row(unit, slice_id, row[deliverable_at] if deliverable_at is not None else "",
                             state, day, trail, row[blocked_at] if blocked_at is not None else "",
                             row[state_at], offset))
-        return Board(unit, tuple(header), tuple(rows), number)
+        return Board(unit, tuple(header), tuple(rows), number, heading)
     return None
 
 
@@ -493,12 +504,12 @@ def region_text(repo: Repo) -> str:
             docs.append(f"{len(packs)} Validation Packs")
         unit_rows.append((name, unit.kind, unit.prefix, f"{unit.state or '?'} {unit.day}".strip() or "?", unit.next, ", ".join(docs)))
     lines += table(("ID", "Kind", "Prefix", "State", "Next", "Documents"), unit_rows)
-    lines += ["", "## Work", "", "Every slice on a board, keyed by its id, with the record and line it was read from.", ""]
+    lines += ["", "## Work", "", "Every slice on a board, keyed by its id, with the record and section it was read from.", ""]
     work_rows = []
     for name, unit in units.items():
         for row in (unit.board.rows if unit.board else ()):
             work_rows.append((row.id, plain(row.deliverable) or row.id, name, state_text(row), plain(row.blocked_on),
-                              f"{(repo.status / name).as_posix()}.md:{row.line}"))
+                              f"{(repo.status / name).as_posix()}.md{unit.board.anchor}"))
     lines += table(("ID", "Claim", "Unit", "State", "Blocked on", "Pointer"), work_rows)
     return "\n".join(lines) + "\n"
 
@@ -529,9 +540,9 @@ def build(repo: Repo, check: bool) -> int:
 
 def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str) -> list[str]:
     """One bar per dated slice, from the earliest day in its trail to the latest, grouped by unit.
-    Merged and tagged work older than RECENT_DAYS before the newest day on any board is left out,
-    so the chart stays readable, and an undated slice is never drawn, since a bar invented for it
-    would be a plan nobody made."""
+    A slice whose latest day is more than RECENT_DAYS before the newest day on any board is left
+    out unless it is building or blocked, so the chart stays readable, and an undated slice is
+    never drawn, since a bar invented for it would be a plan nobody made."""
     import datetime
     cutoff = (datetime.date.fromisoformat(newest) - datetime.timedelta(days=RECENT_DAYS)).isoformat() if newest else ""
     lines = ["```mermaid", "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
@@ -541,13 +552,13 @@ def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str) -
         days = sorted(d for _, d in row.trail if d)
         if not days or row.state is None:
             continue
-        if row.state in ("merged", "tagged", "dropped") and days[-1] < cutoff:
+        if days[-1] < cutoff and row.state not in ("building", "blocked"):
             continue
         tag = "done" if row.state in ("merged", "tagged") else "crit" if row.state == "blocked" else "active"
         start, end = days[0], days[-1]
         if start == end:
             end = (datetime.date.fromisoformat(end) + datetime.timedelta(days=1)).isoformat()
-        label = re.sub(r"[^A-Za-z0-9 .-]", "", f"{slice_id} {row.deliverable[:30]}").strip()
+        label = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 .-]", " ", re.sub(r"'s\b", "", f"{slice_id} {row.deliverable[:30]}"))).strip()
         ident = re.sub(r"[^a-z0-9]", "", slice_id.lower()) or "s"
         by_unit.setdefault(unit, []).append(f"    {label} :{tag}, {ident}, {start}, {end}")
     for unit, bars in sorted(by_unit.items()):
@@ -569,6 +580,8 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
     unit_rows = []
     for name, unit in main_units.items():
         slices = [j for (u, _), j in joined.items() if u == name]
+        if unit.state in ("merged", "tagged", "dropped") and not any(j.moved for j in slices):
+            continue
         counts = {}
         for j in slices:
             counts[j.winner[1].state or "?"] = counts.get(j.winner[1].state or "?", 0) + 1

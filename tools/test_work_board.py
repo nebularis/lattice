@@ -244,7 +244,7 @@ def test_wb1_12_build_checks_then_writes(repo: wb.Repo, capsys: pytest.CaptureFi
     lines = ALPHA.splitlines()
     for slice_id in ("A-1", "A-2", "A-3"):
         number = next(i for i, l in enumerate(lines, 1) if l.startswith(f"| {slice_id} |"))
-        assert f"status/alpha.md:{number} |" in region
+        assert "status/alpha.md#position |" in region
     assert "| A-2 | the join | alpha | building 2026-10-30 |" in region
 
 
@@ -263,3 +263,69 @@ def test_wb1_13_board_text_shows_what_differs_from_main(repo: wb.Repo) -> None:
     assert all(f"| {s} |" in everything for s in ("A-1", "A-2", "A-3"))
     with_commits = section(wb.board_text(repo, show_all=False, measure=False, commits=True), "## Work", "## Branches")
     assert cells_of(with_commits, "A-2")[4] == f"b at {sh(repo.root, 'git', 'rev-parse', '--short', b_tip)}"
+
+
+GANTT_BOARD = """**Status:** building 2026-10-30.
+
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| A-1 | the parser | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
+| A-2 | the join | building 2026-10-30, briefed 2026-10-27 | |
+| A-3 | the tool | planned | |
+| A-4 | the gate | blocked 2026-10-29 | |
+"""
+
+
+def gantt(newest: str) -> list[str]:
+    return wb.gantt_text(wb.join({"main": {"alpha": wb.parse_unit("alpha", GANTT_BOARD)}}), newest, "t")
+
+
+def test_wb3_01_gantt_text_draws_one_bar_per_dated_slice() -> None:
+    lines = gantt("2026-11-02")
+    assert lines[:2] == ["```mermaid", "gantt"] and lines[-1] == "```"
+    assert "    section alpha" in lines
+    bars = [l for l in lines if ":done," in l or ":active," in l or ":crit," in l]
+    assert len(bars) == 3
+    assert any(l.endswith(":done, a1, 2026-10-20, 2026-10-28") for l in bars)
+    assert any(l.endswith(":active, a2, 2026-10-27, 2026-10-30") for l in bars)
+    assert any(l.endswith(":crit, a4, 2026-10-29, 2026-10-30") for l in bars)
+    assert not any("A-3" in l for l in lines)
+
+
+def test_wb3_02_gantt_text_leaves_out_old_merged_work() -> None:
+    bars = "\n".join(gantt("2026-12-15"))
+    assert " a1," not in bars and " a2," in bars
+
+
+def test_wb3_03_render_regions_appends_replaces_and_is_idempotent() -> None:
+    regions = {"glance": "G\n", "branches": "B\n"}
+    mark = {n: (wb.ROADMAP_BEGIN.format(name=n), wb.ROADMAP_END.format(name=n)) for n in regions}
+    appended = wb.render_regions("# Roadmap\n", regions)
+    assert appended.startswith("# Roadmap\n") and appended.endswith(mark["branches"][1] + "\n")
+    assert all(b in appended and e in appended for b, e in mark.values())
+    old = "top\n\n" + mark["glance"][0] + "\n\nold\n\n" + mark["glance"][1] + "\n\nmiddle\n\n" + mark["branches"][0] + "\n\nold\n\n" + mark["branches"][1] + "\n\nend\n"
+    new = wb.render_regions(old, regions)
+    assert new == ("top\n\n" + mark["glance"][0] + "\n\nG\n\n" + mark["glance"][1] + "\n\nmiddle\n\n"
+                   + mark["branches"][0] + "\n\nB\n\n" + mark["branches"][1] + "\n\nend\n")
+    assert wb.render_regions(new, regions) == new and wb.render_regions(appended, regions) == appended
+
+
+def test_wb3_04_roadmap_regions_summarise_units_and_branches(repo: wb.Repo) -> None:
+    on_branch(repo, "b", (DEV / "status/alpha.md").as_posix(), with_a2("built 2026-11-01"))
+    sh(repo.root, "git", "push", "-q", "origin", "b")
+    regions = wb.roadmap_regions(repo)
+    row = cells_of(regions["glance"], "[alpha](plans/alpha.md)")
+    assert "1 built" in row[4] and row[5] == "b"
+    assert "```mermaid" in regions["glance"]
+    assert cells_of(regions["branches"], "`b`")[4] == "A-2"
+    assert "| `main` |" not in regions["branches"]
+
+
+def test_wb3_05_build_roadmap_checks_then_writes(repo: wb.Repo, capsys: pytest.CaptureFixture[str]) -> None:
+    path = repo.root / repo.roadmap
+    assert wb.build_roadmap(repo, check=True) == 1
+    assert "mise run build:roadmap" in capsys.readouterr().out
+    assert not path.exists()
+    assert wb.build_roadmap(repo, check=False) == 0
+    assert wb.ROADMAP_BEGIN.format(name="glance") in path.read_text(encoding="utf-8")
+    assert wb.build_roadmap(repo, check=True) == 0
