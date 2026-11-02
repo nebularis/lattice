@@ -23,8 +23,8 @@ Every unit with a status record, its state from the record's Status line, and it
 | DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | applied-insurance-reference | epic | AIR | planned | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
 | applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
-| computable-contract-substrate | multi-slice unit |  | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md) |
-| config-studio | unit |  | built 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
+| computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
+| config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
@@ -41,7 +41,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
-| ledger | unit | LG | building 2026-10-29 |  | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
+| ledger | unit | LG | building 2026-10-29 | LG-0 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -98,6 +98,68 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | AIR-S4 | substrate ADRs, S4 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
 | AIR-S5 | substrate ADRs, S5 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
 | AIR-S7 | substrate ADRs, S7 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-0.1 | AIR-0.1 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-1.1 | set by R. No version bumps, no tags | applied-insurance-reference | merged 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-1.2 | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` | applied-insurance-reference | merged 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.0 | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.1 | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` | applied-insurance-reference | merged 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.2 | peril spec `0.4.0`→`0.5.0` (common import, four sub-property axioms), peril-vocab `0.4.0`→`0.5.0` (70 characteristic/companion concepts, four `voc:boundScheme` bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.3 | peril-vocab's `cause-N`, `cause-T` and `cause-E` regions filled: 90 N concepts, 71 T, 15 E, 176 in total, each with its characteristics, mechanisms, in-family cross-links and, for 16 concepts, an Oasis OED model code. No version bump (AIR-2.2 already bumped `peril-vocab` this trip). Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.4 | peril-vocab's `cause-H` to `cause-L` regions and `cross-group-links` filled: 37 H concepts, 36 P, 17 C, 10 F, 11 L, bringing the cause scheme to 287 concepts in eight families. Eleven cross-group `canTrigger`/`overlaps`/`related` links. `CauseScheme skos:hasTopConcept` now lists all eight family tops. No version bump. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.5 | brief written 2026-10-13 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.6 | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-2.7 | brief written 2026-10-13 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-3.4 | brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-3.5 | moved from R on 2026-10-13 (lanes §2). Brief written the same day | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.1 | new module `ontology/applied/insurance/exposure/` (`aeo:`), literate from the start: exposure set, location, legal entity, control, asset, interest, valuation, seven scheme contracts, nine programme roles. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.2 | zones, pool participation, assessments and attribute values: six zone contracts, designation source/assessment kind/profile family contracts and schemes, value forms and spaces, and an attribute type scheme across fifteen families (Construction with ten reference sub-schemes, Occupancy, Protection, External exposure, Geocoding quality, Equipment, Corporate, and seven profile-only families), with eleven peril-attribute links on `prl-voc:` cause concepts. Ten new structural shapes, two warning-severity cross-node shapes, and two new profile shape files (`shapes/profiles/construction-protection.ttl`, `shapes/profiles/cyber-posture.ttl`). No version bump (exposure already bumped to `0.1.0` this trip, at AIR-4.1). Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.2a | TD-49 fixed, scope widened by the maintainer to every inverse-functional property of the module: eight properties made plain, `aeo:MembershipShape` withdrawn, `examples/versions.ttl` added. No version bump. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.2b | **built on the formal-methods Track H branch `claude/nice-bohr-pmj43u` as AIR-66 (TD-66), to bring across** (see "Handover from formal-methods Track H" below): an exposure version is never edited on succession, and `aeo:locatedAt` and `aeo:valueOf` name identities fixed by the set version's membership | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.3 | dependencies, peril metrics, metric comparisons and exposure units in the exposure module: spec, six schemes and contracts, two contracts with no reference scheme, four value spaces, nine shapes, `tools/exposure_derivations.py`, `examples/dependencies.ttl` and `examples/units.ttl` (M3, first half). `aeo:perilScope` loses its domain. Built by R. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.4 | `insurance/common` 0.5.0→0.6.0 (loss event, class of business, GLIDE key scheme) with importers re-pinned, and the exposure module's losses, cause chains with effective and defaulted characteristics, coverage requirements, existing cover, cover history and financial metrics: spec, ten schemes and contracts, the money share space, nineteen shapes, `effective_characteristics`, `examples/losses.ttl`. Eligibility 0.12.0 imported. Built by R. Validation Pack | applied-insurance-reference | built 2026-11-02 |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.5 | brief written 2026-10-13 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-4.6 | brief written 2026-10-13 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.1 | `ctr:TermParameter ⊑ ins:Qualifier`, parameter kind scheme with governed admission (an unadmitted kind is carried but not evaluated) | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.2 | limit, retention, defence cost, claims basis, waiting, indemnity and extended reporting parameters | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.3 | aggregate, occurrence grouping, reinstatement, trigger, collateral, pool share, premium and declaration parameters | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.4 | term relations and bundle shapes per term function | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.5 | party role parameters and direction derivation over roles and the exposure relationship graph, with the D&O example | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.6 | defect catalogue as shapes | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the PKG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.1 | brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.10 | AIR-6.10 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.11 | AIR-6.11 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.12 | AIR-6.12 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.2 | AIR-6.2 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.3 | AIR-6.3 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.4 | AIR-6.4 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.5 | AIR-6.5 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.6 | AIR-6.6 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.7 | AIR-6.7 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.8 | AIR-6.8 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.9 | AIR-6.9 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W0 | AIR-6.W0 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W1 | the CRS v5.2 claims bordereau: representation scheme with field codes confirmed against Lloyd's user guide, mapping graph, spreadsheet-to-CSV conversion, source graph, golden fixtures we author | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W2 | reconciliation rules as data: identity by keys, movements from snapshots with the inconsistency check (G1), statuses as the sender's assertions (G4), code lifting (G5), image differences (G2), exchange rates without a date (G8), late and repeated data (G17, wire formats sketch §8) | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W3 | the bordereau's egress kit on the sidecar, on record time, with its lowering report and per-recipient minimisation. Milestone M8 | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W4 | ACORD `ClaimsNotificationAddRq` ingress and its response message, kept where WF-Q5 decides | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W5 | ISO 20022 `pain.001` egress from payment movements, `pain.002` and `camt.054` ingress as facts on movements | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W6 | HL7 FHIR `Claim` ingress and `ClaimResponse` egress for health claims | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-6.W7 | the S.19.01 xBRL-XML instance as a sidecar kit over AIR-6.11's cells | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.0 | examples first: one programme (a primary and two excess layers, one excess on two lines, a follow-form and a drop-down) placed on MRC-style contracts, with the layers as sections of one MRC, lines written per section, one line to stand, a vertical placement whose insurer agreed its own terms on its own security details pages, and a line written under a lineslip citing it. All parties and values invented. One response lifecycle (indication, non-binding quote, binding quote, bound), and three or four vehicles from the vehicles sketch §5, chosen at the slice's start | applied-insurance-reference | planned | P7-Q1 to P7-Q3 answered | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.1 | the programme module, `ontology/applied/insurance/programme/`: programme, tower, layer, the instruments on a layer, lines with written and signed shares and a role, each line's formation state, in the form P7-Q5 chooses. The programme as an ensemble, and relations between layers as Ensemble relations | applied-insurance-reference | planned | AIR-7.0, P7-Q5, Ensemble ES-4 and ES-5, Ledger LG-2 and LG-Q3, CCS C9 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.10 | interim cover and policy intake: the concepts "interim cover" (altLabels "binder"@en-US, "policy binder"@en-US) and "binding authority" (altLabel "binder"@en-GB), each with a scope note naming the other, in the programme module's scheme. Examples: a US interim cover that lists forms with a few values, the issued policy that replaces it and adds detail, one discrepancy, one omission, and a form listed in the policy's schedule but not attached. The intake view: the ES-9 comparison as a report a broker reviews, ordered omissions first, then discrepancies, then additions. The schedule-against-attached check is a check over one instrument's wording, Wording's assembly read for listed and included elements | applied-insurance-reference | planned | AIR-7.1, Ensemble ES-9, CCS C16b | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.2 | market responses: the four kinds, commitment, precision and completeness, a response provisionally placed on a layer, the lifecycle as regimes, and a worked view of a programme's placed capacity by commitment level | applied-insurance-reference | planned | AIR-7.1, CCS HQ-1 decided, SPC for the choreography | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.3 | substrate: conditions over observed values (vehicles sketch §4.1, RV-1) | applied-insurance-reference | planned | AIR-7.0, an ADR | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.4 | substrate: allocation with conservation (vehicles sketch §4.2, RV-2), built as Ledger slice LG-4 | applied-insurance-reference | planned | AIR-7.0, Ledger LG-2 and LG-Q3 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.5 | the vehicle module (RV-3), a vehicle as an ensemble | applied-insurance-reference | planned | AIR-7.3, Ledger LG-4, Ensemble ES-6 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.6 | vehicles evaluated end to end (RV-4) | applied-insurance-reference | planned | AIR-7.5, CCS C12 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.7 | Capacity's future (P7-Q4), if the answer changes the module | applied-insurance-reference | planned | P7-Q4 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.8 | optional: a synthetic data generator for MORK whose ground truth targets the public applied modules (exposure, peril, programme) | applied-insurance-reference | planned | AIR-7.1 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-7.9 | the MRC module, `ontology/applied/insurance/mrc/` (P7-Q6): the unique market reference, the MRC's sections (risk details, information, security details with each insurer's or panel's own pages, subscription agreement, fiscal and regulatory, broker remuneration and deductions) as Wording elements assembled into each line's wording, one instrument per written line (P7-Q5), order hereon, written and signed lines, lines to stand, the signing provisions as a stated rule (Ensemble ES-5), the placement, endorsement and claims roles as authorities (Ensemble ES-7), a line under a contract of delegation citing it (K1), and the security details pages' confidentiality (ADR-A130 decision 12). The guide's text is not reproduced, and no mapping of the data dictionary's fields is published | applied-insurance-reference | planned | AIR-7.1, Ensemble ES-5 and ES-7 (which follows ES-6), P7-Q6 | docs/developer/status/applied-insurance-reference.md#machine-r |
+| AIR-DT1 | the tests for slices built while testing is deferred, from AIR-4.2a. Test plans collected in the Phase 4 plan | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
 | AOR-1 | AOR-1 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-2 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-3 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
@@ -152,6 +214,20 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | CCS-15 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-16 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-17 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3a | CCS-9b.3a | computable-contract-substrate | built 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3c | CCS-9b.3c | computable-contract-substrate | built 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-1 | HQ-1 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-10 | HQ-10 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-11 | HQ-11 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-12 | HQ-12 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-2 | HQ-2 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-3 | HQ-3 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-4 | HQ-4 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-5 | HQ-5 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-6 | HQ-6 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-7 | HQ-7 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-8 | HQ-8 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-9 | HQ-9 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | FMB-1 | kernel and denotation | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
 | FMB-2 | differential tests against the compilers | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
 | FMB-2.1 | harden the differential harness, seed a compiler-side fault | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
@@ -220,12 +296,21 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMH-8 | protocol models K-N, grounding | formal-methods-track-h | planned | FMH-7 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-9 | detection-coverage closure, generated audits | formal-methods-track-h | planned | FMH-3, FMH-4 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-10 | runtime monitors | formal-methods-track-h | planned | FMH-9 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2 | FMH-1.2 | formal-methods-track-h | built 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6e | FMH-2.6e | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6f | FMH-2.6f | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6g | FMH-2.6g | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.8a | FMH-2.8a | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.8b | FMH-2.8b | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-W65 | FMH-W65 | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FM-D0 | environments | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D1 | brief | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D2 | Rocq track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D3 | Isabelle track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D4 | report | formal-methods | built 2026-10-10 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-PF1 | fixes | formal-methods | built 2026-10-07 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-0 | FM-0 | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-4 | FM-4 | formal-methods | built 2026-10-27 |  | docs/developer/status/formal-methods.md#track-d |
 | GH-0 | GH-0 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-1 | GH-1 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-2 | GH-2 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
@@ -267,6 +352,28 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | IMA-0.6 | ADR, inline parts | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.8 | ADR, assembly interface | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.7 | alignment edits | insurml-alignment | planned 2026-10-05 |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-1.1 | module skeleton, element type scheme, scheme binding in an insurance binding scope, key schemes for identifiers and LWR codes | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-1.2 | containment shapes generated from InsurML's rules held as data, builder properties | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-1.3 | alignment document, the collision table as fixtures, clean-room component library | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-2.1 | lift kit: XSLT 3.0 normalisation, emission, minted IRIs, identities and keys, provenance | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-2.2 | lower kit: component files, manifests, derived variables for richer conditions | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-2.3 | fidelity table as tests, golden round trips, the MORK record of the structure mapping | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-3.1 | transclusion, law W8, W3 and W5 read through transclusions | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-3.2 | inline parts, W2's fourth form | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-3.3 | references to a persistent identity with display text: **moved to CCS C8b** (2026-10-06), since CCS C8's stated meaning names variables by identity and the text should too. This epic's lift adopts it | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.1 | assembly models, the record's new terms (`wrd:assembledUnder`, resolution and numbering records), diagnostics for each stage, laws WA-1 to WA-7 | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.1a | assembler interface and the baseline adapter: Eligibility-decided inclusion with three values and declared treatments, alternatives, transclusions, resolution records | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.1b | InsurML assembly model in the profile, and the InsurML adapter over the lifted graph | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.2 | parity suite: baseline against InsurML adapter, and InsurML adapter against InsurML's processor, over every fixture configuration | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.3 | renderer and numbering, with the rule chosen for Q32 | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.4 | verification passes: references in every configuration, dependency acyclicity. Alternatives for every condition kind join when CCS C13a lands | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| IMA-4.5 | optimisation passes: question plans, dead components, specialisation | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| LG-0 | LG-0 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-1 | LG-1 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-2 | LG-2 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-3 | LG-3 | ledger | planned |  | docs/developer/status/ledger.md#board |
+| LG-4 | LG-4 | ledger | planned |  | docs/developer/status/ledger.md#board |
+| LG-5 | LG-5 | ledger | planned |  | docs/developer/status/ledger.md#board |
 | MSC-1 | MSC-1 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-2 | MSC-2 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-3 | MSC-3 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |

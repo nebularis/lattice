@@ -324,6 +324,7 @@ is generated from `AGENTS.md`, never edited by hand.
 | `build:roadmap` | writes ROADMAP.md's generated regions from every branch |
 | `work:normalise` | rewrites every board into the standard columns and state words, reporting without `--apply` |
 | `work:rename` | builds the slice id crosswalk and sweeps every mention and Validation Pack name onto the grammar, reporting without `--apply` |
+| `work:adopt` | brings the slices a record's other tables, a Validation Pack or a plan's tables name onto the unit's board, reporting without `--apply` |
 | `check:work-board` | tests the work board, the crosswalk and the normaliser |
 
 Claude Code users elsewhere install the skills with `/plugin marketplace add nebularis/lattice` and

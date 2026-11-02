@@ -49,6 +49,68 @@ on CCS HQ-6a.2. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
 | AIR-S4 | substrate ADRs, S4 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |
 | AIR-S5 | substrate ADRs, S5 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |
 | AIR-S7 | substrate ADRs, S7 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |
+| AIR-0.1 |  | planned |  |  |  |  |
+| AIR-1.1 | set by R. No version bumps, no tags | merged 2026-11-02 |  |  |  |  |
+| AIR-1.2 | set by R. Tags `applied-classification-v0.1.0`, `applied-classification-vocab-v0.1.0`, `insurance-common-v0.1.0`, `insurance-common-vocab-v0.1.0` | merged 2026-11-02 |  |  |  |  |
+| AIR-2.0 | `insurance/common` and `insurance/peril` converted to literate READMEs, the extractor extended (nested `--layer` paths, `@output-file` on `turtle-vocab`), `prl:DocumentationShape` added (shapes `0.1.0` → `0.2.0`). No spec/vocab version change. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-2.1 | set by R: three shape defects fixed at verification. Tags `applied-insurance-peril-shapes-v0.1.0`, `insurance-peril-v0.1.0`, `insurance-peril-vocab-v0.1.0` | merged 2026-11-02 |  |  |  |  |
+| AIR-2.2 | peril spec `0.4.0`→`0.5.0` (common import, four sub-property axioms), peril-vocab `0.4.0`→`0.5.0` (70 characteristic/companion concepts, four `voc:boundScheme` bindings). Lists amended beyond the first brief (Intentional/Economic agency, 13 more mechanisms, consequence widened to 19). Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-2.3 | peril-vocab's `cause-N`, `cause-T` and `cause-E` regions filled: 90 N concepts, 71 T, 15 E, 176 in total, each with its characteristics, mechanisms, in-family cross-links and, for 16 concepts, an Oasis OED model code. No version bump (AIR-2.2 already bumped `peril-vocab` this trip). Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-2.4 | peril-vocab's `cause-H` to `cause-L` regions and `cross-group-links` filled: 37 H concepts, 36 P, 17 C, 10 F, 11 L, bringing the cause scheme to 287 concepts in eight families. Eleven cross-group `canTrigger`/`overlaps`/`related` links. `CauseScheme skos:hasTopConcept` now lists all eight family tops. No version bump. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-2.5 | brief written 2026-10-13 | planned |  |  |  |  |
+| AIR-2.6 | `common-vocab` `0.5.0`→`0.6.0` (QUDT-aligned units across nine families, four exact conversions, ISO 4217 currencies on `icm-voc:Money`). New document `vocab/peril-intensity.ttl` (own ontology IRI, version in unison with `peril-vocab` `0.5.0`): the intensity measure scheme, 24 measures each with a `qnt:ValueSpace`, three ordinal sub-schemes (MMI, Saffir–Simpson, Enhanced Fujita), seven threshold-defined cause concepts' `prl:definingThreshold` range sets, other causes' `prl:intensityMeasure` links, and `prl:customaryEventWindow` for two groups. `prl:ThresholdDefinitionShape` extended to cross-check a threshold's space against the concept's own measures (peril shapes `0.2.0`→`0.3.0`). Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-2.7 | brief written 2026-10-13 | planned |  |  |  |  |
+| AIR-3.4 | brief written 2026-10-13, AIR-3.4-Q1 and Q2 decided 2026-10-14 | planned |  |  |  |  |
+| AIR-3.5 | moved from R on 2026-10-13 (lanes §2). Brief written the same day | planned |  |  |  |  |
+| AIR-4.1 | new module `ontology/applied/insurance/exposure/` (`aeo:`), literate from the start: exposure set, location, legal entity, control, asset, interest, valuation, seven scheme contracts, nine programme roles. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-4.2 | zones, pool participation, assessments and attribute values: six zone contracts, designation source/assessment kind/profile family contracts and schemes, value forms and spaces, and an attribute type scheme across fifteen families (Construction with ten reference sub-schemes, Occupancy, Protection, External exposure, Geocoding quality, Equipment, Corporate, and seven profile-only families), with eleven peril-attribute links on `prl-voc:` cause concepts. Ten new structural shapes, two warning-severity cross-node shapes, and two new profile shape files (`shapes/profiles/construction-protection.ttl`, `shapes/profiles/cyber-posture.ttl`). No version bump (exposure already bumped to `0.1.0` this trip, at AIR-4.1). Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-4.2a | TD-49 fixed, scope widened by the maintainer to every inverse-functional property of the module: eight properties made plain, `aeo:MembershipShape` withdrawn, `examples/versions.ttl` added. No version bump. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-4.2b | **built on the formal-methods Track H branch `claude/nice-bohr-pmj43u` as AIR-66 (TD-66), to bring across** (see "Handover from formal-methods Track H" below): an exposure version is never edited on succession, and `aeo:locatedAt` and `aeo:valueOf` name identities fixed by the set version's membership | planned |  |  |  |  |
+| AIR-4.3 | dependencies, peril metrics, metric comparisons and exposure units in the exposure module: spec, six schemes and contracts, two contracts with no reference scheme, four value spaces, nine shapes, `tools/exposure_derivations.py`, `examples/dependencies.ttl` and `examples/units.ttl` (M3, first half). `aeo:perilScope` loses its domain. Built by R. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-4.4 | `insurance/common` 0.5.0→0.6.0 (loss event, class of business, GLIDE key scheme) with importers re-pinned, and the exposure module's losses, cause chains with effective and defaulted characteristics, coverage requirements, existing cover, cover history and financial metrics: spec, ten schemes and contracts, the money share space, nineteen shapes, `effective_characteristics`, `examples/losses.ttl`. Eligibility 0.12.0 imported. Built by R. Validation Pack | built 2026-11-02 |  |  |  |  |
+| AIR-4.5 | brief written 2026-10-13 | planned |  |  |  |  |
+| AIR-4.6 | brief written 2026-10-13 | planned |  |  |  |  |
+| AIR-5.1 | `ctr:TermParameter ⊑ ins:Qualifier`, parameter kind scheme with governed admission (an unadmitted kind is carried but not evaluated) | planned |  |  |  |  |
+| AIR-5.2 | limit, retention, defence cost, claims basis, waiting, indemnity and extended reporting parameters | planned |  |  |  |  |
+| AIR-5.3 | aggregate, occurrence grouping, reinstatement, trigger, collateral, pool share, premium and declaration parameters | planned |  |  |  |  |
+| AIR-5.4 | term relations and bundle shapes per term function | planned |  |  |  |  |
+| AIR-5.5 | party role parameters and direction derivation over roles and the exposure relationship graph, with the D&O example | planned |  |  |  |  |
+| AIR-5.6 | defect catalogue as shapes | planned |  |  |  |  |
+| AIR-5.7 | route R2: compile one check family into Capacity runtime forms, parity suite against R1, no write-back | planned |  |  |  |  |
+| AIR-5.8 | insurance renderings of the policy scenarios of the CCS sketch §10 (the PKG rows: S10 to S14, S18 to S26, S28, S29, S33, S34, S37, S42 and the shared rows), as examples with expected decisions | planned |  |  |  |  |
+| AIR-5.9 | the LMA WIM profile in `applied/insurance/wording/` (CCS decision CC-D3): the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`. Open CBAA imports it | planned |  |  |  |  |
+| AIR-6.1 | brief written 2026-10-13, AIR-6.1-Q1 decided 2026-10-14 | planned |  |  |  |  |
+| AIR-6.10 |  | planned |  |  |  |  |
+| AIR-6.11 |  | planned |  |  |  |  |
+| AIR-6.12 |  | planned |  |  |  |  |
+| AIR-6.2 |  | planned |  |  |  |  |
+| AIR-6.3 |  | planned |  |  |  |  |
+| AIR-6.4 |  | planned |  |  |  |  |
+| AIR-6.5 |  | planned |  |  |  |  |
+| AIR-6.6 |  | planned |  |  |  |  |
+| AIR-6.7 |  | planned |  |  |  |  |
+| AIR-6.8 |  | planned |  |  |  |  |
+| AIR-6.9 |  | planned |  |  |  |  |
+| AIR-6.W0 |  | planned |  |  |  |  |
+| AIR-6.W1 | the CRS v5.2 claims bordereau: representation scheme with field codes confirmed against Lloyd's user guide, mapping graph, spreadsheet-to-CSV conversion, source graph, golden fixtures we author | planned |  |  |  |  |
+| AIR-6.W2 | reconciliation rules as data: identity by keys, movements from snapshots with the inconsistency check (G1), statuses as the sender's assertions (G4), code lifting (G5), image differences (G2), exchange rates without a date (G8), late and repeated data (G17, wire formats sketch §8) | planned |  |  |  |  |
+| AIR-6.W3 | the bordereau's egress kit on the sidecar, on record time, with its lowering report and per-recipient minimisation. Milestone M8 | planned |  |  |  |  |
+| AIR-6.W4 | ACORD `ClaimsNotificationAddRq` ingress and its response message, kept where WF-Q5 decides | planned |  |  |  |  |
+| AIR-6.W5 | ISO 20022 `pain.001` egress from payment movements, `pain.002` and `camt.054` ingress as facts on movements | planned |  |  |  |  |
+| AIR-6.W6 | HL7 FHIR `Claim` ingress and `ClaimResponse` egress for health claims | planned |  |  |  |  |
+| AIR-6.W7 | the S.19.01 xBRL-XML instance as a sidecar kit over AIR-6.11's cells | planned |  |  |  |  |
+| AIR-7.0 | examples first: one programme (a primary and two excess layers, one excess on two lines, a follow-form and a drop-down) placed on MRC-style contracts, with the layers as sections of one MRC, lines written per section, one line to stand, a vertical placement whose insurer agreed its own terms on its own security details pages, and a line written under a lineslip citing it. All parties and values invented. One response lifecycle (indication, non-binding quote, binding quote, bound), and three or four vehicles from the vehicles sketch §5, chosen at the slice's start | planned | P7-Q1 to P7-Q3 answered |  |  |  |
+| AIR-7.1 | the programme module, `ontology/applied/insurance/programme/`: programme, tower, layer, the instruments on a layer, lines with written and signed shares and a role, each line's formation state, in the form P7-Q5 chooses. The programme as an ensemble, and relations between layers as Ensemble relations | planned | AIR-7.0, P7-Q5, Ensemble ES-4 and ES-5, Ledger LG-2 and LG-Q3, CCS C9 |  |  |  |
+| AIR-7.10 | interim cover and policy intake: the concepts "interim cover" (altLabels "binder"@en-US, "policy binder"@en-US) and "binding authority" (altLabel "binder"@en-GB), each with a scope note naming the other, in the programme module's scheme. Examples: a US interim cover that lists forms with a few values, the issued policy that replaces it and adds detail, one discrepancy, one omission, and a form listed in the policy's schedule but not attached. The intake view: the ES-9 comparison as a report a broker reviews, ordered omissions first, then discrepancies, then additions. The schedule-against-attached check is a check over one instrument's wording, Wording's assembly read for listed and included elements | planned | AIR-7.1, Ensemble ES-9, CCS C16b |  |  |  |
+| AIR-7.2 | market responses: the four kinds, commitment, precision and completeness, a response provisionally placed on a layer, the lifecycle as regimes, and a worked view of a programme's placed capacity by commitment level | planned | AIR-7.1, CCS HQ-1 decided, SPC for the choreography |  |  |  |
+| AIR-7.3 | substrate: conditions over observed values (vehicles sketch §4.1, RV-1) | planned | AIR-7.0, an ADR |  |  |  |
+| AIR-7.4 | substrate: allocation with conservation (vehicles sketch §4.2, RV-2), built as Ledger slice LG-4 | planned | AIR-7.0, Ledger LG-2 and LG-Q3 |  |  |  |
+| AIR-7.5 | the vehicle module (RV-3), a vehicle as an ensemble | planned | AIR-7.3, Ledger LG-4, Ensemble ES-6 |  |  |  |
+| AIR-7.6 | vehicles evaluated end to end (RV-4) | planned | AIR-7.5, CCS C12 |  |  |  |
+| AIR-7.7 | Capacity's future (P7-Q4), if the answer changes the module | planned | P7-Q4 |  |  |  |
+| AIR-7.8 | optional: a synthetic data generator for MORK whose ground truth targets the public applied modules (exposure, peril, programme) | planned | AIR-7.1 |  |  |  |
+| AIR-7.9 | the MRC module, `ontology/applied/insurance/mrc/` (P7-Q6): the unique market reference, the MRC's sections (risk details, information, security details with each insurer's or panel's own pages, subscription agreement, fiscal and regulatory, broker remuneration and deductions) as Wording elements assembled into each line's wording, one instrument per written line (P7-Q5), order hereon, written and signed lines, lines to stand, the signing provisions as a stated rule (Ensemble ES-5), the placement, endorsement and claims roles as authorities (Ensemble ES-7), a line under a contract of delegation citing it (K1), and the security details pages' confidentiality (ADR-A130 decision 12). The guide's text is not reproduced, and no mapping of the data dictionary's fields is published | planned | AIR-7.1, Ensemble ES-5 and ES-7 (which follows ES-6), P7-Q6 |  |  |  |
+| AIR-DT1 | the tests for slices built while testing is deferred, from AIR-4.2a. Test plans collected in the Phase 4 plan | planned |  |  |  |  |
 
 Verifying queue (S slices handed over and not yet merged): none.
 

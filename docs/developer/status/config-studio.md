@@ -3,7 +3,7 @@
 # Configuration Studio - Status
 
 **Unit ID:** `config-studio`
-**Status:** built 2026-10-30. CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, and ADR-A136's second amendment (writers and the on-disk store) accepted the same day
+**Status:** merged 2026-10-30. On `main` as 995a6e7c, awaiting the maintainer's review. CS0 to CS10 and CS12a to CS15 built and verified. ADR-A136 and ADR-A137 accepted 2026-10-28, and ADR-A136's second amendment (writers and the on-disk store) accepted the same day
 **Last updated:** 2026-10-30
 **Plan:** [config-studio.md](../plans/config-studio.md)
 **Sketch:** [config-studio.md](../sketches/config-studio.md)

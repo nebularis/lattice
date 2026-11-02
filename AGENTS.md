@@ -174,7 +174,7 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 
 | Skill | When |
 |---|---|
-| `lattice-lifecycle` | starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
+| `lattice-lifecycle` | picking up a slice or a unit, from your own plan or another's, before the first edit, and starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
 | `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the maintainer |
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |

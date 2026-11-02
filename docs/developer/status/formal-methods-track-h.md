@@ -143,6 +143,13 @@ Left for the maintainer:
 | FMH-8 | protocol models K-N, grounding | planned, outline only | FMH-7 |
 | FMH-9 | detection-coverage closure, generated audits | planned, outline only | FMH-3, FMH-4 |
 | FMH-10 | runtime monitors | planned, outline only | FMH-9 |
+| FMH-1.2 |  | built 2026-10-09 |  |
+| FMH-2.6e |  | built 2026-10-23 |  |
+| FMH-2.6f |  | built 2026-10-23 |  |
+| FMH-2.6g |  | built 2026-10-23 |  |
+| FMH-2.8a |  | built 2026-10-23 |  |
+| FMH-2.8b |  | built 2026-10-23 |  |
+| FMH-W65 |  | built 2026-10-23 |  |
 
 ## Open questions
 

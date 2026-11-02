@@ -92,3 +92,14 @@ Results sections. In short:
   `check:agent-guidance`, and one flaky `reasoning_server` timing test) are pre-existing and
   unrelated, each confirmed in isolation. `check:site-sections` failed once (my edit to
   `eligibility/README.md` left its site copy stale) and is fixed (`build:site-sections` run).
+
+## Board
+
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| LG-0 |  | built 2026-10-27 |  |
+| LG-1 |  | built 2026-10-27 |  |
+| LG-2 |  | built 2026-10-27 |  |
+| LG-3 |  | planned |  |
+| LG-4 |  | planned |  |
+| LG-5 |  | planned |  |

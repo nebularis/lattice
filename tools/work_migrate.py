@@ -3,6 +3,7 @@
 
   python tools/work_migrate.py rename [--apply]       the crosswalk from the historic ids, then the sweep
   python tools/work_migrate.py normalise [--apply]    every board into the standard columns and state words
+  python tools/work_migrate.py adopt [--apply]        slices a record's other tables, a Validation Pack or a plan name onto the board
 
 Both are idempotent, so a branch runs them once after merging main and is then on the new ids and
 the new boards. Without ``--apply`` each prints what it would do and writes nothing but the
@@ -446,14 +447,178 @@ def normalise(repo: wb.Repo, apply: bool) -> list[str]:
     return report
 
 
+# ---- adopting ----------------------------------------------------------------------------------------
+
+GRAMMAR_RE = re.compile(r"[A-Z]{2,5}-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*")
+EXCEPTIONS_HEADING = "# Slices a plan names"
+
+
+def tables_in(text: str) -> list[tuple[int, list[str], list[list[str]]]]:
+    """Every table as (header line number, headers, rows of cells)."""
+    lines = text.splitlines()
+    out: list[tuple[int, list[str], list[list[str]]]] = []
+    for number, line in enumerate(lines, 1):
+        if not line.startswith("|") or number >= len(lines) or not wb.SEPARATOR_RE.match(lines[number].strip()):
+            continue
+        header = wb.cells(line)
+        rows: list[list[str]] = []
+        for body in lines[number + 1:]:
+            if not body.startswith("|"):
+                break
+            row = wb.cells(body)
+            rows.append(row + [""] * (len(header) - len(row)))
+        out.append((number, header, rows))
+    return out
+
+
+def first_commit_day(root: Path, path: Path) -> str:
+    rel = path.relative_to(root).as_posix()
+    out = subprocess.run(["git", "log", "--follow", "--diff-filter=A", "--format=%cs", "--", rel], cwd=root, capture_output=True, text=True).stdout.strip()
+    return out.splitlines()[-1] if out else committed_day(root, path, "")
+
+
+def candidates_for(repo: wb.Repo, unit: str, prefixes: tuple[str, ...], record_text: str, board: wb.Board) -> dict[str, tuple[str, str, str, str]]:
+    """Slices the unit names outside its board, as id -> (state cell, deliverable, blocked on, source),
+    the record's other tables first, then the Validation Packs, then the plans' tables."""
+    root = repo.root
+    found: dict[str, tuple[str, str, str, str]] = {}
+    mine = lambda i: GRAMMAR_RE.fullmatch(i) and i.split("-")[0] in prefixes
+
+    def take(header: list[str], rows: list[list[str]], source: str, default_state: str, day_for: Callable[[], str]) -> None:
+        lower = [h.lower() for h in header]
+        id_at = next((i for i, h in enumerate(lower) if h in ("slice", "#", "id", "slices")), None)
+        if id_at is None:
+            return
+        state_at = next((i for i, h in enumerate(lower) if h in ("state", "status")), None)
+        blocked_at = next((i for i, h in enumerate(lower) if h.startswith(("blocked", "depends", "start after", "waits"))), None)
+        text_at = next((i for i, h in enumerate(lower) if i != id_at and h in ("deliverable", "delivers", "content", "scope", "note", "slice")), None)
+        for row in rows:
+            for slice_id in split_ids(row[id_at]):
+                if not mine(slice_id) or slice_id in found:
+                    continue
+                cell = row[state_at] if state_at is not None else ""
+                state, day, _ = wb.parse_state(cell)
+                if state is None and cell:
+                    mapped = map_state(cell, row[blocked_at] if blocked_at is not None else "")
+                    if mapped:
+                        state, day, _ = mapped
+                state = state or default_state
+                if state in wb.DATED and not day:
+                    day = day_for()
+                found[slice_id] = (f"{state} {day}".strip(), row[text_at] if text_at is not None else "", row[blocked_at] if blocked_at is not None else "", source)
+
+    record = root / repo.status / f"{unit}.md"
+    for number, header, rows in tables_in(record_text):
+        if number != board.line:
+            take(header, rows, f"{record.relative_to(root).as_posix()}:{number}", "planned", lambda: committed_day(root, record, ""))
+    for prefix in prefixes:
+        for pack in sorted((root / repo.developer / "validation").glob(f"{prefix}-*.md")):
+            if mine(pack.stem) and pack.stem not in found:
+                found[pack.stem] = (f"built {first_commit_day(root, pack)}", "", "", pack.relative_to(root).as_posix())
+    for plan in sorted((root / repo.plans).glob(f"{unit}*.md")):
+        text = plan.read_text(encoding="utf-8")
+        for number, header, rows in tables_in(text):
+            take(header, rows, f"{plan.relative_to(root).as_posix()}:{number}", "planned", lambda: committed_day(root, plan, ""))
+    return found
+
+
+def adopt(repo: wb.Repo, apply: bool) -> list[str]:
+    """Append to each unit's board the slices its record's other tables, its Validation Packs and its
+    plans name and the board lacks, each in the state its source gives, then drop them from the
+    identifier exceptions baseline. Idempotent, and reports without ``--apply``."""
+    report: list[str] = []
+    adopted: set[str] = set()
+    for unit, parsed in wb.units_here(repo).items():
+        prefixes = tuple(p.strip() for p in parsed.prefix.split(",") if p.strip())
+        if not prefixes:
+            continue
+        record = repo.root / repo.status / f"{unit}.md"
+        text = record.read_text(encoding="utf-8")
+        if not parsed.board:
+            # A record with no board gains the standard one at its end, so the unit's slices have a home.
+            text = text.rstrip("\n") + "\n\n## Board\n\n| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n"
+            parsed = wb.parse_unit(unit, text, "")
+            if not parsed.board:
+                report.append(f"{unit}: no board to adopt onto")
+                continue
+            report.append(f"{unit}: a board added at the end of the record")
+        have = {row.id for row in parsed.board.rows}
+        new = {i: c for i, c in candidates_for(repo, unit, prefixes, text, parsed.board).items() if i not in have}
+        if not new:
+            continue
+        lines = text.splitlines()
+        last = parsed.board.rows[-1].line if parsed.board.rows else parsed.board.line + 1
+        extra = len(parsed.board.columns) - 4
+        for slice_id, (state, deliverable, blocked, source) in sorted(new.items()):
+            cells = [slice_id, plain_cell(deliverable), state, plain_cell(blocked)] + [""] * extra
+            lines.insert(last, "| " + " | ".join(cells) + " |")
+            last += 1
+        adopted |= set(new)
+        by_source = {}
+        for _, (_, _, _, source) in new.items():
+            by_source[source.split(":")[0]] = by_source.get(source.split(":")[0], 0) + 1
+        report.append(f"{unit}: {len(new)} rows " + ("adopted" if apply else "to adopt") + " from " + ", ".join(f"{s} ({n})" for s, n in sorted(by_source.items())))
+        if apply:
+            record.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if apply and adopted:
+        for path in repo.exceptions:
+            if not path.exists():
+                continue
+            kept = [l for l in path.read_text(encoding="utf-8").splitlines() if l.split("#")[0].strip() not in adopted]
+            path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+    report.append(f"{len(adopted)} slices {'adopted' if apply else 'would be adopted'}")
+    return report
+
+
+def plain_cell(cell: str) -> str:
+    return wb.LINK_RE.sub(r"\1", cell).replace(";", ",").replace("|", "/").strip()
+
+
+def regroup_exceptions(repo: wb.Repo, apply: bool) -> list[str]:
+    """Rewrite the work-board section of the exceptions baseline grouped by unit, each group headed
+    by the unit it belongs to, so a unit's next slice sees its own list."""
+    prefixes: dict[str, str] = {}
+    for unit, parsed in wb.units_here(repo).items():
+        for p in parsed.prefix.split(","):
+            if p.strip():
+                prefixes[p.strip()] = unit
+    for plan in (repo.root / repo.plans).glob("*.md"):
+        m = re.search(r"^\*\*Prefix:\*\*\s*(.+?)\s*$", plan.read_text(encoding="utf-8"), re.M)
+        if m:
+            for p in m.group(1).split(","):
+                prefixes.setdefault(p.strip(), plan.stem)
+    out: list[str] = []
+    for path in repo.exceptions:
+        if not path.exists() or EXCEPTIONS_HEADING not in path.read_text(encoding="utf-8"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        head, _, tail = text.partition(EXCEPTIONS_HEADING)
+        section_lines = (EXCEPTIONS_HEADING + tail).splitlines()
+        comment = [l for l in section_lines if l.startswith("#") and not l.startswith("# unit ")]
+        ids = [l.split("#")[0].strip() for l in section_lines if l.strip() and not l.startswith("#")]
+        groups: dict[str, list[str]] = {}
+        for i in ids:
+            groups.setdefault(prefixes.get(i.split("-")[0], "no unit declares this prefix"), []).append(i)
+        body = "\n".join(comment) + "\n"
+        for unit, members in sorted(groups.items()):
+            body += f"# unit {unit}, {len(members)} slice(s)\n" + "".join(f"{i}  # named in a plan, no board row yet\n" for i in sorted(set(members)))
+        out.append(f"{path.relative_to(repo.root).as_posix()}: {len(ids)} ids in {len(groups)} groups")
+        if apply:
+            path.write_text(head.rstrip("\n") + "\n\n" + body, encoding="utf-8")
+    return out
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path)
-    parser.add_argument("command", choices=("rename", "normalise"))
+    parser.add_argument("command", choices=("rename", "normalise", "adopt"))
     parser.add_argument("--apply", action="store_true", help="write the changes. Without it, report only")
     args = parser.parse_args(argv)
     repo = wb.Repo.here(args.root)
-    lines = rename(repo, args.apply) if args.command == "rename" else normalise(repo, args.apply)
+    if args.command == "adopt":
+        lines = adopt(repo, args.apply) + regroup_exceptions(repo, args.apply)
+    else:
+        lines = rename(repo, args.apply) if args.command == "rename" else normalise(repo, args.apply)
     print("\n".join(lines))
     return 0
 

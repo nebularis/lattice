@@ -65,6 +65,20 @@ verified on the branch, and the maintainer commits by hand.
 | CCS-15 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
 | CCS-16 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
 | CCS-17 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
+| CCS-9b.3a |  | built 2026-10-29 |  |  |
+| CCS-9b.3c |  | built 2026-10-29 |  |  |
+| HQ-1 |  | planned |  |  |
+| HQ-10 |  | planned |  |  |
+| HQ-11 |  | planned |  |  |
+| HQ-12 |  | planned |  |  |
+| HQ-2 |  | planned |  |  |
+| HQ-3 |  | planned |  |  |
+| HQ-4 |  | planned |  |  |
+| HQ-5 |  | planned |  |  |
+| HQ-6 |  | planned |  |  |
+| HQ-7 |  | planned |  |  |
+| HQ-8 |  | planned |  |  |
+| HQ-9 |  | planned |  |  |
 
 ## History
 

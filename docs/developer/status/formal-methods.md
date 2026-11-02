@@ -100,6 +100,8 @@ status record.
 | FM-D3 | Isabelle track | built 2026-10-06, (commits `c7b399a`, `2a115b1`, `5dd63ad`): Kernel.thy (TA1, TA2), Eligibility.thy (TL1-TL3), Adequacy.thy (15 lemmas via `eval`), defects S1-S5 (S4 needs `quick_and_dirty`, since Isabelle refuses bare `sorry`), Reading.thy (the MINOR change, M3 measured at +18/-6 lines for `MostValueR`), Interface.thy (M6's `monotone_reading` locale), Export.thy (M4/M5: OCaml and Haskell, both checked against all 15 reference fixtures, Haskell compiled with GHC), 13 claim records, `gate.py isabelle` passes clean |  |
 | FM-D4 | report | built 2026-10-10, [formal-prover-experiment.md](../notes/formal-prover-experiment.md), M0-M8 scored for both provers after our corrections (Rocq 62.0, Isabelle 68.0 of 100, M9 removed, M5 reweighted 5→10 and rescored for Scala/Rust/Python, M6 corrected after a tested `can`/`Goal.prove` equivalent of Rocq's `Fail` was found and folded into `Interface.thy`). FM-D1 and FM-D10 decided |  |
 | FM-PF1 | fixes | built 2026-10-07, (commit `c4075a6`), found by the macOS reproduction (`formal-prover-macos-portability.md`): `gate.py`'s `extract_statements` now excludes `defects/`, matching `scan_for_banned`, so the gate's digest check no longer depends on filesystem sort order (it previously passed only because Windows' case-insensitive sort happened to read the real statement last). `.gitignore` covers a stray staged CA file |  |
+| FM-0 |  | built 2026-10-06 |  |
+| FM-4 |  | built 2026-10-27 |  |
 
 ## Decisions
 

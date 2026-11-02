@@ -1,6 +1,6 @@
 ---
 name: lattice-lifecycle
-description: How work is run in LATTICE and projects built on it. Use when starting, continuing, handing off or closing a unit of work, an epic, a phase or a slice, when reading or updating a status record, plan, review request or Validation Pack, when preparing a commit, merge or release, and when reporting what comes next.
+description: How work is run in LATTICE and projects built on it. Use when picking up a slice or a unit, from your own plan or another's, before your first edit, when starting, continuing, handing off or closing a unit of work, an epic, a phase or a slice, when reading or updating a status record, plan, review request or Validation Pack, when preparing a commit, merge or release, and when reporting what comes next.
 ---
 
 # The LATTICE development lifecycle

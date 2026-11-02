@@ -35,7 +35,7 @@ RANK.update({"blocked": 1, "dropped": -1})
 STATE_RE = re.compile(r"^(" + "|".join(STATES) + r")\b\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$")
 STATUS_LINE_RE = re.compile(r"^\*\*Status:\*\*\s*(.+?)\s*$", re.M)
 UNIT_TYPE_RE = re.compile(r"^\*\*Unit type:\*\*\s*(.+?)\s*$", re.M)
-PREFIX_RE = re.compile(r"^\*\*Prefix:\*\*\s*([A-Z]{2,5})\s*$", re.M)
+PREFIX_RE = re.compile(r"^\*\*Prefix:\*\*\s*([A-Z]{2,5}(?:,\s*[A-Z]{2,5})*)\s*$", re.M)
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]*\|$")
 MAIN = "main"
 REGION_BEGIN = "<!-- BEGIN GENERATED work-board. Written by `mise run build:work` from the status records. Edit a status record, never this region. -->"
@@ -499,7 +499,8 @@ def region_text(repo: Repo) -> str:
         for label, rel in (("plan", f"plans/{name}.md"), ("status", f"status/{name}.md"), ("review", f"review/{name}-review.md")):
             if (root / repo.developer / rel).exists():
                 docs.append(f"[{label}]({rel})")
-        packs = sorted(p.name for p in (root / repo.developer / "validation").glob(f"{unit.prefix}-*.md")) if unit.prefix else []
+        packs = sorted(p.name for prefix in unit.prefix.replace(" ", "").split(",") if prefix
+                       for p in (root / repo.developer / "validation").glob(f"{prefix}-*.md"))
         if packs:
             docs.append(f"{len(packs)} Validation Packs")
         unit_rows.append((name, unit.kind, unit.prefix, f"{unit.state or '?'} {unit.day}".strip() or "?", unit.next, ", ".join(docs)))

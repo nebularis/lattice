@@ -234,3 +234,44 @@ def test_wb2_12_two_units_claiming_one_old_id_keep_it_outside_their_own_records(
     assert "| FMC-2 |" in read(repo, "status/formal-methods-track-c.md")
     assert "| CCS-2 |" in read(repo, f"status/{CCS}.md")
     assert read(repo, "sketches/x.md") == "Prose about C2 here.\n"
+
+
+def test_wb2_13_adopt_brings_record_tables_packs_and_plan_tables_onto_the_board(tmp_path: Path) -> None:
+    root = tmp_path / "work"
+    (root / "docs/developer/status").mkdir(parents=True)
+    (root / "docs/developer/plans").mkdir()
+    (root / "docs/developer/validation").mkdir()
+    (root / "tools/knowledge").mkdir(parents=True)
+    sh(tmp_path, "git", "init", "-q", "-b", "main", str(root))
+    sh(root, "git", "config", "user.email", "t@example.org")
+    sh(root, "git", "config", "user.name", "T")
+    sh(root, "git", "config", "commit.gpgsign", "false")
+    (root / "docs/developer/status/ledger.md").write_text(
+        "# Ledger: status\n\n**Unit ID:** `ledger`\n**Status:** planned.\n\n## Position\n\n"
+        "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n| LG-0 | the brief | built 2026-10-20 |  |\n\n"
+        "## Lanes\n\n| Seq | Slice | State | Note |\n|---|---|---|---|\n| 1 | LG-3 | merged | tagged too |\n", encoding="utf-8")
+    (root / "docs/developer/plans/ledger.md").write_text(
+        "# Plan: ledger\n\n**Unit ID:** `ledger`\n**Prefix:** LG\n\n## Slices\n\n| Slice | Content | Depends on |\n|---|---|---|\n"
+        "| LG-1 | the kernel | LG-0 |\n| LG-2 | the folds | LG-1 |\n| LG-Q1 | a question | |\n", encoding="utf-8")
+    (root / "docs/developer/validation/LG-1.md").write_text("# LG-1\n", encoding="utf-8")
+    (root / "tools/knowledge/identifier-exceptions.txt").write_text(
+        "# baseline\n\n# Slices a plan names that no board holds a row for yet\nLG-1  # named in a plan, no board row yet\nLG-2  # named in a plan, no board row yet\nLG-9  # named in a plan, no board row yet\n", encoding="utf-8")
+    sh(root, "git", "add", ".")
+    sh(root, "git", "commit", "-q", "--no-verify", "-m", "start")
+    repo = wb.Repo(root, Path("docs/developer"), exceptions=(root / "tools/knowledge/identifier-exceptions.txt",))
+    report = wm.adopt(repo, apply=False)
+    assert any("ledger: 3 rows to adopt" in line for line in report), report
+    assert "| LG-1 |" not in (root / "docs/developer/status/ledger.md").read_text(encoding="utf-8")
+    wm.adopt(repo, apply=True)
+    unit = wb.parse_unit("ledger", (root / "docs/developer/status/ledger.md").read_text(encoding="utf-8"))
+    rows = {r.id: r for r in unit.board.rows}
+    assert rows["LG-3"].state == "merged" and rows["LG-3"].day, "the record's second table, dated from git"
+    assert rows["LG-1"].state == "built" and rows["LG-1"].day, "a Validation Pack means built, on the day it was added"
+    assert rows["LG-2"].state == "planned" and rows["LG-2"].blocked_on == "LG-1" and rows["LG-2"].deliverable == "the folds"
+    assert "LG-Q1" not in rows, "a question is never a slice"
+    assert all(r.state is not None for r in unit.board.rows)
+    baseline = (root / "tools/knowledge/identifier-exceptions.txt").read_text(encoding="utf-8")
+    assert "LG-1" not in baseline and "LG-2" not in baseline and "LG-9" in baseline
+    assert any("0 slices would be adopted" in line for line in wm.adopt(repo, apply=False))
+    grouped = wm.regroup_exceptions(repo, apply=True)
+    assert grouped and "# unit ledger, 1 slice(s)" in (root / "tools/knowledge/identifier-exceptions.txt").read_text(encoding="utf-8")
