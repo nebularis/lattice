@@ -3,7 +3,7 @@
 # Where the work is: marking units and slices across branches — Sketch
 
 **Unit ID:** `work-board`
-**Status:** Sketch. Options drawn, WB-Q1 to WB-Q6 open. Nothing built.
+**Status:** Sketch. WB-Q1 to WB-Q6 answered 2026-11-02. WB-Q7 to WB-Q9 open. Nothing built.
 **Date:** 2026-11-02
 **Bears on:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md) (the hooks and their four moments), [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) (what the index reads), [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md) (a generated region in a hand-written file), the lifecycle and branching skills, [ROADMAP.md](../ROADMAP.md) §12, [INDEX.md](../INDEX.md).
 
@@ -11,12 +11,12 @@
 
 ## 1. Why
 
-Agents build in parallel, each in its own worktree on its own branch, and nobody pushes but the maintainer. The question "where is slice X being built, and what is on branch Y" is answered today by reading, which is slow and goes stale.
+Agents build in parallel, each in its own worktree on its own branch, pushing its own branch and never merging, and nobody merges into `main` but the maintainer. The question "where is slice X being built, and what is on branch Y" is answered today by reading, which is slow and goes stale.
 
 The facts, measured on 2026-11-02 from this checkout after a fetch.
 
 - **18 refs hold commits `main` lacks, and 15 worktrees are checked out.** The commit counts say nothing. `realign/config-authoring-studio` is 152 commits ahead and, measured by content in an earlier session, almost wholly merged, because branches are squash-merged (skill `lattice-branching`). Only content measurement answers, and it is a dozen git commands per branch.
-- **Two live branches mark nothing.** `fml/isabelle-layers` (31 commits) and `docs/placement-vehicles-structure` (112 commits) change no plan and no status record, so no document anywhere says what they hold.
+- **Two branches that looked live mark nothing.** `fml/isabelle-layers` (31 commits) and `docs/placement-vehicles-structure` (112 commits) change no plan and no status record, so no document anywhere says what they hold. Measured by content for §12, the first is wholly on `main` already and the second nets to deletions, which took three minutes of git to learn and a mark would have said.
 - **The coordination index is hand-written and stale.** [INDEX.md](../INDEX.md) is 1,102 lines. Its header says last updated 2026-10-24 and its footer says 2026-09-25. ROADMAP.md §12 already records that it is stale and must be regenerated from the status records or folded into the roadmap. Reading INDEX.md and ROADMAP.md together costs about 20,000 tokens, before any branch is looked at.
 - **Branches are named in free text, in the wrong documents.** Thirteen status records and one plan carry a `**Branch:**` line. Plans move between branches as agents pick slices up, so a branch written in a plan is wrong soon after it is written.
 - **Slice boards have no one shape.** The CCS record's board has the columns `#, Slice, Tranche, State, Blocked on`, the multi-store record's `Slice, State`, the AIR lanes table `Seq, Slice, Where, Built on, Agent, Start after`, and the state cells are prose, such as "merged (`5da9412`), tagged" and "built 2026-10-27: `platform/sparql-testkit`, ...". A script cannot compare them.
@@ -26,7 +26,8 @@ The facts, measured on 2026-11-02 from this checkout after a fetch.
 
 | | Need | Why |
 |---|---|---|
-| R1 | An agent marks work **on its own branch, in its own worktree**, and never pushes | parallel pushes are the disaster to avoid |
+| R1 | An agent marks work **on its own branch, in its own worktree**, pushes only that branch and never merges | two agents merging or pushing one branch is the disaster to avoid |
+| R1a | An agent marks **before its first edit**, never after | a mark written at handoff is invisible to the board for the whole build, and the board is then wrong exactly when it is needed |
 | R2 | The mark is at a **fixed path**, readable with `git show <ref>:<path>` on every local and remote ref, so no checkout is needed to read it | one script reads every branch from one checkout |
 | R3 | A mark is a **row keyed by a stable identifier** with a **state from a closed set** and a date | a script can join rows across refs. Free text cannot be compared (design standards) |
 | R4 | The joined view is a **command whose output is a few hundred tokens** | the point is to stop paying for reading |
@@ -176,7 +177,7 @@ sequenceDiagram
 These become rules in the lifecycle skill, each a standard row pointing at its section.
 
 1. **A slice's state is written in one place, the slice board of its home unit**, the unit whose plan defines it. An agent that builds a CCS slice on an Isabelle branch sets the row in the CCS status record, on that branch. The adopting unit's record says so in its history and names the slice in prose, and never carries a second row for it.
-2. **Picking up is one edit.** Set the row to `building <date>`, add a history line, commit with the first commit of the work. Name no branch anywhere. The board derives the branch from where it finds the row.
+2. **Picking up is one edit, and it is the first edit.** Before any other file changes, set the row to `building <date>`, add a history line, run `mise run build:work`, and commit the mark on its own, so the board sees the claim from the first push. Name no branch anywhere. The board derives the branch from where it finds the row. The same holds for a unit or a plan picked up whole, rule 5, and for a slice adopted from another plan, rule 1. An agent that finds itself editing without having marked stops, marks, and commits the mark before going on.
 3. **Handing off is one edit.** Set the row to `built <date>` in the commit that carries the Validation Pack's handoff.
 4. **A merge into `main` flips the rows it delivers to `merged <date>`, in the merge commit**, as the branching skill's "Record the merge" already asks. The board flags a `built` row whose branch is merged by content so a forgotten flip is seen.
 5. **A whole unit picked up, or a plan started**, is its status record created or its `**Status:**` line changed, in the same way. The board treats a unit without a parseable board as one row, the unit itself, in the state its `**Status:**` line opens with.
@@ -199,7 +200,7 @@ flowchart LR
 
 ## 7. The tool
 
-`tools/work_board.py`, stdlib and git only, root found through the repository catalogue (STD-273). Four commands behind four tasks.
+`tools/work_board.py`, stdlib and git only, root found through the repository catalogue (STD-273). Seven commands behind seven tasks.
 
 | Task | Does | Reads | Writes |
 |---|---|---|---|
@@ -207,6 +208,9 @@ flowchart LR
 | `build:work` | INDEX.md's generated region from `HEAD` | the working tree | INDEX.md |
 | `build:roadmap` | ROADMAP.md's generated regions from the board, dated | every ref | ROADMAP.md |
 | `check:work` | every touched board is well formed and INDEX.md agrees with the tree | the working tree | nothing |
+| `work:normalise` | rewrites a board into the standard columns and state words where its words map, and lists the cells it could not | the working tree | status records |
+| `work:rename` | builds the slice crosswalk, then applies it, §9a | the working tree | working documents, Validation Pack names |
+| `work:here` | writes or lists presence files, §11 | `.local/agents/` | `.local/agents/` |
 
 **The board's output.** Three tables. Units, one row each, with the joined state and the next slice. Work, one row per slice that is further along on some ref than on `main`, with the ref and the date, and a `stale` column listing refs behind `main` on it. Branches, one row per ref with a commit `main` lacks, with its tip date, its local worktree path if any, the slices it moves, and `no mark` where it moves none. `--measure` adds the branching skill's content measure, the share of a branch's added lines present on `main`, which costs one blob comparison per changed file per branch and is the slow part, seconds for 18 branches.
 
@@ -241,14 +245,14 @@ Two ways to keep it current.
 
 The leaning is (a) with (b) available, since a merge is the moment the picture changes.
 
-## 9. INDEX.md and the knowledge index, WB-Q2 and WB-Q4
+## 9. INDEX.md and the knowledge index, WB-Q2
 
 INDEX.md becomes the agents' register. Its generated region holds two tables the index reads, since each has `ID` as its first column.
 
 - **Units.** `ID` the unit id, kind from the plan's `**Unit type:**` line, state, the next slice, and links to its plan, status record, review request and Validation Packs where the files exist.
 - **Work.** `ID` the slice id as its plan writes it, unit, deliverable, state and date, blocked on, and the status record and line it was read from.
 
-A row's claim is its text, so `find "aggregate bindings, who is building it"` ranks the C9b3b row, and `read` of a prefixed id such as `MSC-3` or `HQ-6a` resolves through the existing `slice` identifier family once it is given this table as its definition. Ids such as `C9b3b`, `CS0` and `H2.6d` are not regular enough for a mention pattern that would not also match prose, so they answer by words and not by `read`. Whether to regularise them is WB-Q4.
+A row's claim is its text, so `find "aggregate bindings, who is building it"` ranks the C9b3b row, and `read CCS-9b.3b` resolves through the `slice` identifier family once the Work table is its definition and the ids are regular, §9a.
 
 The index holds the state as of the tree it was built from. The board holds the state across branches. The skill says which to ask for which question, and the index entry for a row names the board task.
 
@@ -258,6 +262,48 @@ The index holds the state as of the tree it was built from. The board holds the 
 - **(ii) Keep and add.** The region is added at the top and the prose stays below it.
 
 The leaning is (i). Two records of one unit diverge, and the lifecycle skill's "every unit and its documents" is what the Units table is.
+
+### 9a. The slice grammar and the crosswalk, WB-Q4
+
+Slice ids take about a dozen shapes today, counted on 2026-11-02 over the boards and plans: `AIR-4.2a`, `AOR-3b`, `C9b3b`, `C10a`, `F1`, `HQ-6a.1`, `H2.6d`, `B2.1`, `P0.1.1`, `MSC-3`, `OD0`, `DOC1`, `WA1`, `M0`, `CS12a`, `CS-B12`. The `slice` family in `tools/knowledge/identifiers.py` matches nine prefixes with a hyphen and has no definition rule, so it is counted and never checked (ADR-A134, CAP-10). The 177 Validation Packs are named in ten shapes, `applied-insurance-reference-0.1.md`, `FMH-H1-2b.md`, `computable-contract-substrate-c10a.md` among them. Neither `read` nor the identifiers check can work on this, which is the cost of the irregularity, and the crosswalk is mechanical because every shape is a regular expression over a unit's own documents.
+
+**The grammar.**
+
+```
+slice   = PREFIX "-" segment ("." segment)*
+segment = CAPITALS? digits letter?        CAPITALS at most three, letter one lowercase
+PREFIX  = two to five capitals, declared on the unit's plan's **Prefix:** line
+```
+
+A mention pattern is built from the declared prefixes, never from `[A-Z]+`, so `ISO-8601` and `ADR-A133` never match. A slice is defined by its row in its home unit's board, which `build:work` copies into INDEX.md's Work table, the family's definition, so a slice mentioned and defined nowhere fails the identifiers check at the commit, as a decision mentioned and defined nowhere does today. A test id inside a Validation Pack, `AIR11-01` or `HQ6a1-03`, is local to its pack and stays as it is. A Validation Pack is named by its slice, `docs/developer/validation/CCS-9b.3b.md`.
+
+| Unit | Today | Prefix | After |
+|---|---|---|---|
+| applied-insurance-reference | `AIR-4.2a` | AIR | unchanged |
+| applied-ontology-readiness | `AOR-3b` | AOR | unchanged |
+| computable-contract-substrate | `C9b3b`, `C10a`, `F1`, `HQ-6a.1` | CCS, and HQ stays its own | `CCS-9b.3b`, `CCS-10a`, `CCS-F1`, `HQ-6a.1` |
+| formal-methods tracks B, C, E, H | `B2.1`, `C2.1`, `E1.0`, `H2.6d` | FMB, FMC, FME, FMH | `FMH-2.6d` |
+| multi-store-conformance, git-hooks | `MSC-3`, `GH-2` | MSC, GH | unchanged |
+| config-studio | `CS12a`, `CS-B12` | CS | `CS-12a`. The `CS-B` rows are a defect list, not slices, and are not read |
+| word-authoring-poc | `WA1` | WA | `WA-1` |
+| improved-ontology-documentation | `OD0`, `DOC1`, `MC1` | OD | `OD-0`, `OD-DOC1`, `OD-MC1` |
+| identity-minting | `M0` | IM | `IM-0` |
+| lattice-platform-agentic-development | `P0.1.1` | PLT | `PLT-0.1.1` |
+| ledger | `LG1-05b` | LG | `LG-1.5b` |
+| persistence-compiler-iri-sync | `slice-1` | PCI | `PCI-1` |
+| work-board | | WB | `WB-1` |
+
+The segment's optional capitals exist for `F1`, `DOC1`, `MC1` and `CS-B12`. Without them about 70 ids are renumbered by hand, and a hand renumbering is a second record of the slice for as long as anyone remembers the old number. With them the crosswalk stays mechanical, which was the point, at the cost of a grammar that admits `CCS-F1` beside `CCS-1`. The leaning is to admit them.
+
+**The crosswalk.** `mise run work:rename` builds `docs/developer/notes/slice-crosswalk-2026-11.md`, a table of `Was`, `Is` and `Unit`, from each unit's prefix and one regular expression per old shape, for the maintainer to read before anything moves. Then it applies it, replacing whole-word mentions longest first (`C9b3b` before `C9b3` before `C9`) in `docs/developer/`, `docs/architecture/`, `.claude/skills/` and the identifier exceptions baseline, and renaming the Validation Packs with `git mv`. A unit's own documents are rewritten with that unit's rules. Elsewhere only an old id that one unit's crosswalk claims is replaced, and an old id two units claim is listed for the hand. By shape the overlap is small, since CCS writes `C9b` where track C writes `C2.1`, and the sweep reports the count. The task is idempotent, so a live branch runs it once after merging `main` and is then on the new ids, as a branch renumbers a colliding register row today (skill `lattice-branching`). The crosswalk file stays, so an old commit message or a tag note still resolves, and its first column is `Was`, not `ID`, so the index does not read it as a second entry per slice.
+
+| | Count |
+|---|---|
+| mentions rewritten, working documents | on the order of 1,500 in about 40 files |
+| Validation Packs renamed | about 120 of 177 |
+| ids needing the hand | the two-unit overlaps, expected under 10 |
+| live branches that run the task once | 10 today, §12 |
+| tokens, the sweep | near none. Reading its diff, about 30k |
 
 ## 10. The hooks, WB-Q6
 
@@ -271,21 +317,113 @@ A conflict in a generated region is resolved as `knowledge.ttl` is, take `main`'
 
 What a hook does not do. It does not notice work that marks nothing, since a check cannot map a changed module to a unit. The board does, in its Branches table, which is why `no mark` is a row there and in the maintainer's queue.
 
-## 11. KISS
+### 10a. Blocking at a commit, WB-Q6
 
-Not now: a merge driver for one register (not needed under A), an agent or machine column (no query needs it), auto-flipping a row at a merge (a hook that edits a status record is a hook that is wrong once), cross-branch content committed in INDEX.md (stale on commit, and it would conflict on every merge), bars for undated slices, a web view.
+The check refuses a commit on three findings. A staged status record whose board has a state cell that does not open with a word of the set, or opens with `building` or later and carries no date. INDEX.md's generated region differing from a regeneration over the tree. A slice id in a staged file that no board defines, which is the identifiers check once the family has its definition. Each message names the cell or the id, the set, and the task that fixes it.
 
-Needed now: the state set, the standard board, the tool with its four tasks, the two generated regions, the `work` check, the three rules in the skills, the Branch lines gone, the 15 active boards normalised, and an ADR drafted as Proposed at the next free number, A151 on every live branch on 2026-11-02.
+| Risk | When | Why it is bounded |
+|---|---|---|
+| a commit that only adds a history line to an old record is refused because that record's board is in the old shape | from the day the check lands until the record is normalised | the sweep normalises every record that has a board, the 56, not only the 15 active ones, in the change that lands the check. A record with no board is never malformed, it is one row, the unit |
+| a live branch's first commit after merging `main` is refused, because its copy of a record is in the old shape or its region is stale | once per live branch, 10 today | `mise run work:normalise` rewrites a board into the standard shape where its words map, `work:rename` moves its ids, `build:work` its region. The branching skill's merge section lists them beside the index rebuild it already asks for |
+| a state word the mapping does not know, such as "handed over" | at a hand edit | the message prints the set. One cell |
+| a worktree that was never bootstrapped | always, since a hook runs on whatever venv is there | the check is stdlib only, like the others. This sketch's own commit ran the seven checks on a stdlib venv |
+| the maintainer's merge into `main` is refused | the merge checks run the same `work` check | the same fix, and the post-merge hook never fails |
 
-## 12. Leaning and questions
+The serious problem is the second row, and it is ten branches, three tasks each, once. Everything else is one cell. So the answer to WB-Q6 is block, on the condition that the sweep and the three tasks land in the same change as the check, never before it.
 
-- **WB-Q1. Where does the mark live?** Option A, the home unit's status record. It is already the authoritative live state, a pick-up is one cell, and the only conflict it causes is the one worth having.
-- **WB-Q2. Is INDEX.md replaced or added to?** Replace, (i), the prose archived under `notes/`.
-- **WB-Q3. The state set.** The seven-step ladder with `blocked` and `dropped` aside, joined by furthest-then-latest. Open to a smaller set, not a larger one.
-- **WB-Q4. Slice identifiers.** Leave the irregular ids and answer by words, and regularise a unit's ids when its plan is next rewritten, so `read` works for it. Not a migration now.
-- **WB-Q5. The roadmap snapshot.** The post-merge hook regenerates on `main`, the maintainer commits, and `build:roadmap` serves on demand.
-- **WB-Q6. The check's strictness.** Block at a commit on a malformed touched board, as drafted, or warn for a month while the boards are normalised, as the writing rules did.
+What the check never does. It never refuses a branch that marks nothing, since a check cannot map a changed module to a unit. It never judges a row that is behind `main`, which is the join's job. It never reads a presence file, §11.
 
-Estimate, in tokens: the tool and its tests about 60k, the boards and Branch lines about 40k, the skills, standards and ADR about 30k, the INDEX and ROADMAP regions about 20k. Total about 150k.
+## 11. Presence in a shared worktree, WB-Q8
 
-🔴 PLAN FIRST: WB-Q1 to WB-Q6, then a branch from `main` for the unit.
+The maintainer sometimes has two agents on one worktree, usually two models reviewing each other's work. A mark on the board is pushed and says which branch a slice is on, never which session, and the design standards say an agent column answers no query. The question a reviewer needs answered is different and local: is someone else building here right now.
+
+**What a client exposes.** Measured in this session. Claude Code sets, in every command it runs, `CLAUDE_CODE_SESSION_ID`, a UUID that is also the transcript's file name under `~/.claude/projects/`, `CLAUDE_CODE_ENTRYPOINT`, `claude-desktop` here and `cli` in a terminal, and `AI_AGENT`, the client and its version, `claude-code_2-1-309_agent` today. The desktop app adds `CLAUDE_CODE_HOST_SESSION_ID`. No variable names the model. Other clients were not probed, and the task below reads what it finds and takes the rest as arguments.
+
+**The design.** A presence file per session at `.local/agents/<session>.toml` in the worktree. `.local/` is git-ignored and per worktree, which is exactly the scope of the question, one directory on one machine.
+
+```toml
+session = "ba8501af-c97c-4342-bb9d-08abd947c3f5"
+client = "claude-code_2-1-309_agent"
+model = "fable-5.1"
+role = "review"            # build, review or read
+on = ["CCS-9b.3b"]
+since = "2026-11-02T13:40:00Z"
+last = "2026-11-02T14:02:00Z"
+```
+
+`mise run work:here -- --role review --model fable-5.1 --on CCS-9b.3b` writes it, filling session and client from the environment, and refreshes `last` on every later run. `mise run work:here` alone prints the sessions whose file is under twelve hours old, so a crashed session ages out and no lock is ever held. `--leave` stamps the file and it drops from the list. The role is the fact a reader compares, so it is a closed set.
+
+```mermaid
+sequenceDiagram
+    participant B as builder (Fable)
+    participant W as .local/agents/
+    participant R as reviewer (Opus)
+    B->>W: here: build, on CCS-9b.3b
+    R->>W: here: review
+    W-->>R: builder, build, since 13:40
+    Note over R: asked to change a file
+    R->>R: stops, names the builder, asks the maintainer
+```
+
+**The rule**, in AGENTS.md since it is always on, §13. Before the first edit in any checkout, run `mise run work:here`. Where it lists another live session in role build, or you were asked to review, say who is here and ask the maintainer before writing. A reviewer's findings go to the review request or to chat, never into a file another live session is building.
+
+**(a) The task and the rule, or (b) with a hook.** Claude Code can run a `SessionStart` hook from `.claude/settings.json` that writes the file from the session id and prints the other sessions into the agent's context, and a `SessionEnd` hook that stamps `--leave`. It is one client only, it needs the repository's settings trusted on each machine, and the hook's input carries the session id and the directory and not the model, so the model is still stated by hand. The leaning is (a) now, because the rule has to exist for the other clients anyway, and (b) as a slice once (a) has run for a few weeks and shows whether agents forget.
+
+## 12. The branches today, WB-Q9
+
+Measured on 2026-11-02 after a fetch. 24 local branches, 17 remote refs, 9 worktrees under `lattice-wt/` and 7 under `.claude/worktrees/`. Share is the branching skill's content measure, the branch's added lines since its merge-base that are on `main` today, computed by the prototype of `--measure` in about three minutes for the set. Marks says which status records and plans the branch changes.
+
+| Branch | Tip | Ahead | Share on `main` | Marks | Proposed disposition |
+|---|---|---|---|---|---|
+| `claude/persistence-delta-replace` | 11-02 | 137 | 88% | 8 records, 7 plans | live. The persistence replace work. Marks its slices in WB-7 |
+| `claude/persistence-linear-replace` | 11-01 | 135 | 93%, and 100% inside delta-replace | the same | superseded by delta-replace. Delete |
+| `realign/config-authoring-studio` | 11-02 | 154 | 0%, and 61% inside delta-replace | FM-H, PDR, PM records | 5,000 of its 12,844 added lines are on no other ref. Live or abandoned, the maintainer says |
+| `claude/config-authoring-studio` | 11-02 | 151 | 0%, and 75% inside realign | PM, PDR, SQ | 1,500 lines on no other ref. As above |
+| `ccs-trunk` | 10-29 | 53 | 99% | CCS, MSC | merged. Delete once the 43 lines are confirmed noise |
+| the four CS12 subagent branches, `claude/config-studio-shape-forms`, `-showcase-sample`, `cs12b-authoring-domain`, `cs9-studio-operations` | 10-28 | 7 to 18 | 89% to 91% | config-studio, WA | residue of about 1,000 lines each. Confirm, then delete with their `.claude/worktrees/agent-*` worktrees |
+| `claude/nice-bohr-pmj43u-wwhgle` | 10-20 | 45 | 88% | AIR, FM-H, PDD, TD | 2,000 lines not on `main`, remote and local. Ask |
+| `docs/placement-vehicles-structure` | 11-02 | 112 | all, after merging `main`. Against `main` it is 8 files, 13 lines added and 426 removed | none | a documentation branch whose net is deletions. Ask whether the deletions are wanted |
+| `fml/isabelle-layers` | 11-01 | 31 | 100% | none | squash-merged as `df0ddd1a`. Delete the branch, keep the worktree only while H3.1 continues there |
+| `claude/fix-topology-links` | 10-23 | 1 | 56% | 8 old records | 80 lines. Ask |
+| `persistence-mbt` | 09-23 | 1 | 1% | EC, PCI | 463 lines from September. Ask |
+| `spikes/pol-map` | 10-16 | 2 | 0% | none | a spike of 4,205 lines. Keep as a spike |
+| `origin-ssh/tutorial/guide` | 10-16 | 5 | 0% | lattice-tutorial | remote only, 2,208 lines. Ask |
+| `origin-ssh/main-xg1czj`, `origin-ssh/config_studio_GD` | | 1, 0 | | none | one line, and at `main`'s parent. Delete |
+| `docs/work-board` | 11-02 | 1 | | this sketch | live |
+| `claude/epic-noyce-e09046`, `claude/happy-jones-abb1c4`, `claude/ontology-config-authoring-cc050f`, `worktree-agent-*` x 4 | | 0 | | | nothing ahead. Delete the branches and their worktrees |
+
+**The migration, slice WB-7.** For each branch the maintainer names live, its agent, or the maintainer, merges `main` once the check is on it, runs `work:normalise`, `work:rename` and `build:work`, sets every slice the branch is building to `building <date>` in its home unit's record, with the date the work actually started, commits the mark on its own and pushes. Every other branch is deleted, locally and on the remote, with its worktree, by the maintainer. Done when `mise run work:board` shows no `no mark` row and no branch the maintainer did not name. From then on rule 2 of §6 keeps it so.
+
+**The order of the slices.** WB-1 the tool, the board, `build:work` and the join, with the measure. WB-2 the grammar, the prefixes, the crosswalk, `work:rename` and `work:normalise`, run on `main`, with every board normalised, every Branch line removed and the `slice` family given its definition. WB-3 INDEX.md replaced and the ROADMAP regions. WB-4 the `work` check and the post-merge regeneration. WB-5 AGENTS.md, the skills, the standards and the ADR. WB-6 the presence task. WB-7 the branches. WB-2 to WB-4 land in one merge, since the check must never precede the sweep, §10a.
+
+## 13. The words in AGENTS.md and the skills
+
+Three bullets in AGENTS.md's "The contract", which is always loaded, since a rule in a skill is read only when the skill is.
+
+- **Mark before you touch.** Before the first edit of anything you pick up, a slice, a unit or a plan, and above all a slice of another plan, set its row in its home unit's status record to `building <date>`, run `mise run build:work`, and commit that alone (skill `lattice-lifecycle`). An edit made before the mark is invisible to `mise run work:board`, and every view built from the board is then wrong.
+- **Know who is here.** Before the first edit in any checkout, run `mise run work:here`. Where it lists another live session building there, or you were asked to review, say who is here and ask the maintainer before writing.
+- **Ask the board, not the branches.** `mise run work:board` says where every unit and slice is across every local and remote branch, in a few hundred tokens. Read a branch only after it.
+
+The lifecycle skill takes §6 as its "Picking up and finishing" section, each rule a standard row so the index answers `find who is building C9b3b and how do I take a slice over`. The branching skill's merge section adds the three tasks after merging `main`, and its worktree section the presence file. The design skill's plan header gains a `**Prefix:**` line and loses `**Branch:**`. The ADR records the grammar, the state set, the generated regions and the check, as Proposed.
+
+## 14. KISS
+
+Not now: a merge driver for one register (not needed under A), an agent or machine column on the board (no query across branches needs it, and presence is local, §11), the Claude Code presence hook (§11, after the task has run), auto-flipping a row at a merge (a hook that edits a status record is a hook that is wrong once), cross-branch content committed in INDEX.md (stale on commit, and it would conflict on every merge), bars for undated slices, a web view.
+
+Needed now: the state set, the standard board, the slice grammar and the crosswalk, the tool with its tasks, the two generated regions, the `work` check, the rules in AGENTS.md and the skills, the Branch lines gone, every board normalised, the presence task, and an ADR drafted as Proposed at the next free number, A151 on every live branch on 2026-11-02.
+
+## 15. Leaning and questions
+
+- **WB-Q1. Where does the mark live?** Answered 2026-11-02, option A, the home unit's status record. It is already the authoritative live state, a pick-up is one cell, and the only conflict it causes is the one worth having.
+- **WB-Q2. Is INDEX.md replaced or added to?** Answered 2026-11-02, replace, (i), the prose archived under `notes/`.
+- **WB-Q3. The state set.** Answered 2026-11-02, the seven-step ladder with `blocked` and `dropped` aside, joined by furthest-then-latest.
+- **WB-Q4. Slice identifiers.** Answered 2026-11-02, standardise, with a mechanical crosswalk from the historic ids. The grammar and the sweep are §9a, and the prefixes are WB-Q7.
+- **WB-Q5. The roadmap snapshot.** Answered 2026-11-02, the post-merge hook regenerates on `main`, the maintainer commits, and `build:roadmap` serves on demand.
+- **WB-Q6. The check's strictness.** Answered 2026-11-02, block at a commit on a malformed touched board, on the conditions in §10a.
+- **WB-Q7. The unit prefixes.** The table in §9a proposes one per unit that has slices. Which change?
+- **WB-Q8. Presence in a shared worktree.** The task and the rule alone, (a), or with the Claude Code hook that writes the file and injects who else is here, (b). The leaning is (a) now and (b) as a slice once (a) has run for a few weeks, §11.
+- **WB-Q9. Which branches are live.** The dispositions in §12 are proposed from content measurement, and the branching skill says the maintainer names the live set. Which rows are wrong?
+
+Estimate, in tokens: the tool and its tests about 70k, the slice sweep and the crosswalk about 30k, the boards and Branch lines about 40k, AGENTS.md, the skills, standards and ADR about 35k, the INDEX and ROADMAP regions about 20k, the branch migration about 25k. Total about 220k.
+
+🔴 PLAN FIRST: WB-Q7 to WB-Q9, then a plan on this branch and the slices in §12's order.
