@@ -177,7 +177,10 @@ run = "python -m mtp.cli check --out ontology/mork/mtp/out"
 
 [tasks."build:mtp"]
 description = "Regenerate committed MORK Teaching Pack output"
-run = "python -m mtp.cli facts-report; python -m mtp.cli build --out ontology/mork/mtp/out"
+run = [
+  "python -m mtp.cli facts-report",
+  "python -m mtp.cli build --out ontology/mork/mtp/out",
+]
 
 [tasks."check:java"]
 depends = ["build:config-studio-assets"]
@@ -655,6 +658,7 @@ run = "docker compose -f deployment/compose/docker-compose.yml down"
 
 [tasks."build:config-studio-assets"]
 description = "Stage the Configuration Studio's vocabulary and samples into .build/config-studio"
+depends = ["build:mtp"]
 run = "python tools/config_studio_stage.py"
 
 [tasks."check:config-studio"]

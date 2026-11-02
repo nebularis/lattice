@@ -49,7 +49,7 @@ mise tasks               # list every task mise.toml declares, with its descript
 
 | Check | Reads | Built by |
 |---|---|---|
-| `check:java`, `check:frontend` | `.build/config-studio/`, the Configuration Studio's staged vocabulary and samples, which the studio's Maven modules and its vitest suites load | `build:config-studio-assets` |
+| `check:java`, `check:frontend` | `.build/config-studio/`, the Configuration Studio's staged vocabulary and samples, which the studio's Maven modules and its vitest suites load | `build:config-studio-assets`, which depends on `build:mtp` for the Teaching Pack's first layer |
 | `check:mtp` | `ontology/mork/mtp/out/`, the rendered MORK Teaching Pack, whose manifest the check compares | `build:mtp` |
 | `check:mork-transforms` | the `mork-transforms` jar | `bootstrap:mork-transforms` |
 | `check:persistence` | Persistence's compiled expected profiles | `check:persistence-expected-profiles` |
