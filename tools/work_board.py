@@ -533,7 +533,7 @@ def build(repo: Repo, check: bool) -> int:
     if check:
         print(f"{repo.index.as_posix()}: the work-board region is stale against the status records. Run `mise run build:work`")
         return 1
-    path.write_text(wanted, encoding="utf-8")
+    path.write_text(wanted, encoding="utf-8", newline="\n")
     return 0
 
 
@@ -731,7 +731,7 @@ def build_roadmap(repo: Repo, check: bool) -> int:
     if check:
         print(f"{repo.roadmap.as_posix()}: the work-board regions are stale. Run `mise run build:roadmap`")
         return 1
-    path.write_text(wanted, encoding="utf-8")
+    path.write_text(wanted, encoding="utf-8", newline="\n")
     return 0
 
 
@@ -765,7 +765,7 @@ def write_presence(root: Path, session: str, client: str, model: str, role: str,
                 since = line.split("=", 1)[1].strip().strip('"')
     slices = ", ".join(f'"{s}"' for s in on)
     path.write_text(f'session = "{session}"\nclient = "{client}"\nmodel = "{model}"\nrole = "{role}"\n'
-                    f'on = [{slices}]\nsince = "{since}"\n', encoding="utf-8")
+                    f'on = [{slices}]\nsince = "{since}"\n', encoding="utf-8", newline="\n")
     os_utime = __import__("os").utime
     os_utime(path, None)
     return path

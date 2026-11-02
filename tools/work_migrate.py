@@ -250,7 +250,7 @@ def rename(repo: wb.Repo, apply: bool) -> list[str]:
              "| Was | Is | Unit |", "|---|---|---|"]
     table += [f"| {c.old} | {c.new} | {c.unit} |" for c in every]
     if every:
-        walk.write_text("\n".join(table) + "\n", encoding="utf-8")
+        walk.write_text("\n".join(table) + "\n", encoding="utf-8", newline="\n")
     report.append(f"crosswalk: {len(crossings)} ids over {len({c.unit for c in crossings})} units this run, {len(every)} rows in docs/developer/notes/{CROSSWALK}")
     by_unit: dict[str, list[Crossing]] = {}
     claims: dict[str, set[str]] = {}
@@ -278,7 +278,7 @@ def rename(repo: wb.Repo, apply: bool) -> list[str]:
         if new != text:
             changed += 1
             if apply:
-                path.write_text(new, encoding="utf-8")
+                path.write_text(new, encoding="utf-8", newline="\n")
     report.append(f"mentions: {changed} files {'rewritten' if apply else 'would change'}")
     # Validation Packs
     validation = repo.root / repo.developer / "validation"
@@ -300,10 +300,10 @@ def rename(repo: wb.Repo, apply: bool) -> list[str]:
             for old, new in recorded:
                 new_text = new_text.replace(f"validation/{old}", f"validation/{new}").replace(f"]({old})", f"]({new})").replace(f"](./{old})", f"]({new})").replace(f"]({old}#", f"]({new}#")
             if new_text != text:
-                path.write_text(new_text, encoding="utf-8")
+                path.write_text(new_text, encoding="utf-8", newline="\n")
         every = sorted(set(every) | {Crossing(PACKS, old, new) for old, new in moves}, key=lambda c: (c.unit, c.old))
         if every:
-            walk.write_text("\n".join(table[:8] + [f"| {c.old} | {c.new} | {c.unit} |" for c in every]) + "\n", encoding="utf-8")
+            walk.write_text("\n".join(table[:8] + [f"| {c.old} | {c.new} | {c.unit} |" for c in every]) + "\n", encoding="utf-8", newline="\n")
     report.append(f"validation packs: {len(moves)} {'renamed' if apply else 'to rename'}, {len(unmatched)} left as they are: " + ", ".join(unmatched))
     return report
 
@@ -427,7 +427,7 @@ def declare_prefixes(repo: wb.Repo, apply: bool) -> list[str]:
         new = text[:m.end() + 1] + line + text[m.end() + 1:] if m else re.sub(r"^(# [^\n]*\n)", rf"\1\n{line}", text, count=1, flags=re.M)
         out.append(f"{plan.relative_to(repo.root).as_posix()}: Prefix {', '.join(rule.prefixes)}")
         if apply:
-            plan.write_text(BRANCH_LINE_RE.sub("", new), encoding="utf-8")
+            plan.write_text(BRANCH_LINE_RE.sub("", new), encoding="utf-8", newline="\n")
     return out
 
 
@@ -440,13 +440,13 @@ def normalise(repo: wb.Repo, apply: bool) -> list[str]:
         if new != path.read_text(encoding="utf-8"):
             changed += 1
             if apply:
-                path.write_text(new, encoding="utf-8")
+                path.write_text(new, encoding="utf-8", newline="\n")
     for plan in sorted((repo.root / repo.plans).glob("*.md")):
         text = plan.read_text(encoding="utf-8")
         if BRANCH_LINE_RE.search(text):
             changed += 1
             if apply:
-                plan.write_text(BRANCH_LINE_RE.sub("", text), encoding="utf-8")
+                plan.write_text(BRANCH_LINE_RE.sub("", text), encoding="utf-8", newline="\n")
     report += declare_prefixes(repo, apply)
     report.append(f"records and plans: {changed} {'rewritten' if apply else 'would change'}")
     return report
@@ -564,13 +564,13 @@ def adopt(repo: wb.Repo, apply: bool) -> list[str]:
             by_source[source.split(":")[0]] = by_source.get(source.split(":")[0], 0) + 1
         report.append(f"{unit}: {len(new)} rows " + ("adopted" if apply else "to adopt") + " from " + ", ".join(f"{s} ({n})" for s, n in sorted(by_source.items())))
         if apply:
-            record.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            record.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     if apply and adopted:
         for path in repo.exceptions:
             if not path.exists():
                 continue
             kept = [l for l in path.read_text(encoding="utf-8").splitlines() if l.split("#")[0].strip() not in adopted]
-            path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+            path.write_text("\n".join(kept) + "\n", encoding="utf-8", newline="\n")
     report.append(f"{len(adopted)} slices {'adopted' if apply else 'would be adopted'}")
     return report
 
@@ -609,7 +609,7 @@ def regroup_exceptions(repo: wb.Repo, apply: bool) -> list[str]:
             body += f"# unit {unit}, {len(members)} slice(s)\n" + "".join(f"{i}  # named in a plan, no board row yet\n" for i in sorted(set(members)))
         out.append(f"{path.relative_to(repo.root).as_posix()}: {len(ids)} ids in {len(groups)} groups")
         if apply:
-            path.write_text(head.rstrip("\n") + "\n\n" + body, encoding="utf-8")
+            path.write_text(head.rstrip("\n") + "\n\n" + body, encoding="utf-8", newline="\n")
     return out
 
 
