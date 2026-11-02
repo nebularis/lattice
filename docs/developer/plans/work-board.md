@@ -51,6 +51,7 @@ Each slice is briefed on this branch, built in default mode unless the maintaine
 | **WB-7** | the branches. For each branch the maintainer names live in WB-Q9, `main` merged, `work:normalise`, `work:rename` and `build:work` run, every slice it builds set to `building` with the day the work started, the mark committed alone and pushed. Every other branch and its worktree deleted by the maintainer | `mise run work:board --fetch` shows no `no mark` row and no branch the maintainer did not name | 25k |
 | **WB-8** | `check:identifiers` dates each site of a collision to the second in UTC and names the site that keeps the number, or none on a tie, and ADR-A133's addendum of 2026-11-02 | `test_wb8_first_in_is_decided_to_the_second_and_a_tie_goes_to_the_maintainer`, `check:identifiers` | small |
 | **WB-9** | `work:rename` crosses an exception only beside its old line while the old spelling is still mentioned in a tracked file, and after the sweep has written | `test_wb9_rename_keeps_an_exception_whose_old_spelling_is_still_mentioned`, `work:rename` on a merged tree leaves `check:identifiers` passing | small |
+| **WB-10** | a unit's state rolled up from its board, the Status word held to it by the `work` check and set by `work:normalise`, and joined across branches in the board's and the roadmap's units tables, ADR-A151's addendum of 2026-11-02, STD-317 | `test_wb10_01` to `test_wb10_04`, `work:board` on this branch | small |
 
 WB-2, WB-3 and WB-4 merge into `main` together, since the check must never precede the sweep (decision 7). WB-7 follows that merge.
 

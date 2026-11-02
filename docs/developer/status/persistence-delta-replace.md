@@ -3,7 +3,7 @@
 # Writing only what changed, as a persistence mode - Status
 
 **Unit ID:** `persistence-delta-replace`
-**Status:** built 2026-11-02. DR-1 to DR-4 built, awaiting the maintainer's review
+**Status:** building 2026-11-01. DR-1, DR-2 and DR-4 built, awaiting the maintainer's review. DR-3 lacks its capability spec
 **Last updated:** 2026-11-02
 **Plan:** [persistence-delta-replace.md](../plans/persistence-delta-replace.md)
 **Sketch:** [persistence-delta-replace.md](../sketches/persistence-delta-replace.md)

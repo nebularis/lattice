@@ -3,7 +3,7 @@
 # Derived data maintained in the write, and replies that do not wait - Status
 
 **Unit ID:** `projection-maintenance`
-**Status:** building 2026-11-01. PM-0 to PM-3 built 2026-11-01, PM-3a and PM-3b, events over the broker's Web MQTT, built 2026-11-02
+**Status:** built 2026-11-02. PM-0 to PM-3 built 2026-11-01, PM-3a and PM-3b, events over the broker's Web MQTT, built 2026-11-02
 **Last updated:** 2026-11-02
 **Plan:** [projection-maintenance.md](../plans/projection-maintenance.md)
 **Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md), and PM-3's rework in [browser-events-over-web-mqtt.md](../sketches/browser-events-over-web-mqtt.md)

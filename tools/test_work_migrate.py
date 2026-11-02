@@ -295,3 +295,12 @@ def test_wb9_rename_keeps_an_exception_whose_old_spelling_is_still_mentioned(tmp
     assert report == ["exceptions: kept beside their new id, since still mentioned: FMH-H2"]
     wm.cross_exceptions(repo, crossings, apply=True)
     assert baseline.read_text(encoding="utf-8").count("FMH-2 ") == 1, "a second run adds nothing"
+
+
+def test_wb10_03_normalise_holds_the_status_word_to_the_board() -> None:
+    text = "# X\n\n**Unit ID:** `x`\n**Status:** built 2026-11-02. Two built, awaiting review\n\n## Slices\n\n" \
+           "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n| X-1 | a | built 2026-11-02 | |\n| X-2 | b | building 2026-11-01 | |\n"
+    held = wm.hold_status(text, "x")
+    assert "**Status:** building 2026-11-01. Two built, awaiting review\n\n## Slices" in held, "the blank line after it survives"
+    assert wm.hold_status(held, "x") == held
+    assert wm.hold_status(text.replace("**Status:** built 2026-11-02.", "**Status:** planned."), "x").count("building 2026-11-01. Two built") == 1

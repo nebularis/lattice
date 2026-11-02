@@ -3,7 +3,7 @@
 # Performance, integration and load testing for the studio - Status
 
 **Unit ID:** `studio-quality`
-**Status:** building 2026-10-31. SQ-1 and SQ-2 built 2026-10-31, phase D's cost recovered but for publish, which waits on `projection-maintenance`
+**Status:** built 2026-10-31. SQ-1 and SQ-2 built 2026-10-31, phase D's cost recovered but for publish, which waits on `projection-maintenance`
 **Last updated:** 2026-11-02
 **Plan:** [studio-quality.md](../plans/studio-quality.md)
 **Sketch:** [studio-quality-kit.md](../sketches/studio-quality-kit.md)

@@ -449,7 +449,21 @@ def normalise_record(repo: wb.Repo, path: Path) -> tuple[str, list[str]]:
         text = text[:m.end() + 1] + line + "\n" + text[m.end() + 1:]
     elif not status:
         notes.append(f"{path.relative_to(root).as_posix()}: no Status line")
-    return text, notes
+    return hold_status(text, unit), notes
+
+
+def hold_status(text: str, unit: str) -> str:
+    """The record with its Status word and day set to what its board rolls up to (WB-10), the text
+    after them kept. A record with no board, or whose board gives no word, is left as it is."""
+    parsed = wb.parse_unit(unit, text)
+    rolled = wb.rollup(parsed.board.rows) if parsed.board else None
+    status = wb.STATUS_LINE_RE.search(text)
+    if not rolled or not status or (parsed.state, parsed.day) == rolled:
+        return text
+    m = wb.STATE_RE.match(status.group(1))
+    rest = m.group(3) if m else status.group(1)
+    sep = "" if not rest or rest.startswith((".", ",")) else ". "
+    return text.replace(status.group(0), f"**Status:** {rolled[0]} {rolled[1]}".rstrip() + sep + rest, 1)
 
 
 def declare_prefixes(repo: wb.Repo, apply: bool) -> list[str]:

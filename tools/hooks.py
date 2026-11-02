@@ -321,6 +321,11 @@ def work(change: Change, touched: list[str]) -> list[str]:
         unit = board.parse_unit(Path(rel).stem, text)
         if unit.status_text and unit.state is None:
             messages.append(f"{rel}: the Status line opens with '{unit.status_text[:30]}', not a word of {states}, then its day")
+        rolled = board.rollup(unit.board.rows) if unit.board else None
+        if rolled and unit.state and (unit.state, unit.day) != rolled:
+            said, given = f"{unit.state} {unit.day}".strip(), f"{rolled[0]} {rolled[1]}".strip()
+            messages.append(f"{rel}: the Status line reads '{said}', its board rolls up to '{given}'. "
+                            "Run `mise run work:normalise -- --apply`")
         for row in (unit.board.rows if unit.board else ()):
             where = f"{rel}:{row.line}: {row.id}"
             if row.state is None:

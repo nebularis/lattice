@@ -33,7 +33,7 @@ DATED = frozenset(LADDER[2:])
 RANK = {state: n for n, state in enumerate(LADDER)}
 RANK.update({"blocked": 1, "dropped": -1})
 STATE_RE = re.compile(r"^(" + "|".join(STATES) + r")\b\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$")
-STATUS_LINE_RE = re.compile(r"^\*\*Status:\*\*\s*(.+?)\s*$", re.M)
+STATUS_LINE_RE = re.compile(r"^\*\*Status:\*\*[ \t]*(.+?)[ \t]*$", re.M)  # never past its line
 UNIT_TYPE_RE = re.compile(r"^\*\*Unit type:\*\*\s*(.+?)\s*$", re.M)
 PREFIX_RE = re.compile(r"^\*\*Prefix:\*\*\s*([A-Z]{2,5}(?:,\s*[A-Z]{2,5})*)\s*$", re.M)
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]*\|$")
@@ -210,6 +210,30 @@ def find_board(unit: str, text: str) -> Optional[Board]:
                             row[state_at], offset))
         return Board(unit, tuple(header), tuple(rows), number, heading)
     return None
+
+
+def rollup(rows: Iterable[Row]) -> Optional[tuple[str, str]]:
+    """The unit state a board gives, the rule its record's Status word is held to (WB-10).
+    Building while any row is building, dated by the earliest, the day the work started. Otherwise,
+    once a row has reached built, the lowest word the rows at built or later share, dated by the
+    latest, since a planned row left over is the next slice, not work under way. Otherwise blocked
+    if any row is, else the highest of planned and briefed. Dropped rows count only when every row
+    is dropped. None for a board with no row a word parses."""
+    rows = [r for r in rows if r.state]
+    if not rows:
+        return None
+    if all(r.state == "dropped" for r in rows):
+        return "dropped", ""
+    rows = [r for r in rows if r.state != "dropped"]
+    building = [r.day for r in rows if r.state == "building"]
+    if building:
+        return "building", min((d for d in building if d), default="")
+    done = [r for r in rows if r.state in LADDER and RANK[r.state] >= RANK["built"]]
+    if done:
+        return LADDER[min(RANK[r.state] for r in done)], max((r.day for r in done if r.day), default="")
+    if any(r.state == "blocked" for r in rows):
+        return "blocked", ""
+    return LADDER[max(RANK[r.state] for r in rows)], ""
 
 
 def parse_unit(unit: str, status_text: str, plan_text: str = "") -> Unit:
@@ -395,6 +419,24 @@ def join(boards: dict[str, dict[str, Unit]]) -> dict[tuple[str, str], Joined]:
     return dict(sorted(out.items()))
 
 
+def unit_state(name: str, base: Optional[Unit], boards: dict[str, dict[str, Unit]]) -> str:
+    """A unit's state as a cell: the base's, then each branch whose record is further on, furthest
+    first, so a unit built on a branch never reads planned (WB-10). A branch whose record has no
+    state word, or is behind, is left out, as the Work table leaves a stale row out."""
+    def text(unit: Unit) -> str:
+        return f"{unit.state or '?'} {unit.day}".strip()
+    def key(unit: Optional[Unit]) -> tuple[int, str]:
+        return (RANK.get(unit.state or "", -2), unit.day) if unit else (-2, "")
+    own = text(base) if base else "?"
+    others: dict[str, list[tuple[int, str]]] = {}
+    for branch, units in boards.items():
+        unit = units.get(name)
+        if branch != MAIN and unit and unit.state and key(unit) > key(base):
+            others.setdefault(text(unit), []).append((RANK[unit.state], branch))
+    ordered = sorted(others.items(), key=lambda kv: (-max(r for r, _ in kv[1]), kv[0]))
+    return own + "".join(f" · {state} on {', '.join(sorted(b for _, b in hold))}" for state, hold in ordered)
+
+
 # ---- measuring -----------------------------------------------------------------------------------
 
 def share_on_main(root: Path, tip: str) -> str:
@@ -455,7 +497,7 @@ def board_text(repo: Repo, show_all: bool, measure: bool, commits: bool) -> str:
     for name, unit in main_units.items():
         on = sorted({b for (u, _), j in joined.items() if u == name for b in j.moved})
         if show_all or on:
-            unit_rows.append((name, unit.kind, f"{unit.state or '?'} {unit.day}".strip(), unit.next, ", ".join(on)))
+            unit_rows.append((name, unit.kind, unit_state(name, unit, boards), unit.next, ", ".join(on)))
     lines += table(("Unit", "Kind", "State", "Next", "Moved on"), unit_rows)
     lines += ["", "## Work", ""]
     work_rows = []
@@ -648,7 +690,7 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
         summary = ", ".join(f"{n} {st}" for st, n in sorted(counts.items(), key=lambda kv: -kv[1])) or "no board"
         on = sorted({b for j in slices for b in j.moved})
         unit_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
-                          unit.kind, f"{unit.state or '?'} {unit.day}".strip(), unit.next, summary, ", ".join(on)))
+                          unit.kind, unit_state(name, unit, boards), unit.next, summary, ", ".join(on)))
     glance += table(("Unit", "Kind", "State", "Next", "Slices", "Moved on"), unit_rows)
     glance += ["", "One chart per epic, or per unit outside an epic with five dated slices or more, from the first day it has to the newest, every dated slice in the state its board gives.", ""]
     glance += charts_text(main_units, joined, open_units)
