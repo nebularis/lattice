@@ -162,7 +162,7 @@ Rule 11 is amended. Every release in which the layer changed has an entry, not e
 
 Proposed in the [improved ontology documentation sketch](../../developer/sketches/improved-ontology-documentation.md)
 and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the
-[`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD1
-to OD8 onward). The measurements cited in the context are in that unit's status record.
+[`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD-1
+to OD-8 onward). The measurements cited in the context are in that unit's status record.
 
 The addendum of 2026-10-21 is decision D-59 of the Persistence work, recorded in that unit's status record.

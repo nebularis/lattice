@@ -93,7 +93,7 @@ release register checks (row 15). `check:proofs` is native and manual, so it is 
 **Deviations from the plan:**
 
 - **All 13 proof claims re-digested, not three.** A claim's digest covers every definition in the
-  session (E1.4), so changing `some_value` and `every_value` changes every claim's digest. Each was
+  session (FME-1.4), so changing `some_value` and `every_value` changes every claim's digest. Each was
   re-proved before its digest was refreshed. TL2, TL3a and TL3b are restated too, since the readings
   take the closure. AQ's description now reads 30 lemmas.
 - **The reference test count fell from 66 to 58.** The 15 adequacy tests became two table-driven

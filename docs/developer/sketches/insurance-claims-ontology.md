@@ -231,7 +231,7 @@ Before adding anything, each need is matched to what exists or is planned. Statu
 | the insurer's duties to indemnify, defend, advance, pay | `ins:Obligation` arising per case, its occasion, due range, breach | Instrument 0.17.0, Behaviour 0.15.0 (CCS C7 to C11) |
 | exclusions, write-backs, burden of establishing an exception | `ins:Exclusion`, `ins:Permission`, law I7, `exe:ExceptionNotEstablished` | CCS §5.7, built |
 | notice as a condition precedent, a notice duty and its breach chain | `ins:Obligation` with `ins:arisesOn` an `ins:OnAct`, `ins:due`, `ins:arisesOnBreachOf` | CCS §5.5, built |
-| a notification as an act with legal effect | `ins:LegalAct`, `ins:Declaration`, `ins:forCase` | Instrument acts, CCS C9b1 |
+| a notification as an act with legal effect | `ins:LegalAct`, `ins:Declaration`, `ins:forCase` | Instrument acts, CCS-9b.1 |
 | an approval, a consent to settle, a claims co-operation clause | `ins:Exercise` of a power, `ins:pursuantTo`, a consent rule | C9b, `reinsurance-claims-cooperation.ttl` |
 | relation back, deemed receipt, deemed failure | `ins:Deeming`, `ins:forPurposeOf`, closure declarations | ADR-A105, CCS §5.6 |
 | findings, determinations, matters outside computation | finding records, exercise of a power to determine | CCS §6.4 |
@@ -1212,7 +1212,7 @@ and CCS C12 is marked.
 
 | Slice | Content | Needs | Before Phase 5? |
 |---|---|---|---|
-| AIR-6.2a | module, `clm:Loss`, `clm:Demand`, `clm:Circumstance`, `clm:Notification`, `clm:Claim`, keys, roles, the two-clock examples | Instrument acts (C9b1), AIR-4.4, AIR-4.5 | yes |
+| AIR-6.2a | module, `clm:Loss`, `clm:Demand`, `clm:Circumstance`, `clm:Notification`, `clm:Claim`, keys, roles, the two-clock examples | Instrument acts (CCS-9b.1), AIR-4.4, AIR-4.5 | yes |
 | AIR-6.2b | `clm:Response`, triggers (§7.9), the responding-instrument evaluation over the CCS runtime, milestone M6's second half | CCS C11, C12 | after C12 |
 | AIR-6.2c | loss items, quanta, coverage positions, settlement as an instrument | CCS C9 | yes, for the structure |
 | AIR-6.2d | movements, derived balances, the loss run loop to exposure (§13.3) | AIR-4.4 | yes |

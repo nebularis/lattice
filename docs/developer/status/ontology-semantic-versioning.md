@@ -3,10 +3,7 @@
 # Ontology Semantic Versioning - Status
 
 **Unit ID:** `ontology-semantic-versioning`
-**Status:** Slices 1-4 implemented, at our explicit direction to
-implement the plan autonomously (2026-09-25). ADR-A86 itself remains
-Proposed — ratifying it is a separate action for the maintainer this implementation does
-not take on its own behalf.
+**Status:** built 2026-09-25. Slices 1-4 implemented, at our explicit direction to implement the plan autonomously (2026-09-25). ADR-A86 itself remains Proposed, ratifying it is a separate action for the maintainer this implementation does not take on its own behalf.
 **Last updated:** 2026-09-25
 **Trigger:** request, 2026-09-25 ("implement the semantic versioning
 plan autonomously")

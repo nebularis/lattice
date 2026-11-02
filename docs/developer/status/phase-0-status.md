@@ -4,7 +4,7 @@
 
 **Unit type:** Phase
 **Unit ID:** `phase-0`
-**Status:** ⏳ In progress — P0.1 decision pack drafted, pending ratification
+**Status:** built 2026-09-23. ⏳ In progress — P0.1 decision pack drafted, pending ratification
 **Last updated:** 2026-09-23
 **Plan:** [phase-0-plan.md](../plans/phase-0-plan.md)
 **Sketch:** [phase-0-sketch.md](../sketches/phase-0-sketch.md)
@@ -13,9 +13,9 @@
 
 ## Current state
 
-P0.1 (decision pack) was executed autonomously on 2026-09-23: 17 ADRs drafted (A48, A50, A51, A54, A57, A59, A62, A63, A65 through A69, A71, A74, A75, A81), all filed with **Status: Proposed**, none marked Accepted. We were unavailable during this session and asked the agent to work autonomously and make good decisions for later review — no ADR here is self-ratified; ratification remains a human act per the Agentic Development Contract. ADR-A62's namespace harmonisation (the one part of P0.1.12 that is a mechanical change, not a decision) was executed directly: `ontology/spc/spec/spc.ttl`, `ontology/spc/README.md`, and `tools/spc/python/src/spc/ontologies/spc.owl.ttl` now use the harmonised `nebularis.org` namespace, and `ontology-architecture.md` §3 was updated to match.
+P0.1 (decision pack) was executed autonomously on 2026-09-23: 17 ADRs drafted (A48, A50, A51, A54, A57, A59, A62, A63, A65 through A69, A71, A74, A75, A81), all filed with **Status: Proposed**, none marked Accepted. We were unavailable during this session and asked the agent to work autonomously and make good decisions for later review — no ADR here is self-ratified, ratification remains a human act per the Agentic Development Contract. ADR-A62's namespace harmonisation (the one part of PLT-0.1.12 that is a mechanical change, not a decision) was executed directly: `ontology/spc/spec/spc.ttl`, `ontology/spc/README.md`, and `tools/spc/python/src/spc/ontologies/spc.owl.ttl` now use the harmonised `nebularis.org` namespace, and `ontology-architecture.md` §3 was updated to match.
 
-No code slice (P0.2 onward) has started. The original P0.1.3 deliverable, `docs/architecture/iri-policy.md`, is now a short historical record: its body was removed on 2026-09-23 because it still read as guidance and contradicted the current catalogue. Its replacement is `docs/architecture/iri-identity-patterns.md` under ADR-A82.
+No code slice (P0.2 onward) has started. The original PLT-0.1.3 deliverable, `docs/architecture/iri-policy.md`, is now a short historical record: its body was removed on 2026-09-23 because it still read as guidance and contradicted the current catalogue. Its replacement is `docs/architecture/iri-identity-patterns.md` under ADR-A82.
 
 **2026-09-23, later same day:** ADR-A51 was reviewed ([docs/developer/review/ADR-A51-review.md](../review/ADR-A51-review.md)) and found to conflict with RDF identity semantics (environment-scoped IRIs), overclaim uniqueness safety with a truncated hash, and disagree internally with `rdf-sparql-patterns-guide.md`'s own entity-identity default. An initial disposition claimed all findings resolved, but the second review ([ADR-A51-2nd-agent-review.md](../review/ADR-A51-2nd-agent-review.md)) identified unresolved grammar, hash, skolemization, scope, and lifecycle issues. Our architectural direction then reframed the concern: LATTICE is a framework and cannot mandate one identifier scheme for every adopter. [ADR-A82](../../architecture/decisions/ADR-A82-framework-neutral-identity-pattern-selection.md) supersedes the unratified ADR-A51. [iri-identity-patterns.md](../../architecture/iri-identity-patterns.md) is now the proposed pattern catalogue. `iri-policy.md` is retained only as historical profile material.
 
@@ -39,24 +39,24 @@ Nothing else blocks P0.2 starting, once the maintainer has reviewed the P0.1 ADR
 
 ## Slice status
 
-| Slice | ADR(s)/deliverable | Status | Notes |
-|---|---|---|---|
-| P0.1.1 | ADR-A74 | Drafted, Proposed | `data-architecture.md` §1–3, §5–7 rewrite still outstanding |
-| P0.1.2 | ADR-A75 | Drafted, Proposed | |
-| P0.1.3 | ADR-A82 + `iri-identity-patterns.md` | Drafted, Proposed, pending review | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and their `ontology/persistence` configuration surface (`dal:IdentityProfile`, specified, and resolved per resource role by the compiler since `persistence-compiler-iri-sync` Slice 3). Revised on 2026-09-23 by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review. |
-| P0.1.4 | ADR-A54 | Drafted, Proposed | Graph-name validator (P0.3.7) not yet built |
-| P0.1.5 | ADR-A65 | Drafted, Proposed | `ontology/governance/shapes/provenance.ttl` (P0.3.6) not yet built |
-| P0.1.6 | ADR-A67 | Drafted, Proposed | |
-| P0.1.7 | ADR-A68 | Drafted, Proposed | DPO/legal review still recommended, not performed |
-| P0.1.8 | ADR-A63 | Drafted, Proposed | |
-| P0.1.9 | ADR-A48 | Drafted, Proposed | Replaces `solution-design-specification.md` §7.1 CAP framing — doc rewrite still outstanding |
-| P0.1.10 | ADR-A50 + ADR-A81 (renumbered from "A44 amended") | Drafted, Proposed | Numbering collision — see table above |
-| P0.1.11 | ADR-A57 | Drafted, Proposed | |
-| P0.1.12 | ADR-A59, ADR-A66, ADR-A71, ADR-A62 | Drafted, Proposed | ADR-A62's namespace rename executed; the other three are documentation only |
-| P0.1.13 | ADR-A69 | Drafted, Proposed | |
-| P0.1.14 | Threat model document | Not started | Requires owner-per-control assignment; needs risk input |
-| P0.1.15 | NFR/SLO catalogue | Not started | Epic's own framing: "are the numbers ones you are willing to be held to" — requires the maintainer's sign-off on numbers, not agent invention |
-| P0.2+ | Build skeleton, ontology, store SPI, coordination, host, messaging, synthetic data | Not started | |
+| Slice | Deliverable | State | Blocked on | ADR(s)/deliverable | Notes |
+|---|---|---|---|---|---|
+| PLT-0.1.1 |  | built 2026-09-23, Proposed |  | ADR-A74 | `data-architecture.md` §1–3, §5–7 rewrite still outstanding |
+| PLT-0.1.2 |  | built 2026-09-23, Proposed |  | ADR-A75 |  |
+| PLT-0.1.3 |  | built 2026-10-10, Proposed, pending review |  | ADR-A82 + `iri-identity-patterns.md` | ADR-A51's universal policy was superseded before ratification. The new guide describes configurable identity patterns and their `ontology/persistence` configuration surface (`dal:IdentityProfile`, specified, and resolved per resource role by the compiler since `persistence-compiler-iri-sync` Slice 3). Revised on 2026-09-23 by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (normalization, tuple-encoded digests, key rotation, store-local epoch, revision-class alignment). Ready for review. |
+| PLT-0.1.4 |  | built 2026-09-23, Proposed |  | ADR-A54 | Graph-name validator (P0.3.7) not yet built |
+| PLT-0.1.5 |  | built 2026-09-23, Proposed |  | ADR-A65 | `ontology/governance/shapes/provenance.ttl` (P0.3.6) not yet built |
+| PLT-0.1.6 |  | built 2026-09-23, Proposed |  | ADR-A67 |  |
+| PLT-0.1.7 |  | built 2026-09-23, Proposed |  | ADR-A68 | DPO/legal review still recommended, not performed |
+| PLT-0.1.8 |  | built 2026-09-23, Proposed |  | ADR-A63 |  |
+| PLT-0.1.9 |  | built 2026-09-23, Proposed |  | ADR-A48 | Replaces `solution-design-specification.md` §7.1 CAP framing — doc rewrite still outstanding |
+| PLT-0.1.10 |  | built 2026-09-23, Proposed |  | ADR-A50 + ADR-A81 (renumbered from "A44 amended") | Numbering collision — see table above |
+| PLT-0.1.11 |  | built 2026-09-23, Proposed |  | ADR-A57 |  |
+| PLT-0.1.12 |  | built 2026-09-23, Proposed |  | ADR-A59, ADR-A66, ADR-A71, ADR-A62 | ADR-A62's namespace rename executed, the other three are documentation only |
+| PLT-0.1.13 |  | built 2026-09-23, Proposed |  | ADR-A69 |  |
+| PLT-0.1.14 |  | planned |  | Threat model document | Requires owner-per-control assignment, needs risk input |
+| PLT-0.1.15 |  | planned |  | NFR/SLO catalogue | Epic's own framing: "are the numbers ones you are willing to be held to" — requires the maintainer's sign-off on numbers, not agent invention |
+| PLT-0.2r |  | planned |  | Build skeleton, ontology, store SPI, coordination, host, messaging, synthetic data |  |
 
 ## Milestone tracker
 
@@ -96,12 +96,12 @@ Tracks [phase-0-plan.md §3–5](../plans/phase-0-plan.md#3-documentation-obliga
 
 | Item | Status |
 |---|---|
-| `docs/architecture/iri-identity-patterns.md` (P0.1.3) | Drafted and revised (2026-09-23), pending ratification with ADR-A82. `iri-policy.md` reduced to a historical record |
-| `data-architecture.md` §1–3, §5–7 rewrite for A74 (P0.1.1) | Outstanding |
-| `solution-design-specification.md` §7 rewrite for A48 (P0.1.9) | Outstanding |
+| `docs/architecture/iri-identity-patterns.md` (PLT-0.1.3) | Drafted and revised (2026-09-23), pending ratification with ADR-A82. `iri-policy.md` reduced to a historical record |
+| `data-architecture.md` §1–3, §5–7 rewrite for A74 (PLT-0.1.1) | Outstanding |
+| `solution-design-specification.md` §7 rewrite for A48 (PLT-0.1.9) | Outstanding |
 | `ontology-architecture.md` SPC section update for A62 | Done |
-| `docs/architecture/nfr.md` + `nfr.yaml` (P0.1.15) | Outstanding — needs SLO sign-off |
-| Threat model document (P0.1.14) | Outstanding |
+| `docs/architecture/nfr.md` + `nfr.yaml` (PLT-0.1.15) | Outstanding — needs SLO sign-off |
+| Threat model document (PLT-0.1.14) | Outstanding |
 | All other rows in the plan's §3–5 tables | Outstanding |
 
 ## Next steps

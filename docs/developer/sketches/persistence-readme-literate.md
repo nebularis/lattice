@@ -3,11 +3,11 @@
 # Persistence: the README as a literate specification, told through its examples (sketch)
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.11 ([plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20)),
-after H2.9 and the rest of Track H's H2 work
-**Status:** sketch, 2026-10-20. RL-Q1 to RL-Q7 decided by the maintainer the same day (§6). H2.11a and H2.11b built 2026-10-21, awaiting review
+after FMH-2.9 and the rest of Track H's H2 work
+**Status:** sketch, 2026-10-20. RL-Q1 to RL-Q7 decided by the maintainer the same day (§6). FMH-2.11a and FMH-2.11b built 2026-10-21, awaiting review
 **Builds on:** [ADR-A126](../../architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md) (the layout and the section 6
 grammar), [ADR-A127](../../architecture/decisions/ADR-A127-published-architecture-decisions.md) (what a user-facing document may cite),
-[literate specifications](../../architecture/literate-specifications.md), the Eligibility migration (OD6) and Vocabulary's (OD7) of the
+[literate specifications](../../architecture/literate-specifications.md), the Eligibility migration (OD-6) and Vocabulary's (OD-7) of the
 documentation epic, which left Persistence out ("catalogue entries only")
 
 ## 1. Why
@@ -32,7 +32,7 @@ to a graph. The maintainer asks for two things at once:
 | `shapes/constraints.ttl` is mostly SHACL-SPARQL | section 7 carries it in hidden blocks naming their file, as Eligibility's constraints are |
 | it cites ADR-A67, A78, A79, A80, A82, A84, A114 and A121. Only A121 is Published, and A67, A82 and A84 are Proposed | a migrated README fails the sources check on an unpublished citation (ADR-A127). Either the maintainer publishes them first, or the text stops citing them (RL-Q3) |
 | about 36 example files, the expected profiles, the membership fixtures and every behaviour test pass on rdflib and Oxigraph | the narrative can show real, tested graphs and real generated SPARQL, never invented ones |
-| the generated class diagram of the Overview (OD5) draws every class | for about 320 subjects it may be unreadable (RL-Q6) |
+| the generated class diagram of the Overview (OD-5) draws every class | for about 320 subjects it may be unreadable (RL-Q6) |
 | today's §14 says the foundation document imports Foundation 0.4.0, and the file imports 0.18.0 | stale prose, corrected in the migration |
 | the triple-store record and efficient queries and shapes are architecture documents | the gotchas may cite them, since they are not working documents |
 
@@ -146,10 +146,10 @@ light and dark themes. Rendered and checked in both before handoff.
 
 | # | Question | Options | Decided |
 |---|---|---|---|
-| RL-Q1 | one slice or two | (a) H2.11a conformance: the layout, section 6 and 7, checked graph for graph, no narrative change, then H2.11b the narrative, the pictures and the gotchas, prose and diagrams only. (b) one slice | (a). The migration check judges a and a reviewer judges b, and neither hides the other's diff |
+| RL-Q1 | one slice or two | (a) FMH-2.11a conformance: the layout, section 6 and 7, checked graph for graph, no narrative change, then FMH-2.11b the narrative, the pictures and the gotchas, prose and diagrams only. (b) one slice | (a). The migration check judges a and a reviewer judges b, and neither hides the other's diff |
 | RL-Q2 | the running case | (a) the shipped examples, the project aggregate of `composite-project-ownership` for writes and history, `baseline-single-class` for the named-graph family. (b) a new running example. (c) the history and versioning sketch's E1 to E8 | (a). They are tested, domain-neutral, and already the expected profiles' sources. The sketch's examples are a working document the README may not cite |
-| RL-Q3 | citations of unpublished ADRs | (a) the maintainer publishes ADR-A78, A79, A80, A114, A122, A123 and A132 before H2.11a merges, and the text stops citing A67, A82, A84 and A128 while they are Proposed. (b) the README cites none of them and states what they decided | as leaned, (a) for the accepted ones and (b) for the proposed ones. Publication is the maintainer's step, due before H2.11a merges |
+| RL-Q3 | citations of unpublished ADRs | (a) the maintainer publishes ADR-A78, A79, A80, A114, A122, A123 and A132 before FMH-2.11a merges, and the text stops citing A67, A82, A84 and A128 while they are Proposed. (b) the README cites none of them and states what they decided | as leaned, (a) for the accepted ones and (b) for the proposed ones. Publication is the maintainer's step, due before FMH-2.11a merges |
 | RL-Q4 | `persistent-foundation` | (a) generated from this README, as Behaviour's README generates its runtime document (ADR-A120). (b) a README of its own | (a), the Behaviour pattern. The two documents keep their own ontology IRIs and share one version |
 | RL-Q5 | the palette | (a) §5 here, applied to this README, and proposed to the literate specifications conventions as a shared palette afterwards. (b) a shared palette first | (a) |
 | RL-Q6 | the Overview's generated class diagram | (a) the generated diagram restricted to the top classes (profiles, dimensions, compiled profile, operation contract), with the rest in each section's own diagrams, which needs a filter in the generator. (b) the full generated diagram in a collapsed block. (c) no generated diagram for this module | (b) for now. If the rendered diagram is too busy to read single elements, we split it, by document or by section, and that split is the generator filter of (a) |
-| RL-Q7 | the section 6 definitions | every term needs a definition, and some have none or only a comment. (a) drafted from the README's prose and reviewed by the maintainer, as OD6 did for 32 Eligibility terms. (b) left as they are | (a) |
+| RL-Q7 | the section 6 definitions | every term needs a definition, and some have none or only a comment. (a) drafted from the README's prose and reviewed by the maintainer, as OD-6 did for 32 Eligibility terms. (b) left as they are | (a) |

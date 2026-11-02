@@ -25,6 +25,10 @@ along the way.
 - **The git hooks are a floor, never a ceiling.** `mise run bootstrap` installs them ([ADR-A133](docs/architecture/decisions/ADR-A133-git-hooks.md)). They run the checks a commit, or a merge into `main`, touches, and never block a push. Never bypass one (`--no-verify`, `LATTICE_HOOKS_SKIP`) without recording which and why in the slice's Validation Pack, and never report a passing hook as a passing `mise run check`.
 - **Never commit, merge, tag or push** without the maintainer's go-ahead. Release tags are always the
   maintainer's to create. Do not mark an ADR Accepted yourself.
+- **Mark before you touch.** Before the first edit of anything you pick up, a slice, a unit or a plan, and above all a slice of another plan, set its row on the slice board of its home unit's status record to `building <day>`, run `mise run build:work`, and commit that alone (skill `lattice-lifecycle`). An edit made before the mark is invisible to `mise run work:board`, and every view built from the board is then wrong.
+- **Know who is here.** Before the first edit in any checkout, run `mise run work:here`. Where it lists another live session building there, or you were asked to review, say who is here and ask the maintainer before writing.
+- **Attend to ROADMAP.md at every handoff.** Run `mise run build:roadmap -- --fetch` for its generated sections, read each hand-written section against the records the work changed and refresh what disagrees, at the events the lifecycle skill names for each section, in the same commit. The handoff report names the sections refreshed and the sections checked. A roadmap that no handoff touched is stale by then (STD-307).
+- **Ask the board, not the branches.** `mise run work:board` says where every unit and slice is across every local and remote branch, in a few hundred tokens. Read a branch only after it.
 - **End a "what next" report** with 🔴 PLAN FIRST when something must be decided first, or
   🟢 READY TO BRANCH when a new branch is due.
 
@@ -171,7 +175,7 @@ Load the skill whose description matches the task. Each lives in `.claude/skills
 
 | Skill | When |
 |---|---|
-| `lattice-lifecycle` | starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
+| `lattice-lifecycle` | picking up a slice or a unit, from your own plan or another's, before the first edit, and starting, continuing, handing off or closing a unit of work or slice: status, plans, Validation Packs, commits, merges, release tags |
 | `lattice-design` | writing a sketch, a plan brief, an ADR or design questions for the maintainer |
 | `lattice-architecture` | a design that crosses layers or modules, or needs the principles behind LATTICE's structure |
 | `lattice-ontology-authoring` | changing anything under `ontology/` |

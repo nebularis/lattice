@@ -61,7 +61,7 @@ flowchart LR
   migrations, and the licence files. Examples and test fixtures in a separate optional archive, since a runtime
   needs neither.
 - **Tools.** Wheels for the tool packages, built against the RDF bundle of the same release, and the RDF bundle.
-  The literate extractor and the catalogue reader become a package first (RC5).
+  The literate extractor and the catalogue reader become a package first (OD-RC5).
 - **Platform.** Container images for each service and the workers, the Maven artefacts, the data contracts
   (OpenAPI and event schemas), and a compose file naming the images by digest.
 - **Apps.** Container images, or static builds, of the three apps, and the platform bundle they need.
@@ -99,7 +99,7 @@ that what they hold is the release.
 
 - **The smallest useful step is the RDF bundle on a GitHub Release**, with its manifest and checksums. It needs
   no registry account, and it is what an adopter of the ontologies needs first.
-- **Tools follow on PyPI** once RC5 makes the shared tooling a package. Until then a tools archive of wheels on
+- **Tools follow on PyPI** once OD-RC5 makes the shared tooling a package. Until then a tools archive of wheels on
   the GitHub Release serves.
 - **Platform and apps wait** until a service is meant to run outside this repository's compose environment.
 - **V2 keeps the ontology versions meaningful.** Under V1 a tools fix would re-version every ontology.
@@ -123,5 +123,5 @@ apps when a deployment needs them. GHCR for images when they come, and serving t
 
 ## 7. Next
 
-🔴 PLAN FIRST. BUN-Q2 and BUN-Q4 shape the first release's tooling. The RDF bundle could ship with OD-REL, as a
+🔴 PLAN FIRST. BUN-Q2 and BUN-Q4 shape the first release's tooling. The RDF bundle could ship with OD-REL1, as a
 step of its release task, if the answers come before it.

@@ -2,6 +2,9 @@
 
 # Repository Topology A77 Status
 
+**Unit ID:** `repository-topology-a77`
+**Status:** merged 2026-09-20. Accepted, structural migration complete.
+
 **Unit:** `repository-topology-a77`
 **State:** Accepted - structural migration complete
 **Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)

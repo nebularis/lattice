@@ -13,7 +13,7 @@ The maintainer decided on 2026-10-21 that the persistence tests run their genera
 | `check:persistence`: `-m "not conformance"`, `PERSISTENCE_ENGINES` unset, `-n auto --dist loadgroup`, also runs `tools/testing/oxigraph/tests`, depends on `bootstrap:testing-oxigraph`, `bootstrap:testing-mem-check` and `check:persistence-expected-profiles` | `mise.toml` |
 | New `check:persistence-conformance`: `PERSISTENCE_ENGINES=rdflib,oxigraph` through the task's `env` table (no shell prefix, so it works on Windows), no marker filter, same parallelism. On demand and before a merge, not part of `check` | `mise.toml` |
 | `check:persistence-oxigraph` removed, and its references updated | `mise.toml`, `tools/testing/oxigraph/README.md`, `docs/developer/developer-guide.md`, `docs/architecture/triple-store-discovery.md` |
-| Generated SPARQL run directly on `rdflib.Dataset()` now goes through `engines.dataset()`: `test_ir_render` (t16 to t18, t21, t22, t25, t25b, t26, t28), `test_graph_naming`, `test_terms` (H2.1 round trip) | the three test files |
+| Generated SPARQL run directly on `rdflib.Dataset()` now goes through `engines.dataset()`: `test_ir_render` (t16 to t18, t21, t22, t25, t25b, t26, t28), `test_graph_naming`, `test_terms` (FMH-2.1 round trip) | the three test files |
 | Two child-process scripts that import `engines` are told `PERSISTENCE_ENGINES=rdflib`, so they are rdflib whatever the parent selects | `test_append_events.py` (t2), `test_key_claims_and_audits.py` (t45) |
 | `test_h2_4b_t12` (the Oxigraph cases skip where the package is absent) gives its child `PERSISTENCE_ENGINES=rdflib,oxigraph`, since it needs an rdflib case and an Oxigraph case | `test_engines.py` |
 

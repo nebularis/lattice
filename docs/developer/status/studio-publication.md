@@ -3,12 +3,11 @@
 # Publication from the Configuration Studio - Status
 
 **Unit ID:** `studio-publication`
-**Status:** ✅ PB1 to PB17 built 2026-10-31, phase D done
+**Status:** built 2026-10-31. PB1 to PB17 built 2026-10-31, phase D done
 **Last updated:** 2026-10-31
 **Plan:** [studio-publication.md](../plans/studio-publication.md)
 **Sketch:** [studio-publication.md](../sketches/studio-publication.md)
 **ADR:** [A-149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md), Proposed
-**Branch:** `claude/config-authoring-studio`
 
 ## Current position
 

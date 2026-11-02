@@ -1,6 +1,6 @@
 ---
 name: lattice-lifecycle
-description: How work is run in LATTICE and projects built on it. Use when starting, continuing, handing off or closing a unit of work, an epic, a phase or a slice, when reading or updating a status record, plan, review request or Validation Pack, when preparing a commit, merge or release, and when reporting what comes next.
+description: How work is run in LATTICE and projects built on it. Use when picking up a slice or a unit, from your own plan or another's, before your first edit, when starting, continuing, handing off or closing a unit of work, an epic, a phase or a slice, when reading or updating a status record, plan, review request or Validation Pack, when preparing a commit, merge or release, and when reporting what comes next.
 ---
 
 # The LATTICE development lifecycle
@@ -33,7 +33,7 @@ approved.
 | `docs/developer/validation/<slice-id>.md` | a slice's Validation Pack | written with the slice, results filled at verification |
 | `docs/developer/pending-design-decisions.md` | design decisions that matter but cannot be made yet, with the options known | add when raised, remove naming the ADR, sketch or plan that settles it |
 | `docs/developer/technical-debt.md` | debt with no planned home: a shortcut, a gap between a claim and the behaviour, a check that does not run | add when spotted, remove naming the plan that takes it on. Never features, follow-ups or deferred slices |
-| `docs/developer/INDEX.md` | every unit and its documents | when a unit or slice changes state |
+| `docs/developer/INDEX.md` | the generated register of every unit and every slice, written by `mise run build:work` from the status records | never by hand. Regenerated in the same commit as the record it reads (STD-305) |
 
 Never create a second status record for a unit. `docs/developer/` itself holds the registers and durable guidance only.
 
@@ -89,7 +89,7 @@ Fewer than 3 merges it. Skeleton slices, with one build smoke test, are exempt.
    table (ID, Given/When/Then, level L0 to L8, invariant, pass criterion, positive or negative),
    **one command** that runs everything, the artefacts to inspect, and deliberate non-coverage with
    the slice that covers it
-3. a traceability update in `docs/developer/INDEX.md`
+3. its row on the home unit's slice board moved to `built`, and `mise run build:work` run, so INDEX.md's register follows
 4. the doc delta, in the same slice. No "docs later"
 
 **The validation gate.** The maintainer reviews the Validation Pack before running anything, runs
@@ -103,6 +103,42 @@ integration, L5 system end-to-end, L6 UI end-to-end, L7 non-functional, L8 hosti
 
 **Non-weakening.** No slice deletes, skips or loosens an earlier slice's test without an ADR-grade
 justification in its Validation Pack, countersigned at the gate.
+
+## Picking up and finishing
+
+The slice board of a unit's status record is the one place a slice's state is written, and `mise run work:board` reads it from the tip of every local and remote branch ([ADR-A151](../../../docs/architecture/decisions/ADR-A151-the-work-board.md), plan `work-board`). The board's shape is fixed.
+
+```markdown
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| CCS-9b.3b | aggregate bindings | building 2026-10-30, briefed 2026-10-27 | |
+| CCS-9b.4 | qualifying rules | planned | CCS-9b.3 |
+```
+
+- **A slice's state is written once, on the board of its home unit**, the unit whose plan defines it (STD-300). An agent that builds a CCS slice on a formal-methods branch sets the row in the CCS record, on that branch. The adopting unit's record says so in its history and never carries a second row.
+- **Mark before you touch.** Picking up is one edit, and it is the first edit: set the row to `building <day>`, add a history line, run `mise run build:work`, and commit the mark alone, so the board sees the claim from the first push (STD-301). An agent caught editing unmarked stops, marks and commits the mark before going on. A unit or a plan picked up whole is its record's `**Status:**` line changed the same way.
+- **A state is a word of the ladder and the day it was reached.** `planned`, `briefed`, `building`, `built`, `verified`, `merged`, `tagged`, with `blocked` and `dropped` aside, dated from `building` on, newest first in the cell, so the cell is its own trail (STD-302). The day is the fact written. The commit is read from git by `mise run work:board -- --commits`, never written.
+- **Handing off is one edit**, the row to `built <day>` in the commit that carries the Validation Pack's handoff. The maintainer's verification is `verified`, and the merge into `main` flips the rows it delivers to `merged <day>` in the merge commit.
+- **A slice id is `PREFIX-segment(.segment)*`**, a segment being optional capitals, digits and one lowercase letter, and the prefix declared on the unit's plan's `**Prefix:**` line (STD-303). `CCS-9b.3b`, `FMH-2.6d`, `AIR-S1` and `OD-DOC1` are ids. A slice is defined by its row, and a slice a plan names with no row fails `check:identifiers`.
+- **No plan and no status record names a branch** (STD-304). The board derives the branch from where it finds the row, and plans move between branches.
+- **The register is regenerated in the same commit** (STD-305). The `work` hook check refuses a commit whose touched records and INDEX.md's region disagree, or whose touched board is malformed, and names the task that fixes it.
+- **Before the first edit in any checkout, run `mise run work:here`** (STD-306). It writes your presence, `--role build`, `review` or `read` with `--model`, into the worktree's git-ignored `.local/agents/`, and lists the sessions touched in the last twelve hours. Where another live session is building there, or you were asked to review, say who is here and ask the maintainer before writing. A reviewer's findings go to the review request or to chat, never into a file another live session is building.
+
+**ROADMAP.md is kept whole, section by section** (STD-307). It is the maintainer's summary, and every section is current or says why not.
+
+| Section | Kept by | When |
+|---|---|---|
+| 1 the programme at a glance, 7 branches, 9 decisions waiting, 11 completed units | generated by `mise run build:roadmap`, which the post-merge hook runs on `main` | after every merge into `main`, and on demand. Never edited by hand |
+| 2 how the epics depend on one another, 8 the critical path | the planner, as diagrams | when a plan's Dependencies section gains or loses a dependency between units, or a blocker on the board changes the longest chain |
+| 3 the layers | the ontology author, as a diagram | when an ADR changes the substrate's import order or proposes a layer |
+| 4 active epics, 6 the platform programme | the agent handing an epic or a phase off, one subsection per epic | at each handoff and each merge that moves the epic: its documents, its ADRs, what moved and what is next, in the same commit as the status record |
+| 5 smaller units | nobody. It points at section 1 | never |
+| 10 the maintainer's queue | the agent proposes an order at each handoff, the maintainer orders | at each handoff that changes what unblocks the most work |
+| 12 observations | the agent that refreshes the roadmap | at each refresh, every observation checked and a stale one removed |
+
+A handoff that changes a unit's state says in its report which roadmap sections it refreshed and which it left, and why. Where a hand-written section disagrees with section 1, section 1 is right and the section is refreshed.
+
+Ask the board before reading branches. `mise run work:board` answers where every unit and slice is, with `--all` for every row, `--fetch` to fetch every remote first, `--measure` for each branch's content share on `main`, and `--commits` for the commit that set each printed row. INDEX.md holds the state of the tree it was built from, and `graph:ask -- read <slice id>` prints a slice's row.
 
 ## Building a slice
 
@@ -150,5 +186,6 @@ justification in its Validation Pack, countersigned at the gate.
 
 - A handoff lists what was built, what was run and its real result, what was not run, what to check
   first, and every deviation from the plan with its reason.
+- A handoff names the ROADMAP.md sections it refreshed and the ones it checked and left, since every handoff attends to the roadmap (STD-307). The generated ones are `mise run build:roadmap -- --fetch`, and the hand-written ones follow the table in Picking up and finishing.
 - A "what next" report ends with 🔴 PLAN FIRST when something must be decided first, or
   🟢 READY TO BRANCH when a new branch is actually due.

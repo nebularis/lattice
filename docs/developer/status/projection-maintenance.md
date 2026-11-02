@@ -3,7 +3,7 @@
 # Derived data maintained in the write, and replies that do not wait - Status
 
 **Unit ID:** `projection-maintenance`
-**Status:** 🟢 planned 2026-10-31, PM0 next, PM1 after DR1
+**Status:** planned. Sketched and planned 2026-10-31, PM0 next, PM1 after DR1.
 **Last updated:** 2026-10-31
 **Plan:** [projection-maintenance.md](../plans/projection-maintenance.md)
 **Sketch:** [projections-maintained-in-the-write.md](../sketches/projections-maintained-in-the-write.md)

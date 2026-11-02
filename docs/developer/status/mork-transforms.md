@@ -3,11 +3,10 @@
 # MORK transform backends - Status
 
 **Unit ID:** `mork-transforms`
-**Status:** 🟢 XJ1 to XJ7 built 2026-10-30, ADR-A148 Proposed
+**Status:** built 2026-10-30. XJ1 to XJ7 built 2026-10-30, ADR-A148 Proposed
 **Last updated:** 2026-10-30
 **Plan:** [mork-transforms.md](../plans/mork-transforms.md)
 **ADR:** [A-148](../../architecture/decisions/ADR-A148-mork-transform-backends.md), Proposed
-**Branch:** `claude/config-authoring-studio`
 
 ## Current position
 

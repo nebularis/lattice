@@ -290,6 +290,38 @@ def wrapping(change: Change, touched: list[str]) -> list[str]:
             "entry on one line" for path, numbers in sorted(lines.items())]
 
 
+SLICE_ID_RE = __import__("re").compile(r"[A-Z]{2,5}-[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*")
+
+
+def work(change: Change, touched: list[str]) -> list[str]:
+    """The work board (plan work-board, WB-4). A touched status record's Status line and every row
+    of its board open with a state word, dated from building on, each slice id is in the grammar,
+    and INDEX.md's generated region agrees with the records in the tree."""
+    board = tool_module(change, "work_board")
+    repo = board.Repo.here(change.root)
+    status_dir = repo.status.as_posix() + "/"
+    messages: list[str] = []
+    states = ", ".join(board.STATES)
+    for rel in touched:
+        if not rel.startswith(status_dir) or not rel.endswith(".md") or not (change.root / rel).is_file():
+            continue
+        text = (change.root / rel).read_text(encoding="utf-8")
+        unit = board.parse_unit(Path(rel).stem, text)
+        if unit.status_text and unit.state is None:
+            messages.append(f"{rel}: the Status line opens with '{unit.status_text[:30]}', not a word of {states}, then its day")
+        for row in (unit.board.rows if unit.board else ()):
+            where = f"{rel}:{row.line}: {row.id}"
+            if row.state is None:
+                messages.append(f"{where}: the State cell opens with '{board.plain(row.raw, 30)}', not a word of {states}. Run `mise run work:normalise -- --apply` for the historic words")
+            elif row.state in board.DATED and not row.day:
+                messages.append(f"{where}: {row.state} needs the day it was reached, as `{row.state} 2026-11-02`")
+            if not SLICE_ID_RE.fullmatch(row.id):
+                messages.append(f"{where}: a slice id is PREFIX-segment(.segment)*, such as CCS-9b.3b. Run `mise run work:rename -- --apply` for the historic ids")
+    if any(rel.startswith(status_dir) or rel == repo.index.as_posix() for rel in touched):
+        messages += run_tool(change, "tools/work_board.py", "build", "--check")
+    return messages
+
+
 def whole(*args: str) -> Callable[[Change, list[str]], list[str]]:
     """A check that judges a set of files as a whole, once any of them is touched."""
     return lambda change, touched: run_tool(change, *args)
@@ -317,6 +349,7 @@ def checks() -> list[Check]:
         Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
                               "docs/architecture/triple-store-discovery.md"),
               whole("tools/knowledge/identifiers.py")),
+        Check("work", ("docs/developer/status/*", "docs/developer/INDEX.md"), work),
         Check("ontology-versioning", ("ontology/*",),
               lambda change, touched: (run_tool(change, "tools/ontology_version_check.py")
                                        + run_tool(change, "tools/ontology_releases.py", "check")),
@@ -371,7 +404,22 @@ def post_merge(root: Path) -> int:
     except Unavailable as reason:
         lines = [f"not rebuilt: {reason}. Run `mise run build:knowledge`"]
     print("hooks: post-merge, knowledge index " + ("rebuilt" if not lines else "\n  ".join(["not rebuilt"] + lines)))
+    # The work board's registers (plan work-board, WB-4): INDEX.md's region from the merged tree, and
+    # ROADMAP.md's regions on main only, left changed in the tree for the maintainer to commit.
+    steps = [("INDEX.md region", ["tools/work_board.py", "build"], "build:work")]
+    if branch(root) == MERGE_TARGET:
+        steps.append(("ROADMAP.md regions", ["tools/work_board.py", "roadmap"], "build:roadmap"))
+    for label, args, task in steps:
+        try:
+            failed = run_tool(change, *args)
+        except Unavailable as reason:
+            failed = [str(reason)]
+        print(f"hooks: post-merge, {label} " + ("regenerated" if not failed else f"not regenerated. Run `mise run {task}`\n  " + "\n  ".join(failed)))
     return 0
+
+
+def branch(root: Path) -> str:
+    return git("rev-parse", "--abbrev-ref", "HEAD", cwd=root).strip()
 
 
 def run(root: Path, hook: str, registry: Sequence[Check] | None = None) -> int:

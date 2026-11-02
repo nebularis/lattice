@@ -56,7 +56,7 @@ recorded in the status record's history. Those for slices whose briefs are not y
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.1] …`, the
 last being `[AIR-4.1] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.1](../validation/applied-insurance-reference-4.1.md), whose Handoff
+[applied-insurance-reference-4.1](../validation/AIR-4.1.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (layout, namespaces), ADR-A102 (roles). **Sketch:**
 asset exposure ontology §3, §5.1 to §5.3, §5.5, §5.6, §6, §8.
 
@@ -280,7 +280,7 @@ families. The history and versioning sketch's §10.5 (E5) has the counts.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.2] …`, the
 last being `[AIR-4.2] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.2](../validation/applied-insurance-reference-4.2.md). **Decisions:**
+[applied-insurance-reference-4.2](../validation/AIR-4.2.md). **Decisions:**
 ADR-A98, ADR-A99. **Sketch:** asset exposure ontology §5.3, §5.4, §5.7, §5.8, §7, §8.
 **Decided 2026-10-13:** the proposal of that day (zones per hazard kind with empty reference
 editions, attribute types after OED, assessment kinds, the peril links), Q13 (two worked profiles),
@@ -567,7 +567,7 @@ the merge.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.3] …`, the
 last being `[AIR-4.3] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.3](../validation/applied-insurance-reference-4.3.md). **Decisions:**
+[applied-insurance-reference-4.3](../validation/AIR-4.3.md). **Decisions:**
 ADR-A90 (option B, single-valued paths from a case), ADR-A98, epic E3. Decided 2026-10-13: R8, R9.
 **Sketch:** asset exposure ontology §5.9 to §5.11, §6, §8. **Milestone:** M3, with AIR-4.6.
 
@@ -686,7 +686,7 @@ dependency data it would read is complete in this slice.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.4] …`, the
 last being `[AIR-4.4] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.4](../validation/applied-insurance-reference-4.4.md). **Decisions:**
+[applied-insurance-reference-4.4](../validation/AIR-4.4.md). **Decisions:**
 ADR-A98, ADR-A99, ADR-A103 (set readings), epic D7 and D12. **Sketch:** asset exposure ontology
 §5.12 to §5.14.
 **Decided 2026-10-13:** the proposal of that day, Q11 (option a, recorded and effective
@@ -846,7 +846,7 @@ the merge, not now.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.5] …`, the
 last being `[AIR-4.5] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.5](../validation/applied-insurance-reference-4.5.md). **Decisions:**
+[applied-insurance-reference-4.5](../validation/AIR-4.5.md). **Decisions:**
 ADR-A102 (liability role types), epic E4. **Sketch:** asset exposure ontology §5.15, term
 parameters §7.3.
 
@@ -900,7 +900,7 @@ dependency of AIR-4.3), data subjects (direct, size two million records). Passes
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.6] …`, the
 last being `[AIR-4.6] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.6](../validation/applied-insurance-reference-4.6.md). **Decisions:**
+[applied-insurance-reference-4.6](../validation/AIR-4.6.md). **Decisions:**
 ADR-A99, ADR-A98. **Sketch:** asset exposure ontology §10, §12, §5.2.
 **Milestone:** M3, with AIR-4.3.
 

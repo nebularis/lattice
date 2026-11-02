@@ -164,7 +164,7 @@ downstream consumer pattern.
 - **The literate READMEs.** Section 2's header tables name the release's number. The release task rewrites them
   with the Turtle, so they never drift.
 - **The MTP pins** (`build:mtp`) follow MORK's number, which is now the release's.
-- **OD-REL** becomes the first release on the new model, so it creates no cascade at all.
+- **OD-REL1** becomes the first release on the new model, so it creates no cascade at all.
 
 ## 8. Questions
 
@@ -191,6 +191,6 @@ downstream consumer pattern.
 
 ## 9. Next
 
-🔴 PLAN FIRST. REL-Q1 decides whether OD-REL is the first release on the new model, and REL-Q2 its scope. If C
-or D is chosen, an ADR superseding ADR-A86 comes first, then a slice changing the version tooling, then OD-REL
+🔴 PLAN FIRST. REL-Q1 decides whether OD-REL1 is the first release on the new model, and REL-Q2 its scope. If C
+or D is chosen, an ADR superseding ADR-A86 comes first, then a slice changing the version tooling, then OD-REL1
 as the first release.

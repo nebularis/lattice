@@ -66,7 +66,7 @@ reason, so it is kept as it is for now.
    says why, since a guard that fails reads as a lost race. The guard needs its own group because a `FILTER`
    applies to the solutions of its whole group, after the group's patterns have matched. As a top-level `FILTER`, a
    missing `$root` would be bound from the data by a pattern such as `$root pat:seq $expectedSeq`, and the guard would
-   pass for every aggregate (found in the H2.1 review, 2026-10-10, before acceptance).
+   pass for every aggregate (found in the FMH-2.1 review, 2026-10-10, before acceptance).
 6. **The payload is typed, as ground triples bounded by the boundary shape (PL-B).** A `Payload` is a set of subject, predicate and object terms passed through the encoders. It renders as sorted canonical N-Triples, and the same lines feed `$requestDigest`. Every subject must be the root or be reached from the root within the payload by the owned edges of the boundary shape, in their declared direction. The slot in the rendered query is still written `{% raw %}{{{payloadTriples}}}{% endraw %}`, so an unrendered slot is a syntax error. Its declared type is `dal:GroundNTriples`. `logGraphs` becomes a `RegistryList` of encoded IRIs.
    - The store cannot check the payload, because a guard in an update's `WHERE` sees stored data and a property
      path cannot walk `VALUES` rows. The check runs in the caller. A caller using the Python package gets it
@@ -106,7 +106,7 @@ reason, so it is kept as it is for now.
 - The hazards of decision 2's table become refusals by type, and S-3 and S-4 pass by construction over the
   renderer's output. S-3 then reads the parameter declarations instead of the `$name` convention.
 - `compile` gains declarations and a payload contract, so the persistence vocabulary and its shapes change
-  (planned as 0.4.0 in slice H2.7, with release tags owed).
+  (planned as 0.4.0 in slice FMH-2.7, with release tags owed).
 - A caller in another language has two payload duties, PL-A by following the contract and PL-B by running the
   generated check. Nothing forces the second. A published client SDK that performs both is not planned.
 - The logical resources are designed with one realisation in hand. Their fit with `lattice-sql.md` §9 is a
@@ -144,7 +144,7 @@ It amends decisions 5 and 8.
    operation without one, so a builder cannot drop it by accident. The equivalence harness of decision 8 renders with
    guards off, not with the guard removed from the value.
 
-Where each part lands: the builders take the flag from H2.2, the `dal:` term that records it comes with the H2.7
+Where each part lands: the builders take the flag from FMH-2.2, the `dal:` term that records it comes with the FMH-2.7
 vocabulary, and the `INFO` diagnostic, its witness and the Python caller's own check come with H2.8.
 
 ## Addendum, 2026-10-12: who names a named graph
@@ -159,7 +159,7 @@ Decided by the maintainer while planning slice H2.3.
 2. **A caller may choose to name it.** An override, `caller`, declares `$g` of kind `Iri` and writes `GRAPH $g`, so a
    caller that substitutes text gives the store a constant graph. With guards on, the guard group checks `$g` against
    decision 8's rule, so the injectivity of graph names still holds in the query. With guards off as well, the caller
-   alone must name the graph correctly. The choice is recorded in the compiled profile with the guards term (H2.7).
+   alone must name the graph correctly. The choice is recorded in the compiled profile with the guards term (FMH-2.7).
 
 This leaves ADR-A122 decision 8's rule unchanged and moves its enforcement to the caller only when the caller turns off
 both the query's naming and its guards.
@@ -198,7 +198,7 @@ Decided by the maintainer after slice H2.4b. It amends the first addendum's poin
 
 ## Addendum, 2026-10-13: queries, sub-selects and two parameter kinds
 
-Decided by the maintainer on the design review of slices H2.5 and H2.6. It extends decision 2.
+Decided by the maintainer on the design review of slices FMH-2.5 and H2.6. It extends decision 2.
 
 1. **One `Select` value serves a query operation and a sub-select**, as a `SubSelect` pattern element. The fragment is closed: projection
    of variables and aggregates, `GROUP BY` over variables, and `HAVING`.
@@ -216,7 +216,7 @@ Decided by the maintainer on the design review of slices H2.5 and H2.6. It exten
 
 ## Addendum, 2026-10-14: the event slots and the digest parts (accepted 2026-10-20)
 
-Drafted in slice H2.6b for the maintainer to accept. It extends decision 2 and the H2.4a addendum on
+Drafted in slice FMH-2.6b for the maintainer to accept. It extends decision 2 and the FMH-2.4a addendum on
 request-time slots.
 
 1. **Two request-time slots join `payloadTriples` and `logGraphs`.** `{% raw %}{{{eventRows}}}{% endraw %}` holds the rows of `VALUES (?event ?eventType ?opSeq ?occurredAt)` and `{% raw %}{{{eventTriples}}}{% endraw %}` holds the data written beside each event. The IR has a `Rows` slot kind and a `RowValues` element, which binds its variables. The checker does not restrict where it is placed. Like every slot, neither is parameter-guarded.
@@ -225,14 +225,14 @@ request-time slots.
    which makes the batch independent of the order in which a store applies solutions (TSD-01). `append-event` is builder version 2.
 3. **The digest of an append has an event part.** One part per slot, in a fixed order. The event part has two sources, the rows slot and the
    triples slot, and covers each row's type, `pat:opSeq` and `pat:occurredAt` triples with the event triples. It leaves out `pat:revision`,
-   which the store mints. This slice declares the part in the contract. H2.8 computes it.
+   which the store mints. This slice declares the part in the contract. FMH-2.8 computes it.
 4. **`compile` warns `ReceiptModelNotHonoured`** for a target whose receipt model is `dal:PatchLog` or `dal:SnapshotPerRevision`, as it warns
    for `ShardingNotHonoured`.
 
 
 ## Addendum, 2026-10-20: the write disciplines and `append-version` (accepted 2026-10-20)
 
-Drafted in slice H2.6c for the maintainer to accept or change. It is decided at our leanings and extends the builders of decision 1.
+Drafted in slice FMH-2.6c for the maintainer to accept or change. It is decided at our leanings and extends the builders of decision 1.
 
 1. **`dal:writeDiscipline` selects the write of a family.** `dal:InPlace` (absent means this) keeps every operation as it was.
    `dal:AppendVersions` selects `bootstrap-version-row` and `append-version`. `dal:AppendRecords` selects the append form of H2.6b. The
@@ -324,7 +324,7 @@ Built in slice H2.6e. It extends the contract of decisions 4 and 6.
    ownership, the target class and the reference mode (`dal:ByIdentity` or `dal:Pinned`), for every edge that leads to a node. An operation
    cannot know them, so `contract_of` takes them as a second argument, the family's `edge_contracts`, and the compiler's profile records the
    same edges. The mode changes no builder and no rendered query.
-2. **The caller check of H2.8 reads them.** A payload whose object on a pinned edge is not a version, or on an identity edge is a version of
+2. **The caller check of FMH-2.8 reads them.** A payload whose object on a pinned edge is not a version, or on an identity edge is a version of
    a versioned class, is refused there. Persistence refuses `dal:Pinned` on an edge whose target class is not versioned, and warns
    `EvidenceEdgeByIdentity`, at compile time.
 
@@ -363,7 +363,7 @@ the run choices.
    `dal:graphNaming` on each operation, and `instantiate` renders what the profile says. Its own flags and the `guards` and `graph_names`
    arguments of its functions are removed, since no compatibility is owed. This amends the addenda of 2026-10-12, whose flags were on
    `instantiate`, and a rendering can no longer disagree with its profile.
-4. **`PayloadCheck` is an operation kind.** H2.7 adds the kind to the vocabulary, and H2.8 emits one operation of it for each family that
+4. **`PayloadCheck` is an operation kind.** FMH-2.7 adds the kind to the vocabulary, and FMH-2.8 emits one operation of it for each family that
    has a payload, so a caller in another language gets the query from `instantiate` (decision 6).
 5. **A family with no boundary keeps its values in a data graph.** `dal:dataGraph` is mandatory for a `dal:NoBoundary` family that
    guards a value, refused without one as `MissingDataGraph`, as for a composite family. The value-based compare-and-set is the builder
@@ -431,14 +431,14 @@ Built in slice H2.9. It carries out decision 8, and its clause "until then" is s
 
 **Unit:** [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan)
 
-The decision was taken on 2026-10-10 from the typed IR design brief ([formal-methods-track-h-typed-ir](../../developer/sketches/formal-methods-track-h-typed-ir.md), normative detail, options and consequences) and the hazard table of the specification sketch ([formal-methods-track-h-specification, section 3](../../developer/sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)). The plan is [Track H plan section 4](../../developer/plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry). The hazard rows cite H-D11 and H-D12, the questions H2-Q1 to H2-Q6 are answered in decisions 4 to 6, and H-D14 is the no-compatibility decision. The debt rows addressed are TD-34 (the unbound request variable), TD-40 (default-graph patterns), TD-42 (the quadratic composite replace), TD-43 and TD-64 (below), and the sharding and graph-name rows TD-05, TD-06 and TD-41, which are left open. The client SDK is sketched in [persistence-client-sdk](../../developer/sketches/persistence-client-sdk.md) and is not planned. The guard that needs its own group was found in the review of slice H2.1 on 2026-10-10.
+The decision was taken on 2026-10-10 from the typed IR design brief ([formal-methods-track-h-typed-ir](../../developer/sketches/formal-methods-track-h-typed-ir.md), normative detail, options and consequences) and the hazard table of the specification sketch ([formal-methods-track-h-specification, section 3](../../developer/sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)). The plan is [Track H plan section 4](../../developer/plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry). The hazard rows cite H-D11 and H-D12, the questions H2-Q1 to H2-Q6 are answered in decisions 4 to 6, and H-D14 is the no-compatibility decision. The debt rows addressed are TD-34 (the unbound request variable), TD-40 (default-graph patterns), TD-42 (the quadratic composite replace), TD-43 and TD-64 (below), and the sharding and graph-name rows TD-05, TD-06 and TD-41, which are left open. The client SDK is sketched in [persistence-client-sdk](../../developer/sketches/persistence-client-sdk.md) and is not planned. The guard that needs its own group was found in the review of slice FMH-2.1 on 2026-10-10.
 
-The addendum of 2026-10-12 on parameter guards followed the H2.1 review ([FMH-H2-1](../../developer/validation/FMH-H2-1.md#review-2026-10-10)), which also measured the guard cost on rdflib. The addendum on who names a named graph was decided while planning slice H2.3 (plan section 4.1, question H2.3-Q2). The addendum on the path as the IR's reference to the tree was decided while planning slice H2.4 (plan section 4.2, question H2.4-Q1, and the status record's H2-Q7). It rests on FMH-H2-2 decision 2 and on H2-Q5, and defers the stored IR to the ADR proposed by PDD-06, with the rules SI-1 to SI-6 in [typed IR sketch section 9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) and the open points in section 9.5.
+The addendum of 2026-10-12 on parameter guards followed the FMH-2.1 review ([FMH-2.1](../../developer/validation/FMH-2.1.md#review-2026-10-10)), which also measured the guard cost on rdflib. The addendum on who names a named graph was decided while planning slice FMH-2.3 (plan section 4.1, question H2.3-Q2). The addendum on the path as the IR's reference to the tree was decided while planning slice H2.4 (plan section 4.2, question H2.4-Q1, and the status record's H2-Q7). It rests on FMH-2.2 decision 2 and on H2-Q5, and defers the stored IR to the ADR proposed by PDD-06, with the rules SI-1 to SI-6 in [typed IR sketch section 9.4](../../developer/sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) and the open points in section 9.5.
 
-The addendum of 2026-10-13 on the datatype test was decided after slice H2.4b (FMH-H2-4b, decision 1, option D). Its point 5, the strict Python caller check, was question NQ6 of the [design review](../../developer/notes/track-h-feedback.md). The addendum on queries, sub-selects and two parameter kinds was decided on the same design review of slices H2.5 and H2.6 (plan section 4.3, questions H2.5-Q1 and Q2) and takes the `IriOrLiteral` kind from FMH-H2-2 decision 1. The boundness rules in its point 3 are the plan's boundness table.
+The addendum of 2026-10-13 on the datatype test was decided after slice FMH-2.4b (FMH-2.4b, decision 1, option D). Its point 5, the strict Python caller check, was question NQ6 of the [design review](../../developer/notes/track-h-feedback.md). The addendum on queries, sub-selects and two parameter kinds was decided on the same design review of slices FMH-2.5 and FMH-2.6 (plan section 4.3, questions H2.5-Q1 and Q2) and takes the `IriOrLiteral` kind from FMH-2.2 decision 1. The boundness rules in its point 3 are the plan's boundness table.
 
-The addendum of 2026-10-14 on event slots was drafted in slice H2.6b (plan section 4.6, decisions H-D30 and H-D32) and accepted on 2026-10-20. The placement of the rows slot follows the review note of 2026-10-14, and TD-46 is the sharding warning. The addendum on write disciplines was drafted in slice H2.6c (plan section 4.9) with the history and versioning sketch's questions VH-Q1 to VH-Q6, and VH-Q5 is the receipt conflict rule. The addendum on the subjects of an event append applies the rule of ADR-A51 (superseded by a proposed ADR), whose Rule 8 skolemises blank nodes under their parent and whose event IRI is the parent of an event's parts. Its text is not repeated here because that ADR is not published.
+The addendum of 2026-10-14 on event slots was drafted in slice FMH-2.6b (plan section 4.6, decisions H-D30 and H-D32) and accepted on 2026-10-20. The placement of the rows slot follows the review note of 2026-10-14, and TD-46 is the sharding warning. The addendum on write disciplines was drafted in slice FMH-2.6c (plan section 4.9) with the history and versioning sketch's questions VH-Q1 to VH-Q6, and VH-Q5 is the receipt conflict rule. The addendum on the subjects of an event append applies the rule of ADR-A51 (superseded by a proposed ADR), whose Rule 8 skolemises blank nodes under their parent and whose event IRI is the parent of an event's parts. Its text is not repeated here because that ADR is not published.
 
-The addenda built in slices H2.6d (plan section 4.10, question H2.6b-Q2, and Q5 (a) of H2.6b for the digest), H2.6e (section 4.11), H2.6f (section 4.12), H2.6g (section 4.17), H2.7 (section 4.7, questions H2.7-Q1 to Q4) and H2.8b (section 4.8) were accepted with their slice plans. The decisions taken alone in each are listed in the Validation Packs [FMH-H2-6d](../../developer/validation/FMH-H2-6d.md), [FMH-H2-6e](../../developer/validation/FMH-H2-6e.md), [FMH-H2-6f](../../developer/validation/FMH-H2-6f.md), [FMH-H2-6g](../../developer/validation/FMH-H2-6g.md), [FMH-H2-7](../../developer/validation/FMH-H2-7.md) and [FMH-H2-8b](../../developer/validation/FMH-H2-8b.md). TD-43 is the data graph for a family with no boundary (H2.7), TD-64 the version IRIs that did not move, and FMH-H2-6g holds the evidence for the `NotExistsWithoutGraph` rule beside TSD-34.
+The addenda built in slices FMH-2.6d (plan section 4.10, question H2.6b-Q2, and Q5 (a) of FMH-2.6b for the digest), H2.6e (section 4.11), H2.6f (section 4.12), H2.6g (section 4.17), FMH-2.7 (section 4.7, questions H2.7-Q1 to Q4) and H2.8b (section 4.8) were accepted with their slice plans. The decisions taken alone in each are listed in the Validation Packs [FMH-2.6d](../../developer/validation/FMH-2.6d.md), [FMH-2.6e](../../developer/validation/FMH-2.6e.md), [FMH-2.6f](../../developer/validation/FMH-2.6f.md), [FMH-2.6g](../../developer/validation/FMH-2.6g.md), [FMH-2.7](../../developer/validation/FMH-2.7.md) and [FMH-2.8b](../../developer/validation/FMH-2.8b.md). TD-43 is the data graph for a family with no boundary (FMH-2.7), TD-64 the version IRIs that did not move, and FMH-2.6g holds the evidence for the `NotExistsWithoutGraph` rule beside TSD-34.
 
-The addendum of 2026-10-21 on the retired templates was built in slice H2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-H2-9](../../developer/validation/FMH-H2-9.md).
+The addendum of 2026-10-21 on the retired templates was built in slice FMH-2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-2.9](../../developer/validation/FMH-2.9.md).

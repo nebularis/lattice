@@ -3,7 +3,7 @@
 # Writing only what changed, as a persistence mode - Status
 
 **Unit ID:** `persistence-delta-replace`
-**Status:** 🟢 planned 2026-10-31, DR1 next
+**Status:** planned. Sketched and planned 2026-10-31, DR1 next.
 **Last updated:** 2026-10-31
 **Plan:** [persistence-delta-replace.md](../plans/persistence-delta-replace.md)
 **Sketch:** [persistence-delta-replace.md](../sketches/persistence-delta-replace.md)

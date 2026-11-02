@@ -3,7 +3,7 @@
 # Documentation Link Repair - Status
 
 **Unit ID:** `documentation-link-repair`
-**Status:** Pending. Not started.
+**Status:** planned. Pending. Not started.
 **Last updated:** 2026-09-25
 **Plan:** [documentation-link-repair.md](../plans/documentation-link-repair.md)
 
