@@ -132,7 +132,7 @@ order. XS6 needs everything else committed.
 
 **Preconditions:** none.
 
-As the word authoring POC's own WA0, adapted:
+As the word authoring POC's own WA-0, adapted:
 
 | # | Check | Pass |
 |---|---|---|
@@ -271,7 +271,7 @@ sibling. A new `tools/mork2xslt.py` docstring matching its style.
 
 **Paths:** documentation only.
 
-As the word authoring POC's own WA11/WA19: root `README.md` gains the new paths. `docs/developer/INDEX.md`
+As the word authoring POC's own WA-11/WA19: root `README.md` gains the new paths. `docs/developer/INDEX.md`
 entry updated with slice states and links to the Validation Packs. The status record set to
 "awaiting the maintainer's validation" with actual token use per slice. `mise run check:java`,
 `check:mork-compilers` (or whichever task now covers the factored module), `check:ontology-catalog`,

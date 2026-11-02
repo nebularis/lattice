@@ -4,7 +4,7 @@
 
 **Unit:** [formal-methods](../status/formal-methods.md), track D
 **Plan:** [formal-methods-phase-0.md](../plans/formal-methods-phase-0.md)
-**Brief:** [formal-methods-0.md](../validation/formal-methods-0.md)
+**Brief:** [formal-methods-0.md](../validation/FM-0.md)
 **Branch:** `fm/phase-0-prover-spike`, head commit `c4075a6` at the time of writing
 **Decides:** FM-D1 (the proof assistant, or none) and FM-D10 (the Haskell question) -- both
 decided 2026-10-06, see §5: **Isabelle**, with Haskell and Scala adopted as code-generation

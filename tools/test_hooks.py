@@ -255,3 +255,131 @@ def test_or1_01_a_register_or_decision_change_runs_the_identifier_check() -> Non
 def test_or1_02_post_merge_rebuilds_the_index_and_never_fails(repo: Path, capsys) -> None:
     assert hooks.run(repo, "post-merge") == 0
     assert "post-merge" in capsys.readouterr().out
+
+
+# ---- WB-4: the work board check and the post-merge registers -------------------------------------
+
+RECORD = """# Alpha: status
+
+**Unit ID:** `alpha`
+**Status:** building 2026-10-30. A-2 next.
+
+## Position
+
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| AL-1 | the parser | merged 2026-10-28, built 2026-10-25 | |
+| AL-2 | the join | building 2026-10-30 | |
+| AL-3 | the tool | planned | AL-2 |
+"""
+
+
+@pytest.fixture
+def work_repo(repo: Path) -> Path:
+    shutil.copy(ROOT / "repository-catalogue.md", repo / "repository-catalogue.md")
+    for name in ("lattice_repo_catalogue.py", "work_board.py"):
+        shutil.copy(TOOLS / name, repo / "tools" / name)
+    for readme in (ROOT / "ontology").glob("**/README.md"):
+        target = repo / readme.relative_to(ROOT)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(readme, target)
+    (repo / "docs" / "developer" / "status").mkdir(parents=True)
+    (repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n")
+    return repo
+
+
+def record(root: Path, text: str = RECORD) -> str:
+    (root / "docs" / "developer" / "status" / "alpha.md").write_text(text)
+    return "docs/developer/status/alpha.md"
+
+
+def build(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return sh(root, sys.executable, "tools/work_board.py", *args, check=False)
+
+
+def work_messages(root: Path, *files: str) -> list[str]:
+    check = next(c for c in hooks.checks() if c.name == "work")
+    outcomes = hooks.evaluate(hooks.Change(root, files, merge=False), [check], set())
+    return [m for o in outcomes for m in o.messages]
+
+
+def test_wb4_01_a_well_formed_record_with_a_current_index_passes(work_repo: Path) -> None:
+    rel = record(work_repo)
+    assert build(work_repo, "build").returncode == 0
+    assert work_messages(work_repo, rel) == []
+
+
+def test_wb4_02_a_historic_state_word_is_refused(work_repo: Path) -> None:
+    rel = record(work_repo, RECORD.replace("| AL-2 | the join | building 2026-10-30 |", "| AL-2 | the join | Done (abc123) |"))
+    text = "\n".join(work_messages(work_repo, rel))
+    line = next(n for n, row in enumerate(RECORD.replace("building 2026-10-30 |", "Done (abc123) |").splitlines(), 1) if "AL-2" in row)
+    assert f"{rel}:{line}: AL-2" in text
+    assert "State cell opens with" in text and "work:normalise" in text
+    assert "merged" in text and "building" in text
+
+
+def test_wb4_03_a_dated_state_needs_its_day(work_repo: Path) -> None:
+    rel = record(work_repo, RECORD.replace("| building 2026-10-30 | |", "| building | |"))
+    assert any("needs the day" in m for m in work_messages(work_repo, rel))
+
+
+def test_wb4_04_slice_ids_follow_the_grammar(work_repo: Path) -> None:
+    rel = record(work_repo, RECORD.replace("AL-3", "C9b3b"))
+    assert any("work:rename" in m and "C9b3b" in m for m in work_messages(work_repo, rel))
+    ok = RECORD + "| HQ-6a.1 | a | planned | |\n| AIR-S1 | b | planned | |\n| OD-DOC1 | c | planned | |\n"
+    build(work_repo, "build")
+    assert not [m for m in work_messages(work_repo, record(work_repo, ok)) if "work:rename" in m]
+
+
+def test_wb4_05_the_status_line_opens_with_a_state_word(work_repo: Path) -> None:
+    rel = record(work_repo, RECORD.replace("building 2026-10-30. A-2 next.", "🔨 In progress"))
+    build(work_repo, "build")
+    assert any("Status line" in m for m in work_messages(work_repo, rel))
+    rel = record(work_repo, RECORD.replace("**Status:** building 2026-10-30. A-2 next.\n", ""))
+    build(work_repo, "build")
+    assert not [m for m in work_messages(work_repo, rel) if "Status line" in m]
+
+
+def test_wb4_06_a_stale_index_region_is_refused_until_rebuilt(work_repo: Path) -> None:
+    rel = record(work_repo)
+    build(work_repo, "build")
+    record(work_repo, RECORD.replace("| AL-3 | the tool | planned |", "| AL-3 | the tool | building 2026-11-01 |"))
+    assert any("mise run build:work" in m for m in work_messages(work_repo, rel))
+    build(work_repo, "build")
+    assert work_messages(work_repo, rel) == []
+    check = next(c for c in hooks.checks() if c.name == "work")
+    assert hooks.evaluate(hooks.Change(work_repo, ("README.md", "docs/developer/plans/x.md"), False), [check], set()) == []
+
+
+def test_wb4_07_the_work_check_blocks_at_a_commit_and_at_a_merge() -> None:
+    check = next(c for c in hooks.checks() if c.name == "work")
+    assert (check.on_commit, check.on_merge, check.merge_only) == (hooks.BLOCK, hooks.BLOCK, False)
+
+
+def commit_all(root: Path) -> None:
+    sh(root, "git", "add", ".")
+    sh(root, "git", "commit", "-q", "--no-verify", "-m", "work board")
+
+
+def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: Path, capsys) -> None:
+    record(work_repo)
+    roadmap = work_repo / "docs" / "developer" / "ROADMAP.md"
+    roadmap.write_text("# Roadmap\n")
+    commit_all(work_repo)
+    assert hooks.post_merge(work_repo) == 0
+    out = capsys.readouterr().out
+    assert "INDEX.md region regenerated" in out and "ROADMAP.md regions regenerated" in out
+    assert build(work_repo, "build", "--check").returncode == 0
+    assert "<!-- BEGIN GENERATED work-board-glance" in roadmap.read_text()
+    assert "<!-- BEGIN GENERATED work-board-branches" in roadmap.read_text()
+    sh(work_repo, "git", "checkout", "-q", "-b", "feature")
+    roadmap.write_text("# Roadmap\n")
+    (work_repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n")
+    assert hooks.post_merge(work_repo) == 0
+    out = capsys.readouterr().out
+    assert "INDEX.md region regenerated" in out and "ROADMAP.md" not in out
+    assert roadmap.read_text() == "# Roadmap\n"
+    assert build(work_repo, "build", "--check").returncode == 0
+    (work_repo / "tools" / "work_board.py").unlink()
+    assert hooks.post_merge(work_repo) == 0
+    assert "Run `mise run build:work`" in capsys.readouterr().out

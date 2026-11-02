@@ -3,6 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Plan
 
 **Unit ID:** `persistence-compiler-iri-sync`
+**Prefix:** PCI
 **Status:** Complete — all six slices done, 774/774 tests passing, validated 2026-09-25. See [persistence-compiler-iri-sync.md](../status/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
 **Governing ADRs:** ADR-A78 (persistence substrate), ADR-A79 (compiler toolchain), ADR-A82 (framework-neutral identity pattern selection)
@@ -110,7 +111,7 @@ One fixture per `dal:ResourceRole` resolving independently for one class. A name
 - Wire `dal:ClaimScheme`/`dal:schemeVersion`/`dal:SchemeState`; extend `key-claim-write.mustache` to guard-and-insert both the current and next scheme version's claim IRI when `dal:schemeState` is `dal:Dual`.
 - Tests: one fixture per `onViolation` value showing distinct generated operations; a `Dual`-state fixture proving both scheme versions are guarded in one operation, not two.
 
-**Resolved 2026-09-25 (Decision 1):** the guarded write's "distinct generated operations" above turned out to belong in Chapter 7.5 (P7, the reconciler), not Chapter 6 (P1/P2, which only ever describes the `Reject` shape). Option A: `key-claim-write`/`key-claim-write-dual` never branch on `onViolation`; the policy instead selects one reconciler operation per constraint (`key-claim-duplicate-audit` / `key-claim-merge-rewrite` / `key-claim-quarantine`). See the status record's "Slice 5 decisions" and the [Slice 5 VP](../validation/persistence-compiler-iri-sync-slice-5.md).
+**Resolved 2026-09-25 (Decision 1):** the guarded write's "distinct generated operations" above turned out to belong in Chapter 7.5 (P7, the reconciler), not Chapter 6 (P1/P2, which only ever describes the `Reject` shape). Option A: `key-claim-write`/`key-claim-write-dual` never branch on `onViolation`, the policy instead selects one reconciler operation per constraint (`key-claim-duplicate-audit` / `key-claim-merge-rewrite` / `key-claim-quarantine`). See the status record's "Slice 5 decisions" and the [Slice 5 VP](../validation/PCI-5.md).
 
 **Also folded into this slice (decided 2026-09-25):** the registry-token digest-scheme relaxation deferred from Slice 3/4 (status record "Next steps" item 4, found in `identity-minting` M3) — `dal:DigestSchemeRequiredShape` and its Python mirror now exempt `dal:PositionDerivedEvent` + `dal:RegistryTokenDerivation` only.
 

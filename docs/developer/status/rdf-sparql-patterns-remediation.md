@@ -3,6 +3,7 @@
 # RDF & SPARQL Patterns Guide — Remediation Status
 
 **Unit ID:** `rdf-sparql-patterns-remediation`
+**Status:** merged 2026-09-25. Complete and closed.
 **State:** ✅ Complete and closed. Executed on 2026-09-23. Several of its fixes were later found incomplete or wrong by a further review and corrected by [`iri-patterns-post-3866b21-remediation`](iri-patterns-post-3866b21-remediation.md) (see "Later corrections", below). All three deferred items are now dispositioned (see Deferred, below). Nothing further is owed by this unit.
 **Plan:** [rdf-sparql-patterns-remediation.md](../plans/rdf-sparql-patterns-remediation.md) — superseded in execution by [docs/developer/review/IRI-patterns-remediation.md](../review/IRI-patterns-remediation.md), which the maintainer designated authoritative when comparing it against this plan
 **Sketch:** None

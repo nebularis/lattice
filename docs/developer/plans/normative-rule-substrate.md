@@ -3,20 +3,21 @@
 # Plan: Normative rule substrate
 
 **Unit ID:** `normative-rule-substrate`
+**Prefix:** NRS
 **Unit type:** Multi-slice unit, single machine. Deliberately not an epic (§3)
 **Status:** Proposed, awaiting the maintainer's review. No slice may start until §9's decisions are taken.
-Aligned with CCS on 2026-10-10: N1, N2, N4, N5 and the Behaviour part of N8 are CCS's, N6 and N8 are
-absorbed by CCS C12 and C13, and this unit keeps integration with other rule languages (N3, N7, N9,
-N10 to N13), with its own formal-methods treatment when we reach it (status record, NQ-1 to NQ-4)
+Aligned with CCS on 2026-10-10: NRS-1, NRS-2, NRS-4, NRS-5 and the Behaviour part of NRS-8 are CCS's, NRS-6 and NRS-8 are
+absorbed by CCS C12 and C13, and this unit keeps integration with other rule languages (NRS-3, NRS-7, NRS-9,
+NRS-10 to NRS-13), with its own formal-methods treatment when we reach it (status record, NQ-1 to NQ-4)
 **Trigger:** request, 2026-09-29, following the LegalRuleML mapping analysis
 **Sketches:** [legalruleml-mapping.md](../sketches/legalruleml-mapping.md) (the construct-level analysis),
 [rule-layers.md](../sketches/rule-layers.md) and
 [rule-layers-cross-check.md](../sketches/rule-layers-cross-check.md) (the R1 to R5 findings this unit delivers)
 **Status record:** [normative-rule-substrate.md](../status/normative-rule-substrate.md)
 **ADRs:** A-104 to A-111 reserved. A-104 and A-106 are retitled, drafted in
-[computable-contract-substrate](computable-contract-substrate.md) (CCS), which absorbs slice N4 and
-the Behaviour part of N8 (2026-09-30), and accepted at CCS Gate A (2026-10-01). A-105 moved to CCS
-with N5 (2026-10-10). A-107 to A-111 are not drafted
+[computable-contract-substrate](computable-contract-substrate.md) (CCS), which absorbs slice NRS-4 and
+the Behaviour part of NRS-8 (2026-09-30), and accepted at CCS Gate A (2026-10-01). A-105 moved to CCS
+with NRS-5 (2026-10-10). A-107 to A-111 are not drafted
 **Runs alongside:** [applied-insurance-reference](applied-insurance-reference.md) epic, currently at round 3.
 See §4 for the dependency analysis and the ordering verdict
 
@@ -51,7 +52,7 @@ importable rule-body fragment, multi-axis temporal scope, and norm priority.
 route, and any new runtime language. All are deferred in the cross-check §5 with triggers, and
 nothing in this unit changes those triggers.
 
-**Deliberately conditional.** LegalRuleML and ODRL interchange (N12) is built only if a trigger
+**Deliberately conditional.** LegalRuleML and ODRL interchange (NRS-12) is built only if a trigger
 fires. The standing ruling is that both are coverage checklists, not dependencies, and neither
 syntax is adopted.
 
@@ -71,7 +72,7 @@ and one change that cascades to fourteen files. Two safeguards replace the epic 
   than the per-machine sections of the applied-insurance epic.
 
 This is a deliberate deviation from the epic decomposition model (now in skill `lattice-lifecycle`)
-and needs agreement before slice N1 starts. It is listed in §9 as decision D1.
+and needs agreement before slice NRS-1 starts. It is listed in §9 as decision D1.
 
 ---
 
@@ -79,10 +80,10 @@ and needs agreement before slice N1 starts. It is listed in §9 as decision D1.
 
 **Note, 2026-10-10.** This section was measured on 2026-09-29 and is kept as that record. Since
 then: CCS C10 flipped the layer order, so Behaviour no longer imports Instrument and nothing outside
-Instrument imports it (ADR-A104 Consequences). N4, N5 and the Behaviour part of N8 moved to CCS.
-CCS F1 changed Foundation in its own window, not N9's (ADR-A114, CCS risk R6). The applied-insurance
+Instrument imports it (ADR-A104 Consequences). NRS-4, NRS-5 and the Behaviour part of NRS-8 moved to CCS.
+CCS F1 changed Foundation in its own window, not NRS-9's (ADR-A114, CCS risk R6). The applied-insurance
 epic is still in round 3: AIR-3.3 is unmerged, Phase 2 is incomplete, and substrate S2 and S7 have
-not started, so the constraints on N1, N3, N7, N9 and N10 stand.
+not started, so the constraints on NRS-1, NRS-3, NRS-7, NRS-9 and NRS-10 stand.
 
 This section answers the question directly: can this tranche proceed without interfering with the
 applied-insurance epic, and if not, which goes first.
@@ -135,25 +136,25 @@ Remaining epic slices and the files they touch, against this unit's slices.
 | Epic slice | Touches | Contends with | Severity |
 |---|---|---|---|
 | AIR-2.2 to AIR-2.7 | `applied/insurance/peril/**` only, plus reads Quantification | nothing in this unit | none |
-| AIR-3.3 | `tools/mork_compilers/` only, SWRL and OWL backends. No ontology change | **N1** (acyclicity shape and compiler refusal) and **N3** (design-time check) both touch `tools/mork_compilers/` | **moderate** |
+| AIR-3.3 | `tools/mork_compilers/` only, SWRL and OWL backends. No ontology change | **NRS-1** (acyclicity shape and compiler refusal) and **NRS-3** (design-time check) both touch `tools/mork_compilers/` | **moderate** |
 | AIR-3.4, AIR-3.5 | `peril/crosswalk/`, `exposure/examples/`, `mork/examples/` | nothing | none |
 | AIR-4.1 to AIR-4.6 | `applied/insurance/exposure/**` only | nothing | none |
 | AIR-6.1 | `applied/insurance/submission/**` | nothing | none |
 | Substrate S1 | Vocabulary, concept lifecycle | nothing | none |
-| Substrate **S2** | **Eligibility spec**, HierarchicalMatch traversal choice | **N1** (Eligibility shapes), **N5** (Eligibility outcome path) | **moderate** |
+| Substrate **S2** | **Eligibility spec**, HierarchicalMatch traversal choice | **NRS-1** (Eligibility shapes), **NRS-5** (Eligibility outcome path) | **moderate** |
 | Substrate S4 | Quantification, occurrence grouping | nothing | none |
 | Substrate S5 | Surface, generated classes from conjunctions | nothing directly. Conceptual note in §4.4 | low |
 | Substrate S6 | Guidance text only | nothing | none |
-| Substrate **S7** | **Foundation**, conflicting evidenced assertions of one attribute | **N9** (multi-axis temporal scope) shares the file. Conceptually adjacent to **N10** (priority) | **high** |
+| Substrate **S7** | **Foundation**, conflicting evidenced assertions of one attribute | **NRS-9** (multi-axis temporal scope) shares the file. Conceptually adjacent to **NRS-10** (priority) | **high** |
 
 ### 4.4 Conceptual overlap
 
 | Epic item | This unit | Relationship |
 |---|---|---|
-| ADR-A103 set readings and negation (merged as AIR-3.2) | N5 closure declarations | **Complementary, not conflicting.** A103 gives classical negation over a value set. N5 gives a licence for absence to decide. They answer different questions and compose: a set reading says how to read several values, a closure says whether "no values" may mean "false" |
-| S2 HierarchicalMatch traversal choice | N1 composition acyclicity | Both are Eligibility well-foundedness. S2 is acyclicity of scheme ordering, N1 is acyclicity of condition composition. Same shape, different graph. Worth authoring by the same hand |
-| S5 Surface generated classes from conjunctions | N4 modality, N8 chains | Low. Surface materialises conjunctions of characteristics. This unit uses conjunction as a profile combination, which Eligibility already owns. No shared decision |
-| **S7 Foundation assertion conflict resolution** | **N10 norm priority** | **Genuine adjacency.** S7 resolves conflict between two evidenced assertions of one attribute. N10 resolves conflict between two norms with opposing modality. Both are precedence models on Foundation-adjacent data. They should be designed by one hand or explicitly separated, or the repository acquires two precedence vocabularies that do not compose |
+| ADR-A103 set readings and negation (merged as AIR-3.2) | NRS-5 closure declarations | **Complementary, not conflicting.** A103 gives classical negation over a value set. NRS-5 gives a licence for absence to decide. They answer different questions and compose: a set reading says how to read several values, a closure says whether "no values" may mean "false" |
+| S2 HierarchicalMatch traversal choice | NRS-1 composition acyclicity | Both are Eligibility well-foundedness. S2 is acyclicity of scheme ordering, NRS-1 is acyclicity of condition composition. Same shape, different graph. Worth authoring by the same hand |
+| S5 Surface generated classes from conjunctions | NRS-4 modality, NRS-8 chains | Low. Surface materialises conjunctions of characteristics. This unit uses conjunction as a profile combination, which Eligibility already owns. No shared decision |
+| **S7 Foundation assertion conflict resolution** | **NRS-10 norm priority** | **Genuine adjacency.** S7 resolves conflict between two evidenced assertions of one attribute. NRS-10 resolves conflict between two norms with opposing modality. Both are precedence models on Foundation-adjacent data. They should be designed by one hand or explicitly separated, or the repository acquires two precedence vocabularies that do not compose |
 
 ### 4.5 Verdict
 
@@ -165,17 +166,17 @@ determining factor is cascade blast radius rather than subject matter.
 
 | Verdict | Slices | Reason |
 |---|---|---|
-| **Proceed now, in parallel** | N2, N4 (now CCS), N6, N8 | Instrument and Behaviour only. One external importer, no applied module, no epic slice touches them until deferred Phase 5 |
-| **Proceed now, sequenced behind AIR-3.3** | N1, N3, N7 | Share `tools/mork_compilers/` with AIR-3.3. AIR-3.3 is a round-3 slice and small. Waiting for its merge costs one round |
-| **Coordinate with substrate S2** | N5 | Both touch Eligibility. Either author S2 and N5 together, or land S2 first and rebase N5 |
-| **Serialise into a quiet window** | **N9** | Foundation, 14 importers, 5 applied. Must not run while Phase 2 authors the peril files |
-| **Deferred, decision-gated** | N10, N11, N12, N13 | Depend on decisions in §9 and on earlier slices |
+| **Proceed now, in parallel** | NRS-2, NRS-4 (now CCS), NRS-6, NRS-8 | Instrument and Behaviour only. One external importer, no applied module, no epic slice touches them until deferred Phase 5 |
+| **Proceed now, sequenced behind AIR-3.3** | NRS-1, NRS-3, NRS-7 | Share `tools/mork_compilers/` with AIR-3.3. AIR-3.3 is a round-3 slice and small. Waiting for its merge costs one round |
+| **Coordinate with substrate S2** | NRS-5 | Both touch Eligibility. Either author S2 and NRS-5 together, or land S2 first and rebase NRS-5 |
+| **Serialise into a quiet window** | **NRS-9** | Foundation, 14 importers, 5 applied. Must not run while Phase 2 authors the peril files |
+| **Deferred, decision-gated** | NRS-10, NRS-11, NRS-12, NRS-13 | Depend on decisions in §9 and on earlier slices |
 
 **Which goes first, stated plainly.** The rule work goes first, and specifically the Instrument
-deontic extension (N4) goes first, for three independent reasons:
+deontic extension (NRS-4) goes first, for three independent reasons:
 
 1. **It is the cheapest change available.** Its cascade reaches Behaviour, Behaviour's vocabulary
-   and `applied/capacity`, none of which this epic is authoring (N4, version impact).
+   and `applied/capacity`, none of which this epic is authoring (NRS-4, version impact).
 2. **The epic needs it.** The cross-check's sequencing constraint is that R1 must be accepted and
    Instrument bumped **before applied-insurance Phase 5 starts**, because A-101 expects to draft
    term parameters on `ins:Qualifier` without a normative model of the obligation they qualify.
@@ -185,7 +186,7 @@ deontic extension (N4) goes first, for three independent reasons:
    integration of Phases 1 to 4. That deferral is precisely the window in which Instrument can be
    changed without touching anything the epic is building.
 
-**The one hard ordering constraint in the other direction:** N9 (Foundation multi-axis time) must
+**The one hard ordering constraint in the other direction:** NRS-9 (Foundation multi-axis time) must
 come **after Phase 2 completes**, or it forces six actively-authored slice branches to re-pin a
 file they are rewriting. Phase 2 has AIR-2.2 through AIR-2.7 outstanding. If multi-axis time is
 needed sooner than that, the cost is a coordinated freeze across the epic, and that trade is the
@@ -195,9 +196,9 @@ maintainer's to make. It is decision D4 in §9.
 
 | If | Then |
 |---|---|
-| Phase 5 is un-deferred and starts early | N4 becomes urgent and blocking rather than merely first |
-| S7 is pulled forward from the substrate track | N10 must merge with it, or one of the two must be abandoned |
-| A Foundation change is found necessary inside N4, N5 or N8 | Those slices inherit N9's quiet-window constraint, and the parallel-safe verdict collapses. This is the single largest risk in the plan, and N4's first task is to confirm it is avoidable |
+| Phase 5 is un-deferred and starts early | NRS-4 becomes urgent and blocking rather than merely first |
+| S7 is pulled forward from the substrate track | NRS-10 must merge with it, or one of the two must be abandoned |
+| A Foundation change is found necessary inside NRS-4, NRS-5 or NRS-8 | Those slices inherit NRS-9's quiet-window constraint, and the parallel-safe verdict collapses. This is the single largest risk in the plan, and NRS-4's first task is to confirm it is avoidable |
 
 ---
 
@@ -212,13 +213,13 @@ existing ADR and A-101 is reserved by the applied-insurance epic for term parame
 | ADR | Title | Drafted in | Delivers | State (2026-10-10) |
 |---|---|---|---|---|
 | A-104 | Instrument: terms and legal relations (retitled from "Deontic extension of Instrument") | CCS C1 | cross-check R1, and the CCS sketch | accepted 2026-10-01, with addenda |
-| A-105 | Closure declarations and the licence for absence | CCS HQ-6a (moved from N5, 2026-10-10) | cross-check R2 | not drafted |
+| A-105 | Closure declarations and the licence for absence | CCS HQ-6a (moved from NRS-5, 2026-10-10) | cross-check R2 | not drafted |
 | A-106 | Behaviour configuration, runtime, occasions and records (retitled from "Compensation chains and violation records") | CCS C2 | extends R1. Breach chains are `ins:arisesOnBreachOf`, violation is "breach" | accepted 2026-10-01, with addenda |
-| A-107 | Norm priority and defeasibility | N10 | extends R1 | not drafted |
-| A-108 | Multi-axis temporal scope | N9 | new, from the LegalRuleML analysis | not drafted |
-| A-109 | The importable rule-body fragment | N2 | new | not drafted. ADR-A104 decision 15 states its revision (stratified state reads) |
+| A-107 | Norm priority and defeasibility | NRS-10 | extends R1 | not drafted |
+| A-108 | Multi-axis temporal scope | NRS-9 | new, from the LegalRuleML analysis | not drafted |
+| A-109 | The importable rule-body fragment | NRS-2 | new | not drafted. ADR-A104 decision 15 states its revision (stratified state reads) |
 | A-110 | Interpretation contexts | not scheduled. Recorded only | new, deferred | not drafted |
-| A-111 | LegalRuleML and ODRL interchange | N12, conditional | new | not drafted |
+| A-111 | LegalRuleML and ODRL interchange | NRS-12, conditional | new | not drafted |
 
 A-104 amends ADR-A07b, which chose Instrument's minimal shape deliberately. That amendment is the
 substantive architectural act of this unit and must be argued in A-104 rather than assumed.
@@ -251,9 +252,9 @@ so no cascade. No spec bump.
 
 **Diagnostic added:** `exe:CompositionCycle`.
 
-**Note, 2026-10-10.** Eligibility's README is again its literate source (CCS C9b0, merged 2026-10-10),
+**Note, 2026-10-10.** Eligibility's README is again its literate source (CCS-9b.0, merged 2026-10-10),
 so the shape is authored in the README and the shapes files regenerated from it. Eligibility shapes
-are still 0.2.0. CCS C13 and C13a wait on N1, so N1 is on CCS's critical path (status record, NQ-3).
+are still 0.2.0. CCS C13 and C13a wait on NRS-1, so NRS-1 is on CCS's critical path (status record, NQ-3).
 
 #### N2. Declare the importable rule-body fragment (A-109). Moved to CCS (NQ-2)
 
@@ -281,14 +282,14 @@ activation conditions? This is satisfiability of the conjunction of two activati
 the modalities are duals, and the existing reasoning harness (ADR-A83) can answer it. Detects a
 contract that contradicts itself, which is a real and expensive drafting error.
 
-Depends on N4 for the modality vocabulary, so it is sequenced after N4 despite sitting in
+Depends on NRS-4 for the modality vocabulary, so it is sequenced after NRS-4 despite sitting in
 tranche A conceptually. Under the CCS design the pairs compared are an Obligation and a Prohibition
 over the same activity, and an exception (Permission or Exclusion) that excepts nothing in scope. Listed here because it needs no gap closed beyond N4.
 
 **Prerequisite added 2026-10-02: CCS C13a.** The OWL backend compiles only conditions bound to
 the case by an evidence path. CCS slice C13a teaches it question-form conditions and builds the
-joint-satisfiability task (`P ⊓ Q`) for variation slots. N3 uses the same task for clashes, so it
-follows C13a or is built with it. The [insurml-alignment](insurml-alignment.md) plan reuses N3's
+joint-satisfiability task (`P ⊓ Q`) for variation slots. NRS-3 uses the same task for clashes, so it
+follows C13a or is built with it. The [insurml-alignment](insurml-alignment.md) plan reuses NRS-3's
 clash check as a verification pass.
 
 ### Tranche B — Instrument and Behaviour, parallel-safe
@@ -313,7 +314,7 @@ it is a Behaviour state space whose occupancies are derived artefacts following 
 exactly.
 
 **First task, before any authoring:** confirm no Foundation change is required. If one is, this
-slice inherits N9's quiet-window constraint and the plan's parallel-safe verdict collapses (§4.6).
+slice inherits NRS-9's quiet-window constraint and the plan's parallel-safe verdict collapses (§4.6).
 
 **Clean-room requirement (ADR-A-C2):** two non-domain worked examples first, a lending covenant
 reporting duty with a cure period and a trial adverse-event reporting duty. Insurance examples
@@ -325,7 +326,7 @@ bump level, ADR-A86 addendum item 1), which re-pins `behaviour-vocab` and
 `applied/capacity`'s execution profile. No applied insurance module is affected. AIR-3.2 ran this
 exact cascade.
 
-**Laws:** N1, N2, N4, N10 from the sketch §18.3.
+**Laws:** NRS-1, NRS-2, NRS-4, NRS-10 from the sketch §18.3.
 
 #### N6. Scheduled triggers as positioned stimuli (R3). Absorbed by CCS C12 (NQ-3)
 
@@ -340,7 +341,7 @@ backdated fact is ordered by the same rules as any other input. Allowance resets
 **Version impact:** `behaviour/spec` MINOR. One re-pin in `applied/capacity`.
 
 **Built with CCS C12 (2026-09-30, revised 2026-10-01).** The legal triggers are Behaviour triggers (`ins:OnExpiry ⊑ bhv:TriggerDefinition`, CCS CC-D8), so nothing is compiled from `ins:arisesOn` or `ins:due`. C12's runtime evaluator turns each scheduled trigger into a positioned stimulus.
-Whether anything of N6 remains outside C12 is open (status record, NQ-3).
+Whether anything of NRS-6 remains outside C12 is open (status record, NQ-3).
 
 #### N8. Compensation chains and violation records (A-106). Moved to CCS: Behaviour part to C11 and C12, the chain checks absorbed by C13 (NQ-3)
 
@@ -351,29 +352,29 @@ than hand-built. Violation and compliance as `fnd:DecisionRecord` derived artefa
 supporting both derived breach (a deadline passing) and asserted breach (an adjudicator's finding,
 carrying `fnd:assertedBy`).
 
-**Blocked on N5** (since 2026-10-12, CCS HQ-6b, since a breach is an absence over a period). Without a closure licence a violation can never be derived and the whole chain
+**Blocked on NRS-5** (since 2026-10-12, CCS HQ-6b, since a breach is an absence over a period). Without a closure licence a violation can never be derived and the whole chain
 is inert.
 
 **Revised 2026-09-30.** The chain is `ins:arisesOnBreachOf` on the secondary relation (it fans out,
 where a `compensatedBy` list cannot), the Behaviour records are CCS C11 and the runtime evaluator
 C12. Revised 2026-10-01: `ins:arisesOn` takes an `ins:OnBreach` trigger, a Behaviour trigger, so
-there is no compiled wiring. N8 keeps the chain checks: acyclicity, and a permission, exclusion or power never breached.
+there is no compiled wiring. NRS-8 keeps the chain checks: acyclicity, and a permission, exclusion or power never breached.
 
 **Note, 2026-10-10.** Both checks now have a CCS home in part. `ins:OnBreach` names exactly one
 obligation through `ins:ofObligation` (range `ins:Obligation`, Instrument 0.16.0). Law I6, the acyclic
 graph of breach, exercise and state reading, is checked with CCS C13 (Instrument README §21). Whether
-N8 keeps any work is open (status record, NQ-3).
+NRS-8 keeps any work is open (status record, NQ-3).
 
-**Laws:** N3, N5, N9.
+**Laws:** NRS-3, NRS-5, N9.
 
 ### Tranche C — Eligibility and persistence, coordinated
 
 #### N5. Closure declarations (A-105, R2). Moved to CCS
 
 **Moved to [CCS](computable-contract-substrate.md) on 2026-10-10** (HQ6-Q1). CCS's held
-question HQ-6 is this slice, and it runs as CCS work, as N4 and N8 did. Split by HQ6-Q2:
+question HQ-6 is this slice, and it runs as CCS work, as NRS-4 and NRS-8 did. Split by HQ6-Q2:
 
-- **HQ-6a, before CCS C9b3:** ADR-A105, an untimed closure declaration, complete as of the deciding
+- **HQ-6a, before CCS-9b.3:** ADR-A105, an untimed closure declaration, complete as of the deciding
   record's recording time, its sources (a deeming among them), compile-time refusal of an unlicensed
   binding (D7, consistent with CCS C9b0-Q2), and decisions recording the closure they relied on.
   Closures over a period moved to HQ-6b on 2026-10-12 (CCS HQ6a-Q4)
@@ -423,7 +424,7 @@ gives every later slice a baseline. Cheap, and the highest-information slice in 
 **Shares its cascade with CCS slice F1 (2026-09-30),** which adds `fnd:identifier`. Both Foundation
 changes land in one window and one re-pin of the 14 importers. (Overtaken: F1 ran on its
 own as ADR-A114's external and natural keys, merged and tagged while no AIR branch edited a Foundation
-importer. N9 keeps its own later window, CCS risk R6. Foundation is now 0.4.0.)
+importer. NRS-9 keeps its own later window, CCS risk R6. Foundation is now 0.4.0.)
 
 **Touches** `ontology/foundation/spec/`, `shapes/`, `vocab/`, plus a re-pin in all 14 importers.
 
@@ -440,10 +441,10 @@ is the most expensive change the repository can make and the reason this slice i
 
 | Slice | Content | Gate |
 |---|---|---|
-| **N10** | Norm priority and defeasibility (A-107) | D5. The cross-check's row J judges it "enough for current scope" and folds it into Phase 5. The sketch §22.3 offers evidence against. Also adjacent to substrate S7. CCS declared `ins:prevailsOver` between definitions only (C7c D13, 2026-10-06), the planned C9c widens it to an incorporated document, and terms are left to N10 |
-| **N11** | Controlled-English rendering (R5) | Ingestion vision Phase 2 and review workbench design |
-| **N12** | LegalRuleML and ODRL interchange (A-111) | A trigger from §2. Not built speculatively |
-| **N13** | US Code §504 as acceptance milestone | All of the above |
+| **NRS-10** | Norm priority and defeasibility (A-107) | D5. The cross-check's row J judges it "enough for current scope" and folds it into Phase 5. The sketch §22.3 offers evidence against. Also adjacent to substrate S7. CCS declared `ins:prevailsOver` between definitions only (C7c D13, 2026-10-06), the planned C9c widens it to an incorporated document, and terms are left to NRS-10 |
+| **NRS-11** | Controlled-English rendering (R5) | Ingestion vision Phase 2 and review workbench design |
+| **NRS-12** | LegalRuleML and ODRL interchange (A-111) | A trigger from §2. Not built speculatively |
+| **NRS-13** | US Code §504 as acceptance milestone | All of the above |
 
 ---
 
@@ -452,50 +453,50 @@ is the most expensive change the repository can make and the reason this slice i
 ```mermaid
 flowchart TB
     subgraph TA["Tranche A"]
-        N2["N2 fragment ADR"]
-        N1["N1 acyclicity"]
+        NRS-2["NRS-2 fragment ADR"]
+        NRS-1["NRS-1 acyclicity"]
     end
     subgraph TB["Tranche B — Instrument, parallel-safe"]
-        N4["N4 deontic extension<br/>KEYSTONE"]
-        N6["N6 positioned stimuli"]
-        N3["N3 contradiction check"]
-        N8["N8 compensation chains"]
+        NRS-4["NRS-4 deontic extension<br/>KEYSTONE"]
+        NRS-6["NRS-6 positioned stimuli"]
+        NRS-3["NRS-3 contradiction check"]
+        NRS-8["NRS-8 compensation chains"]
     end
     subgraph TC["Tranche C — coordinated"]
-        N5["N5 closure declarations"]
-        N7["N7 corpus measurement"]
+        NRS-5["NRS-5 closure declarations"]
+        NRS-7["NRS-7 corpus measurement"]
     end
     subgraph TD["Tranche D — serialised"]
-        N9["N9 multi-axis time"]
+        NRS-9["NRS-9 multi-axis time"]
     end
-    AIR33["AIR-3.3 merges"] --> N1
-    S2["substrate S2"] -.coordinate.-> N5
-    P2["Phase 2 completes"] --> N9
-    N2 --> N4
-    N4 --> N3
-    N4 --> N6
-    N4 --> N5
-    N5 --> N8
-    N6 --> N8
-    N4 --> N7
-    N1 --> N7
+    AIR33["AIR-3.3 merges"] --> NRS-1
+    S2["substrate S2"] -.coordinate.-> NRS-5
+    P2["Phase 2 completes"] --> NRS-9
+    NRS-2 --> NRS-4
+    NRS-4 --> NRS-3
+    NRS-4 --> NRS-6
+    NRS-4 --> NRS-5
+    NRS-5 --> NRS-8
+    NRS-6 --> NRS-8
+    NRS-4 --> NRS-7
+    NRS-1 --> NRS-7
 ```
 
 | Order | Slice | Gate before starting |
 |---|---|---|
-| 1 | N2 | D1, D2 |
-| 2 | N4 | delivered by CCS. No Foundation change needed (CCS sketch §12.1) |
-| 3 | N1 | AIR-3.3 merged |
-| 4 | N6 | N4 signed off |
-| 5 | N3 | N4 signed off |
-| 6 | N5 | moved to CCS 2026-10-10: HQ-6a before C9b3, HQ-6b before C12 |
-| 7 | N7 | N4, N1 signed off |
-| 8 | N8 | N5, N6 signed off. Since 2026-10-10: CCS HQ-6a and C12, and NQ-3 |
-| 9 | N9 | **D4. Phase 2 complete** |
-| 10+ | N10 to N13 | D5 and later gates |
+| 1 | NRS-2 | D1, D2 |
+| 2 | NRS-4 | delivered by CCS. No Foundation change needed (CCS sketch §12.1) |
+| 3 | NRS-1 | AIR-3.3 merged |
+| 4 | NRS-6 | NRS-4 signed off |
+| 5 | NRS-3 | NRS-4 signed off |
+| 6 | NRS-5 | moved to CCS 2026-10-10: HQ-6a before CCS-9b.3, HQ-6b before C12 |
+| 7 | NRS-7 | NRS-4, NRS-1 signed off |
+| 8 | NRS-8 | NRS-5, NRS-6 signed off. Since 2026-10-10: CCS HQ-6a and C12, and NQ-3 |
+| 9 | NRS-9 | **D4. Phase 2 complete** |
+| 10+ | NRS-10 to NRS-13 | D5 and later gates |
 
-N2 and N4 can begin immediately once §9's decisions are taken. Nothing in the applied-insurance
-epic blocks them. (2026-10-10: the diagram and table are the 2026-09-29 sequencing. N4 and N5 are
+NRS-2 and NRS-4 can begin immediately once §9's decisions are taken. Nothing in the applied-insurance
+epic blocks them. (2026-10-10: the diagram and table are the 2026-09-29 sequencing. NRS-4 and NRS-5 are
 CCS's, and CCS C13 and C13a wait on N1.)
 
 ---
@@ -511,22 +512,22 @@ sign-off.)
 
 | Slice | Levels | One command |
 |---|---|---|
-| N1 | L1, L2, L3 | `mise run check:mork-compilers` |
-| N2 | none, paper only | `mise run check:ontology-catalog` |
-| N3 | L1, L4 | `mise run check:reasoning-testkit` |
-| N4 | L1, L2, L3 | `mise run check:ontology-versioning && mise run check:ontology-catalog` |
-| N5 | L1, L2, L3 | `mise run check:persistence` |
-| N6 | L1, L2 | `mise run check:ontology-catalog` |
-| N7 | L3 | to be defined by the slice |
-| N8 | L1, L2, L3, L4 | `mise run check:mork-compilers` |
-| N9 | L0 to L3, full cascade | `mise run check` |
+| NRS-1 | L1, L2, L3 | `mise run check:mork-compilers` |
+| NRS-2 | none, paper only | `mise run check:ontology-catalog` |
+| NRS-3 | L1, L4 | `mise run check:reasoning-testkit` |
+| NRS-4 | L1, L2, L3 | `mise run check:ontology-versioning && mise run check:ontology-catalog` |
+| NRS-5 | L1, L2, L3 | `mise run check:persistence` |
+| NRS-6 | L1, L2 | `mise run check:ontology-catalog` |
+| NRS-7 | L3 | to be defined by the slice |
+| NRS-8 | L1, L2, L3, L4 | `mise run check:mork-compilers` |
+| NRS-9 | L0 to L3, full cascade | `mise run check` |
 
 **Non-weakening rule applies.** No slice may delete, skip or loosen a test from a previous slice
 without an ADR-grade justification in its Validation Pack, countersigned at the gate.
 
-**Mandatory adversarial probe for N4 and N8** (CCS's since they moved, with N5): law N5 (a specification is violated only when
+**Mandatory adversarial probe for NRS-4 and NRS-8** (CCS's since they moved, with NRS-5): law NRS-5 (a specification is violated only when
 activation is Permitted and fulfilment is Denied, and `Undetermined` never yields violation) must
-be shown to fail when deliberately broken. Getting N5 wrong makes the system accuse parties of
+be shown to fail when deliberately broken. Getting NRS-5 wrong makes the system accuse parties of
 breaching duties never established to apply to them, and it is the single most dangerous defect
 this unit can ship.
 
@@ -536,19 +537,19 @@ this unit can ship.
 
 ---
 
-## 9. Decisions owed before slice N1 starts
+## 9. Decisions owed before slice NRS-1 starts
 
 None of these is taken without the maintainer.
 
 | # | Decision | Bears on | Recommendation offered |
 |---|---|---|---|
 | **D1** | Unit rather than epic, with tranche gates replacing phase gates (§3) | the whole plan | unit. One machine, no coordination benefit from phases |
-| **D2** | Is `ins:Obligation` a deontic operator or a structural document element? ADR-A07b treats it structurally without deciding | N4, and therefore everything | **answered 2026-09-30**: deontic, with structure in a new Wording layer and content in `ins:Term` (CCS sketch §1, §5) |
-| **D3** | How far should ODRL alignment go? Naming the Instrument terms for a one-to-one ODRL mapping costs nothing now and is expensive to retrofit | N4 | **answered 2026-09-30**: design for LATTICE first, align where it costs nothing, map through MORK otherwise |
-| **D4** | Does N9 wait for Phase 2 to complete, or does the epic accept a coordinated freeze? | N9, and the epic | wait. The freeze cost is higher than the delay cost |
-| **D5** | Does priority (N10) wait for Phase 5 as the cross-check's row J suggests, or proceed on the audit-provenance evidence in the sketch §22.3? | N10, and adjacency with S7 | no recommendation. The evidence cuts both ways. Added 2026-09-30: every tested instrument asserts precedence (CBAA M1 1.2.1, M12 12.7.1, the sample package policy's End. 13 "whether such endorsement precedes or follows"). Most resolves when endorsements are consolidated, so a narrow `ins:prevailsOver` as consolidation provenance could come early (CCS sketch §10.7, S70). 2026-10-06: CCS C7c declared `ins:prevailsOver` between definitions only, leaving terms to N10 |
-| **D6** | Is substrate S2 authored together with N5, or landed first? | N5 | together. Both are Eligibility well-foundedness by the same hand. Overtaken 2026-10-10: N5 is CCS HQ-6, and whether S2 still pairs with it is open (status record, NQ-4) |
-| **D7** | Should an unlicensed absence-dependent check be refused at compile time, or compiled to a permanent `Undetermined` with a diagnostic? | N5 | refuse. A permanent `Undetermined` hides a data-provenance problem behind a logic outcome. **Answered 2026-10-10**: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
+| **D2** | Is `ins:Obligation` a deontic operator or a structural document element? ADR-A07b treats it structurally without deciding | NRS-4, and therefore everything | **answered 2026-09-30**: deontic, with structure in a new Wording layer and content in `ins:Term` (CCS sketch §1, §5) |
+| **D3** | How far should ODRL alignment go? Naming the Instrument terms for a one-to-one ODRL mapping costs nothing now and is expensive to retrofit | NRS-4 | **answered 2026-09-30**: design for LATTICE first, align where it costs nothing, map through MORK otherwise |
+| **D4** | Does NRS-9 wait for Phase 2 to complete, or does the epic accept a coordinated freeze? | NRS-9, and the epic | wait. The freeze cost is higher than the delay cost |
+| **D5** | Does priority (NRS-10) wait for Phase 5 as the cross-check's row J suggests, or proceed on the audit-provenance evidence in the sketch §22.3? | NRS-10, and adjacency with S7 | no recommendation. The evidence cuts both ways. Added 2026-09-30: every tested instrument asserts precedence (CBAA M1 1.2.1, M12 12.7.1, the sample package policy's End. 13 "whether such endorsement precedes or follows"). Most resolves when endorsements are consolidated, so a narrow `ins:prevailsOver` as consolidation provenance could come early (CCS sketch §10.7, S70). 2026-10-06: CCS C7c declared `ins:prevailsOver` between definitions only, leaving terms to NRS-10 |
+| **D6** | Is substrate S2 authored together with NRS-5, or landed first? | NRS-5 | together. Both are Eligibility well-foundedness by the same hand. Overtaken 2026-10-10: NRS-5 is CCS HQ-6, and whether S2 still pairs with it is open (status record, NQ-4) |
+| **D7** | Should an unlicensed absence-dependent check be refused at compile time, or compiled to a permanent `Undetermined` with a diagnostic? | NRS-5 | refuse. A permanent `Undetermined` hides a data-provenance problem behind a logic outcome. **Answered 2026-10-10**: refuse, in CCS HQ-6a (HQ6-Q2), consistent with CCS C9b0-Q2 |
 
 ---
 
@@ -556,9 +557,9 @@ None of these is taken without the maintainer.
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| R1 | N4 turns out to need a Foundation change, collapsing the parallel-safe verdict | medium | high | N4's first task is to confirm it is avoidable. If not, stop and re-plan rather than proceeding. Retired 2026-10-10: N4 delivered in CCS with no Foundation change (CCS sketch §12.1) |
-| R2 | N9's cascade lands mid-Phase-2 despite the gate, through an unnoticed transitive dependency | low | high | `mise run check:ontology-versioning` before every handoff. The cascade checklist enumerates importers rather than assuming them |
-| R3 | N10 and substrate S7 produce two incompatible precedence vocabularies | medium | medium | D5 and §4.4. Design by one hand or separate explicitly |
-| R4 | Law N5 ships subtly wrong, so `Undetermined` becomes breach | low | **severe** | Mandatory adversarial probe at the N4 and N8 gates, now CCS's, with HQ-6 |
+| R1 | NRS-4 turns out to need a Foundation change, collapsing the parallel-safe verdict | medium | high | NRS-4's first task is to confirm it is avoidable. If not, stop and re-plan rather than proceeding. Retired 2026-10-10: NRS-4 delivered in CCS with no Foundation change (CCS sketch §12.1) |
+| R2 | NRS-9's cascade lands mid-Phase-2 despite the gate, through an unnoticed transitive dependency | low | high | `mise run check:ontology-versioning` before every handoff. The cascade checklist enumerates importers rather than assuming them |
+| R3 | NRS-10 and substrate S7 produce two incompatible precedence vocabularies | medium | medium | D5 and §4.4. Design by one hand or separate explicitly |
+| R4 | Law NRS-5 ships subtly wrong, so `Undetermined` becomes breach | low | **severe** | Mandatory adversarial probe at the NRS-4 and NRS-8 gates, now CCS's, with HQ-6 |
 | R5 | The unit's scope grows to include an evaluation engine | medium | high | §2 scope exclusions, and the cross-check's deferral triggers are unchanged by this plan |
-| R6 | Applied-insurance Phase 5 is un-deferred while this unit is mid-flight | low | medium | N4 first means the thing Phase 5 needs exists earliest |
+| R6 | Applied-insurance Phase 5 is un-deferred while this unit is mid-flight | low | medium | NRS-4 first means the thing Phase 5 needs exists earliest |

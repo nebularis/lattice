@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-publication PB1 to PB17
+# Validation Pack: studio-publication PB-1 to PB-17
 
 **Plan:** [studio-publication](../plans/studio-publication.md)
 **Status record:** [studio-publication](../status/studio-publication.md)
@@ -17,9 +17,9 @@ What a workspace refers to is read, never copied, and what leaves the studio is 
 mise run check:config-studio
 ```
 
-It stages the assets, then runs the stage and worker tests, the service's Maven build and tests, and the browser code's type check and unit tests. A pass is exit status 0. The worker's own suite runs with `mise run check:workers`, and the persistence caller libraries, PB11, with `mise run check:persistence-library`.
+It stages the assets, then runs the stage and worker tests, the service's Maven build and tests, and the browser code's type check and unit tests. A pass is exit status 0. The worker's own suite runs with `mise run check:workers`, and the persistence caller libraries, PB-11, with `mise run check:persistence-library`.
 
-## PB1: what a job reads
+## PB-1: what a job reads
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -36,7 +36,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** A job reads the other parts as saved, so an unsaved edit elsewhere is unseen until it is saved (MEC-97). The browser's cached compilation is keyed on the other parts' revisions, which PB1-08 exercises only through the first compilation.
 
-## PB2: who a request is from
+## PB-2: who a request is from
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -54,7 +54,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The browser's sign-in at a real OpenID Connect provider, by the authorization code flow with PKCE, which needs a provider and a registered client. The Word add-in under `oidc` (TD-134).
 
-## PB3: a workspace's owner and mode
+## PB-3: a workspace's owner and mode
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The browser does not disable editing in a workspace its principal may only read. A save is refused by the writer and the refusal shown. An administrator gives an ownerless workspace an owner through the API, not the browser.
 
-## PB4: a version, its event and its pointer
+## PB-4: a version, its event and its pointer
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -87,9 +87,9 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 `workers/tests/test_config_studio_publish.py`, `workers/tests/test_config_studio_worker.py` and `PublicationTest`.
 
-**Not covered.** The writer does not recompute a version's digest (PB-D1). Two workspaces may publish one lineage, and both events record where they came from. Reading the registry is PB5.
+**Not covered.** The writer does not recompute a version's digest (PB-D1). Two workspaces may publish one lineage, and both events record where they came from. Reading the registry is PB-5.
 
-## PB5: reading the registry, and publishing from the browser
+## PB-5: reading the registry, and publishing from the browser
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -103,7 +103,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** A lineage whose IRI has a fragment, such as `…/employment#JobFamilyScheme`, names its versions inside the fragment, `…#JobFamilyScheme/rev/1-…`, which a deployment that dereferences IRIs cannot fetch apart from the lineage. The registry has no deletion, by design, so a live check removes its test lineage from the store by hand.
 
-## PB6: depending on published versions
+## PB-6: depending on published versions
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -124,7 +124,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Found live.** The writer refused the publish job's update, since `cst:pins` was not among the predicates a worker may write, and the job stayed running. The unit tests had written job results without pins. `PublicationTest`'s finished job now carries one.
 
-## PB7: fenced imports
+## PB-7: fenced imports
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -141,7 +141,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** A workspace's export omits its imports' content, and nothing removes an import no workspace holds (TD-135). The browser's other imports, such as an ODRL policy or a proposer's source vocabulary, still copy what they read into a part.
 
-## PB8: artefacts that name their sources, and bundles
+## PB-8: artefacts that name their sources, and bundles
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -154,7 +154,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The browser offers a version's bundle to download, but compiles a version only through the API.
 
-## PB9: choosing what a workspace depends on, in its forms
+## PB-9: choosing what a workspace depends on, in its forms
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -165,7 +165,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The browser's world holds each dependency as resolved when the workspace loads or its dependencies change, so a version published meanwhile is read at the next change or reload.
 
-## PB11: the Java caller library
+## PB-11: the Java caller library
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -178,7 +178,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Found.** Python's `$` accepts a trailing line feed, so the Python library accepts a digest, a language tag or an `xsd:long` lexical form ending in one, which the Java library refuses. No vector covers it. **Not covered.** The vectors' schema test is not ported, since it needs a JSON Schema library, and `check:persistence-vectors` covers it.
 
-## PB12: the studio's persistence profile and its skolem IRIs
+## PB-12: the studio's persistence profile and its skolem IRIs
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -191,9 +191,9 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 `tools/test_config_studio_stage.py`, `SkolemTest` and `workers/tests/test_config_studio_worker.py`.
 
-**Not covered.** No write names a blank node with a skolem IRI yet. PB13 makes the writer do it. A cycle of blank nodes is named by its shape alone and told apart by a count, which no authored layer is known to hold.
+**Not covered.** No write names a blank node with a skolem IRI yet. PB-13 makes the writer do it. A cycle of blank nodes is named by its shape alone and told apart by a count, which no authored layer is known to hold.
 
-## PB13: the operations layer
+## PB-13: the operations layer
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -207,9 +207,9 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 `StudioOperationsTest`, 15 tests, by `mise run check:config-studio`.
 
-**Found.** A tombstoned root keeps its version row, so it cannot be created again. A workspace, a part and a document are never created again under a deleted root, since their roots hold a new id, but an import released by every workspace and swept would be, so PB14 never tombstones an import.
+**Found.** A tombstoned root keeps its version row, so it cannot be created again. A workspace, a part and a document are never created again under a deleted root, since their roots hold a new id, but an import released by every workspace and swept would be, so PB-14 never tombstones an import.
 
-## PB14: the writer's workspace commands on generated operations
+## PB-14: the writer's workspace commands on generated operations
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -225,11 +225,11 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 `GraphsTest`, `WorkspaceCommandsTest`, `ReceiptsTest`, `StudioApiTest` and `workers/tests/test_config_studio_worker.py`, by `mise run check:config-studio` and `mise run check:workers`. The service's earlier tests were changed only where they asserted the old layout.
 
-**Changed.** An export names each graph by its aggregate's root, so it does not depend on the profile, and an export made before PB14 is not accepted. A command that writes only the description answers `400` when its receipt is absent after the commit, since the workspace changed while it was applied. A document id or workspace id that was deleted cannot be used again, since a tombstoned root cannot be created again. The worker read any workspace's baseline for a job, which the writer had kept from happening, and now reads only the job's own (PB14-09, PRI-75).
+**Changed.** An export names each graph by its aggregate's root, so it does not depend on the profile, and an export made before PB-14 is not accepted. A command that writes only the description answers `400` when its receipt is absent after the commit, since the workspace changed while it was applied. A document id or workspace id that was deleted cannot be used again, since a tombstoned root cannot be created again. The worker read any workspace's baseline for a job, which the writer had kept from happening, and now reads only the job's own (PB14-09, PRI-75).
 
-**Not covered.** A store written before PB14 reads as holding no workspace until PB16 migrates it. The workspace listing reads each description and scans each family's meta graph, which PB17's summary replaces. Not checked live, since a running studio needs PB16 first.
+**Not covered.** A store written before PB-14 reads as holding no workspace until PB-16 migrates it. The workspace listing reads each description and scans each family's meta graph, which PB-17's summary replaces. Not checked live, since a running studio needs PB-16 first.
 
-## PB15: the registry on generated operations
+## PB-15: the registry on generated operations
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -241,9 +241,9 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 `PublicationTest`, `GraphsTest` and `workers/tests/test_config_studio_publish.py`, by `mise run check:config-studio` and `mise run check:workers`.
 
-**Not covered.** The worker restates the registry's prefixes in two modules, each held to the profile by a test. Not checked live, for the reason PB14 gives.
+**Not covered.** The worker restates the registry's prefixes in two modules, each held to the profile by a test. Not checked live, for the reason PB-14 gives.
 
-## PB16: migrating a store written before phase D
+## PB-16: migrating a store written before phase D
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -261,7 +261,7 @@ It stages the assets, then runs the stage and worker tests, the service's Maven 
 
 **Not covered.** The maintainer's five workspaces were opened and compared, never written, as agreed. The old jobs were dropped, since they named old graphs, so each workspace's compile history starts empty.
 
-## PB17: projections refreshed by worker jobs
+## PB-17: projections refreshed by worker jobs
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|

@@ -2,20 +2,20 @@
 
 # Sketch: browser events over the broker's Web MQTT, with or without a proxy
 
-**Unit:** `projection-maintenance` (PM), a rework of PM3 raised by the maintainer on 2026-11-02
-**Status:** sketch. PM-Q18 and PM-Q20 answered 2026-11-02, PM-Q19, PM-Q21 and PM-Q22 open. PM3a and PM3b built 2026-11-02 with the leanings of PM-Q19 and PM-Q21, [Validation Pack](../validation/PM3b.md)
+**Unit:** `projection-maintenance` (PM), a rework of PM-3 raised by the maintainer on 2026-11-02
+**Status:** sketch. PM-Q18 and PM-Q20 answered 2026-11-02, PM-Q19, PM-Q21 and PM-Q22 open. PM-3a and PM-3b built 2026-11-02 with the leanings of PM-Q19 and PM-Q21, [Validation Pack](../validation/PM-3b.md)
 **Status record:** [projection-maintenance.md](../status/projection-maintenance.md)
 **Builds on:** ADR-A30 (CloudEvents through the outbox), ADR-A149 decision 8 (authenticators), PM-Q10 to PM-Q12 in the [plan](../plans/projection-maintenance.md)
 
 ## 1. The scene
 
-PM3 built a WebSocket of our own at `/api/events` on the studio service. A browser authenticates with its first frame, subscribes to a job by a subscribe frame, and receives the job's CloudEvents. The service refuses an upgrade from another origin, bounds a session's subjects and frame size, and checks that the subscriber may read the job at subscription and again at each delivery (PM3-T5). The service's `EventConsumer` feeds the notifier from the exchange `lattice.studio.events`.
+PM-3 built a WebSocket of our own at `/api/events` on the studio service. A browser authenticates with its first frame, subscribes to a job by a subscribe frame, and receives the job's CloudEvents. The service refuses an upgrade from another origin, bounds a session's subjects and frame size, and checks that the subscriber may read the job at subscription and again at each delivery (PM3-T5). The service's `EventConsumer` feeds the notifier from the exchange `lattice.studio.events`.
 
 All of that is a protocol we own. TLS, authentication, origin checking, limits and every new kind of subscription are ours to build, review and keep, and each is a place to get security wrong. RabbitMQ, which we already run, ships the same capability as a standard protocol, MQTT over WebSockets, with its own TLS and topic authorisation, and MQTT suits clients on the edge as well as browsers. The hypothesis of this sketch is that the broker should carry browser events and the service should keep only the decision of who may read what.
 
 ## 2. What the broker offers
 
-From RabbitMQ 4.4's documentation, read on 2026-11-02. What PM3a's probes found is recorded in the status record.
+From RabbitMQ 4.4's documentation, read on 2026-11-02. What PM-3a's probes found is recorded in the status record.
 
 - **Web MQTT.** The `rabbitmq_web_mqtt` plugin serves MQTT over WebSockets, by default on port 15675 at `/ws`. TLS is configured under `web_mqtt.ssl` (port, certificate, key and CA files, versions and ciphers). `web_mqtt.proxy_protocol = true` accepts the PROXY protocol, so the broker sees the client's address behind a proxy.
 - **Topics.** MQTT topics route through one topic exchange, `mqtt.exchange` (`amq.topic` by default). A topic's `/` becomes `.` in the routing key, `+` becomes `*`, and a topic should hold no `.`.
@@ -25,7 +25,7 @@ From RabbitMQ 4.4's documentation, read on 2026-11-02. What PM3a's probes found 
 
 ## 3. The constraint that places the checks
 
-A browser cannot set a header on a WebSocket upgrade. PM3 authenticates by its first frame for that reason. So a proxy such as nginx or a corporate API gateway cannot check the app's bearer token on the broker's socket, unless the deployment carries its session in a cookie, for example through an OAuth proxy. The credential has to travel inside the protocol, which for MQTT is the CONNECT packet's password, and only the broker reads it there.
+A browser cannot set a header on a WebSocket upgrade. PM-3 authenticates by its first frame for that reason. So a proxy such as nginx or a corporate API gateway cannot check the app's bearer token on the broker's socket, unless the deployment carries its session in a cookie, for example through an OAuth proxy. The credential has to travel inside the protocol, which for MQTT is the CONNECT packet's password, and only the broker reads it there.
 
 The design therefore rests on one rule. **The broker checks every connection and every subscription itself, and a proxy only adds checks.** Then a deployment with a proxy and one without have the same security, and the proxy is defence in depth, never the only gate.
 
@@ -45,7 +45,7 @@ Each keeps a copy of a permission the graph holds, a token's scopes, a cached an
   1. An unbind lost to a netsplit leaves the binding until a reconciler finds it, and with no reconciler for ever. Under (a) the token's expiry at least ends the window.
   2. An unbind stops new routing and does not recall the events already queued or in flight to the socket. A purge after it narrows that and races with deliveries under way.
   3. The lock is a commit in the graph and the unbind a change in the broker, and nothing makes them one step, so an event published between them is delivered. Unbinding before the commit fails closed, and then a broker that cannot be reached blocks an administrator from locking a workspace.
-  4. The Web MQTT plugin creates a queue of its own for each session and binds it to the topics the client subscribes, so a queue the service declares is not one a Web MQTT client reads. The service would bind the plugin's session queues and permissions would forbid the client's own subscriptions, which PM3a would have to probe.
+  4. The Web MQTT plugin creates a queue of its own for each session and binds it to the topics the client subscribes, so a queue the service declares is not one a Web MQTT client reads. The service would bind the plugin's session queues and permissions would forbid the client's own subscriptions, which PM-3a would have to probe.
 
 Testing any of them means modelling the broker's copy, its failures and its repair, beside the graph.
 
@@ -56,14 +56,14 @@ Testing any of them means modelling the broker's copy, its failures and its repa
 - **Topics of one's own.** A principal may write only `studio/u/<name>/<tab>/watch` and read only `studio/u/<name>/<tab>/events`, where `<name>` is the principal's name in unpadded base64url, so a topic holds no `.`, `/`, `+` or `#`, and `<tab>` is a random identifier of the browser tab. The rule depends only on who connected, never on a workspace, so it never changes when a permission does.
 - **The broker asks the service who connected.** The CONNECT packet carries the principal's name as the user and the app's own credential as the password, an OIDC access token, or with local sign-in a key only a page of the studio's own origin reads from the session, since the broker checks no Origin. The broker's HTTP backend asks the service's `user_path`, which authenticates it with the deployment's authenticator (ADR-A149 decision 8) and allows it only when it names the user. `vhost_path`, `resource_path` and `topic_path` answer the fixed rule above, and allow the session's own MQTT queue and the MQTT exchange, nothing else.
 - **The relay keeps who watches what.** It consumes `lattice.studio.events` as `EventConsumer` does today, and every `watch` topic. A watch frame is `{"type":"subscribe","subject":...,"headers":{...}}`, `unsubscribe` or `gone`, where `headers` are those an HTTP request of the browser carries, so the relay knows the principal and whether it administers. A subscribe is refused when its principal is not the topic's.
-- **The check is at delivery.** For each event the relay asks `StudioApi.mayRead` for each watcher of its subject, as PM3's notifier does, and publishes to the events topic of each it allows.
+- **The check is at delivery.** For each event the relay asks `StudioApi.mayRead` for each watcher of its subject, as PM-3's notifier does, and publishes to the events topic of each it allows.
 - **Revocation is one commit.** Locking a workspace commits to the graph, and the next event is withheld because the check reads that commit. No management call, no binding, no token to revoke.
 - **A netsplit fails closed.** A relay that cannot read the graph delivers nothing, and the browser falls back to polling, as it does today.
 - **A tab that goes.** A tab's MQTT will message, published by the broker when the connection drops uncleanly, is `gone` on its watch topic, and a tab that closes cleanly sends `gone` itself. Either way the relay forgets the tab's watches.
 
-What it keeps of PM3 is the notifier's core, the watchers, the check and the fan-out. What moves to the broker is TLS, the socket, authentication of the connection, framing, limits and the origin question, the parts that make a protocol of our own costly to keep. PM3-T5 holds unchanged, so there is no weakening to countersign.
+What it keeps of PM-3 is the notifier's core, the watchers, the check and the fan-out. What moves to the broker is TLS, the socket, authentication of the connection, framing, limits and the origin question, the parts that make a protocol of our own costly to keep. PM3-T5 holds unchanged, so there is no weakening to countersign.
 
-Two windows remain, and neither depends on a second system. Between the check and the publish, as in PM3, microseconds. And identity, checked at CONNECT as PM3 checked it at the first frame, so a principal whose provider account is disabled keeps its connection until it closes, though it hears only what the graph lets it read.
+Two windows remain, and neither depends on a second system. Between the check and the publish, as in PM-3, microseconds. And identity, checked at CONNECT as PM-3 checked it at the first frame, so a principal whose provider account is disabled keeps its connection until it closes, though it hears only what the graph lets it read.
 
 ## 5. The design
 
@@ -113,9 +113,9 @@ sequenceDiagram
 
 The events URL is configuration, the proxy's public address or the broker's own, and the service names it in `/api/session` and in its Content-Security-Policy's `connect-src`, so the browser is the same in both deployments. Events stay structured CloudEvents in JSON in the message body, which needs no MQTT 5 user properties (PM-Q12 holds). The writer and its exchange do not change.
 
-### 5.3 What carries over from PM3
+### 5.3 What carries over from PM-3
 
-| PM3 | Under (d) |
+| PM-3 | Under (d) |
 |---|---|
 | first-frame auth | the CONNECT user and password, checked by the service through the broker. Each subscribe frame carries the headers again |
 | Origin check on the service | a foreign page has no credential to give CONNECT, and a proxy may check Origin as well |
@@ -171,11 +171,11 @@ The negative cases, each on both runs where it applies:
 
 **PM-Q18. Do we replace the service's WebSocket with the broker's Web MQTT?** (a) Yes, and remove the socket and its dependency. (b) Yes, and keep the service's socket as a second transport. (c) No. **Answered 2026-11-02, (a).**
 
-**PM-Q19. What credential does a browser give the broker?** (a) A token the service signs for the broker, with a key of its own. (b) A token from the deployment's identity provider by token exchange. (c) The app's own credential, which the broker's HTTP backend asks the service to check. (a) adds a signing key to rotate, and (b) works only where the provider supports token exchange. (c) adds no key and no token, and costs a check at the service for each connection. Under (d) the broker holds no permission, so a token's scopes have nothing to carry. Leaning (c), which PM3b builds meanwhile.
+**PM-Q19. What credential does a browser give the broker?** (a) A token the service signs for the broker, with a key of its own. (b) A token from the deployment's identity provider by token exchange. (c) The app's own credential, which the broker's HTTP backend asks the service to check. (a) adds a signing key to rotate, and (b) works only where the provider supports token exchange. (c) adds no key and no token, and costs a check at the service for each connection. Under (d) the broker holds no permission, so a token's scopes have nothing to carry. Leaning (c), which PM-3b builds meanwhile.
 
 **PM-Q20. How does the broker enforce who reads which topic?** (a) Token scopes. (b) The HTTP backend at each subscription. (c) A queue for each principal. (d) Identity only, with a relay of the service deciding at delivery. §4 compares them. **Answered 2026-11-02, (d).**
 
-**PM-Q21. Is an identity checked at CONNECT enough?** (a) Yes, as PM3 checked it at the first frame, since every event is still checked against the graph at delivery. (b) The relay also refuses a subscribe frame whose headers no longer authenticate, which (d) does anyway since each frame carries them. (c) The service also closes a principal's connections when its provider disables it. (c) is the management call that §4.1 found fails open, here only for a disabled account. Leaning (a) with (b), which PM3b builds meanwhile.
+**PM-Q21. Is an identity checked at CONNECT enough?** (a) Yes, as PM-3 checked it at the first frame, since every event is still checked against the graph at delivery. (b) The relay also refuses a subscribe frame whose headers no longer authenticate, which (d) does anyway since each frame carries them. (c) The service also closes a principal's connections when its provider disables it. (c) is the management call that §4.1 found fails open, here only for a disabled account. Leaning (a) with (b), which PM-3b builds meanwhile.
 
 **PM-Q22. How is the proxy deployment tested?** (a) A proxy as a container in the `compose` runner. (b) A proxy as a local process installed by mise, so both runs use the `processes` runner and the merge gate needs no Docker. (c) The direct run alone, with the proxy's configuration checked statically. The proxy may be Caddy, which the compose stack already runs, or nginx, which a corporate deployment is likelier to run. Leaning (b) with Caddy, a single binary, if mise installs it on every platform, else (a). Not built until answered.
 
@@ -183,8 +183,8 @@ The negative cases, each on both runs where it applies:
 
 | Slice | What | Done when |
 |---|---|---|
-| PM3a | probe the HTTP backend's calls for an MQTT client, the session queue's name, the will message, and TLS on Web MQTT, and enable Web MQTT in the stack and the harness | the probes are recorded |
-| PM3b | the broker check routes, the relay, `events.ts` over MQTT, TLS in the real-stack run, and the removal of the WebSocket | PM3's tests are carried over to the relay, and the direct run passes with every negative case |
-| PM3c | the proxy run of PM-Q22 in the browser gate | the proxy run passes with every negative case |
+| PM-3a | probe the HTTP backend's calls for an MQTT client, the session queue's name, the will message, and TLS on Web MQTT, and enable Web MQTT in the stack and the harness | the probes are recorded |
+| PM-3b | the broker check routes, the relay, `events.ts` over MQTT, TLS in the real-stack run, and the removal of the WebSocket | PM-3's tests are carried over to the relay, and the direct run passes with every negative case |
+| PM-3c | the proxy run of PM-Q22 in the browser gate | the proxy run passes with every negative case |
 
-PM4's commit events go to the same exchange, so these slices come before it.
+PM-4's commit events go to the same exchange, so these slices come before it.

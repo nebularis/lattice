@@ -2,6 +2,9 @@
 
 # LLM Training and MORK Teaching Pack (MTP) Implementation Status
 
+**Unit ID:** `llm-training-mtp`
+**Status:** merged 2026-09-20. Accepted, fully implemented and validated.
+
 **Unit:** `llm-training-mtp`
 **State:** Accepted - fully implemented and validated
 **Sketch:** [llm-training.md](../sketches/llm-training.md)

@@ -56,9 +56,9 @@ Foundation's versions (MEC-01), the IRI policy's lineage, content revision and p
 
 The studio's derived data is no longer five graphs rebuilt by a job after writes. Each promotion reads one family of aggregates, a workspace description, a lineage, a published version or a job, and keeps its rows for each source in that source's own partition. The write of a source keeps its partition in the same request, by clearing it and filling it from the source as the request leaves it, so a reader sees a write's derived data as soon as the write, and a publish is one commit. The workspace summaries are not stored and are evaluated as they are read. A rebuild of every partition remains, run at start when the promotions grew since the last rebuild, which records the digests of the contracts it read, or when an administrator asks. A promotion that changed or went since is not rebuilt, since that would lose its old rows, and the studio shows the start's warning.
 
-## Addendum, 2026-11-01 (PM0)
+## Addendum, 2026-11-01 (PM-0)
 
-**Renames the derived data of decisions 12 and 14.** The derived data those decisions call projections is named promotions from PM0, after the kind of contract that produces it, `srf:PromotionContract` (PM-Q8 (a)). The word projection is kept for the output of an `srf:ProjectionContract` and for unrelated meanings. The contract file is `contracts/config-studio/promotions.ttl`, its target namespace ends `config-studio/promotion#`, each source's promoted rows lie in the partition `urn:lattice:studio:promoted:{source graph}`, and the job that rebuilds them is of kind `cst:Rebuild`. The decisions stand as accepted.
+**Renames the derived data of decisions 12 and 14.** The derived data those decisions call projections is named promotions from PM-0, after the kind of contract that produces it, `srf:PromotionContract` (PM-Q8 (a)). The word projection is kept for the output of an `srf:ProjectionContract` and for unrelated meanings. The contract file is `contracts/config-studio/promotions.ttl`, its target namespace ends `config-studio/promotion#`, each source's promoted rows lie in the partition `urn:lattice:studio:promoted:{source graph}`, and the job that rebuilds them is of kind `cst:Rebuild`. The decisions stand as accepted.
 
 ## Provenance
 

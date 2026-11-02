@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO3, the ownership vocabulary, persistence 0.3.0
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO3
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO3
 ([plan §3.5](../plans/formal-methods-track-h.md#ho3-the-vocabulary-persistence-030)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decisions 1, 3 and 4,
 and [sketch §3](../sketches/persistence-aggregate-ownership.md#3-declaration-surface-ho3).
@@ -12,7 +12,7 @@ and [sketch §3](../sketches/persistence-aggregate-ownership.md#3-declaration-su
 
 An adopter can declare, in a boundary shape, whether each edge is owned, a reference or vocabulary, name
 the data graph a composite family lives in, and declare reference data, and the shapes refuse a malformed
-declaration. The compiler does not read any of it yet (HO4 and HO5), so no behaviour changes.
+declaration. The compiler does not read any of it yet (FMH-HO4 and FMH-HO5), so no behaviour changes.
 
 ## What changed
 
@@ -50,7 +50,7 @@ declaration. The compiler does not read any of it yet (HO4 and HO5), so no behav
    three values, which is where a violation is reported.
 3. **The new SPARQL shape declares its `PREFIX` inside the query**, and has no `sh:prefixes`. The skill asks
    for this, and the sketch said to copy the older shape's form.
-4. **HO3-T3 builds the sketch's reference configuration inline in the test.** HO4 adds it as a file
+4. **HO3-T3 builds the sketch's reference configuration inline in the test.** FMH-HO4 adds it as a file
    (`composite-project-ownership.ttl`) and can switch the test to it.
 5. **`dal:ownsReferenceData` and `dal:dataGraph` carry `rdfs:domain dal:AggregateBoundaryProfile`.** The sketch
    left them domain-free. They apply to nothing else, and the existing properties of that class do the same.
@@ -109,6 +109,6 @@ Run on 2026-10-10, each restored afterwards.
 
 ## Deliberate non-coverage
 
-- That the compiler reads `dal:ownership`. HO4 and HO5.
+- That the compiler reads `dal:ownership`. FMH-HO4 and HO5.
 - Refusals for an unclassified edge or an owned reference-data edge. HO6.
-- `dal:maxTraversalDepth` is still read by `resolver.py` and `validator.py`, defaulting to 8. HO5 removes it.
+- `dal:maxTraversalDepth` is still read by `resolver.py` and `validator.py`, defaulting to 8. FMH-HO5 removes it.

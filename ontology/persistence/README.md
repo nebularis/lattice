@@ -2090,7 +2090,7 @@ flowchart TB
     classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
 ```
 
-**A stale delta.** Two writers read the aggregate at seq 1 and each computes a delta against it. The first to arrive moves the row. The second finds no row at seq 1, so its `WHERE` has no solution and it writes nothing, not even the delta graphs it would have named. It learns so from the absent claim, reads again, recomputes its delta against seq 2, and sends it with the expected seq 2, or sends nothing when the recomputed delta is empty (STD-301).
+**A stale delta.** Two writers read the aggregate at seq 1 and each computes a delta against it. The first to arrive moves the row. The second finds no row at seq 1, so its `WHERE` has no solution and it writes nothing, not even the delta graphs it would have named. It learns so from the absent claim, reads again, recomputes its delta against seq 2, and sends it with the expected seq 2, or sends nothing when the recomputed delta is empty (STD-309).
 
 ```mermaid
 sequenceDiagram
@@ -2119,7 +2119,7 @@ sequenceDiagram
     end
 ```
 
-**What the caller does.** It reads the aggregate and its row, decides the next state, and computes the two slots as sets, the retracted triples in the state it read and not in the next, the asserted in the next and not in the read, so the two are disjoint. It checks the next state against the family's boundary shape, with the generated `payload-check` over a local graph or the caller library's check, since a delta cannot be checked alone, retracting one triple can orphan a member without the delta showing it. It sends nothing when both slots are empty, because the operation moves the row and writes a receipt whenever its guard holds and cannot tell an unchanged state from a changed one (STD-301). Under a patch log the same two slots fill the add and del graphs, so the delta is computed once. Each of these is an obligation the SPARQL cannot enforce, listed in the compiler's [README](../../tools/persistence/README.md).
+**What the caller does.** It reads the aggregate and its row, decides the next state, and computes the two slots as sets, the retracted triples in the state it read and not in the next, the asserted in the next and not in the read, so the two are disjoint. It checks the next state against the family's boundary shape, with the generated `payload-check` over a local graph or the caller library's check, since a delta cannot be checked alone, retracting one triple can orphan a member without the delta showing it. It sends nothing when both slots are empty, because the operation moves the row and writes a receipt whenever its guard holds and cannot tell an unchanged state from a changed one (STD-309). Under a patch log the same two slots fill the add and del graphs, so the delta is computed once. Each of these is an obligation the SPARQL cannot enforce, listed in the compiler's [README](../../tools/persistence/README.md).
 
 **What works best when.**
 

@@ -95,6 +95,7 @@ FAMILY_CLASS = {
     "pattern": "Pattern",
     "principle": "Principle",
     "standard": "Standard",
+    "slice": "Slice",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -464,6 +465,8 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Entry point": ("entryPoint", "text"),
     "Built": ("built", "built"),
     "Ratified": ("status", "ratified"),
+    "Unit": ("unit", "text"),
+    "State": ("state", "text"),
 }
 
 # Human-only columns, deliberately not indexed. A header in neither table is a reported problem.
@@ -472,7 +475,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
-        "Why we want it", "What exists", "Status",
+        "Why we want it", "What exists", "Status", "Blocked on",
         "Next step",
     }
 )

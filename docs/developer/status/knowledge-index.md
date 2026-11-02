@@ -3,9 +3,9 @@
 # Knowledge index: status
 
 **Unit ID:** `knowledge-index`
+**Status:** building 2026-10-26. Built, with activation and ratification tasks remaining.
 **Sketch:** [knowledge-index.md](../sketches/knowledge-index.md)
 **ADR:** [ADR-A134](../../architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), Accepted 2026-10-24, with addenda of 2026-10-25 and 2026-10-26
-**Branch:** `docs/placement-vehicles-structure`, not merged into `main`
 **Mode:** autonomous on the branch, at the maintainer's request
 
 ## Position

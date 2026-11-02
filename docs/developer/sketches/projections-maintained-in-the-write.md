@@ -123,7 +123,7 @@ Whether a scope's maintainer keeps up with its writers under heavy concurrency d
 
 **PM-Q3. When does a rebuild run?** Answered 2026-10-31. Each projection's graphs record the version of the contract that built them. At start the service rebuilds a projection whose contract changed only where the change is purely additive, new promotions and nothing changed or removed. A change that is not additive is not rebuilt: the service logs that the contract is out of date, the studio shows that its start had warnings, and the rebuild command is not offered for it. An admin command rebuilds on demand, after data was written outside the writer or a fault was fixed. A change that alters or removes rows needs a migration that keeps their history, which is BL-12 and out of scope for now, and these constraints go when it exists. How additive is decided is PM-Q7.
 
-**PM-Q4. What moves to the WebSocket first?** Answered 2026-10-31: none yet. The plumbing waits until the store's writes are shown consistent and stable, so PM3 follows the delta replace unit and PM2.
+**PM-Q4. What moves to the WebSocket first?** Answered 2026-10-31: none yet. The plumbing waits until the store's writes are shown consistent and stable, so PM-3 follows the delta replace unit and PM-2.
 
 **PM-Q5. Where may a tier 2 materialisation live?** Answered 2026-10-31: in the graph only. No store outside the graph yet.
 
@@ -139,7 +139,7 @@ Whether a scope's maintainer keeps up with its writers under heavy concurrency d
 
 Since an altered value is a triple removed and one added, the test for all three is that every row the old contracts produced the new ones produce too. (a) by the contracts: each partition records the digest of each contract that built it, and a change is additive when no recorded contract changed or went and some are new. It is cheap, and it refuses a widening of an existing contract, which is safe and stricter than the definition. (b) by effect: a rebuild into staging, the rows each contract produced before, found by the contract's target namespace wherever they sit, checked to be a subset of those it produces now, then swapped, or the old kept with a warning. It is exact, and costs a whole rebuild and twice the space while staging, at a start whose contract changed. (c) both: (a) first, nothing done where no digest changed, only the new contracts built where only new ones appeared, and (b) only where an existing contract changed. **Answered 2026-10-31, (c).**
 
-**PM-Q8. What is the studio's derived data called?** ADR-A149 calls it projections, and the surface layer names a different thing `srf:ProjectionContract`, a contract lowered into MORK, which tier 2 may use, so the one word would name two things. (a) each is named by the kind of contract that produces it, promotions and index entries, whatever its placement, and "projection" is kept for `srf:ProjectionContract`'s output. (b) read models, a term no layer here defines. (c) keep the name, with the clash recorded. **Answered 2026-10-31, (a),** renamed in the ADR, the contract, the code and the graph names in one change, before PM2 moves them.
+**PM-Q8. What is the studio's derived data called?** ADR-A149 calls it projections, and the surface layer names a different thing `srf:ProjectionContract`, a contract lowered into MORK, which tier 2 may use, so the one word would name two things. (a) each is named by the kind of contract that produces it, promotions and index entries, whatever its placement, and "projection" is kept for `srf:ProjectionContract`'s output. (b) read models, a term no layer here defines. (c) keep the name, with the clash recorded. **Answered 2026-10-31, (a),** renamed in the ADR, the contract, the code and the graph names in one change, before PM-2 moves them.
 
 **PM-Q9. Where does surface output land?** Persistence profiles decide how data is grouped (ADR-A78, ADR-A122): a family's aggregate is a named graph (`dal:NamedGraphBoundary`), the members of a composite in a shared data graph (`dal:CompositePropertyBoundary`), or properties in a data graph (`dal:NoBoundary`). Surface output must not force another grouping on a deployment.
 
@@ -156,15 +156,15 @@ Since an altered value is a triple removed and one added, the test for all three
 
 **PM-Q11. How does a client name its completion channel?** AMQP headers cannot carry it, since a client of the service speaks HTTP. (a) on each request. (b) a standing subscription, registered once. (c) both, by the channel's lifetime. **Answered 2026-11-01, (c).** A channel that lives with a session, a WebSocket or server-sent events, is named on the request or by a subscribe frame on a socket already open. A durable channel, a webhook or an AMQP queue, is a subscription resource held in the store with its owning principal, and its targets are on an allowlist an administrator keeps, since a callback to any URL a client names is a request forgery.
 
-**PM-Q12. What does PM3 build, in what form?** **Answered 2026-11-01:** every event is a CloudEvent in JSON on every transport, using `platform-outbox`'s types. The WebSocket carries CloudEvents frames with no STOMP or MQTT sub-protocol, since the service ends the connection. PM3 builds the exchange, the WebSocket notifier and the subscribe frame. The webhook notifier and the AMQP queue grant wait as BL-13.
+**PM-Q12. What does PM-3 build, in what form?** **Answered 2026-11-01:** every event is a CloudEvent in JSON on every transport, using `platform-outbox`'s types. The WebSocket carries CloudEvents frames with no STOMP or MQTT sub-protocol, since the service ends the connection. PM-3 builds the exchange, the WebSocket notifier and the subscribe frame. The webhook notifier and the AMQP queue grant wait as BL-13.
 
 ## 8. Slices
 
 | Slice | What | Done when |
 |---|---|---|
-| PM1 | the surface backend generating each promotion's delta operations, and the summaries template | each promotion's operations, run after a write, leave what a rebuild leaves |
-| PM2 | the writer maintains every projection in its request, each projection's rows move to one partition a source as PM-Q9 places them, the reads follow, the refresh job becomes a rebuild | the studio's projection tests pass with no refresh, and a publish is one commit |
-| PM3 | the commit events, the service's WebSocket, and the browser's pending marks, jobs first | a job's completion reaches a subscribed browser without polling |
-| PM4 | the tier 2 maintainer, its dependency index, batching and watermark, and the reader's three choices | a materialisation spanning two aggregates reaches each write, and a reader waiting for its write is released when the watermark covers it |
+| PM-1 | the surface backend generating each promotion's delta operations, and the summaries template | each promotion's operations, run after a write, leave what a rebuild leaves |
+| PM-2 | the writer maintains every projection in its request, each projection's rows move to one partition a source as PM-Q9 places them, the reads follow, the refresh job becomes a rebuild | the studio's projection tests pass with no refresh, and a publish is one commit |
+| PM-3 | the commit events, the service's WebSocket, and the browser's pending marks, jobs first | a job's completion reaches a subscribed browser without polling |
+| PM-4 | the tier 2 maintainer, its dependency index, batching and watermark, and the reader's three choices | a materialisation spanning two aggregates reaches each write, and a reader waiting for its write is released when the watermark covers it |
 
-The maintainer accepted this order on 2026-10-31, with PM3 after the delta replace unit and PM2 (PM-Q4).
+The maintainer accepted this order on 2026-10-31, with PM-3 after the delta replace unit and PM-2 (PM-Q4).

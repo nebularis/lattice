@@ -48,7 +48,7 @@ scratch script is not repeatable, and its numbers cannot be checked later.
 
 - AGENTS.md's table of roots, the root README and the copy of AGENTS.md for Copilot (`mise run build:agent-guidance`) gain
   `benchmark/` when this ADR is accepted.
-- The first benchmark is `benchmark/persistence-composite-cost`, built in slice H2.4b of formal-methods Track H.
+- The first benchmark is `benchmark/persistence-composite-cost`, built in slice FMH-2.4b of formal-methods Track H.
 - A benchmark's numbers are evidence for a decision, such as which form of an update a store should get, and not a gate. A
   budget, if one is wanted, is a later decision with its own ADR or addendum.
 - A benchmark that grows into a correctness suite moves to `test/` or to a tool's own tests.

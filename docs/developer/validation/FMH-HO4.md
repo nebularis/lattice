@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO4, the ownership tree and the path compiler
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO4
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO4
 ([plan §3.5](../plans/formal-methods-track-h.md#ho4-the-ownership-tree-and-the-path-compiler)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decisions 1 to 3, and
 [sketch §4, §6 and §10](../sketches/persistence-aggregate-ownership.md).
@@ -35,7 +35,7 @@ code from the compiler yet, so no generated SPARQL changes.
 2. **A `?` or `*` over an alternative is not parenthesised twice.** The sketch's `render` wraps an `Alt`
    (already parenthesised) again. The path means the same, and the golden string is shorter.
 3. **The new example is refused by the current compiler** as `CompositeBoundaryMultipleProperties`, since it has
-   several owned edges. That is expected until HO5 switches the compiler to the tree. The test suites that
+   several owned edges. That is expected until FMH-HO5 switches the compiler to the tree. The test suites that
    iterate the examples treat a refusal as a fixture that does not compile, and the witness check counts it.
 
 ## Test cases
@@ -78,4 +78,4 @@ Run on 2026-10-10, each restored afterwards.
 
 - That the compiler uses the tree or the path. HO5.
 - The refusals that name each recorded problem. HO6.
-- That a path of this size is fast on a real store. HO5 measures a sweep through the generated update.
+- That a path of this size is fast on a real store. FMH-HO5 measures a sweep through the generated update.

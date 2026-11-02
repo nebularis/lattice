@@ -347,7 +347,7 @@ public final class StudioOperations {
         return build(op, given, written, null);
     }
 
-    /** As above, with the state a delta replace leaves, over which the caller check runs the bound and the delta's rules (STD-308). */
+    /** As above, with the state a delta replace leaves, over which the caller check runs the bound and the delta's rules (STD-316). */
     private Update build(Operation op, Map<String, Object> given, Map<String, Model> written, Model next) {
         OperationContract contract = op.contract;
         Map<String, Object> values = new HashMap<>();

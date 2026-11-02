@@ -133,6 +133,17 @@ class Family:
         return self.definition != "none"
 
 
+def slice_prefixes() -> list[str]:
+    """Every prefix a plan declares on its **Prefix:** line, longest first, so the slice family's
+    mention pattern is built from declarations and never from any run of capitals."""
+    found: set[str] = set()
+    for plan in sorted((ROOT / DEVELOPER / "plans").glob("*.md")):
+        for line in plan.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("**Prefix:**"):
+                found.update(p.strip() for p in line[11:].split(",") if re.fullmatch(r"[A-Z]{2,5}", p.strip()))
+    return sorted(found, key=lambda p: (-len(p), p)) or ["WB"]
+
+
 # Ordered most specific first. The first family to match an identifier owns it.
 FAMILIES: tuple[Family, ...] = (
     Family(
@@ -236,12 +247,6 @@ FAMILIES: tuple[Family, ...] = (
         "to fail a build on, so the rule recognising a reference has to be narrower than this",
     ),
     Family(
-        name="slice",
-        mention=re.compile(r"\b((?:AIR|CCS|LG|ES|WA|FM|HQ|AOR|OD)-\d+(?:\.\d+)?[a-z]?)\b"),
-        definition="none",
-        note="epic slices, defined in each epic's plan",
-    ),
-    Family(
         name="question-or-decision-point",
         mention=re.compile(r"\b([A-Z]{1,4}\d*[a-z]?-(?:Q|D)\d+)\b"),
         definition="question",
@@ -250,6 +255,14 @@ FAMILIES: tuple[Family, ...] = (
         note="design questions and decision points. A question defined by a lead or row in a plan or "
         "sketch is an entry of the index. One raised in a note, a status record or a decision is "
         "counted and never failed, and a decision point is not a question",
+    ),
+    Family(
+        name="slice",
+        mention=re.compile(r"\b((?:" + "|".join(slice_prefixes()) + r")-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*)\b"),
+        definition="table-row",
+        defines=((DEVELOPER / "INDEX.md").as_posix(),),
+        note="slices, each defined by its row on its home unit's board, copied into INDEX.md's Work table by "
+        "mise run build:work (plan work-board). The prefixes come from the plans' Prefix lines",
     ),
 )
 
@@ -353,7 +366,8 @@ def tracked_markdown() -> list[Path]:
         text=True,
         check=True,
     )
-    return [ROOT / name for name in listing.stdout.split("\0") if name]
+    # The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.
+    return [ROOT / name for name in listing.stdout.split("\0") if name and not Path(name).name.startswith("slice-crosswalk-")]
 
 
 def scannable(paths: list[Path]) -> list[Path]:

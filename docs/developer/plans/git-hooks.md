@@ -3,6 +3,7 @@
 # Plan: git hooks
 
 **Unit ID:** `git-hooks`
+**Prefix:** GH
 **ADR:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md), Proposed
 **Status record:** [git-hooks.md](../status/git-hooks.md)
 **Status:** built 2026-10-23 on `hooks-impl`, slice by slice, autonomously at the maintainer's request. Handed back for review before the merge into `main`. [Validation Pack](../validation/git-hooks.md).

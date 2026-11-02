@@ -142,7 +142,7 @@ public final class Migration {
             Model now = Skolem.skolemise(store.graph(oldGraph));
             Model asserted = previous == null ? null : now.difference(previous), retracted = previous == null ? null : previous.difference(now);
             // Every revision moves the row, so the sequence ends at n. A revision equal to the one before is replaced whole, since a
-            // delta that changes nothing is never sent (STD-301).
+            // delta that changes nothing is never sent (STD-309).
             r.add(k == 1 ? ops.create(Family.PART, baseline, now, r.txn())
                 : asserted.isEmpty() && retracted.isEmpty() ? ops.replace(Family.PART, baseline, k - 1, now, null, null, r.txn())
                 : ops.replaceDelta(Family.PART, baseline, k - 1, now, asserted, retracted, r.txn()));

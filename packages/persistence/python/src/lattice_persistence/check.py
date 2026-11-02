@@ -15,7 +15,7 @@ guard that fails in the store reads as a lost race. It checks what the store can
 * where the caller can say what is a version, an object on a pinned edge is one and an object on an identity edge is not (H2.6e, TD-67),
 * on a version of a family under delta membership, a checkpoint lists the full set of members,
 * for a delta replace (``OperationKind.DELTA_REPLACE``, ``dal:ChangedTriples``), the two slots ``assertTriples`` and ``retractTriples`` share no triple
-  (``DeltaOverlap``) and are not both empty (``EmptyDelta``, STD-301). The bound is not run over the asserted triples alone, since a member
+  (``DeltaOverlap``) and are not both empty (``EmptyDelta``, STD-309). The bound is not run over the asserted triples alone, since a member
   of the aggregate may be reached through an edge that is already stored. It is run over the next state, where the caller passes it.
 
 A caller who bypasses it is still checked by the guards of the store, which are the same tests where the profile has them on.
@@ -245,7 +245,7 @@ def _delta(operation: ProfileOperation, typed: Mapping[str, object], version_of,
     if both:
         out.append(Refusal("DeltaOverlap", "assertTriples", f"{len(both)} triple(s) are both asserted and retracted, for example {min(t.nt() for t in both)}"))
     if not asserted.triples and not retracted.triples:
-        out.append(Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-301)"))
+        out.append(Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-309)"))
     if next_state is None:
         return out
     contract, root = operation.payload, typed.get("root")

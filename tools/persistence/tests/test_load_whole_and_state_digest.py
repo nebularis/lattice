@@ -1,5 +1,5 @@
 """DR4: the bulk load and the recorded state digest (persistence delta replace unit), carried over from the studio line's slice DR2.
-Validation Pack: docs/developer/validation/DR2.md, the studio line's, whose test IDs are DR2-Tn.
+Validation Pack: docs/developer/validation/DR-2.md, the studio line's, whose test IDs are DR2-Tn.
 
 A bulk load is one request of, for each aggregate, its create and its whole replace, under one transaction id, so whichever half
 applies claims it and the other does nothing. A family that records its state digest sends `record-state-digest` after its write in

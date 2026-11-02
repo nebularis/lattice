@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO6, the ownership refusals and the warning
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO6
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO6
 ([plan §3.5](../plans/formal-methods-track-h.md#ho6-the-refusals-and-the-warning)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decisions 1, 4, 5 and 6, and
 [sketch §5](../sketches/persistence-aggregate-ownership.md#5-refusals-and-warnings-ho6).
@@ -23,9 +23,9 @@ In `validator.py`, in the order of sketch §5.
 | 2 | `ComplexBoundaryPath` | a property shape's `sh:path` is neither an IRI nor `[ sh:inversePath IRI ]` |
 | 3 | `UnclassifiedBoundaryEdge` | a property shape leads to a node and declares no `dal:ownership` |
 | 4 | `OwnershipOnValueProperty` | a value property (`sh:datatype`, or `sh:nodeKind sh:Literal`) carries `dal:ownership` |
-| 5 | `CompositeBoundaryWithoutOwnedEdges` | a composite shape owns no edge (added in HO5, see FMH-HO5) |
+| 5 | `CompositeBoundaryWithoutOwnedEdges` | a composite shape owns no edge (added in FMH-HO5, see FMH-HO5) |
 | 6 | `OwnedReferenceData` | an owned edge leads to `skos:Concept`, `skos:ConceptScheme`, a class a `dal:ReferenceData` covers, or an asserted subclass, and the profile does not declare `dal:ownsReferenceData true` |
-| 8 | `BoundaryConflict` | unchanged from HO5 |
+| 8 | `BoundaryConflict` | unchanged from FMH-HO5 |
 | 9 | `OverlappingOwnership` | two composite profiles whose member classes meet, or one's members meet the other's root class. Checked after rule 8, so a profile owning another's root is `BoundaryConflict` every time |
 | W | `ReferenceToOwnedClass` (warning) | a property shape outside the aggregate's owned shapes points at a member class that is not the root |
 

@@ -410,7 +410,7 @@ class Stack:
 
     def pinned(self, name: str, built: Path) -> Path:
         """A copy of a build output for one component to run from, made just before it starts. A JVM reads its jar for as
-        long as it runs, so a build that rewrote the jar in `target`, as `mise run check` does, would break it (STD-300)."""
+        long as it runs, so a build that rewrote the jar in `target`, as `mise run check` does, would break it (STD-308)."""
         copy = self.run / "pinned" / name / built.name
         if copy.is_dir():
             shutil.rmtree(copy)

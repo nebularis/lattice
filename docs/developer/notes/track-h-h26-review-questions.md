@@ -1,22 +1,22 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# H2.6 review: three open design questions
+# FMH-2.6 review: three open design questions
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6 ([Validation Pack](../validation/FMH-H2-6.md), questions 4 to 6). Written 2026-10-13
-at the maintainer's request, who approved the slice and answered the other five questions. Each question needs an answer before H2.7 is briefed,
-since H2.7 designs the vocabulary and the compiler's emission against the expected profiles.
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.6 ([Validation Pack](../validation/FMH-2.6.md), questions 4 to 6). Written 2026-10-13
+at the maintainer's request, who approved the slice and answered the other five questions. Each question needs an answer before FMH-2.7 is briefed,
+since FMH-2.7 designs the vocabulary and the compiler's emission against the expected profiles.
 
 | # | Question | Leaning |
 |---|---|---|
-| H2.6-RQ4 | Is the pinned head part of `Receipt`, or a resource of its own? | keep it part of `Receipt` (option A) |
-| H2.6-RQ5 | What does the request digest of `append-event` cover? | declare the four event parameters as the digest's payload part (option A) |
-| H2.6-RQ6 | Who writes the patch content of a patch log, and does the contract name it? | the operation writes it, in the same request (option B), decided for H2.7 and built in H2.8's slice or its own |
+| FMH-2.6-RQ4 | Is the pinned head part of `Receipt`, or a resource of its own? | keep it part of `Receipt` (option A) |
+| FMH-2.6-RQ5 | What does the request digest of `append-event` cover? | declare the four event parameters as the digest's payload part (option A) |
+| FMH-2.6-RQ6 | Who writes the patch content of a patch log, and does the contract name it? | the operation writes it, in the same request (option B), decided for FMH-2.7 and built in FMH-2.8's slice or its own |
 
 Answers are recorded in the plan (§4.4) and the status record's history, as the `lattice-design` skill asks.
 
 ---
 
-## H2.6-RQ4: the pinned head
+## FMH-2.6-RQ4: the pinned head
 
 ### The scene
 
@@ -28,14 +28,14 @@ head has moved on. The job also advances each target's retention low-water mark,
 Facts that constrain the options, each checked against the source on 2026-10-13.
 
 - **The pinned graph is a copy.** The same receipt exists in a bucket and in the pinned graph for a while, so the audits that scan receipts count distinct values
-  (`COUNT(DISTINCT ?seq)`), which absorbs the duplicate (guide S3, the gap scan). H2.5 tests it (`test_h2_5_t36b`).
+  (`COUNT(DISTINCT ?seq)`), which absorbs the duplicate (guide S3, the gap scan). FMH-2.5 tests it (`test_h2_5_t36b`).
 - **No generated operation writes it.** The retention job is not a template. Today only the audits touch the pinned graph, and the IR names it as a constant in
   a `VALUES` list next to the registry's buckets, so the graph variable `?log` ranges over the log role and the pinned graph together.
 - **The protocol models will name it.** The protocol sketch lists "G. Retention and pruning: bucket rotation, registry update, low-water-mark advance, pinned
   heads" (expected to be the richest model) and "J. Infrastructure-graph writers" including the retention job, in H6 and H7. They are written against the
   protocol, not against the operation contract.
 - **The paper check** found no relational counterpart. A foreign key from the version row to its head receipt keeps the receipt through a partition drop, and
-  nothing is copied ([FMH-H2-6](../validation/FMH-H2-6.md), the paper check).
+  nothing is copied ([FMH-2.6](../validation/FMH-2.6.md), the paper check).
 
 ```mermaid
 flowchart LR
@@ -88,7 +88,7 @@ Is it needed now? No operation writes the pinned graph, and the audits' reads ar
 
 ---
 
-## H2.6-RQ5: the digest of `append-event`
+## FMH-2.6-RQ5: the digest of `append-event`
 
 ### The scene
 
@@ -124,7 +124,7 @@ string, as the guide says, and for the payload part, no lines. The guide's formu
 revision link, and the digest's payload part is the sorted canonical lines of that slot. One rule covers all operations.
 
 - *Design overheads.* A change to the operation, not a port (the template, the builder, the golden text and the harness), and a second payload slot to guard
-  in H2.8's payload check, since a slot is outside ADR-A79's injection boundary by construction. It makes the guide's three-events example expressible and
+  in FMH-2.8's payload check, since a slot is outside ADR-A79's injection boundary by construction. It makes the guide's three-events example expressible and
   lets an event carry domain triples. It turns the append from a four-parameter operation into one whose position bookkeeping (`opSeq` per event) moves
   into the query, which is more to get wrong.
 - *Runtime overheads.* More text substitution on the hot path of an append. Otherwise the same.
@@ -145,12 +145,12 @@ no change to the operation. B is the larger design and belongs with the question
 
 ### Leaning
 
-**A**, and confirm whether an event is meant to carry only these four fields. If events are to carry domain data, B is the right slice (with H2.8's payload
+**A**, and confirm whether an event is meant to carry only these four fields. If events are to carry domain data, B is the right slice (with FMH-2.8's payload
 check), and RQ5 then reopens.
 
 ---
 
-## H2.6-RQ6: the patch content of a patch log
+## FMH-2.6-RQ6: the patch content of a patch log
 
 ### The scene
 
@@ -200,7 +200,7 @@ flowchart TB
 
 - *Design overheads.* A change to the operation. The contract gains a resource, say `PatchContent`, keyed by (target, epoch, seq, direction), written by Replace
   (and, in a tombstone, by whatever a tombstone retracts), and a relational compiler reads it as the change table, as §9 says. The payload contract has three
-  slots, and the digest's payload part covers all of them. H2.8's payload check covers two more slots. Atomic with the write, so the dangling reference goes away.
+  slots, and the digest's payload part covers all of them. FMH-2.8's payload check covers two more slots. Atomic with the write, so the dangling reference goes away.
 - *Runtime overheads.* About twice the write volume, which the patch log already costs. One update, not two requests. The sweep already reads the old state, so
   the caller still computes the delta, as the guide says.
 - *Brittle under change.* The delta rule is in one place. A later change of the patch format changes the builder, versioned.
@@ -225,8 +225,8 @@ patch log is the receipt model an adopter chooses when replay matters, and repla
 
 ### Leaning
 
-**B**, decided now for H2.7 (the vocabulary names the resource and the slots) and built with H2.8 or in a slice of its own, since it changes an operation and
-H2.8 builds the payload check. Until it is built, A is the behaviour and the profile states the caller obligation. If the maintainer prefers C, H5's
+**B**, decided now for FMH-2.7 (the vocabulary names the resource and the slots) and built with FMH-2.8 or in a slice of its own, since it changes an operation and
+FMH-2.8 builds the payload check. Until it is built, A is the behaviour and the profile states the caller obligation. If the maintainer prefers C, H5's
 capability record must say which stores accept a two-operation request.
 
 ---
@@ -236,14 +236,14 @@ capability record must say which stores accept a two-operation request.
 | Answer | Files and documents touched |
 |---|---|
 | RQ4 A | none. RQ4 B: the checker (a role per `Values` item), `resource_of`, `kinds.expected.ttl`, the expected profiles of every audit, builder versions of the audits |
-| RQ5 A | `contract.py` (a payload part with several sources), the digest part in the files of `append-stream-dataset-guard`, one test. RQ5 B: the append's template, builder and golden, H2.8's payload check. RQ5 C: guide §15.2 and the remediation record |
-| RQ6 A | the contract states the caller obligation, and the expected profiles gain a note on `$assertGraph` and `$retractGraph`. RQ6 B: the replace's template and builder (version 2), the contract (`PatchContent`), H2.7's vocabulary, H2.8's payload check, TD-42's measurement. RQ6 C: a new template and builder, the capability record |
+| RQ5 A | `contract.py` (a payload part with several sources), the digest part in the files of `append-stream-dataset-guard`, one test. RQ5 B: the append's template, builder and golden, FMH-2.8's payload check. RQ5 C: guide §15.2 and the remediation record |
+| RQ6 A | the contract states the caller obligation, and the expected profiles gain a note on `$assertGraph` and `$retractGraph`. RQ6 B: the replace's template and builder (version 2), the contract (`PatchContent`), FMH-2.7's vocabulary, FMH-2.8's payload check, TD-42's measurement. RQ6 C: a new template and builder, the capability record |
 
 ## Answers
 
 | # | Answer | Date |
 |---|---|---|
-| H2.6-RQ4 | **A**, the pinned head is part of `Receipt` (H-D29) | 2026-10-14 |
-| H2.6-RQ5 | **B**, the append gains a payload slot, since an event must be able to carry domain triples (H-D30). The question this write-up asked, whether an event carries only its four fields, is answered: it does not | 2026-10-14 |
-| H2.6-RQ6 | **B**, the write records its patch content in the same update (H-D31), since request atomicity varies by store and by configuration (TSD-06, TSD-Q13). Built in H2.6b, Track H plan §4.6 | 2026-10-14 |
+| FMH-2.6-RQ4 | **A**, the pinned head is part of `Receipt` (H-D29) | 2026-10-14 |
+| FMH-2.6-RQ5 | **B**, the append gains a payload slot, since an event must be able to carry domain triples (H-D30). The question this write-up asked, whether an event carries only its four fields, is answered: it does not | 2026-10-14 |
+| FMH-2.6-RQ6 | **B**, the write records its patch content in the same update (H-D31), since request atomicity varies by store and by configuration (TSD-06, TSD-Q13). Built in FMH-2.6b, Track H plan §4.6 | 2026-10-14 |
 

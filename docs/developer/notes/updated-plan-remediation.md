@@ -1,7 +1,7 @@
 **Findings**
 
 1. **The graph-primary decision is a deliberate architectural replacement, not an additive plan.**  
-   Updated-Plan.md makes RDF the system of record and PostgreSQL disposable coordination. This directly contradicts the current three-realm model in data-architecture.md, the PostgreSQL lifecycle ledger in ADR-A33, and the graph registry in ADR-A34. It is viable, but ADR-A74 must explicitly supersede or amend those decisions before implementation begins. The plan correctly places that in P0.1.1, but it cannot be treated as already aligned.
+   Updated-Plan.md makes RDF the system of record and PostgreSQL disposable coordination. This directly contradicts the current three-realm model in data-architecture.md, the PostgreSQL lifecycle ledger in ADR-A33, and the graph registry in ADR-A34. It is viable, but ADR-A74 must explicitly supersede or amend those decisions before implementation begins. The plan correctly places that in PLT-0.1.1, but it cannot be treated as already aligned.
 
 2. **“Nothing writes durable data until Phase 0 exit” needs a narrower definition.**  
    The plan also creates durable source artifacts, ontology files, golden fixtures, and tests against real stores during Phase 0. Its own P0.3, P0.5, P0.8, and P0.9 depend on this. Amend the rule to: *no persistent tenant or production semantic dataset, nor irreversible business/runtime record, before the exit gate*. Disposable Testcontainers, checked-in source files, and reproducible fixtures should be expressly allowed.

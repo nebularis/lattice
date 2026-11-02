@@ -5,13 +5,13 @@
 **Reviewed 2026-10-10:** [persistence-aggregate-ownership-review.md](persistence-aggregate-ownership-review.md)
 corrects and extends this note, and records our answers to the questions of §11. The design
 is the sketch [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md).
-Where this note and the review disagree, the review holds. Slice HO0 corrects the body.
+Where this note and the review disagree, the review holds. Slice FMH-HO0 corrects the body.
 
 **Status:** note, 2026-10-10. Exploration only. Nothing here is decided, no tool is changed, and no
 ADR is proposed yet. Hypotheses are marked as such. **Prompted by:** our observation that
 `persistence` handles aggregates wrongly, with a placement example of a size the order and line item
 example never reached. **Experiments:** [`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md),
-read-only, rdflib only. **Tracks affected:** formal-methods Track H, slices H1.4b, H1.5, H2 and the
+read-only, rdflib only. **Tracks affected:** formal-methods Track H, slices FMH-1.4b, FMH-1.5, H2 and the
 protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
 
 ## 1. Summary
@@ -20,7 +20,7 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
    no create or tombstone operation, and treats `sh:node` as the sole sign of ownership. The placement
    example needs several owned relations, owned relations that differ by context, references that must
    survive, and vocabulary nodes that must never be touched ([§3](#3-fit-against-the-model)). Since
-   H1.4a the compiler refuses a shape with several node properties (`CompositeBoundaryMultipleProperties`),
+   FMH-1.4a the compiler refuses a shape with several node properties (`CompositeBoundaryMultipleProperties`),
    so the placement shape is refused and not partly swept (review S1).
 2. **Our instinct on ownership is right, and two refinements are proposed.** Ownership is a
    property of an edge in its context, so a flat list of properties is not enough. And listing the
@@ -43,9 +43,9 @@ protocol models of H5 onward ([§10](#10-what-this-does-to-track-h)).
 7. **Two defects found on the way.** The composite replace writes the new payload to the receipt log
    graph and not to the graph it deleted from ([§2.3](#23-a-defect-the-composite-replace-writes-the-payload-to-the-log-graph)).
    And the composite boundary has no create or tombstone-delete (TD-04, known).
-8. **Recommendation, as written.** Hold H-D13, H1.4b and H1.5. Keep the H1.4a refusal as a stop-gap.
+8. **Recommendation, as written.** Hold H-D13, FMH-1.4b and H1.5. Keep the FMH-1.4a refusal as a stop-gap.
    Settle the questions in [§11](#11-questions-for-the-maintainer) before H2 types the closure.
-   Superseded by the review (§6, §8). H-D13 is decided, H1.4b and H1.5 proceed, and H2 waits only for the typing of the closure.
+   Superseded by the review (§6, §8). H-D13 is decided, FMH-1.4b and FMH-1.5 proceed, and H2 waits only for the typing of the closure.
 
 ## 2. What persistence does today
 
@@ -93,7 +93,7 @@ Related facts, all from the code and documents named.
   (`BoundaryConflict`, nested boundaries). It does not, as far as I can read, compare two
   composite roots whose shapes reach the same class, which persistence-fml §8.4 named as an unstated
   precondition (closures are disjoint).
-- Several node properties are refused (`CompositeBoundaryMultipleProperties`, H1.4a), because a
+- Several node properties are refused (`CompositeBoundaryMultipleProperties`, FMH-1.4a), because a
   replace that follows one of them leaves the others' members behind. This is a stop-gap and not a
   capability.
 - There is no create-if-absent and no tombstone delete for this strategy (TD-04). A composite
@@ -107,7 +107,7 @@ on rdflib, the old `status "open"` is gone from the default graph and the new `s
 found only in `urn:g:txlog/2026-10`. A reader of the default graph sees the aggregate disappear.
 The named-graph template writes the payload to `GRAPH ?g`, the aggregate's own graph, which is
 what the composite one should do for its destination. Run `spikes/persistence-aggregate-ownership/payload_graph.py`.
-This went unseen because the H1.4a tests inspect what is left behind, and not where the new
+This went unseen because the FMH-1.4a tests inspect what is left behind, and not where the new
 payload lands. Registered as TD-39 on 2026-10-10. Fixed in HO1.
 
 ## 3. Fit against the model
@@ -128,8 +128,8 @@ deleted, and the node at the far end is deleted only if owned.
 
 | Requirement | Today | Verdict |
 |---|---|---|
-| Delete the outgoing triples of the root and of every owned node | the root, and members reached along one property | partial before H1.4a. On the placement graph the update then reached only the tower node itself, since `definedProgramme` sorts first and `hasLayer` is not followed ([spike](../../../spikes/persistence-aggregate-ownership/README.md)). Since H1.4a the placement shape is refused as `CompositeBoundaryMultipleProperties` (review S1) |
-| Follow several owned relations | refused since H1.4a | not supported |
+| Delete the outgoing triples of the root and of every owned node | the root, and members reached along one property | partial before H1.4a. On the placement graph the update then reached only the tower node itself, since `definedProgramme` sorts first and `hasLayer` is not followed ([spike](../../../spikes/persistence-aggregate-ownership/README.md)). Since FMH-1.4a the placement shape is refused as `CompositeBoundaryMultipleProperties` (review S1) |
+| Follow several owned relations | refused since FMH-1.4a | not supported |
 | Ownership differs by context | the shape tree can express it, the walk flattens it to a list of paths, the template follows one | not supported |
 | Never delete a vocabulary node | nothing | not supported, and not guarded |
 | Never delete a referenced entity | a reference is swept when it is the shape's only `sh:node` (review F1, TD-35) | not supported, and a live hazard |
@@ -459,7 +459,7 @@ computed. `NamedGraphBoundary` already has create, replace and tombstone delete,
 payload lands where the delete happens.
 
 For the placement example the units become graphs: one for the placement, one per tower or layer as
-the author chooses. Prefix nesting, which H1.1 refuses for scopes that share a class, is then the
+the author chooses. Prefix nesting, which FMH-1.1 refuses for scopes that share a class, is then the
 natural shape of the layout, so the antichain check would need to distinguish a graph that is
 deliberately nested under another from an overlap.
 
@@ -496,10 +496,10 @@ run-time single-owner guarantee matters. Q7 and Q8 decide this.
 
 | Item | Effect |
 |---|---|
-| H1.4a refusal | stays as a stop-gap. It stops a silent partial delete today, and is superseded if 9.2 is adopted |
+| FMH-1.4a refusal | stays as a stop-gap. It stops a silent partial delete today, and is superseded if 9.2 is adopted |
 | H-D13 (what the compiler binds, and how) | mostly moot. The "first property" binding disappears under 9.2, and what remains is how the closure is stated in the IR |
-| H1.4b (declaration and implementation gap report) | hold. It would report today's closure as the implementation, and the gap list should include ownership, units and the vocabulary guard |
-| H1.5 (stable labels for compiled profiles) | hold. The compiled profile's shape changes if boundaries carry classified edges and units |
+| FMH-1.4b (declaration and implementation gap report) | hold. It would report today's closure as the implementation, and the gap list should include ownership, units and the vocabulary guard |
+| FMH-1.5 (stable labels for compiled profiles) | hold. The compiled profile's shape changes if boundaries carry classified edges and units |
 | H2 (typed IR) | the closure becomes a tree of classified edges and the units a set of nodes in it. The payload check ([§6](#6-updating)) and the required-parameter guard of TD-34 belong in the same IR |
 | H5 and later (protocol models, Isabelle theories) | the models of the version row and of conflict detection should be extended with units, the removal rule and the invariant row. The spike's table is a small candidate for the first model |
 | Static checks | new ones follow: every edge classified, no `owned` edge to a concept class, owned trees disjoint across roots |
@@ -533,8 +533,8 @@ Answered 2026-10-10. See the review §6.
    If so, closure needs `*` and the cycle check has to become a runtime guard.
 10. **Reference data that is not SKOS.** Are there such sets (currency codes, country codes as
     individuals) that need the same protection as concepts?
-11. **Track H.** Do you agree to hold H-D13, H1.4b and H1.5 until the above is settled, and to keep
-    H1.4a as it stands?
+11. **Track H.** Do you agree to hold H-D13, FMH-1.4b and FMH-1.5 until the above is settled, and to keep
+    FMH-1.4a as it stands?
 12. **ADR.** The sketch and ADR-A78 describe the composite strategy as it is built. A change of this
     size probably needs an ADR amending A78. Do you want that drafted once Q1 to Q8 are answered?
 

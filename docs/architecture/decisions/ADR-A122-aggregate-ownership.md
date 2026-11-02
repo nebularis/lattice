@@ -26,7 +26,7 @@ links to reference data, showed that the composite mechanism does not model owne
   and validation shapes put it on references too. A shape whose only `sh:node` is a reference has
   that reference's triples swept by every replace.
 - **It follows one property.** A shape with several owned relations is refused since formal-methods
-  slice H1.4a, so such an aggregate cannot be declared.
+  slice FMH-1.4a, so such an aggregate cannot be declared.
 - **It cannot express an edge from child to parent** (`sh:inversePath`), which is how several of
   LATTICE's own layers link a part to its whole.
 - **Its replace writes the new payload to the receipt log graph**, not to the graph it deleted from
@@ -108,10 +108,10 @@ No adopter uses `ontology/persistence` or `tools/persistence` outside the formal
   `CompositeBoundaryWithoutOwnedEdges`, `OwnedReferenceData`, `OverlappingOwnership`), one warning
   (`ReferenceToOwnedClass`) and two refusals for graph naming (`GraphIriTemplateInvalid`,
   `GraphIriTemplateOverlap`). It loses
-  `CompositeBoundaryMultipleProperties` (H1.4a) and `BoundaryCycleError`, and the tests that
+  `CompositeBoundaryMultipleProperties` (FMH-1.4a) and `BoundaryCycleError`, and the tests that
   asserted them, which this decision supersedes.
 - Every named-graph graph IRI changes. Nothing persisted depends on the old ones.
-- Track H: H1.4b reports the gaps that remain while the slices run. H2's typed IR carries the tree,
+- Track H: FMH-1.4b reports the gaps that remain while the slices run. H2's typed IR carries the tree,
   the path, the payload check and the required-parameter guard. Protocol model O, for units,
   is deferred with them.
 - An adopter declares more than before, since every node property must be classified. The refusal

@@ -36,7 +36,7 @@ import org.apache.jena.riot.RDFParser;
  * <li>Where the caller can say what is a version, an object on a pinned edge is one and an object on an identity edge is not.
  * <li>On a version of a family under delta membership, a checkpoint lists the full set of members.
  * <li>For a delta replace ({@code OperationKind.DELTA_REPLACE}, {@code dal:ChangedTriples}), the slots {@code assertTriples} and {@code retractTriples}
- * share no triple ({@code DeltaOverlap}) and are not both empty ({@code EmptyDelta}, STD-301). The bound is not run over the asserted triples alone,
+ * share no triple ({@code DeltaOverlap}) and are not both empty ({@code EmptyDelta}, STD-309). The bound is not run over the asserted triples alone,
  * since a member of the aggregate may be reached through an edge that is already stored. It is run over the next state, where the caller passes it.
  * </ul>
  * A value is an {@link Iri}, a {@link Lit}, a {@link Payload}, a {@link Rows}, a {@code String}, an integral number, or for a
@@ -266,7 +266,7 @@ public final class CallerCheck {
             out.add(new Refusal("DeltaOverlap", "assertTriples", both.size() + " triple(s) are both asserted and retracted, for example " + first(both)));
         }
         if (asserted.triples().isEmpty() && retracted.triples().isEmpty()) {
-            out.add(new Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-301)"));
+            out.add(new Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-309)"));
         }
         Payload next = options.nextState();
         if (next == null) return out;

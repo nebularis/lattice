@@ -3,7 +3,7 @@
 # Track H, H2: the typed operation IR and the typed payload (sketch)
 
 **Unit:** `formal-methods-track-h`, slice H2 ([plan §4](../plans/formal-methods-track-h.md#4-h2-h3-the-typed-ir-and-the-specification-registry))
-**Status:** design brief, 2026-10-10. Every question, H2-Q1 to H2-Q6, answered the same day. H2.0 is ready to branch
+**Status:** design brief, 2026-10-10. Every question, H2-Q1 to H2-Q6, answered the same day. FMH-2.0 is ready to branch
 **Builds on:** [specification sketch §3](formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
 (the hazard table, not repeated here), [aggregate-ownership sketch §12 and §15](persistence-aggregate-ownership.md#12-what-h2-inherits),
 [ADR-A79](../../architecture/decisions/ADR-A79-persistence-compiler-toolchain.md),
@@ -38,7 +38,7 @@ What exists, as of `09675a70`:
   refuses a bare `str` (`render.py`). This is the injection boundary of ADR-A79 point 4.
 - The SPARQL structure lives in 28 template files. Its hazards (an unbound variable in an `INSERT`
   template, a blank node, a pattern in the default graph, a value comparison on a term position)
-  are found after the fact by static checks S-3 and S-4 (`templatecheck.py`, H1.3) and by the
+  are found after the fact by static checks S-3 and S-4 (`templatecheck.py`, FMH-1.3) and by the
   witness harness, not prevented.
 - Two request-time slots, `payloadTriples` and `logGraphs`, are passed through as Mustache tags for
   the caller to fill with "trusted, already-serialised SPARQL text"
@@ -109,7 +109,7 @@ the compiled profile is where the choice matters.
 
 **Design overheads.** (a) needs a small vocabulary of logical resources, about six terms, and one
 mapping per builder. The risk is that it is designed with one realisation in hand, so its terms may
-not fit SQL. We check it against `lattice-sql.md` §9's table when H2.7 is briefed, as a hypothesis to
+not fit SQL. We check it against `lattice-sql.md` §9's table when FMH-2.7 is briefed, as a hypothesis to
 test, not a claim. (b) costs nothing now and leaves the relational work to repeat it.
 
 **Runtime overheads.** None for either. The declarations are read at design time.
@@ -176,7 +176,7 @@ another language has two duties, and the second is the extra step:
 2. **PL-B, by running one more query.** `instantiate` renders a `payload-check` query per composite
    or shaped named-graph family, for example
    `SELECT DISTINCT ?s WHERE { ?s ?p ?o FILTER NOT EXISTS { $root <ownedPath> ?s } }`, where
-   `<ownedPath>` is the same compiled path HO5 uses for the sweep, which can match no steps and so
+   `<ownedPath>` is the same compiled path FMH-HO5 uses for the sweep, which can match no steps and so
    reaches the root itself. The caller loads its payload into a local in-memory graph, binds `$root`,
    and runs the query. It does not go to the store. An empty result passes.
 
@@ -356,7 +356,7 @@ model A branches on the same field.
 **The one stop.** If Oxigraph shows R0 to be wrong, not just slow, H2.4 stops and asks, since that is
 a defect in what ships today.
 
-**Measured 2026-10-12 (H2.4b), and corrected 2026-10-13.** The probes of [FMH-H2-4b](../validation/FMH-H2-4b.md) first reported
+**Measured 2026-10-12 (FMH-2.4b), and corrected 2026-10-13.** The probes of [FMH-2.4b](../validation/FMH-2.4b.md) first reported
 that rdflib follows the specification's order. That was wrong. The paragraphs above are right: rdflib 7.6.0 applies each solution in
 turn, and the order of the solutions follows the process's hash seed. Oxigraph 0.5.11 also applies each solution in turn, in solution
 order. So neither is snapshot, R2 is unsafe on both, and R0 is right on both because it inserts the whole payload in every solution.
@@ -402,19 +402,19 @@ tokens, rough, for comparison with the actual cost.
 
 | Slice | Delivers | Modules | Depends on | Estimate |
 |---|---|---|---|---|
-| H2.0 | ADR-A123, Proposed, deciding §3, §3.1, §4 and the answers of §1. ADR-A79 addendum, drafted with A123 and dated when A123 is accepted. The ADR catalogue row | docs only | this brief | 150k |
-| H2.1 | `persistence.ir` and its renderer. One refusal test per type rule of §3, a parse test for every renderable form, and a property test that a rendered operation parses as exactly one update | `ir` (new) | H2.0 | 400k |
-| H2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. The builders take the guards flag. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | H2.1 | 350k |
-| H2.3 | the named-graph row writers ported: create-if-absent, cas-replace, cas-replace value guard, tombstone delete, unconditional write, with their variants (8 templates). The term and value guard tags meet their first real positions | `builders` | H2.2 | 400k |
-| H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). R0 ported unchanged. The benchmark and the two capability probes of §4.3 committed, on rdflib and Oxigraph (TD-42). A stop only if R0 is wrong on Oxigraph | `builders`, `paths` | H2.2 | 400k |
-| H2.5 | the ten remaining ports (key claims and audits), guard D, the closed `SELECT` fragment with a `SubSelect` element and its type rules, and the `Literal` kind. Planned in detail in the [Track H plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13), after the [design review](../notes/track-h-feedback.md) | `ir`, `ir_render`, `builders` | H2.4 | 600k |
-| H2.6 | examples first (ADR-A-C2): nine expected compiled profiles holding the operation contract (kinds, parameters, digest contract, accesses with modes and logical keys, payload and result contracts), the role-to-resource mapping in `builders.py`, five tests, and the paper check of §7.2. Planned in detail in the [Track H plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13). Runs after H2.5 | `ontology/persistence/test`, `builders` | H2.5 | 300k |
-| H2.6b | the event and patch-content slots, added 2026-10-14 (H-D30, H-D31): an event slot on the append, patch-log variants that write their delta graphs in the same update, digest parts per slot, and a warning for the snapshot model. [Track H plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) | `builders`, `contract` | H2.6 | 450k |
-| H2.7 | planned in detail in the [Track H plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14). The vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, the term recording whether guards are on, `--no-parameter-guards`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | H2.6, H2.3 to H2.5 | 450k |
-| H2.8 | planned in detail in the [Track H plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14), over every slot of H2.6b. The typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, and the `INFO` diagnostic for guards that are off, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, H2.7 | 400k |
-| H2.9 | Mustache retired: the templates, `render.py`, `chevron` and the harness removed. S-3 and S-4 run over the IR's output and pass by construction, and S-3 reads the parameter declarations instead of the `$name` convention (H-D11). The injection corpus runs over the builders. README, ADR-A79 addendum, milestone FMH2 | `instantiate`, `templatecheck`, tests | H2.8 | 400k |
+| FMH-2.0 | ADR-A123, Proposed, deciding §3, §3.1, §4 and the answers of §1. ADR-A79 addendum, drafted with A123 and dated when A123 is accepted. The ADR catalogue row | docs only | this brief | 150k |
+| FMH-2.1 | `persistence.ir` and its renderer. One refusal test per type rule of §3, a parse test for every renderable form, and a property test that a rendered operation parses as exactly one update | `ir` (new) | FMH-2.0 | 400k |
+| FMH-2.2 | the equivalence harness of §7.1, with its non-vacuity mutations. The builders take the guards flag. `bootstrap-version-row` and `append-event`, each with its dataset-guard variant, ported. The required-parameter guard, with TD-34's demonstration as a negative test on rdflib. TD-34 closed for these operations | `ir`, `builders` (new) | FMH-2.1 | 350k |
+| FMH-2.3 | the named-graph row writers ported: create-if-absent, cas-replace, cas-replace value guard, tombstone delete, unconditional write, with their variants (8 templates). The term and value guard tags meet their first real positions | `builders` | FMH-2.2 | 400k |
+| H2.4 | the composite family: `OwnershipTree` and `PropertyPath` as IR values, the closure read set, create, replace and tombstone (6 templates). R0 ported unchanged. The benchmark and the two capability probes of §4.3 committed, on rdflib and Oxigraph (TD-42). A stop only if R0 is wrong on Oxigraph | `builders`, `paths` | FMH-2.2 | 400k |
+| FMH-2.5 | the ten remaining ports (key claims and audits), guard D, the closed `SELECT` fragment with a `SubSelect` element and its type rules, and the `Literal` kind. Planned in detail in the [Track H plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13), after the [design review](../notes/track-h-feedback.md) | `ir`, `ir_render`, `builders` | H2.4 | 600k |
+| FMH-2.6 | examples first (ADR-A-C2): nine expected compiled profiles holding the operation contract (kinds, parameters, digest contract, accesses with modes and logical keys, payload and result contracts), the role-to-resource mapping in `builders.py`, five tests, and the paper check of §7.2. Planned in detail in the [Track H plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13). Runs after FMH-2.5 | `ontology/persistence/test`, `builders` | FMH-2.5 | 300k |
+| FMH-2.6b | the event and patch-content slots, added 2026-10-14 (H-D30, H-D31): an event slot on the append, patch-log variants that write their delta graphs in the same update, digest parts per slot, and a warning for the snapshot model. [Track H plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) | `builders`, `contract` | FMH-2.6 | 450k |
+| FMH-2.7 | planned in detail in the [Track H plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14). The vocabulary and its emission: `dal:ParameterDeclaration`, read and write sets over the logical resources of H2-Q6, `dal:PayloadContract`, `dal:GroundNTriples`, the term recording whether guards are on, `--no-parameter-guards`, `dal:templatePath` removed. `persistence` and its shapes at 0.4.0, release tags owed | `ontology/persistence`, `compiler` | FMH-2.6, FMH-2.3 to FMH-2.5 | 450k |
+| FMH-2.8 | planned in detail in the [Track H plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14), over every slot of H2.6b. The typed payload, per H2-Q1 to H2-Q3: the `Payload` type, canonical N-Triples and the digest, the generated `payload-check` query, the caller-side parameter check of H2-Q4, the `INFO` diagnostic and its warning option of H2-Q2, and the `INFO` diagnostic for guards that are off, with their witnesses (§7.3) | `payload` (new), `builders` | H2.4, FMH-2.7 | 400k |
+| FMH-2.9 | Mustache retired: the templates, `render.py`, `chevron` and the harness removed. S-3 and S-4 run over the IR's output and pass by construction, and S-3 reads the parameter declarations instead of the `$name` convention (H-D11). The injection corpus runs over the builders. README, ADR-A79 addendum, milestone FMH2 | `instantiate`, `templatecheck`, tests | FMH-2.8 | 400k |
 
-### 7.1 The equivalence harness (H2.2)
+### 7.1 The equivalence harness (FMH-2.2)
 
 A port changes nothing, and a change ports nothing. The harness checks the first half. Any deliberate
 change to an operation, such as R2 of §4.3, is a separate step after its port, with its own test and
@@ -446,26 +446,26 @@ as the semantic backstop.
 cancels out. That is acceptable for this check, which asks whether the two queries are the same query,
 not whether either is correct. Correctness stays with the behaviour tests and the witnesses.
 
-### 7.2 The paper check of the logical resources (H2.6)
+### 7.2 The paper check of the logical resources (FMH-2.6)
 
 A mismatch with the relational realisation is cheapest to fix before any vocabulary exists, so the
-check runs when the H2.6 fixture is written, not at H2.7. It is a table in H2.6's Validation Pack,
+check runs when the FMH-2.6 fixture is written, not at H2.7. It is a table in FMH-2.6's Validation Pack,
 one row per logical resource of H2-Q6, with its SPARQL realisation (the graph role the builders map it
 to) and its relational realisation from [lattice-sql.md](../notes/rdf-engine/lattice-sql.md) §9 (a
 table, a column or a row). It fails when a resource has no relational counterpart, or when an
-operation of §9 touches something no resource names. A failure goes to the maintainer before H2.7 is
+operation of §9 touches something no resource names. A failure goes to the maintainer before FMH-2.7 is
 briefed. It is a paper check, since no relational compiler exists (ADR-A-FM4 decision 1).
 
-### 7.3 Witnesses for the new severity (H2.8)
+### 7.3 Witnesses for the new severity (FMH-2.8)
 
 The witness harness (`persistence.witness`, H1.2) inventories rules from the source, and today it
 records an observed diagnostic only when its severity is `WARNING`. An `INFO` diagnostic would be
-inventoried and never observed, so it would fail as unwitnessed. That fails closed, and H2.8 still
+inventoried and never observed, so it would fail as unwitnessed. That fails closed, and FMH-2.8 still
 fixes it properly. It adds `INFO` as a rule family and three witnesses: a named-graph family with
 payload operations and no boundary shape gives the `INFO` diagnostic by default, gives a `WARNING`
 under the compile option, and a family that names a shape gives neither.
 
-H2.3, H2.4 and H2.5 are independent once H2.2 lands. Removed and rewritten tests in H2.9 (the
+FMH-2.3, H2.4 and FMH-2.5 are independent once FMH-2.2 lands. Removed and rewritten tests in FMH-2.9 (the
 template alignment tests, the parts of the injection corpus that load template files) are listed in
 its Validation Pack for countersignature, under the non-weakening rule.
 
@@ -500,8 +500,8 @@ the rules that keep a clean stored IR possible until then.
 - **The IR becomes a contract.** Every change to it is an ontology change, versioned under ADR-A86 with release tags, where
   today it can change with a builder.
 - **A vocabulary for SPARQL's structure**, written or adopted. SPIN's SPARQL syntax vocabulary, a W3C member submission of
-  2011, is one existing RDF encoding to evaluate. H2.7's vocabulary work grows with it.
-- **The builders move into `compile`**, which reverses FMH-H2-2's decision 2, and the harness compares the stored IR, printed,
+  2011, is one existing RDF encoding to evaluate. FMH-2.7's vocabulary work grows with it.
+- **The builders move into `compile`**, which reverses FMH-2.2's decision 2, and the harness compares the stored IR, printed,
   with the templates.
 - **The compiled profile grows**, by roughly hundreds of triples per operation per target.
 - **Two migrations if it is done now.** Today's `persistence.ir` is a typed syntax tree, and PDD-06 plans to replace it with an
@@ -524,11 +524,11 @@ Until PDD-06, nothing in H2 may make storing harder. Each rule holds today unles
 | SI-1 | every IR value is a frozen dataclass whose fields hold only IR values, enums, `str`, `int`, `bool`, tuples of these, or encoded terms from `persistence.terms`. No callables, no rdflib nodes, no mutable containers | a structural encoding exists for every value, so it can be written as RDF or any other form | holds, not enforced |
 | SI-2 | a builder is a pure function of its bindings and options. The same inputs give an equal `Operation`. It reads no file, clock or environment | a stored IR and a rebuilt one are the same value | holds, not enforced |
 | SI-3 | every option that changes an operation is visible in the value | a stored IR records it | holds. `GUARDS_OFF` is a field value, and `graph_names="caller"` shows as the parameter `$g` with its `equals` |
-| SI-4 | every graph names its role, from `GRAPH_ROLES` | a stored IR carries the logical resource of each pattern (H2-Q6) | holds, enforced by H2.2's T20, T21 and H2.3's T32 |
-| SI-5 | no IR value holds SPARQL text, apart from encoded terms. From H2.6 on the same rule holds, and is enforced, for the operation contract in the compiled profile | a stored IR is structure, not text to parse again | **does not hold for paths.** `Path` holds a `PropertyPath`, which is rendered text, because `instantiate` sees only the path's text in the profile. A stored IR would hold the path's structure, `persistence.paths.PathExpr`, which `compile` has |
-| SI-6 | the tree and the path agree | a stored IR built by `compile` can carry both | holds on the `compile` side, by HO4's property test and, later, H4's C10 check |
+| SI-4 | every graph names its role, from `GRAPH_ROLES` | a stored IR carries the logical resource of each pattern (H2-Q6) | holds, enforced by FMH-2.2's T20, T21 and FMH-2.3's T32 |
+| SI-5 | no IR value holds SPARQL text, apart from encoded terms. From FMH-2.6 on the same rule holds, and is enforced, for the operation contract in the compiled profile | a stored IR is structure, not text to parse again | **does not hold for paths.** `Path` holds a `PropertyPath`, which is rendered text, because `instantiate` sees only the path's text in the profile. A stored IR would hold the path's structure, `persistence.paths.PathExpr`, which `compile` has |
+| SI-6 | the tree and the path agree | a stored IR built by `compile` can carry both | holds on the `compile` side, by FMH-HO4's property test and, later, H4's C10 check |
 
-SI-1 and SI-2 get a test in slice H2.4a: every ported operation goes through a generic structural encoding and back and is
+SI-1 and SI-2 get a test in slice FMH-2.4a: every ported operation goes through a generic structural encoding and back and is
 equal to itself, and building it twice gives equal values. SI-5's gap is recorded here and is what PDD-06 closes.
 
 ### 9.5 What PDD-06's ADR has to decide about storage

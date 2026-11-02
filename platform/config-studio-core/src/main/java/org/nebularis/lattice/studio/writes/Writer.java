@@ -413,7 +413,7 @@ public final class Writer {
         }
 
         /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced by its delta from what the batch leaves it as, so only what changed is written. */
-        /** Whether {@code body} is what part or document {@code root} already holds, so a save of it changes nothing (STD-301). */
+        /** Whether {@code body} is what part or document {@code root} already holds, so a save of it changes nothing (STD-309). */
         private boolean unchanged(Family f, String root, Model body) {
             Model next = Skolem.skolemise(body);
             Model old = rawGraphs.computeIfAbsent(ops.graph(f, root), store::rawGraph);
@@ -430,7 +430,7 @@ public final class Writer {
                 Model asserted = next.difference(old);
                 Model retracted = old.difference(next);
                 if (asserted.isEmpty() && retracted.isEmpty()) {
-                    // A delta that changes nothing is never sent (STD-301). A row that must still move, a document whose description
+                    // A delta that changes nothing is never sent (STD-309). A row that must still move, a document whose description
                     // changed, takes the whole replace.
                     s.op(graph, txn -> ops.replace(f, root, expect, next, null, null, txn));
                 } else {

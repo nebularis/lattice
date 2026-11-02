@@ -26,7 +26,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         code = yarn(root, script)
         if code:
             return code
-    # The jars are packaged afresh, since the harness builds one only when it is missing. A running stack runs from its own copies (STD-300).
+    # The jars are packaged afresh, since the harness builds one only when it is missing. A running stack runs from its own copies (STD-308).
     platform = root / catalogue.load(root).area("platform")
     subprocess.run(["mvn", "-q", "-f", str(platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer", "-am", "package", "-DskipTests"],
                    cwd=root, check=True)

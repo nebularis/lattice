@@ -86,5 +86,5 @@ README counts as a document that describes a decision.
 
 Raised by the maintainer on 2026-10-16 during the
 [`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md)'s design
-discussion (decisions OD-D21, OD-D22, OD-D25 and OD-D28 to OD-D31, slices DOC1 to DOC3, technical debt
+discussion (decisions OD-D21, OD-D22, OD-D25 and OD-D28 to OD-D31, slices OD-DOC1 to OD-DOC3, technical debt
 TD-50).

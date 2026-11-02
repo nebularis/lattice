@@ -3,7 +3,7 @@
 # Toolchain: JDK 25 LTS and Python 3.14 — Status
 
 **Unit ID:** `toolchain-jdk25-python314`
-**Status:** ✅ Complete (2026-09-23, autonomous mode)
+**Status:** merged 2026-09-23. Complete (2026-09-23, autonomous mode)
 **Plan:** [toolchain-jdk25-python314.md](../plans/toolchain-jdk25-python314.md)
 
 ## Is this unit complete?

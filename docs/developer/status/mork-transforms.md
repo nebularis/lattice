@@ -3,11 +3,10 @@
 # MORK transform backends - Status
 
 **Unit ID:** `mork-transforms`
-**Status:** 🟢 XJ1 to XJ7 built 2026-10-30, ADR-A148 Proposed
+**Status:** built 2026-10-30. XJ1 to XJ7 built 2026-10-30, ADR-A148 Proposed
 **Last updated:** 2026-10-30
 **Plan:** [mork-transforms.md](../plans/mork-transforms.md)
 **ADR:** [A-148](../../architecture/decisions/ADR-A148-mork-transform-backends.md), Proposed
-**Branch:** `claude/config-authoring-studio`
 
 ## Current position
 
@@ -28,4 +27,4 @@ Checked live on 2026-10-30 with the sample in a running studio: both examples ru
 - 2026-10-30: XJ1 to XJ5 built. JOLT writes JSON-LD's keywords and IRIs as keys when `.`, `#`, `@` and its other syntax are escaped with a backslash in `shift` and `modify-overwrite-beta`, while `remove` matches keys unescaped.
 - 2026-10-30: the maintainer answered XJ-Q9 to XJ-Q12 and set the coordinator principle. The run was profiled, its cost is a cold JVM. XJ-Q8 reframed and XJ-Q13 added.
 - 2026-10-30: the maintainer answered XJ-Q8 (a) and XJ-Q13 (a). The engines cache compiled stylesheets and chains. XJ6 and XJ7 built.
-- 2026-10-31: TD-133 taken on by the `studio-publication` plan, and closed by its slice PB1.
+- 2026-10-31: TD-133 taken on by the `studio-publication` plan, and closed by its slice PB-1.

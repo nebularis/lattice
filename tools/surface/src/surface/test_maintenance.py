@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 """PM1: a promotion's rows kept by the write that changes their source (projection maintenance, slice PM1).
-Validation Pack: docs/developer/validation/PM1.md. Test IDs are PM1-Tn.
+Validation Pack: docs/developer/validation/PM-1.md. Test IDs are PM1-Tn.
 
 After any sequence of writes, the rows the clear and fill operations leave are the rows a rebuild from the source leaves, for each
 placement, on rdflib and Oxigraph."""

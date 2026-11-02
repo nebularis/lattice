@@ -89,7 +89,7 @@ things to the IR, decided (H-D14) after the
 | a composite operation's read set is the closure its path computes at execution, and its write set the delete set, the payload and the version row | protocol models that assume a fixed read set for a write (model A) |
 | an explicit graph role for every composite pattern, the profile's named data graph (AO-Q14, decided option a) | TD-40, composite operations that rely on the default graph against static check S-1 |
 
-H2's typing of the closure starts after HO5, when the tree replaces the old walk.
+H2's typing of the closure starts after FMH-HO5, when the tree replaces the old walk.
 
 H2's design, its typed payload and its slices are in the [typed IR sketch](formal-methods-track-h-typed-ir.md)
 (2026-10-10).
