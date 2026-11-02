@@ -136,6 +136,13 @@ _ROWS_STEMS = (
 )
 for _stem in _ROWS_STEMS:
     _STEM_KIND[_stem] = OperationKind.REPLACE
+# The delta replace of each family (persistence-delta-replace DR1), a kind of its own, since the request carries a change and not a state.
+_DELTA_STEMS = (
+    "cas-replace-named-graph-delta", "cas-replace-named-graph-delta-patch-log", "cas-replace-named-graph-delta-no-receipt",
+    "cas-replace-composite-property-delta-patch-log", "cas-replace-composite-property-delta-no-receipt",
+)
+for _stem in _DELTA_STEMS:
+    _STEM_KIND[_stem] = OperationKind.DELTA_REPLACE
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
 
@@ -177,6 +184,7 @@ BUILDER_VERSIONS: dict[str, int] = {
 }
 # The rows replaces were written after both increments above, so each starts at 1 (H2.12).
 BUILDER_VERSIONS.update({stem: 1 for stem in _ROWS_STEMS})
+BUILDER_VERSIONS.update({stem: 1 for stem in _DELTA_STEMS})
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
@@ -336,8 +344,9 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
+        # A delta replace digests the change alone, its add and del parts, and has no payload part (DR-Q3).
         digest = DigestContract(
-            target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event,
+            target, "expectedSeq" if "expectedSeq" in params else None, None if kind is OperationKind.DELTA_REPLACE else payload_name, event,
             "assertTriples" if "assertTriples" in params else "addedMembers" if "addedMembers" in params else None,
             "retractTriples" if "retractTriples" in params else "droppedMembers" if "droppedMembers" in params else None,
         )

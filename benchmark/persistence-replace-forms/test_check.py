@@ -57,7 +57,7 @@ def test_bench_t3_a_built_run_is_whole(family):
 
 
 @pytest.mark.parametrize("engine_class", check.available_engines(), ids=lambda c: c.name)
-@pytest.mark.parametrize("form", ["R0", "R0-nodelta", "R1-candidate"])
+@pytest.mark.parametrize("form", ["R0", "R0-nodelta", "R1-candidate", "R3-delta"])
 def test_bench_t4_a_replace_leaves_exactly_what_it_should(engine_class, form, family):
     check.run_form(engine_class, family, form, 20, repeats=2)
 
@@ -72,7 +72,8 @@ def test_bench_t5_the_one_operation_candidates_pass_on_a_snapshot_engine(family)
             check.run_form(check.OxigraphEngine, family, form, 20, repeats=2)
 
 
-def test_bench_t6_a_replace_that_does_nothing_fails_the_check(family):
+@pytest.mark.parametrize("form", ["R0", "R3-delta"])
+def test_bench_t6_a_replace_that_does_nothing_fails_the_check(family, form):
     class DoesNothing(check.RdflibEngine):
         name = "does-nothing"
 
@@ -81,7 +82,7 @@ def test_bench_t6_a_replace_that_does_nothing_fails_the_check(family):
                 super().update(text)
 
     with pytest.raises(check.WrongResult):
-        check.run_form(DoesNothing, family, "R0", 20, repeats=1)
+        check.run_form(DoesNothing, family, form, 20, repeats=1)
 
 
 def test_bench_t7_a_lost_kept_triple_is_named_in_the_reason(named):
@@ -187,3 +188,16 @@ def test_bench_t14_a_generated_replace_passes_the_edge_cases_it_can_or_reports_w
 def test_bench_t15_the_bare_sweep_counts_the_aggregate(composite):
     engine = check.start(check.OxigraphEngine if check.available_engines()[0].name == "oxigraph" else check.RdflibEngine, build_run(composite, "R0", sized_states(composite, 50, 1)))
     assert engine.count(composite.sweep_query(True)) == 50
+
+
+def test_bench_t16_the_delta_form_changes_one_triple_per_revision_sweeps_nothing_and_needs_no_snapshot(family):
+    assert "R3-delta" in family.forms and "R3-delta" in check.GENERATED and "R3-delta" not in check.CANDIDATES + check.NEEDS_SNAPSHOT
+    states = sized_states(family, 20, 2, "R3-delta")
+    assert states[0] == family.state(20, 1) and all(len(s) == 20 for s in states)
+    assert all(len(a - b) == 1 == len(b - a) for a, b in zip(states[1:], states))
+    run = build_run(family, "R3-delta", states)
+    assert [(len(s.expect_add), len(s.expect_del)) for s in run.steps] == [(1, 1), (1, 1)]
+    text = family.texts["R3-delta"]
+    assert "payloadTriples" not in text and "UNION" not in text and "?s ?p ?o" not in text
+    assert all("{{{" not in s.text and "$" not in s.text for s in run.steps)
+

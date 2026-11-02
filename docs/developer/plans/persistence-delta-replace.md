@@ -1,0 +1,65 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+# Plan: writing only what changed, as a persistence mode
+
+**Unit ID:** `persistence-delta-replace` (DR)
+**Unit type:** multi-slice unit, validation gate per slice
+**Status:** planned 2026-11-02 from the [sketch](../sketches/persistence-delta-replace.md), DR-Q1 to DR-Q8 decided
+**Status record:** [persistence-delta-replace.md](../status/persistence-delta-replace.md)
+**Depends on:** slice H2.12 of track H ([plan §4.20](formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01)), whose rows form, encoding and diagnostics this unit builds on. Built on the branch `claude/persistence-delta-replace`, off `claude/persistence-linear-replace`
+**Touches:** `ontology/persistence/` (the README as the literate source, its spec, shapes, examples and expected profiles), `tools/persistence` (the compiler), `packages/persistence/python` and `packages/persistence/java` (the callers), `benchmark/persistence-replace-forms`, `contracts/config-studio/persistence-profile.ttl`, ADR-A123
+
+## 1. Goal and acceptance
+
+A family written in place under optimistic concurrency replaces an aggregate by writing the triples that changed, guarded on the version row, unless its profile chose the whole-state replace. The generated delta replace is linear in the size of the change on every store, the two caller libraries build and check it, and the studio's writer moves its parts and documents back onto the generated operation, which closes TD-136. Accepted when every slice's Validation Pack passes, the conformance run passes on every engine, and the maintainer has re-approved the expected profiles that change.
+
+## 2. Decisions, from the sketch
+
+| Decided | Answer |
+|---|---|
+| how a profile chooses (DR-Q1) | a new axis, `dal:replaceEncoding`, with the values `dal:ChangedTriples` and `dal:WholeState`, declared beside `dal:membershipEncoding` and resolved like any dimension. One replace per family, no choice per call |
+| the default (DR-Q2) | `dal:ChangedTriples` under `dal:Optimistic`, with `dal:WholeState` named where it is wanted. A family with no guard writes whole state unconditionally, and a declared `dal:ChangedTriples` there is refused until a merge model is named. Every in-place family under `dal:Optimistic` regenerates onto the delta, and every vector and expectation of a replace with it |
+| the digest (DR-Q3) | the delta alone, the asserted lines sorted then the retracted lines sorted, as the add and del parts the digest already has, with no payload part. It identifies the change, and the receipt's previous sequence pins it to a state |
+| a family without a patch log (DR-Q4) | takes the same two slots, `assertTriples` and `retractTriples`, and writes them to the aggregate only |
+| the slot encoding (DR-Q5) | `dal:GroundNTriples`. A delta replace has no sweep, so its `WHERE` yields one solution and its template is filled once, which is linear on every store, rdflib and RDF4J included. The rows form, `dal:providesSnapshotUpdateSemantics` and `dal:replaceForm` bear on `dal:WholeState` families alone |
+| the form on a delta family (DR-Q6) | `dal:replaceForm` declared on a `dal:ChangedTriples` family is warned `ReplaceFormNotApplicable` |
+| the composite boundary (DR-Q7) | the caller checks the next state it holds against the boundary shape, with `payload-check` or the library's check, and sends the delta. A caller obligation, written as a standard with the six of TD-137 |
+| the slices (DR-Q8) | three. DR1 and DR2 here, DR3 in the studio agent's session with a brief, and the studio's deployment declares `dal:providesSnapshotUpdateSemantics` in DR3 and not before |
+
+## 3. Design, settled here
+
+**The dimension.** `replaceEncoding` is a dimension with no baseline default, since its default depends on the concurrency profile. `compile` takes the declared value, and otherwise `dal:ChangedTriples` for an optimistic family and `dal:WholeState` for any other, and the resolved dimension in the compiled profile records a declared value and its winner, or no value, as `replaceForm` does. The operation's `dal:templateId` says which replace was selected either way.
+
+**The builders.** `cas-replace-named-graph-delta` and `cas-replace-composite-property-delta`, each with the receipt variants its family has and a dataset-guard variant, ten in all, at version 1. Their `WHERE` is the template replace's without the sweep, so the guard alone, one solution. Their `DELETE` removes the retracted triples from the aggregate's graph through the `retractTriples` slot, and the version row's triples, and their `INSERT` writes the asserted triples through the `assertTriples` slot, under a patch log the two slots again into the add and del graphs the receipt names, the row, the claim and the receipt. A delta's deletions and insertions are disjoint by construction, so the order a store applies them in does not matter. There is no `payloadTriples` slot. Create and tombstone do not change.
+
+**The IR.** A `PayloadSlot` may stand in a `DELETE` template, recorded as a delete access of the aggregate. The checker refused it until now because no operation deleted a caller's triples, and the delta replace is the operation that does. ADR-A123 gains an addendum.
+
+**The contract.** The operation kind is `dal:DeltaReplace`, a new member of `dal:OperationKind`, so a caller, a relational realisation and a model know that the request carries a change and not a state. The payload contract names `assertTriples` as its parameter, so that the shape over a payload contract holds and the family keeps its `payload-check`, with the root and the boundary shape as before. A caller runs the bound and shape checks over the next state it holds and not over the slot, which the kind tells it (DR-Q7). The digest contract has the kind, target and expected-sequence parts and the add and del parts, and no payload part, which is the one digest whose payload part is dropped, since no existing operation has add and del parts without a payload or an event.
+
+**The selection.** Under `dal:ChangedTriples` the replace is the delta builder of the family, and `dal:replaceForm` and the capability field are not consulted. Under `dal:WholeState` the selection of H2.12 stands, the rows form by capability or opt-in and the template form otherwise.
+
+**The diagnostics.** `ReplaceEncodingUnknown` refuses a value outside the two. `ChangedTriplesNeedsOptimistic` refuses a declared `dal:ChangedTriples` on a family whose concurrency is not `dal:Optimistic`, since a delta applied to a state its caller never read merges triple by triple, which is a model of concurrency with no name yet. `ReplaceEncodingNotApplicable` warns an encoding declared on a family that has no replace of an aggregate to encode, an append discipline, an append-only concurrency or a value-guarded family. `ReplaceFormNotApplicable` now also fires for a form declared on a delta family.
+
+**The callers.** `OperationKind.DeltaReplace` in both libraries. The check refuses a delta whose two slots overlap (`DeltaOverlap`) or are both empty (`EmptyDelta`, STD-299), and, given the next state, an asserted triple that is not in it, a retracted triple that is, and a next state outside the bound, through the checks the whole payload has today. Without the next state the check says so in its result and the standard names the obligation. The digest follows the contract, so no library code is special to the kind beyond the omitted payload part.
+
+**The studio, in the meantime.** `contracts/config-studio/persistence-profile.ttl` declares `dal:WholeState` on each of its six profiles in DR1, with the reason, so that the studio's generated operations do not change under the new default before its writer moves in DR3, which removes the declarations.
+
+## 4. Slices
+
+| Slice | What | Done when | Estimate |
+|---|---|---|---|
+| DR1 | the vocabulary, the dimension, the ten builders, the kind, the selection, the diagnostics, the example `replace-encoding.ttl` and its expected profile, the witnesses, the goldens, the regenerated expected profiles, the benchmark's delta form, the studio's interim declaration, and the Persistence README's narrative and diagrams for the encoding and the form together | `mise run check:persistence` passes, the delta replace leaves the right state on rdflib, Oxigraph and Jena for both families under each receipt model and guard, and the README explains and draws both choices | 350k tokens |
+| DR2 | both caller libraries, their checks and vectors, the conformance run, the compiler README, and the seven caller obligations as standards (TD-137 and DR-Q7) | both library suites and `check:persistence-conformance` pass, and the obligations are register entries | 250k tokens |
+| DR3 | the studio's writer moves its parts and documents onto the generated delta replace, the interim declarations go, the deployment declares `dal:providesSnapshotUpdateSemantics`, and TD-136 closes | the studio's integration and benchmark runs pass with no hand-written replace | 150k tokens, in the studio agent's session |
+
+## 5. The README deliverables of DR1
+
+The maintainer asked on 2026-11-02 that every change of H2.12 and of this unit reach the Persistence README as narrative and diagrams, and not only as section 6 entries, so a user understands how the options work and how they behave at runtime. DR1 writes a section 5.6.12, "Replace encoding", holding the question, the two encodings side by side, a data-flow diagram from the caller's two states to the graphs each encoding writes, a sequence diagram of one save under each encoding on a store, showing the sweep's one solution per stored triple against the delta's one solution, a decision diagram of how `compile` selects the replace from the encoding, the form, the capability field and the opt-in, a timeline of a stale delta refused by the guard and retried, a cost table at stated sizes, the caller's obligations, and what works best when. Section 5.6.2's paragraph on the form of the replace then points at it, the running case of section 5.13 shows the delta replace the project family now gets, and section 5.14's costs gain the choice.
+
+## 6. Validation
+
+One Validation Pack per slice, `DR1` and `DR2` in [docs/developer/validation/persistence-delta-replace.md](../validation/persistence-delta-replace.md), DR3's in the studio unit's. DR1's one command is `mise run check:persistence`, and its conformance is `mise run check:persistence-conformance` on the three engines. Every expected profile that changes is listed for re-approval, and most do, since the default moves every optimistic in-place family onto the delta.
+
+## 7. Deliberate non-coverage
+
+A merge model for a delta under a family with no guard. Healing a graph changed outside the family's operations, which is a whole replace under an operation of its own. A delta of a `dal:NoBoundary` family, whose value guard already writes one property. RDF4J, beyond the observation that the delta has no path (TSD-Q36).

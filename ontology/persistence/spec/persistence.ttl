@@ -113,6 +113,9 @@ dal:CapabilityRequirement a owl:Class ;
 dal:CapabilitySpec a owl:Class ;
     rdfs:comment "An adopter-authored, optional, static declaration of assumed backend capabilities. NEVER derived from a live SPI or a TCK run, and never required for compilation to succeed. Shares field shape with the guide's StoreCapabilities record (Chapter 25 §25.2) by design, not by identity, so a future SPI-integrated stage can populate one from a real TCK run without a second vocabulary." .
 
+dal:ChangedTriples a dal:ReplaceEncoding ;
+    rdfs:comment "The replace takes the triples the caller retracts and the triples it asserts, computed against the state it read at the expected seq, in the slots retractTriples and assertTriples, and sweeps nothing. One solution, each template filled once, so the write is linear in the size of the change on every store. The default of an optimistic family. Under a patch log the same two slots are also written into the revision's add and del graphs." .
+
 dal:ClaimScheme a owl:Class ;
     rdfs:comment "Versioned state for a keyed-hash claim (guide Chapter 6.1), so rotating the HMAC secret does not open a window where two scheme versions can each claim the same normalized key." .
 
@@ -208,6 +211,9 @@ dal:Delete a dal:AccessMode ;
 
 dal:DeltaMembership a dal:MembershipEncoding ;
     rdfs:comment "Each new version states only what changed, as pat:addsMember and pat:dropsMember beside pat:previousVersion, and the domain's membership property is not written for it. Every dal:checkpointEvery versions the write lists every member as under dal:FullMembership and the version carries pat:checkpoint true, so a chain read is never longer than that. Members are read with the generated members query, and a domain shape runs over its results and never over the stored delta. Applies to a family that declares dal:AppendVersions only." .
+
+dal:DeltaReplace a dal:OperationKind ;
+    rdfs:comment "Replaces an aggregate by writing the triples that changed, retracted then asserted, if the version row is at the expected seq (dal:ChangedTriples). The request carries the change and not the state, its digest is over the change alone, and the caller checks the next state it holds against the boundary shape before it sends." .
 
 dal:DenseFeedRead a dal:GlobalReadStrategy ;
     rdfs:comment "Use a store-native dense change feed as the dataset tier directly. Preferred where available." .
@@ -518,7 +524,7 @@ dal:OccurrenceNamespaceDerivation a owl:Class ;
 
 dal:OperationKind a owl:Class ;
     rdfs:comment "The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a no-receipt variant have the kind of their base operation." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
 
 dal:OperationKindPart a dal:DigestPartRole ;
     rdfs:comment "The operation's kind." .
@@ -679,6 +685,10 @@ dal:Reject a dal:ViolationPolicy ;
 
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
+
+dal:ReplaceEncoding a owl:Class ;
+    rdfs:comment "How the compare-and-set replace of an optimistic named-graph or composite family carries the aggregate's new state: dal:ChangedTriples sends the triples retracted and the triples asserted against the state the caller read, guarded on the version row, and sweeps nothing, and dal:WholeState sends the whole new state and sweeps the old. A profile that declares none writes the changed triples under dal:Optimistic and the whole state under any other concurrency, which generates no guarded replace." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:ChangedTriples dal:WholeState ) ] .
 
 dal:ReplaceForm a owl:Class ;
     rdfs:comment "The form of the compare-and-set replace of an optimistic named-graph or composite family: dal:TemplateReplace carries the payload in the update's template, which a store fills once per stored triple, and dal:RowsReplace carries it as rows of the WHERE, so the write is linear in the aggregate's size on a store that applies every deletion before any insertion. A profile that declares none is written in the form the capability spec allows." ;
@@ -853,6 +863,9 @@ dal:WeakEtag a dal:EtagForm ;
 
 dal:WholeAggregateRead a dal:AccessMode ;
     rdfs:comment "A read of an aggregate's every triple, through the owned path or of the root's graph." .
+
+dal:WholeState a dal:ReplaceEncoding ;
+    rdfs:comment "The replace takes the whole new state in payloadTriples and sweeps the old state out of the aggregate. The caller need not have read the stored state. Its form, template or rows, is selected by dal:replaceForm and the capability spec." .
 
 dal:WriteDiscipline a owl:Class ;
     rdfs:comment "How a family writes a new state. One of dal:InPlace, dal:AppendVersions, dal:AppendRecords." ;
@@ -1527,6 +1540,11 @@ dal:registryGraph a owl:DatatypeProperty ;
     rdfs:domain dal:MetaTopologyProfile ;
     rdfs:range xsd:string .
 
+dal:replaceEncoding a owl:ObjectProperty ;
+    rdfs:comment "How an in-place family's replace carries the new state. Absent means dal:ChangedTriples for an optimistic family and dal:WholeState for any other. compile refuses dal:ChangedTriples on a family whose concurrency is not dal:Optimistic (ChangedTriplesNeedsOptimistic), since only the version-row guard makes a delta safe, and any other value (ReplaceEncodingUnknown), and warns an encoding declared on a family with no replace to encode (ReplaceEncodingNotApplicable)." ;
+    rdfs:domain dal:WriteDisciplineProfile ;
+    rdfs:range dal:ReplaceEncoding .
+
 dal:replaceForm a owl:ObjectProperty ;
     rdfs:comment "The operator's choice of replace form for an optimistic family, overriding what the capability spec would select: dal:RowsReplace asks for the rows replace on a store that declares nothing, the operator taking responsibility for its update order, and dal:TemplateReplace keeps the template replace on a store that declares snapshot update semantics. Absent, the capability spec selects, and an undeclared store gets the template replace." ;
     rdfs:domain dal:ConcurrencyProfile ;
@@ -1714,6 +1732,8 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ByIdentity dal:Pinned ) ] .
 
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:ChangedTriples dal:WholeState ) ] .
+
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:CommitGrain dal:EventGrain ) ] .
@@ -1764,7 +1784,7 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ] .
 
-[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:QueryNamed dal:CallerNamed ) ] .
 

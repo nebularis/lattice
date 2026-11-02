@@ -227,6 +227,8 @@ def test_h2_12_t10_a_form_on_a_family_with_no_sweeping_replace_is_recorded_and_w
 def test_h2_12_t11_a_composite_family_takes_the_rows_form_under_a_deployment_wide_spec():
     g = witness._load_fixture(witness.EXAMPLES_DIR / "composite-project-ownership.ttl")
     g.parse(data="@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> . <urn:env> a dal:CapabilitySpec ; dal:providesCas dal:Linearizable ; dal:providesSnapshotUpdateSemantics true .", format="turtle")
+    # the rows form is the whole-state replace's, so the family declares dal:WholeState, since an optimistic family now defaults to the delta (DR1)
+    g.parse(data="@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> . @prefix ex: <https://example.org/projects#> . ex:ProjectEncoding a dal:WriteDisciplineProfile ; dal:appliesTo ex:ProjectClass ; dal:replaceEncoding dal:WholeState .", format="turtle")
     assert any(t.startswith("cas-replace-composite-property-rows") for t in _replaces(g).values())
 
 

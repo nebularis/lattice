@@ -28,6 +28,7 @@ class OperationKind(Enum):
     CREATE = "Create"
     BOOTSTRAP = "Bootstrap"
     REPLACE = "Replace"
+    DELTA_REPLACE = "DeltaReplace"
     TOMBSTONE = "Tombstone"
     APPEND = "Append"
     APPEND_VERSION = "AppendVersion"
@@ -104,11 +105,13 @@ class DigestContract:
     def parts(self) -> tuple:
         """``(role, sources)`` for each part, in order. A part with no source has an empty tuple. The event part replaces the payload
         part for an append, whose rows slot and triples slot are its two sources."""
+        # A delta replace has add and del parts and no payload or event, and digests the change alone, with no payload part (DR-Q3).
+        change_only = self.payload is None and not self.event and (self.add or self.delete)
         return (
             ("OperationKindPart", ()),
             ("TargetPart", (self.target,) if self.target else ()),
             ("ExpectedSeqPart", (self.expected,) if self.expected else ()),
-            ("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ()),
+            *(() if change_only else ((("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ())),)),
             *((("AddPart", (self.add,)),) if self.add else ()),
             *((("DelPart", (self.delete,)),) if self.delete else ()),
         )

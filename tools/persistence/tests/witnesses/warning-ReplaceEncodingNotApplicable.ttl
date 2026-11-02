@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# An encoding declared on a family that appends versions, which has no replace of an aggregate to encode (persistence-delta-replace DR1).
+# base: write-discipline-composite-append-versions.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+
+ex:QuoteWriteProfile dal:replaceEncoding dal:WholeState .

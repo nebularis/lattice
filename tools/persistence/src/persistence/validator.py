@@ -104,6 +104,25 @@ def check_cross_axis(
             "dal:DeltaMembership states a version's members as changes against the version before it, which only a family that "
             "declares dal:AppendVersions keeps. Declare dal:AppendVersions, or dal:FullMembership (H2.6f).",
         )
+    # persistence-delta-replace DR1: the replace encoding. A delta is right only when it is applied to the state it was computed from,
+    # which the version-row guard of dal:Optimistic proves, so a declared dal:ChangedTriples on any other concurrency is refused until a
+    # merge model is named (DR-Q2). Absent is decided by the concurrency in operations.replace_encoding.
+    replace_encoding = _local(_value(dimensions, "replaceEncoding"))
+    if replace_encoding is not None:
+        if replace_encoding not in ("ChangedTriples", "WholeState"):
+            raise CrossAxisViolation(
+                "ReplaceEncodingUnknown",
+                str(target),
+                f"dal:replaceEncoding is dal:{replace_encoding}, and the encodings are dal:ChangedTriples and dal:WholeState (DR1).",
+            )
+        if replace_encoding == "ChangedTriples" and concurrency_local != "Optimistic":
+            raise CrossAxisViolation(
+                "ChangedTriplesNeedsOptimistic",
+                str(target),
+                "dal:ChangedTriples writes the triples a caller computed against the state it read, which is right only when the version-row "
+                "guard of dal:Optimistic proves the aggregate is still that state. Without a guard a delta merges triple by triple, which "
+                "is a model of concurrency with no name yet. Declare dal:Optimistic, or dal:WholeState (DR1, DR-Q2).",
+            )
     interval = _value(dimensions, "checkpointEvery")
     value = interval.toPython() if hasattr(interval, "toPython") else interval
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
@@ -854,14 +873,36 @@ def check_replace_form(target: Target, dimensions: dict[str, ResolvedDimension],
             "applies every deletion before any insertion, and the capability spec declares dal:providesSnapshotUpdateSemantics false. "
             "The opt-in is for a store that declares nothing. Remove the opt-in, or correct the spec.",
         )
-    if not any(op.operation == "cas-replace" and ("named-graph" in op.template_id or "composite" in op.template_id) for op in operations):
+    if not any(_sweeping_replace(op) for op in operations):
         return [_warning(
             "ReplaceFormNotApplicable", target,
             f"dal:replaceForm dal:{form} chooses the form of the replace that sweeps an aggregate, and this family has no such operation. "
-            "Only the compare-and-set of an optimistic named-graph or composite family written in place takes a form. The declaration is "
-            "recorded in the compiled profile and not applied.",
+            "Only the whole-state compare-and-set of an optimistic named-graph or composite family written in place takes a form, and a "
+            "family under dal:ChangedTriples sweeps nothing (DR-Q6). The declaration is recorded in the compiled profile and not applied.",
         )]
     return []
+
+
+def _sweeping_replace(op) -> bool:
+    """Whether a generated operation is the whole-state replace of a named-graph or composite family, the one operation that sweeps."""
+    return op.operation == "cas-replace" and ("named-graph" in op.template_id or "composite" in op.template_id) and "-delta" not in op.template_id
+
+
+def check_replace_encoding(target: Target, dimensions: dict[str, ResolvedDimension], operations) -> list[Diagnostic]:
+    """persistence-delta-replace DR1: an encoding declared on a family that has no replace of an aggregate to encode, an append discipline,
+    an append-only concurrency, an unconditional write or a value-guarded family, is recorded and warned (`ReplaceEncodingNotApplicable`)."""
+    if "replaceEncoding" not in dimensions or _value(dimensions, "replaceEncoding") is None:
+        return []
+    if any(op.operation == "cas-replace" and ("named-graph" in op.template_id or "composite" in op.template_id) for op in operations):
+        return []
+    if _local(_value(dimensions, "replaceEncoding")) == "WholeState" and any(op.operation == "unconditional-write" for op in operations):
+        return []  # an unconditional write is a whole-state write, so the declaration is true of it
+    return [_warning(
+        "ReplaceEncodingNotApplicable", target,
+        f"dal:replaceEncoding dal:{_local(_value(dimensions, 'replaceEncoding'))} says how a replace carries an aggregate's new state, and this "
+        "family has no such operation. Only the compare-and-set of an optimistic named-graph or composite family written in place takes an "
+        "encoding. The declaration is recorded in the compiled profile and not applied.",
+    )]
 
 
 def check_patch_log_written(target: Target, dimensions: dict[str, ResolvedDimension], operations) -> list[Diagnostic]:

@@ -5,6 +5,10 @@
 # never runs the compiler. Every family is a named-graph aggregate under optimistic concurrency. A root's graph is
 # named by the caller (`$g`), which PDD-17 measured as flat on every store. Jobs are coordination data (PRI-52), so they
 # have no family here.
+#
+# Every profile declares dal:WholeState for now, so that the writer's generated operations do not change under the
+# default of persistence-delta-replace, which moves an optimistic family onto the delta replace. The studio slice of that unit
+# (DR3) moves the writer and removes these declarations.
 
 @prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
@@ -23,6 +27,7 @@ cst:DescriptionProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:description/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:ReceiptOnly .
@@ -33,6 +38,7 @@ cst:PartProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:part/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:PatchLog .
@@ -43,6 +49,7 @@ cst:DocumentProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:document/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:PatchLog .
@@ -53,6 +60,7 @@ cst:LineageProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:lineage/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:ReceiptOnly .
@@ -63,6 +71,7 @@ cst:VersionProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:version/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:ReceiptOnly .
@@ -73,6 +82,7 @@ cst:ImportProfile a dal:DataAccessProfile ;
     dal:strategy dal:NamedGraphBoundary ;
     dal:graphIriTemplate "urn:lattice:studio:imported/{id}" ;
     dal:concurrencyProfile dal:Optimistic ;
+    dal:replaceEncoding dal:WholeState ;
     dal:minConcurrencyLevel dal:Linearizable ;
     dal:orderingGrain dal:EventGrain ;
     dal:receiptModel dal:ReceiptOnly .

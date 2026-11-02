@@ -34,7 +34,7 @@ def test_h2_12_l3_an_empty_payload_gives_an_empty_block():
 
 
 def _replace(profiles):
-    return next(o for o in read_contracts(profiles["baseline-single-class"]) if o.template_id == "cas-replace-named-graph-patch-log")
+    return next(o for o in read_contracts(profiles["baseline-whole-state"]) if o.template_id == "cas-replace-named-graph-patch-log")
 
 
 def test_h2_12_l4_a_template_replace_declares_ground_ntriples_and_its_slot_text_is_the_triples(profiles):

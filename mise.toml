@@ -365,7 +365,7 @@ run = "python benchmark/persistence-graph-naming-cost/check.py --emit benchmark/
 
 [tasks."check:persistence-replace-forms"]
 depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on rdflib and Oxigraph (ADR-A124, TSD-01, TD-42). R2 is the generated rows replace, and R1 and the UNION form of R2 are candidates the compiler does not generate. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. REPLACE_FORMS_MAX_R0 caps the size of the generated forms, REPLACE_FORMS_QUICK=1 (or a family name) runs sizes up to 1,000, REPLACE_FORMS_TIMEOUT limits each measurement in seconds"
+description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on rdflib and Oxigraph (ADR-A124, TSD-01, TD-42). R0 is the generated whole-state replace, R2 is the generated rows replace, R3 is the generated delta replace with one changed triple per revision, and R1 and the UNION form of R2 are candidates the compiler does not generate. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. REPLACE_FORMS_MAX_R0 caps the size of the generated forms, REPLACE_FORMS_QUICK=1 (or a family name) runs sizes up to 1,000, REPLACE_FORMS_TIMEOUT limits each measurement in seconds"
 run = "python -m pytest benchmark/persistence-replace-forms -q -p no:cacheprovider && python benchmark/persistence-replace-forms/check.py"
 
 [tasks."check:persistence-replace-forms-jvm"]

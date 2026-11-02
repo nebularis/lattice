@@ -1,4 +1,4 @@
-# The replace that carries its payload as rows (formal-methods H2.12), selected two ways.
+# The replace that carries its payload as rows (formal-methods H2.12), selected two ways. The form applies to a whole-state family, so each profile declares dal:WholeState.
 # ex:Invoice gets it because its deployment's dal:CapabilitySpec declares that the store applies
 # every deletion before any insertion (dal:providesSnapshotUpdateSemantics). ex:Note gets it because
 # its profile opts in with dal:replaceForm dal:RowsReplace, the operator taking responsibility, since
@@ -17,6 +17,7 @@ ex:InvoiceProfile a dal:DataAccessProfile ;
     dal:graphIriTemplate    "urn:g:invoice/{id}" ;
     dal:concurrencyProfile  dal:Optimistic ;
     dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceEncoding     dal:WholeState ;
     dal:orderingGrain       dal:CommitGrain ;
     dal:receiptModel        dal:PatchLog ;
     dal:metaTopology        dal:SharedSharded ;
@@ -37,6 +38,7 @@ ex:NoteProfile a dal:DataAccessProfile ;
     dal:graphIriTemplate    "urn:g:note/{id}" ;
     dal:concurrencyProfile  dal:Optimistic ;
     dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceEncoding     dal:WholeState ;
     dal:replaceForm         dal:RowsReplace ;
     dal:orderingGrain       dal:CommitGrain ;
     dal:receiptModel        dal:ReceiptOnly ;
@@ -53,6 +55,7 @@ ex:MemoProfile a dal:DataAccessProfile ;
     dal:graphIriTemplate    "urn:g:memo/{id}" ;
     dal:concurrencyProfile  dal:Optimistic ;
     dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceEncoding     dal:WholeState ;
     dal:orderingGrain       dal:CommitGrain ;
     dal:receiptModel        dal:PatchLog ;
     dal:metaTopology        dal:SharedSharded ;

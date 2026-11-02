@@ -31,6 +31,22 @@
     "sha256": "c904ae2eafc7dd3e2d5ad88ff9721c337453cdecf21aaf6dce8d79d1250b4969",
     "version": 2
   },
+  "cas-replace-composite-property-delta-no-receipt": {
+    "sha256": "55c98c6acea695dc40d62d2e554639d66541cf89a5cbf26181cf3e7f2fa249e7",
+    "version": 1
+  },
+  "cas-replace-composite-property-delta-no-receipt-dataset-guard": {
+    "sha256": "7a4786d160c7d6260005b98c70f2bf758ddec3341efb2843499242f21e1cb8af",
+    "version": 1
+  },
+  "cas-replace-composite-property-delta-patch-log": {
+    "sha256": "26b0723eb9178beb3a0668f6f7443e0d7b098a21c566abec0f3235368d80caab",
+    "version": 1
+  },
+  "cas-replace-composite-property-delta-patch-log-dataset-guard": {
+    "sha256": "5d92af8dbce05b105df0d6979a97746c8570b7a6024dcd9d49d9d0c4f93dd5f4",
+    "version": 1
+  },
   "cas-replace-composite-property-no-receipt": {
     "sha256": "99f77b999e9b382f3edbdbe983c658c89bdbedb40c3efb5558f31d0bf63e0458",
     "version": 3
@@ -70,6 +86,30 @@
   "cas-replace-named-graph-dataset-guard": {
     "sha256": "e2199258be296683062538afb2e0b856ce48d631d75798b9251b9b94397d49ba",
     "version": 4
+  },
+  "cas-replace-named-graph-delta": {
+    "sha256": "36caddfa3ab79a1a92acec1a8dcba89efc7e40a3a11bc0e2edb9d7337c4c609d",
+    "version": 1
+  },
+  "cas-replace-named-graph-delta-dataset-guard": {
+    "sha256": "48faddefb01df787745c7a1b03425776ff60f91343241838ae90754813b7c1aa",
+    "version": 1
+  },
+  "cas-replace-named-graph-delta-no-receipt": {
+    "sha256": "9a79c6f6d3b0340f193c53731d5b3525fb5d0a1ad8338f9e936b414af5c9fa34",
+    "version": 1
+  },
+  "cas-replace-named-graph-delta-no-receipt-dataset-guard": {
+    "sha256": "e7f112c04fbdb32c9e56a8c68036426f99075566ebd0d1178c7f828e6b65cc9b",
+    "version": 1
+  },
+  "cas-replace-named-graph-delta-patch-log": {
+    "sha256": "d920d22f217e74c66364ea23a0b180a48ada40279c9467718177f50e59ece884",
+    "version": 1
+  },
+  "cas-replace-named-graph-delta-patch-log-dataset-guard": {
+    "sha256": "cbc013fd9dc86bed8f5a0fe740bf624dc21ee7affbfc09a01a0b0ff6e3741222",
+    "version": 1
   },
   "cas-replace-named-graph-no-receipt": {
     "sha256": "80a94a76d425b6b9d9cb955c01c8e18ccca7a313a2e78715d868f53c25d64905",

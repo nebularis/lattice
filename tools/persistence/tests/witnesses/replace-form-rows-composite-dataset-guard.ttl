@@ -13,3 +13,7 @@ ex:OrderEpoch a dal:EpochProfile ;
     dal:appliesTo       ex:OrderClass ;
     dal:epochGuardScope dal:DatasetLevelGuard ;
     dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:OrderEncodingProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:replaceEncoding dal:WholeState .

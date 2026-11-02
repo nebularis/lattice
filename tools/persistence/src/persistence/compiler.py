@@ -110,6 +110,7 @@ def compile_targets(
                 validator.check_capability(check)
 
             operations = select_operations(target, dimensions, uniqueness, spec)
+            diagnostics += validator.check_replace_encoding(target, dimensions, operations)
             diagnostics += validator.check_replace_form(target, dimensions, spec, operations)
             diagnostics += validator.check_patch_log_written(target, dimensions, operations)
             diagnostics += validator.check_payload_bound(target, dimensions, operations, warn=warn_unbounded_payload)

@@ -392,7 +392,8 @@ def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: s
 
 def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt: str = "receipt") -> tuple:
     """The `WHERE` of replace and tombstone, which differ only in their templates. `binds` come first, then the
-    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
+    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds. A delta replace sweeps
+    nothing (`sweep` is None), so its `WHERE` is the guard alone and yields one solution."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
     meta = b.graph("metaGraphPrefix")
@@ -407,7 +408,7 @@ def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *(_claim_binds() if receipt != "none" else ()),
-        sweep,
+        *(() if sweep is None else (sweep,)),
     )
 
 
@@ -439,15 +440,16 @@ def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: st
     return _row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)
 
 
-def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str, rows: bool = False) -> tuple:
+def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str, rows: bool = False, delta: bool = False) -> tuple:
     """The `INSERT` of a replace, whichever family. A patch log writes the caller's delta, in two slots, into the two graphs the receipt
     names (H2.6b-Q1 and Q2). Under `rows` each slot's triples come as rows of the `WHERE` and the template holds one triple of row
-    variables in the slot's place (H2.12)."""
+    variables in the slot's place (H2.12). Under `delta` the aggregate gains the asserted triples alone, and there is no payload slot
+    (persistence-delta-replace DR1)."""
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
     has_receipt, patch = receipt != "none", receipt == "patch-log"
     content = _rows_triple if rows else PayloadSlot
     return (
-        GraphBlock(data, (content("payloadTriples"),)),
+        GraphBlock(data, (content("assertTriples" if delta else "payloadTriples"),)),
         *((_delta_block("add", content("assertTriples")), _delta_block("del", content("retractTriples"))) if patch else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
@@ -489,6 +491,15 @@ def _replace_params(receipt: str) -> tuple:
     return (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD), *((Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD)) if receipt == "patch-log" else ()))
 
 
+def _delta_params() -> tuple:
+    return (*_CAS_PARAMS, Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD))
+
+
+def _delta_delete(b: Bindings, data: Graph, *, dataset_guard: bool, receipt: str) -> tuple:
+    """The `DELETE` of a delta replace: the retracted triples, through their slot, and the version row's triples. Nothing is swept."""
+    return (GraphBlock(data, (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt))
+
+
 def _tombstone_params(receipt: str) -> tuple:
     return (*_CAS_PARAMS, *((Param("cause", Kind.IRI), Param("actor", Kind.IRI)) if receipt != "none" else ()))
 
@@ -503,6 +514,25 @@ def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str
         Group(_named_where(b, named, dataset_guard=dataset_guard, receipt=receipt, deltas=deltas, rows=rows)), guards=guards,
         insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph", rows=rows),
         delete=_sweep_delete(b, named, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _delta_replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    """The replace of a named-graph family under `dal:ChangedTriples` (persistence-delta-replace DR1). The caller sends the triples it
+    retracts and the triples it asserts, computed against the state it read at `$expectedSeq`, and the guard on the version row proves
+    the aggregate is still that state. No sweep, so the `WHERE` yields one solution and each template is filled once, whatever the
+    store's update order, since a delta's deletions and insertions are disjoint. Under a patch log the same two slots are written into
+    the add and del graphs the receipt names."""
+    _check_receipt(receipt)
+    named = _Named(b, graph_names)
+    deltas = ("add", "del") if receipt == "patch-log" else ()
+    binds = (*named.binds(), *(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*deltas))
+    return Operation.build(
+        "cas-replace-named-graph-delta" + _suffix(dataset_guard, receipt),
+        (*_delta_params(), *named.params()),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)), guards=guards,
+        insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph", delta=True),
+        delete=_delta_delete(b, named.graph(Binding.BOUND), dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
@@ -599,6 +629,21 @@ def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receip
         Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)),
         guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2", rows=rows),
         delete=_composite_delete(b, dataset_guard=dataset_guard, receipt=receipt),
+    )
+
+
+def _composite_delta_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    """The replace of a composite family under `dal:ChangedTriples` (persistence-delta-replace DR1), as :func:`_delta_replace` in the
+    family's data graph. No owned path is read, since nothing is swept. The caller checks the next state against the boundary shape
+    before it sends the delta (DR-Q7)."""
+    _check_composite_receipt(receipt)
+    binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
+    return Operation.build(
+        "cas-replace-composite-property-delta" + _suffix(dataset_guard, receipt),
+        _delta_params(),
+        Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)),
+        guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2", delta=True),
+        delete=_delta_delete(b, b.graph("dataGraph"), dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
@@ -1040,8 +1085,26 @@ def _rows_variants() -> dict:
     return out
 
 
+def _delta_variants() -> dict:
+    """The delta replace of each family (persistence-delta-replace DR1), with each receipt model its family has and its dataset-guard
+    variant, keyed by stem. `compile` selects one under `dal:ChangedTriples`, the default of an optimistic family written in place."""
+    out: dict = {}
+    for receipt, tag in (("receipt", ""), ("patch-log", "-patch-log"), ("none", "-no-receipt")):
+        for guard in (False, True):
+            suffix = tag + ("-dataset-guard" if guard else "")
+            out["cas-replace-named-graph-delta" + suffix] = lambda b, guards, names, g=guard, r=receipt: _delta_replace(
+                b, guards=guards, dataset_guard=g, graph_names=names, receipt=r
+            )
+            if receipt != "receipt":
+                out["cas-replace-composite-property-delta" + suffix] = lambda b, guards, names, g=guard, r=receipt: _composite_delta_replace(
+                    b, guards=guards, dataset_guard=g, receipt=r
+                )
+    return out
+
+
 BUILDERS.update(_receipt_variants())
 BUILDERS.update(_rows_variants())
+BUILDERS.update(_delta_variants())
 """Every generated operation, keyed by its builder identity (`dal:templateId`)."""
 
 

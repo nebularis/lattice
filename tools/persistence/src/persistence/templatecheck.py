@@ -104,6 +104,13 @@ for _family, _tags in (("cas-replace-named-graph-rows", ("", "-patch-log", "-no-
                 **{name: _ROW_BRANCH for slot in _slots for name in _ROW_VARIABLES[slot]},
             }
 
+# The delta replaces (persistence-delta-replace DR1) have no row variable and no sweep, so their receipt variants keep the first-write
+# allowance alone.
+for _family, _tags in (("cas-replace-named-graph-delta", ("", "-patch-log")), ("cas-replace-composite-property-delta", ("-patch-log",))):
+    for _tag in _tags:
+        for _guard in ("", "-dataset-guard"):
+            OPTIONAL_INSERT_VARIABLES[f"{_family}{_tag}{_guard}"] = {"prevRev": _FIRST_CAS}
+
 # Stand-ins for the request-time slots, so the text parses as SPARQL. The
 # payload is a ground triple. A real payload is skolemized by the caller.
 _SLOT_STAND_INS = {

@@ -100,6 +100,7 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "writeDiscipline": (DAL.WriteDisciplineProfile, DAL.writeDiscipline, ()),
     # H2.6f (2026-10-20).
     "membershipEncoding": (DAL.WriteDisciplineProfile, DAL.membershipEncoding, ()),
+    "replaceEncoding": (DAL.WriteDisciplineProfile, DAL.replaceEncoding, ()),
     "checkpointEvery": (DAL.WriteDisciplineProfile, DAL.checkpointEvery, ()),
 }
 

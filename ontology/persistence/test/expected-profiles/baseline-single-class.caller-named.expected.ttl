@@ -16,11 +16,6 @@
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-10> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-11> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -31,35 +26,35 @@
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-3> a dal:ResourceAccess ;
-    dal:accessMode dal:WholeAggregateRead ;
-    dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
-    dal:resourceKind dal:Aggregate .
-
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:resourceKind dal:PatchContent .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-5> a dal:ResourceAccess ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:resourceKind dal:Receipt .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-6> a dal:ResourceAccess ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
+    dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> ;
+    dal:resourceKind dal:TransactionClaim .
+
+<https://example.org/lending/LoanApplication/compiled/cas-replace#access-6> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-7> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
-
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#access-9> a dal:ResourceAccess ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
+    dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/lending/LoanApplication/compiled/cas-replace#access-9> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
@@ -69,8 +64,7 @@
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-2>,
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-3>,
         <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-4>,
-        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5>,
-        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-6> .
+        <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-1> a dal:DigestPart ;
     dal:partOrder 1 ;
@@ -89,16 +83,11 @@
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-4> a dal:DigestPart ;
     dal:partOrder 4 ;
-    dal:partRole dal:PayloadPart ;
-    dal:partSource <https://example.org/lending/LoanApplication/compiled/cas-replace#param-payloadTriples> .
-
-<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> a dal:DigestPart ;
-    dal:partOrder 5 ;
     dal:partRole dal:AddPart ;
     dal:partSource <https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples> .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-6> a dal:DigestPart ;
-    dal:partOrder 6 ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#digest-part-5> a dal:DigestPart ;
+    dal:partOrder 5 ;
     dal:partRole dal:DelPart ;
     dal:partSource <https://example.org/lending/LoanApplication/compiled/cas-replace#param-retractTriples> .
 
@@ -132,7 +121,7 @@
 <https://example.org/lending/LoanApplication/compiled/cas-replace#payload> a dal:PayloadContract ;
     dal:boundaryShape dal:NoBoundaryShape ;
     dal:payloadEncoding dal:GroundNTriples ;
-    dal:payloadParameter <https://example.org/lending/LoanApplication/compiled/cas-replace#param-payloadTriples> ;
+    dal:payloadParameter <https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples> ;
     dal:payloadRoot <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root> .
 
 <https://example.org/lending/LoanApplication/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
@@ -469,11 +458,6 @@
     dal:columnName "t" ;
     dal:columnPosition 1 .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples> a dal:ParameterDeclaration ;
-    dal:parameterKind dal:PayloadKind ;
-    dal:parameterName "assertTriples" ;
-    dal:required true .
-
 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-expectedSeq> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PositionKind ;
     dal:parameterName "expectedSeq" ;
@@ -507,9 +491,9 @@
     dal:required true ;
     dal:sourcedFrom dal:RegistryGraph .
 
-<https://example.org/lending/LoanApplication/compiled/cas-replace#param-payloadTriples> a dal:ParameterDeclaration ;
+<https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
-    dal:parameterName "payloadTriples" ;
+    dal:parameterName "assertTriples" ;
     dal:required true .
 
 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> a dal:ParameterDeclaration ;
@@ -655,7 +639,6 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/LoanApplication/compiled/cas-replace#access-1>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-10>,
-                <https://example.org/lending/LoanApplication/compiled/cas-replace#access-11>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-2>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-3>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#access-4>,
@@ -721,22 +704,21 @@
                     dal:paramName "txnGraph" ;
                     dal:paramType "Iri" ;
                     dal:paramValue "<urn:g:txn>" ] ;
-            dal:operationKind dal:Replace ;
+            dal:operationKind dal:DeltaReplace ;
             dal:parameter <https://example.org/lending/LoanApplication/compiled/cas-replace#param-assertTriples>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-epoch>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-expectedSeq>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-g>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-newRev>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-nextSeq>,
-                <https://example.org/lending/LoanApplication/compiled/cas-replace#param-payloadTriples>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-requestDigest>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-retractTriples>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-root>,
                 <https://example.org/lending/LoanApplication/compiled/cas-replace#param-txnId> ;
             dal:payloadContract <https://example.org/lending/LoanApplication/compiled/cas-replace#payload> ;
-            dal:templateVersion 3 ;
+            dal:templateVersion 1 ;
             dal:usesTemplate [ a dal:Template ;
-                    dal:templateId "cas-replace-named-graph-patch-log" ] ],
+                    dal:templateId "cas-replace-named-graph-delta-patch-log" ] ],
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/LoanApplication/compiled/tombstone-delete#access-1>,
                 <https://example.org/lending/LoanApplication/compiled/tombstone-delete#access-10>,
@@ -1368,6 +1350,8 @@
             dal:wonBy <https://example.org/lending#LoanApplicationStrongProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "replaceEncoding" ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;
