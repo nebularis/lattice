@@ -15,7 +15,7 @@
 | WB-0 | the sketch, the plan, this record, the INDEX.md entry | built 2026-11-02 |  |
 | WB-1 | `tools/work_board.py`, `work:board`, `build:work` | built 2026-11-02, building 2026-11-02 |  |
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | built 2026-11-02, building 2026-11-02 |  |
-| WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | planned | WB-2 |
+| WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | building 2026-11-02 |  |
 | WB-4 | the `work` check and the post-merge regeneration | planned | WB-3 |
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | planned | WB-4 |
 | WB-6 | `work:here` | planned | WB-1 |

@@ -1453,7 +1453,7 @@ Every slice on a board, keyed by its id, with the record and line it was read fr
 | WB-0 | the sketch, the plan, this record, the INDEX.md entry | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:15 |
 | WB-1 | `tools/work_board.py`, `work:board`, `build:work` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:16 |
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md:17 |
-| WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | work-board | planned | WB-2 | docs/developer/status/work-board.md:18 |
+| WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md:18 |
 | WB-4 | the `work` check and the post-merge regeneration | work-board | planned | WB-3 | docs/developer/status/work-board.md:19 |
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | planned | WB-4 | docs/developer/status/work-board.md:20 |
 | WB-6 | `work:here` | work-board | planned | WB-1 | docs/developer/status/work-board.md:21 |
