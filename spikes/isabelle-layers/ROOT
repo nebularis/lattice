@@ -8,6 +8,8 @@
 session LatticeLayers = Eligibility +
   description "Isabelle/HOL models of the laws the LATTICE layers state, one theory per layer."
   options [document = false, timeout = 600]
+  sessions
+    "HOL-Library"
   theories
     Foundation
     Temporal
@@ -22,3 +24,5 @@ session LatticeLayers = Eligibility +
     Minting
     Surface
     EligibilityConditions
+    CodeGenPlain
+    CodeGen
