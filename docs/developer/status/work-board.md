@@ -6,7 +6,7 @@
 **Plan:** [work-board.md](../plans/work-board.md)
 **Sketch:** [work-board.md](../sketches/work-board.md)
 **Mode:** default. Write, then hand off.
-**Status:** building 2026-11-02. WB-0 to WB-3 built, WB-4 next, WB-Q9 open. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
+**Status:** building 2026-11-02. WB-0 to WB-4 built, WB-5 and WB-6 building, WB-Q9 open. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
 
 ## Position
 
@@ -16,7 +16,7 @@
 | WB-1 | `tools/work_board.py`, `work:board`, `build:work` | built 2026-11-02, building 2026-11-02 |  |
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | built 2026-11-02, building 2026-11-02 |  |
 | WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | built 2026-11-02, building 2026-11-02 |  |
-| WB-4 | the `work` check and the post-merge regeneration | building 2026-11-02 |  |
+| WB-4 | the `work` check and the post-merge regeneration | built 2026-11-02, building 2026-11-02 |  |
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | building 2026-11-02 |  |
 | WB-6 | `work:here` | building 2026-11-02 |  |
 | WB-7 | the branches marked or deleted | planned | WB-4, WB-Q9 |
@@ -28,3 +28,4 @@
 - 2026-11-02: WB-1 built. `tools/work_board.py` reads every status record's board at the tip of every local and remote branch through one `git cat-file --batch`, folds remotes by URL, joins rows per slice, measures a branch by content and writes INDEX.md's generated region. On this checkout the board reads 28 branches in 1.9 s. 13 tests pass under `mise run check:work-board`. The region appended to INDEX.md shows 21 units with boards and every unparsed cell, which WB-2 normalises.
 - 2026-11-02: WB-2 built. `tools/work_migrate.py` with `work:normalise` and `work:rename`, both idempotent. The sweep on this branch: 63 records normalised, every board row and every Status line now opens with a state word, 21 records had boards, 174 ids crossed over 11 units, 193 files rewritten, 137 Validation Packs renamed, 26 left as they were, 3 ids claimed by two units (C1, C2, C3 of CCS and track C) left outside their own documents. The `slice` identifier family is built from the plans' Prefix lines and defined by INDEX.md's Work table. 169 slices a plan names with no board row are baselined in the exceptions file as TD-137. Status lines of the 42 records without a board were set by reading each record, in a Sonnet session, and the ones it was unsure of are listed in this slice's handoff. The state cell's day where the record gave none is the day git last changed that cell's text. Dead links in the renamed Validation Packs, to the authoring service that has since moved, became plain text, and their semicolons commas, since a renamed file is judged whole by the hooks. 25 tests pass under `mise run check:work-board`.
 - 2026-11-02: WB-3 built. INDEX.md is a preamble and the generated region, its hand-written parts archived whole as `notes/coordination-index-2026-10.md` with their links re-rooted. ROADMAP.md's §1 and §7 are generated regions, the programme at a glance with a gantt of the dated slices of the last 30 days and the open ones, and the branches, written by `mise run build:roadmap` from every branch. The index gains the class Slice with the properties unit and state, the Work table's columns are mapped, and each row points at its board's section anchor, so `graph:ask -- find ... --kind slice` and `read <slice id>` answer. `check:knowledge` 123 passed, `check:work-board` 30 passed, every diagram in ROADMAP.md parses.
+- 2026-11-02: WB-4 built. The `work` check in `tools/hooks.py` refuses a commit or a merge when a touched status record's Status line or a board row opens with no state word, a row from `building` on has no day, a slice id is outside the grammar, or INDEX.md's region is stale, each message naming the task that fixes it. The post-merge hook regenerates INDEX.md's region after the knowledge index, and ROADMAP.md's regions on `main`, never failing. 8 tests in `tools/test_hooks.py`, written in a Sonnet session, `check:hooks` 40 passed.

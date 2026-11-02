@@ -352,7 +352,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-1 | `tools/work_board.py`, `work:board`, `build:work` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-2 | the slice grammar, `work:rename`, `work:normalise`, the sweep, the `slice` family | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-3 | INDEX.md replaced, ROADMAP.md's generated regions, `build:roadmap` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
-| WB-4 | the `work` check and the post-merge regeneration | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-4 | the `work` check and the post-merge regeneration | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-6 | `work:here` | work-board | building 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-7 | the branches marked or deleted | work-board | planned | WB-4, WB-Q9 | docs/developer/status/work-board.md#position |
