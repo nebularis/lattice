@@ -102,17 +102,10 @@ _STEM_KIND: dict[str, OperationKind] = {
     "append-version-delta": OperationKind.APPEND_VERSION,
     "members": OperationKind.MEMBERS_READ,
     "payload-check": OperationKind.PAYLOAD_CHECK,
-    # DR2: the recorded state digest, its write and its read.
-    "record-state-digest": OperationKind.STATE_DIGEST_RECORD,
-    "state-digest-audit-named-graph": OperationKind.STATE_DIGEST_READ,
-    "state-digest-audit-composite": OperationKind.STATE_DIGEST_READ,
     "create-if-absent-named-graph": OperationKind.CREATE,
     "create-if-absent-composite": OperationKind.CREATE,
     "cas-replace-named-graph": OperationKind.REPLACE,
     "cas-replace-composite-property": OperationKind.REPLACE,
-    # DR1: the replace of a family under dal:ChangedTriples, which writes the delta and sweeps nothing.
-    "cas-replace-named-graph-delta": OperationKind.REPLACE,
-    "cas-replace-composite-property-delta": OperationKind.REPLACE,
     "cas-replace-value-guard": OperationKind.VALUE_GUARDED_REPLACE,
     "tombstone-delete-named-graph": OperationKind.TOMBSTONE,
     "tombstone-delete-composite": OperationKind.TOMBSTONE,
@@ -134,7 +127,7 @@ for _stem, _kind in tuple(_STEM_KIND.items()):
         _STEM_KIND[_stem + "-patch-log"] = _kind
         _STEM_KIND[_stem + "-no-receipt"] = _kind
 # A composite family written in place has no receipt-only write (H2.9, D-12 (a)), so only its two variants are builders.
-for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite", "cas-replace-composite-property-delta"):
+for _stem in ("create-if-absent-composite", "cas-replace-composite-property", "tombstone-delete-composite"):
     del _STEM_KIND[_stem]
 # The rows replace of each family (H2.12), with the receipt variants its family has.
 _ROWS_STEMS = (
@@ -143,9 +136,15 @@ _ROWS_STEMS = (
 )
 for _stem in _ROWS_STEMS:
     _STEM_KIND[_stem] = OperationKind.REPLACE
+# The delta replace of each family (persistence-delta-replace DR1), a kind of its own, since the request carries a change and not a state.
+_DELTA_STEMS = (
+    "cas-replace-named-graph-delta", "cas-replace-named-graph-delta-patch-log", "cas-replace-named-graph-delta-no-receipt",
+    "cas-replace-composite-property-delta-patch-log", "cas-replace-composite-property-delta-no-receipt",
+)
+for _stem in _DELTA_STEMS:
+    _STEM_KIND[_stem] = OperationKind.DELTA_REPLACE
 OPERATION_KINDS = _STEM_KIND
 DATASET_GUARD_SUFFIX = "-dataset-guard"
-DELTA_REPLACE_STEMS = ("cas-replace-named-graph-delta", "cas-replace-composite-property-delta")
 
 
 def _carries_rows(group) -> bool:
@@ -185,6 +184,7 @@ BUILDER_VERSIONS: dict[str, int] = {
 }
 # The rows replaces were written after both increments above, so each starts at 1 (H2.12).
 BUILDER_VERSIONS.update({stem: 1 for stem in _ROWS_STEMS})
+BUILDER_VERSIONS.update({stem: 1 for stem in _DELTA_STEMS})
 """The version of each builder, which any change to the text it renders must bump. A golden check
 (`tests/test_builder_versions.py`) holds the version to the text, and it is a number kept here, never computed, so that a
 change to a builder is a change a reviewer sees. A dataset-guard variant shares its base operation's version. `append-event` is at 2
@@ -337,9 +337,6 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     # An append's triples slot holds its events' domain triples, which are not the aggregate's payload and have no boundary shape.
     event = tuple(sorted(p.name for p in operation.params if p.kind in SLOT_KINDS and p.kind is not Kind.REGISTRY_LIST)) if kind is OperationKind.APPEND else ()
     payload_name = None if kind is OperationKind.APPEND else payload_name
-    # A delta replace takes no whole payload. Its two slots are the delta, digested as the add and del parts (DR-Q3 (a)), and the next
-    # state its caller holds is what the boundary shape and the payload check run over.
-    payload_name = None if stem.startswith(DELTA_REPLACE_STEMS) else payload_name
     # The payload of a new version is rooted at the version, whose own triples it holds, and not at the identity (H2.8b).
     root_name = "newVersion" if kind is OperationKind.APPEND_VERSION else "root" if "root" in params else None
     encoding = "TripleRows" if _carries_rows(operation.where) else "GroundNTriples"
@@ -347,8 +344,9 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     digest = None
     if "requestDigest" in params:
         target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
+        # A delta replace digests the change alone, its add and del parts, and has no payload part (DR-Q3).
         digest = DigestContract(
-            target, "expectedSeq" if "expectedSeq" in params else None, payload_name, event,
+            target, "expectedSeq" if "expectedSeq" in params else None, None if kind is OperationKind.DELTA_REPLACE else payload_name, event,
             "assertTriples" if "assertTriples" in params else "addedMembers" if "addedMembers" in params else None,
             "retractTriples" if "retractTriples" in params else "droppedMembers" if "droppedMembers" in params else None,
         )

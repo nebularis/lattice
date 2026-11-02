@@ -44,7 +44,7 @@ def parsed() -> dict:
 
 def test_h2_6_t1_the_expected_profiles_exist_and_parse_and_carry_no_template_path_and_no_suffix(parsed):
     """Since H2.7 there is no `kinds.expected.ttl`: the enumerations are individuals of the spec."""
-    assert len(FILES) == len(ep.CONFIGURATIONS) == 13 and set(parsed) == set(CONFIG)
+    assert len(FILES) == len(ep.CONFIGURATIONS) == 14 and set(parsed) == set(CONFIG)
     assert all(len(g) > 0 for g in parsed.values())
     assert not any(str(p).endswith("#templatePath") for g in parsed.values() for _, p, _ in g)  # dal:templatePath is gone
     ids = [str(o) for g in parsed.values() for o in g.objects(None, DAL.templateId)]

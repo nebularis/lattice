@@ -1937,6 +1937,10 @@
             dal:wonBy <https://example.org/lending#MemoProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
+        [ dal:candidateCount 1 ;
+            dal:dimension "replaceEncoding" ;
+            dal:resolvedValue dal:WholeState ;
+            dal:wonBy <https://example.org/lending#MemoProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;
@@ -2536,6 +2540,10 @@
             dal:wonBy <https://example.org/lending#NoteProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
+        [ dal:candidateCount 1 ;
+            dal:dimension "replaceEncoding" ;
+            dal:resolvedValue dal:WholeState ;
+            dal:wonBy <https://example.org/lending#NoteProfile> ],
         [ dal:candidateCount 1 ;
             dal:dimension "replaceForm" ;
             dal:resolvedValue dal:RowsReplace ;
@@ -3145,6 +3153,10 @@
             dal:wonBy <https://example.org/lending#InvoiceProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
+        [ dal:candidateCount 1 ;
+            dal:dimension "replaceEncoding" ;
+            dal:resolvedValue dal:WholeState ;
+            dal:wonBy <https://example.org/lending#InvoiceProfile> ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;

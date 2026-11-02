@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
-# Generates the whole-state replace (composite-property-no-receipt), which no shipped example reaches since an optimistic in-place family defaults to dal:ChangedTriples.
+# The whole-state no-receipt replace of a composite family (persistence-delta-replace DR1).
 # base: composite-property-boundary-shacl.ttl
 # remove: ex:OrderReceiptProfile dal:receiptModel
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
@@ -8,6 +8,6 @@
 
 ex:OrderReceiptProfile dal:receiptModel dal:NoReceipt .
 
-ex:compositepropertyWriteProfile a dal:WriteDisciplineProfile ;
-    dal:appliesTo        ex:OrderClass ;
-    dal:replaceEncoding  dal:WholeState .
+ex:OrderEncodingProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:replaceEncoding dal:WholeState .

@@ -392,7 +392,8 @@ def _sweep_delete(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: s
 
 def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt: str = "receipt") -> tuple:
     """The `WHERE` of replace and tombstone, which differ only in their templates. `binds` come first, then the
-    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds."""
+    optional dataset guard, the version row, the claim check, and last the `sweep` of what the aggregate holds. A delta replace sweeps
+    nothing (`sweep` is None), so its `WHERE` is the guard alone and yields one solution."""
     root = ParamRef("root")
     epoch = Var("rowEpoch") if dataset_guard else ParamRef("epoch")
     meta = b.graph("metaGraphPrefix")
@@ -407,7 +408,7 @@ def _row_where(b: Bindings, *, binds: tuple, dataset_guard: bool, sweep, receipt
         )),
         NotExists(Group((GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), _ANY),)),))),
         *(_claim_binds() if receipt != "none" else ()),
-        *((sweep,) if sweep is not None else ()),
+        *(() if sweep is None else (sweep,)),
     )
 
 
@@ -439,15 +440,16 @@ def _named_where(b: Bindings, named: _Named, *, dataset_guard: bool, receipt: st
     return _row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=sweep, receipt=receipt)
 
 
-def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str, rows: bool = False) -> tuple:
+def _replace_insert(b: Bindings, data: Graph, *, receipt: str, log: str, rows: bool = False, delta: bool = False) -> tuple:
     """The `INSERT` of a replace, whichever family. A patch log writes the caller's delta, in two slots, into the two graphs the receipt
     names (H2.6b-Q1 and Q2). Under `rows` each slot's triples come as rows of the `WHERE` and the template holds one triple of row
-    variables in the slot's place (H2.12)."""
+    variables in the slot's place (H2.12). Under `delta` the aggregate gains the asserted triples alone, and there is no payload slot
+    (persistence-delta-replace DR1)."""
     root, epoch, new_rev = ParamRef("root"), ParamRef("epoch"), ParamRef("newRev")
     has_receipt, patch = receipt != "none", receipt == "patch-log"
     content = _rows_triple if rows else PayloadSlot
     return (
-        GraphBlock(data, (content("payloadTriples"),)),
+        GraphBlock(data, (content("assertTriples" if delta else "payloadTriples"),)),
         *((_delta_block("add", content("assertTriples")), _delta_block("del", content("retractTriples"))) if patch else ()),
         GraphBlock(b.graph("metaGraphPrefix"), (
             Triple(root, _pat("epoch"), epoch), Triple(root, _pat("seq"), ParamRef("nextSeq")),
@@ -489,6 +491,15 @@ def _replace_params(receipt: str) -> tuple:
     return (*_CAS_PARAMS, Param("payloadTriples", Kind.PAYLOAD), *((Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD)) if receipt == "patch-log" else ()))
 
 
+def _delta_params() -> tuple:
+    return (*_CAS_PARAMS, Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD))
+
+
+def _delta_delete(b: Bindings, data: Graph, *, dataset_guard: bool, receipt: str) -> tuple:
+    """The `DELETE` of a delta replace: the retracted triples, through their slot, and the version row's triples. Nothing is swept."""
+    return (GraphBlock(data, (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt))
+
+
 def _tombstone_params(receipt: str) -> tuple:
     return (*_CAS_PARAMS, *((Param("cause", Kind.IRI), Param("actor", Kind.IRI)) if receipt != "none" else ()))
 
@@ -506,32 +517,22 @@ def _replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str
     )
 
 
-def _delta_params(receipt: str) -> tuple:
-    """A delta replace takes what the write adds and what it removes, whatever the receipt model (DR-Q4), and no whole payload."""
-    return (*_CAS_PARAMS, Param("assertTriples", Kind.PAYLOAD), Param("retractTriples", Kind.PAYLOAD))
-
-
-def _delta_insert(b: Bindings, data: Graph, *, receipt: str, log: str) -> tuple:
-    """The `INSERT` of a delta replace: the asserted triples into the aggregate, then what a replace writes besides its payload. A patch
-    log's add and del graphs take the same two slots."""
-    whole = _replace_insert(b, data, receipt=receipt, log=log)
-    return (GraphBlock(data, (PayloadSlot("assertTriples"),)), *whole[1:])
-
-
-def _replace_delta(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
-    """A named-graph family's replace under `dal:ChangedTriples` (DR1): the retracted triples deleted from the root's graph and the asserted
-    ones inserted, guarded on the version row as the whole replace is, with no sweep, so it costs what changed and not the aggregate's size.
-    The guard proves the graph is the state the caller computed the delta from, as long as only the family's operations write it."""
+def _delta_replace(b: Bindings, *, guards: bool, dataset_guard: bool, graph_names: str, receipt: str = "receipt") -> Operation:
+    """The replace of a named-graph family under `dal:ChangedTriples` (persistence-delta-replace DR1). The caller sends the triples it
+    retracts and the triples it asserts, computed against the state it read at `$expectedSeq`, and the guard on the version row proves
+    the aggregate is still that state. No sweep, so the `WHERE` yields one solution and each template is filled once, whatever the
+    store's update order, since a delta's deletions and insertions are disjoint. Under a patch log the same two slots are written into
+    the add and del graphs the receipt names."""
     _check_receipt(receipt)
     named = _Named(b, graph_names)
     deltas = ("add", "del") if receipt == "patch-log" else ()
     binds = (*named.binds(), *(_log_binds(b) if receipt != "none" else ()), *_delta_binds(*deltas))
     return Operation.build(
         "cas-replace-named-graph-delta" + _suffix(dataset_guard, receipt),
-        (*_delta_params(receipt), *named.params()),
+        (*_delta_params(), *named.params()),
         Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)), guards=guards,
-        insert=_delta_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph"),
-        delete=(GraphBlock(named.graph(Binding.BOUND), (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt)),
+        insert=_replace_insert(b, named.graph(Binding.BOUND), receipt=receipt, log="logGraph", delta=True),
+        delete=_delta_delete(b, named.graph(Binding.BOUND), dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
@@ -631,17 +632,18 @@ def _composite_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receip
     )
 
 
-def _composite_replace_delta(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
-    """A composite family's replace under `dal:ChangedTriples` (DR1). The data graph is shared, so the delta must stay inside the
-    aggregate: the caller runs `payload-check` over the next state it computed the delta from, as it does over a whole payload."""
+def _composite_delta_replace(b: Bindings, *, guards: bool, dataset_guard: bool, receipt: str) -> Operation:
+    """The replace of a composite family under `dal:ChangedTriples` (persistence-delta-replace DR1), as :func:`_delta_replace` in the
+    family's data graph. No owned path is read, since nothing is swept. The caller checks the next state against the boundary shape
+    before it sends the delta (DR-Q7)."""
     _check_composite_receipt(receipt)
     binds = (*(_log_binds(b) + (Bind(Var("logGraph"), Var("logGraph2")),) if receipt != "none" else ()), *_delta_binds(*(("add", "del") if receipt == "patch-log" else ())))
     return Operation.build(
         "cas-replace-composite-property-delta" + _suffix(dataset_guard, receipt),
-        _delta_params(receipt),
+        _delta_params(),
         Group(_row_where(b, binds=binds, dataset_guard=dataset_guard, sweep=None, receipt=receipt)),
-        guards=guards, insert=_delta_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2"),
-        delete=(GraphBlock(b.graph("dataGraph"), (PayloadSlot("retractTriples"),)), _row_delete(b, dataset_guard=dataset_guard, receipt=receipt)),
+        guards=guards, insert=_replace_insert(b, b.graph("dataGraph"), receipt=receipt, log="logGraph2", delta=True),
+        delete=_delta_delete(b, b.graph("dataGraph"), dataset_guard=dataset_guard, receipt=receipt),
     )
 
 
@@ -749,49 +751,6 @@ def _members(b: Bindings, *, guards: bool) -> Operation:
         )),)),
         guards=guards,
         select=Select((member,), distinct=True),
-    )
-
-
-def _record_state_digest(b: Bindings, *, guards: bool) -> Operation:
-    """The digest of the state a write left, recorded on the root's version row where the family declares `dal:recordsStateDigest`
-    (DR2, DR-Q3 (c)). The caller sends it in the same request after its create or replace. It applies only when the row is at the
-    write's sequence, is not deleted, and the transaction's claim names the write's revision, so a stale or refused write records nothing."""
-    root, meta = ParamRef("root"), b.graph("metaGraphPrefix")
-    return Operation.build(
-        "record-state-digest",
-        (Param("root", Kind.IRI), Param("nextSeq", Kind.POSITION), Param("newRev", Kind.IRI), Param("txnId", Kind.IRI),
-         Param("stateDigest", Kind.DIGEST)),
-        Group((
-            GraphBlock(meta, (
-                Triple(root, _pat("seq"), ParamRef("nextSeq")),
-                NotExists(Group((GraphBlock(meta, (Triple(root, _pat("deleted"), _TRUE),)),))),
-            )),
-            GraphBlock(b.graph("txnGraph"), (Triple(ParamRef("txnId"), _pat("rev"), ParamRef("newRev")),)),
-            Optional_(Group((GraphBlock(meta, (Triple(root, _pat("stateDigest"), Var("old")),)),))),
-        )),
-        guards=guards,
-        delete=(GraphBlock(meta, (Triple(root, _pat("stateDigest"), _optional("old")),)),),
-        insert=(GraphBlock(meta, (Triple(root, _pat("stateDigest"), ParamRef("stateDigest")),)),),
-    )
-
-
-def _state_digest_audit(b: Bindings, *, guards: bool, composite: bool, graph_names: str = "query") -> Operation:
-    """A root's recorded state digest and the triples of its aggregate, for a caller to recompute the digest and compare (DR2). A row
-    with no recorded digest returns nothing, and an aggregate with no triples returns the digest alone."""
-    root, meta = ParamRef("root"), b.graph("metaGraphPrefix")
-    digest, s, p, o = Var("stateDigest"), Var("s"), Var("p"), Var("o")
-    if composite:
-        binds, aggregate = (), GraphBlock(b.graph("dataGraph"), (Triple(root, b.path("ownedPath"), s), Triple(s, p, o)))
-        params, name = (Param("root", Kind.IRI),), "state-digest-audit-composite"
-    else:
-        named = _Named(b, graph_names)
-        binds, aggregate = named.binds(), GraphBlock(named.graph(), (Triple(s, p, o),))
-        params, name = (Param("root", Kind.IRI), *named.params()), "state-digest-audit-named-graph"
-    return Operation.build(
-        name, params,
-        Group((*binds, GraphBlock(meta, (Triple(root, _pat("stateDigest"), digest),)), Optional_(Group((aggregate,))))),
-        guards=guards,
-        select=Select((digest, s, p, o)),
     )
 
 
@@ -1068,8 +1027,6 @@ BUILDERS: dict[str, Builder] = {
     "create-if-absent-named-graph-dataset-guard": lambda b, guards, names: _create(b, guards=guards, dataset_guard=True, graph_names=names),
     "cas-replace-named-graph": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=False, graph_names=names),
     "cas-replace-named-graph-dataset-guard": lambda b, guards, names: _replace(b, guards=guards, dataset_guard=True, graph_names=names),
-    "cas-replace-named-graph-delta": lambda b, guards, names: _replace_delta(b, guards=guards, dataset_guard=False, graph_names=names),
-    "cas-replace-named-graph-delta-dataset-guard": lambda b, guards, names: _replace_delta(b, guards=guards, dataset_guard=True, graph_names=names),
     "tombstone-delete-named-graph": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=False, graph_names=names),
     "tombstone-delete-named-graph-dataset-guard": lambda b, guards, names: _tombstone(b, guards=guards, dataset_guard=True, graph_names=names),
     "unconditional-write": lambda b, guards, names: _unconditional(b, guards=guards, graph_names=names),
@@ -1080,9 +1037,6 @@ BUILDERS: dict[str, Builder] = {
     "append-version-delta-dataset-guard": lambda b, guards, names: _append_version(b, guards=guards, dataset_guard=True, delta=True),
     "members": lambda b, guards, names: _members(b, guards=guards),
     "payload-check": lambda b, guards, names: _payload_check(b, guards=guards),
-    "record-state-digest": lambda b, guards, names: _record_state_digest(b, guards=guards),
-    "state-digest-audit-named-graph": lambda b, guards, names: _state_digest_audit(b, guards=guards, composite=False, graph_names=names),
-    "state-digest-audit-composite": lambda b, guards, names: _state_digest_audit(b, guards=guards, composite=True),
     "key-claim-write": lambda b, guards, names: _key_claim_write(b, guards=guards),
     "key-claim-write-dual": lambda b, guards, names: _key_claim_write_dual(b, guards=guards),
     "key-claim-retire": lambda b, guards, names: _key_claim_retire(b, guards=guards),
@@ -1104,7 +1058,6 @@ def _receipt_variants() -> dict:
             ("create-if-absent-named-graph", _create, True), ("cas-replace-named-graph", _replace, True),
             ("tombstone-delete-named-graph", _tombstone, True), ("create-if-absent-composite", _composite_create, False),
             ("cas-replace-composite-property", _composite_replace, False), ("tombstone-delete-composite", _composite_tombstone, False),
-            ("cas-replace-named-graph-delta", _replace_delta, True), ("cas-replace-composite-property-delta", _composite_replace_delta, False),
         ):
             for guard in (False, True):
                 key = stem + tag + ("-dataset-guard" if guard else "")
@@ -1132,8 +1085,26 @@ def _rows_variants() -> dict:
     return out
 
 
+def _delta_variants() -> dict:
+    """The delta replace of each family (persistence-delta-replace DR1), with each receipt model its family has and its dataset-guard
+    variant, keyed by stem. `compile` selects one under `dal:ChangedTriples`, the default of an optimistic family written in place."""
+    out: dict = {}
+    for receipt, tag in (("receipt", ""), ("patch-log", "-patch-log"), ("none", "-no-receipt")):
+        for guard in (False, True):
+            suffix = tag + ("-dataset-guard" if guard else "")
+            out["cas-replace-named-graph-delta" + suffix] = lambda b, guards, names, g=guard, r=receipt: _delta_replace(
+                b, guards=guards, dataset_guard=g, graph_names=names, receipt=r
+            )
+            if receipt != "receipt":
+                out["cas-replace-composite-property-delta" + suffix] = lambda b, guards, names, g=guard, r=receipt: _composite_delta_replace(
+                    b, guards=guards, dataset_guard=g, receipt=r
+                )
+    return out
+
+
 BUILDERS.update(_receipt_variants())
 BUILDERS.update(_rows_variants())
+BUILDERS.update(_delta_variants())
 """Every generated operation, keyed by its builder identity (`dal:templateId`)."""
 
 

@@ -175,4 +175,4 @@ def test_ho8_t8_every_builder_that_names_a_graph_from_a_root_encodes_the_whole_r
             body = render(operation)
             assert "ENCODE_FOR_URI(STR($root))" in body and '"/data"' in body, key  # graphSuffix of the canonical context
             assert 'REPLACE(STR($root)' not in body, key
-    assert len(named) == 25  # the receipt-only writes and the unconditional write, the patch-log and no-receipt variants of the six (H2.6d), and the six named-graph rows replaces (H2.12)
+    assert len(named) == 31  # the receipt-only writes and the unconditional write, the patch-log and no-receipt variants of the six (H2.6d), the six named-graph rows replaces (H2.12) and the six named-graph delta replaces (DR1)

@@ -72,6 +72,9 @@ DIMENSIONS = (
     "checkpointEvery",
     # H2.12 (2026-11-01): the replace form an operator opts a family into, or absent, which means by capability.
     "replaceForm",
+    # persistence-delta-replace DR1 (2026-11-02): whether a replace carries the changed triples or the whole state. No baseline default,
+    # since absent means the changed triples for an optimistic family and the whole state for any other (operations.replace_encoding).
+    "replaceEncoding",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with

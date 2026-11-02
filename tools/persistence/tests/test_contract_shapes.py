@@ -31,14 +31,6 @@ SPEC = Graph().parse(SPEC_TTL, format="turtle")
 PROFILES = {name: Graph().parse(ep.OUT_DIR / f"{name}.expected.ttl", format="turtle") for name, _, _ in ep.CONFIGURATIONS}
 
 
-# The payload of a replace is the whole state, which a family that writes in place states only under dal:WholeState (the default replace states changes).
-BASELINE_WHOLE = "baseline-single-class-whole-state"
-COMPOSITE_WHOLE = "composite-project-ownership-whole-state"
-WHOLE_STATE = {}
-WHOLE_STATE[BASELINE_WHOLE] = ep.emit("baseline-single-class", source=ep.witness._load_fixture(ep.witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log.ttl"))
-WHOLE_STATE[COMPOSITE_WHOLE] = ep.emit("composite-project-ownership", source=ep.witness._load_fixture(ep.witness.WITNESS_DIR / f"{COMPOSITE_WHOLE}.ttl"))
-
-
 def _local(term) -> str | None:
     return None if term is None else str(term).rsplit("#", 1)[-1]
 
@@ -67,7 +59,7 @@ def _violations(data: Graph) -> set:
 
 def _copy(name: str) -> Graph:
     g = Graph()
-    for t in (PROFILES | WHOLE_STATE)[name]:
+    for t in PROFILES[name]:
         g.add(t)
     return g
 
@@ -211,12 +203,12 @@ CASES = [
     ("column position below one", BASELINE, _replace_with(_column("gap-scan-audit"), DAL.columnPosition, Literal(0)), ("ResultColumnShape", "columnPosition")),
     ("column name missing", BASELINE, _drop(_column("gap-scan-audit"), DAL.columnName), ("ResultColumnShape", "columnName")),
     # a payload
-    ("payload encoding outside the enumeration", BASELINE_WHOLE, _replace_with(_payload("cas-replace"), DAL.payloadEncoding, DAL.Bogus), ("PayloadContractShape", "payloadEncoding")),
-    ("boundary shape left out", BASELINE_WHOLE, _drop(_payload("cas-replace"), DAL.boundaryShape), ("PayloadContractShape", "boundaryShape")),
-    ("boundary shape a literal", BASELINE_WHOLE, _replace_with(_payload("cas-replace"), DAL.boundaryShape, Literal("shape")), ("PayloadContractShape", "boundaryShape")),
-    ("payload parameter missing", BASELINE_WHOLE, _drop(_payload("cas-replace"), DAL.payloadParameter), ("PayloadContractShape", "payloadParameter")),
-    ("an edge that is a blank node", COMPOSITE_WHOLE, _second(_payload("cas-replace"), DAL.referenceEdge, BNode()), ("PayloadContractShape", "referenceEdge")),
-    ("an edge its own profile does not state", COMPOSITE_WHOLE, _foreign_edge, ("PayloadContractShape", None)),
+    ("payload encoding outside the enumeration", BASELINE, _replace_with(_payload("cas-replace"), DAL.payloadEncoding, DAL.Bogus), ("PayloadContractShape", "payloadEncoding")),
+    ("boundary shape left out", BASELINE, _drop(_payload("cas-replace"), DAL.boundaryShape), ("PayloadContractShape", "boundaryShape")),
+    ("boundary shape a literal", BASELINE, _replace_with(_payload("cas-replace"), DAL.boundaryShape, Literal("shape")), ("PayloadContractShape", "boundaryShape")),
+    ("payload parameter missing", BASELINE, _drop(_payload("cas-replace"), DAL.payloadParameter), ("PayloadContractShape", "payloadParameter")),
+    ("an edge that is a blank node", COMPOSITE, _second(_payload("cas-replace"), DAL.referenceEdge, BNode()), ("PayloadContractShape", "referenceEdge")),
+    ("an edge its own profile does not state", COMPOSITE, _foreign_edge, ("PayloadContractShape", None)),
     # a digest
     ("digest algorithm other than SHA-256", BASELINE, _replace_with(_digest("cas-replace"), DAL.digestAlgorithm, Literal("MD5")), ("DigestContractShape", "digestAlgorithm")),
     ("digest with no part", BASELINE, _drop(_digest("cas-replace"), DAL.digestPart), ("DigestContractShape", "digestPart")),

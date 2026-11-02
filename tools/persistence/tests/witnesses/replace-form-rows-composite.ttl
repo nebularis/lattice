@@ -8,3 +8,7 @@
 ex:SnapshotStore a dal:CapabilitySpec ;
     dal:providesCas                     dal:Linearizable ;
     dal:providesSnapshotUpdateSemantics true .
+
+ex:OrderEncodingProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:replaceEncoding dal:WholeState .

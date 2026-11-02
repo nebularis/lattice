@@ -1,171 +1,214 @@
-"""DR1: the replace under `dal:ChangedTriples` writes what changed (persistence delta replace unit, slice DR1).
-Validation Pack: docs/developer/validation/DR1.md. Test IDs are DR1-Tn.
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
 
-A delta replace deletes the retracted triples and inserts the asserted ones, guarded on the version row as the whole replace is, and
-sweeps nothing. These tests hold it to the state the whole replace leaves, to the guard, and to the aggregate it names, on each engine."""
+"""DR1: the delta replace (persistence-delta-replace, plan section 3). The compare-and-set of an optimistic named-graph or composite family
+takes the triples the caller retracted and asserted against the state it read, deletes the first and inserts the second, and sweeps nothing,
+so it is linear in the size of the change on every engine, rdflib included, and none of these tests skips by engine. `dal:replaceEncoding`
+chooses between it (`dal:ChangedTriples`, the default under `dal:Optimistic`) and the whole-state replace (`dal:WholeState`). These tests cover
+the builders and their contract, the selection, the diagnostics and the behaviour against the whole-state replace.
+Validation Pack: docs/developer/validation/persistence-delta-replace.md. Test IDs are DR1-Tn."""
 
 from __future__ import annotations
 
-import warnings
-from pathlib import Path
-from urllib.parse import quote
+import re
 
 import pytest
+from rdflib import Literal as RdfLiteral, URIRef
 
 import engines
-from rdflib import RDF, Dataset, Literal, URIRef, Variable
-from rdflib.namespace import XSD
-
 from builder_goldens import CANONICAL_CONTEXT
 from persistence import witness
-from persistence.builders import build
-from persistence.compiler import compile_to_graph
-from persistence.ir_render import render
-from persistence.namespaces import DAL
+from persistence.builders import BUILDERS, build
+from persistence.compiler import compile_targets
+from persistence.contract import OperationKind, contract_of
+from persistence.ir_render import check, render
+from persistence.operations import replace_encoding
+from test_patch_log import (
+    ADDED, DATA, FAMILIES, META, OUTSIDER, OWNS, MEMBER, P, Q, PAT, REMOVED, ROOT, TXN, LONG, _kinds, _refusal, _templates, aggregate, args, data_graph,
+    delta, everything, nt, run, stem, store, triples,
+)
 
-from conftest import EXAMPLES_DIR
-
-EX = "https://example.org/lending#"
-PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
-ROOT, OTHER = URIRef("urn:order:1"), URIRef("urn:order:2")
-META = URIRef("urn:g:meta/17")
-NAMED = URIRef("urn:g:orders/" + quote(str(ROOT), safe="") + "/data")
-DATA = URIRef("urn:g:orders")
-STATUS, NOTE, LINE = URIRef(EX + "status"), URIRef(EX + "note"), URIRef(EX + "lineItem")
-
-BEFORE = {(ROOT, RDF.type, URIRef(EX + "Order")), (ROOT, STATUS, Literal("open")), (ROOT, NOTE, Literal("keep"))}
-ASSERT = {(ROOT, STATUS, Literal("paid"))}
-RETRACT = {(ROOT, STATUS, Literal("open"))}
-AFTER = (BEFORE - RETRACT) | ASSERT
-
-
-def _canon(triple) -> tuple:
-    return tuple(engines.canon(term) for term in triple)
+U = URIRef
+DELTA_BUILDERS = sorted(k for k in BUILDERS if "-delta" in k and k.startswith("cas-replace"))
+RECEIPTS = {"named-graph": ("", "-patch-log", "-no-receipt"), "composite": ("-patch-log", "-no-receipt")}
+CASES = [
+    pytest.param(family, tag, dg, id=f"{family}{tag}{'-dataset-guard' if dg else ''}")
+    for family in FAMILIES for tag in RECEIPTS[family] for dg in (False, True)
+]
+EXAMPLE = witness.EXAMPLES_DIR / "replace-encoding.ttl"
+BYSTANDER = {(OUTSIDER, P, RdfLiteral("outside"))}
+"""The neighbour a composite store holds in the same data graph, which no replace of the root may touch."""
+DAL, EX = "https://www.nebularis.org/neuro-semantic/lattice/persistence#", "https://example.org/lending#"
 
 
-def _nt(triples) -> str:
-    return " ".join(f"{s.n3()} {p.n3()} {o.n3()} ." for s, p, o in sorted(triples))
+def delta_stem(family: str, tag: str = "-patch-log", dg: bool = False) -> str:
+    base = "cas-replace-named-graph-delta" if family == "named-graph" else "cas-replace-composite-property-delta"
+    return base + tag + ("-dataset-guard" if dg else "")
 
 
-def _text(template: str, **slots) -> str:
-    text = render(build(template, CANONICAL_CONTEXT, guards=engines.guards()))
-    for name, triples in slots.items():
-        text = text.replace("{{{" + name + "}}}", _nt(triples))
-    assert "{{{" not in text
-    return text
+def _bystander(family: str) -> set:
+    return BYSTANDER if family == "composite" else set()
 
 
-def _values(expected_seq: int = 1, txn: str = "urn:txn:a") -> dict:
-    return {
-        Variable("root"): ROOT, Variable("epoch"): Literal(1, datatype=XSD.long),
-        Variable("expectedSeq"): Literal(expected_seq, datatype=XSD.long), Variable("nextSeq"): Literal(expected_seq + 1, datatype=XSD.long),
-        Variable("newRev"): URIRef(f"urn:rev:{expected_seq + 1}"), Variable("txnId"): URIRef(txn), Variable("requestDigest"): Literal("d"),
-    }
+def _row(ds) -> dict:
+    return {str(p).removeprefix(PAT): o for s, p, o in ds.graph(META) if s == ROOT}
 
 
-def _dataset(aggregate: URIRef, *, others: bool = False, dataset_guard: bool = False) -> Dataset:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        ds = engines.dataset()
-        ds.graph(META).add((ROOT, URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
-        ds.graph(META).add((ROOT, URIRef(PAT + "seq"), Literal(1, datatype=XSD.long)))
-        if dataset_guard:
-            ds.graph(URIRef("urn:g:dataset")).add((URIRef("urn:g:dataset"), URIRef(PAT + "epoch"), Literal(1, datatype=XSD.long)))
-        for t in BEFORE:
-            ds.graph(aggregate).add(t)
-        if others:
-            ds.graph(aggregate).add((OTHER, STATUS, Literal("open")))
-    return ds
+# ---- the builders and their contract ------------------------------------------------------------------------------------------------
 
 
-def _run(ds: Dataset, text: str, **values) -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        ds.update(text, initBindings=_values(**values))
+def test_dr1_t1_ten_delta_builders_exist_one_per_receipt_model_and_guard_of_each_family():
+    assert DELTA_BUILDERS == sorted(delta_stem(family, tag, dg) for family in FAMILIES for tag in RECEIPTS[family] for dg in (False, True))
+    assert len(DELTA_BUILDERS) == 10
 
 
-def _graph(ds: Dataset, name: URIRef) -> set:
-    return {(s, p, o) for s, p, o in ds.graph(name)}
-
-
-def _seq(ds: Dataset):
-    return {o for s, p, o in ds.graph(META) if s == ROOT and p == URIRef(PAT + "seq")}
-
-
-@engines.each_engine_and_guards
-@pytest.mark.parametrize("template", ["cas-replace-named-graph-delta", "cas-replace-named-graph-delta-patch-log", "cas-replace-named-graph-delta-no-receipt"])
-def test_dr1_t1_a_named_graph_delta_leaves_the_state_the_whole_replace_leaves(template):
-    whole = template.replace("-delta", "")
-    by_delta, by_whole = _dataset(NAMED), _dataset(NAMED)
-    _run(by_delta, _text(template, assertTriples=ASSERT, retractTriples=RETRACT))
-    _run(by_whole, _text(whole, payloadTriples=AFTER, assertTriples=ASSERT, retractTriples=RETRACT))
-    assert _graph(by_delta, NAMED) == _graph(by_whole, NAMED) == {_canon(t) for t in AFTER}
-    assert _seq(by_delta) == _seq(by_whole) == {engines.canon(Literal(2, datatype=XSD.long))}
-
-
-@engines.each_engine_and_guards
-def test_dr1_t2_a_patch_log_delta_records_the_delta_and_names_it_from_the_receipt():
-    ds = _dataset(NAMED)
-    _run(ds, _text("cas-replace-named-graph-delta-patch-log", assertTriples=ASSERT, retractTriples=RETRACT))
-    assert _graph(ds, URIRef("urn:rev:2/add")) == {_canon(t) for t in ASSERT}
-    assert _graph(ds, URIRef("urn:rev:2/del")) == {_canon(t) for t in RETRACT}
-
-
-@engines.each_engine_and_guards
-@pytest.mark.parametrize("expected_seq, txn", [(5, "urn:txn:a"), (1, "urn:txn:used")])
-def test_dr1_t3_a_stale_or_replayed_delta_changes_nothing(expected_seq, txn):
-    ds = _dataset(NAMED)
-    if txn == "urn:txn:used":
-        ds.graph(URIRef("urn:g:txn")).add((URIRef(txn), URIRef(PAT + "rev"), URIRef("urn:rev:old")))
-    before = {(s, p, o, str(getattr(g, "identifier", g))) for s, p, o, g in ds.quads((None, None, None, None))}
-    _run(ds, _text("cas-replace-named-graph-delta-patch-log", assertTriples=ASSERT, retractTriples=RETRACT), expected_seq=expected_seq, txn=txn)
-    after = {(s, p, o, str(getattr(g, "identifier", g))) for s, p, o, g in ds.quads((None, None, None, None))}
-    assert after == before
-
-
-@engines.each_engine_and_guards
-@pytest.mark.parametrize("template", ["cas-replace-composite-property-delta-patch-log", "cas-replace-composite-property-delta-no-receipt"])
-def test_dr1_t4_a_composite_delta_changes_its_aggregate_and_leaves_another_in_the_shared_graph(template):
-    ds = _dataset(DATA, others=True)
-    _run(ds, _text(template, assertTriples=ASSERT, retractTriples=RETRACT))
-    assert _graph(ds, DATA) == {_canon(t) for t in AFTER | {(OTHER, STATUS, Literal("open"))}}
-
-
-@engines.each_engine_and_guards
-@pytest.mark.parametrize("template", ["cas-replace-named-graph-delta-dataset-guard", "cas-replace-composite-property-delta-patch-log-dataset-guard"])
-def test_dr1_t5_the_dataset_guard_variant_does_the_same(template):
-    graph = NAMED if "named" in template else DATA
-    ds = _dataset(graph, dataset_guard=True)
-    _run(ds, _text(template, assertTriples=ASSERT, retractTriples=RETRACT))
-    assert _graph(ds, graph) == {_canon(t) for t in AFTER}
-
-
-@pytest.mark.parametrize("template", ["cas-replace-named-graph-delta-patch-log", "cas-replace-composite-property-delta-no-receipt"])
-def test_dr1_t6_a_delta_replace_sweeps_nothing_and_deletes_only_what_it_retracts(template):
-    text = render(build(template, CANONICAL_CONTEXT))
-    delete = text.split("INSERT {")[0]
-    assert "OPTIONAL { GRAPH" not in text and "?s ?p ?o" not in text
-    assert delete.count("{{{retractTriples}}}") == 1 and "{{{assertTriples}}}" not in delete and "payloadTriples" not in text
-
-
-def _replace_template(source: Path) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(source))
-    nodes = [n for n in compiled.subjects(DAL.forOperation, None) if str(compiled.value(n, DAL.forOperation)).endswith("cas-replace")]
-    return str(compiled.value(compiled.value(nodes[0], DAL.usesTemplate), DAL.templateId))
-
-
-def test_dr1_t7_an_optimistic_in_place_family_that_declares_no_encoding_replaces_by_its_delta():
-    assert _replace_template(EXAMPLES_DIR / "baseline-single-class.ttl") == "cas-replace-named-graph-delta-patch-log"
-    assert _replace_template(EXAMPLES_DIR / "composite-project-ownership.ttl").startswith("cas-replace-composite-property-delta")
-
-
-def test_dr1_t8_a_family_that_declares_whole_state_keeps_the_whole_replace(tmp_path):
-    fixture = tmp_path / "whole.ttl"
-    fixture.write_text(
-        "# base: baseline-single-class.ttl\n"
-        "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .\n"
-        "@prefix ex: <https://example.org/lending#> .\n"
-        "ex:WholeState a dal:WriteDisciplineProfile ; dal:appliesTo ex:LoanApplicationClass ; dal:replaceEncoding dal:WholeState .\n",
-        encoding="utf-8", newline="\n",
+@pytest.mark.parametrize("key", DELTA_BUILDERS)
+def test_dr1_t2_a_delta_builder_deletes_and_inserts_the_callers_two_slots_and_sweeps_nothing(key):
+    op = build(key, dict(CANONICAL_CONTEXT))
+    sets = check(op)
+    assert any(a.subject == "{payload}" and a.mode == "Delete" for a in sets.writes) and any(a.subject == "{payload}" and a.mode == "Insert" for a in sets.writes)
+    text = render(op)
+    deleted, inserted = text[text.index("DELETE"):text.index("INSERT")], text[text.index("INSERT"):text.index("WHERE")]
+    graph = "?g" if "named-graph" in key else "<urn:g:orders>"
+    assert "UNION" not in text and "?s ?p ?o" not in text
+    assert set(re.findall(r"OPTIONAL \{[^}]*\}", text)) <= {"OPTIONAL { $root pat:head ?prevRev }"}, "the head is the only optional, never a sweep"
+    assert "GRAPH " + graph + " { {{{retractTriples}}} }" in deleted and "pat:seq $expectedSeq" in deleted
+    assert "GRAPH " + graph + " { {{{assertTriples}}} }" in inserted
+    patch_log = "-patch-log" in key
+    assert ("GRAPH ?addGraph { {{{assertTriples}}} }" in inserted) is patch_log
+    assert ("GRAPH ?delGraph { {{{retractTriples}}} }" in inserted) is patch_log
+    assert "payloadTriples" not in text
+    contract = contract_of(op)
+    assert contract.kind is OperationKind.DELTA_REPLACE
+    assert "payloadTriples" not in {p.name for p in contract.parameters}
+    assert (contract.payload.parameter, contract.payload.encoding) == ("assertTriples", "GroundNTriples")
+    assert contract.version == 1
+    assert contract.digest.parts() == (
+        ("OperationKindPart", ()), ("TargetPart", ("root",)), ("ExpectedSeqPart", ("expectedSeq",)), ("AddPart", ("assertTriples",)),
+        ("DelPart", ("retractTriples",)),
     )
-    assert _replace_template(fixture) == "cas-replace-named-graph-patch-log"
+
+
+# ---- the selection and the diagnostics ---------------------------------------------------------------------------------------------------
+
+
+def _replaces(graph) -> dict:
+    out = {}
+    for ct in compile_targets(graph):
+        name = str(ct.target.cls).rsplit("#", 1)[-1]
+        out[name] = next(op.template_id for op in ct.operations if op.operation == "cas-replace")
+    return out
+
+
+def test_dr1_t3_compile_selects_the_delta_by_default_under_optimistic_and_the_whole_state_replace_where_declared():
+    assert _replaces(witness._load_fixture(EXAMPLE)) == {
+        "Ticket": "cas-replace-named-graph-delta-patch-log", "Draft": "cas-replace-named-graph-delta", "Snapshot": "cas-replace-named-graph-rows",
+    }
+    assert _templates(witness.EXAMPLES_DIR / "baseline-single-class.ttl")["cas-replace"] == "cas-replace-named-graph-delta-patch-log"
+    assert _templates(witness.EXAMPLES_DIR / "composite-project-ownership.ttl")["cas-replace"] == "cas-replace-composite-property-delta-patch-log"
+    # the effective encoding: the declared one, else the delta under dal:Optimistic and the whole state under any other concurrency
+    g = witness._load_fixture(EXAMPLE)
+    g.remove((U(EX + "DraftProfile"), U(DAL + "replaceEncoding"), None))
+    g.remove((U(EX + "DraftProfile"), U(DAL + "concurrencyProfile"), None))
+    g.remove((U(EX + "DraftProfile"), U(DAL + "minConcurrencyLevel"), None))
+    g.add((U(EX + "DraftProfile"), U(DAL + "concurrencyProfile"), U(DAL + "ProvidedConcurrency")))
+    encodings = {str(ct.target.cls).rsplit("#", 1)[-1]: replace_encoding(ct.dimensions) for ct in compile_targets(g)}
+    assert encodings == {"Ticket": "ChangedTriples", "Draft": "WholeState", "Snapshot": "WholeState"}
+
+
+def test_dr1_t4_an_encoding_that_is_neither_of_the_two_is_refused():
+    assert _refusal(witness._load_fixture(witness.WITNESS_DIR / "refusal-ReplaceEncodingUnknown.ttl")) == "ReplaceEncodingUnknown"
+
+
+def test_dr1_t5_changed_triples_on_a_family_with_no_version_row_guard_is_refused():
+    assert _refusal(witness._load_fixture(witness.WITNESS_DIR / "refusal-ChangedTriplesNeedsOptimistic.ttl")) == "ChangedTriplesNeedsOptimistic"
+
+
+def test_dr1_t6_an_encoding_on_a_family_with_no_replace_to_encode_is_warned_and_one_on_a_replacing_family_is_not():
+    assert "ReplaceEncodingNotApplicable" in _kinds(witness._load_fixture(witness.WITNESS_DIR / "warning-ReplaceEncodingNotApplicable.ttl"))
+    assert "ReplaceEncodingNotApplicable" not in _kinds(witness._load_fixture(EXAMPLE))
+
+
+def test_dr1_t7_a_replace_form_on_a_delta_family_is_warned_and_on_a_whole_state_family_is_not():
+    g = witness._load_fixture(EXAMPLE)
+    for name in ("Ticket", "Snapshot"):
+        g.add((U(EX + name + "Profile"), U(DAL + "replaceForm"), U(DAL + "RowsReplace")))
+    warned = {str(ct.target.cls).rsplit("#", 1)[-1] for ct in compile_targets(g) if "ReplaceFormNotApplicable" in {d.kind for d in ct.diagnostics}}
+    assert warned == {"Ticket"}
+
+
+# ---- behaviour, against the whole-state replace -----------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("family,tag,dg", CASES)
+@engines.each_engine_and_guards
+def test_dr1_t8_the_delta_replace_leaves_what_the_whole_state_replace_leaves_under_each_receipt_model_and_guard(family, tag, dg):
+    old = aggregate(family)
+    new = (old - {REMOVED}) | {ADDED}
+    ds = store(family, dataset_epoch=1 if dg else None, head=tag != "-no-receipt")
+    run(ds, delta_stem(family, tag, dg), args(), assertTriples=nt([ADDED]), retractTriples=nt([REMOVED]))
+    assert triples(ds, data_graph(family)) == new | _bystander(family)
+    row = _row(ds)
+    assert row["seq"].toPython() == 2
+    assert ("head" in row and row["head"] == U("urn:rev:order/1/2")) is (tag != "-no-receipt")
+    assert (U("urn:txn:2"), U(PAT + "rev"), U("urn:rev:order/1/2")) in triples(ds, TXN)
+    if tag == "-patch-log":
+        assert triples(ds, delta(2, "add")) == {ADDED} and triples(ds, delta(2, "del")) == {REMOVED}
+    whole = store(family, dataset_epoch=1 if dg else None, head=tag != "-no-receipt")
+    run(whole, stem("replace", family, tag, dg), args(), payloadTriples=nt(new), assertTriples=nt([ADDED]), retractTriples=nt([REMOVED]))
+    assert triples(whole, data_graph(family)) == triples(ds, data_graph(family))
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+@engines.each_engine_and_guards
+def test_dr1_t9_a_lost_race_writes_nothing_in_any_graph(family):
+    ds = store(family, seq=2)
+    before = everything(ds)
+    run(ds, delta_stem(family), args(seq=1), assertTriples=nt([ADDED]), retractTriples=nt([REMOVED]))
+    assert everything(ds) == before
+
+
+@pytest.mark.parametrize("tag", ["-patch-log", "-no-receipt"])
+@pytest.mark.parametrize("family", FAMILIES)
+@engines.each_engine_and_guards
+def test_dr1_t10_a_retry_under_the_same_transaction_id_changes_nothing_the_second_time(family, tag):
+    ds = store(family)
+    slots = {"assertTriples": nt([ADDED]), "retractTriples": nt([REMOVED])}
+    run(ds, delta_stem(family, tag), args(), **slots)
+    # put the row back at the seq the request expects, so that the claim alone refuses the second run
+    ds.graph(META).remove((ROOT, U(PAT + "seq"), None))
+    ds.graph(META).add((ROOT, U(PAT + "seq"), LONG(1)))
+    before = everything(ds)
+    run(ds, delta_stem(family, tag), args(), **slots)
+    assert everything(ds) == before
+
+
+@pytest.mark.parametrize("tag", RECEIPTS["composite"])
+@engines.each_engine_and_guards
+def test_dr1_t11_a_composite_delta_that_retracts_a_member_removes_it_and_leaves_the_root_and_the_neighbour(tag):
+    ds = store("composite", head=tag != "-no-receipt")
+    run(ds, delta_stem("composite", tag), args(), assertTriples="", retractTriples=nt([(ROOT, OWNS, MEMBER), (MEMBER, P, RdfLiteral("line"))]))
+    root = {(ROOT, P, RdfLiteral("old")), (ROOT, Q, RdfLiteral("keep"))}
+    assert triples(ds, DATA) == root | BYSTANDER
+    assert _row(ds)["seq"].toPython() == 2
+
+
+@pytest.mark.parametrize("tag", ["-patch-log", "-no-receipt"])
+@pytest.mark.parametrize("family", FAMILIES)
+@engines.each_engine_and_guards
+def test_dr1_t12_an_empty_delta_still_moves_the_row_and_writes_the_receipt_which_is_why_the_caller_withholds_it(family, tag):
+    ds = store(family, head=tag != "-no-receipt")
+    before = triples(ds, data_graph(family))
+    run(ds, delta_stem(family, tag), args(), assertTriples="", retractTriples="")
+    assert triples(ds, data_graph(family)) == before
+    assert _row(ds)["seq"].toPython() == 2
+    assert (U("urn:txn:2"), U(PAT + "rev"), U("urn:rev:order/1/2")) in triples(ds, TXN)
+    if tag == "-patch-log":
+        assert not triples(ds, delta(2, "add")) and not triples(ds, delta(2, "del"))
+        assert (U("urn:rev:order/1/2"), U(PAT + "asserts"), delta(2, "add")) in {t for g in ds.graphs() for t in g}
+
+
+def test_dr1_t13_a_composite_family_with_a_boundary_shape_keeps_its_payload_check_under_the_delta():
+    (ct,) = compile_targets(witness._load_fixture(witness.EXAMPLES_DIR / "composite-project-ownership.ttl"))
+    ids = {o.operation: o.template_id for o in ct.operations}
+    assert ids["cas-replace"] == "cas-replace-composite-property-delta-patch-log" and ids["payload-check"] == "payload-check"

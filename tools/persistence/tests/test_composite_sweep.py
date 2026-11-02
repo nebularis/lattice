@@ -28,7 +28,7 @@ from persistence import templatecheck, witness
 from persistence.cli import main
 from persistence.compiler import compile_to_graph
 
-from conftest import EXAMPLES_DIR
+from conftest import EXAMPLES_DIR, load_whole_state
 
 EX = "https://example.org/lending#"
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
@@ -37,7 +37,7 @@ DATA_GRAPH = URIRef("urn:g:orders")
 PLAIN = "cas-replace-composite-property-patch-log"
 DATASET_GUARD = "cas-replace-composite-property-patch-log-dataset-guard"
 FIXTURES = {
-    PLAIN: witness.WITNESS_DIR / "composite-property-boundary-shacl-whole-state.ttl",
+    PLAIN: EXAMPLES_DIR / "composite-property-boundary-shacl.ttl",
     DATASET_GUARD: witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl",
 }
 PAYLOAD = (
@@ -48,7 +48,7 @@ PAYLOAD = (
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]), guards=guards)
+    compiled, _ = compile_to_graph(load_whole_state(FIXTURES[template]), guards=guards)
     return next(o for o in templatecheck.operations(compiled) if o.template == template).text
 
 
@@ -167,6 +167,6 @@ def test_ho1_t6_a_stale_sequence_changes_nothing():
 
 @pytest.mark.parametrize("template", [PLAIN, DATASET_GUARD])
 def test_ho1_t7_the_changed_templates_pass_the_static_checks(template):
-    compiled, _ = compile_to_graph(witness._load_fixture(FIXTURES[template]))
+    compiled, _ = compile_to_graph(load_whole_state(FIXTURES[template]))
     assert templatecheck.check_compiled(compiled) == []
     assert main(["hygiene", str(FIXTURES[PLAIN])]) == 0

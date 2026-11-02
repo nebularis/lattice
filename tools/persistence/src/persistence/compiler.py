@@ -9,8 +9,6 @@ pipeline (ADR-A79).
 
 from __future__ import annotations
 
-import dataclasses
-
 import hashlib
 from dataclasses import dataclass, field
 
@@ -28,7 +26,7 @@ from .capability import (
 from .builders import _check_graph_names
 from .contract import edge_contracts
 from .contract_emit import add_edge_facts, contract_for, emit_contract, mint_edge
-from .model import DIMENSIONS, Diagnostic, ResolvedDimension, default_replace_encoding
+from .model import DIMENSIONS, Diagnostic, ResolvedDimension
 from .namespaces import DAL
 from .operations import GeneratedOperation, default_graph_template, select_operations
 from .recipes import build_recipes, canonical_json
@@ -98,8 +96,6 @@ def compile_targets(
             dimensions = {
                 dim: resolve_dimension(graph, target, dim, spec) for dim in DIMENSIONS
             }
-            if dimensions["replaceEncoding"].value is None:
-                dimensions["replaceEncoding"] = dataclasses.replace(dimensions["replaceEncoding"], value=default_replace_encoding(dimensions))
             uniqueness = resolve_uniqueness(graph, target)
             identity = resolve_identity(graph, target, spec)
             resolved_by_target[target] = dimensions
@@ -114,6 +110,7 @@ def compile_targets(
                 validator.check_capability(check)
 
             operations = select_operations(target, dimensions, uniqueness, spec)
+            diagnostics += validator.check_replace_encoding(target, dimensions, operations)
             diagnostics += validator.check_replace_form(target, dimensions, spec, operations)
             diagnostics += validator.check_patch_log_written(target, dimensions, operations)
             diagnostics += validator.check_payload_bound(target, dimensions, operations, warn=warn_unbounded_payload)

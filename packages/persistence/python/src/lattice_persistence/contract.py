@@ -28,6 +28,7 @@ class OperationKind(Enum):
     CREATE = "Create"
     BOOTSTRAP = "Bootstrap"
     REPLACE = "Replace"
+    DELTA_REPLACE = "DeltaReplace"
     TOMBSTONE = "Tombstone"
     APPEND = "Append"
     APPEND_VERSION = "AppendVersion"
@@ -41,8 +42,6 @@ class OperationKind(Enum):
     AUDIT = "Audit"
     MEMBERS_READ = "MembersRead"
     PAYLOAD_CHECK = "PayloadCheck"
-    STATE_DIGEST_RECORD = "StateDigestRecord"
-    STATE_DIGEST_READ = "StateDigestRead"
 
 
 @dataclass(frozen=True, order=True)
@@ -105,14 +104,14 @@ class DigestContract:
 
     def parts(self) -> tuple:
         """``(role, sources)`` for each part, in order. A part with no source has an empty tuple. The event part replaces the payload
-        part for an append, whose rows slot and triples slot are its two sources. A delta replace, which has an add or a del part and
-        no payload, has no payload part, so its digest differs from a whole replace's of an empty payload with the same delta (DR-Q3)."""
-        delta = not self.payload and not self.event and bool(self.add or self.delete)
+        part for an append, whose rows slot and triples slot are its two sources."""
+        # A delta replace has add and del parts and no payload or event, and digests the change alone, with no payload part (DR-Q3).
+        change_only = self.payload is None and not self.event and (self.add or self.delete)
         return (
             ("OperationKindPart", ()),
             ("TargetPart", (self.target,) if self.target else ()),
             ("ExpectedSeqPart", (self.expected,) if self.expected else ()),
-            *(() if delta else (("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ()),)),
+            *(() if change_only else ((("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ())),)),
             *((("AddPart", (self.add,)),) if self.add else ()),
             *((("DelPart", (self.delete,)),) if self.delete else ()),
         )

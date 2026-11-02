@@ -213,18 +213,16 @@ class TestEpochGuardScopeTemplateSelection:
     def test_dataset_level_guard_selects_dataset_guard_templates(self):
         from rdflib import URIRef
 
-        from persistence import witness
-
         g = Graph()
         g.parse(SPEC_TTL, format="turtle")
-        g += witness._load_fixture(witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log-dataset-guard-epoch-example.ttl")
+        g.parse(EXAMPLES_DIR / "epoch-dataset-level-guard.ttl", format="turtle")
         target = URIRef("https://example.org/lending#LoanApplication")
 
         out, compiled = compile_to_graph(g, classes={target})
         assert len(compiled) == 1
         cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
         assert len(cas_ops) == 1
-        assert cas_ops[0].template_id == "cas-replace-named-graph-patch-log-dataset-guard"  # the example declares dal:PatchLog (H2.6d)
+        assert cas_ops[0].template_id == "cas-replace-named-graph-delta-patch-log-dataset-guard"  # the example declares dal:PatchLog (H2.6d) and, under dal:Optimistic, takes the delta replace (DR1)
 
         rendered = instantiate_profile(out)
         text = rendered["cas-replace"]
@@ -234,17 +232,15 @@ class TestEpochGuardScopeTemplateSelection:
     def test_baseline_selects_original_named_graph_template(self):
         from rdflib import URIRef
 
-        from persistence import witness
-
         g = Graph()
         g.parse(SPEC_TTL, format="turtle")
-        g += witness._load_fixture(witness.WITNESS_DIR / "template-cas-replace-named-graph-patch-log.ttl")
+        g.parse(EXAMPLES_DIR / "baseline-single-class.ttl", format="turtle")
         target = URIRef("https://example.org/lending#LoanApplication")
 
         _, compiled = compile_to_graph(g, classes={target})
         cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
         assert len(cas_ops) == 1
-        assert cas_ops[0].template_id == "cas-replace-named-graph-patch-log"  # the example declares dal:PatchLog (H2.6d)
+        assert cas_ops[0].template_id == "cas-replace-named-graph-delta-patch-log"  # the example declares dal:PatchLog (H2.6d) and, under dal:Optimistic, takes the delta replace (DR1)
 
 
 def test_instantiate_keeps_every_target_apart(tmp_path):

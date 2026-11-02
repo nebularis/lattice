@@ -17,16 +17,17 @@ def by_template(profile, template):
 
 
 def test_reads_every_operation_and_its_parameters(profiles):
-    ops = read_contracts(profiles["baseline-single-class"])
+    ops = read_contracts(profiles["baseline-whole-state"])
     assert {o.kind for o in ops} >= {OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE, OperationKind.AUDIT}
-    replace = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    assert OperationKind.DELTA_REPLACE in {o.kind for o in read_contracts(profiles["baseline-single-class"])}  # the default under dal:Optimistic (DR1)
+    replace = by_template(profiles["baseline-whole-state"], "cas-replace-named-graph-patch-log")
     assert replace.parameter("expectedSeq").kind == "Position" and replace.parameter("requestDigest").kind == "Digest"
     assert replace.payload.parameter == "payloadTriples" and replace.payload.root == "root"
     assert replace.version >= 1
 
 
 def test_digest_parts_in_order(profiles):
-    replace = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    replace = by_template(profiles["baseline-whole-state"], "cas-replace-named-graph-patch-log")
     assert [p.role for p in replace.digest.parts] == [
         "OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "AddPart", "DelPart"]
     assert replace.digest.algorithm == "SHA-256"
@@ -36,7 +37,7 @@ def test_digest_parts_in_order(profiles):
 
 
 def test_replace_digest_from_a_profile(profiles):
-    replace = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    replace = by_template(profiles["baseline-whole-state"], "cas-replace-named-graph-patch-log")
     a, b = T("urn:example:r", "urn:example:p", "urn:example:a"), T("urn:example:r", "urn:example:p", "urn:example:b")
     values = {"root": Iri.encode("urn:example:r"), "expectedSeq": 3, "payloadTriples": Payload.of(a, b),
               "assertTriples": Payload.of(b), "retractTriples": Payload.of()}
@@ -60,13 +61,13 @@ def test_append_digest_merges_rows_and_triples_into_one_part(profiles):
 
 
 def test_a_missing_source_is_named(profiles):
-    replace = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    replace = by_template(profiles["baseline-whole-state"], "cas-replace-named-graph-patch-log")
     with pytest.raises(DigestError, match="retractTriples"):
         request_digest(replace, {"root": "urn:example:r", "expectedSeq": 1, "payloadTriples": Payload.of(), "assertTriples": Payload.of()})
 
 
 def test_a_bare_string_is_not_a_payload(profiles):
-    replace = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
+    replace = by_template(profiles["baseline-whole-state"], "cas-replace-named-graph-patch-log")
     with pytest.raises(DigestError, match="Payload"):
         request_digest(replace, {"root": "urn:example:r", "expectedSeq": 1, "payloadTriples": "<urn:a> <urn:b> <urn:c> .",
                                  "assertTriples": Payload.of(), "retractTriples": Payload.of()})
@@ -75,14 +76,3 @@ def test_a_bare_string_is_not_a_payload(profiles):
 def test_an_operation_without_a_digest_refuses(profiles):
     with pytest.raises(DigestError):
         request_digest(by_template(profiles["baseline-single-class"], "key-claim-write"), {})
-
-
-def test_a_delta_replace_digests_its_delta_alone_and_differs_from_a_whole_replace_of_nothing(profiles):
-    """DR3: the replace under dal:ChangedTriples takes the delta, and its digest has no payload part (DR-Q3 (a))."""
-    delta = by_template(profiles["baseline-single-class"], "cas-replace-named-graph-delta-patch-log")
-    whole = by_template(profiles["baseline-single-class-whole-state"], "cas-replace-named-graph-patch-log")
-    assert delta.kind is OperationKind.REPLACE and delta.payload is None
-    assert [p.role for p in delta.digest.parts] == ["OperationKindPart", "TargetPart", "ExpectedSeqPart", "AddPart", "DelPart"]
-    b = T("urn:example:r", "urn:example:p", "urn:example:b")
-    values = {"root": Iri.encode("urn:example:r"), "expectedSeq": 3, "assertTriples": Payload.of(b), "retractTriples": Payload.of()}
-    assert request_digest(delta, values) != request_digest(whole, {**values, "payloadTriples": Payload.of()})

@@ -65,8 +65,6 @@ _FIRST_VERSION = (
 OPTIONAL_INSERT_VARIABLES: dict[str, dict[str, str]] = {
     "cas-replace-named-graph": {"prevRev": _FIRST_CAS},
     "cas-replace-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
-    "cas-replace-named-graph-delta": {"prevRev": _FIRST_CAS},
-    "cas-replace-named-graph-delta-dataset-guard": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph": {"prevRev": _FIRST_CAS},
     "tombstone-delete-named-graph-dataset-guard": {"prevRev": _FIRST_CAS},
     "append-version": {"prevRev": _FIRST_CAS, "priorVersion": _FIRST_VERSION},
@@ -83,7 +81,6 @@ _NOTHING_SWEPT = (
 # The patch-log variants (H2.6d) have the receipt allowances of their base operation. Their tombstones also copy the sweep.
 for _base in (
     "cas-replace-named-graph", "cas-replace-composite-property", "tombstone-delete-named-graph", "tombstone-delete-composite",
-    "cas-replace-named-graph-delta", "cas-replace-composite-property-delta",
 ):
     for _guard in ("", "-dataset-guard"):
         OPTIONAL_INSERT_VARIABLES[f"{_base}-patch-log{_guard}"] = {
@@ -106,6 +103,13 @@ for _family, _tags in (("cas-replace-named-graph-rows", ("", "-patch-log", "-no-
                 **({"prevRev": _FIRST_CAS} if _tag != "-no-receipt" else {}),
                 **{name: _ROW_BRANCH for slot in _slots for name in _ROW_VARIABLES[slot]},
             }
+
+# The delta replaces (persistence-delta-replace DR1) have no row variable and no sweep, so their receipt variants keep the first-write
+# allowance alone.
+for _family, _tags in (("cas-replace-named-graph-delta", ("", "-patch-log")), ("cas-replace-composite-property-delta", ("-patch-log",))):
+    for _tag in _tags:
+        for _guard in ("", "-dataset-guard"):
+            OPTIONAL_INSERT_VARIABLES[f"{_family}{_tag}{_guard}"] = {"prevRev": _FIRST_CAS}
 
 # Stand-ins for the request-time slots, so the text parses as SPARQL. The
 # payload is a ground triple. A real payload is skolemized by the caller.

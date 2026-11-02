@@ -13,7 +13,10 @@ guard that fails in the store reads as a lost race. It checks what the store can
 * a payload names no subject outside the aggregate, and an append's event triples name no subject outside its events (the bound of
   :mod:`lattice_persistence.bound`),
 * where the caller can say what is a version, an object on a pinned edge is one and an object on an identity edge is not (H2.6e, TD-67),
-* on a version of a family under delta membership, a checkpoint lists the full set of members.
+* on a version of a family under delta membership, a checkpoint lists the full set of members,
+* for a delta replace (``OperationKind.DELTA_REPLACE``, ``dal:ChangedTriples``), the two slots ``assertTriples`` and ``retractTriples`` share no triple
+  (``DeltaOverlap``) and are not both empty (``EmptyDelta``, STD-299). The bound is not run over the asserted triples alone, since a member
+  of the aggregate may be reached through an edge that is already stored. It is run over the next state, where the caller passes it.
 
 A caller who bypasses it is still checked by the guards of the store, which are the same tests where the profile has them on.
 """
@@ -154,8 +157,15 @@ def refusals(
     allow_empty_log_graphs: bool = False,
     version_of: Optional[Callable] = None,
     membership: Optional[Membership] = None,
+    next_state: Optional[Payload] = None,
 ) -> tuple:
-    """Every reason the request ``values`` for ``operation`` is refused, as a sorted tuple of :class:`Refusal`. Empty when it passes."""
+    """Every reason the request ``values`` for ``operation`` is refused, as a sorted tuple of :class:`Refusal`. Empty when it passes.
+
+    ``next_state`` is for a delta replace only and is ignored by every other kind. It is the whole aggregate the caller holds after the change,
+    and passing it is obligation 8 of tools/persistence/README.md ("Obligations the SPARQL cannot enforce for you"). Given it, an asserted
+    triple not in it is ``AssertOutsideNextState``, a retracted triple in it is ``RetractInNextState``, a subject of it outside the aggregate
+    is ``PayloadOutsideBound``, and with ``version_of`` the reference modes of its edges are checked. Without it the overlap and the empty
+    delta are still refused and nothing else about the aggregate is checked, since a delta does not carry the state."""
     out: list = []
 
     def refuse(code: str, where: str, reason: str) -> None:
@@ -194,7 +204,9 @@ def refusals(
 
     # a payload names no subject outside the aggregate
     contract = operation.payload
-    if contract is not None and contract.parameter in typed and contract.root in typed:
+    if operation.kind is OperationKind.DELTA_REPLACE:
+        out.extend(_delta(operation, typed, version_of, next_state))
+    elif contract is not None and contract.parameter in typed and contract.root in typed:
         payload, root = typed[contract.parameter], typed[contract.root]
         stray = outside_bound(contract, root, payload)
         if stray:
@@ -221,6 +233,35 @@ def refusals(
                 if stray:
                     refuse("EventOutsideBound", triples_name, f"{stray[0]} is neither an event of the batch nor minted under one ({{event}}/part/...), so the append would describe it")
     return tuple(sorted(set(out)))
+
+
+def _delta(operation: ProfileOperation, typed: Mapping[str, object], version_of, next_state: Optional[Payload]) -> list:
+    """The checks of a delta replace: the two slots, and the next state where the caller gives it (obligation 8)."""
+    asserted, retracted = typed.get("assertTriples"), typed.get("retractTriples")
+    if asserted is None or retracted is None:
+        return []
+    out = []
+    both = asserted.triples & retracted.triples
+    if both:
+        out.append(Refusal("DeltaOverlap", "assertTriples", f"{len(both)} triple(s) are both asserted and retracted, for example {min(t.nt() for t in both)}"))
+    if not asserted.triples and not retracted.triples:
+        out.append(Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-299)"))
+    if next_state is None:
+        return out
+    contract, root = operation.payload, typed.get("root")
+    missing = asserted.triples - next_state.triples
+    if missing:
+        out.append(Refusal("AssertOutsideNextState", "assertTriples", f"{len(missing)} asserted triple(s) are not in the next state, for example {min(t.nt() for t in missing)}"))
+    kept = retracted.triples & next_state.triples
+    if kept:
+        out.append(Refusal("RetractInNextState", "retractTriples", f"{len(kept)} retracted triple(s) are in the next state, for example {min(t.nt() for t in kept)}"))
+    if contract is not None and root is not None:
+        stray = outside_bound(contract, root, next_state)
+        if stray:
+            out.append(Refusal("PayloadOutsideBound", "nextState", f"{len(stray)} subject(s) are neither {plain(root)} nor reached from it by an owned edge, for example {stray[0]}"))
+        if version_of is not None:
+            out.extend(_reference_modes(contract, root, next_state, version_of))
+    return out
 
 
 def _reference_modes(contract, root, payload, version_of) -> list:

@@ -244,7 +244,6 @@ class GraphRole(Enum):
     PINNED = "pinned"
     DATASET = "dataset"
     PATCH = "patch"
-    DERIVED = "derived"  # the materialised rows of a surface contract, kept by the write that changes their source (PM1)
 
 
 @dataclass(frozen=True)

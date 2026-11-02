@@ -27,11 +27,11 @@ from persistence.compiler import compile_targets, compile_to_graph
 from persistence.instantiate import instantiate_by_target
 from persistence.ir_render import fill_slots
 
-from conftest import EXAMPLES_DIR
+from conftest import EXAMPLES_DIR, load_whole_state
 
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 PX = "https://example.org/projects#"
-PROJECT_EXAMPLE = witness.WITNESS_DIR / "composite-project-ownership-whole-state.ttl"
+PROJECT_EXAMPLE = EXAMPLES_DIR / "composite-project-ownership.ttl"
 PROJECT_DATA = Path(__file__).resolve().parent / "fixtures" / "project-data.ttl"
 DATASET_GUARD_FIXTURE = witness.WITNESS_DIR / "template-cas-replace-composite-property-dataset-guard.ttl"
 DATA_GRAPH = URIRef("urn:g:projects")
@@ -47,7 +47,7 @@ _OPERATION = {CREATE: "create-if-absent", REPLACE: "cas-replace", TOMBSTONE: "to
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
+    compiled, _ = compile_to_graph(load_whole_state(PROJECT_EXAMPLE), guards=guards)  # the sweeping replace, since the default is the delta (DR1)
     (by_target,) = instantiate_by_target(compiled).values()
     return fill_slots(by_target[_OPERATION[template]], templatecheck._SLOT_STAND_INS)
 

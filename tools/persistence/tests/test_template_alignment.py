@@ -112,8 +112,7 @@ def test_head_is_read_optionally(builder):
 
 @pytest.mark.parametrize(
     "builder",
-    # record-state-digest reads the claim to know its write applied, and writes none (DR2).
-    [t for t in ALL_BUILDERS if "INSERT" in _raw(t) and ("pat:rev $newRev" in _raw(t) or "pat:rev ?rev" in _raw(t)) and t != "record-state-digest"],
+    [t for t in ALL_BUILDERS if "INSERT" in _raw(t) and ("pat:rev $newRev" in _raw(t) or "pat:rev ?rev" in _raw(t))],
 )
 def test_every_txn_claim_records_the_request_digest(builder):
     """Guide §15.2 (review A5)."""

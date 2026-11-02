@@ -37,7 +37,7 @@ class CheckTest {
 
     static Triple t(String s, String p, String o) { return t(s, p, iri(o)); }
 
-    static OperationContract replace() { return operation("composite-project-ownership-whole-state", "cas-replace-composite-property-patch-log"); }
+    static OperationContract replace() { return operation("composite-whole-state", "cas-replace-composite-property-patch-log"); }
 
     static Map<String, Object> request(Object... over) {
         Map<String, Object> base = values(
@@ -140,13 +140,13 @@ class CheckTest {
     // ---- a caller-named graph
 
     @Test void theNamingRuleIsReadFromTheBindingsOfTheProfile() {
-        var named = operation("baseline-single-class-whole-state", "cas-replace-named-graph-patch-log");
+        var named = operation("baseline-whole-state", "cas-replace-named-graph-patch-log");
         assertTrue(named.parameter("g").isEmpty());
         assertEquals("urn:g:loan-application/urn%3Aa", CallerCheck.graphName(named, iri("urn:a")));
     }
 
     @Test void aCallerNamedGraphMustEqualTheRule() {
-        var base = operation("baseline-single-class-whole-state", "cas-replace-named-graph-patch-log");
+        var base = operation("baseline-whole-state", "cas-replace-named-graph-patch-log");
         List<ParameterContract> params = new ArrayList<>(base.parameters());
         params.add(new ParameterContract("g", "Iri", true, true, false));
         List<Binding> bindings = new ArrayList<>(base.bindings().stream().filter(b -> !b.name().equals("graphPrefix") && !b.name().equals("graphSuffix")).toList());
@@ -160,7 +160,7 @@ class CheckTest {
     }
 
     @Test void theGraphNameEncodesNonAsciiAsUtf8() {
-        var base = operation("baseline-single-class-whole-state", "cas-replace-named-graph-patch-log");
+        var base = operation("baseline-whole-state", "cas-replace-named-graph-patch-log");
         var named = base.withBindings(List.of(new Binding("graphPrefix", "\"urn:g:\""), new Binding("graphSuffix", "\"\"")));
         assertEquals("urn:g:urn%3Ax-%C3%A9-%F0%9F%98%80_.~", CallerCheck.graphName(named, Iri.of("urn:x-\u00e9-\uD83D\uDE00_.~")));
     }

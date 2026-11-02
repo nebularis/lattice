@@ -4,7 +4,7 @@
 """What the persistence compiler's named-graph replace costs against candidate linear forms and the generated rows replace on rdflib and Oxigraph, and what each store does with the update (ADR-A124, TSD-01, TSD-42, TD-42).
 
 The generated `cas-replace-named-graph` (patch-log receipt, caller-named graph) sweeps the aggregate's graph with `OPTIONAL { GRAPH $g { ?s ?p ?o } }`. Its `WHERE` gives one
-solution per stored triple (M) and a store that fills the whole `INSERT` template for every solution pays M times the payload (N). Five forms are measured.
+solution per stored triple (M) and a store that fills the whole `INSERT` template for every solution pays M times the payload (N). Six forms are measured.
 
 | Form | What it is |
 |---|---|
@@ -12,6 +12,7 @@ solution per stored triple (M) and a store that fills the whole `INSERT` templat
 | `R0-nodelta` | `R0` with empty `assertTriples` and `retractTriples`, to separate the payload's cost from the delta blocks' cost |
 | `R1-candidate` | a candidate the compiler does not generate yet, two operations in one request, a delete that sweeps and then an insert with no sweep |
 | `R2-candidate` | a candidate the compiler does not generate yet, one operation whose sweep is a `UNION` with one extra solution that alone binds every graph the `INSERT` writes to |
+| `R3-delta` | the generated delta replace (`cas-replace-named-graph-delta-patch-log`, `cas-replace-composite-property-delta-patch-log`, `dal:ChangedTriples`), one operation with no sweep, whose `DELETE` holds the triples the caller retracted and whose `INSERT` holds the triples it asserted, so it is linear in the change on every engine. It runs a workload of one changed triple per revision (k = 1) at each M and needs no snapshot semantics |
 | `R2-values-candidate` | the generated rows replace (`cas-replace-named-graph-rows-patch-log`, `cas-replace-composite-property-rows-patch-log`), one operation whose `WHERE` carries the payload and the delta as `VALUES` rows in `UNION` branches, so the `INSERT` template holds three single quads and the payload is carried by the solutions. Its three payload slots are filled as rows `(s p o)` |
 
 **Workload.** For each size M the stored state at revision r holds M triples, the first half unchanged across revisions (the kept half) and the second half carrying the revision. The
@@ -73,14 +74,18 @@ FORMS = {
     "R1-candidate": "R1 candidate (two operations)",
     "R2-candidate": "R2 candidate (one operation, UNION)",
     "R2-values-candidate": "R2 (generated rows)",
+    "R3-delta": "R3 (generated delta, k = 1)",
 }
 CANDIDATES = ("R1-candidate", "R2-candidate")
 NEEDS_SNAPSHOT = ("R2-candidate", "R2-values-candidate")
 """The forms that are right only on an engine that removes every deletion before it adds any insertion (P1)."""
-GENERATED = ("R0", "R0-nodelta", "R2-values-candidate")
+GENERATED = ("R0", "R0-nodelta", "R2-values-candidate", "R3-delta")
+"""The forms whose wrong result fails the run. A candidate that is wrong is a finding, so it is recorded."""
 ROWS_FORMS = ("R2-values-candidate",)
 """The forms whose payload slots are filled as rows `(s p o)` (`dal:TripleRows`) and not as N-Triples."""
-"""The forms whose wrong result fails the run. A candidate that is wrong is a finding, so it is recorded."""
+DELTA_FORMS = ("R3-delta",)
+"""The forms that send the triples retracted and asserted against the state read and sweep nothing (`dal:ChangedTriples`, persistence-delta-replace DR1). They run the workload with one changed triple per revision (k = 1), need no snapshot
+semantics, are linear in the change and so are not held to `REPLACE_FORMS_MAX_R0`."""
 
 
 class WrongResult(AssertionError):
@@ -345,8 +350,13 @@ def named_family() -> Family:
         "eventGraphPrefix": Iri.encode("urn:g:events/order/"), "datasetGraph": Iri.encode("urn:g:dataset"), "datasetNode": Iri.encode("urn:g:dataset-node"),
     }
     create, r0 = _rendered(context, "create-if-absent-named-graph-patch-log", "cas-replace-named-graph-patch-log")
-    texts = {"create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0), "R2-candidate": candidate_r2(r0), "R2-values-candidate": _generated(context, "cas-replace-named-graph-rows-patch-log")}
-    return Family("named-graph", ROOT, root_graph(), META, TXN, LOG, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-candidate", "R2-values-candidate"), named_state)
+    texts = {"create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0), "R2-candidate": candidate_r2(r0), "R2-values-candidate": _generated(context, "cas-replace-named-graph-rows-patch-log"), "R3-delta": _generated(context, "cas-replace-named-graph-delta-patch-log")}
+    return Family("named-graph", ROOT, root_graph(), META, TXN, LOG, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-candidate", "R2-values-candidate", "R3-delta"), named_state)
+
+
+WHOLE_STATE = f"""@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex: <https://example.org/projects#> .
+ex:ProjectEncoding a dal:WriteDisciplineProfile ; dal:appliesTo ex:ProjectClass ; dal:replaceEncoding dal:WholeState ."""
 
 
 def composite_context() -> dict:
@@ -358,7 +368,10 @@ def composite_context() -> dict:
     from persistence.instantiate import operation_context
     from persistence.namespaces import DAL
 
-    compiled, _ = compile_to_graph(witness._load_fixture(Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl"), guards=False)
+    config = witness._load_fixture(Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl")
+    # the example now gets the delta replace, which has no owned path, and R0 sweeps it, so the family declares the whole-state encoding (DR1)
+    config.parse(data=WHOLE_STATE, format="turtle")
+    compiled, _ = compile_to_graph(config, guards=False)
     for profile in compiled.subjects(RDF.type, DAL.CompiledProfile):
         for node in compiled.objects(profile, DAL.generatedOperation):
             if str(compiled.value(compiled.value(node, DAL.usesTemplate), DAL.templateId)).startswith("cas-replace-composite"):
@@ -380,8 +393,9 @@ def composite_family() -> Family:
     texts = {
         "create": create, "R0": r0, "R0-nodelta": r0, "R1-candidate": candidate_r1(r0, sweep, f"  GRAPH <{data}> {{ ?s ?p ?o }}\n"),
         "R2-values-candidate": _generated(composite_context(), "cas-replace-composite-property-rows-patch-log"),
+        "R3-delta": _generated(composite_context(), "cas-replace-composite-property-delta-patch-log"),
     }
-    return Family("composite", COMPOSITE_ROOT, data, meta, txn, log, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-values-candidate"), composite_state, BYSTANDER, f"GRAPH <{data}> {{ $root {path} ?s . ?s ?p ?o }}")
+    return Family("composite", COMPOSITE_ROOT, data, meta, txn, log, texts, ("R0", "R0-nodelta", "R1-candidate", "R2-values-candidate", "R3-delta"), composite_state, BYSTANDER, f"GRAPH <{data}> {{ $root {path} ?s . ?s ?p ?o }}")
 
 
 def family_named(name: str) -> Family:
@@ -440,8 +454,20 @@ class Run:
     preload: str = ""
 
 
-def sized_states(family: Family, m: int, repeats: int = REPEATS) -> list:
+def delta_states(family: Family, m: int, repeats: int = REPEATS) -> list:
+    """The states of revisions 1 to `repeats` + 1 at size M for a delta form: the family's first state, and then one literal-valued triple changed per revision (k = 1), always the same one, so each replace retracts one triple and asserts one."""
+    states = [family.state(m, 1)]
+    for revision in range(2, repeats + 2):
+        old = states[-1]
+        literals = sorted(t for t in old if not is_iri(t[2]))
+        states.append(old - {literals[0]} | {(literals[0][0], literals[0][1], f"r{revision}")} if literals else set(old))
+    return states
+
+
+def sized_states(family: Family, m: int, repeats: int = REPEATS, form: str | None = None) -> list:
     """The states of revisions 1 to `repeats` + 1 at size M. Revision 1 is the create."""
+    if form in DELTA_FORMS:
+        return delta_states(family, m, repeats)
     return [family.state(m, r) for r in range(1, repeats + 2)]
 
 
@@ -525,7 +551,7 @@ def start(engine_class, run: Run):
 
 def run_form(engine_class, family: Family, form: str, m: int, repeats: int = REPEATS) -> float:
     """The best time in milliseconds of `repeats` replaces. Raises WrongResult."""
-    run = build_run(family, form, sized_states(family, m, repeats))
+    run = build_run(family, form, sized_states(family, m, repeats, form))
     engine = start(engine_class, run)
     best = float("inf")
     for number, step in enumerate(run.steps, 1):
@@ -714,7 +740,7 @@ def _emit_steps(run: Run) -> list:
 def emit_family(family: Family, sizes=SIZES, repeats: int = REPEATS) -> dict:
     runs = {}
     for m in sizes:
-        built = {form: build_run(family, form, sized_states(family, m, repeats)) for form in family.forms}
+        built = {form: build_run(family, form, sized_states(family, m, repeats, form)) for form in family.forms}
         runs[str(m)] = {"create": built["R0"].create, "forms": {form: _emit_steps(run) for form, run in built.items()}}
     edges = {}
     for case, title in family.edge_cases:
@@ -825,7 +851,7 @@ def measure(families: list, max_r0: int, quick: set, timeout: float) -> Report:
             for form in family.forms:
                 stopped = False
                 for m in sizes:
-                    if form in GENERATED and m > max_r0:
+                    if form in GENERATED and form not in DELTA_FORMS and m > max_r0:
                         cell = f"not run: above REPLACE_FORMS_MAX_R0 ({max_r0})"
                     elif form in NEEDS_SNAPSHOT and not snapshot[engine_class.name]:
                         cell = "not run: per-solution store (P1)"

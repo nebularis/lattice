@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
-# Generates the whole-state composite-property CAS under the dataset-level guard, which no
+# Generates the composite-property CAS under the dataset-level guard, which no
 # shipped example reaches. See template-append-event.ttl.
 # base: composite-property-boundary-shacl.ttl
 @prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
@@ -10,7 +10,3 @@ ex:OrderEpoch a dal:EpochProfile ;
     dal:appliesTo       ex:OrderClass ;
     dal:epochGuardScope dal:DatasetLevelGuard ;
     dal:epochAuthority  dal:ExternalHighWaterMark .
-
-ex:OrderWriteProfile a dal:WriteDisciplineProfile ;
-    dal:appliesTo       ex:OrderClass ;
-    dal:replaceEncoding dal:WholeState .
