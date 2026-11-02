@@ -279,12 +279,12 @@ GANTT_BOARD = """**Status:** building 2026-10-30.
 """
 
 
-def gantt(newest: str) -> list[str]:
-    return wb.gantt_text(wb.join({"main": {"alpha": wb.parse_unit("alpha", GANTT_BOARD)}}), newest, "t")
+def gantt(completed: bool = False) -> list[str]:
+    return wb.gantt_text(wb.join({"main": {"alpha": wb.parse_unit("alpha", GANTT_BOARD)}}), "t", None, completed)
 
 
 def test_wb3_01_gantt_text_draws_one_bar_per_dated_slice() -> None:
-    lines = gantt("2026-11-02")
+    lines = gantt()
     assert lines[:3] == ["```mermaid", wb.GANTT_THEME, "gantt"] and lines[-1] == "```"
     assert "    section alpha" in lines
     bars = [l for l in lines if ":done," in l or ":active," in l or ":crit," in l]
@@ -295,9 +295,12 @@ def test_wb3_01_gantt_text_draws_one_bar_per_dated_slice() -> None:
     assert not any("A-3" in l for l in lines)
 
 
-def test_wb3_02_gantt_text_leaves_out_old_merged_work() -> None:
-    bars = "\n".join(gantt("2026-12-15"))
-    assert " a1," not in bars and " a2," in bars
+def test_wb3_02_gantt_text_keeps_every_dated_slice_and_completed_draws_the_closed_ones() -> None:
+    bars = "\n".join(gantt())
+    assert " a1," in bars and " a2," in bars, "no window: a chart runs from its first day"
+    closed = "\n".join(gantt(completed=True))
+    assert " a1," in closed and " a2," not in closed and " a4," not in closed
+    assert wb.gantt_text(wb.join({}), "t") == [], "nothing dated draws nothing"
 
 
 def test_wb3_03_render_regions_appends_replaces_and_is_idempotent() -> None:

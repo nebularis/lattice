@@ -42,7 +42,7 @@ REGION_BEGIN = "<!-- BEGIN GENERATED work-board. Written by `mise run build:work
 REGION_END = "<!-- END GENERATED work-board -->"
 ROADMAP_BEGIN = "<!-- BEGIN GENERATED work-board-{name}. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->"
 ROADMAP_END = "<!-- END GENERATED work-board-{name} -->"
-RECENT_DAYS = 30
+SIZEABLE = 5  # dated slices a unit outside an epic needs for a chart of its own
 
 
 # ---- the repository ----------------------------------------------------------------------------
@@ -509,7 +509,7 @@ def region_text(repo: Repo) -> str:
     work_rows = []
     for name, unit in units.items():
         for row in (unit.board.rows if unit.board else ()):
-            work_rows.append((row.id, plain(row.deliverable) or row.id, name, state_text(row), plain(row.blocked_on),
+            work_rows.append((row.id, plain(row.deliverable, 190) or row.id, name, state_text(row), plain(row.blocked_on),
                               f"{(repo.status / name).as_posix()}.md{unit.board.anchor}"))
     lines += table(("ID", "Claim", "Unit", "State", "Blocked on", "Pointer"), work_rows)
     return "\n".join(lines) + "\n"
@@ -549,25 +549,25 @@ GANTT_KEY = ["```mermaid", "flowchart LR",
              "    classDef done fill:#8fcf8f,stroke:#2f7d32,color:#000", "    classDef crit fill:#f28b82,stroke:#b23a30,color:#000", "```"]
 
 
-def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str, completed: bool = False) -> list[str]:
-    """One bar per dated slice, from the earliest day in its trail to the latest, grouped by unit,
-    coloured by state as the key under it says. The open chart holds every building, built, verified
-    or blocked slice and the merged ones of the last RECENT_DAYS, and the completed chart holds every
-    merged, tagged or dropped slice whatever its age. An undated slice is never drawn, since a bar
-    invented for it would be a plan nobody made."""
+def gantt_text(joined: dict[tuple[str, str], Joined], title: str, names: Optional[Iterable[str]] = None,
+               completed: bool = False) -> list[str]:
+    """One bar per dated slice of the named units, from the earliest day in its trail to the latest,
+    a section per unit, coloured by state as the key says. The chart runs from the first day any of
+    its slices has, so an epic's chart goes back to its first commit. With ``completed`` only
+    merged, tagged or dropped slices are drawn. An undated slice is never drawn, since a bar
+    invented for it would be a plan nobody made. Nothing is returned where nothing is dated."""
     import datetime
-    cutoff = (datetime.date.fromisoformat(newest) - datetime.timedelta(days=RECENT_DAYS)).isoformat() if newest else ""
-    lines = ["```mermaid", GANTT_THEME, "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
+    wanted = set(names) if names is not None else None
     by_unit: dict[str, list[str]] = {}
     for (unit, slice_id), j in joined.items():
+        if wanted is not None and unit not in wanted:
+            continue
         _, row = j.winner
         days = sorted(d for _, d in row.trail if d)
         if not days or row.state is None:
             continue
         closed = row.state in ("merged", "tagged", "dropped")
         if completed and not closed:
-            continue
-        if not completed and closed and days[-1] < cutoff:
             continue
         tag = "done" if closed else "crit" if row.state == "blocked" else "active" if row.state == "building" else ""
         start, end = days[0], days[-1]
@@ -576,11 +576,46 @@ def gantt_text(joined: dict[tuple[str, str], Joined], newest: str, title: str, c
         label = re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 .-]", " ", re.sub(r"'s\b", "", f"{slice_id} {row.deliverable[:30]}"))).strip()
         ident = re.sub(r"[^a-z0-9]", "", slice_id.lower()) or "s"
         by_unit.setdefault(unit, []).append(f"    {label} :{tag + ', ' if tag else ''}{ident}, {start}, {end}")
+    if not by_unit:
+        return []
+    lines = ["```mermaid", GANTT_THEME, "gantt", f"    title {title}", "    dateFormat YYYY-MM-DD", "    axisFormat %d %b"]
     for unit, bars in sorted(by_unit.items()):
         lines.append(f"    section {unit}")
         lines += bars
     lines.append("```")
-    return lines + [""] + GANTT_KEY
+    return lines
+
+
+def chart_groups(units: dict[str, Unit], joined: dict[tuple[str, str], Joined], names: Iterable[str]) -> list[tuple[str, list[str]]]:
+    """How the units share charts: an epic with every unit named after it, a unit outside an epic
+    with SIZEABLE dated slices or more on its own, and the rest together as the smaller units."""
+    names = list(names)
+    dated = {n: sum(1 for (u, _), j in joined.items() if u == n and any(d for _, d in j.winner[1].trail)) for n in names}
+    epics = sorted((n for n in names if units[n].kind.startswith("epic")), key=len, reverse=True)
+    owned: dict[Optional[str], list[str]] = {}
+    for n in names:
+        parent = next((e for e in epics if n == e or n.startswith(e + "-")), None)
+        owned.setdefault(parent, []).append(n)
+    groups: list[tuple[str, list[str]]] = [(f"the {e} epic", owned[e]) for e in sorted(epics) if e in owned]
+    small: list[str] = []
+    for n in owned.get(None, []):
+        if dated[n] >= SIZEABLE:
+            groups.append((n, [n]))
+        else:
+            small.append(n)
+    if small:
+        groups.append(("the smaller units", small))
+    return groups
+
+
+def charts_text(units: dict[str, Unit], joined: dict[tuple[str, str], Joined], names: Iterable[str], completed: bool = False) -> list[str]:
+    """The key once, then one chart per group, each from its first day. A group with nothing dated draws nothing."""
+    lines: list[str] = list(GANTT_KEY)
+    for title, members in chart_groups(units, joined, names):
+        chart = gantt_text(joined, title.capitalize() if title[0].islower() else title, members, completed)
+        if chart:
+            lines += [""] + chart
+    return lines
 
 
 def roadmap_regions(repo: Repo) -> dict[str, str]:
@@ -594,13 +629,17 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
     glance = [f"Built from the status records on {len(found)} branches, the newest board day {newest or 'unknown'}.", ""]
     unit_rows = []
     done_rows = []
+    open_units: list[str] = []
+    done_units: list[str] = []
     for name, unit in main_units.items():
         slices = [j for (u, _), j in joined.items() if u == name]
         if unit.state in ("merged", "tagged", "dropped") and not any(j.moved for j in slices):
             last = max((d for j in slices for _, d in j.winner[1].trail if d), default=unit.day)
             done_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
                               unit.kind, f"{unit.state} {unit.day}".strip(), str(len(slices)), last))
+            done_units.append(name)
             continue
+        open_units.append(name)
         counts = {}
         for j in slices:
             counts[j.winner[1].state or "?"] = counts.get(j.winner[1].state or "?", 0) + 1
@@ -609,10 +648,11 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
         unit_rows.append((f"[{name}](plans/{name}.md)" if (repo.root / repo.plans / f"{name}.md").exists() else name,
                           unit.kind, f"{unit.state or '?'} {unit.day}".strip(), unit.next, summary, ", ".join(on)))
     glance += table(("Unit", "Kind", "State", "Next", "Slices", "Moved on"), unit_rows)
-    glance += [""] + gantt_text(joined, newest, f"Open work and the last {RECENT_DAYS} days, newest day {newest}")
-    completed = ["Every unit whose Status line reads merged, tagged or dropped and that no branch moves, with its slices, and every merged, tagged or dropped slice with a day, whatever its age.", ""]
+    glance += ["", "One chart per epic, or per unit outside an epic with five dated slices or more, from the first day it has to the newest, every dated slice in the state its board gives.", ""]
+    glance += charts_text(main_units, joined, open_units)
+    completed = ["Every unit whose Status line reads merged, tagged or dropped and that no branch moves, with its slices, and a chart per group of their merged, tagged or dropped slices with a day, whatever its age.", ""]
     completed += table(("Unit", "Kind", "State", "Slices", "Last day"), done_rows)
-    completed += [""] + gantt_text(joined, newest, "Completed slices", completed=True)
+    completed += [""] + charts_text(main_units, joined, done_units, completed=True)
     branch_rows = []
     for b in found:
         if b.name == MAIN or b.ahead_of_main == 0:
@@ -621,7 +661,49 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
         branch_rows.append((f"`{b.name}`", b.day, str(b.ahead_of_main), b.drift, ", ".join(moved) or "no mark"))
     branches_text = [f"Branches with a commit `main` lacks, from the same reading.", ""]
     branches_text += table(("Branch", "Tip", "Ahead of main", "Upstream", "Moves"), branch_rows)
-    return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n", "completed": "\n".join(completed) + "\n"}
+    return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n",
+            "completed": "\n".join(completed) + "\n", "decisions": decisions_text(repo)}
+
+
+def decisions_text(repo: Repo) -> str:
+    """What waits on the maintainer, read from the registers in the working tree: the Proposed decisions
+    from the catalogue, the pending design decisions, the open debt, and the slices named only in prose."""
+    root = repo.root
+    catalogue = root / repo.architecture / "decisions" / "README.md" if repo.architecture else None
+    proposed = []
+    if catalogue and catalogue.exists():
+        for line in catalogue.read_text(encoding="utf-8").splitlines():
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) >= 3 and cells[0].startswith("[") and cells[-1].lower().startswith("proposed"):
+                # The catalogue's links are relative to its own folder, and this region lives in the developer area.
+                link = cells[0].replace("](", f"]({(Path('..') / repo.architecture.relative_to(repo.architecture.parent) / 'decisions').as_posix()}/")
+                proposed.append((link, plain(cells[1], 90), cells[-1]))
+    def rows_of(name: str) -> int:
+        path = root / repo.developer / name
+        return sum(1 for l in path.read_text(encoding="utf-8").splitlines() if re.match(r"^\| [A-Z]+-\d+ \|", l)) if path.exists() else 0
+    prose_only = 0
+    for path in repo.exceptions:
+        if path.exists() and "# unit " in path.read_text(encoding="utf-8"):
+            prose_only = sum(1 for l in path.read_text(encoding="utf-8").split("# Slices a plan names", 1)[-1].splitlines()
+                             if l.strip() and not l.startswith("#"))
+    def register_rows(name: str) -> list[tuple[str, str]]:
+        path = root / repo.developer / name
+        out = []
+        for line in (path.read_text(encoding="utf-8").splitlines() if path.exists() else []):
+            m = re.match(r"^\| ([A-Z]+-\d+) \| (.*)$", line)
+            if m:
+                cells = [c.strip() for c in m.group(2).split("|")]
+                bold = re.match(r"\*\*(.+?)\*\*", cells[0])
+                out.append((m.group(1), plain(bold.group(1) if bold else cells[0], 160)))
+        return out
+    pending = register_rows("pending-design-decisions.md")
+    debt = rows_of("technical-debt.md")
+    lines = [f"Read from the registers in this tree: {len(proposed)} Proposed decisions, {len(pending)} pending design decisions, {debt} rows of [technical debt](technical-debt.md), and {prose_only} slices named only in prose, listed by unit in the identifier exceptions baseline.",
+             "", "### 9.1 Proposed decisions", ""]
+    lines += table(("Decision", "Subject", "Status"), proposed)
+    lines += ["", "### 9.2 Pending design decisions", "", "Every row of [pending-design-decisions.md](pending-design-decisions.md), which loses a row when a sketch, plan or ADR settles it.", ""]
+    lines += table(("Decision", "Question"), pending)
+    return "\n".join(lines) + "\n"
 
 
 def render_regions(existing: str, regions: dict[str, str]) -> str:
