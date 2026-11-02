@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.4b, a second engine, the store probes and the benchmark
+# Validation Pack: FMH-2.4b, a second engine, the store probes and the benchmark
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.4b, planned in
 [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) under

@@ -187,7 +187,7 @@ it, with the rest of the work package, when verifying at the close. FMH-HO8 may 
 Every slice that adds a refusal, warning, shape or template adds its witness in the same commit, or
 `mise run check:persistence` fails (H1.2, FMH-1.3). Every slice ends with `mise run check:persistence`
 passing, and reports the passed and xfailed counts it saw in its Validation Pack. Validation Packs are
-`docs/developer/validation/FMH-HO<n>.md`, in the form of [FMH-H1-4a](../validation/FMH-1.4a.md).
+`docs/developer/validation/FMH-HO<n>.md`, in the form of [FMH-1.4a](../validation/FMH-1.4a.md).
 
 **Non-weakening.** FMH-HO5 deletes the FMH-1.4a refusal, its witness, and tests H1.4a-T3, T4, T5 and T9, and
 rewrites T1, T2, T6, T7, T8, T10 and T11 for the tree. Each removal is justified by ADR-A122 decision
@@ -519,7 +519,7 @@ ADR-A123 is accepted (2026-10-10). FMH-2.0 to FMH-2.3 are merged and signed off 
 
 **Unit:** slice FMH-2.3 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under
 ADR-A123 and its addendum of 2026-10-12. Builds on FMH-2.2's harness, `GRAPH_ROLES` and typed bindings
-([FMH-H2-2](../validation/FMH-2.2.md)). All four questions were decided on 2026-10-12.
+([FMH-2.2](../validation/FMH-2.2.md)). All four questions were decided on 2026-10-12.
 
 #### The scene, checked against the templates
 
@@ -555,7 +555,7 @@ Three facts constrain the port.
 | H2.3-Q1 | `cas-replace-value-guard` uses the default graph | (a) **leave it unported in FMH-2.3**, record it as TD-43, and decide where a `dal:NoBoundary` target's data lives when FMH-2.7 changes the vocabulary, for example the profile's `dal:dataGraph` as for a composite family. Port it then, as a change. (b) Decide now that a `dal:NoBoundary` profile names a data graph, and port it in FMH-2.3 as a change, which needs a vocabulary change before FMH-2.7's. (c) Give the IR a default-graph role. Against ADR-A123 decision 2 and S-1, and a store's default graph differs between stores | (a). Nothing in FMH-2.3 depends on it, and the decision belongs with FMH-2.7's vocabulary. **Decided 2026-10-12: (a)** |
 | H2.3-Q2 | a `GRAPH ?g` inside an inner group, with `?g` bound outside it | (a) **`UnboundGraphVariable` counts a graph variable as bound when any enclosing group binds it**, since the join restricts the result. The scope a `BIND` sees stays bottom-up. The FMH-2.1 refusal case for `OPTIONAL` becomes an accepted case, with an engine test that the result holds only `?g`'s triples. The three templates port unchanged. A store that evaluates the inner group literally bottom-up scans every graph before the join, where rdflib passes the outer binding in. That is a cost, not a wrong result, and joins TD-42's measurement in H2.4. (b) Keep the refusal, and move the sweep out of the `OPTIONAL`. That is a change to three templates, not a port, and alters the operations' behaviour when `?g` is empty | (a). **Decided 2026-10-12: (a) by default, and (c) as an override the caller chooses** (steps 1, 2 and 8) |
 | H2.3-Q3 | `$assertGraph` and `$retractGraph` | (a) **declare them optional, as the template treats them.** The port changes nothing, and a patch-log caller who leaves them out gets a receipt without them, unguarded, as today. FMH-2.7 then declares requiredness per receipt model, since its parameter declarations live in the compiled profile, and the builder takes the resolved receipt model from there. (b) Pass the resolved dimensions to the builders now and make the two required under `dal:PatchLog`. A change in FMH-2.3, and a second input to every builder | (a). **Decided 2026-10-12: (a)** |
-| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for FMH-2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-H2-3`. Recorded as H-D21 |
+| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for FMH-2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-2.3`. Recorded as H-D21 |
 
 #### Parameter kinds
 
@@ -619,7 +619,7 @@ H2.3b:
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
+One Validation Pack, `FMH-2.3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
 exceed the slice-sizing rule (H-D21). Every port passes the harness with guards off, its bindings equal its template's tags, every graph
 has the role `GRAPH_ROLES` gives it, and every semantic rule a builder relies on has an engine test (plan §5.1): the
 join on an outer `?g` (step 2), an unbound `OPTIONAL` variable skipping only its own template triple (the head on a
@@ -698,7 +698,7 @@ H2.4 stops and asks.
 
 | # | Question | Options and consequences | Leaning |
 |---|---|---|---|
-| H2.4-Q1 | ADR-A123 decision 4 says the IR holds a reference to the `OwnershipTree`, and `instantiate` has only the path | (a) **the compiled path is the IR's reference to the tree.** The builder takes it with `Bindings.path`, the read set marks the sweep `closure` with the path's text, and FMH-5 reads the path. The tree stays in `persistence.boundary`, where `compile` and FMH-2.8's payload check use it. A dated addendum corrects the wording of decision 4. (b) Carry the tree into the compiled profile, so `instantiate` can rebuild it. That needs the boundary shape in the profile, a vocabulary change, for no reader that the path does not already serve | (a). **Why it drifted, and the impact, 2026-10-12.** The sentence came from the typed IR brief (§3.1), which took the ownership sketch's "`OwnershipTree` as typed IR values" without checking where the IR is built. ADR-A79 already had `instantiate` read only the compiled profile, H2-Q5 (a) then kept the IR out of the profile, and FMH-H2-2's decision 2 put the builders in `instantiate`, so the IR can hold only what the profile holds, the path. Under (a) nothing in code changes. The read sets, FMH-2.8's `payload-check` query and an SDK use the path. FMH-4's C10 check and FMH-5's models have the tree on the `compile` side, and a relational realisation reads it from the configuration. What `instantiate` cannot do is check the path against the tree, which FMH-HO4's property test and FMH-4's C10 cover. **Decided 2026-10-12: (a)**, with H2-Q7 (A): the IR is not stored until PDD-06's ADR decides a stored IR, and the rules SI-1 to SI-6 of the [typed IR sketch §9.4](../sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) keep that possible. Recorded as ADR-A123's third addendum |
+| H2.4-Q1 | ADR-A123 decision 4 says the IR holds a reference to the `OwnershipTree`, and `instantiate` has only the path | (a) **the compiled path is the IR's reference to the tree.** The builder takes it with `Bindings.path`, the read set marks the sweep `closure` with the path's text, and FMH-5 reads the path. The tree stays in `persistence.boundary`, where `compile` and FMH-2.8's payload check use it. A dated addendum corrects the wording of decision 4. (b) Carry the tree into the compiled profile, so `instantiate` can rebuild it. That needs the boundary shape in the profile, a vocabulary change, for no reader that the path does not already serve | (a). **Why it drifted, and the impact, 2026-10-12.** The sentence came from the typed IR brief (§3.1), which took the ownership sketch's "`OwnershipTree` as typed IR values" without checking where the IR is built. ADR-A79 already had `instantiate` read only the compiled profile, H2-Q5 (a) then kept the IR out of the profile, and FMH-2.2's decision 2 put the builders in `instantiate`, so the IR can hold only what the profile holds, the path. Under (a) nothing in code changes. The read sets, FMH-2.8's `payload-check` query and an SDK use the path. FMH-4's C10 check and FMH-5's models have the tree on the `compile` side, and a relational realisation reads it from the configuration. What `instantiate` cannot do is check the path against the tree, which FMH-HO4's property test and FMH-4's C10 cover. **Decided 2026-10-12: (a)**, with H2-Q7 (A): the IR is not stored until PDD-06's ADR decides a stored IR, and the rules SI-1 to SI-6 of the [typed IR sketch §9.4](../sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) keep that possible. Recorded as ADR-A123's third addendum |
 | H2.4-Q2 | where Oxigraph runs | (a) an optional extra of `tools/persistence`, (b) a spike only, (c) a required test dependency | **Decided 2026-10-12: a test-support package at `tools/testing/oxigraph`**, since it is not a runtime backend or store SPI (ADR-A75) but an engine for tests and conformance. It holds the in-memory Oxigraph adapter (`update`, `select`, `quads`, and binding `$name` parameters as a caller would), depends on `pyoxigraph>=0.5.11,<0.6`, and is installed by its own `bootstrap:testing-oxigraph`. The persistence engine tests are parametrised over rdflib and Oxigraph, and the Oxigraph cases skip when the package is absent. A task `check:persistence-oxigraph` installs it and runs them. `check:persistence` and `check` are unchanged. A new kind of directory under `tools/`, so [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md), accepted 2026-10-12 |
 | H2.4-Q3 | where the benchmark lives | (a) a spike, (b) a `mise` task, (c) a slow test | **Decided 2026-10-12: a proper check in a new root, `benchmark/persistence-composite-cost`, run on demand.** Its task, `check:persistence-composite-cost`, is not a dependency of `check`. As a check it has a pass criterion: at every size and on both engines the replace leaves exactly the payload and the right row, and it fails on a wrong result. It writes the timings and the fitted growth per engine to a generated, git-ignored report, and it does not fail on slowness, since no budget exists before H5. The maintainer confirmed this pass criterion, and that it must not fail on time, on 2026-10-12. A new root, so [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md), accepted 2026-10-12 |
 | H2.4-Q4 | slice size | (a) **two slices.** FMH-2.4a ports the six templates with their behaviour and engine tests, needing no new toolchain. FMH-2.4b adds Oxigraph per Q2, the probes P1 to P4 and the benchmark per Q3. (b) One slice, about 30 cases, beyond the sizing rule as H-D21 allowed for FMH-2.3 | (a). The two parts are different kinds of work, FMH-2.4a can start before Q2 and Q3 are settled, and only FMH-2.4b can trigger the stop. **Decided 2026-10-12: (a)** |
@@ -749,7 +749,7 @@ FMH-2.4b, the measurements:
 
 #### Planned validation
 
-One Validation Pack per slice, `FMH-H2-4a` and `FMH-H2-4b`, each with `mise run check:persistence` as its one command,
+One Validation Pack per slice, `FMH-2.4a` and `FMH-2.4b`, each with `mise run check:persistence` as its one command,
 and for FMH-2.4b also `mise run check:persistence-oxigraph` and `mise run check:persistence-composite-cost`, the second
 run by hand. The adversarial probes at the gate include a path
 with one alternative dropped (the harness fails), the sweep moved out of its `OPTIONAL` (a replace of an empty aggregate
@@ -773,7 +773,7 @@ probes P2 to P4.
 ### 4.3 FMH-2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13, built 2026-10-13)
 
 **Unit:** slice FMH-2.5 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123 and its four
-addenda. The last ports, guard D (FMH-H2-4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then FMH-2.6 (§4.5).
+addenda. The last ports, guard D (FMH-2.4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then FMH-2.6 (§4.5).
 **Revised** after a design review of FMH-2.5 and FMH-2.6,
 [track-h-feedback.md](../notes/track-h-feedback.md), whose points are cited below as "review §n". Every question is decided
 (2026-10-13). One slice of about 40 cases, beyond the sizing rule as H-D21 allowed for FMH-2.3 (H-D23).
@@ -798,7 +798,7 @@ Ten facts constrain the slice, checked against the code and the templates on 202
 1. **The IR has a top-level `SELECT`, and nothing enforces its rules.** `Select` (projection, `GROUP BY`, `HAVING`) exists since FMH-2.1 and
    renders and parses (FMH-2.1's audit forms in T10). But the random property test (T20) generates only updates, and the checker does not
    refuse an ungrouped projected variable or a non-group term in `HAVING` (review §1.2, B1).
-2. **The IR has no sub-select.** Two templates need one (FMH-H2-1 decision 4).
+2. **The IR has no sub-select.** Two templates need one (FMH-2.1 decision 4).
 3. **No new graph role is needed.** `GRAPH_ROLES` already maps `pinnedGraph`, `retentionGraph`, `keyQuarantineGraph` and `keysGraph`,
    and FMH-2.2's T21 checks every template's graphs against it. `compile` binds `registryGraph`, but no template reads it, since the caller
    reads the bucket list from it. The review's B3 is answered except for `?log` (fact 4).
@@ -900,7 +900,7 @@ Boundness of a projected item, for the checker (review §1.2):
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-5`, recording H-D23, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Adversarial
+One Validation Pack, `FMH-2.5`, recording H-D23, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Adversarial
 probes at the gate: the guard reverted to a fixed `xsd:long` (the Oxigraph guards-on regression fails), an aggregate projected with no
 `GROUP BY` counted as bound (a refusal fires), a sub-select that leaks an inner variable (a refusal fires), `NOT EXISTS` correlation broken
 (the engine test fails), an audit without its `DISTINCT` (a behaviour test fails), and `MIN` replaced by `MAX` (the merge test fails).
@@ -1015,7 +1015,7 @@ owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, 
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-6`, with `mise run check:persistence` as its one command, the expected profiles and the class diagram as its
+One Validation Pack, `FMH-2.6`, with `mise run check:persistence` as its one command, the expected profiles and the class diagram as its
 artefacts, the paper-check table, the list of proposed names, and the table of intended differences. Adversarial probes at the gate: a
 parameter dropped from one expected file (agreement fails), an undeclared `$` added to a golden `.rq` (the names test fails), an example's
 configuration changed without regenerating its expected profile (the base-profile test fails), and a blank node introduced into a
@@ -1204,7 +1204,7 @@ so the pack uses a mutation that ties the receipt to the event instead. An empty
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-6b`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: the
+One Validation Pack, `FMH-2.6b`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: the
 `VALUES` block moved into its own group, so it no longer joins the counter (the three-row test fails), the digest parts declared in the
 other order (the contract test fails), and a patch-log profile that compiles without the warning (the warning's witness fails).
 
@@ -1275,13 +1275,13 @@ moves on this branch. About 450k tokens.
    the operation id without the suffix (H-D25), and `instantiate` finds the builder by it.
 4. **TD-43** per Q1: the value guard's data graph, its builder and its guard, the hand declaration removed, and `HAND_DECLARED` emptied.
 5. **The tests.** Byte equality with the expected files (Q4). The intended-differences table is empty and the test that keeps it non-stale is
-   removed (FMH-H2-6 T5), which is listed for countersignature. Every witness.
+   removed (FMH-2.6 T5), which is listed for countersignature. Every witness.
 6. **Documents.** Both READMEs, ADR-A79's addendum (`dal:templatePath` gone, as ADR-A123 decision 10 said), the catalogue's release table
    (`mise run build:ontology-releases`), and 🔴 the release tag `ontologies-v<next>` owed (ADR-A129, Q5). Revised 2026-10-20.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-7`, with `mise run check:persistence`, `mise run check:persistence-oxigraph`, `mise run check:ontology-versioning`
+One Validation Pack, `FMH-2.7`, with `mise run check:persistence`, `mise run check:persistence-oxigraph`, `mise run check:ontology-versioning`
 and the ontology checks of the `lattice-ontology-authoring` skill. Probes at the gate: an operation with a blank-node declaration (a shape fails),
 an enumeration value outside its kind (a shape fails), a profile emitted without its run choices (byte equality fails), and the value guard's
 pattern moved back to the default graph (`DefaultGraphPattern`).
@@ -1315,7 +1315,7 @@ H2.8-Q1 to Q3 are for the maintainer before a branch.
 |---|---|---|---|
 | H2.8-Q1 | where the caller-side code lives | (a) **`persistence.payload` and `persistence.caller` in `tools/persistence`, as a reference implementation** the tests and the README use, not a published library. (b) a new package under `packages/`, the SDK sketch's option S-A, which needs its own ADR (ADR-A84's precedent) | (a). The SDK is held for the end of Track H **Decided by the maintainer 2026-10-20: (b).** Usable library code under `packages/`, with its own ADR, drafted before FMH-2.8 is briefed |
 | H2.8-Q2 | what bounds an event's triples | (a) **every subject is an event of the batch or a node the slot reaches from one by any predicate**, the connected part, as H2.6b-Q4 (c) says. (b) an event shape per event type, which adopters would have to declare | (a), with (b) left for when a deployment asks for it **Decided by the maintainer 2026-10-20: (c), added that day:** every subject is an event of the batch or a node minted under one event's IRI, so an event may link to an aggregate but never describe it. (b) as an optional tightening where a deployment declares shapes |
-| H2.8-Q3 | an empty `logGraphs` | (a) **the caller check refuses it**, since an audit over the pinned graph alone reports clean (FMH-H2-5, non-coverage). (b) allow it with a warning | (a) **Decided by the maintainer 2026-10-20: (c), added that day:** the audit reports "nothing examined" as a third outcome beside clean and failed |
+| H2.8-Q3 | an empty `logGraphs` | (a) **the caller check refuses it**, since an audit over the pinned graph alone reports clean (FMH-2.5, non-coverage). (b) allow it with a warning | (a) **Decided by the maintainer 2026-10-20: (c), added that day:** the audit reports "nothing examined" as a third outcome beside clean and failed |
 
 #### Revised 2026-10-20
 
@@ -1354,7 +1354,7 @@ diagnostics), decided when it is briefed.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-8`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: a payload with a
+One Validation Pack, `FMH-2.8`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: a payload with a
 subject outside the aggregate (the check refuses), a literal holding `} } ; DROP ALL` (it stays a literal), a digest over a merged list (the vector
 test fails), an `xsd:integer` epoch on Oxigraph (the strict caller check refuses where the store's guard would pass), and an empty `logGraphs`.
 
@@ -1425,7 +1425,7 @@ it. Versioning is ignored on this branch (TD-64).
 
 #### Planned validation
 
-`FMH-H2-6c`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes: an `append-version` that deletes the
+`FMH-2.6c`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes: an `append-version` that deletes the
 prior version (the second-version test fails), one that skips `fnd:supersededBy` (the chain test fails), a versioned class compiled in
 place without the warning (its witness fails).
 
@@ -1446,7 +1446,7 @@ as-of read is restated to read backward from the current state (TD-48). `Receipt
   the append disciplines, whose versions and records take their position and transaction time from the receipt. The transaction claim
   stays wherever a compare-and-set or an append can be retried.
 
-Validation Pack `FMH-H2-6d`. About 280k tokens. Runs after H2.6c.
+Validation Pack `FMH-2.6d`. About 280k tokens. Runs after H2.6c.
 
 ### 4.11 H2.6e: how references between versions are declared (planned 2026-10-20)
 
@@ -1462,7 +1462,7 @@ unless an edge declares otherwise.
 
 Pros: one declaration, where ownership already lives, so an adopter states both facts about an edge in one place. The checks are at
 compile time and in the caller, with no store cost. Cons: a second classification on every edge an adopter writes, though the default
-needs none. Deferring reads means early consumers write the resolving query themselves. `FMH-H2-6e`. About 120k tokens.
+needs none. Deferring reads means early consumers write the resolving query themselves. `FMH-2.6e`. About 120k tokens.
 
 ### 4.12 H2.6f: how a root version lists its members, with fixtures and a benchmark (planned 2026-10-20)
 
@@ -1482,7 +1482,7 @@ and not the default.
 
 Fixtures (EX-Q2 (b)): a TriG file per chosen strategy, the stored triples of E5 and E7 under each encoding, checked by a test against
 their counts. Benchmark (EX-Q2 (c), ADR-A124): `benchmark/persistence-membership/`, full against delta against in-place with a patch log,
-writes and reads at 1, 10 and 100 versions of a 500-member set, failing on a wrong count, never on time. `FMH-H2-6f`. About 300k tokens.
+writes and reads at 1, 10 and 100 versions of a 500-member set, failing on a wrong count, never on time. `FMH-2.6f`. About 300k tokens.
 
 ### 4.13 W-65: Wording shares values across assembled wordings (planned 2026-10-20, TD-65)
 
@@ -1518,7 +1518,7 @@ module at 0.x. `FMH-AIR-66`. About 80k tokens.
 
 ### 4.18 FMH-2.8c: the follow-ups of the FMH-2.6 and FMH-2.8 reviews (planned 2026-10-20)
 
-Decided by the maintainer on 2026-10-20 in the review of FMH-H2-6d to FMH-H2-8b. Runs after H2.8b and before FMH-2.9, since FMH-2.9 deletes the
+Decided by the maintainer on 2026-10-20 in the review of FMH-2.6d to FMH-2.8b. Runs after H2.8b and before FMH-2.9, since FMH-2.9 deletes the
 templates these steps would otherwise change twice.
 
 1. **Each edge stated once (H2.6e (2), the middle ground).** The payload contract names its boundary shape (H2.8b, D-31) and points at
@@ -1537,7 +1537,7 @@ templates these steps would otherwise change twice.
    place each, that under `dal:DeltaMembership` the digest's add and del parts hold the added and dropped members, and under a patch log
    the added and removed triples, with an example of each. The contract's part declarations carry the same note.
 
-`FMH-H2-8c`. About 150k tokens.
+`FMH-2.8c`. About 150k tokens.
 
 ### 4.15 FMH-2.9: Mustache retired (planned 2026-10-20)
 
@@ -1560,10 +1560,10 @@ Added 2026-10-20 by the maintainer's decisions:
 
 Steps: remove the templates and their check, `render.py` and the `chevron` dependency, and the harness tests (listed for countersignature,
 since they are removed, ADR-grade justification: their subject no longer exists). S-3 reads the parameter declarations instead of the
-`$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-H2-9`. About 250k
+`$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-2.9`. About 250k
 tokens.
 
-**Built 2026-10-21** ([FMH-H2-9](../validation/FMH-2.9.md)), awaiting review.
+**Built 2026-10-21** ([FMH-2.9](../validation/FMH-2.9.md)), awaiting review.
 
 ### 4.17 H2.6g: every NOT EXISTS reads the graph it means (planned 2026-10-20, TSD-34)
 
@@ -1579,7 +1579,7 @@ a `GRAPH` block, for example the deleted-row guard `FILTER NOT EXISTS { $root pa
    recorded in the test.
 4. A rule in the IR checker, so a new builder cannot reintroduce the shape: a `NotExists` inside a `GraphBlock` names its graph.
 
-`FMH-H2-6g`. About 120k tokens. Runs after FMH-2.7, before H2.8.
+`FMH-2.6g`. About 120k tokens. Runs after FMH-2.7, before H2.8.
 
 ### 4.19 H2.11: the Persistence README as a literate specification (planned 2026-10-20)
 
@@ -1617,9 +1617,9 @@ Split into two slices (RL-Q1 (a)), so the migration check judges one and a revie
    The sources check, `check:persistence`, `check:persistence-oxigraph` and `check:ontology-catalog` pass, and the expected profiles are
    unchanged.
 
-Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-H2-11a`. About 400k tokens.
+Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-2.11a`. About 400k tokens.
 
-**Built 2026-10-21** ([FMH-H2-11a](../validation/FMH-2.11a.md)), awaiting review. TD-01 is closed. The probe changed a domain, since the
+**Built 2026-10-21** ([FMH-2.11a](../validation/FMH-2.11a.md)), awaiting review. TD-01 is closed. The probe changed a domain, since the
 spec has no restriction row, and the migration check failed naming the triple.
 
 #### FMH-2.11b: the narrative, the pictures, the gotchas
@@ -1639,9 +1639,9 @@ spec has no restriction row, and the migration check failed naming the triple.
    check passes.
 
 Probe: a diagram with a syntax error (the render check fails), a narrative paragraph citing a working document (the sources check fails).
-`FMH-H2-11b`. About 300k tokens.
+`FMH-2.11b`. About 300k tokens.
 
-**Built 2026-10-21** ([FMH-H2-11b](../validation/FMH-2.11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
+**Built 2026-10-21** ([FMH-2.11b](../validation/FMH-2.11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
 cross references are 5.15. The migration check passes with the same 137 reconciliations, both probes failed as expected, and D-64 is closed.
 
 ### 4.16 Order, from 2026-10-20

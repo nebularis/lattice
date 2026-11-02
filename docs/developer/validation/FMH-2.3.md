@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.3, the named-graph row writers
+# Validation Pack: FMH-2.3, the named-graph row writers
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.3, planned in
 [plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12) under

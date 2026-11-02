@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.4a, refuse a composite boundary with several node properties
+# Validation Pack: FMH-1.4a, refuse a composite boundary with several node properties
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-1.4a, the first half
 of [plan §3, H1.4](../plans/formal-methods-track-h.md). FMH-1.4b, the gap report, follows.

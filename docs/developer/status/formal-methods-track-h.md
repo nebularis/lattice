@@ -62,12 +62,12 @@ FMH-TS-2. The review tranche R1 to R10 was answered on 2026-10-20 (History). Ver
 
 | # | What | Where |
 |---|---|---|
-| Q1 | FMH-2.9's decisions D-43 and D-45 to D-49 (D-42 and D-44 approved), and the 77 removed test cases and changed tests for countersignature | [FMH-H2-9](../validation/FMH-2.9.md) |
-| Q2 | FMH-2.11a's decisions D-50 to D-58 and D-60 to D-64 (D-59 decided), the 85 drafted definitions and 21 rewritten comments, and the release notes' effect classes (D-62) | [FMH-H2-11a](../validation/FMH-2.11a.md) |
-| Q3 | FMH-2.11b's decisions D-65 to D-67 | [FMH-H2-11b](../validation/FMH-2.11b.md) |
-| Q4 | the follow-ups' decisions D-68 to D-73, among them closing the three enumerations of one member (D-68) | FMH-H2-11b, "Follow-ups of 2026-10-21" |
+| Q1 | FMH-2.9's decisions D-43 and D-45 to D-49 (D-42 and D-44 approved), and the 77 removed test cases and changed tests for countersignature | [FMH-2.9](../validation/FMH-2.9.md) |
+| Q2 | FMH-2.11a's decisions D-50 to D-58 and D-60 to D-64 (D-59 decided), the 85 drafted definitions and 21 rewritten comments, and the release notes' effect classes (D-62) | [FMH-2.11a](../validation/FMH-2.11a.md) |
+| Q3 | FMH-2.11b's decisions D-65 to D-67 | [FMH-2.11b](../validation/FMH-2.11b.md) |
+| Q4 | the follow-ups' decisions D-68 to D-73, among them closing the three enumerations of one member (D-68) | FMH-2.11b, "Follow-ups of 2026-10-21" |
 | Q5 | FMH-TS-1's decisions and changed tests, among them the session-wide translate-once cache that tests running SPARQL directly on rdflib now go through | [FMH-TS-1](../validation/FMH-TS-1.md) |
-| Q6 | 26 stale anchors outside Persistence whose right target is not clear, mostly `#phase-N` links in `docs/developer/INDEX.md` | FMH-H2-11b, D-72 |
+| Q6 | 26 stale anchors outside Persistence whose right target is not clear, mostly `#phase-N` links in `docs/developer/INDEX.md` | FMH-2.11b, D-72 |
 
 ### Before the merge into `main`
 
@@ -83,7 +83,7 @@ Done 2026-10-21:
 
 Left for the maintainer:
 
-1. **Countersignature:** done. FMH-H2-9, FMH-TS-1 and `test_c8b_09` were countersigned on 2026-10-21.
+1. **Countersignature:** done. FMH-2.9, FMH-TS-1 and `test_c8b_09` were countersigned on 2026-10-21.
 2. **The merge**, once the conformance run below is accepted. `mise run check:persistence-conformance` passed on the merge candidate on
    2026-10-21 (4353 passed, 1 xfailed), and `mise run check:full-sweep` passed every check.
 3. **After the merge**, then the release tags it prints, `ontologies-v0.19.0` and the applied tags among them.
@@ -409,7 +409,7 @@ Left for the maintainer:
   indexes follow. The maintainer merged `main` into this branch (`b0fce2a`). On the open question of whether
   `compile` should fail on gaps, we chose option C: the gap rules for a declaration the compiler ignores become
   compile diagnostics or refusals (see the entry that follows).
-- 2026-10-10: option C carried out ([FMH-H1-4c](../validation/FMH-1.4c.md)). A declaration the compiler cannot
+- 2026-10-10: option C carried out ([FMH-1.4c](../validation/FMH-1.4c.md)). A declaration the compiler cannot
   honour is a compile warning or a refusal, never a gap. An unconditional write for a boundary with no named graph is
   now refused (`UnconditionalWriteRequiresNamedGraph`, TD-02 reworded), the shard-count gap rule duplicated an
   existing warning and is gone, and the gap report keeps four standing entries and is informational only. Open for
@@ -458,10 +458,10 @@ Left for the maintainer:
   be wrong. (3) `INFO` and its warning option get witnesses in FMH-2.8, and the witness harness learns the new
   family, since it records only `WARNING` diagnostics today (§7.3). (4) The paper check of the logical
   resources against `lattice-sql.md` §9 moves to FMH-2.6 (§7.2).
-- 2026-10-10: FMH-2.0 built ([FMH-H2-0](../validation/FMH-2.0.md)). [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
+- 2026-10-10: FMH-2.0 built ([FMH-2.0](../validation/FMH-2.0.md)). [ADR-A123](../../architecture/decisions/ADR-A123-typed-operation-ir.md)
   is drafted Proposed and catalogued. A123 was free on every remote branch. The ADR-A79 addendum is drafted at the foot of
   A123 and applied on acceptance, since an accepted ADR should not carry text for a decision not yet taken.
-- 2026-10-10: FMH-2.1 built ([FMH-H2-1](../validation/FMH-2.1.md)). `persistence.ir` (the values) and
+- 2026-10-10: FMH-2.1 built ([FMH-2.1](../validation/FMH-2.1.md)). `persistence.ir` (the values) and
   `persistence.ir_render` (26 named refusals, rendering, derived read and write sets). Nothing calls them yet.
   `check:persistence` at 1849 passed and 1 xfailed (489 added). The property test of adversarial literals
   found a defect in the existing `Literal.encode`: a value holding a backslash before `u` was written so that
@@ -471,7 +471,7 @@ Left for the maintainer:
   are in the Validation Pack.
 - 2026-10-10: the maintainer accepted ADR-A123, and we applied the dated ADR-A79 addendum and catalogued both. The
   maintainer confirmed the four decisions of FMH-H2-1. A review of FMH-2.1 found five defects and fixed each with a test
-  ([FMH-H2-1, Review](../validation/FMH-2.1.md#review-2026-10-10)). The serious one: the required-parameter guard
+  ([FMH-2.1, Review](../validation/FMH-2.1.md#review-2026-10-10)). The serious one: the required-parameter guard
   rendered as a top-level `FILTER`, which applies after the group's patterns, so a replace with no `$root` bound
   `$root` from the data and wrote every matching aggregate. The guard is now its own group, and ADR-A123 decision 5
   says so, corrected before acceptance. The others: prefix compaction changed a literal that looked like an IRI, an
@@ -491,12 +491,12 @@ Left for the maintainer:
   form cost about 60% on a 20,000-triple sweep. The maintainer also raised a SPARQL semantic IR for a later phase,
   recorded as PDD-06 and plan §5.1, with an interim rule that every semantic rule the checker encodes gets an engine
   test. The suite was not run (1,876 cases collected).
-- 2026-10-12: ran the FMH-H2-1 one command after pulling. `check:persistence` gave 4 failures, all in T29
+- 2026-10-12: ran the FMH-2.1 one command after pulling. `check:persistence` gave 4 failures, all in T29
   (`a_bind_sees_only_its_own_group`). The query selected only `?b`, and rdflib 7.6.0 drops a row whose projected
   variables are all unbound, so the expected `[None]` came back empty. The queries now select `?a ?b` and read `?b`,
   which asserts the same scope rule. The expected values are unchanged. `check:persistence` then gave
   `1875 passed, 1 xfailed`.
-- 2026-10-12: FMH-2.2 built ([FMH-H2-2](../validation/FMH-2.2.md)). The equivalence harness (`tests/equivalence.py`) holds a
+- 2026-10-12: FMH-2.2 built ([FMH-2.2](../validation/FMH-2.2.md)). The equivalence harness (`tests/equivalence.py`) holds a
   builder to its template as normalised rdflib algebra, with the guard off, and `bootstrap-version-row` and
   `append-event` (each with its dataset-guard variant) are ported in `persistence.builders`. The harness caught my
   first port of `append-event` at once: I had put an `epoch` triple in the non-dataset `INSERT` that the template does
@@ -538,7 +538,7 @@ Left for the maintainer:
   on the parameter (`Param(..., equals=...)`), derived by `ParameterGuard.derive` and validated by `check` as a guard
   expression. The plan's step 8 says so.
 
-- 2026-10-12: FMH-2.3 built ([FMH-H2-3](../validation/FMH-2.3.md)), autonomously on this branch. The create, replace and
+- 2026-10-12: FMH-2.3 built ([FMH-2.3](../validation/FMH-2.3.md)), autonomously on this branch. The create, replace and
   tombstone builders, each with its dataset-guard variant, and the unconditional write are ported, and the harness compares 90
   operations, all equal to their templates. The scope rule follows the join (H2.3-Q2) with an engine test. `Param.equals`
   carries the naming check of the caller-named graph, as the maintainer directed, so a builder never writes a guard
@@ -553,10 +553,10 @@ Left for the maintainer:
   rule at its edges behaved as the join rule says. Fixed: an unknown `graph_names` is now refused by every builder, not only
   those that name a graph. Recorded: on rdflib a template triple whose graph variable is unbound is written to a new
   blank-node graph (TD-44), which matters only with guards off. The status line, which still described FMH-2.2, is corrected.
-- 2026-10-12: the maintainer countersigned both FMH-H2-3 items, the removed FMH-2.1 refusal case and FMH-HO8's test input made
-  `xsd:long`. FMH-2.0 to FMH-2.3 are marked ready for the maintainer's merge. FMH-H2-2's decisions 2 and 3 remain unconfirmed,
+- 2026-10-12: the maintainer countersigned both FMH-2.3 items, the removed FMH-2.1 refusal case and FMH-HO8's test input made
+  `xsd:long`. FMH-2.0 to FMH-2.3 are marked ready for the maintainer's merge. FMH-2.2's decisions 2 and 3 remain unconfirmed,
   recommended for acceptance.
-- 2026-10-12: the maintainer accepted FMH-H2-2's decisions 2 (`instantiate` renders the ported operations from their
+- 2026-10-12: the maintainer accepted FMH-2.2's decisions 2 (`instantiate` renders the ported operations from their
   builders now) and 3 (the harness corpus is every fixture that compiles). No decision is open in FMH-2.0 to H2.3.
 - 2026-10-12: FMH-2.0 to FMH-2.3 are merged to `main`, and `main` is merged back into this branch (`361b25e`). H2.4 planned in
   [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12):
@@ -584,14 +584,14 @@ Left for the maintainer:
   (`tools/testing/`). Both numbers were rechecked after the merge and are free. AGENTS.md's table of roots, the root README,
   the Copilot copy (`build:agent-guidance`, then `check:agent-guidance` with 0 problems) and an addendum to ADR-A77 name both.
 
-- 2026-10-12: FMH-2.4a built ([FMH-H2-4a](../validation/FMH-2.4a.md)), autonomously on this branch. The six composite templates are
+- 2026-10-12: FMH-2.4a built ([FMH-2.4a](../validation/FMH-2.4a.md)), autonomously on this branch. The six composite templates are
   ported, and the harness, binding, guard and role cases cover them. A replace with no `$root` over two aggregates writes nothing
   guarded, and unguarded rdflib sweeps both aggregates, writes the payload once and moves both rows (T3). SI-1 and SI-2 have
   tests: every ported operation encodes structurally and back, builds equal twice, and builds with the file, clock and
   environment closed (T8 to T11). The lifecycle tests of FMH-HO1, FMH-HO5 and FMH-HO7 bound `$epoch` as an `xsd:integer`, which the guard
   refuses, so their request and stored epochs are `xsd:long`, assertions unchanged (listed for countersignature). `check:persistence`
   gave `2035 passed, 1 xfailed`. Six probes, all caught.
-- 2026-10-12: FMH-2.4b built ([FMH-H2-4b](../validation/FMH-2.4b.md)), autonomously on this branch, after H2.4a. The packages `tools/testing/oxigraph` and
+- 2026-10-12: FMH-2.4b built ([FMH-2.4b](../validation/FMH-2.4b.md)), autonomously on this branch, after H2.4a. The packages `tools/testing/oxigraph` and
   `benchmark/persistence-composite-cost` are created per ADR-A125 and ADR-A124, and six test modules run on rdflib and on Oxigraph. **R0 is right on
   Oxigraph, so the plan's stop did not arise.** Findings, none a wrong result: (1) Oxigraph 0.5.11 stores `"1"^^xsd:long` as `xsd:integer`, so the parameter
   guard's datatype test can never pass there (TD-45, **decision 1 is open**, with options A to C and a leaning); (2) R0 needs memory quadratic in the
@@ -607,7 +607,7 @@ Left for the maintainer:
   processes and passes on every run, listed for countersignature in FMH-H2-4b. The Validation Pack, the sketch's §4.3 note and TD-42 are
   corrected. Oxigraph's findings were re-run directly and hold, and Oxigraph's source (`eval_delete_insert`) confirms it collects every
   mutation in a `Vec` before applying them in order. `check:persistence-oxigraph` gave 66 passed.
-- 2026-10-13: the maintainer decided FMH-H2-4b decision 1, option D, a self-calibrating datatype test
+- 2026-10-13: the maintainer decided FMH-2.4b decision 1, option D, a self-calibrating datatype test
   (`DATATYPE($p) = DATATYPE("0"^^xsd:long)`), recorded as ADR-A123's fourth addendum and built in FMH-2.5, and countersigned the corrected P1
   test. Planned FMH-2.5 (the ten remaining ports, a sub-select in the IR, guard D, engine tests for `MIN` over IRIs, counts of numeric terms
   and `GROUP_CONCAT`'s order) and FMH-2.6 (expected compiled profiles for eight examples covering every operation kind, an agreement test with
@@ -622,7 +622,7 @@ Left for the maintainer:
   cloud agent, not in parallel. FMH-2.5 goes first, so FMH-2.6 derives every operation from a builder. Plan §4.3 to §4.5, ADR-A123 (a fifth
   addendum and a point in the fourth), the typed IR sketch's §7 and §9.4, and five open questions in the triple-store record (TSD-Q6 to
   Q10) are updated. FMH-2.5 is ready to branch.
-- 2026-10-13: FMH-2.5 built ([FMH-H2-5](../validation/FMH-2.5.md)), autonomously on the branch, in the six gates of plan §4.3. Guard D and the
+- 2026-10-13: FMH-2.5 built ([FMH-2.5](../validation/FMH-2.5.md)), autonomously on the branch, in the six gates of plan §4.3. Guard D and the
   extended probe P5 (no divergence, so no stop), the `SELECT` fragment with four new rules and the boundness table, ten builders (every
   template but `cas-replace-value-guard` is now ported), and behaviour tests on both engines with the guards on and off. Running the audits
   found three differences between the stores that change results, now TSD-16 (rdflib's `MIN` over IRIs returns a literal), TSD-17 (Oxigraph groups
@@ -630,12 +630,12 @@ Left for the maintainer:
   with TSD-18 to TSD-20 beside them. TSD-17 is worked around in the renderer. TSD-16 needs a decision (Validation Pack, decision 1). TD-34 is
   closed and TD-45's guard part is done. Seven adversarial probes were run and each was caught. `check:persistence` and
   `check:persistence-oxigraph` ran and passed here.
-- 2026-10-13: the maintainer decided FMH-H2-5 decision 1, option B (the canonical owner of a merge is `IRI(MIN(STR(?owner)))`), and that decision 3
+- 2026-10-13: the maintainer decided FMH-2.5 decision 1, option B (the canonical owner of a merge is `IRI(MIN(STR(?owner)))`), and that decision 3
   (the fragment-limit fields) is fine for now. Option B is built in the template and the builder, with the checker allowing an aggregate inside a scalar
   function of a projection. Decision 2, how the builder and the template agree about arithmetic, is open with a leaning to parenthesise the template as well.
-- 2026-10-13: the maintainer decided FMH-H2-5 decision 2, option B, and approved the rest. The gap-scan template now says `(?S - ?L) + 1`, the harness
+- 2026-10-13: the maintainer decided FMH-2.5 decision 2, option B, and approved the rest. The gap-scan template now says `(?S - ?L) + 1`, the harness
   normalisation for arithmetic chains is removed, and FMH-2.5 has no open decision.
-- 2026-10-13: FMH-2.6 built ([FMH-H2-6](../validation/FMH-2.6.md)), autonomously on the branch, and stopped for the maintainer's review. The contract of an
+- 2026-10-13: FMH-2.6 built ([FMH-2.6](../validation/FMH-2.6.md)), autonomously on the branch, and stopped for the maintainer's review. The contract of an
   operation is derived in production code (`persistence.contract`: kinds, access modes, the role-to-resource mapping, builder versions), with the checker
   giving each access a mode. Ten files in `ontology/persistence/test/expected-profiles/` (the eight examples, the caller-named variant, and the
   enumerations) are held to the builders, to `compile` and to a golden check on builder versions by 114 new cases. Mapping findings: only the keys graph
@@ -677,7 +677,7 @@ Left for the maintainer:
   event half on its own: events as `VALUES` rows in an `eventRows` slot, event data in an `eventTriples` slot, the digest's payload and
   event parts, and the warning. FMH-2.8's checks no longer name the add and del graphs. FMH-2.6b is ready to branch once the planning documents
   are on `main`.
-- 2026-10-14: FMH-2.6b's event half built autonomously on the branch ([FMH-H2-6b](../validation/FMH-2.6b.md)). An append takes `{{{eventRows}}}` and
+- 2026-10-14: FMH-2.6b's event half built autonomously on the branch ([FMH-2.6b](../validation/FMH-2.6b.md)). An append takes `{{{eventRows}}}` and
   `{{{eventTriples}}}`, the contract declares the event digest part, and `compile` warns `ReceiptModelNotHonoured` for both models, so six expected
   profiles changed. TSD-21 recorded. The patch-log half, FMH-2.7 and FMH-2.8 are not built.
 - 2026-10-14: reviewed FMH-2.6b's event half. It is built as briefed, and the pack reports honestly that the plan's `VALUES`-in-a-group probe
@@ -743,38 +743,38 @@ Left for the maintainer:
 | D-4 | W-65 | a value still belongs to at least one assembled wording (minimum kept), so a value in no wording is reported | FMH-W65 |
 | D-5 | W-65 | the endorsement example asserts `ex:sec-2 fnd:supersededBy ex:sec-2-v2`, and the new section version repeats `ex:sec-2`'s object id and rank key | FMH-W65 |
 | D-6 | W-65 | one changed test, the Wording example count, for countersignature. No law yet checks that two wordings sharing a value are versions of one identity | FMH-W65 |
-| D-7 | FMH-2.6d | a receipt names a delta graph only where the write fills it: a create `pat:asserts`, a tombstone `pat:retracts`, a replace both | FMH-H2-6d |
-| D-8 | FMH-2.6d | the IR's one-payload-slot rule dropped, since a replace under a patch log has three slots | FMH-H2-6d |
-| D-9 | FMH-2.6d | under `dal:NoReceipt` the tombstone drops `$cause` and `$actor`, the gap scan and receipt-side fork audits are not generated, and a composite family may declare it though `dal:ReceiptOnly` is refused for composites. To ratify or refuse | FMH-H2-6d |
-| D-10 | FMH-2.6d | a patch log declared on a family that never writes one (an append discipline, an append-only concurrency, an unconditional or value-guarded write) has no warning, following the brief. A warning is a small follow-up if wanted | FMH-H2-6d, TD-46 |
-| D-11 | FMH-2.6d | a no-receipt family needs its own meta shard, since another family's gap scan would read its rows. Documented, not checked | FMH-H2-6d |
-| D-12 | FMH-2.6d | the receipt-only composite templates are reachable only through the snapshot model, candidates for removal in FMH-2.9 | FMH-H2-6d |
-| D-13 | H2.6e | the profile records every node-leading edge, the default mode stated, and the payload contract carries them too, so they are stated twice | FMH-H2-6e |
-| D-14 | H2.6e | a pinned value property is refused, and an unknown mode is refused at compile, not by a shape | FMH-H2-6e |
-| D-15 | H2.6e | the evidence warning reads the source shape's target class. "A class the profile names as a record" is not built, since a profile cannot name one (TD-67) | FMH-H2-6e, TD-67 |
-| D-16 | H2.6f | the caller passes the full list and `pat:checkpoint true` on the first version and every `checkpointEvery`th, and the member slots otherwise. A version with no checkpoint before it has no members. Checkpoints found by their marker, not by seq | FMH-H2-6f |
-| D-17 | H2.6f | the member slots reuse the digest's add and del parts, and the membership property is a parameter of the members read | FMH-H2-6f |
-| D-18 | H2.6f | the members read keeps its correct but slow form (98.6 s for 100 versions on rdflib, 1.7 s on Oxigraph). A sub-select form was fast on rdflib but returned wrong results. **Corrected 2026-10-20 by TSD-34:** parameters in a sub-select are applied. The cause is rdflib evaluating a `NOT EXISTS` with no `GRAPH` against the default graph after the first solution. TD-68 to be corrected the same way | FMH-H2-6f, TD-68 |
+| D-7 | FMH-2.6d | a receipt names a delta graph only where the write fills it: a create `pat:asserts`, a tombstone `pat:retracts`, a replace both | FMH-2.6d |
+| D-8 | FMH-2.6d | the IR's one-payload-slot rule dropped, since a replace under a patch log has three slots | FMH-2.6d |
+| D-9 | FMH-2.6d | under `dal:NoReceipt` the tombstone drops `$cause` and `$actor`, the gap scan and receipt-side fork audits are not generated, and a composite family may declare it though `dal:ReceiptOnly` is refused for composites. To ratify or refuse | FMH-2.6d |
+| D-10 | FMH-2.6d | a patch log declared on a family that never writes one (an append discipline, an append-only concurrency, an unconditional or value-guarded write) has no warning, following the brief. A warning is a small follow-up if wanted | FMH-2.6d, TD-46 |
+| D-11 | FMH-2.6d | a no-receipt family needs its own meta shard, since another family's gap scan would read its rows. Documented, not checked | FMH-2.6d |
+| D-12 | FMH-2.6d | the receipt-only composite templates are reachable only through the snapshot model, candidates for removal in FMH-2.9 | FMH-2.6d |
+| D-13 | H2.6e | the profile records every node-leading edge, the default mode stated, and the payload contract carries them too, so they are stated twice | FMH-2.6e |
+| D-14 | H2.6e | a pinned value property is refused, and an unknown mode is refused at compile, not by a shape | FMH-2.6e |
+| D-15 | H2.6e | the evidence warning reads the source shape's target class. "A class the profile names as a record" is not built, since a profile cannot name one (TD-67) | FMH-2.6e, TD-67 |
+| D-16 | H2.6f | the caller passes the full list and `pat:checkpoint true` on the first version and every `checkpointEvery`th, and the member slots otherwise. A version with no checkpoint before it has no members. Checkpoints found by their marker, not by seq | FMH-2.6f |
+| D-17 | H2.6f | the member slots reuse the digest's add and del parts, and the membership property is a parameter of the members read | FMH-2.6f |
+| D-18 | H2.6f | the members read keeps its correct but slow form (98.6 s for 100 versions on rdflib, 1.7 s on Oxigraph). A sub-select form was fast on rdflib but returned wrong results. **Corrected 2026-10-20 by TSD-34:** parameters in a sub-select are applied. The cause is rdflib evaluating a `NOT EXISTS` with no `GRAPH` against the default graph after the first solution. TD-68 to be corrected the same way | FMH-2.6f, TD-68 |
 | D-19 | TSD-34 follow-up | every template with a `NOT EXISTS` inside a `GRAPH` block and no `GRAPH` of its own, for example the deleted-row guard, is probed over a seed sweep on rdflib (TSD-Q19) after FMH-2.7, and given its own `GRAPH` where it can be wrong. Planned as H2.6g | TSD-34 |
-| D-20 | FMH-2.7 | `GeneratedOperation.template_id` keeps its suffix in memory until FMH-2.9, only the profile drops it | FMH-H2-7 |
-| D-21 | FMH-2.7 | `dal:templateVersion` moves to the generated operation, and `dal:boundaryShape` and `dal:referenceEdge` lose their `rdfs:domain`, since the contract is a second use | FMH-H2-7 |
-| D-22 | FMH-2.7 | `MissingDataGraph` applies only where the value guard is generated. The value guard's resource is `dal:PropertyValue`, keyed by root, builder version 2 | FMH-H2-7 |
-| D-23 | FMH-2.7 | declaration IRIs include the deployment where there is one. `dal:HandDeclared` kept as an escape hatch | FMH-H2-7 |
-| D-24 | FMH-2.7 | five FMH-2.6 tests removed and two replaced by the isomorphism test, for countersignature. The `pat:` terms checked against the guide's Appendix A by hand, since a test reading `docs/architecture` breaks the catalogue's reach rule | FMH-H2-7 |
+| D-20 | FMH-2.7 | `GeneratedOperation.template_id` keeps its suffix in memory until FMH-2.9, only the profile drops it | FMH-2.7 |
+| D-21 | FMH-2.7 | `dal:templateVersion` moves to the generated operation, and `dal:boundaryShape` and `dal:referenceEdge` lose their `rdfs:domain`, since the contract is a second use | FMH-2.7 |
+| D-22 | FMH-2.7 | `MissingDataGraph` applies only where the value guard is generated. The value guard's resource is `dal:PropertyValue`, keyed by root, builder version 2 | FMH-2.7 |
+| D-23 | FMH-2.7 | declaration IRIs include the deployment where there is one. `dal:HandDeclared` kept as an escape hatch | FMH-2.7 |
+| D-24 | FMH-2.7 | five FMH-2.6 tests removed and two replaced by the isomorphism test, for countersignature. The `pat:` terms checked against the guide's Appendix A by hand, since a test reading `docs/architecture` breaks the catalogue's reach rule | FMH-2.7 |
 
-| D-25 | H2.6g | all 29 operations with the shape name their graph, not only those the defect could affect (none could), so the checker rule has no exception. 15 builder versions bumped | FMH-H2-6g |
-| D-26 | H2.6g | a test asserts rdflib's context sharing still holds, so an rdflib change prompts a TSD-34 review. No seed-sweep test fails on removing a `GRAPH`, since no outcome depends on it: the text scan, the harness and the checker are the guards | FMH-H2-6g |
-| D-27 | H2.8a | the digest hashes each content part as one component, `enc([kind, target, expected, enc(part 1), enc(part 2), ...])`, where guide §15.2 has one flat list, which cannot tell the parts apart. The guide's text is TD-69 | FMH-H2-8a, TD-69 |
-| D-28 | H2.8a | canonical N-Triples: lines sorted by UTF-8 bytes, duplicates dropped, four characters escaped, `xsd:string` plain, language tags lower-cased. The kind is `dal:operationKind`, the target hashed without angle brackets | FMH-H2-8a |
-| D-29 | H2.8a | a payload has two texts, canonical N-Triples for the digest and SPARQL-encoded for the slot. `bootstrap:persistence` installs the library, which is on no index | FMH-H2-8a |
+| D-25 | H2.6g | all 29 operations with the shape name their graph, not only those the defect could affect (none could), so the checker rule has no exception. 15 builder versions bumped | FMH-2.6g |
+| D-26 | H2.6g | a test asserts rdflib's context sharing still holds, so an rdflib change prompts a TSD-34 review. No seed-sweep test fails on removing a `GRAPH`, since no outcome depends on it: the text scan, the harness and the checker are the guards | FMH-2.6g |
+| D-27 | H2.8a | the digest hashes each content part as one component, `enc([kind, target, expected, enc(part 1), enc(part 2), ...])`, where guide §15.2 has one flat list, which cannot tell the parts apart. The guide's text is TD-69 | FMH-2.8a, TD-69 |
+| D-28 | H2.8a | canonical N-Triples: lines sorted by UTF-8 bytes, duplicates dropped, four characters escaped, `xsd:string` plain, language tags lower-cased. The kind is `dal:operationKind`, the target hashed without angle brackets | FMH-2.8a |
+| D-29 | H2.8a | a payload has two texts, canonical N-Triples for the digest and SPARQL-encoded for the slot. `bootstrap:persistence` installs the library, which is on no index | FMH-2.8a |
 - 2026-10-20: the maintainer approved W-65's decisions (D-4 to D-6), and decided D-10 (add a warning), D-11 (a compile-time check)
   and D-24 (a test, with persistence's catalogue reach widened, coverage before narrow scope). All three are added to H2.8b. D-9, D-12
   and D-15 asked back. AIR-66 handed over into the AIR Phase 4 plan.
-| D-30 | H2.8b | the library walks the contract's edges in Python rather than running the payload-check query, held equal to it on both engines over random payloads | FMH-H2-8b |
-| D-31 | H2.8b | the contract gains `dal:edgeTargetShape` and the payload contract the boundary shape. An append of versions roots its payload at `newVersion` | FMH-H2-8b |
-| D-32 | H2.8b | an empty `logGraphs` is refused by default, with a flag that reports nothing examined. The outcome is two contract properties and a library derivation, not a result column. Fixed-graph audits report clean over an empty graph (TD-72) | FMH-H2-8b, TD-72 |
-| D-33 | H2.8b | reference modes are checked only where the caller supplies which nodes are versions (TD-67 narrowed). The delta and patch-log slots are not bounded (TD-70), and event-type shapes have no hook yet (TD-71) | FMH-H2-8b |
-| D-34 | H2.8b | the caller check is strict: an unknown parameter is refused, a digest must be 64 lower-case hex | FMH-H2-8b |
+| D-30 | H2.8b | the library walks the contract's edges in Python rather than running the payload-check query, held equal to it on both engines over random payloads | FMH-2.8b |
+| D-31 | H2.8b | the contract gains `dal:edgeTargetShape` and the payload contract the boundary shape. An append of versions roots its payload at `newVersion` | FMH-2.8b |
+| D-32 | H2.8b | an empty `logGraphs` is refused by default, with a flag that reports nothing examined. The outcome is two contract properties and a library derivation, not a result column. Fixed-graph audits report clean over an empty graph (TD-72) | FMH-2.8b, TD-72 |
+| D-33 | H2.8b | reference modes are checked only where the caller supplies which nodes are versions (TD-67 narrowed). The delta and patch-log slots are not bounded (TD-70), and event-type shapes have no hook yet (TD-71) | FMH-2.8b |
+| D-34 | H2.8b | the caller check is strict: an unknown parameter is refused, a digest must be 64 lower-case hex | FMH-2.8b |
 - 2026-10-20: the maintainer decided D-9 (allow `dal:NoReceipt` on composites, with a later warning for record classes), D-15 (b), a
   profile term naming record classes, and D-12 (a), the receipt-only composite templates deleted in FMH-2.9 and `dal:SnapshotPerRevision`
   refused on in-place composites. Approved FMH-2.6d's twelve, H2.6e's except (2), asked back, H2.6f's except (1), (8), (11) and (12),
@@ -790,14 +790,14 @@ Left for the maintainer:
 - 2026-10-20: at the maintainer's request, ADR-A78, A79, A80, A114, A122, A123 and A132 are published. Working references and the
   citations of superseded or proposed decisions (A51, A71, A74, A75, A82, A84) moved into each ADR's Provenance section, and ADR-A51's
   rules are cited through the IRI and identity patterns. The wording changes beyond dropped references are for the maintainer's review.
-| D-35 | FMH-2.8c | the profile's edges are minted `<target>/compiled/profile#edge-NN`, under a reserved `profile` segment. **Approved 2026-10-20** | FMH-H2-8c |
-| D-36 | FMH-2.8c | record classes are named for the whole configuration, with asserted subclasses, as `dal:ReferenceData` is. **Approved 2026-10-20** | FMH-H2-8c |
-| D-37 | FMH-2.8c | the library reads record classes and refuses nothing on them. **Ratified 2026-10-20**, TD-67 narrowed and not closed | FMH-H2-8c, TD-67 |
-| D-38 | FMH-2.8c | a compiled profile states only the record classes its family touches. **Approved 2026-10-20** | FMH-H2-8c |
-| D-39 | FMH-2.8c | `NoReceiptForRecord` is a warning and fires for a versioned target too. **Approved 2026-10-20** | FMH-H2-8c |
-| D-40 | FMH-2.8c | the note on the add and del parts sits on `dal:AddPart` and `dal:DelPart`, not on each emitted part. **Approved 2026-10-20** | FMH-H2-8c |
-| D-41 | FMH-2.8c | the random-history sweep runs its 16 child processes side by side (test code). **Approved 2026-10-20** | FMH-H2-8c |
-- 2026-10-20: FMH-2.8c built autonomously ([FMH-H2-8c](../validation/FMH-2.8c.md)). Each edge stated once by the profile, the faster `members` form
+| D-35 | FMH-2.8c | the profile's edges are minted `<target>/compiled/profile#edge-NN`, under a reserved `profile` segment. **Approved 2026-10-20** | FMH-2.8c |
+| D-36 | FMH-2.8c | record classes are named for the whole configuration, with asserted subclasses, as `dal:ReferenceData` is. **Approved 2026-10-20** | FMH-2.8c |
+| D-37 | FMH-2.8c | the library reads record classes and refuses nothing on them. **Ratified 2026-10-20**, TD-67 narrowed and not closed | FMH-2.8c, TD-67 |
+| D-38 | FMH-2.8c | a compiled profile states only the record classes its family touches. **Approved 2026-10-20** | FMH-2.8c |
+| D-39 | FMH-2.8c | `NoReceiptForRecord` is a warning and fires for a versioned target too. **Approved 2026-10-20** | FMH-2.8c |
+| D-40 | FMH-2.8c | the note on the add and del parts sits on `dal:AddPart` and `dal:DelPart`, not on each emitted part. **Approved 2026-10-20** | FMH-2.8c |
+| D-41 | FMH-2.8c | the random-history sweep runs its 16 child processes side by side (test code). **Approved 2026-10-20** | FMH-2.8c |
+- 2026-10-20: FMH-2.8c built autonomously ([FMH-2.8c](../validation/FMH-2.8c.md)). Each edge stated once by the profile, the faster `members` form
   adopted after a 16-seed sweep and both engines agreed with the reference model (TD-68 closed, read of version 100 from 98.6 s to 1.28 s on
   rdflib), `dal:recordClass` and `NoReceiptForRecord` (TD-67 narrowed), and the member parts documented. The maintainer approved D-35 to D-41.
   Three Oxigraph tests fail on pyoxigraph 0.5.12, before and after FMH-2.8c, and pass on 0.5.11.
@@ -807,52 +807,52 @@ Left for the maintainer:
   `VERSION`, `SNAPSHOT_UPDATES` and `LEFT_GROUPED_ARITHMETIC`, held to the installed version's behaviour by `test_ox_t6`, and the three tests
   that failed read them, so they pass on 0.5.11 and on 0.5.12. Two were renamed, for countersignature. TD-73 closed. Paused.
 | D-42 | FMH-2.9 | the tests that reached the receipt-only composite writes through `receipt_only.py` are ported to the patch-log variants with every assertion unchanged, not removed, since their subject is the sweep, the lifecycle and the guard. The helper and the snapshot witnesses are removed | FMH-H2-9. Approved by the maintainer 2026-10-21 |
-| D-43 | FMH-2.9 | `CompositeBoundarySnapshotNotBuilt` is raised for a composite boundary with `dal:SnapshotPerRevision`, optimistic concurrency and no append discipline, the configurations that selected the deleted writes | FMH-H2-9 |
+| D-43 | FMH-2.9 | `CompositeBoundarySnapshotNotBuilt` is raised for a composite boundary with `dal:SnapshotPerRevision`, optimistic concurrency and no append discipline, the configurations that selected the deleted writes | FMH-2.9 |
 | D-44 | FMH-2.9 | the builder goldens use one canonical context. 48 of 52 digests changed once and were re-recorded by a one-time run that skipped the changed-text refusal, after the old keying was shown to match the old record for all 52 | FMH-H2-9. Approved by the maintainer 2026-10-21 |
-| D-45 | FMH-2.9 | `fill_slots` and `slot_marker` live in `ir_render`, one pass, and `REQUEST_TIME_SLOTS` is gone | FMH-H2-9 |
-| D-46 | FMH-2.9 | `instantiate` and the command line lose the template library override, with no deprecation | FMH-H2-9 |
-| D-47 | FMH-2.9 | the `hygiene` message still says `templates:`, since two existing tests assert it | FMH-H2-9 |
-| D-48 | FMH-2.9 | the injection corpus counts the operations a value yields, where it asserted `True` after a parse, and adds a literal corpus | FMH-H2-9 |
-| D-49 | FMH-2.9 | the caller library gets its own slot-filling corpus, which reads the values back from a store | FMH-H2-9 |
-| D-50 | FMH-2.11a | no Utility paragraph is added where none exists, so one term has one. About 320 utilities are authoring work, not conformance | FMH-H2-11a |
-| D-51 | FMH-2.11a | the 18 individuals with no comment keep none, and are listed as an open issue in the README | FMH-H2-11a |
-| D-52 | FMH-2.11a | the catalogue entry has no `imports` line, since `test_rc1_t4` allows it for substrate modules only (ADR-A121). The Foundation import is in §2, §3 and §11 | FMH-H2-11a |
-| D-53 | FMH-2.11a | two comments lose their backticks, since the plain-text rules cannot give them back and a datatyped literal is a different RDF term | FMH-H2-11a |
-| D-54 | FMH-2.11a | the old Validation section is Detailed Design 5.10, and its paragraph on the shapes over a compiled profile is in 7.2 | FMH-H2-11a |
-| D-55 | FMH-2.11a | old §1 is the Overview whole, and the new §1, the `dct:description` of both documents, is new and shorter | FMH-H2-11a |
-| D-56 | FMH-2.11a | old 7.10.1 is 5.6.11, old §11 is §8, old 14.3 is 8.6, and every `§` reference is mapped by one table | FMH-H2-11a |
-| D-57 | FMH-2.11a | 6.4 is 43 tables in one `output-file` region, and the 15 individuals with a logical key or a Unicode version are two 6.6 blocks | FMH-H2-11a |
-| D-58 | FMH-2.11a | 6.1 to 6.3 follow the old file's topic order, not the alphabet | FMH-H2-11a |
+| D-45 | FMH-2.9 | `fill_slots` and `slot_marker` live in `ir_render`, one pass, and `REQUEST_TIME_SLOTS` is gone | FMH-2.9 |
+| D-46 | FMH-2.9 | `instantiate` and the command line lose the template library override, with no deprecation | FMH-2.9 |
+| D-47 | FMH-2.9 | the `hygiene` message still says `templates:`, since two existing tests assert it | FMH-2.9 |
+| D-48 | FMH-2.9 | the injection corpus counts the operations a value yields, where it asserted `True` after a parse, and adds a literal corpus | FMH-2.9 |
+| D-49 | FMH-2.9 | the caller library gets its own slot-filling corpus, which reads the values back from a store | FMH-2.9 |
+| D-50 | FMH-2.11a | no Utility paragraph is added where none exists, so one term has one. About 320 utilities are authoring work, not conformance | FMH-2.11a |
+| D-51 | FMH-2.11a | the 18 individuals with no comment keep none, and are listed as an open issue in the README | FMH-2.11a |
+| D-52 | FMH-2.11a | the catalogue entry has no `imports` line, since `test_rc1_t4` allows it for substrate modules only (ADR-A121). The Foundation import is in §2, §3 and §11 | FMH-2.11a |
+| D-53 | FMH-2.11a | two comments lose their backticks, since the plain-text rules cannot give them back and a datatyped literal is a different RDF term | FMH-2.11a |
+| D-54 | FMH-2.11a | the old Validation section is Detailed Design 5.10, and its paragraph on the shapes over a compiled profile is in 7.2 | FMH-2.11a |
+| D-55 | FMH-2.11a | old §1 is the Overview whole, and the new §1, the `dct:description` of both documents, is new and shorter | FMH-2.11a |
+| D-56 | FMH-2.11a | old 7.10.1 is 5.6.11, old §11 is §8, old 14.3 is 8.6, and every `§` reference is mapped by one table | FMH-2.11a |
+| D-57 | FMH-2.11a | 6.4 is 43 tables in one `output-file` region, and the 15 individuals with a logical key or a Unicode version are two 6.6 blocks | FMH-2.11a |
+| D-58 | FMH-2.11a | 6.1 to 6.3 follow the old file's topic order, not the alphabet | FMH-2.11a |
 | D-59 | FMH-2.11a | the class diagram is kept whole and collapsed, and is 16,210 by 1,460 pixels, too wide to read. A split is proposed, a generator filter, and no tool was changed | FMH-H2-11a. Decided by the maintainer 2026-10-21, the generator draws parts, and Persistence has eight |
-| D-60 | FMH-2.11a | the sketch and the two proposed decisions leave the cross references, and each sentence that cited one keeps its meaning | FMH-H2-11a |
-| D-61 | FMH-2.11a | comments in the two hidden shape blocks are edited, which changes no graph, and the generated shapes files open with the SPDX header | FMH-H2-11a |
-| D-62 | FMH-2.11a | the release notes class each change by its effect on a graph valid under the previous release, with the branch's changes in one "Unreleased" entry | FMH-H2-11a |
-| D-63 | FMH-2.11a | the README's Open Issues lists seven items, none naming a debt row or a working document | FMH-H2-11a |
-| D-64 | FMH-2.11a | `ontology/persistence/docs/*.md` still link the sketches, and the README links both. **Closed in FMH-2.11b**, the links are rewritten out | FMH-H2-11a, FMH-H2-11b |
-| D-65 | FMH-2.11b | a sequence diagram carries the palette as translucent `rect` phases, a class diagram as `style` lines, and every subgraph box has no fill, since mermaid has no class for them and the default cluster fill would read as the receipts colour | FMH-H2-11b |
-| D-66 | FMH-2.11b | the new subsections are 5.13 and 5.14 and the cross references moved to 5.15, since nothing cites 5.13 | FMH-H2-11b |
-| D-67 | FMH-2.11b | two §6 definitions still described the Mustache templates FMH-2.9 retired (`dal:GeneratedOperation`, `dal:ParameterBinding`), and the compiler diagram of §4 had a "select named templates" step. Both definitions are rewritten to name the builder, as four reconciliation lines in a fourth group of the FMH-2.11a file (141 in all), and the diagram step reads "select a builder per operation". Three stale anchors in `tools/persistence/README.md` are repointed to §5.6.1, §5.6.10 and §5.6.11 | FMH-H2-11b |
-| D-68 | follow-ups of 2026-10-21 | every class with individuals in the spec is closed with `owl:oneOf`, 43 in all, and no class with individuals is left open. That includes three with one member (`dal:Rule`, `dal:PayloadEncoding`, `dal:BoundaryShapeAbsence`), since the compiler reads each by name and a new member would need new code | FMH-H2-11b |
-| D-69 | follow-ups of 2026-10-21 | `dal:sourcedFrom` keeps its `sh:in ( dal:RegistryGraph )`, although `dal:Source` also has `dal:NoSource`, since no source is the absence of the property. The new test names this one exception | FMH-H2-11b |
-| D-70 | follow-ups of 2026-10-21 | the missing `sh:in` lists are one `<Class>EnumerationsShape` for each domain class, in a second hidden block at the end of 7.2, and not edits to the shapes that exist. Each is SHACL Core and targets one class | FMH-H2-11b |
-| D-71 | follow-ups of 2026-10-21 | 6.4 gains a table for `dal:ResourceKind` and one for the Unicode pipelines (type `owl:NamedIndividual`), and 6.6 keeps only the 15 `dal:logicalKey` and `dal:unicodeVersion` statements. The Axiom Index is collapsed in a `<details>` as the class diagram is | FMH-H2-11b |
-| D-72 | follow-ups of 2026-10-21 | a link fragment is changed where the target heading is the same heading under a new slug (the TSD-01 and TSD-18 slugs, which drop `/` and parentheses, and headings that gained a suffix), and 26 others are listed in the Pack for the maintainer | FMH-H2-11b |
-| D-73 | follow-ups of 2026-10-21 | the enumerations are not a reconciliation group of the migration. The migration was proven at `a1df48b7` (141 differences against `f25008b2`). Against `a1df48b7` the follow-ups add 833 triples and remove none, all the `owl:oneOf`, `owl:AllDifferent` and `sh:in` axioms. The class diagram is eight parts (D-59) | FMH-H2-11b |
+| D-60 | FMH-2.11a | the sketch and the two proposed decisions leave the cross references, and each sentence that cited one keeps its meaning | FMH-2.11a |
+| D-61 | FMH-2.11a | comments in the two hidden shape blocks are edited, which changes no graph, and the generated shapes files open with the SPDX header | FMH-2.11a |
+| D-62 | FMH-2.11a | the release notes class each change by its effect on a graph valid under the previous release, with the branch's changes in one "Unreleased" entry | FMH-2.11a |
+| D-63 | FMH-2.11a | the README's Open Issues lists seven items, none naming a debt row or a working document | FMH-2.11a |
+| D-64 | FMH-2.11a | `ontology/persistence/docs/*.md` still link the sketches, and the README links both. **Closed in FMH-2.11b**, the links are rewritten out | FMH-2.11a, FMH-2.11b |
+| D-65 | FMH-2.11b | a sequence diagram carries the palette as translucent `rect` phases, a class diagram as `style` lines, and every subgraph box has no fill, since mermaid has no class for them and the default cluster fill would read as the receipts colour | FMH-2.11b |
+| D-66 | FMH-2.11b | the new subsections are 5.13 and 5.14 and the cross references moved to 5.15, since nothing cites 5.13 | FMH-2.11b |
+| D-67 | FMH-2.11b | two §6 definitions still described the Mustache templates FMH-2.9 retired (`dal:GeneratedOperation`, `dal:ParameterBinding`), and the compiler diagram of §4 had a "select named templates" step. Both definitions are rewritten to name the builder, as four reconciliation lines in a fourth group of the FMH-2.11a file (141 in all), and the diagram step reads "select a builder per operation". Three stale anchors in `tools/persistence/README.md` are repointed to §5.6.1, §5.6.10 and §5.6.11 | FMH-2.11b |
+| D-68 | follow-ups of 2026-10-21 | every class with individuals in the spec is closed with `owl:oneOf`, 43 in all, and no class with individuals is left open. That includes three with one member (`dal:Rule`, `dal:PayloadEncoding`, `dal:BoundaryShapeAbsence`), since the compiler reads each by name and a new member would need new code | FMH-2.11b |
+| D-69 | follow-ups of 2026-10-21 | `dal:sourcedFrom` keeps its `sh:in ( dal:RegistryGraph )`, although `dal:Source` also has `dal:NoSource`, since no source is the absence of the property. The new test names this one exception | FMH-2.11b |
+| D-70 | follow-ups of 2026-10-21 | the missing `sh:in` lists are one `<Class>EnumerationsShape` for each domain class, in a second hidden block at the end of 7.2, and not edits to the shapes that exist. Each is SHACL Core and targets one class | FMH-2.11b |
+| D-71 | follow-ups of 2026-10-21 | 6.4 gains a table for `dal:ResourceKind` and one for the Unicode pipelines (type `owl:NamedIndividual`), and 6.6 keeps only the 15 `dal:logicalKey` and `dal:unicodeVersion` statements. The Axiom Index is collapsed in a `<details>` as the class diagram is | FMH-2.11b |
+| D-72 | follow-ups of 2026-10-21 | a link fragment is changed where the target heading is the same heading under a new slug (the TSD-01 and TSD-18 slugs, which drop `/` and parentheses, and headings that gained a suffix), and 26 others are listed in the Pack for the maintainer | FMH-2.11b |
+| D-73 | follow-ups of 2026-10-21 | the enumerations are not a reconciliation group of the migration. The migration was proven at `a1df48b7` (141 differences against `f25008b2`). Against `a1df48b7` the follow-ups add 833 triples and remove none, all the `owl:oneOf`, `owl:AllDifferent` and `sh:in` axioms. The class diagram is eight parts (D-59) | FMH-2.11b |
 | D-74 | second review of 2026-10-21 | `dal:minConcurrencyLevel` takes `dal:Linearizable` and `dal:BestEffort` only, with an exception in `test_enumerations.py` as for `dal:sourcedFrom`. A family that needs no guarantee declares no level, since `dal:Optimistic` already needs `dal:BestEffort`, and `dal:NoConcurrencyGuarantee` is a level a store provides. Approved by the maintainer 2026-10-23 |
 | D-75 | second review of 2026-10-21 | `dal:Quarantine` is typed `dal:OperationKind` and `dal:ViolationPolicy` and loses its `owl:NamedIndividual` type, and its definition says both. Its 6.4 row stays in the table of `dal:OperationKind`, and the table of `dal:ViolationPolicy` lists `dal:Reject` and `dal:Merge` with a sentence naming `dal:Quarantine`. `dal:Merge` and `dal:Reject` clash with no enumeration. Approved by the maintainer 2026-10-23 |
 | D-76 | second review of 2026-10-21 | `dal:requiresCas` changes with `dal:providesCas`, and `dal:requiresUniquenessLevel` and `dal:minEnforcementLevel` range over `dal:UniquenessEnforcementLevel`. The compiler holds a level as its IRI string, ranks it by `_CAS_RANK` keyed by IRI, emits `dal:requiresCas` as an IRI, and a spec that names no level provides `dal:NoConcurrencyGuarantee`. Three library fixtures under `packages/persistence/python/tests/data/` and eight expected profiles change. Approved by the maintainer 2026-10-23 |
 | D-77 | second review of 2026-10-21 | by the maintainer's change of scope, `dal:providesCommitValidation` ranges over the new `dal:CommitValidationLevel` = { `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`, `dal:CustomRulesValidation` }. None of the four names clashes with an existing term, and no requirement mirrors the property. Property shapes are in new `dal:CapabilitySpecEnumerationsShape` and `dal:CapabilityRequirementEnumerationsShape` and `dal:UniquenessConstraintEnumerationsShape`, and the structural `dal:CapabilitySpecShape` keeps `sh:maxCount 1`. Approved by the maintainer 2026-10-23 |
-- 2026-10-21: FMH-2.9 built autonomously ([FMH-H2-9](../validation/FMH-2.9.md)). The templates, `render.py`, `chevron` and the equivalence harness are gone, every
+- 2026-10-21: FMH-2.9 built autonomously ([FMH-2.9](../validation/FMH-2.9.md)). The templates, `render.py`, `chevron` and the equivalence harness are gone, every
   operation is rendered from its builder, the template id has no suffix in memory, the goldens are keyed by operation, the receipt-only composite writes are
   deleted and `dal:SnapshotPerRevision` is refused on an in-place composite family (TD-46 narrowed), S-3 reads the declared parameters, and the injection corpus
   runs over the builders and the library's slot filling. ADR-A123 has an addendum and ADR-A79's addenda are updated. No expected profile changed. D-42 to D-49
   and the changed and removed tests are for the maintainer. Paused.
-- 2026-10-21: FMH-2.11a built autonomously ([FMH-H2-11a](../validation/FMH-2.11a.md)). The Persistence README is in the 13-section layout and is the one
+- 2026-10-21: FMH-2.11a built autonomously ([FMH-2.11a](../validation/FMH-2.11a.md)). The Persistence README is in the 13-section layout and is the one
   source of `spec/persistence.ttl`, `spec/persistent-foundation.ttl`, `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl`, each the same graph as at
   `f25008b2` but for 137 reconciled differences (the header, 85 drafted definitions, 21 rewritten comments). It cites only published decisions and no working
   document, and a changed domain makes the migration check fail naming the triple. TD-01 is closed. The class diagram is too wide to read (D-59). D-50 to D-64
   are for the maintainer. Paused.
-- 2026-10-21: FMH-2.11b built autonomously ([FMH-H2-11b](../validation/FMH-2.11b.md)). The Persistence README has a running case in eight steps, pictures of each
+- 2026-10-21: FMH-2.11b built autonomously ([FMH-2.11b](../validation/FMH-2.11b.md)). The Persistence README has a running case in eight steps, pictures of each
   kind of write, a race, a retry and a stale seq, 14 gotchas and one palette on all 49 diagrams, each rendered with mermaid 10.9.1 in both themes. No graph changed
   (137 reconciled differences as before), D-64 is closed, and D-65 and D-66 are for the maintainer. Paused.
 - 2026-10-21: the maintainer approved D-42 (the receipt-only composite tests ported to the patch-log variants, not removed) and D-44 (the builder
@@ -895,11 +895,11 @@ Left for the maintainer:
 - 2026-10-21: the maintainer confirmed ADR-A129 as recorded: the substrate and standalone modules take one release tag,
   `ontologies-vX.Y.Z`, and the applied modules keep their own versions and tags under ADR-A86. The maintainer creates the tags
   `mise run build:ontology-releases` lists once the branch is merged into `main`.
-- 2026-10-21: the maintainer countersigned the changed and removed tests of FMH-H2-9 and FMH-TS-1.
+- 2026-10-21: the maintainer countersigned the changed and removed tests of FMH-2.9 and FMH-TS-1.
 - 2026-10-21: second review of FMH-2.11b built autonomously (D-74 to D-77). Four classes close the seven individuals without a class
   and the commit validation strings, `dal:providesCas`, `dal:requiresCas` and `dal:providesCommitValidation` are object properties,
   eight expected profiles and three library fixtures are regenerated, and the 0.19.0 release notes record the changes
-  ([FMH-H2-11b](../validation/FMH-2.11b.md)).
+  ([FMH-2.11b](../validation/FMH-2.11b.md)).
 - 2026-10-21: the maintainer countersigned `test_c8b_09` and answered the review: Q1 (FMH-2.9), Q3 (FMH-2.11b), Q4 (the enumeration follow-ups)
   and Q5 (FMH-TS-1) approved, and of Q2 (FMH-2.11a) D-53, D-54 and the rest approved, with these changes:
   - D-50: a utility is written only where it serves a purpose. None is added.
@@ -913,7 +913,7 @@ Left for the maintainer:
   - Q6: 24 stale anchors are fixed. The three left in `docs/_includes/theory/` are correct on the published theory page, where kramdown
     sets those ids.
 - 2026-10-23: the maintainer approved the second review's follow-ups: the eight regenerated expected profiles (only `dal:requiresCas` as
-  an IRI) and the three library fixtures, decisions D-74 to D-77, and the changed tests of FMH-H2-11b's "second review" section.
+  an IRI) and the three library fixtures, decisions D-74 to D-77, and the changed tests of FMH-2.11b's "second review" section.
 - 2026-10-23: TD-23 fixed at the maintainer's request, before the merge. `discover_targets` (`persistence.scopes`) takes its classes from
   `dal:targetClass` and from the `dal:coversClass` of every `dal:GraphPatternScope`, never of a `dal:ReferenceData`, so a class a
   graph-pattern scope covers is compiled and the shipped example's `MixedReceiptModel` warning leaves `compile`. The strict expected failure

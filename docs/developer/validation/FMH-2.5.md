@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.5, key claims, the audits, guard D and the SELECT fragment
+# Validation Pack: FMH-2.5, key claims, the audits, guard D and the SELECT fragment
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.5, planned in
 [plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13) (H-D23, one slice in

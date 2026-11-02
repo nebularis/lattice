@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.4b, the declaration/implementation gap report
+# Validation Pack: FMH-1.4b, the declaration/implementation gap report
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-1.4b, the second half
 of [plan §3, H1.4](../plans/formal-methods-track-h.md), as redefined in the plan's section "FMH-1.4b and

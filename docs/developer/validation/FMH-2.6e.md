@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6e, how references between versions are declared
+# Validation Pack: FMH-2.6e, how references between versions are declared
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6e, planned in
 [plan §4.11](../plans/formal-methods-track-h.md#411-h26e-how-references-between-versions-are-declared-planned-2026-10-20)

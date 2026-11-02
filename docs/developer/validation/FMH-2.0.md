@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.0, ADR-A123 drafted
+# Validation Pack: FMH-2.0, ADR-A123 drafted
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.0 of the
 [typed IR sketch §7](../../developer/sketches/formal-methods-track-h-typed-ir.md#7-slices).
 **Decisions needing confirmation:** none. **A123 accepted by the maintainer on 2026-10-10**, with decision 5 corrected
-by the FMH-2.1 review before acceptance (the guard is its own group, [FMH-H2-1](FMH-2.1.md) F1). The ADR-A79 addendum is
+by the FMH-2.1 review before acceptance (the guard is its own group, [FMH-2.1](FMH-2.1.md) F1). The ADR-A79 addendum is
 applied and dated.
 
 ## Invariant

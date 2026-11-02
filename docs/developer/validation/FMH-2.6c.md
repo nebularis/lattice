@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6c, the write disciplines
+# Validation Pack: FMH-2.6c, the write disciplines
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.6c, planned in
 [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). Decided at our leanings on 2026-10-20 (VH-Q1 to

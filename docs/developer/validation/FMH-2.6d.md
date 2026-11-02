@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6d, the patch log, no receipt and the link between versions
+# Validation Pack: FMH-2.6d, the patch log, no receipt and the link between versions
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.6d, planned in
 [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-the-link-between-versions-no-receipt-planned-2026-10-20-revised-the-same-day)

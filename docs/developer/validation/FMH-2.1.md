@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.1, the typed operation IR and its renderer
+# Validation Pack: FMH-2.1, the typed operation IR and its renderer
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.1 of the
 [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under

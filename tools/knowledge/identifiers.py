@@ -366,7 +366,8 @@ def tracked_markdown() -> list[Path]:
         text=True,
         check=True,
     )
-    return [ROOT / name for name in listing.stdout.split("\0") if name]
+    # The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.
+    return [ROOT / name for name in listing.stdout.split("\0") if name and not Path(name).name.startswith("slice-crosswalk-")]
 
 
 def scannable(paths: list[Path]) -> list[Path]:

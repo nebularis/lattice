@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.5, stable compiled-profile labels
+# Validation Pack: FMH-1.5, stable compiled-profile labels
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-1.5
 ([plan §3, FMH-1.5](../plans/formal-methods-track-h.md)).

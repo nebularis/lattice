@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.8c, the follow-ups of the FMH-2.6 and FMH-2.8 reviews
+# Validation Pack: FMH-2.8c, the follow-ups of the FMH-2.6 and FMH-2.8 reviews
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.8c,
 [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-2026-10-20). Authored and run in
@@ -120,14 +120,14 @@ record 0.5.12, and the tests follow the installed version (the status record's l
 | `emit_contract` copies each edge onto the payload contract again, as before FMH-2.8c | 7 tests fail (H2.6e-T13, the expected profiles, the new shape case), and the code was restored |
 | The evidence warning ignores record classes | H2.8c-T8 fails, and the code was restored |
 | `NoReceiptForRecord` disabled | H2.8c-T9 fails, and the witness check reports `UNWITNESSED warning:NoReceiptForRecord`, and the code was restored |
-| The `members` form without the sub-select, on the same histories (4 seeds, a scratch run) | right on every seed, as FMH-H2-6g found, so the sweep guards correctness and T5 guards the form |
+| The `members` form without the sub-select, on the same histories (4 seeds, a scratch run) | right on every seed, as FMH-2.6g found, so the sweep guards correctness and T5 guards the form |
 
 ## Benchmark
 
 `mise run check:persistence-membership`, 500 members, one replaced per version, checkpoint every 16, rdflib 7.6.0, pyoxigraph 0.5.12. Every member
 set and stored count was right. The read of the current members of a delta family:
 
-| Engine | Versions | Before (FMH-H2-6f) | After |
+| Engine | Versions | Before (FMH-2.6f) | After |
 |---|---|---|---|
 | rdflib | 100 | 98.6 s | 1.28 s |
 | rdflib | 10 | | 0.21 s |

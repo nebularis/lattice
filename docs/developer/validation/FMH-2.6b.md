@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6b, the event slots and the unhonoured receipt models
+# Validation Pack: FMH-2.6b, the event slots and the unhonoured receipt models
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.6b, the event half only, planned in
 [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-2026-10-14) ("Steps, the event half"), after

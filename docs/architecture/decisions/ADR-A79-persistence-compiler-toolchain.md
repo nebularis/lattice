@@ -63,4 +63,4 @@ Designed in the [persistence profile substrate sketch](../../developer/sketches/
 pending revision because its ingestion and query-plane slices assumed ad hoc query construction. The store SPI is proposed decision
 A75. The addendum of 2026-10-10 follows ADR-A123. The templates were retired by slice FMH-2.9 of the
 [formal-methods Track H plan](../../developer/plans/formal-methods-track-h.md). The addendum of 2026-10-20 was built in slice FMH-2.7,
-whose decisions taken alone are listed in [FMH-H2-7](../../developer/validation/FMH-2.7.md). Published 2026-10-20.
+whose decisions taken alone are listed in [FMH-2.7](../../developer/validation/FMH-2.7.md). Published 2026-10-20.

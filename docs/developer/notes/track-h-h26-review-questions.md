@@ -35,7 +35,7 @@ Facts that constrain the options, each checked against the source on 2026-10-13.
   heads" (expected to be the richest model) and "J. Infrastructure-graph writers" including the retention job, in H6 and H7. They are written against the
   protocol, not against the operation contract.
 - **The paper check** found no relational counterpart. A foreign key from the version row to its head receipt keeps the receipt through a partition drop, and
-  nothing is copied ([FMH-H2-6](../validation/FMH-2.6.md), the paper check).
+  nothing is copied ([FMH-2.6](../validation/FMH-2.6.md), the paper check).
 
 ```mermaid
 flowchart LR

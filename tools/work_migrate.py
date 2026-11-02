@@ -62,7 +62,7 @@ RULES: tuple[Rule, ...] = (
     Rule("formal-methods-track-b", ("FMB",), (r"B(\d+(?:\.\d+)?[a-z]?)",)),
     Rule("formal-methods-track-c", ("FMC",), (r"C(\d+(?:\.\d+)?[a-z]?)",)),
     Rule("formal-methods-track-e", ("FME",), (r"E(\d+(?:\.\d+)?[a-z]?)",)),
-    Rule("formal-methods-track-h", ("FMH",), (r"H(\d+(?:\.\d+)?[a-z]?)", r"(HO\d+)"),
+    Rule("formal-methods-track-h", ("FMH",), (r"H(\d+(?:\.\d+)?[a-z]?)", r"(HO\d+)", r"FMH-H(\d+(?:[.-]\d+)?[a-z]?)"),
          (r"FMH-H(\d+)-(\d+[a-z]?)", r"FMH-(HO\d+)")),
     Rule("identity-minting", ("IM",), (r"M(\d+)",), (r"identity-minting-m(\d+)",)),
     Rule("improved-ontology-documentation", ("OD",), (r"OD(\d+[a-z]?)", r"(RC\d+[a-z]?)", r"(DOC\d+[a-z]?)", r"(MC\d+[a-z]?)"),
@@ -156,14 +156,19 @@ def unit_ids(repo: wb.Repo, unit: str) -> list[str]:
 
 
 def crosswalk(repo: wb.Repo) -> list[Crossing]:
-    """One crossing per historic id on a unit's board, from the unit's rule. An id the rule does
-    not match, and an id already in the grammar, are left out."""
+    """One crossing per historic id on a unit's board, from the unit's rule, and one per historic
+    spelling of a crossed id that prose still uses, such as a pack's own `FMH-H1.1` for `FMH-1.1`.
+    An id the rule does not match, and an id already in the grammar, are left out."""
     out: list[Crossing] = []
     for rule in RULES:
         for old in unit_ids(repo, rule.unit):
             new = cross(rule, old)
             if new and new != old:
                 out.append(Crossing(rule.unit, old, new))
+            elif new and rule.unit == "formal-methods-track-h" and new.startswith("FMH-") and not new.startswith("FMH-HO"):
+                body = new[4:]
+                for spelling in (f"FMH-H{body}", f"FMH-H{body.replace('.', '-', 1)}"):
+                    out.append(Crossing(rule.unit, spelling, new))
     return sorted(set(out), key=lambda c: (c.unit, c.old))
 
 

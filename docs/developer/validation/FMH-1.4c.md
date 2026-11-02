@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.4c, a declaration the compiler cannot honour is not a gap
+# Validation Pack: FMH-1.4c, a declaration the compiler cannot honour is not a gap
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), a follow-up to FMH-1.4b
-([FMH-H1-4b](FMH-1.4b.md)), decided with the maintainer on 2026-10-10 (option C of the question whether
+([FMH-1.4b](FMH-1.4b.md)), decided with the maintainer on 2026-10-10 (option C of the question whether
 `compile` should fail on gaps).
 **Decisions needing confirmation:** one, below.
 

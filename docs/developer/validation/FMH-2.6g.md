@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6g, every NOT EXISTS reads the graph it means
+# Validation Pack: FMH-2.6g, every NOT EXISTS reads the graph it means
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6g, planned in
 [plan §4.17](../plans/formal-methods-track-h.md#417-h26g-every-not-exists-reads-the-graph-it-means-planned-2026-10-20-tsd-34) for

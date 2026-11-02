@@ -676,7 +676,7 @@ ADR decides it, the choice lives in deployment configuration (decision RS-D5).
 ### 9.1 Gaps found by the paper check of formal-methods FMH-2.6 (2026-10-13)
 
 Formal-methods Track H slice FMH-2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
-and checked them against this section ([Validation Pack FMH-H2-6](../../validation/FMH-2.6.md), the paper check). The resources and operation kinds all have
+and checked them against this section ([Validation Pack FMH-2.6](../../validation/FMH-2.6.md), the paper check). The resources and operation kinds all have
 a relational reading. These are the places where §9 is silent or incomplete, recorded here for a later revision of this paper. They are *judgement*: no relational
 compiler exists, so each is a reading of the text and not a measurement.
 

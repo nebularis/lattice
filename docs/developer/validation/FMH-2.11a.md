@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.11a, the Persistence README as a literate specification
+# Validation Pack: FMH-2.11a, the Persistence README as a literate specification
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.11a,
 [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20),
@@ -16,7 +16,7 @@ changed, added or removed.
 
 `ontology/persistence/README.md` is in the 13-section layout of ADR-A126 and is the one source of `spec/persistence.ttl`,
 `spec/persistent-foundation.ttl`, `shapes/constraints.ttl` and `shapes/persistent-foundation.ttl`. Every one of them is the same graph as at
-`f25008b2` except for the 137 differences in [FMH-H2-11a-reconciliations.txt](FMH-H2-11a-reconciliations.txt). Each is one of
+`f25008b2` except for the 137 differences in [FMH-2.11a-reconciliations.txt](FMH-2.11a-reconciliations.txt). Each is one of
 10 header lines, 85 drafted definitions or 42 lines for the 21 rewritten comments.
 No class, property, individual, domain, range, shape or SPARQL constraint changed. The README cites only published decisions and no working document,
 and neither does any file it generates.
@@ -197,7 +197,7 @@ sketch, a debt row, a question or a Validation Pack), two cite ADR-A68, which is
 | `dal:HandDeclared` | Written by hand, for an operation that has no builder. None has, since FMH-2.7 gave the value-based guard a builder (TD-43). | Written by hand, for an operation that has no builder. None has, since the value-based guard has a builder. |
 | `dal:NoBoundary` | No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties, which live in the profile's dal:dataGraph, mandatory for a family that has one (H2.7-Q1). | No coherent aggregate. Concurrency, if any, is value-based CAS on individual properties, which live in the profile's dal:dataGraph, mandatory for a family that has one. |
 | `dal:NoReceipt` | No receipt and no head for a write, which still records its transaction claim, so a retry after a lost reply is confirmed. For a dal:InPlace family that wants no history, such as a derived artefact that can be regenerated (formal-methods FMH-2.6d, VH-Q5a). Refused with dal:AppendVersions, dal:AppendRecords and a stream, whose versions and records take their position and transaction time from the receipt. | No receipt and no head for a write, which still records its transaction claim, so a retry after a lost reply is confirmed. For a dal:InPlace family that wants no history, such as a derived artefact that can be regenerated. Refused with dal:AppendVersions, dal:AppendRecords and a stream, whose versions and records take their position and transaction time from the receipt. |
-| `dal:NothingExamined` | The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result (FMH-H2-5, non-coverage). | The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result. |
+| `dal:NothingExamined` | The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result (FMH-2.5, non-coverage). | The audit returned no row and read nothing: the graphs it examines are not listed, or hold no receipt. This is not a clean result. |
 | `dal:PatchLog` | asserts/retracts delta graphs alongside each receipt, written in the same update as the write (formal-methods FMH-2.6d). A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families. | asserts/retracts delta graphs alongside each receipt, written in the same update as the write. A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families. |
 | `dal:PerSubjectGraphDrop` | Drop the per-subject graph and record a tombstone (ADR-A68). Requires every graph holding this subject's payload, including patch-log deltas and snapshots, to be per-subject and enumerable. | Drop the per-subject graph and record a tombstone. Requires every graph holding this subject's payload, including patch-log deltas and snapshots, to be per-subject and enumerable. |
 | `dal:PersonalData` | Subject to erasure obligations (ADR-A68). | Subject to erasure obligations. |

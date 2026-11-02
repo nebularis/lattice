@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.7, the vocabulary and the compiler's emission
+# Validation Pack: FMH-2.7, the vocabulary and the compiler's emission
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.7, planned in
 [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14)
@@ -148,7 +148,7 @@ Run of 2026-10-20 on the finished tree.
 | `mise run check:persistence` | 3938 passed, 1 xfailed, no failures, expected profiles current (H2.6f recorded 3802) |
 | `mise run check:persistence-oxigraph` | 361 passed in the persistence tests marked for Oxigraph (H2.6f recorded 353), and the support tests |
 | `mise run check:ontology-catalog` | 1136 passed, 7 skipped |
-| `mise run check:persistence-membership` | passed, the benchmark's 10 tests and the counts of FMH-H2-6f unchanged (about 5 minutes). Its two scripts now compile with `guards=False` and not instantiate with it |
+| `mise run check:persistence-membership` | passed, the benchmark's 10 tests and the counts of FMH-2.6f unchanged (about 5 minutes). Its two scripts now compile with `guards=False` and not instantiate with it |
 | `python -m persistence witness` | 122 of 122 rules witnessed, 0 listed gaps |
 | `mise run check:ontology-versioning` | not run, which fails `UNBUMPED` as expected on this branch (TD-64) |
 

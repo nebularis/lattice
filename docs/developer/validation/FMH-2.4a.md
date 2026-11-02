@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.4a, the composite family's builders
+# Validation Pack: FMH-2.4a, the composite family's builders
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.4a, planned in
 [plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)
@@ -30,7 +30,7 @@ equal twice, and builds without reading a file, the clock or the environment (SI
 `test_composite_sweep.py`). They bound `$epoch` as an `xsd:integer`, and stored the row's and the dataset graph's epoch the
 same way, so the request matched the store by term. The composite operations now carry the parameter guard, which refuses an
 `xsd:integer` epoch (the README says it is a different term and never matches), so the request and the stored epochs are
-`xsd:long`. The assertions are unchanged. This is the same change as FMH-H2-3's second countersignature item, now for the
+`xsd:long`. The assertions are unchanged. This is the same change as FMH-2.3's second countersignature item, now for the
 composite tests.
 
 ## Test cases

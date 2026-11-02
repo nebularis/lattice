@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.8a, the caller library core
+# Validation Pack: FMH-2.8a, the caller library core
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.8a, the first half of
 [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14), built under

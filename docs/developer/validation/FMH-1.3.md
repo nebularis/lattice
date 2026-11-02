@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.3, static template checks S-3 and S-4
+# Validation Pack: FMH-1.3, static template checks S-3 and S-4
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-1.3
 ([plan §3, FMH-1.3](../plans/formal-methods-track-h.md))

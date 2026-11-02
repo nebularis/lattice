@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.2d, refuse a multi-valued single-valued property (TD-25)
+# Validation Pack: FMH-1.2d, refuse a multi-valued single-valued property (TD-25)
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), a fix arising from FMH-1.2c
 **Decided by:** the maintainer, 2026-10-09 (H-D10): the compiler refuses a multi-valued functional
 property in the resolver. No ADR. It changes `tools/persistence` behaviour for malformed input only.
-**Finding:** TD-25, see [FMH-H1.2c](FMH-1.2c.md).
+**Finding:** TD-25, see [FMH-1.2c](FMH-1.2c.md).
 
 ## Invariant
 

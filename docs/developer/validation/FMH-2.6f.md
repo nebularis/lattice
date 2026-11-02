@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.6f, how a root version lists its members
+# Validation Pack: FMH-2.6f, how a root version lists its members
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.6f, planned in
 [plan §4.12](../plans/formal-methods-track-h.md#412-h26f-how-a-root-version-lists-its-members-with-fixtures-and-a-benchmark-planned-2026-10-20)

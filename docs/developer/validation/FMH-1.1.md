@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.1, the prefix antichain and overlap check
+# Validation Pack: FMH-1.1, the prefix antichain and overlap check
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-1.1
 ([plan §3](../plans/formal-methods-track-h.md))

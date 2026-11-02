@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.8b, the payload checks, the caller check and the audit outcome
+# Validation Pack: FMH-2.8b, the payload checks, the caller check and the audit outcome
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H2.8b, the second half of
 [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14), built on the library of
-[FMH-H2-8a](FMH-2.8a.md) under [ADR-A132](../../architecture/decisions/ADR-A132-persistence-caller-library.md). Authored and run in autonomous mode, not
+[FMH-2.8a](FMH-2.8a.md) under [ADR-A132](../../architecture/decisions/ADR-A132-persistence-caller-library.md). Authored and run in autonomous mode, not
 committed. Versioning is ignored on this branch (TD-64), so no version IRI moved.
 
 **For the maintainer:** read the decisions taken alone below, above all decision 1 (the library walks the contract and does not run the query), decision 4

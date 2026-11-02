@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H2.2, the equivalence harness and the first builders
+# Validation Pack: FMH-2.2, the equivalence harness and the first builders
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-2.2 of the
 [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices) and its

@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.2b, witnesses for every refusal and warning
+# Validation Pack: FMH-1.2b, witnesses for every refusal and warning
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.2, part b
 ([plan §3, H1.2](../plans/formal-methods-track-h.md), split by H-D8)
-**Builds on:** [FMH-H1.2a](FMH-1.2.md), the harness and the audit witnesses.
+**Builds on:** [FMH-1.2a](FMH-1.2.md), the harness and the audit witnesses.
 **Decisions:** none new. The patch fixture format is described below for the maintainer to confirm.
 
 ## Invariant

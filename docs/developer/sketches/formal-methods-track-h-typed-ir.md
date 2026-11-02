@@ -356,7 +356,7 @@ model A branches on the same field.
 **The one stop.** If Oxigraph shows R0 to be wrong, not just slow, H2.4 stops and asks, since that is
 a defect in what ships today.
 
-**Measured 2026-10-12 (FMH-2.4b), and corrected 2026-10-13.** The probes of [FMH-H2-4b](../validation/FMH-2.4b.md) first reported
+**Measured 2026-10-12 (FMH-2.4b), and corrected 2026-10-13.** The probes of [FMH-2.4b](../validation/FMH-2.4b.md) first reported
 that rdflib follows the specification's order. That was wrong. The paragraphs above are right: rdflib 7.6.0 applies each solution in
 turn, and the order of the solutions follows the process's hash seed. Oxigraph 0.5.11 also applies each solution in turn, in solution
 order. So neither is snapshot, R2 is unsafe on both, and R0 is right on both because it inserts the whole payload in every solution.
@@ -501,7 +501,7 @@ the rules that keep a clean stored IR possible until then.
   today it can change with a builder.
 - **A vocabulary for SPARQL's structure**, written or adopted. SPIN's SPARQL syntax vocabulary, a W3C member submission of
   2011, is one existing RDF encoding to evaluate. FMH-2.7's vocabulary work grows with it.
-- **The builders move into `compile`**, which reverses FMH-H2-2's decision 2, and the harness compares the stored IR, printed,
+- **The builders move into `compile`**, which reverses FMH-2.2's decision 2, and the harness compares the stored IR, printed,
   with the templates.
 - **The compiled profile grows**, by roughly hundreds of triples per operation per target.
 - **Two migrations if it is done now.** Today's `persistence.ir` is a typed syntax tree, and PDD-06 plans to replace it with an

@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.2c, witnesses for every SHACL shape
+# Validation Pack: FMH-1.2c, witnesses for every SHACL shape
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.2, part c
 ([plan §3, H1.2](../plans/formal-methods-track-h.md), split by H-D8)
-**Builds on:** [FMH-H1.2a](FMH-1.2.md) and [FMH-H1.2b](FMH-1.2b.md).
+**Builds on:** [FMH-1.2a](FMH-1.2.md) and [FMH-1.2b](FMH-1.2b.md).
 **Decisions:** none new. One finding needs a design decision from the maintainer (TD-25, below).
 
 ## Invariant

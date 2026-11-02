@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: FMH-H1.2, witness coverage (harness and audits)
+# Validation Pack: FMH-1.2, witness coverage (harness and audits)
 
 **Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice H1.2, part a
 ([plan §3, H1.2](../plans/formal-methods-track-h.md))
