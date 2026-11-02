@@ -801,6 +801,9 @@
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:ReceiptOnly ],
         [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
+        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceEncoding" ],

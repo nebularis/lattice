@@ -10,7 +10,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/persistence> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> ;
     dct:description """A relational database gives an application a unique key, a row that two writers collide on and a count of the rows an update touched. An RDF store gives none of them, so an adopter that writes changing data to one needs machinery of its own. Which machinery depends on the adopter's domain, workload and store, so LATTICE does not decide it. Persistence is the vocabulary an adopter uses to record, per class and per deployment, which options they chose for aggregate boundaries, concurrency, ordering, history, uniqueness, identity minting, epochs and erasure. The compiler in tools/persistence turns that record into generated, portable SPARQL and identity minting recipes.
 
 Persistence targets classes, graphs and shapes by IRI reference only. It is optional, and an adopter's domain ontology never needs to know that it exists. The configuration vocabulary imports nothing, and only the optional persistent-foundation document imports a layer.""" ;
@@ -524,7 +524,7 @@ dal:OccurrenceNamespaceDerivation a owl:Class ;
 
 dal:OperationKind a owl:Class ;
     rdfs:comment "The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a no-receipt variant have the kind of their base operation." ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ] .
 
 dal:OperationKindPart a dal:DigestPartRole ;
     rdfs:comment "The operation's kind." .
@@ -779,6 +779,12 @@ dal:SortedAcquisition a dal:DeadlockPolicy ;
 dal:Source a owl:Class ;
     rdfs:comment "Where a caller obtains a value, or the statement that there is no source." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:RegistryGraph dal:NoSource ) ] .
+
+dal:StateDigestRead a dal:OperationKind ;
+    rdfs:comment "Reads a root's recorded state digest and the triples of its aggregate, for a caller to recompute the digest and compare." .
+
+dal:StateDigestRecord a dal:OperationKind ;
+    rdfs:comment "Records on a root's version row the digest of the state its write left, guarded on the row being at the write's sequence and the transaction's claim, so it applies only after that write." .
 
 dal:StoreLocalEpoch a dal:EpochAuthority ;
     rdfs:comment "The epoch lives only inside the dataset being restored. Unsafe under a double restore from the same backup: the second restore reuses the epoch the first one just allocated. Warned, not refused (dal:StoreLocalEpochWarningShape): acceptable only when the same backup is never restored twice into a live epoch space and no position-derived identifier leaves the dataset." .
@@ -1527,6 +1533,11 @@ dal:recordClass a owl:ObjectProperty ;
     rdfs:comment "On a profile, a class whose instances are records: evidence of what they saw, cited for what they said at a time, beside the subclasses of fnd:Evidence and fnd:DerivedArtefact. Its subclasses, as the configuration asserts them, are records too. compile warns EvidenceEdgeByIdentity for an edge by identity from a record class to a versioned one, and NoReceiptForRecord for dal:NoReceipt on a family whose target is a record class or versioned. On a dal:CompiledProfile, the record classes the family touches, its target class and the subject classes of its edges, so a caller reads them without the configuration. No rdfs:domain is declared, since any profile may name one." ;
     rdfs:range owl:Class .
 
+dal:recordsStateDigest a owl:ObjectProperty ;
+    rdfs:comment "Whether a family written in place under dal:Optimistic records, on its version row, the digest of the state each write leaves, so an audit finds a graph changed outside the family's operations. Absent means false. The caller computes the digest over the sorted canonical N-Triples of the next state and records it with the generated record-state-digest operation in the same request as its write." ;
+    rdfs:domain dal:WriteDisciplineProfile ;
+    rdfs:range xsd:boolean .
+
 dal:referenceEdge a owl:ObjectProperty ;
     rdfs:comment "On a dal:CompiledProfile, an edge of the family's boundary shape, stated there once with an IRI. On a dal:PayloadContract, a pointer to an edge of its own profile, which the payload's caller check follows. No rdfs:domain is declared, since the property has two." ;
     rdfs:range dal:ReferenceEdge .
@@ -1784,7 +1795,7 @@ dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:ProvidedConcurrency dal:Optimistic dal:AppendOnly dal:LockingConcurrency ) ] .
 
-[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ] .
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Quarantine dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:QueryNamed dal:CallerNamed ) ] .
 

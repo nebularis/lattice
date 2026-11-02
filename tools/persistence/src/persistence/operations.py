@@ -105,6 +105,8 @@ def select_operations(
     delta_tag = "-delta" if delta else ""
     # H2.12: the rows replace where the store applies deletions before insertions, by declaration or by the operator's opt-in.
     rows_tag = "-rows" if not delta and rows_replace(dimensions, spec) else ""
+    # DR4: the form the whole replace takes, as the family's replace or as `replace-whole` beside a delta replace.
+    whole_rows_tag = "-rows" if rows_replace(dimensions, spec) else ""
     concurrency = _local(dimensions["concurrencyProfile"].value)
     ordering = _local(dimensions["orderingGrain"].value)
     # dal:writeDiscipline (H2.6c). The default, dal:InPlace, is every selection below that is not one of the two branches it names.
@@ -209,6 +211,8 @@ def select_operations(
                 ))
             ops.append(GeneratedOperation("cas-replace", cas_template, common_bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, common_bindings))
+            ops.extend(_whole_and_digest(dimensions, delta, f"cas-replace-named-graph{whole_rows_tag}{receipt_tag}{guard_suffix}",
+                                         "state-digest-audit-named-graph", common_bindings, common_bindings))
         elif boundary == "CompositePropertyBoundary":
             # A property path cannot be a variable, so the path that reaches the aggregate's
             # members is a compile-time slot, not a request-time $-variable. It is compiled from
@@ -239,6 +243,8 @@ def select_operations(
             # a delta replace sweeps nothing, so it needs the data graph and no path, as the create does
             ops.append(GeneratedOperation("cas-replace", composite_template, common_bindings + [data_graph] if delta else bindings))
             ops.append(GeneratedOperation("tombstone-delete", tombstone_template, bindings))
+            ops.extend(_whole_and_digest(dimensions, delta, f"cas-replace-composite-property{whole_rows_tag}{receipt_tag}{guard_suffix}",
+                                         "state-digest-audit-composite", bindings, common_bindings))
         elif boundary == "NoBoundary":
             # The values live in the family's data graph, which the validator has required (MissingDataGraph, H2.7-Q1), and the
             # value guard property, which it has required too (NoBoundaryConcurrencyConflict).
@@ -342,6 +348,19 @@ def select_operations(
         ops.append(GeneratedOperation("payload-check", "payload-check", check_bindings))
 
     return ops
+
+
+def _whole_and_digest(dimensions: dict, delta: bool, whole_template: str, audit_template: str, bindings: list, row_bindings: list) -> list:
+    """What an optimistic in-place family gains beside its replace (DR4). Under dal:ChangedTriples, the whole replace as `replace-whole`, in
+    the form the family would take under dal:WholeState, for an import or a repair and for a bulk load composed with the create (DR-Q1,
+    DR-Q10). Under dal:recordsStateDigest, the write that records the digest of the state a write left and the read that audits it
+    (DR-Q3 (c))."""
+    out = [GeneratedOperation("replace-whole", whole_template, bindings)] if delta else []
+    digest = dimensions.get("recordsStateDigest")
+    if digest is not None and digest.value is not None and str(digest.value).lower() == "true":
+        out.append(GeneratedOperation("record-state-digest", "record-state-digest", row_bindings))
+        out.append(GeneratedOperation("state-digest-audit", audit_template, bindings))
+    return out
 
 
 PAYLOAD_GRAPH = "urn:g:payload"

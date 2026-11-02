@@ -427,16 +427,6 @@ Built in slice H2.9. It carries out decision 8, and its clause "until then" is s
    That model is now refused for a composite family written in place (`CompositeBoundarySnapshotNotBuilt`) until snapshots are built. A named-graph family keeps its
    receipt-only writes, and keeps the `ReceiptModelNotHonoured` warning for the snapshot.
 
-## Addendum, 2026-11-01: the delta replace and a slot in a DELETE template (proposed, for the maintainer's review)
-
-Built in slice DR1 of the persistence delta replace unit. It extends the operation kinds of decision 4 and the slots of decision 6, and answers DR-Q1 to DR-Q4.
-
-1. **`cas-replace-named-graph-delta` and `cas-replace-composite-property-delta`,** with the receipt, patch-log, no-receipt and dataset-guard variants their whole-state forms have, are the replace of a family under `dal:ChangedTriples`. Their kind is `Replace`. They take two request-time payload slots, `assertTriples` and `retractTriples`, whatever the receipt model, and no `payloadTriples`. The `WHERE` is the whole replace's without its sweep, so the update costs what changed and not the size of the aggregate.
-2. **A `DELETE` template may hold a payload slot.** The slot is a set of ground triples, so the update deletes exactly those, and the access it records is a delete of `{payload}` in the slot's graph. A slot in a `WHERE` pattern is still refused.
-3. **The digest contract of a delta replace has no payload part.** Its add and del parts are `assertTriples` and `retractTriples`, so the request digest is over the delta (DR-Q3 (a)), and its payload contract is absent, since the boundary shape and the payload check run over the next state the caller holds and not over the delta.
-4. **A composite family's caller runs `payload-check` over the next state** it computed the delta from, as it does over a whole payload, since the data graph is shared and the update cannot tell one aggregate's triples from another's.
-5. **The new builders are at the versions the formula of `BUILDER_VERSIONS` gives a builder that writes the store vocabulary,** and every whole-state builder is unchanged.
-
 ## Provenance
 
 **Unit:** [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan)
@@ -453,7 +443,6 @@ The addenda built in slices H2.6d (plan section 4.10, question H2.6b-Q2, and Q5 
 
 The addendum of 2026-10-21 on the retired templates was built in slice H2.9 (plan section 4.15, questions H2.9-Q1 to Q3, and the maintainer's decision D-12 (a)), whose decisions taken alone are listed in [FMH-H2-9](../../developer/validation/FMH-H2-9.md).
 
-The addendum of 2026-11-01 on the delta replace was built in slice DR1 of the [persistence delta replace plan](../../developer/plans/persistence-delta-replace.md), from questions DR-Q1 to DR-Q4 of its sketch.
 ## Addendum, 2026-11-01: the rows replace, selected by capability (proposed with slice H2.12)
 
 **Narrows decision 7.** The composite replace, and the named-graph replace, which has the same form, no longer keep the template form on every store. The [linear replace sketch](../../developer/sketches/persistence-linear-named-graph-replace.md) measured the forms on six engines ([TSD-65](../triple-store-discovery.md#tsd-65-a-deleteinsert-fills-every-template-quad-once-per-solution-on-every-engine-measured-whether-or-not-the-quad-is-then-skipped-and-only-jena-applies-a-quad-with-no-variable-once-per-operation)), and the maintainer answered its questions on 2026-11-01.
@@ -477,3 +466,13 @@ The maintainer decided on 2026-10-31 that a write writes only what changed unles
 5. **The form of the addendum of 2026-11-01 applies to a whole-state family alone.** A delta replace fills each template once whatever the store's update order, so `dal:providesSnapshotUpdateSemantics` and `dal:replaceForm` are not consulted for it, and a form declared on a delta family is warned (`ReplaceFormNotApplicable`, DR-Q6). The delta slots keep `dal:GroundNTriples` (DR-Q5).
 
 Built in slice DR1, [persistence-delta-replace](../../developer/validation/persistence-delta-replace.md).
+
+## Addendum, 2026-11-02: the whole replace beside a delta, and the state digest (proposed with slice DR4 of `persistence-delta-replace`)
+
+The maintainer answered DR-Q1 on 2026-10-31 with an operation for imports and bulk loads beside the delta replace, and DR-Q3 with (c) as a family's opt-in, and confirmed both on 2026-11-02.
+
+1. **A family under `dal:ChangedTriples` also has `replace-whole`,** the whole-state replace its family would have under `dal:WholeState`, rows or template form as the addendum of 2026-11-01 selects, under an operation id of its own and of kind `dal:Replace`. A caller that holds a state it did not compute from the stored one sends it, and a bulk load composes, for each aggregate, its create and its `replace-whole` under one transaction id (DR-Q10).
+2. **`dal:recordsStateDigest` adds two operation kinds,** `dal:StateDigestRecord`, a write guarded on the row being at the write's sequence and on the transaction's claim, which records `pat:stateDigest` on the version row, and `dal:StateDigestRead`, a query of the recorded digest and the aggregate's triples. Neither carries a payload or a request digest.
+3. **One request from several operations has one prologue.** The libraries' `compose` hoists each operation's `PREFIX` and `BASE` lines to the head and refuses two bindings of one prefix, since Oxigraph refuses a prologue after `;` ([TSD-68](../triple-store-discovery.md#tsd-68-oxigraph-refuses-a-prologue-after-the--of-an-update-request)).
+
+Built on the studio's branch as its slice DR2 ([DR2](../../developer/validation/DR2.md)) and carried over onto the addendum above as DR4.

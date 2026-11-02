@@ -235,8 +235,20 @@
     "sha256": "5947f4e2b2a38c49a86c741d0a5ba7b2ba5db8ba4109923e3b290f3b9cbe26ee",
     "version": 1
   },
+  "record-state-digest": {
+    "sha256": "ccb471ae8b2e2a0ce010e3747a1e546d65caa41a2179dbc57cbd23ee378a970c",
+    "version": 2
+  },
   "revision-multi-txn-audit": {
     "sha256": "774ff7fccb3173b9b60e6e27dde78baafed3db8703401b824bb0c9ada6008ccb",
+    "version": 2
+  },
+  "state-digest-audit-composite": {
+    "sha256": "113d86c133145054fea6c175ac673b19f17f5126d10ba3a882fe93bffe1a2665",
+    "version": 2
+  },
+  "state-digest-audit-named-graph": {
+    "sha256": "d5bff0d6de9f9aad98cb7de0a9c7165d0065c4522ab90d7d8bd0eb8713f22b72",
     "version": 2
   },
   "tombstone-delete-composite-no-receipt": {

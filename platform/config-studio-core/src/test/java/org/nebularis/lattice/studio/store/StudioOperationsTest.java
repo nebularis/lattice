@@ -161,10 +161,11 @@ class StudioOperationsTest {
     @EnumSource(value = Family.class, names = {"PART", "DOCUMENT"})
     void theLogHoldsTheDeltaGiven(Family f) {
         String root = rootOf(f);
-        Model old = model(root, "old", 10);
-        Model next = model(root, "new", 8);
         Model asserted = model(root, "asserted", 3);
         Model retracted = model(root, "retracted", 2);
+        // the delta leads from the old state to the next one, which the caller check holds it to (STD-308)
+        Model old = model(root, "old", 10).add(retracted);
+        Model next = ModelFactory.createDefaultModel().add(old).remove(retracted).add(asserted);
         for (boolean linear : new boolean[] {false, true}) {
             Fixture s = Fixture.create();
             s.run(ops.create(f, root, old, "urn:txn:d/1"));

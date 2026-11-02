@@ -26,9 +26,9 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.20.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.20.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.20.0> |
-| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.20.0> | none |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0> |
+| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.21.0> | none |
 
 | Prefix | Namespace |
 |---|---|
@@ -287,6 +287,7 @@ classDiagram
     class WriteDisciplineProfile {
         checkpointEvery (xsd:long)
     }
+    class boolean
     AggregateBoundaryProfile --> AggregateBoundaryStrategy : strategy
     AggregateBoundaryProfile --> FirstWriteMode : firstWrite
     ConcurrencyProfile --> ConcurrencyLevel : minConcurrencyLevel
@@ -298,6 +299,7 @@ classDiagram
     WriteDisciplineProfile --> MembershipEncoding : membershipEncoding
     WriteDisciplineProfile --> ReplaceEncoding : replaceEncoding
     WriteDisciplineProfile --> WriteDiscipline : writeDiscipline
+    WriteDisciplineProfile --> boolean : recordsStateDigest
     class ObjectProperty_ownership["Object Property - ownership"]
     class ObjectProperty_referenceMode["Object Property - referenceMode"]
 ```
@@ -687,6 +689,8 @@ classDiagram
         PayloadCheck
         Quarantine
         Replace
+        StateDigestRead
+        StateDigestRecord
         Tombstone
         UnconditionalWrite
         ValueGuardedReplace
@@ -2086,7 +2090,7 @@ flowchart TB
     classDef refused fill:#f5b7b1,stroke:#922b21,color:#000
 ```
 
-**A stale delta.** Two writers read the aggregate at seq 1 and each computes a delta against it. The first to arrive moves the row. The second finds no row at seq 1, so its `WHERE` has no solution and it writes nothing, not even the delta graphs it would have named. It learns so from the absent claim, reads again, recomputes its delta against seq 2, and sends it with the expected seq 2, or sends nothing when the recomputed delta is empty (STD-299).
+**A stale delta.** Two writers read the aggregate at seq 1 and each computes a delta against it. The first to arrive moves the row. The second finds no row at seq 1, so its `WHERE` has no solution and it writes nothing, not even the delta graphs it would have named. It learns so from the absent claim, reads again, recomputes its delta against seq 2, and sends it with the expected seq 2, or sends nothing when the recomputed delta is empty (STD-301).
 
 ```mermaid
 sequenceDiagram
@@ -2115,18 +2119,22 @@ sequenceDiagram
     end
 ```
 
-**What the caller does.** It reads the aggregate and its row, decides the next state, and computes the two slots as sets, the retracted triples in the state it read and not in the next, the asserted in the next and not in the read, so the two are disjoint. It checks the next state against the family's boundary shape, with the generated `payload-check` over a local graph or the caller library's check, since a delta cannot be checked alone, retracting one triple can orphan a member without the delta showing it. It sends nothing when both slots are empty, because the operation moves the row and writes a receipt whenever its guard holds and cannot tell an unchanged state from a changed one (STD-299). Under a patch log the same two slots fill the add and del graphs, so the delta is computed once. Each of these is an obligation the SPARQL cannot enforce, listed in the compiler's [README](../../tools/persistence/README.md).
+**What the caller does.** It reads the aggregate and its row, decides the next state, and computes the two slots as sets, the retracted triples in the state it read and not in the next, the asserted in the next and not in the read, so the two are disjoint. It checks the next state against the family's boundary shape, with the generated `payload-check` over a local graph or the caller library's check, since a delta cannot be checked alone, retracting one triple can orphan a member without the delta showing it. It sends nothing when both slots are empty, because the operation moves the row and writes a receipt whenever its guard holds and cannot tell an unchanged state from a changed one (STD-301). Under a patch log the same two slots fill the add and del graphs, so the delta is computed once. Each of these is an obligation the SPARQL cannot enforce, listed in the compiler's [README](../../tools/persistence/README.md).
 
 **What works best when.**
 
 | The family is | Declare | Because |
 |---|---|---|
 | records people edit, autosaves, any large aggregate | `dal:ChangedTriples`, or nothing under `dal:Optimistic` | a save costs the change, not the aggregate, on every store |
-| written by an import or a sync that produces a state without reading the stored one | `dal:WholeState` | a delta needs the state it was computed from, and such a writer has none |
+| written by an import or a sync that produces a state without reading the stored one | `dal:WholeState`, or `replace-whole` beside the delta where most writes are edits | a delta needs the state it was computed from, and such a writer has none |
 | a graph that something else may edit outside the family's operations | `dal:WholeState` | the whole replace sweeps the drift out, the delta carries it forward |
 | written under `dal:ProvidedConcurrency` or `dal:LockingConcurrency` | nothing. The write is unconditional and whole | there is no guard to make a delta safe |
 
 `test_delta_replace.py` holds that the delta replace leaves the state the whole replace leaves, on every engine, for both families under each receipt model and guard (`DR1-T8`), that a stale delta writes nothing (`DR1-T9`), and that a retry changes nothing (`DR1-T10`).
+
+**A whole replace and a bulk load beside the delta.** Under `dal:ChangedTriples` the compiler also generates the whole-state replace under an operation of its own, `replace-whole`, kind `dal:Replace`, in the form the family would take under `dal:WholeState`. It is the write of a caller that holds a state it did not compute from the stored one, such as an import or a repair that heals drift. A caller loading many aggregates' whole states composes one request of, for each aggregate, its `create-if-absent` and its `replace-whole`, each guarded on its own version row, so a new aggregate is created, an existing one replaced and a stale one left as it was. The libraries' `compose` joins the filled operations into one request with one prologue, since Oxigraph refuses a prologue after `;` ([TSD-68](../../docs/architecture/triple-store-discovery.md#tsd-68-oxigraph-refuses-a-prologue-after-the--of-an-update-request)).
+
+**A digest of the state, by opt-in.** A delta keeps a graph changed outside the family's operations as it was. `dal:recordsStateDigest` true on the write-discipline profile of a family written in place under `dal:Optimistic` makes the version row record the digest of the state each write leaves, so an audit finds such a change. Absent means false. The caller computes the digest over the sorted canonical N-Triples of the next state (`state_digest` in Python, `RequestDigest.stateDigest` in Java) and records it with the generated `record-state-digest` operation, kind `dal:StateDigestRecord`, in the same request as its write, guarded on the row being at the write's sequence and on the transaction's claim, so a stale or refused write records nothing. The generated `state-digest-audit` operation, kind `dal:StateDigestRead`, returns the recorded digest and the aggregate's triples, for the caller to recompute and compare. It costs a sort of N triples a write and one triple on the row, which is why it is an opt-in. `test_load_whole_and_state_digest.py` holds both.
 
 ### 5.7 Capability self-checks
 
@@ -3430,6 +3438,10 @@ pat:rev a owl:ObjectProperty ;
 pat:requestDigest a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     rdfs:comment "Lower-case hex SHA-256 of enc([operationKind, target, expected, *sorted canonical N-Triples of the skolemized payload and events]). Distinguishes a replay of the same request from a different request reusing the txn id." .
+
+pat:stateDigest a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The digest of the state the root's last write left, recorded where the family's profile declares dal:recordsStateDigest." .
 ```
 
 The terms of a key claim, whose subject is derived from the constraint, the scheme version and the keyed hash of the key value, and which lives in the key graph.
@@ -3736,7 +3748,7 @@ write skew turns on it.
 **Definition.** The logical kind of a generated operation, closed. A dataset-guard variant, a patch-log variant and a
 no-receipt variant have the kind of their base operation.
 
-**Equivalent to.** { dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:DeltaReplace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck }
+**Equivalent to.** { dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:DeltaReplace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck, dal:StateDigestRecord, dal:StateDigestRead }
 
 #### `dal:AuditOutcome`
 
@@ -4833,6 +4845,14 @@ compile refuses dal:DeltaMembership for a family that does not declare dal:Appen
 
 **Range.** `dal:ReplaceEncoding`
 
+#### `dal:recordsStateDigest`
+
+**Definition.** Whether a family written in place under dal:Optimistic records, on its version row, the digest of the state each write leaves, so an audit finds a graph changed outside the family's operations. Absent means false. The caller computes the digest over the sorted canonical N-Triples of the next state and records it with the generated record-state-digest operation in the same request as its write.
+
+**Domain.** `dal:WriteDisciplineProfile`
+
+**Range.** `xsd:boolean`
+
 #### `dal:mergeRelation`
 
 **Definition.** The ontology relation used to record a merge (for example fnd:replacedBy, if the adopter's ontology
@@ -5594,6 +5614,8 @@ The individuals of `dal:OperationKind`.
 | `dal:Audit` | `dal:OperationKind` | A read-only query that returns the rows that violate an invariant. Returns none on a clean dataset. |
 | `dal:MembersRead` | `dal:OperationKind` | Resolves the members of a version from a chain of deltas back to the nearest checkpoint (dal:DeltaMembership). |
 | `dal:PayloadCheck` | `dal:OperationKind` | Returns the subjects of a payload that are neither the root nor reached from it by the family's owned edges, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). The caller runs it over a local graph holding its payload and never over the store. Generated for a family that names a dal:boundaryShape. |
+| `dal:StateDigestRecord` | `dal:OperationKind` | Records on a root's version row the digest of the state its write left, guarded on the row being at the write's sequence and the transaction's claim, so it applies only after that write. |
+| `dal:StateDigestRead` | `dal:OperationKind` | Reads a root's recorded state digest and the triples of its aggregate, for a caller to recompute the digest and compare. |
 
 The individuals of `dal:ParameterKind`.
 
@@ -5935,7 +5957,7 @@ The members of each enumeration of 6.1 are distinct individuals, so a reasoner c
 
 **All different.** dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow
 
-**All different.** dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:DeltaReplace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck
+**All different.** dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:DeltaReplace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck, dal:StateDigestRecord, dal:StateDigestRead
 
 **All different.** dal:Clean, dal:Failed, dal:NothingExamined
 
@@ -6075,7 +6097,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:MintingRecipe` | Class |  |
 | `dal:NamespaceScope` | Class | Subclass of `dal:ProfileScope`. |
 | `dal:OccurrenceNamespaceDerivation` | Class | Equivalent to {`dal:RegistryTokenDerivation`, `dal:HashedTargetDerivation`}. |
-| `dal:OperationKind` | Class | Equivalent to {`dal:Quarantine`, `dal:Create`, `dal:Bootstrap`, `dal:Replace`, `dal:DeltaReplace`, `dal:Tombstone`, `dal:Append`, `dal:AppendVersion`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:KeyClaimRetire`, `dal:MergeRewrite`, `dal:Audit`, `dal:MembersRead`, `dal:PayloadCheck`}. |
+| `dal:OperationKind` | Class | Equivalent to {`dal:Quarantine`, `dal:Create`, `dal:Bootstrap`, `dal:Replace`, `dal:DeltaReplace`, `dal:Tombstone`, `dal:Append`, `dal:AppendVersion`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:KeyClaimRetire`, `dal:MergeRewrite`, `dal:Audit`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:StateDigestRecord`, `dal:StateDigestRead`}. |
 | `dal:OrderingGrain` | Class | Equivalent to {`dal:CommitGrain`, `dal:EventGrain`}. |
 | `dal:OrderingProfile` | Class |  |
 | `dal:OwnershipKind` | Class | Equivalent to {`dal:Owned`, `dal:Reference`, `dal:Vocabulary`}. |
@@ -6192,6 +6214,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:receiptModel` | Object property | Domain `dal:ReceiptProfile`. Range `dal:ReceiptModel`. |
 | `dal:recipeStrategy` | Object property | Domain `dal:MintingRecipe`. |
 | `dal:recordClass` | Object property | Range `owl:Class`. |
+| `dal:recordsStateDigest` | Object property | Domain `dal:WriteDisciplineProfile`. Range `xsd:boolean`. |
 | `dal:referenceEdge` | Object property | Range `dal:ReferenceEdge`. |
 | `dal:referenceMode` | Object property | Range `dal:ReferenceMode`. |
 | `dal:replaceEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:ReplaceEncoding`. |
@@ -6297,15 +6320,15 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:BlockingContiguityCheck`. |
 | `dal:Aggregate` | Individual | Type `dal:ResourceKind`. Different from `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:AggregateRootRole` | Individual | Type `dal:ResourceRole`. Different from `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
-| `dal:Append` | Individual | Type `dal:OperationKind`. Different from `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Append` | Individual | Type `dal:OperationKind`. Different from `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:AppendOnly` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:LockingConcurrency`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
 | `dal:AppendRecords` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendVersions`, `dal:InPlace`. |
-| `dal:AppendVersion` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:AppendVersion` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:AppendVersions` | Individual | Type `dal:WriteDiscipline`. Different from `dal:AppendRecords`, `dal:InPlace`. |
-| `dal:Audit` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Audit` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:BestEffort` | Individual | Type `dal:ConcurrencyLevel`. Different from `dal:Linearizable`, `dal:NoConcurrencyGuarantee`. |
 | `dal:BlockingContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:AdvisoryContiguityCheck`. |
-| `dal:Bootstrap` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Bootstrap` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:BucketAnyRetention` | Individual | Type `dal:RetentionMode`. Different from `dal:PrefixOnlyRetention`. |
 | `dal:BuilderDerived` | Individual | Type `dal:DeclarationSource`. Different from `dal:HandDeclared`. |
 | `dal:ByIdentity` | Individual | Type `dal:ReferenceMode`. Different from `dal:Pinned`. |
@@ -6320,7 +6343,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ContentAddressedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
 | `dal:ContentRevisionRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
 | `dal:CountColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`, `dal:TermColumn`. |
-| `dal:Create` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Create` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. Different from `dal:NoErasure`, `dal:PerSubjectGraphDrop`. |
 | `dal:CustomRulesValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`. |
 | `dal:DatasetEpoch` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
@@ -6328,7 +6351,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:DelPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
 | `dal:Delete` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
 | `dal:DeltaMembership` | Individual | Type `dal:MembershipEncoding`. Different from `dal:FullMembership`. |
-| `dal:DeltaReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:DeltaReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:DenseFeedRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:LagWindowRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
 | `dal:DerivedFeed` | Individual | Type `dal:DatasetTierModel`. Different from `dal:GlobalDenseCounter`, `dal:HybridLogicalClock`. |
 | `dal:DerivedHashIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -6364,10 +6387,10 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:IriKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:IriOrLiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:KeyClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
-| `dal:KeyClaimRetire` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyClaimRetire` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:KeyClaimRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:LineageRole`. |
-| `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
-| `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:KeyQuarantine` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
 | `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
@@ -6376,10 +6399,10 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
 | `dal:LongKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
-| `dal:MembersRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:MembersRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:Merge` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Quarantine`, `dal:Reject`. |
 | `dal:MergeRecord` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
-| `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. Different from `dal:ErasureWins`. |
 | `dal:NamedGraphBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:CompositePropertyBoundary`, `dal:NoBoundary`. |
 | `dal:NaturalKeyIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -6403,7 +6426,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:PartitionedWriter` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`. |
 | `dal:PatchContent` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:PatchLog` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:ReceiptOnly`, `dal:SnapshotPerRevision`. |
-| `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:PayloadKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:PayloadPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:TargetPart`. |
 | `dal:PerAggregate` | Individual | Type `dal:MetaTopology`. Different from `dal:SharedSharded`. |
@@ -6420,7 +6443,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:PropertyValue` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:LockingConcurrency`, `dal:Optimistic`. |
 | `dal:PublicData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PersonalData`. |
-| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `dal:ViolationPolicy`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:Merge`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Reject`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Quarantine` | Individual | Type `dal:OperationKind`, `dal:ViolationPolicy`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:Merge`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Reject`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:CallerNamed`. |
 | `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:ExternalEventIdStrategy`, `dal:PositionDerivedEvent`. |
 | `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -6431,7 +6454,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. Different from `dal:HashedTargetDerivation`. |
 | `dal:Reject` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Merge`, `dal:Quarantine`. |
-| `dal:Replace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Replace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:StoreLocalEpoch`, `dal:WriterStartRefusal`. |
 | `dal:RetentionMark` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:Retired` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retiring`. |
@@ -6447,6 +6470,8 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:SingleRepresentation` | Individual | Type `dal:EtagRepresentation`. Different from `dal:TaggedRepresentation`. |
 | `dal:SnapshotPerRevision` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:PatchLog`, `dal:ReceiptOnly`. |
 | `dal:SortedAcquisition` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:EngineDetectAndRetry`, `dal:PartitionedWriter`. |
+| `dal:StateDigestRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:StateDigestRecord` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:StoreLocalEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:RestoreControlledEpoch`, `dal:WriterStartRefusal`. |
 | `dal:StringColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:TermColumn`. |
 | `dal:StringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`. |
@@ -6457,13 +6482,13 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:TargetPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`. |
 | `dal:TemplateReplace` | Individual | Type `dal:ReplaceForm`. |
 | `dal:TermColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:PositionColumn`, `dal:StringColumn`. |
-| `dal:Tombstone` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:Tombstone` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:TransactionClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:VersionRow`. |
 | `dal:Transactional` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Advisory`, `dal:Strong`. |
 | `dal:TripleRows` | Individual | Type `dal:PayloadEncoding`. |
-| `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
+| `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
 | `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:CallerSuppliedSurrogate`. |
-| `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
+| `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
 | `dal:VersionRow` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`. |
 | `dal:Vocabulary` | Individual | Type `dal:OwnershipKind`. Different from `dal:Owned`, `dal:Reference`. |
 | `dal:WatermarkedRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:LagWindowRead`, `dal:NoGlobalRead`. |
@@ -6966,6 +6991,8 @@ dal:WriteDisciplineProfileShape
     sh:property [ sh:path dal:replaceEncoding ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:in ( dal:ChangedTriples dal:WholeState ) ;
                   sh:message "dal:replaceEncoding takes one of dal:ChangedTriples, dal:WholeState. A family that declares none writes the changed triples under dal:Optimistic." ] ;
+    sh:property [ sh:path dal:recordsStateDigest ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+                  sh:message "dal:recordsStateDigest is one boolean." ] ;
     sh:property [ sh:path dal:checkpointEvery ; sh:maxCount 1 ;
                   sh:or ( [ sh:datatype xsd:long ] [ sh:datatype xsd:integer ] ) ;
                   sh:message "dal:checkpointEvery is one integer, the number of versions between full lists of members." ] .
@@ -6999,7 +7026,7 @@ dal:OperationContractShape
     sh:property [ sh:path dal:operationKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
                   sh:in ( dal:Create dal:Bootstrap dal:Replace dal:DeltaReplace dal:Tombstone dal:Append dal:AppendVersion dal:UnconditionalWrite
                           dal:ValueGuardedReplace dal:KeyClaimWrite dal:KeyClaimWriteDual dal:KeyClaimRetire dal:Quarantine
-                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck ) ;
+                          dal:MergeRewrite dal:Audit dal:MembersRead dal:PayloadCheck dal:StateDigestRecord dal:StateDigestRead ) ;
                   sh:message "A generated operation has exactly one dal:operationKind, an individual of dal:OperationKind." ] ;
     sh:property [ sh:path dal:templateVersion ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
                   sh:message "A generated operation has exactly one dal:templateVersion, an integer." ] ;
@@ -7777,8 +7804,11 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 ## 12. Release Notes
 
 - **Unreleased**.
+  - State digest and bulk load. New: `dal:recordsStateDigest`, `dal:StateDigestRecord`, `dal:StateDigestRead` and `pat:stateDigest`. A family under `dal:ChangedTriples` also generates `replace-whole` (no effect).
   - The rows replace. New: `dal:ReplaceForm`, `dal:TemplateReplace`, `dal:RowsReplace`, `dal:replaceForm` on `dal:ConcurrencyProfile`, `dal:providesSnapshotUpdateSemantics` on `dal:CapabilitySpec`, and `dal:TripleRows` as a `dal:PayloadEncoding`. A configuration that declares none of them compiles to the same operations as before, and every compiled profile gains the resolved `replaceForm` dimension (no effect).
   - The delta replace. New: `dal:ReplaceEncoding`, `dal:ChangedTriples`, `dal:WholeState`, `dal:replaceEncoding` on `dal:WriteDisciplineProfile`, and `dal:DeltaReplace` as a `dal:OperationKind`. An optimistic family written in place that declares no encoding now gets the delta replace, whose request carries the changed triples and no whole state, so a caller of such a family changes what it sends, and a family that wants the old replace declares `dal:WholeState` (changes meaning).
+- **0.21.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.20.0**.
   - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
   - changes meaning. The store vocabulary, the `pat:` terms that the generated operations write into receipts, version rows, transaction claims and key claims, moves from the illustrative `example.org` namespace to the published `persistence-store` document, `spec/persistence-store.ttl`, with the namespace `https://www.nebularis.org/neuro-semantic/lattice/persistence-store#`. Data written under the old IRIs is stored under different IRIs and must be rewritten.

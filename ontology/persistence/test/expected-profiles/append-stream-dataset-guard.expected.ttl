@@ -722,6 +722,9 @@
             dal:resolvedValue dal:PatchLog ;
             dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
         [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
+        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceEncoding" ],

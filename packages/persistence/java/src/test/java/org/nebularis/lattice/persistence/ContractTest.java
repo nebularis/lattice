@@ -25,8 +25,10 @@ class ContractTest {
 
     @Test void readsEveryOperationAndItsParameters() {
         var ops = OperationContract.read(TestSupport.profiles().get("baseline-whole-state"));
-        var deltaKinds = OperationContract.read(TestSupport.profiles().get("baseline-single-class")).stream().map(OperationContract::kind).collect(Collectors.toSet());
-        assertTrue(deltaKinds.contains(OperationKind.DELTA_REPLACE) && !deltaKinds.contains(OperationKind.REPLACE), "the default under dal:Optimistic is the delta replace (DR1)");
+        var delta = OperationContract.read(TestSupport.profiles().get("baseline-single-class"));
+        assertTrue(delta.stream().anyMatch(o -> o.kind() == OperationKind.DELTA_REPLACE), "the default under dal:Optimistic is the delta replace (DR1)");
+        assertTrue(delta.stream().filter(o -> o.kind() == OperationKind.REPLACE).allMatch(o -> o.payload() != null && o.payload().parameter().equals("payloadTriples")),
+            "its only whole replace is replace-whole, which takes the whole state (DR4)");
         var kinds = ops.stream().map(OperationContract::kind).collect(Collectors.toSet());
         assertTrue(kinds.containsAll(List.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE, OperationKind.AUDIT)));
         var replace = operation("baseline-whole-state", REPLACE);
@@ -89,5 +91,15 @@ class ContractTest {
 
     @Test void anOperationWithoutADigestRefuses() {
         assertThrows(DigestException.class, () -> RequestDigest.requestDigest(operation("baseline-single-class", "key-claim-write"), Map.of()));
+    }
+
+    /** DR4, from the studio line's DR2: one prologue for a composed request, and the digest of a state, as the Python library gives them. */
+    @Test void composeHoistsOnePrologueAndAStateDigestIsOfItsLines() {
+        String joined = RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:a#>\nPREFIX b: <urn:b#>\nINSERT DATA { } ;"));
+        assertEquals(List.of("PREFIX a: <urn:a#>", "PREFIX b: <urn:b#>"), joined.lines().limit(2).toList());
+        assertThrows(IllegalArgumentException.class, () -> RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:b#>\nINSERT DATA { }")));
+        Triple b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        assertEquals("cc5c78894f9a048300351a2db7c1db372771b7c01f182a152a4b95d5dfc7974b", RequestDigest.stateDigest(Payload.of(b)), "the Python library's state_digest of the same triple");
+        assertEquals(RequestDigest.stateDigest(Payload.of(b, b)), RequestDigest.stateDigest(Payload.of(b)));
     }
 }

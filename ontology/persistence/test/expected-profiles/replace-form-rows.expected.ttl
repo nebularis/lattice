@@ -1936,6 +1936,9 @@
             dal:resolvedValue dal:PatchLog ;
             dal:wonBy <https://example.org/lending#MemoProfile> ],
         [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
+        [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 1 ;
             dal:dimension "replaceEncoding" ;
@@ -2538,6 +2541,9 @@
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:ReceiptOnly ;
             dal:wonBy <https://example.org/lending#NoteProfile> ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 1 ;
@@ -3151,6 +3157,9 @@
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:PatchLog ;
             dal:wonBy <https://example.org/lending#InvoiceProfile> ],
+        [ dal:candidateCount 0 ;
+            dal:dimension "recordsStateDigest" ;
+            dal:resolvedLiteral false ],
         [ dal:candidateCount 0 ;
             dal:dimension "registryGraph" ],
         [ dal:candidateCount 1 ;

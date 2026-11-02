@@ -83,6 +83,18 @@ class ReceiptsTest {
     }
 
     @Test
+    void aSaveThatChangesNothingIsAnsweredWithTheRevisionItHasAndWritesNothing() {
+        StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
+        Writer writer = created(store);
+        assertEquals(Reply.ok(1), writer.apply(Command.save(WS, "surface", 0, AT, surface("one"))));
+        int receipts = store.graph(Graphs.receipts(WS)).listSubjectsWithProperty(RDF.type, Cst.Receipt).toList().size();
+        assertEquals(Reply.ok(1), writer.apply(Command.save(WS, "surface", 1, AT, surface("one"))), "a delta that changes nothing is never sent (STD-301)");
+        assertEquals(1, revision(store));
+        assertEquals(receipts, store.graph(Graphs.receipts(WS)).listSubjectsWithProperty(RDF.type, Cst.Receipt).toList().size());
+        assertEquals(Reply.ok(2), writer.apply(Command.save(WS, "surface", 1, AT, surface("two"))), "and a change is written as before");
+    }
+
+    @Test
     void aRedeliveredCommandIsAnsweredFromItsReceiptAndAppliedOnce() {
         StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
         Writer writer = created(store);

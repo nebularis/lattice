@@ -75,13 +75,15 @@ DIMENSIONS = (
     # persistence-delta-replace DR1 (2026-11-02): whether a replace carries the changed triples or the whole state. No baseline default,
     # since absent means the changed triples for an optimistic family and the whole state for any other (operations.replace_encoding).
     "replaceEncoding",
+    # DR4, from the studio line's DR2 (2026-11-01): whether such a family records the digest of the state each write leaves.
+    "recordsStateDigest",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
 # ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
 LITERAL_DIMENSIONS = frozenset(
     {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph",
-     "perSubjectScoped", "checkpointEvery"}
+     "perSubjectScoped", "checkpointEvery", "recordsStateDigest"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
@@ -116,6 +118,8 @@ BASELINE_DEFAULTS: dict[str, str] = {
     # H2.6f: every version lists its members, and a checkpoint is every 16th version under dal:DeltaMembership.
     "membershipEncoding": "FullMembership",
     "checkpointEvery": RdfLiteral(16, datatype=XSD.long),
+    # DR4: no state digest is recorded unless a profile asks for it (DR-Q3 (c)).
+    "recordsStateDigest": RdfLiteral(False),
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
     # default for epochAuthority, privacyClass, erasureStrategy,
     # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile

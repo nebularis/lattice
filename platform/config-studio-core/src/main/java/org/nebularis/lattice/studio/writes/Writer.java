@@ -413,6 +413,13 @@ public final class Writer {
         }
 
         /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced by its delta from what the batch leaves it as, so only what changed is written. */
+        /** Whether {@code body} is what part or document {@code root} already holds, so a save of it changes nothing (STD-301). */
+        private boolean unchanged(Family f, String root, Model body) {
+            Model next = Skolem.skolemise(body);
+            Model old = rawGraphs.computeIfAbsent(ops.graph(f, root), store::rawGraph);
+            return next.difference(old).isEmpty() && old.difference(next).isEmpty();
+        }
+
         private void write(Steps s, Family f, String root, long expect, Model body) {
             String graph = ops.graph(f, root);
             Model next = Skolem.skolemise(body);
@@ -422,7 +429,13 @@ public final class Writer {
                 Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
                 Model asserted = next.difference(old);
                 Model retracted = old.difference(next);
-                s.op(graph, txn -> ops.replaceDelta(f, root, expect, next, asserted, retracted, txn));
+                if (asserted.isEmpty() && retracted.isEmpty()) {
+                    // A delta that changes nothing is never sent (STD-301). A row that must still move, a document whose description
+                    // changed, takes the whole replace.
+                    s.op(graph, txn -> ops.replace(f, root, expect, next, null, null, txn));
+                } else {
+                    s.op(graph, txn -> ops.replaceDelta(f, root, expect, next, asserted, retracted, txn));
+                }
             }
             rawGraphs.put(graph, next);
         }
@@ -493,6 +506,9 @@ public final class Writer {
             String graph = ops.graph(Family.PART, root);
             Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
             Model next = ModelFactory.createDefaultModel().add(old).remove(removed).add(added);
+            if (unchanged(Family.PART, root, next)) {
+                return Reply.ok(c.expect());
+            }
             long revision = ws.revision(part) + 1;
             Steps s = new Steps(c);
             write(s, Family.PART, root, c.expect(), next);
@@ -523,6 +539,9 @@ public final class Writer {
             Workspace ws = found.get();
             if (ws.revision(part) != c.expect()) {
                 return Reply.stale(ws.revision(part));
+            }
+            if (c.expect() != 0 && unchanged(Family.PART, Graphs.partRoot(ws.id(), part), graph)) {
+                return Reply.ok(c.expect());
             }
             long next = ws.revision(part) + 1;
             Steps s = new Steps(c);
@@ -559,6 +578,9 @@ public final class Writer {
             long next = c.expect() + 1;
             Workspace.Document held = ws.documents().get(doc);
             boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());
+            if (described && c.expect() != 0 && unchanged(Family.DOCUMENT, Graphs.document(ws.id(), doc), graph)) {
+                return Reply.ok(c.expect());
+            }
             Workspace updated = described ? ws.documentRevised(doc, next)
                 : ws.withDocument(doc, new Workspace.Document(c.label(), c.sample(), next, c.at()), c.at());
             Steps s = new Steps(c);

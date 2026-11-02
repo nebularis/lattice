@@ -60,8 +60,8 @@ public final class StudioOperations {
         }
     }
 
-    private static final Set<OperationKind> USED = Set.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE);
-    /** The operations every family has, by name. A family under dal:ChangedTriples also has replace-whole (DR2). */
+    private static final Set<OperationKind> USED = Set.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.DELTA_REPLACE, OperationKind.TOMBSTONE);
+    /** The operations every family has, by name. A family under dal:ChangedTriples also has replace-whole (DR4). */
     private static final List<String> NAMES = List.of("create-if-absent", "cas-replace", "tombstone-delete");
     private static final Pattern SLOT = Pattern.compile("\\{\\{\\{([A-Za-z]+)\\}\\}\\}");
     /** The namespace of the marker triple a payload slot is filled with before parsing, replaced by the payload's quads after. */
@@ -276,14 +276,14 @@ public final class StudioOperations {
      */
     public List<Update> replaceDelta(Family f, String root, long expectedSeq, Model next, Model asserted, Model retracted, String txnId) {
         Operation op = operation(f, "cas-replace");
-        if (op.contract.parameter("assertTriples").isEmpty() || op.contract.parameter("payloadTriples").isPresent()) {
+        if (op.contract.kind() != OperationKind.DELTA_REPLACE) {
             throw new IllegalArgumentException(f + "'s replace is " + op.contract.templateId() + ", which is not a delta replace, so its profile is not dal:ChangedTriples");
         }
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
         values.put("assertTriples", asserted);
         values.put("retractTriples", retracted);
-        return List.of(build(op, values));
+        return List.of(build(op, values, Map.of(), next));
     }
 
     /** Deletes the aggregate and marks its version row deleted when the row is at {@code expectedSeq}. */
@@ -302,7 +302,7 @@ public final class StudioOperations {
 
     private Update replaceUpdate(Family f, String root, long expectedSeq, Model payload, Model asserted, Model retracted, String txnId,
                                  Map<String, Model> written) {
-        // the whole replace: a family under dal:ChangedTriples has it as replace-whole beside its delta replace (DR2)
+        // the whole replace: a family under dal:ChangedTriples has it as replace-whole beside its delta replace (DR4)
         Operation op = Optional.ofNullable(operation(f, "replace-whole")).orElse(operation(f, "cas-replace"));
         Map<String, Object> values = common(f, root, txnId, expectedSeq + 1);
         values.put("expectedSeq", expectedSeq);
@@ -344,6 +344,11 @@ public final class StudioOperations {
 
     /** As {@link #build(Operation, Map)}, with each slot named in {@code written} filled with that graph rather than the one digested. */
     private Update build(Operation op, Map<String, Object> given, Map<String, Model> written) {
+        return build(op, given, written, null);
+    }
+
+    /** As above, with the state a delta replace leaves, over which the caller check runs the bound and the delta's rules (STD-308). */
+    private Update build(Operation op, Map<String, Object> given, Map<String, Model> written, Model next) {
         OperationContract contract = op.contract;
         Map<String, Object> values = new HashMap<>();
         Map<String, Model> payloads = new HashMap<>();
@@ -359,7 +364,7 @@ public final class StudioOperations {
         if (contract.parameter("requestDigest").isPresent()) {
             values.put("requestDigest", RequestDigest.requestDigest(contract, values));
         }
-        CallerCheck.check(contract, values);
+        CallerCheck.check(contract, values, next == null ? CallerCheck.Options.none() : CallerCheck.Options.none().nextState(payload(next)));
         ParameterizedSparqlString bound = new ParameterizedSparqlString(op.text);
         Map<String, String> slots = new HashMap<>();
         for (ParameterContract p : contract.parameters()) {
