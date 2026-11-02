@@ -17,8 +17,11 @@ import org.nebularis.lattice.studio.auth.Principal;
  * tab's events topic, {@code studio/u/<name>/<tab>/watch} and {@code .../events}, with the name in unpadded base64url. The rule never
  * names a workspace, so no permission the graph holds is copied into the broker, and the relay decides what each event reaches.
  *
- * <p>Each route takes the backend's form-encoded POST and answers {@code allow} or {@code deny}. The broker's own users, the relay's
- * among them, authenticate by its internal backend first and never reach these routes.
+ * <p>Each route, {@code /api/broker/<secret>/<check>}, takes the backend's form-encoded POST and answers {@code allow} or {@code deny}.
+ * The secret is the one the broker was configured with, so a caller that does not know it is answered as for no route. The broker's
+ * own users, the relay's among them, authenticate by its internal backend first and never reach these routes. A principal signed in
+ * by the local authenticator, which trusts the name a request gives, connects with the service's local key as its password, which
+ * only a page of the studio's origin can read from the session.
  */
 public final class BrokerAuth {
     /** The routes' prefix, never routed by a proxy. */
@@ -29,9 +32,37 @@ public final class BrokerAuth {
     private static final Base64.Encoder B64 = Base64.getUrlEncoder().withoutPadding();
 
     private final Function<Map<String, String>, Principal> authenticate;
+    private final String localKey;
 
-    public BrokerAuth(Function<Map<String, String>, Principal> authenticate) {
+    /** {@code localKey} is null unless the deployment signs in locally, when it is the only password the broker's user check takes. */
+    public BrokerAuth(Function<Map<String, String>, Principal> authenticate, String localKey) {
         this.authenticate = authenticate;
+        this.localKey = localKey;
+    }
+
+    /** A new random key, 192 bits in base64url. */
+    public static String newKey() {
+        byte[] key = new byte[24];
+        new java.security.SecureRandom().nextBytes(key);
+        return B64.encodeToString(key);
+    }
+
+    /** The check a path names under {@code secret}, such as {@code user}, or null when the path does not carry that secret. */
+    public static String check(String path, String secret) {
+        if (secret == null || !path.startsWith(PREFIX)) {
+            return null;
+        }
+        String rest = path.substring(PREFIX.length());
+        int slash = rest.indexOf('/');
+        if (slash < 0 || !same(rest.substring(0, slash), secret)) {
+            return null;
+        }
+        return rest.substring(slash + 1);
+    }
+
+    /** Whether two secrets are equal, in time that does not depend on where they differ. */
+    private static boolean same(String given, String expected) {
+        return java.security.MessageDigest.isEqual(given.getBytes(StandardCharsets.UTF_8), expected.getBytes(StandardCharsets.UTF_8));
     }
 
     /** A principal's name as it appears in a topic, with no {@code .}, {@code /}, {@code +} or {@code #}. */
@@ -57,12 +88,13 @@ public final class BrokerAuth {
         return "studio:" + topicName(principal) + ":" + tab;
     }
 
-    public ApiResponse handle(String method, String path, byte[] body) {
+    /** The answer to {@code check}, one of {@code user}, {@code vhost}, {@code resource} and {@code topic}. */
+    public ApiResponse handle(String method, String check, byte[] body) {
         if (!method.equals("POST")) {
             return ApiResponse.text(405, "method not allowed").with("Allow", "POST");
         }
         Map<String, String> p = form(body);
-        boolean allow = switch (path.substring(PREFIX.length())) {
+        boolean allow = switch (check) {
             case "user" -> user(p);
             case "vhost" -> "/".equals(p.get("vhost")) && tab(p) != null;
             case "resource" -> resource(p);
@@ -78,9 +110,18 @@ public final class BrokerAuth {
             return false;
         }
         String password = p.getOrDefault("password", "");
-        // The headers a request of the browser would carry, whichever the deployment's authenticator reads.
-        Map<String, String> headers = password.isEmpty() ? Map.of("x-lattice-principal", user)
-            : Map.of("x-lattice-principal", user, "authorization", "Bearer " + password);
+        Map<String, String> headers;
+        if (localKey != null) {
+            if (!same(password, localKey)) {
+                return false;
+            }
+            headers = Map.of("x-lattice-principal", user);
+        } else {
+            if (password.isEmpty()) {
+                return false;
+            }
+            headers = Map.of("authorization", "Bearer " + password);
+        }
         Principal found = authenticate.apply(headers);
         return found != null && found.name().equals(user);
     }

@@ -6,7 +6,7 @@
 // event lost while the connection was down, or a studio that offers no events, costs a delay, never a hang.
 
 import type { MqttClient } from "mqtt";
-import { authHeaders, loadSession } from "./session";
+import { authHeaders, loadSession, type Session } from "./session";
 
 const RECONNECT_MS = 5000;
 const GONE = JSON.stringify({ type: "gone" });
@@ -24,10 +24,10 @@ export function topicName(principal: string): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/** The CONNECT password: the bearer token, or `local` with no token, since the broker refuses an empty password before it asks the service. */
-function password(): string {
+/** The CONNECT password: the bearer token, or with local sign-in the key only a page of the studio's own origin reads from the session. */
+function password(session: Session): string {
   const auth = authHeaders().Authorization;
-  return auth?.startsWith("Bearer ") ? auth.slice(7) : "local";
+  return auth?.startsWith("Bearer ") ? auth.slice(7) : (session.eventsPassword ?? "");
 }
 
 function send(frame: object) {
@@ -55,7 +55,7 @@ async function connect() {
     watchTopic = `${base}/watch`;
     const c = open(session.events, {
       username: session.principal,
-      password: password(),
+      password: password(session),
       clientId: `studio:${topicName(session.principal)}:${tab}`,
       clean: true,
       reconnectPeriod: RECONNECT_MS,
@@ -67,7 +67,7 @@ async function connect() {
     client = c;
     c.on("reconnect", () => {
       // A token may have been renewed since the last connection.
-      c.options.password = password();
+      c.options.password = password(session);
     });
     c.on("connect", async () => {
       try {

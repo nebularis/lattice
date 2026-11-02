@@ -10,11 +10,12 @@ import org.nebularis.lattice.studio.settings.Secrets;
 
 /**
  * The service's settings, read from the environment. A null field means the setting is absent. {@code eventsUrl} is where a browser's
- * MQTT client reaches the broker for events, the broker's own Web MQTT address or a proxy's (PM-Q20 (d)).
+ * MQTT client reaches the broker for events, the broker's own Web MQTT address or a proxy's (PM-Q20 (d)). {@code brokerSecret} is
+ * the path segment the broker's HTTP auth backend names in every check, so only the broker is answered.
  */
 public record StudioConfig(int port, String bind, Path assets, Path staticDir, String fusekiUrl,
                            String fusekiDataset, String fusekiUser, String fusekiPassword, String amqpUri,
-                           Set<String> features, long epoch, String eventsUrl) {
+                           Set<String> features, long epoch, String eventsUrl, String brokerSecret) {
 
     public static StudioConfig fromEnv(Map<String, String> env) {
         int port;
@@ -33,7 +34,7 @@ public record StudioConfig(int port, String bind, Path assets, Path staticDir, S
             optional(env, "LATTICE_FUSEKI_USER"), Secrets.secret(env, "LATTICE_FUSEKI_PASSWORD"),
             Secrets.secret(env, "LATTICE_AMQP_URI"),
             features(env.getOrDefault("LATTICE_STUDIO_FEATURES", "")), epoch(env),
-            optional(env, "LATTICE_STUDIO_EVENTS_URL"));
+            optional(env, "LATTICE_STUDIO_EVENTS_URL"), Secrets.secret(env, "LATTICE_STUDIO_BROKER_SECRET"));
     }
 
     /** The epoch the store's version rows are written at, 1 until the operator restores the store and raises it (PB-D9). */

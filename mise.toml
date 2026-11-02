@@ -705,12 +705,12 @@ run = "python tools/config_studio_stack.py status"
 
 [tasks."studio:infra"]
 description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"
-run = "docker compose -f deployment/compose/config-studio/docker-compose.yml up -d --wait"
+run = "python tools/config_studio_stack.py infra"
 
 [tasks."studio:service"]
 description = "Build and run the Configuration Studio's service on 127.0.0.1:8090 against Fuseki and RabbitMQ"
 depends = ["build:config-studio-assets"]
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STUDIO_STATIC = "apps/config-studio/dist" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri", LATTICE_STUDIO_STATIC = "apps/config-studio/dist", LATTICE_STUDIO_EVENTS_URL = "ws://127.0.0.1:15675/ws", LATTICE_STUDIO_BROKER_SECRET_FILE = ".build/config-studio/infra/broker/secret" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-service -am package -DskipTests && java -jar platform/config-studio-service/target/config-studio-service.jar"
 
 [tasks."studio:ca"]
@@ -719,17 +719,17 @@ run = "docker compose -f deployment/compose/config-studio/docker-compose.yml cp 
 
 [tasks."studio:writer"]
 description = "Build and run the Configuration Studio's store writer against Fuseki's update service and RabbitMQ's writes super stream. Run several to spread the partitions"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_WRITE_DATASET = "studio-write", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STREAM_URI = "rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_WRITE_DATASET = "studio-write", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri", LATTICE_STREAM_URI_FILE = ".build/config-studio/infra/broker/stream-uri" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-writer -am package -DskipTests && java -jar platform/config-studio-writer/target/config-studio-writer.jar"
 
 [tasks."studio:worker"]
 description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }
 run = "python -m lattice_workers.config_studio_main"
 
 [tasks."studio:transforms"]
 description = "Build and run the Configuration Studio's transforms worker, which runs the mapping part's XSLT stylesheets and JOLT chains, against Fuseki and RabbitMQ"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-transforms -am package -DskipTests && java -jar platform/config-studio-transforms/target/config-studio-transforms.jar"
 
 [tasks."studio:web"]

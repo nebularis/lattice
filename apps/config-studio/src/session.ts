@@ -16,6 +16,8 @@ export interface Session {
   tokenEndpoint?: string;
   /** Where the broker's MQTT serves events, when the studio offers them. */
   events?: string;
+  /** With local sign-in, the password the broker takes for events, which only a page of the studio's own origin can read. */
+  eventsPassword?: string;
 }
 
 const LOCAL = "lattice-studio:principal";

@@ -34,6 +34,7 @@ import org.nebularis.lattice.studio.writes.StudioEvents;
 class EventsTest {
     private static final String WS = Fixture.id(1);
     private static final String AS = "x-lattice-principal";
+    private static final String SECRET = "the-broker-secret";
 
     @TempDir Path dir;
     Fixture f;
@@ -44,7 +45,7 @@ class EventsTest {
         f = new Fixture(Fixture.assetsDir(dir.resolve("assets")));
         notifier = new Notifier(f.api::authenticate, f.api::mayRead);
         f.listener = notifier::deliver;
-        f.api.events("ws://127.0.0.1:15675/ws");
+        f.api.events("ws://127.0.0.1:15675/ws", SECRET);
         assertEquals(201, f.createWorkspace("One").status());
     }
 
@@ -200,10 +201,18 @@ class EventsTest {
     // --- the broker's checks -----------------------------------------------------------------------------------------
 
     private String broker(String check, String form) {
-        ApiResponse r = f.send("POST", BrokerAuth.PREFIX + check, null, Map.of("content-type", "application/x-www-form-urlencoded"),
+        ApiResponse r = f.send("POST", BrokerAuth.PREFIX + SECRET + "/" + check, null, Map.of("content-type", "application/x-www-form-urlencoded"),
             form.getBytes(StandardCharsets.UTF_8));
         assertEquals(200, r.status());
         return new String(r.body(), StandardCharsets.UTF_8);
+    }
+
+    /** The local key the session gives a page of the studio's own origin. */
+    private String key() {
+        String body = new String(f.get("/api/session").body(), StandardCharsets.UTF_8);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"eventsPassword\":\"([A-Za-z0-9_-]+)\"").matcher(body);
+        assertTrue(m.find(), body);
+        return m.group(1);
     }
 
     private static String client(String principal, String tab) {
@@ -212,19 +221,36 @@ class EventsTest {
 
     @Test
     void theBrokerLetsAPrincipalInOnlyAsItselfFromAClientIdOfItsOwn() {
-        assertEquals("allow", broker("user", "username=developer&password=local&client_id=" + client("developer", "t1")));
-        assertEquals("deny", broker("user", "username=mallory&password=local&client_id=" + client("mallory", "t1")), "an unknown principal");
-        assertEquals("deny", broker("user", "username=developer&password=local&client_id=" + client("reviewer", "t1")), "another's client id");
-        assertEquals("deny", broker("user", "username=developer&password=local&client_id=studio%3Aabc"), "a client id naming no tab");
-        assertEquals("deny", broker("user", "username=developer&password=local"), "no client id, as an AMQP connection has");
+        assertEquals("allow", broker("user", "username=developer&password=" + key() + "&client_id=" + client("developer", "t1")));
+        assertEquals("deny", broker("user", "username=mallory&password=" + key() + "&client_id=" + client("mallory", "t1")), "an unknown principal");
+        assertEquals("deny", broker("user", "username=developer&password=" + key() + "&client_id=" + client("reviewer", "t1")), "another's client id");
+        assertEquals("deny", broker("user", "username=developer&password=" + key() + "&client_id=studio%3Aabc"), "a client id naming no tab");
+        assertEquals("deny", broker("user", "username=developer&password=" + key()), "no client id, as an AMQP connection has");
         assertEquals("allow", broker("vhost", "username=developer&vhost=%2F&client_id=" + client("developer", "t1")));
         assertEquals("deny", broker("vhost", "username=developer&vhost=other&client_id=" + client("developer", "t1")));
     }
 
     @Test
+    void aLocalPrincipalConnectsOnlyWithTheKeyAPageOfTheStudiosOwnOriginReads() {
+        String c = client("developer", "t1");
+        assertEquals("allow", broker("user", "username=developer&password=" + key() + "&client_id=" + c));
+        assertEquals("deny", broker("user", "username=developer&password=local&client_id=" + c), "a page of another site knows no key");
+        assertEquals("deny", broker("user", "username=developer&password=&client_id=" + c));
+        assertEquals("deny", broker("user", "username=guest&password=" + key() + "&client_id=" + client("guest", "t1")), "a name the authenticator does not offer");
+    }
+
+    @Test
+    void theBrokersChecksAnswerOnlyUnderTheirSecret() {
+        String form = "username=developer&password=" + key() + "&client_id=" + client("developer", "t1");
+        for (String path : List.of(BrokerAuth.PREFIX + "user", BrokerAuth.PREFIX + "wrong/user", BrokerAuth.PREFIX + SECRET + "x/user", BrokerAuth.PREFIX + "/user")) {
+            assertEquals(404, f.send("POST", path, null, Map.of(), form.getBytes(StandardCharsets.UTF_8)).status(), path);
+        }
+    }
+
+    @Test
     void theBrokersPasswordIsTheBearerTokenOfTheDeploymentsAuthenticator() {
-        BrokerAuth oidc = new BrokerAuth(h -> ("Bearer good".equals(h.get("authorization")) ? new org.nebularis.lattice.studio.auth.Principal("developer", false) : null));
-        java.util.function.Function<String, String> user = form -> new String(oidc.handle("POST", BrokerAuth.PREFIX + "user",
+        BrokerAuth oidc = new BrokerAuth(h -> ("Bearer good".equals(h.get("authorization")) ? new org.nebularis.lattice.studio.auth.Principal("developer", false) : null), null);
+        java.util.function.Function<String, String> user = form -> new String(oidc.handle("POST", "user",
             (form + "&client_id=" + client("developer", "t1")).getBytes(StandardCharsets.UTF_8)).body(), StandardCharsets.UTF_8);
         assertEquals("allow", user.apply("username=developer&password=good"));
         assertEquals("deny", user.apply("username=developer&password=bad"));
@@ -256,8 +282,8 @@ class EventsTest {
 
     @Test
     void theBrokersChecksAreNotServedWhenTheStudioOffersNoEvents() {
-        f.api.events(null);
-        assertEquals(404, f.send("POST", BrokerAuth.PREFIX + "user", null, Map.of(), "username=developer".getBytes(StandardCharsets.UTF_8)).status());
+        f.api.events(null, null);
+        assertEquals(404, f.send("POST", BrokerAuth.PREFIX + SECRET + "/user", null, Map.of(), "username=developer".getBytes(StandardCharsets.UTF_8)).status());
     }
 
     @Test

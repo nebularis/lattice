@@ -63,9 +63,11 @@ public final class StudioMain {
             events = Amqp.connect(config.amqpUri(), "config-studio-service events");
         }
         StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
-        if (config.eventsUrl() != null && events != null) {
+        if (config.eventsUrl() != null && config.brokerSecret() == null) {
+            LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_STUDIO_BROKER_SECRET, so the broker's checks are not served and the browser polls for jobs");
+        } else if (config.eventsUrl() != null && events != null) {
             // Events reach a browser over the broker's MQTT, which asks this service who connected, and the relay decides what each tab hears (PM-Q20 (d)).
-            api.events(config.eventsUrl());
+            api.events(config.eventsUrl(), config.brokerSecret());
             Relay.start(events, new Notifier(api::authenticate, api::mayRead));
         } else if (config.eventsUrl() != null) {
             LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_AMQP_URI, so the browser polls for jobs");
@@ -91,7 +93,7 @@ public final class StudioMain {
 
     private static boolean selfCheck() throws Exception {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
-            "studio", null, null, null, java.util.Set.of(), 1L, null);
+            "studio", null, null, null, java.util.Set.of(), 1L, null, null);
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         try (StudioStore store = StudioStore.inMemory();
              StudioHttpServer server = serve(config, new StudioApi(store, ops, new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC())), new RecordingJobBus(), Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), LocalAuthenticator.developers()))) {

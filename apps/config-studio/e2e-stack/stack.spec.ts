@@ -82,19 +82,23 @@ test("an author tests an interval condition and reads how a contract resolves, a
   await expect(table.getByRole("row", { name: /Lender B/ })).toContainText("Lender B sector codes", { timeout: 30_000 });
 });
 
-test("the broker lets a browser in only as its principal, and onto its own tab's topics only", async ({ request }) => {
+test("the broker lets a browser in only as its principal, with the session's key, and onto its own tab's topics only", async ({ request }) => {
   const session = await (await request.get("/api/session")).json();
   test.skip(!session.events, "the studio offers no events");
   const name = (p: string) => Buffer.from(p).toString("base64url");
-  const open = (username: string, clientId: string) =>
+  const open = (username: string, clientId: string, password = session.eventsPassword ?? "") =>
     new Promise<MqttClient | Error>((resolve) => {
-      const c = connect(session.events, { username, password: "local", clientId, reconnectPeriod: 0, rejectUnauthorized: false, connectTimeout: 10_000 });
+      const c = connect(session.events, { username, password, clientId, reconnectPeriod: 0, rejectUnauthorized: false, connectTimeout: 10_000 });
       c.on("connect", () => resolve(c));
       c.on("error", (e) => {
         c.end(true);
         resolve(e);
       });
     });
+  // A page of another site can open a WebSocket to the broker, which checks no Origin, so neither a default user nor a local
+  // principal without the key a page of the studio's own origin reads from the session gets in.
+  expect(await open("guest", "studio:guest:t1", "guest"), "the broker has no guest").toBeInstanceOf(Error);
+  expect(await open("developer", `studio:${name("developer")}:t1`, "local"), "a local principal without the session's key").toBeInstanceOf(Error);
   expect(await open("mallory", `studio:${name("mallory")}:t1`), "a principal the studio does not know").toBeInstanceOf(Error);
   expect(await open("developer", `studio:${name("reviewer")}:t1`), "a client id of another principal").toBeInstanceOf(Error);
   const own = await open("developer", `studio:${name("developer")}:t1`);

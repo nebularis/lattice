@@ -59,7 +59,7 @@ Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with
 | `GET /api/features` | | `200`, `application/json`, `{"features": [...]}`, the optional features the deployment turned on with `LATTICE_STUDIO_FEATURES`, such as `odrl` |
 | `GET /api/status` | | `200`, `application/json`, `{"warnings": [...]}`, what the service's start found that an administrator should know, such as a promotion changed since the last rebuild (PM-Q3) |
 | `POST /api/admin/rebuild` | | `202`, a rebuild of every promoted partition is queued. `403` for a principal who is not an administrator |
-| `POST /api/broker/{user,vhost,resource,topic}` | the RabbitMQ HTTP auth backend's form | `200`, `allow` or `deny`, the broker's checks of who a browser is and what it may use, below. `404` when the studio offers no events. A proxy never routes them |
+| `POST /api/broker/{secret}/{user,vhost,resource,topic}` | the RabbitMQ HTTP auth backend's form | `200`, `allow` or `deny`, the broker's checks of who a browser is and what it may use, below. `404` when the studio offers no events or the path does not carry `LATTICE_STUDIO_BROKER_SECRET`. A proxy never routes them |
 | `GET /api/vocabulary` | | `200`, the `dal:`, `srf:`, `fnd:` and `voc:` specifications and vocabularies merged, with an `ETag`. `304` for a matching `If-None-Match` |
 | `GET /api/samples` | | `200`, every `cst:Sample` with its label and comment |
 | `GET /api/samples/{id}` | | `200`, the sample's files merged into one graph |
@@ -165,11 +165,11 @@ The writer publishes a CloudEvent for each applied update of a job, of type `org
 
 The broker's MQTT over WebSockets (its Web MQTT plugin) carries the events to the browser, as CloudEvents in JSON in the message body, when `LATTICE_STUDIO_EVENTS_URL` names where a browser reaches it, the broker's own address or a proxy's. `/api/session` names it as `events`, and the page's `Content-Security-Policy` lets it connect there. The broker checks identity only, and the service's relay decides what each tab hears.
 
-A tab connects with its principal's name as the user, the app's own credential as the password (an OIDC access token, or `local` for the local authenticator, since the broker refuses an empty password), and the client id `studio:<name>:<tab>`, where `<name>` is the principal's name in unpadded base64url and `<tab>` is 1 to 32 of `a-z0-9`. The broker's HTTP auth backend asks the service, after the broker's own users, and the service allows:
+A tab connects with its principal's name as the user, the app's own credential as the password, and the client id `studio:<name>:<tab>`, where `<name>` is the principal's name in unpadded base64url and `<tab>` is 1 to 32 of `a-z0-9`. The credential is the OIDC access token, or with the local authenticator, which trusts the name a request gives, the key `/api/session` gives as `eventsPassword`, made at each start. Only a page of the studio's own origin can read the session, and the broker checks no `Origin`, so the key is what keeps a page of another site from connecting as a local principal. The broker's HTTP auth backend asks the service under the secret, after the broker's own users, and the service allows:
 
 | Check | Allowed |
 |---|---|
-| `user` | the credential authenticates as the user named, from a client id of that user |
+| `user` | the token authenticates as the user named, or the key is the service's and the local authenticator offers the name, from a client id of that user |
 | `vhost` | `/` |
 | `resource` | the session's own queue, `mqtt-subscription-<client id>qos0` or `qos1`, and reading or writing `amq.topic` |
 | `topic` | writing `studio/u/<name>/<tab>/watch` and reading `studio/u/<name>/<tab>/events`, for the client id's own tab |

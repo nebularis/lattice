@@ -97,15 +97,18 @@ class ProcessStudio(Studio):
         stack.wait_for("fuseki", fuseki, READY_TIMEOUT)
         stack.wait_for("rabbitmq", amqp, READY_TIMEOUT)
         stack.wait_for("rabbitmq", stream, READY_TIMEOUT)
+        # The broker has the run's own user and no guest, as the stack's does (PM-Q20 (d)).
+        stack.ensure_broker_user()
+        password, secret = stack.broker_credentials()
 
         env = {
             "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{fuseki}", "LATTICE_FUSEKI_DATASET": "studio",
-            "LATTICE_AMQP_URI": f"amqp://guest:guest@127.0.0.1:{amqp}/%2F", "LATTICE_STUDIO_ASSETS": str(assets),
+            "LATTICE_AMQP_URI": stack.amqp_uri(password), "LATTICE_STUDIO_ASSETS": str(assets),
             "LATTICE_ROOT": str(self.root),
         }
-        writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": f"rabbitmq-stream://guest:guest@127.0.0.1:{stream}/%2f"}
+        writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": stack.stream_uri(password)}
         service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth,
-                       "LATTICE_STUDIO_EVENTS_URL": f"wss://127.0.0.1:{web_mqtts}/ws"}
+                       "LATTICE_STUDIO_EVENTS_URL": f"wss://127.0.0.1:{web_mqtts}/ws", "LATTICE_STUDIO_BROKER_SECRET": secret}
         static = _build.web(self.root, self.run_dir / "web")
         if static is not None:
             service_env["LATTICE_STUDIO_STATIC"] = str(static)

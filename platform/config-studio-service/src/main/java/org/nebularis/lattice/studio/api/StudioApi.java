@@ -80,6 +80,13 @@ public final class StudioApi {
     private final Authenticator auth;
     /** Where a browser's MQTT client connects for events, or null when the studio offers none (PM-Q20 (d)). */
     private volatile String eventsUrl;
+    /** The broker's checks, answered only under the path segment the broker was configured with. */
+    private volatile String brokerSecret;
+    /**
+     * What a browser signed in locally gives the broker as its password, which only a page of the studio's own origin can read from
+     * the session, so a page of another site cannot connect as a local principal over a WebSocket, which no CORS rule guards.
+     */
+    private final String localKey;
     /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
     private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
 
@@ -105,6 +112,7 @@ public final class StudioApi {
         this.store = store;
         this.ops = ops;
         this.auth = auth;
+        this.localKey = auth instanceof LocalAuthenticator ? org.nebularis.lattice.studio.events.BrokerAuth.newKey() : null;
         // Every write carries the principal of the request it serves (PRI-54), which handle() has authenticated.
         // A write keeps its sources' promotions in its own request (PM2), so no read waits for anything after it.
         this.writes = c -> {
@@ -238,9 +246,10 @@ public final class StudioApi {
         return found != null && found.readableBy(principal.name(), principal.admin());
     }
 
-    /** Offers events over the broker's MQTT at {@code url}, which the session names and the broker's checks ask about. */
-    public void events(String url) {
+    /** Offers events over the broker's MQTT at {@code url}, which the session names, and the broker's checks under {@code secret}. */
+    public void events(String url, String secret) {
         this.eventsUrl = url;
+        this.brokerSecret = secret;
     }
 
     public String eventsUrl() {
@@ -251,8 +260,9 @@ public final class StudioApi {
         try {
             // The broker's checks of who connected answer the broker, which authenticates as no principal (PM-Q20 (d)).
             if (req.path().startsWith(org.nebularis.lattice.studio.events.BrokerAuth.PREFIX)) {
-                return eventsUrl == null ? secure(ApiResponse.text(404, "not found"))
-                    : secure(new org.nebularis.lattice.studio.events.BrokerAuth(this::authenticate).handle(req.method(), req.path(), req.body()));
+                String check = org.nebularis.lattice.studio.events.BrokerAuth.check(req.path(), brokerSecret);
+                return eventsUrl == null || check == null ? secure(ApiResponse.text(404, "not found"))
+                    : secure(new org.nebularis.lattice.studio.events.BrokerAuth(this::authenticate, localKey).handle(req.method(), check, req.body()));
             }
             // Health and the session's description answer anyone, so a browser can learn how to sign in.
             if (req.path().equals("/api/health") || req.path().equals("/api/session")) {
@@ -286,6 +296,9 @@ public final class StudioApi {
         Principal p = auth.authenticate(req);
         if (eventsUrl != null) {
             out.put("events", eventsUrl);
+            if (localKey != null) {
+                out.put("eventsPassword", localKey);
+            }
         }
         if (p != null) {
             out.put("principal", p.name());

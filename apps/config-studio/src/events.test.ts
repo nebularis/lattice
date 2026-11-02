@@ -41,7 +41,7 @@ describe("events", () => {
     vi.doMock("mqtt", () => ({ connect: (url: string, options: Record<string, unknown>) => new FakeClient(url, options) }));
     vi.doMock("./session", () => ({
       authHeaders: () => ({ "X-Lattice-Principal": "reviewer" }),
-      loadSession: async () => ({ provider: "local", principal: "reviewer", events: "wss://broker.example:15676/ws" }),
+      loadSession: async () => ({ provider: "local", principal: "reviewer", events: "wss://broker.example:15676/ws", eventsPassword: "the-key" }),
     }));
     vi.stubGlobal("window", { addEventListener: () => undefined });
   });
@@ -67,7 +67,7 @@ describe("events", () => {
     const name = events.topicName("reviewer");
     expect(c.url).toBe("wss://broker.example:15676/ws");
     expect(c.options.username).toBe("reviewer");
-    expect(c.options.password).toBe("local");
+    expect(c.options.password).toBe("the-key");
     expect(String(c.options.clientId)).toMatch(new RegExp(`^studio:${name}:[a-z0-9]{12}$`));
     const tab = String(c.options.clientId).split(":")[2];
     expect((c.options.will as { topic: string; payload: string }).topic).toBe(`studio/u/${name}/${tab}/watch`);

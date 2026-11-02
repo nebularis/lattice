@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MPL-2.0
+# The broker and the add-in's proxy under Docker Desktop, on any platform, which forwards host.docker.internal to the host's
+# loopback, where the service listens. Their ports are published on loopback alone.
+services:
+  rabbitmq:
+    volumes:
+      - ./rabbitmq-stream.conf:/etc/rabbitmq/conf.d/20-stream.conf:ro
+    ports:
+      - "127.0.0.1:5673:5672"
+      - "127.0.0.1:15673:15672"
+      - "127.0.0.1:5553:5552"
+      - "127.0.0.1:15675:15675"
+  addin-proxy:
+    ports:
+      - "127.0.0.1:3443:3443"
