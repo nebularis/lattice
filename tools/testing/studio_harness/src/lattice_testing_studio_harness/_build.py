@@ -17,6 +17,7 @@ JARS = {"service": "config-studio-service", "writer": "config-studio-writer"}
 KEEP_ENV = "STUDIO_HARNESS_KEEP"
 JARS_ENV = "LATTICE_STUDIO_HARNESS_JARS"
 ASSETS_ENV = "LATTICE_STUDIO_HARNESS_ASSETS"
+STAGED_PARTS = ("persistence/profile.ttl", "maintenance/manifest.json")
 WORKER_ROOT_ENV = "LATTICE_STUDIO_HARNESS_WORKER_ROOT"
 
 
@@ -64,6 +65,11 @@ def assets(root: Path, into: Path) -> Path:
     staged = Path(os.environ[ASSETS_ENV]) if os.environ.get(ASSETS_ENV) else root / ".build" / "config-studio"
     if not (staged / "vocabulary.ttl").is_file():
         raise HarnessError(f"the studio's assets are not staged in {staged}. Run `mise run build:config-studio-assets`")
+    # A stage made before a later change lacks what that change added, and the writer then fails deep in its start, so the
+    # newest part every process reads is checked here. Add to STAGED_PARTS when the stage gains a part a process needs.
+    missing = [part for part in STAGED_PARTS if not (staged / part).is_file()]
+    if missing:
+        raise HarnessError(f"the studio's assets in {staged} are stale, without {', '.join(missing)}. Run `mise run build:config-studio-assets`")
     shutil.copytree(staged, into, ignore=shutil.ignore_patterns("run", "infra", "*.trig"))
     return into
 

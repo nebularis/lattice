@@ -722,7 +722,7 @@ depends = ["build:config-studio-assets"]
 run = "yarn workspace @lattice/config-studio run test"
 
 [tasks."test:config-studio-browser"]
-description = "Run both of the Configuration Studio's browser suites: the journeys against the in-memory fake service, then the real-stack suite against a single topology the harness starts in isolation (ADR-A150), never the developer's own stack. Builds the browser application. Part of the merge checks of a change to the studio"
+description = "Run both of the Configuration Studio's browser suites: the journeys against the in-memory fake service, then the real-stack suite against a single topology the harness starts in isolation (ADR-A150), never the developer's own stack. Builds the browser application. Run by convention before a merge of a change to the studio, never in a hook (ADR-A133 decision 13)"
 depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
 run = "python -m lattice_testing_studio_harness.browser"
 
