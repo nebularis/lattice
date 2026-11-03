@@ -390,15 +390,24 @@ def linked(db: ox.Store, top: list[dict], shown: set[str], limit: int = 8) -> li
     return list(out.values())[:limit]
 
 
-def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[str]) -> list[dict]:
-    """Every entry the filters admit, and the declared terms only when ``--kind`` names ``term``.
+# Kinds that are shown only when asked for, by --kind or by an identifier written in the question,
+# because ranked among the entries they take the places of the entries that answer (ADR-A134
+# decisions 31 and 34).
+ASKED_FOR = {"Term", "Slice"}
+
+
+def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[str], named: frozenset[str] = frozenset()) -> list[dict]:
+    """Every entry the filters admit, the declared terms only when ``--kind`` names ``term``, and the
+    slices only when ``--kind`` names ``slice`` or the question names one by its identifier.
 
     Ranked among the entries, 2,774 terms crowded the entries out of questions about a design, and
     no bias kept both kinds of question answered, so a term is asked for or not shown (ADR-A134
-    decision 31). A term states no phase or audience, so a filter on either hides it."""
+    decision 31). The 385 slices did the same once the work board indexed them, lowering hit@5 on
+    the bake-off from 0.930 to 0.837, so a slice is asked for too (decision 34). A term states no
+    phase or audience, so a filter on either hides it."""
     rows = [
         r for r in rows_of(db.query(CANDIDATES))
-        if (not kinds or r["kind"] in kinds)
+        if (r["kind"] in kinds if kinds else (r["kind"] not in ASKED_FOR or identifiers.normalise(r["id"]) in named))
         and (not phases or phases & set((r["phases"] or "").split()))
         and (not audiences or audiences & set((r["audiences"] or "").split()))
     ]
@@ -411,10 +420,10 @@ def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[s
 
 def without(kinds: set[str], excluded: set[str]) -> set[str]:
     """The kinds left once ``excluded`` are taken out: of those named, or of every entry kind when
-    none is. Terms stay out unless named, so excluding nothing leaves the default (decision 30)."""
+    none is. Terms and slices stay out unless named, so excluding nothing leaves the default (decision 30)."""
     if not excluded:
         return kinds
-    return (kinds or set(KINDS.values()) - {"Term"}) - excluded
+    return (kinds or set(KINDS.values()) - ASKED_FOR) - excluded
 
 
 def flags(r: dict) -> str:
@@ -498,17 +507,17 @@ def rank(
     """Every candidate scored against the words, best first, and the best meaning score. Raises
     embed.Unavailable where the vectors or the model are missing."""
     facets = facets or {}
-    rows = candidates(db, kinds, phases, audiences)
+    # An identifier written in the question names one entry outright, which no amount of meaning can
+    # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
+    # first stops `find PDD-08` reporting that the index may not hold PDD-08.
+    named = frozenset(identifiers.normalise(word) for word in words.split())
+    rows = candidates(db, kinds, phases, audiences, named)
     nodes, vectors = embed.load(STORE_PATH.parent)
     question = (model or embed.Model()).question(words)
     index = {node: i for i, node in enumerate(nodes)}
     sections: dict[str, list[dict]] = {}
     for section in rows_of(db.query(SECTIONS)):
         sections.setdefault(section["n"], []).append(section)
-    # An identifier written in the question names one entry outright, which no amount of meaning can
-    # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
-    # first stops `find PDD-08` reporting that the index may not hold PDD-08.
-    named = {identifiers.normalise(word) for word in words.split()}
     for r in rows:
         r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
         if r["kind"] != "Term" and identifiers.normalise(r["id"]) in named:

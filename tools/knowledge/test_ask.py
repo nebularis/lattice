@@ -309,7 +309,7 @@ def test_misses_near_lists_the_confident_and_incomplete(isolated, capsys):
 def test_a_kind_can_be_excluded_and_every_other_kept():
     """Questions cost some ranking, so an agent whose answers are crowded by them leaves them out
     without naming every other kind, and terms stay out unless they are named."""
-    every = set(ask.KINDS.values()) - {"Term"}
+    every = set(ask.KINDS.values()) - {"Term", "Slice"}
     assert ask.without(set(), {"Question"}) == every - {"Question"}
     assert ask.without({"Standard", "Question"}, {"Question"}) == {"Standard"}
     assert ask.without(set(), set()) == set()
@@ -346,3 +346,19 @@ def test_misses_removes_a_question_the_index_now_answers(isolated, capsys):
     assert "1 question(s) the index now answers" in out
     assert [r["text"] for r in ask.asks()] == ["graph"]
     assert ask.MISS_LOG.read_text(encoding="utf-8").count("find ") == 1
+
+
+def test_a_slice_is_found_only_when_asked_for_or_named(isolated, capsys):
+    """Slices took the places of the entries that answer, so a question without --kind slice never
+    sees one, unless it names the slice by its identifier, which ranks it first (ADR-A134 decision 34)."""
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a ledger account")
+    entry(store, "LG-4", "Slice", "ledger ledger ledger")
+    embed.build(store, isolated)
+    ask.find(store, "ledger", set(), set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["MEC-1"]
+    ask.find(store, "ledger", {"Slice"}, set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["LG-4"]
+    ask.find(store, "where is LG-4", set(), set(), set(), 8)
+    assert table(capsys.readouterr().out)[0][1] == "LG-4"
+    assert "Slice" not in ask.without(set(), {"Question"})
