@@ -96,6 +96,7 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | FMH-H2-1 | FMH-2.1 | formal-methods-track-h |
 | FMH-H2-11a | FMH-2.11a | formal-methods-track-h |
 | FMH-H2-11b | FMH-2.11b | formal-methods-track-h |
+| FMH-H2-12 | FMH-2.12 | formal-methods-track-h |
 | FMH-H2-2 | FMH-2.2 | formal-methods-track-h |
 | FMH-H2-3 | FMH-2.3 | formal-methods-track-h |
 | FMH-H2-4a | FMH-2.4a | formal-methods-track-h |
@@ -118,6 +119,7 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | FMH-H2.1 | FMH-2.1 | formal-methods-track-h |
 | FMH-H2.11a | FMH-2.11a | formal-methods-track-h |
 | FMH-H2.11b | FMH-2.11b | formal-methods-track-h |
+| FMH-H2.12 | FMH-2.12 | formal-methods-track-h |
 | FMH-H2.2 | FMH-2.2 | formal-methods-track-h |
 | FMH-H2.3 | FMH-2.3 | formal-methods-track-h |
 | FMH-H2.4a | FMH-2.4a | formal-methods-track-h |
@@ -199,7 +201,10 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | DOC2 | OD-DOC2 | improved-ontology-documentation |
 | DOC2b | OD-DOC2b | improved-ontology-documentation |
 | DOC3 | OD-DOC3 | improved-ontology-documentation |
+| ELC | OD-ELC1 | improved-ontology-documentation |
 | MC1 | OD-MC1 | improved-ontology-documentation |
+| OD-ELC | OD-ELC1 | improved-ontology-documentation |
+| OD-REL | OD-REL1 | improved-ontology-documentation |
 | OD0 | OD-0 | improved-ontology-documentation |
 | OD1 | OD-1 | improved-ontology-documentation |
 | OD2 | OD-2 | improved-ontology-documentation |
@@ -228,6 +233,10 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | N7 | NRS-7 | normative-rule-substrate |
 | N8 | NRS-8 | normative-rule-substrate |
 | N9 | NRS-9 | normative-rule-substrate |
+| DR1 | DR-1 | persistence-delta-replace |
+| DR2 | DR-2 | persistence-delta-replace |
+| DR3 | DR-3 | persistence-delta-replace |
+| DR4 | DR-4 | persistence-delta-replace |
 | P0.1.1 | PLT-0.1.1 | phase-0-status |
 | P0.1.10 | PLT-0.1.10 | phase-0-status |
 | P0.1.11 | PLT-0.1.11 | phase-0-status |
@@ -243,9 +252,41 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | P0.1.7 | PLT-0.1.7 | phase-0-status |
 | P0.1.8 | PLT-0.1.8 | phase-0-status |
 | P0.1.9 | PLT-0.1.9 | phase-0-status |
+| PM0 | PM-0 | projection-maintenance |
+| PM1 | PM-1 | projection-maintenance |
+| PM2 | PM-2 | projection-maintenance |
+| PM3 | PM-3 | projection-maintenance |
+| PM3a | PM-3a | projection-maintenance |
+| PM3b | PM-3b | projection-maintenance |
+| PM3c | PM-3c | projection-maintenance |
+| PM4 | PM-4 | projection-maintenance |
+| PB1 | PB-1 | studio-publication |
+| PB10 | PB-10 | studio-publication |
+| PB11 | PB-11 | studio-publication |
+| PB12 | PB-12 | studio-publication |
+| PB13 | PB-13 | studio-publication |
+| PB14 | PB-14 | studio-publication |
+| PB15 | PB-15 | studio-publication |
+| PB16 | PB-16 | studio-publication |
+| PB17 | PB-17 | studio-publication |
+| PB2 | PB-2 | studio-publication |
+| PB3 | PB-3 | studio-publication |
+| PB4 | PB-4 | studio-publication |
+| PB5 | PB-5 | studio-publication |
+| PB6 | PB-6 | studio-publication |
+| PB7 | PB-7 | studio-publication |
+| PB8 | PB-8 | studio-publication |
+| PB9 | PB-9 | studio-publication |
+| SQ1 | SQ-1 | studio-quality |
+| SQ2 | SQ-2 | studio-quality |
+| SQ3 | SQ-3 | studio-quality |
+| SQ4 | SQ-4 | studio-quality |
+| SQ5 | SQ-5 | studio-quality |
+| SQ6 | SQ-6 | studio-quality |
 | DOC1.md | OD-DOC1.md | validation pack |
 | DOC2.md | OD-DOC2.md | validation pack |
 | DOC2b.md | OD-DOC2b.md | validation pack |
+| ELC.md | OD-ELC1.md | validation pack |
 | FMH-H1-1.md | FMH-1.1.md | validation pack |
 | FMH-H1-2.md | FMH-1.2.md | validation pack |
 | FMH-H1-2b.md | FMH-1.2b.md | validation pack |
@@ -260,6 +301,7 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | FMH-H2-1.md | FMH-2.1.md | validation pack |
 | FMH-H2-11a.md | FMH-2.11a.md | validation pack |
 | FMH-H2-11b.md | FMH-2.11b.md | validation pack |
+| FMH-H2-12.md | FMH-2.12.md | validation pack |
 | FMH-H2-2.md | FMH-2.2.md | validation pack |
 | FMH-H2-3.md | FMH-2.3.md | validation pack |
 | FMH-H2-4a.md | FMH-2.4a.md | validation pack |
@@ -278,6 +320,7 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | FMH-H2-8c.md | FMH-2.8c.md | validation pack |
 | FMH-H2-9.md | FMH-2.9.md | validation pack |
 | MC1.md | OD-MC1.md | validation pack |
+| OD-REL.md | OD-REL1.md | validation pack |
 | OD0.md | OD-0.md | validation pack |
 | OD1.md | OD-1.md | validation pack |
 | OD2.md | OD-2.md | validation pack |
@@ -393,8 +436,3 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | WA8 | WA-8 | word-authoring-poc |
 | WA9 | WA-9 | word-authoring-poc |
 | WA9a | WA-9a | word-authoring-poc |
-| ELC | OD-ELC1 | improved-ontology-documentation |
-| OD-ELC | OD-ELC1 | improved-ontology-documentation |
-| OD-REL | OD-REL1 | improved-ontology-documentation |
-| ELC.md | OD-ELC1.md | validation pack |
-| OD-REL.md | OD-REL1.md | validation pack |

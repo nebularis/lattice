@@ -202,7 +202,12 @@ def replace_operation() -> tuple[str, dict[str, str]]:
     from persistence.namespaces import DAL
 
     example = Path(witness.EXAMPLES_DIR) / "composite-project-ownership.ttl"
-    compiled, _ = compile_to_graph(witness._load_fixture(example), guards=False)
+    config = witness._load_fixture(example)
+    # the example gets the delta replace by default (persistence-delta-replace DR1), which sweeps nothing, and this benchmark measures the sweep
+    config.parse(data=(
+        "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> . @prefix ex: <https://example.org/projects#> . "
+        "ex:ProjectEncoding a dal:WriteDisciplineProfile ; dal:appliesTo ex:ProjectClass ; dal:replaceEncoding dal:WholeState ."), format="turtle")
+    compiled, _ = compile_to_graph(config, guards=False)
     (by_target,) = instantiate_by_target(compiled).values()
     text = by_target["cas-replace"]
     import re
@@ -226,7 +231,8 @@ def run_once(engine_class, size: int, text: str, graphs: dict[str, str]) -> tupl
         "newRev": ("iri", "urn:rev:2"), "txnId": ("iri", "urn:txn:a"), "requestDigest": ("str", "d"),
     }
     start = time.perf_counter()
-    engine.update(text.replace("{{{payloadTriples}}}", nt(new_payload)), parameters)
+    # the patch log's two delta slots are left empty, since this benchmark measures the sweep and not the delta
+    engine.update(text.replace("{{{payloadTriples}}}", nt(new_payload)).replace("{{{assertTriples}}}", "").replace("{{{retractTriples}}}", ""), parameters)
     elapsed = time.perf_counter() - start
     verify(engine, graphs, new_payload, len(stored))
     return elapsed, len(stored)

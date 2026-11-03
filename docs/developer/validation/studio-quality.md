@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-quality SQ1 to SQ6
+# Validation Pack: studio-quality SQ-1 to SQ-6
 
 **Plan:** [studio-quality](../plans/studio-quality.md)
 **Status record:** [studio-quality](../status/studio-quality.md)
@@ -21,7 +21,7 @@ mise run studio:integration -- --runner compose
 
 The first runs the harness's own tests, which start nothing. The others start each declared topology, as processes or in Docker Compose, run the smoke scenario and stop it. A pass is exit status 0.
 
-## SQ1: the harness
+## SQ-1: the harness
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -37,7 +37,7 @@ The first runs the harness's own tests, which start nothing. The others start ea
 
 **Not covered.** `oidc` topologies, the memory store under compose, and the transforms worker, which no scenario uses. A run interrupted part way leaves its run folder and processes. `writers` counts writer processes, which share the contract's eight partitions.
 
-## SQ2: reports, comparison and phase D's cost
+## SQ-2: reports, comparison and phase D's cost
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
@@ -64,7 +64,7 @@ The first runs the harness's own tests, which start nothing. The others start ea
 
 The other two pairs agree: saves 65% to 95% slower, reads 30% to 100% slower, publishing about 7.5 times slower, the registry listing about a third faster, the workspace listing unchanged.
 
-**What is not yet known.** These are measures of the whole studio, so they say how much slower and not why. Hypotheses, none measured: a read now loads the workspace from its description and two scans of version rows, where it read one description. A save adds a read of the part for its delta, skolemisation, a digest and a claim, and queues a refresh that reads the whole store while the next request runs. Publishing now waits for that refresh. SQ3's component benchmarks are to separate them.
+**What is not yet known.** These are measures of the whole studio, so they say how much slower and not why. Hypotheses, none measured: a read now loads the workspace from its description and two scans of version rows, where it read one description. A save adds a read of the part for its delta, skolemisation, a digest and a claim, and queues a refresh that reads the whole store while the next request runs. Publishing now waits for that refresh. SQ-3's component benchmarks are to separate them.
 
 ## Phase D's causes and their fixes
 
@@ -106,7 +106,7 @@ Commands run 2026-10-31, all passing: `mvn -q -f platform/pom.xml -pl config-stu
 
 On Fuseki's in-memory dataset a save of 1,000 triples now takes 84 ms, against 225 ms before the fixes, so what is left on TDB2 is commits. **Not yet fixed**, each a question in the sketch's §6: a save still clears its part and writes it whole, 121 ms of TDB2's time for 1,000 triples where its delta is two (SQ-Q1), and a publish still waits for a refresh of two commits and a worker's turn (SQ-Q2). The read costs one more round trip than before phase D, for the version rows, which was left as it is.
 
-**Not covered.** Whether SQ2's reports of `bd2a144d` ran on jars with stale classes is not known. The writer's jar in this checkout held core classes compiled at 15:05 when the fault was found, and those reports ran at 16:34, so they may have measured part of an earlier commit. A run of `bd2a144d` from a clean build would settle it. The fixes were not measured on Linux, where a commit costs less, nor under concurrent load, which SQ6 covers.
+**Not covered.** Whether SQ-2's reports of `bd2a144d` ran on jars with stale classes is not known. The writer's jar in this checkout held core classes compiled at 15:05 when the fault was found, and those reports ran at 16:34, so they may have measured part of an earlier commit. A run of `bd2a144d` from a clean build would settle it. The fixes were not measured on Linux, where a commit costs less, nor under concurrent load, which SQ-6 covers.
 
 ## Phase D, the delta save and the reads side by side
 
@@ -134,6 +134,6 @@ Medians on `2e8a02cc`, same machine, load average 1.5 at the start, against befo
 | read a part, 3,000 triples | 15.1 ms | 14.2 ms | −6% |
 | list workspaces | 2.9 ms | 2.6 ms | −9%, within noise |
 | a publish job, submitted to done | 151.6 ms | 142.1 ms | −6%, within noise |
-| publish | 90.4 ms | 294.3 ms | about 3.3 times, PM2 |
+| publish | 90.4 ms | 294.3 ms | about 3.3 times, PM-2 |
 | list the registry | 3.7 ms | 2.6 ms | −29% |
 

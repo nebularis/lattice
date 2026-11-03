@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MPL-2.0
+# The broker and the add-in's proxy under Docker Engine on Linux, whose containers cannot reach the host's loopback, where the
+# service listens. They share the host's network, and each binds loopback on the ports docker-compose.desktop.yml publishes.
+services:
+  rabbitmq:
+    network_mode: host
+    environment:
+      # Erlang's port mapper listens on loopback alone, so the node is named for localhost, which resolves there, never for
+      # the host's own name.
+      ERL_EPMD_ADDRESS: "127.0.0.1"
+      RABBITMQ_NODENAME: "rabbit@localhost"
+  addin-proxy:
+    network_mode: host
+    environment:
+      STUDIO_HOST: "127.0.0.1"
+      ADDIN_BIND: "127.0.0.1"

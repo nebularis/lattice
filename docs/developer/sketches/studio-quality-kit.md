@@ -101,11 +101,11 @@ Every benchmark run writes a report to `benchmark/reports/{benchmark}/{date}-{co
 
 ## 4. The phase D regression check
 
-The service's HTTP API is the same before and after phase D, so the check drives the API, not internal classes. It runs one scenario on two commits, `4029bd0f` (before PB13) and the current head, each in its own worktree with its own isolated stack, on the same machine one after the other:
+The service's HTTP API is the same before and after phase D, so the check drives the API, not internal classes. It runs one scenario on two commits, `4029bd0f` (before PB-13) and the current head, each in its own worktree with its own isolated stack, on the same machine one after the other:
 - create a workspace, save a part of 100, 1,000 and 3,000 triples, ten times each, read it back, list the workspaces, publish a concept scheme and list the registry
 - each measured as the median and spread of its repeats, written as a report under `benchmark/reports/studio-api/` for each commit, and compared.
 
-What it should show, as a hypothesis: a save costs more after phase D, since it reads the part to compute its delta and writes the delta and a row beside it, and that cost grows with the part's size. A listing costs about the same, and less once PB17's projections are read. A save of 3,000 triples is the case to watch, since TD-136 keeps it linear.
+What it should show, as a hypothesis: a save costs more after phase D, since it reads the part to compute its delta and writes the delta and a row beside it, and that cost grows with the part's size. A listing costs about the same, and less once PB-17's projections are read. A save of 3,000 triples is the case to watch, since TD-136 keeps it linear.
 
 ## 5. Choices, taken alone for ratification
 
@@ -140,5 +140,5 @@ The phase D causes and the fixes made are in the Validation Pack's last section.
 - (b) the publish replies without waiting, and the client shows its own publication until the listing has it. Decision 14's waiting reader goes, and every client must do the same.
 - (c) leave it, since a publish is rare and a third of a second is within what a person waits for an explicit action.
 
-**Leaning (c) now and (a) when load runs (SQ6) show the refresh limiting throughput**, since (a) is the fix that also removes the refresh's commits from every save.
+**Leaning (c) now and (a) when load runs (SQ-6) show the refresh limiting throughput**, since (a) is the fix that also removes the refresh's commits from every save.
 

@@ -15,7 +15,7 @@ A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmar
 | `publish` | 5 | the `POST` that publishes the job's result |
 | `list registry` | 5 | the registry listing after each publication |
 
-Two warm-up repeats of each measure run first and are discarded. The sizes are generated deterministically: SKOS concepts with a label and one blank node each. It uses only routes that exist before and after phase D of the publication unit, and waits for no projection.
+Two warm-up repeats of each measure run first and are discarded. The sizes are generated deterministically: SKOS concepts with a label and one blank node each. It uses only routes that exist before and after phase D of the publication unit, and waits for no promotion.
 
 ## Pass criterion
 

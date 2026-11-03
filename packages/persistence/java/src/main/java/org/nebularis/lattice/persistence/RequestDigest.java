@@ -52,6 +52,41 @@ public final class RequestDigest {
         }
     }
 
+    /**
+     * The digest of an aggregate's state, recorded by {@code record-state-digest} where the family declares
+     * {@code dal:recordsStateDigest} (DR4): the SHA-256 of {@code enc} over the sorted, de-duplicated canonical N-Triples lines.
+     */
+    public static String stateDigest(Payload state) {
+        return digestHex(enc(Text.sortedUnique(state.lines()).stream().map(Text::utf8).toList()));
+    }
+
+    /**
+     * One update request from several filled operations, in order (DR4). Each operation's {@code PREFIX} and {@code BASE} lines are
+     * hoisted into one prologue at the head, since Oxigraph refuses a prologue after {@code ;} (TSD-68). A prefix two operations bind
+     * to different IRIs is refused.
+     */
+    public static String compose(List<String> requests) {
+        if (requests.isEmpty()) throw new IllegalArgumentException("compose needs at least one request");
+        java.util.LinkedHashMap<String, String> prologue = new java.util.LinkedHashMap<>();
+        List<String> bodies = new ArrayList<>();
+        for (String request : requests) {
+            List<String> lines = new ArrayList<>(request.strip().replaceAll(";+$", "").lines().toList());
+            while (!lines.isEmpty() && (lines.get(0).isBlank() || lines.get(0).stripLeading().toUpperCase().matches("^(PREFIX|BASE)\\b.*"))) {
+                String line = lines.remove(0).strip();
+                if (line.isEmpty()) continue;
+                String[] words = line.split("\\s+");
+                String key = line.toUpperCase().startsWith("PREFIX") && words.length > 1 ? "PREFIX " + words[1].toUpperCase() : "BASE";
+                String had = prologue.putIfAbsent(key, line);
+                if (had != null && !had.equals(line)) throw new IllegalArgumentException("two operations declare " + key + " differently, " + had + " and " + line);
+            }
+            bodies.add(String.join("\n", lines).strip());
+        }
+        List<String> out = new ArrayList<>(prologue.values());
+        out.add("");
+        out.add(String.join(" ;\n", bodies));
+        return String.join("\n", out).strip();
+    }
+
     private static String iriText(Object value) {
         if (value instanceof Iri i) return i.value();
         if (value instanceof String s) return s;

@@ -15,12 +15,13 @@ import pytest
 from rdflib import Graph
 from rdflib.compare import isomorphic
 
-from expected_profiles import CONFIGURATIONS, emit
+from conftest import load_whole_state
+from expected_profiles import CONFIGURATIONS, EXAMPLES, emit
 from lattice_persistence import read_contracts
 from persistence.contract_emit import contract_for
 
 LIBRARY_DATA = Path(__file__).resolve().parents[3] / "packages" / "persistence" / "python" / "tests" / "data"
-LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership", "composite-project-ownership")
+LIBRARY_FIXTURES = ("baseline-single-class", "append-stream-dataset-guard", "write-discipline-delta-membership", "composite-project-ownership", "replace-form-rows", "replace-encoding")
 
 
 @pytest.mark.parametrize("name,example,options", CONFIGURATIONS, ids=[c[0] for c in CONFIGURATIONS])
@@ -50,3 +51,13 @@ def test_library_reads_the_reference_edges_of_a_composite_family():
 def test_the_library_fixture_is_what_compile_emits(name):
     fixture = Graph().parse(LIBRARY_DATA / f"{name}.compiled.ttl")
     assert isomorphic(fixture, emit(name)), f"{name}.compiled.ttl is stale, regenerate it with persistence compile"
+
+
+WHOLE_STATE_FIXTURES = {"baseline-whole-state": "baseline-single-class", "composite-whole-state": "composite-project-ownership"}
+"""The fixtures the library's tests of the whole-state replace read, each an example with `dal:WholeState` declared, since the example itself now gets the delta replace (persistence-delta-replace DR1)."""
+
+
+@pytest.mark.parametrize("name,example", sorted(WHOLE_STATE_FIXTURES.items()))
+def test_the_whole_state_library_fixture_is_what_compile_emits(name, example):
+    fixture = Graph().parse(LIBRARY_DATA / f"{name}.compiled.ttl")
+    assert isomorphic(fixture, emit(example, source=load_whole_state(EXAMPLES / f"{example}.ttl"))), f"{name}.compiled.ttl is stale, regenerate it with persistence compile"

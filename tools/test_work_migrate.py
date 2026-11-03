@@ -275,3 +275,32 @@ def test_wb2_13_adopt_brings_record_tables_packs_and_plan_tables_onto_the_board(
     assert any("0 slices would be adopted" in line for line in wm.adopt(repo, apply=False))
     grouped = wm.regroup_exceptions(repo, apply=True)
     assert grouped and "# unit ledger, 1 slice(s)" in (root / "tools/knowledge/identifier-exceptions.txt").read_text(encoding="utf-8")
+
+
+def test_wb9_rename_keeps_an_exception_whose_old_spelling_is_still_mentioned(tmp_path: Path) -> None:
+    """An exception names a spelling the text holds. Crossing it while a pack's FMH-H2-1, or a file
+    outside the sweep's areas, still spells the old id broke the identifier check."""
+    root = tmp_path / "work"
+    (root / "spikes").mkdir(parents=True)
+    (root / "tools/knowledge").mkdir(parents=True)
+    sh(tmp_path, "git", "init", "-q", "-b", "main", str(root))
+    (root / "spikes/README.md").write_text("Matching FMH-H2-1, as the pack once said.\n", encoding="utf-8")
+    baseline = root / "tools/knowledge/identifier-exceptions.txt"
+    baseline.write_text("# baseline\nFMH-H2  # the H2 phase\nFMH-H1.4a  # prose only\n", encoding="utf-8")
+    sh(root, "git", "add", ".")
+    repo = wb.Repo(root, Path("docs/developer"), exceptions=(baseline,))
+    crossings = [wm.Crossing("formal-methods-track-h", "FMH-H2", "FMH-2"), wm.Crossing("formal-methods-track-h", "FMH-H1.4a", "FMH-1.4a")]
+    report = wm.cross_exceptions(repo, crossings, apply=True)
+    assert baseline.read_text(encoding="utf-8").splitlines() == ["# baseline", "FMH-H2  # the H2 phase", "FMH-2  # the H2 phase", "FMH-1.4a  # prose only"]
+    assert report == ["exceptions: kept beside their new id, since still mentioned: FMH-H2"]
+    wm.cross_exceptions(repo, crossings, apply=True)
+    assert baseline.read_text(encoding="utf-8").count("FMH-2 ") == 1, "a second run adds nothing"
+
+
+def test_wb10_03_normalise_holds_the_status_word_to_the_board() -> None:
+    text = "# X\n\n**Unit ID:** `x`\n**Status:** built 2026-11-02. Two built, awaiting review\n\n## Slices\n\n" \
+           "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n| X-1 | a | built 2026-11-02 | |\n| X-2 | b | building 2026-11-01 | |\n"
+    held = wm.hold_status(text, "x")
+    assert "**Status:** building 2026-11-01. Two built, awaiting review\n\n## Slices" in held, "the blank line after it survives"
+    assert wm.hold_status(held, "x") == held
+    assert wm.hold_status(text.replace("**Status:** built 2026-11-02.", "**Status:** planned."), "x").count("building 2026-11-01. Two built") == 1

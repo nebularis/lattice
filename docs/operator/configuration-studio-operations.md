@@ -75,6 +75,8 @@ Read by `StudioConfig.fromEnv`. A blank value counts as unset. `LATTICE_FUSEKI_P
 | `LATTICE_FUSEKI_DATASET` | `studio` | The Fuseki service the service reads through, which cannot update |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | none | Basic authentication to Fuseki. The stack's Fuseki has none |
 | `LATTICE_AMQP_URI` | none | RabbitMQ's URI. Unset means jobs are recorded but never delivered, and stay `cst:Queued`, with a warning in the log, and the service writes the store through a writer of its own, which is for tests and a demonstration only |
+| `LATTICE_STUDIO_EVENTS_URL` | none | Where a browser's MQTT client reaches the broker's Web MQTT for job events, the broker's own address or a proxy's, for example `ws://127.0.0.1:15675/ws`. The session names it and the page's policy lets it connect there. Unset, or without a broker or the secret below, the browser polls for jobs |
+| `LATTICE_STUDIO_BROKER_SECRET` | none | The path segment the broker's HTTP auth backend names in every check, `/api/broker/<secret>/user` and the rest, so the service answers the broker alone. May be read from a file. A proxy never routes `/api/broker/` |
 
 ### Store writer
 
@@ -85,7 +87,7 @@ Read by `WriterConfig.fromEnv`. The variables are in the [writer's README](../..
 | `LATTICE_STUDIO_ASSETS` | `.build/config-studio` | The directory whose `persistence/` folder holds the generated operations the writer runs. A relative path is relative to the directory the writer starts in |
 | `LATTICE_STUDIO_EPOCH` | `1` | The epoch the version rows it writes carry, as the service's |
 
- `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write`, the stack's AMQP URI, and `LATTICE_STREAM_URI=rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f`. It is the only process given the update service.
+ `LATTICE_FUSEKI_PASSWORD`, `LATTICE_AMQP_URI` and `LATTICE_STREAM_URI` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it `LATTICE_FUSEKI_WRITE_DATASET=studio-write` and the stack's AMQP and stream URIs, `rabbitmq-stream://studio:<password>@127.0.0.1:5553/%2f`. It is the only process given the update service.
 
 ### Worker
 
@@ -112,18 +114,20 @@ Read by `TransformsMain`. `LATTICE_FUSEKI_URL` and `LATTICE_AMQP_URI` are requir
 
 ### Values the stack sets
 
-`studio:up`, `studio:service` and `studio:worker` all use the same values. The service and the worker must agree on the Fuseki URL and dataset and on the AMQP URI, or jobs are written where the worker does not look.
+`studio:up`, `studio:service` and `studio:worker` all use the same values. The stack makes the broker's password and the service's broker secret once, in `.build/config-studio/infra/broker`, with the AMQP and stream URIs, which the `studio:*` tasks read as `LATTICE_AMQP_URI_FILE`, `LATTICE_STREAM_URI_FILE` and `LATTICE_STUDIO_BROKER_SECRET_FILE`. The service and the worker must agree on the Fuseki URL and dataset and on the AMQP URI, or jobs are written where the worker does not look.
 
 | Variable | Value |
 |---|---|
 | `LATTICE_FUSEKI_URL` | `http://127.0.0.1:3130` |
 | `LATTICE_FUSEKI_DATASET` | `studio` |
-| `LATTICE_AMQP_URI` | `amqp://guest:guest@127.0.0.1:5673/%2F` |
+| `LATTICE_AMQP_URI` | `amqp://studio:<password>@127.0.0.1:5673/%2F` |
 | `LATTICE_STUDIO_STATIC` | `apps/config-studio/dist` (the service only) |
+| `LATTICE_STUDIO_EVENTS_URL` | `ws://127.0.0.1:15675/ws` (the service only) |
+| `LATTICE_STUDIO_BROKER_SECRET` | the stack's secret (the service only) |
 
 `studio:up` also reads `LATTICE_STUDIO_DATA`, the folder for the store (see [Where things live](#where-things-live)).
 
-The AMQP URI holds RabbitMQ's `guest` password. That is acceptable only because the broker is local and `guest` is its default. Do not put a real credential in it. Give a real one through `LATTICE_AMQP_URI_FILE`.
+The broker has one user, `studio`, with the stack's password, and never `guest`. Web MQTT checks no `Origin`, and no CORS rule guards a WebSocket, so a default user would let any page a browser opens connect. A broker an older stack started still has `guest` until `studio:down` and `studio:up` restart it, which `studio:up` says.
 
 ### Secrets in files
 
@@ -233,7 +237,7 @@ Started from the generic Unix release (the Windows release on Windows) through i
 | `RABBITMQ_CONFIG_FILE` | `.build/config-studio/infra/rabbitmq/rabbitmq.conf` | The stream protocol on `127.0.0.1:5553`, advertised as `127.0.0.1:5553`, so the writer reaches each partition's leader there |
 | `ERLANG_HOME` | the parent of the directory holding `erl` | RabbitMQ's scripts find Erlang from it. The stack derives it from `erl` on the path, and stops with "RabbitMQ needs Erlang" if there is none |
 
-RabbitMQ runs on the Erlang mise installs, so start it through `mise`. The user is the default `guest` with password `guest`, in virtual host `/` (written `%2F` in the URI). The Docker setup mounts `rabbitmq-stream.conf`, which listens for streams on `5552` in the container, published at `127.0.0.1:5553` and advertised as `localhost:5553`, and `fuseki-studio.ttl`, the same two services over `/data`. It runs `rabbitmq:4.4-management-alpine` with `guest`/`guest` set explicitly, and publishes the AMQP port at `127.0.0.1:5673` and the management interface at `127.0.0.1:15673`. It mounts `deployment/compose/config-studio/enabled_plugins`, which keeps the image's own plugins and adds the stream plugin.
+RabbitMQ runs on the Erlang mise installs, so start it through `mise`. Its user is `studio`, with the stack's password, in virtual host `/` (written `%2F` in the URI), and it has no `guest`. It also serves Web MQTT on `127.0.0.1:15675`, whose HTTP auth backend asks the service, after the broker's own users, who a browser is and which topics it may use. `mise run studio:infra`, or `studio:up --docker`, writes the broker's configuration to `.build/config-studio/infra/compose/rabbitmq-studio.conf`, which the compose file mounts with `fuseki-studio.ttl`, the same two services over `/data`, and `deployment/compose/config-studio/enabled_plugins`, which keeps the image's own plugins and adds the stream plugin, Web MQTT and the HTTP auth backend. It adds an override for the kind of Docker. Under Docker Desktop, on any platform, `docker-compose.desktop.yml` publishes AMQP at `127.0.0.1:5673`, the management interface at `127.0.0.1:15673`, streams at `127.0.0.1:5553` and Web MQTT at `127.0.0.1:15675`, and mounts `rabbitmq-stream.conf`, which listens for streams on `5552` in the container, advertised as `localhost:5553`. The broker and the add-in proxy reach the service as `host.docker.internal`, which Docker Desktop forwards to the host's loopback. Under Docker Engine on Linux, which does not, `docker-compose.host-network.yml` puts both on the host's network, each listener bound to loopback on the same ports, and names the broker's node `rabbit@localhost`.
 
 ### Topology
 
@@ -413,13 +417,13 @@ The Configuration Studio authenticates every request but `/api/health` and `/api
 | Authentication | `local` by default, which trusts the name a request gives and is allowed on loopback only, or `oidc`, which accepts a bearer token whose signature the provider's published keys verify with an asymmetric algorithm, naming the configured issuer and audience, unexpired. Every write carries its principal to the writer, which records it on the receipt. Fuseki and RabbitMQ still accept any client that reaches them |
 | Authorisation | A workspace's creator owns it and sets its mode: `locked`, read and written by its owner and administrators only, `read-only`, read by everyone signed in and written by its owner and administrators, or `shared`, read and written by everyone signed in. A workspace from before modes has no owner and is shared until an administrator gives it one with `POST /api/workspaces/{ws}/access?mode=…&owner=…`. The service hides what a principal may not read, and the writer refuses a write the mode does not allow, whatever the service checked |
 | Network exposure | Every listener is bound to `127.0.0.1`. Fuseki has `--localhost`, RabbitMQ has `RABBITMQ_NODE_IP_ADDRESS=127.0.0.1`, and Docker publishes each port at `127.0.0.1`. Changing `LATTICE_STUDIO_BIND` opens the service, and nothing else protects it |
-| RabbitMQ user | The default `guest`/`guest`, which RabbitMQ accepts from the loopback address only, and the node listens on loopback alone. In Docker the container's own network is not loopback to the broker, so the compose file sets `loopback_users []` and relies on the loopback-only port publication instead |
+| RabbitMQ user | `studio`, with a password the stack makes, and no `guest`, since Web MQTT checks no `Origin`. Every listener is on loopback. A browser connects only through the service's checks, as its principal with its OIDC token, or with local sign-in with the key the session gives a page of the studio's own origin |
 | Transport | Plain HTTP and plain AMQP. No TLS |
 | Cross-origin | No response carries `Access-Control-Allow-Origin`, so a page on another origin cannot read the API from a browser. This is not authentication, because the browser's same-origin rule does not stop a request from the local machine or a forged request |
 | Request validation | The service validates every request: content type (Turtle or RDF/XML, else `415`), body size (5 MiB, else `413`), syntax (else `400`), every identifier in a path, the revision a save expects (`If-Match`, else `428` or `412`), and that a saved graph holds only its own part's subjects (`422`). RDF/XML that declares a DTD is refused, which prevents external entities |
 | Response headers | `X-Content-Type-Options: nosniff` on every response. `Cache-Control: no-store` on every `/api` response except the vocabulary, which is revalidated by its `ETag`. `Referrer-Policy: no-referrer` on every response. On an HTML response, `Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'`, which allows no scripts from elsewhere and no framing |
 | Static files | The service resolves a requested file to its real path and serves it only if it is a regular file under `LATTICE_STUDIO_STATIC`, so a `..` or a link out is refused |
 | Errors | An unexpected error returns `500` with the text `internal error` and logs the detail to the service log, not to the client |
-| Secrets | The AMQP and stream URIs, the Fuseki password and the proposer key are read from the environment or from a file it names ([Secrets in files](#secrets-in-files)). A value in the environment is visible to anyone who can read the process's environment, and a file only to whom its permissions allow. The local stack's compose file has the broker's default `guest` password in the clear |
+| Secrets | The AMQP and stream URIs, the Fuseki password and the proposer key are read from the environment or from a file it names ([Secrets in files](#secrets-in-files)). A value in the environment is visible to anyone who can read the process's environment, and a file only to whom its permissions allow. The local stack keeps the broker's password and the service's broker secret in `.build/config-studio/infra/broker`, readable by their owner alone where the platform has such permissions |
 
 Reaching it from another machine needs `oidc`, TLS and a protected broker and store. The studio terminates no TLS itself.

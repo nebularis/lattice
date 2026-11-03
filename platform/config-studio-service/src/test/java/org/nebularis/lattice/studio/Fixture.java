@@ -40,10 +40,18 @@ final class Fixture {
         org.apache.jena.query.DatasetFactory.createTxnMem()));
     /** The operations the stage tool wrote, loaded once. */
     static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
-    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC)));
+    static final org.nebularis.lattice.studio.store.Maintenance MAINTENANCE = org.nebularis.lattice.studio.store.Maintenance.load(Path.of(System.getProperty("studio.assets"), "maintenance"));
+    /** Every completion event the writer published, and a listener a test may set to hear the next ones (PM3). */
+    final java.util.List<org.nebularis.lattice.outbox.CloudEvent> events = new java.util.concurrent.CopyOnWriteArrayList<>();
+    volatile java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> listener = e -> { };
+    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, MAINTENANCE, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC),
+        e -> {
+            events.add(e);
+            listener.accept(e);
+        }));
     final RecordingJobBus bus = new RecordingJobBus();
-    /** Stands in for the worker's refresh jobs, which every bus the api is given hands to it. */
-    final RefreshWorker refreshWorker = new RefreshWorker(store, writes);
+    /** Stands in for the worker's rebuild jobs, which every bus the api is given hands to it. */
+    final RebuildWorker rebuildWorker = new RebuildWorker(store, writes);
     final Path assets;
     final StudioApi api;
     private final AtomicLong counter = new AtomicLong();
@@ -59,11 +67,11 @@ final class Fixture {
     Fixture(Path assets, JobBus busOverride, java.util.Set<String> features) {
         this.assets = assets;
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
-        bus.runWith(refreshWorker::handle);
+        bus.runWith(rebuildWorker::handle);
         JobBus given = busOverride == null ? bus : new JobBus() {
             @Override
             public void publish(String jobIri) throws Exception {
-                if (!refreshWorker.handle(jobIri)) {
+                if (!rebuildWorker.handle(jobIri)) {
                     busOverride.publish(jobIri);
                 }
             }
@@ -113,8 +121,6 @@ final class Fixture {
 
     ApiResponse send(String method, String path, String query, Map<String, String> headers, byte[] body) {
         ApiResponse response = api.handle(new ApiRequest(method, path, query, headers, body));
-        // A write leaves the projections to a refresh job, so the next read waits for it and sees the write.
-        api.awaitProjections(java.time.Duration.ofSeconds(10));
         return response;
     }
 
@@ -159,6 +165,12 @@ final class Fixture {
         Files.writeString(dir.resolve("samples.ttl"), PREFIXES
             + "<urn:lattice:studio:sample:lending> a cst:Sample ; <http://www.w3.org/2000/01/rdf-schema#label> \"Lending\" .\n");
         Files.writeString(dir.resolve("samples/lending.ttl"), "@prefix ex: <https://example.org/> .\nex:loan ex:p ex:o .\n");
+        // the summaries are a query read as they are listed (PM2), the staged one
+        Files.createDirectories(dir.resolve("promotions"));
+        Path staged = Path.of(System.getProperty("studio.assets"), "promotions");
+        for (String name : new String[] {"workspace-summaries.rq", "promotions.ttl"}) {
+            Files.copy(staged.resolve(name), dir.resolve("promotions").resolve(name), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
         return dir;
     }
 }

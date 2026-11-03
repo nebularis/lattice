@@ -53,7 +53,7 @@ The first stages the vocabulary and samples. The second builds and runs the 50 t
 
 To run each part in its own terminal instead, as below.
 
-The studio needs Fuseki on `127.0.0.1:3130` with an updatable dataset `studio`, and RabbitMQ on `127.0.0.1:5673` with its default `guest` user, which RabbitMQ accepts from the loopback address only. The compose file lets `guest` in from the container network, since the host is not loopback there.
+The studio needs Fuseki on `127.0.0.1:3130` with an updatable dataset `studio`, and RabbitMQ on `127.0.0.1:5673` with the stack's user `studio`, whose password `studio:up` or `studio:infra` makes in `.build/config-studio/infra/broker`.
 
 With Docker:
 

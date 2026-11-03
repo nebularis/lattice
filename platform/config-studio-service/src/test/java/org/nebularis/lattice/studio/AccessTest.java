@@ -163,7 +163,7 @@ class AccessTest {
     void aWriteWithNoPrincipalIsNotRefusedForAccess() {
         developersWorkspace();
         mode(null, WS, "locked");
-        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.systemUTC());
         Instant at = Instant.parse("2026-10-28T09:00:00Z");
         assertEquals(200, writer.apply(Command.save(WS, "surface", 0, at, Fixture.model(CONFIG))).status(), "a save with no principal");
 
@@ -183,7 +183,7 @@ class AccessTest {
     void aSaveAsAnotherPrincipalIsRefusedAtTheWriterToo() {
         developersWorkspace();
         mode(null, WS, "read-only");
-        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.systemUTC());
         Command save = Command.save(WS, "surface", 0, Instant.parse("2026-10-28T09:00:00Z"), Fixture.model(CONFIG));
         assertEquals(403, writer.apply(save.by("reviewer", false)).status());
         assertEquals(200, writer.apply(save.by("developer", false)).status());
@@ -201,7 +201,7 @@ class AccessTest {
         assertTrue(ws.writableBy("anyone", false));
         assertFalse(ws.managedBy("anyone", false));
 
-        Writer writer = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
+        Writer writer = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.systemUTC());
         assertEquals(200, writer.apply(Command.create(WS, "Plan", Instant.parse("2026-10-27T10:00:00Z"), null,
             Fixture.model(Fixture.PREFIXES + "ex:a ex:p ex:b ."))).status());
         assertNull(Workspace.from(WS, f.store.graph(Graphs.description(WS))).owner(), "created with no principal");

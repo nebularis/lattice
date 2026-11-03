@@ -31,3 +31,11 @@ A pick-up is one commit that the board shows on the next fetch, and a branch tha
 ## Provenance
 
 The sketch [work-board.md](../../developer/sketches/work-board.md) holds the measurements, the five options for where the mark lives and their costs, the branch survey, and the questions WB-Q1 to WB-Q9 with the maintainer's answers of 2026-11-02. The plan [work-board.md](../../developer/plans/work-board.md) holds the decisions and slices WB-0 to WB-7.
+
+## Addendum, 2026-11-02
+
+**Narrows decision 8.**
+
+10. **A unit's state is its board's roll-up, and is joined across branches.** Where a record has a board, its Status word and day are what the rows give, building while any row is building, else the lowest word of the rows at built or later, else blocked if any row is, else the highest of planned and briefed. The `work` check refuses a word that disagrees, and `work:normalise` sets it. The board and the roadmap's units table show `main`'s state and each branch whose record is further on, as they show a slice's.
+
+Provenance of the addendum: after the realign branch's merge of `main` the board read two of its units as planned, since the Units table read each unit's state from `main` alone. The maintainer chose on 2026-11-02 to join the state, roll it up from the board and hold the word to it (slice WB-10 of `work-board`). A first rule, building while any row was below built, read ten paused units as building, and was narrowed to a row actually building.

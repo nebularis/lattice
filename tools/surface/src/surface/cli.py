@@ -335,6 +335,31 @@ def command_mork(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_maintenance(args: argparse.Namespace) -> int:
+    """Write each promotion's clear and fill operations, which keep its rows from a write's delta (PM1), as
+    ``<key>-clear.rq`` and ``<key>-fill.rq`` and a ``manifest.json`` listing them in the order a write sends them."""
+    import json
+
+    from persistence.ir_render import render
+
+    from .maintenance import MaintenanceRefused, maintenance
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    for contract in read_contracts(parse_files(args.contracts), only=args.contract):
+        try:
+            m = maintenance(contract)
+        except MaintenanceRefused as refused:
+            print(f"error: {refused}", file=sys.stderr)
+            return 2
+        for part, op in (("clear", m.clear), ("fill", m.fill)):
+            (out / f"{m.key}-{part}.rq").write_text(render(op), encoding="utf-8", newline="\n")
+        manifest.append({"contract": str(m.contract), "key": m.key, "clear": f"{m.key}-clear.rq", "fill": f"{m.key}-fill.rq"})
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
+    return 0
+
+
 def command_lower(args: argparse.Namespace) -> int:
     """Lower Surface contracts into MORK mapping graphs (ADR-A18).
 
@@ -417,6 +442,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     lower_cmd.add_argument("--out", default=None, help="output file (default: stdout)")
     lower_cmd.set_defaults(func=command_lower)
+
+    maint = sub.add_parser("maintenance", help="write each promotion's operations that keep its rows from a write's delta")
+    maint.add_argument("--contracts", nargs="+", required=True, help="declaration graph files")
+    maint.add_argument("--contract", default=None, help="only this contract IRI")
+    maint.add_argument("--out", required=True, help="the folder to write the operations and manifest.json into")
+    maint.set_defaults(func=command_maintenance)
 
     args = parser.parse_args(argv)
     logging.basicConfig(

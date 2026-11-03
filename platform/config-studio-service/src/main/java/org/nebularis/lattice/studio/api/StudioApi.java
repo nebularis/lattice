@@ -35,12 +35,12 @@ import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
 import org.nebularis.lattice.studio.auth.Principal;
 import org.nebularis.lattice.studio.jobs.JobBus;
-import org.nebularis.lattice.studio.jobs.Refresher;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.authoring.Documents;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.store.Promotions;
 import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioOperations.Family;
 import org.nebularis.lattice.studio.store.StudioStore;
@@ -78,15 +78,21 @@ public final class StudioApi {
     private final Set<String> features;
 
     private final Authenticator auth;
+    /** Where a browser's MQTT client connects for events, or null when the studio offers none (PM-Q20 (d)). */
+    private volatile String eventsUrl;
+    /** The broker's checks, answered only under the path segment the broker was configured with. */
+    private volatile String brokerSecret;
+    /**
+     * What a browser signed in locally gives the broker as its password, which only a page of the studio's own origin can read from
+     * the session, so a page of another site cannot connect as a local principal over a WebSocket, which no CORS rule guards.
+     */
+    private final String localKey;
     /** The principal of the request this thread serves, set and cleared by {@link #handle}. */
     private static final ThreadLocal<Principal> CURRENT = new ThreadLocal<>();
 
-    /** Rebuilds the projections after a write that changes a source (ADR-A149 decision 14). */
-    private final Refresher refresher;
-    private static final Duration AWAIT_REFRESH = Duration.ofSeconds(10);
-    private static final Duration REFRESH_TIMEOUT = Duration.ofSeconds(60);
-    /** How long a refresh that nothing waits for gathers the writes after the first, so a burst of saves costs one refresh. */
-    private static final Duration REFRESH_DELAY = Duration.ofMillis(500);
+    /** Rebuilds the promotions after a write that changes a source (ADR-A149 decision 14). */
+    private static final Duration REBUILD_TIMEOUT = Duration.ofSeconds(60);
+    /** How long a rebuild that nothing waits for gathers the writes after the first, so a burst of saves costs one rebuild. */
 
     private final Documents documents = new Documents();
     private final StudioMcp mcp;
@@ -106,14 +112,13 @@ public final class StudioApi {
         this.store = store;
         this.ops = ops;
         this.auth = auth;
+        this.localKey = auth instanceof LocalAuthenticator ? org.nebularis.lattice.studio.events.BrokerAuth.newKey() : null;
         // Every write carries the principal of the request it serves (PRI-54), which handle() has authenticated.
+        // A write keeps its sources' promotions in its own request (PM2), so no read waits for anything after it.
         this.writes = c -> {
             Principal p = CURRENT.get();
-            Reply reply = writes.send(p == null ? c : c.by(p.name(), p.admin()));
-            afterWrite(c, reply);
-            return reply;
+            return writes.send(p == null ? c : c.by(p.name(), p.admin()));
         };
-        this.refresher = new Refresher(this::refreshOnce, REFRESH_DELAY);
         this.bus = bus;
         this.clock = clock;
         this.ids = ids;
@@ -121,54 +126,76 @@ public final class StudioApi {
         this.mcp = new StudioMcp(store, ops, this.writes, clock, ids, assets, this::runTool);
     }
 
-    /** Requests a refresh of every projection, as the service does when it starts. */
-    public void refresh() {
-        refresher.request();
+    /**
+     * Rebuilds every promoted partition from the store, in the background, one rebuild at a time (PM-Q3). The service asks for one at
+     * start when no rebuild has recorded the contracts it built from, or when the contracts since are the recorded ones and new ones
+     * alone, and an administrator asks for one after data was written outside the writer or a fault was fixed. A contract that changed
+     * or went is not rebuilt: the start logs it and the studio shows the warning, since its old rows would be lost (BL-12).
+     */
+    public void rebuild() {
+        REBUILDS.submit(() -> {
+            try {
+                rebuildOnce();
+            } catch (Exception e) {
+                LOG.warn("the rebuild of the promoted partitions failed: {}", e.getMessage());
+                warnings.add("The rebuild of the promoted partitions failed: " + e.getMessage());
+            }
+        });
     }
 
-    /** Waits until no refresh is queued or running, which a test needs to read the projections a request left. */
-    public boolean awaitProjections(Duration timeout) {
-        return refresher.awaitIdle(timeout);
+    /** What the start found that an administrator should know, which the studio shows (PM-Q3). */
+    public List<String> warnings() {
+        return List.copyOf(warnings);
     }
 
     /**
-     * Marks the projections stale after a command that changes one's source. A reply that a listing read next must show waits
-     * for the refresh, a save or a job does not.
+     * At start: compares the staged contracts' digests with those the last rebuild recorded, and rebuilds or warns (PM-Q3, PM-Q7). It
+     * reads the record and the staged contracts only, so a start with nothing changed does no rebuild.
      */
-    private void afterWrite(Command c, Reply reply) {
-        // A refresh job's own submission and deletion name no workspace and change no projection's source.
-        if (!reply.applied() || c.workspace() == null) {
-            return;
-        }
-        switch (c.type()) {
-            case CREATE, IMPORT, DELETE_WORKSPACE, SET_ACCESS, SET_DEPENDENCIES, PUBLISH, FENCE, RELEASE -> refresher.awaitFresh(AWAIT_REFRESH);
-            case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, SUBMIT_JOB, DELETE_JOB -> refresher.request();
-            default -> { }
+    public void startUp() {
+        Map<String, String> staged = Promotions.digests(read("promotions/promotions.ttl"));
+        Map<String, String> recorded = Promotions.recorded(store.graph(Graphs.PROMOTED_RECORD));
+        List<String> changed = recorded.entrySet().stream()
+            .filter(e -> !e.getValue().equals(staged.get(e.getKey()))).map(Map.Entry::getKey).sorted().toList();
+        if (!changed.isEmpty()) {
+            String message = "The promotions " + String.join(", ", changed) + " changed or were removed since the last rebuild, so they are out of date"
+                + " and are not rebuilt, since that would lose their old rows. An additive change rebuilds itself.";
+            LOG.warn(message);
+            warnings.add(message);
+        } else if (!recorded.keySet().equals(staged.keySet())) {
+            rebuild();
         }
     }
 
+    private static final java.util.concurrent.ExecutorService REBUILDS = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "studio-rebuild");
+        t.setDaemon(true);
+        return t;
+    });
+    private final java.util.List<String> warnings = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     /**
-     * One refresh: submits a refresh job, which names no workspace, hands it to the worker and waits for it to finish. The writer
-     * deletes a refresh job with the update that succeeds it, so its graph gone is its success. A job that failed or did not finish in
-     * time is deleted here, and the refresh throws.
+     * One rebuild: submits a rebuild job, which names no workspace, hands it to the worker and waits for it to finish. The writer
+     * deletes the job with the update that succeeds it, so its graph gone is its success. A job that failed or did not finish in
+     * time is deleted here, and the rebuild throws.
      */
-    private void refreshOnce() throws Exception {
+    private void rebuildOnce() throws Exception {
         String job = UUID.randomUUID().toString();
         String jobIri = Graphs.job(job);
         Model description = org.apache.jena.rdf.model.ModelFactory.createDefaultModel();
-        description.createResource(jobIri).addProperty(RDF.type, Cst.Job).addProperty(Cst.kind, Cst.Refresh).addProperty(Cst.status, Cst.Queued)
+        description.createResource(jobIri).addProperty(RDF.type, Cst.Job).addProperty(Cst.kind, Cst.Rebuild).addProperty(Cst.status, Cst.Queued)
             .addProperty(Cst.submittedAt, description.createTypedLiteral(now().toString(), XSDDatatype.XSDdateTime));
         org.apache.jena.query.Dataset graphs = org.apache.jena.query.DatasetFactory.create();
         graphs.addNamedModel(jobIri, description);
-        Reply sent = writes.send(Command.submitRefresh(job, graphs));
+        Reply sent = writes.send(Command.submitRebuild(job, graphs));
         if (!sent.applied()) {
-            throw new IllegalStateException("the refresh job was refused: " + sent.message());
+            throw new IllegalStateException("the rebuild job was refused: " + sent.message());
         }
         boolean gone = false;
         try {
             bus.publish(jobIri);
             Resource node = ResourceFactory.createResource(jobIri);
-            long deadline = System.nanoTime() + REFRESH_TIMEOUT.toNanos();
+            long deadline = System.nanoTime() + REBUILD_TIMEOUT.toNanos();
             while (System.nanoTime() < deadline) {
                 Model m = store.graph(jobIri);
                 if (m.isEmpty()) {
@@ -179,20 +206,64 @@ public final class StudioApi {
                     return;
                 }
                 if (m.contains(node, Cst.status, Cst.Failed)) {
-                    throw new IllegalStateException("the refresh job failed: " + m.getProperty(node, Cst.failureMessage).getString());
+                    throw new IllegalStateException("the rebuild job failed: " + m.getProperty(node, Cst.failureMessage).getString());
                 }
                 Thread.sleep(25);
             }
-            throw new java.util.concurrent.TimeoutException("the worker did not finish the refresh job in " + REFRESH_TIMEOUT.toSeconds() + " s");
+            throw new java.util.concurrent.TimeoutException("the worker did not finish the rebuild job in " + REBUILD_TIMEOUT.toSeconds() + " s");
         } finally {
             if (!gone) {
-                writes.send(Command.deleteRefresh(job));
+                writes.send(Command.deleteRebuild(job));
             }
         }
     }
 
+    /** The principal that request headers name, as an HTTP request with them would be authenticated, or null. */
+    public Principal authenticate(Map<String, String> headers) {
+        return auth.authenticate(new ApiRequest("GET", "/api/events", "", headers, new byte[0]));
+    }
+
+    /**
+     * Whether {@code principal} may read the job, by the rule its HTTP route applies: a workspace's job when the principal may read the
+     * workspace, and a rebuild job, which names none, by an administrator only (PM-Q10 (a)).
+     */
+    public boolean mayRead(Principal principal, String jobIri) {
+        if (!jobIri.startsWith(Graphs.job("")) || !Graphs.isId(jobIri.substring(Graphs.job("").length()))) {
+            return false;
+        }
+        Model m = store.graph(jobIri);
+        if (m.isEmpty()) {
+            return false;
+        }
+        org.apache.jena.rdf.model.Statement ws = m.createResource(jobIri).getProperty(Cst.workspace);
+        if (ws == null) {
+            return principal.admin();
+        }
+        if (!ws.getObject().isURIResource()) {
+            return false;
+        }
+        Workspace found = ops.workspace(store, ws.getResource().getURI().substring(Graphs.WORKSPACE_PREFIX.length()));
+        return found != null && found.readableBy(principal.name(), principal.admin());
+    }
+
+    /** Offers events over the broker's MQTT at {@code url}, which the session names, and the broker's checks under {@code secret}. */
+    public void events(String url, String secret) {
+        this.eventsUrl = url;
+        this.brokerSecret = secret;
+    }
+
+    public String eventsUrl() {
+        return eventsUrl;
+    }
+
     public ApiResponse handle(ApiRequest req) {
         try {
+            // The broker's checks of who connected answer the broker, which authenticates as no principal (PM-Q20 (d)).
+            if (req.path().startsWith(org.nebularis.lattice.studio.events.BrokerAuth.PREFIX)) {
+                String check = org.nebularis.lattice.studio.events.BrokerAuth.check(req.path(), brokerSecret);
+                return eventsUrl == null || check == null ? secure(ApiResponse.text(404, "not found"))
+                    : secure(new org.nebularis.lattice.studio.events.BrokerAuth(this::authenticate, localKey).handle(req.method(), check, req.body()));
+            }
             // Health and the session's description answer anyone, so a browser can learn how to sign in.
             if (req.path().equals("/api/health") || req.path().equals("/api/session")) {
                 return secure(req.path().equals("/api/session") ? session(req) : negotiate(req, route(req)));
@@ -223,6 +294,12 @@ public final class StudioApi {
         }
         Map<String, Object> out = new java.util.LinkedHashMap<>(auth.settings());
         Principal p = auth.authenticate(req);
+        if (eventsUrl != null) {
+            out.put("events", eventsUrl);
+            if (localKey != null) {
+                out.put("eventsPassword", localKey);
+            }
+        }
         if (p != null) {
             out.put("principal", p.name());
             out.put("admin", p.admin());
@@ -271,6 +348,20 @@ public final class StudioApi {
         if (s.length == 1 && s[0].equals("features")) {
             return method.equals("GET") ? features() : notAllowed("GET");
         }
+        if (s.length == 1 && s[0].equals("status")) {
+            return method.equals("GET") ? status() : notAllowed("GET");
+        }
+        if (s.length == 2 && s[0].equals("admin") && s[1].equals("rebuild")) {
+            if (!method.equals("POST")) {
+                return notAllowed("POST");
+            }
+            Principal p = CURRENT.get();
+            if (p == null || !p.admin()) {
+                return ApiResponse.text(403, "only an administrator rebuilds the promoted partitions");
+            }
+            rebuild();
+            return ApiResponse.text(202, "the rebuild of the promoted partitions is queued");
+        }
         if (s.length == 1 && s[0].equals("vocabulary")) {
             return method.equals("GET") ? vocabulary(req) : notAllowed("GET");
         }
@@ -301,7 +392,7 @@ public final class StudioApi {
         }
         if (s.length == 1 && s[0].equals("workspaces")) {
             return switch (method) {
-                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store)));
+                case "GET" -> ApiResponse.turtle(200, Turtle.write(readableWorkspaces(store, assets)));
                 case "POST" -> createWorkspace(req);
                 default -> notAllowed("GET, POST");
             };
@@ -328,7 +419,8 @@ public final class StudioApi {
                 return switch (method) {
                     case "GET" -> getGraph(ws, s[3], query(req.query()).get("revision"));
                     case "PUT" -> putGraph(req, ws, s[3]);
-                    default -> notAllowed("GET, PUT");
+                    case "PATCH" -> patchGraph(req, ws, s[3]);
+                    default -> notAllowed("GET, PUT, PATCH");
                 };
             }
             if (s.length == 3 && s[2].equals("documents")) {
@@ -380,6 +472,12 @@ public final class StudioApi {
     }
 
     // --- static assets ---------------------------------------------------------------------
+
+    /** The warnings the start found, which the studio shows (PM-Q3), as {@code {"warnings": [...]}}. */
+    private ApiResponse status() {
+        String json = warnings.stream().map(w -> "\"" + w.replace("\\", "\\\\").replace("\"", "\\\"") + "\"").collect(Collectors.joining(","));
+        return new ApiResponse(200, Map.of("Content-Type", "application/json"), ("{\"warnings\":[" + json + "]}").getBytes(StandardCharsets.UTF_8));
+    }
 
     private ApiResponse features() {
         String json = features.stream().sorted().map(f -> "\"" + f + "\"").collect(Collectors.joining(","));
@@ -575,6 +673,62 @@ public final class StudioApi {
             return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(current));
         }
         return reply.applied() ? ApiResponse.empty(204).with("ETag", etag(reply.revision())) : refusal(reply);
+    }
+
+    /**
+     * A part changed by a patch (DR-Q5 (c), DR-Q7 (b)): a TriG body of two named graphs, what is added and what is removed, against the
+     * revision If-Match names. Each graph is checked here as a saved part is, and the writer applies the patch to the stored part.
+     */
+    private ApiResponse patchGraph(ApiRequest req, String id, String name) {
+        if (load(id) == null) {
+            return notFound();
+        }
+        if (req.body() != null && req.body().length > MAX_BODY_BYTES) {
+            return tooLarge();
+        }
+        if (!media(req).equals(TRIG)) {
+            return ApiResponse.text(415, "a patch is " + TRIG + " with the graphs <" + Command.PATCH_ADD + "> and <" + Command.PATCH_DEL + ">");
+        }
+        String ifMatch = req.header("if-match");
+        if (ifMatch == null) {
+            return ApiResponse.text(428, "If-Match is required");
+        }
+        org.apache.jena.query.Dataset patch;
+        try {
+            patch = Turtle.parseTrig(req.body() == null ? new byte[0] : req.body());
+        } catch (RiotException e) {
+            return ApiResponse.text(400, "the body does not parse as TriG");
+        }
+        java.util.Set<String> names = new java.util.HashSet<>();
+        patch.listNames().forEachRemaining(names::add);
+        if (!patch.getDefaultModel().isEmpty() || !java.util.Set.of(Command.PATCH_ADD, Command.PATCH_DEL).containsAll(names)) {
+            return ApiResponse.text(422, "a patch holds the graphs <" + Command.PATCH_ADD + "> and <" + Command.PATCH_DEL + "> alone");
+        }
+        Model added = patch.getNamedModel(Command.PATCH_ADD), removed = patch.getNamedModel(Command.PATCH_DEL);
+        List<String> strangers = Parts.strangers(added, name, 5);
+        if (!strangers.isEmpty()) {
+            return ApiResponse.text(422, "the patch adds terms of another part: " + String.join(", ", strangers));
+        }
+        Long expect = revisionOf(ifMatch);
+        Reply reply = expect == null ? null : writes.send(Command.patch(id, name, expect, now(), added, removed));
+        if (reply == null || reply.status() == 412) {
+            long current = reply == null ? load(id).revision(name) : reply.revision();
+            return ApiResponse.text(412, "If-Match is not the current revision").with("ETag", etag(current));
+        }
+        return reply.applied() ? ApiResponse.empty(204).with("ETag", etag(reply.revision())) : refusal(reply);
+    }
+
+    private static final Map<Path, String> SUMMARIES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The staged summaries query under {@code assets}, read once (PM2). */
+    static String summariesQuery(Path assets) {
+        return SUMMARIES.computeIfAbsent(assets, a -> {
+            try {
+                return java.nio.file.Files.readString(a.resolve("promotions").resolve("workspace-summaries.rq"), StandardCharsets.UTF_8);
+            } catch (java.io.IOException e) {
+                throw new java.io.UncheckedIOException("the staged assets hold no promotions/workspace-summaries.rq", e);
+            }
+        });
     }
 
     /** The revision an If-Match of ours names, or null for any other value. */
@@ -1118,14 +1272,14 @@ public final class StudioApi {
 
     /**
      * The workspaces that follow a lineage, pin one of its versions or a version, or hold an import, with their summaries,
-     * from the holders projection. A workspace the request's principal may not read is left out.
+     * from the holders promotion. A workspace the request's principal may not read is left out.
      */
     private ApiResponse holders(String iri) {
         if (iri == null || !(Graphs.isImportGraph(iri) || Graphs.isUnitIri(iri.replaceFirst("/rev/1-[0-9a-f]{16}$", "")))) {
             return ApiResponse.text(400, "iri is a lineage, a version or an import's root");
         }
         Model edges = store.holders(iri);
-        Model summaries = store.summaries();
+        Model summaries = store.summaries(summariesQuery(assets));
         Model out = readable(edges.listSubjects().toList().stream()
             .map(w -> summaries.getResource(w.getURI())).filter(w -> w.hasProperty(RDF.type, Cst.Workspace)).toList());
         edges.listStatements().forEachRemaining(st -> {
@@ -1211,9 +1365,9 @@ public final class StudioApi {
         return p == null || ws.readableBy(p.name(), p.admin());
     }
 
-    /** The summary of each workspace the request's principal may read, from the summaries projection in one read. */
-    static Model readableWorkspaces(StudioStore store) {
-        Model all = store.summaries();
+    /** The summary of each workspace the request's principal may read, from the summaries query in one read. */
+    static Model readableWorkspaces(StudioStore store, Path assets) {
+        Model all = store.summaries(summariesQuery(assets));
         return readable(all.listSubjectsWithProperty(RDF.type, Cst.Workspace).toList());
     }
 

@@ -6,7 +6,10 @@
 	admin off
 }
 
+# The service is reached as host.docker.internal under Docker Desktop, and on loopback when the proxy shares the host's
+# network under Docker Engine, which docker-compose.host-network.yml sets with STUDIO_HOST and ADDIN_BIND.
 https://localhost:3443 {
+	bind {$ADDIN_BIND:0.0.0.0}
 	tls internal
 	header {
 		X-Content-Type-Options nosniff
@@ -14,7 +17,7 @@ https://localhost:3443 {
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' https://appsforoffice.microsoft.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self' https://*.officeapps.live.com https://*.office.com https://*.microsoft365.com https://*.sharepoint.com https://*.cloud.microsoft"
 	}
 	handle /api/* {
-		reverse_proxy host.docker.internal:8090
+		reverse_proxy {$STUDIO_HOST:host.docker.internal}:8090
 	}
 	handle_path /addin/* {
 		root * /srv/addin

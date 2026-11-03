@@ -207,15 +207,53 @@ def own_files(repo: wb.Repo, unit: str) -> set[Path]:
     return found
 
 
-def sweep_files(repo: wb.Repo) -> list[Path]:
-    """Every file the sweep rewrites: the developer and architecture areas, the skills and the
-    identifier exceptions baseline, each found through the catalogue, never by a path written here."""
+def sweep_files(repo: wb.Repo, exceptions: bool = True) -> list[Path]:
+    """Every file the sweep rewrites: the developer and architecture areas, the skills and, unless
+    told not to, the identifier exceptions baseline, each found through the catalogue, never by a
+    path written here."""
     files: list[Path] = []
     for area in (repo.developer, repo.architecture, repo.skills):
         if area is not None and (repo.root / area).is_dir():
             files += sorted((repo.root / area).rglob("*.md"))
-    files += [p for p in repo.exceptions if p.exists()]
+    files += [p for p in repo.exceptions if p.exists()] if exceptions else []
     return [f for f in files if f.name != CROSSWALK]
+
+
+def still_mentioned(repo: wb.Repo, old: str) -> bool:
+    """Whether a tracked file outside the baseline still spells the id, as itself or as the start of
+    a longer spelling such as a pack's FMH-H2-1, which the identifier check reads as FMH-H2. The
+    sweep reaches only some areas and leaves such spellings, so an exception may still be needed."""
+    out = subprocess.run(["git", "grep", "-lP", r"(?<![\w\-/.])" + re.escape(old) + r"(?![\w.])"],
+                         cwd=repo.root, capture_output=True, text=True).stdout.split()
+    baseline = {p.resolve() for p in repo.exceptions}
+    return any((repo.root / f).resolve() not in baseline for f in out)
+
+
+def cross_exceptions(repo: wb.Repo, crossings: list[Crossing], apply: bool) -> list[str]:
+    """Each exception names a spelling the text still holds, so it takes the new id only beside its
+    old line while the old spelling is mentioned, and alone once it is not (WB-9)."""
+    new_of = {c.old: c.new for c in crossings}
+    kept_old: list[str] = []
+    for path in repo.exceptions:
+        if not path.exists():
+            continue
+        out: list[str] = []
+        lines = path.read_text(encoding="utf-8").splitlines()
+        present = {l.split("#")[0].strip() for l in lines}
+        for line in lines:
+            key = line.split("#")[0].strip()
+            if key not in new_of:
+                out.append(line)
+                continue
+            crossed = line.replace(key, new_of[key], 1)
+            if still_mentioned(repo, key):
+                out.append(line)
+                kept_old.append(key)
+            if new_of[key] not in present:
+                out.append(crossed)
+        if apply:
+            path.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
+    return [f"exceptions: kept beside their new id, since still mentioned: {', '.join(kept_old)}"] if kept_old else []
 
 
 def pattern_for(old: str) -> re.Pattern[str]:
@@ -265,7 +303,7 @@ def rename(repo: wb.Repo, apply: bool) -> list[str]:
     by_unit = {u: cs for u, cs in by_unit.items() if u not in bare_units}
     general = [c for c in crossings if len(claims[c.old]) == 1 and distinctive(c.old) and c.unit not in bare_units]
     changed = 0
-    for path in sweep_files(repo):
+    for path in sweep_files(repo, exceptions=False):
         text = path.read_text(encoding="utf-8")
         new = text
         owner = max((u for u in by_unit if path in own_files(repo, u)), key=len, default=None)
@@ -280,6 +318,7 @@ def rename(repo: wb.Repo, apply: bool) -> list[str]:
             if apply:
                 path.write_text(new, encoding="utf-8", newline="\n")
     report.append(f"mentions: {changed} files {'rewritten' if apply else 'would change'}")
+    report += cross_exceptions(repo, crossings, apply)  # after the sweep, which it must see written
     # Validation Packs
     validation = repo.root / repo.developer / "validation"
     moves: list[tuple[str, str]] = []
@@ -410,7 +449,21 @@ def normalise_record(repo: wb.Repo, path: Path) -> tuple[str, list[str]]:
         text = text[:m.end() + 1] + line + "\n" + text[m.end() + 1:]
     elif not status:
         notes.append(f"{path.relative_to(root).as_posix()}: no Status line")
-    return text, notes
+    return hold_status(text, unit), notes
+
+
+def hold_status(text: str, unit: str) -> str:
+    """The record with its Status word and day set to what its board rolls up to (WB-10), the text
+    after them kept. A record with no board, or whose board gives no word, is left as it is."""
+    parsed = wb.parse_unit(unit, text)
+    rolled = wb.rollup(parsed.board.rows) if parsed.board else None
+    status = wb.STATUS_LINE_RE.search(text)
+    if not rolled or not status or (parsed.state, parsed.day) == rolled:
+        return text
+    m = wb.STATE_RE.match(status.group(1))
+    rest = m.group(3) if m else status.group(1)
+    sep = "" if not rest or rest.startswith((".", ",")) else ". "
+    return text.replace(status.group(0), f"**Status:** {rolled[0]} {rolled[1]}".rstrip() + sep + rest, 1)
 
 
 def declare_prefixes(repo: wb.Repo, apply: bool) -> list[str]:

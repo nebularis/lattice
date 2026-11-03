@@ -175,6 +175,7 @@ def test_gh2_01_each_change_triggers_its_checks() -> None:
     assert names_for("AGENTS.md") == ["deny-terms", "agent-guidance", "links", "writing", "wrapping", "published-decisions"]
     assert "ontology-versioning" not in names_for("ontology/party/spec/party.ttl")
     assert "ontology-versioning" in names_for("ontology/party/spec/party.ttl", merge=True)
+    assert not [c for c in hooks.checks() if c.name == "studio-browser"], "a test suite runs by convention, never in a hook (GH-5)"
     assert names_for("package.json") == ["deny-terms"]
 
 
@@ -336,6 +337,13 @@ def test_wb4_05_the_status_line_opens_with_a_state_word(work_repo: Path) -> None
     rel = record(work_repo, RECORD.replace("**Status:** building 2026-10-30. A-2 next.\n", ""))
     build(work_repo, "build")
     assert not [m for m in work_messages(work_repo, rel) if "Status line" in m]
+
+
+def test_wb10_04_a_status_word_its_board_does_not_give_is_refused(work_repo: Path) -> None:
+    rel = record(work_repo, RECORD.replace("**Status:** building 2026-10-30.", "**Status:** planned."))
+    build(work_repo, "build")
+    text = "\n".join(work_messages(work_repo, rel))
+    assert "rolls up to 'building 2026-10-30'" in text and "work:normalise" in text
 
 
 def test_wb4_06_a_stale_index_region_is_refused_until_rebuilt(work_repo: Path) -> None:

@@ -31,9 +31,9 @@ Every unit with a status record, its state from the record's Status line, and it
 | formal-methods-track-b | phase | FMB | built 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
 | formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
 | formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
-| formal-methods-track-h | phase | FMH | verified 2026-10-09 | FMH-1.1 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 44 Validation Packs |
+| formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
 | formal-methods | epic | FM | built 2026-10-06 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
-| git-hooks | unit | GH | built 2026-10-24 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
+| git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
 | implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
@@ -50,9 +50,9 @@ Every unit with a status record, its state from the record's Status line, and it
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
 | ontology-root-relocation | unit |  | merged 2026-09-20 |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
-| ontology-semantic-versioning | unit |  | built 2026-09-25 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
+| ontology-semantic-versioning | unit |  | built 2026-11-03 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
 | persistence-compiler-iri-sync | unit | PCI | built 2026-09-23 | PCI-1 | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md), 5 Validation Packs |
-| persistence-delta-replace | multi-slice unit |  | planned |  | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md) |
+| persistence-delta-replace | multi-slice unit | DR | building 2026-11-01 | DR-1 | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md), 4 Validation Packs |
 | phase-0-1-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-0-1-handoff.md) |
 | phase-0-status | unit |  | built 2026-09-23 | PLT-0.1.1 | [status](status/phase-0-status.md) |
 | phase-1-status | unit |  | blocked 2026-09-22 |  | [status](status/phase-1-status.md) |
@@ -65,14 +65,14 @@ Every unit with a status record, its state from the record's Status line, and it
 | phase-5-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-5-handoff.md) |
 | phase-6-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-6-handoff.md) |
 | platform-continuation | unit |  | merged 2026-09-20 |  | [status](status/platform-continuation.md), [review](review/platform-continuation-review.md) |
-| projection-maintenance | multi-slice unit |  | planned |  | [plan](plans/projection-maintenance.md), [status](status/projection-maintenance.md) |
+| projection-maintenance | multi-slice unit | PM | built 2026-11-02 | PM-0 | [plan](plans/projection-maintenance.md), [status](status/projection-maintenance.md), 4 Validation Packs |
 | python-test-melting | unit |  | built 2026-10-27 |  | [plan](plans/python-test-melting.md), [status](status/python-test-melting.md) |
 | rdf-sparql-patterns-remediation | plan |  | merged 2026-09-25 |  | [plan](plans/rdf-sparql-patterns-remediation.md), [status](status/rdf-sparql-patterns-remediation.md) |
 | rdf-sparql-patterns-status | unit |  | built 2026-09-22 | RSP-1 | [status](status/rdf-sparql-patterns-status.md) |
 | repository-topology-a77 | unit |  | merged 2026-09-20 |  | [status](status/repository-topology-a77.md), [review](review/repository-topology-a77-review.md) |
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
-| studio-publication | multi-slice unit in four phases |  | built 2026-10-31 |  | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
-| studio-quality | multi-slice unit |  | building 2026-10-31 |  | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
+| studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
+| studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
@@ -250,6 +250,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FME-3 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-4 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-5 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
+| FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4 | formal-methods-track-h | built 2026-11-01 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.1 | prefix antichain and overlap check | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.2a | witness harness, audit witnesses, measured gap list | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.2b | witnesses for the refusals and warnings | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
@@ -279,7 +280,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMH-2.4b | Oxigraph, probes, benchmark | formal-methods-track-h | built 2026-10-13 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment | formal-methods-track-h | built 2026-10-23 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6 | expected compiled profiles, paper check | formal-methods-track-h | built 2026-10-13 | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | building 2026-10-14 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | verified 2026-10-14 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6c | write disciplines | formal-methods-track-h | built 2026-10-20 | the review tranche below | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6d | patch log for in-place families | formal-methods-track-h | planned 2026-10-20 | FMH-2.6c's review | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.8c | edges once, faster `members`, record classes, member parts | formal-methods-track-h | verified 2026-10-20 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
@@ -316,6 +317,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | GH-2 | GH-2 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-3 | GH-3 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-4 | GH-4 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
+| GH-5 | test suites leave the hooks: the studio's browser gate runs by convention before a merge, and a hook runs quick static checks only | git-hooks | built 2026-11-03 |  | docs/developer/status/git-hooks.md#position |
 | IM-0 | ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-1 | Vocabulary, compiler recipe emission, `dal:claimsConstraint` checks, `export-recipes` | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-2 | Pinned Unicode 16.0 tables, Python library, vector generation | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
@@ -419,6 +421,10 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | PCI-4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md#slice-status |
 | PCI-5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md#slice-status |
 | PCI-6 | Documentation close-out | persistence-compiler-iri-sync | built 2026-09-25 |  | docs/developer/status/persistence-compiler-iri-sync.md#slice-status |
+| DR-1 | the vocabulary, the delta builders, the kind and the selection | persistence-delta-replace | built 2026-11-02 | the review | docs/developer/status/persistence-delta-replace.md#slices |
+| DR-2 | both caller libraries' checks and vectors, the caller obligations as standards | persistence-delta-replace | built 2026-11-02 | the review | docs/developer/status/persistence-delta-replace.md#slices |
+| DR-3 | the studio's writer on the generated delta replace | persistence-delta-replace | building 2026-11-01 |  | docs/developer/status/persistence-delta-replace.md#slices |
+| DR-4 | `replace-whole`, `load-whole` and the state digest, carried over from the studio line | persistence-delta-replace | built 2026-11-02 | the review | docs/developer/status/persistence-delta-replace.md#slices |
 | PLT-0.1.1 | PLT-0.1.1 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md#slice-status |
 | PLT-0.1.2 | PLT-0.1.2 | phase-0-status | built 2026-09-23 |  | docs/developer/status/phase-0-status.md#slice-status |
 | PLT-0.1.3 | PLT-0.1.3 | phase-0-status | built 2026-10-10 |  | docs/developer/status/phase-0-status.md#slice-status |
@@ -435,9 +441,40 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | PLT-0.1.14 | PLT-0.1.14 | phase-0-status | planned |  | docs/developer/status/phase-0-status.md#slice-status |
 | PLT-0.1.15 | PLT-0.1.15 | phase-0-status | planned |  | docs/developer/status/phase-0-status.md#slice-status |
 | PLT-0.2r | PLT-0.2r | phase-0-status | planned |  | docs/developer/status/phase-0-status.md#slice-status |
+| PM-0 | the rename of PM-Q8 across the studio | projection-maintenance | built 2026-11-01 |  | docs/developer/status/projection-maintenance.md#slices |
+| PM-1 | the surface backend, a clear and a fill for each promotion | projection-maintenance | built 2026-11-01 |  | docs/developer/status/projection-maintenance.md#slices |
+| PM-2 | the writer keeps each source's promotions in its own request | projection-maintenance | built 2026-11-01 |  | docs/developer/status/projection-maintenance.md#slices |
+| PM-3 | CloudEvents for the writers' and workers' job updates | projection-maintenance | built 2026-11-01 |  | docs/developer/status/projection-maintenance.md#slices |
+| PM-3a | the probes of the broker's Web MQTT and HTTP auth backend | projection-maintenance | built 2026-11-02 |  | docs/developer/status/projection-maintenance.md#slices |
+| PM-3b | PM-Q20 (d), the broker's checks of identity and the relay | projection-maintenance | built 2026-11-02 | the review | docs/developer/status/projection-maintenance.md#slices |
+| PM-3c | the proxy run of PM-Q22 in the browser gate | projection-maintenance | planned | PM-Q22 | docs/developer/status/projection-maintenance.md#slices |
+| PM-4 | the tier 2 maintainer | projection-maintenance | planned | PM-Q13 to PM-Q17 | docs/developer/status/projection-maintenance.md#slices |
 | RSP-1 | Core patterns | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
 | RSP-2 | Substrate and compiler | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
 | RSP-3 | Housekeeping first cut | rdf-sparql-patterns-status | planned |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
+| PB-1 | a job's input and its findings | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-2 | the `Authenticator` seam, `local` and `oidc` | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-3 | a workspace's owner and mode | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-4 | the `cst:` publication terms and the `publish` job | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-5 | the registry's read API and browser | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-6 | a workspace's dependencies, followed or pinned | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-7 | fenced imports stored once by digest | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-8 | artefacts naming their sources, the bundle export | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-9 | vocabulary bindings that select a published edition | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-10 | a brief, the working store as persistence profiles | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-11 | the Java caller library | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-12 | the studio's persistence profile | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-13 | the operations layer, `StudioOperations` | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-14 | the writer's workspace commands on PB-13 | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-15 | the registry on PB-13 | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-16 | the migration of a store written before phase D | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| PB-17 | the projections of ADR-A149 decision 14 | studio-publication | built 2026-10-31 |  | docs/developer/status/studio-publication.md#slices |
+| SQ-1 | the harness, a topology from a declared configuration | studio-quality | built 2026-10-31 |  | docs/developer/status/studio-quality.md#slices |
+| SQ-2 | reports in git, the compare task, the `studio-api` scenario | studio-quality | built 2026-10-31 |  | docs/developer/status/studio-quality.md#slices |
+| SQ-3 | component benchmarks | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
+| SQ-4 | the model and the Hypothesis state machine | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
+| SQ-5 | a Jepsen test against the Compose topology | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
+| SQ-6 | Locust load runs with reports | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
@@ -463,5 +500,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-5 | AGENTS.md, the skills, the standards, the ADR | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-6 | `work:here` | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-7 | the branches marked or deleted | work-board | briefed 2026-11-02 | the merge of this branch into `main` | docs/developer/status/work-board.md#position |
+| WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-10 | a unit's state joined across branches, rolled up from its board, and the Status word held to the roll-up | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 
 <!-- END GENERATED work-board -->

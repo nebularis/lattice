@@ -32,7 +32,7 @@ class SweeperTest {
     private static final StudioOperations OPS = StudioOperations.load(java.nio.file.Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
 
     private final StudioStore store = StudioStore.inMemory();
-    private final DirectWrites writes = new DirectWrites(new Writer(store, OPS, Clock.fixed(AT, ZoneOffset.UTC)));
+    private final DirectWrites writes = new DirectWrites(new Writer(store, OPS, org.nebularis.lattice.studio.store.Maintenance.load(java.nio.file.Path.of(System.getProperty("studio.assets"), "maintenance")), Clock.fixed(AT, ZoneOffset.UTC)));
 
     /** A finished job of the workspace, as the service submits it and the worker ends it. */
     private String job(String id, String finished) {

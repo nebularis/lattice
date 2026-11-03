@@ -1430,6 +1430,8 @@ That is the primitive, abbreviated: the production form adds the dataset epoch g
 
 Why whole-graph replace rather than a patch: if the previous version had three line items and the new one has two, a patch that forgets to delete the third leaves a dangling triple. Replacing the graph makes the write the complete state, which is what an aggregate is.
 
+**Its cost, and the rows form (2026-11-01).** With the payload in the template, a store fills the template once per solution of the sweep, so the write costs the old size times the new. The generated replace has a second form that carries the payload as `VALUES` rows in `UNION` branches beside the sweep, linear, and right only on a store that applies every deletion before any insertion, which SPARQL 1.1 defines and not every store does. The compiler selects it by the store's declared capability, and the Persistence README's §5.6.2 says how.
+
 ### 14.2 Variants
 
 **Create-if-absent.** The guard is inverted: the version row must *not* exist. The dataset epoch guard applies here as on every write, so a writer started under an older epoch cannot create a row after a restore. Abbreviated, with the full form in [§19.3](#193-the-create-path):
@@ -3249,6 +3251,8 @@ pat:current    a owl:ObjectProperty ;
     rdfs:comment "Snapshot-per-revision model only: the sealed payload graph that is the current state." .
 pat:deleted    a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
     rdfs:comment "Tombstone. Present and true when the target's payload has been deleted; the row and its counter survive (F10)." .
+pat:stateDigest a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The digest of the state the target's last write left, where its family declares dal:recordsStateDigest, so an audit finds a graph changed outside the family's operations." .
 pat:fence      a owl:DatatypeProperty ; rdfs:range xsd:long ;
     rdfs:comment "Fencing token from an external lease (§16.2). Writes with an older token fail the guard." .
 pat:lockedBy   a owl:ObjectProperty ;   rdfs:comment "Editorial lease holder (§16.3)." .

@@ -110,6 +110,7 @@ WINGMAN
 benchmark/*/report.json
 benchmark/*/report.md
 benchmark/*/operations.json
+benchmark/*/operations/
 benchmark/*/sweep.json
 benchmark/*/sweep.md
 benchmark/*/cross_family.json

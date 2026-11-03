@@ -408,3 +408,28 @@ def test_wb6_06_the_here_subcommand_writes_lists_and_leaves(tmp_path: Path) -> N
     assert (tmp_path / ".local" / "agents" / "sess1.toml").exists()
     assert "left" in here("--leave")
     assert not (tmp_path / ".local" / "agents" / "sess1.toml").exists()
+
+
+def _rows(*cells: str) -> list[wb.Row]:
+    text = "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n" + "".join(f"| X-{n} | d | {c} | |\n" for n, c in enumerate(cells, 1))
+    return list(wb.find_board("x", text).rows)
+
+
+def test_wb10_01_a_board_rolls_up_to_one_unit_state() -> None:
+    assert wb.rollup(_rows("built 2026-11-02", "building 2026-11-01", "building 2026-10-30")) == ("building", "2026-10-30"), "the day the work started"
+    assert wb.rollup(_rows("built 2026-10-09", "planned")) == ("built", "2026-10-09"), "a paused unit is not building"
+    assert wb.rollup(_rows("verified 2026-10-20", "built 2026-10-27", "merged 2026-10-30")) == ("built", "2026-10-30"), "the lowest word, the latest day"
+    assert wb.rollup(_rows("planned", "blocked")) == ("blocked", ""), "nothing moving and something blocked"
+    assert wb.rollup(_rows("planned", "briefed")) == ("briefed", "")
+    assert wb.rollup(_rows("merged 2026-10-30", "dropped")) == ("merged", "2026-10-30"), "a dropped row is set aside"
+    assert wb.rollup(_rows("dropped", "dropped")) == ("dropped", "")
+    assert wb.rollup(_rows("Done (abc)")) is None
+
+
+def test_wb10_02_a_unit_state_shows_each_branch_further_on() -> None:
+    def unit(state: str, day: str = "") -> wb.Unit:
+        return wb.Unit("u", "unit", state, day, "", None)
+    boards = {"main": {"u": unit("planned")}, "b1": {"u": unit("built", "2026-11-02")},
+              "b2": {"u": unit("building", "2026-11-01")}, "b3": {"u": unit("planned")}, "b4": {"u": wb.Unit("u", "unit", None, "", "", None)}}
+    assert wb.unit_state("u", boards["main"]["u"], boards) == "planned · built 2026-11-02 on b1 · building 2026-11-01 on b2"
+    assert wb.unit_state("u", None, {"b1": boards["b1"]}) == "? · built 2026-11-02 on b1"

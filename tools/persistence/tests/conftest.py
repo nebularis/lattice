@@ -56,6 +56,27 @@ def example():
     return load_example
 
 
+def whole_state(graph: Graph) -> Graph:
+    """``graph`` with ``dal:WholeState`` declared for every class scope, so an optimistic family keeps the sweeping replace that these tests
+    exercise, where the default is the delta replace (persistence-delta-replace DR1)."""
+    from rdflib import RDF, Namespace, URIRef
+
+    dal = Namespace("https://www.nebularis.org/neuro-semantic/lattice/persistence#")
+    for scope in list(graph.subjects(RDF.type, dal.ClassScope)):
+        profile = URIRef(str(scope) + "WholeState")  # named, so that a compiled profile built from it is the same every time
+        graph.add((profile, RDF.type, dal.WriteDisciplineProfile))
+        graph.add((profile, dal.appliesTo, scope))
+        graph.add((profile, dal.replaceEncoding, dal.WholeState))
+    return graph
+
+
+def load_whole_state(path) -> Graph:
+    """The fixture at ``path`` as :func:`whole_state` leaves it."""
+    from persistence import witness
+
+    return whole_state(witness._load_fixture(path))
+
+
 # ---- engines (H2.4b, ADR-A125) -------------------------------------------------------------------------------------
 
 
