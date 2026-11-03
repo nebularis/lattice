@@ -59,10 +59,10 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence" uri="persistence/spec/persistence.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence-store" uri="persistence/spec/persistence-store.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.21.0" uri="persistence/spec/persistence-store.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence/0.21.0" uri="persistence/spec/persistence.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.22.0" uri="persistence/spec/persistence-store.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.0" uri="persistence/spec/persistence.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation" uri="persistence/spec/persistent-foundation.ttl"/>
-    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.21.0" uri="persistence/spec/persistent-foundation.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.22.0" uri="persistence/spec/persistent-foundation.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0" uri="quantification/spec/quantification.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/spc" uri="spc/spec/spc.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/spc/0.20.0" uri="spc/spec/spc.ttl"/>
