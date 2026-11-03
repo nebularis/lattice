@@ -160,6 +160,7 @@ def test_an_entry_and_a_decision_name_the_addendum_that_narrowed_them(isolated, 
     out = capsys.readouterr().out
     assert "Narrowed by adr.md:40-60." in under_row(out, "PRI-1")
     assert "Narrowed by adr.md:40-60." in under_row(out, "ADR-1")
+    assert {r[1]: r[4] for r in table(out)} == {"ADR-1": "~", "PRI-1": "~"}, "a narrowed row is marked as a reversed one is"
 
 
 def test_declared_terms_are_searched_only_when_their_kind_is_named(isolated, capsys):

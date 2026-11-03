@@ -138,7 +138,7 @@ No bias keeps both, so the maintainer chose to leave terms out unless they are a
 
 **Status:** Proposed, 2026-11-03.
 
-33. **A register entry may name the addendum that narrowed the decision it rests on.** A `Narrowed by` column, optional and trailing like the signposts of decision 28, names an addendum by its decision and the day in its heading, `ADR-A129 addendum 2026-10-26`, which survive an edit as a section's position does not. It is read as `ki:narrowedBy` from the entry to that addendum's section, and a cell that names no addendum of that day is reported. `find` prints the addendum under the entry, and under a decision whose first numbered decision, the text its claim is drawn from, an addendum narrows, as decision 29 already did for a section that outranks the claim.
+33. **A register entry may name the addendum that narrowed the decision it rests on.** A `Narrowed by` column, optional and trailing like the signposts of decision 28, names an addendum by its decision and the day in its heading, `ADR-A129 addendum 2026-10-26`, which survive an edit as a section's position does not. It is read as `ki:narrowedBy` from the entry to that addendum's section, and a cell that names no addendum of that day is reported. `find` marks the row `~`, as it marks a superseded or reversed one, and prints the addendum under the entry, and under a decision whose first numbered decision, the text its claim is drawn from, an addendum narrows, as decision 29 already did for a section that outranks the claim.
 
 ## Provenance
 

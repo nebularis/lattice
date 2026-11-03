@@ -422,7 +422,7 @@ def flags(r: dict) -> str:
     marks = ""
     if r.get("uncovered"):
         marks += "!"
-    if r.get("reversed") or r.get("successor") or r.get("status") == "Superseded":
+    if r.get("reversed") or r.get("narrowed") or r.get("successor") or r.get("status") == "Superseded":
         marks += "~"
     if r.get("debts"):
         marks += "TD"
@@ -558,7 +558,7 @@ def _show_found(db: ox.Store, rows: list[dict], facets: dict, best: float) -> No
 
 FLAG_WORDS = {
     "!": "! the entry states a case it does not cover",
-    "~": "~ the text returned was superseded or reversed",
+    "~": "~ the text returned was superseded, reversed or narrowed",
     "TD": "TD an open debt bears on the entry",
     "BL": "BL an idea on the backlog, not built, bears on the entry",
     "?": "? the entry is Proposed, not ratified",
