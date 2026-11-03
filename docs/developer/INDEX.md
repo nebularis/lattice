@@ -50,7 +50,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
 | ontology-root-relocation | unit |  | merged 2026-09-20 |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
-| ontology-semantic-versioning | unit |  | building 2026-11-03 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
+| ontology-semantic-versioning | unit |  | built 2026-11-03 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
 | persistence-compiler-iri-sync | unit | PCI | built 2026-09-23 | PCI-1 | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md), 5 Validation Packs |
 | persistence-delta-replace | multi-slice unit | DR | building 2026-11-01 | DR-1 | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md), 4 Validation Packs |
 | phase-0-1-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-0-1-handoff.md) |

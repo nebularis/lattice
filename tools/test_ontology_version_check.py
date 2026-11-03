@@ -92,6 +92,6 @@ def test_a_flagged_module_is_told_how_it_is_released() -> None:
     lines = ovc.how_released(ovc.ROOT, ["ontology/persistence/spec/persistence.ttl: content changed",
                                         "ontology/foundation/spec/foundation.ttl: content changed"])
     assert len(lines) == 2
-    assert any("ontology/foundation is substrate" in l and "release:prepare" in l for l in lines)
-    assert any("ontology/persistence is standalone, released on its own" in l and "Never `release:prepare`" in l for l in lines)
+    assert any("ontology/foundation is substrate" in l and "version:bump -- --increment" in l for l in lines)
+    assert any("ontology/persistence is standalone, released on its own" in l and "--layer-target persistence" in l and "move in unison" in l for l in lines)
     assert ovc.how_released(ovc.ROOT, []) == []

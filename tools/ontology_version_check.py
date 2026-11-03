@@ -295,11 +295,11 @@ def how_released(root: Path, problems: list[str]) -> list[str]:
             continue
         if base.rstrip("/") in members:
             lines.append(f"HOW {base.rstrip('/')} is {module.kind}, a member of the release {catalogue.release_version}: "
-                         "bump every member together with `mise run release:prepare -- <X.Y.Z>`")
+                         "bump every member together with `mise run version:bump -- --increment <major|minor|patch>`")
         else:
-            lines.append(f"HOW {base.rstrip('/')} is {module.kind}, released on its own: bump only its changed documents' "
-                         "version IRIs and its changed directories' .version files, each by its own change, and tag each "
-                         "document as <name>-vX.Y.Z. Never `release:prepare`, which moves the substrate")
+            lines.append(f"HOW {base.rstrip('/')} is {module.kind}, released on its own: its spec documents move in unison, "
+                         f"its shapes by their own .version. `mise run version:bump -- --layer-target {module.name} "
+                         "--increment <major|minor|patch>`, with --with-shapes or --only-shapes as the shapes changed")
     return lines
 
 
