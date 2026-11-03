@@ -76,8 +76,7 @@ the maintainer is actually preparing a merge into `main`, never as part of an or
    - **A README, its examples and its shapes name no delivery identifier**, such as a slice, a plan
      question or a technical debt item, and no delivery phrasing such as "this slice". Skill
      `lattice-publication-hygiene`, "Delivery identifiers stay in working documents", has the rule.
-2. **Know which versioning applies.** The modules of the kinds listed in the repository catalogue's
-   `[conventions.release]` (`substrate`, the layers of ADR-A01's order) are one release with one number, held there (ADR-A129). Their shapes and projection directories have no `.version` file. The standalone modules (MORK, SPC, Surface and Persistence), the applied modules and the examples keep their own versions and pin a release (ADR-A86, and ADR-A129's 2026-10-26 addendum).
+2. **Know which versioning applies.** The modules of the kinds listed in the repository catalogue's `[conventions.release]` (`substrate`, the layers of ADR-A01's order) are one release with one number, held there (ADR-A129). Their shapes and projection directories have no `.version` file. The standalone modules (MORK, SPC, Surface and Persistence), the applied modules and the examples keep their own versions and pin a release (ADR-A86, and ADR-A129's 2026-10-26 addendum). Look the kind up before every bump, in the module README's `[module]` block or from `mise run check:ontology-versioning -- --base-ref main`, whose `HOW` line names each flagged module's kind and how it is bumped, and never assume a module's version follows the release because its number matches.
 3. **Move the release for a change to a member.** `mise run release:prepare -- <X.Y.Z>` moves every
    member version IRI, every import of a member, the applied modules' pins, the literate READMEs and
    the tool packages' sources to the new number in one substitution, then regenerates the XML catalogs

@@ -279,6 +279,30 @@ def check(root: Path, base_ref: str) -> list[str]:
     return problems
 
 
+def how_released(root: Path, problems: list[str]) -> list[str]:
+    """For each module a flagged file belongs to, how its bump is made, from its catalogue kind, since
+    the substrate shares one release and every other module is released on its own (ADR-A129's
+    addendum of 2026-10-26). A bump made the wrong way moves modules that did not change."""
+    if not (root / lattice_repo_catalogue.CATALOGUE_FILE).is_file():
+        return []
+    catalogue = lattice_repo_catalogue.load(root)
+    members = {m.path.as_posix() for m in catalogue.release_members()}
+    flagged = {p.split(":", 1)[0].strip() for p in problems}
+    lines = []
+    for module in sorted(catalogue.modules.values(), key=lambda m: m.path.as_posix()):
+        base = module.path.as_posix() + "/"
+        if not any(f.startswith(base) for f in flagged):
+            continue
+        if base.rstrip("/") in members:
+            lines.append(f"HOW {base.rstrip('/')} is {module.kind}, a member of the release {catalogue.release_version}: "
+                         "bump every member together with `mise run release:prepare -- <X.Y.Z>`")
+        else:
+            lines.append(f"HOW {base.rstrip('/')} is {module.kind}, released on its own: bump only its changed documents' "
+                         "version IRIs and its changed directories' .version files, each by its own change, and tag each "
+                         "document as <name>-vX.Y.Z. Never `release:prepare`, which moves the substrate")
+    return lines
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Flag ontology files whose content changed without a version bump"
@@ -302,6 +326,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"UNVERSIONED {problem}", file=sys.stderr)
     for problem in released:
         print(f"RELEASE {problem}", file=sys.stderr)
+    for line in how_released(root, unbumped):
+        print(line, file=sys.stderr)
     if unbumped or unversioned or released:
         print(
             f"{len(unbumped)} ontology file(s) changed without a version bump "

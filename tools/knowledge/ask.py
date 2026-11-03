@@ -182,7 +182,8 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
        (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences)
        (GROUP_CONCAT(DISTINCT ?ac) AS ?activities) (GROUP_CONCAT(DISTINCT ?qu) AS ?qualities)
        (GROUP_CONCAT(DISTINCT ?te) AS ?technologies) (SAMPLE(?dn) AS ?uncovered)
-       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (GROUP_CONCAT(DISTINCT ?idea) AS ?ideas) (SAMPLE(?sp) AS ?successor) WHERE {
+       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (GROUP_CONCAT(DISTINCT ?idea) AS ?ideas) (SAMPLE(?sp) AS ?successor)
+       (SAMPLE(?np) AS ?narrowed) WHERE {
   GRAPH ki:index {
     ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
     OPTIONAL { ?n ki:pointer ?pointer }
@@ -191,6 +192,7 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
     OPTIONAL { ?d ki:bearsOn ?n ; a ki:Debt ; ki:status ki:Open ; ki:identifier ?debt }
     OPTIONAL { ?b ki:bearsOn ?n ; a ki:Backlog ; ki:status ki:Open ; ki:identifier ?idea }
     OPTIONAL { ?n ki:supersededBy ?successorNode . ?successorNode ki:identifier ?sp }
+    OPTIONAL { ?n ki:narrowedBy ?w . ?w ki:pointer ?np }
     OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
     OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
     OPTIONAL { ?n ki:activity ?x BIND (REPLACE(STR(?x), "^.*#", "") AS ?ac) }
@@ -511,12 +513,17 @@ def rank(
         r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
         if r["kind"] != "Term" and identifiers.normalise(r["id"]) in named:
             r["meaning"] = 1.0
+        # A decision's claim is its first numbered decision, so the row carries what reverses or
+        # narrows that section even when no section outranks the claim.
+        first = next((x for x in sections.get(r["n"], []) if x["s"].endswith("/section-1")), None)
+        if first:
+            r["reversed"], r["narrowed"] = first["reversed"], first["narrowed"] or r.get("narrowed")
         # An entry is as close as its closest section and then points at it. After the name, so that
         # a named entry keeps its whole-file pointer.
         for section in sections.get(r["n"], []):
             if section["s"] in index and (m := float(vectors[index[section["s"]]] @ question)) > r["meaning"]:
                 r["meaning"], r["pointer"] = m, section["pointer"]
-                r["reversed"], r["narrowed"] = section["reversed"], section["narrowed"]
+                r["reversed"], r["narrowed"] = section["reversed"], section["narrowed"] or r.get("narrowed")
                 r["section"] = section["text"]
         r["facets"] = sum(bool(wanted & set((r.get(c) or "").split())) for c, wanted in facets.items())
         r["score"] = r["meaning"] + BOOST * r["facets"]

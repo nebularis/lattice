@@ -143,6 +143,25 @@ def test_a_reversed_section_is_marked_and_names_the_addendum(isolated, capsys):
     assert "Reversed by adr.md:40-60." in line and "The section that answered: minting minting slow" in line
 
 
+def test_an_entry_and_a_decision_name_the_addendum_that_narrowed_them(isolated, capsys):
+    """A principle whose Narrowed by names an addendum, and a decision whose first numbered decision,
+    its claim, an addendum narrows, each print the addendum under the row, even where no section
+    outranks the claim. PRI-03 restated ADR-A129's narrowed decision 1 unmarked until this."""
+    store = ox.Store()
+    entry(store, "ADR-1", "Decision", "one release for every module")
+    section(store, "ADR-1", 1, "one release for every module", "adr.md:10-12")
+    section(store, "ADR-1", 2, "graph graph", "adr.md:40-60")
+    first, addendum = (ox.NamedNode(f"{KI}node/ADR1/section-{n}") for n in (1, 2))
+    store.add(ox.Quad(first, ox.NamedNode(KI + "narrowedBy"), addendum, INDEX))
+    entry(store, "PRI-1", "Principle", "one release for every module")
+    fact(store, "PRI-1", "narrowedBy", addendum)
+    embed.build(store, isolated)
+    ask.find(store, "one release for every module", set(), set(), set(), 8)
+    out = capsys.readouterr().out
+    assert "Narrowed by adr.md:40-60." in under_row(out, "PRI-1")
+    assert "Narrowed by adr.md:40-60." in under_row(out, "ADR-1")
+
+
 def test_declared_terms_are_searched_only_when_their_kind_is_named(isolated, capsys):
     """Terms crowded the entries out of questions about a design, so a question without --kind term
     never sees one. Named alone, the kind finds only terms, named with another it ranks both, and a

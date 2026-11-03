@@ -52,6 +52,8 @@ How each triple store behaves, and how we found out, is recorded in [docs/archit
 
 How to write a SPARQL constraint, a generated query or a test fixture that runs in reasonable time is recorded in [docs/architecture/efficient-queries-and-shapes.md](docs/architecture/efficient-queries-and-shapes.md) ([ADR-A128](docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md)), and its rules are standards in the register. Before writing or changing one, find the rules that apply with `mise run graph:ask -- find <what the query does> --kind standard --activity query-writing` and read each, reading the whole record only when the query answers weakly. It says which of its rules hold for any engine and which only for rdflib, pySHACL or our harness.
 
+**Look up how an ontology module is versioned before bumping it.** The substrate is one release, moved by `mise run release:prepare`, and every standalone and applied module is released on its own, document by document, with its own tags (ADR-A129, skill `lattice-ontology-authoring`). A module's kind is in its README's `[module]` block, and `mise run check:ontology-versioning -- --base-ref main` prints a `HOW` line for each module it flags. A standalone module's number matching the release's says nothing about how it moves.
+
 Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
 `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
 through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.

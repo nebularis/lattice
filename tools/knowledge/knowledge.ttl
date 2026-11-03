@@ -310,7 +310,7 @@ ki:supersededBy
 ki:narrowedBy
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Node ;
     rdfs:label "narrowed by" ;
-    rdfs:comment "From a numbered decision's section to the addendum section whose bold lead narrows or amends it, the weaker sibling of ki:supersededBy: the decision stands, but not as written. Earns its place because find prints the narrowing addendum's pointer beside the section it returns, so an agent never acts on the narrowed text alone (ADR-A134 decision 29)." .
+    rdfs:comment "From a numbered decision's section to the addendum section whose bold lead narrows or amends it, and from a register entry to the addendum its Narrowed by column names, the weaker sibling of ki:supersededBy: the decision stands, but not as written. Earns its place because find prints the narrowing addendum's pointer beside the section it returns, so an agent never acts on the narrowed text alone (ADR-A134 decision 29)." .
 
 ki:answers
     rdf:type owl:ObjectProperty ; rdfs:domain ki:Node ; rdfs:range ki:Question ;
