@@ -23,7 +23,7 @@ is written, and comes to R once, when the trip is done.
 **Briefs written:** every slice of the trip, the last on 2026-10-13. Every question of the trip is
 decided (2026-10-14), so the branch can be created. AIR-3.3 has a brief that is blocked (phase 3
 plan).
-**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on 2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for AIR-3.3-Q1 (phase 3 plan), since HQ-6a.2 merged on 2026-10-16, and lands before CCS's N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS CCS-9b.3, and CCS C9 merges before Phase 5 (epic §3b). The trip's imports stay pinned to `main` at the branch point, and R re-pins once at the merge (lanes §6 step 4).
+**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on 2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for AIR-3.3-Q1 (phase 3 plan), since HQ-6a.2 merged on 2026-10-16, and lands before CCS's N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS-9b.3, and CCS C9 merges before Phase 5 (epic §3b). The trip's imports stay pinned to `main` at the branch point, and R re-pins once at the merge (lanes §6 step 4).
 
 ## Machine R
 

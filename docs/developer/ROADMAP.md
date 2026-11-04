@@ -33,9 +33,10 @@ Built from the status records on 11 branches, the units' own state from this tre
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
 | [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built |  |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | ccs/board-corrections |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | realign/config-authoring-studio |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
+| [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | no board |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-08 | FMC-1 | 3 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 5 planned, 3 built, 1 dropped |  |
@@ -46,9 +47,7 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [ledger](plans/ledger.md) | unit | built 2026-10-27 | LG-0 | 3 built, 3 planned |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-conformance](plans/multi-store-conformance.md) | unit | merged 2026-10-29 |  | 5 merged | ccs/board-corrections |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -305,20 +304,6 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
-    title Multi-store-conformance
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section multi-store-conformance
-    MSC-1 platform sparql-testkit to :done, msc1, 2026-10-27, 2026-10-29
-    MSC-2 Jena in the persistence engine :done, msc2, 2026-10-27, 2026-10-29
-    MSC-3 Jena in the compilers engines :done, msc3, 2026-10-27, 2026-10-29
-    MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
-    MSC-5 TSD-42 and TSD-43 on Jena TSD :done, msc5, 2026-10-27, 2026-10-29
-```
-
-```mermaid
-%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
-gantt
     title Ontology-remediation
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -478,10 +463,6 @@ gantt
     IM-1 Vocabulary compiler recipe em :im1, 2026-09-24, 2026-09-25
     IM-2 Pinned Unicode 16.0 tables Py :im2, 2026-09-24, 2026-09-25
     IM-3 Java library vector coverage :im3, 2026-09-24, 2026-09-25
-    section ledger
-    LG-0 :lg0, 2026-10-27, 2026-10-28
-    LG-1 :lg1, 2026-10-27, 2026-10-28
-    LG-2 :lg2, 2026-10-27, 2026-10-28
     section normative-rule-substrate
     NRS-4 Deontic extension of Instrumen :done, nrs4, 2026-09-30, 2026-10-01
     NRS-5 Closure declarations A-105 R :done, nrs5, 2026-10-10, 2026-10-11
@@ -712,7 +693,7 @@ flowchart LR
 
 ### 4.5 Ensemble and Ledger, substrate layers
 
-Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and plan, for the maintainer's review. No Ensemble slice is briefed and it has no status record. Ledger's layer is on `main` with ADR-A131 Accepted. LG-0 (examples) and LG-1 (the configuration document) are built, verified and committed, LG-2 (the runtime document) is briefed and not started, and LG-3 to LG-5 are planned. LG-5, the benchmark, is part built ahead of LG-2.
+Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and plan, for the maintainer's review. Its status record was created on 2026-11-04 with ES-0 and ES-1 briefed, their packs written, and ES-2 to ES-9 planned. Ledger's layer is on `main` with ADR-A131 Accepted. LG-0 (examples) and LG-1 (the configuration document) are built, verified and committed, LG-2 (the runtime document) is briefed and not started, and LG-3 to LG-5 are planned. LG-5, the benchmark, is part built ahead of LG-2.
 
 | | Ensemble | Ledger |
 |---|---|---|
@@ -769,12 +750,12 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-10-29 | 53 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | CCS-9b.3a, CCS-9b.3b, CCS-9b.3c, HQ-6a.1, HQ-6a.2, MSC-1, MSC-2, MSC-3, MSC-4, MSC-5 |
-| `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | no mark |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-04 | 114 | local ahead 34, not pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | no mark |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d |
 | `spikes/pol-map` | 2026-10-16 | 2 | pushed | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 
@@ -825,7 +806,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 36 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -919,9 +900,11 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 | governance-surfaces | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | implementation-handover-historical | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | iri-patterns-post-3866b21-remediation | unit | merged 2026-09-23 | 0 | 2026-09-23 |
+| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | 6 | 2026-10-27 |
 | llm-training-mtp | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | mork-package-split | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | mtp-execution | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| [multi-store-conformance](plans/multi-store-conformance.md) | unit | merged 2026-10-29 | 5 | 2026-10-29 |
 | ontology-root-relocation | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | phase-0-1-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | phase-2-handoff | unit | merged 2026-09-20 | 0 | 2026-09-20 |
@@ -946,6 +929,20 @@ flowchart LR
     classDef open fill:#f2c14e,stroke:#b8860b,color:#000
     classDef done fill:#8fcf8f,stroke:#2f7d32,color:#000
     classDef crit fill:#f28b82,stroke:#b23a30,color:#000
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title Multi-store-conformance
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section multi-store-conformance
+    MSC-1 platform sparql-testkit to :done, msc1, 2026-10-27, 2026-10-29
+    MSC-2 Jena in the persistence engine :done, msc2, 2026-10-27, 2026-10-29
+    MSC-3 Jena in the compilers engines :done, msc3, 2026-10-27, 2026-10-29
+    MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
+    MSC-5 TSD-42 and TSD-43 on Jena TSD :done, msc5, 2026-10-27, 2026-10-29
 ```
 
 <!-- END GENERATED work-board-completed -->
