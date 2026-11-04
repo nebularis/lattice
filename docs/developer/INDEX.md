@@ -21,27 +21,27 @@ Every unit with a status record, its state from the record's Status line, and it
 | ID | Kind | Prefix | State | Next | Documents |
 |---|---|---|---|---|---|
 | DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
-| applied-insurance-reference | epic | AIR | planned | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
+| applied-insurance-reference | epic | AIR | built 2026-11-02 | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
 | applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
-| computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
+| computable-contract-substrate | multi-slice unit | CCS, HQ | built 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
 | config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
-| formal-methods-track-b | phase | FMB | built 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
+| formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
 | formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
 | formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
 | formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
-| formal-methods | epic | FM | built 2026-10-06 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
+| formal-methods | epic | FM | built 2026-10-27 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
 | git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
 | implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
-| improved-ontology-documentation | unit | OD | verified 2026-10-17 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 17 Validation Packs |
+| improved-ontology-documentation | unit | OD | built 2026-10-20 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 17 Validation Packs |
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
-| ledger | unit | LG | building 2026-10-29 | LG-0 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
+| ledger | unit | LG | built 2026-10-27 | LG-0 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -51,10 +51,10 @@ Every unit with a status record, its state from the record's Status line, and it
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
 | ontology-root-relocation | unit |  | merged 2026-09-20 |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
 | ontology-semantic-versioning | unit |  | built 2026-11-03 |  | [plan](plans/ontology-semantic-versioning.md), [status](status/ontology-semantic-versioning.md) |
-| persistence-compiler-iri-sync | unit | PCI | built 2026-09-23 | PCI-1 | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md), 5 Validation Packs |
+| persistence-compiler-iri-sync | unit | PCI | built 2026-09-25 | PCI-1 | [plan](plans/persistence-compiler-iri-sync.md), [status](status/persistence-compiler-iri-sync.md), 5 Validation Packs |
 | persistence-delta-replace | multi-slice unit | DR | building 2026-11-01 | DR-1 | [plan](plans/persistence-delta-replace.md), [status](status/persistence-delta-replace.md), 4 Validation Packs |
 | phase-0-1-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-0-1-handoff.md) |
-| phase-0-status | unit |  | built 2026-09-23 | PLT-0.1.1 | [status](status/phase-0-status.md) |
+| phase-0-status | unit |  | built 2026-10-10 | PLT-0.1.1 | [status](status/phase-0-status.md) |
 | phase-1-status | unit |  | blocked 2026-09-22 |  | [status](status/phase-1-status.md) |
 | phase-2-handoff | unit |  | merged 2026-09-20 |  | [status](status/phase-2-handoff.md) |
 | phase-2-status | unit |  | planned |  | [status](status/phase-2-status.md) |
@@ -80,8 +80,8 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
-| word-authoring-poc | multi-slice unit | WA | built 2026-10-02 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
-| work-board | multi-slice unit | WB | built 2026-11-02 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
+| word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
+| work-board | multi-slice unit | WB | building 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
 
 ## Work
@@ -503,5 +503,6 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-10 | a unit's state joined across branches, rolled up from its board, and the Status word held to the roll-up | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
+| WB-11 | a branch whose boards are not on the grammar is read as such, never as moving every old id | work-board | building 2026-11-04 |  | docs/developer/status/work-board.md#position |
 
 <!-- END GENERATED work-board -->
