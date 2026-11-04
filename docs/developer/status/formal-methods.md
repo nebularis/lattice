@@ -3,7 +3,7 @@
 # Formal Methods: Status
 
 **Unit ID:** `formal-methods` (epic)
-**Status:** built 2026-10-27. ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4, plus the FM-PF1/PF4 fixes from the
+**Status:** built 2026-11-02. ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4, plus the FM-PF1/PF4 fixes from the
 macOS reproduction). **FM-D1 decided 2026-10-06: Isabelle.** FM-D10 decided:
 Haskell and Scala both adopted as code-generation targets. The maintainer has also decided to
 continue track E's work on this same branch rather than cutting a fresh one, deferring the merge
@@ -100,8 +100,9 @@ status record.
 | FM-D3 | Isabelle track | built 2026-10-06, (commits `c7b399a`, `2a115b1`, `5dd63ad`): Kernel.thy (TA1, TA2), Eligibility.thy (TL1-TL3), Adequacy.thy (15 lemmas via `eval`), defects S1-S5 (S4 needs `quick_and_dirty`, since Isabelle refuses bare `sorry`), Reading.thy (the MINOR change, M3 measured at +18/-6 lines for `MostValueR`), Interface.thy (M6's `monotone_reading` locale), Export.thy (M4/M5: OCaml and Haskell, both checked against all 15 reference fixtures, Haskell compiled with GHC), 13 claim records, `gate.py isabelle` passes clean |  |
 | FM-D4 | report | built 2026-10-10, [formal-prover-experiment.md](../notes/formal-prover-experiment.md), M0-M8 scored for both provers after our corrections (Rocq 62.0, Isabelle 68.0 of 100, M9 removed, M5 reweighted 5→10 and rescored for Scala/Rust/Python, M6 corrected after a tested `can`/`Goal.prove` equivalent of Rocq's `Fail` was found and folded into `Interface.thy`). FM-D1 and FM-D10 decided |  |
 | FM-PF1 | fixes | built 2026-10-07, (commit `c4075a6`), found by the macOS reproduction (`formal-prover-macos-portability.md`): `gate.py`'s `extract_statements` now excludes `defects/`, matching `scan_for_banned`, so the gate's digest check no longer depends on filesystem sort order (it previously passed only because Windows' case-insensitive sort happened to read the real statement last). `.gitignore` covers a stray staged CA file |  |
-| FM-0 |  | built 2026-10-06 |  |
-| FM-4 |  | built 2026-10-27 |  |
+| FM-0 | track D, the prover spike, the pack that covers FM-D0 to FM-D4 | built 2026-10-06 |  |
+| FM-CG1 | code generation from the layer models, `spikes/isabelle-layers`: thirteen proved layer theories, two code-generation theories, Haskell, SML and Scala exports, Eligibility's decision table executing | merged 2026-11-02, built 2026-11-01 |  |
+| FM-CG2 | the generated Haskell as a differential oracle beside the Python reference, under the four conditions the spike's README states | planned | PDD-19 |
 
 ## Decisions
 
@@ -139,3 +140,4 @@ status record.
 | FM-EP, the Eligibility pass (2026-10-09, machine S, `fm/eligibility-pass`) | not estimated | 1969.4 AI credits |
 - 2026-10-09: an Eligibility pass scheduled before CCS-9b.3, which extends Eligibility with set comparisons and aggregate bindings: FM-D17, FME-1.4, FMB-2.2 and FMB-2.1 on this epic's own branch, merged to `main` first
 - 2026-10-09: FM-EP merged to `main` (`2a438b15`). L9's README amendment handed to CCS slice CCS-9b.0 for release
+- 2026-11-04: FM-CG1 and FM-CG2 added on `fml/isabelle-layers` (plan work-board, WB-7). The code-generation spike that branch had called H3.1 is this epic's FM-D10 at work and feeds PDD-19, not track H's H3, which the track H plan defines as the specification registry. FM-CG1 is on `main` as df0ddd1a. The row the adopt step took from track C's C4 pack is gone from this board, since that pack is track C's, now named by its slice FMC-4. FM-0 stays as the track D pack's row.

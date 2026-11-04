@@ -387,9 +387,19 @@ def mentions(paths: list[Path]) -> dict[str, dict[str, Mention]]:
     """Every identifier mention, as family -> normalised key -> Mention."""
     found: dict[str, dict[str, Mention]] = {family.name: {} for family in FAMILIES}
     for path in paths:
+        generated = False
         for number, line in enumerate(
             path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
         ):
+            # A generated region is derived, from the catalogue or from every branch's boards, so what
+            # it names is not a mention this tree makes. A definition in one, INDEX.md's Work table,
+            # is still read by definition_sites, which does not come through here.
+            if line.startswith("<!-- BEGIN GENERATED"):
+                generated = True
+            if generated:
+                if line.startswith("<!-- END GENERATED"):
+                    generated = False
+                continue
             claimed: set[str] = set()
             for family in FAMILIES:
                 for spelling in family.mention.findall(line):

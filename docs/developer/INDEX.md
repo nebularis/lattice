@@ -30,10 +30,10 @@ Every unit with a status record, its state from the record's Status line, and it
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
 | ensemble | unit | ES | briefed | ES-0 | [plan](plans/ensemble.md), [status](status/ensemble.md), 2 Validation Packs |
 | formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
-| formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
+| formal-methods-track-c | phase | FMC | built 2026-10-27 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md), 1 Validation Packs |
 | formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
 | formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
-| formal-methods | epic | FM | built 2026-10-27 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
+| formal-methods | epic | FM | built 2026-11-02 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 1 Validation Packs |
 | git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
@@ -253,6 +253,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMC-2.2 | model the composed scheme, decision-level check | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-3 | slot exclusivity, SMT | formal-methods-track-c | planned | FMC-2 (done) | docs/developer/status/formal-methods-track-c.md#slices |
+| FMC-4 | a design model of ADR-A130, the Ensemble, in Alloy | formal-methods-track-c | built 2026-10-27 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FME-1.0 | home, generation tooling | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.1 | the kernel, for real | formal-methods-track-e | built 2026-10-06 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.2 | rounding and residual theorem | formal-methods-track-e | dropped 2026-10-07 | track B's B4, which waits on CCS's C12 | docs/developer/status/formal-methods-track-e.md#slices |
@@ -322,8 +323,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FM-D3 | Isabelle track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D4 | report | formal-methods | built 2026-10-10 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-PF1 | fixes | formal-methods | built 2026-10-07 |  | docs/developer/status/formal-methods.md#track-d |
-| FM-0 | FM-0 | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
-| FM-4 | FM-4 | formal-methods | built 2026-10-27 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-0 | track D, the prover spike, the pack that covers FM-D0 to FM-D4 | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-CG1 | code generation from the layer models, `spikes/isabelle-layers`: thirteen proved layer theories, two code-generation theories, Haskell, SML and Scala exports, Eligibility's decision table ex | formal-methods | merged 2026-11-02 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-CG2 | the generated Haskell as a differential oracle beside the Python reference, under the four conditions the spike's README states | formal-methods | planned | PDD-19 | docs/developer/status/formal-methods.md#track-d |
 | GH-0 | GH-0 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-1 | GH-1 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-2 | GH-2 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |

@@ -3,11 +3,11 @@
 # Formal Methods, Track C: Status
 
 **Unit ID:** `formal-methods-track-c` (phase, within the `formal-methods` epic)
-**Status:** built 2026-10-08. FMC-1 and FMC-2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
+**Status:** built 2026-10-27. FMC-1 and FMC-2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
 2026-10-07, Proposed, citing this track's checked evidence. FMC-2.1 (well-formedness facts, a
 re-run) done 2026-10-08, after an implementation-level review, FMC-2.2 and FMC-2.3 queued, not started
 **Last updated:** 2026-10-22. C4 (a design model of ADR-A130, Ensemble) briefed 2026-10-22, with its
-[Validation Pack](../validation/FM-4.md). ADR-A130's acceptance waits on it
+[Validation Pack](../validation/FMC-4.md). ADR-A130's acceptance waits on it
 **Plan:** [formal-methods-track-c.md](../plans/formal-methods-track-c.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -65,6 +65,7 @@ started.
 | FMC-2.2 | model the composed scheme, decision-level check | planned 2026-10-08, queued |  |
 | FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | planned 2026-10-08, queued, recommended before `ADR-A116`'s acceptance |  |
 | FMC-3 | slot exclusivity, SMT | planned, outline only | FMC-2 (done) |
+| FMC-4 | a design model of ADR-A130, the Ensemble, in Alloy | built 2026-10-27 |  |
 
 ## Open questions
 
@@ -113,3 +114,4 @@ started.
   `CompositionOverlapError`) is explicitly deferred to a follow-up slice, not done by this commit.
   CCS's and insurml-alignment's own plan documents are left untouched (Machine R's own editorial
   territory); our own bundle/push to `origin` is expected to surface this ADR to them.
+- 2026-11-04: FMC-4 given its row, from its Validation Pack, which the adopt step had filed on the epic's board under the epic's prefix. The pack is named by its slice now (plan work-board, WB-7).
