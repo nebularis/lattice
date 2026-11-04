@@ -148,7 +148,7 @@ export function TemporalSection({ part, node }: { part: Part; node: string }) {
   );
 }
 
-const PALETTE = ["#4f46e5", "#0e7c86", "#b4541a", "#6d4bd6", "#18794e", "#a3410f", "#1662c4"];
+const PALETTE = [1, 2, 3, 4, 5, 6, 7].map((n) => `var(--scheme-${n})`);
 
 function segmentLabel(r: Resolution): string {
   const d = (v?: string) => (v ? new Date(v).toISOString().slice(0, 10) : "");

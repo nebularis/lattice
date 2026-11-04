@@ -29,7 +29,7 @@ The image route and the `mise` tasks were not exercised. Nothing on the branch w
 | Isabelle session `FormalMethodsSpikeDefects` | Pass |
 | Isabelle-exported OCaml and Haskell | All 15 fixtures match in each |
 | `check_s4.py` and `check_s5.py`, both tracks | Pass |
-| `gate.py` on `rocq/` and `isabelle/` | **Fail**, see PF1 |
+| `gate.py` on `rocq/` and `isabelle/` | **Fail**, see FM-PF1 |
 
 ## 3. Findings to fix
 

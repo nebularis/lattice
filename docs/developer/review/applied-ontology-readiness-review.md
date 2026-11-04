@@ -19,7 +19,7 @@ AOR-2 to AOR-9, AOR-3b, AOR-12 and AOR-13 are committed and signed off in
 | ADR-A97 | Mork 0.4.0: GCI annotations repaired, order relations made OWL 2 DL, acyclicity shapes | [ADR](../../architecture/decisions/ADR-A97-mork-order-relations-in-owl-2-dl.md), [VP](../validation/eligibility-compiler-part-b.md) |
 | AOR-10, AOR-11 | Design-time OWL classes, `elg:singleValued`, subsumption, satisfiability and overlap checks | [VP](../validation/applied-ontology-readiness-aor-10-11.md) |
 | AOR-14 to AOR-16 | Derived rate spaces, calendar binding, alternative bounds with compiler unit selection | [VP](../validation/applied-ontology-readiness-aor-14-16.md) |
-| AOR-17 | Provision attachment | [VP](../validation/applied-ontology-readiness-aor-17.md) |
+| AOR-17 | Provision attachment | [VP](../validation/AOR-17.md) |
 
 ## Commands
 

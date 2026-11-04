@@ -2,7 +2,9 @@
 
 # Phase 3 Validation Handoff
 
-**Status:** Accepted
+**Unit ID:** `phase-3-handoff`
+
+**Status:** merged 2026-09-20. Accepted
 **Governing ADRs:** [ADR-A31](../../architecture/decisions/ADR-A31-release-stack-neutral-integration-contract.md), [ADR-A39](../../architecture/decisions/ADR-A39-semantic-release-assembly-and-provenance-ledger.md), [ADR-A40](../../architecture/decisions/ADR-A40-oci-reference-export-restore-and-command-adapters.md)
 
 ## Scope

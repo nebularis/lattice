@@ -176,9 +176,9 @@ class PublicationTest {
 
     @Test
     void theWriterRefusesWhatIsNotAVersionOfItsLineage() {
-        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        Writer w = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
         Model ok = content(D1);
-        assertEquals(200, new Writer(f.store, Fixture.OPS, Clock.systemUTC()).apply(Command.publish(WS, UNIT, version(D1), ok)).status());
+        assertEquals(200, new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.systemUTC()).apply(Command.publish(WS, UNIT, version(D1), ok)).status());
         assertEquals(400, w.apply(Command.publish(WS, UNIT, "https://example.org/other/rev/1-" + D1, ok)).status());
         assertEquals(400, w.apply(Command.publish(WS, UNIT, UNIT + "/rev/1-ABCDEF0123456789", ok)).status());
         Model noIdentity = ModelFactory.createDefaultModel();
@@ -266,11 +266,11 @@ class PublicationTest {
         org.apache.jena.rdfconnection.RDFConnection real = org.apache.jena.rdfconnection.RDFConnection.connect(DatasetFactory.createTxnMem());
         StudioStore plain = new StudioStore(real);
         Clock clock = Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC);
-        Writer first = new Writer(plain, Fixture.OPS, clock);
+        Writer first = new Writer(plain, Fixture.OPS, Fixture.MAINTENANCE, clock);
         assertEquals(200, first.apply(Command.create(WS, "Plan", Instant.parse("2026-10-27T10:00:00Z"), null,
             baseline())).status());
         Writer second = new Writer(interleaving(real, Graphs.lineage(UNIT), () -> assertEquals(200, first.apply(Command.publish(WS, UNIT, version(D1), content(D1))).status())),
-            Fixture.OPS, clock);
+            Fixture.OPS, Fixture.MAINTENANCE, clock);
         Command mine = Command.publish(WS, UNIT, version(D2), content(D2));
         Reply r = second.apply(mine);
         assertEquals(400, r.status());
@@ -287,7 +287,7 @@ class PublicationTest {
 
     @Test
     void aVersionOrphanedByALostRaceIsReusedByTheNextPublishOfTheSameContent() {
-        Writer w = new Writer(f.store, Fixture.OPS, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
+        Writer w = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.fixed(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC));
         // The version's row and graph are there, as a publish that lost the race left them, and no lineage names it.
         f.store.update(new org.apache.jena.update.UpdateRequest().add(
             Fixture.OPS.create(StudioOperations.Family.VERSION, version(D1),
@@ -307,7 +307,7 @@ class PublicationTest {
         assertEquals(201, publish(finished(D1)).status());
         Model lineage = f.store.rawGraph(Graphs.lineage(UNIT));
         Model version = f.store.rawGraph(Graphs.version(UNIT, D1));
-        Writer w = new Writer(f.store, Fixture.OPS, Clock.systemUTC());
+        Writer w = new Writer(f.store, Fixture.OPS, Fixture.MAINTENANCE, Clock.systemUTC());
         Command again = Command.publish(WS, UNIT, version(D1), content(D1));
         Reply r = w.apply(again);
         assertEquals(200, r.status());

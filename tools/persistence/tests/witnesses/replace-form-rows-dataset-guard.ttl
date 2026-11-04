@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The dataset-guard variants of the three rows replaces of a named-graph family (H2.12).
+# base: replace-form-rows.ttl
+# remove: ex:MemoProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:MemoProfile dal:receiptModel dal:NoReceipt ;
+    dal:replaceForm dal:RowsReplace .
+
+ex:InvoiceEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:InvoiceClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:NoteEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:NoteClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:MemoEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:MemoClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .

@@ -3,22 +3,23 @@
 # Git hooks: status
 
 **Unit ID:** `git-hooks`
+**Status:** built 2026-11-03.
 **Plan:** [git-hooks.md](../plans/git-hooks.md)
 **ADR:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md), Proposed
-**Branch:** `hooks-impl`, from `main` at `04f6f9ae`
 **Mode:** autonomous, at the maintainer's request on 2026-10-23. Each slice is committed locally, and the branch is handed back for review before the merge into `main`.
 
 **Validation Pack:** [git-hooks](../validation/git-hooks.md)
 
 ## Position
 
-| Slice | State |
-|---|---|
-| GH-0 | built |
-| GH-1 | built: `tools/hooks.py`, its tests (12), the tasks, bootstrap |
-| GH-2 | built: the commit checks and merge gates wired, 19 tests |
-| GH-3 | built: `tools/writing_rules.py`, wired as the writing and wrapping checks, 30 tests in all |
-| GH-4 | built: `AGENTS.md` and its Copilot copy, the toolchain, publication-hygiene and lifecycle skills, the developer guide (task table and a Git hooks section), the ADR index |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| GH-0 |  | built 2026-10-24 |  |
+| GH-1 |  | built 2026-10-24: `tools/hooks.py`, its tests (12), the tasks, bootstrap |  |
+| GH-2 |  | built 2026-10-24: the commit checks and merge gates wired, 19 tests |  |
+| GH-3 |  | built 2026-10-24: `tools/writing_rules.py`, wired as the writing and wrapping checks, 30 tests in all |  |
+| GH-4 |  | built 2026-10-24: `AGENTS.md` and its Copilot copy, the toolchain, publication-hygiene and lifecycle skills, the developer guide (task table and a Git hooks section), the ADR index |  |
+| GH-5 | test suites leave the hooks: the studio's browser gate runs by convention before a merge, and a hook runs quick static checks only | built 2026-11-03, building 2026-11-03 |  |
 
 ## History
 
@@ -29,3 +30,5 @@
 - 2026-10-23: GH-4, the guidance. `AGENTS.md` gains the rule that the hooks are a floor and a bypass is recorded, the toolchain skill a section on the hooks, the lifecycle skill the merge gate, the publication-hygiene skill the deny-list as one of the commit checks. The developer guide lists the new tasks, and the ADR index lists A-133 with a note on numbering against the placement branch.
 - 2026-10-23: handoff. Every slice built and committed, `mise run check:hooks` 30 passed, `mise run hooks:merge` passes for the branch. Ready for the maintainer's review and the merge into `main`. ADR-A133 is Proposed, for the maintainer to accept.
 - 2026-10-23: at the maintainer's request, a Git hooks section in the developer guide, a merge of `claude/fix-topology-links` (the whole-tree link check now passes, and its rule for generated copies lives in `check_links_in`), and TD-75 to TD-77 for the writing rules' existing debt. `check:hooks` 30 passed again. Ready for the merge into `main`.
+- 2026-11-03: GH-5 picked up. The studio's browser gate at a merge into `main` held a squash for over a minute, then failed on assets staged before PM-2. Without it the merge checks took 7.5 s over 290 files. The maintainer decided that a hook runs quick scripts and checks only, never a test suite.
+- 2026-11-03: GH-5 built. The studio-browser check is gone from `tools/hooks.py`, by ADR-A133's addendum of 2026-11-03 (decision 13, reversing 11) and STD-318, both for the maintainer. The lifecycle skill's test-suites bullet names `test:config-studio-browser` beside the conformance suites, run by convention before a merge, and AGENTS.md says a hook never runs a test suite. The harness refuses assets staged before the persistence profile or the maintenance manifest existed, naming `build:config-studio-assets`, where the writer had failed on a missing `manifest.json`.

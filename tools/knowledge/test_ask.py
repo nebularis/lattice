@@ -143,6 +143,26 @@ def test_a_reversed_section_is_marked_and_names_the_addendum(isolated, capsys):
     assert "Reversed by adr.md:40-60." in line and "The section that answered: minting minting slow" in line
 
 
+def test_an_entry_and_a_decision_name_the_addendum_that_narrowed_them(isolated, capsys):
+    """A principle whose Narrowed by names an addendum, and a decision whose first numbered decision,
+    its claim, an addendum narrows, each print the addendum under the row, even where no section
+    outranks the claim. PRI-03 restated ADR-A129's narrowed decision 1 unmarked until this."""
+    store = ox.Store()
+    entry(store, "ADR-1", "Decision", "one release for every module")
+    section(store, "ADR-1", 1, "one release for every module", "adr.md:10-12")
+    section(store, "ADR-1", 2, "graph graph", "adr.md:40-60")
+    first, addendum = (ox.NamedNode(f"{KI}node/ADR1/section-{n}") for n in (1, 2))
+    store.add(ox.Quad(first, ox.NamedNode(KI + "narrowedBy"), addendum, INDEX))
+    entry(store, "PRI-1", "Principle", "one release for every module")
+    fact(store, "PRI-1", "narrowedBy", addendum)
+    embed.build(store, isolated)
+    ask.find(store, "one release for every module", set(), set(), set(), 8)
+    out = capsys.readouterr().out
+    assert "Narrowed by adr.md:40-60." in under_row(out, "PRI-1")
+    assert "Narrowed by adr.md:40-60." in under_row(out, "ADR-1")
+    assert {r[1]: r[4] for r in table(out)} == {"ADR-1": "~", "PRI-1": "~"}, "a narrowed row is marked as a reversed one is"
+
+
 def test_declared_terms_are_searched_only_when_their_kind_is_named(isolated, capsys):
     """Terms crowded the entries out of questions about a design, so a question without --kind term
     never sees one. Named alone, the kind finds only terms, named with another it ranks both, and a
@@ -289,7 +309,7 @@ def test_misses_near_lists_the_confident_and_incomplete(isolated, capsys):
 def test_a_kind_can_be_excluded_and_every_other_kept():
     """Questions cost some ranking, so an agent whose answers are crowded by them leaves them out
     without naming every other kind, and terms stay out unless they are named."""
-    every = set(ask.KINDS.values()) - {"Term"}
+    every = set(ask.KINDS.values()) - {"Term", "Slice"}
     assert ask.without(set(), {"Question"}) == every - {"Question"}
     assert ask.without({"Standard", "Question"}, {"Question"}) == {"Standard"}
     assert ask.without(set(), set()) == set()
@@ -326,3 +346,19 @@ def test_misses_removes_a_question_the_index_now_answers(isolated, capsys):
     assert "1 question(s) the index now answers" in out
     assert [r["text"] for r in ask.asks()] == ["graph"]
     assert ask.MISS_LOG.read_text(encoding="utf-8").count("find ") == 1
+
+
+def test_a_slice_is_found_only_when_asked_for_or_named(isolated, capsys):
+    """Slices took the places of the entries that answer, so a question without --kind slice never
+    sees one, unless it names the slice by its identifier, which ranks it first (ADR-A134 decision 34)."""
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a ledger account")
+    entry(store, "LG-4", "Slice", "ledger ledger ledger")
+    embed.build(store, isolated)
+    ask.find(store, "ledger", set(), set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["MEC-1"]
+    ask.find(store, "ledger", {"Slice"}, set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["LG-4"]
+    ask.find(store, "where is LG-4", set(), set(), set(), 8)
+    assert table(capsys.readouterr().out)[0][1] == "LG-4"
+    assert "Slice" not in ask.without(set(), {"Question"})

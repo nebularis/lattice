@@ -72,7 +72,7 @@ every slice is checked against:
 
 | Needs | From | Gates |
 |---|---|---|
-| Instrument's legal acts (`ins:Declaration`, `ins:Proposal`, `ins:Assent`, `ins:forCase`) | CCS C9b1 (merged) | AIR-6.2, 6.6 |
+| Instrument's legal acts (`ins:Declaration`, `ins:Proposal`, `ins:Assent`, `ins:forCase`) | CCS-9b.1 (merged) | AIR-6.2, 6.6 |
 | occasions created and moved by the runtime evaluator | CCS C11, C12 | AIR-6.5 and everything after it that evaluates |
 | the Instrument rewrite (C9) merged | CCS | AIR-6.6 (settlement as an instrument) |
 | the exposure loss model (`aeo:LossCause`, loss experience, assets, interests, roles, populations) | AIR-4.1 to AIR-4.5 | AIR-6.2, 6.7 |
@@ -180,7 +180,7 @@ actual cost.
 
 | Slice | Content | Needs | Before Phase 5? | Estimate |
 |---|---|---|---|---|
-| AIR-6.2 | module skeleton, `clm:Loss` with its dates, `clm:Demand`, `clm:Circumstance`, `clm:Notification ⊑ ins:Declaration`, `clm:Claim` (versioned) and its keys, the role scheme, the two-clock examples | CL-Q1, Q3, Q7, AIR-4.5, CCS C9b1 | yes | 300k |
+| AIR-6.2 | module skeleton, `clm:Loss` with its dates, `clm:Demand`, `clm:Circumstance`, `clm:Notification ⊑ ins:Declaration`, `clm:Claim` (versioned) and its keys, the role scheme, the two-clock examples | CL-Q1, Q3, Q7, AIR-4.5, CCS-9b.1 | yes | 300k |
 | AIR-6.5 | `clm:Response`, triggers by claims basis, the instrument version chosen by trigger date, the evaluator creating occasions per response, the reference English-law profile for when indemnity arises. Milestone M6's claims half | CL-Q2, CCS C12, AIR-6.2 | after CCS C12 | 400k |
 | AIR-6.6 | loss items, quanta by stage, adjustments, `clm:CoveragePosition ⊑ ins:Declaration`, `clm:Settlement ⊑ ins:Instrument` with offers, assents and releases, parametric claims with a determination | CL-Q5, Q6, Q10, CCS C9 | yes, for the structure | 350k |
 | AIR-6.7 | `clm:Movement` (asserted and derived), cost classes after the CRS heads, derived balances (paid, outstanding, incurred, recovered), the loss run derivation writing `aeo:LossExperience` and `aeo:LossRecord` | CL-Q4, Q9, WF-Q2, AIR-6.2 | yes | 300k |

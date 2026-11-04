@@ -2,7 +2,7 @@
 
 # Persistence: aggregate ownership (design sketch)
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slices HO0 to HO9
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slices FMH-HO0 to FMH-HO9
 ([plan §3.5](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership))
 **Status:** sketch, 2026-10-10. Decisions AO-Q1 to AO-Q12 were taken on 2026-10-10
 (H-D14), and AO-Q13 the same day, option a (H-D15, [§9](#9-named-graph-naming-ao-q13-ho8)). The decisions are
@@ -62,7 +62,7 @@ A skolem IRI is an ordinary IRI here (F5). Payloads are skolemised before they a
 stored aggregate has no blank nodes. A list or a quantity inside an aggregate is owned only through
 owned edges, for example `rdf:first` and `rdf:rest` as owned edges of a list shape.
 
-## 3. Declaration surface (HO3)
+## 3. Declaration surface (FMH-HO3)
 
 `ontology/persistence` goes from 0.2.1 to **0.3.0** (breaking, ADR-A113). Follow skill
 `lattice-ontology-authoring` for the version IRI, the catalog and the release row.
@@ -153,9 +153,9 @@ Copy the prefix declarations and `sh:prefixes` form of the existing
 Add `[ sh:path dal:ownsReferenceData ; sh:maxCount 1 ; sh:datatype xsd:boolean ]` to
 `dal:AggregateBoundaryProfileShape`.
 
-## 4. The walk (HO4)
+## 4. The walk (FMH-HO4)
 
-HO4 adds the new walk beside the old one, as a pure addition, and HO5 switches the compiler to it and deletes the old one. The new walk returns an `OwnershipTree` and raises nothing for classification
+FMH-HO4 adds the new walk beside the old one, as a pure addition, and FMH-HO5 switches the compiler to it and deletes the old one. The new walk returns an `OwnershipTree` and raises nothing for classification
 problems. It records them, and `validator.py` raises them (§5), so every refusal kind is a string
 literal in `validator.py` where the witness harness finds it (H-D9).
 
@@ -223,14 +223,14 @@ walk(graph, root_shape):
 Notes for the implementer:
 
 - Recursion is legal. A shape reached twice is walked once.
-- The sort key is total and independent of triple order (law L1). Keep H1.4a's T7 property, now over
+- The sort key is total and independent of triple order (law L1). Keep FMH-1.4a's T7 property, now over
   the new tree.
 - A `dal:Reference` or `dal:Vocabulary` edge never queues its `sh:node`. That is what makes
   `sh:node` on a reference safe (F1).
 - `functional_value` (`persistence.functional`) refuses a multi-valued `dal:ownership`. The shape
   in §3.3 also catches it.
 
-### 4.3 Where the tree goes (HO5)
+### 4.3 Where the tree goes (FMH-HO5)
 
 `resolver.py` stores the tree as `boundary_dim.extra["ownershipTree"]`. It replaces the extras
 `compositeProperties`, `compositeEdgeProperties` and `maxTraversalDepth`, which are removed, and
@@ -238,7 +238,7 @@ Notes for the implementer:
 `BoundaryCycleError` is deleted with its witness `refusal-BoundaryCycleError.ttl`.
 `MissingBoundaryShapeError` stays.
 
-## 5. Refusals and warnings (HO6)
+## 5. Refusals and warnings (FMH-HO6)
 
 Raised in `validator.py`, in this order, so that one fixture triggers exactly one rule. Each is a
 `CrossAxisViolation(kind, str(target), message)` except the warning. Each needs a witness in
@@ -260,10 +260,10 @@ slice that adds it, or `mise run check:persistence` fails (H1.2).
 
 Rules 8 and 9 are configuration-wide and run where `BoundaryConflict` runs today. The warning is a `Diagnostic(kind="ReferenceToOwnedClass", severity="WARNING", ...)`, emitted like `MixedReceiptModel` ([validator.py:469](../../../tools/persistence/src/persistence/validator.py)).
 
-Removed in HO5, with its witness and tests: `CompositeBoundaryMultipleProperties`. Several owned
+Removed in FMH-HO5, with its witness and tests: `CompositeBoundaryMultipleProperties`. Several owned
 edges are the normal case now.
 
-## 6. Compiling the tree to one property path (HO4)
+## 6. Compiling the tree to one property path (FMH-HO4)
 
 ### 6.1 Why one path
 
@@ -344,23 +344,23 @@ Owned edges of §10's fixture, by source shape: `ProjectShape` (`hasMilestone` t
 `hasPlan` to `PlanShape`), `MilestoneShape` (`hasTask` to `TaskShape`), `TaskShape` (`attachment` to
 `DocumentShape`, `^onTask` to `CommentShape`, `hasSubtask` to `TaskShape`), and nothing owned from
 `PlanShape`, `DocumentShape` or `CommentShape`. The rendered string depends on elimination order and
-is pinned by a golden test in HO4 after the first run. Its **meaning** is pinned now, by the member
+is pinned by a golden test in FMH-HO4 after the first run. Its **meaning** is pinned now, by the member
 set in §10.3.
 
-## 7. Generated operations (HO1, HO5, HO7)
+## 7. Generated operations (FMH-HO1, FMH-HO5, FMH-HO7)
 
 **Which graph (AO-Q14, decided 2026-10-10: option a).** A composite family's aggregates live in one
 named graph, the profile's `dal:dataGraph`, bound as an `Iri` named `dataGraph`. Every composite
-pattern, delete template and payload from HO5 on is wrapped in `GRAPH {{{dataGraph}}}`, which meets
+pattern, delete template and payload from FMH-HO5 on is wrapped in `GRAPH {{{dataGraph}}}`, which meets
 static check S-1 ([review F10, §7.1](../notes/persistence-aggregate-ownership-review.md#71-a-further-question-ao-q14)).
-HO1 alone keeps the default graph, because it fixes today's template before `dal:dataGraph`
-exists. A composite profile without `dal:dataGraph` is refused as `MissingDataGraph` (HO5). Version
+FMH-HO1 alone keeps the default graph, because it fixes today's template before `dal:dataGraph`
+exists. A composite profile without `dal:dataGraph` is refused as `MissingDataGraph` (FMH-HO5). Version
 rows, transaction claims and revision records keep their graphs. Tests load their data into the data
-graph. The sections below show the HO1 form, and then the HO5 and HO7 forms with the graph.
+graph. The sections below show the FMH-HO1 form, and then the FMH-HO5 and FMH-HO7 forms with the graph.
 
 ### 7.1 Replace, `cas-replace-composite-property` and its dataset-guard variant
 
-**HO1** (before the path exists) changes the existing two templates only in these places:
+**FMH-HO1** (before the path exists) changes the existing two templates only in these places:
 
 ```sparql
 DELETE {
@@ -383,7 +383,7 @@ So `?root ?p1 ?o1` and `?member ?p2 ?o2` become one `?s ?p ?o`, the two `OPTIONA
 becomes `*` (the zero-length step brings in the root), and the payload leaves `GRAPH ?logGraph`.
 Update the template's header comment to match.
 
-**HO5** replaces `{{{compositeProperty}}}*` with `{{{ownedPath}}}`, bound as a `PropertyPath` from
+**FMH-HO5** replaces `{{{compositeProperty}}}*` with `{{{ownedPath}}}`, bound as a `PropertyPath` from
 `tree.owned_path()`, and adds the data graph, so the three changed places read:
 
 ```sparql
@@ -394,7 +394,7 @@ WHERE  { ... OPTIONAL { GRAPH {{{dataGraph}}} { $root {{{ownedPath}}} ?s . ?s ?p
 
 The `compositeProperty` binding is removed from `operations.py`.
 
-### 7.2 Create, `create-if-absent-composite` and its dataset-guard variant (HO7, closes TD-04)
+### 7.2 Create, `create-if-absent-composite` and its dataset-guard variant (FMH-HO7, closes TD-04)
 
 Copy `create-if-absent-named-graph.mustache` and its dataset-guard variant. Then:
 
@@ -406,7 +406,7 @@ Copy `create-if-absent-named-graph.mustache` and its dataset-guard variant. Then
 Generated when the boundary is composite and `dal:firstWrite` is `dal:AbsentRow`, exactly as the
 named-graph create is generated for a named-graph boundary today.
 
-### 7.3 Tombstone delete, `tombstone-delete-composite` and its dataset-guard variant (HO7)
+### 7.3 Tombstone delete, `tombstone-delete-composite` and its dataset-guard variant (FMH-HO7)
 
 Copy `tombstone-delete-named-graph.mustache` and its dataset-guard variant. Then:
 
@@ -420,7 +420,7 @@ Generated wherever the named-graph tombstone is generated for a named-graph boun
 ### 7.4 Every new or changed template
 
 - appears in `test_template_alignment.py`
-- is reached by a fixture (H1.3's rule), adding `template-<name>.ttl` witnesses where no example
+- is reached by a fixture (FMH-1.3's rule), adding `template-<name>.ttl` witnesses where no example
   reaches it
 - passes S-3 and S-4 (`python -m persistence hygiene`). The previous-revision allowance in
   `templatecheck.OPTIONAL_INSERT_VARIABLES` applies to the new tombstone as it does to the
@@ -438,12 +438,12 @@ AO-Q7. A `dal:NamedGraphBoundary` profile **may** name a `dal:boundaryShape`. Wh
 compiler walks it, applies refusals 2 to 6 and the warning, and records the tree. No SPARQL changes:
 the graph is the aggregate. The tree defines which subjects a payload may contain, and H2's IR
 enforces that as the payload check ([§12](#12-what-h2-inherits)). Documentation recommends named
-graphs for new deployments (HO7). The compiler's default boundary strategy does not change.
+graphs for new deployments (FMH-HO7). The compiler's default boundary strategy does not change.
 
-## 9. Named-graph naming, AO-Q13 (HO8)
+## 9. Named-graph naming, AO-Q13 (FMH-HO8)
 
 Decided 2026-10-10, option a (H-D15). The options and the reasoning on IRI length are in the
-[review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13). HO8 does this:
+[review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13). FMH-HO8 does this:
 
 - `dal:graphIriTemplate` must contain `{id}` exactly once. Its comment says `{id}` is replaced by the
   root IRI, percent-encoded with `ENCODE_FOR_URI`. A template without `{id}` is refused as
@@ -470,7 +470,7 @@ Decided 2026-10-10, option a (H-D15). The options and the reasoning on IRI lengt
 
 Domain-neutral, because substrate documentation must be (`AGENTS.md`). It has the structure of the
 placement example in the exploration note: several owned relations, a recursion, an edge that is owned in one
-context and a reference in another, an inverse edge, a reference outside, and vocabulary. HO4 adds it
+context and a reference in another, an inverse edge, a reference outside, and vocabulary. FMH-HO4 adds it
 as `ontology/persistence/examples/composite-project-ownership.ttl` (configuration and shape) and
 `tools/persistence/tests/fixtures/project-data.ttl` (instance data).
 
@@ -538,7 +538,7 @@ still deleted because the comment is a member and the triple's subject is the co
 
 ### 10.2 Instance data
 
-Loaded into the data graph `<urn:g:projects>` from HO5 on, and into the default graph for HO4's
+Loaded into the data graph `<urn:g:projects>` from FMH-HO5 on, and into the default graph for FMH-HO4's
 path tests, which do not involve operations.
 
 ```turtle
@@ -649,7 +649,7 @@ Decisions, one numbered point each:
    standard limits IRI length, and a store that refused an over-long IRI would fail the write loudly
    (review §7).
 
-Consequences: the removed terms (§3.2), refusals (§5), templates (§7), the effect on Track H (H1.4b,
+Consequences: the removed terms (§3.2), refusals (§5), templates (§7), the effect on Track H (FMH-1.4b,
 H2, model O), and that no compatibility was kept, citing the agreement of 2026-10-10.
 
 Add it to `docs/architecture/decisions/README.md`. Re-check the number against `main` before the
@@ -674,13 +674,13 @@ a write touches changes. Each row below is mirrored in the plan's outline for th
 | Slice or artefact | Before | After the ownership design |
 |---|---|---|
 | Laws (main sketch §3) | L1 to L15, from the source review. L3 asks that targets partition instances | **L16, ownership is a partition of members**, added to the track's register: the compiled path denotes exactly the classified tree's paths (soundness, review check C10), and no node is a member of two live aggregates (disjointness: class-level by `OverlappingOwnership`, instance-level by an audit, H9). L6's gap list follows H1.4b. L15's migrations gain two kinds: reclassifying an edge, which changes what a delete takes for data already stored, and changing `dal:graphIriTemplate`, which renames graphs |
-| H1.4b | composite entries from TD-03 and the first-property binding | the entries in plan §3's H1.4b paragraph, plus "composite operations rely on the default graph (S-1, TD-40)" until HO5 |
+| FMH-1.4b | composite entries from TD-03 and the first-property binding | the entries in plan §3's FMH-1.4b paragraph, plus "composite operations rely on the default graph (S-1, TD-40)" until FMH-HO5 |
 | H2, typed IR | typed parameters, read and write sets, explicit graph roles, guard tags | adds `OwnershipTree` and `PropertyPath` as typed values, the payload check, the required-parameter guard (TD-34) (§12). A composite operation's **read set is the closure the path computes at execution**, and its write set is the delete set, the payload and the version row, which H5's models consume. The explicit-graph rule holds, since AO-Q14 chose a named data graph |
-| H3, registry | cross-axis rules, selection table, README tables, obligations, laws held | the boundary rules of §5 and HO8's two graph-naming rules join the rule inventory with their witnesses. They are structural rules over one shape or one configuration, not cross-axis predicates, so the registry records them as their own kind. The selection table gains composite create (under `dal:AbsentRow`) and composite tombstone delete, so the L5 totality check covers them |
+| H3, registry | cross-axis rules, selection table, README tables, obligations, laws held | the boundary rules of §5 and FMH-HO8's two graph-naming rules join the rule inventory with their witnesses. They are structural rules over one shape or one configuration, not cross-axis predicates, so the registry records them as their own kind. The selection table gains composite create (under `dal:AbsentRow`) and composite tombstone delete, so the L5 totality check covers them |
 | H4, exhaustive checks | V1 to V10 over the cross-axis space, and the static checks of the specification sketch §6 | three additions. **C10, path language equality:** the compiled path's language equals the set of owned-edge paths of the shape graph, checked by automata equivalence over the shape graph (it was "to the declared depth", and depth is gone). **IRI-template injectivity (Z3 strings)** covers graph templates across families, verifying F11's two rules. **C14, request size:** whole-replace sends the whole aggregate, so the bound uses the largest declared aggregate |
 | H5, models A to D | model A, the guarded write, over named graphs | **model A is parametrised by boundary strategy.** Under the composite strategy the delete set is read at execution, so the model checks that a writer to aggregate A never changes a triple outside A's delete set, and that two writers to A always meet on A's root row (the spike's D0 result, now beyond pairs of writers). **Model C, the create race, covers the composite create**, whose guards are "no version row" and "no triple of the root". Two concurrent creates insert the same version-row triple, and whether inserting an identical statement counts as a write-write conflict is a store property the capability record must carry and the model must branch on |
 | H5, capability record | the full record of the main sketch §5 | `unionDefaultGraph` does not matter to the composite strategy, since AO-Q14 chose a named data graph. The identical-insert conflict property above is a new field |
-| H6, Isabelle | `Resolution`, `Positions`, `Encoding`, `Outcomes` | **`Encoding.thy` gains graph-IRI injectivity**: `prefix · enc(r) · suffix` is injective in `(family, r)` under F11's two rules, with `enc` the percent-encoding of UTF-8. A theory of state elimination (the compiled regular expression denotes the automaton's language) is possible but not proposed: H4's automata check and HO4's property test cover it at lower cost |
+| H6, Isabelle | `Resolution`, `Positions`, `Encoding`, `Outcomes` | **`Encoding.thy` gains graph-IRI injectivity**: `prefix · enc(r) · suffix` is injective in `(family, r)` under F11's two rules, with `enc` the percent-encoding of UTF-8. A theory of state elimination (the compiled regular expression denotes the automaton's language) is possible but not proposed: H4's automata check and FMH-HO4's property test cover it at lower cost |
 | H7, models E to J | outcome, epoch, retention, global read, fencing, infrastructure writers | no change. None depends on what an aggregate contains |
 | H8, model K (erasure) | the enumerated store list | the list includes composite members in the data graph, reached through the owned path, and erasure follows its own procedure, not the tombstone delete (ADR-A122 consequences) |
 | H8, model L (multi-aggregate writes) | deadlock and livelock under `dal:deadlockPolicy` | adds references across aggregates: a writer to B adding a reference into A while A is deleted. Under the roots-only rule (AO-Q4) the reference names A's root and reads as deleted. A reference to a non-root member, which the compiler only warns about, can dangle, and the model shows when |

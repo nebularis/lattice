@@ -35,6 +35,9 @@ import org.apache.jena.riot.RDFParser;
  * <li>A payload names no subject outside the aggregate, and an append's event triples name none outside its events.
  * <li>Where the caller can say what is a version, an object on a pinned edge is one and an object on an identity edge is not.
  * <li>On a version of a family under delta membership, a checkpoint lists the full set of members.
+ * <li>For a delta replace ({@code OperationKind.DELTA_REPLACE}, {@code dal:ChangedTriples}), the slots {@code assertTriples} and {@code retractTriples}
+ * share no triple ({@code DeltaOverlap}) and are not both empty ({@code EmptyDelta}, STD-309). The bound is not run over the asserted triples alone,
+ * since a member of the aggregate may be reached through an edge that is already stored. It is run over the next state, where the caller passes it.
  * </ul>
  * A value is an {@link Iri}, a {@link Lit}, a {@link Payload}, a {@link Rows}, a {@code String}, an integral number, or for a
  * {@code RegistryList} an {@link Iterable} of {@link Iri} or IRI strings. A Jena literal node is read as a literal.
@@ -46,17 +49,26 @@ public final class CallerCheck {
     private static final Pattern DIGEST = Pattern.compile("[0-9a-f]{64}");
     private static final BigInteger MIN = BigInteger.valueOf(Long.MIN_VALUE), MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
-    /** The options of {@link #refusals}. {@code versionOf} says what is a version, and a null one skips the reference modes. */
-    public record Options(boolean allowEmptyLogGraphs, Predicate<Iri> versionOf, Membership membership) {
+    /**
+     * The options of {@link #refusals}. {@code versionOf} says what is a version, and a null one skips the reference modes. {@code nextState} is for a
+     * delta replace only and is ignored by every other kind. It is the whole aggregate the caller holds after the change, and passing it is obligation 8
+     * of tools/persistence/README.md ("Obligations the SPARQL cannot enforce for you"). Given it, an asserted triple not in it is
+     * {@code AssertOutsideNextState}, a retracted triple in it is {@code RetractInNextState}, a subject of it outside the aggregate is
+     * {@code PayloadOutsideBound}, and with {@code versionOf} the reference modes of its edges are checked. Without it the overlap and the empty delta are
+     * still refused and nothing else about the aggregate is checked, since a delta does not carry the state. It defaults to null.
+     */
+    public record Options(boolean allowEmptyLogGraphs, Predicate<Iri> versionOf, Membership membership, Payload nextState) {
         /** No option. */
-        public static Options none() { return new Options(false, null, null); }
+        public static Options none() { return new Options(false, null, null, null); }
 
         /** An audit over no graph is then allowed, and reports nothing examined. */
-        public Options allowEmptyLogGraphs(boolean allow) { return new Options(allow, versionOf, membership); }
+        public Options allowEmptyLogGraphs(boolean allow) { return new Options(allow, versionOf, membership, nextState); }
 
-        public Options versionOf(Predicate<Iri> versionOf) { return new Options(allowEmptyLogGraphs, versionOf, membership); }
+        public Options versionOf(Predicate<Iri> versionOf) { return new Options(allowEmptyLogGraphs, versionOf, membership, nextState); }
 
-        public Options membership(Membership membership) { return new Options(allowEmptyLogGraphs, versionOf, membership); }
+        public Options membership(Membership membership) { return new Options(allowEmptyLogGraphs, versionOf, membership, nextState); }
+
+        public Options nextState(Payload nextState) { return new Options(allowEmptyLogGraphs, versionOf, membership, nextState); }
     }
 
     private static String iri(Object value) {
@@ -206,7 +218,9 @@ public final class CallerCheck {
 
         // a payload names no subject outside the aggregate
         PayloadContract contract = operation.payload();
-        if (contract != null && typed.containsKey(contract.parameter()) && contract.root() != null && typed.containsKey(contract.root())) {
+        if (operation.kind() == OperationKind.DELTA_REPLACE) {
+            out.addAll(delta(operation, typed, options));
+        } else if (contract != null && typed.containsKey(contract.parameter()) && contract.root() != null && typed.containsKey(contract.root())) {
             Payload payload = (Payload) typed.get(contract.parameter());
             Object root = typed.get(contract.root());
             List<Iri> stray = Bound.outsideBound(contract, root, payload);
@@ -235,6 +249,47 @@ public final class CallerCheck {
             }
         }
         return List.copyOf(out);
+    }
+
+    /** The first of these triples as its canonical line, in the order of the UTF-8 bytes of the lines. */
+    private static String first(Set<Triple> triples) {
+        return Text.sortedUnique(triples.stream().map(Triple::nt).toList()).get(0);
+    }
+
+    /** The checks of a delta replace: the two slots, and the next state where the caller gives it (obligation 8). */
+    private static List<Refusal> delta(OperationContract operation, Map<String, Object> typed, Options options) {
+        if (!(typed.get("assertTriples") instanceof Payload asserted) || !(typed.get("retractTriples") instanceof Payload retracted)) return List.of();
+        List<Refusal> out = new ArrayList<>();
+        Set<Triple> both = new HashSet<>(asserted.triples());
+        both.retainAll(retracted.triples());
+        if (!both.isEmpty()) {
+            out.add(new Refusal("DeltaOverlap", "assertTriples", both.size() + " triple(s) are both asserted and retracted, for example " + first(both)));
+        }
+        if (asserted.triples().isEmpty() && retracted.triples().isEmpty()) {
+            out.add(new Refusal("EmptyDelta", "assertTriples", "a delta that asserts and retracts nothing changes no aggregate, so the caller withholds the write (STD-309)"));
+        }
+        Payload next = options.nextState();
+        if (next == null) return out;
+        Set<Triple> missing = new HashSet<>(asserted.triples());
+        missing.removeAll(next.triples());
+        if (!missing.isEmpty()) {
+            out.add(new Refusal("AssertOutsideNextState", "assertTriples", missing.size() + " asserted triple(s) are not in the next state, for example " + first(missing)));
+        }
+        Set<Triple> kept = new HashSet<>(retracted.triples());
+        kept.retainAll(next.triples());
+        if (!kept.isEmpty()) {
+            out.add(new Refusal("RetractInNextState", "retractTriples", kept.size() + " retracted triple(s) are in the next state, for example " + first(kept)));
+        }
+        PayloadContract contract = operation.payload();
+        Object root = typed.get("root");
+        if (contract != null && root != null) {
+            List<Iri> stray = Bound.outsideBound(contract, root, next);
+            if (!stray.isEmpty()) {
+                out.add(new Refusal("PayloadOutsideBound", "nextState", stray.size() + " subject(s) are neither " + plain(root) + " nor reached from it by an owned edge, for example " + stray.get(0)));
+            }
+            if (options.versionOf() != null) out.addAll(referenceModes(contract, root, next, options.versionOf()));
+        }
+        return out;
     }
 
     /** An object on a pinned edge is a version, and on an identity edge it is not. Every edge of every node the owned walk reaches (TD-67). */

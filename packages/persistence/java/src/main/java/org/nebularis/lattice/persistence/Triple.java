@@ -14,4 +14,7 @@ public record Triple(Iri subject, Iri predicate, Term object) {
 
     /** The encoded SPARQL form of the triple. */
     public String sparql() { return subject + " " + predicate + " " + object.sparql() + " ."; }
+
+    /** The triple as one row {@code (s p o)} of a {@code VALUES} block, for a slot whose encoding is {@code TripleRows}. */
+    public String row() { return "(" + subject + " " + predicate + " " + object.sparql() + ")"; }
 }

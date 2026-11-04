@@ -165,7 +165,7 @@ description = "Check local Markdown links under docs"
 run = "python tools/repository_topology_check.py --links"
 
 [tasks."check:python-root"]
-run = "python -m unittest surface.test_surface mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
+run = "python -m unittest surface.test_surface surface.test_maintenance mork_compilers.test_mork_compilers -v && python -m tools.phase8_conformance"
 
 [tasks."check:workers"]
 run = "python -m pytest workers/tests"
@@ -369,6 +369,16 @@ depends = ["bootstrap:persistence"]
 description = "Measure a GRAPH ?g inside an OPTIONAL, and the generated named-graph replace with the query and caller graph naming, on Jena (in-memory and TDB2) and RDF4J (ADR-A124, TSD-42, PDD-17). Python renders the operations and the JVM runs them. Run on demand, not part of check. Fails on a wrong result, never on time. Add -Dgraphnaming.max=<quads> or -Dgraphnaming.quick=1 to the mvn command to shorten it"
 run = "python benchmark/persistence-graph-naming-cost/check.py --emit benchmark/persistence-graph-naming-cost/operations.json && mvn -q -f benchmark/persistence-graph-naming-cost-jvm/pom.xml compile exec:exec"
 
+[tasks."check:persistence-replace-forms"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on rdflib and Oxigraph (ADR-A124, TSD-01, TD-42). R0 is the generated whole-state replace, R2 is the generated rows replace, R3 is the generated delta replace with one changed triple per revision, and R1 and the UNION form of R2 are candidates the compiler does not generate. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. REPLACE_FORMS_MAX_R0 caps the size of the generated forms, REPLACE_FORMS_QUICK=1 (or a family name) runs sizes up to 1,000, REPLACE_FORMS_TIMEOUT limits each measurement in seconds"
+run = "python -m pytest benchmark/persistence-replace-forms -q -p no:cacheprovider && python benchmark/persistence-replace-forms/check.py"
+
+[tasks."check:persistence-replace-forms-jvm"]
+depends = ["bootstrap:persistence"]
+description = "Measure the generated named-graph and composite replaces against candidate forms, probe how each engine applies an update, and run the edge cases of an empty aggregate and an empty payload, on Jena (in-memory, TDB2 on disk and Fuseki over HTTP) and RDF4J (ADR-A124, TSD-01, TD-42). Python renders the operations, including the generated rows replace (R2), and the JVM runs them. Run on demand, not part of check. Fails on a wrong result of a generated form, never on time. Add -Dreplaceforms.maxr0=<size> or -Dreplaceforms.quick=1 to the mvn command to shorten it"
+run = "python benchmark/persistence-replace-forms/check.py --emit benchmark/persistence-replace-forms/operations.json && mvn -q -f benchmark/persistence-replace-forms-jvm/pom.xml compile exec:exec"
+
 [tasks."check:sparql-constraint-query-cost"]
 depends = ["bootstrap:testing-oxigraph"]
 description = "Measure the forms of a SHACL-SPARQL constraint query on rdflib, Oxigraph and Jena when its test kit is built (ADR-A124, ADR-A128, TSD-Q18). Run on demand, not part of check. Fails on a wrong result, never on time. SPARQL_COST_QUICK=1 runs the smallest sizes"
@@ -452,6 +462,10 @@ run = "python tools/agent_guidance.py build"
 description = "Check a module's README migration to the ADR-A126 layout left every generated graph as it was at a git ref: mise run check:literate-migration -- <module> <ref> [--reconciliations <file>] (OD-D9)"
 run = "python tools/literate_migration_check.py"
 
+[tasks."version:bump"]
+description = "Bump ontology versions and regenerate what they generate: the substrate release with --increment major|minor|patch or --new-version X.Y.Z, or one module released on its own with --layer-target <module>, its shapes too with --with-shapes or alone with --only-shapes. mise run version:bump -- --layer-target persistence --increment minor --with-shapes (tools/bump_version.py)"
+run = "python tools/extract_bumped.py"
+
 [tasks."release:prepare"]
 description = "Move every release member's documents, imports and READMEs to a new release number, then regenerate the XML catalogs and the release register: mise run release:prepare -- <X.Y.Z> (OD-D55)"
 run = "python tools/ontology_release.py prepare"
@@ -519,6 +533,38 @@ run = "python tools/hooks.py merge"
 [tasks."check:hooks"]
 description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
+
+[tasks."work:board"]
+description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards (plan work-board). --all, --fetch, --measure, --commits"
+run = "python tools/work_board.py board"
+
+[tasks."build:work"]
+description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree (plan work-board)"
+run = "python tools/work_board.py build"
+
+[tasks."check:work-board"]
+description = "Test the work board: the board parser, the join across branches, the fold of remotes, the generated regions, the slice crosswalk and the board normaliser (plan work-board)"
+run = "python -m pytest tools/test_work_board.py tools/test_work_migrate.py -q"
+
+[tasks."work:rename"]
+description = "Build the slice id crosswalk from the historic ids and sweep every mention and Validation Pack name onto the grammar, idempotent. Reports without --apply (plan work-board, WB-2)"
+run = "python tools/work_migrate.py rename"
+
+[tasks."work:normalise"]
+description = "Rewrite every status record's slice board into the standard columns and state words, remove Branch lines, declare prefixes, idempotent. Reports without --apply (plan work-board, WB-2)"
+run = "python tools/work_migrate.py normalise"
+
+[tasks."work:here"]
+description = "Who is in this worktree: write your presence (--role build|review|read, --model, --on) into .local/agents/, list the sessions touched in the last twelve hours, or --leave (plan work-board, WB-6)"
+run = "python tools/work_board.py here"
+
+[tasks."work:adopt"]
+description = "Bring the slices a record's other tables, a Validation Pack or a plan's tables name onto the unit's board, in the state the source gives, and regroup the identifier exceptions by unit. Reports without --apply (plan work-board, WB-2)"
+run = "python tools/work_migrate.py adopt"
+
+[tasks."build:roadmap"]
+description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch (plan work-board)"
+run = "python tools/work_board.py roadmap"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). Oxigraph is the default engine (STD-153), since the whole suite, the reasoner tests included, passed on both engines first (STD-274, 2026-10-27). check:mork-compilers-conformance runs the same suite on rdflib. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
@@ -596,7 +642,7 @@ run = "python tools/validation_replay.py replay"
 
 [tasks."check:ontology-catalog"]
 description = "Run the ontology tool tests (catalog, versioning, Eligibility examples, PROV-O alignment, Wording, Behaviour split, Instrument with its regimes and terms in time), then fail when a catalog drifts, an import does not resolve, or a known defect is fixed but still listed (ADR-A88). Parallelised by test with --dist worksteal (python-test-melting, TM7): the shared, cached graphs in tools/conftest.py are per-worker-process, not global, so each worker parses what it needs. Measured on two machines, worksteal was 9 to 11 percent faster than the per-file --dist loadfile it replaces, because the largest file no longer sets a floor on the run. PYTEST_XDIST_AUTO_NUM_WORKERS sets what auto means, e.g. on a machine whose efficiency cores add nothing. tools/test_peril_vocabulary.py is included again (TD-45): under test-level distribution it adds about 22s on four cores, and no longer sets a floor on the run. `mise run check:peril-vocabulary` still runs it alone"
-run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_lattice_repo_catalogue.py tools/test_literate_extract.py tools/test_literate_grammar.py tools/test_literate_migration_check.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_peril_intensity.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_reasoning_jvm_options.py tools/test_reasoning_server.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py tools/test_validation_replay.py tools/test_ledger.py tools/test_structural_standards.py tools/test_guardrail_scan.py -q -n auto --dist worksteal && python tools/ontology_catalog.py check"
+run = "python -m pytest tools/test_applied_shared_contracts.py tools/test_eligibility_examples.py tools/test_exposure_ontology.py tools/test_lattice_repo_catalogue.py tools/test_literate_extract.py tools/test_literate_grammar.py tools/test_literate_migration_check.py tools/test_mork_order_relations.py tools/test_ontology_catalog.py tools/test_ontology_releases.py tools/test_ontology_version_check.py tools/test_bump_version.py tools/test_peril_intensity.py tools/test_peril_vocabulary.py tools/test_provenance_alignment.py tools/test_reasoning_isolation.py tools/test_substrate_extensions.py tools/test_wording.py tools/test_behaviour_split.py tools/test_import_guard.py tools/test_behaviour_records.py tools/test_behaviour_nested.py tools/test_keys.py tools/test_instrument.py tools/test_regimes.py tools/test_terms_in_time.py tools/test_constitutive_terms.py tools/test_parameter_bindings.py tools/test_amendments.py tools/test_graph_cache.py tools/test_repo_files.py tools/test_environment_banner.py tools/test_reasoning_stalled_import.py tools/test_reasoning_jvm_options.py tools/test_reasoning_server.py tools/test_additivity.py tools/test_legal_acts.py tools/test_full_sweep.py tools/test_python_requirements.py tools/test_closures.py tools/test_validation_replay.py tools/test_ledger.py tools/test_structural_standards.py tools/test_guardrail_scan.py -q -n auto --dist worksteal && python tools/ontology_catalog.py check"
 
 [tasks."check:peril-vocabulary"]
 description = "tools/test_peril_vocabulary.py alone (TD-45), spread over workers by test. It is part of check:ontology-catalog, so this is only for running it by itself"
@@ -665,7 +711,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets", "check:authoring-domain", "bootstrap:testing-studio-harness"]
 run = [
-  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_refresh.py workers/tests/test_config_studio_layers.py -q",
+  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_rebuild.py workers/tests/test_config_studio_layers.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]
@@ -674,6 +720,11 @@ run = [
 description = "Run the Configuration Studio's browser tests against a fake service"
 depends = ["build:config-studio-assets"]
 run = "yarn workspace @lattice/config-studio run test"
+
+[tasks."test:config-studio-browser"]
+description = "Run both of the Configuration Studio's browser suites: the journeys against the in-memory fake service, then the real-stack suite against a single topology the harness starts in isolation (ADR-A150), never the developer's own stack. Builds the browser application. Run by convention before a merge of a change to the studio, never in a hook (ADR-A133 decision 13)"
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+run = "python -m lattice_testing_studio_harness.browser"
 
 [tasks."studio:up"]
 description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service, the worker and the transforms worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
@@ -700,12 +751,12 @@ run = "python tools/config_studio_stack.py status"
 
 [tasks."studio:infra"]
 description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"
-run = "docker compose -f deployment/compose/config-studio/docker-compose.yml up -d --wait"
+run = "python tools/config_studio_stack.py infra"
 
 [tasks."studio:service"]
 description = "Build and run the Configuration Studio's service on 127.0.0.1:8090 against Fuseki and RabbitMQ"
 depends = ["build:config-studio-assets"]
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STUDIO_STATIC = "apps/config-studio/dist" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri", LATTICE_STUDIO_STATIC = "apps/config-studio/dist", LATTICE_STUDIO_EVENTS_URL = "ws://127.0.0.1:15675/ws", LATTICE_STUDIO_BROKER_SECRET_FILE = ".build/config-studio/infra/broker/secret" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-service -am package -DskipTests && java -jar platform/config-studio-service/target/config-studio-service.jar"
 
 [tasks."studio:ca"]
@@ -714,17 +765,17 @@ run = "docker compose -f deployment/compose/config-studio/docker-compose.yml cp 
 
 [tasks."studio:writer"]
 description = "Build and run the Configuration Studio's store writer against Fuseki's update service and RabbitMQ's writes super stream. Run several to spread the partitions"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_WRITE_DATASET = "studio-write", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F", LATTICE_STREAM_URI = "rabbitmq-stream://guest:guest@127.0.0.1:5553/%2f" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_WRITE_DATASET = "studio-write", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri", LATTICE_STREAM_URI_FILE = ".build/config-studio/infra/broker/stream-uri" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-writer -am package -DskipTests && java -jar platform/config-studio-writer/target/config-studio-writer.jar"
 
 [tasks."studio:worker"]
 description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }
 run = "python -m lattice_workers.config_studio_main"
 
 [tasks."studio:transforms"]
 description = "Build and run the Configuration Studio's transforms worker, which runs the mapping part's XSLT stylesheets and JOLT chains, against Fuseki and RabbitMQ"
-env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI = "amqp://guest:guest@127.0.0.1:5673/%2F" }
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }
 run = "mvn -q -f platform/pom.xml -pl config-studio-transforms -am package -DskipTests && java -jar platform/config-studio-transforms/target/config-studio-transforms.jar"
 
 [tasks."studio:web"]

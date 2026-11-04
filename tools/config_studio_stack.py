@@ -2,6 +2,7 @@
 """Starts and stops the Configuration Studio's stack in the background, on every platform (ADR-A136).
 
     python tools/config_studio_stack.py up [--docker] [--dev]
+    python tools/config_studio_stack.py infra
     python tools/config_studio_stack.py down
     python tools/config_studio_stack.py status
 
@@ -18,7 +19,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
+import secrets
 import shutil
 import signal
 import socket
@@ -29,7 +32,7 @@ import time
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
@@ -52,25 +55,62 @@ RABBITMQ_ARCHIVE = {
 # The same addresses as the studio:service and studio:worker tasks in mise.toml.
 FUSEKI_PORT, RABBITMQ_PORT, SERVICE_PORT, WEB_PORT, ADDIN_PORT = 3130, 5673, 8090, 4175, 4176
 STREAM_PORT = 5553
+# The broker's MQTT over WebSockets, which carries the studio's events to the browser (PM-Q20 (d)).
+WEB_MQTT_PORT = 15675
+# Every process's settings but the broker's URIs, which carry the stack's password (`Stack.env`).
 STUDIO_ENV = {
     "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{FUSEKI_PORT}",
     "LATTICE_FUSEKI_DATASET": "studio",
-    "LATTICE_AMQP_URI": f"amqp://guest:guest@127.0.0.1:{RABBITMQ_PORT}/%2F",
     "LATTICE_STUDIO_STATIC": "apps/config-studio/dist",
 }
-# The writer alone gets the update service and the stream protocol.
-WRITER_ENV = {
-    **STUDIO_ENV,
-    "LATTICE_FUSEKI_WRITE_DATASET": "studio-write",
-    "LATTICE_STREAM_URI": f"rabbitmq-stream://guest:guest@127.0.0.1:{STREAM_PORT}/%2f",
-}
+# The broker's one user, for the studio's own processes, with a password made once for each stack. The broker has no `guest`,
+# since Web MQTT checks no Origin and no CORS rule guards a WebSocket, so any page a browser opens could connect as a default user.
+BROKER_USER = "studio"
 
 # RabbitMQ's stream plugin, for the writes super stream (ADR-A136), on its own port, advertised as the loopback address
 # so a client on this machine reaches the partitions' leader there.
-RABBITMQ_PLUGINS = "[rabbitmq_stream].\n"
+# Web MQTT carries the studio's events to the browser, and the HTTP auth backend asks the service who a browser is and what
+# topics it may use, after the broker's own users (PM-Q20 (d)). The plain MQTT listener is not opened.
+RABBITMQ_PLUGINS = "[rabbitmq_stream,rabbitmq_web_mqtt,rabbitmq_auth_backend_http].\n"
+# The broker's user, its checks of a browser at the service under the stack's secret, and Web MQTT, for both kinds of stack.
+BROKER_CONF = """default_user = {user}
+default_pass = {password}
+auth_backends.1 = internal
+auth_backends.2 = http
+auth_http.http_method = post
+auth_http.user_path = http://{host}:{service}/api/broker/{secret}/user
+auth_http.vhost_path = http://{host}:{service}/api/broker/{secret}/vhost
+auth_http.resource_path = http://{host}:{service}/api/broker/{secret}/resource
+auth_http.topic_path = http://{host}:{service}/api/broker/{secret}/topic
+mqtt.allow_anonymous = false
+mqtt.listeners.tcp = none
+web_mqtt.tcp.port = {web_mqtt}
+"""
 RABBITMQ_CONF = """stream.listeners.tcp.1 = 127.0.0.1:{port}
 stream.advertised_host = 127.0.0.1
 stream.advertised_port = {port}
+web_mqtt.tcp.ip = 127.0.0.1
+"""
+# A broker in Docker on the host's network, as on Docker Engine, where a container cannot reach the host's loopback, so each
+# listener binds loopback on the stack's own ports, as the published ports do under Docker Desktop.
+COMPOSE_HOST_NETWORK_CONF = """listeners.tcp.default = 127.0.0.1:{amqp}
+management.tcp.ip = 127.0.0.1
+management.tcp.port = {management}
+prometheus.tcp.ip = 127.0.0.1
+stream.listeners.tcp.1 = 127.0.0.1:{stream}
+stream.advertised_host = 127.0.0.1
+stream.advertised_port = {stream}
+web_mqtt.tcp.ip = 127.0.0.1
+distribution.listener.interface = 127.0.0.1
+distribution.listener.port_range.min = {dist}
+distribution.listener.port_range.max = {dist}
+"""
+# Web MQTT over TLS as well, with a certificate the caller made, as a test harness does.
+RABBITMQ_TLS_CONF = """web_mqtt.ssl.ip = 127.0.0.1
+web_mqtt.ssl.port = {port}
+web_mqtt.ssl.certfile = {cert}
+web_mqtt.ssl.keyfile = {key}
+web_mqtt.ssl.cacertfile = {ca}
 """
 
 # One TDB2 database behind two services: `studio` reads only, for the service and the worker, and `studio-write`
@@ -117,6 +157,9 @@ class Stack:
         self.cache = self.infra
         self.fuseki_port, self.rabbitmq_port, self.stream_port, self.rabbitmq_node = FUSEKI_PORT, RABBITMQ_PORT, STREAM_PORT, RABBITMQ_NODE
         self.rabbitmq_dist_port = RABBITMQ_PORT + 20000
+        self.service_port, self.web_mqtt_port = SERVICE_PORT, WEB_MQTT_PORT
+        # Web MQTT's TLS listener as (port, certificate, key, CA), or None for none.
+        self.web_mqtt_tls: Optional[Tuple[int, Path, Path, Path]] = None
         self.memory = False
 
     # --- processes -------------------------------------------------------------------------------
@@ -204,7 +247,12 @@ class Stack:
         plugins = data / "enabled_plugins"
         plugins.write_text(RABBITMQ_PLUGINS, encoding="utf-8", newline="\n")
         conf = data / "rabbitmq.conf"
-        conf.write_text(RABBITMQ_CONF.format(port=self.stream_port), encoding="utf-8", newline="\n")
+        text = RABBITMQ_CONF.format(port=self.stream_port) + self.broker_conf("127.0.0.1")
+        if self.web_mqtt_tls is not None:
+            port, cert, key, ca = self.web_mqtt_tls
+            # The broker's configuration takes forward slashes on every platform.
+            text += RABBITMQ_TLS_CONF.format(port=port, cert=cert.resolve().as_posix(), key=key.resolve().as_posix(), ca=ca.resolve().as_posix())
+        conf.write_text(text, encoding="utf-8", newline="\n")
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_CONFIG_FILE": str(conf),
@@ -217,6 +265,95 @@ class Stack:
             raise SystemExit("RabbitMQ needs Erlang. Run this through mise, which installs it")
         env["ERLANG_HOME"] = str(Path(erl).resolve().parent.parent)
         return env
+
+    # --- the broker's user and the service's secret ----------------------------------------------
+
+    def broker_credentials(self) -> Tuple[str, str]:
+        """The broker user's password and the secret the broker names in its checks at the service, each made once for the stack
+        and kept in `infra/broker`, with the AMQP and stream URIs, which the studio:* tasks of mise.toml read as `*_FILE`."""
+        folder = self.infra / "broker"
+        folder.mkdir(parents=True, exist_ok=True)
+        values = []
+        for name in ("password", "secret"):
+            path = folder / name
+            if not path.exists():
+                write_private(path, secrets.token_urlsafe(24))
+            values.append(path.read_text(encoding="utf-8").strip())
+        password, secret = values
+        write_private(folder / "amqp-uri", self.amqp_uri(password))
+        write_private(folder / "stream-uri", self.stream_uri(password))
+        return password, secret
+
+    def amqp_uri(self, password: str) -> str:
+        return f"amqp://{BROKER_USER}:{password}@127.0.0.1:{self.rabbitmq_port}/%2F"
+
+    def stream_uri(self, password: str) -> str:
+        return f"rabbitmq-stream://{BROKER_USER}:{password}@127.0.0.1:{self.stream_port}/%2f"
+
+    def broker_conf(self, host: str) -> str:
+        """The broker's user and its checks at the service on `host`, as the broker reaches it."""
+        password, secret = self.broker_credentials()
+        return BROKER_CONF.format(user=BROKER_USER, password=password, host=host, service=self.service_port, secret=secret, web_mqtt=self.web_mqtt_port)
+
+    def env(self) -> Dict[str, str]:
+        """Every process's settings, with the broker's URI."""
+        return {**STUDIO_ENV, "LATTICE_AMQP_URI": self.amqp_uri(self.broker_credentials()[0])}
+
+    def writer_env(self) -> Dict[str, str]:
+        """The writer alone gets the update service and the stream protocol."""
+        return {**self.env(), "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": self.stream_uri(self.broker_credentials()[0])}
+
+    def service_env(self) -> Dict[str, str]:
+        """The service also offers events over the broker's Web MQTT, and answers the broker's checks under the stack's secret."""
+        return {**self.env(), "LATTICE_STUDIO_EVENTS_URL": f"ws://127.0.0.1:{self.web_mqtt_port}/ws",
+                "LATTICE_STUDIO_BROKER_SECRET": self.broker_credentials()[1]}
+
+    def ctl(self, *args: str) -> subprocess.CompletedProcess:
+        ctl = self.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if WINDOWS else "rabbitmqctl")
+        return subprocess.run(command([str(ctl), "-n", self.rabbitmq_node, *args]), env={**os.environ, **self.rabbitmq_env()},
+                              capture_output=True, text=True, check=True)
+
+    def broker_users(self) -> List[str]:
+        return [u["user"] for u in json.loads(self.ctl("list_users", "--silent", "--formatter", "json").stdout or "[]")]
+
+    def ensure_broker_user(self) -> None:
+        """Gives a broker this script started the stack's user and removes `guest`. A new broker has the user from its
+        configuration and never had `guest`. One whose data an older stack made has `guest` until this runs."""
+        users = self.broker_users()
+        if BROKER_USER not in users:
+            self.ctl("add_user", BROKER_USER, self.broker_credentials()[0])
+            self.ctl("set_permissions", "-p", "/", BROKER_USER, ".*", ".*", ".*")
+        if "guest" in users:
+            self.ctl("delete_user", "guest")
+
+    # --- the compose stack -----------------------------------------------------------------------
+
+    def compose_files(self) -> List[Path]:
+        """The compose file and the override for the kind of Docker: Docker Desktop on every platform forwards
+        `host.docker.internal` to the host's loopback, where the service listens, and Docker Engine does not, so there the
+        broker shares the host's network."""
+        override = "docker-compose.host-network.yml" if docker_engine_on_linux() else "docker-compose.desktop.yml"
+        return [self.compose, self.compose.parent / override]
+
+    def compose_up(self) -> List[Path]:
+        """Writes the broker's configuration under `infra/compose`, which the compose file mounts, and starts the compose stack."""
+        files = self.compose_files()
+        host_network = files[1].name == "docker-compose.host-network.yml"
+        text = self.broker_conf("127.0.0.1" if host_network else "host.docker.internal")
+        if host_network:
+            text += COMPOSE_HOST_NETWORK_CONF.format(amqp=self.rabbitmq_port, management=self.rabbitmq_port + 10000,
+                                                     stream=self.stream_port, dist=self.rabbitmq_dist_port)
+        folder = self.infra / "compose"
+        folder.mkdir(parents=True, exist_ok=True)
+        write_private(folder / "rabbitmq-studio.conf", text)
+        run(["docker", "compose", *[a for f in files for a in ("-f", str(f))], "up", "-d", "--build", "--wait"], self.root)
+        return files
+
+    def infra_only(self) -> None:
+        """Fuseki and RabbitMQ in Docker alone, for the studio:* tasks of mise.toml, which run the rest on the host."""
+        files = self.compose_up()
+        self.run.mkdir(parents=True, exist_ok=True)
+        (self.run / "docker").write_text("\n".join(str(f) for f in files), encoding="utf-8", newline="\n")
 
     def rabbitmq(self) -> None:
         archive = download(f"{RABBITMQ_RELEASE}/{RABBITMQ_ARCHIVE[0]}", RABBITMQ_ARCHIVE[1], self.cache)
@@ -231,30 +368,35 @@ class Stack:
         if docker:
             # The proxy serves the add-in's built files, so they are built before it starts.
             run(["yarn", "workspace", "@lattice/word-authoring-addin", "run", "build"], self.root)
-            run(["docker", "compose", "-f", str(self.compose), "up", "-d", "--build", "--wait"], self.root)
+            files = self.compose_up()
             self.run.mkdir(parents=True, exist_ok=True)
-            (self.run / "docker").write_text(str(self.compose), encoding="utf-8", newline="\n")
+            (self.run / "docker").write_text("\n".join(str(f) for f in files), encoding="utf-8", newline="\n")
         else:
             for name, start, port in (("fuseki", self.fuseki, FUSEKI_PORT), ("rabbitmq", self.rabbitmq, RABBITMQ_PORT)):
                 if listening(port):
                     print(f"{name}: already listening on {port}")
+                    if name == "rabbitmq" and "guest" in self.broker_users():
+                        print("rabbitmq: an older stack started it, and it still has the user guest. Run studio:down, then studio:up")
                     continue
                 start()
                 self.wait_for(name, port)
+                if name == "rabbitmq":
+                    self.ensure_broker_user()
                 print(f"{name}: up on 127.0.0.1:{port}")
         if not dev:
             run(["yarn", "workspace", "@lattice/config-studio", "run", "build"], self.root)
         run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-service,config-studio-writer,config-studio-transforms", "-am", "package", "-DskipTests"], self.root)
-        jar = self.platform / "config-studio-service" / "target" / "config-studio-service.jar"
+        built = lambda module: self.platform / module / "target" / f"{module}.jar"
         if self.pid("writer") is None:
-            self.spawn("writer", ["java", "-jar", str(self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar")], WRITER_ENV)
+            self.spawn("writer", ["java", "-jar", str(self.pinned("writer", built("config-studio-writer")))], self.writer_env())
         if self.claim("service", SERVICE_PORT):
-            self.spawn("service", ["java", "-jar", str(jar)], STUDIO_ENV)
+            static = {} if dev else {"LATTICE_STUDIO_STATIC": str(self.pinned("web", self.root / STUDIO_ENV["LATTICE_STUDIO_STATIC"]))}
+            self.spawn("service", ["java", "-jar", str(self.pinned("service", built("config-studio-service")))], {**self.service_env(), **static})
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
-            self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], STUDIO_ENV)
+            self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], self.env())
         if self.pid("transforms") is None:
-            self.spawn("transforms", ["java", "-jar", str(self.platform / "config-studio-transforms" / "target" / "config-studio-transforms.jar")], STUDIO_ENV)
+            self.spawn("transforms", ["java", "-jar", str(self.pinned("transforms", built("config-studio-transforms")))], self.env())
         if self.claim("addin", ADDIN_PORT):
             self.spawn("addin", ["yarn", "workspace", "@lattice/word-authoring-addin", "run", "dev"])
             self.wait_for("addin", ADDIN_PORT)
@@ -266,13 +408,26 @@ class Stack:
         addin = "https://localhost:3443/addin/taskpane.html for Word" if docker else f"http://127.0.0.1:{ADDIN_PORT}/addin/harness.html"
         print(f"Configuration Studio: {url}. Word add-in: {addin}. Logs in {self.run}. Stop it with `mise run studio:down`")
 
+    def pinned(self, name: str, built: Path) -> Path:
+        """A copy of a build output for one component to run from, made just before it starts. A JVM reads its jar for as
+        long as it runs, so a build that rewrote the jar in `target`, as `mise run check` does, would break it (STD-308)."""
+        copy = self.run / "pinned" / name / built.name
+        if copy.is_dir():
+            shutil.rmtree(copy)
+        copy.parent.mkdir(parents=True, exist_ok=True)
+        if built.is_dir():
+            shutil.copytree(built, copy)
+        else:
+            shutil.copy2(built, copy)
+        return copy
+
     def migrate(self, dry_run: bool) -> None:
         """Runs the one-off migration of a store written before phase D, with the writer's environment, against the running Fuseki.
         It backs the dataset up first, to the assets folder, and prints the path."""
         run(["mvn", "-q", "-f", str(self.platform / "pom.xml"), "-pl", "config-studio-writer", "-am", "package", "-DskipTests"], self.root)
         jar = self.platform / "config-studio-writer" / "target" / "config-studio-writer.jar"
         argv = ["java", "-cp", str(jar), "org.nebularis.lattice.studio.writer.MigrateMain", *(["--dry-run"] if dry_run else [])]
-        subprocess.run(command(argv), cwd=self.root, env={**os.environ, **WRITER_ENV}, check=True)
+        subprocess.run(command(argv), cwd=self.root, env={**os.environ, **self.writer_env()}, check=True)
 
     def down(self) -> None:
         for name in reversed(ORDER):
@@ -280,7 +435,8 @@ class Stack:
                 print(f"{name}: stopped")
         marker = self.run / "docker"
         if marker.exists():
-            run(["docker", "compose", "-f", marker.read_text().strip(), "down", "--timeout", "60"], self.root)
+            files = [line for line in marker.read_text().splitlines() if line.strip()]
+            run(["docker", "compose", *[a for f in files for a in ("-f", f)], "down", "--timeout", "60"], self.root)
             marker.unlink()
             print("docker: Fuseki and RabbitMQ stopped")
 
@@ -307,6 +463,22 @@ def data_dir(env: Dict[str, str], platform: str = sys.platform) -> Path:
     if platform == "darwin":
         return home / "Library" / "Application Support" / "LATTICE" / "studio"
     return Path(env.get("XDG_DATA_HOME") or home / ".local" / "share") / "lattice" / "studio"
+
+
+def write_private(path: Path, text: str) -> None:
+    """Writes a secret readable by its owner alone, where the platform has such permissions."""
+    path.write_text(text, encoding="utf-8", newline="\n")
+    if not WINDOWS:
+        path.chmod(0o600)
+
+
+def docker_engine_on_linux() -> bool:
+    """Whether Docker here is Docker Engine on Linux, whose containers cannot reach the host's loopback, rather than Docker Desktop,
+    on any platform, which forwards `host.docker.internal` there."""
+    if not sys.platform.startswith("linux"):
+        return False
+    out = subprocess.run(["docker", "info", "--format", "{{.OperatingSystem}}"], capture_output=True, text=True, check=False).stdout
+    return "Docker Desktop" not in out
 
 
 def command(argv: List[str]) -> List[str]:
@@ -425,7 +597,7 @@ def extract(archive: Path, into: Path) -> None:
 
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("action", choices=("up", "down", "status", "migrate"))
+    parser.add_argument("action", choices=("up", "infra", "down", "status", "migrate"))
     parser.add_argument("--dry-run", action="store_true", help="with migrate: write nothing and print what it would do")
     parser.add_argument("--docker", action="store_true", help="run Fuseki and RabbitMQ with docker compose")
     parser.add_argument("--dev", action="store_true", help="also serve the browser code with hot reload on 4175")
@@ -434,6 +606,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     stack = Stack(lattice_repo_catalogue.find_root(args.root))
     if args.action == "up":
         stack.up(args.docker, args.dev)
+    elif args.action == "infra":
+        stack.infra_only()
     elif args.action == "migrate":
         stack.migrate(args.dry_run)
     elif args.action == "down":

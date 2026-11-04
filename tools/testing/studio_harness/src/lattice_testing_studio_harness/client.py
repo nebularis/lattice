@@ -141,7 +141,7 @@ class Client:
     # --- the registry ----------------------------------------------------------------------------
 
     def registry(self) -> Reply:
-        """Every published lineage with its current version, read from the registry projection."""
+        """Every published lineage with its current version, read from the registry promotion."""
         return self.request("GET", "/api/registry", headers={"Accept": "text/turtle"})
 
     def registry_terms(self, text: str) -> Reply:

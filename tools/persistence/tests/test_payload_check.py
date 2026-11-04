@@ -81,12 +81,12 @@ def test_h2_8b_t3_the_payload_of_a_new_version_is_rooted_at_the_version():
     for example in ("write-discipline-composite-append-versions", "write-discipline-noboundary-append-versions", "write-discipline-delta-membership"):
         (append,) = [o for o in operations_named(emit(example), "append-version-dataset-guard") + operations_named(emit(example), "append-version-delta-dataset-guard")]
         assert append.payload.root == "newVersion", example
-    (replace,) = operations_named(emit("composite-project-ownership"), "cas-replace-composite-property-patch-log")
+    (replace,) = operations_named(emit("composite-project-ownership"), "cas-replace-composite-property-delta-patch-log")
     assert replace.payload.root == "root"
 
 
 def test_h2_8b_t4_the_contract_names_the_shape_and_the_target_shape_of_each_owned_edge():
-    (replace,) = operations_named(emit("composite-project-ownership"), "cas-replace-composite-property-patch-log")
+    (replace,) = operations_named(emit("composite-project-ownership"), "cas-replace-composite-property-delta-patch-log")
     assert replace.payload.shape == "https://example.org/projects#ProjectShape"
     owned = {(e.predicate.rsplit("#", 1)[-1], (e.target_shape or "").rsplit("#", 1)[-1]) for e in replace.payload.edges if e.ownership == "Owned"}
     assert ("hasSubtask", "TaskShape") in owned and ("onTask", "CommentShape") in owned

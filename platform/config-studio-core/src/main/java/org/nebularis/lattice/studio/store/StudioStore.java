@@ -29,25 +29,23 @@ import org.apache.jena.update.UpdateRequest;
 public final class StudioStore implements AutoCloseable {
     private static final String PREFIXES = "PREFIX cst: <" + Cst.NS + ">\n";
     private static final String GRAPH_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } }";
-    private static final String PROJECTION_PREFIXES = PREFIXES + "PREFIX prj: <" + Projections.NS + ">\n";
-    /** The registry projection, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
-    private static final String REGISTRY_QUERY = PROJECTION_PREFIXES
-        + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prj:current ?version } }";
-    /** The summaries projection without its refresh node. */
-    private static final String SUMMARIES_QUERY = "CONSTRUCT { ?s ?p ?o } WHERE { GRAPH ?g { ?s ?p ?o } FILTER (?s != ?g) }";
-    private static final String HOLDERS_QUERY = PROJECTION_PREFIXES + """
+    private static final String PROMOTION_PREFIXES = PREFIXES + "PREFIX prm: <" + Promotions.NS + ">\n";
+    /** The registry promotion, read as the lineage graphs hold it: {@code ?lineage cst:current ?version}. */
+    private static final String REGISTRY_QUERY = PROMOTION_PREFIXES
+        + "CONSTRUCT { ?lineage cst:current ?version } WHERE { GRAPH ?g { ?lineage prm:current ?version } }";
+    private static final String HOLDERS_QUERY = PROMOTION_PREFIXES + """
         CONSTRUCT { ?w ?edge ?held } WHERE {
           GRAPH ?g {
-            { ?w prj:dependsOn ?held . FILTER (?held = ?iri || STRSTARTS(STR(?held), CONCAT(STR(?iri), "/rev/"))) BIND (cst:dependsOn AS ?edge) }
+            { ?w prm:dependsOn ?held . FILTER (?held = ?iri || STRSTARTS(STR(?held), CONCAT(STR(?iri), "/rev/"))) BIND (cst:dependsOn AS ?edge) }
             UNION
-            { ?w prj:holdsImport ?held . FILTER (?held = ?iri) BIND (cst:holdsImport AS ?edge) }
+            { ?w prm:holdsImport ?held . FILTER (?held = ?iri) BIND (cst:holdsImport AS ?edge) }
           }
         }""";
-    private static final String TERMS_QUERY = PROJECTION_PREFIXES + """
+    private static final String TERMS_QUERY = PROMOTION_PREFIXES + """
         SELECT ?concept ?label ?version WHERE {
           GRAPH ?g {
-            ?concept prj:prefLabel ?label .
-            OPTIONAL { ?concept prj:inScheme ?version }
+            ?concept prm:prefLabel ?label .
+            OPTIONAL { ?concept prm:inScheme ?version }
             FILTER (CONTAINS(LCASE(STR(?label)), LCASE(?q)))
           }
         } ORDER BY ?label ?concept ?version LIMIT 50""";
@@ -64,10 +62,10 @@ public final class StudioStore implements AutoCloseable {
           }
         }""";
 
-    /** The jobs projection, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
-    private static final String JOBS_OF_QUERY = PROJECTION_PREFIXES
-        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prj:workspace ?ws } }";
-    /** The jobs of a workspace as their graphs hold them, which the writer deletes with it and so cannot take from a projection that lags. */
+    /** The jobs promotion, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
+    private static final String JOBS_OF_QUERY = PROMOTION_PREFIXES
+        + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prm:workspace ?ws } }";
+    /** The jobs of a workspace as their graphs hold them, which the writer deletes with it and so cannot take from a promotion that lags. */
     private static final String JOB_GRAPHS_OF_QUERY = PREFIXES
         + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?job { ?job a cst:Job ; cst:workspace ?ws } }";
     private static final String EXPIRED_JOBS_QUERY = PREFIXES + """
@@ -197,20 +195,25 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
-    /** Every published lineage with its current version (ADR-A149), read from the registry projection. */
+    /**
+     * Every published lineage with its current version (ADR-A149), from the promoted partitions of the lineages, which the write of
+     * each lineage keeps (PM2). A promoted property appears in promoted partitions alone, so the read names no graph.
+     */
     public Model registry() {
-        return construct(REGISTRY_QUERY, "registry");
+        return connection.queryConstruct(new ParameterizedSparqlString(REGISTRY_QUERY).asQuery());
     }
 
-    /** The summaries projection: each workspace's label, owner, mode, time and the sequence of each part and document. */
-    public Model summaries() {
-        return construct(SUMMARIES_QUERY, "summaries");
+    /**
+     * Each workspace's label, owner, mode, time and the sequence of each part and document, by {@code query}, the staged
+     * {@code workspace-summaries.rq}, evaluated as it is read (PM2), since a summary joins a workspace to its parts' version rows.
+     */
+    public Model summaries(String query) {
+        return connection.queryConstruct(new ParameterizedSparqlString(query).asQuery());
     }
 
     /** The workspaces that follow, pin or hold {@code iri}, as {@code ?w cst:dependsOn ?held} and {@code ?w cst:holdsImport ?held}. */
     public Model holders(String iri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(HOLDERS_QUERY);
-        query.setIri("g", Graphs.projection("holders"));
         query.setIri("iri", iri);
         return connection.queryConstruct(query.asQuery());
     }
@@ -218,7 +221,6 @@ public final class StudioStore implements AutoCloseable {
     /** The concepts whose label contains {@code text}, in any case, at most 50, as {@code skos:prefLabel} and {@code skos:inScheme}. */
     public Model terms(String text) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(TERMS_QUERY);
-        query.setIri("g", Graphs.projection("terms"));
         query.setLiteral("q", text);
         Model out = ModelFactory.createDefaultModel();
         connection.querySelect(query.asQuery(), row -> {
@@ -236,13 +238,7 @@ public final class StudioStore implements AutoCloseable {
     private static final org.apache.jena.rdf.model.Property SKOS_IN_SCHEME =
         ModelFactory.createDefaultModel().createProperty("http://www.w3.org/2004/02/skos/core#inScheme");
 
-    private Model construct(String text, String projection) {
-        ParameterizedSparqlString query = new ParameterizedSparqlString(text);
-        query.setIri("g", Graphs.projection(projection));
-        return connection.queryConstruct(query.asQuery());
-    }
-
-    /** The compile jobs of one workspace, without their reports and artefacts: its jobs from the jobs projection, each then read from its graph. */
+    /** The compile jobs of one workspace, without their reports and artefacts: its jobs from their promoted partitions, each then read from its graph. */
     public Model compileJobs(String workspaceIri) {
         Model out = ModelFactory.createDefaultModel();
         jobsOf(workspaceIri).listSubjects().forEachRemaining(job -> {
@@ -254,10 +250,9 @@ public final class StudioStore implements AutoCloseable {
         return out;
     }
 
-    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}, from the jobs projection. A job just submitted may not be there yet. */
+    /** The jobs of one workspace, as {@code ?job cst:workspace ?ws}, from the promoted partitions of the jobs, kept by each job's write. */
     public Model jobsOf(String workspaceIri) {
         ParameterizedSparqlString query = new ParameterizedSparqlString(JOBS_OF_QUERY);
-        query.setIri("g", Graphs.projection("jobs"));
         query.setIri("ws", workspaceIri);
         return connection.queryConstruct(query.asQuery());
     }

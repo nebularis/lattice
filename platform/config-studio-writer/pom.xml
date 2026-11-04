@@ -35,7 +35,8 @@
       <plugin>
         <!-- The shade overwrites this module's jar, so without a forced creation a build that changed only a dependency keeps
              the old jar, and the shade merges that jar's stale copies of the dependency's classes. Forced here only, since a
-             forced jar is rewritten on every build, which breaks a JVM reading it, as the reasoning testkit's tests do. -->
+             forced jar is rewritten on every build, which breaks a JVM reading it, as the reasoning testkit's tests do. A stack runs
+             from a copy, so the build leaves it alone (STD-308). -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.4.1</version>

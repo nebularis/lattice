@@ -6,7 +6,7 @@ Starts the `single` topology on the `processes` runner through the harness, crea
 - listing the workspaces, 20 times
 - publishing a concept scheme with a changed label, 5 times, as its job, its publication and the registry listing that follows
 
-It uses only routes the studio had before phase D of the publication unit and has now, and waits for no projection. Two warm-up repeats of each measure are discarded.
+It uses only routes the studio had before phase D of the publication unit and has now, and waits for no promotion. Two warm-up repeats of each measure are discarded.
 **A wrong reply or a wrong read-back fails the run. Time never does.** `--checkout PATH` measures another checkout of the repository, whose jars, staged assets and
 worker code are used (see the harness README), and names the report for that checkout's commit."""
 

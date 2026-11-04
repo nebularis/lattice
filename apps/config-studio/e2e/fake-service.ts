@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Page, Route } from "@playwright/test";
-import { Parser } from "n3";
+import { DataFactory, Parser, Store, Writer } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
@@ -107,16 +107,18 @@ m:fr-end a ins:RegimeTransition , bhv:TransitionDefinition ; bhv:fromState m:fr-
 m:act-for-lenders ins:appliesInState m:fr-in-force .
 `;
 
-/** A dry-run job decides the interval condition from the one number it is given, Permitted above one lender, and reports as
+/** A dry-run job decides the condition its facts name, so a renamed sample needs no change here, from the one number it is given, Permitted above one lender, and reports as
  * information a condition with no fact, which reads Undetermined, as the worker does. */
 function dryRunResults(job: string, body: string): string {
   const quads = new Parser().parse(body);
   const facts = quads.filter((q) => q.predicate.value === CST + "forCondition");
-  const condition = E_BUILDER + "more-than-one-lender";
+  const interval = quads.find((q) => q.predicate.value === RDF_TYPE && q.object.value === ELG + "IntervalCondition");
+  const condition = facts[0]?.object.value ?? interval?.subject.value ?? E_BUILDER + "more-than-one-lender";
+  const name = condition.slice(condition.lastIndexOf("/") + 1);
   const number = facts.map((f) => quads.find((q) => q.subject.value === f.subject.value && q.predicate.value === CST + "number")?.object.value).find((v) => v !== undefined);
   const decision = number === undefined ? "Undetermined" : Number(number) > 1 ? "Permitted" : "Denied";
   const node = `${job.slice(0, -1)}#t0>`;
-  const info = number === undefined ? `<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No sample fact for more-than-one-lender" ; cst:code "dry-run" ; sh:focusNode <${condition}> ] .\n` : "";
+  const info = number === undefined ? `<urn:r> sh:result [ sh:resultSeverity sh:Info ; sh:resultMessage "No sample fact for ${name}" ; cst:code "dry-run" ; sh:focusNode <${condition}> ] .\n` : "";
   return `${job} cst:testResult ${node} . ${node} cst:condition <${condition}> ; cst:decision cst:${decision}${decision === "Undetermined" ? ' ; cst:diagnostic "no fact"' : ""} .\n${info}`;
 }
 
@@ -225,6 +227,11 @@ export class FakeService {
     const turtle = (body: string, status = 200, headers: Record<string, string> = {}) =>
       route.fulfill({ status, body, headers: { "Content-Type": "text/turtle", ...headers } });
 
+    // the service's local authentication with one developer signed in, as `mise run studio:up` gives (ADR-A149 decision 9)
+    const json = (body: unknown) => route.fulfill({ status: 200, body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
+    if (parts[0] === "session") return json({ provider: "local", principal: "developer", admin: true, principalOption: ["developer"], administrator: ["developer"] });
+    if (parts[0] === "status") return json({ warnings: [] });
+    if (parts[0] === "features") return json({ features: [] });
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
     if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8") + (parts[1] === "builder" ? REGIME : ""));
@@ -246,11 +253,13 @@ export class FakeService {
       if (parts.length === 2) return turtle(PREFIX + this.describe(parts[1]));
       if (parts[2] === "graphs") {
         const name = parts[3];
-        if (method === "PUT") {
+        if (method === "PUT" || method === "PATCH") {
           const ifMatch = request.headers()["if-match"] ?? null;
-          this.saves.push({ name, ifMatch, body: request.postData() ?? "" });
+          // a patch is applied to the stored part, so a test reads the part a save of the same change would leave (DR-Q5 (c))
+          const body = method === "PATCH" ? applyPatch(ws.graphs[name], request.postData() ?? "") : request.postData() ?? "";
+          this.saves.push({ name, ifMatch, body });
           if (ifMatch !== `"${ws.revisions[name]}"`) return route.fulfill({ status: 412, body: "stale" });
-          ws.graphs[name] = request.postData() ?? "";
+          ws.graphs[name] = body;
           ws.revisions[name] += 1;
           return route.fulfill({ status: 204, headers: { ETag: `"${ws.revisions[name]}"` } });
         }
@@ -278,4 +287,22 @@ export class FakeService {
     }
     return route.fulfill({ status: 404, body: "not found" });
   }
+}
+
+/** The Turtle `stored` with the patch's removed triples taken out and its added ones put in, as the service applies one. */
+function applyPatch(stored: string, trig: string): string {
+  const { namedNode, quad, defaultGraph } = DataFactory;
+  const prefixes: Record<string, string> = {};
+  const store = new Store(new Parser().parse(stored, null, (prefix, iri) => (prefixes[prefix] = iri.value)));
+  new Parser({ format: "application/trig" }).parse(trig, null, (prefix, iri) => (prefixes[prefix] ??= iri.value));
+  for (const q of new Parser({ format: "application/trig" }).parse(trig)) {
+    const triple = quad(q.subject, q.predicate, q.object, defaultGraph());
+    if (q.graph.equals(namedNode("urn:lattice:studio:patch:add"))) store.addQuad(triple);
+    else store.removeQuad(triple);
+  }
+  const writer = new Writer({ prefixes });
+  writer.addQuads(store.getQuads(null, null, null, null));
+  let out = "";
+  writer.end((_, result) => (out = result ?? ""));
+  return out;
 }

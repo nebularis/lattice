@@ -46,9 +46,9 @@ mise run check:vocabulary
 
 Equivalently, without `mise`: `python -m pip install -e ./tools/vocabulary[test]`
 then `python -m pytest tools/vocabulary/tests -q`. VTB-01 through 04, 07 (the
-context-independent form), 09, and 13 run in `test_shacl_fixtures.py`; VTB-05,
-06, 07 (the context-dependent form), 08, and 10 in `test_resolver.py`; VTB-11
-in `test_determinism.py`; VTB-12 and 14 in `test_consumer_boundary.py`.
+context-independent form), 09, and 13 run in `test_shacl_fixtures.py`, VTB-05,
+06, 07 (the context-dependent form), 08, and 10 in `test_resolver.py`, VTB-11
+in `test_determinism.py`, VTB-12 and 14 in `test_consumer_boundary.py`.
 
 ## Expected artefacts
 
@@ -89,5 +89,5 @@ Closed 2026-09-25. All 14 cases and both consumer integrations (Surface,
 Eligibility) verified green in the working environment. A follow-up
 cross-reference against
 [docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)
-found no defects blocking closure; four hardening items are tracked under
+found no defects blocking closure, four hardening items are tracked under
 `temporal-binding-consumer-hardening`.

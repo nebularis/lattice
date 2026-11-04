@@ -3,11 +3,11 @@
 # Formal Methods, Track C: Status
 
 **Unit ID:** `formal-methods-track-c` (phase, within the `formal-methods` epic)
-**Status:** C1 and C2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
-2026-10-07, Proposed, citing this track's checked evidence. C2.1 (well-formedness facts, a
-re-run) done 2026-10-08, after an implementation-level review; C2.2 and C2.3 queued, not started
+**Status:** built 2026-10-08. FMC-1 and FMC-2 done, 2026-10-06. `ADR-A116` (Vocabulary scheme composition) drafted
+2026-10-07, Proposed, citing this track's checked evidence. FMC-2.1 (well-formedness facts, a
+re-run) done 2026-10-08, after an implementation-level review, FMC-2.2 and FMC-2.3 queued, not started
 **Last updated:** 2026-10-22. C4 (a design model of ADR-A130, Ensemble) briefed 2026-10-22, with its
-[Validation Pack](../validation/formal-methods-c4.md). ADR-A130's acceptance waits on it
+[Validation Pack](../validation/FM-4.md). ADR-A130's acceptance waits on it
 **Plan:** [formal-methods-track-c.md](../plans/formal-methods-track-c.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Epic status:** [formal-methods.md](formal-methods.md)
@@ -15,15 +15,15 @@ re-run) done 2026-10-08, after an implementation-level review; C2.2 and C2.3 que
 ## Current position
 
 Read directly from `main` (without checking it out): CCS's C8 shipped without deciding HQ-4,
-explicitly deferring to track C2 ("the lease's date words are not written, waiting for HQ-4 and
-track C2," C8's own validation pack). insurml-alignment's IMA-D4a is in the same state. Track C2
+explicitly deferring to track FMC-2 ("the lease's date words are not written, waiting for HQ-4 and
+track FMC-2," C8's own validation pack). insurml-alignment's IMA-D4a is in the same state. Track FMC-2
 was genuinely green-field: nothing built elsewhere resolved it.
 
-C1 installed Alloy Analyzer 6.2.0 (one MIT-licensed JAR, `C:\fmx\alloy\alloy.jar`, not tracked in
+FMC-1 installed Alloy Analyzer 6.2.0 (one MIT-licensed JAR, `C:\fmx\alloy\alloy.jar`, not tracked in
 the repository) and smoke-tested it headlessly via `exec`: a satisfiable and an unsatisfiable
 model were told apart correctly via `receipt.json`.
 
-C2 built `tools/models/vocabulary-scheme-composition/SchemeComposition.als` and ran two checks at
+FMC-2 built `tools/models/vocabulary-scheme-composition/SchemeComposition.als` and ran two checks at
 scope 4: `EverySourceResolves` found no counterexample (composition does not drop a source that
 resolves alone, HQ-4's own property, made checkable); `NoOverlapDisagreement` **found a
 counterexample** — the sketch's proposed "union of members, union of hierarchies" does not by
@@ -31,14 +31,14 @@ itself prevent two composed schemes disagreeing about a shared concept's `broade
 results, the counterexample instance read and explained, and the three candidate fixes are in
 [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md).
 
-**C2.1, 2026-10-08:** an implementation-level review of the programme's evidence found the
+**FMC-2.1, 2026-10-08:** an implementation-level review of the programme's evidence found the
 original `NoOverlapDisagreement` counterexample degenerate — a concept recorded as its own
 `broader` parent, a self-loop `Scheme`'s signature never excluded. Two well-formedness facts were
 added (`broader` irreflexive, `^broader` acyclic) and the check re-run at the same scope: **the
 counterexample survives**, now with a genuinely distinct, non-self-referential witness (full
 detail in the model's README, re-run section). The finding stands; its first piece of supporting
-evidence did not, and has been replaced with a stronger one. C2.2 (model the composed scheme
-directly, check a decision-level property against Eligibility's L9-L11) and C2.3 (model
+evidence did not, and has been replaced with a stronger one. FMC-2.2 (model the composed scheme
+directly, check a decision-level property against Eligibility's L9-L11) and FMC-2.3 (model
 `ADR-A116`'s own accepted rule, `run` the real HQ-4/IMA-D4a configurations to confirm they are
 admitted) are both queued, not started — see
 [the review response](../notes/formal-methods-more-feedback-response.md) §4.
@@ -47,24 +47,24 @@ admitted) are both queued, not started — see
 (`docs/architecture/decisions/ADR-A116-vocabulary-scheme-composition.md`), which decides the
 overlap rule (forbid, by a new static Vocabulary shape — the simplest of the three candidates,
 not the precedence or free-union alternatives) and the composition construct itself
-(`voc:BindingAspect`/`voc:forAspect`). **Recommended before accepting it**: C2.3 (model the rule
+(`voc:BindingAspect`/`voc:forAspect`). **Recommended before accepting it**: FMC-2.3 (model the rule
 itself and `run` the real HQ-4/IMA-D4a configurations against it) — the review's own open
 question 2 is still live, that the simplest rule may be too strict for the very cases it exists
 to serve. Implementing the ADR (the ontology change, the shape, the resolver's
 `CompositionOverlapError`) is a separate follow-up slice either way, not done by the ADR itself.
-C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a) is next in track C's own numbering, not
+FMC-3 (slot exclusivity and exhaustiveness, SMT, CCS C13a) is next in track C's own numbering, not
 started.
 
 ## Slices
 
-| Slice | State | Blocked on |
-|---|---|---|
-| C1 (Alloy skeleton) | **done** | nothing |
-| C2 (scheme composition) | **done**, results recorded | nothing — the overlap-rule *decision* is the maintainer's, not a blocker on this slice's own completion |
-| C2.1 (well-formedness facts, re-run) | **done**, 2026-10-08 | nothing |
-| C2.2 (model the composed scheme, decision-level check) | not started, queued 2026-10-08 | nothing |
-| C2.3 (model `ADR-A116`'s own rule against HQ-4/IMA-D4a) | not started, queued 2026-10-08, recommended before `ADR-A116`'s acceptance | nothing |
-| C3 (slot exclusivity, SMT) | not started, outline only | C2 (done) |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| FMC-1 | Alloy skeleton | built 2026-10-08 |  |
+| FMC-2 | scheme composition | built 2026-10-07, results recorded | nothing — the overlap-rule *decision* is the maintainer's, not a blocker on this slice's own completion |
+| FMC-2.1 | well-formedness facts, re-run | built 2026-10-08 |  |
+| FMC-2.2 | model the composed scheme, decision-level check | planned 2026-10-08, queued |  |
+| FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | planned 2026-10-08, queued, recommended before `ADR-A116`'s acceptance |  |
+| FMC-3 | slot exclusivity, SMT | planned, outline only | FMC-2 (done) |
 
 ## Open questions
 
@@ -78,16 +78,16 @@ started.
 
 - 2026-10-06: sketch and plan written. HQ-4 and IMA-D4a read directly from `main`'s commit
   history and this repository's own CCS/insurml-alignment plans (not assumed): both explicitly
-  defer to track C2, confirming it as genuinely unblocked, green-field work. Alloy chosen over
-  SMT for C2 specifically, per the epic plan's own C2/C3 split (relational vs numeric), not
+  defer to track FMC-2, confirming it as genuinely unblocked, green-field work. Alloy chosen over
+  SMT for FMC-2 specifically, per the epic plan's own FMC-2/C3 split (relational vs numeric), not
   re-derived.
-- 2026-10-06: C1 done. Alloy Analyzer 6.2.0 installed at `C:\fmx\alloy\alloy.jar` (not tracked),
+- 2026-10-06: FMC-1 done. Alloy Analyzer 6.2.0 installed at `C:\fmx\alloy\alloy.jar` (not tracked),
   run under the mise-managed Java 25 JDK already on this host (the bare `java` on a fresh
   terminal's `PATH` is a stale 1.8.0_491 — invoke the JDK's own `bin\java.exe` explicitly).
   Smoke-tested via `exec` on a two-command model (`smoke.als`, not kept — a one-off toolchain
   check): a satisfiable `run` reported `SAT` with an instance in `receipt.json`, a deliberately
   unsatisfiable `run` reported `UNSAT` with no `solution` key.
-- 2026-10-06: C2 done. `SchemeComposition.als` built: `Scheme` given explicit `Concept` members
+- 2026-10-06: FMC-2 done. `SchemeComposition.als` built: `Scheme` given explicit `Concept` members
   and a `broader` hierarchy (needed to state the overlap question concretely, a refinement on the
   sketch's more abstract proposal found necessary once Alloy's type-checking was run against it),
   `single: Source -> Context -> lone Scheme` standing in for ADR-A85's whole resolver collapsed to

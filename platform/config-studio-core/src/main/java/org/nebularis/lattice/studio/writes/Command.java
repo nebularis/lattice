@@ -9,7 +9,7 @@ import org.apache.jena.rdf.model.Model;
 
 /**
  * One write to the store, as the service or the worker asks the workspace's writer to make it. Every write names the
- * workspace it belongs to, which is the key that routes it to one writer. A refresh job's writes name none and route by the job's own id. The graphs it carries are in {@code body}: the
+ * workspace it belongs to, which is the key that routes it to one writer. A rebuild job's writes name none and route by the job's own id. The graphs it carries are in {@code body}: the
  * default graph for the one graph a creation or a save carries, named graphs for an import, a job's submission and a
  * job's update. The fields a type does not use are null. {@code id} names the command, so its receipt names it and a
  * redelivered command is applied once, and {@code sender} says which component sent it, unauthenticated (TD-99). {@code
@@ -24,7 +24,7 @@ public record Command(String id, String sender, Type type, String workspace, Str
         CREATE("create"), SAVE("save"), IMPORT("import"), DELETE_WORKSPACE("delete-workspace"),
         SAVE_DOCUMENT("save-document"), DELETE_DOCUMENT("delete-document"), SUBMIT_JOB("submit-job"), JOB_UPDATE("job-update"),
         DELETE_JOB("delete-job"), SET_ACCESS("set-access"), PUBLISH("publish"),
-        SET_DEPENDENCIES("set-dependencies"), FENCE("fence"), RELEASE("release");
+        SET_DEPENDENCIES("set-dependencies"), FENCE("fence"), RELEASE("release"), PATCH("patch");
 
         public final String wire;
 
@@ -48,6 +48,18 @@ public record Command(String id, String sender, Type type, String workspace, Str
 
     public static Command save(String ws, String part, long expect, Instant at, Model graph) {
         return new Command(newId(), SERVICE, Type.SAVE, ws, null, part, expect, at, null, null, withDefault(graph), null, false);
+    }
+
+    /** The graph of the patch's added triples, and of its removed ones, in a patch command's body (DR-Q5 (c), DR-Q7 (b)). */
+    public static final String PATCH_ADD = "urn:lattice:studio:patch:add";
+    public static final String PATCH_DEL = "urn:lattice:studio:patch:del";
+
+    /** A part changed by what is added and removed against the revision {@code expect}, which the browser sends where it holds the part it read. */
+    public static Command patch(String ws, String part, long expect, Instant at, Model added, Model removed) {
+        Dataset body = DatasetFactory.create();
+        body.addNamedModel(PATCH_ADD, added);
+        body.addNamedModel(PATCH_DEL, removed);
+        return new Command(newId(), SERVICE, Type.PATCH, ws, null, part, expect, at, null, null, body, null, false);
     }
 
     /** {@code title} is the document's, and {@code template} its template's key, carried as the command's label and sample. */
@@ -104,16 +116,16 @@ public record Command(String id, String sender, Type type, String workspace, Str
         return new Command(newId(), SERVICE, Type.DELETE_JOB, ws, job, null, null, null, null, null, DatasetFactory.create(), null, false);
     }
 
-    /** A refresh job's submission (ADR-A149 decision 14), which names no workspace. The job graph is its only graph. */
-    public static Command submitRefresh(String job, Dataset graphs) {
+    /** A rebuild job's submission (ADR-A149 decision 14), which names no workspace. The job graph is its only graph. */
+    public static Command submitRebuild(String job, Dataset graphs) {
         return new Command(newId(), SERVICE, Type.SUBMIT_JOB, null, job, null, null, null, null, null, graphs, null, false);
     }
 
-    public static Command deleteRefresh(String job) {
+    public static Command deleteRebuild(String job) {
         return new Command(newId(), SERVICE, Type.DELETE_JOB, null, job, null, null, null, null, null, DatasetFactory.create(), null, false);
     }
 
-    /** The id that routes the write to its writer: the workspace's, or a refresh job's own, which names no workspace. */
+    /** The id that routes the write to its writer: the workspace's, or a rebuild job's own, which names no workspace. */
     public String routingId() {
         return workspace != null ? workspace : job;
     }

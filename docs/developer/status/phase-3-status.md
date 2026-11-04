@@ -4,7 +4,7 @@
 
 **Unit type:** Phase
 **Unit ID:** `phase-3`
-**Status:** ⏳ Rolling-wave placeholder — not started, full expansion awaits P2.11.4
+**Status:** planned. Rolling-wave placeholder, not started, full expansion awaits P2.11.4
 **Last updated:** 2026-09-22
 **Plan:** [phase-3-plan.md](../plans/phase-3-plan.md)
 **Sketch:** [phase-3-sketch.md](../sketches/phase-3-sketch.md)

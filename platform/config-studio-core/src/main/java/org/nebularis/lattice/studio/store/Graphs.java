@@ -152,18 +152,31 @@ public final class Graphs {
         return iri != null && VERSION_GRAPH.matcher(iri).matches();
     }
 
-    /** The studio's projections, each one graph that a refresh job replaces whole (ADR-A149 decision 14). */
-    public static final String PROJECTION_PREFIX = "urn:lattice:studio:projection:";
-    public static final java.util.List<String> PROJECTIONS = java.util.List.of("registry", "jobs", "holders", "terms", "summaries");
+    /** The graph of {@code source}'s promoted rows, its own partition, kept by the write of {@code source} (PM-Q1 (a′), PM-Q9 (iii)). */
+    public static final String PROMOTED_PREFIX = "urn:lattice:studio:promoted:";
 
-    public static String projection(String key) {
-        return PROJECTION_PREFIX + key;
+    /** The record of the contracts the last rebuild built the promoted partitions from (PM-Q3). */
+    public static final String PROMOTED_RECORD = "urn:lattice:studio:promoted-record";
+
+    public static String promoted(String source) {
+        return PROMOTED_PREFIX + source;
     }
 
-    /** Whether {@code iri} names one of the five projections. */
-    public static boolean isProjection(String iri) {
-        return iri != null && iri.startsWith(PROJECTION_PREFIX) && PROJECTIONS.contains(iri.substring(PROJECTION_PREFIX.length()));
+    /** Whether {@code iri} names a promoted partition, which only a write of its source or a rebuild writes. */
+    public static boolean isPromoted(String iri) {
+        return iri != null && iri.startsWith(PROMOTED_PREFIX) && familyOf(iri.substring(PROMOTED_PREFIX.length())) != null;
     }
+
+    /** The family of aggregates {@code graph} is the source of, as {@code cst:sourceFamily} names it, or null for any other graph. */
+    public static String familyOf(String graph) {
+        if (graph == null) return null;
+        if (graph.startsWith(DESCRIPTION_PREFIX)) return "description";
+        if (graph.startsWith(LINEAGE_PREFIX)) return "lineage";
+        if (graph.startsWith(VERSION_PREFIX)) return "version";
+        if (graph.startsWith(JOB_PREFIX) && isId(graph.substring(JOB_PREFIX.length()))) return "job";
+        return null;
+    }
+
 
     /** An import graph is global and immutable, stored once by the digest of its content whichever workspaces hold it. */
     public static final String IMPORT_PREFIX = "urn:lattice:studio:import:";

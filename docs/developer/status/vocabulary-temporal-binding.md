@@ -3,7 +3,7 @@
 # Vocabulary Temporal Binding - Status
 
 **Unit ID:** `vocabulary-temporal-binding`
-**Status:** Closed (2026-09-25). Vocabulary package, SHACL, and both real consumers (Surface, Eligibility) verified green. ADR-A85 Accepted.
+**Status:** built 2026-09-25. Closed (2026-09-25). Vocabulary package, SHACL, and both real consumers (Surface, Eligibility) verified green. ADR-A85 Accepted.
 **Last updated:** 2026-09-25
 **Trigger:** `65ac4a85e11cc1f8616e3e0c24efd59bf4ca410d`
 **Plan:** [vocabulary-temporal-fixes.md](../plans/vocabulary-temporal-fixes.md)
@@ -45,12 +45,12 @@ for the two SHACL checks that need one.
 
 ## Planned slices
 
-| Slice | Status | Scope |
-|---|---|---|
-| 1. Decision and documentation foundation | Done (prior session) | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton |
-| 2. Examples and SHACL constraints | Verified, 14/14 package tests pass | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` |
-| 3. Resolution reference implementation | Verified, included in 14/14 package tests | `tools/vocabulary` resolver + determinism/precedence/conflict tests |
-| 4. Consumer/provenance integration | Complete, verified | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`); Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve to; both proven against dedicated fixtures |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | built 2026-09-25, prior session |  |
+| VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | verified 2026-09-25, 14/14 package tests pass |  |
+| VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | verified 2026-09-25, included in 14/14 package tests |  |
+| VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve to, both proven against dedicated fixtures | built 2026-09-25, verified |  |
 
 ## Decisions made during implementation (flagged for the maintainer's review)
 

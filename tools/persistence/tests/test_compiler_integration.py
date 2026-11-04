@@ -222,7 +222,7 @@ class TestEpochGuardScopeTemplateSelection:
         assert len(compiled) == 1
         cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
         assert len(cas_ops) == 1
-        assert cas_ops[0].template_id == "cas-replace-named-graph-patch-log-dataset-guard"  # the example declares dal:PatchLog (H2.6d)
+        assert cas_ops[0].template_id == "cas-replace-named-graph-delta-patch-log-dataset-guard"  # the example declares dal:PatchLog (H2.6d) and, under dal:Optimistic, takes the delta replace (DR1)
 
         rendered = instantiate_profile(out)
         text = rendered["cas-replace"]
@@ -240,7 +240,7 @@ class TestEpochGuardScopeTemplateSelection:
         _, compiled = compile_to_graph(g, classes={target})
         cas_ops = [o for o in compiled[0].operations if o.operation == "cas-replace"]
         assert len(cas_ops) == 1
-        assert cas_ops[0].template_id == "cas-replace-named-graph-patch-log"  # the example declares dal:PatchLog (H2.6d)
+        assert cas_ops[0].template_id == "cas-replace-named-graph-delta-patch-log"  # the example declares dal:PatchLog (H2.6d) and, under dal:Optimistic, takes the delta replace (DR1)
 
 
 def test_instantiate_keeps_every_target_apart(tmp_path):

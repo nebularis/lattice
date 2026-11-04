@@ -2,8 +2,10 @@
 
 # Surface-MORK Unified Projection Program — Status Record
 
+**Unit ID:** `surface-mork-unified-projection`
+
 **Unit:** `surface-mork-unified-projection`  
-**Status:** Phases 0-8 complete; Phases 9-10 planned, not started  
+**Status:** merged 2026-09-22. Phases 0-8 complete, Phases 9-10 planned, not started  
 **Last updated:** 2026-09-22  
 **Owner:** Surface and MORK maintainers
 

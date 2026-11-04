@@ -193,7 +193,7 @@ carries its declarations as data:
 
 Capabilities let the assembler check a form before assembling it. A form that uses a construct its
 model neither reads nor lowers is refused at design time with a diagnostic, never assembled with
-the construct silently dropped (law WA3).
+the construct silently dropped (law WA-3).
 
 ## 6. The hooks
 
@@ -240,7 +240,7 @@ several) become diagnostics at the decide, resolve content and resolve reference
 | reference resolutions | | one record per reference (H5) |
 | numbers | | a numbering record, or object ids on the instance's view (H8) |
 | inherited values | | derived, not stored in the record (H6) |
-| lowerings applied | | which constructs were carried by lowering, and how (WA3) |
+| lowerings applied | | which constructs were carried by lowering, and how (WA-3) |
 | provenance | Foundation | the assembly as a `prov:Activity` using the form, settings, model and kit versions, by digest |
 
 ```turtle
@@ -329,7 +329,7 @@ flowchart BT
 | MORK and Executable | the lift's mapping record, compiled condition plans, diagnostics (H10) | |
 
 Assembly sits entirely at design and issue time. Nothing in it is evaluated per event, as Wording
-§5.11 already states, and law WA4 makes that a rule for every model.
+§5.11 already states, and law WA-4 makes that a rule for every model.
 
 ## 10. InsurML as the insurance default
 
@@ -367,13 +367,13 @@ Proposed, for the Wording ADR.
 
 | # | Law |
 |---|---|
-| WA1 | An assembled wording names exactly one assembly model version |
-| WA2 | Whatever the model, the record satisfies W3 to W6, and W8 once transclusions exist |
-| WA3 | A form is assembled only under a model whose capabilities cover its constructs, directly or by a declared lowering, and the record lists every lowering applied |
-| WA4 | Assembly reads the form, the settings and the choices only, never runtime records or state |
-| WA5 | The same form version, settings, choices and model version give the same record, up to minted identifiers |
-| WA6 | A failed assembly produces diagnostics and no record. No partial record is published |
-| WA7 | Two realisations of one model agree on every fixture of the parity suite |
+| WA-1 | An assembled wording names exactly one assembly model version |
+| WA-2 | Whatever the model, the record satisfies W3 to W6, and W8 once transclusions exist |
+| WA-3 | A form is assembled only under a model whose capabilities cover its constructs, directly or by a declared lowering, and the record lists every lowering applied |
+| WA-4 | Assembly reads the form, the settings and the choices only, never runtime records or state |
+| WA-5 | The same form version, settings, choices and model version give the same record, up to minted identifiers |
+| WA-6 | A failed assembly produces diagnostics and no record. No partial record is published |
+| WA-7 | Two realisations of one model agree on every fixture of the parity suite |
 
 ## 12. Where it lives, and alternatives
 

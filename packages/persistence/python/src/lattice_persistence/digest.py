@@ -96,4 +96,33 @@ def request_digest(operation: ProfileOperation, values: Mapping[str, object]) ->
     return digest_hex(request_input(operation, values))
 
 
-__all__ = ["DigestError", "enc", "digest_input", "digest_hex", "request_input", "request_digest"]
+def state_digest(state: Payload) -> str:
+    """The digest of an aggregate's state, recorded by `record-state-digest` where the family declares `dal:recordsStateDigest` (DR4).
+    It is ``hex(SHA-256(enc(lines)))`` over the sorted, de-duplicated canonical N-Triples lines of the state, so an empty state has a
+    digest too, and a caller recomputes it from what `state-digest-audit` returns."""
+    return digest_hex(enc(sorted(set(state.lines()))))
+
+
+def compose(*requests: str) -> str:
+    """One update request from several filled operations, in order (DR4). A bulk load composes, for each aggregate, its create and its
+    `replace-whole`, and a write that records its state digest is followed by `record-state-digest`. Each operation's `PREFIX` and `BASE`
+    lines are hoisted into one prologue at the head, since Oxigraph refuses a prologue after `;` although SPARQL 1.1 allows it (TSD-68).
+    A prefix two operations bind to different IRIs is refused. A store applies one request atomically where it says it does."""
+    if not requests:
+        raise ValueError("compose needs at least one request")
+    prologue: dict[str, str] = {}
+    bodies = []
+    for request in requests:
+        lines = request.strip().rstrip(";").splitlines()
+        while lines and (lines[0].strip() == "" or lines[0].lstrip().upper().startswith(("PREFIX", "BASE"))):
+            line = lines.pop(0).strip()
+            if not line:
+                continue
+            key = " ".join(line.split()[:2]).upper() if line.upper().startswith("PREFIX") else "BASE"
+            if prologue.setdefault(key, line) != line:
+                raise ValueError(f"two operations declare {key} differently, {prologue[key]!r} and {line!r}")
+        bodies.append("\n".join(lines).strip())
+    return "\n".join([*prologue.values(), "", " ;\n".join(bodies)]).strip()
+
+
+__all__ = ["DigestError", "enc", "digest_input", "digest_hex", "request_input", "request_digest", "state_digest", "compose"]

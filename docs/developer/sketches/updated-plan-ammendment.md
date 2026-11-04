@@ -20,10 +20,10 @@ becomes of it, is to be decided.
 | **AM-03** | Part 0.4, guardrail **G2** | 3 | Restatement |
 | **AM-04** | Part 0.2 slice shape; slices P0.2.1–P0.2.4, P0.9.3, P0.9.5; Part 12 item 8 | 4, §2 | **Toolchain correction** — `mise` sole orchestrator, Maven, Yarn 4 |
 | **AM-05** | Part 1 in full | 5, §1 | **Replacement** — logical topology, no filesystem relocation |
-| **AM-06** | Part 1 module names; M1; P0.5.3/.11/.12; P0.1.10 | 6 | Naming resolution |
+| **AM-06** | Part 1 module names, M1, P0.5.3/.11/.12, PLT-0.1.10 | 6 | Naming resolution |
 | **AM-07** | P0.3.3; new slice **P0.1.16** | 5 (last bullet) | **Addition** — platform-vocabulary home becomes a decision |
-| **AM-08** | P0.1.1 | 1 | Scope extension — explicit ADR supersession |
-| **AM-09** | P0.1.9; P1.4; P1.11.1 | 7 | **Relocation** — release/provenance rule made normative earlier |
+| **AM-08** | PLT-0.1.1 | 1 | Scope extension — explicit ADR supersession |
+| **AM-09** | PLT-0.1.9, P1.4, P1.11.1 | 7 | **Relocation** — release/provenance rule made normative earlier |
 | **AM-10** | P1.2.3 | §3 | Scope extension — reference migration with alias period |
 | **AM-11** | P0.7.6 | 5, §2 | Replacement — extend existing Compose, do not rename |
 | **AM-12** | New slice **P0.2.10** | §4 | **Addition** — Copilot instructions update |
@@ -227,7 +227,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 ## AM-06 — Canonical module and report names
 
-**Where.** Part 1 (handled by AM-05); milestone **M1**; slices **P0.5.3**, **P0.5.11**, **P0.5.12**; slice **P0.1.10**.
+**Where.** Part 1 (handled by AM-05), milestone **M1**, slices **P0.5.3**, **P0.5.11**, **P0.5.12**, slice **PLT-0.1.10**.
 
 **Why.** Review finding 6: the plan's topology said `graph-spi-tck` while M1 said `semantic-dataset-tck`. Combined with finding 5, the resolution is to keep the existing prefix everywhere.
 
@@ -239,9 +239,9 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 | Part 1 | `graph-spi-tck` | **`semantic-dataset-tck`** — also the public, published report name |
 | Part 1, P0.5.3, P0.5.11 | `graph-adapter-tdb2` | **`semantic-dataset-tdb2`** |
 | Part 1, P0.5.12 | `graph-adapter-fuseki` | **`semantic-dataset-fuseki`** (existing module, extended) |
-| Part 1 | `runtime-host` | **`platform/runtime-host`** — confirmed, with the `surface-control-plane` rename handled in P0.1.10 |
+| Part 1 | `runtime-host` | **`platform/runtime-host`** — confirmed, with the `surface-control-plane` rename handled in PLT-0.1.10 |
 
-**P0.1.10 scope addition.** Append to the Scope cell:
+**PLT-0.1.10 scope addition.** Append to the Scope cell:
 
 > Also resolves module naming: A44's amendment renames the never-created `platform/surface-control-plane` to `platform/runtime-host` and edits `solution-design-specification.md §4.2` in the same slice, since A50 makes the module role-profiled rather than Surface-specific. The canonical names of AM-06 are recorded here so CI and documentation never reference a withdrawn name.
 
@@ -269,27 +269,27 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 ---
 
-## AM-08 — P0.1.1 must state ADR supersession explicitly
+## AM-08 — PLT-0.1.1 must state ADR supersession explicitly
 
-**Where.** Slice **P0.1.1**, Deliverable and Validation-focus cells.
+**Where.** Slice **PLT-0.1.1**, Deliverable and Validation-focus cells.
 
 **Why.** Review finding 1: graph-primary is a deliberate replacement of the accepted three-realm model, ADR-A33's PostgreSQL lifecycle ledger, and ADR-A34's registry. The plan placed the rewrite correctly but did not require the supersession to be named, which would leave two accepted-and-contradictory ADR sets in the catalogue.
 
-**Replacement text for the P0.1.1 row.**
+**Replacement text for the PLT-0.1.1 row.**
 
 | Slice | Deliverable | Validation focus | Executable consequence |
 |---|---|---|---|
-| **P0.1.1** | **ADR-A74 graph-primary realm model**, which must contain an explicit supersession section naming, at minimum: **ADR-A33** (surface revision ledger and optimistic concurrency) — superseded as to storage realm, **preserved as to the `expectedVersion`/`409` contract**, which P1.1.2 must not change; **ADR-A34** (graph-family registry and immutable identity) — superseded as to enforcement mechanism, preserved as to intent, with uniqueness becoming structural per A51; **ADR-A30** (cross-runtime boundary) — amended where it assumes a PostgreSQL system of record; **ADR-A39** — PostgreSQL portions superseded; **ADR-A31** — **unaffected**, with the review's boundary restatement added to `§4.4` as an addition, not a reversal; **ADR-A29** — **unaffected**. Plus the rewrite of `data-architecture.md §1–§3, §5–§7` incorporating the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) as ratified in P0.0.1 | Is every contradicted ADR named? Is A33's concurrency contract preserved verbatim while its storage realm changes? Does the rewritten `§5` still contain the seven original concurrent-access rules in equivalent form, plus new rule 8 (no direct store access)? | ArchUnit G2/G2a; `docs/architecture/decisions/README.md` supersession map updated in the same slice |
+| **PLT-0.1.1** | **ADR-A74 graph-primary realm model**, which must contain an explicit supersession section naming, at minimum: **ADR-A33** (surface revision ledger and optimistic concurrency) — superseded as to storage realm, **preserved as to the `expectedVersion`/`409` contract**, which P1.1.2 must not change, **ADR-A34** (graph-family registry and immutable identity) — superseded as to enforcement mechanism, preserved as to intent, with uniqueness becoming structural per A51, **ADR-A30** (cross-runtime boundary) — amended where it assumes a PostgreSQL system of record, **ADR-A39** — PostgreSQL portions superseded, **ADR-A31** — **unaffected**, with the review's boundary restatement added to `§4.4` as an addition, not a reversal, **ADR-A29** — **unaffected**. Plus the rewrite of `data-architecture.md §1–§3, §5–§7` incorporating the artifact-realm exception (AM-03) and the Phase 0 durable-data scope (AM-02) as ratified in P0.0.1 | Is every contradicted ADR named? Is A33's concurrency contract preserved verbatim while its storage realm changes? Does the rewritten `§5` still contain the seven original concurrent-access rules in equivalent form, plus new rule 8 (no direct store access)? | ArchUnit G2/G2a, `docs/architecture/decisions/README.md` supersession map updated in the same slice |
 
 ---
 
 ## AM-09 — Release publish classification and the T5 rule become normative in Phase 0
 
-**Where.** (a) Slice **P0.1.9**, Deliverable cell — extend. (b) Slice group **P1.4** — add a dependency note. (c) Slice **P1.11.1** — remove one item.
+**Where.** (a) Slice **PLT-0.1.9**, Deliverable cell — extend. (b) Slice group **P1.4** — add a dependency note. (c) Slice **P1.11.1** — remove one item.
 
 **Why.** Review finding 7: `solution-design-specification.md §2.2` and process map P3 contradict each other on release publish, and P3 shows an unprotected PostgreSQL→Fuseki dual write. The review's instruction is to make the replacement rule normative **before** the release ledger is retained or migrated. My plan put the §2.2 fix in P1.11.1, a close-out documentation slice that runs *after* P1.4 migrates the ledger.
 
-**P0.1.9 Deliverable replacement.**
+**PLT-0.1.9 Deliverable replacement.**
 
 > **ADR-A48 (replace): transaction boundary catalogue.** T1–T12 enumerated with mechanism, residual risk, and detector; the three rules stated normatively in `solution-design-specification.md §7.2` — *no unprotected dual write*, *content addressing is what makes sagas safe*, *every saga has a named reaper*. **Additionally, and in this slice:** (a) resolve G-21 by reclassifying release publish in `§2.2` as **synchronous with a bounded deadline** (30 s soft, 120 s hard), deleting the "background operation" language, and making P3 in `§2.4` agree with the table; (b) state that if signing or registry push is enabled, that specific step becomes a job on `lattice.release.publish` with the receipt recorded on completion; (c) state the T5 rule normatively — **every PostgreSQL→RDF-store write, and under A74 every operation spanning the graph and any other realm, goes through the outbox or a named saga**, and the `§5.3` provenance alert is redefined from an expected race into a genuine anomaly detector.
 
@@ -299,7 +299,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 **P1.11.1 replacement.** Remove `§2.2 (G-21 publish deadline)` from the list, since AM-09 moves it to P0.1.9. The remaining scope is:
 
-> Update `solution-design-specification.md` §1 (NFR/tenancy/OSS columns + runtime rows), §4.1, §4.5 (extended topology with ordering classes), §4.6 (four missing failure modes from G-25), and confirm §7.2 matches what P0.1.9 ratified and what Phase 1 actually built.
+> Update `solution-design-specification.md` §1 (NFR/tenancy/OSS columns + runtime rows), §4.1, §4.5 (extended topology with ordering classes), §4.6 (four missing failure modes from G-25), and confirm §7.2 matches what PLT-0.1.9 ratified and what Phase 1 actually built.
 
 ---
 
@@ -344,7 +344,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 
 | Slice | Scope | Tests / validation |
 |---|---|---|
-| **P0.2.10** | **Update `.github/copilot-instructions.md`** to make the v0.2 process enforceable. Required edits: (1) an implementation slice must ship `docs/validation/<slice-id>.md` in the prescribed Validation Pack shape; (2) it must ship a `docs/traceability/matrix.csv` row and an explicit *deliberate non-coverage* statement; (3) **`mise` remains the only task-runner authority unless ADR-A29 is superseded** — agents must not introduce `make`, `just`, Gradle, or `pnpm`; (4) once A74 is accepted, add the graph-primary authority rule **and** the G2a artifact-realm exception; (5) agents must stop for the maintainer's architectural guidance at every decision slice (already required in principle — made explicit); (6) replace the blanket "all listed architecture documents must be updated" wording with "update each *affected* normative document", retaining the existing minimum set for cross-cutting changes. **Blocked by P0.0 and by P0.1.1** — the instructions must not encode an unratified rule | Review against the ratification record; a deliberate probe: ask a fresh agent session to add a `justfile` task and confirm it refuses and cites A29 |
+| **P0.2.10** | **Update `.github/copilot-instructions.md`** to make the v0.2 process enforceable. Required edits: (1) an implementation slice must ship `docs/validation/<slice-id>.md` in the prescribed Validation Pack shape, (2) it must ship a `docs/traceability/matrix.csv` row and an explicit *deliberate non-coverage* statement, (3) **`mise` remains the only task-runner authority unless ADR-A29 is superseded** — agents must not introduce `make`, `just`, Gradle, or `pnpm`, (4) once A74 is accepted, add the graph-primary authority rule **and** the G2a artifact-realm exception, (5) agents must stop for the maintainer's architectural guidance at every decision slice (already required in principle — made explicit), (6) replace the blanket "all listed architecture documents must be updated" wording with "update each *affected* normative document", retaining the existing minimum set for cross-cutting changes. **Blocked by P0.0 and by PLT-0.1.1** — the instructions must not encode an unratified rule | Review against the ratification record, a deliberate probe: ask a fresh agent session to add a `justfile` task and confirm it refuses and cites A29 |
 
 ---
 
@@ -389,7 +389,7 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 | `ontology/platform/` | Part 1; P0.3.3 | Home decided by ADR-A76 (AM-07) |
 | `workers/mapping_plan_compiler/` etc. as sibling roots | Part 1 | `lattice_workers.*` sub-packages (AM-05 §1.3) |
 | `clients/client-java`, `clients/client-python` as a new root | Part 1 | `platform/client-java`; `lattice_workers.client` |
-| `platform/surface-control-plane` (implied by spec §4.2) | Part 1 | `platform/runtime-host`, renamed in P0.1.10 |
+| `platform/surface-control-plane` (implied by spec §4.2) | Part 1 | `platform/runtime-host`, renamed in PLT-0.1.10 |
 
 **Validation for the sweep.** A CI grep gate over `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` and all VPs failing on any withdrawn token. This is the cheapest possible guard against the plan itself being the source of the drift.
 
@@ -404,12 +404,12 @@ The toolchain corrections in AM-04 remain in force. `mise` remains the sole orch
 | AM-07 adds P0.1.16 and blocks P0.3.3 | Half a day of decision work; P0.3.3 was not on the critical path ahead of P0.4 by more than that |
 | AM-09 moves the G-21/T5 rule earlier | No net change to effort; changes ordering so P1.4 is no longer built against an unratified rule |
 | AM-10 splits P1.2.3 and adds P1.2.4 | One slice added; P1.7 now blocked by P1.2.4 |
-| AM-12 adds P0.2.10 | One slice; must run after P0.0 and P0.1.1 |
+| AM-12 adds P0.2.10 | One slice, must run after P0.0 and PLT-0.1.1 |
 
 **Critical path (Part 14) is unchanged in shape.** It now begins one gate earlier:
 
 ```
-P0.0 (ratification) ─► P0.1.1/3/4/5/6/8/16 (ADRs) ─► P0.3.3 ─► P0.4 ─► P0.5 ─► M1 ─► …
+P0.0 (ratification) ─► PLT-0.1.1/3/4/5/6/8/16 (ADRs) ─► P0.3.3 ─► P0.4 ─► P0.5 ─► M1 ─► …
 ```
 
 The three slices deserving disproportionate attention are unchanged: **P0.4** (canonicalisation), **P0.5.8** (scoping hostile suite), **P2.1** (mapping plan compiler). **P0.0** now joins them as the cheapest high-leverage gate in the plan.

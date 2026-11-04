@@ -136,7 +136,12 @@ class StudioOperationsTest {
         assertFalse(one.get(0).toString().contains("\"old 0\""), "the delta's request carries no unchanged triple");
         linear.run(one);
         assertEquals(Optional.of(2L), ops.seq(linear.store, f, root));
-        assertEquals(generated.quads(), linear.quads());
+        // the claim's request digest is over the delta for the delta replace and over the state for the whole one (DR-Q3 (a)), so
+        // the two stores differ in that one quad and in nothing else
+        java.util.function.Predicate<String> digest = q -> q.contains("persistence-store#requestDigest");
+        assertEquals(generated.quads().stream().filter(digest.negate()).collect(java.util.stream.Collectors.toSet()),
+            linear.quads().stream().filter(digest.negate()).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(1, linear.quads().stream().filter(digest).filter(q -> !generated.quads().contains(q)).count());
         assertTrue(linear.store.graph(ops.graph(f, root)).isIsomorphicWith(next));
 
         Set<String> before = linear.quads();
@@ -156,10 +161,11 @@ class StudioOperationsTest {
     @EnumSource(value = Family.class, names = {"PART", "DOCUMENT"})
     void theLogHoldsTheDeltaGiven(Family f) {
         String root = rootOf(f);
-        Model old = model(root, "old", 10);
-        Model next = model(root, "new", 8);
         Model asserted = model(root, "asserted", 3);
         Model retracted = model(root, "retracted", 2);
+        // the delta leads from the old state to the next one, which the caller check holds it to (STD-316)
+        Model old = model(root, "old", 10).add(retracted);
+        Model next = ModelFactory.createDefaultModel().add(old).remove(retracted).add(asserted);
         for (boolean linear : new boolean[] {false, true}) {
             Fixture s = Fixture.create();
             s.run(ops.create(f, root, old, "urn:txn:d/1"));

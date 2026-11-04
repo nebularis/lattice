@@ -2,7 +2,9 @@
 
 # Implementation Validation Status
 
-**Status:** Accepted with recorded residuals
+**Unit ID:** `validation-status`
+
+**Status:** merged 2026-09-20. Accepted with recorded residuals
 **Governing ADR:** [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)
 
 Date: 2026-09-20  

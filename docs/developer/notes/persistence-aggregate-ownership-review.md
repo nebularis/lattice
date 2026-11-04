@@ -12,7 +12,7 @@ was answered the same day: option a (H-D17).
 (commit `8141756`, "the note" below, cited as note §n or note:line) and its spike
 [`spikes/persistence-aggregate-ownership`](../../../spikes/persistence-aggregate-ownership/README.md)
 ("the spike"). Also read: the feedback that prompted the note, the H-D13 walkthrough in the
-[H1.4a Validation Pack](../validation/FMH-H1-4a.md), the composite and named-graph templates, `boundary.py`,
+[FMH-1.4a Validation Pack](../validation/FMH-1.4a.md), the composite and named-graph templates, `boundary.py`,
 `operations.py`, `validator.py`, the [persistence README](../../../ontology/persistence/README.md) and
 [`tools/persistence/README.md`](../../../tools/persistence/README.md).
 **Method:** reading only. Nothing was run for this review. Every claim about the code cites the line
@@ -57,9 +57,9 @@ Only [`payload_graph.py`](../../../spikes/persistence-aggregate-ownership/payloa
 the compiler generated. [`placement.py`](../../../spikes/persistence-aggregate-ownership/placement.py) and
 [`concurrency_model.py`](../../../spikes/persistence-aggregate-ownership/concurrency_model.py) are models.
 
-**S1. The "today" closure simulates the compiler before H1.4a.** `first_property_path` ([placement.py:115](../../../spikes/persistence-aggregate-ownership/placement.py)) sorts the `Placement` entry of `OWNED_TREE` and follows the first property. The real walk collects node properties across the whole shape tree ([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py)), and the compiler refuses the placement shape under H1.4a because it has several node properties. The verdict at [note:123](persistence-aggregate-ownership.md) and the test `test_the_first_property_alone_reaches_only_the_tower` ([test_spike.py:31](../../../spikes/persistence-aggregate-ownership/test_spike.py)) describe the pre-H1.4a compiler. Today the shape is refused.
+**S1. The "today" closure simulates the compiler before H1.4a.** `first_property_path` ([placement.py:115](../../../spikes/persistence-aggregate-ownership/placement.py)) sorts the `Placement` entry of `OWNED_TREE` and follows the first property. The real walk collects node properties across the whole shape tree ([boundary.py:81](../../../tools/persistence/src/persistence/boundary.py)), and the compiler refuses the placement shape under FMH-1.4a because it has several node properties. The verdict at [note:123](persistence-aggregate-ownership.md) and the test `test_the_first_property_alone_reaches_only_the_tower` ([test_spike.py:31](../../../spikes/persistence-aggregate-ownership/test_spike.py)) describe the pre-H1.4a compiler. Today the shape is refused.
 
-**S2. The figures assume an answer to Q1.** `OWNED_TREE` owns `connectsPolicy` ([placement.py:85](../../../spikes/persistence-aggregate-ownership/placement.py)). The "12 nodes" ([note:151](persistence-aggregate-ownership.md)), the policy with two owners and the inbound quote (note §4.3) all follow from that. With Q1 answered "reference" ([§6](#6-the-twelve-questions-answered)), the closure is 11 nodes and both §4.3 examples disappear. A single-owner check is still needed in general, and HO0 rebuilds its example from a document owned by two layers.
+**S2. The figures assume an answer to Q1.** `OWNED_TREE` owns `connectsPolicy` ([placement.py:85](../../../spikes/persistence-aggregate-ownership/placement.py)). The "12 nodes" ([note:151](persistence-aggregate-ownership.md)), the policy with two owners and the inbound quote (note §4.3) all follow from that. With Q1 answered "reference" ([§6](#6-the-twelve-questions-answered)), the closure is 11 nodes and both §4.3 examples disappear. A single-owner check is still needed in general, and FMH-HO0 rebuilds its example from a document owned by two layers.
 
 **S3. The two tree closures differ.** `unrolled_paths` checks the child's `rdf:type` ([placement.py:136](../../../spikes/persistence-aggregate-ownership/placement.py)), taking the first type rdflib returns, in an arbitrary order. `unrolled_sparql` ([placement.py:142](../../../spikes/persistence-aggregate-ownership/placement.py)) checks no type. They agree on this graph only. The SPARQL form is what a template can carry. **Decided:** the delete set follows paths and does not check types. The path from the root carries the context, and a wrongly typed edge is a data error that SHACL validation of the aggregate catches.
 
@@ -73,7 +73,7 @@ correct and over-protective.
 
 ## 4. Findings against the note and the code
 
-**F1. A referenced entity can be deleted today.** The note says "never delete a referenced entity" holds by accident ([note:127](persistence-aggregate-ownership.md)) and that the `sh:node` problem "is limited by the one-property rule" ([note:230](persistence-aggregate-ownership.md)). Neither holds. A shape whose only `sh:node` is a reference, for example `[ sh:path ex:placedBy ; sh:node ex:CustomerShape ]`, with line items declared through `sh:class`, is accepted by H1.4a. [operations.py:164](../../../tools/persistence/src/persistence/operations.py) binds `placedBy`, and the replace sweeps `$root ex:placedBy+ ?member . ?member ?p2 ?o2`, which deletes the customer's triples. Reasoned from the code, not run. Neither the spike nor the H1.4a tests cover it. Registered as TD-35.
+**F1. A referenced entity can be deleted today.** The note says "never delete a referenced entity" holds by accident ([note:127](persistence-aggregate-ownership.md)) and that the `sh:node` problem "is limited by the one-property rule" ([note:230](persistence-aggregate-ownership.md)). Neither holds. A shape whose only `sh:node` is a reference, for example `[ sh:path ex:placedBy ; sh:node ex:CustomerShape ]`, with line items declared through `sh:class`, is accepted by H1.4a. [operations.py:164](../../../tools/persistence/src/persistence/operations.py) binds `placedBy`, and the replace sweeps `$root ex:placedBy+ ?member . ?member ?p2 ?o2`, which deletes the customer's triples. Reasoned from the code, not run. Neither the spike nor the FMH-1.4a tests cover it. Registered as TD-35.
 
 **F2. The composite replace is quadratic.** The template's two independent `OPTIONAL`s (`cas-replace-composite-property.mustache:53`) join to one solution per pair of a root triple and a member triple. A root with 20 triples and members with 2,000 triples gives 40,000 solutions for one write. Sweeping with a single pattern whose subject ranges over the root and the members makes it linear. Reasoned from SPARQL's join semantics, not measured. Registered as TD-36.
 
@@ -121,7 +121,7 @@ uses only characters the encoding also emits, so `urn:g:` plus the encoding of a
 `orders` can equal `urn:g:orders` plus the encoding of another root. A suffix that begins with such a
 character has the same problem at the other end. Two rules restore injectivity: the template
 prefixes of all named-graph families form an antichain, and a non-empty suffix begins with a character
-`ENCODE_FOR_URI` never emits, for example `/`. HO8 adds both as refusals
+`ENCODE_FOR_URI` never emits, for example `/`. FMH-HO8 adds both as refusals
 ([sketch §9](../sketches/persistence-aggregate-ownership.md#9-named-graph-naming-ao-q13-ho8)), and
 H4's IRI-template injectivity check (Z3 strings) verifies them.
 
@@ -151,7 +151,7 @@ states each one as a buildable rule.
 | AO-Q8 | **Membership is computed inside the update**, from one property path compiled from the tree. No membership index | Linear in aggregate size, and correct on a single-writer store (S5) |
 | AO-Q9 | **Recursion is supported.** The shape graph may contain cycles of owned edges, compiled to `*`. `BoundaryCycleError` and `dal:maxTraversalDepth` are removed | SPARQL path evaluation terminates on cyclic data. The risk is a wrongly typed edge, which validation catches |
 | AO-Q10 | **Reference data is declared per class** with `dal:ReferenceData` and `dal:coversClass`. `skos:Concept` and `skos:ConceptScheme` are reference data without declaration. An owned edge to reference data is refused unless the profile declares `dal:ownsReferenceData true` (F8) | Covers non-SKOS sets such as currency codes |
-| AO-Q11 | **Track H.** H-D13 is decided now as Option 1, a stop-gap whose unchecked precondition is F1. H1.4b proceeds and reports F1, F2, F4 and TD-39. H1.5 proceeds. H2 waits only for its typing of the closure, which follows HO5 | Stable labels and the gap report do not depend on the ownership design |
+| AO-Q11 | **Track H.** H-D13 is decided now as Option 1, a stop-gap whose unchecked precondition is F1. FMH-1.4b proceeds and reports F1, F2, F4 and TD-39. FMH-1.5 proceeds. H2 waits only for its typing of the closure, which follows FMH-HO5 | Stable labels and the gap report do not depend on the ownership design |
 | AO-Q12 | **An ADR amending A78**, numbered ADR-A122 unless taken by merge time, drafted as Proposed from the sketch on 2026-10-10 | The change alters A78's decision 4 |
 
 ## 7. One new question, AO-Q13
@@ -229,9 +229,9 @@ deployments and not an unusual choice. The condition holds.
   aggregates in one named graph, named in every query, is the portable choice. Relying on the
   default graph is the less portable one.
 
-So HO1 is unchanged: it fixes today's template, which has no data graph yet. HO3 adds
-`dal:dataGraph`, mandatory on a composite profile, with a shape. HO5 adds the refusal
-`MissingDataGraph` and wraps every composite pattern and payload in `GRAPH {{{dataGraph}}}`, and HO7
+So FMH-HO1 is unchanged: it fixes today's template, which has no data graph yet. FMH-HO3 adds
+`dal:dataGraph`, mandatory on a composite profile, with a shape. FMH-HO5 adds the refusal
+`MissingDataGraph` and wraps every composite pattern and payload in `GRAPH {{{dataGraph}}}`, and FMH-HO7
 does the same for create and tombstone delete.
 
 ## 8. Track H, re-sequenced
@@ -239,25 +239,25 @@ does the same for create and tombstone delete.
 The slices themselves are in the [plan](../plans/formal-methods-track-h.md#35-ho-aggregate-ownership).
 In order:
 
-1. H-D13 decided (Option 1, stop-gap). The maintainer's merge signs off H1.4a with the rest.
-2. HO0: correct the note and the spike (S1, S2, S5 and the findings).
-3. HO1: fix TD-39 and TD-36 in the existing composite template.
-4. H1.4b and H1.5, as planned, with the additions in AO-Q11.
-5. HO2: ADR-A122, drafted 2026-10-10 and Proposed. The maintainer accepts it with the work package.
-6. HO3: the vocabulary. HO4: the ownership tree and the path compiler, added beside the old walk.
-   HO5: the switch-over, closing TD-03, TD-35 and TD-37. HO6: the refusals and the warning. HO7:
+1. H-D13 decided (Option 1, stop-gap). The maintainer's merge signs off FMH-1.4a with the rest.
+2. FMH-HO0: correct the note and the spike (S1, S2, S5 and the findings).
+3. FMH-HO1: fix TD-39 and TD-36 in the existing composite template.
+4. FMH-1.4b and FMH-1.5, as planned, with the additions in AO-Q11.
+5. FMH-HO2: ADR-A122, drafted 2026-10-10 and Proposed. The maintainer accepts it with the work package.
+6. FMH-HO3: the vocabulary. FMH-HO4: the ownership tree and the path compiler, added beside the old walk.
+   FMH-HO5: the switch-over, closing TD-03, TD-35 and TD-37. FMH-HO6: the refusals and the warning. FMH-HO7:
    composite create and tombstone delete, closing TD-04.
-7. HO8 (TD-38), any time after HO3. HO9: documentation and close-out.
+7. FMH-HO8 (TD-38), any time after HO3. FMH-HO9: documentation and close-out.
 8. H2, whose IR then types the classified tree, the payload check and the required-parameter guard
    (TD-34).
 
 ## 9. What changes in the note and the spike
 
-Made by HO0, specified in the plan. Summarised here so a reader of the note knows what is wrong in it.
+Made by FMH-HO0, specified in the plan. Summarised here so a reader of the note knows what is wrong in it.
 
 | Where | Change |
 |---|---|
-| note §1, §3 row "Delete the outgoing triples" (line 123) | describes the compiler before H1.4a (S1) |
+| note §1, §3 row "Delete the outgoing triples" (line 123) | describes the compiler before FMH-1.4a (S1) |
 | note §3 row "Never delete a referenced entity" (line 127), §4.5 (lines 230-231) | the hazard is live today (F1) |
 | note §4.1 ("12 nodes"), §4.3 | Pol1 is a reference (AO-Q1). 11 nodes. Two owners shown with a shared document |
 | note §9.1 | "by construction" restated (F6) |

@@ -2,6 +2,9 @@
 
 # SPC Package Split Status
 
+**Unit ID:** `spc-package-split`
+**Status:** merged 2026-09-20. Accepted.
+
 **Unit:** `spc-package-split`
 **State:** Accepted
 **Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)

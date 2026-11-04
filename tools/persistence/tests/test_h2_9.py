@@ -62,7 +62,7 @@ def test_h2_9_t3_the_receipt_only_composite_writes_have_no_builder_and_a_named_g
         _composite_create(None, guards=True, dataset_guard=False, receipt="receipt")
     (ct,) = compile_targets(witness._load_fixture(witness.WITNESS_DIR / "write-discipline-snapshot-named-graph.ttl"))
     assert "ReceiptModelNotHonoured" in {d.kind for d in ct.diagnostics}
-    assert {o.operation: o.template_id for o in ct.operations}["cas-replace"] == "cas-replace-named-graph"
+    assert {o.operation: o.template_id for o in ct.operations}["cas-replace"] == "cas-replace-named-graph-delta"  # the delta replace of DR1, which the receipt-only default gives
 
 
 def test_h2_9_t4_a_template_id_is_the_builders_identity_in_memory_and_in_the_profile_and_every_operation_is_built():

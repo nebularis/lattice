@@ -24,10 +24,14 @@ class ContractTest {
     static Triple t(String s, String p, String o) { return new Triple(Iri.of(s), Iri.of(p), Iri.of(o)); }
 
     @Test void readsEveryOperationAndItsParameters() {
-        var ops = OperationContract.read(TestSupport.profiles().get("baseline-single-class"));
+        var ops = OperationContract.read(TestSupport.profiles().get("baseline-whole-state"));
+        var delta = OperationContract.read(TestSupport.profiles().get("baseline-single-class"));
+        assertTrue(delta.stream().anyMatch(o -> o.kind() == OperationKind.DELTA_REPLACE), "the default under dal:Optimistic is the delta replace (DR1)");
+        assertTrue(delta.stream().filter(o -> o.kind() == OperationKind.REPLACE).allMatch(o -> o.payload() != null && o.payload().parameter().equals("payloadTriples")),
+            "its only whole replace is replace-whole, which takes the whole state (DR4)");
         var kinds = ops.stream().map(OperationContract::kind).collect(Collectors.toSet());
         assertTrue(kinds.containsAll(List.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE, OperationKind.AUDIT)));
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         assertEquals("Position", replace.parameter("expectedSeq").orElseThrow().kind());
         assertEquals("Digest", replace.parameter("requestDigest").orElseThrow().kind());
         assertEquals("payloadTriples", replace.payload().parameter());
@@ -36,7 +40,7 @@ class ContractTest {
     }
 
     @Test void digestPartsInOrder() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         assertEquals(List.of("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "AddPart", "DelPart"),
             replace.digest().parts().stream().map(DigestPart::role).toList());
         assertEquals("SHA-256", replace.digest().algorithm());
@@ -48,7 +52,7 @@ class ContractTest {
     }
 
     @Test void replaceDigestFromAProfile() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         Triple a = t("urn:example:r", "urn:example:p", "urn:example:a"), b = t("urn:example:r", "urn:example:p", "urn:example:b");
         var v = values("root", Iri.of("urn:example:r"), "expectedSeq", 3, "payloadTriples", Payload.of(a, b), "assertTriples", Payload.of(b), "retractTriples", Payload.of());
         String one = RequestDigest.requestDigest(replace, v);
@@ -72,14 +76,14 @@ class ContractTest {
     }
 
     @Test void aMissingSourceIsNamed() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
             values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", Payload.of(), "assertTriples", Payload.of())));
         assertTrue(e.getMessage().contains("retractTriples"));
     }
 
     @Test void aBareStringIsNotAPayload() {
-        var replace = operation("baseline-single-class", REPLACE);
+        var replace = operation("baseline-whole-state", REPLACE);
         var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
             values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", "<urn:a> <urn:b> <urn:c> .", "assertTriples", Payload.of(), "retractTriples", Payload.of())));
         assertTrue(e.getMessage().contains("Payload"));
@@ -87,5 +91,15 @@ class ContractTest {
 
     @Test void anOperationWithoutADigestRefuses() {
         assertThrows(DigestException.class, () -> RequestDigest.requestDigest(operation("baseline-single-class", "key-claim-write"), Map.of()));
+    }
+
+    /** DR4, from the studio line's DR2: one prologue for a composed request, and the digest of a state, as the Python library gives them. */
+    @Test void composeHoistsOnePrologueAndAStateDigestIsOfItsLines() {
+        String joined = RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:a#>\nPREFIX b: <urn:b#>\nINSERT DATA { } ;"));
+        assertEquals(List.of("PREFIX a: <urn:a#>", "PREFIX b: <urn:b#>"), joined.lines().limit(2).toList());
+        assertThrows(IllegalArgumentException.class, () -> RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:b#>\nINSERT DATA { }")));
+        Triple b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        assertEquals("cc5c78894f9a048300351a2db7c1db372771b7c01f182a152a4b95d5dfc7974b", RequestDigest.stateDigest(Payload.of(b)), "the Python library's state_digest of the same triple");
+        assertEquals(RequestDigest.stateDigest(Payload.of(b, b)), RequestDigest.stateDigest(Payload.of(b)));
     }
 }

@@ -27,7 +27,7 @@ from persistence.compiler import compile_targets, compile_to_graph
 from persistence.instantiate import instantiate_by_target
 from persistence.ir_render import fill_slots
 
-from conftest import EXAMPLES_DIR
+from conftest import EXAMPLES_DIR, load_whole_state
 
 PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 PX = "https://example.org/projects#"
@@ -47,7 +47,7 @@ _OPERATION = {CREATE: "create-if-absent", REPLACE: "cas-replace", TOMBSTONE: "to
 
 @lru_cache(maxsize=None)
 def _text_for(template: str, guards: bool) -> str:
-    compiled, _ = compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=guards)
+    compiled, _ = compile_to_graph(load_whole_state(PROJECT_EXAMPLE), guards=guards)  # the sweeping replace, since the default is the delta (DR1)
     (by_target,) = instantiate_by_target(compiled).values()
     return fill_slots(by_target[_OPERATION[template]], templatecheck._SLOT_STAND_INS)
 

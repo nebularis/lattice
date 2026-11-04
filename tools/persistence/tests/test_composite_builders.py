@@ -23,6 +23,8 @@ from persistence import ir as ir_module
 from persistence import witness
 from persistence.builders import BUILDERS, build
 from persistence.compiler import compile_to_graph
+
+from conftest import load_whole_state
 from persistence.instantiate import instantiate_by_target
 from persistence.ir import GUARDS_OFF
 from persistence import templatecheck
@@ -37,7 +39,7 @@ from test_composite_lifecycle import (
 
 
 def _compiled():
-    return compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE))[0]
+    return compile_to_graph(load_whole_state(PROJECT_EXAMPLE))[0]
 
 
 def _context(stem: str) -> dict:
@@ -74,7 +76,7 @@ def test_h2_4a_t2_a_tombstone_has_no_payload_and_a_create_reads_the_roots_triple
 
 
 def _text_without_guard(operation: str) -> str:
-    (by_target,) = instantiate_by_target(compile_to_graph(witness._load_fixture(PROJECT_EXAMPLE), guards=False)[0]).values()
+    (by_target,) = instantiate_by_target(compile_to_graph(load_whole_state(PROJECT_EXAMPLE), guards=False)[0]).values()
     return fill_slots(by_target[operation], templatecheck._SLOT_STAND_INS)
 
 

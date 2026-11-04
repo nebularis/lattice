@@ -70,7 +70,7 @@ export function Home() {
             >
               <div className="row">
                 <FolderOpen size={18} color="var(--accent)" />
-                <h3 className="grow ellipsis">{w.label}</h3>
+                <h2 className="grow ellipsis">{w.label}</h2>
                 <a
                   className="btn ghost icon sm"
                   aria-label={`Export ${w.label}`}

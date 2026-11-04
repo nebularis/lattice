@@ -34,7 +34,7 @@ No test was edited in its assertions. Tests whose helpers changed, countersigned
 | Wall | 117 s | 90 s | 88 s | 90 s | 99 s, 103 s, 105 s |
 | Summed user CPU | 398 s | 446 s | 516 s | 557 s | |
 
-Summed CPU rises with workers, as on the efficiency cores (H5). The task keeps `auto`, which `PYTEST_XDIST_AUTO_NUM_WORKERS` sets. Other tasks: check:persistence-oxigraph 15 s (368 passed), check:persistence-library 1 s, check:persistence-expected-profiles 4 s.
+Summed CPU rises with workers, as on the efficiency cores (FMH-5). The task keeps `auto`, which `PYTEST_XDIST_AUTO_NUM_WORKERS` sets. Other tasks: check:persistence-oxigraph 15 s (368 passed), check:persistence-library 1 s, check:persistence-expected-profiles 4 s.
 
 ## Not met
 

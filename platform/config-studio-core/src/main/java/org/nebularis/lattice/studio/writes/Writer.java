@@ -78,12 +78,26 @@ public final class Writer {
 
     private final StudioStore store;
     private final StudioOperations ops;
+    private final org.nebularis.lattice.studio.store.Maintenance maintenance;
     private final Clock clock;
+    private final java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> events;
 
-    public Writer(StudioStore store, StudioOperations ops, Clock clock) {
+    /** {@code maintenance} keeps the promotions of each source a command writes, in the command's request (PM2). */
+    public Writer(StudioStore store, StudioOperations ops, org.nebularis.lattice.studio.store.Maintenance maintenance, Clock clock) {
+        this(store, ops, maintenance, clock, e -> { });
+    }
+
+    /**
+     * {@code events} is given each completion event once the request that applied its write has committed (PM3). A failure to publish
+     * one is logged and never fails the write, since a subscriber that misses it still reads the job.
+     */
+    public Writer(StudioStore store, StudioOperations ops, org.nebularis.lattice.studio.store.Maintenance maintenance, Clock clock,
+                  java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> events) {
         this.store = store;
         this.ops = ops;
+        this.maintenance = maintenance;
         this.clock = clock;
+        this.events = events;
     }
 
     public Reply apply(Command c) {
@@ -116,15 +130,32 @@ public final class Writer {
             store.update(b.request);
             Map<String, Long> applied = store.receipts(b.planned.keySet());
             b.planned.forEach((id, plan) -> replies[plan.index] = applied.containsKey(id) ? plan.reply : plan.unapplied.get());
+            for (Plan plan : b.planned.values()) {
+                if (applied.containsKey(batch.get(plan.index).id())) {
+                    publish(batch.get(plan.index));
+                }
+            }
         }
         return List.of(replies);
     }
 
+    private void publish(Command c) {
+        org.nebularis.lattice.outbox.CloudEvent event = StudioEvents.of(c, clock.instant());
+        if (event == null) {
+            return;
+        }
+        try {
+            events.accept(event);
+        } catch (RuntimeException e) {
+            org.slf4j.LoggerFactory.getLogger(Writer.class).warn("the event for {} was not published: {}", event.subject(), e.getMessage());
+        }
+    }
+
     private static Reply check(Command c) {
-        // A refresh job names no workspace, so its submission, updates and deletion name the job alone.
-        boolean refresh = c != null && c.workspace() == null && c.job() != null
+        // A rebuild job names no workspace, so its submission, updates and deletion name the job alone.
+        boolean rebuild = c != null && c.workspace() == null && c.job() != null
             && (c.type() == Command.Type.SUBMIT_JOB || c.type() == Command.Type.JOB_UPDATE || c.type() == Command.Type.DELETE_JOB);
-        if (c == null || c.type() == null || (!refresh && !Graphs.isId(c.workspace()))) {
+        if (c == null || c.type() == null || (!rebuild && !Graphs.isId(c.workspace()))) {
             return Reply.refused("a write names a workspace by its id");
         }
         if (!Graphs.isId(c.id())) {
@@ -194,9 +225,20 @@ public final class Writer {
 
             void commit(String receipts, String claim, Long revision) {
                 updates.forEach(request::add);
+                keep(wrote);
                 Node claimed = iri(claim);
                 receipt(c, receipts, quad(ops.txnGraph(), claimed, CLAIM, Var.alloc("claimed")), wrote, revision);
             }
+        }
+
+        /** The promotions of each source among {@code graphs}, kept in the request after their writes (PM2). */
+        void keep(java.util.Collection<String> graphs) {
+            new java.util.LinkedHashSet<>(graphs).forEach(g -> {
+                String family = Graphs.familyOf(g);
+                if (family != null) {
+                    maintenance.keep(family, g).forEach(request::add);
+                }
+            });
         }
 
         Optional<Model> job(String id) {
@@ -215,6 +257,7 @@ public final class Writer {
             return switch (c.type()) {
                 case CREATE -> create(index, c);
                 case SAVE -> save(index, c);
+                case PATCH -> patch(index, c);
                 case IMPORT -> importing(index, c);
                 case SAVE_DOCUMENT -> saveDocument(index, c);
                 case DELETE_DOCUMENT -> deleteDocument(index, c);
@@ -247,7 +290,7 @@ public final class Writer {
                 return Reply.notFound();
             }
             boolean allowed = switch (c.type()) {
-                case SAVE, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH, SET_DEPENDENCIES, FENCE, RELEASE -> ws.writableBy(c.principal(), c.admin());
+                case SAVE, PATCH, SAVE_DOCUMENT, DELETE_DOCUMENT, PUBLISH, SET_DEPENDENCIES, FENCE, RELEASE -> ws.writableBy(c.principal(), c.admin());
                 case DELETE_WORKSPACE, SET_ACCESS -> ws.managedBy(c.principal(), c.admin());
                 default -> true;
             };
@@ -370,6 +413,13 @@ public final class Writer {
         }
 
         /** Part or document {@code root} created when {@code expect} is 0, otherwise replaced by its delta from what the batch leaves it as, so only what changed is written. */
+        /** Whether {@code body} is what part or document {@code root} already holds, so a save of it changes nothing (STD-309). */
+        private boolean unchanged(Family f, String root, Model body) {
+            Model next = Skolem.skolemise(body);
+            Model old = rawGraphs.computeIfAbsent(ops.graph(f, root), store::rawGraph);
+            return next.difference(old).isEmpty() && old.difference(next).isEmpty();
+        }
+
         private void write(Steps s, Family f, String root, long expect, Model body) {
             String graph = ops.graph(f, root);
             Model next = Skolem.skolemise(body);
@@ -379,7 +429,13 @@ public final class Writer {
                 Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
                 Model asserted = next.difference(old);
                 Model retracted = old.difference(next);
-                s.op(graph, txn -> ops.replaceDelta(f, root, expect, next, asserted, retracted, txn));
+                if (asserted.isEmpty() && retracted.isEmpty()) {
+                    // A delta that changes nothing is never sent (STD-309). A row that must still move, a document whose description
+                    // changed, takes the whole replace.
+                    s.op(graph, txn -> ops.replace(f, root, expect, next, null, null, txn));
+                } else {
+                    s.op(graph, txn -> ops.replaceDelta(f, root, expect, next, asserted, retracted, txn));
+                }
             }
             rawGraphs.put(graph, next);
         }
@@ -411,6 +467,60 @@ public final class Writer {
             return planned(index, c, Reply.ok(1), () -> Reply.refused("the workspace exists"));
         }
 
+        /**
+         * A part changed by a patch, what is added and what is removed against the revision the browser read (DR-Q5 (c)). The next state
+         * is the stored part with the removed triples taken out and the added ones put in, and it is written by its delta as a save is, so
+         * it passes the same checks. A patch cannot name a stored blank node, so one holding a blank node is refused, and the browser
+         * sends the whole part instead. Removing a triple the part does not hold, or adding one it holds, changes nothing. A dataset keeps
+         * no empty graph, so a side that is absent is empty.
+         */
+        private Reply patch(int index, Command c) {
+            String part = c.part();
+            Model added = c.body().containsNamedModel(Command.PATCH_ADD) ? c.body().getNamedModel(Command.PATCH_ADD) : ModelFactory.createDefaultModel();
+            Model removed = c.body().containsNamedModel(Command.PATCH_DEL) ? c.body().getNamedModel(Command.PATCH_DEL) : ModelFactory.createDefaultModel();
+            boolean alone = true;
+            for (Iterator<Resource> names = c.body().listModelNames(); names.hasNext(); ) {
+                String name = names.next().getURI();
+                alone &= Command.PATCH_ADD.equals(name) || Command.PATCH_DEL.equals(name);
+            }
+            if (part == null || !Workspace.GRAPHS.contains(part) || c.expect() == null || c.at() == null || !alone
+                || !c.body().getDefaultModel().isEmpty()) {
+                return Reply.refused("a patch names a part, the revision it expects and a time, and carries an add graph and a del graph alone");
+            }
+            if (Skolem.hasBlank(added) || Skolem.hasBlank(removed)) {
+                return Reply.refused("a patch names no blank node, so a part holding one is saved whole");
+            }
+            List<String> strangers = Parts.strangers(added, part, 5);
+            if (!strangers.isEmpty()) {
+                return Reply.refused("the patch adds terms of another part: " + String.join(", ", strangers));
+            }
+            Optional<Workspace> found = workspace(c.workspace());
+            if (found.isEmpty()) {
+                return Reply.notFound();
+            }
+            Workspace ws = found.get();
+            if (ws.revision(part) != c.expect() || c.expect() == 0) {
+                return Reply.stale(ws.revision(part));
+            }
+            String root = Graphs.partRoot(ws.id(), part);
+            String graph = ops.graph(Family.PART, root);
+            Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
+            Model next = ModelFactory.createDefaultModel().add(old).remove(removed).add(added);
+            if (unchanged(Family.PART, root, next)) {
+                return Reply.ok(c.expect());
+            }
+            long revision = ws.revision(part) + 1;
+            Steps s = new Steps(c);
+            write(s, Family.PART, root, c.expect(), next);
+            s.commit(Graphs.receipts(ws.id()), revision);
+            workspaces.put(ws.id(), Optional.of(ws.revised(part, revision)));
+            String id = ws.id();
+            return planned(index, c, Reply.ok(revision), () -> {
+                Workspace now = ops.workspace(store, id);
+                return now == null ? Reply.notFound() : Reply.stale(now.revision(part));
+            });
+        }
+
         /** A part is created or replaced, and its version row moves with it. The description is not written, so saves of two parts never contend. */
         private Reply save(int index, Command c) {
             String part = c.part();
@@ -429,6 +539,9 @@ public final class Writer {
             Workspace ws = found.get();
             if (ws.revision(part) != c.expect()) {
                 return Reply.stale(ws.revision(part));
+            }
+            if (c.expect() != 0 && unchanged(Family.PART, Graphs.partRoot(ws.id(), part), graph)) {
+                return Reply.ok(c.expect());
             }
             long next = ws.revision(part) + 1;
             Steps s = new Steps(c);
@@ -465,6 +578,9 @@ public final class Writer {
             long next = c.expect() + 1;
             Workspace.Document held = ws.documents().get(doc);
             boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());
+            if (described && c.expect() != 0 && unchanged(Family.DOCUMENT, Graphs.document(ws.id(), doc), graph)) {
+                return Reply.ok(c.expect());
+            }
             Workspace updated = described ? ws.documentRevised(doc, next)
                 : ws.withDocument(doc, new Workspace.Document(c.label(), c.sample(), next, c.at()), c.at());
             Steps s = new Steps(c);
@@ -614,23 +730,24 @@ public final class Writer {
             s.wrote.addAll(cleared);
             s.commit(Graphs.STORE_RECEIPTS, s.first, null);
             cleared.forEach(g -> request.add(clear(g, mine(c, Graphs.STORE_RECEIPTS))));
+            keep(cleared);
             workspaces.put(id, Optional.empty());
             seqs.remove(root);
             return planned(index, c, Reply.ok(), () -> changed(id));
         }
 
-        /** A refresh job names no workspace, target or input, and its graph is the only one it carries. */
-        private Reply submitRefresh(int index, Command c) {
+        /** A rebuild job names no workspace, target or input, and its graph is the only one it carries. */
+        private Reply submitRebuild(int index, Command c) {
             String jobIri = Graphs.job(c.job());
             if (!names(c).equals(Set.of(jobIri)) || !c.body().getDefaultModel().isEmpty()) {
-                return Reply.refused("a refresh job's submission carries its job graph only");
+                return Reply.refused("a rebuild job's submission carries its job graph only");
             }
             Model description = c.body().getNamedModel(jobIri);
             Resource job = description.createResource(jobIri);
-            if (!description.contains(job, RDF.type, Cst.Job) || !description.contains(job, Cst.kind, Cst.Refresh)
+            if (!description.contains(job, RDF.type, Cst.Job) || !description.contains(job, Cst.kind, Cst.Rebuild)
                 || !description.contains(job, Cst.status, Cst.Queued) || description.contains(job, Cst.workspace)
                 || description.contains(job, Cst.target) || description.contains(job, Cst.configGraph)) {
-                return Reply.refused("a refresh job is a cst:Job of kind cst:Refresh with the status Queued, and names no workspace, target or input");
+                return Reply.refused("a rebuild job is a cst:Job of kind cst:Rebuild with the status Queued, and names no workspace, target or input");
             }
             if (job(c.job()).isPresent()) {
                 return Reply.refused("the job exists");
@@ -644,7 +761,7 @@ public final class Writer {
 
         private Reply submitJob(int index, Command c) {
             if (c.workspace() == null) {
-                return submitRefresh(index, c);
+                return submitRebuild(index, c);
             }
             String jobIri = Graphs.job(c.job());
             String input = Graphs.jobInput(c.job());
@@ -680,6 +797,7 @@ public final class Writer {
             receipt(c, receipts, guard, List.of(jobIri, input), null);
             request.add(insert(jobIri, description, mine(c, receipts)));
             request.add(insert(input, c.body().getNamedModel(input), mine(c, receipts)));
+            keep(List.of(jobIri));
             jobs.put(c.job(), Optional.of(description));
             return planned(index, c, Reply.ok(), () -> Reply.refused("the workspace is gone, or the job exists"));
         }
@@ -693,12 +811,12 @@ public final class Writer {
             String jobIri = Graphs.job(c.job());
             String recordIri = Graphs.jobRecord(c.job());
             Set<String> names = names(c);
-            boolean refresh = c.workspace() == null;
-            // A refresh job's update may carry the projection graphs beside its own, and no other job's update may carry one.
-            boolean carries = refresh ? names.contains(jobIri) && names.stream().allMatch(n -> n.equals(jobIri) || Graphs.isProjection(n))
+            boolean rebuild = c.workspace() == null;
+            // A rebuild job's update may carry promoted partitions beside its own graph, and no other job's update may carry one.
+            boolean carries = rebuild ? names.contains(jobIri) && names.stream().allMatch(n -> n.equals(jobIri) || Graphs.isPromoted(n) || n.equals(Graphs.PROMOTED_RECORD))
                 : names.equals(Set.of(jobIri)) || names.equals(Set.of(jobIri, recordIri));
             if (!carries || !c.body().getDefaultModel().isEmpty()) {
-                return Reply.refused("a job's update carries its job graph, an assemble job's its record graph, and a refresh job's the projection graphs, only");
+                return Reply.refused("a job's update carries its job graph, an assemble job's its record graph, and a rebuild job's promoted partitions, only");
             }
             Optional<Model> found = job(c.job());
             if (found.isEmpty()) {
@@ -706,16 +824,16 @@ public final class Writer {
             }
             Model existing = found.get();
             if (!ownsJob(existing, jobIri, c)) {
-                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
+                return Reply.refused(rebuild ? "the job is not a rebuild job" : "the job is not this workspace's");
             }
             Model update = c.body().getNamedModel(jobIri);
             if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
                 return Reply.refused("a job's update may change only its status and results");
             }
             for (String name : names) {
-                if (Graphs.isProjection(name) && c.body().getNamedModel(name).listStatements().toList().stream()
+                if (Graphs.isPromoted(name) && c.body().getNamedModel(name).listStatements().toList().stream()
                     .anyMatch(st -> st.getSubject().isAnon() || st.getObject().isAnon())) {
-                    return Reply.refused("a projection holds IRIs and literals only: " + name);
+                    return Reply.refused("a promoted partition holds IRIs and literals only: " + name);
                 }
             }
             Model record = names.contains(recordIri) ? c.body().getNamedModel(recordIri) : null;
@@ -733,7 +851,7 @@ public final class Writer {
             request.add(clear(jobIri, mine(c, receipts)));
             request.add(insert(jobIri, update, mine(c, receipts)));
             for (String name : names) {
-                if (Graphs.isProjection(name)) {
+                if (Graphs.isPromoted(name) || name.equals(Graphs.PROMOTED_RECORD)) {
                     request.add(clear(name, mine(c, receipts)));
                     request.add(insert(name, c.body().getNamedModel(name), mine(c, receipts)));
                 }
@@ -742,9 +860,9 @@ public final class Writer {
                 request.add(clear(recordIri, mine(c, receipts)));
                 request.add(insert(recordIri, record, mine(c, receipts)));
             }
-            if (refresh && update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded)) {
-                // A refresh that succeeded has nothing left to read, so the update that writes its projections deletes the job
-                // and its receipts too, last, which saves the service a request and the store a commit for every refresh.
+            if (rebuild && update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded)) {
+                // A rebuild that succeeded has nothing left to read, so the update that writes its promotions deletes the job
+                // and its receipts too, last, which saves the service a request and the store a commit for every rebuild.
                 List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), receipts);
                 graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
                 jobs.put(c.job(), Optional.empty());
@@ -844,28 +962,29 @@ public final class Writer {
                 return Reply.notFound();
             }
             Model existing = found.get();
-            boolean refresh = c.workspace() == null;
+            boolean rebuild = c.workspace() == null;
             if (!ownsJob(existing, jobIri, c)) {
-                return Reply.refused(refresh ? "the job is not a refresh job" : "the job is not this workspace's");
+                return Reply.refused(rebuild ? "the job is not a rebuild job" : "the job is not this workspace's");
             }
             List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), Graphs.jobReceipts(c.job()));
-            // A refresh job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
-            String receipts = refresh ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
+            // A rebuild job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
+            String receipts = rebuild ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
             receipt(c, receipts, ownerGuard(c, jobIri), graphs, null);
             graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
+            keep(graphs);
             jobs.put(c.job(), Optional.empty());
-            return planned(index, c, Reply.ok(), refresh ? () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound() : Reply::notFound);
+            return planned(index, c, Reply.ok(), rebuild ? () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound() : Reply::notFound);
         }
 
-        /** Whether the job is the command's workspace's, or a refresh job when the command names no workspace. */
+        /** Whether the job is the command's workspace's, or a rebuild job when the command names no workspace. */
         private boolean ownsJob(Model existing, String jobIri, Command c) {
             Resource job = existing.createResource(jobIri);
-            return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Refresh)
+            return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Rebuild)
                 : existing.contains(job, Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())));
         }
 
         private Element ownerGuard(Command c, String jobIri) {
-            return c.workspace() == null ? quad(jobIri, iri(jobIri), Cst.kind.asNode(), Cst.Refresh.asNode())
+            return c.workspace() == null ? quad(jobIri, iri(jobIri), Cst.kind.asNode(), Cst.Rebuild.asNode())
                 : quad(jobIri, iri(jobIri), Cst.workspace.asNode(), iri(Graphs.workspace(c.workspace())));
         }
 

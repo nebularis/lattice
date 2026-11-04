@@ -165,7 +165,8 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
       dispatch({ type: "saving", part, saving: true });
       const graph = c.current;
       try {
-        const revision = await api.save(id, part, graph, force?.revision ?? c.revision);
+        // a forced save writes over another revision than the one this graph was read at, so it is sent whole
+        const revision = await api.save(id, part, graph, force?.revision ?? c.revision, force ? undefined : c.saved);
         dispatch({ type: "saved", part, graph, revision });
       } catch (error) {
         dispatch({ type: "saving", part, saving: false });

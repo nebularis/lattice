@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.UUID;
+import org.nebularis.lattice.studio.events.Relay;
+import org.nebularis.lattice.studio.events.Notifier;
 import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
@@ -48,17 +50,29 @@ public final class StudioMain {
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         JobBus bus;
         Writes writes;
+        com.rabbitmq.client.Connection events = null;
         if (config.amqpUri() == null) {
             // Tests and a demonstration without a broker only: the service writes the store through a writer of its own.
             LOG.warn("LATTICE_AMQP_URI is not set, so jobs are recorded but never reach a worker, and this service writes the store itself");
             bus = new RecordingJobBus();
-            writes = new DirectWrites(new Writer(store, ops, Clock.systemUTC()));
+            writes = new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC()));
         } else {
             // Jobs and writes are published on connections of their own, so a broker holding one back does not stall the other.
             bus = new RabbitJobBus(Amqp.connect(config.amqpUri(), "config-studio-service jobs"));
             writes = new RabbitWrites(Amqp.connect(config.amqpUri(), "config-studio-service writes"), store, WRITE_TIMEOUT);
+            events = Amqp.connect(config.amqpUri(), "config-studio-service events");
         }
-        StudioHttpServer server = serve(config, store, ops, writes, bus, auth);
+        StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
+        if (config.eventsUrl() != null && config.brokerSecret() == null) {
+            LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_STUDIO_BROKER_SECRET, so the broker's checks are not served and the browser polls for jobs");
+        } else if (config.eventsUrl() != null && events != null) {
+            // Events reach a browser over the broker's MQTT, which asks this service who connected, and the relay decides what each tab hears (PM-Q20 (d)).
+            api.events(config.eventsUrl(), config.brokerSecret());
+            Relay.start(events, new Notifier(api::authenticate, api::mayRead));
+        } else if (config.eventsUrl() != null) {
+            LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_AMQP_URI, so the browser polls for jobs");
+        }
+        StudioHttpServer server = serve(config, api);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.close();
             bus.close();
@@ -67,23 +81,22 @@ public final class StudioMain {
         LOG.info("Configuration Studio service listening on http://{}:{}/", config.bind(), server.port());
     }
 
-    private static StudioHttpServer serve(StudioConfig config, StudioStore store, StudioOperations ops, Writes writes, JobBus bus, Authenticator auth) throws Exception {
-        StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
+    private static StudioHttpServer serve(StudioConfig config, StudioApi api) throws Exception {
         StudioHttpServer server = new StudioHttpServer(api, config.bind(), config.port(), config.staticDir());
         server.start();
         if (config.amqpUri() != null) {
-            // The projections are rebuilt from the store on every start, since writes made while the service was down changed them.
-            api.refresh();
+            // Writes keep their promotions, so a start rebuilds them only when the contracts grew since the last rebuild (PM-Q3).
+            api.startUp();
         }
         return server;
     }
 
     private static boolean selfCheck() throws Exception {
         StudioConfig config = new StudioConfig(0, "127.0.0.1", Path.of(".build/config-studio"), null, null,
-            "studio", null, null, null, java.util.Set.of(), 1L);
+            "studio", null, null, null, java.util.Set.of(), 1L, null, null);
         StudioOperations ops = StudioOperations.load(config.assets().resolve("persistence"), config.epoch());
         try (StudioStore store = StudioStore.inMemory();
-             StudioHttpServer server = serve(config, store, ops, new DirectWrites(new Writer(store, ops, Clock.systemUTC())), new RecordingJobBus(), LocalAuthenticator.developers())) {
+             StudioHttpServer server = serve(config, new StudioApi(store, ops, new DirectWrites(new Writer(store, ops, org.nebularis.lattice.studio.store.Maintenance.load(config.assets().resolve("maintenance")), Clock.systemUTC())), new RecordingJobBus(), Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), LocalAuthenticator.developers()))) {
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/api/health")).build(),
                 HttpResponse.BodyHandlers.ofString());

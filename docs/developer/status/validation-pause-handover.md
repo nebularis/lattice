@@ -2,6 +2,9 @@
 
 # Validation Pause Handover
 
+**Unit ID:** `validation-pause-handover`
+**Status:** dropped 2026-09-20. Closed and superseded by completed validation.
+
 Date: 2026-09-20  
 Status: Closed and superseded by completed validation
 Governing ADR: [ADR-A29](../../architecture/decisions/ADR-A29-repository-toolchain-and-environment-boundary.md)

@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO8, injective graph naming
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO8
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO8
 ([plan §3.5](../plans/formal-methods-track-h.md#ho8-injective-graph-naming-td-38)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decision 8,
 [sketch §9](../sketches/persistence-aggregate-ownership.md#9-named-graph-naming-ao-q13-ho8), and review findings F6 and F11.

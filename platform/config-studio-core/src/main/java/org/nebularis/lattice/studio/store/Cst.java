@@ -18,8 +18,8 @@ public final class Cst {
     /** An event of a lineage's registry graph, the publication of one version. */
     /** A job kind that reads imported RDF and gives the digest of its content (ADR-A149 decision 6). */
     public static final Resource Fence = r("Fence");
-    /** A job kind that rebuilds the studio's projections, naming no workspace (ADR-A149 decision 14). */
-    public static final Resource Refresh = r("Refresh");
+    /** A job kind that rebuilds the studio's promotions, naming no workspace (ADR-A149 decision 14). */
+    public static final Resource Rebuild = r("Rebuild");
     public static final Resource Publication = r("Publication");
     public static final Resource Persistence = r("Persistence");
     public static final Resource Surface = r("Surface");
@@ -29,6 +29,7 @@ public final class Cst {
     public static final Resource Succeeded = r("Succeeded");
 
     public static final Property baselineGraph = p("baselineGraph");
+    public static final Property contractDigest = p("contractDigest");
     public static final Property baselineRevision = p("baselineRevision");
     public static final Property surfaceRevision = p("surfaceRevision");
     public static final Property persistenceRevision = p("persistenceRevision");

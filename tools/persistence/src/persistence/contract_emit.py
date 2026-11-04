@@ -130,7 +130,7 @@ def emit_contract(
         g.add((pc, DAL.payloadParameter, m(f"param-{c.payload.parameter}")))
         if c.payload.root:
             g.add((pc, DAL.payloadRoot, m(f"param-{c.payload.root}")))
-        g.add((pc, DAL.payloadEncoding, DAL.GroundNTriples))
+        g.add((pc, DAL.payloadEncoding, DAL[c.payload.encoding]))
         g.add((pc, DAL.boundaryShape, shape if shape is not None else DAL.NoBoundaryShape))
         for edge in edges:
             g.add((pc, DAL.referenceEdge, edge))

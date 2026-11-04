@@ -11,6 +11,8 @@ requires-python = ">=3.14"
 dependencies = [
   "rdflib>=7.0,<8",
   "lattice-vocabulary-resolver>=0.1,<0.2",
+  # the maintenance operations are typed operations of the persistence compiler's IR (PM1)
+  "lattice-persistence-compiler",
 ]
 
 [project.scripts]

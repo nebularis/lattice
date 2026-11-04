@@ -45,7 +45,7 @@ before this note reaches that branch, the requested layer is added by AIR-7.0's 
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-6.1] …`, the
 last being `[AIR-6.1] Handoff`. **Validation Pack:**
-[applied-insurance-reference-6.1](../validation/applied-insurance-reference-6.1.md). **Decisions:**
+[applied-insurance-reference-6.1](../validation/AIR-6.1.md). **Decisions:**
 ADR-A98 (decision 6: the prefix is fixed when the module is built). **Sketch:** asset exposure
 ontology §1, §5.8. **Milestone:** M6, first half. **Decided 2026-10-14:** AIR-6.1-Q1 (below), at
 its leaning.

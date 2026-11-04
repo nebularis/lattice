@@ -2,7 +2,7 @@
 
 # Persistence: history, versions and the receipt models (sketch)
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), the patch-log half of H2.6b and H2.10, held for this sketch
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), the patch-log half of FMH-2.6b and H2.10, held for this sketch
 on 2026-10-14 (H-D33)
 **Status:** draft for the maintainer, 2026-10-14. Questions VH-Q1 to VH-Q7 are open. VH-Q7 researched 2026-10-14 (§6.1). §9 sets out what LATTICE's layers already record about history, 2026-10-14, restated 2026-10-21
 **Touches:** Foundation's versioning, Behaviour's runtime records, Wording's references by identity
@@ -13,7 +13,7 @@ README §7.4, aggregate ownership ([ADR-A122](../../architecture/decisions/ADR-A
 
 ## 1. Why this sketch exists
 
-Planning H2.6b's patch log, the maintainer asked how deep a patch must track a change, using a broker's tower and a carrier's requote as the
+Planning FMH-2.6b's patch log, the maintainer asked how deep a patch must track a change, using a broker's tower and a carrier's requote as the
 case. Working it through showed that persistence keeps history with a mechanism of its own, the receipt models, which never refers to the
 versioning Foundation already defines, and that the two disagree. This sketch sets out the facts, the use cases, and the options, and
 proposes what persistence should do with history. It decides nothing.
@@ -180,7 +180,7 @@ sequenceDiagram
 | in place, no history wanted | receipt only | as today |
 
 The snapshot model (H2.10) becomes either the root version's manifest under VH-Q2 (a), free under (b), or a copy for in-place data. Each
-option keeps H2.6b's `ReceiptModelNotHonoured` warning until the model is built.
+option keeps FMH-2.6b's `ReceiptModelNotHonoured` warning until the model is built.
 
 ### 5.6 Retention (VH-Q6)
 
@@ -344,7 +344,7 @@ Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should
 - Defining the negotiation thread, the terms for a quote's precision and completeness, and how a quote names its layer. They are domain modelling, for an
   applied unit, and this sketch uses them only as the worked case.
 - The in-force question, which ADR-A67 and the instrument layer answer.
-- The event slots of H2.6b, which do not depend on any of this.
+- The event slots of FMH-2.6b, which do not depend on any of this.
 
 ## 8. Questions for the maintainer
 
@@ -358,7 +358,7 @@ Persistence needs three write disciplines, not two, which VH-Q4 and VH-Q5 should
 | VH-Q6 | retention of superseded versions (§5.6) | never prune a version a retained version references |
 | VH-Q7 | Behaviour's versioning (§6) | **decided 2026-10-20**: Behaviour's three disciplines are right, and no change to Behaviour here. The keying of a balance is the ledger plan's |
 
-Answers decide whether the patch log is built as planned in H2.6b's held half, rebuilt as an append write for versioned families, or
+Answers decide whether the patch log is built as planned in FMH-2.6b's held half, rebuilt as an append write for versioned families, or
 narrowed to in-place data, and what H2.10 builds. An ADR follows the answers, since VH-Q1 and VH-Q3 change how persistence relates to
 Foundation.
 
@@ -372,9 +372,9 @@ market (Open CBAA, through Instrument's `ins:boundUnder` and powers) and placeme
 
 | Concern | In LATTICE | State |
 |---|---|---|
-| a contract's structure | Wording elements, Instrument's stated and bound terms, relations and qualifiers, Quantification's amounts, Eligibility's conditions | built (CCS C3 to C9b2). The template library is C8a, planned |
+| a contract's structure | Wording elements, Instrument's stated and bound terms, relations and qualifiers, Quantification's amounts, Eligibility's conditions | built (CCS C3 to CCS-9b.2). The template library is C8a, planned |
 | a quote or an offer, structurally an instrument | an instrument version whose words are a proposal (CCS sketch, "proposals are many, and are fragments of instruments") | modelled in outline. A proposal arriving as data without words is held question HQ-1 |
-| a market response's commitment, precision and completeness | commitment reads from legal acts: a binding quote is the carrier's `ins:Assent` to a version, and binding is the client's assent to the same version. "Precision … and completeness are recorded beside its terms, never inside them" (CCS sketch §7.4). "Pending, decided and lapsed are derived, never stored" (`ins:Proposal`) | acts built (C9b1). The terms for precision and completeness are not yet defined |
+| a market response's commitment, precision and completeness | commitment reads from legal acts: a binding quote is the carrier's `ins:Assent` to a version, and binding is the client's assent to the same version. "Precision … and completeness are recorded beside its terms, never inside them" (CCS sketch §7.4). "Pending, decided and lapsed are derived, never stored" (`ins:Proposal`) | acts built (CCS-9b.1). The terms for precision and completeness are not yet defined |
 | binding | the bound contract is the version both parties assented to, with no copy. A change at binding, such as a signed-down line, is an amendment | a hypothesis for the examples to test |
 | several instruments in one arrangement, and subscription | Instrument's sections (§16), Party's groups, held question HQ-7 (several instruments covering portions of one order) | partly modelled. PDD-09 |
 | a programme, its tower and layers, as the placing record states them | the AIR contract module (Phase 5) and AIR-6.1's submission | not modelled. Phase 5 is deferred |
@@ -1453,7 +1453,7 @@ Two points the examples raised, decided the same way:
 | VH-D1 | agreed: agreement is evaluated, not stored |
 | VH-D2 | **revised: a choice per family.** A full membership list per root version (fast reads) or one stored as changes against the last (small writes, a chain to resolve on read), declared by the family. The full list stays the default |
 | R2 | (a): `append-version` links versions with a persistence term of its own, never `fnd:supersededBy`, which the domain asserts under its own rule (Instrument once a version is agreed) |
-| R4 to R8 | accepted: the examples and EP-1 to EP-11, TD-63 to TD-66 and PDD-11, H2.6c's eight decisions taken alone, its twelve expected profiles, its two changed tests |
+| R4 to R8 | accepted: the examples and EP-1 to EP-11, TD-63 to TD-66 and PDD-11, FMH-2.6c's eight decisions taken alone, its twelve expected profiles, its two changed tests |
 
 **VH-Q5a, approved 2026-10-20 at the leaning below.** Which families need no receipt. The version row's seq decides a race without one, and the transaction claim, which
 is separate, confirms an outcome after a lost reply. A receipt gives order, the head chain, gap and fork audits, transaction time for a

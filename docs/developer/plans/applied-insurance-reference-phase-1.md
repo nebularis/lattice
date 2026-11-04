@@ -28,7 +28,7 @@ D2).
 ### AIR-1.1: Drop the legacy contract module, create the layout
 
 **Machine:** S (Copilot Business). **Branch:** `air/1.1-layout`. **Validation Pack:**
-[applied-insurance-reference-1.1](../validation/applied-insurance-reference-1.1.md), whose Handoff
+[applied-insurance-reference-1.1](../validation/AIR-1.1.md), whose Handoff
 section S fills in.
 
 **Invariant:** the legacy module and its known defect are gone, no ontology or tool file refers to
@@ -79,7 +79,7 @@ the legacy entries).
 
 **Machine:** S (Copilot Business). **Branch:** `air/1.2-shared-contracts`, created after AIR-1.1
 merges. **Validation Pack:**
-[applied-insurance-reference-1.2](../validation/applied-insurance-reference-1.2.md), whose Handoff
+[applied-insurance-reference-1.2](../validation/AIR-1.2.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (decisions 1, 5, 6), ADR-A102.
 
 **Invariant:** every classification the epic needs has one `voc:SchemeContract`, at the lowest

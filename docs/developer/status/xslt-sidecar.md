@@ -3,7 +3,7 @@
 # Bidirectional XSLT transformation sidecar - Status
 
 **Unit ID:** `xslt-sidecar`
-**Status:** 🔵 Drafted, not started. Decisions XS-D1 to XS-D7 awaiting the maintainer
+**Status:** planned. Drafted, not started. Decisions XS-D1 to XS-D7 awaiting the maintainer
 **Last updated:** 2026-10-02
 **Plan:** [xslt-sidecar.md](../plans/xslt-sidecar.md)
 **Sketch:** [xslt-sidecar.md](../sketches/xslt-sidecar.md)
