@@ -1,0 +1,83 @@
+@b <https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#>
+@p lrmlmm=<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#>
+@p rulemm=<http://docs.oasis-open.org/legalruleml/ns/v1.0/rule-metamodel#>
+@p vocab=<http://docs.oasis-open.org/legalruleml/ns/v1.0/vocab#>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+%R Lrml fm mork:RDF lb "LegalRuleML metamodel instances"
+%X
+lrmlmm:Obligation RE
+lrmlmm:Prohibition RE
+lrmlmm:Permission RE
+lrmlmm:Right RE
+lrmlmm:Reparation RE
+lrmlmm:TemporalCharacteristic RE
+lrmlmm:LegalReference RE
+lrmlmm:Authority RE
+lrmlmm:Jurisdiction RE
+%T Concepts in Lrml
+ObligationConcept C ra lrmlmm:Obligation
+ProhibitionConcept C ra lrmlmm:Prohibition
+PermissionConcept C ra lrmlmm:Permission
+RightConcept C ra lrmlmm:Right
+ReparationConcept C ra lrmlmm:Reparation
+TemporalConcept C ra lrmlmm:TemporalCharacteristic
+ReferenceConcept C ra lrmlmm:LegalReference
+AuthorityConcept C ra lrmlmm:Authority
+JurisdictionConcept C ra lrmlmm:Jurisdiction
+BearerConcept C p lrmlmm:Bearer
+AuxiliaryConcept C p lrmlmm:AuxiliaryParty
+%M Scheme md mork:ReviewMode lb "LegalRuleML metamodel instances to stated meaning"
+Role_T MD xt pty:Role c role
+Role_T_Label M cb Role_T xr rdfs:label r "rdfs:label|rulemm:symbolForData"
+# obligation
+Obligation MD f ObligationConcept xt ins:Term,ins:Template c term w 85
+Obligation_Relation MD cb Obligation xt ins:Obligation,ins:Template xr ins:arisesUnder c relation w 85
+Obligation_Obligor MD cb Obligation_Relation tp Role_T f BearerConcept xi ins:obligor w 85
+Obligation_Obligee MD cb Obligation_Relation tp Role_T f AuxiliaryConcept xi ins:obligee w 55 n "The auxiliary party is related to the specification, and is the party owed it only by assumption."
+# prohibition
+Prohibition MD f ProhibitionConcept xt ins:Term,ins:Template c term w 85
+Prohibition_Relation MD cb Prohibition xt ins:Prohibition,ins:Template xr ins:arisesUnder c relation w 85
+Prohibition_Obligor MD cb Prohibition_Relation tp Role_T f BearerConcept xi ins:obligor w 85
+Prohibition_Obligee MD cb Prohibition_Relation tp Role_T f AuxiliaryConcept xi ins:obligee w 55
+# permission
+Permission MD f PermissionConcept xt ins:Term,ins:Template c term w 85
+Permission_Relation MD cb Permission xt ins:Permission,ins:Template xr ins:arisesUnder c relation w 85
+Permission_Holder MD cb Permission_Relation tp Role_T f BearerConcept xi ins:holder w 85
+Permission_Counterparty MD cb Permission_Relation tp Role_T f AuxiliaryConcept xi ins:counterparty w 60
+# right
+Right MD f RightConcept xt ins:Term,ins:Template c term w 70
+Right_Relation MD cb Right xt ins:Permission,ins:Template xr ins:arisesUnder c relation w 60 n "A Right is a permission that implies obligations or prohibitions on the auxiliary parties, which this mapping does not state."
+Right_Holder MD cb Right_Relation tp Role_T f BearerConcept xi ins:holder w 80
+Right_Counterparty MD cb Right_Relation tp Role_T f AuxiliaryConcept xi ins:counterparty w 65
+# reparation
+Reparation MD f ReparationConcept xt ins:Term,ins:Template c reparation-term w 55
+Reparation_Relation MD cb Reparation xt ins:Obligation,ins:Template xr ins:arisesOnBreachOf,ins:arisesUnder c reparation w 45
+# temporal characteristic
+Temporal MD f TemporalConcept xt fnd:TemporalScope c temporal-scope w 35
+Temporal_From M cb Temporal xr fnd:validFrom r "lrmlmm:atTime/rulemm:symbolForData" w 35 mork:appliesWhen Starts_Shape
+Temporal_To M cb Temporal xr fnd:validTo r "lrmlmm:atTime/rulemm:symbolForData" w 35 mork:appliesWhen Ends_Shape
+# legal source
+Reference MD f ReferenceConcept xt fnd:Key c key w 40
+Reference_Value M cb Reference xr fnd:keyValue r lrmlmm:refID w 55
+# authority and jurisdiction
+Authority MD f AuthorityConcept xt pty:Actor c authority w 40
+Jurisdiction MD f JurisdictionConcept xt skos:Concept c jurisdiction w 20
+!T Scheme sh:declare _:d1
+!T _:d1 sh:prefix "lrmlmm"
+!T _:d1 sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#"^xsd:anyURI
+!T Scheme sh:declare _:d2
+!T _:d2 sh:prefix "rulemm"
+!T _:d2 sh:namespace "http://docs.oasis-open.org/legalruleml/ns/v1.0/rule-metamodel#"^xsd:anyURI
+!T Scheme sh:declare _:d3
+!T _:d3 sh:prefix "rdfs"
+!T _:d3 sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^xsd:anyURI
+!T Starts_Shape rdf:type sh:NodeShape
+!T Starts_Shape sh:property _:s1
+!T _:s1 sh:path lrmlmm:hasStatusDevelopment
+!T _:s1 sh:hasValue vocab:Starts
+!T Ends_Shape rdf:type sh:NodeShape
+!T Ends_Shape sh:property _:e1
+!T _:e1 sh:path lrmlmm:hasStatusDevelopment
+!T _:e1 sh:hasValue vocab:Ends

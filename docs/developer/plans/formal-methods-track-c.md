@@ -3,20 +3,21 @@
 # Plan: Formal Methods, Track C: the design-time models
 
 **Unit ID:** `formal-methods-track-c`
+**Prefix:** FMC
 **Unit type:** Phase (Epic Decomposition Model, `copilot-instructions.md`)
 **Epic:** [formal-methods](formal-methods.md)
 **Sketch:** [formal-methods-track-c.md](../sketches/formal-methods-track-c.md)
 **Status record:** [formal-methods-track-c.md](../status/formal-methods-track-c.md)
-**Status:** Proposed. C1 (toolchain skeleton) and C2 (the scheme-composition model) both start
+**Status:** Proposed. FMC-1 (toolchain skeleton) and FMC-2 (the scheme-composition model) both start
 now; neither needs a prover choice or an ADR of its own first
 
 ## 1. Scope
 
 Design-time models, permanently, for whichever law family needs one before an ADR fixes it (epic
-§4, "Track C"). This plan details C1 (skeletons), C2 (binding
-resolution with scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a), and C4 and C5 (the models of ADR-A130 and ADR-A131). C4c, with the Ensemble plan's ES-8, is added only if its addendum admits cyclic components. C3
+§4, "Track C"). This plan details FMC-1 (skeletons), FMC-2 (binding
+resolution with scheme composition, ahead of CCS C8's HQ-4 and insurml-alignment's IMA-D4a), and C4 and C5 (the models of ADR-A130 and ADR-A131). C4c, with the Ensemble plan's ES-8, is added only if its addendum admits cyclic components. FMC-3
 (slot exclusivity and exhaustiveness by SMT, in step with CCS C13a) stays at the epic's outline
-level until C2 is done, per the rolling-wave rule.
+level until FMC-2 is done, per the rolling-wave rule.
 
 Track C needs no proof assistant (epic plan's track table: "Prover: no") and does not depend on
 track D or E's gate. It is independent of the Isabelle/`tools/proofs/` work entirely: a different
@@ -28,14 +29,14 @@ checked model and a recommendation, not a mechanised law).
 
 | Dependency | State | Blocks |
 |---|---|---|
-| the Alloy toolchain | not installed in this repository yet. Java 25 is already available (`mise`); Alloy Analyzer is one MIT-licensed JAR, no further runtime dependency | C1 |
-| ADR-A85 (the current single-scheme resolution law) | accepted, read in full for this plan (sketch §2) | C2's model must keep its three properties (determinism, reported conflicts, unscoped fallback) for the single-source case |
-| HQ-4's and IMA-D4a's own statements | both read directly from `main` and from this repository's own plans, not guessed at (sketch §1) | C2's model targets exactly what they ask, not a reinvented version of it |
-| the shared Vocabulary ADR itself | not written, and not this track's job to write (sketch §5) | C2 produces the checked evidence such an ADR would cite; it does not draft the ADR |
+| the Alloy toolchain | not installed in this repository yet. Java 25 is already available (`mise`), Alloy Analyzer is one MIT-licensed JAR, no further runtime dependency | FMC-1 |
+| ADR-A85 (the current single-scheme resolution law) | accepted, read in full for this plan (sketch §2) | FMC-2's model must keep its three properties (determinism, reported conflicts, unscoped fallback) for the single-source case |
+| HQ-4's and IMA-D4a's own statements | both read directly from `main` and from this repository's own plans, not guessed at (sketch §1) | FMC-2's model targets exactly what they ask, not a reinvented version of it |
+| the shared Vocabulary ADR itself | not written, and not this track's job to write (sketch §5) | FMC-2 produces the checked evidence such an ADR would cite, it does not draft the ADR |
 
 ## 3. Slices
 
-### C1: the Alloy skeleton (prerequisite, not in the epic's own numbering) — done
+### FMC-1: the Alloy skeleton (prerequisite, not in the epic's own numbering) — done
 
 - Alloy Analyzer 6.2.0 (a single MIT-licensed JAR) installed at `C:\fmx\alloy\alloy.jar`, the
   same short-root, not-tracked-in-the-repository convention track D and E's toolchains use.
@@ -52,7 +53,7 @@ checked model and a recommendation, not a mechanised law).
   can pass" discipline track D's seeded defects used. The smoke output itself was not kept (a
   one-off toolchain check, recorded here instead); the model file (`smoke.als`) is.
 
-### C2: binding resolution with scheme composition — done
+### FMC-2: binding resolution with scheme composition — done
 
 - The model built at `tools/models/vocabulary-scheme-composition/SchemeComposition.als`, close
   to the sketch's proposed shape (§4) with one simplification found necessary once Alloy's own
@@ -79,7 +80,7 @@ checked model and a recommendation, not a mechanised law).
   stay acyclic) with no choice made among them here — that choice is the maintainer's, informed by
   this evidence, for whichever ADR accepts scheme composition.
 
-### C2.1: well-formedness facts, and a re-run — done
+### FMC-2.1: well-formedness facts, and a re-run — done
 
 Queued, then done the same session, 2026-10-08, after an implementation-level review (full
 disposition in [the review response](../notes/formal-methods-more-feedback-response.md) §2, §4):
@@ -90,20 +91,20 @@ counterexample survives, now non-degenerate (two distinct schemes genuinely disa
 shared concept's parent, neither relation touching the shared concept itself) — recorded in full,
 with the new witness, in [the model's own README](../../../tools/models/vocabulary-scheme-composition/README.md).
 
-### C2.2: model the composed scheme and check a decision-level property — not started
+### FMC-2.2: model the composed scheme and check a decision-level property — not started
 
-The model as built (C2) shows that two source schemes' relations *can* differ over a shared
+The model as built (FMC-2) shows that two source schemes' relations *can* differ over a shared
 concept. It never constructs the composed scheme itself, and never checks a property at the level
 that actually matters to an adopter: whether a decision made under the composed scheme (an
 Eligibility hierarchical-match outcome, L9-L11) can disagree with the decision any one source
 scheme alone would have given. Extend the model to build the union scheme explicitly and check
-this directly, rather than only the weaker "the inputs to a union can disagree" property C2
+this directly, rather than only the weaker "the inputs to a union can disagree" property FMC-2
 checked.
 
-### C2.3: model `ADR-A116`'s accepted rule itself, against its own motivating cases — not started
+### FMC-2.3: model `ADR-A116`'s accepted rule itself, against its own motivating cases — not started
 
-**Recommended before or alongside `ADR-A116`'s acceptance, not after.** Neither C2 nor its
-well-formedness fix (C2.1) ever modelled the rule `ADR-A116` actually decided (forbid overlapping
+**Recommended before or alongside `ADR-A116`'s acceptance, not after.** Neither FMC-2 nor its
+well-formedness fix (FMC-2.1) ever modelled the rule `ADR-A116` actually decided (forbid overlapping
 membership, checked by a new static Vocabulary shape). Add it as a fact, then `run` the real HQ-4
 and IMA-D4a configurations (an Instrument baseline's dates composed with a wording's own dates;
 InsurML's type scheme composed with a profile-local scheme) to confirm they are *admitted*, not
@@ -124,7 +125,7 @@ maintainer accepts.
 #### C4 in detail
 
 **Machine:** R. **Branch:** `fm/c4-ensemble-model`, from this branch or `main` after it merges.
-**Commits are the maintainer's.** **Validation Pack:** [formal-methods-c4](../validation/formal-methods-c4.md).
+**Commits are the maintainer's.** **Validation Pack:** [formal-methods-c4](../validation/FM-4.md).
 **Decisions modelled:** ADR-A130 decisions 3 (kinds, closed semantics), 4 (endpoints, narrowing), 5
 (units, positions, least fixpoint, order, cycles, independence of order) and 10 (signed shares), with
 ADR-A131 decisions 5 (an account shared by several instruments belongs to their ensemble) and 6 (two
@@ -132,7 +133,7 @@ phases at one position).
 **Home:** `tools/models/ensemble-composition/`, with `Ensemble.als`, a `README.md` in the form of
 `vocabulary-scheme-composition/README.md`, and the archived `receipt.json` and any counterexample
 files `exec` writes. `tools/models/README.md` gains a line for it.
-**Toolchain:** Alloy Analyzer 6.2.0, the same JAR as C1, from
+**Toolchain:** Alloy Analyzer 6.2.0, the same JAR as FMC-1, from
 `https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v6.2.0/org.alloytools.alloy.dist.jar`.
 It is not installed on machine R. The maintainer downloads it, or approves the download, to a path
 outside the repository, and its SHA-256 is recorded in the model's README. Run with the mise JDK.
@@ -330,7 +331,7 @@ accidentally unsatisfiable everywhere.
 
 ## 6. Out of scope
 
-C3 (slot exclusivity and exhaustiveness, SMT, CCS C13a — a later slice). Writing the shared
+FMC-3 (slot exclusivity and exhaustiveness, SMT, CCS C13a — a later slice). Writing the shared
 Vocabulary ADR (the maintainer's decision, this track's job is the evidence for it). Any change under
 `ontology/` (this track produces a model and a recommendation, not a merged ontology edit).
 Eligibility's hierarchical-match addendum (`insurml-typing.md` §6.1's dependent follow-on),

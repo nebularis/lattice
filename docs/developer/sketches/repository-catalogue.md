@@ -397,12 +397,12 @@ Each slice ends with `mise run check` passing and the known-exceptions list shor
 | Slice | Scope |
 |---|---|
 | RC0 | ADR-A121 drafted, catalogue document with roots, conventions and every module, interface module, `check:catalogue` (schema and both tree directions), bypass scan in report-only mode with the exceptions list generated from today's tree |
-| RC1 | pilot, `tools/persistence` (`witness.py`, `cli.py`, its tests and its `mise` tasks). Confirms root discovery (§4.3) under pytest, `mise` and CI |
-| RC2 | root-level scripts and checks: `literate_extract.py` reads extraction contracts from the catalogue, `ontology_version_check`, `ontology_catalog`, `import_guard`, `check_formal_freshness`, `repository_topology_check`. The four Instrument tests drop their `--shapes` lists |
-| RC3 | root-level `tools/test_*.py` (25 files, 19 of them deriving the root from `__file__`). Follows `python-test-melting` TM3 (§8.1), so the 16 modules that share ontology fixtures need one edit in the test support module, not 16 |
-| RC4 | tool packages `mork`, `mork_compilers`, `surface`, `vocabulary`, `spc/python`, `reference/*`, then `workers/` |
-| RC5 | `mise.toml` tasks that name module paths use the CLI. Bypass scan switches from report-only to failing |
-| RC6 | skills and AGENTS.md (§6), READMEs link to the catalogue, link check widened |
+| OD-RC1 | pilot, `tools/persistence` (`witness.py`, `cli.py`, its tests and its `mise` tasks). Confirms root discovery (§4.3) under pytest, `mise` and CI |
+| OD-RC2 | root-level scripts and checks: `literate_extract.py` reads extraction contracts from the catalogue, `ontology_version_check`, `ontology_catalog`, `import_guard`, `check_formal_freshness`, `repository_topology_check`. The four Instrument tests drop their `--shapes` lists |
+| OD-RC3 | root-level `tools/test_*.py` (25 files, 19 of them deriving the root from `__file__`). Follows `python-test-melting` TM3 (§8.1), so the 16 modules that share ontology fixtures need one edit in the test support module, not 16 |
+| OD-RC4 | tool packages `mork`, `mork_compilers`, `surface`, `vocabulary`, `spc/python`, `reference/*`, then `workers/` |
+| OD-RC5 | `mise.toml` tasks that name module paths use the CLI. Bypass scan switches from report-only to failing |
+| OD-RC6 | skills and AGENTS.md (§6), READMEs link to the catalogue, link check widened |
 
 `sys.path.insert` sibling imports (34 sites) are related but separate. Many exist only to import a
 sibling script's constants, and disappear when those constants move to the catalogue. The rest are
@@ -416,7 +416,7 @@ the following, and this unit consumes the result.
 
 | Shared task | Owned by | Effect here |
 |---|---|---|
-| One test support module holding the layer stack (`LOWER`, the layer order, `ALL_SHAPES`), the extraction-contract shape lists repeated in four Instrument tests, and the one place a test finds the repository root (§1.2) | TM1, TM3 | RC3 shrinks to replacing that module's literals with catalogue lookups. The module is a single entry in the known-exceptions list until then (§5, item 4) |
+| One test support module holding the layer stack (`LOWER`, the layer order, `ALL_SHAPES`), the extraction-contract shape lists repeated in four Instrument tests, and the one place a test finds the repository root (§1.2) | TM1, TM3 | OD-RC3 shrinks to replacing that module's literals with catalogue lookups. The module is a single entry in the known-exceptions list until then (§5, item 4) |
 | Scanning repository files without `git grep` (TD-29), taking its roots as arguments | TM6 | the helper's roots come from the catalogue after RC3. It also removes a dependence on `.git`, which §4.3 already rules out for root discovery |
 | Replacing `sys.path.insert` and `from test_parameter_bindings import ...` sibling imports in those modules | TM1, TM3 | fewer of the 34 sites (§8) remain for this unit to count |
 
@@ -528,7 +528,7 @@ which map IRIs to files. "Repository catalogue" differs by one word and one spel
   more copy to drift. The bypass scan (§5, item 4) is the mitigation, and it only works once it
   fails rather than reports.
 - **Discovery from an unexpected working directory.** A tool started outside the tree fails to find
-  the root. The error must say to set `LATTICE_ROOT`. The pilot (RC1) tests this.
+  the root. The error must say to set `LATTICE_ROOT`. The pilot (OD-RC1) tests this.
 - **Scope creep.** Each new kind of metadata will look like it belongs here. RC-Q3's answer is the
   boundary, and the ADR should state it.
 - **Merge conflicts on one file** under RC-Q1 option A, if many slices add modules in parallel.

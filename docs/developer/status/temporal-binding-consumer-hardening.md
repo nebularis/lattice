@@ -3,12 +3,7 @@
 # Vocabulary Temporal-Binding Consumer Hardening - Status
 
 **Unit ID:** `temporal-binding-consumer-hardening`
-**Status:** Implemented (2026-09-25), at our direction ("proceed with
-the attached plan"), which is treated as confirmation of Finding 1's Option B
-(the plan's own "Our input" line already recorded this agreement). Not yet
-executed in this sandbox — no `rdflib` here (network-restricted); statically
-verified (`py_compile`, a direct AST-level mutation probe for Finding 4) and
-handed off for `mise run check:vocabulary` / `python -m unittest surface.test_surface -v`.
+**Status:** built 2026-09-25. Implemented (2026-09-25), at our direction ("proceed with the attached plan"), which is treated as confirmation of Finding 1's Option B (the plan's own "Our input" line already recorded this agreement). Not yet executed in this sandbox, no `rdflib` here (network-restricted), statically verified (`py_compile`, a direct AST-level mutation probe for Finding 4) and handed off for `mise run check:vocabulary` / `python -m unittest surface.test_surface -v`.
 **Last updated:** 2026-09-25
 **Trigger:** Closure cross-reference of `vocabulary-temporal-binding` against
 [docs/architecture/rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md)

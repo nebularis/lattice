@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="https://www.nebularis.org/neuro-semantic/lattice/document/1" id="00000002-0000-4000-8000-000000000000">
+  <meta>
+    <title>Software Licence (sample)</title>
+    <template>software-licence</template>
+    <variable key="licence-fee" type="money">Licence fee</variable>
+    <variable key="payment-days" type="duration">Payment days</variable>
+    <variable key="user-limit" type="number">User limit</variable>
+  </meta>
+  <body>
+    <section key="definitions">
+      <definition id="00000002-0000-4000-8000-000000000001" term="Licensor">“Licensor” means the party granting rights under this Agreement.</definition>
+      <definition id="00000002-0000-4000-8000-000000000002" term="Licensee">“Licensee” means the party receiving rights under this Agreement.</definition>
+      <definition id="00000002-0000-4000-8000-000000000003" term="Software">“Software” means the computer program licensed under this Agreement.</definition>
+      <definition id="00000002-0000-4000-8000-000000000004" term="Documentation">“Documentation” means the user manuals supplied with the <ref target="00000002-0000-4000-8000-000000000003">Software</ref>.</definition>
+    </section>
+    <section key="grant">
+      <clause id="00000002-0000-4000-8000-000000000005"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> may use the <ref target="00000002-0000-4000-8000-000000000003">Software</ref> for its internal business purposes.</clause>
+      <clause id="00000002-0000-4000-8000-000000000006"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> may permit up to <var key="user-limit">10</var> users to access the <ref target="00000002-0000-4000-8000-000000000003">Software</ref>.</clause>
+      <clause id="00000002-0000-4000-8000-000000000007"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> shall not sublicense the <ref target="00000002-0000-4000-8000-000000000003">Software</ref>.</clause>
+    </section>
+    <section key="restrictions">
+      <clause id="00000002-0000-4000-8000-000000000008"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> shall not reverse engineer the <ref target="00000002-0000-4000-8000-000000000003">Software</ref>.</clause>
+    </section>
+    <section key="fees">
+      <clause id="00000002-0000-4000-8000-000000000009"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> shall pay the <var key="licence-fee">GBP 5,000</var> annually in advance.</clause>
+      <clause id="00000002-0000-4000-8000-000000000010"><ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> shall pay each invoice within <var key="payment-days">30 days</var>.</clause>
+      <unmarked>Fees are exclusive of VAT.</unmarked>
+    </section>
+    <section key="warranty-exclusions">
+      <clause id="00000002-0000-4000-8000-000000000011"><ref target="00000002-0000-4000-8000-000000000001">Licensor</ref> is not liable for any loss of profits.</clause>
+    </section>
+    <section key="termination">
+      <clause id="00000002-0000-4000-8000-000000000012"><ref target="00000002-0000-4000-8000-000000000001">Licensor</ref> may terminate this Agreement if <ref target="00000002-0000-4000-8000-000000000002">Licensee</ref> fails to pay any fee.</clause>
+    </section>
+  </body>
+</document>

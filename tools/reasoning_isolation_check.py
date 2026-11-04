@@ -20,15 +20,25 @@ import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import lattice_repo_catalogue  # noqa: E402
+
+ROOT = lattice_repo_catalogue.find_root()
 TESTKIT = Path("platform/reasoning-testkit/pom.xml")
 ENGINE = re.compile(r"hermit|openllet|pellet|drools|owlapi|owlready|jpype|py4j|pyjnius", re.IGNORECASE)
-SKIP = {"node_modules", "target", ".venv", "build", ".build"}
+# What a build tool writes beside the sources it builds, skipped where there is no catalogue to say.
+BUILD_TOOL = {"node_modules", "target", ".venv", ".build", "build"}
 POM = "{http://maven.apache.org/POM/4.0.0}"
 
 
 def files(root: Path, name: str) -> list[Path]:
-    return [p for p in sorted(root.rglob(name)) if not SKIP & set(p.relative_to(root).parts)]
+    """Every file called ``name`` in the repository catalogue's scope (STD-273). A root with no catalogue, such
+    as a test's temporary directory, is walked whole."""
+    try:
+        return lattice_repo_catalogue.load(root).files(name)
+    except (lattice_repo_catalogue.CatalogueError, OSError):
+        return [p for p in sorted(root.rglob(name)) if not BUILD_TOOL & set(p.relative_to(root).parts)]
 
 
 def check(root: Path) -> list[str]:

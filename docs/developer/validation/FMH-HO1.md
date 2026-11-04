@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO1, fix the composite replace (TD-39, TD-36)
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO1
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO1
 ([plan §3.5](../plans/formal-methods-track-h.md#ho1-fix-the-composite-replace-td-39-td-36)).
 **Source:** [the review](../notes/persistence-aggregate-ownership-review.md), findings F2 and F3, and
 [sketch §7.1](../sketches/persistence-aggregate-ownership.md#71-replace-cas-replace-composite-property-and-its-dataset-guard-variant).
@@ -40,7 +40,7 @@ from the rendered text, taking the string from `templatecheck._SLOT_STAND_INS` s
 the replace runs with an empty payload, which is what the tests always meant. Their assertions are
 unchanged (T10 gives `[]`, T11 gives `urn:pay:1` or `urn:li:1`) and still cover the whole default
 graph. Filtering the stand-in's subject from the result was rejected, because it makes the assertion
-skip something. T10 and T11 never covered where the payload lands. HO1-T1 to T3 do. HO5 rewrites T10 and
+skip something. T10 and T11 never covered where the payload lands. HO1-T1 to T3 do. FMH-HO5 rewrites T10 and
 T11 for the ownership tree and the data graph.
 
 ## Test cases
@@ -93,6 +93,6 @@ composite counts still read `[]`, `["urn:pay:1"]` and `["urn:li:1"]`.
 
 ## Deliberate non-coverage
 
-- Which property the update follows, and several owned properties. HO4 and HO5.
-- The default graph against static check S-1 (TD-40). HO5 moves the composite family to a named data graph.
+- Which property the update follows, and several owned properties. FMH-HO4 and HO5.
+- The default graph against static check S-1 (TD-40). FMH-HO5 moves the composite family to a named data graph.
 - Create and tombstone delete for the composite strategy (TD-04). HO7.

@@ -2,6 +2,9 @@
 
 # MORK Teaching Pack (MTP) Implementation Plan - Execution Status
 
+**Unit ID:** `mtp-execution`
+**Status:** merged 2026-09-20. Accepted, plan fully executed and validated.
+
 **Unit:** `mtp-execution`
 **State:** Accepted - plan fully executed and validated
 **Plan Document:** [mtp-implementation-plan.md](../sketches/mtp-implementation-plan.md)

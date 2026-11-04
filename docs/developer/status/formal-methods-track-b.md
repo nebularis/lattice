@@ -3,9 +3,9 @@
 # Formal Methods, Track B: Status
 
 **Unit ID:** `formal-methods-track-b` (phase, within the `formal-methods` epic)
-**Status:** B1, B2 and B3 done, 2026-10-07. **B2.1 and B2.2 done, 2026-10-09**, on branch
+**Status:** building 2026-10-09. FMB-1, FMB-2 and FMB-3 done, 2026-10-07. **FMB-2.1 and FMB-2.2 done, 2026-10-09**, on branch
 `fm/eligibility-pass` (machine S), part of the formal-methods epic's Eligibility pass (FM-EP)
-CCS's C9b3 waits on. B5 attempted the same session, blocked (see below), deferred
+CCS's CCS-9b.3 waits on. FMB-5 attempted the same session, blocked (see below), deferred
 **Last updated:** 2026-10-09
 **Plan:** [formal-methods-track-b.md](../plans/formal-methods-track-b.md)
 **Sketch:** [formal-methods-track-b.md](../sketches/formal-methods-track-b.md)
@@ -15,7 +15,7 @@ CCS's C9b3 waits on. B5 attempted the same session, blocked (see below), deferre
 
 ## Current position
 
-B1 built `tools/reference/eligibility/`: `kernel.py` (a direct port of
+FMB-1 built `tools/reference/eligibility/`: `kernel.py` (a direct port of
 `tools/proofs/eligibility/KernelLaws.thy`'s `or3`/`and3`/`neg3`/`decision_leq` and
 `Eligibility.thy`'s `some_value`/`every_value`) and `denotation.py` (the single-candidate decision
 for laws L9-L12 and L14, written from `ontology/eligibility/README.md` §6's own prose, cross-
@@ -32,15 +32,15 @@ deliberately made to fix `Undetermined` to `Permitted`) was confirmed to fail si
 both files before being reverted — the "prove it can fail" check the plan's own validation
 criterion calls for.
 
-B2 (`tools/reference/eligibility/tests/test_differential.py`) differentially tested the reference
+FMB-2 (`tools/reference/eligibility/tests/test_differential.py`) differentially tested the reference
 against `tools/mork_compilers`' compiled SPARQL and SHACL, reusing that package's own fixtures
 (`DIAGNOSES`, `ENTITLEMENT`) and one real Eligibility example (`flat-scheme-lending.ttl`). It found
-and fixed two real defects in B1's `denotation.py`: a missing scheme-membership precondition (L9's
+and fixed two real defects in FMB-1's `denotation.py`: a missing scheme-membership precondition (L9's
 "restricted to that scheme's members" — a candidate outside the scheme could be wrongly Denied
 rather than Undetermined) and a `SingleValue` reading that took the first value regardless of
 count instead of requiring exactly one. 63 tests pass.
 
-B3 added `RegenerationPropertyTests` to `tools/surface/src/surface/test_surface.py`: a property
+FMB-3 added `RegenerationPropertyTests` to `tools/surface/src/surface/test_surface.py`: a property
 test (stdlib `random`, seeded — Hypothesis was attempted first and found blocked by this
 environment's package mirror specifically, not a network-wide block) checking `impacted_surfaces`'
 soundness and completeness against an independently structured BFS oracle, plus monotonicity and a
@@ -49,7 +49,7 @@ scoped. 72 tests pass in `surface.test_surface` (3 new, no regression).
 
 `ADR-A-FM3` accepted, 2026-10-07.
 
-**2026-10-09, branch `fm/eligibility-pass` (machine S), B2.2 done.** The suspected defect was
+**2026-10-09, branch `fm/eligibility-pass` (machine S), FMB-2.2 done.** The suspected defect was
 real: `decide_concept_match(hierarchical=True, scheme=None, required={...})` fell through to the
 unmatched-required branch and returned `Denied`. Fixed test-first (a failing test added and
 confirmed failing against the old code, per convention): a new early guard returns `Undetermined`
@@ -58,13 +58,13 @@ against", not "this candidate fails the closure", the same reasoning L14 already
 wording in `ontology/eligibility/README.md` amended to state this case explicitly (the CCS plan's
 own anticipation that this slice "may change the README's wording" confirmed).
 
-**2026-10-09, B2.1 done.** All six items: (1) a deliberate fault seeded directly into
+**2026-10-09, FMB-2.1 done.** All six items: (1) a deliberate fault seeded directly into
 `eligibility_ir._expand` (via `monkeypatch`, not a permanent edit), confirmed the SHACL backend's
 real output (which reads `plan.expansion` directly) now disagrees with the unchanged reference —
 the harness's core rationale, tested for the first time; (2) an adjudication log added to this
-package's own README, with entries for all three disagreements found so far (B2's two, B2.2's
+package's own README, with entries for all three disagreements found so far (FMB-2's two, FMB-2.2's
 one), naming which side was wrong and the normative citation, including one entry flagged as
-weaker than the others (B2's `SingleValue` fix, settled by reading the compiler's template, not a
+weaker than the others (FMB-2's `SingleValue` fix, settled by reading the compiler's template, not a
 README law); (3) the per-backend projection of `{Permitted, Denied, Undetermined}` stated
 explicitly for both tested backends (SPARQL: no projection, exact; SHACL: conformance-plus-lists,
 reconstructed by the test helper); (4) the differential engine named (rdflib, not a production
@@ -76,31 +76,31 @@ every combination of flat/chained three-concept scheme, both match modes, every 
 `{c0, c1}` and every excluded subset of `{c2}` (28 compiled plans, 4 candidates each, 112
 comparisons), checked against both SPARQL and SHACL, not sampled.
 
-**B5 attempted, blocked.** `pip install mutmut` fails: its dependency `textual` pulls
+**FMB-5 attempted, blocked.** `pip install mutmut` fails: its dependency `textual` pulls
 `platformdirs`, which 403s from the configured mirror (same per-package-mirror-gap pattern as
 `hypothesis` before it, repository memory). Not retried further; deferred, not this session's to
 force. A hand-seeded mutation (as this session already used three times elsewhere) remains the
 fallback if a measured score is wanted before the mirror gap closes.
 
 **Validated:** `python -m pytest tools/reference/eligibility/tests -q` — 66 passed (was 63: +1
-B2.2, +2 B2.1's two new test classes, one of which itself checks 28 generated cases × 4
+FMB-2.2, +2 FMB-2.1's two new test classes, one of which itself checks 28 generated cases × 4
 candidates internally).
 
-**Next action, for the maintainer:** review and accept this branch's work (B2.1, B2.2, plus track E's
-FM-D17/E1.4 on the same branch) so CCS's C9b3 can start. B4 still waits on CCS's C12. B5 remains
+**Next action, for the maintainer:** review and accept this branch's work (FMB-2.1, FMB-2.2, plus track E's
+FM-D17/E1.4 on the same branch) so CCS's CCS-9b.3 can start. FMB-4 still waits on CCS's C12. FMB-5 remains
 open whenever the mirror gap clears or a hand-seeded alternative is wanted.
 
 ## Slices
 
-| Slice | State | Blocked on |
-|---|---|---|
-| B1 (kernel and denotation) | **done** | nothing |
-| B2 (differential tests against the compilers) | **done** | nothing |
-| B2.1 (harden the differential harness, seed a compiler-side fault) | **done**, 2026-10-09 | nothing |
-| B2.2 (verify/fix the scheme-less hierarchical-match branch) | **done**, 2026-10-09, defect confirmed and fixed | nothing |
-| B3 (Surface's regeneration property test; MORK and MCN deferred) | **done** | nothing |
-| B4 (evaluation context, CCS C12's conformance kit) | not started, outline only | CCS's C12, not yet briefable |
-| B5 (measured mutation score) | attempted 2026-10-09, blocked (`mutmut`'s dependency chain 403s on the mirror), deferred | the mirror gap, or a hand-seeded fallback |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| FMB-1 | kernel and denotation | built 2026-10-09 |  |
+| FMB-2 | differential tests against the compilers | built 2026-10-09 |  |
+| FMB-2.1 | harden the differential harness, seed a compiler-side fault | built 2026-10-09 |  |
+| FMB-2.2 | verify/fix the scheme-less hierarchical-match branch | built 2026-10-09, defect confirmed and fixed |  |
+| FMB-3 | Surface's regeneration property test, MORK and MCN deferred | built 2026-10-09 |  |
+| FMB-4 | evaluation context, CCS C12's conformance kit | planned, outline only | CCS's C12, not yet briefable |
+| FMB-5 | measured mutation score | building 2026-10-09, blocked (`mutmut`'s dependency chain 403s on the mirror), deferred | the mirror gap, or a hand-seeded fallback |
 
 ## Open questions
 
@@ -111,11 +111,11 @@ open whenever the mirror gap clears or a hand-seeded alternative is wanted.
 
 ## Log
 
-- 2026-10-07: sketch and plan written, scoping B1-B3 (B4 confirmed still blocked on CCS's C12 by
-  reading `main` directly). B3 lightened at our request: the MORK join-semilattice item
+- 2026-10-07: sketch and plan written, scoping B1-B3 (FMB-4 confirmed still blocked on CCS's C12 by
+  reading `main` directly). FMB-3 lightened at our request: the MORK join-semilattice item
   removed as a questionable claim not to be carried on assumption, MCN's round-trip item already
   recorded as blocked (no RDF-to-MCN encoder exists). Both documents committed.
-- 2026-10-07: B1 built and validated. `ADR-A-FM3` drafted (Proposed): home `tools/reference/`,
+- 2026-10-07: FMB-1 built and validated. `ADR-A-FM3` drafted (Proposed): home `tools/reference/`,
   scope B1-B3, restating epic principles E1 and E3. `tools/reference/eligibility/` created
   (`pyproject.toml`, `README.md`, `src/reference_eligibility/{kernel,denotation}.py`,
   `tests/{test_kernel,test_denotation}.py`). Wired into `mise.toml`
@@ -123,24 +123,24 @@ open whenever the mirror gap clears or a hand-seeded alternative is wanted.
   aggregates — no dependency beyond `pytest`). Root `README.md` and `tools/README.md` updated.
   47 tests pass; a seeded mutation confirmed the suite catches a real regression before being
   reverted.
-- 2026-10-07: E1.2's blocker (track E's own status) resolved as a consequence of this phase's
-  sketch: the rounding/residual theorem belongs to B4/E3-E4, not Quantification. Track E's plan
-  and status records corrected to retire E1.2 and point at this track's B4, and E1.3's blocked-on
+- 2026-10-07: FME-1.2's blocker (track E's own status) resolved as a consequence of this phase's
+  sketch: the rounding/residual theorem belongs to FMB-4/E3-E4, not Quantification. Track E's plan
+  and status records corrected to retire FME-1.2 and point at this track's FMB-4, and FME-1.3's blocked-on
   text refreshed now that track C's C2 is done (the overlap-rule ADR is the remaining blocker,
   not C2 itself).
 - 2026-10-07: `ADR-A-FM3` accepted.
-- 2026-10-07: B2 built. `tools/reference/eligibility/tests/test_differential.py` differentially
+- 2026-10-07: FMB-2 built. `tools/reference/eligibility/tests/test_differential.py` differentially
   tests `decide_concept_match` against `tools/mork_compilers`' compiled SPARQL (executed) and
   SHACL (pySHACL), reusing that package's own fixtures (`DIAGNOSES`, `ENTITLEMENT`) and helpers
   (`with_questions`, `sparql`, `shacl`), plus one real Eligibility example
-  (`flat-scheme-lending.ttl`) for L14. Found and fixed two real defects in B1's own
+  (`flat-scheme-lending.ttl`) for L14. Found and fixed two real defects in FMB-1's own
   `denotation.py`: (1) no scheme-membership precondition (L9's "restricted to that scheme's
   members"), so a candidate entirely outside the resolved scheme could be wrongly Denied instead
   of Undetermined; (2) `decide_condition`'s `SingleValue` reading took the first value regardless
   of count rather than requiring exactly one. Both fixed, with regression tests added to
   `test_denotation.py`. `mork-compilers` and `pyshacl` added to the package's test extras
   (`bootstrap:reference-eligibility` now depends on `bootstrap:mork-compilers`). 63 tests pass.
-- 2026-10-07: B3 built. `tools/surface/src/surface/test_surface.py` gains
+- 2026-10-07: FMB-3 built. `tools/surface/src/surface/test_surface.py` gains
   `RegenerationPropertyTests`: Hypothesis was attempted first for property generation and found
   blocked by this environment's package mirror (a 403 on that one dependency specifically,
   confirmed not a network-wide block — other packages installed normally this session); fell back

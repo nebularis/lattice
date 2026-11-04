@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** ✅ Complete. All six slices done, 774/774 tests passing (validated 2026-09-25).
+**Status:** built 2026-09-25. ✅ Complete. All six slices done, 774/774 tests passing (validated 2026-09-25).
 **Last updated:** 2026-09-25 (Slice 6 documentation close-out, unit complete)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)
@@ -51,14 +51,14 @@ No open blockers remain.
 
 ## Slice status
 
-| Slice | Scope | Status |
-|---|---|---|
-| 1 | Dataset-level epoch guard (G1 — correctness) | ✅ Complete, 290/290 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-1.md) |
-| 2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | ✅ Complete, 526/526 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-2.md) |
-| 3 | Identity minting profile resolution (G2) | ✅ Complete, 570/570 passing — see [VP](../validation/persistence-compiler-iri-sync-slice-3.md) |
-| 4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | ✅ Complete, validated 2026-09-25 (669 passed, adversarial probes checked) — see [VP](../validation/persistence-compiler-iri-sync-slice-4.md) |
-| 5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | ✅ Complete, validated 2026-09-25 (774 passed) — see [VP](../validation/persistence-compiler-iri-sync-slice-5.md) |
-| 6 | Documentation close-out | ✅ Complete, 2026-09-25 | no VP (L0, documentation only — same precedent as `applied-ontology-readiness` AOR-1) |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| PCI-1 | Dataset-level epoch guard (G1 — correctness) | built 2026-09-23, 290/290 passing — see [VP](../validation/PCI-1.md) |  |
+| PCI-2 | Ordering/receipt/concurrency/aggregate-boundary extension properties + meta-topology sharding (G5, G6) | built 2026-09-23, 526/526 passing — see [VP](../validation/PCI-2.md) |  |
+| PCI-3 | Identity minting profile resolution (G2) | built 2026-09-23, 570/570 passing — see [VP](../validation/PCI-3.md) |  |
+| PCI-4 | Privacy/erasure profile + cross-profile compatibility (G3 partial, G4) | built 2026-09-25, validated  (669 passed, adversarial probes checked) — see [VP](../validation/PCI-4.md) |  |
+| PCI-5 | Uniqueness `onViolation` reconciler operations, `mergeRelation`, `ClaimScheme` `dal:Dual` rotation, registry-token digest relaxation (G7) | built 2026-09-25, validated  (774 passed) — see [VP](../validation/PCI-5.md) |  |
+| PCI-6 | Documentation close-out | built 2026-09-25 |  |
 
 ## Slice 1 delivery detail
 

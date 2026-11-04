@@ -32,7 +32,7 @@ so the argument is decisive for it.
 
 ## 2. Targets
 
-Both tracks formalise the same targets, from the same written semantics (D1).
+Both tracks formalise the same targets, from the same written semantics (FM-D1).
 
 | # | Target | Content |
 |---|---|---|
@@ -117,9 +117,9 @@ The experiment runs on its own branch, `fm/phase-0-prover-spike`, which the main
 
 | Content | On the branch | Reaches `main` |
 |---|---|---|
-| the brief (D1) | yes | yes, with the plan's other documents |
+| the brief (FM-D1) | yes | yes, with the plan's other documents |
 | spike sources: theories, proofs, code generation settings, the decoder, the gate script, image definitions and environment tasks | yes, under `spikes/formal-prover/`, one subdirectory per prover | no. `spikes/` is a new directory, allowed on an unmerged branch only. If track E adopts any of it, it moves to the home FM-D2 decides, under that ADR |
-| the report (D4) | yes | yes, carried to `main` on its own, merged or not |
+| the report (FM-D4) | yes | yes, carried to `main` on its own, merged or not |
 | the status record's updates | yes | yes |
 
 The branch's head commit is recorded in the report, so the result can be reproduced from it even if
@@ -128,7 +128,7 @@ the branch is later deleted.
 ### 7.2 Hosts and routes
 
 Both tracks run on the image route of epic §4 for everything measured, on the same host, so that
-neither prover gains from its host. The images are built in D0 under the epic's rules: one tool per
+neither prover gains from its host. The images are built in FM-D0 under the epic's rules: one tool per
 image, staged builds, `linux/amd64` and `linux/arm64`, pinned by digest, one container per job with
 no network and capped resources.
 
@@ -147,7 +147,7 @@ Two git-ignored locations, by kind:
 
 | Location | For | Ignored by |
 |---|---|---|
-| `.build/formal/` | build artefacts: toolchain distributions, image build contexts, caches keyed by image digest, and everything a build produces | a new `.gitignore` rule, `.build/formal/*` with `!.build/formal/.gitkeep`, following the existing `.build/` convention. D0 adds it on the branch |
+| `.build/formal/` | build artefacts: toolchain distributions, image build contexts, caches keyed by image digest, and everything a build produces | a new `.gitignore` rule, `.build/formal/*` with `!.build/formal/.gitkeep`, following the existing `.build/` convention. FM-D0 adds it on the branch |
 | `.local/formal/` | files that are not build artefacts but must not reach GitHub: run logs, timing data | the existing `.local/**` rule |
 
 | Kind | Location | Set by |
@@ -169,11 +169,11 @@ data and no toolchain file. Only sources, the brief, the report, the status reco
 
 | Slice | Content | Output | Estimate (tokens) |
 |---|---|---|---|
-| D0 | environments: the two prover images and the host-language images under epic §4's rules, multi-arch and pinned. The `check:formal-network`, `bootstrap:formal-images`, optional `bootstrap:formal-native-<tool>` and `check:formal-smoke` tasks in their spike form, with the Python driver. The smoke suite (prove, generate code, compile, run, read an AST, cross-compile) passing on macOS, Windows and Linux by the image route. M7's environment measures | `spikes/formal-prover/env/`, and a section of the report | under 0.05M |
-| D1 | the brief: the written semantics of TA and TL, the defects as patches, the MINOR change as a patch, the measures, the report template, the claim and gate scripts in their spike form, fairness rules | Validation Pack `docs/developer/validation/formal-methods-0.md` | under 0.05M |
-| D2 | the Rocq track | `spikes/formal-prover/rocq/` | 0.1M to 0.25M, capped at 0.25M |
-| D3 | the Isabelle track | `spikes/formal-prover/isabelle/` | 0.1M to 0.25M, capped at 0.25M |
-| D4 | the report: scores, evidence, recommendation or abandonment | `docs/developer/notes/formal-prover-experiment.md` | under 0.05M |
+| FM-D0 | environments: the two prover images and the host-language images under epic §4's rules, multi-arch and pinned. The `check:formal-network`, `bootstrap:formal-images`, optional `bootstrap:formal-native-<tool>` and `check:formal-smoke` tasks in their spike form, with the Python driver. The smoke suite (prove, generate code, compile, run, read an AST, cross-compile) passing on macOS, Windows and Linux by the image route. M7's environment measures | `spikes/formal-prover/env/`, and a section of the report | under 0.05M |
+| FM-D1 | the brief: the written semantics of TA and TL, the defects as patches, the MINOR change as a patch, the measures, the report template, the claim and gate scripts in their spike form, fairness rules | Validation Pack `docs/developer/validation/FM-0.md` | under 0.05M |
+| FM-D2 | the Rocq track | `spikes/formal-prover/rocq/` | 0.1M to 0.25M, capped at 0.25M |
+| FM-D3 | the Isabelle track | `spikes/formal-prover/isabelle/` | 0.1M to 0.25M, capped at 0.25M |
+| FM-D4 | the report: scores, evidence, recommendation or abandonment | `docs/developer/notes/formal-prover-experiment.md` | under 0.05M |
 
 **Fairness.** One model and one agent configuration for both tracks, on one host and the image route. Both start from the same written
 semantics. The order of the tracks is recorded, since the second may benefit from the first, and the
@@ -187,7 +187,7 @@ report weighs that. A target not finished within the cap is scored as not finish
 | FM-D1 is decided, or the prover abandoned, with reasons if the rule is overruled | the status record |
 | FM-D10's Haskell question is answered | the status record |
 | the abandonment thresholds of the epic §6 are revised with the measurements | the epic plan |
-| the smoke suite passes on macOS, Windows and Linux by the image route, for the chosen prover's stack | D0's results in the report |
+| the smoke suite passes on macOS, Windows and Linux by the image route, for the chosen prover's stack | FM-D0's results in the report |
 | no build output, binary, image, certificate or toolchain file is tracked on the branch | `git status` on the branch |
 | the report and the status record are on `main` | `main` |
 

@@ -3,6 +3,7 @@
 # Plan: Computable contract substrate
 
 **Unit ID:** `computable-contract-substrate` (CCS)
+**Prefix:** CCS, HQ
 **Unit type:** multi-slice unit, single machine R, in tranches with validation gates (as
 [normative-rule-substrate](normative-rule-substrate.md) §3)
 **Status:** Proposed, awaiting the maintainer's review. All §8 decisions taken (CC-D8 on 2026-10-01)
@@ -17,8 +18,8 @@ first design, superseded)
 **ADRs:** A-104 (retitled), A-106 (retitled), A-112, A-113, A-114, A-115 and A-120, accepted. A-130
 (Ensemble) and A-131 (Ledger), Proposed, take over HQ-2's second case, HQ-7 and HQ-12, and the ledger. A-105 is
 drafted here in HQ-6a (2026-10-10). A-109 is revised in NRS
-**Absorbs:** NRS slices N4, N5 (as HQ-6), N1 and N2 (before C13), N6 (in C12) and N8 (its Behaviour
-part in C11 and C12, its chain checks in C13), decided 2026-10-10 (NRS NQ-2, NQ-3)
+**Absorbs:** NRS slices N4, N5 (as HQ-6), N1 and N2 (before CCS-13), N6 (in CCS-12) and N8 (its Behaviour
+part in CCS-11 and CCS-12, its chain checks in CCS-13), decided 2026-10-10 (NRS NQ-2, NQ-3)
 **Precedes:** applied-insurance Phase 5 (AIR epic §3b) and Open CBAA's migration (§7)
 
 ---
@@ -56,10 +57,10 @@ N12). A native evaluation engine.
 
 | ADR | Title | Decides | Drafted in |
 |---|---|---|---|
-| A-112 | Wording layer | the layer, its position between Eligibility and Instrument, and Behaviour moved below Instrument (both amend A-01), its contents | C0 |
-| A-113 | Breaking changes at major version zero | a breaking change to a 0.x layer takes a MINOR bump, marked breaking (C0-Q3) (clarifies A-86) | C0 |
-| A-104 | Instrument: terms and legal relations (retitled from "Deontic extension of Instrument") | the rewrite, superseding A-07b, carrying A-96 onto terms. Regimes, legal triggers, `ins:appliesInState`, `ins:computedBy`, the template library and `ontology/instrument/templates/` | C1 |
-| A-106 | Behaviour configuration, runtime, occasions and records (retitled from "Compensation chains and violation records") | the configuration and runtime split, `bhv:targets` with no range, `bhv:forSubject` relaxed, engine-setting defaults, no required effect, the evidence rule (B6), occasions, act, breach, exercise, determination and deemed-fact records, laws B1 to B8. Alignment with Instrument is by sub-class and sub-property (sketch §7.3), with no compiled wiring | C2 |
+| A-112 | Wording layer | the layer, its position between Eligibility and Instrument, and Behaviour moved below Instrument (both amend A-01), its contents | CCS-0 |
+| A-113 | Breaking changes at major version zero | a breaking change to a 0.x layer takes a MINOR bump, marked breaking (C0-Q3) (clarifies A-86) | CCS-0 |
+| A-104 | Instrument: terms and legal relations (retitled from "Deontic extension of Instrument") | the rewrite, superseding A-07b, carrying A-96 onto terms. Regimes, legal triggers, `ins:appliesInState`, `ins:computedBy`, the template library and `ontology/instrument/templates/` | CCS-1 |
+| A-106 | Behaviour configuration, runtime, occasions and records (retitled from "Compensation chains and violation records") | the configuration and runtime split, `bhv:targets` with no range, `bhv:forSubject` relaxed, engine-setting defaults, no required effect, the evidence rule (B6), occasions, act, breach, exercise, determination and deemed-fact records, laws B1 to B8. Alignment with Instrument is by sub-class and sub-property (sketch §7.3), with no compiled wiring | CCS-2 |
 | A-109 | The importable rule-body fragment (NRS N2) | revised: a read of a recorded occasion state is admitted when stratified | NRS N2 |
 | A-105 | Closure declarations (NRS N5) | revised: a contract's deeming is a closure source, determinations and burden | CCS HQ-6a (moved from NRS N5, 2026-10-10) |
 
@@ -73,22 +74,22 @@ branch.
 
 | Slice | Content | Output |
 |---|---|---|
-| C0 | draft A-112, A-113, and the A-01 and ADR-A-C2 addenda (CC-D7) | four documents, Proposed |
-| C1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I18 | ADR, Proposed |
-| C2 | draft A-106 from the sketch §7, laws B1 to B8 | ADR, Proposed |
+| CCS-0 | draft A-112, A-113, and the A-01 and ADR-A-C2 addenda (CC-D7) | four documents, Proposed |
+| CCS-1 | draft A-104 from the sketch §5, §6, §7.3, §7.4, laws I1 to I18 | ADR, Proposed |
+| CCS-2 | draft A-106 from the sketch §7, laws B1 to B8 | ADR, Proposed |
 
 Gate A: the maintainer accepts A-104, A-106, A-112 and A-113.
 
-#### C0 in detail
+#### CCS-0 in detail
 
 **Machine:** R. **Branch:** `ccs/c0-adrs`, created. **Validation Pack:**
-[computable-contract-substrate-c0](../validation/computable-contract-substrate-c0.md).
+[computable-contract-substrate-c0](../validation/CCS-0.md).
 **Decisions carried:** CC-D1, CC-D2 and CC-D8's layer order (A-112), CC-D4 (A-113), CC-D7 (the
 ADR-A-C2 addendum).
 
 **Invariant:** paper only. Two new ADRs and two addenda, all `Proposed`, plus the ADR index. No
 ontology, tool, README or architecture document changes: those follow acceptance at Gate A, in the
-slices that build what the ADRs decide (C3, C10, C16). Each ADR states what was decided and cites
+slices that build what the ADRs decide (CCS-3, CCS-10, CCS-16). Each ADR states what was decided and cites
 the sketch for the argument, so the rationale lives in one place.
 
 **Questions for the maintainer before the branch** (the brief follows the recommendation unless told
@@ -97,7 +98,7 @@ otherwise):
 | # | Question | Options | Recommendation |
 |---|---|---|---|
 | C0-Q1 | How does A-112 change A-01's layer order? The ADR README says a changed decision is a new ADR that supersedes the old one | (a) A-112 decides, and A-01 gains a short addendum giving the new order and pointing to A-112, as A-86 and A-98 gained addenda. (b) A-112 supersedes A-01 and restates every layer's import rule | (a): A-01's other rules (no upward import, projections from the higher layer, the rejected composition module) stand, and readers of A-01 find the current order |
-| C0-Q2 | How is "not substantially more comprehensive" (CC-D7) measured, so C15 can test it? | (a) every class and property an insurance example uses for a scenario is also used by an other-domain example for that scenario. (b) a reviewer's judgement, recorded per example | (a), mechanical and checkable |
+| C0-Q2 | How is "not substantially more comprehensive" (CC-D7) measured, so CCS-15 can test it? | (a) every class and property an insurance example uses for a scenario is also used by an other-domain example for that scenario. (b) a reviewer's judgement, recorded per example | (a), mechanical and checkable |
 | C0-Q3 | Where is a breaking 0.x change marked (A-113)? The release register is generated and has no notes column | (a) in the ADR that authorises the change and in the layer README's release note, with the register unchanged. (b) a register column written by `tools/ontology_releases.py` | (a): no tool change, and the register keeps its add-only rows |
 
 1. **ADR-A112, Wording layer** (`ADR-A112-wording-layer.md`). Shape as A-103: Status, Date,
@@ -117,11 +118,11 @@ otherwise):
      variables, tables under CC-D6, assembly, the assembled wording, amendments), with laws W1 to
      W7 listed by number and linked, not restated.
    - **Decision 4, what Wording does not hold:** legal meaning (Instrument), the LMA WIM typing
-     (an applied profile, CC-D3), identifiers (Foundation, F1).
+     (an applied profile, CC-D3), identifiers (Foundation, CCS-F1).
    - **Rejected:** a layer named Contract, and wording inside Instrument. One sentence each, citing
      sketch §1.1 and DP3 (§3.1).
-   - **Consequences:** `ontology/wording/` is created at C3 under this ADR (the topology rule).
-     A-01's promised import-closure check is built at C10a. Documentation follows at C3 and C16.
+   - **Consequences:** `ontology/wording/` is created at CCS-3 under this ADR (the topology rule).
+     A-01's promised import-closure check is built at C10a. Documentation follows at CCS-3 and C16.
      Open CBAA's `wim:` migrates (plan §7).
 2. **ADR-A01 addendum**, under C0-Q1 (a): `## Addendum (2026-10-01): Wording, and Behaviour below
    Instrument`, **Status:** Proposed, with ADR-A112. The new order as a text tree in A-01's own
@@ -146,12 +147,12 @@ otherwise):
      comprehensive, measured under C0-Q2.
    - **Unchanged:** the authoring order (premise, then two non-domain examples, then mechanism),
      and the ban on any deployment, brand or closed-estate identifier in substrate text.
-   - **Consequences:** C15's coverage test checks both conditions per scenario.
+   - **Consequences:** CCS-15's coverage test checks both conditions per scenario.
 5. **ADR index** (`docs/architecture/decisions/README.md`):
    - rows for A-112 and A-113 (Proposed)
    - A-01 and A-C2 titles marked "(with addendum)"
    - one sentence in the numbering paragraph: A-104 to A-111 are reserved by NRS, A-104 and A-106
-     are drafted in CCS C1 and C2, and A-112 and A-113 are CCS's
+     are drafted in CCS-1 and CCS-2, and A-112 and A-113 are CCS's
 6. **Handoff:** the Validation Pack's Handoff block and the status record. There are no tags,
    since no version changes.
 
@@ -169,10 +170,10 @@ otherwise):
 | C0-10 | `git diff --stat main` / read / only the four ADR files, the ADR index, the Validation Pack and the status record change | L1 | + |
 | C0-11 | each ADR / read / it cites the sketch for its argument and does not restate it | paper | + |
 
-#### C1 in detail
+#### CCS-1 in detail
 
 **Machine:** R. **Branch:** `ccs/c0-adrs` (we ran tranche A on one branch, 2026-10-01).
-**Validation Pack:** [computable-contract-substrate-c1](../validation/computable-contract-substrate-c1.md).
+**Validation Pack:** [computable-contract-substrate-c1](../validation/CCS-1.md).
 **Decisions carried:** CC-D5, CC-D8 (regimes and legal triggers), CC-D10, CC-D11.
 
 **Invariant:** paper only. ADR-A104 `Proposed`, superseding ADR-A07b on acceptance and carrying
@@ -184,7 +185,7 @@ ADR-A96 onto terms, decides what the sketch §5, §6, §7.3 and §7.4 decide and
    parties (with CC-D10), content and static parameters, legal triggers, regimes, structure apart
    from state, constitutive terms, exceptions and burden, change, sections (CC-D11), templates and
    `ontology/instrument/templates/`, calculated values, evaluation, laws I1 to I16.
-3. **Consequences:** slices C6 to C9 and C8a, the A-113 bumps, `ins:InstrumentTarget`, NRS N4,
+3. **Consequences:** slices CCS-6 to C9 and CCS-8a, the A-113 bumps, `ins:InstrumentTarget`, NRS N4,
    A-105 and A-109 revisions, ADR-A-C2 and its addendum for E1 to E8.
 4. **Decided in review (2026-10-01):** `ins:Element` retired under CC-D12, and `ins:fulfilledBy`
    replaced by `ins:fulfilledWhen` with delegated performance.
@@ -199,10 +200,10 @@ ADR-A96 onto terms, decides what the sketch §5, §6, §7.3 and §7.4 decide and
 | C1-05 | A-07b's terms (`Element`, `Provision`, `Obligation`, `Qualifier`, the cross-reference properties, `fulfilledBy`, R-B7) / checked / each is carried, replaced or raised as an open point | paper | + |
 | C1-06 | links and prose / the checks of C0-08 and C0-09 / pass | L1 | + |
 
-#### C2 in detail
+#### CCS-2 in detail
 
 **Machine:** R. **Branch:** `ccs/c0-adrs`. **Validation Pack:**
-[computable-contract-substrate-c2](../validation/computable-contract-substrate-c2.md).
+[computable-contract-substrate-c2](../validation/CCS-2.md).
 **Decisions carried:** CC-D8.
 
 **Invariant:** paper only. ADR-A106 `Proposed`, amending ADR-A11 and mapping ADR-A08's tiers onto
@@ -214,7 +215,7 @@ history and concurrent regimes are left to C11a.
 2. **Decision:** the layer flip, A-11's target binding amended, the two documents by tier, the
    evidence rule, occasions and records, alignment without runtime inference, roles filled later,
    laws B1 to B8, and what is not decided.
-3. **Consequences:** C10, C10a, C11, C12, the re-pins, risk R8, the Phase 3 engine.
+3. **Consequences:** CCS-10, CCS-10a, CCS-11, CCS-12, the re-pins, risk R8, the Phase 3 engine.
 4. **Decided in review (2026-10-01):** engine settings stay explicit. A-09 and A-10 stand, with no
    Behaviour-wide default.
 5. **Index:** the A-106 row, and A-11 marked as amended on acceptance.
@@ -232,17 +233,17 @@ history and concurrent regimes are left to C11a.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source. Unions named once, each property's subject and value stated in its comment and checked by SHACL Core shapes (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0, shapes 0.1.0 |
-| C4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5), with subject and value comments and SHACL Core shapes as in C3 | 0.2.0 MINOR, vocab 0.2.0, shapes 0.2.0 |
-| C5 | wording amendments (§4.6), shapes for laws W1 to W6 (W7 is a design rule), the slot condition-set check under C5-Q1, the README completed (laws, how-to) | 0.3.0 MINOR (breaking: new violations), vocab 0.3.0, shapes 0.3.0 |
+| CCS-3 | `ontology/wording` spec: wordings, elements, part-whole, rank keys, typing properties and their scheme contracts, content classes, text parts, references, document objects, variables. Sections are an element type (CC-D11), not a class. The README starts here as the literate source. Unions named once, each property's subject and value stated in its comment and checked by SHACL Core shapes (sketch §4.1, §4.2) | new: spec 0.1.0, vocab 0.1.0, shapes 0.1.0 |
+| CCS-4 | tables (§4.3), assembly: inclusion modes, variation slots, inclusion conditions, assembled wordings, variable values (§4.4, §4.5), with subject and value comments and SHACL Core shapes as in CCS-3 | 0.2.0 MINOR, vocab 0.2.0, shapes 0.2.0 |
+| CCS-5 | wording amendments (§4.6), shapes for laws W1 to W6 (W7 is a design rule), the slot condition-set check under C5-Q1, the README completed (laws, how-to) | 0.3.0 MINOR (breaking: new violations), vocab 0.3.0, shapes 0.3.0 |
 
 Wording imports Foundation, Vocabulary, Quantification and Eligibility. Nothing imports it until
-C6, so tranche B cascades nowhere.
+CCS-6, so tranche B cascades nowhere.
 
-#### C3 in detail
+#### CCS-3 in detail
 
 **Machine:** R. **Branch:** `ccs/c3-wording-spec`, created.
-**Validation Pack:** [computable-contract-substrate-c3](../validation/computable-contract-substrate-c3.md).
+**Validation Pack:** [computable-contract-substrate-c3](../validation/CCS-3.md).
 **Decisions:** ADR-A112 (decisions 1 to 4), ADR-A113, ADR-A-C2 and its addendum, CC-D6, CC-D11.
 
 **Invariant:** a new layer, `ontology/wording`, whose spec imports exactly Foundation 0.3.0,
@@ -260,7 +261,7 @@ other document changes version.
 
 1. **Versioning policy (ADR-A113).** `docs/architecture/ontology-versioning-policy.md` gains the
    major-version-zero rule beside its bump table, and the "Release notes" README section it
-   requires. This is A-113's own consequence, landed here because C3 is the first slice after
+   requires. This is A-113's own consequence, landed here because CCS-3 is the first slice after
    Gate A.
 2. **Examples first (ADR-A-C2).** `ontology/wording/examples/` gains, before any README prose:
    - `facility-agreement.ttl`: a wording with a section holding clauses 4.1 and 4.2, clause 4.1
@@ -280,14 +281,14 @@ other document changes version.
      `⊑ wrd:comprises` (transitive, never asserted), with inverses
    - `wrd:rankKey` and `wrd:objectId` (functional data properties)
    - `wrd:elementType` (functional) and `wrd:classification`, ranging over `skos:Concept`
-   - content classes `wrd:Text`, `wrd:Table` (declared only, rows and columns are C4),
+   - content classes `wrd:Text`, `wrd:Table` (declared only, rows and columns are CCS-4),
      `wrd:Variable`, `wrd:Reference` and `wrd:Metadata`, each `⊑ wrd:Element`, pairwise disjoint
    - `wrd:TextPart` with `wrd:hasTextPart` (inverse functional), `wrd:partIndex`,
      `wrd:partText`, `wrd:refersToVariable` and `wrd:refersToObject`
    - `wrd:DocumentObject` and `wrd:ExternalDocument` (`⊑ prov:Entity`), `wrd:documentKind`,
      `wrd:linksTo`
    - `wrd:EmbeddedVariable` and `wrd:GoverningVariable` (disjoint), `wrd:variableKey`,
-     `wrd:populationMethod` (its class only, individuals are C4), `wrd:populatedFrom`,
+     `wrd:populationMethod` (its class only, individuals are CCS-4), `wrd:populatedFrom`,
      `wrd:valueContract` (to `voc:SchemeContract`), `wrd:valueSpace` (to `qnt:ValueSpace`),
      `wrd:admissibleValues` (to `qnt:RangeSet`), `wrd:multiValued`
 4. **Vocab** (`vocab/wording-vocab.ttl`, `0.1.0`): `wrd-voc:ElementTypeContract`,
@@ -324,11 +325,11 @@ other document changes version.
 | C3-16 | `wrd:WordingNode`, `wrd:LinkedDocument`, `wrd:ReferenceTarget` / spec / each the one named union of its members, with the members' subclass triples asserted, and no anonymous union used as a domain or range | L1 | + |
 | C3-17 | every property / spec / its comment states its subject and value | L1 | + |
 
-#### C4 in detail
+#### CCS-4 in detail
 
 **Machine:** R. **Branch:** `ccs/c4-wording-assembly`, created. May run
-beside C11 and C10a: they share no file except `mise.toml`'s test list and the status record.
-**Validation Pack:** [computable-contract-substrate-c4](../validation/computable-contract-substrate-c4.md).
+beside CCS-11 and CCS-10a: they share no file except `mise.toml`'s test list and the status record.
+**Validation Pack:** [computable-contract-substrate-c4](../validation/CCS-4.md).
 **Decisions:** ADR-A112 decision 3, CC-D6 (tables), ADR-A-C2 and its addendum.
 
 **Invariant:** Wording gains tables, assembly and variable values, all additive (MINOR, not
@@ -344,7 +345,7 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 - **C4-Q2.** `wrd:VariationSlot ⊑ wrd:Element`, ranked among its siblings, with
   `wrd:hasVariant ⊑ wrd:directlyComprises` to its variants. The slot carries the shared object id
   ("1.4"). Each variant carries its letter ("1.4A") only in the library form, and the assembled
-  numbering shows "1.4". The slot is where C5's law shapes check its conditions as a set: no two
+  numbering shows "1.4". The slot is where CCS-5's law shapes check its conditions as a set: no two
   overlap, and together they cover every case. Open CBAA's D19 had no recorded rationale and
   could not give the slot a rank. The LMA drafts number the position and letter the variants.
 - **C4-Q3.** One `wrd:VariableValue` per variable, and per column where the variable is a table
@@ -374,7 +375,7 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
    Conditional) and the eight population methods, as named individuals, with comments written
    fresh and no market references.
 4. **Shapes** (`wording-shapes` 0.2.0): a subject shape and a class shape per new property, as in
-   C3, and a Core check that a variable value has exactly one variable and at least one value. The
+   CCS-3, and a Core check that a variable value has exactly one variable and at least one value. The
    laws that need SPARQL (one variant per slot, W3. Conditions read governing variables, W4.
    Mandatory children included, W5. A value matches its declaration, W6) stay in C5.
 5. **README:** the model sections for §4.3 to §4.5, the shapes, and the example table. The literate
@@ -396,13 +397,13 @@ Core, as in C3. Assembly is design time: nothing here is evaluated per event.
 | C4-10 | the examples / git history / committed before the model | paper | + |
 | C4-11 | the existing tool tests / unchanged / pass (non-weakening) | L1 | + |
 
-#### C5 in detail
+#### CCS-5 in detail
 
 **Machine:** R. **Branch:** `ccs/c5-wording-laws`, created. May run beside
-C11a, which shares no file but the status record. **Commits are the maintainer's** (2026-10-01): the
+CCS-11a, which shares no file but the status record. **Commits are the maintainer's** (2026-10-01): the
 agent builds and verifies, then stops before committing, including between the examples and the
 model, which ADR-A-C2 orders.
-**Validation Pack:** [computable-contract-substrate-c5](../validation/computable-contract-substrate-c5.md).
+**Validation Pack:** [computable-contract-substrate-c5](../validation/CCS-5.md).
 **Decisions:** ADR-A112 decision 3, ADR-A113, C4-Q2's refinement (the slot checks its conditions).
 
 **Invariant:** Wording gains textual amendments, and its laws W1 to W6 become shapes, so a
@@ -415,7 +416,7 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
   same single governing variable, the ranges must be pairwise disjoint and together cover the
   variable's admissible values. Every other slot gets the structural check (all its variants'
   conditions read the same governing variables), and a report lists it as unchecked. The full
-  check, by reasoner for every kind of condition, is slice **C13a** (tranche E), not dropped.
+  check, by reasoner for every kind of condition, is slice **CCS-13a** (tranche E), not dropped.
   Open CBAA planned it (integration spec §5.6) but never built it, because the OWL backend refuses
   question-form conditions.
 - **C5-Q2a.** The five operations are a closed set of named individuals: Insert, Delete, Replace,
@@ -471,10 +472,10 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
    prov:used` and `wrd:replacement ⊑ prov:generated` (C5-Q2b). The legal effect is ADR-A104's
    `ins:Amendment` with `ins:textChanges`, built in C9.
 3. **Vocab** (`wording-vocab` 0.3.0): the operations under C5-Q2a, Endorsement, Rows and Columns.
-4. **Shapes** (`wording-shapes` 0.3.0): the C3 pattern for the new properties, and the laws:
+4. **Shapes** (`wording-shapes` 0.3.0): the CCS-3 pattern for the new properties, and the laws:
    - **W1**: an element's parents (`wrd:isDirectlyComprisedBy`, or `wrd:hasVariant` inverted) are all
      versions of one parent, and its root is a version of exactly one wording, with no cycle
-   - **W2**: a text's part indices run 0 to n−1 without gaps or repeats (the one-form half is C3's)
+   - **W2**: a text's part indices run 0 to n−1 without gaps or repeats (the one-form half is CCS-3's)
    - **W3**: a variant has mode Variation and is a slot's variant, and the reverse. An assembled
      wording that includes a slot includes exactly one of its variants
    - **W4**: only conditional elements and variants have an inclusion condition, and every
@@ -518,13 +519,13 @@ violation-level shapes are breaking under ADR-A113, so the README gains a Releas
 
 | Slice | Content | Version impact |
 |---|---|---|
-| F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistenceKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of sensitive schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 24 documents ([keys impact](../sketches/keys-impact.md) §4). Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
+| CCS-F1 | External and natural keys ([ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md), CC-D9): `fnd:Key` with a `fnd:KeyScheme` and a value, `fnd:externalKey` (locates) and `fnd:naturalKey` (identifies), the common mixin `fnd:NaturallyKeyed` with its uniqueness shapes, `fnd:MergedOnNaturalKey` with `owl:hasKey`, and Persistence's optional `persistent-foundation` with `dal:PersistenceKeyed`. Taken now, while no AIR branch has work (ADR-A114 Consequences). **Impact analyses first:** before ADR-A114 is accepted, CCS-F1 writes an analysis of its effect on Persistence (uniqueness constraints, key claims and merge policy, identity profiles and minting recipes for key nodes, normalisation, privacy of sensitive schemes) and on Surface (index and promotion contracts over keys, generated lookups), each with the changes it needs | Foundation MINOR, cascading to 24 documents ([keys impact](../sketches/keys-impact.md) §4). Persistence gains `persistent-foundation`. NRS N9 keeps its own later cascade |
 
-#### F1 in detail
+#### CCS-F1 in detail
 
 **Machine:** R. **Branch:** `ccs/f1-keys`, created once this brief is on
-`main`. **Commits are the maintainer's**, examples first (ADR-A-C2). Runs before C6, in the quiet window
-of ADR-A114's Consequences: no branch may edit a Foundation importer until F1 merges.
+`main`. **Commits are the maintainer's**, examples first (ADR-A-C2). Runs before CCS-6, in the quiet window
+of ADR-A114's Consequences: no branch may edit a Foundation importer until CCS-F1 merges.
 **Validation Pack:** [computable-contract-substrate-f1](../validation/computable-contract-substrate-f1.md).
 **Decisions:** [ADR-A114](../../architecture/decisions/ADR-A114-external-and-natural-keys.md)
 (Accepted 2026-10-03), CC-D9, ADR-A51, ADR-A84, ADR-A86, ADR-A113.
@@ -545,13 +546,13 @@ analyses the effect on:
 | Surface | an index contract over `fnd:externalKey` (retrieval by key) and a promotion contract restating an identity's natural key onto its versions (one-step lookup), and whether either needs a Surface change |
 | the cascade | every document pinning `foundation/0.3.0` (17 at 2026-10-03), transitively every document pinning those, the version each takes under ADR-A86, the tags, and the test suites that name versions |
 
-Each finding states the change it needs and whether it belongs in F1 or a follow-up. **Gate:** the
+Each finding states the change it needs and whether it belongs in CCS-F1 or a follow-up. **Gate:** the
 maintainer accepts the analysis and ADR-A114. Changes the analysis finds in `tools/persistence` are
 briefed into this section then, with their test rows.
 
 **At the gate, 2026-10-03.** The analysis found no change to `tools/persistence` or `tools/surface`
 beyond Surface's ontology constant (S4), and 24 importers, not 17. G2 accepted: Foundation gains the
-property chain of ADR-A114 decision 5. G3 accepted: Instrument takes 0.8.0 in the cascade, and C6 to
+property chain of ADR-A114 decision 5. G3 accepted: Instrument takes 0.8.0 in the cascade, and CCS-6 to
 C9 shift by one MINOR (tranche D below). G1 revised in answer to our question: a scheme's key
 class is defined by an OWL restriction on the scheme (ADR-A114 decision 2), replacing
 `dal:keyClassFor`, with three shapes in `persistent-foundation` (analysis P2), accepted. ADR-A114
@@ -589,7 +590,7 @@ accepted. Two follow-ups are recorded below.
 5. **The cascade:** every pinned importer re-pins, with its release row and tag, as the analysis
    lists. No document pins `foundation/0.3.0` afterwards.
 6. **Elsewhere:** Foundation's README gains a section on keys with diagrams and the example walked
-   through. AIR-4.1's brief uses `fnd:Key` in place of `aeo:Identifier`. C6's brief records
+   through. AIR-4.1's brief uses `fnd:Key` in place of `aeo:Identifier`. CCS-6's brief records
    instruments' keys. The plan's §7 notes Open CBAA's `agr:umr` as a key scheme.
 7. **Tests:** `tools/test_keys.py`, with the rows below. Catalog, releases and the tag list. Work
    stops before any commit.
@@ -612,7 +613,7 @@ accepted. Two follow-ups are recorded below.
 | F1-14 | a scheme with no key class, one with two, a key class with no identity profile, a key typed with one scheme's class and carrying another scheme / `persistent-foundation` shapes / each reported (G1) | L1 | − |
 | F1-15 | the Surface example / compiled over the Foundation example / each agreement version carries both natural keys and the identity's external key as `fnd:externalKey`, and neither version is `fnd:NaturallyKeyed`. With only the natural-key contract, the external key is missing | L1 | + |
 
-**F1 follow-ups.** Found by the analysis, outside F1, each with an owner so it is not lost (risk R10).
+**CCS-F1 follow-ups.** Found by the analysis, outside CCS-F1, each with an owner so it is not lost (risk R10).
 
 | # | Follow-up | Owner | When |
 |---|---|---|---|
@@ -626,17 +627,17 @@ and may run beside tranche B.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C10 | the layer flip and the split (sketch §7.1, §7.2): configuration and runtime documents in one namespace, `bhv:targetsElement` replaced by `bhv:targets` with no range, `bhv:forSubject` range removed (Open CBAA L15), the Instrument import removed, `bhv:InstrumentTarget` deprecated in `behaviour-vocab` (C6 declares its replacement), the at-least-one-effect restriction removed. Policies stay explicit (ADR-A106's open point) | Behaviour breaking MINOR (A-113). Re-pins `behaviour-vocab`, `applied/capacity`'s execution profile |
-| C10a | import guard (B7): a design-time check that no layer imports or names a term of a layer above it, run over every catalogue entry | `tools/`, a `mise` check |
-| C11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions with a fixed core state space refined by sub-states (C11a). Declared initial states. The evidence rule (B6), derivation (B1) and fixed parties (I11) as shapes (sketch §7.5, §7.6) | configuration 0.9.0, runtime 0.9.0, vocab 0.9.0, shapes 0.3.0 (breaking) |
-| C11a | deep dive: nested states, history and concurrent regimes (sketch §7.10), including the sub-states by which a deployment refines an occasion's fixed core (C11-Q1). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks C12 only |
+| CCS-10 | the layer flip and the split (sketch §7.1, §7.2): configuration and runtime documents in one namespace, `bhv:targetsElement` replaced by `bhv:targets` with no range, `bhv:forSubject` range removed (Open CBAA L15), the Instrument import removed, `bhv:InstrumentTarget` deprecated in `behaviour-vocab` (CCS-6 declares its replacement), the at-least-one-effect restriction removed. Policies stay explicit (ADR-A106's open point) | Behaviour breaking MINOR (A-113). Re-pins `behaviour-vocab`, `applied/capacity`'s execution profile |
+| CCS-10a | import guard (B7): a design-time check that no layer imports or names a term of a layer above it, run over every catalogue entry | `tools/`, a `mise` check |
+| CCS-11 | runtime records: act, breach (derived and asserted), exercise, determination, deemed fact, acceptance. Occasions with a fixed core state space refined by sub-states (CCS-11a). Declared initial states. The evidence rule (B6), derivation (B1) and fixed parties (I11) as shapes (sketch §7.5, §7.6) | configuration 0.9.0, runtime 0.9.0, vocab 0.9.0, shapes 0.3.0 (breaking) |
+| CCS-11a | deep dive: nested states, history and concurrent regimes (sketch §7.10), including the sub-states by which a deployment refines an occasion's fixed core (C11-Q1). A sketch and an A-106 amendment first, then the ontology change. Settles B5 | MINOR. Blocks CCS-12 only |
 
-#### C10 in detail
+#### CCS-10 in detail
 
 **Machine:** R. **Branch:** `ccs/c10-behaviour-split`, created. May run
-beside C3: the two share no file except the architecture documents, which C10 edits after C3
+beside CCS-3: the two share no file except the architecture documents, which CCS-10 edits after CCS-3
 merges. **Validation Pack:**
-[computable-contract-substrate-c10](../validation/computable-contract-substrate-c10.md).
+[computable-contract-substrate-c10](../validation/CCS-10.md).
 **Decisions:** ADR-A106 decisions 1 to 3 and 6, ADR-A11 as amended, ADR-A01's addendum, ADR-A113.
 
 **Invariant:** Behaviour imports nothing above Eligibility and names no Instrument term. Its
@@ -668,7 +669,7 @@ property.
    `tracksAllowance`, `availableBalance`), disjoint from each other and from the configuration
    classes. Occasions and records are C11.
 3. **Vocab** (`behaviour-vocab` `0.8.0`): re-pinned to configuration 0.8.0. `bhv:InstrumentTarget`
-   gains `owl:deprecated true` and a comment naming its replacement in Instrument (C6).
+   gains `owl:deprecated true` and a comment naming its replacement in Instrument (CCS-6).
 4. **Shapes** (`.version` `0.1.0` → `0.2.0`): `hasEffect`'s minimum removed. A new
    `EffectDefinitionShape`: exactly one `bhv:targetKind`, and at least one target under C10-Q2.
    The policy shapes and `PriorityOrderedNeedsPriority` unchanged.
@@ -682,7 +683,7 @@ property.
    release rows, and the tag list for the maintainer.
 8. **README** (`ontology/behaviour/README.md`): imports, the two documents mapped to the four
    tiers, the target rule, and a "Release notes" section with the 0.8.0 breaking entry (ADR-A113).
-   `ontology-architecture.md` and the root README already carry the new order after C3. C10
+   `ontology-architecture.md` and the root README already carry the new order after C3. CCS-10
    corrects only what they say about Behaviour's imports and documents.
 9. **Tests:** `tools/test_behaviour_split.py`, added to `check:ontology-catalog`'s list. Before the
    change, record whether each fixture conforms. After it, compare (risk R8).
@@ -704,10 +705,10 @@ property.
 | C10-13 | `check:ontology-versioning` / run / every changed document and directory bumped, with release rows | L1 | + |
 | C10-14 | the existing tool tests and `check:python-root` / unchanged / pass (non-weakening) | L1 | + |
 
-#### C10a in detail
+#### CCS-10a in detail
 
 **Machine:** R. **Branch:** `ccs/c10a-import-guard`, created.
-**Validation Pack:** [computable-contract-substrate-c10a](../validation/computable-contract-substrate-c10a.md).
+**Validation Pack:** [computable-contract-substrate-c10a](../validation/CCS-10a.md).
 **Decisions:** ADR-A01 and its addendum (the order), ADR-A106 law B7.
 
 **Invariant:** a design-time check fails when a layer's document imports a higher layer, or when
@@ -748,10 +749,10 @@ Behaviour are siblings: neither may name the other. It covers the substrate laye
 | C10a-04 | the tool's order table / compared with the `ontology-architecture.md` diagram / agree | L1 | + |
 | C10a-05 | `mise run check` / dependency list / includes `check:import-guard` | L1 | + |
 
-#### C11 in detail
+#### CCS-11 in detail
 
 **Machine:** R. **Branch:** `ccs/c11-runtime-records`, created.
-**Validation Pack:** [computable-contract-substrate-c11](../validation/computable-contract-substrate-c11.md).
+**Validation Pack:** [computable-contract-substrate-c11](../validation/CCS-11.md).
 **Decisions:** ADR-A106 decisions 4 and 5, laws B1, B2, B6, ADR-A92, ADR-A113.
 
 **Invariant:** the runtime document gains occasions and the records that change their state, all
@@ -765,15 +766,15 @@ probe).
 
 - **C11-Q1, a fixed core refined by sub-states.** `bhv:OccasionStates` holds six states, `bhv:Pending`,
   `bhv:Arisen`, `bhv:Performed`, `bhv:Breached`, `bhv:Ended` and `bhv:Suspended`, as
-  `behaviour-vocab` individuals. Their transitions are the evaluator's (C12), derived from the
+  `behaviour-vocab` individuals. Their transitions are the evaluator's (CCS-12), derived from the
   sketch §6.1's algorithms and protected by law I7, so no deployment adds a top-level state to
-  this space. A deployment refines a core state with sub-states of its own (C11a) and adds
+  this space. A deployment refines a core state with sub-states of its own (CCS-11a) and adds
   parallel regimes on the occasion (a dispute, a cure period, force majeure). Every other state
   space stays open: anyone declares states, transitions and triggers as configuration.
 - **C11-Q2, a declared initial state.** Configuration gains `bhv:initialState` on a state space
   (additive). An occupancy that no execution entered either occupies its space's initial state,
   carrying evidence of the subject taking effect, or carries evidence of an external log entry.
-  `bhv:Pending` is the occasion space's initial state. Nested states (C11a) reuse the property
+  `bhv:Pending` is the occasion space's initial state. Nested states (CCS-11a) reuse the property
   for initial sub-states.
 
 0. **Configuration** (`behaviour` 0.8.0 → 0.9.0, additive): `bhv:initialState` (a state space to
@@ -795,7 +796,7 @@ probe).
    - every new property states subject and value in its comment
 2. **Vocab** (`behaviour-vocab` 0.9.0) under C11-Q1: `bhv:OccasionStates`, a state space with
    `bhv:initialState bhv:Pending`, and its six states, each commented as the evaluator's. Its
-   transitions are the evaluator's (C12), not declared here. The README states the extension rule:
+   transitions are the evaluator's (CCS-12), not declared here. The README states the extension rule:
    sub-states and parallel regimes, never a new top-level occasion state.
 3. **Shapes** (`behaviour-shapes` 0.3.0, breaking under ADR-A113: B6 adds a violation an existing
    graph could fail. No fixture in the repository has a state occupancy today):
@@ -807,13 +808,13 @@ probe).
      `prov:wasDerivedFrom` a record
    - **I11 probe**: an occasion's parties are role occupancy versions, never persistent
      identities, so a later version of an occupancy cannot change them
-   - a subject shape and a class shape per new property, as in C3
+   - a subject shape and a class shape per new property, as in CCS-3
 4. **Examples first (ADR-A-C2):** the trial protocol's adverse event reporting duty, run once: an
    act record of the event, an occasion arising, a stimulus for the deadline, and a breach record.
    A software licence suspension and reinstatement: an exercise record that took effect, and one
    that did not and says why. Each occupancy carries its execution or evidence.
 5. **README:** the runtime section's records table, and the 0.9.0 release notes. The runtime
-   document stays a file (C10).
+   document stays a file (CCS-10).
 6. **Tests:** `tools/test_behaviour_split.py` gains the rows below (or a sibling
    `test_behaviour_records.py` if it grows past one concern).
 
@@ -833,25 +834,25 @@ probe).
 | C11-10 | `check:ontology-versioning` / run / runtime, vocab and shapes bumped, and the README's release notes mark shapes 0.3.0 breaking | L1 | + |
 | C11-11 | the existing tool tests, `check:python-root`, `check:mork-compilers` / unchanged / pass (non-weakening) | L1 | + |
 
-#### C11a in detail
+#### CCS-11a in detail
 
 **Machine:** R. **Branch:** `ccs/c11a-nested-states`, created. **Commits are
 the maintainer's.** The slice has two phases with a validation gate between them, because its design is not
 yet written.
-**Validation Pack:** [computable-contract-substrate-c11a](../validation/computable-contract-substrate-c11a.md).
+**Validation Pack:** [computable-contract-substrate-c11a](../validation/CCS-11a.md).
 **Decisions:** ADR-A106 (decisions 5 and 7, law B5), C11-Q1 (occasions refined by sub-states),
 C11-Q2 (initial states, reused for composite states).
 
 **Invariant:** Behaviour can express a state that contains states of its own, re-entering the
 sub-state it left (history), and several regimes active on one subject at once with stated rules
-for how they interact, in configuration as data, evaluated by C12 without inference.
+for how they interact, in configuration as data, evaluated by CCS-12 without inference.
 
 **Phase 1, paper: a sketch and an A-106 amendment.** `docs/developer/sketches/nested-states-and-history.md`:
 
 | Topic | What the sketch decides |
 |---|---|
 | reference semantics | how far Behaviour follows a published statechart standard (W3C SCXML: compound and parallel states, initial states, shallow and deep history), and where it departs |
-| composite states | how a state holds sub-states: a sub-state space per composite state, or a parent property on states, and how `bhv:initialState` (C11) names a composite state's initial sub-state |
+| composite states | how a state holds sub-states: a sub-state space per composite state, or a parent property on states, and how `bhv:initialState` (CCS-11) names a composite state's initial sub-state |
 | history | shallow or deep, declared per composite state, and what an occupancy records so a re-entry can find its prior sub-state. This replaces law B5's interim rule |
 | occupancies | one occupancy per active state at each level, or one per leaf, and how law B6 applies to entries caused by a parent's entry |
 | concurrent regimes | whether concurrency is parallel regions within one state space, separate regimes on one subject, or both, and the interaction rules: which regime's state gates a relation when two apply, and evaluation order |
@@ -918,7 +919,7 @@ are the maintainer's, examples first.
      subject, and a region of a currently occupied state holds exactly one current state
 
    B10 (no cycle of derived triggers) needs what each derived trigger reads, which Instrument
-   declares, so it is checked by C12's compile step, not by these shapes.
+   declares, so it is checked by CCS-12's compile step, not by these shapes.
 6. **README.** §5 gains the model with diagrams: a class diagram of states, regions and
    transitions, the pass as a flowchart, history as a sequence diagram. A new section, **Worked
    state machines**, takes each example in turn: its premise, a Mermaid statechart, the
@@ -950,38 +951,38 @@ are the maintainer's, examples first.
 
 | Slice | Content | Version impact |
 |---|---|---|
-| C6 | instrument and term, the five relation classes with Exclusion, parties with groups and roles, party details (`noticeAddress`, `operatesAt`), instrument keys (from F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is F1's cascade (G3) |
-| C7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After C6 and C11a phase 2 |
-| C7b | **terms in time** (split from C7, then from C7c at C7b-Q1, 2026-10-04): due ranges, recurrence, windows on powers and permissions, survival, how an instrument or a term ends and what arises on termination, designed in the [terms in time sketch](../sketches/terms-in-time.md) (§5.1, §5.5, §7.9, I3, I5 as restated, I9). Arising and ending of single relations moved to C7a (C7a-Q3). `ins:computedBy` deferred to contract amounts (C7b-Q7). Anchored time may add to Quantification (TQ1) | 0.11.0 MINOR, and a Quantification MINOR with its re-pin cascade if TQ1 is answered as recommended. After C7a |
-| C7c | **what terms are, and who they bind** (split from C7b at C7b-Q1, 2026-10-04): constitutive terms (Definition, Deeming), sections (`appliesWithin`, `notWithin`), per-section definitions with union and overlap reporting, term classification (§5.6, §5.10, I15, I16). From C6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model), and how a group acts (several, joint) through a defined party word's definition. I15 fixes a case's section by the power it was bound under, so `ins:boundUnder` is brought forward from C9 (C7c-Q1) | 0.12.0 MINOR. After C7b |
-| C8 | parameter bindings from wording variables (`ins:ParameterBinding`), including the dates and lengths that anchored time names (a wording date as a context role, terms in time sketch §5.2), and **definitions of date and amount words** ("the Expiry Date", "the Commitment"), whose `ins:means` is a value bound from a wording variable, from C7c-Q7, decided with HQ-4, encoding status, and law I17's two SHACL-SPARQL shapes (§5.9, I17). Stated and bound meaning, ownership (`ins:Template`, `ins:expressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`) and their SHACL Core shapes moved into C6 (C6-Q1 (b)) | 0.13.0 MINOR |
-| C8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
-| C8b | **Wording references by identity** (raised by C8-Q1, 2026-10-06, taking over insurml-alignment IMA-3.3). `wrd:refersToVariable` and `wrd:refersToObject` may name an element's persistent identity, resolved within the assembled wording's inclusions, so a clause's text names a variable or an object as its stated meaning does (D3), and a clause reused under another schedule needs no new version. A law that an assembled wording includes at most one version of a referenced identity. An optional display text for an inflected form ("insured persons") or a variable's printed name (bridge §11). A version reference stays valid. Brief: whether the identity reference replaces or sits beside the version reference, how the renderer resolves it, and InsurML's lift (IMA-D8) | Wording 0.6.0 → 0.7.0, re-pinning Instrument 0.14.0. After C8, before C9, which then takes Instrument 0.15.0 |
-| C9 | amendments, consent rules, incorporation (with segment scope), `takesEffectWhen` (§5.8). `ins:boundUnder` moved into C7c (C7c-Q1). Consent rules complete how a group acts (HQ-5). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from C6's review) | 0.15.0 MINOR, shapes (C8b takes 0.14.0) |
+| CCS-6 | instrument and term, the five relation classes with Exclusion, parties with groups and roles, party details (`noticeAddress`, `operatesAt`), instrument keys (from CCS-F1), activity, scope, `maintains`, `fulfilledWhen`, `excepts`, qualifiers (§5.1 to §5.4, §5.7). `ins:InstrumentTarget` in Instrument's vocabulary | Instrument 0.8.0 to 0.9.0, breaking MINOR (A-113). Imports Wording and Behaviour configuration. 0.8.0 is CCS-F1's cascade (G3) |
+| CCS-7a | **regimes and gating** (split from C7, 2026-10-02): legal triggers (`OnExercise`, `OnBreach`, `OnAct`, `OnCondition`, `OnExpiry`, with the states in which a period does not run, C11a-Q2), `ins:Regime`, `ins:RegimeTransition`, `ins:stateKind`, `appliesInState` with the gating rule of the nested states sketch §6.2 and per-occasion resolution (C11a-Q4). The explicit `bhv:` type shape (B4) (§7.3, §7.4) | 0.10.0 MINOR. After CCS-6 and CCS-11a phase 2 |
+| CCS-7b | **terms in time** (split from C7, then from CCS-7c at C7b-Q1, 2026-10-04): due ranges, recurrence, windows on powers and permissions, survival, how an instrument or a term ends and what arises on termination, designed in the [terms in time sketch](../sketches/terms-in-time.md) (§5.1, §5.5, §7.9, I3, I5 as restated, I9). Arising and ending of single relations moved to CCS-7a (C7a-Q3). `ins:computedBy` deferred to contract amounts (C7b-Q7). Anchored time may add to Quantification (TQ1) | 0.11.0 MINOR, and a Quantification MINOR with its re-pin cascade if TQ1 is answered as recommended. After CCS-7a |
+| CCS-7c | **what terms are, and who they bind** (split from CCS-7b at C7b-Q1, 2026-10-04): constitutive terms (Definition, Deeming), sections (`appliesWithin`, `notWithin`), per-section definitions with union and overlap reporting, term classification (§5.6, §5.10, I15, I16). From CCS-6's review (2026-10-03): how a case-dependent party resolves, through a definition (§5.10, S58) and through the case (S20, `ins:resolvedBy`, C6-Q5: either a path-only `elg:EvidenceBinding`, which relaxes Eligibility's shape, or a rule that such resolution is not a valid way to model), and how a group acts (several, joint) through a defined party word's definition. I15 fixes a case's section by the power it was bound under, so `ins:boundUnder` is brought forward from C9 (C7c-Q1) | 0.12.0 MINOR. After CCS-7b |
+| CCS-8 | parameter bindings from wording variables (`ins:ParameterBinding`), including the dates and lengths that anchored time names (a wording date as a context role, terms in time sketch §5.2), and **definitions of date and amount words** ("the Expiry Date", "the Commitment"), whose `ins:means` is a value bound from a wording variable, from C7c-Q7, decided with HQ-4, encoding status, and law I17's two SHACL-SPARQL shapes (§5.9, I17). Stated and bound meaning, ownership (`ins:Template`, `ins:expressedIn`, `ins:boundIn`, `ins:boundFrom`, `ins:alsoExpressedIn`) and their SHACL Core shapes moved into CCS-6 (C6-Q1 (b)) | 0.13.0 MINOR |
+| CCS-8a | the template library (§5.11) in `ontology/instrument/templates/`: periods, switching and threshold regimes, relation patterns. Term and qualifier templates wait for the bases decision in [contract-amounts.md](../sketches/contract-amounts.md) §1.7 | templates 0.1.0 |
+| CCS-8b | **Wording references by identity** (raised by C8-Q1, 2026-10-06, taking over insurml-alignment IMA-3.3). `wrd:refersToVariable` and `wrd:refersToObject` may name an element's persistent identity, resolved within the assembled wording's inclusions, so a clause's text names a variable or an object as its stated meaning does (D3), and a clause reused under another schedule needs no new version. A law that an assembled wording includes at most one version of a referenced identity. An optional display text for an inflected form ("insured persons") or a variable's printed name (bridge §11). A version reference stays valid. Brief: whether the identity reference replaces or sits beside the version reference, how the renderer resolves it, and InsurML's lift (IMA-D8) | Wording 0.6.0 → 0.7.0, re-pinning Instrument 0.14.0. After CCS-8, before C9, which then takes Instrument 0.15.0 |
+| C9 | amendments, consent rules, incorporation (with segment scope), `takesEffectWhen` (§5.8). `ins:boundUnder` moved into CCS-7c (C7c-Q1). Consent rules complete how a group acts (HQ-5). Shapes for I1 to I16. An example with a party to the instrument who is in no relation, executing separately (S90, from CCS-6's review) | 0.15.0 MINOR, shapes (CCS-8b takes 0.14.0) |
 
-Nothing outside Instrument imports Instrument once C10 lands, so tranche D cascades only to
+Nothing outside Instrument imports Instrument once CCS-10 lands, so tranche D cascades only to
 Instrument's own documents and examples. No applied insurance module imports Instrument.
 
-#### C6 in detail
+#### CCS-6 in detail
 
 **Machine:** R. **Branch:** `ccs/c6-instrument-relations`, created once
 this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples first
 (ADR-A-C2).
-**Validation Pack:** [computable-contract-substrate-c6](../validation/computable-contract-substrate-c6.md).
+**Validation Pack:** [computable-contract-substrate-c6](../validation/CCS-6.md).
 **Decisions:** ADR-A104 decisions 1 to 5 and 10, CC-D10, CC-D12, ADR-A96, ADR-A102, ADR-A113.
 
 **Invariant:** Instrument states what an agreement binds its parties to: an instrument expressed in
 one assembled wording, terms, and the five legal relations with their parties and content, so
 that an obligation, a prohibition and its permitted exception, an exclusion and a power can each be
 written and checked as data. Only `ins:Instrument` is a version. Every relation arises under exactly
-one term and belongs to it. Nothing here evaluates: arising, due and ending (C7b), regimes and
-gating (C7a), parameter bindings (C8) and amendments (C9) follow.
+one term and belongs to it. Nothing here evaluates: arising, due and ending (CCS-7b), regimes and
+gating (CCS-7a), parameter bindings (CCS-8) and amendments (C9) follow.
 
 **Answered 2026-10-02 and 2026-10-03:** C6-Q1 (b), ownership's core moves into C6.
-C6-Q3 and C6-Q4 as recommended. C6-Q2: slice F1 runs first (ADR-A114), so C6 records an
+C6-Q3 and C6-Q4 as recommended. C6-Q2: slice CCS-F1 runs first (ADR-A114), so CCS-6 records an
 instrument's keys from its first examples: the agreement number and market reference as natural
 keys on its persistent identity, and amendments, declarations and notices locating it with
-`fnd:externalKey`. C6's branch is recreated from `main` after F1 merges.
+`fnd:externalKey`. CCS-6's branch is recreated from `main` after CCS-F1 merges.
 
 **Simplified after review of the examples, 2026-10-03** (decided):
 - a bound relation carries no `ins:boundIn`: it belongs to its term (`ins:arisesUnder`), and only
@@ -992,37 +993,37 @@ keys on its persistent identity, and amendments, declarations and notices locati
 - `ins:party` stays authored, never derived from the relations: a beneficiary or regulator in a
   relation may be no party (CC-Q4), and parties execute separately (S90). The facility example
   shows a beneficiary who is not a party
-- `ins:resolvedBy` moves to C7b with C6-Q5 (resolution of a case-dependent party). C6 keeps the
+- `ins:resolvedBy` moves to CCS-7b with C6-Q5 (resolution of a case-dependent party). CCS-6 keeps the
   contingent occupancy, a role with no actor (ADR-A102)
 - an activity names the act, never its scope: `ins-voc:Enrol` with a scope, not
   `EnrolIneligibleParticipant`, and `ins-voc:Terminate`, shared by termination for convenience and
   for breach
 - stated meaning names `pty:Role`s only, never an invented group role. How a group acts is stated
-  by a defined party word in C7b
+  by a defined party word in CCS-7b
 - conditions that nothing can yet evaluate are commented as placeholders
 - the facility example's term 8.1 gives rise to two relations, to show what a term is for
 
 **Questions for the maintainer:**
 
 - **C6-Q1. Where term ownership is built.** The plan puts CC-D12's ownership (stated and bound
-  terms, `ins:boundIn`, `ins:boundFrom`) in C8. Without it, a C6 term has no owner, and C6's
+  terms, `ins:boundIn`, `ins:boundFrom`) in C8. Without it, a CCS-6 term has no owner, and CCS-6's
   examples would name occupancies directly in one tier, to be rewritten into two tiers in C8.
   Options:
-  - (a) keep the plan: C6 terms are owned by `ins:expressedIn` a wording element only, with
-    occupancies named directly. C8 splits them into stated and bound meaning and rewrites the
+  - (a) keep the plan: CCS-6 terms are owned by `ins:expressedIn` a wording element only, with
+    occupancies named directly. CCS-8 splits them into stated and bound meaning and rewrites the
     examples
-  - (b) move ownership's core into C6: `ins:Template` (the stated-meaning mixin),
+  - (b) move ownership's core into CCS-6: `ins:Template` (the stated-meaning mixin),
     `ins:expressedIn` and `ins:alsoExpressedIn` for stated terms, `ins:boundIn`, `ins:boundFrom`
-    and `ins:impliedBy` for bound terms, with law I2's Core shapes. C8 keeps parameter bindings,
+    and `ins:impliedBy` for bound terms, with law I2's Core shapes. CCS-8 keeps parameter bindings,
     encoding status and law I17's shapes
-  - (c) reorder: C8 before C7a and C7b. C6's examples still lack ownership
+  - (c) reorder: CCS-8 before CCS-7a and C7b. CCS-6's examples still lack ownership
 
   **Recommendation: (b).** Ownership is what makes a relation belong to its text (CC-D12), the
   examples are written once in the two tiers they keep, and ADR-A96's many-element attachment
   moves to `ins:alsoExpressedIn` in the same slice that retires `ins:inProvision`.
 - **C6-Q2. Instrument identifiers.** The plan row lists them, but they are Foundation's keys
   (CC-D9, ADR-A114, `fnd:naturalKey` and `fnd:externalKey`), built by slice F1. **Recommendation:**
-  drop them from C6. An instrument's keys arrive with F1 and need nothing from Instrument.
+  drop them from C6. An instrument's keys arrive with CCS-F1 and need nothing from Instrument.
 - **C6-Q3. Party details.** `ins:noticeAddress` and `ins:operatesAt` on an occupancy (S97). Party
   has no address or place. **Recommendation:** `ins:noticeAddress` takes a string (the address as
   written, identity being by identifier, CC-D9), and `ins:operatesAt` a concept under a new scheme
@@ -1036,11 +1037,11 @@ keys on its persistent identity, and amendments, declarations and notices locati
 
 - the activity scheme follows C3-Q1: `ins-voc:ActivityContract` constrains `ins:activity`, with a
   baseline scheme bound as fallback that holds every activity the examples and README use
-- unions are named once with explicit subclass triples (C3), and every property states its subject
+- unions are named once with explicit subclass triples (CCS-3), and every property states its subject
   and value in its comment
 - law I8 (a permission's holder is the excepted prohibition's obligor with the same activity, and
   an exclusion's holder is the excepted obligation's obligor or the power's counterparty) ships in
-  C6, since every term it reads is built here. I1 to I16's other shapes stay with the slices that
+  CCS-6, since every term it reads is built here. I1 to I16's other shapes stay with the slices that
   build their terms (C9 for the rest)
 - the legacy minimal shape (ADR-A07b) is removed, as ADR-A104 decides: `ins:Element`,
   `ins:Provision`, `ins:hasProvision`, `ins:partOfInstrument`, `ins:hasObligation`,
@@ -1049,7 +1050,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
   spec). `shapes/single-provision.ttl` becomes `shapes/single-expression.ttl`, the same optional
   check on `ins:alsoExpressedIn` for a deployment that expresses each term once (ADR-A96). The stub
   `shapes/rules.ttl` is removed. The supersession shape retargets `ins:Instrument`
-- the README is rewritten in the style of the Behaviour README after C11a: narrative, diagrams,
+- the README is rewritten in the style of the Behaviour README after CCS-11a: narrative, diagrams,
   and a worked section per example. The comment markers of the
   [documentation sketch](../sketches/improved-ontology-documentation.md) wait for that sketch's plan
 
@@ -1062,12 +1063,12 @@ keys on its persistent identity, and amendments, declarations and notices locati
    |---|---|---|
    | `facility-agreement.ttl` | E1, E2 | an obligation owed to a group severally, a continuing obligation with a beneficiary who is no party, one term giving rise to a prohibition (negative pledge) and the permission excepting it, a power held by a group, natural keys, stated meaning on the form and bound meaning for one facility |
    | `trial-protocol.ttl` | E8 | a reporting obligation, a prohibition with a waiver as a permission (law I8), a power to end a site's participation |
-   | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy, its resolution deferred to C7b) |
+   | `product-warranty.ttl` | E5 | an exclusion excepting the duty to repair, its carve-back in its scope, a party that depends on the case (a contingent occupancy, its resolution deferred to CCS-7b) |
    | `software-licence.ttl` | E7 | an exclusion excepting a power (immunity: a perpetual licence the licensor cannot end for convenience), party details |
 
 2. **Spec** (`instrument` 0.8.0 → 0.9.0, breaking under ADR-A113), sketch §5.1 to §5.4: imports
    Foundation, Vocabulary, Quantification, Party, Eligibility, Wording 0.4.0 and Behaviour
-   configuration 0.11.0 (their versions after F1's cascade), never the runtime document.
+   configuration 0.11.0 (their versions after CCS-F1's cascade), never the runtime document.
    - `ins:Instrument ⊑ fnd:Versioned`, `ins:expressedIn` one `wrd:AssembledWording` (I1), `ins:party`
    - `ins:Term`, not a version. Under C6-Q1 (b): `ins:Template`, `ins:expressedIn` (stated term to
      one element version), `ins:alsoExpressedIn`, `ins:boundIn` (bound term to one instrument
@@ -1076,7 +1077,7 @@ keys on its persistent identity, and amendments, declarations and notices locati
      `ins:ContinuingObligation` and `ins:Prohibition` under `ins:Obligation` and disjoint, each
      relation `ins:arisesUnder` exactly one term
    - parties: `ins:obligor`, `ins:obligee`, `ins:holder`, `ins:counterparty` over the C6-Q4 union,
-     with contingent occupancies (ADR-A102) and no `ins:resolvedBy` (C7b). Under C6-Q3:
+     with contingent occupancies (ADR-A102) and no `ins:resolvedBy` (CCS-7b). Under C6-Q3:
      `ins:noticeAddress`, `ins:operatesAt`
    - content: `ins:activity`, `ins:scope` (an `elg:Condition`, at most one), `ins:maintains`,
      `ins:fulfilledWhen`, `ins:excepts` (a permission to a prohibition, an exclusion to an
@@ -1112,19 +1113,19 @@ keys on its persistent identity, and amendments, declarations and notices locati
 | C6-14 | the README / literate check / blocks equal the files. Release notes mark 0.9.0 and shapes 0.2.0 breaking | L1 | + |
 | C6-15 | the existing tool tests / updated only where a retired term is named / pass | L1 | + |
 
-#### C7a in detail
+#### CCS-7a in detail
 
 **Machine:** R. **Branch:** `ccs/c7a-regimes`, created from `main` once
 this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples first
 (ADR-A-C2). Merged into `main` before its release tags are created.
-**Validation Pack:** [computable-contract-substrate-c7a](../validation/computable-contract-substrate-c7a.md).
+**Validation Pack:** [computable-contract-substrate-c7a](../validation/CCS-7a.md).
 **Decisions:** ADR-A104 decisions 6 (legal triggers), 7 (regimes) and 8 (DP6), ADR-A106 and its addendum (nested states, C11a-Q2 and
 C11a-Q4 answered (a)), CC-D8, DP6 (sketch §6.3), ADR-A113.
 
 **Invariant:** a contract's regimes are Behaviour state spaces that arise under a term and gate legal
 relations: a relation names the states it applies in (`ins:appliesInState`), and the same legal
 triggers (an exercise, a breach, an act, a condition, an expiry) move a regime between states and,
-from C7b, make relations arise and end. State gates evaluation and never enters a design-time
+from CCS-7b, make relations arise and end. State gates evaluation and never enters a design-time
 comparison (DP6). Every regime transition is a legal trigger, with the engine settings fixed, so an
 author states only what the clause says.
 
@@ -1185,7 +1186,7 @@ ADR-A104's 2026-10-04 addendum, decision 5:
     includes that clause. Occupancies (`bhv:forSubject` the instrument's identity) distinguish the
     instruments. A bound relation names the regime's state directly in `ins:appliesInState`. A value
     the instance supplies, such as the length of a notice period from a variable, is resolved per
-    instrument at runtime from its assembled wording (C8 parameter bindings). Law I13 is restated:
+    instrument at runtime from its assembled wording (CCS-8 parameter bindings). Law I13 is restated:
     only bound *relations* are evaluated, and regimes are read as stated, per subject
   - (b) **two tiers.** A bound regime per instrument version, with copied states and transitions,
     and an occupancy migration on every amendment
@@ -1195,8 +1196,8 @@ ADR-A104's 2026-10-04 addendum, decision 5:
   only thing that moves an occupancy to a new state space. (b) duplicates whole state machines per
   version and fights Behaviour's own model. (a) needs an addendum to ADR-A104, whose decision 13
   says only bound meaning is evaluated, and to the sketch's §5.9, which lists `ins:Template` as a
-  mixin on regimes. C7a drafts it.
-- **C7a-Q2. The act of an `ins:OnAct` trigger.** The sketch reuses `ins:activity` on `ins:OnAct`. C6
+  mixin on regimes. CCS-7a drafts it.
+- **C7a-Q2. The act of an `ins:OnAct` trigger.** The sketch reuses `ins:activity` on `ins:OnAct`. CCS-6
   declared `ins:activity`'s domain as `ins:LegalRelation`, so a reasoner would infer that every
   `ins:OnAct` is a legal relation, and so one of the four disjoint kinds. Options: (a) drop
   `ins:activity`'s domain (shapes already check which subjects carry it), and use it on `ins:OnAct`
@@ -1208,7 +1209,7 @@ ADR-A104's 2026-10-04 addendum, decision 5:
   gated relation's arising trigger: an exclusion gated by `Disputed` reads the dispute regime of the
   occasion its `ins:arisesOnBreachOf` chain reaches. That needs `ins:arisesOn`,
   `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf` and `ins:endsOn`, which the plan puts in C7b. They
-  take the triggers C7a defines. **Recommendation:** move those four properties into C7a. C7b keeps
+  take the triggers CCS-7a defines. **Recommendation:** move those four properties into C7a. CCS-7b keeps
   due ranges, recurrence, survival, `ins:ends`, constitutive terms, sections and party resolution
 - **C7a-Q4. The name for "the period does not run in these states".** C11a-Q2 (a) puts it on
   `ins:OnExpiry`: "the notice period does not run while force majeure continues", "the cure period is
@@ -1223,7 +1224,7 @@ ADR-A104's 2026-10-04 addendum, decision 5:
   share within an agreement, where several parties are each liable for their own share, and another
   agreement altogether, where one contract responds only once another is exhausted. Options: (a)
   state the default now (the relation's own instrument identity, or the occasion its arising chain
-  reaches), and hold the other cases for a qualified gate designed with C12, (b) allow other
+  reaches), and hold the other cases for a qualified gate designed with CCS-12, (b) allow other
   subjects only through legal triggers (`ins:OnCondition` over the other subject's state), never
   through `ins:appliesInState`, (c) design qualified gates now. **Recommendation: (a)**. Answered (a):
   the model is first consistent within one legally binding agreement, and dependencies across
@@ -1231,13 +1232,13 @@ ADR-A104's 2026-10-04 addendum, decision 5:
 
 **Decided by precedent, not asked:**
 
-- the state kind scheme follows the activity scheme (C3-Q1, C6): `ins-voc:StateKindContract`
+- the state kind scheme follows the activity scheme (C3-Q1, CCS-6): `ins-voc:StateKindContract`
   constrains `ins:stateKind`, with a baseline scheme bound as fallback holding every kind the
   examples and README use
 - every specialisation needs the explicit `bhv:` type beside the `ins:` type (B4, sketch §7.3), so
   the engine reads Behaviour's terms without a reasoner. A shape requires it, on the graph the
   engine reads: the asserted graph without a reasoner, the closed graph with one (C7a-R1)
-- the gating rule and the per-occasion resolution are evaluated by C12. C7a states them in the
+- the gating rule and the per-occasion resolution are evaluated by C12. CCS-7a states them in the
   README and comments, and ships design-time shapes: an `ins:appliesInState` value is a state of an
   `ins:Regime`, and a relation gated by a state of a regime `bhv:perOccasionOf` a relation must
   arise on that relation's breach or exercise (C11a-Q4 (a))
@@ -1256,7 +1257,7 @@ ADR-A104's 2026-10-04 addendum, decision 5:
 
 2. **Spec** (`instrument` 0.9.0 → 0.10.0, additive): the constructs of the table above, and under
    C7a-Q3 `ins:arisesOn`, `ins:arisesOnBreachOf`, `ins:arisesOnExerciseOf`, `ins:endsOn`. Under C7a-Q2,
-   `ins:activity` loses its domain, and every domain and range C7a adds follows the principle in
+   `ins:activity` loses its domain, and every domain and range CCS-7a adds follows the principle in
    `.github/copilot-instructions.md`. Each property's comment states its subject and value. Under
    C7a-R1, the five trigger classes and `ins:RegimeTransition` carry their `bhv:` superclass and
    `owl:hasValue` restrictions for the kind and the two policies, and `ins:ofPower`,
@@ -1306,18 +1307,18 @@ ADR-A104's 2026-10-04 addendum, decision 5:
 | C7a-17 | a regime transition stating `bhv:AllMatches` / Instrument's shapes on the asserted graph / reported once, at that transition. After an OWL 2 RL closure / reported at every regime transition (the merge, until FU-C7a-a) | L1 | − |
 | C7a-18 | a trigger with only `ins:ofPower` (no class) / OWL 2 RL closure / `ins:OnExercise`, `bhv:TriggerDefinition` and kind `bhv:ExternalStimulus` (C7a-R1) | L1 | + |
 
-**C7a follow-ups.** Found while building C7a, outside it, each with an owner (risk R10).
+**CCS-7a follow-ups.** Found while building CCS-7a, outside it, each with an owner (risk R10).
 
 | # | Follow-up | Owner | When |
 |---|---|---|---|
-| FU-C7a-a | `owl:AllDifferent` over Behaviour's selection policies, activation policies and trigger kinds, so a reasoner reports a wrongly stated value as an inconsistency instead of merging two individuals (ADR-A104 2026-10-04 addendum, decision 5). Also registered as TD-17 | a Behaviour vocab change | the next Behaviour release, or before C12 reads regimes through a reasoner |
+| FU-C7a-a | `owl:AllDifferent` over Behaviour's selection policies, activation policies and trigger kinds, so a reasoner reports a wrongly stated value as an inconsistency instead of merging two individuals (ADR-A104 2026-10-04 addendum, decision 5). Also registered as TD-17 | a Behaviour vocab change | the next Behaviour release, or before CCS-12 reads regimes through a reasoner |
 
-#### C7b in detail
+#### CCS-7b in detail
 
 **Machine:** R. **Branch:** `ccs/c7b-terms-in-time`, created from `main`
 once this brief is on `main` and its questions are answered. **Commits are the maintainer's**, examples
 first (ADR-A-C2). Merged into `main` before its release tags are created.
-**Validation Pack:** [computable-contract-substrate-c7b](../validation/computable-contract-substrate-c7b.md).
+**Validation Pack:** [computable-contract-substrate-c7b](../validation/CCS-7b.md).
 **Decisions:** ADR-A104 decisions 6 (`ins:due`, `ins:ends`), 13 and 14 (`ins:computedBy`), and its
 2026-10-04 addendum (regimes stated once), ADR-A94 (calendars), ADR-A113. Laws I3, I5 and I9.
 **Design:** the [terms in time sketch](../sketches/terms-in-time.md), for C7b-Q3 to C7b-Q5.
@@ -1329,17 +1330,17 @@ obligation has one occasion per period. An instrument or a term ends when a regi
 state, and a surviving term goes on giving rise to occasions after that. Nothing here evaluates.
 
 **Scope after C7a.** Arising and ending of single relations (`ins:arisesOn`, `ins:endsOn` and the
-short forms) moved into C7a (C7a-Q3). The row's remaining content falls into two groups that share
+short forms) moved into CCS-7a (C7a-Q3). The row's remaining content falls into two groups that share
 almost nothing, and C7b-Q1 split them:
 
 | Group | Content | Sketch, scenarios, laws |
 |---|---|---|
 | **terms in time** (this brief) | due ranges, recurrence, survival, how an instrument or a term ends, relations arising on termination, `ins:computedBy` | §5.1, §5.5, §7.9. S1, S2, S9, S16 to S18, S60, S72. I3, I5, I9 |
-| **what terms are, and who they bind** (C7c) | definitions and deemings, sections (`ins:appliesWithin`, `ins:notWithin`, I15), per-section definitions with union and overlap reporting (I16), term classification, resolution of a party that depends on the case (C6-Q5, S20, S58), how a group acts through a defined party word | §5.3, §5.6, §5.10. S15, S20, S25, S58, S94 to S96. I11, I15, I16 |
+| **what terms are, and who they bind** (CCS-7c) | definitions and deemings, sections (`ins:appliesWithin`, `ins:notWithin`, I15), per-section definitions with union and overlap reporting (I16), term classification, resolution of a party that depends on the case (C6-Q5, S20, S58), how a group acts through a defined party word | §5.3, §5.6, §5.10. S15, S20, S25, S58, S94 to S96. I11, I15, I16 |
 
 **Answered 2026-10-04:**
 
-- C7b-Q1 (a): the slice is split, and C7c is briefed separately
+- C7b-Q1 (a): the slice is split, and CCS-7c is briefed separately
 - C7b-Q2 (a): an obligation has at most one due range. Asserting that every obligation falls due
   at exactly one time is legally incorrect. Where the words fix no time, this layer does not model
   the *reasonable time* the law implies, unless a contract's express words define one. Law I5 is
@@ -1358,7 +1359,7 @@ recorded (held design question HQ-3). TQ3, TQ4, TQ6 and TQ7 as recommended. TQ5,
 whose relations arise on termination survives for that purpose without saying so, because requiring
 express wording would not work in practice.
 
-**What C7b builds, from the answers:**
+**What CCS-7b builds, from the answers:**
 
 | Layer | Adds | Sketch |
 |---|---|---|
@@ -1369,12 +1370,12 @@ express wording would not work in practice.
 **Before branching.** Quantification's change re-pins every document that imports it: Party,
 Eligibility, Wording, Behaviour, Surface, Instrument and the applied modules, including
 `applied/insurance/peril` and `applied/capacity`. The maintainer confirms that no parallel workstream
-edits those documents while C7b runs (risk R6, as for F1).
+edits those documents while CCS-7b runs (risk R6, as for CCS-F1).
 
 **Quantification's README is not yet its literate source.** Its blocks equal the generated files
 as graphs, but it has no block for the ontology header, and one shapes block holds what three files
-contain. C7b first restores it as the source (a header block and three shapes blocks), with no
-change to any graph, as F1 did for Foundation, and then makes its additions there.
+contain. CCS-7b first restores it as the source (a header block and three shapes blocks), with no
+change to any graph, as CCS-F1 did for Foundation, and then makes its additions there.
 
 **Questions, as asked:**
 
@@ -1383,19 +1384,19 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
   different dependencies. Law I15 fixes a case's section by the power it was bound under
   (`ins:boundUnder`), which is C9's, so the second group either follows C9 or brings
   `ins:boundUnder` forward. Options:
-  - (a) **split**: C7b is terms in time (Instrument 0.11.0), and C7c is what terms are and who they
+  - (a) **split**: CCS-7b is terms in time (Instrument 0.11.0), and CCS-7c is what terms are and who they
     bind (0.12.0), briefed separately with its own questions, including C6-Q5 and the I15
     dependency
   - (b) one slice, as planned
 
-  **Recommendation: (a).** Each half is a coherent slice of the size C7a was, and C7c's I15
+  **Recommendation: (a).** Each half is a coherent slice of the size CCS-7a was, and CCS-7c's I15
   dependency can be decided in its own brief.
 - **C7b-Q2. Must every obligation fall due (law I5)?** I5 says an obligation has exactly one due
   range unless continuing or a prohibition. Many obligations name no time: "the Supplier shall
   deliver the Goods ordered", "the Buyer shall pay the price". Where a contract fixes no time for
   performance, the law implies a *reasonable time*, which only a finding can establish. Options:
   - (a) **at most one** due range. With none, the obligation has no fixed time, and breach by lapse
-    of time is never derived: only a finding (C13) can establish it. I5 is restated
+    of time is never derived: only a finding (CCS-13) can establish it. I5 is restated
   - (b) exactly one, as I5 says, and every example states a due range
 
   **Recommendation: (a).** It matches the law, and (b) would force authors to invent deadlines that
@@ -1414,7 +1415,7 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
     offsets with units. A Quantification change, cascading to every importer
 
   **Recommendation: (a).** It stays in Instrument, reads as the clause does, and matches
-  `ins:after`. A due date set by a variable ("the Maturity Date") is a C8 binding. The anchor
+  `ins:after`. A due date set by a variable ("the Maturity Date") is a CCS-8 binding. The anchor
   scheme follows the activity and state kind schemes.
 - **C7b-Q4. How a recurrence names its periods.** "Within 10 Business Days after the end of each
   month" needs one occasion per month. `qnt:Recurrence` requires a concrete anchor, which stated
@@ -1428,7 +1429,7 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
   **Recommendation: (a)**, for the reason given at C7b-Q3. (b) would make the recurrence the only
   bound-only value in a stated relation.
 - **C7b-Q5. What ends an instrument or a term, and what arises on termination.** The sketch gives a
-  power `ins:ends` an instrument, a term or a relation, effective on exercise. C7a showed that
+  power `ins:ends` an instrument, a term or a relation, effective on exercise. CCS-7a showed that
   termination usually happens on entering a state: the licence ends when its notice period runs
   out, not when notice is given. Contracts also attach consequences to termination itself: "on
   termination, the Licensee shall return all materials", "the deposit shall be repaid within 30
@@ -1438,13 +1439,13 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
     legal trigger, `ins:OnEntry` (`ins:ofState`, kind `bhv:DerivedTrigger`), fires on entering a
     state, so relations may arise on termination and other regimes may react to it (a run-off
     regime entered on termination). Termination for breach that takes effect at once is a
-    transition straight into the ending state, as in the C7a licence
+    transition straight into the ending state, as in the CCS-7a licence
   - (b) `ins:ends` on a power, effective on exercise, as the sketch has it, and "on termination"
     written as an `ins:OnExercise` of each power that terminates. This cannot express ending at the
     end of a notice period
   - (c) `ins:ends` on any legal trigger
 
-  **Recommendation: (a).** It keeps one account of ending, the C7a one, and gives "on termination"
+  **Recommendation: (a).** It keeps one account of ending, the CCS-7a one, and gives "on termination"
   its own operative fact. It adds a sixth legal trigger, so it needs an addendum to ADR-A104
   decision 6, drafted with the examples. A single relation still ends through `ins:endsOn`.
 - **C7b-Q6. How survival is stated.** "Clauses 9 and 12 survive termination of this agreement",
@@ -1469,11 +1470,11 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
 
 **Decided by precedent, not asked:**
 
-- the context role scheme follows the activity and state kind schemes (C3-Q1, C6, C7a): a baseline
+- the context role scheme follows the activity and state kind schemes (C3-Q1, CCS-6, CCS-7a): a baseline
   scheme of roles, bound as fallback to the contract that constrains `qnt:contextRole` (sketch
   §5.2)
 - arising windows beyond the instrument's term (a discovery period, a reporting period after
-  expiry) are period regimes, with relations gated by their states (C7a)
+  expiry) are period regimes, with relations gated by their states (CCS-7a)
 - a due range is part of the relation's stated meaning, and a bound relation restates it in full
   (ADR-A104 decision 2)
 - durations use Quantification's units and calendars, as `ins:after` does (ADR-A94)
@@ -1488,7 +1489,7 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
    | `trial-reporting.ttl` | a duty to report each serious adverse event within 24 hours of its arising (an `ins:OnAct`), and a monthly safety report due within 10 business days after each month end (recurrence, `PeriodEnd`, a calendar unit). A duty with no due range (C7b-Q2), and a covenant-like duty tested on dates (sketch §5.4) |
    | `lease-expiry.ttl` | a lease that expires at its Expiry Date (`ins:OnExpiry` `ins:at`, `ins:ends` the instrument), a tenant's break exercisable in a window (`ins:window`), and the deposit repaid within 30 days after the lease ends (`ins:OnEntry`, anchored at `Ending`) |
    | `service-renewal.ttl` | an evergreen services agreement that renews each year unless a notice of non-renewal is given in its window, and ends on notice or at the end of a period (sketch §8.2, §8.3) |
-   | `licence-survival.ttl` | the C7a notice regime with `ins:ends` on its terminated state, a duty to return materials arising on termination, confidentiality surviving for five years, and an indemnity surviving without limit (C7b-Q6) |
+   | `licence-survival.ttl` | the CCS-7a notice regime with `ins:ends` on its terminated state, a duty to return materials arising on termination, confidentiality surviving for five years, and an indemnity surviving without limit (C7b-Q6) |
 
 2. **Spec.** Quantification first: its README restored as the literate source, then 0.7.0 with
    the additions above, and the re-pin cascade computed and applied under the procedure in
@@ -1534,7 +1535,7 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
 | C7b-08 | `ins:ends` on a state of a plain `bhv:StateSpace`, or naming a bound term / shapes / each reported | L1 | − |
 | C7b-09 | a survival period that is not a quantity of time, survival on a relation / shapes / each reported | L1 | − |
 | C7b-10 | a stated due range, and its bound restatement / shapes / conform, and the bound relation names the same anchor kind | L1 | + |
-| C7b-11 | any new trigger / OWL 2 RL closure / its kind and Behaviour type follow, as for C7a's triggers (C7a-R1) | L1 | + |
+| C7b-11 | any new trigger / OWL 2 RL closure / its kind and Behaviour type follow, as for CCS-7a's triggers (C7a-R1) | L1 | + |
 | C7b-12 | the vocab / parsed / the role scheme is bound to the role contract, every role the examples use is in the baseline | L1 | + |
 | C7b-13 | the README / literate check / blocks equal the files. Release notes for 0.11.0 and shapes 0.4.0. Every diagram renders under mermaid 11 | L1 | + |
 | C7b-14 | the existing tool tests, including `tools/test_regimes.py` / unchanged / pass | L1 | + |
@@ -1545,12 +1546,12 @@ change to any graph, as F1 did for Foundation, and then makes its additions ther
 | C7b-19 | a relation arising on an `ins:OnEntry` of an ending state, under a term with no `ins:survives` / shapes / conforms (TQ5) | L1 | + |
 | C7b-20 | every diagram in both READMEs and the sketch / mermaid 11, rendered in a page / renders | L1 | + |
 
-#### C7c in detail
+#### CCS-7c in detail
 
 **Machine:** R. **Branch:** `ccs/c7c-terms-and-parties`, created from
 `main` once this brief is on `main` and its questions are answered. **Commits are the maintainer's**,
 examples first (ADR-A-C2). Merged into `main` before its release tags are created.
-**Validation Pack:** [computable-contract-substrate-c7c](../validation/computable-contract-substrate-c7c.md).
+**Validation Pack:** [computable-contract-substrate-c7c](../validation/CCS-7c.md).
 **Decisions:** ADR-A104 decisions 4 (parties, `ins:resolvedBy`, CC-D10), 9 (constitutive terms), 11
 (`ins:boundUnder`) and 12 (sections), ADR-A102 (contingent occupancies), ADR-A87 (exclusion in
 hierarchical match), ADR-A113. Laws I11, I15 and I16.
@@ -1568,7 +1569,7 @@ prevails, and every overlap is reported (I16). A party that depends on the case 
 occasion arises, and stays fixed (I11). A term's classification is read, never evaluated: its
 effect is stated as relations (I12). Nothing here evaluates.
 
-**Scope.** The row's content, after C7b:
+**Scope.** The row's content, after CCS-7b:
 
 | Group | Content | Sketch, scenarios, laws |
 |---|---|---|
@@ -1580,7 +1581,7 @@ effect is stated as relations (I12). Nothing here evaluates.
 **Before branching.** Nothing outside Instrument imports Instrument, so the bump re-pins no other
 document. C7c-Q3 (b) would change Eligibility, and C7c-Q4 (b) Party. Either would cascade to every
 importer of that layer, and the maintainer then confirms that no parallel workstream edits them while
-C7c runs (risk R6).
+CCS-7c runs (risk R6).
 
 **Answered 2026-10-06:**
 
@@ -1597,7 +1598,7 @@ C7c runs (risk R6).
 - C7c-Q4 (a), with the full set of group behaviours revisited after C9 (held design question HQ-5)
 - C7c-Q5 (a), with `ins:prevailsOver` declared between definitions only
 - C7c-Q6 (a)
-- C7c-Q7 (a). Date and amount words are recorded in C8's row
+- C7c-Q7 (a). Date and amount words are recorded in CCS-8's row
 - C7c-Q8 (a), with deemings made watertight once ADR-A105 exists (held design question HQ-6)
 - C7c-Q9 (a)
 
@@ -1608,8 +1609,8 @@ C7c runs (risk R6).
   applies within. `ins:boundUnder` is C9's (ADR-A104 decision 11). Options:
   - (a) **bring `ins:boundUnder` forward**: the property alone, from an instrument to the power
     whose exercise created it, at most one. C9 keeps amendments, consent rules, incorporation and
-    `ins:takesEffectWhen`. I15 and its shape land in C7c
-  - (b) C7c without I15: sections and `ins:appliesWithin` for terms and definitions, and a case's
+    `ins:takesEffectWhen`. I15 and its shape land in CCS-7c
+  - (b) CCS-7c without I15: sections and `ins:appliesWithin` for terms and definitions, and a case's
     section waits for C9
   - (c) a case's section asserted directly, and checked against `ins:boundUnder` when C9 arrives
 
@@ -1658,7 +1659,7 @@ C7c runs (risk R6).
     from C9
 
   **Recommendation: (a).** CC-D10 already makes silence Undetermined, which the examples show, and
-  consent rules belong with C9, where amendments use them too. S96 is then shown in part by C7c and
+  consent rules belong with C9, where amendments use them too. S96 is then shown in part by CCS-7c and
   completed by C9.
 - **C7c-Q5. Overlapping definitions (I16) and InsurML's scope rule.** I16 combines overlapping
   definitions of one word by union unless one prevails. InsurML refuses a reference that resolves
@@ -1686,12 +1687,12 @@ C7c runs (risk R6).
   "Material Adverse Effect" or "Territory" means a condition, a concept or a scheme (§5.6). A date
   or amount word, such as "the Expiry Date" or "the Commitment", means a value, usually from the
   schedule. Options:
-  - (a) **party, condition and concept words in C7c. Date and amount words wait for C8**, whose
+  - (a) **party, condition and concept words in C7c. Date and amount words wait for CCS-8**, whose
     parameter bindings give wording values to relations, and where HQ-4 (context roles from several
     sources) is decided
-  - (b) all three kinds in C7c
+  - (b) all three kinds in CCS-7c
 
-  **Recommendation: (a).** A value word needs the binding from a wording variable, which is C8's.
+  **Recommendation: (a).** A value word needs the binding from a wording variable, which is CCS-8's.
 - **C7c-Q8. Deemings and closure (S25, ADR-A105).** A deeming whose condition reads an absence
   ("deemed failed if not provided within 60 days") is a closure source, and the closure declaration
   is ADR-A105's, NRS N5, not yet drafted. Options:
@@ -1700,7 +1701,7 @@ C7c runs (risk R6).
     declaration left to A-105. The examples show deemed failure, deemed receipt and relation back
   - (b) defer deemings to NRS N5
 
-  **Recommendation: (a).** A deeming is stated meaning whatever its evaluation needs, and C11's
+  **Recommendation: (a).** A deeming is stated meaning whatever its evaluation needs, and CCS-11's
   deemed-fact records already exist to receive it. Deemed receipt "two business days after posting"
   waits for HQ-3's business day conventions.
 - **C7c-Q9. A section's ending (deferred by the ADR-A104 addendum of 2026-10-05).** A section may
@@ -1709,7 +1710,7 @@ C7c runs (risk R6).
     it, and nothing else
   - (b) defer to C9
 
-  **Recommendation: (a).** It is one more value for a property C7b built, read as C7b's ending is.
+  **Recommendation: (a).** It is one more value for a property CCS-7b built, read as CCS-7b's ending is.
 
 **Decided by precedent, not asked:**
 
@@ -1718,7 +1719,7 @@ C7c runs (risk R6).
   values are alternatives, and `ins:notWithin` excludes the parts at or below it (sketch §5.10)
 - a case falls within a term's sections by Eligibility's hierarchical match with exclusion over the
   wording tree, and a case under a part above an exclusion is Undetermined (ADR-A87)
-- interpretation clauses and status declarations are terms with no relation, which C6 already
+- interpretation clauses and status declarations are terms with no relation, which CCS-6 already
   allows. An example shows one of each (S61, S71)
 - the wording's definition element, of element type Definition, expresses the term under which the
   `ins:Definition` arises. References from text to it are Wording's
@@ -1738,7 +1739,7 @@ answers above where they differ, and the ADR-A104 addendum records them.
 
 | # | Decision |
 |---|---|
-| D1 | **An instance stores only what differs from its form**: the instrument and its identity and keys, its parties (occupancies, groups, memberships), the values it gives the wording's variables (C8), the elements its assembled wording includes, `ins:boundUnder`, and records filling a contingent party. Nothing else |
+| D1 | **An instance stores only what differs from its form**: the instrument and its identity and keys, its parties (occupancies, groups, memberships), the values it gives the wording's variables (CCS-8), the elements its assembled wording includes, `ins:boundUnder`, and records filling a contingent party. Nothing else |
 | D2 | **Stated meaning is content-addressed with its element version** (ADR-A51, CC-D12). A wording seen before, matched on its hash, brings its stated meaning and is never restated. Only changed, endorsed or novel elements add stated meaning |
 | D3 | **Stated meaning is context-free.** A stated term never names another element's version. Scopes and endings name a section's persistent identity, resolved within the assembled wording's inclusions, as bridge §11 resolves references |
 | D4 | **Bound meaning is generated, never stored with the instance.** It is a derived artefact (ADR-A92) built on demand from stated meaning and the instance, cached as need dictates, and may live in its own subgraph for heavy processing. Only bound meaning is evaluated (law I13), so evaluation generates what it reads. The examples show the generated bound meaning under its own heading, as the expected output |
@@ -1753,13 +1754,13 @@ answers above where they differ, and the ADR-A104 addendum records them.
 | D8 | **Scopes.** No scope governs the whole instrument. Several `ins:appliesWithin` values are alternatives, and `ins:notWithin` excludes the parts at or below it. Sections nest along the wording tree. A declared section must be included in the assembled wording, and a scope naming a part inside a declared section that is not itself a section is reported while drafting |
 | D9 | **A case's sections.** A case bound under a power falls in the one section the power is bound within (I15), and such a power must be bound within exactly one section. Any other case, such as a claim under a package policy, is not placed: each section's bound relations evaluate it in their own right, and cross-section terms read which sections responded. ADR-A87's Undetermined arises only for a case placed at a section above an excluded part |
 | D10 | **Cross-section terms.** A qualifier spanning sections (an aggregate, a shared limit) is bound once and qualifies each section's bound relations, which read their words as their own section defines them. `ins:qualifies` on a bound qualifier therefore takes every bound relation generated from the stated one it qualifies. A cross-section term naming a word that varies by section is split per section and reported while drafting, for a reviewer to confirm |
-| D11 | **Ending a section.** `ins:ends` may name a section. Entering the state ends, for that section's cases, every term bound within it. What the words keep alive is survival (`ins:survives`, C7b). Revises C7c-Q9 |
+| D11 | **Ending a section.** `ins:ends` may name a section. Entering the state ends, for that section's cases, every term bound within it. What the words keep alive is survival (`ins:survives`, CCS-7b). Revises C7c-Q9 |
 
 *Constitutive terms*
 
 | # | Decision |
 |---|---|
-| D12 | **Definitions.** An `ins:Definition` arises under a term. It `ins:defines` exactly one word, the node stated meaning names wherever the text uses it: a `pty:Role` for a party word, a `skos:Concept` for a condition or concept word. It `ins:means` at least one thing: roles on stated meaning and occupancies or groups on bound meaning for a party word, an Eligibility condition, concept or scheme otherwise. **Stated meaning names words, bound meaning names meanings.** A condition slot on stated meaning (`ins:condition`, `ins:scope`, `ins:maintains`, `ins:deems`, `ins:when`, `ins:resolutionFilter`) may take a word a definition defines, and binding replaces it by its meaning in each section, so a condition word varies by section as a party word does. On bound meaning those slots take conditions only. A word that no definition resolves, in a section its term applies within, is reported while drafting. `ins:actingRule` states how several parties a word means act together, on stated and bound meaning, and binding gives it to the group it builds. Date and amount words wait for C8 |
+| D12 | **Definitions.** An `ins:Definition` arises under a term. It `ins:defines` exactly one word, the node stated meaning names wherever the text uses it: a `pty:Role` for a party word, a `skos:Concept` for a condition or concept word. It `ins:means` at least one thing: roles on stated meaning and occupancies or groups on bound meaning for a party word, an Eligibility condition, concept or scheme otherwise. **Stated meaning names words, bound meaning names meanings.** A condition slot on stated meaning (`ins:condition`, `ins:scope`, `ins:maintains`, `ins:deems`, `ins:when`, `ins:resolutionFilter`) may take a word a definition defines, and binding replaces it by its meaning in each section, so a condition word varies by section as a party word does. On bound meaning those slots take conditions only. A word that no definition resolves, in a section its term applies within, is reported while drafting. `ins:actingRule` states how several parties a word means act together, on stated and bound meaning, and binding gives it to the group it builds. Date and amount words wait for CCS-8 |
 | D13 | **Overlap (I16), at binding, per section.** Overlapping definitions meaning the same parties give a warning. Different parties under one agreed acting rule form that group, with a warning. Parties no definition describes together form a group with no rule (Undetermined, CC-D10), with a warning. Conflicting acting rules are a violation. `ins:prevailsOver`, between definitions only, removes an overlap. An applied profile may make any warning a violation |
 | D14 | **Deemings.** An `ins:Deeming` arises under a term, `ins:deems` exactly one condition, `ins:when` at most one, conclusively or not (`ins:conclusive`), and `ins:forPurposeOf` limits it to named relations or terms. The closure a deeming over absence licenses is ADR-A105's (HQ-6). Interpretation clauses and status declarations are terms with no relation |
 | D15 | **Classification.** `ins:classification` on a stated term names a concept from the scheme bound to `ins-voc:TermClassificationContract`, which has no baseline. It is read, never evaluated: a breach's effect is stated as relations arising on it (I12) |
@@ -1771,7 +1772,7 @@ answers above where they differ, and the ADR-A104 addendum records them.
 | D16 | **Bound relations always name their parties.** No occupancy is filled by definitions |
 | D17 | **A party that depends on the case** is a contingent occupancy (ADR-A102) with at most one `ins:resolvedBy`. An `ins:PartyResolution` starts at the case's class (`ins:resolvesFrom`), follows an ordered path of `elg:EvidenceStep`s to actors (`ins:resolutionStep`), and keeps those satisfying at most one condition (`ins:resolutionFilter`). Without a resolution, a record of each occasion fills it. Either way the party is fixed at arising (I11). Restates decision 4 |
 | D18 | **Groups.** A duty owed by or to a group is decided by its composition rule. A power held by a group, and a group with no rule, are Undetermined until C9's consent rules (CC-D10). The full set of group behaviours follows C9 (HQ-5) |
-| D19 | **Party is domain-neutral.** `pty:share` is replaced by `pty:outwardShare` (the proportion a member stands for towards the other side) and `pty:inwardShare` (the proportion it bears among the members), both optional. `pty:SeveralOnly` becomes `pty:EachForOwnShare` and `pty:JointAndSeveral` becomes `pty:EachForWhole`, defined structurally. What a proportion means (liability, contribution, a line) is the instrument's or the applied layer's. Caps are `ins:Qualifier`s with C8's amounts, and a net contribution clause leaves the outward share unfixed, found per occasion (C13). An example shows several liability and joint and several liability built from these. Revises C7c-Q4's "no Party change" |
+| D19 | **Party is domain-neutral.** `pty:share` is replaced by `pty:outwardShare` (the proportion a member stands for towards the other side) and `pty:inwardShare` (the proportion it bears among the members), both optional. `pty:SeveralOnly` becomes `pty:EachForOwnShare` and `pty:JointAndSeveral` becomes `pty:EachForWhole`, defined structurally. What a proportion means (liability, contribution, a line) is the instrument's or the applied layer's. Caps are `ins:Qualifier`s with CCS-8's amounts, and a net contribution clause leaves the outward share unfixed, found per occasion (CCS-13). An example shows several liability and joint and several liability built from these. Revises C7c-Q4's "no Party change" |
 
 *Also decided*
 
@@ -1781,7 +1782,7 @@ answers above where they differ, and the ADR-A104 addendum records them.
 | D21 | Party resolution's properties are Instrument's own. A shared path type in Foundation, which would also replace Surface's and Eligibility's copies, is raised as its own unit |
 | D22 | Several instruments covering portions of one order are held as HQ-7 |
 
-**What C7c builds:**
+**What CCS-7c builds:**
 
 | Layer | Adds |
 |---|---|
@@ -1857,22 +1858,22 @@ answers above where they differ, and the ADR-A104 addendum records them.
 | C7c-21 | an incident meeting two towers' conditions / the examples' expected outcomes / each tower's relations apply, the cap counts both | L1 | + |
 | C7c-22 | two instruments whose wordings include the same element version / stated meaning / one set of stated nodes, shared | L1 | + |
 
-#### C8 in detail
+#### CCS-8 in detail
 
 **Machine:** R. **Branch:** `ccs/c8-parameter-bindings`, created from
 `main` once this brief is on `main` and its questions are answered, except C8-Q3's HQ-4 part, which
 waits for the formal-methods epic's track C2. **Commits are the maintainer's**, examples first (ADR-A-C2).
 Merged into `main` before its release tags are created.
-**Validation Pack:** [computable-contract-substrate-c8](../validation/computable-contract-substrate-c8.md).
+**Validation Pack:** [computable-contract-substrate-c8](../validation/CCS-8.md).
 **Decisions:** ADR-A104 decision 13 (binding) and its 2026-10-06 addendum (D1 to D22), ADR-A92
 (derived artefacts), ADR-A51 (content-addressed versions), ADR-A85 (scheme bindings), ADR-A115
 (context values). Laws I13 and I17.
 **Inputs:** the CCS sketch §5.9, scenarios S63 and S65, and S46, S73 and S81 for what waits on
-contract amounts. C7c's handoff: the two checks that need binding (overlapping definitions on the
+contract amounts. CCS-7c's handoff: the two checks that need binding (overlapping definitions on the
 form, and every word resolving in every section its term applies within), and the actors a
-schedule names, which C7c's examples could show only in generated output. C7c-Q7's date and amount
+schedule names, which CCS-7c's examples could show only in generated output. C7c-Q7's date and amount
 words, and HQ-4. From the insurml-alignment epic: the bridge sketch §12 (contractual and
-informational content). From the formal-methods epic: track C2, which models scheme composition
+informational content). From the formal-methods epic: track CCS-2, which models scheme composition
 before HQ-4 is decided.
 
 **Invariant:** an instrument stores only what differs from its form, and its values are among that.
@@ -1886,14 +1887,14 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
 |---|---|---|
 | values in stated meaning | how a stated node takes a value from a wording variable: a duration, a rate, a threshold, a date, an amount, a party, a concept | §5.9. S65. I13 |
 | value words | definitions of date and amount words, and wording dates as context roles | C7c-Q7, HQ-4 |
-| schedules | the parties and values a schedule names, per section | C7c's handoff, S94 |
+| schedules | the parties and values a schedule names, per section | CCS-7c's handoff, S94 |
 | what text means nothing | encoding status | §5.9. S63. I17 |
 | generation | a reference binder for one instrument, and the checks that need it | D4, D5. I16, I17 |
 
 **Questions:**
 
 - **C8-Q1. How stated meaning takes a value from a variable.** "The Borrower shall repay within
-  [10] Business Days." The sketch (§5.9, written before C7c's D1 to D5 and D12) has an
+  [10] Business Days." The sketch (§5.9, written before CCS-7c's D1 to D5 and D12) has an
   `ins:ParameterBinding` node per parameter, naming a parameter kind and the variable, and scope
   parameters with their own subject, steps and strategy. Generation now makes bound meaning from the
   form and the instance (D4), so the question is only how a stated node says where a value goes.
@@ -1959,7 +1960,7 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   (formal-methods track G) quantifies over the values its variables admit. Wording's text references
   (`wrd:refersToVariable`) still name a variable version, so a clause's text and its stated meaning
   name the variable differently until Wording takes the identity reference of bridge §11, which slice
-  C8b plans.
+  CCS-8b plans.
 - **C8-Q2. The parties a schedule names.** "In Lot 2, the Supplier means [Ash Ltd]." Options:
   - (a) **a party word's stated definition means a variable**, whose value is an occupancy or a
     group (`wrd:value` already admits a party's occupancy). Binding resolves the word, per section,
@@ -1978,7 +1979,7 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   - (c) **a wording's own dates are defined words**, admitted as context roles because a definition
     in the instrument defines them, with no scheme binding. Baseline roles stay bound by contract
 
-  **Recommendation: (c), decided after track C2's model of scheme composition** (agreed
+  **Recommendation: (c), decided after track CCS-2's model of scheme composition** (agreed
   2026-10-06). Amount words take entered values only: computed amounts, bases and aggregation wait
   for contract amounts (§1.7 of its sketch), and so does `ins:computedBy` (C7b-Q7).
 - **C8-Q4. Encoding status: which text is expected to mean something.** Law I17 asks that an
@@ -2004,18 +2005,18 @@ the stated meaning of the elements its wording includes (I17). Nothing here eval
   An unassessed leaf is a warning, since drafting and lifting leave many for a while, and an
   applied profile may make it a violation. A container that does express meaning, such as a
   section whose term spans its clauses, is never at fault.
-- **C8-Q5. A reference binder.** Bound meaning is generated (D4), and C7c's examples hand-write it.
+- **C8-Q5. A reference binder.** Bound meaning is generated (D4), and CCS-7c's examples hand-write it.
   Options:
   - (a) **a Python reference binder** in `tools/`, generating one instrument's bound meaning from
     its form and instance: words and variables resolved per section, sharing where they resolve
-    alike, deterministic IRIs (D5). The tests regenerate every C7c and C8 example's generated part
+    alike, deterministic IRIs (D5). The tests regenerate every CCS-7c and CCS-8 example's generated part
     and compare it with the expected output, and I16 and I17 run on the binder's output. C16b adds
     sharing across instruments, the cache and the subgraph
   - (b) no binder until C16b. The examples keep hand-written expected output
 
-  **Recommendation: (a).** A variable means nothing until something applies it, and C7c's two open
+  **Recommendation: (a).** A variable means nothing until something applies it, and CCS-7c's two open
   checks need the binder. Hand-written output would drift from the rules without one.
-- **C8-Q6. C7c's two open checks.** Options:
+- **C8-Q6. CCS-7c's two open checks.** Options:
   - (a) **both on the form as well**: overlapping definitions of a word within a section, and a
     word some term uses with no definition applying in a section where the term applies, as
     SHACL-SPARQL over stated meaning and sectioning. The binder reports what depends on values,
@@ -2063,7 +2064,7 @@ its consequences and its resolution across the tiers were set out. The text refe
 - examples are domain-neutral, from at least three domains, under the rule in
   `.github/copilot-instructions.md`
 
-**What C8 builds, if the recommendations are taken:**
+**What CCS-8 builds, if the recommendations are taken:**
 
 | Layer | Adds |
 |---|---|
@@ -2078,7 +2079,7 @@ its consequences and its resolution across the tiers were set out. The text refe
    | File | Shows |
    |---|---|
    | `facility-parameters.ttl` | a facility form's variables: the margin, "the Commitment" as an amount word, the leverage ceiling inside a covenant's range, repayment within [n] Business Days, and the parties. Generated bound meaning |
-   | `framework-lots.ttl` (reworked) | Schedule 1's suppliers as variables whose values are occupancies and a group, closing C7c's gap (C8-Q2) |
+   | `framework-lots.ttl` (reworked) | Schedule 1's suppliers as variables whose values are occupancies and a group, closing CCS-7c's gap (C8-Q2) |
    | `lease-expiry.ttl` (reworked) | the Expiry Date and the Break Date as date words bound from variables, anchoring the expiry and the break window (C8-Q3, once HQ-4 is decided) |
    | `services-schedule.ttl` | a services agreement whose territory list is a variable inside a scope condition, an element for information only (`NoMeaning`, S63), and one not yet assessed |
 
@@ -2112,7 +2113,7 @@ its consequences and its resolution across the tiers were set out. The text refe
 | C8-07 | an included leaf of text with neither stated meaning bound nor a mark / I17 / a warning. A container with neither / no report | L1 | ± |
 | C8-08 | two stated definitions of one word applying within one section of the form / shapes / a warning | L1 | + |
 | C8-09 | a stated term using a word with no definition in one of its sections / shapes / reported | L1 | − |
-| C8-10 | every C7c and C8 example / binder / output isomorphic to its expected generated part | L1 | + |
+| C8-10 | every CCS-7c and CCS-8 example / binder / output isomorphic to its expected generated part | L1 | + |
 | C8-11 | a variable with no value in the instance / binder / the node unbuilt and reported | L1 | − |
 | C8-12 | the framework's Schedule 1 / binder / each lot's supplier from its variable, Lots 1 and 2 sharing 3.1 | L1 | + |
 | C8-13 | the binder run twice / output / identical IRIs (D5) | L1 | + |
@@ -2125,12 +2126,12 @@ its consequences and its resolution across the tiers were set out. The text refe
 | C8-20 | a concept word also in the scheme its condition is constrained by, a word meaning a condition placed in a concept slot / shapes / each reported | L1 | − |
 | C8-21 | the documentation / every place listed in the decision / states the cycle rule | L1 | + |
 
-#### C8b in detail
+#### CCS-8b in detail
 
 **Machine:** R. **Branch:** `ccs/c8b-references-by-identity`, created from
 `main` once this brief is on `main` and its questions are answered. **Commits are the maintainer's**,
 examples first (ADR-A-C2). Merged into `main` before its release tags are created.
-**Validation Pack:** [computable-contract-substrate-c8b](../validation/computable-contract-substrate-c8b.md).
+**Validation Pack:** [computable-contract-substrate-c8b](../validation/CCS-8b.md).
 **Decisions:** ADR-A104 and its 2026-10-06 addenda (D3, values in stated meaning), ADR-A51
 (content-addressed versions), the Wording ADRs behind laws W1 to W7. Takes over insurml-alignment
 IMA-3.3, and settles the identity half of IMA-D8.
@@ -2147,7 +2148,7 @@ definition needs no new version. Nothing here changes what a wording means.
 Wording keeps every piece of text as a **version**. An element, a clause or a definition, has one
 persistent identity for its whole life ("clause 5", "the definition of Insured Person"), and a new
 version each time its words change. Versions are immutable and content-addressed (ADR-A51), and
-since C7c they carry the stated meaning their words express, so a version seen before is matched on
+since CCS-7c they carry the stated meaning their words express, so a version seen before is matched on
 its hash and never restated (D2).
 
 A wording does not hold text directly. It **includes** versions: an assembled wording lists the
@@ -2175,7 +2176,7 @@ Today every reference names a **version**:
 
 ```mermaid
 flowchart LR
-    subgraph F1["Form, edition 1"]
+    subgraph CCS-F1["Form, edition 1"]
         C5a["clause 5, version 1<br/>'… any Insured Person …'"]
         D1["definition of Insured Person,<br/>version 1"]
         C5a -- "refersToObject" --> D1
@@ -2200,7 +2201,7 @@ everything it mentions:
    be placed in a second form whose schedule declares its own version of the days variable: the
    clause's text points at the first form's variable version, so the second form needs its own
    copy of the clause.
-3. **Text and meaning disagree.** Since C8, the clause's stated meaning names the variable by
+3. **Text and meaning disagree.** Since CCS-8, the clause's stated meaning names the variable by
    identity (`ins:valueFrom`), and resolves it within whichever wording holds the clause. Its text
    still names one version. The two can point at different versions of the same variable.
 4. **Outside documents are ambiguous.** "In accordance with the Data Protection Regulation" is a
@@ -2232,12 +2233,12 @@ wording that includes the text pins the version.
           B4 -- "hasIdentity" --> B2
       end
       subgraph C["(c) Every reference names an identity, and something else fixes the version"]
-          C1["clause"] -- "refers to" --> C2["the definition's identity"]
-          C1 -- "refers to" --> C3["the Regulation's identity"]
-          CW["the wording"] -- "includes" --> C4["definition, version 1"]
-          C4 -- "hasIdentity" --> C2
-          CW -- "relies on, static" --> C5["the Regulation,<br/>2026 edition"]
-          C5 -- "hasIdentity" --> C3
+          CCS-1["clause"] -- "refers to" --> CCS-2["the definition's identity"]
+          CCS-1 -- "refers to" --> CCS-3["the Regulation's identity"]
+          CW["the wording"] -- "includes" --> CCS-4["definition, version 1"]
+          CCS-4 -- "hasIdentity" --> CCS-2
+          CW -- "relies on, static" --> CCS-5["the Regulation,<br/>2026 edition"]
+          CCS-5 -- "hasIdentity" --> CCS-3
       end
   ```
 
@@ -2266,7 +2267,7 @@ wording that includes the text pins the version.
       wording is assembled
     - **ambulatory**: "as amended from time to time", no edition fixed. The edition is whichever is
       in force at the time a case is evaluated, which makes it a value the evaluation context
-      supplies (C12), as Quantification's context values do (ADR-A115)
+      supplies (CCS-12), as Quantification's context values do (ADR-A115)
 
     Consequences:
     - Solves all four problems, with one rule: a reference names what it refers to, never which
@@ -2278,7 +2279,7 @@ wording that includes the text pins the version.
       wording to an external document, static or ambulatory. Its shapes: every external
       reference has exactly one reliance in the wording holding it.
     - Ambulatory references reach the evaluator: an edition chosen at evaluation time is a
-      runtime value, and C12 and C13 must supply it. Until then an ambulatory reference is stated
+      runtime value, and CCS-12 and CCS-13 must supply it. Until then an ambulatory reference is stated
       and not resolved, which is honest, since its edition is not known at design time.
     - Breaking at 0.x: the same six examples, plus the two outside documents they cite. Wording
       0.7.0, Instrument re-pinned. More work than (b): about twice the model and the shapes.
@@ -2341,7 +2342,7 @@ wording that includes the text pins the version.
 
   **Leaning: (a).**
 
-- **C8b-Q4. Code.** The C8 binder already finds a variable's version from its identity.
+- **C8b-Q4. Code.** The CCS-8 binder already finds a variable's version from its identity.
   - **(a) Shapes for W8, and the binder's lookup extended to forms.** No new module. There is no
     renderer yet.
   - **(b) A shared reference resolver in `tools/`**, used by the binder and a future renderer.
@@ -2361,7 +2362,7 @@ policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 - examples are domain-neutral, from at least three domains
 - the insurml-alignment lift writes references by identity, with no resolution records (IMA-D8)
 
-**What C8b builds:**
+**What CCS-8b builds:**
 
 | Layer | Adds |
 |---|---|
@@ -2392,7 +2393,7 @@ policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 | C8b-05 | the reused clause / its two forms / one element version, its hash unchanged, each form resolving the variable to its own declaration | L1 | + |
 | C8b-06 | a reference to an outside document with no reliance, or two, in the wording holding it / W8 / reported. A static reliance with no edition, an ambulatory one naming an edition / shapes / each reported | L1 | − |
 | C8b-06a | a definition revised in a second edition of a form / the clause mentioning it / the same element version in both editions | L1 | + |
-| C8b-07 | the binder over the reworked Instrument examples / output / unchanged from C8 | L1 | + |
+| C8b-07 | the binder over the reworked Instrument examples / output / unchanged from CCS-8 | L1 | + |
 | C8b-08 | Instrument / imports / Wording 0.7.0, and no file outside the catalog names Wording 0.6.0 | L1 | + |
 | C8b-09 | both READMEs / literate checks / pass. Release notes for Wording 0.7.0 and Instrument 0.14.0 | L1 | + |
 | C8b-10 | the existing tests, the version and catalog checks, the import guard, `build:mtp` and `check:mtp` / pass | L1 | + |
@@ -2402,7 +2403,7 @@ policy ever needs it. C8b-Q3 (a). C8b-Q4 (a).
 **Machine:** R. **Branch:** created from `main` once this brief is on
 `main` and its questions are answered, one branch per slice if C9 is split (C9-Q1). **Commits are
 the maintainer's**, examples first (ADR-A-C2). Merged into `main` before release tags are created.
-**Validation Packs:** [C9a](../validation/computable-contract-substrate-c9a.md). C9b's and C9c's are written
+**Validation Packs:** [CCS-9a](../validation/CCS-9a.md). C9b's and CCS-9c's are written
 when each is briefed.
 **Decisions:** ADR-A104 decisions 4, 11 and 16 and its addenda, ADR-A106 (records), ADR-A112 and its
 references-by-identity addendum (reliance on outside documents), ADR-A85 (resolution by valid time),
@@ -2420,13 +2421,13 @@ and a document it incorporates means, within it, what the incorporation says.
 
 An instrument is versioned (`fnd:Versioned`). Each of its versions is expressed in exactly one assembled
 wording (law I1) and binds exactly the stated meaning of the element versions that wording includes
-(law I17). Its bound meaning is generated (C8). Nothing else about an instrument changes, because no
+(law I17). Its bound meaning is generated (CCS-8). Nothing else about an instrument changes, because no
 term or relation is versioned (law I18).
 
-The text side of change already exists. Wording C5 records an amendment's operations
+The text side of change already exists. Wording CCS-5 records an amendment's operations
 (`wrd:Amendment`, insert, delete, replace, strike and substitute, append), each stated in a part of
 an amending document and producing a new element version. `facility-amendment.ttl` changes three
-clauses of a facility and assembles a second facility wording. Behaviour C11 has runtime records of
+clauses of a facility and assembles a second facility wording. Behaviour CCS-11 has runtime records of
 a party accepting a version (`bhv:AcceptanceRecord`), exercising a power (`bhv:ExerciseRecord`) and
 acting (`bhv:ActRecord`), but Instrument imports only Behaviour's configuration, so none of these
 is Instrument's to read (C9-Q2 choice 0).
@@ -2469,9 +2470,9 @@ Three facts about the current model shape every option below:
    be written onto an existing version. It must sit on something new, such as the amendment.
 2. **Eligibility cannot count.** A condition tests one case's attributes. It cannot say "every
    party has accepted" or "lenders whose commitments are more than two thirds of the total". Any
-   rule over a set of parties is a construct of its own, evaluated by C12, or an Eligibility
+   rule over a set of parties is a construct of its own, evaluated by CCS-12, or an Eligibility
    extension.
-3. **References name identities since C8b**, and a wording's reliance fixes an outside document's
+3. **References name identities since CCS-8b**, and a wording's reliance fixes an outside document's
    edition, static or as amended. Incorporation by reference is a reliance with legal effect, so it
    should reuse that, never fix an edition a second way.
 
@@ -2484,16 +2485,16 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
 - **C9-Q1. One slice or several.** C9's row lists amendments, consent rules, incorporation and
   taking effect, plus S90 and the two endings terms-in-time left to C9. Its "shapes for I1 to I16"
-  is stale, since C6 to C8 shipped those, and only I4, I10 and I14 remain, of which I10 and I14 are
+  is stale, since CCS-6 to CCS-8 shipped those, and only I4, I10 and I14 remain, of which I10 and I14 are
   evaluated, not shaped. Counted from the questions below, C9 is about 26 test rows over Instrument,
   Wording and `tools/`, above the slice sizing rule's 15.
-  - **(a) Three slices.** C9a, amendments, taking effect, and the two endings (Q2, Q5, Q6).
+  - **(a) Three slices.** CCS-9a, amendments, taking effect, and the two endings (Q2, Q5, Q6).
     C9b, powers held by groups and materiality (Q3, Q4), which an amendment by majority needs.
-    C9c, incorporation (Q7, Q8). Materiality moved from C9a to C9b on 2026-10-07, beside the
+    CCS-9c, incorporation (Q7, Q8). Materiality moved from CCS-9a to C9b on 2026-10-07, beside the
     consent rules that read it.
     - Each about 8 to 10 rows, each with its own Validation Pack, releasing Instrument 0.15.0,
-      0.16.0 and 0.17.0 in turn, and Wording 0.8.0 with C9c if Q7 (a) widens reliance.
-    - C9a's examples amend by agreement of all parties, and C9b adds the majority case.
+      0.16.0 and 0.17.0 in turn, and Wording 0.8.0 with CCS-9c if Q7 (a) widens reliance.
+    - CCS-9a's examples amend by agreement of all parties, and C9b adds the majority case.
     - Estimated 1.5M to 2.5M tokens each, about 6M in all, to be checked against the actuals.
   - **(b) Two slices.** Amendments with consent rules, then incorporation with taking effect.
     - The first is about 16 rows, at the limit. Taking effect and incorporation share nothing.
@@ -2522,9 +2523,9 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
   ```mermaid
   flowchart LR
-      P["3 Feb<br/>proposal recorded<br/>v2 drafted"] --> C1["10 Feb<br/>lender A consents"]
-      C1 --> C2["20 Feb, recorded 21 Feb<br/>lender B consents<br/>the rule is met: agreed"]
-      C2 -. "applies from" .-> E["1 Jan<br/>effective date<br/>(retrospective)"]
+      P["3 Feb<br/>proposal recorded<br/>v2 drafted"] --> CCS-1["10 Feb<br/>lender A consents"]
+      CCS-1 --> CCS-2["20 Feb, recorded 21 Feb<br/>lender B consents<br/>the rule is met: agreed"]
+      CCS-2 -. "applies from" .-> E["1 Jan<br/>effective date<br/>(retrospective)"]
   ```
 
   So the amendment is recorded before it is agreed, and takes effect before both. The model must
@@ -2557,11 +2558,11 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
   - **(b) Assents as Instrument facts.** A new `ins:Assent` records one party's assent to one
     instrument version: who, which version, when (its valid time) and when it became known (its
     evidence). An amendment is agreed when the assents its rule needs exist: every party for an
-    amendment by agreement (C9a), the consent rule for an amendment by exercise of a power (C9b).
+    amendment by agreement (CCS-9a), the consent rule for an amendment by exercise of a power (C9b).
     The agreed time is the valid time of the assent that completes the rule.
     - *Design.* One fact serves three needs: execution of the first version by each party
       (C9-Q5, S90), amendment by agreement, and consent to a group power's exercise (C9-Q4). It is
-      Instrument's own, so a shape can check an amendment by agreement, and C12 a consent rule,
+      Instrument's own, so a shape can check an amendment by agreement, and CCS-12 a consent rule,
       without Behaviour. Any application may produce it, from a workflow engine, a signing service or
       a scanned signature page. It overlaps `bhv:AcceptanceRecord`, "a party's acceptance of a
       version". An application that uses Behaviour's runtime records the two separately or maps
@@ -2569,7 +2570,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
       (ADR-A106).
     - *Runtime.* One node per assenting party per version: forty for a forty-lender amendment, which
       is the information a consent rule must have anyway. "Agreed" is computed, cheap for every
-      party, and a weighted sum for a threshold (C12).
+      party, and a weighted sum for a threshold (CCS-12).
   - **(c) Agreed amendments only.** Proposals, consents and pending states stay entirely in the
     application. An `ins:Amendment` is asserted only once agreed, with its agreed time as in (a).
     - *Design.* The smallest substrate. LATTICE never holds a pending amendment, so the order of
@@ -2670,7 +2671,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
       pending at once. A shape allows at most one **agreed** amendment per version, so a fork among
       agreed changes is caught.
     - *Runtime.* "Which version applied at valid time *t*, as known at *k*" walks the agreed chain
-      (C12), filtering by the acceptance records known at *k*. A portfolio query ("every limit in
+      (CCS-12), filtering by the acceptance records known at *k*. A portfolio query ("every limit in
       force on 1 March") walks every instrument's chain, which surprises a SPARQL author expecting a
       date on each version. A generated view of each version's valid period, derived and never
       authored, gives that query a filter.
@@ -2749,16 +2750,16 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
   meaning. Its one gap is the replayer, and until it exists the overtaken window can be reported as
   not held, so an evaluation inside it is Undetermined rather than wrong.
 
-  *KISS.* The overtaking case is rare and absent from C9a's examples. (iii)'s authored model is the
-  plain chain C9a builds anyway, plus one warning shape. The replayer can wait for C16b, which
+  *KISS.* The overtaking case is rare and absent from CCS-9a's examples. (iii)'s authored model is the
+  plain chain CCS-9a builds anyway, plus one warning shape. The replayer can wait for C16b, which
   generates on demand already.
 
-  **Leaning: (iii),** revised from (i). C9a builds the chain and the warning, and the replayer joins
+  **Leaning: (iii),** revised from (i). CCS-9a builds the chain and the warning, and the replayer joins
   C16b. Until then the window is reported, never silently read from the wrong version.
 
-  *Choice 2. How the amendment reaches its text changes.* Wording C5 already links each text change
+  *Choice 2. How the amendment reaches its text changes.* Wording CCS-5 already links each text change
   to the part of the amending document that states it (`wrd:expressedIn`). The sketch, written
-  before C5, gave the legal amendment a second link to each text change (`ins:textChanges`). The
+  before CCS-5, gave the legal amendment a second link to each text change (`ins:textChanges`). The
   picture uses `facility-amendment.ttl`, where a letter of three paragraphs makes three changes and
   a later confirmation restates one of them:
 
@@ -2821,7 +2822,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     - *Runtime.* A join across both versions' inclusions for every reading.
   - *KISS.* (a) is the smallest that is right in general.
 
-  **Why deviate from the sketch.** The sketch's `ins:textChanges` predates C5, and C5 gave each text
+  **Why deviate from the sketch.** The sketch's `ins:textChanges` predates CCS-5, and CCS-5 gave each text
   change its link to its document. With that link in place, (b) repeats it, and the document the
   parties signed, which (a) names, would otherwise have no link from the amendment at all.
 
@@ -2849,7 +2850,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     - *Design.* One class, on the power that needs it. The weight ("its Commitment") is a value of
       the instance read for each member, so a weight that changes, such as a commitment after a
       transfer, is read from the version in force at the exercise. Counting is Instrument's,
-      evaluated by C12 (law I10), since Eligibility cannot count. Being affected is read from the
+      evaluated by CCS-12 (law I10), since Eligibility cannot count. Being affected is read from the
       change report: a member whose relations the change alters. A group power with no rule stays
       Undetermined, and HQ-5 follows for "any one may act" and the rest.
     - *Runtime.* One acceptance record per consenting member per exercise, forty for a syndicate of
@@ -2919,10 +2920,10 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
   **Leaning: (a).**
 
-- **C9-Q7. What incorporation names** (C9c, S53, S99). "The Supplier's Code of Conduct, as amended
+- **C9-Q7. What incorporation names** (CCS-9c, S53, S99). "The Supplier's Code of Conduct, as amended
   from time to time, is incorporated into this Agreement", or "the Standard Terms 2026 apply to
   Lot 2".
-  - **(a) Stated in the words, as C8b decided.** The incorporating clause names the document's
+  - **(a) Stated in the words, as CCS-8b decided.** The incorporating clause names the document's
     identity, and the wording's reliance fixes the edition. Instrument adds `ins:incorporates` on the
     clause's stated term. An encoded document's stated meaning is generated into the instrument
     within the sections the incorporating term applies within (S99), and law I17 widens to
@@ -2955,7 +2956,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     instrument version binding the new edition.
     - *Design.* Laws I17 and I18 stay exact, since a version's meaning never moves. But the wording
       is unchanged, because an ambulatory reliance names an identity, so the new version must pin
-      the edition it binds itself, a per-version record (`ins:incorporatesEdition`) that C8b avoided
+      the edition it binds itself, a per-version record (`ins:incorporatesEdition`) that CCS-8b avoided
       for text. Someone must start the amendments when an edition is published.
     - *Runtime.* A fan-out. One document incorporated into ten thousand instruments, revised four
       times a year, is forty thousand amendments and versions a year, each small but each a
@@ -2990,7 +2991,7 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
 
   **Leaning: (a).**
 
-- **C9-Q10. The word "binder".** C8 named its generator `tools/instrument_binder.py`, and ADR-A104's
+- **C9-Q10. The word "binder".** CCS-8 named its generator `tools/instrument_binder.py`, and ADR-A104's
   and ADR-A112's addenda and the Instrument README call it "the reference binder". "Binder" is a
   market word, and the governing instructions name the operation instantiation and the component an
   instantiator.
@@ -2998,14 +2999,14 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
     tests, the two addenda, the Instrument README and the open plan sections. Closed Validation
     Packs and history keep the old name.
     - *Design.* A mechanical change, reviewed on its own. No ontology changes, so no release.
-  - **(b) Rename as C9a's first commit.**
+  - **(b) Rename as CCS-9a's first commit.**
     - *Design.* Mixes a rename into a design slice's review.
 
   **Leaning: (a).**
 
 **Answered 2026-10-07 and 2026-10-08:**
 
-- C9-Q1 (a), three slices, C9a to C9c.
+- C9-Q1 (a), three slices, CCS-9a to C9c.
 - C9-Q2 choice 0 (b), assents as Instrument facts (`ins:Assent`), after the case for deciding
   consent across placement, quote to bind, endorsements, binding authorities, claims and
   reinsurance recoveries. Choice 1 (a), the effective time on the amendment only, the events in any
@@ -3017,15 +3018,15 @@ volume, inconsistency, and surprises for traversal or aggregation), then against
   (MQ1 to MQ7), with held questions HQ-8 to HQ-10.
 - C9-Q4 (a), a consent rule on the power. C9-Q5 (b), formation as a regime, reading assents.
   C9-Q6 (a), a party leaving and ending by agreement are amendments. C9-Q7 (a), incorporation
-  stated in the words, reusing C8b's reliance.
+  stated in the words, reusing CCS-8b's reliance.
 - C9-Q8 (c), static incorporation only, deferred to HQ-11 with S53's volumes in view.
 - C9-Q9 (a), HQ-1 re-timed to before an applied layer ingests proposals.
-- C9-Q10 (a), "binder" renamed "instantiator" on `main` before C9a's branch.
+- C9-Q10 (a), "binder" renamed "instantiator" on `main` before CCS-9a's branch.
 
 **Insurance examples, by explicit instruction (2026-10-08).** This instruction asks that
 C9 model insurance specifics. In C9's examples, in this slice or a subsequent one, show:
 
-1. **Endorsement and mid-term adjustment** (C9a), replacing a subscription placement by our
+1. **Endorsement and mid-term adjustment** (CCS-9a), replacing a subscription placement by our
    choice on 2026-10-08. A policy's cover extended mid-term by endorsement, effective before
    the insurer agrees it, and whether the endorsement is in force on the date of a loss, as known
    when the loss is notified and as known later
@@ -3039,10 +3040,10 @@ A reinsurer's consent is to an act, the settlement, not to a version, so C9b's b
 `ins:Assent` may name an exercise as well as a version. A subscription placement waits for C9a-Q1's
 question to be taken up (below).
 
-**Raised in C9a's examples phase (2026-10-08):**
+**Raised in CCS-9a's examples phase (2026-10-08):**
 
 - **C9a-Q1. Each insurer bound from its own assent.** Withdrawn 2026-10-08, who chose
-  not to resolve it in C9. The subscription placement example is replaced in C9a by an endorsement
+  not to resolve it in C9. The subscription placement example is replaced in CCS-9a by an endorsement
   and mid-term adjustment, showing whether an endorsement is in force on the date of a loss. A
   placement, and how each subscribing insurer is bound from its own assent, waits for a later slice,
   with HQ-7. The options recorded here, a formation regime run per party, one instrument per
@@ -3050,7 +3051,7 @@ question to be taken up (below).
 
 **Decided by precedent, not asked:**
 
-- an amendment to one instrument, an endorsement, leaves its form untouched (C5). An existing
+- an amendment to one instrument, an endorsement, leaves its form untouched (CCS-5). An existing
   instrument reaches a new form edition only by an amendment, since its version's wording is fixed
   (laws I1 and I17)
 - every change is a re-assembly, a new assembled wording through the assembly interface's hook H13,
@@ -3065,16 +3066,16 @@ question to be taken up (below).
 
 | Slice | Layer | Adds |
 |---|---|---|
-| C9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
-| C9b0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before C9b3 |
-| C9b1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
-| C9b2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
+| CCS-9a | Instrument 0.15.0 | `ins:Amendment` (`ins:amends`, `ins:resultsIn`, `ins:affectsExisting`, `ins:statedIn`), its effective time on Foundation's temporal scope and its recording on Foundation's evidence. `ins:Assent` (a party, a version, its valid time and evidence), and an amendment by agreement agreed when every party has assented. Formation as a regime: `ins:begins` and `ins:OnAcceptance`. Shapes for at most one agreed amendment per version, the overtaking warning (C9-Q2 rule (iii)), the I14 continuity warning, and I4. Examples include an endorsement and mid-term adjustment, showing whether it is in force on the date of a loss |
+| CCS-9b.0 | Eligibility, cascading | the Eligibility README made its source again (TD-16's Eligibility part), and law L9's amendment from FM-EP released. Before CCS-9b.3 |
+| CCS-9b.1 | Instrument 0.16.0, Behaviour 0.14.0, both breaking | the legal acts tier in its own document (ADR-A120): declarations (assent, consent, objection, withdrawal), proposals (the amendment one of them), exercises, `ins:pursuantTo`. Behaviour's exercise and acceptance records narrowed to findings. Example: reinsurance claims co-operation. [Consent sketch](../sketches/consent-and-group-powers.md) §2.1 |
+| CCS-9b.2 | Quantification, cascading | extensive and intensive quantities, a proportion's base, sum and count. Examples: multicurrency commitments, written and signed lines, signing down. Sketch §2.4 |
 | HQ-6a.1 | Eligibility, cascading, MORK Executable | ADR-A105 drafted, `elg:Closure` (its source, `elg:licensedBy`, covering the bindings that name it, HQ6a-Q5), untimed (HQ6a-Q4), `elg:closedUnder` on a binding, `elg:closureReliedOn` on a decision, law L17 and its reference semantics, examples of an admissions registry, an objections register and a licence's usage reports. Under HQ6a-Q1 (b), ADR-A103's addendum and L15 restated, with their proofs. No Persistence content. HQ-6a in detail |
-| HQ-6a.2 | `tools/mork_compilers` | the backends apply a closure, refuse an unlicensed binding with `exe:NoClosureLicence`, and record the closures a decision relied on. After HQ-6a.1, before C9b3 |
-| C9b3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where C9b0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. With it, substrate S2: an option for hierarchical match to follow kind links only (`prl:broaderGeneric`) rather than every `skos:broader` (NRS NQ-4, 2026-10-10). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
-| C9b4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
-| C9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
-| C9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
+| HQ-6a.2 | `tools/mork_compilers` | the backends apply a closure, refuse an unlicensed binding with `exe:NoClosureLicence`, and record the closures a decision relied on. After HQ-6a.1, before CCS-9b.3 |
+| CCS-9b.3 | Eligibility, own ADR | set comparisons (subset, intersects, disjoint), aggregate bindings, the two kinds of deferral, with their proofs and reference semantics, including a hierarchical condition whose binding does not apply at the resolution time, Undetermined under L9 where CCS-9b.0 leaves the compilers refusing it (C9b0-Q2), and the same guard in the OWL and SWRL backends. With it, substrate S2: an option for hierarchical match to follow kind links only (`prl:broaderGeneric`) rather than every `skos:broader` (NRS NQ-4, 2026-10-10). After the formal-methods Eligibility pass and HQ-6. Sketch §2.3 |
+| CCS-9b.4 | Instrument | qualifying rules as acting rules (`ins:QualifyingRule`), universe, exclusions and reference time, joint and several powers, laws I11 and I13 restated, measure words, Party's shares deprecated with a warning shape. Examples: Majority Lenders acceleration with a transfer between request and decision, an Extraordinary Resolution. Sketch §2.2, §2.5 |
+| CCS-9d | Instrument 0.17.0 | materiality (C9-Q3): the change report, condition words over it, grades, the evaluation profile, and selecting consenting members by grade. Split from C9b by C9b-Q1's leaning |
+| CCS-9c | Wording 0.8.0, Instrument 0.18.0 | reliance on a wording, and W8 for references to a wording. `ins:incorporates`, generation of an encoded incorporated document's meaning within sections, I17 widened, cycle checks and `ins:prevailsOver` over an incorporated document. Static incorporation only, an ambulatory one of an encoded document reported (C9-Q8 (c)). `tools/`: the instantiator follows incorporation |
 
 #### C9b in detail
 
@@ -3085,51 +3086,51 @@ becomes four slices:
 
 ```mermaid
 flowchart LR
-    B1["C9b1 legal acts<br/>Instrument, Behaviour"]
-    B2["C9b2 additivity<br/>Quantification"]
+    B1["CCS-9b.1 legal acts<br/>Instrument, Behaviour"]
+    B2["CCS-9b.2 additivity<br/>Quantification"]
     FM["FM-EP, Eligibility pass<br/>merged 2026-10-09"]
-    B0["C9b0 Eligibility sources<br/>README the source again,<br/>L9 released"]
+    B0["CCS-9b.0 Eligibility sources<br/>README the source again,<br/>L9 released"]
     H6["HQ-6a.1 and HQ-6a.2<br/>closures, ADR-A105"]
-    B3["C9b3 set comparisons<br/>Eligibility, own ADR"]
-    B4["C9b4 qualifying rules<br/>Instrument"]
+    B3["CCS-9b.3 set comparisons<br/>Eligibility, own ADR"]
+    B4["CCS-9b.4 qualifying rules<br/>Instrument"]
     FM --> B0
     B0 --> B3
     B2 --> B3
     H6 --> B3
     B1 --> B4
     B3 --> B4
-    B4 --> D["C9d materiality"] --> C["C9c incorporation"]
+    B4 --> D["CCS-9d materiality"] --> C["CCS-9c incorporation"]
 ```
 
-**How C9b0 to C9b2 run (2026-10-09).** On one integration branch,
+**How CCS-9b.0 to CCS-9b.2 run (2026-10-09).** On one integration branch,
 `ccs/c9b-groundwork`. Each slice runs in its own local worktree and branch (`ccs/c9b0-eligibility-sources`,
 `ccs/c9b2-additivity`, `ccs/c9b1-legal-acts`), built by a sub-agent that commits there, examples
-first. They are merged into the integration branch in the order C9b0, C9b2, C9b1, takes each
+first. They are merged into the integration branch in the order CCS-9b.0, CCS-9b.2, CCS-9b.1, takes each
 document's version once at the strongest level any slice needs, recomputes the cascade and
 regenerates the catalog, release register and MTP lock. Design questions go to the maintainer through the
 agent. The maintainer reviews all three Validation Packs, pushes, merges into `main` and creates the tags.
 
-**Before C9b3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
-`fm/eligibility-pass`, and merged (2026-10-09). C9b3 extends Eligibility's laws, its Isabelle theory, its reference semantics
+**Before CCS-9b.3, the formal-methods epic's Eligibility pass, FM-EP, is completed** on machine S, on
+`fm/eligibility-pass`, and merged (2026-10-09). CCS-9b.3 extends Eligibility's laws, its Isabelle theory, its reference semantics
 and its four compilers, so it must build on a hardened base. The items are FM-D17 (generate the
-kernel's truth tables from the README into both the theory and the reference), E1.4 (gate digests that
+kernel's truth tables from the README into both the theory and the reference), FME-1.4 (gate digests that
 cover definitions, characterising lemmas, set-reading invariance, no `by eval`, the assumption audit),
-B2.2 (the suspected hierarchical-match defect, which may change the README's wording) and B2.1 (faults
+FMB-2.2 (the suspected hierarchical-match defect, which may change the README's wording) and FMB-2.1 (faults
 seeded in the compilers, adjudication records, exhaustive generation). B5's mutation score may follow.
-C9b1 and C9b2 touch no Eligibility artefact. C9b3 then carries its own proof and reference rows.
+CCS-9b.1 and CCS-9b.2 touch no Eligibility artefact. CCS-9b.3 then carries its own proof and reference rows.
 
 **FM-EP merged on 2026-10-09** (`2a438b15`): FM-D17 (the kernel's truth tables generated from the README
-into the theory and the reference), E1.4, B2.2 and B2.1 done, B5 deferred. Its checks pass on `main`. It
-left one thing for CCS. B2.2 amended law L9 in the Eligibility README, so a hierarchical condition with
+into the theory and the reference), FME-1.4, FMB-2.2 and FMB-2.1 done, B5 deferred. Its checks pass on `main`. It
+left one thing for CCS. FMB-2.2 amended law L9 in the Eligibility README, so a hierarchical condition with
 no resolved scheme is Undetermined rather than Denied. Eligibility's README is not yet its source
 (TD-16), so the change did not reach `vocab/eligibility-vocab.ttl` and no version moved, and
-`check:ontology-versioning` compares `.ttl` files only, which is how it passed. C9b3 must edit that
+`check:ontology-versioning` compares `.ttl` files only, which is how it passed. CCS-9b.3 must edit that
 README and regenerate from it, which TD-16 forbids today. So a new slice comes first:
 
-- **C9b0, Eligibility sources** (TD-16's Eligibility part). Make the README Eligibility's source again:
+- **CCS-9b.0, Eligibility sources** (TD-16's Eligibility part). Make the README Eligibility's source again:
   restore the vocabulary's ontology header in it, reconcile the shapes, each difference judged, not
   regenerated over, add a test running `--check` as the other literate layers have, and release L9's
-  amendment. It also confirms the compilers' reading of L9's new case. Briefed below, in C9b0 in detail.
+  amendment. It also confirms the compilers' reading of L9's new case. Briefed below, in CCS-9b.0 in detail.
 
 The details below are the record of the first brief.
 
@@ -3149,7 +3150,7 @@ contract states.
 
 **Setting the scene.**
 
-Since C9a, a party's assent to a version is an Instrument fact (`ins:Assent`), and an amendment by
+Since CCS-9a, a party's assent to a version is an Instrument fact (`ins:Assent`), and an amendment by
 agreement is agreed when every party has assented. Three things remain:
 
 - **A power held by a group is Undetermined** (CC-D10). The facility example's clause 10.1, "The
@@ -3199,10 +3200,10 @@ Each option is compared on its design overheads and its runtime overheads, then 
 - **C9b-Q1. One slice or two.** Consent rules, what a consent names, delegated consent and the
   per-exercise regime come to about 12 rows. Materiality (change report, condition words, grades,
   evaluation profile, determinations) comes to about 10 more.
-  - **(a) Two slices.** C9b consent, then C9d materiality, which adds selecting consenting members
+  - **(a) Two slices.** C9b consent, then CCS-9d materiality, which adds selecting consenting members
     by a change's grade.
     - *Design.* Each slice reviewable on its own. Consent rules in C9b select by role and by
-      threshold only, and C9d adds selection by grade. The change report's design, the larger
+      threshold only, and CCS-9d adds selection by grade. The change report's design, the larger
       piece, gets its own brief.
     - *Runtime.* None.
   - **(b) One slice,** about 22 rows over Instrument and `tools/`.
@@ -3210,13 +3211,13 @@ Each option is compared on its design overheads and its runtime overheads, then 
       questions.
   - *KISS.* (a).
 
-  **Leaning: (a),** C9b consent, C9d materiality, C9c incorporation unchanged.
+  **Leaning: (a),** C9b consent, CCS-9d materiality, CCS-9c incorporation unchanged.
 
 - **C9b-Q2. What a consent is given to.**
   - **(a) An Instrument record of an exercise, `ins:Exercise`,** naming the power exercised, and
     for an amendment the amendment. A consent is an `ins:Assent` naming the exercise
     (`ins:assentTo` widened from a version to a version or an exercise). An amendment under a
-    power is an exercise whose consents may be given as assents to its resulting version, as C9a's
+    power is an exercise whose consents may be given as assents to its resulting version, as CCS-9a's
     are.
     - *Design.* One consent mechanism for every group power: acceleration, waiver, amendment. Any
       application writes an exercise as it writes assents. It overlaps `bhv:ExerciseRecord`, kept
@@ -3241,7 +3242,7 @@ Each option is compared on its design overheads and its runtime overheads, then 
 - **C9b-Q3. The consent rule.** Stated once, on the stated power, and read for every bound power
   (`ins:consentRule`).
   - **Who must consent.** Every member, members by role (the Agent, the Lead), or members affected
-    by the change, read from the change report (C9d).
+    by the change, read from the change report (CCS-9d).
   - **A threshold,** optional: a share of a weight, more than or at least.
   - **Where each member's weight comes from:**
     - **(i) Party's outward share** on the member's group membership.
@@ -3261,7 +3262,7 @@ Each option is compared on its design overheads and its runtime overheads, then 
     a commitments table only where the two differ.
 
   **Leaning: who by every member or by role, a threshold, and weight (ii).** Selection by affected
-  members waits for C9d's change report.
+  members waits for CCS-9d's change report.
 
 - **C9b-Q4. Delegated consent.** "Each Lender authorises the Agent to consent on its behalf to any
   amendment that is not material." The sketch uses `pty:Delegation`.
@@ -3285,7 +3286,7 @@ Each option is compared on its design overheads and its runtime overheads, then 
   - **(a) Build it now.** A regime stated with the power runs once per exercise, as
     `bhv:perOccasionOf` runs one per occasion (fact 4), entering a lapsed state on an expiry.
     - *Design.* Uses Behaviour's existing scoping with an exercise as its subject. Lapsed is a
-      state of the exercise, read by the consent rule's evaluation (C12).
+      state of the exercise, read by the consent rule's evaluation (CCS-12).
     - *Runtime.* One occupancy per exercise.
   - **(b) Defer** until an example needs it.
   - *KISS.* (b), unless the reinsurance example needs a time limit, which claims co-operation
@@ -3312,11 +3313,11 @@ Each option is compared on its design overheads and its runtime overheads, then 
 |---|---|
 | Instrument 0.16.0 | `ins:ConsentRule` (`ins:consentRule`, who must consent by role or all, `ins:threshold`, `ins:weightedBy` a word), `ins:Exercise` (`ins:exercises`, `ins:proposedBy`), `ins:assentTo` widened to an exercise, `ins:byExerciseOf`, a regime per exercise. Shapes for each. Examples: the facility's acceleration by the Majority Lenders, an amendment under a power, and reinsurance recoveries |
 
-#### C9b0 in detail
+#### CCS-9b.0 in detail
 
 **Machine:** R. **Branch:** created from `main` once this brief is answered.
-Merged first of C9b0, C9b2 and C9b1. **Commits are the maintainer's.**
-**Decisions:** TD-16, ADR-A120, law L9 as amended by FM-EP's B2.2 (`2a438b15`).
+Merged first of CCS-9b.0, CCS-9b.2 and C9b1. **Commits are the maintainer's.**
+**Decisions:** TD-16, ADR-A120, law L9 as amended by FM-EP's FMB-2.2 (`2a438b15`).
 
 **Invariant:** Eligibility's README generates every Eligibility spec, vocab and shapes file, and
 `--check` proves it. No shape, law text or ontology header exists only in a generated file.
@@ -3364,7 +3365,7 @@ flowchart LR
 |---|---|---|
 | (a) three `turtle-shapes` blocks, structural, constraints and rules, `--shapes` naming all three | none new: Wording already has two blocks. A `sh:rule` in a shapes block is ordinary Turtle to the extractor | none. Files unchanged |
 | (b) one block, the files merged into `constraints.ttl` | every reader of the three files changes, including five tests that load `structural.ttl` and `constraints.ttl` but not `rules.ttl` | a merge moves shapes between files, so tests that skip `rules.ttl` gain L9 (a) and may change |
-| (c) two blocks, `rules.ttl` left hand-kept | the README is still not the whole source, the defect C9b0 exists to remove | none |
+| (c) two blocks, `rules.ttl` left hand-kept | the README is still not the whole source, the defect CCS-9b.0 exists to remove | none |
 
 KISS: (a) is the smallest change that makes the README the whole source. **Leaning (a).**
 **Answered (2026-10-09): (a).**
@@ -3378,24 +3379,24 @@ KISS: (a) is the smallest change that makes the README the whole source. **Leani
 
 The refusal has two causes, which reality separates. A condition with no contract is mis-authored,
 and refusing it is right. A condition whose binding does not apply at the resolution time is a
-binding-time deferral, which C9b3 names and designs. KISS: C9b0 need not pre-empt C9b3.
-**Leaning (a)**, with C9b3 turning the no-applicable-binding case into Undetermined.
-**Answered (2026-10-09): (a), and C9b3 must cover the no-applicable-binding case.**
+binding-time deferral, which CCS-9b.3 names and designs. KISS: CCS-9b.0 need not pre-empt C9b3.
+**Leaning (a)**, with CCS-9b.3 turning the no-applicable-binding case into Undetermined.
+**Answered (2026-10-09): (a), and CCS-9b.3 must cover the no-applicable-binding case.**
 
 **Built (2026-10-09, merged into `ccs/c9b-groundwork`).** As briefed, with these settled while
 building: the guards raise `IRCompileError` rather than assert, so they hold under `python -O`. The
 spec's `@base` moved into README §2's prefix block so the spec regenerates byte for byte. A new README
-§11 holds release notes. The OWL and SWRL backends have no guard, which C9b3 adds with the
+§11 holds release notes. The OWL and SWRL backends have no guard, which CCS-9b.3 adds with the
 no-applicable-binding case. One command: the literate `--check`, then
 `tools/test_eligibility_examples.py` and `tools/mork_compilers/src/mork_compilers/test_hierarchical_conditions.py`
-([Validation Pack](../validation/computable-contract-substrate-c9b0.md)).
+([Validation Pack](../validation/CCS-9b.0.md)).
 
 **TD-16 cross-checked (we asked, 2026-10-09).** FM-EP (`2a438b15`) changed only
 `ontology/eligibility/README.md` under `ontology/`. On `main`, `literate_extract.py --check` reports
 drift in all three generated files. The spec differs in layout only. The vocab has one triple only in
 the README (L9's new comment) and four only in the file (L9's old comment and the three-triple
 header). The shapes differ as above. So TD-16's Eligibility part stands, and our proposal,
-repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 as briefed.
+repairing Eligibility's README in its own slice before the rest of C9b, is CCS-9b.0 as briefed.
 
 **Decided by precedent, not asked:**
 
@@ -3410,16 +3411,16 @@ repairing Eligibility's README in its own slice before the rest of C9b, is C9b0 
 - the README §6.4 diagram calls L1 to L8 static, but no law register says so, and L5 has no shape.
   Recorded as TD-27, not fixed here
 
-**Planned validation** (pack `docs/developer/validation/computable-contract-substrate-c9b0.md`, written with the slice): the
+**Planned validation** (pack `docs/developer/validation/CCS-9b.0.md`, written with the slice): the
 literate `--check` for Eligibility (positive), a probe shape edited in a generated file fails it
 (negative), each moved shape still fires on its probe (`WildcardCondition` with `NoWildcard`, an
 empty profile, an empty decision, a cyclic scheme), no violation is reported twice, the
 required-concepts-without-contract refusal, and the backend guards. One command:
 `mise run check:eligibility-sources` or the test file, settled in the pack.
 
-#### C9b1 in detail
+#### CCS-9b.1 in detail
 
-**Machine:** R. **Branch:** from `main` after C9b2 merges, merged last of the three.
+**Machine:** R. **Branch:** from `main` after CCS-9b.2 merges, merged last of the three.
 **Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.1, §2.6, §3, §4.3 and
 its decisions, ADR-A104, ADR-A106, ADR-A120.
 
@@ -3429,7 +3430,7 @@ about it is a Behaviour finding. A consumer that states meaning only never impor
 
 **Setting the scene.** Facts from a read-only investigation (2026-10-09), checked against the source:
 
-- C9a's `ins:Amendment` is "the legal effect of a change", a `prov:Activity` whose temporal scope is
+- CCS-9a's `ins:Amendment` is "the legal effect of a change", a `prov:Activity` whose temporal scope is
   **when it takes effect**. The sketch gives a proposal's temporal scope as **when it was made**, and
   makes the amendment a kind of proposal.
 - `ins:Assent` sits in Instrument's main document. Its utility still says it is read for "consent to
@@ -3470,7 +3471,7 @@ flowchart TB
         LA --> EX
         LA --> PR
     end
-    AM["ins:Amendment (C9a)<br/>effect, effective time"]
+    AM["ins:Amendment (CCS-9a)<br/>effect, effective time"]
     PR -- "Q1 (a): ins:proposes" --> AM
     BR["bhv:ExerciseRecord<br/>finding: tookEffect"]
     BR -- "bhv:exercised" --> EX
@@ -3484,7 +3485,7 @@ act made at a time. The variation it proposes is its content, which takes effect
 | Option | Design overheads | Runtime overheads |
 |---|---|---|
 | (a) `ins:Proposal` is a legal act (`ins:proposedBy`, made when its temporal scope says) that `ins:proposes` a matter, such as an amendment. The amendment is unchanged | one property. Mirrors the law's act and content | an amendment's proposal is one hop away |
-| (b) `ins:Amendment ⊑ ins:Proposal`, as the sketch wrote, with its temporal scope moved to when proposed and its effective time on a new property | breaks C9a (0.15.x) and its examples, shapes and laws I4 and I14 | none |
+| (b) `ins:Amendment ⊑ ins:Proposal`, as the sketch wrote, with its temporal scope moved to when proposed and its effective time on a new property | breaks CCS-9a (0.15.x) and its examples, shapes and laws I4 and I14 | none |
 | (c) the subclass, with temporal scope meaning different things per subclass | the same property means two things. Easy to model wrongly, hard to query | queries must branch on type |
 
 KISS: (a) adds one property and changes nothing released. It departs from one line of the sketch, not
@@ -3495,7 +3496,7 @@ from a decision. **Leaning (a).**
 
 | Option | Design overheads | Runtime overheads |
 |---|---|---|
-| (a) deprecate it, with a warning shape, removed in C16c. Whether a version is agreed is derived from assents (C9a) | one example and one test move to assents | none |
+| (a) deprecate it, with a warning shape, removed in C16c. Whether a version is agreed is derived from assents (CCS-9a) | one example and one test move to assents | none |
 | (b) narrow it to "the evaluator relied on an assent", `bhv:accepted` pointing at the assent | changes the range of a property (breaking), and stores a fact the evaluator can derive | a second record per assent |
 
 KISS: a record of reliance has no reader. **Leaning (a).**
@@ -3508,7 +3509,7 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 - `ins:LegalAct ⊑ prov:Activity, fnd:TemporallyScoped, fnd:Evidenced`. Every act names its case with a
   new `ins:forCase`
 - `ins:Assent` moves into the acts document and loses "consent to a power's exercise". A consumer of
-  C9a's assents must now import the acts document, so Instrument 0.16.0 is breaking
+  CCS-9a's assents must now import the acts document, so Instrument 0.16.0 is breaking
 - `bhv:exercised` points at an `ins:Exercise` and keeps no range. `bhv:actor` on an exercise record is
   deprecated, since the act names its party and a second copy can disagree
 - `ins:OnExercise` becomes a `bhv:DerivedTrigger`, since it fires on an exercise found effective
@@ -3541,7 +3542,7 @@ KISS: a record of reliance has no reader. **Leaning (a).**
   approval, scoped to a refusal found arbitrary, a determination. It is not an obligation to approve,
   since the reinsurer may refuse for proper reasons. Answered: as leaned.
 - **C9b1-Q5.** The five earlier Behaviour examples with exercise records move to exercise acts in
-  C16c, with the removal of the deprecated terms. Answered: as leaned.
+  CCS-16c, with the removal of the deprecated terms. Answered: as leaned.
 - Settled while building: `ins:forCase` is optional, at most one, since an assent or a proposal to
   amend has no case. Act shapes target each concrete act class. `bhv:actor` on an exercise record is
   deprecated in its utility only.
@@ -3550,21 +3551,21 @@ KISS: a record of reliance has no reader. **Leaning (a).**
 §6.4, the shapes for each act, an exercise by the power's holder, and an act relied on done no later
 than the act relying on it. The reinsurance implied term is a prohibition on refusing
 (`ins-voc:Refuse`), beside `ins-voc:Settle` and `ins-voc:Approve`. Instrument 0.16.0 (shapes 0.8.0)
-and Behaviour 0.14.0 (shapes 0.5.0), both breaking, each released once with C9b2's re-pins. ADR-A104
+and Behaviour 0.14.0 (shapes 0.5.0), both breaking, each released once with CCS-9b.2's re-pins. ADR-A104
 and ADR-A106 addenda, accepted 2026-10-10. 15 rows in two parts, acts and Behaviour
-([Validation Pack](../validation/computable-contract-substrate-c9b1.md)).
+([Validation Pack](../validation/CCS-9b.1.md)).
 
 **Planned validation** (pack `computable-contract-substrate-c9b1.md`): each act class and its shapes at zero and too many,
 proposal and `ins:proposes`, `ins:pursuantTo` across instruments, the reinsurance evidence path
 Permitted with an approval made before the settlement by the reinsurer, rejected when made by
 another party or after, `ins:OnExercise` derived, the deprecation warnings, the acts document's
-imports, and every C9a test unchanged. Precedence on a path cannot be tested yet (deliberate
-non-coverage, C9b3). If the table passes 15 cases the slice splits into the acts tier and the
+imports, and every CCS-9a test unchanged. Precedence on a path cannot be tested yet (deliberate
+non-coverage, CCS-9b.3). If the table passes 15 cases the slice splits into the acts tier and the
 Behaviour change.
 
-#### C9b2 in detail
+#### CCS-9b.2 in detail
 
-**Machine:** R. **Branch:** from `main` after C9b0 merges.
+**Machine:** R. **Branch:** from `main` after CCS-9b.0 merges.
 **Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.4, ADR-A93, ADR-A94,
 ADR-A115, Quantification's open question 7.
 
@@ -3622,7 +3623,7 @@ semi-additive measure adds along some groupings and not others, and in every kno
 it must not cross is time: a balance adds across accounts, not across days (XBRL's instant against
 duration). Adding it later takes a third value, `qnt:SemiAdditive`, and an optional property naming
 what a sum must not cross. Both are additive changes. The sum's grouping is the aggregate's, which is
-Eligibility's (C9b3), so that check sits there. (b) defers it the same way, with a third subclass.
+Eligibility's (CCS-9b.3), so that check sits there. (b) defers it the same way, with a third subclass.
 (Corrected 2026-10-09: an earlier line here told authors to leave a stock undeclared, which the
 analysis below contradicts. A balance shares its currency's Extensive space.)
 
@@ -3646,7 +3647,7 @@ decide it:
   and a balance plus a payment is a new balance, a sum within one space. A third class of space
   would split them into two spaces and turn that sum into a cross-space one. The fact "do not sum
   across time" is about what the value measures, as XBRL puts its period type on the concept, not
-  on the unit. Its home is the measure word (C9b4) or Eligibility's aggregate binding (C9b3), which
+  on the unit. Its home is the measure word (CCS-9b.4) or Eligibility's aggregate binding (CCS-9b.3), which
   is also where the check runs.
 - **Only Sum is at stake.** The lowest, highest, latest and a count of a balance over time are
   meaningful, and so is an average daily balance, which divides a sum over time by a count of days.
@@ -3741,9 +3742,9 @@ one space needs Extensive) and Q13 (runtime: different units or bases with no co
 Undetermined), and three shapes. Signing down needs only Ratio then Scale, so HQ-12 stays held. A Sum
 capability stating no operands reads as a sum within its own space. `qnt:baseRole` is not restricted
 to proportions. Rows C9b2-08 to C9b2-13 are checked by a reference reading of §9.9 until an evaluator
-of sums exists (C12). Corrected at merge: a stock shares its currency's Extensive space. Quantification
-0.8.0 and its shapes 0.3.0 cascade to 18 documents, Eligibility's versions shared with C9b0
-([Validation Pack](../validation/computable-contract-substrate-c9b2.md)).
+of sums exists (CCS-12). Corrected at merge: a stock shares its currency's Extensive space. Quantification
+0.8.0 and its shapes 0.3.0 cascade to 18 documents, Eligibility's versions shared with CCS-9b.0
+([Validation Pack](../validation/CCS-9b.2.md)).
 
 **Decided by precedent, not asked:**
 
@@ -3754,7 +3755,7 @@ of sums exists (C12). Corrected at merge: a stock shares its currency's Extensiv
   reason. Two laws are registered, one static and one runtime
 - the README table is corrected: proportions of one base are extensive
 - Quantification becomes 0.8.0, additive. Its shapes become 0.3.0, breaking, since a shape tightens,
-  though no loaded space declares a same-space Sum. 18 documents re-pin, Eligibility's from C9b0's
+  though no loaded space declares a same-space Sum. 18 documents re-pin, Eligibility's from CCS-9b.0's
   versions
 - examples: multicurrency commitments (sum after dated conversion), written and signed lines, and
   signing down, which uses Ratio and Scale. If signing down needs a product of two derived values,
@@ -3807,7 +3808,7 @@ found to supersede the decision (HQ-6b).
   Eligibility decision and never says what one is. ADR-A105 fills that.
 - **The formal-freshness gate** requires every Eligibility semantic law to appear in the reference
   semantics, so a closure law brings its reference reading with it.
-- **What C9b3 needs:** set comparisons that turn an absence into Denied, or into Permitted for
+- **What CCS-9b.3 needs:** set comparisons that turn an absence into Denied, or into Permitted for
   `elg:Disjoint`, need a licensed closure (consent sketch §2.3). A closure over a period also
   covers deemed consent and "a lender that has not replied within 10 days is disregarded" (§3),
   which HQ-6b builds (HQ6a-Q4).
@@ -3863,7 +3864,7 @@ flowchart LR
         B0["no qualification recorded"]
     end
     subgraph C["applicant C"]
-        C1["medicine"]
+        CCS-1["medicine"]
     end
     Q{"holds no qualification<br/>in medicine?"}
     A --> Q
@@ -3925,14 +3926,14 @@ flowchart LR
   `mork_compilers/test_set_readings.py`) declare closures or expect Undetermined
 - the reference semantics for L15 change, and the proved claims `TL1-some`, `TL1-every` and `TL4a`
   are restated and re-proved, in HQ-6a.1
-- C9b3's set comparisons inherit (b), so `elg:Subset` and `elg:Disjoint` are decided only under a
+- CCS-9b.3's set comparisons inherit (b), so `elg:Subset` and `elg:Disjoint` are decided only under a
   closure, which is what the consent sketch already assumes
 - the SPARQL and SHACL backends stop deciding A and Z without a closure. SWRL is unchanged, being
   already confined to (b)'s outcomes
 
 The law agrees with (b): a record proves what it shows, and silence proves nothing unless a deeming,
 a time bar or a party's authority makes it. KISS here favours the model that matches reality. The
-extra cost is bounded (five files, two proof claims) and is paid once, before C9b3 builds on it.
+extra cost is bounded (five files, two proof claims) and is paid once, before CCS-9b.3 builds on it.
 **Leaning revised to (b),** with a closure's source allowed to be an operational profile, so that
 a deployment can restore today's behaviour on purpose by declaring its records complete.
 **Answered (2026-10-10): (b).**
@@ -3962,14 +3963,14 @@ KISS: (a) states the reliance where it happens. **Leaning (a).**
 
 **HQ6a-Q4. Closures over a period** (raised by the maintainer, 2026-10-12). "No documents within 60
 days of the request" needs the window and the closure together, and a window anchored per subject
-needs ADR-A115's context values resolved at evaluation, which no compiler does before C12. C9b3's
+needs ADR-A115's context values resolved at evaluation, which no compiler does before C12. CCS-9b.3's
 set comparisons need only untimed closures ("the consents register is complete as of this
 decision").
 
 | Option | Design overheads | Runtime overheads |
 |---|---|---|
-| (1) windows in HQ-6a: the closure's window bounds the records it covers and says when it is in force | HQ-6a.2 resolves anchors per subject, a part of C12 built early, and the examples depend on it | a window resolved per subject per decision |
-| (2) untimed closures in HQ-6a, complete as of the deciding record's recording time. Windows move to HQ-6b, with the other matters of time (business days, supersession) | none new. HQ-6b already comes before C12, which resolves anchors | none |
+| (1) windows in HQ-6a: the closure's window bounds the records it covers and says when it is in force | HQ-6a.2 resolves anchors per subject, a part of CCS-12 built early, and the examples depend on it | a window resolved per subject per decision |
+| (2) untimed closures in HQ-6a, complete as of the deciding record's recording time. Windows move to HQ-6b, with the other matters of time (business days, supersession) | none new. HQ-6b already comes before CCS-12, which resolves anchors | none |
 
 **Answered (2026-10-12): (2).** Example 2 in HQ6a-Q1 is HQ-6b's to build. Its outcomes hold as drawn
 once windows exist.
@@ -4050,7 +4051,7 @@ and no shape compares the two.
 - **sizing:** HQ-6a touches Eligibility, the reference semantics, the compilers and MORK's
   Executable ontology, so it splits by the lifecycle rule: **HQ-6a.1**, ADR-A105, the Eligibility
   model, examples and reference semantics, and **HQ-6a.2**, the compilers, the refusal and decision
-  records. Both merge before C9b3
+  records. Both merge before CCS-9b.3
 
 **What HQ-6a.1 builds** (branch `ccs/hq6a1-closures-model`, examples first):
 
@@ -4058,7 +4059,7 @@ and no shape compares the two.
   the deciding record's recording time, and the boundary: a closure's binding to the store is
   HQ-6b's, against Track H's per-root sequence (AO-Q6)
 - **ADR-A103 addendum**, accepted 2026-10-12: `SomeValue` Denied and `EveryValue` Permitted need a closure
-- **Eligibility, in its README** (the literate source since C9b0):
+- **Eligibility, in its README** (the literate source since CCS-9b.0):
   - `elg:Closure`: `elg:licensedBy` (exactly one, no range: a deeming, a term, a party or an
     operational profile). It covers the bindings that name it (HQ6a-Q5)
   - `elg:closedUnder` on `elg:EvidenceBinding` (at most one closure), allowed only with
@@ -4117,9 +4118,9 @@ pins, since the MTP hashes MORK's own terms only, the SHACL backend needs no cha
 decided shapes reuse the SPARQL condition select, and AIR32-08 restated under a closure.
 
 **HQ-6a.2's questions** (raised in its examples phase, answered by the maintainer 2026-10-12). They
-settle how "this decision relied on that closure" leaves the compilers, which C12 (the evaluator,
+settle how "this decision relied on that closure" leaves the compilers, which CCS-12 (the evaluator,
 which records decisions), HQ-6b (supersession by a late fact), formal-methods Track H (per-root
-streams) and C13 (breach derivation) all build on.
+streams) and CCS-13 (breach derivation) all build on.
 
 *Where reliance is first known, and who records it.* The compilers produce a query that returns one
 row per subject (`?decision`, `?diagnostic`, ADR-A89 item 5). They mint no records. The evaluator
@@ -4132,7 +4133,7 @@ flowchart LR
     end
     subgraph Run["run time"]
         Q --> R["rows: subject, decision,<br/>diagnostic, closure"]
-        R --> E["evaluator (C12)<br/>mints elg:EligibilityDecision"]
+        R --> E["evaluator (CCS-12)<br/>mints elg:EligibilityDecision"]
         E --> DR["decision record<br/>decisionValue<br/>closureReliedOn<br/>fnd:recordedAt = the cut"]
         DR --> S["store (Track H)<br/>per-root stream"]
     end
@@ -4155,13 +4156,13 @@ flowchart TB
     subgraph Option1["(1) per row: the closure named only where absence decided"]
         A1["ada · stem Permitted (physics proves it) · no closure"]
         B1["ben · stem Denied (no STEM recorded) · registry-closure"]
-        C1["cai · stem Denied (nothing recorded) · registry-closure"]
+        CCS-1["cai · stem Denied (nothing recorded) · registry-closure"]
         D1["dee · stem Permitted (physics proves it) · no closure"]
     end
     subgraph Option2["(2) per binding: every row names it"]
         A2["ada · Permitted · registry-closure"]
         B2["ben · Denied · registry-closure"]
-        C2["cai · Denied · registry-closure"]
+        CCS-2["cai · Denied · registry-closure"]
         D2["dee · Permitted · registry-closure"]
     end
     LF["a maths qualification for ada, recorded late"] -. "(1) nothing to revisit:<br/>ada was Permitted on a record" .-> A1
@@ -4201,10 +4202,10 @@ volume shows the cost.
 the closure, beside `decide_condition`, which is unchanged. The differential harness takes it up
 when it covers bound conditions (track B).
 
-**Left for later, and where:** minting the decision record, its cut and its identity (C12). Finding
+**Left for later, and where:** minting the decision record, its cut and its identity (CCS-12). Finding
 the decisions a late fact supersedes (HQ-6b). Binding a closure to a per-root stream (HQ-6b, Track
 H AO-Q6). Breach records' `bhv:closureReliedOn` filled the same way, from the rows of a relation's
-plan (C13).
+plan (CCS-13).
 
 **Planned validation, HQ-6a.1** (pack `computable-contract-substrate-hq6a1.md`):
 
@@ -4235,12 +4236,12 @@ A compiled decision names its closures. `build:mtp` and `check:mtp` pass. `check
 **Deliberately not covered:** closures over a period and their anchors, the deemed-failure
 example and the trial placeholder, supersession by a late fact, conclusive and single-purpose
 deemings, business days, the deemed-fact record's link, and the closure's binding to the store (all
-HQ-6b). Set comparisons over closures (C9b3).
+HQ-6b). Set comparisons over closures (CCS-9b.3).
 
-#### C9b3 in detail
+#### CCS-9b.3 in detail
 
 **Machine:** R. **Branch:** created by the maintainer from `main` once this brief is answered, one per sub-slice (C9b3-Q1), each in its own worktree under `~/work/lattice-wt/`.
-**Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and its decision 2, ADR-A103 and its addendum, ADR-A105 and its addendum, ADR-A100, ADR-A89, ADR-A91, ADR-A129 (one release, bumped once at merge), C9b0-Q2 (the no-applicable-binding case), C9b2-Q1 and Q2 (additivity, base roles), NRS NQ-4 (S2 with C9b3).
+**Decisions:** the [consent sketch](../sketches/consent-and-group-powers.md) §2.3 and its decision 2, ADR-A103 and its addendum, ADR-A105 and its addendum, ADR-A100, ADR-A89, ADR-A91, ADR-A129 (one release, bumped once at merge), C9b0-Q2 (the no-applicable-binding case), C9b2-Q1 and Q2 (additivity, base roles), NRS NQ-4 (S2 with CCS-9b.3).
 **Placement:** substrate semantics, laws, proofs and compilers, all open. The examples come from lending, bonds, licensing and trials.
 
 **Invariant:** a condition may relate two sets reached from one subject, and may read an aggregate of a measure over a set, without Eligibility counting or summing. What it states decides only what the records prove, and completeness is licensed by a closure on each set whose completeness an outcome needs. A sum is read only over an extensive measure, in one unit and on one base. Hierarchical matching walks the ordering relation the condition names, never a relation of another kind.
@@ -4248,7 +4249,7 @@ HQ-6b). Set comparisons over closures (C9b3).
 **Setting the scene.** Facts checked against `main` (2026-10-27):
 
 - **One set per binding.** An `elg:EvidenceBinding` reads the values one path reaches from a subject, `elg:SomeValue` or `elg:EveryValue` combines their per-value decisions (L15), and a closure licenses completeness (L17). A per-value decision compares a value with concepts the condition names statically (`elg:requiredConcept`). Nothing lets a value be compared with a second set read from the same subject, so "every member of the universe has consented" cannot be stated (consent sketch §2.3).
-- **No aggregate.** Nothing reads a sum or a share. Quantification has `qnt:Sum` with law Q12 (a sum within one space needs it Extensive) and Q13 (mixed units or bases with no conversion are Undetermined), and base roles (C9b2). Who checks that an aggregate's measure may be summed was left to Eligibility's shapes in this slice.
+- **No aggregate.** Nothing reads a sum or a share. Quantification has `qnt:Sum` with law Q12 (a sum within one space needs it Extensive) and Q13 (mixed units or bases with no conversion are Undetermined), and base roles (CCS-9b.2). Who checks that an aggregate's measure may be summed was left to Eligibility's shapes in this slice.
 - **Hierarchical matching follows every `skos:broader`.** The compilers hard-code it (`eligibility_ir.py`, the SPARQL backend's `skos:broader*`). The peril scheme asserts every kind link (`prl:broaderGeneric`) and part link (`prl:broaderPartitive`) as plain `skos:broader` too, so a condition requiring "a kind of tropical cyclone" admits storm surge, which is part of one. L9 speaks of "the bound scheme's ordering relation" and never names which.
 - **A binding that does not apply at the resolution time is refused.** `_resolve_scheme` raises on `NoApplicableBindingError` (C9b0-Q2 left it so for this slice to change). The OWL and SWRL backends have no guard for a hierarchical plan with no scheme.
 - **The profile union is engine-dependent.** HQ-6a.2's `?closures`, a `GROUP_CONCAT` over a `UNION` of nested aggregate sub-selects, drops a record's contribution on Oxigraph (TSD-41, TD-92). Aggregate bindings add more aggregation to generated SPARQL, and STD-153 makes Oxigraph the default engine for a test that runs generated SPARQL.
@@ -4313,7 +4314,7 @@ Reality: "every member has consented" quantifies over the members, and asks of e
 
 **C9b3-Q3. How an aggregate binding is stated.** The sketch's `elg:AggregateBinding` reads a measure over a set, optionally relative to a second set, and offers the result to an interval condition. Two choices are open.
 
-*The measure.* (i) A path from each member to its quantity, made of `elg:EvidenceStep`s, which the compilers can follow. (ii) A word, with no range, which an Instrument layer resolves, as `elg:licensedBy` names a source. Eligibility cannot import Instrument, so under (ii) no Eligibility compiler can read the value. **Leaning (i),** with C9b4's measure words stating the path their value is found by.
+*The measure.* (i) A path from each member to its quantity, made of `elg:EvidenceStep`s, which the compilers can follow. (ii) A word, with no range, which an Instrument layer resolves, as `elg:licensedBy` names a source. Eligibility cannot import Instrument, so under (ii) no Eligibility compiler can read the value. **Leaning (i),** with CCS-9b.4's measure words stating the path their value is found by.
 
 *The sets and their closures.* An aggregate needs each set's completeness for different outcomes: a share above a threshold is proved by the consenters recorded, once the universe is complete, but proving it below needs the consenters complete too.
 
@@ -4356,14 +4357,14 @@ A thesaurus states both relations, and which one a clause relies on is the claus
 - **Q3 a path, and (x).** The measure is a path of `elg:EvidenceStep`s. The aggregate names two existing evidence bindings, each with its own reading and closure: above a lower bound needs the universe closed, below an upper bound needs both closed.
 - **Q4 (a).** The condition names the relation it walks, a sub-property of `skos:broader`, `skos:broader` when absent. L9 and L14 are restated over the named relation. A closed set of strategies aligned to ISO 25964's generic and partitive relations was weighed and not taken, since it would make Eligibility know one thesaurus standard's relations.
 - **Q5 (a),** TSD-41 is bisected and the template fixed in C9b3b. The debt row is retired from the register, since this plan now holds it.
-- **The two kinds of deferral** are named in Eligibility's README with no class or marker, since no query or check answers differently by them (STD-013, STD-276).
+- **The two kinds of deferral** are named in Eligibility's README with no class or marker, since no query or check answers differently by them (STD-013, STD-295).
 
 **Decided by precedent, not asked:**
 
 - a hierarchical condition whose binding does not apply at the resolution time compiles to a plan that answers Undetermined for every candidate, with a new diagnostic in MORK's Executable ontology, and the OWL and SWRL backends refuse a hierarchical plan with no scheme (C9b0-Q2)
 - the two kinds of deferral are named in Eligibility's README, with no new class, since no query answers differently because of one: an evidence or aggregate binding is an evaluation-time deferral, and Instrument's `ins:valueFrom` the binding-time one (skill `lattice-ontology-authoring`, "Name the deferral")
 - Eligibility never counts or sums in its own documents. The compilers' generated SPARQL computes, as it does for readings (layers state, code executes)
-- each new law gets its reference semantics, its Isabelle statement and proof, and differential tests where the harness covers bound conditions (the formal-freshness gate, the formal-methods plan's C9b3 row)
+- each new law gets its reference semantics, its Isabelle statement and proof, and differential tests where the harness covers bound conditions (the formal-freshness gate, the formal-methods plan's CCS-9b.3 row)
 - every new term follows ADR-A126's layout in Eligibility's README, and the README, its examples and shapes name no slice, question or debt identifier (skill `lattice-publication-hygiene`)
 - every test that runs generated SPARQL opts in to both engines (STD-173), and each sub-slice runs `check:mork-compilers-conformance` before its merge
 - no version moves on a branch. `mise run release:prepare` moves the release once, before each merge (ADR-A129)
@@ -4444,7 +4445,7 @@ flowchart TB
 
 **Leaning (a),** recorded as a deferral in the README's open issues.
 
-**C9b3a-Q4. The ADR.** The plan gives C9b3 its own ADR. (a) One ADR, ADR-A145, "Set comparisons and aggregate bindings", drafted Proposed in C9b3a with both decisions already taken (C9b3-Q2 (a′), C9b3-Q3 (x)), and C9b3b adding its implementation note. (b) One ADR per sub-slice. **Leaning (a):** the two share the reading of a set from a subject and its closure, and one record says it once.
+**C9b3a-Q4. The ADR.** The plan gives CCS-9b.3 its own ADR. (a) One ADR, ADR-A145, "Set comparisons and aggregate bindings", drafted Proposed in C9b3a with both decisions already taken (C9b3-Q2 (a′), C9b3-Q3 (x)), and C9b3b adding its implementation note. (b) One ADR per sub-slice. **Leaning (a):** the two share the reading of a set from a subject and its closure, and one record says it once.
 
 **Answers (2026-10-27):**
 
@@ -4471,21 +4472,21 @@ flowchart TB
 
 | Slice | Content | Where |
 |---|---|---|
-| C12 | the runtime evaluator for regimes and occasions: positioned stimuli for scheduled triggers (NRS N6, absorbed), derived triggers for `ins:OnBreach` and `ins:OnCondition`, occasion derivation, state occupancies with evidence (B6), history per C11a. B3 and B6 shown. Draws and credits as Ledger postings (ADR-A131), and the composition step over evaluation units with its conformance kit once Ensemble's ES-3 states its contract (ADR-A130) | `tools/`, after C9, C11a and Ledger LG-3. The composition step after Ensemble ES-3 |
-| C13 | relation plans in the shared IR: per-class algorithms (§6.1), exception burden and `exe:ExceptionNotEstablished`, stratified state reading (§6.2), regime gating per state (§6.3, B8), finding, determination and deeming reads (§6.4), and NRS N8's chain checks (absorbed). SPARQL reference first, SWRL for the positive subset | `tools/mork_compilers`. After AIR-3.3, and NRS N1 and N2, run as CCS slices (NQ-2) |
-| C13a | **design-time joint satisfiability (deferred from C5, decided 2026-10-02).** The OWL backend learns to compile question-form conditions, whose subject is the value they are posed, which it refuses today (`owl_backend.py`: "compiles bound conditions only"). On that: a variation slot's conditions checked as a set by the reasoner, no two jointly satisfiable and their union covering the governing variables' admissible values, for every kind of condition, which C5's SHACL-SPARQL covers only for intervals over one variable. NRS N3's clash check (an obligation and a prohibition over overlapping scopes) and segment overlap use the same task, satisfiability of `P ⊓ Q`. Reasoner in the test-only harness (ADR-A83), so this serves LATTICE tooling, beside C5's consumer-runnable shapes | `tools/mork_compilers`. After C5 and NRS N1, with or before NRS N3 |
+| CCS-12 | the runtime evaluator for regimes and occasions: positioned stimuli for scheduled triggers (NRS N6, absorbed), derived triggers for `ins:OnBreach` and `ins:OnCondition`, occasion derivation, state occupancies with evidence (B6), history per C11a. B3 and B6 shown. Draws and credits as Ledger postings (ADR-A131), and the composition step over evaluation units with its conformance kit once Ensemble's ES-3 states its contract (ADR-A130) | `tools/`, after C9, CCS-11a and Ledger LG-3. The composition step after Ensemble ES-3 |
+| CCS-13 | relation plans in the shared IR: per-class algorithms (§6.1), exception burden and `exe:ExceptionNotEstablished`, stratified state reading (§6.2), regime gating per state (§6.3, B8), finding, determination and deeming reads (§6.4), and NRS N8's chain checks (absorbed). SPARQL reference first, SWRL for the positive subset | `tools/mork_compilers`. After AIR-3.3, and NRS N1 and N2, run as CCS slices (NQ-2) |
+| CCS-13a | **design-time joint satisfiability (deferred from CCS-5, decided 2026-10-02).** The OWL backend learns to compile question-form conditions, whose subject is the value they are posed, which it refuses today (`owl_backend.py`: "compiles bound conditions only"). On that: a variation slot's conditions checked as a set by the reasoner, no two jointly satisfiable and their union covering the governing variables' admissible values, for every kind of condition, which CCS-5's SHACL-SPARQL covers only for intervals over one variable. NRS N3's clash check (an obligation and a prohibition over overlapping scopes) and segment overlap use the same task, satisfiability of `P ⊓ Q`. Reasoner in the test-only harness (ADR-A83), so this serves LATTICE tooling, beside CCS-5's consumer-runnable shapes | `tools/mork_compilers`. After CCS-5 and NRS N1, with or before NRS N3 |
 
 ### Tranche F: examples and documentation
 
 | Slice | Content |
 |---|---|
-| C14 | neutral examples E1 to E4 (sketch §9) with expected-decision tables and Behaviour traces, covering their scenarios |
-| C15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
-| C16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
-| C16a | **simplification sweep** (from C6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
-| C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (C7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what C7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first. Revisits C9-Q2's overtaking rule (iii), whose derived nodes put a burden on implementors (2026-10-08) | an ADR, then `tools/` and Instrument shapes. After C9 and C12, before C17 |
-| C16c | **remove Party's shares** (decided 2026-10-09, [consent sketch](../sketches/consent-and-group-powers.md) §2.5). `pty:outwardShare` and `pty:inwardShare` hold one value per membership, with an unstated meaning and base, fixed per membership version. C9b4 replaces their uses with measure words, narrows and deprecates them, and adds a warning shape reporting every use. This slice removes both, the warning shape with them, and Party's composition rules read measure words. It also removes Behaviour's terms deprecated by C9b1 (`bhv:AcceptanceRecord`, `bhv:accepted`, `bhv:actor` on an exercise record), moving the five earlier Behaviour examples' exercise records to name exercise acts (C9b1-Q5). Required before the CCS epic closes | Party and Behaviour, breaking, cascading. After C9b4 |
-| C17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
+| CCS-14 | neutral examples E1 to E4 (sketch §9) with expected-decision tables and Behaviour traces, covering their scenarios |
+| CCS-15 | neutral examples E5 to E8, and a coverage test that every scenario S1 to S101 (except the amounts group and the merged S79) is shown by at least one example |
+| CCS-16 | how-to guides for Wording and Instrument (sketch §11), the substrate README's "computable contract" section, ontology architecture, SDS, data architecture |
+| C16a | **simplification sweep** (from CCS-6's review, 2026-10-03): after C9, review the Instrument model for what can be removed without losing logical correctness, under the Ponytail guardrails in `.github/copilot-instructions.md`. First candidate: the asserted `ins:Template` type, derivable from `ins:expressedIn` and `ins:arisesUnder` but kept because law I13's shapes read it without a reasoner. Second: every domain and range in Instrument reviewed against the principle in `.github/copilot-instructions.md` (from C7a-Q2): kept only where it gives useful design-time entailment or restates what a shape checks |
+| C16b | **instance records and shared bound meaning** (TD-19, required before the epic closes, decided 2026-10-06). An instance stores only what differs from its form (CCS-7c D1), and bound meaning is generated on demand, cached as need dictates and kept out of the main graph where processing allows (D4). This slice adds what CCS-7c leaves out: sharing generated bound nodes across instruments and versions by content address, the cache and its invalidation (ADR-A27, ADR-A92), the subgraph a heavy process works in, and a size measure over a form the size of the sample policy, about 100 stored nodes per bound policy as the target. Its own ADR first. Revisits C9-Q2's overtaking rule (iii), whose derived nodes put a burden on implementors (2026-10-08) | an ADR, then `tools/` and Instrument shapes. After C9 and CCS-12, before CCS-17 |
+| CCS-16c | **remove Party's shares** (decided 2026-10-09, [consent sketch](../sketches/consent-and-group-powers.md) §2.5). `pty:outwardShare` and `pty:inwardShare` hold one value per membership, with an unstated meaning and base, fixed per membership version. CCS-9b.4 replaces their uses with measure words, narrows and deprecates them, and adds a warning shape reporting every use. This slice removes both, the warning shape with them, and Party's composition rules read measure words. It also removes Behaviour's terms deprecated by CCS-9b.1 (`bhv:AcceptanceRecord`, `bhv:accepted`, `bhv:actor` on an exercise record), moving the five earlier Behaviour examples' exercise records to name exercise acts (C9b1-Q5). Required before the CCS epic closes | Party and Behaviour, breaking, cascading. After CCS-9b.4 |
+| CCS-17 | handoff: the insurance renderings list for AIR Phase 5 (policy scenarios) and Open CBAA (binding authority scenarios), and the Open CBAA migration notes (§7) |
 
 ### Held design questions
 
@@ -4495,77 +4496,77 @@ so that its implications can be weighed when it is taken up.
 | # | Question | Why it matters | Take up |
 |---|---|---|---|
 | HQ-1 | **Instruments without wording.** An instrument, or a fragment of one, may arrive as structured data from another system, mapped in rather than written. A counterparty's proposal sent back in response to a request for terms is the common case: it carries terms, sometimes partial or approximate, and no clause text. Law I1 requires every instrument version to be expressed in exactly one assembled wording, and law I2 requires every stated term to be expressed in a clause version. Options to weigh: (a) ingestion produces wording elements from the data, keeping "the words are the contract", (b) a fragment that is not yet an instrument, with weaker rules until it is accepted, (c) relax I1 for instruments whose source is data | a proposal must be checked by the same shapes as a contract, before anyone accepts it. Related, from C7a-Q1: a proposal's commitment (an indication, a non-binding quote, a binding quote) is a legal relation, whether it confers a power of acceptance and when that power ends. Its precision ("around five million") and completeness are an overlay on its terms, outside the legal model | before an applied ontology ingests proposals (AIR Phase 5, insurml-alignment Phase 5). Re-timed from "no later than C9" by C9-Q9 (a), 2026-10-08, since nothing in C9 needs it |
-| HQ-2 | **Qualified gates: gating by another subject's state.** C7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | **split 2026-10-20 (ADR-A130 decision 9, Proposed):** the first case stays with Instrument and Party, beside HQ-5. The second case moves to the [Ensemble plan](ensemble.md), ES-3 |
+| HQ-2 | **Qualified gates: gating by another subject's state.** CCS-7a gates a relation by the state of its own instrument, or of the occasion its arising chain reaches (C7a-Q5). Two cases are held: one participant's share within one agreement, where several parties are each liable for their own share and each share has its own state, and another agreement altogether, where one contract responds only once another is exhausted | the model must be consistent within one legally binding agreement first. Dependencies across agreements may not belong in this layer at all, and may sit in an applied ontology above it | **split 2026-10-20 (ADR-A130 decision 9, Proposed):** the first case stays with Instrument and Party, beside HQ-5. The second case moves to the [Ensemble plan](ensemble.md), ES-3 |
 | HQ-3 | **Business day conventions and times of day** (TQ2, held 2026-10-05). "If that day is not a Business Day, on the next Business Day" (following, modified following, preceding), and "by 11:00 a.m. London time" (a time of day in a zone, S74). Recorded as use cases A13 and A14 in the [terms in time sketch](../sketches/terms-in-time.md) §3 | a due date that falls on a non-business day, or at a time of day, is resolved wrongly until Quantification can roll and zone it | with the first business continuity examples, in Quantification beside ADR-A94's calendars |
-| HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). C7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers Revised 2026-10-09: the remaining group behaviours become acting rules beside C9b4's qualifying rules, and "any one may act" an `elg:Intersects` ([consent sketch](../sketches/consent-and-group-powers.md) §2.2, §5). |
-| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). C7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the maintainer, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before C9b3, whose set comparisons need licensed closures ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, an untimed closure declaration, complete as of the deciding record's recording time (HQ6a-Q4, 2026-10-12), its sources (a deeming, a term, a party, an operational profile), set readings deciding on completeness only under one (HQ6a-Q1 (b)), compile-time refusal of an unlicensed binding (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before C12: closures over a period anchored per subject, which deemed consent and "snooze you lose" need, rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the closure's binding to the store: its cut to the per-root sequence and receipt stream (formal-methods Track H, AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. **HQ-6a holds no Persistence content** (2026-10-10). Track H owns the sequence and the audit, and its plan records the dependency. |
-| HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, C7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | **moved to the [Ensemble plan](ensemble.md), ES-5 (K4 portions and shares), ADR-A130, Proposed** |
-| HQ-8 | **Materiality beyond amendments** (MQ1, 2026-10-07). Material breach, a material adverse change in a party's circumstances and a material change in a risk classify an event or a state of affairs, as amendment materiality classifies a change. They share its sources (the contract's definition, a referenced one, a determination) and its split between enumerated and evaluative definitions ([change materiality sketch](../sketches/change-materiality.md)) | each is otherwise modelled ad hoc, and a definition such as "Material Adverse Effect" already exists as a condition word (C7c) without a rule for its evaluative part | later in the epic, after C9 and C12, reusing C9's mechanism |
+| HQ-5 | **The full set of group behaviours** (C7c-Q4, 2026-10-06). CCS-7c uses Party's two composition rules for duties and leaves a group's power, and a group with no rule, Undetermined (CC-D10). The full set is: several only, joint only, joint and several, any one may act, all must act, and a threshold by number or by share, for duties and for powers alike, with how a member's share, release or default affects the rest, and how the instrument's silence is filled by an amendment, a deeming, a market default declared as data, or a recorded reading | a relation owed to or held by a group is decided wrongly, or not at all, until every mode is modelled | immediately after C9, as its own slice or the first follow-up of C9, and before AIR Phase 5 and Open CBAA's migration rely on group powers Revised 2026-10-09: the remaining group behaviours become acting rules beside CCS-9b.4's qualifying rules, and "any one may act" an `elg:Intersects` ([consent sketch](../sketches/consent-and-group-powers.md) §2.2, §5). |
+| HQ-6 | **Deemings made watertight** (C7c-Q8, 2026-10-06). CCS-7c states deemings in full, but the closure a deeming over absence licenses is ADR-A105's, not yet drafted. To settle: the closure declaration and its scope and window, rebuttal of a rebuttable deeming by later evidence and what that supersedes, the precedence of a conclusive deeming over a finding, deemings for one purpose only (`ins:forPurposeOf`) and how they stay out of other relations, deemed receipt counted in business days (HQ-3), and the deemed-fact record's link back to its deeming and closure | a deeming may be read as more or less than its words say, and a late fact may not supersede it correctly | a CCS slice, taking over NRS slice N5 (ADR-A105), as N4 and N8 were (HQ6-Q1, the maintainer, 2026-10-10). Split (HQ6-Q2): **HQ-6a**, before CCS-9b.3, whose set comparisons need licensed closures ([consent sketch](../sketches/consent-and-group-powers.md) §2.3): ADR-A105, an untimed closure declaration, complete as of the deciding record's recording time (HQ6a-Q4, 2026-10-12), its sources (a deeming, a term, a party, an operational profile), set readings deciding on completeness only under one (HQ6a-Q1 (b)), compile-time refusal of an unlicensed binding (NRS D7, as C9b0-Q2), and decisions recording their closure. **HQ-6b**, before CCS-12: closures over a period anchored per subject, which deemed consent and "snooze you lose" need, rebuttal and supersession, conclusive precedence, single-purpose deemings, deemed receipt in business days (HQ-3), the deemed-fact record's link, and the closure's binding to the store: its cut to the per-root sequence and receipt stream (formal-methods Track H, AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. **HQ-6a holds no Persistence content** (2026-10-10). Track H owns the sequence and the audit, and its plan records the dependency. |
+| HQ-7 | **Several instruments covering portions of one order** (raised 2026-10-06, CCS-7c). A layer in an insurance programme may be placed on several policies, each covering a portion of the order, on different risks or on the same risk with different terms. They are separate instruments related to one placement, not a group of parties acting together, so neither Party's groups nor a section models them | a placement split across policies is modelled as a group or not at all, and the portions cannot be reconciled with the order | **moved to the [Ensemble plan](ensemble.md), ES-5 (K4 portions and shares), ADR-A130, Proposed** |
+| HQ-8 | **Materiality beyond amendments** (MQ1, 2026-10-07). Material breach, a material adverse change in a party's circumstances and a material change in a risk classify an event or a state of affairs, as amendment materiality classifies a change. They share its sources (the contract's definition, a referenced one, a determination) and its split between enumerated and evaluative definitions ([change materiality sketch](../sketches/change-materiality.md)) | each is otherwise modelled ad hoc, and a definition such as "Material Adverse Effect" already exists as a condition word (CCS-7c) without a rule for its evaluative part | later in the epic, after C9 and CCS-12, reusing C9's mechanism |
 | HQ-9 | **Eligibility paths ending at an identity** (MQ7, 2026-10-07). A condition that asks whether a value is one of several named records, such as "any amendment to Clause 35" or "a claim on one of the named vessels". Matching is exact, with no hierarchy unless the condition walks a structure Eligibility does not import | until then a materiality definition naming a clause falls back to a determination (C9), and other layers tag records with concepts to be matched | its own Eligibility slice with an ADR, after ADR-A90, A91 and A103, cascading to every importer and the MORK and design-time OWL compilers |
 | HQ-10 | **A deployment configuration layer** (MQ5, 2026-10-07). Settings that vary by deployment, tenant or jurisdiction have no common home: Eligibility's operational profiles, C9's materiality fallback, HQ-5's market default for a silent group, and the evaluation context sketch's environments. Vocabulary's scope bindings select schemes, not settings | each layer grows its own profile and selection, and an outcome's settings are recorded differently in each | its own unit with an ADR for the new module, once C9's profile shows the pattern |
-| HQ-11 | **An encoded document incorporated as amended** (C9-Q8, 2026-10-08). C9c incorporates encoded documents statically only. For one a party may vary, such as underwriting instructions under a binding authority (S53), each new edition reaches the instrument either by an amendment yielding a new version that pins the edition, or by resolution for each occasion at its valid time, as ADR-A85 resolves scheme bindings | the first fans out an amendment per instrument per edition, the second makes a version's meaning move over time and restates law I18. Until decided, such an incorporation is reported and its meaning not generated | when S53's volumes are known, with Open CBAA's underwriting instructions in view |
-| HQ-4 | **Context roles from several sources** (found building C7b, 2026-10-05). Quantification's role contract resolves to one scheme in a context (Vocabulary, ADR-A85), and two unscoped bindings conflict. Roles come from several places: Instrument's baseline (arising, inception, ending, period start and end), other layers (an allowance reset, a policy year), and each wording's defined dates (the Expiry Date, the Break Date). C7b binds Instrument's baseline. The lease example's own date roles are left unbound | a deployment that uses Instrument and another layer's roles, or a wording's own dates, cannot bind them all to one contract today. Options: one deployment scheme that collects every role, scoped bindings, or wording dates as roles bound from variables in C8 rather than as concepts | with C8's parameter bindings, which give wording dates their values |
-| HQ-12 | **Composing shares** (C9b2-Q2 (p4), 2026-10-09). A share of a share is a product: a 10% line on an order that is 50% of a layer is 5% of the layer, and the spaces multiply as fractions, (line ÷ order) × (order ÷ layer) = (line ÷ layer). Needs a new operation kind with its law discharge, a derived space per pair of bases, and support in every consumer. It composes with C9b2's base roles, which supply the runtime check that the bases chain | comparing or reporting participations across layers or programmes, and any clause that multiplies shares, without first converting to amounts | **moved to the [Ensemble plan](ensemble.md), ES-5, as a new operation kind with its law** |
+| HQ-11 | **An encoded document incorporated as amended** (C9-Q8, 2026-10-08). CCS-9c incorporates encoded documents statically only. For one a party may vary, such as underwriting instructions under a binding authority (S53), each new edition reaches the instrument either by an amendment yielding a new version that pins the edition, or by resolution for each occasion at its valid time, as ADR-A85 resolves scheme bindings | the first fans out an amendment per instrument per edition, the second makes a version's meaning move over time and restates law I18. Until decided, such an incorporation is reported and its meaning not generated | when S53's volumes are known, with Open CBAA's underwriting instructions in view |
+| HQ-4 | **Context roles from several sources** (found building CCS-7b, 2026-10-05). Quantification's role contract resolves to one scheme in a context (Vocabulary, ADR-A85), and two unscoped bindings conflict. Roles come from several places: Instrument's baseline (arising, inception, ending, period start and end), other layers (an allowance reset, a policy year), and each wording's defined dates (the Expiry Date, the Break Date). CCS-7b binds Instrument's baseline. The lease example's own date roles are left unbound | a deployment that uses Instrument and another layer's roles, or a wording's own dates, cannot bind them all to one contract today. Options: one deployment scheme that collects every role, scoped bindings, or wording dates as roles bound from variables in CCS-8 rather than as concepts | with CCS-8's parameter bindings, which give wording dates their values |
+| HQ-12 | **Composing shares** (C9b2-Q2 (p4), 2026-10-09). A share of a share is a product: a 10% line on an order that is 50% of a layer is 5% of the layer, and the spaces multiply as fractions, (line ÷ order) × (order ÷ layer) = (line ÷ layer). Needs a new operation kind with its law discharge, a derived space per pair of bases, and support in every consumer. It composes with CCS-9b.2's base roles, which supply the runtime check that the bases chain | comparing or reporting participations across layers or programmes, and any clause that multiplies shares, without first converting to amounts | **moved to the [Ensemble plan](ensemble.md), ES-5, as a new operation kind with its law** |
 
 ## 5. Sequencing
 
 ```mermaid
 flowchart TB
-    C0 & C1 & C2 --> GA["Gate A"]
-    GA --> C3 --> C4 --> C5
-    GA --> C10 --> C11 --> C11a
-    C10 --> C10a
-    C5 & C10 --> C6 --> C7b
-    C7b --> C7c
-    C6 & C11a --> C7a
-    C7a & C7b --> C8 --> C8a
-    C8 --> C9
-    C9 & C11a --> C12
-    LG3["Ledger LG-3"] --> C12
-    ES3["Ensemble ES-3"] --> C12
-    C9 & C11 --> C13
-    C5 & N1 --> C13a
-    C13a --> N3["NRS N3"]
-    AIR33["AIR-3.3"] --> C13
-    N1["NRS N1"] --> C13
-    C9 & C12 --> C14 --> C15 --> C16 --> C17
-    C8a --> C14
+    CCS-0 & CCS-1 & CCS-2 --> GA["Gate A"]
+    GA --> CCS-3 --> CCS-4 --> CCS-5
+    GA --> CCS-10 --> CCS-11 --> CCS-11a
+    CCS-10 --> CCS-10a
+    CCS-5 & CCS-10 --> CCS-6 --> CCS-7b
+    CCS-7b --> CCS-7c
+    CCS-6 & CCS-11a --> CCS-7a
+    CCS-7a & CCS-7b --> CCS-8 --> CCS-8a
+    CCS-8 --> C9
+    C9 & CCS-11a --> CCS-12
+    LG3["Ledger LG-3"] --> CCS-12
+    ES3["Ensemble ES-3"] --> CCS-12
+    C9 & CCS-11 --> CCS-13
+    CCS-5 & N1 --> CCS-13a
+    CCS-13a --> N3["NRS N3"]
+    AIR33["AIR-3.3"] --> CCS-13
+    N1["NRS N1"] --> CCS-13
+    C9 & CCS-12 --> CCS-14 --> CCS-15 --> CCS-16 --> CCS-17
+    CCS-8a --> CCS-14
     C9 --> P5["AIR Phase 5 may start"]
 ```
 
-Tranches A to D touch no file any AIR round-3 or round-4 slice touches. C13 shares
-`tools/mork_compilers/` with AIR-3.3 and NRS N1 and follows both. C10a adds a check beside the
+Tranches A to D touch no file any AIR round-3 or round-4 slice touches. CCS-13 shares
+`tools/mork_compilers/` with AIR-3.3 and NRS N1 and follows both. CCS-10a adds a check beside the
 existing ontology checks and touches no AIR file.
 
 ## 6. Impact on other plans
 
 | Plan | Change |
 |---|---|
-| [normative-rule-substrate](normative-rule-substrate.md) | N4 is delivered by C1 and C6 to C9. N8's Behaviour work is C11 and C12, and N8 keeps the chain checks. Breach chains are `ins:arisesOn` an `ins:OnBreach` trigger, not compiled wiring. N2 revised (stratified state reads). N5 revised (contractual deeming, determinations, burden). N6 is built with C12. N3 compares Obligation and Prohibition, and Permission and Exclusion. D2 and D3 answered. 2026-10-10: N5 moved to CCS as HQ-6 (HQ-6a, HQ-6b), D7 answered (refuse), C13 and C13a wait on N1. NRS's remaining scope is its NQ-1 to NQ-4 |
-| [applied-insurance-reference](applied-insurance-reference.md) §3b | the Phase 5 constraint becomes C9 accepted and merged. C10 re-pins `applied/capacity`, which the epic does not author before Phase 5. C6 no longer cascades to it |
-| [phase 5](applied-insurance-reference-phase-5.md) | builds on Wording and Instrument. Term parameters qualify terms and relations, and their bases feed contract-amounts §1.7. Adds the policy renderings (sample policy scenarios), insurance templates on the C8a library and, under CC-D3, the LMA WIM profile |
+| [normative-rule-substrate](normative-rule-substrate.md) | N4 is delivered by CCS-1 and CCS-6 to C9. N8's Behaviour work is CCS-11 and CCS-12, and N8 keeps the chain checks. Breach chains are `ins:arisesOn` an `ins:OnBreach` trigger, not compiled wiring. N2 revised (stratified state reads). N5 revised (contractual deeming, determinations, burden). N6 is built with C12. N3 compares Obligation and Prohibition, and Permission and Exclusion. D2 and D3 answered. 2026-10-10: N5 moved to CCS as HQ-6 (HQ-6a, HQ-6b), D7 answered (refuse), CCS-13 and CCS-13a wait on N1. NRS's remaining scope is its NQ-1 to NQ-4 |
+| [applied-insurance-reference](applied-insurance-reference.md) §3b | the Phase 5 constraint becomes C9 accepted and merged. CCS-10 re-pins `applied/capacity`, which the epic does not author before Phase 5. CCS-6 no longer cascades to it |
+| [phase 5](applied-insurance-reference-phase-5.md) | builds on Wording and Instrument. Term parameters qualify terms and relations, and their bases feed contract-amounts §1.7. Adds the policy renderings (sample policy scenarios), insurance templates on the CCS-8a library and, under CC-D3, the LMA WIM profile |
 | [phase 6](applied-insurance-reference-phase-6.md) | claims are occasions of the policy's relations |
-| [phase-3-plan](phase-3-plan.md) (platform operation plane) | the behaviour engine loads Behaviour configuration and writes runtime records, occasions and evidence (C10, C11, C12) |
+| [phase-3-plan](phase-3-plan.md) (platform operation plane) | the behaviour engine loads Behaviour configuration and writes runtime records, occasions and evidence (CCS-10, CCS-11, CCS-12) |
 | Open CBAA plan and integration spec | migration of §7 |
-| [insurml-alignment](insurml-alignment.md) (proposed epic, 2026-10-05) | C7c's brief takes InsurML's scope-based resolution of defined terms as input (bridge sketch §11). C9 is the gate for the epic's Wording changes, and receives endorsements lifted from InsurML as amendments. C12, C13 and C13a evaluate and verify placed contracts. The LMA WIM profile of §7 is built with InsurML in view, in the epic's Phase 1 (IMA-D2) |
-| [ensemble](ensemble.md) (ADR-A130, Proposed) | takes over HQ-2's second case, HQ-7 and HQ-12. C12 gains the composition step after ES-3. ES-9's comparison between instruments needs C16b's content addresses |
-| [ledger](ledger.md) (ADR-A131, Accepted) | C12 runs draws and credits as postings, after LG-3, which migrates Behaviour's allowances |
-| [evaluation-context](../sketches/evaluation-context.md) (sketch, 2026-10-02) | the ledger, combinators and environments that runtime passes run in. The ledger is now a layer of its own, [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (Accepted 2026-10-21), with its own [plan](ledger.md), and C12 waits on its slice LG-3. Comes back in at C7b (the target of `ins:computedBy`), C8a (bases), C12 (a pass as a run of the context, the sequential environment) and C13 (a Datalog form beside the SPARQL reference), and at AIR Phase 5. Its §13 |
+| [insurml-alignment](insurml-alignment.md) (proposed epic, 2026-10-05) | CCS-7c's brief takes InsurML's scope-based resolution of defined terms as input (bridge sketch §11). C9 is the gate for the epic's Wording changes, and receives endorsements lifted from InsurML as amendments. CCS-12, CCS-13 and CCS-13a evaluate and verify placed contracts. The LMA WIM profile of §7 is built with InsurML in view, in the epic's Phase 1 (IMA-D2) |
+| [ensemble](ensemble.md) (ADR-A130, Proposed) | takes over HQ-2's second case, HQ-7 and HQ-12. CCS-12 gains the composition step after ES-3. ES-9's comparison between instruments needs C16b's content addresses |
+| [ledger](ledger.md) (ADR-A131, Accepted) | CCS-12 runs draws and credits as postings, after LG-3, which migrates Behaviour's allowances |
+| [evaluation-context](../sketches/evaluation-context.md) (sketch, 2026-10-02) | the ledger, combinators and environments that runtime passes run in. The ledger is now a layer of its own, [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md) (Accepted 2026-10-21), with its own [plan](ledger.md), and CCS-12 waits on its slice LG-3. Comes back in at CCS-7b (the target of `ins:computedBy`), CCS-8a (bases), CCS-12 (a pass as a run of the context, the sequential environment) and CCS-13 (a Datalog form beside the SPARQL reference), and at AIR Phase 5. Its §13 |
 
 ## 7. Open CBAA migration
 
 Recorded here so the other repository can plan it. Details in the sketch §3 and §12.2. Open CBAA
-pins release tags, and its migration starts once C9 and C12 are merged (risk R1). Open CBAA's own
+pins release tags, and its migration starts once C9 and CCS-12 are merged (risk R1). Open CBAA's own
 plan (`docs/development/plan.md`, "Upstream") mirrors this section.
 
 | Open CBAA module | After migration |
 |---|---|
 | `wim` | removed. Its structure is LATTICE's Wording layer (ADR-A112). The LMA WIM profile (the four levels as element types, their containment rules as shapes, the LMA typing schemes and `applicableTo`) is in LATTICE's `applied/insurance/wording/` (CC-D3, AIR-5.9), and Open CBAA imports it |
 | `stm` | `AuthorityGrant ⊑ ins:Power` with its envelope mechanism. Other kinds, templates, parameter bindings and encoding status come from Instrument |
-| `agr` | UMR, markets, CBAA roles. The UMR becomes a `fnd:KeyScheme` and `agr:umr` a natural key on the contract's identity (ADR-A114, F1). The M12 regimes become `applied/insurance` templates on the C8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
+| `agr` | UMR, markets, CBAA roles. The UMR becomes a `fnd:KeyScheme` and `agr:umr` a natural key on the contract's identity (ADR-A114, CCS-F1). The M12 regimes become `applied/insurance` templates on the CCS-8a library. Agreement versions become `ins:Instrument`s expressed in `wrd:Wording`s |
 | `rsk` | unchanged, with `rsk:BoundPolicy ⊑ ins:Instrument` and `rsk:boundUnder ⊑ ins:boundUnder` |
 | example BA-2026-001 | re-expressed, joined by the binding authority scenario renderings |
-| decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream (C10). D19 replaced (below) |
+| decisions | D22 holds as I13. D23 resolved. D25 changed. I6 closed. L15 fixed upstream (CCS-10). D19 replaced (below) |
 
 What changes in the data, beyond renaming:
 
@@ -4576,7 +4577,7 @@ What changes in the data, beyond renaming:
 | `agr:VariableValue` | `wrd:VariableValue` on a `wrd:AssembledWording`, one per variable and column | C4-Q1, C4-Q3 |
 | `stm:` templates and bound statements | stated meaning owned by a library element version, bound meaning owned by an instrument version | CC-D12, ADR-A104 decision 2 |
 | the M12 lifecycle in `agr` | regimes (`ins:Regime`) from the template library | CC-D8 |
-| an agreement as the subject of its own state | a state occupancy for the instrument's persistent identity, `bhv:forSubject` having no range | ADR-A106, C10 |
+| an agreement as the subject of its own state | a state occupancy for the instrument's persistent identity, `bhv:forSubject` having no range | ADR-A106, CCS-10 |
 
 
 ## 8. Decisions
@@ -4590,10 +4591,10 @@ None of these is taken without the maintainer.
 | CC-D3 | Home of the LMA WIM profile | `applied/insurance/wording/` in LATTICE | **decided 2026-09-30** |
 | CC-D4 | Scope of A-113 | every 0.x layer | **decided 2026-09-30** |
 | CC-D5 | Templates in the substrate | yes | **decided 2026-09-30** |
-| CC-D6 | Table structure | fields in the wording, entries at the instance or in the wording, in either orientation, cells as variable values | **decided 2026-09-30**, amended 2026-10-02 (fields and entries replace rows and columns, C5), with long lists as multi-valued variables |
+| CC-D6 | Table structure | fields in the wording, entries at the instance or in the wording, in either orientation, cells as variable values | **decided 2026-09-30**, amended 2026-10-02 (fields and entries replace rows and columns, CCS-5), with long lists as multi-valued variables |
 | CC-D7 | Clean-room examples | insurance examples allowed in the substrate beside other-domain ones | **decided 2026-09-30, amended** (below) |
 | CC-D8 | Gating by state, and the Behaviour and Instrument relationship | Behaviour below Instrument, split into configuration and runtime. Regimes and legal triggers specialise Behaviour (sketch §6.3, §7) | **decided 2026-10-01** (below) |
-| CC-D9 | Where identifiers live | Party | **decided 2026-09-30: Foundation**, slice F1 |
+| CC-D9 | Where identifiers live | Party | **decided 2026-09-30: Foundation**, slice CCS-F1 |
 | CC-D10 | A defined word meaning several parties when the instrument is silent | Undetermined until the graph holds an assertion of how the parties act | **decided 2026-09-30, amended** (below) |
 | CC-D11 | Pieces of text, and parts of a contract | `wrd:TextPart`. Sections as parts of one instrument, named Section, no contract-of-contracts for now | **decided 2026-09-30** (sketch §5.10) |
 | CC-D12 | Who owns the nodes that carry a contract's meaning | meaning belongs to its text: stated meaning part of one element version, bound meaning part of one instrument version. Only wordings, elements and instruments are versions | **decided 2026-10-01** (sketch §5.9, A-104 decision 2) |
@@ -4602,7 +4603,7 @@ None of these is taken without the maintainer.
 - **CC-D7.** ADR-A-C2 is relaxed for this unit's examples. Insurance examples may sit in the
   substrate provided every scenario is also shown in another domain's example, and the insurance
   examples are not substantially more comprehensive than the others. The relaxation is an
-  addendum to ADR-A-C2, drafted in C0, and C15's coverage test checks both conditions per scenario.
+  addendum to ADR-A-C2, drafted in CCS-0, and CCS-15's coverage test checks both conditions per scenario.
 - **CC-D10.** A relation that resolves to a group whose mode of acting the instrument does not state
   is Undetermined until the graph holds an assertion of that mode (several, joint, joint and
   several, any one). The assertion may come from any source the graph accepts, a later amendment,
@@ -4624,20 +4625,20 @@ Its adversarial probes are recorded in the status record, and the maintainer's m
 
 | Slice | Levels | One command |
 |---|---|---|
-| C0 to C2 | none, paper | link and prose checks |
-| C3 to C11a | L1, L2 | `mise run build:ontology-catalog`, then `mise run check:ontology-versioning && mise run check:ontology-catalog` |
-| C10a | L1 | the new import guard check, with its failing fixtures |
-| C12, C13 | L1, L2, L3 | `mise run check:mork-compilers` |
-| C14, C15 | L2, L3 | the examples' decision tests and the scenario coverage test |
+| CCS-0 to CCS-2 | none, paper | link and prose checks |
+| CCS-3 to CCS-11a | L1, L2 | `mise run build:ontology-catalog`, then `mise run check:ontology-versioning && mise run check:ontology-catalog` |
+| CCS-10a | L1 | the new import guard check, with its failing fixtures |
+| CCS-12, CCS-13 | L1, L2, L3 | `mise run check:mork-compilers` |
+| CCS-14, CCS-15 | L2, L3 | the examples' decision tests and the scenario coverage test |
 
 **Mandatory adversarial probes.**
-- **I7 (C13):** an Undetermined fulfilment must never yield a breach, and a breach must never rest
+- **I7 (CCS-13):** an Undetermined fulfilment must never yield a breach, and a breach must never rest
   on an unestablished exception. Both are shown to fail when deliberately broken.
-- **I11 (C11):** an occasion's parties must not change after arising.
-- **B6 (C11, C12):** a state occupancy with neither a transition execution nor evidence must fail.
-- **B7 (C10a):** a fixture layer that imports a higher layer, or names a higher layer's term
+- **I11 (CCS-11):** an occasion's parties must not change after arising.
+- **B6 (CCS-11, CCS-12):** a state occupancy with neither a transition execution nor evidence must fail.
+- **B7 (CCS-10a):** a fixture layer that imports a higher layer, or names a higher layer's term
   without importing it, must fail the guard.
-- **B8 (C13):** a design-time comparison that reads a runtime record must be rejected.
+- **B8 (CCS-13):** a design-time comparison that reads a runtime record must be rejected.
 
 Non-weakening applies throughout.
 
@@ -4652,13 +4653,13 @@ records), the ADR catalogue.
 
 | # | Risk | Mitigation |
 |---|---|---|
-| R1 | The rewrite breaks the only consumer mid-work | Open CBAA pins release tags. Its migration starts after C9 and C12 |
-| R2 | A Foundation change beyond F1 is found necessary | stop and re-plan. None is expected (sketch §12.1) |
+| R1 | The rewrite breaks the only consumer mid-work | Open CBAA pins release tags. Its migration starts after C9 and CCS-12 |
+| R2 | A Foundation change beyond CCS-F1 is found necessary | stop and re-plan. None is expected (sketch §12.1) |
 | R3 | Scope grows into contract amounts | amounts stay a catalogue until their own unit |
 | R4 | Examples drift into insurance terms | ADR-A-C2 check in every Validation Pack |
-| R5 | The scenario catalogue loses rows as slices are cut | C15's coverage test fails on any scenario without an example |
-| R6 | The Foundation cascade collides with Phase 2's peril authoring | retired for F1 (ADR-A114 Consequences): no branch edits a Foundation importer while F1 runs. NRS N9 keeps its own later window |
-| R7 | The nested-states deep dive grows | C11a blocks only C12. Instrument, templates and examples without history proceed |
-| R8 | Removing Behaviour's range axioms breaks data relying on inferred types | C10's Validation Pack runs every Behaviour example and capacity fixture before and after |
-| R9 | The design-time satisfiability check (C13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and C5's Validation Pack lists it under deliberate non-coverage |
-| R10 | F1's follow-ups (FU-F1a, FU-F1b) and C7a's (FU-C7a-a) are forgotten | each has an owner in its slice's follow-ups table, FU-F1a is in the `identity-minting` plan's deferred items, FU-C7a-a is TD-17 in the technical debt register, and each slice's Validation Pack lists its follow-ups under deliberate non-coverage |
+| R5 | The scenario catalogue loses rows as slices are cut | CCS-15's coverage test fails on any scenario without an example |
+| R6 | The Foundation cascade collides with Phase 2's peril authoring | retired for CCS-F1 (ADR-A114 Consequences): no branch edits a Foundation importer while CCS-F1 runs. NRS N9 keeps its own later window |
+| R7 | The nested-states deep dive grows | CCS-11a blocks only C12. Instrument, templates and examples without history proceed |
+| R8 | Removing Behaviour's range axioms breaks data relying on inferred types | CCS-10's Validation Pack runs every Behaviour example and capacity fixture before and after |
+| R9 | The design-time satisfiability check (CCS-13a) is deferred and forgotten | it is a slice in tranche E with its own row on the status board, NRS N3 names it as its prerequisite, and CCS-5's Validation Pack lists it under deliberate non-coverage |
+| R10 | CCS-F1's follow-ups (FU-F1a, FU-F1b) and CCS-7a's (FU-C7a-a) are forgotten | each has an owner in its slice's follow-ups table, FU-F1a is in the `identity-minting` plan's deferred items, FU-C7a-a is TD-17 in the technical debt register, and each slice's Validation Pack lists its follow-ups under deliberate non-coverage |

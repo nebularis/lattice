@@ -17,8 +17,8 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.19.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.19.0> |
-| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.19.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.19.0> |
+| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> |
+| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -1126,9 +1126,7 @@ The mechanisms, value readings, comparisons, decisions, step directions, referen
 
 ### 6.5 Disjointness and Keys
 
-**All disjoint.** `elg:Condition`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`,
-`elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision`, `elg:OperationalProfile`, `elg:Law`,
-`elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:StepDirection`, `elg:ValueReading`, `elg:Closure`, `elg:Comparison`
+**All disjoint.** `elg:Condition`, `elg:Question`, `elg:EligibilityDecision`, `elg:MatchStrategy`, `elg:CompositionOperation`, `elg:WildcardSemantics`, `elg:Decision`, `elg:OperationalProfile`, `elg:Law`, `elg:EvidenceBinding`, `elg:EvidenceStep`, `elg:StepDirection`, `elg:ValueReading`, `elg:Closure`, `elg:Comparison`
 
 ### 6.6 Other Axioms
 
@@ -1318,15 +1316,7 @@ requires a closure's one source.
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds the other constraints.
-`elg:SingleConditionMechanismShape` discharges L1 and L3 for a condition that is not a profile, and
-`elg:CompositionOnProfileShape` the rest of L2, so only a profile declares a composition operation.
-`elg:IntervalContainmentRequiresRangeSet` discharges L4 for an `elg:IntervalCondition`.
-`elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06).
-`elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match
-(ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows
-a closure only on a binding read some or every value or a binding of a set comparison, and `elg:ClosureReliedOnNamedShape` allows a
-decision to rely only on a closure a binding of its profile names (ADR-A105).
+`shapes/constraints.ttl` holds the other constraints. `elg:SingleConditionMechanismShape` discharges L1 and L3 for a condition that is not a profile, and `elg:CompositionOnProfileShape` the rest of L2, so only a profile declares a composition operation. `elg:IntervalContainmentRequiresRangeSet` discharges L4 for an `elg:IntervalCondition`. `elg:WildcardPolicyConsistency` reports a `Wildcard` match strategy under `NoWildcard` (ADR-A06). `elg:ConceptConditionDeclarationShape` warns of a concept condition that states nothing to match (ADR-A87), and `elg:ReachableExclusionShape` discharges L13. `elg:ClosureNeedsSetReadingShape` allows a closure only on a binding read some or every value or a binding of a set comparison, and `elg:ClosureReliedOnNamedShape` allows a decision to rely only on a closure a binding of its profile names (ADR-A105).
 
 `elg:SetComparisonBindingsShape` checks the two bindings of a set comparison. They are two bindings, each names the comparison with `elg:bindsCondition`, they name the same subject class, and neither declares a value reading or a value space. `elg:SetComparisonBindingShape` requires a binding that binds a set comparison to be that comparison's tested or reference binding. The cardinalities of a comparison, its match strategy, and its having no required or excluded concept, are in the structural shapes (§7.1). A binding of a set comparison may name a closure without a value reading, since the comparison fixes the reading (L18).
 
@@ -1886,19 +1876,11 @@ Eligibility imports Foundation, Vocabulary, Quantification, and Party. Quantific
 
 ## 12. Release Notes
 
-- **Next release** (additive). `elg:hasCondition` is `fnd:meaningBearing`, so a condition is never edited and a shared one is immutable (Foundation section 4), and the three decision values are `owl:AllDifferent`.
-
-Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
-
-- Next release. Re-pinned: a new substrate layer joins the release.
-  - New `elg:SetComparison`, a condition that relates the values two evidence bindings read from one subject, with `elg:comparison`, `elg:testedBinding`, `elg:referenceBinding` and the closed class `elg:Comparison` of `elg:Subset`, `elg:Intersects` and `elg:Disjoint`. New law L18 (no effect on a graph that declares none).
-  - A binding of a set comparison may name a closure without declaring a value reading, and `elg:ConceptConditionDeclarationShape` no longer warns of a set comparison that names no concept (no effect).
-  - New shapes `elg:SetComparisonBindingsShape` and `elg:SetComparisonBindingShape`, and the structural shapes of `elg:SetComparison`. A graph that declares no set comparison is not affected.
-  - New `elg:hierarchyRelation`, naming the relation a hierarchical condition walks. Absent, the relation is `skos:broader`, so every existing graph keeps its meaning (no effect).
-  - L9, L11 and L14 are restated over the condition's hierarchy relation, and L9's acyclicity requirement is over that relation (no effect for a graph that names none).
-  - New shapes `elg:HierarchyRelationShape` and `elg:HierarchyRelationNeedsHierarchicalMatchShape`. A graph that does not name a hierarchy relation is not affected. One that does and names a property that is not `skos:broader` and has no declared route to it is invalid (may invalidate).
-  - A hierarchical condition, or one with exclusions only, whose contract has bindings that apply at no instant compiles to a plan that answers Undetermined for every candidate, where the compilers refused it before (changes meaning for a consumer of the compilers, not for a graph).
-  - L12 states that a condition with exclusions only, whose contract has scheme bindings and none applies at the resolution time, is Undetermined for every candidate. A condition bound to no contract keeps its reading (changes meaning only where a contract's bindings leave a gap).
+- **0.20.0**.
+  - may invalidate ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md)). `elg:hasCondition` is `fnd:meaningBearing`, so a condition is never edited and a shared one is immutable (Foundation section 4), and the three decision values are `owl:AllDifferent`.
+  - no effect. New `elg:SetComparison`, a condition that relates the values two evidence bindings read from one subject, with `elg:comparison`, `elg:testedBinding`, `elg:referenceBinding` and the closed class `elg:Comparison` of `elg:Subset`, `elg:Intersects` and `elg:Disjoint`, law L18, the shapes `elg:SetComparisonBindingsShape` and `elg:SetComparisonBindingShape`, and the structural shapes of `elg:SetComparison`. A graph that declares no set comparison is not affected.
+  - no effect. A binding of a set comparison may name a closure without declaring a value reading, and `elg:ConceptConditionDeclarationShape` no longer warns of a set comparison that names no concept.
+  - no effect. New `elg:hierarchyRelation`, naming the relation a hierarchical condition walks. Absent, the relation is `skos:broader`, so every existing graph keeps its meaning. L9, L11 and L14 are restated over the condition's hierarchy relation, and L9's acyclicity requirement is over that relation.
 - 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). No other change.
 - 0.18.0, the first release of the substrate and standalone modules as one set
   ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every
@@ -1929,6 +1911,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   scheme is undetermined for every candidate. The vocabulary's ontology header joins the README, which is
   again the source of every Eligibility spec, vocab and shapes file. Re-pinned to `eligibility` 0.11.0. The
   shapes, 0.2.0, are unchanged.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
 ## 13. Open Issues
 

@@ -32,6 +32,49 @@ ADR-A70
 # ADR-A76 was ever written.
 ADR-A76
 
-# Defined on the ledger branch docs/placement-vehicles-structure, whose rows took these numbers before
-# the index remediation took 281 to 283 on main. Remove both entries when that branch merges.
-STD-280
+# Slices a plan names that no board holds a row for yet, found when the slice family gained its
+# definition (plan work-board, WB-2, TD-137). A row written on the home unit's board defines the slice,
+# and its line here goes in the same change. `mise run work:adopt` writes the rows a record's other
+# tables, a Validation Pack or a plan's tables give, and regroups what is left here by unit.
+# unit applied-insurance-reference, 7 slice(s)
+AIR-4  # a phase of the AIR plan, not a slice, named by an ontology README and a note
+AIR-5  # a phase of the AIR plan, not a slice, named by a note
+AIR-6.2a  # named in prose only, no board row yet
+AIR-6.2b  # named in prose only, no board row yet
+AIR-6.2c  # named in prose only, no board row yet
+AIR-6.2d  # named in prose only, no board row yet
+AIR-66  # named only by the pack FMH-AIR-66.md, which has no row
+# unit computable-contract-substrate, 9 slice(s)
+HQ-6a  # a tranche whose slices HQ-6a.1 and HQ-6a.2 are on the board
+HQ-6b  # a tranche named in the CCS plan, not yet sliced
+HQ-X1  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X2  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X3  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X4  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X5  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X6  # a label in the rdf-engine notes, which happens to share the HQ prefix
+HQ-X7  # a label in the rdf-engine notes, which happens to share the HQ prefix
+# unit ensemble, 10 slice(s)
+ES-0  # named in prose only, no board row yet
+ES-1  # named in prose only, no board row yet
+ES-2  # named in prose only, no board row yet
+ES-3  # named in prose only, no board row yet
+ES-4  # named in prose only, no board row yet
+ES-5  # named in prose only, no board row yet
+ES-6  # named in prose only, no board row yet
+ES-7  # named in prose only, no board row yet
+ES-8  # named in prose only, no board row yet
+ES-9  # named in prose only, no board row yet
+# unit formal-methods-track-h, 3 slice(s)
+FMH-H1  # named in prose only, no board row yet
+FMH-H1.4a  # named in prose only, no board row yet
+FMH-1.4a  # named in prose only, no board row yet
+FMH-H2  # the H2 phase of track H, not a slice
+FMH-2  # the H2 phase of track H, not a slice
+# unit ledger, 2 slice(s)
+LG-1.5b  # named in prose only, no board row yet
+LG-6  # named in prose only, no board row yet
+# unit multi-store-conformance, 1 slice(s)
+MSC-6  # an example in the work-board sketch, never planned
+# unit ontology-remediation, 1 slice(s)
+OR-7a  # named in prose only, no board row yet

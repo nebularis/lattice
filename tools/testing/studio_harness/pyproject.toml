@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-testing-studio-harness"
+version = "0.1.0"
+description = "Starts an isolated Configuration Studio from a declared topology, as processes or in Docker Compose, with a client over its HTTP API (ADR-A125, ADR-A150). Not a deployment tool"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

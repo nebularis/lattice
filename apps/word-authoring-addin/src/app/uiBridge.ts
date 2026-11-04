@@ -3,7 +3,7 @@
  * `App` subscribes, the Markup panel fills its forms from the drafts and shows the message, and
  * the Analyse panel runs once when `runAnalyse` is set, then it is cleared.
  */
-import type { ValueType } from "../domain/types";
+import type { ValueType } from "@lattice/authoring-domain";
 import type { Tab } from "./tabs";
 
 export interface VariableDraft {

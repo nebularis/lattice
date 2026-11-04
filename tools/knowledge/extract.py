@@ -87,6 +87,7 @@ FAMILY_CLASS = {
     "decision": "Decision",
     "pending-decision": "PendingDecision",
     "technical-debt": "Debt",
+    "backlog": "Backlog",
     "store-discovery": "Discovery",
     "store-question": "Discovery",
     "mechanism": "Mechanism",
@@ -94,6 +95,7 @@ FAMILY_CLASS = {
     "pattern": "Pattern",
     "principle": "Principle",
     "standard": "Standard",
+    "slice": "Slice",
 }
 
 # The status words a decision's Status line may open with, longest first so "Published" is not read
@@ -133,17 +135,24 @@ NUMBER_RE = re.compile(r"^(?:\*\*)?(?P<n>\d+)\.\s")
 # ``**Reverses decision 8.**`` or ``**Narrows decisions 3, 6 and 7.**`` (ADR-A134 decision 29).
 SUPERSESSION_RE = re.compile(r"\*\*(?P<verb>Reverses|Narrows) decisions? (?P<numbers>\d+(?:(?:,| and|, and) \d+)*)\.\*\*")
 SUPERSESSION_EDGE = {"Reverses": "supersededBy", "Narrows": "narrowedBy"}
+# An addendum named by its decision and the day in its heading, "ADR-A129 addendum 2026-10-26", which
+# survives an edit as a section's position does not. ``decisions`` fills ADDENDA before the registers
+# are read, so a register's Narrowed by can point a principle or standard at the addendum that narrowed
+# the decision it rests on.
+ADDENDUM_DATE_RE = re.compile(r"^## Addendum\b\D{0,12}?(\d{4}-\d{2}-\d{2})")  # ", 2026-11-02", " (2026-10-26)", " of 2026-10-25"
+ADDENDUM_REF_RE = re.compile(r"(ADR-[A-Z0-9-]+?)\s+addendum\s+(\d{4}-\d{2}-\d{2})", re.I)
+ADDENDA: dict[tuple[str, str], ox.NamedNode] = {}
 
 
 def tracked(*patterns: str) -> list[Path]:
-    """Tracked files matching any pattern, from git rather than the filesystem."""
+    """Tracked files matching any pattern, from git rather than the filesystem, skipping a tracked file deleted in the working tree."""
     listing = subprocess.run(
         ["git", "-C", str(ROOT), "ls-files", "-z", *patterns],
         capture_output=True,
         text=True,
         check=True,
     )
-    return sorted({ROOT / name for name in listing.stdout.split("\0") if name})
+    return sorted({ROOT / name for name in listing.stdout.split("\0") if name and (ROOT / name).exists()})
 
 
 def node(identifier: str) -> ox.NamedNode:
@@ -314,6 +323,7 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
     """One node per decision file, named by its title, with what it decides as the claim and its
     Related line as declared edges."""
     known: dict[str, ox.NamedNode] = {}
+    ADDENDA.clear()
     family = next(f for f in identifiers.FAMILIES if f.name == "decision")
     defined = identifiers.definitions(family)
     for path in tracked((identifiers.ARCHITECTURE / "decisions" / "*.md").as_posix()):
@@ -387,6 +397,8 @@ def decisions(out: Extract) -> dict[str, ox.NamedNode]:
             out.quads.append(ox.Quad(section, ki("claim"), ox.Literal(text), INDEX_GRAPH))
             out.quads.append(ox.Quad(section, ki("pointer"), ox.Literal(f"{rel}:{start}-{end}"), INDEX_GRAPH))
             out.bump("decision-section")
+            if (dated := ADDENDUM_DATE_RE.match(lines[start - 1])):
+                ADDENDA[(identifiers.normalise(canonical), dated.group(1))] = section
         for target, edge, by in supersessions(lines, found, rel, out):
             out.quads.append(ox.Quad(ox.NamedNode(f"{subject.value}/section-{target + 1}"), ki(edge),
                                      ox.NamedNode(f"{subject.value}/section-{by + 1}"), INDEX_GRAPH))
@@ -429,6 +441,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Claim": ("claim", "claim"),
     "Capability": ("claim", "claim"),
     "Debt": ("claim", "claim"),
+    "Idea": ("claim", "claim"),
     "Decision": ("claim", "claim"),
     "Question": ("claim", "claim"),
     "Why it matters": ("problemShape", "text"),
@@ -448,6 +461,7 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Unchecked because": ("uncheckedBecause", "text"),
     "Does not cover": ("doesNotCover", "text"),
     "Distinguished from": ("distinguishedFrom", "ids"),
+    "Narrowed by": ("narrowedBy", "addenda"),
     "Bears on": ("bearsOn", "targets"),
     "Stratum": ("stratum", "stratum"),
     "Governs": ("governs", "names"),
@@ -462,6 +476,8 @@ COLUMNS: dict[str, tuple[str, str]] = {
     "Entry point": ("entryPoint", "text"),
     "Built": ("built", "built"),
     "Ratified": ("status", "ratified"),
+    "Unit": ("unit", "text"),
+    "State": ("state", "text"),
 }
 
 # Human-only columns, deliberately not indexed. A header in neither table is a reported problem.
@@ -470,6 +486,7 @@ UNMAPPED_COLUMNS = frozenset(
         "Conf", "Reuse note",
         "Spotted", "Cost while it stays", "Likely home",
         "Raised", "Cost of deferring", "Options known",
+        "Why we want it", "What exists", "Status", "Blocked on",
         "Next step",
     }
 )
@@ -490,7 +507,7 @@ CONTROLLED = {
 SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
 # The signpost columns stand last in a table, and a row may leave them out, so adding them changed no
 # row that carries none and a branch editing a row merges cleanly (ADR-A134 decision 28).
-OPTIONAL_TRAILING = frozenset({"Does not cover", "Distinguished from", "Bears on"})
+OPTIONAL_TRAILING = frozenset({"Does not cover", "Distinguished from", "Bears on", "Narrowed by"})
 # A boundary is one case, said briefly, so it fits on the line find prints under an answer.
 DOES_NOT_COVER_LIMIT = 120
 CURIE_RE = re.compile(r"(?<![\w/#.-])(?P<prefix>[a-z][\w-]*):(?P<local>[A-Za-z][\w-]*)(?![\w-])")
@@ -665,6 +682,17 @@ def register_rows(out: Extract) -> None:
                                 out.bump(prop)
                                 if len(cell) > DOES_NOT_COVER_LIMIT:
                                     out.problems.append(f"{here} has a Does not cover of {len(cell)} characters, over {DOES_NOT_COVER_LIMIT}")
+                        elif kind == "addenda":
+                            refs = ADDENDUM_REF_RE.findall(cell)
+                            if not refs:
+                                out.problems.append(f"{here} has {header} '{cell}', which names no addendum as 'ADR-Ann addendum YYYY-MM-DD'")
+                            for decision, day in refs:
+                                target = ADDENDA.get((identifiers.normalise(decision), day))
+                                if target is None:
+                                    out.problems.append(f"{here} has {header} '{decision} addendum {day}', and {decision} has no addendum of that day")
+                                else:
+                                    add(prop, target)
+                                    out.bump(prop)
                         elif kind == "targets":
                             for target in targets(cell, here, out):
                                 add(prop, target)

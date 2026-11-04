@@ -1,0 +1,180 @@
+{
+ "run": "cold-2",
+ "scheme": "https://example.org/lattice/mtp/legalruleml-cold2#Scheme",
+ "mappings": {
+  "accepted": 20,
+  "corrected": 2,
+  "rejected": 0,
+  "deferred": 10,
+  "total": 32,
+  "accepted_share": 0.625
+ },
+ "cost": {
+  "seconds": 159,
+  "input_tokens": null,
+  "output_tokens": null,
+  "total_tokens": 116986
+ },
+ "decisions": [
+  {
+   "mapping": "Obl",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Obl_Activity",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Obl_Activity_Label",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Obl_Obligee",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Obl_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Obl_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Activity",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Perm_Activity_Label",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Perm_Counterparty",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Holder",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Implied",
+   "decision": "accepted",
+   "note": "states the prohibition the permission excepts, its obligor the holder (law I8), as the doctrine asks"
+  },
+  {
+   "mapping": "Perm_Implied_Activity",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Perm_Implied_Activity_Label",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Perm_Implied_Obligee",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Implied_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Implied_Term",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Perm_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Proh",
+   "decision": "corrected",
+   "note": "map every prohibition. Where the source names no auxiliary party, the obligee is left for the reviewer, never the prohibition dropped by a guard"
+  },
+  {
+   "mapping": "Proh_Activity",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Proh_Activity_Label",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Proh_Obligee",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Proh_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Proh_Relation",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Right_Claim",
+   "decision": "accepted",
+   "note": "the claim end of a right, owed by the auxiliary party to the bearer, which both earlier runs missed"
+  },
+  {
+   "mapping": "Right_Claim_Activity",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Right_Claim_Activity_Label",
+   "decision": "deferred",
+   "note": "the act is in the rule's formula, which the sample does not carry, so a concept minted from the specification's label stands in until a source gives the act"
+  },
+  {
+   "mapping": "Right_Claim_Obligee",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Right_Claim_Obligor",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Right_T",
+   "decision": "corrected",
+   "note": "a LegalRuleML right is two relations under one term: the claim end mapped here, and a permission held by the bearer with the prohibition it excepts, which the term also needs, as Perm states"
+  },
+  {
+   "mapping": "Role_T",
+   "decision": "accepted",
+   "note": ""
+  },
+  {
+   "mapping": "Role_T_Label",
+   "decision": "accepted",
+   "note": ""
+  }
+ ]
+}

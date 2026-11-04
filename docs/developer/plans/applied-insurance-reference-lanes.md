@@ -231,7 +231,7 @@ Not in the trip, and why:
 |---|---|
 | AIR-3.3 | CCS HQ-6a.2 and AIR-3.3-Q1. Built on R on its own branch |
 | Phase 5, AIR-6.2 onward | CCS C9 and the Open CBAA integration of Phases 1 to 4 (D2) |
-| Substrate S2, S7 | CCS C9b3 and NRS N10 |
+| Substrate S2, S7 | CCS-9b.3 and NRS N10 |
 | Substrate S1, S4, S5 | change layers CCS is still bumping. Merged after the trip |
 
 Round numbers are kept from the earlier plan so the status record's history still reads. The trip

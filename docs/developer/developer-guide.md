@@ -43,6 +43,19 @@ mise run check           # run every validation task
 mise tasks               # list every task mise.toml declares, with its description
 ```
 
+### What `check` needs first
+
+`mise run check` is self-sufficient after two commands. `mise install` puts the toolchains `mise.toml` declares on the path, which is how `check:java` gets Maven and `check:spc` gets Mix. `mise run bootstrap` installs every package's dependencies in this checkout's `.venv` and the Yarn workspace, installs the git hooks and derives the knowledge index. Nothing else is run by hand. A check that reads an artefact a build writes names that build in its `depends`, so the aggregate stages what it reads in the right order and `mise run clean:build` can never leave `check` failing on a missing file (STD-299). The checks that read a built artefact today:
+
+| Check | Reads | Built by |
+|---|---|---|
+| `check:java`, `check:frontend` | `.build/config-studio/`, the Configuration Studio's staged vocabulary and samples, which the studio's Maven modules and its vitest suites load | `build:config-studio-assets`, which depends on `build:mtp` for the Teaching Pack's first layer |
+| `check:mtp` | `ontology/mork/mtp/out/`, the rendered MORK Teaching Pack, whose manifest the check compares | `build:mtp` |
+| `check:mork-transforms` | the `mork-transforms` jar | `bootstrap:mork-transforms` |
+| `check:persistence` | Persistence's compiled expected profiles | `check:persistence-expected-profiles` |
+
+A suite that fails with a missing file under `.build/` or a generated directory is a check whose dependency is undeclared, never something to stage by hand. Add the `depends` line and the table row.
+
 ### Git hooks
 
 `mise run bootstrap` installs two git hooks, `pre-commit` and `pre-merge-commit` ([ADR-A133](../architecture/decisions/ADR-A133-git-hooks.md)). They live in the repository's shared hooks directory, so one install covers the main checkout and every worktree. `mise run hooks:install` installs them alone. It never replaces a hook it did not write: it stops and says how to add the dispatcher to yours, and under bootstrap it warns and carries on.
@@ -63,6 +76,8 @@ A commit that touches none of these runs the deny-list alone, in well under a se
 **At a merge into `main`** (a clean merge, or a commit on `main` while a merge or a squash is in progress) the same checks run over every file the merge brings, all blocking, together with the published-decisions check over the whole tree and ontology versioning, since the merge is where the release moves. CI is manual (§6), so before merging on GitHub run `mise run hooks:merge`, which runs this gate for the current branch by hand.
 
 **No hook runs at a push**, so a branch, and a cloud agent's work, always reaches the maintainer.
+
+**The work board.** The `work` check refuses a commit whose touched status record has a malformed board or Status line, a slice id outside the grammar, or a stale INDEX.md region, and names the task that fixes it. After a merge the hook regenerates INDEX.md's region, and ROADMAP.md's regions on `main`, leaving them changed in the tree to commit (ADR-A151).
 
 **Running and skipping.** `mise run hooks:run` runs the commit checks over what is staged without committing. `LATTICE_HOOKS_SKIP=links,writing git commit …` skips named checks, and `git commit --no-verify` skips every check. Record a skip, and why, in the slice's Validation Pack. The hooks are a floor: `mise run check` remains the full gate. `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
 
@@ -184,6 +199,7 @@ ordinary Turtle.
 |---|---|---|
 | [`tools/mork_compilers/`](../../tools/mork_compilers/README.md) | Compiles Eligibility conditions into SPARQL, SHACL, SWRL and an OWL design-time-checking backend, through one shared IR (ADR-A23, ADR-A24, ADR-A89) | `mise run check:mork-compilers` |
 | [`tools/vocabulary/`](../../tools/vocabulary/README.md) | The scoped and temporal concept-scheme binding resolver (ADR-A85) | `mise run check:vocabulary` |
+| [`tools/wording_assembler/`](../../tools/wording_assembler/README.md) | Assembles a wording from a form, settings and choices under Wording's baseline model, and renders it in the document markup (ADR-A139, ADR-A140) | `mise run check:wording-assembler` |
 | [`tools/surface/`](../../tools/surface/README.md) | Compiles Surface promotion/projection contracts into generated module packages, with minimal-scope regeneration planning (ADR-A27) | `mise run check:python-root` (its tests run under `surface.test_surface`) |
 | [`tools/persistence/`](../../tools/persistence/README.md) | Compiles Persistence profiles into SPARQL plans (ADR-A78/A79) | `mise run check:persistence` |
 | [`tools/mork/`](../../tools/mork/README.md) | The MORK package and the MORK Teaching Pack generator | `mise run check:mtp`, `mise run build:mtp` |
@@ -202,6 +218,30 @@ ordinary Turtle.
 | [`tools/models/`](../../tools/models/README.md) | Alloy/SMT design-time models, evidence for an ADR before it is accepted (track C) | run directly with the Alloy Analyzer JAR, see that README |
 | [`tools/reference/`](../../tools/reference/README.md) | Hand-written reference semantics, differentially tested against the real compilers (track B, ADR-A-FM3) | `mise run check:reference-eligibility` |
 
+### Isabelle's memory
+
+An `isabelle build` runs two processes, a JVM front end and the Poly/ML prover. Isabelle2025-2's distribution settings give the JVM `-Xmx4g`, and the JVM grows to its cap whether or not the build needs it. On 2026-10-30, clean builds of `spikes/isabelle-layers`'s `LatticeLayers` session on Linux x86_64 measured these peaks, sampled from resident memory:
+
+| Settings | JVM | Poly/ML | Together | Elapsed |
+|---|---|---|---|---|
+| the distribution's | 4,082 MB | 1,668 MB | 5,693 MB | 48 s |
+| `-Xmx512m`, three runs | 714 to 731 MB | 897 to 1,620 MB | 1,601 to 2,324 MB | 27 to 29 s |
+| `-Xmx512m` and `ML_OPTIONS="--maxheap 600M"`, four runs | 718 to 731 MB | 758 to 885 MB | 1,466 to 1,604 MB | 27 to 30 s |
+
+To build within about 1.6 GB, put these two lines in your own user settings, `~/.isabelle/Isabelle2025-2/etc/settings` (`%USERPROFILE%\.isabelle\Isabelle2025-2\etc\settings` on Windows), never in the repository:
+
+```bash
+ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true -Xms128m -Xmx512m -Xss16m"
+ML_OPTIONS="--maxheap 600M"
+```
+
+`isabelle getenv ISABELLE_TOOL_JAVA_OPTIONS ML_OPTIONS` shows the values in force. Four further points from the same measurement.
+
+- Never rebuild `HOL` or `Pure`. The distribution ships both heaps built, and `isabelle build -f` rebuilds every ancestor of the session named, which is how a `HOL` build was killed at 9 GB on a 15 GB machine. Use `-c` to rebuild only the session named.
+- A session that imports `HOL-Library` theories through `sessions "HOL-Library"` in its `ROOT` loads them from source and needs no `HOL-Library` heap, so there is no second heap build running beside the session's own.
+- With `-Xmx512m`, `threads=1` held the peak at about 1.5 GB as well, but took 64 s instead of 27 s, so it is not the remedy.
+- The figures are one machine's, measured on Linux only. The desktop editor has its own cap, `JEDIT_JAVA_OPTIONS`, also `-Xmx4g`, which was not measured, and an interactive session over large theories may need more than a batch build.
+
 ### Repository-wide gates (`tools/*.py`)
 
 | Script | Checks | Command |
@@ -212,6 +252,7 @@ ordinary Turtle.
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
 | `ontology_releases.py` | Release rows exist for every version, tags are named correctly | `mise run build:ontology-releases` / `check` |
+| `bump_version.py`, `extract_bumped.py` | Bump the substrate release, or one module released on its own with its spec documents in unison and optionally its shapes, then extract the READMEs it changed and regenerate the catalogs and the release register (CAP-105) | `mise run version:bump -- [--layer-target <module>] --increment minor` |
 | `import_guard.py` | No substrate layer imports upward (ADR-A01 addendum, law B7) | `mise run check:import-guard` |
 | `reasoning_isolation_check.py` | A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83) | `mise run check:reasoning-isolation` |
 | `repository_topology_check.py` | The repository's own structure matches ADR-A77 | `mise run topology:preflight` / `topology:ready` / `topology:links` |
@@ -278,6 +319,14 @@ is generated from `AGENTS.md`, never edited by hand.
 | `hooks:run` | runs the commit checks over what is staged, as the commit hook does |
 | `hooks:merge` | runs the merge checks for the current branch against `main`, for example before merging on GitHub |
 | `check:hooks` | tests the hooks dispatcher and the writing rules |
+| `work:board` | where every unit and slice is, across every local and remote branch, from the status records' slice boards. `--all`, `--fetch`, `--measure`, `--commits` (ADR-A151) |
+| `work:here` | who is in this worktree: write your presence with `--role` and `--model`, or list the live sessions |
+| `build:work` | writes INDEX.md's generated register from the status records in the working tree |
+| `build:roadmap` | writes ROADMAP.md's generated regions from every branch |
+| `work:normalise` | rewrites every board into the standard columns and state words, reporting without `--apply` |
+| `work:rename` | builds the slice id crosswalk and sweeps every mention and Validation Pack name onto the grammar, reporting without `--apply` |
+| `work:adopt` | brings the slices a record's other tables, a Validation Pack or a plan's tables name onto the unit's board, reporting without `--apply` |
+| `check:work-board` | tests the work board, the crosswalk and the normaliser |
 
 Claude Code users elsewhere install the skills with `/plugin marketplace add nebularis/lattice` and
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the

@@ -3,6 +3,7 @@
 # Plan: Applied ontology readiness
 
 **Unit ID:** `applied-ontology-readiness`
+**Prefix:** AOR
 **Status:** Proposed, awaiting the maintainer's review before implementation
 **Trigger:** request, 2026-09-25
 **Sketch:** [applied-ontology-readiness.md](../sketches/applied-ontology-readiness.md)

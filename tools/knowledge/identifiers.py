@@ -43,7 +43,7 @@ Usage, from the repository root::
 
 The check also fails when a family defines one identifier twice, which a merge of two branches that
 each numbered a row produces. First in wins: the row committed earlier keeps the number, and the
-check prints both sites with the date each line was committed (ADR-A133 addendum).
+check prints every site with the time its line was committed, to the second, and names the one that keeps the number (ADR-A133 addendum).
 """
 
 from __future__ import annotations
@@ -133,6 +133,17 @@ class Family:
         return self.definition != "none"
 
 
+def slice_prefixes() -> list[str]:
+    """Every prefix a plan declares on its **Prefix:** line, longest first, so the slice family's
+    mention pattern is built from declarations and never from any run of capitals."""
+    found: set[str] = set()
+    for plan in sorted((ROOT / DEVELOPER / "plans").glob("*.md")):
+        for line in plan.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("**Prefix:**"):
+                found.update(p.strip() for p in line[11:].split(",") if re.fullmatch(r"[A-Z]{2,5}", p.strip()))
+    return sorted(found, key=lambda p: (-len(p), p)) or ["WB"]
+
+
 # Ordered most specific first. The first family to match an identifier owns it.
 FAMILIES: tuple[Family, ...] = (
     Family(
@@ -159,6 +170,14 @@ FAMILIES: tuple[Family, ...] = (
         defines=((DEVELOPER / "technical-debt.md").as_posix(),),
         removable=True,
         note="removed from the register when an item gains a home in a plan",
+    ),
+    Family(
+        name="backlog",
+        mention=re.compile(r"\b(BL-\d+)\b"),
+        definition="table-row",
+        defines=((DEVELOPER / "backlog.md").as_posix(),),
+        removable=True,
+        note="removed from the register when a plan takes the idea on",
     ),
     Family(
         name="mechanism",
@@ -228,12 +247,6 @@ FAMILIES: tuple[Family, ...] = (
         "to fail a build on, so the rule recognising a reference has to be narrower than this",
     ),
     Family(
-        name="slice",
-        mention=re.compile(r"\b((?:AIR|CCS|LG|ES|WA|FM|HQ|AOR|OD)-\d+(?:\.\d+)?[a-z]?)\b"),
-        definition="none",
-        note="epic slices, defined in each epic's plan",
-    ),
-    Family(
         name="question-or-decision-point",
         mention=re.compile(r"\b([A-Z]{1,4}\d*[a-z]?-(?:Q|D)\d+)\b"),
         definition="question",
@@ -242,6 +255,14 @@ FAMILIES: tuple[Family, ...] = (
         note="design questions and decision points. A question defined by a lead or row in a plan or "
         "sketch is an entry of the index. One raised in a note, a status record or a decision is "
         "counted and never failed, and a decision point is not a question",
+    ),
+    Family(
+        name="slice",
+        mention=re.compile(r"\b((?:" + "|".join(slice_prefixes()) + r")-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*)\b"),
+        definition="table-row",
+        defines=((DEVELOPER / "INDEX.md").as_posix(),),
+        note="slices, each defined by its row on its home unit's board, copied into INDEX.md's Work table by "
+        "mise run build:work (plan work-board). The prefixes come from the plans' Prefix lines",
     ),
 )
 
@@ -345,7 +366,8 @@ def tracked_markdown() -> list[Path]:
         text=True,
         check=True,
     )
-    return [ROOT / name for name in listing.stdout.split("\0") if name]
+    # The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.
+    return [ROOT / name for name in listing.stdout.split("\0") if name and not Path(name).name.startswith("slice-crosswalk-")]
 
 
 def scannable(paths: list[Path]) -> list[Path]:
@@ -429,13 +451,14 @@ def duplicates(family: Family) -> dict[str, list[tuple[Path, int, str]]]:
 
 
 def committed_on(path: Path, line: int) -> str:
-    """The date the line was committed, from git blame, "uncommitted" for a line not yet committed,
-    or "unknown" where git cannot say. Line 0 dates the file's first commit."""
+    """When the line was committed, to the second in UTC as 2026-11-02T14:13:37Z, from git blame,
+    "uncommitted" for a line not yet committed, or "unknown" where git cannot say. Line 0 dates the
+    file's first commit. Two branches often number rows on the same day, so a day cannot order them."""
     try:
         if line == 0:
-            out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%cs", "--", str(path)],
+            out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%ct", "--", str(path)],
                                  cwd=ROOT, capture_output=True, text=True, check=True).stdout
-            return out.strip().splitlines()[-1] if out.strip() else "uncommitted"
+            return _utc(int(out.strip().splitlines()[-1])) if out.strip() else "uncommitted"
         out = subprocess.run(["git", "blame", "--line-porcelain", f"-L{line},{line}", "--", str(path)],
                              cwd=ROOT, capture_output=True, text=True, check=True).stdout
     except (subprocess.CalledProcessError, OSError, IndexError):
@@ -444,8 +467,21 @@ def committed_on(path: Path, line: int) -> str:
         return "uncommitted"
     for row in out.splitlines():
         if row.startswith("committer-time "):
-            return datetime.date.fromtimestamp(int(row.split()[1])).isoformat()
+            return _utc(int(row.split()[1]))
     return "unknown"
+
+
+def _utc(seconds: int) -> str:
+    return datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def first_in(dates: list[str]) -> int | None:
+    """The index of the site committed first, or None where two share the earliest time or one has
+    no time, since then the rule cannot pick and the maintainer does."""
+    known = [d for d in dates if d[:1].isdigit()]
+    if len(known) != len(dates) or known.count(min(known)) > 1:
+        return None
+    return dates.index(min(known))
 
 
 def excepted() -> set[str]:
@@ -594,8 +630,12 @@ def main() -> int:
         )
 
     for family, _, sites in findings.duplicated:
-        where = ", ".join(f"{_name(path)}:{line} ({committed_on(path, line)})" for path, line, _ in sites)
-        print(f"ERROR: {sites[0][2]} ({family.name}) is defined {len(sites)} times: {where}")
+        dates = [committed_on(path, line) for path, line, _ in sites]
+        where = ", ".join(f"{_name(path)}:{line} ({date})" for (path, line, _), date in zip(sites, dates))
+        first = first_in(dates)
+        keeps = (f" {_name(sites[first][0])}:{sites[first][1]} keeps the number." if first is not None
+                 else " No one site was committed first, so the maintainer decides which keeps it.")
+        print(f"ERROR: {sites[0][2]} ({family.name}) is defined {len(sites)} times: {where}.{keeps}")
 
     if findings.duplicated:
         print(

@@ -37,13 +37,14 @@ Production text is everything under `ontology/` (READMEs, the documents generate
 examples and the comments in them), the site's pages, and published ADRs outside their Provenance
 section (ADR-A127 decision 4, ADR-A126 decision 11).
 
-- **Never in production text:** slice and phase identifiers (`LG-1`, `AIR-4.2`, `C9b3`), question
+- **Never in production text:** slice and phase identifiers (`LG-1`, `AIR-4.2`, `CCS-9b.3`), question
   identifiers (`LG-Q3`, `P7-Q2`), unit, epic and plan names used as labels (`CCS`, `NRS`), technical
   debt and test row identifiers (`TD-49`, `LG1-02`), and delivery phrasing such as "this slice", "the
   plan's brief", "flagged at", "at verification", "not yet written in LG-2" or "open for the maintainer".
 - **Say what instead.** State the fact the identifier stood for. A term not yet specified is "not yet
   specified". A rule decided in an ADR cites the ADR. A modelling choice is stated as the choice, with
   its reason. A release note says what changed, never which slice changed it.
+- **A migrated README cites only published decisions** (ADR-A127). The published-decisions check reports such a citation in a README not yet migrated and fails one in a README migrated to the ADR-A126 layout, which blocks a merge into `main`. On a branch a release note may cite the Proposed decision its change rests on, and before the merge the maintainer accepts that decision, or the note cites the published text that states the rule instead (PDD-16).
 - **Working documents keep them.** Sketches, plans, status records, review requests, Validation Packs,
   the developer index, commit messages and agent memory use delivery identifiers freely, since that is
   what they are for.

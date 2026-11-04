@@ -28,6 +28,7 @@ class OperationKind(Enum):
     CREATE = "Create"
     BOOTSTRAP = "Bootstrap"
     REPLACE = "Replace"
+    DELTA_REPLACE = "DeltaReplace"
     TOMBSTONE = "Tombstone"
     APPEND = "Append"
     APPEND_VERSION = "AppendVersion"
@@ -41,6 +42,8 @@ class OperationKind(Enum):
     AUDIT = "Audit"
     MEMBERS_READ = "MembersRead"
     PAYLOAD_CHECK = "PayloadCheck"
+    STATE_DIGEST_RECORD = "StateDigestRecord"
+    STATE_DIGEST_READ = "StateDigestRead"
 
 
 @dataclass(frozen=True, order=True)
@@ -78,6 +81,9 @@ class PayloadContract:
     record_classes: tuple = ()
     """The classes the profile names as records, whose instances are evidence of what they saw (``dal:recordClass``, H2.8c). An edge by
     identity from one to a versioned class is warned at compile, and a caller can read them here."""
+    encoding: str = "GroundNTriples"
+    """How every ``Payload`` slot of the operation is written (``dal:payloadEncoding``): ``GroundNTriples``, one triple per line with its
+    full stop, or ``TripleRows``, one row ``(s p o)`` per triple for a ``VALUES`` block (H2.12). :func:`slot_text` picks the text."""
 
 
 # The digest's content parts, in the fixed order of the contract: the payload of a write, or for an append the events, then for a
@@ -101,11 +107,13 @@ class DigestContract:
     def parts(self) -> tuple:
         """``(role, sources)`` for each part, in order. A part with no source has an empty tuple. The event part replaces the payload
         part for an append, whose rows slot and triples slot are its two sources."""
+        # A delta replace has add and del parts and no payload or event, and digests the change alone, with no payload part (DR-Q3).
+        change_only = self.payload is None and not self.event and (self.add or self.delete)
         return (
             ("OperationKindPart", ()),
             ("TargetPart", (self.target,) if self.target else ()),
             ("ExpectedSeqPart", (self.expected,) if self.expected else ()),
-            ("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ()),
+            *(() if change_only else ((("EventPart", self.event) if self.event else ("PayloadPart", (self.payload,) if self.payload else ())),)),
             *((("AddPart", (self.add,)),) if self.add else ()),
             *((("DelPart", (self.delete,)),) if self.delete else ()),
         )
@@ -201,9 +209,10 @@ def _payload(g: Graph, node) -> PayloadContract:
     records = tuple(sorted(
         str(c) for op in g.subjects(DAL.payloadContract, node) for profile in g.subjects(DAL.generatedOperation, op) for c in g.objects(profile, DAL.recordClass)
     ))
+    encoding = next(iter(g.objects(node, DAL.payloadEncoding)), None)
     return PayloadContract(
         _param_name(g, _one(g, node, DAL.payloadParameter)), None if root is None else _param_name(g, root), edges,
-        None if shape == DAL.NoBoundaryShape else str(shape), records,
+        None if shape == DAL.NoBoundaryShape else str(shape), records, "GroundNTriples" if encoding is None else _local(encoding),
     )
 
 

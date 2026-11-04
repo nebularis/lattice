@@ -213,6 +213,51 @@ flowchart TB
   (ADR-A127). This ADR is published with the first slice that creates the README, citing accepted
   decisions it builds on by their GitHub links.
 
+## Addendum (2026-10-27): an account instance is named, and a posting carries two orderings
+
+Two amendments, both from designing the runtime document that decision 2 promised. Neither changes what Ledger is for.
+
+**An account instance gains a minted IRI, which reverses part of decision 4.** Decision 4 has a posting name its account by the account definition, the owner and the key, so that no account instance needs an identity of its own and a balance read joins nothing. That reasoning holds for a balance read and fails for a partition. Once postings are separated by closing period, the separation needs a name for the unit it separates, and a composite of three values is not a name. [ADR-A122](ADR-A122-aggregate-ownership.md) decision 8 keeps a named graph's IRI injective in its root, which presupposes the root has an IRI at all.
+
+So an account instance is a node with a minted IRI, and a posting names that node rather than repeating the three values. A balance record is keyed by the account node and the position rather than by account, owner and position.
+
+The natural key is kept, not replaced. The account definition, the owner and the key value remain a key in the sense of [ADR-A114](ADR-A114-external-and-natural-keys.md), so an adopter holding those values still resolves the instance, and the uniqueness they express is still enforced. What changes is that the instance has its own name as well, which the key resolves to. The cost is one node and one IRI per account instance where there were none. The gain is that a posting's reference to its account is one term rather than three, and that the unit of a partition can be named.
+
+**A posting carries two orderings, not one.** A fact may be recorded after the time from which it takes effect. A correction belongs where the fact it corrects belongs, a restoration of consumed amount may take effect as of the act that consumed it, and an adjustment may be agreed later and apply earlier. One ordering cannot hold both without either losing the sequence in which facts were recorded or putting a fact in the wrong place.
+
+- **Effective position.** Where the fact sits in the arrangement the accounts describe. Supplied by the domain, comparable across accounts, and never assigned by an evaluator.
+- **Recorded position.** Where the fact sits in the account's own append-only sequence. Assigned by the writer, monotonic, and total only within one account.
+
+Nothing is mutated to achieve this. A correction is a compensating posting whose effective position is that of the fact it corrects and whose recorded position is current, so the append-only property of decision 4 and the key guard both survive.
+
+Three consequences follow.
+
+1. **A reading is reproducible only when paired with the recorded position at which it was taken.** A balance as of an effective position depends on every posting at or before that effective position, whatever its recorded position, so a posting recorded late and effective early changes a historical reading. That is correct behaviour rather than a defect, and it has to be stated, because a reading quoted without its recorded position cannot be reproduced.
+2. **The axis that compares accounts is effective position.** No global counter is needed, and none is wanted, since recorded position is total only within one account.
+3. **Correctness arguments about what a write touches are stated over two axes**, with append-only as an explicit hypothesis rather than an assumption.
+
+**What this does not decide.** How the name of a period's partitioned unit is minted. That rests on the account IRI this addendum provides, and it is held open until the read that spans a change of closing recurrence has been measured, because the cost of that read is what separates a derived name from a recorded one.
+
+## Addendum (2026-10-27, second): the recorded axis keys the partition, and a period's unit is named from its root and close
+
+The addendum above gave an account instance a minted IRI and a posting two orderings. This states what the partition is keyed on, which that addendum left implicit and which a review found to be the source of a misreading.
+
+**Books, closes and checkpoints are keyed on the recorded axis, never the effective one.** A period's unit of partition holds the postings *recorded* in that period. The sealing rule forces this rather than merely permitting it: a unit is registrable only once complete, and a unit keyed on effective position can never be complete, because a posting effective inside it may be recorded at any later time. A unit keyed on the recorded axis is complete the moment the period closes, which is what makes the close a sealing act.
+
+Three consequences follow, and each removes a question rather than adding a mechanism.
+
+- **A posting effective inside an already-closed period belongs in the open unit**, carrying its earlier effective position. It has a current recorded position, and the recorded axis is what places it. The closed units are untouched, so their registered content stays true and nothing re-seals.
+- **No checkpoint is disturbed by such a posting.** A checkpoint is the running balance along the recorded ordering at a close, so it was never a claim about what was effective by then. It remains exactly true, and the set of checkpoints stays the product of accounts and closes.
+- **A reading as of an effective position folds, and is not a correctness-path read.** It cannot be served from a checkpoint, because a running balance cannot run along both axes at once. That is a restatement, with the latency of a reporting read rather than of an operational one.
+
+**The name of a period's unit is derived from its root and its close position**, the question the addendum above left open and the graph-role addendum of the same date named as the one thing it did not decide. The inputs are the root's minted IRI and a close position computable from the declared recurrence, so the name needs no lookup and no stored triple, and a generated operation can compute it while a guard checks a caller's against the same rule. A name derived from the unit's content is refused: a unit must be nameable while it is open, and its content is settled only at the close.
+
+**A change of closing recurrence starts a new family rather than renaming anything.** Within a family the recurrence is constant, so no history of recurrence need be stored or consulted, and the recurrence an as-of read already has to know is read from a node that read already fetches. Measured: a read whose range crosses such a change stays flat, at 1.53 to 1.70 ms across a tenfold history where the unpartitioned fold of the same history grows from 22 to 224 ms, and within the spread between repeats of a same-width read inside one family. The figures are one engine's.
+
+**A posting is never effective later than it was recorded.** Its effective position does not exceed the recorded position of the pass that wrote it, so a fact may be backdated and never forward-dated. This is a consequence of the boundary between this layer and the one that owns occasions rather than a rule of arithmetic: a posting records an effect that has fired, and an effect fires on its occasion at that occasion's time, so an amount agreed now to take effect later is a term and a scheduled occasion rather than a posting dated forward. A reinstatement, an instalment and a cession on a risks-attaching basis are all of that shape.
+
+What it buys is the only tractable form of a reading as of an effective position. Every posting in a period closed at or before the read point is effective at or before it, so the read starts from that close's checkpoint and folds only the later periods, picking up whatever was backdated into them. Without the bound a checkpoint would also over-count postings effective after the read point, and a summed checkpoint cannot be filtered, so the read would scan the whole history. The cost of that fold is measured separately and this addendum does not assume it is cheap.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -229,3 +274,9 @@ maintainer answered LG-Q1 to LG-Q8 the same day, as the plan leaned, and asked t
 checked for its cost at runtime. Decision 3 then states keyed accounts, conversion and purposes, and
 decision 4 carries a posting's amount as a literal in the unit of account. The maintainer accepted
 this ADR, with ADR-A01's 2026-10-19 addendum, on 2026-10-21.
+
+The maintainer published this ADR on 2026-10-26, once the README of its first slice existed.
+
+**The 2026-10-27 addendum.** Designed in the [ledger history and runtime sketch](../../developer/sketches/ledger-history-and-runtime.md), whose §2.1 states the two orderings and whose §7 holds the questions. The maintainer answered LF-Q11 (two orderings), LF-Q17 to LF-Q22 on 2026-10-27. LF-Q19 is the reversal of decision 4's keying, and the sketch records that the partition template of the [multi-store runtime sketch](../../developer/sketches/multi-store-runtime.md) rests on it (MS-Q2, answered the same day). The minting of a period's unit is deliberately left out, tracked as PDD-12 in the [pending design decisions](../../developer/pending-design-decisions.md), pending the measurement of a read spanning a change of closing recurrence. The addendum's examples are domain-neutral by the substrate rule, where the sketch's are drawn from insurance.
+
+**The second 2026-10-27 addendum.** Written after a review of the first found that a proposal to give the checkpoint a second coordinate rested on reading a period's unit as keyed on effective position. The [ledger history and runtime sketch](../../developer/sketches/ledger-history-and-runtime.md) §4 had already recorded that a running balance cannot run along both axes, so a reading as of an effective position folds, and LF-Q17 had already fixed the running balance to the recorded ordering. The partition question is PDD-12 in the [pending design decisions](../../developer/pending-design-decisions.md), and the late-posting question PDD-14, raised while reading reinsurance material and reframed by this addendum. The cross-family measurement is `check:ledger-cross-family` under [benchmark/ledger-posting-cost](../../../benchmark/ledger-posting-cost/README.md). The forward-dating bound is left open for the maintainer and is owed a shape in LG-2.

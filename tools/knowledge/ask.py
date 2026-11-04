@@ -182,14 +182,17 @@ SELECT ?n ?id ?kind ?status ?claim ?pointer
        (GROUP_CONCAT(DISTINCT ?ph) AS ?phases) (GROUP_CONCAT(DISTINCT ?au) AS ?audiences)
        (GROUP_CONCAT(DISTINCT ?ac) AS ?activities) (GROUP_CONCAT(DISTINCT ?qu) AS ?qualities)
        (GROUP_CONCAT(DISTINCT ?te) AS ?technologies) (SAMPLE(?dn) AS ?uncovered)
-       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (SAMPLE(?sp) AS ?successor) WHERE {
+       (GROUP_CONCAT(DISTINCT ?debt) AS ?debts) (GROUP_CONCAT(DISTINCT ?idea) AS ?ideas) (SAMPLE(?sp) AS ?successor)
+       (SAMPLE(?np) AS ?narrowed) WHERE {
   GRAPH ki:index {
     ?n ki:identifier ?id ; ki:claim ?claim ; a ?k .
     OPTIONAL { ?n ki:pointer ?pointer }
     OPTIONAL { ?n ki:status ?s }
     OPTIONAL { ?n ki:doesNotCover ?dn }
     OPTIONAL { ?d ki:bearsOn ?n ; a ki:Debt ; ki:status ki:Open ; ki:identifier ?debt }
+    OPTIONAL { ?b ki:bearsOn ?n ; a ki:Backlog ; ki:status ki:Open ; ki:identifier ?idea }
     OPTIONAL { ?n ki:supersededBy ?successorNode . ?successorNode ki:identifier ?sp }
+    OPTIONAL { ?n ki:narrowedBy ?w . ?w ki:pointer ?np }
     OPTIONAL { ?n ki:phase ?p BIND (REPLACE(STR(?p), "^.*#", "") AS ?ph) }
     OPTIONAL { ?n ki:audience ?a BIND (REPLACE(STR(?a), "^.*#", "") AS ?au) }
     OPTIONAL { ?n ki:activity ?x BIND (REPLACE(STR(?x), "^.*#", "") AS ?ac) }
@@ -224,7 +227,7 @@ SELECT ?n ?iri ?claim ?pointer ?module WHERE { GRAPH ki:terms {
 KINDS = {
     "mechanism": "Mechanism", "capability": "Capability", "pattern": "Pattern",
     "principle": "Principle", "standard": "Standard", "discovery": "Discovery",
-    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt",
+    "decision": "Decision", "pending-decision": "PendingDecision", "debt": "Debt", "backlog": "Backlog", "slice": "Slice",
     "question": "Question", "term": "Term",
 }
 PHASES = {
@@ -387,15 +390,24 @@ def linked(db: ox.Store, top: list[dict], shown: set[str], limit: int = 8) -> li
     return list(out.values())[:limit]
 
 
-def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[str]) -> list[dict]:
-    """Every entry the filters admit, and the declared terms only when ``--kind`` names ``term``.
+# Kinds that are shown only when asked for, by --kind or by an identifier written in the question,
+# because ranked among the entries they take the places of the entries that answer (ADR-A134
+# decisions 31 and 34).
+ASKED_FOR = {"Term", "Slice"}
+
+
+def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[str], named: frozenset[str] = frozenset()) -> list[dict]:
+    """Every entry the filters admit, the declared terms only when ``--kind`` names ``term``, and the
+    slices only when ``--kind`` names ``slice`` or the question names one by its identifier.
 
     Ranked among the entries, 2,774 terms crowded the entries out of questions about a design, and
     no bias kept both kinds of question answered, so a term is asked for or not shown (ADR-A134
-    decision 31). A term states no phase or audience, so a filter on either hides it."""
+    decision 31). The 385 slices did the same once the work board indexed them, lowering hit@5 on
+    the bake-off from 0.930 to 0.837, so a slice is asked for too (decision 34). A term states no
+    phase or audience, so a filter on either hides it."""
     rows = [
         r for r in rows_of(db.query(CANDIDATES))
-        if (not kinds or r["kind"] in kinds)
+        if (r["kind"] in kinds if kinds else (r["kind"] not in ASKED_FOR or identifiers.normalise(r["id"]) in named))
         and (not phases or phases & set((r["phases"] or "").split()))
         and (not audiences or audiences & set((r["audiences"] or "").split()))
     ]
@@ -408,10 +420,10 @@ def candidates(db: ox.Store, kinds: set[str], phases: set[str], audiences: set[s
 
 def without(kinds: set[str], excluded: set[str]) -> set[str]:
     """The kinds left once ``excluded`` are taken out: of those named, or of every entry kind when
-    none is. Terms stay out unless named, so excluding nothing leaves the default (decision 30)."""
+    none is. Terms and slices stay out unless named, so excluding nothing leaves the default (decision 30)."""
     if not excluded:
         return kinds
-    return (kinds or set(KINDS.values()) - {"Term"}) - excluded
+    return (kinds or set(KINDS.values()) - ASKED_FOR) - excluded
 
 
 def flags(r: dict) -> str:
@@ -419,10 +431,12 @@ def flags(r: dict) -> str:
     marks = ""
     if r.get("uncovered"):
         marks += "!"
-    if r.get("reversed") or r.get("successor") or r.get("status") == "Superseded":
+    if r.get("reversed") or r.get("narrowed") or r.get("successor") or r.get("status") == "Superseded":
         marks += "~"
     if r.get("debts"):
         marks += "TD"
+    if r.get("ideas"):
+        marks += "BL"
     if r.get("status") == "Proposed":
         marks += "?"
     return marks
@@ -444,6 +458,8 @@ def under(r: dict) -> str:
         text.append(f"Narrowed by {r['narrowed']}.")
     if r.get("debts"):
         text.append(f"Open debt: {', '.join(sorted(r['debts'].split()))}.")
+    if r.get("ideas"):
+        text.append(f"On the backlog, not built: {', '.join(sorted(r['ideas'].split()))}.")
     return " ".join(text)
 
 
@@ -491,27 +507,32 @@ def rank(
     """Every candidate scored against the words, best first, and the best meaning score. Raises
     embed.Unavailable where the vectors or the model are missing."""
     facets = facets or {}
-    rows = candidates(db, kinds, phases, audiences)
+    # An identifier written in the question names one entry outright, which no amount of meaning can
+    # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
+    # first stops `find PDD-08` reporting that the index may not hold PDD-08.
+    named = frozenset(identifiers.normalise(word) for word in words.split())
+    rows = candidates(db, kinds, phases, audiences, named)
     nodes, vectors = embed.load(STORE_PATH.parent)
     question = (model or embed.Model()).question(words)
     index = {node: i for i, node in enumerate(nodes)}
     sections: dict[str, list[dict]] = {}
     for section in rows_of(db.query(SECTIONS)):
         sections.setdefault(section["n"], []).append(section)
-    # An identifier written in the question names one entry outright, which no amount of meaning can
-    # beat and which the embedding scores poorly, since a name carries no sense of its own. Ranking it
-    # first stops `find PDD-08` reporting that the index may not hold PDD-08.
-    named = {identifiers.normalise(word) for word in words.split()}
     for r in rows:
         r["meaning"] = float(vectors[index[r["n"]]] @ question) if r["n"] in index else -1.0
         if r["kind"] != "Term" and identifiers.normalise(r["id"]) in named:
             r["meaning"] = 1.0
+        # A decision's claim is its first numbered decision, so the row carries what reverses or
+        # narrows that section even when no section outranks the claim.
+        first = next((x for x in sections.get(r["n"], []) if x["s"].endswith("/section-1")), None)
+        if first:
+            r["reversed"], r["narrowed"] = first["reversed"], first["narrowed"] or r.get("narrowed")
         # An entry is as close as its closest section and then points at it. After the name, so that
         # a named entry keeps its whole-file pointer.
         for section in sections.get(r["n"], []):
             if section["s"] in index and (m := float(vectors[index[section["s"]]] @ question)) > r["meaning"]:
                 r["meaning"], r["pointer"] = m, section["pointer"]
-                r["reversed"], r["narrowed"] = section["reversed"], section["narrowed"]
+                r["reversed"], r["narrowed"] = section["reversed"], section["narrowed"] or r.get("narrowed")
                 r["section"] = section["text"]
         r["facets"] = sum(bool(wanted & set((r.get(c) or "").split())) for c, wanted in facets.items())
         r["score"] = r["meaning"] + BOOST * r["facets"]
@@ -533,9 +554,9 @@ def _show_found(db: ox.Store, rows: list[dict], facets: dict, best: float) -> No
     if also:
         print("\nlinked to the top answers by a declared edge:")
         show(also, ("via", "id", "kind", "status", "claim", "pointer"))
-    marks = {m for r in rows for m in ("!", "~", "TD", "?") if m in r["flags"]}
+    marks = {m for r in rows for m in ("!", "~", "TD", "BL", "?") if m in r["flags"]}
     if marks:
-        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "?") if m in marks) + ". The line under the row says which.")
+        print("\n" + ". ".join(FLAG_WORDS[m] for m in ("!", "~", "TD", "BL", "?") if m in marks) + ". The line under the row says which.")
     if facets:
         print("\n+ marks each facet the entry matches, which raised it by", BOOST)
     if best < WEAK:
@@ -546,8 +567,9 @@ def _show_found(db: ox.Store, rows: list[dict], facets: dict, best: float) -> No
 
 FLAG_WORDS = {
     "!": "! the entry states a case it does not cover",
-    "~": "~ the text returned was superseded or reversed",
+    "~": "~ the text returned was superseded, reversed or narrowed",
     "TD": "TD an open debt bears on the entry",
+    "BL": "BL an idea on the backlog, not built, bears on the entry",
     "?": "? the entry is Proposed, not ratified",
 }
 
@@ -579,8 +601,10 @@ def read_ranges(db: ox.Store, identifier: str) -> list[tuple[str, str]]:
 
 
 def whole_file(where: str) -> int | None:
-    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None."""
-    path, start, end = anchors.parse_range(where)
+    """The length of the file a range covers whole, when it is longer than WHOLE_FILE, else None.
+
+    ``where`` is a label from read_ranges, so the row and pointed-at prefixes are dropped first."""
+    path, start, end = anchors.parse_range(where.removeprefix("row ").removeprefix("pointed-at "))
     total = len((ROOT / path).read_text(encoding="utf-8", errors="replace").splitlines())
     return total if start == 1 and end in (None, total) and total > WHOLE_FILE else None
 

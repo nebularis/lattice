@@ -1,0 +1,39 @@
+@b <https://example.org/lattice/odrl/mapping#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+@p vcard=<http://www.w3.org/2006/vcard/ns#>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+@p elg=<https://www.nebularis.org/neuro-semantic/lattice/eligibility#>
+%R Source fm mork:RDF lb "ODRL 2.2 policies"
+%X
+odrl:Agreement RE
+%T Concepts in Source
+PolicyConcept C ra odrl:Agreement
+PermissionConcept C p odrl:permission
+ProhibitionConcept C p odrl:prohibition
+ObligationConcept C p odrl:obligation
+DutyConcept C p odrl:permission/odrl:duty
+RemedyConcept C p odrl:prohibition/odrl:remedy
+PermAssignee C p ^odrl:permission/odrl:assignee
+PermAssigner C p ^odrl:permission/odrl:assigner
+ProhAssignee C p ^odrl:prohibition/odrl:assignee
+ProhAssigner C p ^odrl:prohibition/odrl:assigner
+OblAssignee C p ^odrl:obligation/odrl:assignee
+OblAssigner C p ^odrl:obligation/odrl:assigner
+DutyAssignee C p ^odrl:duty/^odrl:permission/odrl:assignee
+DutyAssigner C p ^odrl:duty/^odrl:permission/odrl:assigner
+RemAssignee C p ^odrl:remedy/^odrl:prohibition/odrl:assignee
+RemAssigner C p ^odrl:remedy/^odrl:prohibition/odrl:assigner
+%M Scheme md mork:ReviewMode lb "an ODRL policy to a stated term with its permission, prohibitions, obligations and remedy" sdl [odrl <http://www.w3.org/ns/odrl/2/>]
+Role_T MD xt pty:Role c role
+Role_T_Label M cb Role_T xr rdfs:label v "party"
+Policy MD f PolicyConcept xt ins:Term,ins:Template c term
+Permission MD cb Policy f PermissionConcept xt ins:Permission,ins:Template xr ins:arisesUnder c permission w 80 n "An ODRL permission is a liberty, so an ins:Permission."
+Permission_Activity M cb Permission xr ins:activity r odrl:action
+Permission_Holder MD cb Permission tp Role_T f PermAssignee xi ins:holder
+Permission_Counterparty MD cb Permission tp Role_T f PermAssigner xi ins:counterparty
+Implied MD cb Permission xt ins:Prohibition,ins:Template xi ins:excepts ct "implied-prohibition/${odrl:action}" n "The prohibition the permission excepts (law I8)."
+Implied_Term MD cb Implied xt ins:Term,ins:Template xi ins:arisesUnder ct "implied-term/${odrl:action}"
+Implied_Activity M cb Implied xr ins:activity r odrl:action
+Implied_Obligor MD cb Implied tp Role_T f PermAssignee xi ins:obligor
+Implied_Obligee MD cb Implied tp Role_T f PermAssigner xi ins:obligee

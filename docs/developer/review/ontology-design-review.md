@@ -305,7 +305,7 @@ Questions answered weakly or beside the point, from this review's own asking:
 | a layer namespace on a placeholder domain released under a version IRI | STD-069 at 0.78, domain neutrality | nothing records SPC's or `pat:`'s namespace as debt |
 | a law stated in a README that no proof or test checks | ADR-A-FM3 at 0.72 | no row per unrealised law. TD-27 covers Eligibility's registers only |
 
-Register rows to add, each a gap STD-272 says to report: SPC and `pat:` namespaces (§2.2), the mutable-parts rule and its four instances (§2.3), four canonicalisation schemes (§2.4), Persistence baselines (§2.5), Q8, Q13 and the missing law IRIs (§2.6), `fnd:supersededBy` acyclicity (§2.8), Behaviour's stored balance (§2.9), the minting edge cases (§2.10), the time rules (§2.11), the seven empty shape files (§3.3), the three-way names (§3.2), the stale architecture document (§3.7), capacity's release state (§3.7). The debts already recorded that this review confirms: TD-11, TD-16, TD-20, TD-26, TD-27, TD-32, TD-46, TD-47, TD-48, TD-51, TD-64, TD-65, TD-66, TD-67, TD-74, TD-85, TD-95, TD-96, TD-97, TD-98.
+Register rows to add, each a gap STD-272 says to report: SPC and `pat:` namespaces (§2.2), the mutable-parts rule and its four instances (§2.3), four canonicalisation schemes (§2.4), Persistence baselines (§2.5), Q8, Q13 and the missing law IRIs (§2.6), `fnd:supersededBy` acyclicity (§2.8), Behaviour's stored balance (§2.9), the minting edge cases (§2.10), the time rules (§2.11), the seven empty shape files (§3.3), the three-way names (§3.2), the stale architecture document (§3.7), capacity's release state (§3.7). The debts already recorded that this review confirms: TD-11, TD-16, TD-20, TD-26, TD-27, TD-32, TD-46, TD-47, TD-48, TD-51, TD-64, TD-65, TD-66, TD-67, TD-74, TD-85, TD-95, TD-131, TD-132, TD-98.
 
 🔴 PLAN FIRST. Item 1 of §7 is the maintainer's alone, and items 2, 4, 5 and 9 are design decisions that change accepted ADRs.
 
@@ -340,10 +340,10 @@ Every branch numbers its own rows from the highest it can see. The same identifi
 
 | ID | `main` working tree | ledger branch | `ccs-trunk` | studio |
 |---|---|---|---|---|
-| STD-279 | the index remediation's own rows run 279 to 283 | a record is never effective later than it was recorded | say what a row with no value means | a service validates what it receives |
-| TD-94 | the index remediation's own rows run 94 to 100 | the period partition costs more on TDB2 and nobody knows why | two static shapes read `skos:broader` | the `dal:` shapes do not check a multi-dimension profile |
+| STD-298 | the index remediation's own rows run 279 to 283 | a record is never effective later than it was recorded | say what a row with no value means | a service validates what it receives |
+| TD-130 | the index remediation's own rows run 94 to 100 | the period partition costs more on TDB2 and nobody knows why | two static shapes read `skos:broader` | the `dal:` shapes do not check a multi-dimension profile |
 
-`check:identifiers` checks that every identifier a document cites resolves to a row. It does not check that a row's identifier is unique, so a tree with two STD-279 rows passes it. The extractor keys a node by its identifier, so two rows become one node with two claims (not tested, read from `extract.py`). The register header already records a renumbering on 2026-10-10 for exactly this, when `main` and track H had both assigned TD-26 and TD-32, with the rule that `main` keeps its numbers. That rule is the one to keep, and the renumbering touches every citation of the moved row on the branch, which `check:identifiers` then finds.
+`check:identifiers` checks that every identifier a document cites resolves to a row. It does not check that a row's identifier is unique, so a tree with two STD-298 rows passes it. The extractor keys a node by its identifier, so two rows become one node with two claims (not tested, read from `extract.py`). The register header already records a renumbering on 2026-10-10 for exactly this, when `main` and track H had both assigned TD-26 and TD-32, with the rule that `main` keeps its numbers. That rule is the one to keep, and the renumbering touches every citation of the moved row on the branch, which `check:identifiers` then finds.
 
 Until a rule stops it recurring, every merge of `main` into a branch, and of a branch into `main`, renumbers. Three options, a design question for the maintainer and not decided here.
 

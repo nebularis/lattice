@@ -1,0 +1,29 @@
+{
+ "decoded": true,
+ "triples": 90,
+ "schemes": [
+  {
+   "scheme": "https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Scheme",
+   "queries": 1,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "BadPath",
+   "about": "https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T_Label",
+   "message": "undeclared prefix 'rdfs' at 0 in path 'rdfs:label|rulemm:symbolForData'"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "NoIterator",
+   "about": "https://www.nebularis.org/neuro-semantic/lattice/config-studio/legalruleml-mapping#Role_T",
+   "message": "a root datum names the source classes it iterates with mork:mappingFor and mork:representedAs"
+  }
+ ],
+ "errors": 2,
+ "output_triples": null
+}

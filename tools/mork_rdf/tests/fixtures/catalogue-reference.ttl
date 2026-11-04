@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix tgt:  <http://example.org/tgt#> .
+
+tgt:Genres a skos:ConceptScheme .
+tgt:SF a skos:Concept ; skos:inScheme tgt:Genres ; skos:notation "SF" .
+tgt:Crime a skos:Concept ; skos:inScheme tgt:Genres ; skos:notation "CR" .

@@ -513,6 +513,59 @@
    "sha256": "f05e0ad9954e60def7f14dcd5ae5fef3b5935525a973e40ba6aee3d1f09036a2"
   },
   {
+   "id": "digest-delta-replace",
+   "description": "Delta replace. The add part holds the triple the write asserts and the del part the triple it retracts. There is no payload part, since the request carries the change and not the state. The operation kind, target, expected seq and the two parts are the whole digest.",
+   "operationKind": "DeltaReplace",
+   "target": "urn:example:person/1",
+   "expected": 1,
+   "parts": [
+    {
+     "role": "AddPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "37",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    },
+    {
+     "role": "DelPart",
+     "triples": [
+      {
+       "s": {
+        "iri": "urn:example:person/1"
+       },
+       "p": {
+        "iri": "urn:example:age"
+       },
+       "o": {
+        "literal": "36",
+        "datatype": "http://www.w3.org/2001/XMLSchema#long"
+       }
+      }
+     ]
+    }
+   ],
+   "canonicalParts": [
+    [
+     "<urn:example:person/1> <urn:example:age> \"37\"^^<http://www.w3.org/2001/XMLSchema#long> ."
+    ],
+    [
+     "<urn:example:person/1> <urn:example:age> \"36\"^^<http://www.w3.org/2001/XMLSchema#long> ."
+    ]
+   ],
+   "encodedHex": "31323a44656c74615265706c61636532303a75726e3a6578616d706c653a706572736f6e2f31313a3139313a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223337225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e39313a38383a3c75726e3a6578616d706c653a706572736f6e2f313e203c75726e3a6578616d706c653a6167653e20223336225e5e3c687474703a2f2f7777772e77332e6f72672f323030312f584d4c536368656d61236c6f6e673e202e",
+   "sha256": "2979820a2626b35d7e9ce79229bf0dda8280b690cc7aea42169dea9184dddc63"
+  },
+  {
    "id": "digest-same-triple-in-add",
    "description": "The triple C is in the add part and the del part is empty.",
    "operationKind": "Replace",

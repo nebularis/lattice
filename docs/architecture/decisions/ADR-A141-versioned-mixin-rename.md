@@ -1,10 +1,13 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A141: The mixin `fnd:Version` is renamed `fnd:Versioned`
 
-**Status:** Proposed 2026-10-28
+**Status:** Published, 2026-10-29. Accepted 2026-10-29.
 **Date:** 2026-10-28
-**Related:** [ADR-A113](ADR-A113-breaking-changes-at-major-version-zero.md) (a breaking change at major version zero), [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release for the substrate)
+**Related:** [ADR-A113](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md) (a breaking change at major version zero), [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (one release for the substrate)
 **Described in:** [Foundation](../../../ontology/foundation/README.md), §2 and the release notes
 
 ## Context

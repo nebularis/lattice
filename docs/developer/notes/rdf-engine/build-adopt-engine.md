@@ -416,7 +416,7 @@ times the context size, and output is a small fraction. In the measurements belo
 ### 11.2 Calibration from this session
 
 This session's debug log retains the last 59 main-agent calls and one subagent run. Earlier slices
-(WA10, WA11) fell outside it and cannot be measured. Full data in Appendix A.
+(WA-10, WA-11) fell outside it and cannot be measured. Full data in Appendix A.
 
 | Work | Calls | Mean context | G | E |
 |---|---|---|---|---|

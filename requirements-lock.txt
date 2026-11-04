@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # Core LATTICE validation environment, generated 2026-09-18, re-verified unchanged on Python 3.14.7 on 2026-09-23.
+# pyoxigraph raised to 0.5.13 on 2026-10-27 to match the floor tools/testing/oxigraph declares.
 # Install with: python3 -m pip install -c requirements-lock.txt ".[reasoning]"
 flatbuffers==25.12.19
 html5rdf==1.2.1

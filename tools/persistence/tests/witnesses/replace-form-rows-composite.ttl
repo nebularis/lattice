@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The patch-log rows replace of a composite family, selected by a deployment-wide capability spec (H2.12).
+# base: composite-property-boundary-shacl.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:SnapshotStore a dal:CapabilitySpec ;
+    dal:providesCas                     dal:Linearizable ;
+    dal:providesSnapshotUpdateSemantics true .
+
+ex:OrderEncodingProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:replaceEncoding dal:WholeState .

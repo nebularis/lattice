@@ -3,7 +3,7 @@
  * implements this over Office.js (`officePort.ts`) and over an in-memory model for tests and the
  * harness (`fakePort.ts`); WA8 only defines the shape.
  */
-import type { VariableDeclaration } from "../domain/types";
+import type { VariableDeclaration } from "@lattice/authoring-domain";
 
 export type MarkResultReason = "no-selection" | "outside-element" | "outside-section" | "already-marked" | "spans-parts";
 
@@ -20,6 +20,9 @@ export interface AuthoringMetadata {
   documentId: string;
   templateId: string;
   title: string;
+  /** The studio workspace the document is saved in, once it has been saved. */
+  workspaceId?: string;
+  /** The revision the workspace holds, null until the document is first saved. */
   revision: number | null;
   variables: VariableDeclaration[];
 }

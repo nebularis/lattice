@@ -91,6 +91,11 @@ class Triple:
         obj = self.object.sparql() if isinstance(self.object, Lit) else str(self.object)
         return f"{self.subject} {self.predicate} {obj} ."
 
+    def row(self) -> str:
+        """The triple as one row of a ``VALUES (?s ?p ?o)`` block, for a slot whose encoding is ``TripleRows`` (H2.12)."""
+        obj = self.object.sparql() if isinstance(self.object, Lit) else str(self.object)
+        return f"({self.subject} {self.predicate} {obj})"
+
 
 def _term(node) -> Object:
     """The typed term for an rdflib node. A blank node is refused."""
@@ -134,6 +139,11 @@ class Payload:
 
     def sparql(self) -> str:
         return "\n".join(sorted({t.sparql() for t in self.triples}))
+
+    def rows(self) -> str:
+        """The text that fills a slot whose encoding is ``TripleRows``: one row per triple, sorted, with no duplicate. An empty payload is an
+        empty block, which gives its branch no solution and is why the rows replace keeps an empty branch beside it."""
+        return "\n".join(sorted({t.row() for t in self.triples}))
 
     def subjects(self) -> frozenset:
         return frozenset(t.subject for t in self.triples)
@@ -198,4 +208,17 @@ class Rows:
         return len(self.rows)
 
 
-__all__ = ["PayloadError", "Lit", "Triple", "Payload", "EventRow", "Rows"]
+def slot_text(operation, name: str, value) -> str:
+    """The text that fills the slot ``name`` of ``operation`` with ``value``, by the operation's contract: a :class:`Payload` is written as
+    rows where the payload contract's encoding is ``TripleRows`` and as triples otherwise, and :class:`Rows` as its rows. The caller
+    substitutes it for the marker ``{{{name}}}``."""
+    if isinstance(value, Rows):
+        return value.sparql()
+    if not isinstance(value, Payload):
+        raise PayloadError(f"slot {name!r} takes a Payload or Rows, got {type(value).__name__}")
+    contract = getattr(operation, "payload", None)
+    rows = contract is not None and getattr(contract, "encoding", "GroundNTriples") == "TripleRows"
+    return value.rows() if rows else value.sparql()
+
+
+__all__ = ["PayloadError", "Lit", "Triple", "Payload", "EventRow", "Rows", "slot_text"]

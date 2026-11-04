@@ -152,13 +152,17 @@ that does not use them.
 
 Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are unchanged.
 
+## Addendum 2026-10-29 (proposed 2026-10-29)
+
+Rule 11 is amended. Every release in which the layer changed has an entry, not every released version, since the release register records which documents each release holds. The entry's form is the versioning policy's: one bullet per release, newest first, one sub-bullet per change opening with its ADR-A129 class, and `Unreleased` for a change whose number is not yet assigned. Two units had written pending notes as "Next release", a phrase that in English names the release after the current one, in two styles and in two places in one list, which the 0.20.0 cut made visible.
+
 ## Provenance
 
 **Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)
 
 Proposed in the [improved ontology documentation sketch](../../developer/sketches/improved-ontology-documentation.md)
 and settled in design discussion on 2026-10-15 and 2026-10-16, recorded as decisions OD-D1 to OD-D27 in the
-[`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD1
-to OD8 onward). The measurements cited in the context are in that unit's status record.
+[`improved-ontology-documentation` plan](../../developer/plans/improved-ontology-documentation.md) (slices OD-1
+to OD-8 onward). The measurements cited in the context are in that unit's status record.
 
 The addendum of 2026-10-21 is decision D-59 of the Persistence work, recorded in that unit's status record.

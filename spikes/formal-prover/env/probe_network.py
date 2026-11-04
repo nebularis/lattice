@@ -1,20 +1,39 @@
 #!/usr/bin/env python3
 """Checks that track D's tool sources are reachable (mise task check:formal-network),
 cross-platform. See env/probe-network.ps1 for a PowerShell equivalent with the same targets,
-kept for quick manual diagnosis on Windows."""
+kept for quick manual diagnosis on Windows.
+
+A source is probed by the file the install will fetch, never by the directory holding it. Probing
+the directory reported Isabelle reachable while the pinned bundle returned 404, because a mirror
+that carries only the current release still serves its index. The Isabelle target is derived from
+install_native.py, so the probe and the install can never name different files."""
 
 from __future__ import annotations
 
+import platform
 import sys
 import urllib.error
 import urllib.request
 
-TARGETS = {
+import install_native
+
+OTHER_TARGETS = {
     "opam releases (GitHub API)": "https://api.github.com/repos/ocaml/opam/releases/latest",
     "Rocq opam repository": "https://rocq-prover.org/opam/released/repo",
-    "Isabelle Cambridge mirror": "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/",
     "Docker Hub registry": "https://registry-1.docker.io/v2/",
 }
+
+
+def isabelle_target() -> tuple[str, str] | None:
+    """The pinned Isabelle artefact for this host, or None where no native route is scripted."""
+    if platform.system() == "Windows":
+        return "Isabelle pinned installer", f"{install_native.ISABELLE_MIRROR}/{install_native.ISABELLE}.exe"
+    try:
+        bundle = install_native.isabelle_bundle()
+    except SystemExit:
+        return None
+    return "Isabelle pinned bundle", f"{install_native.ISABELLE_MIRROR}/{bundle}.tar.gz"
+
 
 BLOCK_MARKERS = ("Block Notice", "Not allowed to browse", "cgi-bin/notice")
 
@@ -41,11 +60,17 @@ def probe(url: str, timeout: int = 20) -> str:
 
 
 def main() -> int:
+    targets = dict(OTHER_TARGETS)
+    isabelle = isabelle_target()
+    if isabelle:
+        targets[isabelle[0]] = isabelle[1]
     failed = False
-    for name, url in TARGETS.items():
+    for name, url in targets.items():
         status = probe(url)
         failed = failed or not status.startswith("ok")
         print(f"{name:<30} {status:<10} {url}")
+    if not isabelle:
+        print(f"{'Isabelle':<30} {'skipped':<10} no native route scripted for {platform.system()}")
     return 1 if failed else 0
 
 

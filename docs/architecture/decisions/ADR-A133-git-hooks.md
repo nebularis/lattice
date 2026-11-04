@@ -71,3 +71,26 @@ Proposed on 2026-10-23, after the maintainer asked which checks should become ho
 10. **Identifiers at a commit and at a merge.** The identifier check runs over the registers, the decisions and the store record as a commit check and a merge gate, blocking at both. It fails when an identifier is defined twice, which happens when two branches each numbered a row and one is merged into the other. The rule is first in wins: the row whose line was committed earlier keeps its number, and the later row and every citation of it are renumbered. The check prints both sites with the date each line was committed, so the choice is mechanical and the index, rebuilt after the merge, holds one entry per identifier.
 
 Provenance of the addendum: the maintainer chose the uniqueness check as a merge hook with first in wins on 2026-10-28, over provisional identifiers on branches and over reserved ranges, in the ontology remediation unit.
+
+## Addendum, 2026-11-01
+
+11. **The studio's browser suites at a merge.** A merge into `main` that touches the Configuration Studio (its application, its services, its contracts or its worker) runs `mise run test:config-studio-browser`: the browser journeys against the in-memory fake service, then the real-stack suite against a single topology the studio harness starts in isolation (ADR-A150). It blocks. It runs at a merge only, since it takes a few minutes and builds the browser application and the jars. The fake service keeps the journeys fast, and the real stack catches a fake that has drifted from the service, as the fake had when it lacked the session route and accepted a patch the service refused (TSD-69).
+
+Provenance of the addendum: the maintainer chose on 2026-11-01 to keep the fake service for the journeys and to add the real stack to the merge gate, over moving every browser test onto the real stack.
+
+## Addendum, 2026-11-02
+
+**Narrows decision 10.**
+
+12. **First in wins is decided to the second.** The check prints each site with the time its line was committed, in UTC to the second, and names the site that keeps the number. Two branches often number rows on the same day, which a date cannot order. Where two sites share the earliest second, or one has no commit, it names none and the maintainer decides.
+
+Provenance of the addendum: two branches numbered STD-300 upward on 2026-11-02, five hours apart, and the check printed the same day for both. The maintainer asked for the rule to go by the time on 2026-11-02 (slice WB-8 of `work-board`).
+
+## Addendum, 2026-11-03
+
+**Reverses decision 11.**
+
+13. **A hook runs quick checks, never a test suite.** A check in a hook reads the files a commit or a merge changes and answers in seconds, for example a static check, a register check or a regenerated file compared. A test suite, which builds, starts processes or runs a browser, runs by convention before a merge into `main`, and the handoff that asks for the merge lists each suite a change touched with its result (skill `lattice-lifecycle`). The studio's browser suites leave the merge gate and are among them, as `mise run test:config-studio-browser`, which stages the studio's assets and packages its jars before it runs.
+
+Provenance of the addendum: the browser gate held a squash merge into `main` for over a minute and then failed on assets staged before the change, while the other merge checks took 7.5 s over the same 290 files. The maintainer decided on 2026-11-03 that tests are not hooks (slice GH-5 of `git-hooks`).
+

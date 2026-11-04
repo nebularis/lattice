@@ -1,0 +1,56 @@
+@b <https://example.org/lattice/mtp/legalruleml-cold2#>
+@p lrmlmm=<http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#>
+@p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+@p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+%R Source fm mork:RDF lb "LegalRuleML deontic specifications"
+%X
+lrmlmm:Obligation RE
+lrmlmm:Permission RE
+lrmlmm:Prohibition RE
+lrmlmm:Right RE
+%T Concepts in Source
+ObligationConcept C ra lrmlmm:Obligation
+ObligationBearer C p lrmlmm:Bearer
+ObligationAux C p lrmlmm:AuxiliaryParty
+PermissionConcept C ra lrmlmm:Permission
+PermissionBearer C p lrmlmm:Bearer
+PermissionAux C p lrmlmm:AuxiliaryParty
+ProhibitionConcept C ra lrmlmm:Prohibition
+ProhibitionBearer C p lrmlmm:Bearer
+ProhibitionAux C p lrmlmm:AuxiliaryParty
+RightConcept C ra lrmlmm:Right
+RightBearer C p lrmlmm:Bearer
+RightAux C p lrmlmm:AuxiliaryParty
+%M Scheme md mork:ReviewMode lb "LegalRuleML deontic specifications to stated LATTICE relations" sdl [lrmlmm <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#>] sdl [rdfs <http://www.w3.org/2000/01/rdf-schema#>]
+Role_T MD xt pty:Role c role
+Role_T_Label M cb Role_T xr rdfs:label r rdfs:label
+Obl MD f ObligationConcept xt ins:Term,ins:Template c obligation-term
+Obl_Relation MD cb Obl xt ins:Obligation,ins:Template xr ins:arisesUnder c obligation
+Obl_Activity MD cb Obl_Relation xt skos:Concept xi ins:activity ct "activity/${rdfs:label}"
+Obl_Activity_Label M cb Obl_Activity xr rdfs:label r rdfs:label
+Obl_Obligor MD cb Obl_Relation tp Role_T f ObligationBearer xi ins:obligor
+Obl_Obligee MD cb Obl_Relation tp Role_T f ObligationAux xi ins:obligee
+Perm MD f PermissionConcept xt ins:Term,ins:Template c permission-term
+Perm_Relation MD cb Perm xt ins:Permission,ins:Template xr ins:arisesUnder c permission
+Perm_Activity MD cb Perm_Relation xt skos:Concept xi ins:activity ct "activity/${rdfs:label}"
+Perm_Activity_Label M cb Perm_Activity xr rdfs:label r rdfs:label
+Perm_Holder MD cb Perm_Relation tp Role_T f PermissionBearer xi ins:holder
+Perm_Counterparty MD cb Perm_Relation tp Role_T f PermissionAux xi ins:counterparty
+Perm_Implied MD cb Perm_Relation xt ins:Prohibition,ins:Template xi ins:excepts ct "implied-prohibition/${rdfs:label}" n "Law I8: the permission excepts a prohibition on the same act, its obligor the holder."
+Perm_Implied_Term MD cb Perm_Implied xt ins:Term,ins:Template xi ins:arisesUnder ct "implied-term/${rdfs:label}"
+Perm_Implied_Activity MD cb Perm_Implied xt skos:Concept xi ins:activity ct "activity/${rdfs:label}"
+Perm_Implied_Activity_Label M cb Perm_Implied_Activity xr rdfs:label r rdfs:label
+Perm_Implied_Obligor MD cb Perm_Implied tp Role_T f PermissionBearer xi ins:obligor
+Perm_Implied_Obligee MD cb Perm_Implied tp Role_T f PermissionAux xi ins:obligee
+Proh MD f ProhibitionConcept aw "lrmlmm:AuxiliaryParty [1..]" xt ins:Term,ins:Template c prohibition-term
+Proh_Relation MD cb Proh xt ins:Prohibition,ins:Template xr ins:arisesUnder c prohibition
+Proh_Activity MD cb Proh_Relation xt skos:Concept xi ins:activity ct "activity/${rdfs:label}"
+Proh_Activity_Label M cb Proh_Activity xr rdfs:label r rdfs:label
+Proh_Obligor MD cb Proh_Relation tp Role_T f ProhibitionBearer xi ins:obligor
+Right_T MD f RightConcept xt ins:Term,ins:Template c right-term
+Right_Claim MD cb Right_T xt ins:Obligation,ins:Template xr ins:arisesUnder c right-claim n "A right is several Hohfeld relations. Its claim end is an obligation owed to the bearer by the auxiliary party."
+Right_Claim_Activity MD cb Right_Claim xt skos:Concept xi ins:activity ct "activity/${rdfs:label}"
+Right_Claim_Activity_Label M cb Right_Claim_Activity xr rdfs:label r rdfs:label
+Right_Claim_Obligor MD cb Right_Claim tp Role_T f RightAux xi ins:obligor
+Right_Claim_Obligee MD cb Right_Claim tp Role_T f RightBearer xi ins:obligee
+Proh_Obligee MD cb Proh_Relation tp Role_T f ProhibitionAux xi ins:obligee

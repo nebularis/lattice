@@ -52,7 +52,7 @@ The Activity, Quality and Technology values register entries are tagged with, ra
 | conceptual-data-modelling | conceptual data modelling | data-modelling |  |  | Naming the things, relations and rules of a domain without regard to how they are stored. |  | yes |
 | logical-data-modelling | logical data modelling | data-modelling |  |  | Giving a conceptual model keys, cardinalities, constraints and shapes, independent of any one store. |  | yes |
 | physical-data-modelling | physical data modelling | data-modelling |  |  | Fitting a logical model to a store, with its indexes, partitions, graphs, encodings and write paths. | Use for how a model is laid out in a store and written to it, such as aggregates, guarded writes and history. Use solution design for the component around it. | yes |
-| ontology-design | ontology design | conceptual-data-modelling design logical-data-modelling |  |  | Designing classes, properties, shapes and vocabularies within one layer or applied module. |  | yes |
+| ontology-design | ontology design | conceptual-data-modelling design logical-data-modelling |  |  | Designing classes, properties, shapes and vocabularies within one layer or applied module. | Use for authoring an ontology as well as designing one, including any change under `ontology/`. The skill `lattice-ontology-authoring` and the plans call this activity authoring, and `ontology-authoring` is not a value. Use cross-layer design for deciding which layer a concept belongs in. | yes |
 | schema-design | schema design | api-and-contract-design logical-data-modelling |  |  | Designing a schema others validate against, such as a SHACL shape, a JSON Schema or a table definition. |  | yes |
 | identity-design | identity design | data-modelling |  |  | Deciding how things are identified, keyed and versioned, and how their identifiers are minted. |  | yes |
 | temporal-modelling | temporal modelling | data-modelling |  |  | Modelling validity periods, recording time, history, versions and as-of reads. |  | yes |
@@ -253,6 +253,8 @@ The Activity, Quality and Technology values register entries are tagged with, ra
 | trig | TriG | format |  |  | TriG, Turtle with named graphs. |  | yes |
 | n-triples | N-Triples and N-Quads | format |  |  | N-Triples and N-Quads, the line-based RDF formats. |  | yes |
 | json-ld | JSON-LD | format standard |  |  | JSON-LD, RDF as JSON. |  | yes |
+| xslt | XSLT | language standard |  |  | XSLT and XPath, the W3C languages for transforming XML. |  | no |
+| jolt | JOLT | library |  |  | Bazaarvoice JOLT, a JSON to JSON transformation library and its chain specifications. |  | no |
 | json | JSON | format |  |  | JSON documents. |  | yes |
 | yaml | YAML | format |  |  | YAML documents. |  | yes |
 | toml | TOML | format |  |  | TOML configuration files. |  | yes |

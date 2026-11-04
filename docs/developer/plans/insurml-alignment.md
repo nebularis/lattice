@@ -2,6 +2,8 @@
 
 # InsurML Alignment: Epic
 
+**Prefix:** IMA
+
 **Unit type:** Epic
 **Epic:** `insurml-alignment` (IMA)
 **Epic status:** Proposed, awaiting the maintainer's review. Phase 0 is detailed to slice level in its own
@@ -125,7 +127,7 @@ changes follow the ADR drafted in IMA-0.8, after CCS C9, with phase 3.
 
 | Slice | Content | Sketch |
 |---|---|---|
-| IMA-4.1 | assembly models, the record's new terms (`wrd:assembledUnder`, resolution and numbering records), diagnostics for each stage, laws WA1 to WA7 | assembly §5, §7, §11 |
+| IMA-4.1 | assembly models, the record's new terms (`wrd:assembledUnder`, resolution and numbering records), diagnostics for each stage, laws WA-1 to WA-7 | assembly §5, §7, §11 |
 | IMA-4.1a | assembler interface and the baseline adapter: Eligibility-decided inclusion with three values and declared treatments, alternatives, transclusions, resolution records | assembly §6, §8, bridge §10, §11 |
 | IMA-4.1b | InsurML assembly model in the profile, and the InsurML adapter over the lifted graph | assembly §10 |
 | IMA-4.2 | parity suite: baseline against InsurML adapter, and InsurML adapter against InsurML's processor, over every fixture configuration | assembly §8, bridge §7 |

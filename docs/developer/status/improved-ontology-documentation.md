@@ -3,9 +3,8 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** In progress. OD0 accepted. OD1, RC1, RC2, OD2 and OD3 done. OD4 and OD5 built autonomously and committed locally, not pushed.
+**Status:** built 2026-10-20. In progress. OD-0 accepted. OD-1, OD-RC1, OD-RC2, OD-2 and OD-3 done. OD-4 and OD-5 built autonomously and committed locally, not pushed.
 **Last updated:** 2026-10-16
-**Branch:** `docs/literate-v2`
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
 **Sketches:** [improved-ontology-documentation.md](../sketches/improved-ontology-documentation.md),
 [repository-catalogue.md](../sketches/repository-catalogue.md)
@@ -30,31 +29,31 @@ and the versioning check passes against `main`.
 
 ## Slices
 
-| Slice | State | Blocked on |
-|---|---|---|
-| OD0 ADRs, the AGENTS.md rule, the conventions document | accepted 2026-10-17, committed, [Validation Pack](../validation/OD0.md) | |
-| RC1 catalogue and reader | committed 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/RC1.md) | |
-| RC2 consumers use the reader | passed and committed 2026-10-18, [Validation Pack](../validation/RC2.md) | |
-| RC3 roots, AGENTS.md table, bypass scan | approved 2026-10-19 after the `reaches` audit, committed locally, [Validation Pack](../validation/RC3.md) | |
-| OD1 scanner and markers | passed 2026-10-17, choices agreed, [Validation Pack](../validation/OD1.md) | the maintainer's merge |
-| OD2 sections 1 to 3 | built autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD2.md) | |
-| OD3 section 6 to OWL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD3.md) | |
-| OD4 section 6 to SHACL | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD4.md) | the maintainer's review of six decisions taken alone |
-| OD5 generated regions | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD5.md) | the maintainer's review of six decisions taken alone |
-| OD6 Eligibility pilot | built autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
-| OD7 Vocabulary | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD7.md) | |
-| OD8 onward, one per layer | planned | OD7, and for Foundation and Party their part of TD-16 |
-| DOC1 published decisions | approved 2026-10-19, committed locally, [Validation Pack](../validation/DOC1.md) | |
-| DOC2 site sections | approved 2026-10-20, merged, [Validation Pack](../validation/DOC2.md) | |
-| DOC3 tutorial and Field Guide review | planned | DOC2, `lattice-tutorial` merged |
-| RC4 downstream extension | planned | RC3 |
-| RC5 package promotion | planned | RC4 |
-| RC6 XML catalogue folded in | planned | RC5, a new ADR on ADR-A88 |
-| ELC composition operation | approved 2026-10-19, committed locally, [Validation Pack](../validation/ELC.md) | |
-| MC1 migration check labels | approved 2026-10-20, committed locally, [Validation Pack](../validation/MC1.md) | |
-| VER1 one release for the substrate | approved 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) | |
-| DOC2b working documents out of published pages | built autonomously 2026-10-20, committed locally, [Validation Pack](../validation/DOC2b.md) | |
-| OD-REL first release, 0.18.0 | approved 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL.md) | the tags, on `main` after the merge |
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| OD-0 | ADRs, the AGENTS.md rule, the conventions document | verified 2026-10-17, committed, [Validation Pack](../validation/OD-0.md) |  |
+| OD-RC1 | catalogue and reader | built 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/OD-RC1.md) |  |
+| OD-RC2 | consumers use the reader | verified 2026-10-18, and committed, [Validation Pack](../validation/OD-RC2.md) |  |
+| OD-RC3 | roots, AGENTS.md table, bypass scan | verified 2026-10-19, after the `reaches` audit, committed locally, [Validation Pack](../validation/OD-RC3.md) |  |
+| OD-1 | scanner and markers | verified 2026-10-17, choices agreed, [Validation Pack](../validation/OD-1.md) | the maintainer's merge |
+| OD-2 | sections 1 to 3 | built 2026-10-18 autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD-2.md) |  |
+| OD-3 | section 6 to OWL | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-3.md) |  |
+| OD-4 | section 6 to SHACL | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-4.md) | the maintainer's review of six decisions taken alone |
+| OD-5 | generated regions | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-5.md) | the maintainer's review of six decisions taken alone |
+| OD-6 | Eligibility pilot | built 2026-10-20 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
+| OD-7 | Vocabulary | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-7.md) |  |
+| OD-8 | onward, one per layer | planned | OD-7, and for Foundation and Party their part of TD-16 |
+| OD-DOC1 | published decisions | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-DOC1.md) |  |
+| OD-DOC2 | site sections | merged 2026-10-20, [Validation Pack](../validation/OD-DOC2.md) |  |
+| OD-DOC3 | tutorial and Field Guide review | planned | OD-DOC2, `lattice-tutorial` merged |
+| OD-RC4 | downstream extension | planned | OD-RC3 |
+| OD-RC5 | package promotion | planned | OD-RC4 |
+| OD-RC6 | XML catalogue folded in | planned | OD-RC5, a new ADR on ADR-A88 |
+| OD-ELC1 | composition operation | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-ELC1.md) |  |
+| OD-MC1 | migration check labels | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-MC1.md) |  |
+| OD-VER1 | one release for the substrate | verified 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) |  |
+| OD-DOC2b | working documents out of published pages | built 2026-10-20 autonomously 2026-10-20, committed locally, [Validation Pack](../validation/OD-DOC2b.md) |  |
+| OD-REL1 | first release, 0.18.0 | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL1.md) | the tags, on `main` after the merge |
 
 ## Open questions
 
@@ -64,13 +63,13 @@ and the versioning check passes against `main`.
 
 | Unit | Relationship |
 |---|---|
-| `computable-contract-substrate` | C6 merged on 2026-10-04 without markers, so the Instrument README migrates here. Still planned and touching migrated READMEs: C9b3 and C9b4 (Eligibility), C8a, C9c and C9d (Instrument), C16c (Party). Whichever lands second adopts the other's format. HQ-6a.2, in flight, changes no README |
+| `computable-contract-substrate` | C6 merged on 2026-10-04 without markers, so the Instrument README migrates here. Still planned and touching migrated READMEs: CCS-9b.3 and CCS-9b.4 (Eligibility), C8a, C9c and C9d (Instrument), C16c (Party). Whichever lands second adopts the other's format. HQ-6a.2, in flight, changes no README |
 | `repository-catalogue` | Absorbed. Its sketch's questions are answered in this plan |
 | TD-16 | Vocabulary reconciled in OD7. Foundation and Party wait for their part |
 | TD-20 | Runs when convenient. A migrated README states each term once |
 | TD-50 | Added by this unit: move the site assembly to a Pages workflow later |
-| `lattice-tutorial` | On branch `tutorial/guide`. Its pages join the Tutorial section in DOC2, its `<!-- source: ... -->` marker joins the conventions document, and DOC3 reviews it against the Field Guide once it merges |
-| `formal-methods-track-e` | The Formalisation section carries its `isabelle-spec` blocks. `check_formal_freshness.py` moves to the reader in RC2 |
+| `lattice-tutorial` | On branch `tutorial/guide`. Its pages join the Tutorial section in OD-DOC2, its `<!-- source: ... -->` marker joins the conventions document, and OD-DOC3 reviews it against the Field Guide once it merges |
+| `formal-methods-track-e` | The Formalisation section carries its `isabelle-spec` blocks. `check_formal_freshness.py` moves to the reader in OD-RC2 |
 
 ## Log
 
@@ -92,7 +91,7 @@ and the versioning check passes against `main`.
   (yes), RC-Q8 (`repository-catalogue.md`). Plain text with tag links, sorted output, sections by title with
   a numeral warning, "None." for empty subsections, Canonicalisation and Formalisation as optional normative
   sections, Release Notes mandatory, no top-level sections of a layer's own. The sources rule for
-  user-facing documents and a published decisions ADR added, with slices DOC1 and DOC2, and RC6 to fold in
+  user-facing documents and a published decisions ADR added, with slices OD-DOC1 and OD-DOC2, and OD-RC6 to fold in
   the XML catalogue. CCS C6 found already merged (2026-10-04), so Instrument migrates here. Plan rewritten.
 - 2026-10-16: OD-Q14 answered (a), recorded as OD-D25. For OD-Q15 the site was surveyed: GitHub Pages
   builds all of `docs/` with no workflow, so the 111 ADR files and 334 developer documents are live as
@@ -104,11 +103,11 @@ and the versioning check passes against `main`.
 - 2026-10-16: OD-Q15 answered: durable developer guidance may be linked (OD-D28), site sections declared in the
   root catalogue and copied into `docs/` (OD-D29, with TD-50 for a Pages workflow later), declared sections only
   with a Contributing section (OD-D30), and the section list with a tutorial and Field Guide review after the
-  tutorial merges (OD-D31, DOC3). Every design question is answered.
+  tutorial merges (OD-D31, OD-DOC3). Every design question is answered.
 - 2026-10-16: OD-D28 amended at the maintainer's request: the sources check reads HTML comments and hidden
   blocks too. The one comment on any branch that cites a working document, the tutorial spine's authoring note,
   is repointed in DOC2.
-- 2026-10-16: OD0 authored. ADR-A121, ADR-A126 and ADR-A127 drafted as Proposed and listed in the catalogue
+- 2026-10-16: OD-0 authored. ADR-A121, ADR-A126 and ADR-A127 drafted as Proposed and listed in the catalogue
   (numbers checked free on every local and remote branch), the AGENTS.md rule of OD-D21 and OD-D28 added, and
   `docs/architecture/literate-specifications.md` started. Six drafting choices are listed in the Validation
   Pack for the maintainer. Links and the boundaries search checked while drafting. `build:agent-guidance`
@@ -117,124 +116,124 @@ and the versioning check passes against `main`.
   and committed OD0. Their Status lines and the catalogue rows now say Accepted, 2026-10-17. ADR-A120 and
   ADR-A01 gained their addenda, the catalogue's convention lists the Published status, and the AGENTS.md rule
   no longer marks ADR-A127 Proposed. The Copilot copy needs `build:agent-guidance` again.
-- 2026-10-17: OD1 authored, not yet run. A scan of all 22 module READMEs first showed no nested tagged
+- 2026-10-17: OD-1 authored, not yet run. A scan of all 22 module READMEs first showed no nested tagged
   fence, no tagged fence inside a comment and no marker-like comment, so the new scanner leaves every
   extraction unchanged (OD1-T1 tests it). `tools/test_literate_extract.py`, which no task ran, joins
   `check:ontology-catalog`. Three implementation choices are listed in the Validation Pack.
-- 2026-10-17: the maintainer ran OD1's tests, which pass, and agreed its three implementation choices. No
-  adversarial probe was run at the gate. RC1 started.
-- 2026-10-17: RC1 authored, not yet run. `repository-catalogue.md` at the root lists 19 modules, each README
+- 2026-10-17: the maintainer ran OD-1's tests, which pass, and agreed its three implementation choices. No
+  adversarial probe was run at the gate. OD-RC1 started.
+- 2026-10-17: OD-RC1 authored, not yet run. `repository-catalogue.md` at the root lists 19 modules, each README
   holds its entry, and `tools/lattice_repo_catalogue.py` reads and checks them (`check:catalogue`, in
   `check`). The extraction contracts were taken from what each README generates, by the extractor's
   `plan()` in memory, and the substrate imports from `import_guard.ALLOWED`, and tests hold both. Eight
   implementation choices and two deviations are in the Validation Pack.
-- 2026-10-17: the maintainer committed RC1 (`be612df5`). Its results and choices are not yet recorded.
-- 2026-10-17: RC2 authored, not yet run. The extractor reads shape targets from the catalogue and `--shapes`
+- 2026-10-17: the maintainer committed OD-RC1 (`be612df5`). Its results and choices are not yet recorded.
+- 2026-10-17: OD-RC2 authored, not yet run. The extractor reads shape targets from the catalogue and `--shapes`
   is removed. The import guard, the versioning check and the freshness check read their constants from it.
   Every extractor command for people or CI drops `--shapes` and goes through `mise exec`, CI's two Surface
   steps included. RC1-T4 now compares the catalogue with ADR-A01's order written out in the test.
 - 2026-10-18: the maintainer merged `main` into the branch (`74989f04`, with `mise.toml` taking main's
-  `check:ontology-catalog` plus our two test modules) and ran RC2's checks: the import guard, versioning,
+  `check:ontology-catalog` plus our two test modules) and ran OD-RC2's checks: the import guard, versioning,
   freshness and catalogue checks pass, and `check:ontology-catalog` passes with 974 tests and 7 skips (the
-  reasoning tests without their jar). RC1's tests pass in the same run.
+  reasoning tests without their jar). OD-RC1's tests pass in the same run.
 - 2026-10-18: RC1-C1 to RC1-C8 and RC2-C2 agreed as implemented, RC2-C1 changed to option (c): the extractor
   finds the catalogue above its README, from any working directory. Implemented with RC2-T7. On RC1-C5, a
-  migrated README holds its entry in section 3, which OD2's layout check will enforce. RC2-C2's move to
+  migrated README holds its entry in section 3, which OD-2's layout check will enforce. RC2-C2's move to
   option (b), every extraction checked against its entry, is planned in RC4.
-- 2026-10-18: the maintainer committed and pushed RC2, and asked for OD2 and OD3 to be built without stopping
-  for decisions, with local commits only. OD2 built: `tools/literate_grammar.py` compiles sections 1 and 2 of
+- 2026-10-18: the maintainer committed and pushed OD-RC2, and asked for OD-2 and OD-3 to be built without stopping
+  for decisions, with local commits only. OD-2 built: `tools/literate_grammar.py` compiles sections 1 and 2 of
   a README in the layout into each document's opening, and the layout check requires the catalogue entry in
   section 3. Eight decisions taken alone are listed in its Validation Pack. Its tests, the catalogue tests,
   the per-layer extraction tests and the freshness check were run and pass.
-- 2026-10-18: OD3 built: the Manchester parser and the section 6 compiler in `tools/literate_grammar.py`. Ten
+- 2026-10-18: OD-3 built: the Manchester parser and the section 6 compiler in `tools/literate_grammar.py`. Ten
   decisions taken alone are listed in its Validation Pack. The grammar states two of SPC's axioms exactly as
   SPC's file does (OD3-T7). Its tests, the extractor and catalogue tests, the per-layer extraction tests, and
   the freshness and catalogue checks were run and pass. Committed locally, not pushed.
-- 2026-10-18: the maintainer answered OD2's and OD3's decisions. All agreed but OD2's decision 5, changed to
+- 2026-10-18: the maintainer answered OD-2's and OD-3's decisions. All agreed but OD-2's decision 5, changed to
   order a document's blocks by their text and refuse prefixes in a migrated README's blocks (OD2-Q5, option
   b), with a later move to a version check on graph content (TD-51). Multilingual support recorded as PDD-10,
-  and OD3's unsupported forms in the plan's unplanned backlog. The maintainer ran every test suite and
+  and OD-3's unsupported forms in the plan's unplanned backlog. The maintainer ran every test suite and
   all pass. The change and its tests (OD2-T10, OD2-T11) pass and are committed locally.
-- 2026-10-18: the maintainer agreed OD4's four leanings and asked for OD4 and OD5 to be built autonomously,
-  with local commits. OD4 built: restriction rows checked in SHACL become `shapes/structural.ttl`, generated
+- 2026-10-18: the maintainer agreed OD-4's four leanings and asked for OD-4 and OD-5 to be built autonomously,
+  with local commits. OD-4 built: restriction rows checked in SHACL become `shapes/structural.ttl`, generated
   whole, and rows for one property and message share a property shape. The grammar states Eligibility's
   `EligibilityDecisionShape` exactly as its file does (OD4-T7). Six decisions taken alone are listed in its
   Validation Pack. Its tests and the neighbouring suites pass.
-- 2026-10-18: OD5 built: the Axiom Index and the Overview's class diagram are generated from the compiled
+- 2026-10-18: OD-5 built: the Axiom Index and the Overview's class diagram are generated from the compiled
   section 6 into required regions of the README, rewritten by extraction and reported as drift by `--check`.
   The generated diagram renders under mermaid 10.9.1. Six decisions taken alone are listed in its Validation
   Pack. Its tests and the neighbouring suites pass. Committed locally, not pushed.
-- 2026-10-18: OD4's decisions 2 to 6 and OD5's decisions 1 and 3 to 6 agreed. OD4's decision 1 (merging rows
-  into one property shape) and OD5's decision 2 (the README as an output) agreed after explanation. Every OD4
-  and OD5 decision is settled.
+- 2026-10-18: OD-4's decisions 2 to 6 and OD-5's decisions 1 and 3 to 6 agreed. OD-4's decision 1 (merging rows
+  into one property shape) and OD-5's decision 2 (the README as an output) agreed after explanation. Every OD-4
+  and OD-5 decision is settled.
 - 2026-10-18: the planning round answered (OD-D32 to OD-D40): merge before the pilot and continue on this branch,
   a reusable migration check, enumeration in the grammar for OWL enumerated classes and SHACL `sh:in`, individuals
   with extra statements whole in 6.6 blocks, the maintainer named as creator with permission for the display name,
   unpublished ADRs hidden by a Jekyll default, the first publication pass limited to what Eligibility cites, a
   Described in field, and AGENTS.md's table generated with its columns unchanged. TD-52 (ADR metadata as a table)
-  and TD-53 (most of `docs/` unpublished by default, for a website sketch) added. Briefs for OD6, DOC1 and RC3
+  and TD-53 (most of `docs/` unpublished by default, for a website sketch) added. Briefs for OD-6, OD-DOC1 and OD-RC3
   written into the plan.
 - 2026-10-18: RC3-Q2 answered (b), recorded as OD-D41: the bypass scan's exceptions in a file beside the reader,
   with one technical debt row giving their count. Every planning question is answered.
-- 2026-10-18: OD6 started. Enumeration in the grammar and the migration check written, with their tests, which
+- 2026-10-18: OD-6 started. Enumeration in the grammar and the migration check written, with their tests, which
   pass. Two findings stopped the migration for a decision: 32 of Eligibility's 52 terms have no definition, and
   any migration changes a layer's graphs (Dublin Core in the header), so each needs a version that cascades
   through 11 documents in 5 modules. Answered: definitions are drafted and reviewed (OD-D42), and versions are
-  left inconsistent on this branch until one release slice, OD-REL, bumps and re-pins everything before the merge
-  (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD6 to continue
+  left inconsistent on this branch until one release slice, OD-REL1, bumps and re-pins everything before the merge
+  (OD-D43). The maintainer asked for a sketch on changing how imports pin, and authorised OD-6 to continue
   autonomously with local commits.
-- 2026-10-18: OD6 finished. Eligibility's README is in the layout, and the migration check against `dab1c790`
+- 2026-10-18: OD-6 finished. Eligibility's README is in the layout, and the migration check against `dab1c790`
   passes with 40 reconciled differences, the 32 drafted definitions and each document's Dublin Core. No axiom
   or shape changed. `check_formal_freshness.py` now reads only the Isabelle blocks, and OD1-T1 and RC1-T3 were
   adjusted for a migrated README. Two gaps found and left as the README's open issues: L1 to L8 name no
   register, and 14 individuals have no definition.
 
-- 2026-10-18: OD6 reviewed. The definitions agreed with three changes, applied and reconciled. L1 to L8's
+- 2026-10-18: OD-6 reviewed. The definitions agreed with three changes, applied and reconciled. L1 to L8's
   register goes to OD-REL. OD6-Q7 opened on renaming `elg:CompatibilityOperation`.
 - 2026-10-19: OD6-Q7 answered. `elg:CompatibilityOperation` becomes `elg:CompositionOperation`, declared on
   admission profiles only (OD-D44), and `elg:DimensionConsistent` is retired with `elg:E6` (OD-D45). Slice ELC
   briefed, to land before OD-REL.
 - 2026-10-19: ELC-Q1 and Q2, DOC1-Q4 to Q7 and RC3-Q3 to Q5 answered (OD-D46 to OD-D53). The maintainer
-  authorised ELC, DOC1 and RC3 to be built autonomously, committed locally and not pushed.
+  authorised ELC, OD-DOC1 and OD-RC3 to be built autonomously, committed locally and not pushed.
 - 2026-10-19: ELC built. `elg:CompositionOperation` on profiles only, `elg:DimensionConsistent` and `elg:E6`
   removed, 42 graphs rewritten and checked graph to graph, and Instrument's warranty carve-back typed as the
   profile it is. The migration check now escapes line breaks, and TD-55 records its whole-file blank node
-  labels. RC3 runs in a separate worktree.
-- 2026-10-19: DOC1 built. The published decisions list and the sources check run in `mise run check`, the
+  labels. OD-RC3 runs in a separate worktree.
+- 2026-10-19: OD-DOC1 built. The published decisions list and the sources check run in `mise run check`, the
   twelve ADRs Eligibility cites are published under the maintainer's advance approval (OD-D50), and the site
   shows only those. The local site build showed Jekyll's `published: false` default hides nothing, so the site
   excludes ADRs and includes each published one by name.
-- 2026-10-19: RC3 built in a separate worktree and cherry-picked onto this branch, without the main checkout's own
-  commit it was cut from. Its bypass scan found DOC1's new list tool building `docs/` paths, which now asks the
+- 2026-10-19: OD-RC3 built in a separate worktree and cherry-picked onto this branch, without the main checkout's own
+  commit it was cut from. Its bypass scan found OD-DOC1's new list tool building `docs/` paths, which now asks the
   reader for the architecture area instead. ADR-A121's addendum keeps its slice reference in Provenance.
 
-- 2026-10-19: ELC, DOC1 and RC3 approved. RC3's `reaches` audited and now checked by RC3-T17. Two entries
+- 2026-10-19: ELC, OD-DOC1 and OD-RC3 approved. OD-RC3's `reaches` audited and now checked by RC3-T17. Two entries
   corrected, and TD-56 records SPC's pipeline script writing into a missing directory.
-- 2026-10-19: next slices proposed (MC1, OD7, DOC2, OD-REL). NX-Q1 answered (a), the branch is cut after OD-REL.
+- 2026-10-19: next slices proposed (OD-MC1, OD-7, OD-DOC2, OD-REL1). NX-Q1 answered (a), the branch is cut after OD-REL.
   The import pinning checks were run, and the maintainer asked to rethink versioning first. The
   [release model sketch](../sketches/ontology-release-model.md) proposes one release for every ontology,
   REL-Q1 to REL-Q6 open.
 - 2026-10-19: REL-Q1 to REL-Q6 and NX-Q3 to NX-Q5 answered (OD-D54 to OD-D62). One release for the substrate,
-  starting at 0.18.0, with the data class of every change in its notes. Briefs written for MC1, OD7, VER1, DOC2
+  starting at 0.18.0, with the data class of every change in its notes. Briefs written for OD-MC1, OD-7, VER1, OD-DOC2
   and OD-REL. The check REL-Q2 asked for found three standalone modules depending on the substrate (REL-Q2a). The
   release bundles sketch opened BUN-Q1 to BUN-Q7.
 - 2026-10-19: REL-Q2a answered (a), OD-D63. The maintainer authorised the slices to run autonomously.
-- 2026-10-19: MC1 built. Blank nodes are labelled by their subtree, ELC's reconciliations shrink from 126 to 102,
-  and TD-55 is closed. DOC2 runs in its own worktree, `docs/literate-v2-doc2`.
-- 2026-10-19: OD7 built. Vocabulary's README is the source of its spec and three shape files, the same graphs
+- 2026-10-19: OD-MC1 built. Blank nodes are labelled by their subtree, ELC's reconciliations shrink from 126 to 102,
+  and TD-55 is closed. OD-DOC2 runs in its own worktree, `docs/literate-v2-doc2`.
+- 2026-10-19: OD-7 built. Vocabulary's README is the source of its spec and three shape files, the same graphs
   but for four Dublin Core triples, and its part of TD-16 is closed.
 - 2026-10-19: VER1 built. ADR-A129 Proposed, the release number in the catalogue, the versioning check and register
   by release, and `release:prepare`. `Executable.ttl` imports Eligibility. `.build/site` untracked, committed by
   mistake with DOC1.
-- 2026-10-19: DOC2 built by a Sonnet sub-agent in its own worktree and merged. Site sections declared in the
+- 2026-10-19: OD-DOC2 built by a Sonnet sub-agent in its own worktree and merged. Site sections declared in the
   catalogue, working documents off the site, which shrinks from 836 files to 96. Stray notes in `docs/` left for
   the maintainer.
-- 2026-10-20: OD-REL built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
+- 2026-10-20: OD-REL1 built. Release 0.18.0 made with `release:prepare`, L1 to L8 given their register, the applied
   modules bumped in two rounds, release notes with each change's data class, and tests reading the release
   number. The full sweep passes, all 15 checks.
-- 2026-10-20: MC1, OD7, VER1, DOC2 and OD-REL approved, and ADR-A129 accepted. DOC2's decision 5 stands on condition
+- 2026-10-20: OD-MC1, OD-7, VER1, OD-DOC2 and OD-REL1 approved, and ADR-A129 accepted. OD-DOC2's decision 5 stands on condition
   that TD-60's cleaning happens before the merge.
-- 2026-10-20: DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
+- 2026-10-20: OD-DOC2b built, the stray notes moved or retired as the maintainer decided, and ADR-A129 published,
   so the 0.18.0 release notes cite it. The full sweep passes all 17 checks.
 - 2026-10-20: `docs/GOVERNANCE.md` and `docs/validation-and-test-plan.md` retired at the maintainer's decision. The
   order of authority moves to the ontology architecture's §2, and every link is repointed. The branch is ready for

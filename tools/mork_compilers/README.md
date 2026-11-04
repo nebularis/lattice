@@ -37,14 +37,7 @@ A hierarchical plan walks `plan.relation`, the condition's `elg:hierarchyRelatio
 
 A set comparison (`elg:SetComparison`, L18) compiles to a `SetComparisonPlan` holding its comparison, strategy, relation and scheme, and the two bindings' paths with their closures. SPARQL decides each tested value by an `EXISTS` into the reference path started from the bound subject, reads the rows with `_read_set` as every value (Subset) or some value (Intersects, Disjoint, the latter negated), and reports the closures it relied on in `?closure`. A value not found in an open reference set is Undetermined with `exe:NoClosureLicence`. SHACL wraps the same decision. The OWL backend refuses a comparison because OWL 2 DL cannot relate the values of two paths from one subject, and the SWRL backend because SWRL cannot test absence (ADR-A90). See `ontology/eligibility/examples/set-comparison-*.ttl` and `test_set_comparisons.py`.
 
-A hierarchical plan whose resolved scheme has no member with a link of its relation
-to another member (`plan.no_hierarchy`) follows `elg:L14` (ADR-A100): a required
-concept is `Permitted`, an excluded one `Denied`, and every other member
-`Undetermined` with `exe:NoHierarchy`, before default inclusion (L12)
-applies. The expansion and the SPARQL query both apply it, and the OWL backend
-refuses such a plan. See `ontology/eligibility/examples/flat-scheme-lending.ttl`,
-where one condition meets a hierarchical scheme or a flat list depending on
-the binding scope.
+A hierarchical plan whose resolved scheme has no member with a link of its relation to another member (`plan.no_hierarchy`) follows `elg:L14` (ADR-A100): a required concept is `Permitted`, an excluded one `Denied`, and every other member `Undetermined` with `exe:NoHierarchy`, before default inclusion (L12) applies. The expansion and the SPARQL query both apply it, and the OWL backend refuses such a plan. See `ontology/eligibility/examples/flat-scheme-lending.ttl`, where one condition meets a hierarchical scheme or a flat list depending on the binding scope.
 
 A binding may read several values (`elg:valueReading`, `elg:L15`, ADR-A103). The
 IR carries the reading on the evidence path. SPARQL then decides each value as

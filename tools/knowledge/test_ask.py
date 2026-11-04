@@ -84,6 +84,19 @@ def test_flags_mark_a_boundary_a_debt_and_a_proposed_entry(isolated, capsys):
     assert "! the entry states a case it does not cover" in out and "TD an open debt" in out and "? the entry is Proposed" in out
 
 
+def test_an_open_backlog_idea_flags_the_entry_it_bears_on(isolated, capsys):
+    """BL says an unbuilt idea on the backlog bears on the entry, and the line under the row names it."""
+    store = ox.Store()
+    entry(store, "CAP-1", "Capability", "compile a mapping to RML")
+    entry(store, "BL-1", "Backlog", "compile a mapping to XSLT")
+    fact(store, "BL-1", "status", ox.NamedNode(KI + "Open"))
+    fact(store, "BL-1", "bearsOn", at("CAP-1"))
+    embed.build(store, isolated)
+    ask.find(store, "mapping", {"Capability"}, set(), set(), 8)
+    out = capsys.readouterr().out
+    assert table(out)[0][4] == "BL" and "On the backlog, not built: BL-1." in under_row(out, "CAP-1")
+
+
 def test_a_closed_debt_does_not_flag_its_entry(isolated, capsys):
     store = ox.Store()
     entry(store, "MEC-1", "Mechanism", "a ledger account")
@@ -128,6 +141,26 @@ def test_a_reversed_section_is_marked_and_names_the_addendum(isolated, capsys):
     assert row[1] == "ADR-1" and row[4] == "~" and row[-1] == "adr.md:10-12"
     line = under_row(out, "ADR-1")
     assert "Reversed by adr.md:40-60." in line and "The section that answered: minting minting slow" in line
+
+
+def test_an_entry_and_a_decision_name_the_addendum_that_narrowed_them(isolated, capsys):
+    """A principle whose Narrowed by names an addendum, and a decision whose first numbered decision,
+    its claim, an addendum narrows, each print the addendum under the row, even where no section
+    outranks the claim. PRI-03 restated ADR-A129's narrowed decision 1 unmarked until this."""
+    store = ox.Store()
+    entry(store, "ADR-1", "Decision", "one release for every module")
+    section(store, "ADR-1", 1, "one release for every module", "adr.md:10-12")
+    section(store, "ADR-1", 2, "graph graph", "adr.md:40-60")
+    first, addendum = (ox.NamedNode(f"{KI}node/ADR1/section-{n}") for n in (1, 2))
+    store.add(ox.Quad(first, ox.NamedNode(KI + "narrowedBy"), addendum, INDEX))
+    entry(store, "PRI-1", "Principle", "one release for every module")
+    fact(store, "PRI-1", "narrowedBy", addendum)
+    embed.build(store, isolated)
+    ask.find(store, "one release for every module", set(), set(), set(), 8)
+    out = capsys.readouterr().out
+    assert "Narrowed by adr.md:40-60." in under_row(out, "PRI-1")
+    assert "Narrowed by adr.md:40-60." in under_row(out, "ADR-1")
+    assert {r[1]: r[4] for r in table(out)} == {"ADR-1": "~", "PRI-1": "~"}, "a narrowed row is marked as a reversed one is"
 
 
 def test_declared_terms_are_searched_only_when_their_kind_is_named(isolated, capsys):
@@ -222,6 +255,23 @@ def test_read_refuses_a_pointer_to_a_whole_long_file(tmp_path, monkeypatch, caps
     assert ask.whole_file("short.md:1-10") is None
 
 
+def test_read_prints_an_entry_with_a_register_row_and_a_pointer(tmp_path, monkeypatch, capsys):
+    """An entry with its defining register row and a pointer, as every register entry has, prints
+    both under their labels, rather than reading the label as a path."""
+    monkeypatch.setattr(ask, "ROOT", tmp_path)
+    monkeypatch.setattr(ask, "ASK_LOG", tmp_path / "asks.log")
+    (tmp_path / "register.md").write_text("| MEC-1 | a row |", encoding="utf-8")
+    (tmp_path / "short.md").write_text("\n".join(f"line {n}" for n in range(1, 11)), encoding="utf-8")
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a mechanism")
+    fact(store, "MEC-1", "row", "register.md:1-1")
+    fact(store, "MEC-1", "pointer", "short.md:2-3")
+    ask.read(store, "MEC-1")
+    out = capsys.readouterr().out
+    assert "== row register.md:1-1\n| MEC-1 | a row |" in out
+    assert "== pointed-at short.md:2-3\nline 2\nline 3" in out
+
+
 def test_every_find_and_read_is_logged_with_its_best_score(isolated, capsys):
     store = ox.Store()
     entry(store, "MEC-1", "Mechanism", "a ledger account")
@@ -259,7 +309,7 @@ def test_misses_near_lists_the_confident_and_incomplete(isolated, capsys):
 def test_a_kind_can_be_excluded_and_every_other_kept():
     """Questions cost some ranking, so an agent whose answers are crowded by them leaves them out
     without naming every other kind, and terms stay out unless they are named."""
-    every = set(ask.KINDS.values()) - {"Term"}
+    every = set(ask.KINDS.values()) - {"Term", "Slice"}
     assert ask.without(set(), {"Question"}) == every - {"Question"}
     assert ask.without({"Standard", "Question"}, {"Question"}) == {"Standard"}
     assert ask.without(set(), set()) == set()
@@ -296,3 +346,19 @@ def test_misses_removes_a_question_the_index_now_answers(isolated, capsys):
     assert "1 question(s) the index now answers" in out
     assert [r["text"] for r in ask.asks()] == ["graph"]
     assert ask.MISS_LOG.read_text(encoding="utf-8").count("find ") == 1
+
+
+def test_a_slice_is_found_only_when_asked_for_or_named(isolated, capsys):
+    """Slices took the places of the entries that answer, so a question without --kind slice never
+    sees one, unless it names the slice by its identifier, which ranks it first (ADR-A134 decision 34)."""
+    store = ox.Store()
+    entry(store, "MEC-1", "Mechanism", "a ledger account")
+    entry(store, "LG-4", "Slice", "ledger ledger ledger")
+    embed.build(store, isolated)
+    ask.find(store, "ledger", set(), set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["MEC-1"]
+    ask.find(store, "ledger", {"Slice"}, set(), set(), 8)
+    assert [r[1] for r in table(capsys.readouterr().out)] == ["LG-4"]
+    ask.find(store, "where is LG-4", set(), set(), set(), 8)
+    assert table(capsys.readouterr().out)[0][1] == "LG-4"
+    assert "Slice" not in ask.without(set(), {"Question"})

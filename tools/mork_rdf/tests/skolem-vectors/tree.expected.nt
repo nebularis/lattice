@@ -1,0 +1,8 @@
+<http://example.org/records/dune> <http://example.org/src#author> <urn:mork-rdf:skolem:v1:c51f3e0ee7dd93719641617539628443d9e6f5a8ae706a110399484181e80e26> .
+<http://example.org/records/tract> <http://example.org/src#author> <urn:mork-rdf:skolem:v1:f5346576a6229269d18056a75815cbae19e473a0bdf9bf742d74e4450cac8494-1> .
+<http://example.org/records/tract> <http://example.org/src#author> <urn:mork-rdf:skolem:v1:f5346576a6229269d18056a75815cbae19e473a0bdf9bf742d74e4450cac8494-2> .
+<urn:mork-rdf:skolem:v1:c51f3e0ee7dd93719641617539628443d9e6f5a8ae706a110399484181e80e26> <http://example.org/src#address> <urn:mork-rdf:skolem:v1:e4c687e5d31cb1192f4b13b13533425e3da8c6823e6998a9268213bea5c668bd> .
+<urn:mork-rdf:skolem:v1:c51f3e0ee7dd93719641617539628443d9e6f5a8ae706a110399484181e80e26> <http://example.org/src#name> "Frank Herbert" .
+<urn:mork-rdf:skolem:v1:e4c687e5d31cb1192f4b13b13533425e3da8c6823e6998a9268213bea5c668bd> <http://example.org/src#city> "Tacoma" .
+<urn:mork-rdf:skolem:v1:f5346576a6229269d18056a75815cbae19e473a0bdf9bf742d74e4450cac8494-1> <http://example.org/src#name> "Anon" .
+<urn:mork-rdf:skolem:v1:f5346576a6229269d18056a75815cbae19e473a0bdf9bf742d74e4450cac8494-2> <http://example.org/src#name> "Anon" .

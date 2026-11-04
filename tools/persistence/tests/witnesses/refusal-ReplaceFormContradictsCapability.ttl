@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The opt-in to the rows replace against a capability spec that declares the store does not apply deletions before insertions (H2.12).
+# base: replace-form-rows.ttl
+# remove: ex:FusekiOverTdb2 dal:providesSnapshotUpdateSemantics
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:FusekiOverTdb2 dal:providesSnapshotUpdateSemantics false .
+ex:InvoiceProfile dal:replaceForm dal:RowsReplace .

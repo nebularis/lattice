@@ -2,6 +2,9 @@
 
 # Design Sketches Validation Summary
 
+**Unit ID:** `design-sketches-validation-summary`
+**Status:** merged 2026-09-20. Validation of seven design sketches against the codebase, complete.
+
 **Date:** 2026-09-20  
 **Scope:** 7 design sketches in `/docs/developer/sketches/`  
 **Assessment:** Implementation extent and status for each design

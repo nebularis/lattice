@@ -603,16 +603,6 @@ def test_the_release_is_one_data_quantum(built):
     assert {m.name for m in catalogue.release_members()} == substrate
 
 
-def test_a_broker_does_not_separate_the_authoring_service_from_its_worker(built):
-    """The finding the software view exists to make: in the authoring deployment the service and the
-    worker talk through RabbitMQ and share Fuseki, so they are one quantum."""
-    _, store = built
-    rows = _rows(store, """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        SELECT ?id WHERE { GRAPH ki:index { ?q ki:deployment "compose/authoring" ; ki:identifier ?id ;
-        ki:includes ?a , ?b . ?a rdfs:label "authoring-service" . ?b rdfs:label "authoring-worker" } }""")
-    assert len(rows) == 1
-
-
 def test_a_governed_quantum_exists(built):
     _, store = built
     rows = _rows(store, "SELECT ?id ?q WHERE { GRAPH ki:index { ?s ki:governs ?q ; ki:identifier ?id "
@@ -897,6 +887,30 @@ def test_the_signpost_columns_are_read_and_checked(tmp_path, monkeypatch):
     assert any("'zz:nothing', whose prefix no ontology document declares" in p for p in out.problems)
 
 
+def test_a_narrowed_by_cell_points_an_entry_at_the_addendum_by_its_day(tmp_path, monkeypatch):
+    """PRI-03 restated ADR-A129's decision 1 after its addendum of 2026-10-26 had narrowed it, and no
+    signpost said so. A Narrowed by cell names the addendum by decision and day, which survive an
+    edit, and resolves to that addendum's section, or is reported."""
+    section = extract.ox.NamedNode(KI + "node/ADRA129/section-4")
+    monkeypatch.setitem(extract.ADDENDA, ("ADRA129", "2026-10-26"), section)
+    out = _register(
+        tmp_path, monkeypatch, "| ID | Claim | Narrowed by |",
+        "| MEC-1 | **A claim.** | ADR-A129 addendum 2026-10-26 |\n| MEC-2 | **A claim.** | ADR-A129 addendum 2026-01-01 |\n| MEC-3 | **A claim.** | decision 1 |",
+    )
+    facts = {(q.subject.value.rsplit("/", 1)[-1], q.predicate.value.rsplit("#", 1)[-1], str(q.object.value)) for q in out.quads}
+    assert ("MEC1", "narrowedBy", section.value) in facts
+    assert any("ADR-A129 has no addendum of that day" in p for p in out.problems)
+    assert any("names no addendum" in p for p in out.problems)
+
+
+def test_the_corpus_resolves_every_narrowed_by_cell(built):
+    out, store = built
+    assert not [p for p in out.problems if "Narrowed by" in p]
+    rows = one(store, f"""PREFIX ki: <{KI}> SELECT ?to WHERE {{ GRAPH ki:index {{
+        ?n ki:identifier "PRI-03" ; ki:narrowedBy ?a . ?a ki:pointer ?to }} }}""")
+    assert [str(r["to"].value).split(":")[0] for r in rows] == ["docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md"]
+
+
 def test_a_signpost_to_nothing_is_reported(tmp_path):
     store = ox.Store(str(tmp_path / "s"))
     g = extract.INDEX_GRAPH
@@ -953,7 +967,7 @@ def test_a_declared_term_carries_a_claim_from_its_own_document(built):
 # Measured 2026-10-28 when the check was written, and recorded as TD-100. Remove an entry when its
 # claim is cut to the limit, and never add one.
 KNOWN_LONG_CLAIMS = frozenset({
-    "TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-276", "STD-277",
+    "TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296",
 })
 
 

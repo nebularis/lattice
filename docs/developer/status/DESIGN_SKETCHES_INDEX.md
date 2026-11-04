@@ -4,7 +4,9 @@
 
 # Design Sketch Implementation Validation — Document Index (ARCHIVED)
 
-**Status:** Superseded. See `docs/developer/INDEX.md` for the current, consolidated tracking of all design sketches, plans, status records, reviews, and validation packs.
+**Unit ID:** `DESIGN_SKETCHES_INDEX`
+
+**Status:** dropped 2026-09-20. Superseded. See `docs/developer/INDEX.md` for the current, consolidated tracking of all design sketches, plans, status records, reviews, and validation packs.
 
 This document is kept for historical reference. For current work status, consult:
 - **Consolidated index:** [`docs/developer/INDEX.md`](../INDEX.md)

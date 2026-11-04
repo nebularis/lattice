@@ -1,4 +1,4 @@
-import type { Analysis, ElementAnalysis, Span } from "../domain/types";
+import type { Analysis, ElementAnalysis, Span } from "@lattice/authoring-domain";
 
 export interface LogicalEnglishPanelProps {
   analysis: Analysis | null;

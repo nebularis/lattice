@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Assemblies of the facility form of the Wording layer's examples (facility-form.ttl), for the contract builder
+# (ADR-A138). The first chooses a variant and admits the syndication clause, the second leaves the lender count
+# unset, so its condition is Undetermined and the assembly is refused (ADR-A139).
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix f:    <https://example.org/lattice/wording/facility-form/> .
+@prefix a:    <https://example.org/lattice/studio/assembly/> .
+
+a:syndicated a cst:Assembly ;
+    rdfs:label "Syndicated, three lenders, UK and Ireland" ;
+    cst:assembles f:form ;
+    cst:choice f:cl-5-2b ;
+    cst:setting a:syndicated-lenders , a:syndicated-jurisdictions .
+
+a:syndicated-lenders a wrd:VariableValue ;
+    wrd:forVariable f:gv-lender-count ;
+    wrd:literalValue "3"^^xsd:decimal .
+
+a:syndicated-jurisdictions a wrd:VariableValue ;
+    wrd:forVariable f:var-jurisdictions ;
+    wrd:value f:uk , f:ie .
+
+a:unsettled a cst:Assembly ;
+    rdfs:label "No lender count yet" ;
+    cst:assembles f:form ;
+    cst:choice f:cl-5-2b ;
+    cst:setting a:unsettled-jurisdictions .
+
+a:unsettled-jurisdictions a wrd:VariableValue ;
+    wrd:forVariable f:var-jurisdictions ;
+    wrd:value f:uk .

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/config-studio/proposal-candidates/0.1.0",
+  "title": "Configuration Studio: what a language-model proposer returns for one clause (ADR-A138)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidates"],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "evidence"],
+        "properties": {
+          "kind": {"type": "string", "description": "A relation kind the prompt offered, by its label, for example Obligation"},
+          "role": {"type": ["string", "null"], "description": "The label of the role that bears it: the obligor, or the holder"},
+          "counterRole": {"type": ["string", "null"], "description": "The label of the role it is owed to: the obligee, or the counterparty"},
+          "activity": {"type": ["string", "null"], "description": "The label of an activity the prompt offered"},
+          "evidence": {"type": "string", "maxLength": 1000, "description": "The words of the clause the candidate rests on"}
+        }
+      }
+    }
+  }
+}

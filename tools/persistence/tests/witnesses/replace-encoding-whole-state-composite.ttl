@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The whole-state patch-log replace of a composite family (persistence-delta-replace DR1).
+# base: composite-property-boundary-shacl.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:OrderEncodingProfile a dal:WriteDisciplineProfile ;
+    dal:appliesTo       ex:OrderClass ;
+    dal:replaceEncoding dal:WholeState .

@@ -1,10 +1,13 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A146: A published term is versioned by its release
 
-**Status:** Proposed 2026-10-29
+**Status:** Published, 2026-10-29. Accepted 2026-10-29.
 **Date:** 2026-10-29
-**Related:** [ADR-A86](ADR-A86-ontology-semantic-versioning.md) (one `owl:versionIRI` per ontology document), [ADR-A51](ADR-A51-iri-and-identity-policy.md) (persistent identity across immutable versions, and data never revised needs neither), [ADR-A141](ADR-A141-versioned-mixin-rename.md) (the mixin `fnd:Versioned`), [ADR-A142](ADR-A142-meaning-bearing-edges.md) (a meaning-bearing edge from a versioned thing is owned or pinned)
+**Related:** [ADR-A86](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A86-ontology-semantic-versioning.md) (one `owl:versionIRI` per ontology document), the [identity guide](../iri-identity-patterns.md) (persistent identity across immutable versions, and a public vocabulary term scoped by nothing), [ADR-A141](ADR-A141-versioned-mixin-rename.md) (the mixin `fnd:Versioned`), [ADR-A142](ADR-A142-meaning-bearing-edges.md) (a meaning-bearing edge from a versioned thing is owned or pinned)
 **Described in:** [Foundation](../../../ontology/foundation/README.md), §4, §6 and §8.7
 
 ## Context

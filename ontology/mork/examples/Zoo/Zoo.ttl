@@ -12,7 +12,7 @@
 
 :Animal rdf:type owl:Class .
 
-:Mamal rdf:type owl:Class ;
+:Mammal rdf:type owl:Class ;
           rdfs:subClassOf :Animal .
 
 :Reptile rdf:type owl:Class ;

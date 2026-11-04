@@ -11,8 +11,8 @@
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.19.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.19.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
@@ -74,6 +74,14 @@ wrd-voc:Endorsement a skos:Concept ;
 	skos:prefLabel "Endorsement"@en ;
 	skos:altLabel "Amendment letter"@en ;
 	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
+
+# ---- Assembly models ------------------------------------------------------------
+
+wrd-voc:BaselineAssemblyModel a owl:NamedIndividual , wrd:AssemblyModel ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
+	fnd:hasGovernanceState fnd:Active ;
+	rdfs:label "Baseline assembly model"@en ;
+	rdfs:comment "Wording's own assembly model: three-valued inclusion conditions, refusal on Undetermined, exactly one admitted variant per slot, and optional elements only when chosen (§5.14)." .
 
 # ---- Inclusion modes: a closed set -------------------------------------------
 

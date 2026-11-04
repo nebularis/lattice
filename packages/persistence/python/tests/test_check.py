@@ -32,7 +32,7 @@ def op(profiles, example: str, template: str):
 
 @pytest.fixture(scope="module")
 def replace(profiles):
-    return op(profiles, "composite-project-ownership", "cas-replace-composite-property-patch-log")
+    return op(profiles, "composite-whole-state", "cas-replace-composite-property-patch-log")
 
 
 def request(**over):
@@ -135,7 +135,7 @@ def test_the_check_raises_with_every_reason(replace):
 
 @pytest.fixture(scope="module")
 def caller_named(profiles):
-    return op(profiles, "baseline-single-class", "cas-replace-named-graph-patch-log")
+    return op(profiles, "baseline-whole-state", "cas-replace-named-graph-patch-log")
 
 
 def test_the_naming_rule_is_read_from_the_bindings_of_the_profile(caller_named):
@@ -147,7 +147,7 @@ def test_a_caller_named_graph_must_equal_the_rule(profiles):
 
     from lattice_persistence.contract import ParameterContract
 
-    base = op(profiles, "baseline-single-class", "cas-replace-named-graph-patch-log")
+    base = op(profiles, "baseline-whole-state", "cas-replace-named-graph-patch-log")
     named = dc_replace(
         base, parameters=(*base.parameters, ParameterContract("g", "Iri", True, equals_graph_name=True)),
         bindings=tuple(b for b in base.bindings if b[0] not in ("graphPrefix", "graphSuffix")) + (("graphPrefix", '"urn:g:loan/"'), ("graphSuffix", '""')),

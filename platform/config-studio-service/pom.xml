@@ -1,0 +1,77 @@
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.nebularis.lattice</groupId><artifactId>lattice-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
+  <artifactId>config-studio-service</artifactId>
+  <description>Configuration Studio HTTP service: HTTP, reads of the store, and the publication of jobs and writes (ADR-A136).</description>
+  <properties>
+    <studio.helidon.version>4.5.6</studio.helidon.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <!-- amqp-client brings slf4j-api 1.7, which slf4j-simple 2.0 cannot bind to. -->
+      <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.20</version></dependency>
+      <dependency><groupId>org.slf4j</groupId><artifactId>jcl-over-slf4j</artifactId><version>2.0.20</version></dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency><groupId>org.nebularis.lattice</groupId><artifactId>config-studio-core</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>org.nebularis.lattice</groupId><artifactId>config-studio-authoring</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>io.helidon.webserver</groupId><artifactId>helidon-webserver</artifactId><version>${studio.helidon.version}</version></dependency>
+    <!-- Validates an OpenID Connect provider's tokens against its published keys (ADR-A149 decision 8). -->
+    <dependency><groupId>com.nimbusds</groupId><artifactId>nimbus-jose-jwt</artifactId><version>10.3</version></dependency>
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-simple</artifactId><version>2.0.20</version><scope>runtime</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+  </dependencies>
+  <build>
+    <finalName>config-studio-service</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <studio.assets>${project.basedir}/../../.build/config-studio</studio.assets>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- The shade overwrites this module's jar, so without a forced creation a build that changed only a dependency keeps
+             the old jar, and the shade merges that jar's stale copies of the dependency's classes. Forced here only, since a
+             forced jar is rewritten on every build, which breaks a JVM reading it, as the reasoning testkit's tests do. A stack runs
+             from a copy, so the build leaves it alone (STD-308). -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration><forceCreation>true</forceCreation></configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.nebularis.lattice.studio.app.StudioMain</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <!-- Each Helidon jar lists its service registry files in this manifest, so the shaded jar needs all of them. -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/helidon/manifest</resource>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.DSA</exclude><exclude>META-INF/*.RSA</exclude></excludes></filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

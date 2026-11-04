@@ -2,7 +2,9 @@
 
 # Phase 2 Validation Handoff
 
-**Status:** Accepted
+**Unit ID:** `phase-2-handoff`
+
+**Status:** merged 2026-09-20. Accepted
 **Governing ADRs:** [ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md), [ADR-A32](../../architecture/decisions/ADR-A32-surface-revision-lifecycle-and-release-candidates.md), [ADR-A33](../../architecture/decisions/ADR-A33-surface-revision-ledger-and-optimistic-concurrency.md), [ADR-A34](../../architecture/decisions/ADR-A34-surface-graph-family-registry-and-immutable-identity.md), [ADR-A35](../../architecture/decisions/ADR-A35-trusted-surface-worker-execution-boundary.md), [ADR-A36](../../architecture/decisions/ADR-A36-surface-worker-idempotent-delivery-boundary.md), [ADR-A37](../../architecture/decisions/ADR-A37-surface-worker-durable-processing-and-rabbitmq-acknowledgement.md), [ADR-A38](../../architecture/decisions/ADR-A38-surface-output-publication-and-studio-authoring-boundary.md)
 
 ## Scope

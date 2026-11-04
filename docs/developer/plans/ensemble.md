@@ -3,6 +3,7 @@
 # Plan: Ensemble, relations between instruments
 
 **Unit ID:** `ensemble`
+**Prefix:** ES
 **Status:** proposed 2026-10-20, amended 2026-10-21 (IR-Q7, evaluation below the instrument, several
 implementations of the evaluator, design closure with ES-Q7 to ES-Q9), for the maintainer's review.
 No slice is briefed yet.
@@ -136,7 +137,7 @@ Prefix `ens:`, namespace `https://www.nebularis.org/neuro-semantic/lattice/ensem
 
 **Machine:** R or S, as the maintainer assigns. **Branch:** `ensemble/es-0-examples`, after ADR-A130
 is accepted. **Commits are the maintainer's.** **Validation Pack:**
-[ensemble-es-0](../validation/ensemble-es-0.md). **Decisions:** ADR-A130 decisions 1 to 12, ES-Q4,
+[ensemble-es-0](../validation/ES-0.md). **Decisions:** ADR-A130 decisions 1 to 12, ES-Q4,
 ES-Q7 to ES-Q9.
 
 **Invariant:** the model accepts each arrangement below, written in the vocabulary above with
@@ -172,7 +173,7 @@ hand. Lending and construction come before insurance in the README (ADR-A-C2).
 ### ES-1 in detail: the layer
 
 **Machine:** R or S. **Branch:** `ensemble/es-1-layer`. **Validation Pack:**
-[ensemble-es-1](../validation/ensemble-es-1.md). **Decisions:** ADR-A130 decisions 1 to 4, 7 and 9,
+[ensemble-es-1](../validation/ES-1.md). **Decisions:** ADR-A130 decisions 1 to 4, 7 and 9,
 ADR-A01's 2026-10-18 addendum.
 
 **Invariant:** ensembles, memberships, relations and endpoints are stated as data, every relation in

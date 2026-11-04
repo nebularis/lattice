@@ -3,10 +3,11 @@
 # Plan: Word authoring proof of concept
 
 **Unit ID:** `word-authoring-poc` (WAP)
+**Prefix:** WA
 **Unit type:** multi-slice unit, run as one shot on machine S, with a validation gate per slice
 after the run
 **Status:** Decisions WA-D1 to WA-D13 recorded 2026-10-01 (WA-D4 Javalin, the rest as recommended).
-ADR-A118 Proposed. Execution started with WA0
+ADR-A118 Proposed. Execution started with WA-0
 **Sketch:** [word-authoring-poc.md](../sketches/word-authoring-poc.md) (the design, cited below as
 "sketch §n")
 **Status record:** [word-authoring-poc.md](../status/word-authoring-poc.md)
@@ -21,7 +22,7 @@ fixes a name, a pattern, an order or a value, use it exactly. Where it does not,
 
 **Recorded 2026-10-02. Awaiting the maintainer's scheduling decision.** The POC is reported running
 successfully. Wording is now published and stable, superseding the availability assumption behind
-WA-D3, but not automatically changing that decision or the completed WA0 to WA11 scope.
+WA-D3, but not automatically changing that decision or the completed WA-0 to WA-11 scope.
 
 The impact assessment and candidate design are in
 [sketch §4.1.1](../sketches/word-authoring-poc.md#411-deferred-adopt-the-published-wording-ontology).
@@ -50,17 +51,23 @@ completed slice instructions below remain a record of the POC as implemented.
 ## Follow-on tranche: richer data, a web app, and add-in parity
 
 **Recorded 2026-10-02. Awaiting the maintainer's decisions.** We asked for three further
-enhancements once WA0 to WA11 were running and validated: deeper, more realistic sample data, a
+enhancements once WA-0 to WA-11 were running and validated: deeper, more realistic sample data, a
 web authoring app editing the same documents without Word, and parity brought back to the Word
 add-in. The design is in
 [sketch §8](../sketches/word-authoring-poc.md#8-follow-on-enhancements-proposed-2026-10-02).
 
 This plan's §3 gains decisions WA-D14 to WA-D20, §4's slice overview gains WA12 to WA20, and §5
 gains their slice instructions. None of WA12 to WA20 may start until its decisions are recorded,
-exactly as WA0 could not start before WA-D1 to WA-D13 (stop rule S1). WA20 (the richer sample) is
+exactly as WA-0 could not start before WA-D1 to WA-D13 (stop rule S1). WA20 (the richer sample) is
 additionally deferred until the CCS workstream completes, regardless of decisions.
 
 No implementation is authorised by this note.
+
+---
+
+## Alignment with the Configuration Studio
+
+**Recorded 2026-10-27.** We decided to unify this proof of concept with the Configuration Studio, in step CS12 of the [studio's plan](config-studio.md#cs12-unifying-the-word-authoring-proof-of-concept), which records the decisions. In short, wording becomes a mode of the studio, so the web app of the follow-on tranche (WA14 to WA16) is not built and WA-D14 and WA-D15 are settled there: React and TypeScript as the studio is, and a shared domain package, `packages/authoring-domain`. The authoring service moves from Javalin (WA-D4) to Helidon SE WebServer, then folds into the studio's service as one deployable. Documents travel as XML in a LATTICE document vocabulary, and their meaning as RDF, so this plan's JSON contracts are retired in CS12d. WA12 (nested clauses) and WA17 (add-in parity) stand, and should be built against the shared package once it exists. No implementation is authorised by this note.
 
 ---
 
@@ -78,7 +85,7 @@ The unit is accepted when:
    `docs/developer/validation/LOG.md`
 2. `mise run check:authoring-stack` starts the stack from a clean checkout, seeds three samples and
    passes its end-to-end suite
-3. the manual Word checklist (WA11, M1 to M14) is completed by a maintainer in real Word
+3. the manual Word checklist (WA-11, M1 to M14) is completed by a maintainer in real Word
 4. `mise run check:java`, `check:workers`, `check:ontology-versioning` and `check:ontology-catalog`
    pass, with no existing test weakened
 
@@ -176,11 +183,11 @@ counting from 01 in document order.
 All offsets (`start`, `end` of detections and spans) are **UTF-16 code units** into the **element
 text**, the concatenation of the element's parts' texts in index order (a literal's `text`, a
 variable's or reference's displayed `text`). Java and TypeScript strings already count this way.
-Python converts with `offsets.utf16_len()` (WA6). `end` is exclusive.
+Python converts with `offsets.utf16_len()` (WA-6). `end` is exclusive.
 
 ### 2.6 Gaps for CCS C3
 
-The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go to C3 as input:
+The mapping (WA-2) uses `wap:` where the CCS sketch §4 names no term. These go to C3 as input:
 `wap:hasPart` (text to part), `wap:displayText` (shown text of a variable or reference part),
 `wap:DefinitionText` and `wap:definedTerm` (a definition and its term), `wap:valueType` (instead of
 `wrd:valueContract`), `wap:sectionKey`, `wap:elementId`, `wap:plainText`.
@@ -193,7 +200,7 @@ The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go t
 | Apache Jena (`jena-arq`, `jena-shacl`, `jena-rdfconnection`) | `${jena.version}` = 5.1.0 |
 | Jackson databind | 2.18.2 |
 | networknt json-schema-validator | 1.5.6 |
-| RabbitMQ amqp-client | 5.22.0 (as `platform-outbox`) |
+| RabbitMQ amqp-client | 5.37.0 (as `platform-outbox`), raised from 5.22.0 on 2026-10-28 for its advisories |
 | slf4j-simple | 2.0.16 |
 | Javalin (`io.javalin:javalin`) | 6.7.0, or the latest 6.x that P3 resolves (record it) |
 | Testcontainers (core only) | 2.0.2. Fallback 1.21.4 if P3 cannot resolve 2.0.2 (record it) |
@@ -201,8 +208,8 @@ The mapping (WA2) uses `wap:` where the CCS sketch §4 names no term. These go t
 | Python | 3.14 (mise) |
 | pika, rdflib, jsonschema, pytest | `>=1.3,<2`, `>=7.1,<8`, `>=4.23,<5`, `>=8,<9` |
 | React, Vite, TypeScript, Playwright | as `apps/surface-contract-studio`: 19.0.0, 6.0.5, 5.7.3, 1.50.1 |
-| Vitest, jsdom, ajv, mermaid, @types/office-js | 3.0.x, 25.0.x, 8.17.x, 11.4.x, latest 1.0.x. Exact versions as resolved in WA8, pinned without ranges |
-| images | `stain/jena-fuseki:5.1.0`, `rabbitmq:3.13-management-alpine`, `eclipse-temurin:25-jre`, `python:3.14-slim`, `caddy:2.10-alpine` |
+| Vitest, jsdom, ajv, mermaid, @types/office-js | 3.0.x, 25.0.x, 8.17.x, 11.4.x, latest 1.0.x. Exact versions as resolved in WA-8, pinned without ranges |
+| images | `stain/jena-fuseki:5.1.0`, `rabbitmq:4.4-management-alpine`, `eclipse-temurin:25-jre`, `python:3.14-slim`, `caddy:2.10-alpine` |
 
 ---
 
@@ -215,7 +222,7 @@ None of these is taken without the maintainer. All were recorded 2026-10-01.
 | WA-D1 | Delivery | (a) Office web add-in, XML manifest, sideloaded, served from the stack over HTTPS. (b) VSTO or COM add-in. (c) Teams unified manifest | (a), the only one with no installation | **decided 2026-10-01: (a)** |
 | WA-D2 | Markup in the document | (a) content controls with short tags, plus one custom XML part. (b) bookmarks. (c) hidden text markers | (a): visible, nestable, survives editing, readable from OOXML | **decided 2026-10-01: (a)** |
 | WA-D3 | Vocabulary | (a) the CCS sketch's `wrd:` IRIs in a provisional resource outside `ontology/`, plus `wap:`. (b) wait for CCS C3 | (a): no ontology change, and the gaps feed C3 (§2.6) | **decided 2026-10-01: (a)** |
-| WA-D4 | Java HTTP | (a) the JDK's `com.sun.net.httpserver` behind a framework-neutral API class, as `SurfaceRevisionApi`. (b) Javalin. (c) Spring Boot | (a): no framework imposed, few dependencies, the repository's existing pattern | **decided 2026-10-01: (b) Javalin**, behind the framework-neutral `AuthoringApi` (WA4) |
+| WA-D4 | Java HTTP | (a) the JDK's `com.sun.net.httpserver` behind a framework-neutral API class, as `SurfaceRevisionApi`. (b) Javalin. (c) Spring Boot | (a): no framework imposed, few dependencies, the repository's existing pattern | **decided 2026-10-01: (b) Javalin**, behind the framework-neutral `AuthoringApi` (WA-4) |
 | WA-D5 | Store | (a) Fuseki over the Graph Store Protocol, with an in-memory test double. (b) embedded TDB2 in the service | (a): Fuseki is already in compose, and the worker reads graphs by reference | **decided 2026-10-01: (a)** |
 | WA-D6 | Work split | (a) Java: mapping, SHACL, detection, template checks. Python job: LE reading, LE program, proposal graph. (b) detection in Python too. (c) detection in the add-in | (a): immediate structural feedback, linguistic work as a job | **decided 2026-10-01: (a)** |
 | WA-D7 | Where highlighting shows | (a) task pane only, with control colours in the document. (b) also character highlighting in the document | (a): the document stays an ordinary contract | **decided 2026-10-01: (a)** |
@@ -224,7 +231,7 @@ None of these is taken without the maintainer. All were recorded 2026-10-01.
 | WA-D10 | Job state | (a) jobs in memory, analyses stored in Fuseki. (b) Postgres | (a): a restart loses only in-flight jobs | **decided 2026-10-01: (a)** |
 | WA-D11 | Branch and commits | `ux/auth-le`, one local commit per slice, no push (§2.1) | as stated | **decided 2026-10-01: as stated** |
 | WA-D12 | Graph drawing | (a) Mermaid, strict security level. (b) a hand-written SVG layout | (a): already the repository's diagram language | **decided 2026-10-01: (a)** |
-| WA-D13 | How ribbon and right-click commands run (WA9a) | (a) a shared runtime: commands and task pane share one JavaScript context, so a command can open the pane with a form filled in. (b) a separate function file: commands cannot talk to the pane, so commands needing input only open the pane | (a). Where a Word build lacks the shared runtime, it ignores the ribbon and menu entries and the task pane still opens from the Add-ins list (R8) | **decided 2026-10-01: (a)** |
+| WA-D13 | How ribbon and right-click commands run (WA-9a) | (a) a shared runtime: commands and task pane share one JavaScript context, so a command can open the pane with a form filled in. (b) a separate function file: commands cannot talk to the pane, so commands needing input only open the pane | (a). Where a Word build lacks the shared runtime, it ignores the ribbon and menu entries and the task pane still opens from the Add-ins list (R8) | **decided 2026-10-01: (a)** |
 
 ### Decisions for the follow-on tranche (sketch §8)
 
@@ -247,32 +254,32 @@ WA12 to WA20 (§4, §5) may not start until the decisions they depend on are rec
 
 | Slice | Title | Paths | Levels | One command | Estimate (tokens) |
 |---|---|---|---|---|---|
-| WA0 | Preflight | status record only | L0 | the preflight script (§5 WA0) | 60k |
-| WA1 | Contracts, templates and samples | `contracts/`, `workers/` (tests, pyproject), `mise.toml` | L1, L3 | `mise run check:authoring-contracts` | 300k |
-| WA2 | Service model, mapping and shapes | `platform/authoring-service`, `platform/pom.xml`, `contracts/authoring/fixtures/wording` | L1, L2, L3 | `mise run check:authoring-service` | 450k |
-| WA3 | Detection, templates and conformance | `platform/authoring-service` | L1 | `mise run check:authoring-service` | 300k |
-| WA4 | API and HTTP adapter | `platform/authoring-service` | L1, L3 | `mise run check:authoring-service` | 450k |
-| WA5 | Fuseki, RabbitMQ and the runnable service | `platform/authoring-service` | L1, L4 | `mise run check:authoring-service-it` | 350k |
-| WA6 | Logical English reading | `workers/` | L1, L2, L3 | `mise run check:authoring-worker` | 450k |
-| WA7 | Worker runtime | `workers/` | L1, L3 | `mise run check:authoring-worker` | 200k |
-| WA8 | Add-in domain | `apps/word-authoring-addin` | L1, L2, L3 | `mise run check:authoring-addin` | 450k |
-| WA9 | Add-in task pane and harness | `apps/word-authoring-addin` | L1, L6 | `mise run test:authoring-addin` | 550k |
-| WA9a | Ribbon and right-click commands | `apps/word-authoring-addin` | L1, L3, L6 | `mise run test:authoring-addin` | 250k |
-| WA10 | Compose stack | `deployment/compose/authoring`, `tools/`, `mise.toml`, add-in stack tests | L0, L5, L6 | `mise run check:authoring-stack` | 400k |
-| WA11 | Documentation and close-out | docs only | paper, manual L6 | `mise run check:authoring` and the WA11 checks | 150k |
+| WA-0 | Preflight | status record only | L0 | the preflight script (§5 WA-0) | 60k |
+| WA-1 | Contracts, templates and samples | `contracts/`, `workers/` (tests, pyproject), `mise.toml` | L1, L3 | `mise run check:authoring-contracts` | 300k |
+| WA-2 | Service model, mapping and shapes | `platform/authoring-service`, `platform/pom.xml`, `contracts/authoring/fixtures/wording` | L1, L2, L3 | `mise run check:authoring-service` | 450k |
+| WA-3 | Detection, templates and conformance | `platform/authoring-service` | L1 | `mise run check:authoring-service` | 300k |
+| WA-4 | API and HTTP adapter | `platform/authoring-service` | L1, L3 | `mise run check:authoring-service` | 450k |
+| WA-5 | Fuseki, RabbitMQ and the runnable service | `platform/authoring-service` | L1, L4 | `mise run check:authoring-service-it` | 350k |
+| WA-6 | Logical English reading | `workers/` | L1, L2, L3 | `mise run check:authoring-worker` | 450k |
+| WA-7 | Worker runtime | `workers/` | L1, L3 | `mise run check:authoring-worker` | 200k |
+| WA-8 | Add-in domain | `apps/word-authoring-addin` | L1, L2, L3 | `mise run check:authoring-addin` | 450k |
+| WA-9 | Add-in task pane and harness | `apps/word-authoring-addin` | L1, L6 | `mise run test:authoring-addin` | 550k |
+| WA-9a | Ribbon and right-click commands | `apps/word-authoring-addin` | L1, L3, L6 | `mise run test:authoring-addin` | 250k |
+| WA-10 | Compose stack | `deployment/compose/authoring`, `tools/`, `mise.toml`, add-in stack tests | L0, L5, L6 | `mise run check:authoring-stack` | 400k |
+| WA-11 | Documentation and close-out | docs only | paper, manual L6 | `mise run check:authoring` and the WA-11 checks | 150k |
 
-Total about 4.35M tokens for WA0 to WA11. Record the actual per slice in the status record.
+Total about 4.35M tokens for WA-0 to WA11. Record the actual per slice in the status record.
 
 ```mermaid
 flowchart LR
-    WA0 --> WA1 --> WA2 --> WA3 --> WA4 --> WA5
-    WA1 --> WA6 --> WA7
-    WA1 --> WA8 --> WA9 --> WA9a
-    WA5 & WA7 & WA9a --> WA10 --> WA11
+    WA-0 --> WA-1 --> WA-2 --> WA-3 --> WA-4 --> WA-5
+    WA-1 --> WA-6 --> WA-7
+    WA-1 --> WA-8 --> WA-9 --> WA-9a
+    WA-5 & WA-7 & WA-9a --> WA-10 --> WA-11
 ```
 
-Run them in numeric order. WA8 and WA9 need the frontend precondition P5. If P5 fails, finish WA1
-to WA7 and stop (S1).
+Run them in numeric order. WA-8 and WA-9 need the frontend precondition P5. If P5 fails, finish WA-1
+to WA-7 and stop (S1).
 
 ### Follow-on tranche: WA12 to WA20 (not started, sketch §8)
 
@@ -289,11 +296,11 @@ to WA7 and stop (S1).
 | WA20 | Binding authority agreement sample (**deferred on CCS**) | `contracts/authoring/**` | L1, L3 | `mise run check:authoring-contracts` | 350k (provisional) |
 
 Total about 3.15M tokens for WA12 to WA19 (excluding WA20, deferred and re-estimated when
-scheduled). Combined with WA0 to WA11, the unit totals about 7.5M tokens if both tranches run.
+scheduled). Combined with WA-0 to WA-11, the unit totals about 7.5M tokens if both tranches run.
 
 ```mermaid
 flowchart LR
-    WA11 --> WA12 --> WA13
+    WA-11 --> WA12 --> WA13
     WA12 --> WA14 --> WA15 --> WA16
     WA13 --> WA15
     WA12 & WA16 --> WA17
@@ -310,7 +317,7 @@ having finished.
 ## 5. Slices
 
 
-### WA0: Preflight
+### WA-0: Preflight
 
 **Preconditions:** none.
 
@@ -331,11 +338,11 @@ P5 runs with the prompt disabled because a corepack download prompt otherwise bl
 Delete `.build/preflight` after P4.
 
 **Output:** the status record's preflight table. No commit unless the status record changed, then
-`[wap] WA0: preflight`.
+`[wap] WA-0: preflight`.
 
 ---
 
-### WA1: Contracts, templates and samples
+### WA-1: Contracts, templates and samples
 
 **Preconditions:** P1, P4.
 
@@ -408,7 +415,7 @@ licensing needs a new path entry.
 
 #### Other contract files
 
-- `contracts/authoring/amqp-topology.json`, data read by both runtimes' tests (WA5, WA7):
+- `contracts/authoring/amqp-topology.json`, data read by both runtimes' tests (WA-5, WA-7):
 
   ```json
   {
@@ -427,7 +434,7 @@ licensing needs a new path entry.
   `lattice.authoring`. `lattice.authoring.dead` has no arguments and is bound to the dead-letter
   exchange. Identical arguments on both sides avoid `PRECONDITION_FAILED`.
 - `contracts/openapi/authoring-service.openapi.json`, OpenAPI 3.1.0, one operation per route of
-  WA4's table, request and response bodies by `$ref` to the schema `$id`s, `text/turtle` for the
+  WA-4's table, request and response bodies by `$ref` to the schema `$id`s, `text/turtle` for the
   graph route.
 - `contracts/authoring/templates/<templateId>.json` for `facility-agreement`, `software-licence`,
   `property-policy`, with sections, admitted term kinds and variables as the sketch §3.2 table.
@@ -538,7 +545,7 @@ event schemas into a `referencing.Registry` keyed by `$id`, and validates with
 | AC-07 | a snapshot whose element has zero parts, and a definition whose term is null / validated / both fail (zero cases) | L3 | - |
 | AC-08 | each template / validated / passes, section keys and variable keys unique within it | L3 | + |
 | AC-09 | each sample / validated and cross-checked / passes the schema, names an existing template, uses only that template's section keys, every reference targets a definition in the same sample, every definition's term occurs in one of its literal parts, documentIds follow §2.4 | L3 | + |
-| AC-10 | the OpenAPI file / parsed / version `3.1.0` and exactly the routes and methods of WA4's table | L3 | + |
+| AC-10 | the OpenAPI file / parsed / version `3.1.0` and exactly the routes and methods of WA-4's table | L3 | + |
 | AC-11 | the three samples / scanned / together contain each demo feature: a bracket placeholder, an unmarked money amount, an unmarked duration, an unreferenced variable, an unmarked entry, a clause with `shall not` in a section admitting only Permission | L1 | + |
 
 **Self-probe:** remove `"additionalProperties": false` from the Part literal definition. AC-02
@@ -549,9 +556,9 @@ contracts, templates and samples (ADR-A118)`.
 
 ---
 
-### WA2: Service model, mapping and shapes
+### WA-2: Service model, mapping and shapes
 
-**Preconditions:** P2, P3, WA1 committed.
+**Preconditions:** P2, P3, WA-1 committed.
 
 **Paths:** `platform/pom.xml` (module entry), `platform/authoring-service/**`,
 `contracts/authoring/fixtures/wording/*.nt`, `mise.toml`, `README.md`,
@@ -566,7 +573,7 @@ contracts, templates and samples (ADR-A118)`.
 - dependencies: `org.apache.jena:jena-arq`, `jena-shacl`, `jena-rdfconnection` at `${jena.version}`.
   `com.fasterxml.jackson.core:jackson-databind`, `com.networknt:json-schema-validator`,
   `com.rabbitmq:amqp-client`, `org.slf4j:slf4j-simple` (scope runtime) at §2.7 versions.
-  `org.junit.jupiter:junit-jupiter` (test). `org.testcontainers:testcontainers` (test, added in WA5)
+  `org.junit.jupiter:junit-jupiter` (test). `org.testcontainers:testcontainers` (test, added in WA-5)
 - `<build><finalName>authoring-service</finalName>`
 - resources: `src/main/resources`, plus `${project.basedir}/../../contracts` with targetPath
   `contracts`, includes `authoring/**/*.json` and `events/wording-analysis-*.schema.json`, excludes
@@ -691,9 +698,9 @@ vocabulary and the gaps of §2.6.
 
 ---
 
-### WA3: Detection, templates and conformance
+### WA-3: Detection, templates and conformance
 
-**Preconditions:** WA2 committed.
+**Preconditions:** WA-2 committed.
 
 **Paths:** `platform/authoring-service/**`.
 
@@ -778,9 +785,9 @@ For each element of `analysis.elements` whose `sectionKey` the template names:
 
 ---
 
-### WA4: API and HTTP adapter
+### WA-4: API and HTTP adapter
 
-**Preconditions:** WA3 committed.
+**Preconditions:** WA-3 committed.
 
 **Paths:** `platform/authoring-service/**`, `docs/architecture/solution-design-specification.md`.
 
@@ -839,7 +846,7 @@ with the body `{"error": "internal error", "details": []}` and the stack trace g
 
 #### `onAnalysisResult`
 
-Validate against `wording-analysis-result`. Invalid: log and return (the bus dead-letters it, WA5).
+Validate against `wording-analysis-result`. Invalid: log and return (the bus dead-letters it, WA-5).
 Unknown jobId: log and return. Failed: `jobs.fail`. Completed: look up the document's template
 through the registry, compute conformance, build the `analysis-view` node, store it as one triple
 `<D/rev/n> wap:analysisJson "<json>"` in the analysis graph, cache it in memory, then
@@ -875,9 +882,9 @@ and ADR-A118, and the statement that it is not a platform contract.
 
 ---
 
-### WA5: Fuseki, RabbitMQ and the runnable service
+### WA-5: Fuseki, RabbitMQ and the runnable service
 
-**Preconditions:** P6, WA4 committed.
+**Preconditions:** P6, WA-4 committed.
 
 **Paths:** `platform/authoring-service/**`, `mise.toml`.
 
@@ -897,7 +904,7 @@ and ADR-A118, and the statement that it is not a platform contract.
 Add `org.testcontainers:testcontainers` (test). Add profile `authoring-it` running
 `maven-failsafe-plugin` 3.5.0 goals `integration-test` and `verify` for `**/*IT.java`. ITs use
 `GenericContainer` only: `stain/jena-fuseki:5.1.0` with `ADMIN_PASSWORD=lattice`, port 3030, wait
-for HTTP `/$/ping`. `rabbitmq:3.13-management-alpine` with `RABBITMQ_DEFAULT_USER` and
+for HTTP `/$/ping`. `rabbitmq:4.4-management-alpine` with `RABBITMQ_DEFAULT_USER` and
 `RABBITMQ_DEFAULT_PASS` `lattice`, port 5672, wait for log `Server startup complete`. Containers start
 in `@BeforeAll` and stop in `@AfterAll`.
 
@@ -926,9 +933,9 @@ run = "mvn -f platform/pom.xml -pl authoring-service -am -Pauthoring-it verify"
 
 ---
 
-### WA6: Logical English reading
+### WA-6: Logical English reading
 
-**Preconditions:** WA1 committed (fixtures), WA2 committed (the `.nt` fixtures).
+**Preconditions:** WA-1 committed (fixtures), WA-2 committed (the `.nt` fixtures).
 
 **Paths:** `workers/src/lattice_workers/wording_le/**`, `workers/tests/test_wording_le.py`,
 `workers/tests/fixtures/wording_le/**`, `workers/pyproject.toml` (package data), `mise.toml`.
@@ -1081,7 +1088,7 @@ description = "Test the word authoring POC worker"
 run = "python -m pytest workers/tests/test_wording_le.py workers/tests/test_wording_analysis_worker.py workers/tests/test_authoring_contracts.py -q"
 ```
 
-In WA6 the task lists only `test_wording_le.py` and `test_authoring_contracts.py`. WA7 adds
+In WA-6 the task lists only `test_wording_le.py` and `test_authoring_contracts.py`. WA-7 adds
 `test_wording_analysis_worker.py`.
 
 | ID | Given / When / Then | Level | +/- |
@@ -1108,9 +1115,9 @@ the command.
 
 ---
 
-### WA7: Worker runtime
+### WA-7: Worker runtime
 
-**Preconditions:** WA6 committed.
+**Preconditions:** WA-6 committed.
 
 **Paths:** `workers/src/lattice_workers/fuseki_gsp.py`,
 `workers/src/lattice_workers/wording_analysis_worker.py`,
@@ -1163,9 +1170,9 @@ The adapter acks after a successful publish, nacks without requeue on `ValueErro
 
 ---
 
-### WA8: Add-in domain
+### WA-8: Add-in domain
 
-**Preconditions:** P5, P7, WA1 committed.
+**Preconditions:** P5, P7, WA-1 committed.
 
 **Paths:** `apps/word-authoring-addin/**` (domain, config, manifest, unit tests), `yarn.lock`,
 `.gitignore`, `.build/word-authoring-addin-test-results/.gitkeep`, `mise.toml`, `README.md`.
@@ -1193,7 +1200,7 @@ Dev dependencies: `@playwright/test`, `@types/react`, `@types/react-dom`, `@type
 
 | File | Contents |
 |---|---|
-| `domain/types.ts` | TypeScript types for every schema of WA1, by hand, names as the `$defs` |
+| `domain/types.ts` | TypeScript types for every schema of WA-1, by hand, names as the `$defs` |
 | `domain/schemas.ts` | imports every schema JSON from `../../../../contracts/...`, one `Ajv2020` instance (`ajv/dist/2020`, `allErrors: true`, `strict: true`), `addSchema` each, `validate(name, value): string[]` |
 | `domain/tags.ts` | the codec below |
 | `domain/ooxml.ts` | `parseBody(ooxml: string): ParsedDocument` and `writeSections(...)`, `writePackage(bodyXml)`, rules below |
@@ -1294,7 +1301,7 @@ this slice, `Version` `0.1.0.0`, `ProviderName` `Nebularis`, `DefaultLocale` `en
 `https://localhost:3443/addin/help.html`, `AppDomains` `https://localhost:3443`, `Hosts`
 `Document`, `Requirements` set `WordApi` `1.4`, `DefaultSettings/SourceLocation`
 `https://localhost:3443/addin/taskpane.html`, `Permissions` `ReadWriteDocument`, and
-`VersionOverrides` with one ribbon button on the Home tab that shows the task pane (WA9a adds the
+`VersionOverrides` with one ribbon button on the Home tab that shows the task pane (WA-9a adds the
 other commands). Icons
 (`public/assets/icon-16.png`, `-32`, `-64`, `-80`) are solid `#1F6FB2` squares written once with a
 standard-library Python snippet (`zlib`, `struct`), not committed as a script. `public/help.html` is
@@ -1318,9 +1325,9 @@ run = "yarn workspace @lattice/word-authoring-addin run check"
 | S8-04 | a section with a heading, an unmarked paragraph and an empty element, and a paragraph outside sections / parsed / two unmarked entries (one with null section), the empty element dropped with a warning (zero case) | L1 | - |
 | S8-05 | a variable `w:sdt` inside a reference `w:sdt` / parsed / literal text and a warning | L1 | - |
 | S8-06 | a parse with an undeclared variable key and adjacent literal runs / built / the declaration added with a warning, literals merged, the snapshot validates | L1 | + |
-| S8-07 | ajv / the valid and invalid fixtures and the samples of WA1 / same outcomes as AC-05 to AC-07 | L3 | +/- |
+| S8-07 | ajv / the valid and invalid fixtures and the samples of WA-1 / same outcomes as AC-05 to AC-07 | L3 | +/- |
 | S8-08 | `occurrenceIndex` with repeated text and an astral character, `escapeWordSearch("a^b")` / expected indices, `a^^b` | L1 | + |
-| S8-09 | the facility graph view golden of WA6 / `toMermaid` / deterministic text, node ids `n0…`, quotes escaped as `#quot;` | L1 | + |
+| S8-09 | the facility graph view golden of WA-6 / `toMermaid` / deterministic text, node ids `n0…`, quotes escaped as `#quot;` | L1 | + |
 | S8-10 | `HttpApiClient` with a fake fetch / a PUT, a 409 answer, a fetch that never settles / the right URL, method, headers and body, an `ApiError` with status 409, a timeout rejection | L1 | +/- |
 | S8-11 | the manifest / parsed / a GUID `Id`, every URL under `https://localhost:3443/addin/`, `ReadWriteDocument`, `WordApi` 1.4 | L1 | + |
 | S8-12 | `pollJob` with fake timers / completed after three polls, never completing, failed / resolves completed, rejects `timeout`, resolves failed at once | L1 | +/- |
@@ -1332,9 +1339,9 @@ run = "yarn workspace @lattice/word-authoring-addin run check"
 
 ---
 
-### WA9: Add-in task pane and harness
+### WA-9: Add-in task pane and harness
 
-**Preconditions:** WA8 committed.
+**Preconditions:** WA-8 committed.
 
 **Paths:** `apps/word-authoring-addin/**`, `docs/architecture/ux-design.md`.
 
@@ -1347,7 +1354,7 @@ run = "yarn workspace @lattice/word-authoring-addin run check"
 | `src/main.tsx` | `Office.onReady`. If `Office.context.requirements.isSetSupported("WordApi", "1.4")` is false, render the "unsupported Word version" message. Else render `<App port={new OfficeWordPort()} api={new HttpApiClient("/api")} />` |
 | `src/harness.tsx` | renders `<App port={fakePort} api={new HttpApiClient("/api")} options={{ pollTimeoutMs }} />`, `pollTimeoutMs` from the query string (default 20000). Exposes `window.__harness = { model(), ooxml(), metadata(), select(elementId, start, end) }` |
 | `src/word/officePort.ts` | `DocumentPort` over Office.js, rules below |
-| `src/word/fakePort.ts` | `DocumentPort` over an in-memory `ParsedDocument` and metadata. `readBodyOoxml` writes the model with the WA8 writer. `insertOoxml` parses and appends. Selections are `(elementId, start, end)` in element-text offsets. Marking splits the literal part. Reasons: no selection, a selection crossing a part boundary (`spans-parts`), inside a variable or reference (`already-marked`), an element id not found (`outside-element`) |
+| `src/word/fakePort.ts` | `DocumentPort` over an in-memory `ParsedDocument` and metadata. `readBodyOoxml` writes the model with the WA-8 writer. `insertOoxml` parses and appends. Selections are `(elementId, start, end)` in element-text offsets. Marking splits the literal part. Reasons: no selection, a selection crossing a part boundary (`spans-parts`), inside a variable or reference (`already-marked`), an element id not found (`outside-element`) |
 | `src/app/App.tsx` | tabs Document, Markup, Analyse, Logical English, Graph, and an error banner |
 | `src/app/*.tsx` | one component per panel, below |
 | `src/app/app.css` | role colours, legend, layout for a 320 to 450 pixel wide pane |
@@ -1382,8 +1389,8 @@ R2). All text from the document or the API is rendered as React text, never as H
 `playwright.config.ts`: `testDir` `./e2e`, `outputDir`
 `../../.build/word-authoring-addin-test-results`, `use.baseURL` `http://127.0.0.1:4175/addin/`,
 `use.channel` `msedge` on Windows, `webServer` `yarn dev --host 127.0.0.1` on port 4175. Tests mock
-`/api/**` with `page.route`, answering from the WA1 samples and templates and the WA6 goldens, and
-validate request bodies with the WA8 ajv module.
+`/api/**` with `page.route`, answering from the WA-1 samples and templates and the WA-6 goldens, and
+validate request bodies with the WA-8 ajv module.
 
 ```toml
 [tasks."test:authoring-addin"]
@@ -1418,12 +1425,12 @@ colours, the role colours, the accessibility rule (title text with every colour)
 
 ---
 
-### WA9a: Ribbon and right-click commands
+### WA-9a: Ribbon and right-click commands
 
-**Preconditions:** WA9 committed, decision WA-D13 recorded.
+**Preconditions:** WA-9 committed, decision WA-D13 recorded.
 
 **Paths:** `apps/word-authoring-addin/**`, `contracts/authoring/fixtures/suggested-keys.json` (read
-only, created in WA1), `docs/architecture/ux-design.md`.
+only, created in WA-1), `docs/architecture/ux-design.md`.
 
 The author can mark text without the task pane open: select words, then right-click and choose from
 a LATTICE submenu, or click a button in a LATTICE group on the Home tab. Commands that need input
@@ -1435,7 +1442,7 @@ for add-in shortcuts would need checking first).
 
 | Id | Ribbon | Right-click | Does |
 |---|---|---|---|
-| `showPane` | Show pane | | opens the task pane (the WA8 button, moved into the group) |
+| `showPane` | Show pane | | opens the task pane (the WA-8 button, moved into the group) |
 | `markClause` | Clause | Mark as clause | `wrapSelectionAsElement("clause", new UUID)` |
 | `markDefinition` | Definition | Mark as definition | `wrapSelectionAsElement("definition", new UUID)` |
 | `markTerm` | Term | Mark as defined term (in its definition) | `markSelection({ kind: "term" })` |
@@ -1456,7 +1463,7 @@ switches to the Markup tab and opens the pane, so the author always sees why. Ev
 | `src/commands/handlers.ts` | `createHandlers(deps: { port, bridge, showPane, newUuid })` returning one `(event) => Promise<void>` per id. No Office global is touched here, so the handlers run under Vitest and in the harness |
 | `src/commands/register.ts` | `registerCommands(handlers)`: `Office.actions.associate(id, handler)` for each id. `showPane` is `() => Office.addin.showAsTaskpane()` |
 | `src/app/uiBridge.ts` | a small observable store: `{ tab, variableDraft, referenceDraft, message, runAnalyse }`, `post(partial)`, `subscribe(listener)`. `App` subscribes. The Markup panel fills its forms from the drafts and shows the message. The Analyse panel runs once when `runAnalyse` is set, then clears it |
-| `src/domain/keys.ts` | `suggestKey(text, valueType)` with WA3's rule, and `guessValueType(text)`: the WA3 money, percentage, date and duration patterns (JavaScript syntax, `u` flag) matched against the whole trimmed text, in that order, else `text` |
+| `src/domain/keys.ts` | `suggestKey(text, valueType)` with WA-3's rule, and `guessValueType(text)`: the WA-3 money, percentage, date and duration patterns (JavaScript syntax, `u` flag) matched against the whole trimmed text, in that order, else `text` |
 | `src/main.tsx` | after `Office.onReady`, `registerCommands(createHandlers(...))` before rendering, sharing one bridge and port with `App` |
 | `src/harness.tsx` | adds `window.__harness.command(id)`, which runs the handler with a fake event and a `showPane` that records calls |
 
@@ -1479,11 +1486,11 @@ place of the outer one when it understands it. In it:
   control, label `LATTICE`, with the six right-click items of the table as `ExecuteFunction`
   actions.
 - `Resources`: every image, URL, short and long string referenced, each `resid` 32 characters or
-  fewer. Icons per command are solid squares in the tag colours of WA8 (clause blue, definition and
+  fewer. Icons per command are solid squares in the tag colours of WA-8 (clause blue, definition and
   term purple, variable orange, defined term green, unmark and analyse grey), 16, 32 and 80 pixels,
   written with the same standard-library snippet as WA8.
 
-The outer V1_0 overrides keep only the WA8 "Show pane" button, for Word builds without the shared
+The outer V1_0 overrides keep only the WA-8 "Show pane" button, for Word builds without the shared
 runtime.
 
 #### Tests
@@ -1507,9 +1514,9 @@ silently. The add-in README gains the commands.
 
 ---
 
-### WA10: Compose stack
+### WA-10: Compose stack
 
-**Preconditions:** P6, WA5, WA7 and WA9a committed.
+**Preconditions:** P6, WA-5, WA-7 and WA-9a committed.
 
 **Paths:** `deployment/compose/authoring/**`, `tools/authoring_stage.py`,
 `tools/test_authoring_stage.py`, `apps/word-authoring-addin/playwright.stack.config.ts`,
@@ -1563,9 +1570,9 @@ authoring job does not import. Images build with no network access beyond the ba
 
 | Service | Image or build | Host ports (all `127.0.0.1`) | Environment | Health | Depends on |
 |---|---|---|---|---|---|
-| `fuseki` | `stain/jena-fuseki:5.1.0` | 3130 → 3030 | `ADMIN_PASSWORD: lattice` | `wget -qO- http://localhost:3030/$$/ping` (the image has `wget`, checked in WA0) | |
-| `rabbitmq` | `rabbitmq:3.13-management-alpine` | 5673 → 5672, 15673 → 15672 | `RABBITMQ_DEFAULT_USER`, `_PASS`: `lattice` | `rabbitmq-diagnostics -q ping` | |
-| `authoring-service` | build `../../../.build/authoring/service`, `platform: linux/amd64` | 8088 → 8080 | the WA5 variables: Fuseki `http://fuseki:3030`, AMQP `amqp://lattice:lattice@rabbitmq:5672/%2F`, admin password `lattice`, seed `true` | `java -cp /app/authoring-service.jar org.nebularis.lattice.authoring.app.HealthProbe http://localhost:8080/api/health`, interval 10s, retries 12, start period 20s | fuseki, rabbitmq healthy |
+| `fuseki` | `stain/jena-fuseki:5.1.0` | 3130 → 3030 | `ADMIN_PASSWORD: lattice` | `wget -qO- http://localhost:3030/$$/ping` (the image has `wget`, checked in WA-0) | |
+| `rabbitmq` | `rabbitmq:4.4-management-alpine` | 5673 → 5672, 15673 → 15672 | `RABBITMQ_DEFAULT_USER`, `_PASS`: `lattice` | `rabbitmq-diagnostics -q ping` | |
+| `authoring-service` | build `../../../.build/authoring/service`, `platform: linux/amd64` | 8088 → 8080 | the WA-5 variables: Fuseki `http://fuseki:3030`, AMQP `amqp://lattice:lattice@rabbitmq:5672/%2F`, admin password `lattice`, seed `true` | `java -cp /app/authoring-service.jar org.nebularis.lattice.authoring.app.HealthProbe http://localhost:8080/api/health`, interval 10s, retries 12, start period 20s | fuseki, rabbitmq healthy |
 | `authoring-worker` | build `../../../.build/authoring/worker` | none | AMQP and Fuseki as the service, dataset `authoring`, `LATTICE_FUSEKI_USER` `admin`, `LATTICE_FUSEKI_PASSWORD` `lattice` | none | rabbitmq healthy, authoring-service healthy |
 | `authoring-proxy` | `caddy:2.10-alpine` | 3443 → 3443 | | none | authoring-service healthy |
 
@@ -1602,7 +1609,7 @@ https://localhost:3443 {
 ```
 
 The policy is a starting point. If Word fails to load the pane because of it, the manual checklist
-(WA11 M2) records the change needed, and the change is a follow-up commit.
+(WA-11 M2) records the change needed, and the change is a follow-up commit.
 
 #### `mise.toml`
 
@@ -1672,9 +1679,9 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
 
 ---
 
-### WA11: Documentation and close-out
+### WA-11: Documentation and close-out
 
-**Preconditions:** WA10 committed.
+**Preconditions:** WA-10 committed.
 
 **Paths:** documentation only.
 
@@ -1684,7 +1691,7 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
    `HKCU\Software\Microsoft\Office\16.0\WEF\Developer`, name `LatticeAuthoring`, data the full path
    of the manifest, then restart Word, given as a command for the maintainer to run), central
    deployment by an administrator, and how to remove each.
-2. The manual checklist below goes into the WA11 Validation Pack, to be completed by a maintainer.
+2. The manual checklist below goes into the WA-11 Validation Pack, to be completed by a maintainer.
 3. `docs/developer/INDEX.md` entry updated with slice states and links to the Validation Packs.
 4. The status record set to "awaiting the maintainer's validation", with the actual token use per slice.
 5. Run `mise run check:authoring`, `mise run check:java`, `mise run check:workers`,
@@ -1712,7 +1719,7 @@ Cert:\CurrentUser\Root`, which asks for confirmation and needs no administrator)
 | M13 | right-click with the selection outside any clause, Mark as variable… | the pane opens and says the selection is not inside a clause |
 | M14 | repeat M11 in the other Word client (web or desktop) | record whether the ribbon group and the right-click submenu appear there |
 
-**Commit:** `[wap] WA11: documentation and close-out`.
+**Commit:** `[wap] WA-11: documentation and close-out`.
 
 ---
 
@@ -1722,12 +1729,12 @@ These are drafted to the level the plan's stop rule S3 allows before their decis
 WA-D20) are recorded: scope, paths, the design points sketch §8 already fixes, and a token
 estimate. Where a decision is still open, the slice says so rather than guessing a field name, a
 route shape or a file layout the maintainer has not confirmed. The detailed, field-by-field instruction
-WA0 to WA11 have is written into each slice once its decisions land, following the same process
-(§2.2) that produced WA0 to WA11.
+WA-0 to WA-11 have is written into each slice once its decisions land, following the same process
+(§2.2) that produced WA-0 to WA11.
 
 ### WA12: Nested clause data model
 
-**Preconditions:** WA11 committed. Decisions WA-D16, WA-D17 recorded.
+**Preconditions:** WA-11 committed. Decisions WA-D16, WA-D17 recorded.
 
 **Paths:** `contracts/authoring/**` (schemas, templates, samples, fixtures), `platform/authoring-service/**`,
 `workers/src/lattice_workers/wording_le/**`, `apps/word-authoring-addin/src/domain/ooxml.ts`,
@@ -1738,12 +1745,12 @@ The foundational slice the rest of the tranche depends on: every runtime's `Elem
 `children` field of the same shape (WA-D16), so a clause can contain clauses. Scope:
 
 - `document-snapshot.schema.json`: `Element.children` (array, same `Element` schema, present and
-  possibly empty on every element, consistent with WA1 rule 3). A definition's `children` is always
+  possibly empty on every element, consistent with WA-1 rule 3). A definition's `children` is always
   empty, checked at the application level (WA-D17), since JSON Schema's own recursion cannot by
   itself bound depth or restrict which kind may nest.
 - `rdf.WordingMapper`: a child element is `wrd:directlyComprises` **of its parent element**, not of
   the section, with its rank key and object id extended one level per the existing pattern (plan
-  §2's WA2 object id rule, generalised recursively: `(s+1).(e+1).(c+1)` for the c-th child of
+  §2's WA-2 object id rule, generalised recursively: `(s+1).(e+1).(c+1)` for the c-th child of
   element e of section s, and so on to WA-D17's maximum depth).
 - Two new SHACL shapes in `wording-poc-shapes.ttl`: one bounding nesting depth at the WA-D17 maximum
   (a SPARQL property-path count over `wrd:directlyComprises`/`wap:elementType`), one forbidding a
@@ -1759,9 +1766,9 @@ The foundational slice the rest of the tranche depends on: every runtime's `Elem
   further block `w:sdt`s tagged as clauses (not definitions, WA-D17), read and written recursively.
   `fakePort.ts`'s in-memory model and its `selectUnmarked`-style test seams grow a nested case.
 
-Test approach: extend WA2's N-Triples fixture regeneration and SHACL tests with a nested fixture (a
-clause two and three levels deep); extend WA6's sentence-form tests with a parent-plus-children
-reading; extend WA8's OOXML round-trip tests with a nested `w:sdt` fixture. A self-probe candidate:
+Test approach: extend WA-2's N-Triples fixture regeneration and SHACL tests with a nested fixture (a
+clause two and three levels deep), extend WA-6's sentence-form tests with a parent-plus-children
+reading, extend WA-8's OOXML round-trip tests with a nested `w:sdt` fixture. A self-probe candidate:
 remove the depth-bound SHACL shape and confirm a five-level fixture, which should fail, no longer
 does.
 
@@ -1791,7 +1798,7 @@ the catalogue's content is authored. This slice only needs the loader and the ro
 an initially empty or placeholder catalogue, since WA16 depends on this route existing first, not
 the reverse).
 
-Test approach: as WA4's route tests (each route's schema, a 200 over the seeded samples, an empty
+Test approach: as WA-4's route tests (each route's schema, a 200 over the seeded samples, an empty
 case for a fresh store).
 
 **Docs:** service README's route table gains the three entries.
@@ -1805,7 +1812,7 @@ case for a fresh store).
 **Paths:** `apps/word-authoring-webapp/**` (new workspace), `packages/authoring-domain/**` (new, only
 if WA-D15 chooses shared modules over duplication), `mise.toml`, `README.md`.
 
-Scaffolds the new workspace exactly as WA8 scaffolded the add-in (`package.json`, `vite.config.ts`,
+Scaffolds the new workspace exactly as WA-8 scaffolded the add-in (`package.json`, `vite.config.ts`,
 `vitest.config.ts`, `tsconfig.json`, Playwright config, `mise run check:authoring-webapp` and
 `test:authoring-webapp`), and builds the left-hand pane of sketch §8.2's screen: the document list
 (from WA13's new route) and the library browser (from WA13's route, over WA16's eventual content),
@@ -1832,12 +1839,12 @@ The middle text pane (continuous prose per section, marked spans in the plan §2
 the right-hand pane's segregated panels from sketch §8.2's table: Markup (selection), Definitions,
 Variables, Scope, each wired to one consistent selection model shared by the tree, text and panel
 panes. The tree's "add below" affordance, filtered to the kinds WA-D17 allows at that position. This
-is the tranche's largest slice, comparable to WA9: a selection anywhere in the three panes must
+is the tranche's largest slice, comparable to WA-9: a selection anywhere in the three panes must
 update all three consistently, and every edit (mark, unmark, edit a part's text, a variable's
-label, a definition's term) round-trips through the same snapshot submission WA4's API already
+label, a definition's term) round-trips through the same snapshot submission WA-4's API already
 accepts, unchanged by this tranche.
 
-Test approach: as WA9's Playwright harness pattern, mocking `/api/**` from WA1's samples and WA12's
+Test approach: as WA-9's Playwright harness pattern, mocking `/api/**` from WA-1's samples and WA12's
 nested fixtures, covering selection-drives-markup, add-below's kind filtering (including the
 zero-case: a definition offers nothing), and a part edited on the right updating the text pane.
 
@@ -1856,7 +1863,7 @@ The Versions panel (WA-D18: a list from WA13's revision route, selecting an olde
 the tree and text panes read-only, no diff, no restore). The library catalogue's real content
 (WA-D19: a handful of seed clauses and definitions with a kind and tags) and the library browser's
 search and insert-at-tree-position behaviour, which copies a library entry's parts into the open
-document exactly as "Insert sample" already does (plan WA9). Theming's dark variant, if WA14 only
+document exactly as "Insert sample" already does (plan WA-9). Theming's dark variant, if WA14 only
 wired the toggle and not every component's dark styles.
 
 Test approach: a revision picker test (seed two revisions, confirm the older one renders its own
@@ -1880,10 +1887,10 @@ depth, `outside-clause` or `max-depth` reasons on failure, mirroring the existin
 reason pattern), a command to insert a library entry at the current position (reusing WA16's
 catalogue route), and the Markup tab reorganised into the same segregated panels (Markup,
 Definitions, Variables, Scope, Versions) sketch §8.2 gives the web app, rather than the single
-mixed tab WA9 built. No new backend behaviour: every command here submits the same snapshot shape
+mixed tab WA-9 built. No new backend behaviour: every command here submits the same snapshot shape
 WA12 already extended.
 
-Test approach: as WA9a's handler tests (the new commands over the fake port, including the
+Test approach: as WA-9a's handler tests (the new commands over the fake port, including the
 `max-depth` and `outside-clause` reasons as explicit negative cases) and new Playwright cases for
 the reorganised panels.
 
@@ -1901,17 +1908,17 @@ rather than repeating its rules.
 `mise.toml`.
 
 Wires the web app into the running stack as a second static path behind the same proxy (`/webapp/*`,
-alongside the add-in's `/addin/*`, sketch §8.2), with a staging step mirroring WA10's
+alongside the add-in's `/addin/*`, sketch §8.2), with a staging step mirroring WA-10's
 `authoring_stage.py` for the web app's build output, and a stack-level Playwright suite proving the
 sketch §8.3 claim empirically rather than by inspection: a document submitted through the add-in's
 fake port (or the harness) is visible in the web app's document list and tree with no new backend
 step, and a document edited in the web app is immediately visible through the add-in's own API
-calls. This is the cross-client proof plan §8.3 promises, run against the real stack as WA10's own
+calls. This is the cross-client proof plan §8.3 promises, run against the real stack as WA-10's own
 suite already runs.
 
-Test approach: as WA10's `e2e-stack` suite, adding cases for the web app's static paths and the
+Test approach: as WA-10's `e2e-stack` suite, adding cases for the web app's static paths and the
 cross-client round trip above. Self-probe candidate: stop the `authoring-service` container mid-test
-and confirm the cross-client case fails on the expected timeout, as WA10's own self-probe did for
+and confirm the cross-client case fails on the expected timeout, as WA-10's own self-probe did for
 the worker.
 
 **Docs:** `deployment/compose/authoring/README.md` gains the web app's service entry and path.
@@ -1925,7 +1932,7 @@ Root `README.md`'s "Run the Word authoring POC" section gains the web app's URL.
 
 **Paths:** documentation only.
 
-As WA11, for this tranche: a manual checklist (open the web app, open a document pushed from the
+As WA-11, for this tranche: a manual checklist (open the web app, open a document pushed from the
 add-in's harness, mark up text in each of the three panes, view an older revision, insert a library
 entry, switch themes, then confirm the same document still opens correctly from the add-in). Status
 record set to "awaiting the maintainer's validation" with actual token use per slice. `check:authoring`,
@@ -1950,9 +1957,9 @@ with the term kinds a real CBAA section would admit, and at least one clause nes
 deep. A content-authoring slice once WA12's mechanism exists and CCS's settled Party and Instrument
 vocabulary gives real terms for the roles and limits involved, rather than inventing POC-only ones
 now. The estimate is provisional: it assumes no new mechanism, only content, fixtures and the
-existing contract tests (WA1's AC-01 to AC-11) extended to the new sample.
+existing contract tests (WA-1's AC-01 to AC-11) extended to the new sample.
 
-Test approach: as WA1, extended to the fourth sample, including nesting-specific cases (AC-09's
+Test approach: as WA-1, extended to the fourth sample, including nesting-specific cases (AC-09's
 cross-checks over a nested element, a demo feature for the deepest nesting case).
 
 **Docs:** `contracts/authoring`'s own documentation (if any exists by then) gains the sample.
@@ -1963,15 +1970,15 @@ cross-checks over a nested element, a demo feature for the deepest nesting case)
 
 | Task | Runs |
 |---|---|
-| `check:authoring-contracts` | contract, template, sample and fixture tests (WA1) |
-| `check:authoring-service` | the service's unit tests (WA2 to WA4) |
-| `check:authoring-service-it` | the service's container tests and jar self-check (WA5) |
+| `check:authoring-contracts` | contract, template, sample and fixture tests (WA-1) |
+| `check:authoring-service` | the service's unit tests (WA-2 to WA-4) |
+| `check:authoring-service-it` | the service's container tests and jar self-check (WA-5) |
 | `build:authoring-fixtures` | regenerates `contracts/authoring/fixtures/wording/*.nt` |
-| `check:authoring-worker` | the worker's tests (WA6, WA7) |
-| `check:authoring-addin`, `test:authoring-addin` | Vitest and harness Playwright (WA8, WA9) |
-| `check:authoring-tools` | the staging tool's tests (WA10) |
+| `check:authoring-worker` | the worker's tests (WA-6, WA-7) |
+| `check:authoring-addin`, `test:authoring-addin` | Vitest and harness Playwright (WA-8, WA-9) |
+| `check:authoring-tools` | the staging tool's tests (WA-10) |
 | `build:authoring`, `authoring:up`, `authoring:down`, `authoring:reset`, `authoring:ca` | the stack |
-| `check:authoring-stack` | builds, starts and tests the stack (WA10, extended WA18) |
+| `check:authoring-stack` | builds, starts and tests the stack (WA-10, extended WA18) |
 | `check:authoring` | everything except the stack |
 | `check:authoring-webapp`, `test:authoring-webapp` | Vitest and Playwright for the web app (WA14 to WA16) |
 
@@ -2014,7 +2021,7 @@ cross-checks over a nested element, a demo feature for the deepest nesting case)
 Non-coverage that applies to the whole unit, cited by every pack: CCS assembly, amendments, tables
 and versioned elements. LE2 parsing of the generated program. Concurrent editing. Authentication.
 Poison-message retry limits (a message that always fails transiently is requeued without end).
-Real Word, except through WA11's manual checklist.
+Real Word, except through WA-11's manual checklist.
 
 ---
 
@@ -2027,7 +2034,7 @@ Real Word, except through WA11's manual checklist.
 | R3 | Testcontainers fails against Docker 29's API | P6 checks the API version, §2.7 names the fallback |
 | R4 | The CSP blocks Office.js | M2 records it, a follow-up changes the Caddyfile |
 | R5 | The tenant blocks sideloading | desktop registry sideload, central deployment, or the harness |
-| R6 | The goldens encode a wrong reading | the WA6 pack lists the facility readings for the maintainer's review before sign-off |
+| R6 | The goldens encode a wrong reading | the WA-6 pack lists the facility readings for the maintainer's review before sign-off |
 | R7 | Scope grows into accepting proposals or editing meaning | out of scope by the sketch §1. A follow-up unit needs its own plan |
 | R8 | A Word build or Word on the web lacks the shared runtime or the right-click extension point | Word then ignores those manifest entries. The task pane still marks everything, and M14 records which clients show the commands |
 | R9 | The web app duplicates the add-in's marking or validation logic and drifts out of sync with it | WA-D15 decides whether to share the TypeScript modules outright, and WA14 adds a parity test either way |
@@ -2037,7 +2044,7 @@ Real Word, except through WA11's manual checklist.
 
 ## 9. Handoff
 
-After WA11 the agent's last message lists, in order: the commits made (`git log --oneline
+After WA-11 the agent's last message lists, in order: the commits made (`git log --oneline
 <first>^..HEAD`), the Validation Packs, any blocker or deviation, the manual checklist, and:
 
 > The branch `ux/auth-le` holds the commits locally. Push it when the slices are validated:

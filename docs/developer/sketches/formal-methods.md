@@ -88,7 +88,7 @@ The properties fall into families that recur across the layers:
 |---|---|---|
 | Consistency | the axioms and laws have a model | every T-Box, every applied module |
 | Adequacy | the formal model and the shapes accept the same data | every layer with a literate README |
-| Determinism | equal inputs give equal outputs | binding resolution, assembly (WA5), passes (B3), compilers (ADR-A19), minting |
+| Determinism | equal inputs give equal outputs | binding resolution, assembly (WA-5), passes (B3), compilers (ADR-A19), minting |
 | Law preservation | an algorithm's output satisfies the laws its specification promises | assembly (W3 to W6), macrosteps (B9 to B11), projections (X1 to X6) |
 | Refinement and parity | an implementation, or a compiled artefact, means what the specification means | compilers, backends (ADR-A28), the InsurML adapters, persistence plans |
 | Monotonicity in information | more evidence never reverses a decided outcome | Eligibility, Quantification comparisons, Instrument breach (I7) |
@@ -263,7 +263,7 @@ context's monad stack (§9):
 | B8, DP6: design time never reads runtime records | a design-time computation receives only `DesignEnv`. The evaluator's `RunEnv` extends it with positions and records, and a lemma shows a design-time computation observes nothing outside `DesignEnv`. The architecture check fails a runtime-derived field added to `DesignEnv` |
 | only a lifted effect changes the ledger (evaluation context §6) | only `lift : Computation A -> Effect` produces `State Ledger` |
 | B3: the engine never reads a clock | time enters only as a position in `RunEnv` |
-| WA4: assembly reads the form, settings and choices only | the assembler's monad carries no runtime component |
+| WA-4: assembly reads the form, settings and choices only | the assembler's monad carries no runtime component |
 | units never change silently | quantities are indexed by value space and unit, so adding two in different units does not typecheck without `convert` |
 
 ### 7.3 Adequacy against the ontology
@@ -397,7 +397,7 @@ the program, since the two coincide on stratified programs (FM-D11).
 | Specify | Prove |
 |---|---|
 | forms, elements, text parts, inclusion modes, slots, transclusion, inline parts, laws W1 to W8 | the laws are jointly satisfiable, and transclusion introduces no cycle (W8) |
-| assembly as a function of form, settings, choices and model (assembly sketch §8) | WA1 to WA7: every successful assembly satisfies W3 to W6, assembly is deterministic, a missing capability refuses rather than drops |
+| assembly as a function of form, settings, choices and model (assembly sketch §8) | WA-1 to WA-7: every successful assembly satisfies W3 to W6, assembly is deterministic, a missing capability refuses rather than drops |
 | a lowering, such as an interval condition carried as a derived governing variable | the lowered assembly includes exactly what the native one does |
 | InsurML's processing model, from its normative steps | **parity for the shared fragment**: on forms that use only constructs both models read natively, the InsurML model and the baseline produce the same record |
 

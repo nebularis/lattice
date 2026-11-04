@@ -37,7 +37,10 @@ Turtle -- serialisation order is not semantically meaningful.
 
 from __future__ import annotations
 
+import hashlib
 import re
+import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -66,9 +69,10 @@ from mcn_decoder import (
     lint,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 MORK_TTL = REPO_ROOT / "ontology" / "mork" / "spec" / "Mork.ttl"
 LOAN_TTL = REPO_ROOT / "ontology" / "mork" / "examples" / "Mork2RML" / "loan_mapping.ttl"
+SPEC_MD = REPO_ROOT / "docs" / "architecture" / "mork-compact-notation.md"
 UNCERTAIN_TTL = REPO_ROOT / "ontology" / "mork" / "examples" / "Zoo" / "UncertainMappings.ttl"
 
 EX = "http://ex.org/m#"
@@ -1929,7 +1933,6 @@ def _strip_named_individual(graph: Graph) -> None:
         graph.remove(triple)
 
 
-@pytest.mark.skipif(not LOAN_TTL.exists(), reason="repository example file not found")
 class TestWorkedExampleLoanMapping:
     MCN_TEXT = """\
 @b <http://example.org/mapping#>
@@ -1965,7 +1968,6 @@ Map_PrincipalValue cb Map_Principal xr qnt:numericValue r principal
         assert len(both) == 40
 
 
-@pytest.mark.skipif(not UNCERTAIN_TTL.exists(), reason="repository example file not found")
 class TestWorkedExampleUncertainMappings:
     MCN_TEXT = """\
 @b <http://www.nebularis.org/ontologies/UncertainMappings#>
@@ -1984,7 +1986,7 @@ Map_Eggs_Hypothesis bt .T cn Map_EggSize c #Eggs n "Hypothesis mapping for 'Eggs
 Map_Falcon MU hy Map_Falcon_Hypothesis{n "Hypothesise the creation of several new types/classes to support the Falcon concept."} f pets:FalconType,pets:Rep_Falcon mr "Recommend defining a new individual 'Falcon' in the target ontology, representing the concept of Falcon as an individual species of Bird." w 65
 Map_Falcon_Hypothesis MD cn Map_Lays_Eggs df Map_Gen_Bird_Class{n "Falcon is a bird, birds lay eggs, however birds are not reptiles. Recommend defining a new class 'Bird' in the target ontology, and then defining 'Falcon' as an individual of the class."} xt .dcd,Map_Yield_Oviparous,Map_Yield_Pet i #Falcon n "Hypothesis mapping for 'Falcon' is Pet, Bird."
 Map_Gen_Bird_Class bt Map_Yield_Oviparous,:Animal dp Map_Oviparity c #Bird n "Create a class 'Bird' in the output ontology."
-Map_Gen_Monotreme_Class bt Map_Yield_Oviparous,:Mamal c #Monotreme n "Create a class 'Monotreme' in the output ontology."
+Map_Gen_Monotreme_Class bt Map_Yield_Oviparous,:Mammal c #Monotreme n "Create a class 'Monotreme' in the output ontology."
 Map_Lays_Eggs MD cn Map_Eggs xr :laysEggs v t n "Asserts the property `Falcon laysEggs true`"
 Map_Oviparity MX bt .T tc mork:OviparousBase c #Oviparous mr "Recommend introducing a notional construct to model reproductive modes, with 'Oviparity' as a member/individual."
 Map_Pet xt :Animal f pets:PetType c #Pet w 90 n "'Pet' is a possible sematic match with the class 'Animal' in the target ontology, representing the concept of pet animals."
@@ -1994,28 +1996,20 @@ Map_Yield_Oviparous MX y .dci c #Oviparous n "Yields the axiom <BaseIRI>#Oviparo
 Map_Yield_Pet MX y .dci c #Pet n "Yields the axiom <BaseIRI>#Pet at processing time."
 """
 
-    def test_round_trip_matches_except_documented_original_defect(self):
-        """This MCN excerpt (spec Sec 16.2) omits the file's standalone
-        :TempMapping/skos:example block (an unrelated illustration, not
-        part of the mapping scheme); the three remaining differences are
-        the *original* Turtle's own defect -- three owl:Axiom
-        reifications whose annotatedTarget uses the mork: prefix instead
-        of the local one, so they annotate nothing. MCN's {...} form
-        makes that mistake syntactically impossible."""
+    def test_round_trip_matches_except_the_omitted_illustration(self):
+        """This MCN omits the file's standalone :TempMapping skos:example
+        block (an unrelated illustration, not part of the mapping scheme).
+        The reified annotations once pointed at the wrong namespace in the
+        original, and no longer do, so everything else matches exactly."""
         decoded = decode(self.MCN_TEXT)
         original = Graph().parse(str(UNCERTAIN_TTL), format="turtle")
         _strip_named_individual(decoded)
         _strip_named_individual(original)
         iso_decoded, iso_original = to_isomorphic(decoded), to_isomorphic(original)
-        both, only_decoded, only_original = graph_diff(iso_decoded, iso_original)
-        assert len(only_decoded) == 3
-        for _s, p, o in only_decoded:
-            assert p == OWL.annotatedTarget
-            assert "UncertainMappings#" in str(o)
-        wrong_prefix_diffs = [t for t in only_original if t[1] == OWL.annotatedTarget]
-        assert len(wrong_prefix_diffs) == 3
-        for _s, p, o in wrong_prefix_diffs:
-            assert "Mork#Map_" in str(o)
+        _both, only_decoded, only_original = graph_diff(iso_decoded, iso_original)
+        assert len(only_decoded) == 0
+        assert {str(s).rsplit("#", 1)[-1] for s, _p, _o in only_original} == {"TempMapping"}
+        assert SKOS.example in {p for _s, p, _o in only_original}
 
 
 # ===========================================================================
@@ -2023,21 +2017,33 @@ Map_Yield_Pet MX y .dci c #Pet n "Yields the axiom <BaseIRI>#Pet at processing t
 # ===========================================================================
 
 
-@pytest.mark.skipif(not MORK_TTL.exists(), reason="ontology/mork/spec/Mork.ttl not found")
 class TestCodebookCoverage:
     @staticmethod
     def _declared_terms():
-        text = MORK_TTL.read_text()
-        # Strip triple-quoted string bodies (skos:example, skos:scopeNote,
-        # ...) first: they routinely embed illustrative Turtle snippets
-        # (an "Aardvark" class, an "isSubcategoryOf" property) that name
-        # real MCN terms in prose but are not themselves declarations in
-        # this ontology.
-        text = re.sub(r'"""(?:[^"]|"(?!""))*"""', "", text, flags=re.S)
+        """(local name, kind) of every class, object, datatype and annotation
+        property and named individual Mork.ttl declares in the MORK namespace."""
+        graph = Graph().parse(str(MORK_TTL), format="turtle")
+        kinds = {
+            OWL.Class: "Class",
+            OWL.ObjectProperty: "ObjectProperty",
+            OWL.DatatypeProperty: "DatatypeProperty",
+            OWL.AnnotationProperty: "AnnotationProperty",
+            OWL.NamedIndividual: "NamedIndividual",
+        }
         declared = set()
-        for m in re.finditer(r"^:(\w+)\s+(?:rdf:type|a)\s+owl:(\w+)", text, re.M):
-            declared.add((m.group(1), m.group(2)))
+        for kind_iri, kind in kinds.items():
+            for subject in graph.subjects(RDF.type, kind_iri):
+                if isinstance(subject, URIRef) and str(subject).startswith(cb.MORK_NS):
+                    declared.add((str(subject)[len(cb.MORK_NS):], kind))
         return declared
+
+    @staticmethod
+    def _spec_exceptions():
+        """The terms section 8.5 of the specification lists as having no
+        code, as local names."""
+        text = SPEC_MD.read_text()
+        section = text.split("### 8.5 Terms without a code", 1)[1].split("\n## ", 1)[0]
+        return set(re.findall(r"^\| `mork:(\w+)` \|", section, re.M))
 
     def test_no_duplicate_type_codes(self):
         # mcn_codebook._type() already raises on duplicates at import
@@ -2057,7 +2063,11 @@ class TestCodebookCoverage:
 
     def test_every_class_has_a_type_code(self):
         covered = {v.curie.split(":")[1] for v in cb.TYPES.values() if v.curie.startswith("mork:")}
-        missing = [name for name, kind in self._declared_terms() if kind == "Class" and name not in covered]
+        missing = [
+            name
+            for name, kind in self._declared_terms()
+            if kind == "Class" and name not in covered and name not in self._spec_exceptions()
+        ]
         assert not missing, f"classes with no MCN type code: {missing}"
 
     def test_every_object_and_data_property_has_a_code(self):
@@ -2069,7 +2079,9 @@ class TestCodebookCoverage:
         missing = [
             name
             for name, kind in self._declared_terms()
-            if kind in ("ObjectProperty", "DatatypeProperty", "AnnotationProperty") and name not in covered
+            if kind in ("ObjectProperty", "DatatypeProperty", "AnnotationProperty")
+            and name not in covered
+            and name not in self._spec_exceptions()
         ]
         assert not missing, f"properties with no MCN code: {missing}"
 
@@ -2079,7 +2091,10 @@ class TestCodebookCoverage:
         missing = [
             name
             for name, kind in self._declared_terms()
-            if kind == "NamedIndividual" and name not in covered_res and name not in covered_types
+            if kind == "NamedIndividual"
+            and name not in covered_res
+            and name not in covered_types
+            and name not in self._spec_exceptions()
         ]
         assert not missing, f"individuals with no MCN reserved token: {missing}"
 
@@ -2087,10 +2102,8 @@ class TestCodebookCoverage:
         text = MORK_TTL.read_text()
         for prefix_decl in re.finditer(r"@prefix\s+(\w+):\s+<([^>]+)>", text):
             prefix, iri = prefix_decl.group(1), prefix_decl.group(2)
-            if prefix in ("xml",):
-                continue
-            assert prefix in cb.PREDECLARED_PREFIXES, f"{prefix} not predeclared"
-            assert cb.PREDECLARED_PREFIXES[prefix] == iri, f"{prefix} IRI mismatch"
+            if prefix in cb.PREDECLARED_PREFIXES:
+                assert cb.PREDECLARED_PREFIXES[prefix] == iri, f"{prefix} IRI mismatch"
 
 
 # ===========================================================================
@@ -2252,3 +2265,340 @@ class TestMcnPackage:
         import mcn
 
         assert not hasattr(mcn, "encode")
+
+
+# ===========================================================================
+# Terms added so that MCN expresses every term of MORK
+# ===========================================================================
+
+# Decoded before the codes below were added: sha256 of the input text ->
+# (sha256 of the canonical decoding of Sec 12.4, triple count). The inputs are
+# the committed MTP cassettes and the specification's complete documents.
+DECODED_BEFORE = {
+    "74980134c8236fef1d726206541d3dc4c7ff6f0819db5e2e0cf8ead6ba1ba86c": ("4c45d4943fff9f439ec39fd85ba35e93297f8da123f2880d09f5700252aebbd9", 49),
+    "f97fa9c886b42f6a24307518f5bae3b32a15d34c38effd44170a5c80d4adbd0d": ("2cdf4adef3e109d55e0b7f7d7ad0e42032d4fe4cb09c104900386256d773adf2", 157),  # the cassette's zoo:Mammal, corrected 2026-10-29
+    "069af38c6f612fb11e435087f303b863f0599c302864887ab2da6b16c5a05c90": ("20aeb7cf3575cd40a6f7e73ce886817c020563cb3de920c292e6b7f88b473b7c", 67),
+    "1e49a7dd99101f3e03dc8c67d51a44336865b4cd715bda2d26fdbea477e9b729": ("eb1b1fad284f569f9af92ffea1e44635f7fb7b304b5ddb5029fadab7a81f518c", 69),
+    "8447849ecc9aed2def5dd8245811491d96cf07583559dc88173d6172f66320bb": ("a65ebc91613b163a9652eeb57efe38a32726666f85196a1b5d64c8d6636bf976", 43),
+    "431346c594205e82a5b07749801bf8b8cd19586903e1fc1eb6a38925aceedf75": ("15d2211f71c2f1ff3492f180af241a6f5ca8765b42b778c33ede440885d99b4b", 147),
+}
+MTP_CASSETTES = REPO_ROOT / "ontology" / "mork" / "mtp" / "out" / "cassettes"
+FENCE = "`" * 3
+
+
+def _spec_blocks():
+    return re.findall(rf"^{FENCE}\n(.*?)^{FENCE}", SPEC_MD.read_text(), re.S | re.M)
+
+
+class TestExistingDocumentsDecodeAsBefore:
+    def test_cassettes_and_specification_examples_decode_to_the_same_graphs(self):
+        texts = [p.read_text() for p in sorted(MTP_CASSETTES.glob("*.txt"))] + _spec_blocks()
+        seen = set()
+        for text in texts:
+            key = hashlib.sha256(text.encode()).hexdigest()
+            if key not in DECODED_BEFORE:
+                continue
+            graph = decode(text)
+            digest, count = DECODED_BEFORE[key]
+            assert len(graph) == count
+            assert hashlib.sha256(canonical_ntriples(graph).encode()).hexdigest() == digest
+            seen.add(key)
+        assert seen == set(DECODED_BEFORE), "an existing example was edited or removed"
+
+    def test_older_codes_keep_their_terms(self):
+        assert cb.PROPERTIES["pd"].curie == "mork:provenanceCreated"
+        assert cb.PROPERTIES["rp"].curie == "mork:referenceDataPath"
+        assert cb.TYPES["PI"].curie == "fnd:PersistentIdentity"
+        assert cb.RESERVED[".json"] == "mork:JSON"
+
+
+class TestNewTypeAndPropertyCodes:
+    def test_enumeration_classes_and_their_properties(self):
+        graph = gh("s1 M af .glob,.dfn,.ex,.all cmb .union lcm .cast ldt xsd:integer\ne1 RD\ne2 AF+CB+LC+FS+OB")
+        assert set(graph.objects(U("s1"), MORK.axiomForm)) == {
+            MORK.GlobalAxioms, MORK.DefiningRestriction, MORK.ExistentialRestriction, MORK.UniversalRestriction}
+        assert (U("s1"), MORK.classCombination, MORK.UnionOfClasses) in graph
+        assert (U("s1"), MORK.lookupComparison, MORK.CastComparison) in graph
+        assert (U("s1"), MORK.lookupDatatype, XSD.integer) in graph
+        assert (U("e1"), RDF.type, MORK.ReviewDecision) in graph
+        for cls in ("AxiomForm", "ClassCombination", "LookupComparison", "FindingSeverity", "OutputBox"):
+            assert (U("e2"), RDF.type, MORK[cls]) in graph
+
+    def test_every_enumeration_individual_has_a_token(self):
+        graph = gh("s1 M af .glob lcm .lexcmp,.termcmp cmb .inter rdc .acc,.cor,.rej,.defer fsv .err,.wrn,.inf ob .iout,.tout")
+        got = {str(o).rsplit("#", 1)[-1] for _s, _p, o in graph if str(o).startswith(cb.MORK_NS)}
+        assert {"GlobalAxioms", "LexicalComparison", "TermComparison", "IntersectionOfClasses", "Accepted", "Corrected",
+                "Rejected", "Deferred", "ErrorFinding", "WarningFinding", "InfoFinding", "InstanceOutput",
+                "TerminologyOutput"} <= got
+
+    def test_rdf_is_a_representation_format(self):
+        graph = decode(f"@b <{EX}>\n%R Src .rdf id src.ttl")
+        assert (U("Src"), MORK["format"], MORK.RDF) in graph
+        assert (U("Src"), MORK.identifier, Literal("src.ttl")) in graph
+
+    def test_compiled_mapping_family(self):
+        graph = gh(
+            "s1 KM cim .draft cbs http://ex.org/out/ cpl mork-rdf mdg abc\n"
+            "q1 KQ qi 2 stm 1 qk construct chk C1 ob .iout roo m1 cla ex:ax clc ex:cc clp ex:cp cxp x\n"
+            'f1 KF fc BadPath fx 3 fmg "no good" fsv .err fab m1\n'
+            "s1 hq q1 hf f1 hec c1 rat 2026-10-29T00:00:00Z\n"
+            "c1 cof m1 efc 0.72 cfr ex:src")
+        assert (U("s1"), RDF.type, MORK.CompiledMapping) in graph
+        assert (U("s1"), MORK.compiledInMode, MORK.DraftMode) in graph
+        assert (U("s1"), MORK.compiledBase, Literal("http://ex.org/out/", datatype=XSD.anyURI)) in graph
+        assert (U("s1"), MORK.hasCompiledQuery, U("q1")) in graph
+        assert (U("s1"), MORK.hasCompileFinding, U("f1")) in graph
+        assert (U("s1"), MORK.hasEffectiveConfidence, U("c1")) in graph
+        assert (U("s1"), MORK.readAt, Literal("2026-10-29T00:00:00Z", datatype=XSD.dateTime)) in graph
+        assert (U("q1"), RDF.type, MORK.CompiledQuery) in graph
+        assert (U("q1"), MORK.queryIndex, Literal(2)) in graph
+        assert (U("q1"), MORK.stratum, Literal(1)) in graph
+        assert (U("q1"), MORK.outputBox, MORK.InstanceOutput) in graph
+        assert (U("q1"), MORK.readsOutputOf, U("m1")) in graph
+        assert (U("f1"), RDF.type, MORK.CompileFinding) in graph
+        assert (U("f1"), MORK.findingSeverity, MORK.ErrorFinding) in graph
+        assert (U("f1"), MORK.findingIndex, Literal(3)) in graph
+        assert (U("c1"), MORK.effectiveConfidence, Literal("0.72", datatype=XSD.double)) in graph
+        assert (U("c1"), MORK.confidenceOf, U("m1")) in graph
+
+    def test_community_and_history_family(self):
+        graph = gh(
+            "o1 HO oin sec1 obc c1 ois s1 ots 2026-10-29T00:00:00Z\n"
+            "k1 HC hcm b1 hop pj1 coh 0.8 csz 4 coc 12 cos cs1\n"
+            "cs1 HS dfr o1 dal leiden dre 1.0 csv 2\n"
+            "b1 HB mbc c1 cmw 0.5\n"
+            "t1 HT mtc k1 mts sec1 mcs c1,c2 mcf 0.9 msc 0.7\n"
+            "pj1 HP pjc ex:Cls pto ex:Onto pcf 3 hpp pp1 hdt d1\n"
+            "pp1 HR pjn c1 pjp ex:Parent pjy ex:p ppc 0.6 ppf 2\n"
+            "d1 HD dtr pj1 dtc pp1 dtf 5\n"
+            'r1 HW rvo m1 rdc .cor cby m2 rnt "fix it"\n'
+            "u1 HU prf s1 prm model-1 tpv 4")
+        for node, cls in (("o1", "SectionObservation"), ("k1", "SemanticCommunity"), ("cs1", "CommunityScheme"),
+                          ("b1", "CommunityMembership"), ("t1", "CommunityMatch"), ("pj1", "OntologicalProjection"),
+                          ("pp1", "PropertyProjection"), ("d1", "DAGTemplate"), ("r1", "MappingReview"),
+                          ("u1", "ProposalRun")):
+            assert (U(node), RDF.type, MORK[cls]) in graph, cls
+        assert (U("k1"), MORK.communityScheme, U("cs1")) in graph
+        assert (U("k1"), MORK.communityCoherence, Literal("0.8", datatype=XSD.decimal)) in graph
+        assert (U("t1"), MORK.matchedConcepts, U("c2")) in graph
+        assert (U("r1"), MORK.reviewDecision, MORK.Corrected) in graph
+        assert (U("r1"), MORK.reviewNote, Literal("fix it")) in graph
+        assert (U("u1"), MORK.teachingPackVersion, Literal("4")) in graph
+        assert (U("o1"), MORK.observationTimestamp, Literal("2026-10-29T00:00:00Z", datatype=XSD.dateTime)) in graph
+
+    def test_shadow_properties(self):
+        graph = gh("s1 sho ex:T shd s2 shr s3 shc s4 shp s5")
+        for prop, target in (("shadowOf", URIRef("http://ex.org/onto#T")), ("shadowDomain", U("s2")),
+                             ("shadowRange", U("s3")), ("shadowSubClassOf", U("s4")), ("shadowSubPropertyOf", U("s5"))):
+            assert (U("s1"), MORK[prop], target) in graph
+
+    def test_every_mork_property_code_agrees_with_the_ontology(self):
+        ontology = Graph().parse(str(MORK_TTL), format="turtle")
+        for code, spec in cb.PROPERTIES.items():
+            if not spec.curie.startswith("mork:") or "/" in spec.curie:
+                continue
+            term = MORK[spec.curie.split(":")[1]]
+            if (term, RDF.type, OWL.DatatypeProperty) in ontology:
+                assert spec.kind == cb.KIND_DATA, code
+                declared = ontology.value(term, RDFS.range)
+                if spec.datatype not in (None, "*") and declared is not None:
+                    assert URIRef(cb._expand(spec.datatype)) == declared, code
+            elif (term, RDF.type, OWL.ObjectProperty) in ontology:
+                assert spec.kind == cb.KIND_OBJECT, code
+
+
+class TestPrefixDeclarations:
+    def test_positional_declaration_under_sdl(self):
+        graph = gh("%M S sdl [odrl http://www.w3.org/ns/odrl/2/]")
+        node = U("S_sdl1")
+        assert (U("S"), SH.declare, node) in graph
+        assert (node, RDF.type, SH.PrefixDeclaration) in graph
+        assert (node, SH.prefix, Literal("odrl")) in graph
+        assert (node, SH.namespace, Literal("http://www.w3.org/ns/odrl/2/", datatype=XSD.anyURI)) in graph
+
+    def test_several_declarations_and_quoted_or_iri_namespaces(self):
+        graph = gh('%M S sdl [a http://a.org/#],[b "http://b.org/"],[c <http://c.org/>]')
+        got = {str(graph.value(n, SH.prefix)): graph.value(n, SH.namespace) for n in graph.objects(U("S"), SH.declare)}
+        assert got == {"a": Literal("http://a.org/#", datatype=XSD.anyURI),
+                       "b": Literal("http://b.org/", datatype=XSD.anyURI),
+                       "c": Literal("http://c.org/", datatype=XSD.anyURI)}
+
+    def test_typed_and_explicit_identity_forms(self):
+        graph = gh("%M S sdl [PD spx a sns http://a.org/],[#d2 a2 http://a2.org/],[#d3 PD spx a3 sns http://a3.org/]")
+        assert graph.value(U("S_sdl1"), SH.prefix) == Literal("a")
+        assert graph.value(U("d2"), SH.prefix) == Literal("a2")
+        assert graph.value(U("d3"), SH.namespace) == Literal("http://a3.org/", datatype=XSD.anyURI)
+
+    def test_a_prefix_spelled_like_a_type_code_is_quoted(self):
+        graph = gh('%M S sdl ["M" http://m.org/]')
+        assert graph.value(U("S_sdl1"), SH.prefix) == Literal("M")
+
+    def test_equals_the_raw_triples(self):
+        compact = gh("%M S sdl [x http://x.org/]")
+        raw = gh(
+            "%M S\n!T S sh:declare S_sdl1\n!T S_sdl1 rdf:type sh:PrefixDeclaration\n"
+            '!T S_sdl1 sh:prefix "x"\n!T S_sdl1 sh:namespace "http://x.org/"^xsd:anyURI\n'
+            "!T S_sdl1 rdf:type owl:NamedIndividual")
+        assert set(compact) == set(raw)
+
+    def test_missing_namespace_is_an_error(self):
+        with pytest.raises(McnSyntaxError):
+            gh("%M S sdl [x]")
+
+
+GUARD_BASE = "@b <http://example.org/mapping#>\n@p odrl=<http://www.w3.org/ns/odrl/2/>\n@p ex=<http://ex.org/onto#>\n"
+GUARD_NODE = URIRef("http://example.org/mapping#m1_aw1")
+ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
+
+
+def _guard(payload: str) -> Graph:
+    return decode(GUARD_BASE + f'm1 aw "{payload}"')
+
+
+class TestGuards:
+    def test_property_guard_with_count_and_in(self):
+        from rdflib.collection import Collection
+
+        graph = _guard("odrl:operator [1..] in {odrl:lt,odrl:lteq}")
+        assert (URIRef("http://example.org/mapping#m1"), MORK.appliesWhen, GUARD_NODE) in graph
+        assert (GUARD_NODE, RDF.type, SH.NodeShape) in graph
+        prop = graph.value(GUARD_NODE, SH.property)
+        assert graph.value(prop, SH.path) == ODRL.operator
+        assert graph.value(prop, SH.minCount) == Literal(1)
+        assert graph.value(prop, SH.maxCount) is None
+        assert list(Collection(graph, graph.value(prop, SH["in"]))) == [ODRL.lt, ODRL.lteq]
+
+    def test_a_guard_has_no_target_and_no_scheme(self):
+        graph = _guard("odrl:operator [1..1]")
+        forbidden = {SH.targetClass, SH.targetNode, SH.targetObjectsOf, SH.targetSubjectsOf, SKOS.inScheme}
+        assert not forbidden & set(graph.predicates(GUARD_NODE, None))
+
+    def test_property_components(self):
+        graph = _guard("odrl:a [1..1] = odrl:v;odrl:b cls ex:C;odrl:c dt xsd:string;odrl:d nk iri;^odrl:e [..0]")
+        props = {}
+        for p in graph.objects(GUARD_NODE, SH.property):
+            path = graph.value(p, SH.path)
+            props["inv" if isinstance(path, BNode) else str(path)] = p
+        assert graph.value(props[str(ODRL.a)], SH.hasValue) == ODRL.v
+        assert graph.value(props[str(ODRL.a)], SH.maxCount) == Literal(1)
+        assert graph.value(props[str(ODRL.b)], SH["class"]) == URIRef("http://ex.org/onto#C")
+        assert graph.value(props[str(ODRL.c)], SH.datatype) == XSD.string
+        assert graph.value(props[str(ODRL.d)], SH.nodeKind) == SH.IRI
+        assert graph.value(graph.value(props["inv"], SH.path), SH.inversePath) == ODRL.e
+        assert graph.value(props["inv"], SH.maxCount) == Literal(0)
+
+    def test_node_level_components(self):
+        graph = _guard("in {odrl:lt,odrl:gt};= odrl:lt;cls ex:C;dt xsd:string;nk iri")
+        assert graph.value(GUARD_NODE, SH.hasValue) == ODRL.lt
+        assert graph.value(GUARD_NODE, SH["class"]) == URIRef("http://ex.org/onto#C")
+        assert graph.value(GUARD_NODE, SH.datatype) == XSD.string
+        assert graph.value(GUARD_NODE, SH.nodeKind) == SH.IRI
+        assert graph.value(GUARD_NODE, SH["in"]) is not None
+
+    def test_not_and_or_nest(self):
+        from rdflib.collection import Collection
+
+        graph = _guard("not(odrl:a = odrl:x);and(odrl:b [1..],or(odrl:c [1..],not(odrl:d [1..])));or(odrl:e [1..])")
+        inner = graph.value(GUARD_NODE, SH["not"])
+        assert (inner, RDF.type, SH.NodeShape) in graph
+        assert graph.value(graph.value(inner, SH.property), SH.hasValue) == ODRL.x
+        and_members = list(Collection(graph, graph.value(GUARD_NODE, SH["and"])))
+        assert len(and_members) == 2
+        assert (and_members[1], SH["or"], None) in graph
+        assert len(list(Collection(graph, graph.value(GUARD_NODE, SH["or"])))) == 1
+
+    def test_a_guard_may_name_a_shape_written_elsewhere(self):
+        graph = decode(GUARD_BASE + "m1 aw g1\ng1 SH\n")
+        assert (URIRef("http://example.org/mapping#m1"), MORK.appliesWhen, URIRef("http://example.org/mapping#g1")) in graph
+
+    def test_bnode_shapes_option(self):
+        graph = decode("@opt bnode-shapes\n" + GUARD_BASE + 'm1 aw "odrl:a [1..]"')
+        assert isinstance(graph.value(GUARD_NODE, SH.property), BNode)
+
+    @pytest.mark.parametrize("payload", [
+        "",
+        "odrl:a [1..] re x",
+        "odrl:a/odrl:b [1..]",
+        "odrl:a [1..],odrl:b [1..]",
+        "not(odrl:a [1..],odrl:b [1..])",
+        "and(odrl:a [1..]",
+        "[1..]",
+        "odrl:a [1..] ?",
+    ])
+    def test_malformed_guards_are_refused(self, payload):
+        with pytest.raises(McnSyntaxError) as excinfo:
+            _guard(payload)
+        assert excinfo.value.code.startswith(("guard-", "shacl-", "core-"))
+
+
+class TestExplicitIdentityInlineNodes:
+    """Sec 9.6: an inline node with an explicit identity and no type list is
+    a node of code-value pairs, under a code with no positional table."""
+
+    def test_explicit_id_with_pairs(self):
+        graph = gh('s1 f [#x c "y"]')
+        assert (U("x"), MORK.conceptName, Literal("y")) in graph
+        assert (U("s1"), MORK.mappingFor, U("x")) in graph
+
+    def test_explicit_id_with_pairs_under_a_curie_code(self):
+        graph = gh('s1 sh:declare [#x sh:prefix "a" sh:namespace "http://a.org/"^xsd:anyURI]')
+        assert (U("x"), SH.prefix, Literal("a")) in graph
+        assert (U("x"), SH.namespace, Literal("http://a.org/", datatype=XSD.anyURI)) in graph
+
+    def test_explicit_id_alone_and_typed_still_work(self):
+        assert (U("s1"), MORK.mappingFor, U("x")) in gh("s1 f [#x]")
+        assert (U("x"), RDF.type, MORK.DataConcept) in gh('s1 f [#x C c "y"]')
+
+    def test_positional_codes_keep_their_positional_reading(self):
+        graph = gh("s1 tg [#t c ex:A]")
+        assert (U("t"), SH.targetClass, URIRef("http://ex.org/onto#A")) in graph
+
+    def test_without_an_explicit_id_pairs_alone_are_still_refused(self):
+        with pytest.raises(McnSyntaxError):
+            gh('s1 f [c "y"]')
+
+    def test_an_unknown_code_after_an_explicit_id_is_refused(self):
+        with pytest.raises(McnSyntaxError):
+            gh("s1 f [#x zzz foo]")
+
+
+COMPILE_MCN = """\
+@b <http://example.org/mapping#>
+@p src=<http://example.org/src#>
+@p tgt=<http://example.org/tgt#>
+@p odrl=<http://www.w3.org/ns/odrl/2/>
+%X
+src:Rule RE
+Concept_Rule C ra src:Rule
+%M Policy md .draft sdl [src http://example.org/src#],[tgt http://example.org/tgt#],[odrl http://www.w3.org/ns/odrl/2/]
+Map_RuleClass xt tgt:Rule
+Map_Rule MD f Concept_Rule df Map_RuleClass cn Map_Lt,Map_Other,Map_Chain
+Map_Lt xr tgt:ordered r odrl:operator aw "odrl:operator [1..] in {odrl:lt,odrl:lteq};^src:of [..0]"
+Map_Other xr tgt:other r odrl:operator aw "not(odrl:operator = odrl:eq);odrl:operator cls src:Op;odrl:operator dt xsd:string nk iri"
+Map_Chain xr tgt:chain r odrl:operator aw "and(odrl:operator [1..1],or(odrl:a [1..],odrl:b = odrl:v));in {odrl:lt}"
+"""
+
+
+class TestGuardsAndPrefixesCompile:
+    def test_decoded_scheme_compiles_without_guard_or_path_findings(self):
+        self._assert_compiles(COMPILE_MCN, 4)
+
+    def test_the_specifications_guarded_scheme_compiles(self):
+        (text,) = [b for b in _spec_blocks() if "sdl [" in b and " aw " in b]
+        self._assert_compiles(text, 3)
+
+    def test_the_check_has_teeth_a_targeted_shape_is_a_guard_finding(self):
+        text = re.sub(r'(Map_Other .*? aw )".*"', r"\1[SH tcl src:Rule]", COMPILE_MCN)
+        with pytest.raises(AssertionError):
+            self._assert_compiles(text, 3)
+
+    @staticmethod
+    def _assert_compiles(text, queries):
+        sys.path.insert(0, str(REPO_ROOT / "tools"))
+        from mork_rdf import compile_scheme
+
+        graph = decode(text)
+        compiled = compile_scheme(graph, "http://example.org/mapping#Policy", base="http://example.org/out/",
+                                  at=datetime(2026, 10, 29, tzinfo=timezone.utc))
+        assert {f.code for f in compiled.findings} & {"GuardUnsupported", "BadPath"} == set()
+        assert len(compiled.queries) == queries
