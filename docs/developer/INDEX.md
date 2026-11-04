@@ -23,7 +23,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | applied-insurance-reference | epic | AIR | built 2026-11-02 | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
 | applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
-| computable-contract-substrate | multi-slice unit | CCS, HQ | built 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
+| computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
 | config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
@@ -46,7 +46,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-conformance | unit | MSC | built 2026-10-27 | MSC-1 | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
+| multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
 | ontology-root-relocation | unit |  | merged 2026-09-20 |  | [status](status/ontology-root-relocation.md), [review](review/ontology-root-relocation-review.md) |
@@ -191,31 +191,32 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | CCS-F1 | external and natural keys (ADR-A114) | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-6 | instrument, terms, the five relations, parties, content | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-7b | terms in time | computable-contract-substrate | merged 2026-10-06 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-7c | what terms are, and who they bind (split from CCS-7b) | computable-contract-substrate | merged 2026-10-27 | done | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-7c | what terms are, and who they bind (split from CCS-7b) | computable-contract-substrate | merged 2026-10-27 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-8 | values in stated meaning, Wording references by identity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-8b | values in stated meaning, Wording references by identity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-9a | amendments, assents and taking effect | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-9b.0 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-9b.1 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-9b.2 | Eligibility sources, legal acts, additivity | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| HQ-6a.1 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | computable-contract-substrate | merged 2026-10-27 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | computable-contract-substrate | merged 2026-10-27 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9b.3 | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9b.4 | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9d | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9c | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-8a | set comparisons, qualifying rules, materiality, incorporation, template library | computable-contract-substrate | briefed 2026-10-27 | CCS-9b.4 on CCS-9b.3 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-6a.1 | untimed closures (ADR-A105): the model and reference semantics | computable-contract-substrate | tagged 2026-10-12 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| HQ-6a.2 | untimed closures (ADR-A105): the compilers (`executable-v0.7.0`) | computable-contract-substrate | tagged 2026-10-16 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3 | set comparisons, aggregate bindings, the two kinds of deferral, hierarchical match over a named relation, as CCS-9b.3a, CCS-9b.3b and CCS-9b.3c | computable-contract-substrate | blocked | CCS-9b.3b | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3a | set comparisons, law L18 (ADR-A145) | computable-contract-substrate | tagged 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3b | aggregate bindings, with `qnt:Count` for existence and quorums by number | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.3c | hierarchical match over a named relation, no applicable binding Undetermined | computable-contract-substrate | tagged 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9b.4 | qualifying rules | computable-contract-substrate | planned | CCS-9b.3b | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9d | materiality | computable-contract-substrate | planned | CCS-9b.4 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-9c | incorporation | computable-contract-substrate | planned | CCS-9d | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-8a | template library | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-16c | remove Party's shares | computable-contract-substrate | planned | CCS-9b.4 | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-7a | regimes and gating, split from C7 | computable-contract-substrate | merged 2026-10-05 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-12 | runtime evaluator, relation plans | computable-contract-substrate | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-13 | runtime evaluator, relation plans | computable-contract-substrate | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from CCS-5) | computable-contract-substrate | blocked | CCS-5, NRS N1 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-14 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-15 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-16 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-17 | examples, docs, handoff | computable-contract-substrate | blocked | CCS-8a, C9, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9b.3a | CCS-9b.3a | computable-contract-substrate | built 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-9b.3c | CCS-9b.3c | computable-contract-substrate | built 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-12 | runtime evaluator | computable-contract-substrate | blocked | CCS-9c, LG-3, ES-3 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-13 | relation plans | computable-contract-substrate | blocked | CCS-9c, AIR-3.3, NRS-1 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from CCS-5) | computable-contract-substrate | blocked | NRS-1 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-14 | neutral examples E1 to E4 | computable-contract-substrate | blocked | CCS-8a, CCS-9c, CCS-12 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-15 | neutral examples E5 to E8, and the scenario coverage test | computable-contract-substrate | blocked | CCS-14 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-16 | how-to guides and architecture documents | computable-contract-substrate | blocked | CCS-15 | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-17 | handoff: insurance renderings and Open CBAA migration notes | computable-contract-substrate | blocked | CCS-16 | docs/developer/status/computable-contract-substrate.md#slice-board |
 | HQ-1 | HQ-1 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | HQ-10 | HQ-10 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | HQ-11 | HQ-11 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
@@ -376,14 +377,14 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-3 | LG-3 | ledger | planned |  | docs/developer/status/ledger.md#board |
 | LG-4 | LG-4 | ledger | planned |  | docs/developer/status/ledger.md#board |
 | LG-5 | LG-5 | ledger | planned |  | docs/developer/status/ledger.md#board |
-| MSC-1 | MSC-1 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
-| MSC-2 | MSC-2 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
-| MSC-3 | MSC-3 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
-| MSC-4 | MSC-4 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
-| MSC-5 | MSC-5 | multi-store-conformance | built 2026-10-27 |  | docs/developer/status/multi-store-conformance.md#position |
+| MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an A | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
+| MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, on | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
+| MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the pr | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
+| MSC-4 | `benchmark/persistence-store-probes`, P3 out of `check:persistence`, TSD-42 rerun with rdflib, STD-290, CAP-97. Jena's column added in MSC-5 | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
+| MSC-5 | TSD-42 and TSD-43 on Jena, TSD-Q12, Q18, Q19 narrowed to Fuseki, Q21's `MAX` left to the specification's authors, TSD-54 to TSD-57, `sparql-constraint-query-cost` runs Jena, thirteen upstrea | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | NRS-2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads (ADR-A104 decision 15) | normative-rule-substrate | blocked | D1, NQ-2 | docs/developer/status/normative-rule-substrate.md#slice-board |
 | NRS-4 | Deontic extension of Instrument (A-104, R1) | normative-rule-substrate | dropped 2026-09-30 | CCS C1, C6 to C9 | docs/developer/status/normative-rule-substrate.md#slice-board |
-| NRS-1 | Condition composition acyclicity (R4). CCS C13 and C13a wait on it | normative-rule-substrate | blocked | AIR-3.3 merge, NQ-2 | docs/developer/status/normative-rule-substrate.md#slice-board |
+| NRS-1 | Condition composition acyclicity (R4). CCS-13 and CCS-13a wait on it, and CCS does the work (NQ-2) | normative-rule-substrate | blocked | AIR-3.3 | docs/developer/status/normative-rule-substrate.md#slice-board |
 | NRS-6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | normative-rule-substrate | blocked | CCS C12, NQ-3 | docs/developer/status/normative-rule-substrate.md#slice-board |
 | NRS-3 | Self-contradiction design-time check | normative-rule-substrate | blocked | CCS C13a, NQ-2 | docs/developer/status/normative-rule-substrate.md#slice-board |
 | NRS-5 | Closure declarations (A-105, R2) | normative-rule-substrate | dropped 2026-10-10 | CCS HQ-6a before CCS-9b.3, HQ-6b before C12 | docs/developer/status/normative-rule-substrate.md#slice-board |

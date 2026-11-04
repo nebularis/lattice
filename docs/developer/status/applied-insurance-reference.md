@@ -23,27 +23,19 @@ is written, and comes to R once, when the trip is done.
 **Briefs written:** every slice of the trip, the last on 2026-10-13. Every question of the trip is
 decided (2026-10-14), so the branch can be created. AIR-3.3 has a brief that is blocked (phase 3
 plan).
-**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and
-from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on
-2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1 (phase 3 plan),
-and lands before CCS's N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS
-CCS-9b.3, and CCS C9 merges before Phase 5 (epic §3b). The trip's imports stay pinned to `main` at the
-branch point, and R re-pins once at the merge (lanes §6 step 4).
+**Concurrent work:** from round 3, machine R also builds the normative-rule-substrate unit, and from 2026-09-30 the computable-contract-substrate unit (CCS), which took over NRS N4, and on 2026-10-10 N1, N2 and N5 as well. AIR-3.3 waits for AIR-3.3-Q1 (phase 3 plan), since HQ-6a.2 merged on 2026-10-16, and lands before CCS's N1 and C13. NRS N9 waits for Phase 2, substrate S2 is authored with CCS CCS-9b.3, and CCS C9 merges before Phase 5 (epic §3b). The trip's imports stay pinned to `main` at the branch point, and R re-pins once at the merge (lanes §6 step 4).
 
 ## Machine R
 
-**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. Every brief of the one trip
-written and every question decided (2026-10-14). Next: the maintainer creates and pushes
-`air/applied-reference` from `main`, and R verifies S's bundle when the trip is done. AIR-3.3 waits
-on CCS HQ-6a.2. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
+**Position:** round 3. Rounds 1 and 2 complete, Phase 1 complete. Every brief of the one trip written and every question decided (2026-10-14). Next: the maintainer creates and pushes `air/applied-reference` from `main`, and R verifies S's bundle when the trip is done. AIR-3.3 waits on AIR-3.3-Q1. NRS N2 moved to CCS on 2026-10-10 (NRS NQ-2).
 **Last updated:** 2026-10-14
-**Blockers:** AIR-3.3 waits for CCS HQ-6a.2 to merge and for AIR-3.3-Q1.
+**Blockers:** AIR-3.3 waits for AIR-3.3-Q1.
 
 | Slice | Deliverable | State | Blocked on | Seq | Branch | Note |
 |---|---|---|---|---|---|---|
 | AIR-3.1 |  | merged 2026-10-14 |  | 2 | `air/3.1-flat-hierarchy` | tags `eligibility-vocab-v0.7.0`, `executable-v0.6.0` |
 | AIR-3.2 |  | merged 2026-10-14 |  | 8 | `air/3.2-set-readings` | eight tags (Validation Pack Results) |
-| AIR-3.3 |  | planned |  | 13 | `air/3.3-readings-swrl-owl`, created from `main` after HQ-6a.2 merges | brief blocked on AIR-3.3-Q1 |
+| AIR-3.3 |  | planned |  | 13 | `air/3.3-readings-swrl-owl` | brief blocked on AIR-3.3-Q1 |
 | AIR-S1 | substrate ADRs, S1 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |
 | AIR-S2 | substrate ADRs, S2 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |
 | AIR-S4 | substrate ADRs, S4 | planned |  | 23+ | `air/s<n>-<slug>` | ADRs drafted in round 4 |

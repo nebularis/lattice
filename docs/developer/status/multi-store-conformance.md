@@ -3,7 +3,7 @@
 # Multi-store conformance: status
 
 **Unit ID:** `multi-store-conformance`
-**Status:** built 2026-10-27.
+**Status:** merged 2026-10-29.
 **Plan:** [multi-store-conformance.md](../plans/multi-store-conformance.md)
 **Mode:** autonomous across the whole plan, at the maintainer's request on 2026-10-27, with up to two sub-agents. The maintainer reviews before `main`.
 
@@ -11,13 +11,13 @@
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| MSC-1 |  | built 2026-10-27: `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an ADR-A125 addendum proposed |  |
-| MSC-2 |  | built 2026-10-27: Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, one upstream report drafted (Jena `CLEAR GRAPH`), CAP-95 |  |
-| MSC-3 |  | built 2026-10-27: Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the profile read set's `?decision`, owned by CCS C9b3b), CAP-96 |  |
-| MSC-4 |  | built 2026-10-27: `benchmark/persistence-store-probes`, P3 out of `check:persistence`, TSD-42 rerun with rdflib, STD-290, CAP-97. Jena's column added in MSC-5 |  |
-| MSC-5 |  | built 2026-10-27: TSD-42 and TSD-43 on Jena, TSD-Q12, Q18, Q19 narrowed to Fuseki, Q21's `MAX` left to the specification's authors, TSD-54 to TSD-57, `sparql-constraint-query-cost` runs Jena, thirteen upstream drafts under `.local/upstream/`, none filed |  |
+| MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an ADR-A125 addendum proposed | merged 2026-10-29, built 2026-10-27 |  |
+| MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, one upstream report drafted (Jena `CLEAR GRAPH`), CAP-95 | merged 2026-10-29, built 2026-10-27 |  |
+| MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the profile read set's `?decision`, owned by CCS C9b3b), CAP-96 | merged 2026-10-29, built 2026-10-27 |  |
+| MSC-4 | `benchmark/persistence-store-probes`, P3 out of `check:persistence`, TSD-42 rerun with rdflib, STD-290, CAP-97. Jena's column added in MSC-5 | merged 2026-10-29, built 2026-10-27 |  |
+| MSC-5 | TSD-42 and TSD-43 on Jena, TSD-Q12, Q18, Q19 narrowed to Fuseki, Q21's `MAX` left to the specification's authors, TSD-54 to TSD-57, `sparql-constraint-query-cost` runs Jena, thirteen upstream drafts under `.local/upstream/`, none filed | merged 2026-10-29, built 2026-10-27 |  |
 
-**Next action, for the maintainer:** review the unit on `multi-store-conformance` before it reaches `main`, after `ccs-trunk`. Decide when to file the reports in `docs/developer/notes/upstream-sparql-engine-reports.md` that are not filed (TSD-Q32, checking RDFLib/rdflib#3498 first).
+**Next action, for the maintainer:** decide when to file the reports in [the upstream reports note](../notes/upstream-sparql-engine-reports.md) that are not filed (TSD-Q32).
 
 ## History
 
@@ -32,3 +32,4 @@
 - 2026-10-27: `graph:ask -- read` prints an entry's register row before the section its Pointer names, which 574 of 585 register entries hid. The discovery record's open questions are indexed as discoveries (TD-100 removed), and a Ratified cell is read by its leading yes or no, so CAP-84 to CAP-97, MEC-84, MEC-85 and PRI-51 now carry their status
 - 2026-10-27: the maintainer ratifies CAP-90 to CAP-97 and STD-290, with the capabilities that list the stores reworded to name every supported store and CAP-93 rephrased
 - 2026-10-27: the maintainer filed oxigraph/oxigraph#2008 and #2009. The other upstream drafts moved from the git-ignored `.local/upstream/` into `docs/developer/notes/upstream-sparql-engine-reports.md`, each with its tracker search and full reproduction, so they survive the checkout. The discovery record's open questions gain an Answered by column, and a question a finding answers in full shows as Answered in the index, labelled and never hidden
+- 2026-11-04: rows set to merged. Release 0.20.0 (2026-10-29) delivered the unit
