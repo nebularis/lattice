@@ -3,27 +3,19 @@
 # Computable contract substrate - Status
 
 **Unit ID:** `computable-contract-substrate`
-**Status:** built 2026-10-29. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
+**Status:** verified 2026-10-29. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
 **Last updated:** 2026-10-27
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
 [contract-amounts.md](../sketches/contract-amounts.md)
-**ADRs:** A-104, A-105, A-106, A-112, A-113, A-114, A-115 and A-120 accepted, with addenda
+**ADRs:** A-104, A-105, A-106, A-112, A-113, A-114, A-115, A-120 and A-145 accepted, with addenda
 **Machine:** R
 
 ## Current position
 
-Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0,
-Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run
-check`. In tranche D, CCS-6 to CCS-7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification
-0.7.0). CCS-8 and CCS-8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). Of C9, CCS-9a, CCS-9b.0 to CCS-9b.2
-and HQ-6a are merged and tagged: amendments and assents, Eligibility's README as its source, additivity,
-the legal acts tier (Instrument 0.16.0, Behaviour 0.14.0), and untimed closures (ADR-A105). HQ-6a.1
-gave Eligibility 0.12.0 with L15 restated and L17 (2026-10-12), and HQ-6a.2 the compilers' closures
-and `exe:NoClosureLicence` (Executable 0.7.0, merged 2026-10-16). From CCS-5 on, slices are built and
-verified on the branch, and the maintainer commits by hand.
+Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: Wording 0.3.0, Behaviour 0.10.0 (shapes 0.4.0) with nested states and history, the import guard in `mise run check`. In tranche D, CCS-6 to CCS-7c are merged and tagged (Instrument 0.12.0, Party 0.8.0, Quantification 0.7.0). CCS-8 and CCS-8b are merged and tagged (Instrument 0.14.0, Wording 0.7.0). Of C9, CCS-9a, CCS-9b.0 to CCS-9b.2 and HQ-6a are merged and tagged: amendments and assents, Eligibility's README as its source, additivity, the legal acts tier (Instrument 0.16.0, Behaviour 0.14.0), and untimed closures (ADR-A105). HQ-6a.1 gave Eligibility 0.12.0 with L15 restated and L17 (2026-10-12), and HQ-6a.2 the compilers' closures and `exe:NoClosureLicence` (Executable 0.7.0, merged 2026-10-16). CCS-9b.3a and CCS-9b.3c, with the multi-store conformance unit, are merged and tagged in release 0.20.0 (2026-10-29). From CCS-5 on, slices are built and verified on the branch, and the maintainer commits by hand.
 
-**Next action, for us:** brief C9b3b, aggregate bindings, on `ccs-trunk`: a measure as a path, each set its own binding and closure (C9b3-Q3 (x)), `qnt:Count` for existence and quorums by number (C9b3a-Q2 (c)), the profile read set's `?decision` dependence under STD-279's third meaning, and the Q12 additivity shape. The maintainer reviews C9b3a on `ccs-trunk` and ratifies ADR-A145. The multi-store conformance unit is merged into `ccs-trunk`, not yet into `main`. HQ-6b, closures over a period, follows before C12.
+**Next action, for us:** brief CCS-9b.3b, aggregate bindings: a measure as a path, each set its own binding and closure (C9b3-Q3 (x)), `qnt:Count` for existence and quorums by number (C9b3a-Q2 (c)), and the profile read set's `?decision` dependence under STD-279's third meaning (TD-105). HQ-6b, closures over a period, follows before CCS-12.
 
 ## Slice board
 
@@ -42,31 +34,32 @@ verified on the branch, and the maintainer commits by hand.
 | CCS-F1 | external and natural keys (ADR-A114) | merged 2026-10-10, tagged |  | Foundation, now |
 | CCS-6 | instrument, terms, the five relations, parties, content | merged 2026-10-10, tagged |  | D |
 | CCS-7b | terms in time | merged 2026-10-06 (`5da9412`), tagged |  | D |
-| CCS-7c | what terms are, and who they bind (split from CCS-7b) | merged 2026-10-27 and tagged | done | D |
+| CCS-7c | what terms are, and who they bind (split from CCS-7b) | merged 2026-10-27 and tagged |  | D |
 | CCS-8 | values in stated meaning, Wording references by identity | merged 2026-10-10, tagged |  | D |
 | CCS-8b | values in stated meaning, Wording references by identity | merged 2026-10-10, tagged |  | D |
 | CCS-9a | amendments, assents and taking effect | merged 2026-10-10, tagged |  | D |
 | CCS-9b.0 | Eligibility sources, legal acts, additivity | merged 2026-10-10, tagged 2026-10-10 |  | D |
 | CCS-9b.1 | Eligibility sources, legal acts, additivity | merged 2026-10-10, tagged 2026-10-10 |  | D |
 | CCS-9b.2 | Eligibility sources, legal acts, additivity | merged 2026-10-10, tagged 2026-10-10 |  | D |
-| HQ-6a.1 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | merged 2026-10-27 and tagged: HQ-6a.1 2026-10-12, HQ-6a.2 2026-10-16 (`executable-v0.7.0`) |  | D |
-| HQ-6a.2 | untimed closures (ADR-A105): the model and reference semantics, then the compilers | merged 2026-10-27 and tagged: HQ-6a.1 2026-10-12, HQ-6a.2 2026-10-16 (`executable-v0.7.0`) |  | D |
-| CCS-9b.3 | set comparisons, qualifying rules, materiality, incorporation, template library | briefed 2026-10-27, CCS-9b.3, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk`, C9b3a merged into `ccs-trunk` 2026-10-28, then C9b3b | CCS-9b.4 on CCS-9b.3 | D |
-| CCS-9b.4 | set comparisons, qualifying rules, materiality, incorporation, template library | briefed 2026-10-27, CCS-9b.3, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk`, C9b3a merged into `ccs-trunk` 2026-10-28, then C9b3b | CCS-9b.4 on CCS-9b.3 | D |
-| CCS-9d | set comparisons, qualifying rules, materiality, incorporation, template library | briefed 2026-10-27, CCS-9b.3, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk`, C9b3a merged into `ccs-trunk` 2026-10-28, then C9b3b | CCS-9b.4 on CCS-9b.3 | D |
-| CCS-9c | set comparisons, qualifying rules, materiality, incorporation, template library | briefed 2026-10-27, CCS-9b.3, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk`, C9b3a merged into `ccs-trunk` 2026-10-28, then C9b3b | CCS-9b.4 on CCS-9b.3 | D |
-| CCS-8a | set comparisons, qualifying rules, materiality, incorporation, template library | briefed 2026-10-27, CCS-9b.3, delivered on `ccs-trunk`: C9b3c and the profile union fix merged into `ccs-trunk`, C9b3a merged into `ccs-trunk` 2026-10-28, then C9b3b | CCS-9b.4 on CCS-9b.3 | D |
+| HQ-6a.1 | untimed closures (ADR-A105): the model and reference semantics | tagged 2026-10-12, merged 2026-10-12 |  | D |
+| HQ-6a.2 | untimed closures (ADR-A105): the compilers (`executable-v0.7.0`) | tagged 2026-10-16, merged 2026-10-16 |  | D |
+| CCS-9b.3 | set comparisons, aggregate bindings, the two kinds of deferral, hierarchical match over a named relation, as CCS-9b.3a, CCS-9b.3b and CCS-9b.3c | blocked, briefed 2026-10-27 | CCS-9b.3b | D |
+| CCS-9b.3a | set comparisons, law L18 (ADR-A145) | tagged 2026-10-29, merged 2026-10-29 |  | D |
+| CCS-9b.3b | aggregate bindings, with `qnt:Count` for existence and quorums by number | planned |  | D |
+| CCS-9b.3c | hierarchical match over a named relation, no applicable binding Undetermined | tagged 2026-10-29, merged 2026-10-29 |  | D |
+| CCS-9b.4 | qualifying rules | planned | CCS-9b.3b | D |
+| CCS-9d | materiality | planned | CCS-9b.4 | D |
+| CCS-9c | incorporation | planned | CCS-9d | D |
+| CCS-8a | template library | planned |  | D |
 | CCS-16c | remove Party's shares | planned, required before the epic closes | CCS-9b.4 | F |
 | CCS-7a | regimes and gating, split from C7 | merged 2026-10-05 to `main` (`c6e5853`) and tagged |  | D |
-| CCS-12 | runtime evaluator, relation plans | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | E |
-| CCS-13 | runtime evaluator, relation plans | blocked | C9, CCS-11, CCS-11a, AIR-3.3, NRS N1 | E |
-| CCS-13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from CCS-5) | blocked | CCS-5, NRS N1 | E |
-| CCS-14 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
-| CCS-15 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
-| CCS-16 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
-| CCS-17 | examples, docs, handoff | blocked | CCS-8a, C9, CCS-12 | F |
-| CCS-9b.3a |  | built 2026-10-29 |  |  |
-| CCS-9b.3c |  | built 2026-10-29 |  |  |
+| CCS-12 | runtime evaluator | blocked | CCS-9c, LG-3, ES-3 | E |
+| CCS-13 | relation plans | blocked | CCS-9c, AIR-3.3, NRS-1 | E |
+| CCS-13a | design-time joint satisfiability: slot conditions by reasoner, the task NRS N3 reuses (deferred from CCS-5) | blocked | NRS-1 | E |
+| CCS-14 | neutral examples E1 to E4 | blocked | CCS-8a, CCS-9c, CCS-12 | F |
+| CCS-15 | neutral examples E5 to E8, and the scenario coverage test | blocked | CCS-14 | F |
+| CCS-16 | how-to guides and architecture documents | blocked | CCS-15 | F |
+| CCS-17 | handoff: insurance renderings and Open CBAA migration notes | blocked | CCS-16 | F |
 | HQ-1 |  | planned |  |  |
 | HQ-10 |  | planned |  |  |
 | HQ-11 |  | planned |  |  |
@@ -218,3 +211,5 @@ verified on the branch, and the maintainer commits by hand.
 - 2026-10-28: renumbered before merging `main`, under the ADR-A133 addendum's first-in-wins rule and the merge brief of 2026-10-28: our decision numbered A136 became ADR-A145 (the configuration studio's A136 is earlier, and main's own A136 became ADR-A141), and TD-95 became TD-123 (the ledger branch's TD-95 is earlier). The decision file is renamed and every citation moved
 - 2026-10-29: merged `main` at `8661c0d6` into `ccs-trunk`, under the merge brief of 2026-10-28. Nine files conflicted as the brief expected. Reconciled: TSD-42 is the one record of Oxigraph reading every graph for a `GRAPH ?g` bound outside, carrying TSD-45's account of the computed form and its measurements on Oxigraph, rdflib, Jena and RDF4J (R-M, R-N), and TSD-45 points to it, PDD-17 and every other citation repointed. Our heading of TSD-41 is kept, the record noting the retitling. The two section 7.6s are 7.6 and 7.7. Departed from the brief's "keep both sets" in `test_store_probes.py`: jolly-turing's two P3 timing tests are not kept in `check:persistence`, since STD-290 forbids a timing assertion there and `benchmark/persistence-graph-naming-cost` measures both forms. Main's `fnd:Versioned` rename and claim limit applied: thirteen of our claims shortened to 200 characters, the STD-279 exception dropped. Main's own CCS tests loaded a Quantification shapes file main deleted, so they had not run on main, and now skip the deleted empty files and load Foundation's vocabulary. The Instrument and Wording examples type their identities and mint one for each versioned node that had none. Open for the maintainer: identities for 22 layer individuals that main's `fnd:VersionedShape` now covers (52 catalogue failures), and the 33 meaning-bearing edges from versioned transitions to triggers, guards and conditions, four of them shared (one failure), with the release register failing on `main` too
 - 2026-10-29: merged `main` at `8b9f7c45` into `ccs-trunk`, bringing ADR-A146: a published term, an individual an ontology document declares, is versioned by its release and marked with `rdfs:isDefinedBy`, so the layers' 22 individuals carry no identity and the 52 catalogue failures they caused are gone. The examples stay data, as the maintainer ruled, and take option 2(a): each trigger, guard and condition a versioned transition or profile names is minted under it, `<owner>-<part>`, the two shared triggers (`on-termination-for-breach`, `on-year-end`) copied once per owner, and the tests and Instrument README that name them follow. The role occupancies in four amendment examples gained the temporal scope Foundation's shape requires, the Quantification examples identities, and `signing-factor` its base role (Q13). `check:ontology-catalog` passes, 1225, and `check:full-sweep` fails only on UNBUMPED and on the release register, which fails on `main` too
+- 2026-11-04: board corrections picked up. Release 0.20.0 (2026-10-29) delivered CCS-9b.3a, CCS-9b.3c and the multi-store unit, so the rows that still read `built` or say otherwise are being set to what the tags and the plan say. No slice is being built
+- 2026-11-04: board corrected. CCS-9b.3a and CCS-9b.3c read merged and tagged, as release 0.20.0 did, CCS-9b.3 is blocked on the new CCS-9b.3b, and HQ-6a's days are its merges. The rows CCS-12 and CCS-13 had shared one list of blockers since they were split, and take the plan's edges, by the maintainer's decision: CCS-12 waits on CCS-9c, LG-3 and ES-3, CCS-13 on CCS-9c, AIR-3.3 and NRS-1, and CCS-13a on NRS-1. The work of NRS-1 is CCS's (NRS NQ-2) and its row stays on the NRS board, where its plan defines it (STD-300)

@@ -27,10 +27,7 @@ document and started no slice. Its first blocker, D2, was answered on 2026-09-30
 [computable-contract-substrate](../plans/computable-contract-substrate.md) unit (CCS), which also
 takes NRS-8's Behaviour work and revises NRS-2, NRS-5 and NRS-6 (the plan's slice notes).
 
-**2026-10-10:** NRS-5 moved to CCS as its held question HQ-6 (HQ6-Q1), split into HQ-6a
-before CCS-9b.3 and HQ-6b before CCS C12 (HQ6-Q2, the plan's NRS-5 note). D7 is answered with it. This
-unit now holds NRS-1, NRS-2, NRS-3, NRS-6's and NRS-8's remainders, NRS-7, NRS-9 and NRS-10 to NRS-13, none started. CCS waits
-on NRS-1 (C13, C13a) and NRS-3 waits on CCS C13a.
+**2026-10-10:** NRS-5 moved to CCS as its held question HQ-6 (HQ6-Q1), split into HQ-6a before CCS-9b.3 and HQ-6b before CCS C12 (HQ6-Q2, the plan's NRS-5 note). D7 is answered with it. NQ-2 and NQ-3 then moved more, as the next action says. CCS-13 and CCS-13a wait on NRS-1, and NRS-3 waits on CCS-13a.
 
 **Next action:** none here for now. NRS-1, NRS-2, NRS-4 and NRS-5 are CCS's, NRS-6 and NRS-8 are absorbed by CCS C12
 and C13 (NQ-2, NQ-3). The unit holds NRS-3, NRS-7, NRS-9 and NRS-10 to NRS-13, the rule-language work, which we take
@@ -70,7 +67,7 @@ Instrument's position has changed, since after CCS C10 nothing outside Instrumen
 |---|---|---|---|---|
 | NRS-2 | Declare the importable rule-body fragment (A-109), revised for stratified state reads (ADR-A104 decision 15) | blocked | D1, NQ-2 | A |
 | NRS-4 | Deontic extension of Instrument (A-104, R1) | dropped 2026-09-30, CCS, delivered | CCS C1, C6 to C9 | B |
-| NRS-1 | Condition composition acyclicity (R4). CCS C13 and C13a wait on it | blocked | AIR-3.3 merge, NQ-2 | A |
+| NRS-1 | Condition composition acyclicity (R4). CCS-13 and CCS-13a wait on it, and CCS does the work (NQ-2) | blocked | AIR-3.3 | A |
 | NRS-6 | Scheduled triggers as positioned stimuli (R3), built with CCS C12 | blocked | CCS C12, NQ-3 | B |
 | NRS-3 | Self-contradiction design-time check | blocked | CCS C13a, NQ-2 | B |
 | NRS-5 | Closure declarations (A-105, R2) | dropped 2026-10-10, CCS | CCS HQ-6a before CCS-9b.3, HQ-6b before C12 | C |
@@ -164,3 +161,4 @@ other rule languages: NRS-3, NRS-7, NRS-9 and NRS-10 to N13. D1, D4 and D5 are o
 - 2026-10-10: NQ-1 to NQ-4 answered as leaned. NRS keeps the rule-language integration work. NRS-1 and NRS-2 move to CCS, NRS-6 and NRS-8 are absorbed by CCS C12 and C13, and S2 pairs with CCS-9b.3
 - 2026-10-12: CCS moved closures over a period from HQ-6a to HQ-6b (HQ6a-Q4). NRS-8's dependency follows them to HQ-6b
 - 2026-10-29: the contract builder's CB5 (config-studio) takes NRS-12's import half for ODRL only, as proposals for review, through a MORK mapping scheme compiled to SPARQL by `tools/mork_rdf`. The maintainer's choice of CB5 is the trigger for that half. Export, interchange and the conformance measurement stay here (NRS-7, NRS-12), and LegalRuleML's RML route is recorded in the runtime pipeline sketch §13
+- 2026-11-04: NRS-1 settled with the CCS record. CCS does its work (NQ-2) and its row stays here, where its plan defines it (STD-300). It gates CCS-13 and CCS-13a, as the CCS plan says, and not CCS-12

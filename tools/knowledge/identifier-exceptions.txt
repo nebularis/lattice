@@ -44,8 +44,7 @@ AIR-6.2b  # named in prose only, no board row yet
 AIR-6.2c  # named in prose only, no board row yet
 AIR-6.2d  # named in prose only, no board row yet
 AIR-66  # named only by the pack FMH-AIR-66.md, which has no row
-# unit computable-contract-substrate, 10 slice(s)
-CCS-9b.3b  # named in prose only, no board row yet
+# unit computable-contract-substrate, 9 slice(s)
 HQ-6a  # a tranche whose slices HQ-6a.1 and HQ-6a.2 are on the board
 HQ-6b  # a tranche named in the CCS plan, not yet sliced
 HQ-X1  # a label in the rdf-engine notes, which happens to share the HQ prefix

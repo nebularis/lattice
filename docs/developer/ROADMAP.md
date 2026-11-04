@@ -27,13 +27,13 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 10 branches, the units' own state from this tree, the newest board day 2026-11-04.
+Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-04.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
 | [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built |  |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | built 2026-10-29 · verified 2026-10-29 on realign/config-authoring-studio | CCS-0 | 20 merged, 13 planned, 7 blocked, 5 briefed, 3 verified, 2 built |  |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | ccs/board-corrections |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
@@ -48,7 +48,7 @@ Built from the status records on 10 branches, the units' own state from this tre
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [ledger](plans/ledger.md) | unit | built 2026-10-27 | LG-0 | 3 built, 3 planned |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-conformance](plans/multi-store-conformance.md) | unit | built 2026-10-27 | MSC-1 | 5 built |  |
+| [multi-store-conformance](plans/multi-store-conformance.md) | unit | merged 2026-10-29 |  | 5 merged | ccs/board-corrections |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -67,7 +67,7 @@ Built from the status records on 10 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
-| [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 10 built, 1 building, 1 briefed |  |
+| [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
 
 One chart per epic, or per unit outside an epic with five dated slices or more, from the first day it has to the newest, every dated slice in the state its board gives.
@@ -250,14 +250,14 @@ gantt
     CCS-9b.1 Eligibility sources legal act :done, ccs9b1, 2026-10-10, 2026-10-11
     CCS-9b.2 Eligibility sources legal act :done, ccs9b2, 2026-10-10, 2026-10-11
     CCS-9b.3 set comparisons qualifying ru :ccs9b3, 2026-10-27, 2026-10-28
-    CCS-9b.3a :ccs9b3a, 2026-10-29, 2026-10-30
-    CCS-9b.3c :ccs9b3c, 2026-10-29, 2026-10-30
+    CCS-9b.3a set comparisons law L18 ADR- :done, ccs9b3a, 2026-10-29, 2026-10-30
+    CCS-9b.3c hierarchical match over a name :done, ccs9b3c, 2026-10-29, 2026-10-30
     CCS-9b.4 set comparisons qualifying ru :ccs9b4, 2026-10-27, 2026-10-28
     CCS-9c set comparisons qualifying ru :ccs9c, 2026-10-27, 2026-10-28
     CCS-9d set comparisons qualifying ru :ccs9d, 2026-10-27, 2026-10-28
     CCS-F1 external and natural keys ADR :done, ccsf1, 2026-10-10, 2026-10-11
-    HQ-6a.1 untimed closures ADR-A105 t :done, hq6a1, 2026-10-27, 2026-10-28
-    HQ-6a.2 untimed closures ADR-A105 t :done, hq6a2, 2026-10-27, 2026-10-28
+    HQ-6a.1 untimed closures ADR-A105 t :done, hq6a1, 2026-10-12, 2026-10-13
+    HQ-6a.2 untimed closures ADR-A105 t :done, hq6a2, 2026-10-16, 2026-10-17
 ```
 
 ```mermaid
@@ -309,11 +309,11 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section multi-store-conformance
-    MSC-1 :msc1, 2026-10-27, 2026-10-28
-    MSC-2 :msc2, 2026-10-27, 2026-10-28
-    MSC-3 :msc3, 2026-10-27, 2026-10-28
-    MSC-4 :msc4, 2026-10-27, 2026-10-28
-    MSC-5 :msc5, 2026-10-27, 2026-10-28
+    MSC-1 platform sparql-testkit to :done, msc1, 2026-10-27, 2026-10-29
+    MSC-2 Jena in the persistence engine :done, msc2, 2026-10-27, 2026-10-29
+    MSC-3 Jena in the compilers engines :done, msc3, 2026-10-27, 2026-10-29
+    MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
+    MSC-5 TSD-42 and TSD-43 on Jena TSD :done, msc5, 2026-10-27, 2026-10-29
 ```
 
 ```mermaid
@@ -456,7 +456,7 @@ gantt
     WB-0 the sketch the plan this rec :wb0, 2026-11-02, 2026-11-03
     WB-1 tools work board.py work b :wb1, 2026-11-02, 2026-11-03
     WB-10 a unit state joined across b :wb10, 2026-11-02, 2026-11-03
-    WB-11 a branch whose boards are not :active, wb11, 2026-11-04, 2026-11-05
+    WB-11 a branch whose boards are not :wb11, 2026-11-04, 2026-11-05
     WB-2 the slice grammar work renam :wb2, 2026-11-02, 2026-11-03
     WB-3 INDEX.md replaced ROADMAP.md :wb3, 2026-11-02, 2026-11-03
     WB-4 the work check and the post- :wb4, 2026-11-02, 2026-11-03
@@ -525,23 +525,24 @@ flowchart LR
 
     FM -->|"Eligibility pass for CCS-9b.3"| CCS
     CCS -->|"HQ-6a closures for AIR-3.3"| AIR
-    AIR -->|"AIR-3.3 gates CCS-12"| CCS
+    AIR -->|"AIR-3.3 gates CCS-13"| CCS
     CCS -->|"CCS-12 evaluator for FMB-4"| FM
-    NRS -->|"NRS-1 for CCS-12, CCS-13 and CCS-13a"| CCS
+    NRS -->|"NRS-1 for CCS-13 and CCS-13a"| CCS
     CCS -->|"Instrument tranche for IMA phase 3"| IMA
     AIR -->|"phases 1 to 4"| CBAA
     CBAA -.->|"integration gates AIR phase 5"| AIR
     CCS -.->|"hands over HQ-2, HQ-7, HQ-12"| ENS
     ENS -.->|"ES-4 and ES-5 for AIR-7.1"| AIR
     LDG -.->|"LG-3 gates AIR phase 5 and AIR-6.8"| AIR
-    LDG -.->|"LG-3 accounts for Behaviour, PDD-07"| CCS
+    LDG -.->|"LG-3 gates CCS-12, PDD-07"| CCS
+    ENS -.->|"ES-3 gates CCS-12"| CCS
     LDG -.->|"LG-4 allocation for AIR phase 7"| AIR
     IOD -->|"literate layout and one release"| CCS
     IOD -->|"literate layout and one release"| AIR
     IOD -->|"OD-DOC3 reviews it"| TUT
 ```
 
-The arrow from NRS into CCS is NRS-1. The NRS log (NQ-2, 2026-10-10) moved NRS-1 to CCS, while the CCS board still names NRS-1 as the blocker of CCS-12, CCS-13 and CCS-13a, and the NRS board still lists it, so the records disagree.
+The arrow from NRS into CCS is NRS-1. CCS does its work (NQ-2, 2026-10-10) and its row stays on the NRS board, where its plan defines it. These arrows are the CCS plan's section 5, by the maintainer's decision of 2026-11-04: AIR-3.3 and NRS-1 gate CCS-13, NRS-1 gates CCS-13a, and CCS-12 waits on Ledger LG-3 and Ensemble ES-3.
 
 ## 3. The layers, now and proposed
 
@@ -573,7 +574,7 @@ Persistence, Surface and MORK sit beside the substrate. They are versioned on th
 
 **Documents.** [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), [sketch](sketches/computable-contract-substrate.md). ADRs A-104, A-106, A-112 to A-115 and A-120 accepted, A-105 and A-145 published.
 
-**Where it is.** The status record reads verified, in progress. Gate A passed on 2026-10-01 (CCS-0 to CCS-2). Tranche B (CCS-3 to CCS-5, Wording) and tranche C (CCS-10, CCS-10a, CCS-11, CCS-11a, the Behaviour split and nested states) are merged and tagged, and so is CCS-F1. In tranche D, CCS-6, CCS-7a to CCS-7c, CCS-8, CCS-8b, CCS-9a, CCS-9b.0 to CCS-9b.2, HQ-6a.1 and HQ-6a.2 (ADR-A105) are merged, and HQ-6a.2's `executable-v0.7.0` is tagged. CCS-9b.3 is briefed (2026-10-27) and delivered on `ccs-trunk`, which `main` does not yet have. The profile union fix, CCS-9b.3c (the hierarchy relation) and CCS-9b.3a (set comparisons, ADR-A145) are merged into `ccs-trunk`, and so is the multi-store conformance unit. CCS-9b.3b, aggregate bindings, is next to brief and has no board row yet. HQ-6b, closures over a period, follows before CCS-12.
+**Where it is.** The status record reads verified, in progress. Gate A passed on 2026-10-01 (CCS-0 to CCS-2). Tranche B (CCS-3 to CCS-5, Wording) and tranche C (CCS-10, CCS-10a, CCS-11, CCS-11a, the Behaviour split and nested states) are merged and tagged, and so is CCS-F1. In tranche D, CCS-6, CCS-7a to CCS-7c, CCS-8, CCS-8b, CCS-9a, CCS-9b.0 to CCS-9b.2, HQ-6a.1 and HQ-6a.2 (ADR-A105) are merged, and HQ-6a.2's `executable-v0.7.0` is tagged. CCS-9b.3a (set comparisons, ADR-A145) and CCS-9b.3c (the hierarchy relation) are merged and tagged in release 0.20.0 (2026-10-29), with the profile union fix and the multi-store conformance unit. CCS-9b.3 is blocked on CCS-9b.3b, aggregate bindings, which is next to brief. HQ-6b, closures over a period, follows before CCS-12.
 
 ```mermaid
 flowchart LR
@@ -588,7 +589,7 @@ flowchart LR
     end
     subgraph D["Tranche D, Instrument"]
         D1["CCS-6 to CCS-8b"] --> D2["CCS-9a"] --> D3["CCS-9b.0 to CCS-9b.2"] --> D4["HQ-6a.1, HQ-6a.2"]
-        D4 --> D5["CCS-9b.3"] --> D6["CCS-9b.4"]
+        D4 --> D5["CCS-9b.3a, CCS-9b.3c"] --> D5b["CCS-9b.3b"] --> D6["CCS-9b.4"]
         D6 --> D7["CCS-9d, CCS-9c, CCS-8a"]
     end
     subgraph E["Tranche E, evaluation"]
@@ -612,7 +613,7 @@ flowchart LR
     class D6,D7,E1,E2,F1,F2 wait
 ```
 
-**What it waits on.** CCS-9b.4 waits on CCS-9b.3. CCS-12 and CCS-13 are blocked on the rest of the Instrument tranche (CCS-9b.3, CCS-9b.4, CCS-9d, CCS-9c, CCS-8a), AIR-3.3 and NRS N1. CCS-13a is blocked on NRS N1. CCS-14 to CCS-17 are blocked on CCS-8a, the Instrument tranche and CCS-12. CCS-16c, removing Party's shares, is planned and must land before the epic closes. It follows CCS-9b.4.
+**What it waits on.** CCS-9b.4 waits on CCS-9b.3b, CCS-9d on CCS-9b.4, and CCS-9c on CCS-9d. CCS-12 is blocked on CCS-9c, Ledger LG-3 and Ensemble ES-3. CCS-13 is blocked on CCS-9c, AIR-3.3 and NRS-1. CCS-13a is blocked on NRS-1. CCS-14 is blocked on CCS-8a, CCS-9c and CCS-12, and CCS-15 to CCS-17 follow in turn. CCS-16c, removing Party's shares, is planned and must land before the epic closes. It follows CCS-9b.4.
 
 **Held questions.** HQ-1 to HQ-12, in the plan, each a planned row on the board. Three are proposed for hand-over to the Ensemble unit (HQ-2's second case, HQ-7, HQ-12) once ADR-A130 is accepted. ADR-A130 is still Proposed.
 
@@ -769,6 +770,7 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-10-29 | 53 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | CCS-9b.3a, CCS-9b.3b, CCS-9b.3c, HQ-6a.1, HQ-6a.2, MSC-1, MSC-2, MSC-3, MSC-4, MSC-5 |
 | `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
@@ -780,18 +782,22 @@ Branches with a commit `main` lacks, from the same reading.
 
 ## 8. The critical path
 
-The longest chain of dependencies now runs through AIR-3.3 and NRS-1 and CCS's tranche D into its evaluator, and from there into formal methods and AIR's later phases.
+The longest chain of dependencies now runs through CCS's tranche D, with Ledger LG-3 and Ensemble ES-3 beside it, into its evaluator, and from there into formal methods and AIR's later phases. AIR-3.3 and NRS-1 lead to CCS-13 and CCS-13a beside that chain.
 
 ```mermaid
 flowchart LR
     Q1["AIR-3.3-Q1 decided"] --> AIR33["AIR-3.3 readings in SWRL and OWL"]
     AIR33 --> NRS1["NRS-1 condition composition acyclicity"]
-    AIR33 --> CCS12["CCS-12 and CCS-13 evaluator"]
-    NRS1 --> CCS12
+    AIR33 --> CCS13["CCS-13 relation plans"]
+    NRS1 --> CCS13
     NRS1 --> CCS13a["CCS-13a joint satisfiability"]
-    K93["CCS-9b.3 set comparisons"] --> K94["CCS-9b.4 qualifying rules"]
-    K94 --> REST["CCS-9d, CCS-9c, CCS-8a"]
-    REST --> CCS12
+    K93["CCS-9b.3b aggregate bindings"] --> K94["CCS-9b.4 qualifying rules"]
+    K94 --> REST["CCS-9d, CCS-9c"]
+    REST --> CCS12["CCS-12 evaluator"]
+    REST --> CCS13
+    LG3C["Ledger LG-3"] --> CCS12
+    ES3C["Ensemble ES-3"] --> CCS12
+    K8A["CCS-8a template library"] --> CLOSE
     K94 --> K16c["CCS-16c Party shares removed"]
     CCS12 --> FMB4["FMB-4 evaluation context"]
     FMB4 --> G["FM track G instrument assurance"]
@@ -808,8 +814,9 @@ flowchart LR
 
 **Reading it.**
 
-- **CCS-9b.3 and CCS-9b.4** gate the most work. CCS-9b.4, CCS-9d, CCS-9c, CCS-8a and CCS-16c, the evaluator, the epic's close, FMB-4 and FM track G, and IMA Phase 3 sit downstream. CCS-13a does not, since it is blocked on NRS-1 only.
-- **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-12 on the CCS board and NRS-1 on the NRS board, so the evaluator waits on it twice over.
+- **CCS-9b.3b and CCS-9b.4** gate the most work. CCS-9b.4, CCS-9d, CCS-9c and CCS-16c, the evaluator, the epic's close, FMB-4 and FM track G, and IMA Phase 3 sit downstream. CCS-13a does not, since it is blocked on NRS-1 only.
+- **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-13 on the CCS board and NRS-1 on the NRS board, so relation plans wait on it twice over, and the evaluator does not.
+- **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and Ensemble has no status record yet.
 - **ADR-A130** alone takes the three CCS held questions HQ-2 (second case), HQ-7 and HQ-12, and it is still Proposed. ADR-A131 is Accepted and Ledger's layer is on `main`, and Ledger takes PDD-07, not a CCS held question.
 - **AIR-7.1** waits on Ensemble ES-4 and ES-5 and on Ledger LG-2 and LG-3, along with AIR-7.0, P7-Q5 and CCS's Instrument tranche. The ADRs are not the gate, the slices are.
 - **AIR Phase 5** waits on Open CBAA's integration of phases 1 to 4 and on Ledger LG-3, which is planned. PDD-08, the evaluation context, is split and unowned per `status/ledger.md`, with its pieces going to a Quantification slice, LG-2 and PDD-13.
@@ -818,7 +825,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 36 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
