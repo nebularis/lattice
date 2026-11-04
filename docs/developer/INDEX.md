@@ -28,6 +28,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
+| ensemble | unit | ES | briefed | ES-0 | [plan](plans/ensemble.md), [status](status/ensemble.md), 2 Validation Packs |
 | formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
 | formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
 | formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
@@ -41,7 +42,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
-| ledger | unit | LG | built 2026-10-27 | LG-0 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
+| ledger | unit | LG | merged 2026-10-27 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -229,6 +230,16 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | HQ-7 | HQ-7 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | HQ-8 | HQ-8 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | HQ-9 | HQ-9 | computable-contract-substrate | planned |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| ES-0 | examples first, as data the model must accept or refuse | ensemble | briefed 2026-10-21 | ADR-A130 accepted | docs/developer/status/ensemble.md#board |
+| ES-1 | the layer, its README, ens:Ensemble, ens:Relation and endpoints | ensemble | briefed 2026-10-21 | ES-0 | docs/developer/status/ensemble.md#board |
+| ES-2 | the Instrument hook, a measured value or evidence as a recorded fact | ensemble | planned | ES-1 | docs/developer/status/ensemble.md#board |
+| ES-3 | K2 and K3, dependency and priority, evaluation units below the instrument | ensemble | planned | ES-2, Ledger LG-2 | docs/developer/status/ensemble.md#board |
+| ES-4 | K6, shared resources, the derivation from the terms that draw on an account | ensemble | planned | ES-3, Ledger LG-2, LG-Q3, LG-Q4 | docs/developer/status/ensemble.md#board |
+| ES-5 | K4, portions and shares | ensemble | planned | ES-3, LG-Q6 | docs/developer/status/ensemble.md#board |
+| ES-6 | K5 and the ensemble's life, formation, membership by rule | ensemble | planned | ES-3, ES-Q5 | docs/developer/status/ensemble.md#board |
+| ES-7 | K8, representation, authorities one per subject | ensemble | planned | ES-6, CCS C9's consent rules (HQ-5), the terms digest (evaluator plan EV-9) | docs/developer/status/ensemble.md#board |
+| ES-8 | K7, contribution, by addendum to ADR-A130 | ensemble | planned | ES-4, Ledger LG-4 | docs/developer/status/ensemble.md#board |
+| ES-9 | comparison between instruments, where one replaces or completes another | ensemble | planned | ES-2, CCS C16b | docs/developer/status/ensemble.md#board |
 | FMB-1 | kernel and denotation | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
 | FMB-2 | differential tests against the compilers | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
 | FMB-2.1 | harden the differential harness, seed a compiler-side fault | formal-methods-track-b | built 2026-10-09 |  | docs/developer/status/formal-methods-track-b.md#slices |
@@ -371,12 +382,13 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | IMA-4.3 | renderer and numbering, with the rule chosen for Q32 | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.4 | verification passes: references in every configuration, dependency acyclicity. Alternatives for every condition kind join when CCS C13a lands | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.5 | optimisation passes: question plans, dead components, specialisation | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
-| LG-0 | LG-0 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-1 | LG-1 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-2 | LG-2 | ledger | built 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-3 | LG-3 | ledger | planned |  | docs/developer/status/ledger.md#board |
-| LG-4 | LG-4 | ledger | planned |  | docs/developer/status/ledger.md#board |
-| LG-5 | LG-5 | ledger | planned |  | docs/developer/status/ledger.md#board |
+| LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | briefed 2026-10-27 |  | docs/developer/status/ledger.md#board |
+| LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | ledger | planned | LG-2 | docs/developer/status/ledger.md#board |
+| LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | ledger | planned | LG-3 | docs/developer/status/ledger.md#board |
+| LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |
+| LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
 | MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an A | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, on | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the pr | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
