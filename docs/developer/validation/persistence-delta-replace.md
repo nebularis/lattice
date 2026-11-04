@@ -114,7 +114,7 @@ Then `mise run check:persistence-vectors` and `mise run check:persistence-confor
 
 ### Artefacts to inspect
 
-`contracts/persistence/vectors.json`, the `digest-delta-replace` entry. The seven standards of the caller obligations in `docs/developer/standards.md`, numbered when minted, and the closed TD-139.
+`contracts/persistence/vectors.json`, the `digest-delta-replace` entry. The seven standards of the caller obligations in `docs/developer/standards.md`, numbered when minted, and the closed TD-140.
 
 ### Deliberate non-coverage
 
@@ -132,7 +132,7 @@ Run 2026-11-02, every figure read from the full output, and re-run here after th
 | `mise run build:knowledge`, `mise run check:identifiers` | built, 12 passed |
 | `mise run hooks:run` | ok |
 
-**Standards minted, for ratification.** STD-310 to STD-315 for obligations 1 to 6, STD-316 for obligation 8, each pointing at the compiler README's obligations section, with STD-309 as obligation 7. TD-139 is closed by them.
+**Standards minted, for ratification.** STD-310 to STD-315 for obligations 1 to 6, STD-316 for obligation 8, each pointing at the compiler README's obligations section, with STD-309 as obligation 7. TD-140 is closed by them.
 
 **Not done.** A caller-check vector for `DeltaOverlap` or `EmptyDelta`, since the vector format carries no payload slots for a caller check and extending it is its own change. The two refusals are held by both libraries' tests instead.
 
