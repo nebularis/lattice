@@ -6,7 +6,7 @@
 **Plan:** [work-board.md](../plans/work-board.md)
 **Sketch:** [work-board.md](../sketches/work-board.md)
 **Mode:** default. Write, then hand off.
-**Status:** building 2026-11-04. WB-0 to WB-6 built, WB-7 briefed and waiting on the merge of this branch into `main`. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
+**Status:** built 2026-11-04. WB-0 to WB-6 built, WB-7 briefed and waiting on the merge of this branch into `main`. Autonomous mode from WB-1 at the maintainer's request, commits to `docs/work-board` only.
 
 ## Position
 
@@ -23,7 +23,7 @@
 | WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | built 2026-11-02, building 2026-11-02 |  |
 | WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | built 2026-11-02, building 2026-11-02 |  |
 | WB-10 | a unit's state joined across branches, rolled up from its board, and the Status word held to the roll-up | built 2026-11-02, building 2026-11-02 |  |
-| WB-11 | a branch whose boards are not on the grammar is read as such, never as moving every old id | building 2026-11-04 |  |
+| WB-11 | a branch whose boards are not on the grammar is read as such, never as moving every old id | built 2026-11-04, building 2026-11-04 |  |
 
 ## History
 
@@ -48,3 +48,4 @@
 - 2026-11-02: WB-10 picked up. The board's Units table read each unit's state from `main` alone, so a unit built on a branch read planned. The maintainer chose the join, the roll-up as the rule, and the check holding the Status word to it, with `work:normalise` setting the word.
 - 2026-11-02: WB-10 built. `rollup` in `tools/work_board.py` gives a board's unit state, the `work` check holds a touched record's Status word to it, `work:normalise` sets it, and both units tables show `main`'s state and each branch further on. The first rule read ten paused units as building and was narrowed to a row building. `STATUS_LINE_RE` no longer runs past its line, which had let a rewrite of the Status line drop the blank line after it. Of 26 boards on this tree 10 disagreed. This branch set the words of its own records and track H, whose FMH-2.6b row read building for an event half the maintainer approved, and leaves the rest to the branches that own them, since the check reads only a touched record. ADR-A151's addendum of 2026-11-02 and STD-317 for the maintainer.
 - 2026-11-04: WB-11 picked up on `main` at the maintainer's request. With `main` normalised and the live branches not yet, the board listed hundreds of old ids as slices each branch moves, since the join read `1.`, `B1` and `C0` as slices `main` lacks.
+- 2026-11-04: WB-11 built on `main`. `join` leaves out a row whose id is outside the grammar, `off_grammar` counts such rows per branch, and the Branches tables of the board and the roadmap say `board not on the grammar, n rows` with the two tasks that fix it. On this checkout the live branches now read that way instead of moving 178 ids each. The test fixtures took two-letter prefixes, since `A-1` was never on the grammar. 45 tests pass, and the Sonnet session wrote them. Alongside, `work:normalise` set nine records' Status words to their roll-ups, and the closed caller-obligations debt is cited as TD-140.

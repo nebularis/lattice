@@ -21,15 +21,15 @@ A2 = "building 2026-10-30, briefed 2026-10-27"
 ALPHA = f"""# Alpha: status
 
 **Unit ID:** `alpha`
-**Status:** building 2026-10-30. Slice A-2 next.
+**Status:** building 2026-10-30. Slice AL-2 next.
 
 ## Position
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| A-1 | the parser | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
-| A-2 | the join | {A2} | |
-| A-3 | the tool | planned | A-2 |
+| AL-1 | the parser | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
+| AL-2 | the join | {A2} | |
+| AL-3 | the tool | planned | AL-2 |
 """
 PLAN = "# Alpha\n\n**Unit type:** multi-slice unit, one tool\n**Prefix:** AL\n"
 OLD_BOARD = """| # | Slice | Tranche | State | Blocked on |
@@ -88,7 +88,7 @@ def repo(tmp_path: Path) -> wb.Repo:
 
 def with_a2(state: str, drop_a3: bool = False) -> str:
     text = ALPHA.replace(A2, state)
-    return text.replace("| A-3 | the tool | planned | A-2 |\n", "") if drop_a3 else text
+    return text.replace("| AL-3 | the tool | planned | AL-2 |\n", "") if drop_a3 else text
 
 
 def unit(text: str) -> dict[str, wb.Unit]:
@@ -120,9 +120,9 @@ def test_wb1_02_find_board_reads_the_standard_board() -> None:
     lines = ALPHA.splitlines()
     assert board is not None
     assert board.line == lines.index("| Slice | Deliverable | State | Blocked on |") + 1
-    assert [r.id for r in board.rows] == ["A-1", "A-2", "A-3"]
+    assert [r.id for r in board.rows] == ["AL-1", "AL-2", "AL-3"]
     assert [r.deliverable for r in board.rows] == ["the parser", "the join", "the tool"]
-    assert [r.blocked_on for r in board.rows] == ["", "", "A-2"]
+    assert [r.blocked_on for r in board.rows] == ["", "", "AL-2"]
     assert [r.line for r in board.rows] == [next(i for i, l in enumerate(lines, 1) if l.startswith(f"| {r.id} |")) for r in board.rows]
 
 
@@ -134,15 +134,15 @@ def test_wb1_03_find_board_reads_the_older_board() -> None:
 
 
 def test_wb1_04_find_board_skips_tables_without_a_state_column() -> None:
-    text = "| Name | Note |\n|---|---|\n| x | y |\n\n| Slice | State |\n|---|---|\n| A-1 | planned |\n"
+    text = "| Name | Note |\n|---|---|\n| x | y |\n\n| Slice | State |\n|---|---|\n| AL-1 | planned |\n"
     board = wb.find_board("u", text)
-    assert board is not None and [r.id for r in board.rows] == ["A-1"]
+    assert board is not None and [r.id for r in board.rows] == ["AL-1"]
     assert wb.find_board("u", "# No table here\n\nJust prose.\n") is None
 
 
 def test_wb1_05_parse_unit_reads_state_kind_prefix_and_next() -> None:
     u = wb.parse_unit("alpha", ALPHA, PLAN)
-    assert (u.state, u.day, u.kind, u.prefix, u.next) == ("building", "2026-10-30", "multi-slice unit", "AL", "A-2")
+    assert (u.state, u.day, u.kind, u.prefix, u.next) == ("building", "2026-10-30", "multi-slice unit", "AL", "AL-2")
     bare = wb.parse_unit("alpha", ALPHA)
     assert (bare.kind, bare.prefix) == ("unit", "")
 
@@ -197,15 +197,15 @@ def test_wb1_08_branches_fold_remotes_and_report_drift(repo: wb.Repo, tmp_path: 
 
 def test_wb1_09_join_picks_winner_and_marks_stale_and_moved() -> None:
     main, b, c = (unit(with_a2(s)) for s in ("built 2026-10-25", "verified 2026-10-27", "built 2026-10-25"))
-    joined = wb.join({"main": main, "b": b, "c": c})[("alpha", "A-2")]
+    joined = wb.join({"main": main, "b": b, "c": c})[("alpha", "AL-2")]
     assert joined.winner == ("b", b["alpha"].board.rows[1])
     assert joined.stale == [] and joined.moved == ["b"]
     merged = unit(with_a2("merged 2026-10-28"))
-    assert wb.join({"main": merged, "c": c})[("alpha", "A-2")].stale == ["c"]
+    assert wb.join({"main": merged, "c": c})[("alpha", "AL-2")].stale == ["c"]
     claim_b, claim_c = unit(with_a2("building 2026-10-30")), unit(with_a2("building 2026-11-01"))
-    assert wb.join({"main": main, "b": claim_b, "c": claim_c})[("alpha", "A-2")].claims == ["b", "c"]
+    assert wb.join({"main": main, "b": claim_b, "c": claim_c})[("alpha", "AL-2")].claims == ["b", "c"]
     no_a3 = unit(with_a2("built 2026-10-25", drop_a3=True))
-    assert wb.join({"main": no_a3, "b": b})[("alpha", "A-3")].moved == ["b"]
+    assert wb.join({"main": no_a3, "b": b})[("alpha", "AL-3")].moved == ["b"]
     one, two = {"main": main, "b": b, "c": c}, {"c": c, "b": b, "main": main}
     first, second = wb.join(one), wb.join(two)
     assert list(first) == list(second)
@@ -243,12 +243,12 @@ def test_wb1_12_build_checks_then_writes(repo: wb.Repo, capsys: pytest.CaptureFi
     assert wb.build(repo, check=False) == 0 and index.exists()
     assert wb.build(repo, check=True) == 0
     region = wb.region_text(repo)
-    assert "| alpha | multi-slice unit | AL | building 2026-10-30 | A-2 |" in region
+    assert "| alpha | multi-slice unit | AL | building 2026-10-30 | AL-2 |" in region
     lines = ALPHA.splitlines()
-    for slice_id in ("A-1", "A-2", "A-3"):
+    for slice_id in ("AL-1", "AL-2", "AL-3"):
         number = next(i for i, l in enumerate(lines, 1) if l.startswith(f"| {slice_id} |"))
         assert "status/alpha.md#position |" in region
-    assert "| A-2 | the join | alpha | building 2026-10-30 |" in region
+    assert "| AL-2 | the join | alpha | building 2026-10-30 |" in region
 
 
 def test_wb1_13_board_text_shows_what_differs_from_main(repo: wb.Repo) -> None:
@@ -258,24 +258,24 @@ def test_wb1_13_board_text_shows_what_differs_from_main(repo: wb.Repo) -> None:
     text = wb.board_text(repo, show_all=False, measure=False, commits=False)
     work = section(text, "## Work", "## Branches")
     branches = section(text, "## Branches")
-    assert cells_of(work, "A-2")[4] == "b"
-    assert "| A-1 |" not in work and "| A-3 |" not in work
-    assert cells_of(branches, "b")[5] == "A-2"
+    assert cells_of(work, "AL-2")[4] == "b"
+    assert "| AL-1 |" not in work and "| AL-3 |" not in work
+    assert cells_of(branches, "b")[5] == "AL-2"
     assert cells_of(branches, "docs")[5] == "no mark"
     everything = section(wb.board_text(repo, show_all=True, measure=False, commits=False), "## Work", "## Branches")
-    assert all(f"| {s} |" in everything for s in ("A-1", "A-2", "A-3"))
+    assert all(f"| {s} |" in everything for s in ("AL-1", "AL-2", "AL-3"))
     with_commits = section(wb.board_text(repo, show_all=False, measure=False, commits=True), "## Work", "## Branches")
-    assert cells_of(with_commits, "A-2")[4] == f"b at {sh(repo.root, 'git', 'rev-parse', '--short', b_tip)}"
+    assert cells_of(with_commits, "AL-2")[4] == f"b at {sh(repo.root, 'git', 'rev-parse', '--short', b_tip)}"
 
 
 GANTT_BOARD = """**Status:** building 2026-10-30.
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| A-1 | the parser | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
-| A-2 | the join | building 2026-10-30, briefed 2026-10-27 | |
-| A-3 | the tool | planned | |
-| A-4 | the gate | blocked 2026-10-29 | |
+| AL-1 | the parser | merged 2026-10-28, verified 2026-10-27, built 2026-10-25, briefed 2026-10-20 | |
+| AL-2 | the join | building 2026-10-30, briefed 2026-10-27 | |
+| AL-3 | the tool | planned | |
+| AL-4 | the gate | blocked 2026-10-29 | |
 """
 
 
@@ -289,17 +289,17 @@ def test_wb3_01_gantt_text_draws_one_bar_per_dated_slice() -> None:
     assert "    section alpha" in lines
     bars = [l for l in lines if ":done," in l or ":active," in l or ":crit," in l]
     assert len(bars) == 3
-    assert any(l.endswith(":done, a1, 2026-10-20, 2026-10-28") for l in bars)
-    assert any(l.endswith(":active, a2, 2026-10-27, 2026-10-30") for l in bars)
-    assert any(l.endswith(":crit, a4, 2026-10-29, 2026-10-30") for l in bars)
-    assert not any("A-3" in l for l in lines)
+    assert any(l.endswith(":done, al1, 2026-10-20, 2026-10-28") for l in bars)
+    assert any(l.endswith(":active, al2, 2026-10-27, 2026-10-30") for l in bars)
+    assert any(l.endswith(":crit, al4, 2026-10-29, 2026-10-30") for l in bars)
+    assert not any("AL-3" in l for l in lines)
 
 
 def test_wb3_02_gantt_text_keeps_every_dated_slice_and_completed_draws_the_closed_ones() -> None:
     bars = "\n".join(gantt())
-    assert " a1," in bars and " a2," in bars, "no window: a chart runs from its first day"
+    assert " al1," in bars and " al2," in bars, "no window: a chart runs from its first day"
     closed = "\n".join(gantt(completed=True))
-    assert " a1," in closed and " a2," not in closed and " a4," not in closed
+    assert " al1," in closed and " al2," not in closed and " al4," not in closed
     assert wb.gantt_text(wb.join({}), "t") == [], "nothing dated draws nothing"
 
 
@@ -323,7 +323,7 @@ def test_wb3_04_roadmap_regions_summarise_units_and_branches(repo: wb.Repo) -> N
     row = cells_of(regions["glance"], "[alpha](plans/alpha.md)")
     assert "1 built" in row[4] and row[5] == "b"
     assert "```mermaid" in regions["glance"]
-    assert cells_of(regions["branches"], "`b`")[4] == "A-2"
+    assert cells_of(regions["branches"], "`b`")[4] == "AL-2"
     assert "| `main` |" not in regions["branches"]
 
 
@@ -379,7 +379,7 @@ def test_wb6_04_leave_presence_removes_the_file(tmp_path: Path) -> None:
 
 def test_wb6_05_presence_text_warns_only_of_another_builder() -> None:
     def one(session: str, role: str) -> list[dict[str, str]]:
-        return [{"session": session, "client": "c", "model": "m", "role": role, "on": "A-1", "since": "s", "touched": "1 min ago"}]
+        return [{"session": session, "client": "c", "model": "m", "role": role, "on": "AL-1", "since": "s", "touched": "1 min ago"}]
     empty = wb.presence_text([], "abc")
     assert "nobody here" in empty and "mise run work:here" in empty
     other = wb.presence_text(one("zzz", "build"), "abc")
@@ -403,7 +403,7 @@ def test_wb6_06_the_here_subcommand_writes_lists_and_leaves(tmp_path: Path) -> N
         done = subprocess.run([sys.executable, str(real / "tools" / "work_board.py"), "--root", str(tmp_path), "here", *args],
                               cwd=real, env=env, capture_output=True, text=True, check=True)
         return done.stdout
-    out = here("--role", "review", "--model", "m", "--on", "A-1", "--now", "2026-11-02T10:00:00+00:00")
+    out = here("--role", "review", "--model", "m", "--on", "AL-1", "--now", "2026-11-02T10:00:00+00:00")
     assert "sess1" in out and "review" in out
     assert (tmp_path / ".local" / "agents" / "sess1.toml").exists()
     assert "left" in here("--leave")
@@ -433,3 +433,39 @@ def test_wb10_02_a_unit_state_shows_each_branch_further_on() -> None:
               "b2": {"u": unit("building", "2026-11-01")}, "b3": {"u": unit("planned")}, "b4": {"u": wb.Unit("u", "unit", None, "", "", None)}}
     assert wb.unit_state("u", boards["main"]["u"], boards) == "planned · built 2026-11-02 on b1 · building 2026-11-01 on b2"
     assert wb.unit_state("u", None, {"b1": boards["b1"]}) == "? · built 2026-11-02 on b1"
+
+
+OFF_ROWS = "| C9b3b | x | planned | |\n| 1. | x | planned | |\n| B1 | x | planned | |\n"
+OLD_IDS = ALPHA.replace("AL-1", "C1").replace("AL-2", "C2").replace("AL-3", "C3")
+
+
+def test_wb11_01_join_leaves_out_rows_off_the_grammar() -> None:
+    board = ALPHA.replace("| AL-3 | the tool | planned | AL-2 |\n", OFF_ROWS).replace("| AL-2 |", "| AL-9 |")
+    joined = wb.join({"main": unit(board)})
+    assert set(joined) == {("alpha", "AL-1"), ("alpha", "AL-9")}
+    only = "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n| AL-1 | x | planned | |\n" + OFF_ROWS
+    assert set(wb.join({"main": unit(only)})) == {("alpha", "AL-1")}
+
+
+def test_wb11_02_off_grammar_counts_rows_per_branch() -> None:
+    only = "| Slice | Deliverable | State | Blocked on |\n|---|---|---|---|\n| AL-1 | x | planned | |\n"
+    assert wb.off_grammar({"main": unit(only + OFF_ROWS), "b": unit(only)}) == {"main": 3, "b": 0}
+
+
+def test_wb11_03_moves_text_names_ids_or_the_remedy() -> None:
+    assert wb.moves_text(["AL-2"], 0) == "AL-2"
+    assert wb.moves_text([], 5).startswith("board not on the grammar, 5 rows")
+    assert "work:normalise" in wb.moves_text([], 5)
+    assert wb.moves_text([], 0) == "no mark"
+    both = wb.moves_text(["AL-2"], 2)
+    assert "AL-2" in both and "2 rows not on the grammar" in both
+
+
+def test_wb11_04_a_branch_with_old_ids_is_named_not_listed(repo: wb.Repo) -> None:
+    on_branch(repo, "old", (DEV / "status/alpha.md").as_posix(), OLD_IDS.replace("| C3 | the tool | planned | C2 |\n", ""))
+    sh(repo.root, "git", "push", "-q", "origin", "old")
+    text = wb.board_text(repo, show_all=False, measure=False, commits=False)
+    assert "board not on the grammar, 2 rows" in cells_of(section(text, "## Branches"), "old")[5]
+    assert "| C1 |" not in section(text, "## Work", "## Branches")
+    units = section(text, "## Units", "## Work") if "## Units" in text else ""
+    assert "old" not in units

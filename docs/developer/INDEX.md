@@ -81,7 +81,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
-| work-board | multi-slice unit | WB | building 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
+| work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
 
 ## Work
@@ -503,6 +503,6 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WB-8 | a register collision dated to the second, and the check naming the row that keeps the number | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-9 | `work:rename` keeps an exception whose old spelling is still mentioned | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
 | WB-10 | a unit's state joined across branches, rolled up from its board, and the Status word held to the roll-up | work-board | built 2026-11-02 |  | docs/developer/status/work-board.md#position |
-| WB-11 | a branch whose boards are not on the grammar is read as such, never as moving every old id | work-board | building 2026-11-04 |  | docs/developer/status/work-board.md#position |
+| WB-11 | a branch whose boards are not on the grammar is read as such, never as moving every old id | work-board | built 2026-11-04 |  | docs/developer/status/work-board.md#position |
 
 <!-- END GENERATED work-board -->

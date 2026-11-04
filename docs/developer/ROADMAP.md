@@ -27,47 +27,47 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-03.
+Built from the status records on 10 branches, the units' own state from this tree, the newest board day 2026-11-04.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
-| [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | planned | AIR-3.3 | 55 planned, 10 built, 5 merged, 1 ? | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
+| [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
 | [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built |  |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 35 merged, 15 planned, 7 blocked, 6 ?, 5 briefed, 3 verified, 2 built | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | built 2026-10-29 · verified 2026-10-29 on realign/config-authoring-studio | CCS-0 | 20 merged, 13 planned, 7 blocked, 5 briefed, 3 verified, 2 built |  |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
-| [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | built 2026-10-09 | FMB-1 | 7 ?, 5 built, 1 planned, 1 building | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-08 | FMC-1 | 6 ?, 3 built, 3 planned | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 6 ?, 5 planned, 3 built, 1 dropped | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 33 built, 31 ?, 15 merged, 14 planned, 6 verified, 2 briefed | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [formal-methods](plans/formal-methods.md) | epic | built 2026-10-06 | FM-D0 | 8 built, 6 ? | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
+| [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-08 | FMC-1 | 3 built, 3 planned |  |
+| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 5 planned, 3 built, 1 dropped |  |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-10-27 | FM-D0 | 8 built |  |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
-| [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 5 ?, 4 built, 1 planned | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | verified 2026-10-17 | OD-0 | 13 built, 12 ?, 10 planned, 10 verified, 1 merged | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers |
+| [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [ledger](plans/ledger.md) | unit | building 2026-10-29 | LG-0 | 3 built, 3 planned |  |
+| [ledger](plans/ledger.md) | unit | built 2026-10-27 | LG-0 | 3 built, 3 planned |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [multi-store-conformance](plans/multi-store-conformance.md) | unit | built 2026-10-27 | MSC-1 | 5 built |  |
-| [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 13 ?, 7 blocked, 4 planned, 2 dropped | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
+| [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
-| [persistence-compiler-iri-sync](plans/persistence-compiler-iri-sync.md) | unit | built 2026-09-23 | PCI-1 | 7 ?, 6 built | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, persistence-mbt, spikes/pol-map, tutorial/guide |
-| [persistence-delta-replace](plans/persistence-delta-replace.md) | multi-slice unit | building 2026-11-01 | DR-1 | 5 built, 1 building, 1 briefed | claude/persistence-delta-replace |
-| phase-0-status | unit | built 2026-09-23 | PLT-0.1.1 | 16 ?, 13 built, 3 planned | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, persistence-mbt, spikes/pol-map, tutorial/guide |
+| [persistence-compiler-iri-sync](plans/persistence-compiler-iri-sync.md) | unit | built 2026-09-25 | PCI-1 | 6 built |  |
+| [persistence-delta-replace](plans/persistence-delta-replace.md) | multi-slice unit | building 2026-11-01 | DR-1 | 3 built, 1 building |  |
+| phase-0-status | unit | built 2026-10-10 | PLT-0.1.1 | 13 built, 3 planned |  |
 | phase-1-status | unit | blocked 2026-09-22 |  | no board |  |
 | phase-2-status | unit | planned |  | no board |  |
 | phase-3-status | unit | planned |  | no board |  |
 | phase-4-status | unit | planned |  | no board |  |
 | [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | built 2026-11-02 | PM-0 | 6 built, 2 planned |  |
 | [python-test-melting](plans/python-test-melting.md) | unit | built 2026-10-27 |  | no board |  |
-| rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 3 ?, 2 built, 1 planned | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, persistence-mbt, spikes/pol-map, tutorial/guide |
+| rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
-| vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 4 ?, 2 built, 2 verified | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-02 | WA-0 | 13 built, 13 ? | ccs-trunk, claude/persistence-delta-replace, claude/persistence-linear-replace, config_studio_GD, docs/placement-vehicles-structure, fml/isabelle-layers, spikes/pol-map, tutorial/guide |
-| [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-02 | WB-0 | 10 built, 1 briefed |  |
+| vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
+| [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
+| [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 10 built, 1 building, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
 
 One chart per epic, or per unit outside an epic with five dated slices or more, from the first day it has to the newest, every dated slice in the state its board gives.
@@ -182,13 +182,6 @@ gantt
     FMH-HO8 injective graph naming within :done, fmhho8, 2026-10-10, 2026-10-11
     FMH-HO9 ownership documentation and cl :done, fmhho9, 2026-10-10, 2026-10-11
     FMH-W65 :fmhw65, 2026-10-23, 2026-10-24
-    H2.11a :h211a, 2026-10-21, 2026-10-22
-    H2.11b :h211b, 2026-10-21, 2026-10-22
-    H2.12 :h212, 2026-11-01, 2026-11-02
-    H2.6 :h26, 2026-10-13, 2026-10-14
-    H2.6c :h26c, 2026-10-20, 2026-10-21
-    H2.6d :h26d, 2026-10-20, 2026-10-21
-    H2.9 :h29, 2026-10-21, 2026-10-22
 ```
 
 ```mermaid
@@ -235,7 +228,6 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section computable-contract-substrate
-    C9b0 Eligibility sources legal act :done, c9b0, 2026-10-10, 2026-10-11
     CCS-0 A-112 A-113 A-01 and ADR-A-C :ccs0, 2026-10-29, 2026-10-30
     CCS-1 A-104 :ccs1, 2026-10-29, 2026-10-30
     CCS-10 Behaviour split and layer flip :done, ccs10, 2026-10-10, 2026-10-11
@@ -372,22 +364,6 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
-    title Persistence-delta-replace
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section persistence-delta-replace
-    DR-1 the vocabulary the delta buil :dr1, 2026-11-02, 2026-11-03
-    DR-2 both caller libraries checks :dr2, 2026-11-02, 2026-11-03
-    DR-3 the studio writer on the gen :active, dr3, 2026-11-01, 2026-11-02
-    DR-4 replace-whole load-whole :dr4, 2026-11-02, 2026-11-03
-    DR1 :dr1, 2026-11-02, 2026-11-03
-    DR2 :dr2, 2026-11-02, 2026-11-03
-    DR3 :dr3, 2026-11-02, 2026-11-03
-```
-
-```mermaid
-%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
-gantt
     title Phase-0-status
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -480,6 +456,7 @@ gantt
     WB-0 the sketch the plan this rec :wb0, 2026-11-02, 2026-11-03
     WB-1 tools work board.py work b :wb1, 2026-11-02, 2026-11-03
     WB-10 a unit state joined across b :wb10, 2026-11-02, 2026-11-03
+    WB-11 a branch whose boards are not :active, wb11, 2026-11-04, 2026-11-05
     WB-2 the slice grammar work renam :wb2, 2026-11-02, 2026-11-03
     WB-3 INDEX.md replaced ROADMAP.md :wb3, 2026-11-02, 2026-11-03
     WB-4 the work check and the post- :wb4, 2026-11-02, 2026-11-03
@@ -508,6 +485,11 @@ gantt
     section normative-rule-substrate
     NRS-4 Deontic extension of Instrumen :done, nrs4, 2026-09-30, 2026-10-01
     NRS-5 Closure declarations A-105 R :done, nrs5, 2026-10-10, 2026-10-11
+    section persistence-delta-replace
+    DR-1 the vocabulary the delta buil :dr1, 2026-11-02, 2026-11-03
+    DR-2 both caller libraries checks :dr2, 2026-11-02, 2026-11-03
+    DR-3 the studio writer on the gen :active, dr3, 2026-11-01, 2026-11-02
+    DR-4 replace-whole load-whole :dr4, 2026-11-02, 2026-11-03
     section rdf-sparql-patterns-status
     RSP-1 Core patterns :rsp1, 2026-09-22, 2026-09-23
     RSP-2 Substrate and compiler :rsp2, 2026-09-22, 2026-09-23
@@ -786,15 +768,13 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-10-29 | 53 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, DOC1, DOC2, DOC2b, DOC3, E1.0, E1.1, E1.2, E1.3, E1.4, E2, ELC, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.11a, H2.11b, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.6c, H2.6d, H2.7, H2.8, H2.8c, H2.9, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, MC1, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, OD-REL, OD0, OD1, OD2, OD3, OD4, OD5, OD6, OD7, OD8, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, RC1, RC2, RC3, RC4, RC5, RC6, VER1, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `claude/persistence-delta-replace` | 2026-11-02 | 137 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, DOC1, DOC2, DOC2b, DOC3, DR1, DR2, DR3, E1.0, E1.1, E1.2, E1.3, E1.4, E2, ELC, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.11a, H2.11b, H2.12, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.6c, H2.6d, H2.7, H2.8, H2.8c, H2.9, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, MC1, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, OD-REL, OD0, OD1, OD2, OD3, OD4, OD5, OD6, OD7, OD8, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, RC1, RC2, RC3, RC4, RC5, RC6, VER1, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `claude/persistence-linear-replace` | 2026-11-01 | 135 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, DOC1, DOC2, DOC2b, DOC3, E1.0, E1.1, E1.2, E1.3, E1.4, E2, ELC, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.11a, H2.11b, H2.12, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.6c, H2.6d, H2.7, H2.8, H2.8c, H2.9, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, MC1, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, OD-REL, OD0, OD1, OD2, OD3, OD4, OD5, OD6, OD7, OD8, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, RC1, RC2, RC3, RC4, RC5, RC6, VER1, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, DOC1, DOC2, DOC2b, DOC3, E1.0, E1.1, E1.2, E1.3, E1.4, E2, ELC, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.11a, H2.11b, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.6c, H2.6d, H2.7, H2.8, H2.8c, H2.9, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, MC1, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, OD-REL, OD0, OD1, OD2, OD3, OD4, OD5, OD6, OD7, OD8, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, RC1, RC2, RC3, RC4, RC5, RC6, VER1, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, DOC1, DOC2, DOC2b, DOC3, E1.0, E1.1, E1.2, E1.3, E1.4, E2, ELC, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.11a, H2.11b, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.6c, H2.6d, H2.7, H2.8, H2.8c, H2.9, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, MC1, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, OD-REL, OD0, OD1, OD2, OD3, OD4, OD5, OD6, OD7, OD8, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, RC1, RC2, RC3, RC4, RC5, RC6, VER1, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `persistence-mbt` | 2026-09-23 | 1 | pushed | 1, 1., 2, 2., 3, 3., 4, 5, 6, 7, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+ |
+| `ccs-trunk` | 2026-10-29 | 53 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `docs/placement-vehicles-structure` | 2026-11-02 | 113 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | no mark |
-| `spikes/pol-map` | 2026-10-16 | 2 | pushed | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, E1.0, E1.1, E1.2, E1.3, E1.4, E2, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H2.6b, H2.7, H2.8, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
-| `tutorial/guide` | 2026-10-16 | 5 | remote only | 1, 1., 1., 2, 2., 2., 3, 3., 3., 4, 4., 5, 6, B1, B2, B2.1, B2.2, B3, B4, B5, C0, C1, C1, C10, C10a, C11, C11a, C12, C13a, C14, C16c, C2, C2, C2.1, C2.2, C2.3, C3, C3, C4, C5, C6, C7a, C7b, C7c, C8, C9a, C9b0, C9b3, D0, D1, D2, D3, D4, E1.0, E1.1, E1.2, E1.3, E1.4, E2, F1, H1.1, H1.2a, H1.2b, H1.2c, H1.2d, H1.3, H1.4a, H1.4b, H1.4c, H1.5, H10, H2, H2.0, H2.1, H2.2, H2.3, H2.4a, H2.4b, H2.5, H2.6, H3, H4, H5, H6, H7, H8, H9, HO0, HO1, HO2, HO3, HO4, HO5, HO6, HO7, HO8, HO9, M0, M1, M2, M3, M4, N1, N10, N11, N12, N13, N2, N3, N4, N5, N6, N7, N8, N9, P0.1.1, P0.1.10, P0.1.11, P0.1.12, P0.1.13, P0.1.14, P0.1.15, P0.1.2, P0.1.3, P0.1.4, P0.1.5, P0.1.6, P0.1.7, P0.1.8, P0.1.9, P0.2+, PF1/PF4, WA0, WA1, WA10, WA11, WA2, WA3, WA4, WA5, WA6, WA7, WA8, WA9, WA9a, substrate |
+| `spikes/pol-map` | 2026-10-16 | 2 | pushed | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 
 <!-- END GENERATED work-board-branches -->
 

@@ -33,6 +33,7 @@ DATED = frozenset(LADDER[2:])
 RANK = {state: n for n, state in enumerate(LADDER)}
 RANK.update({"blocked": 1, "dropped": -1})
 STATE_RE = re.compile(r"^(" + "|".join(STATES) + r")\b\s*(\d{4}-\d{2}-\d{2})?\s*(.*)$")
+SLICE_ID_RE = re.compile(r"[A-Z]{2,5}-[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*")  # the grammar, STD-303
 STATUS_LINE_RE = re.compile(r"^\*\*Status:\*\*[ \t]*(.+?)[ \t]*$", re.M)  # never past its line
 UNIT_TYPE_RE = re.compile(r"^\*\*Unit type:\*\*\s*(.+?)\s*$", re.M)
 PREFIX_RE = re.compile(r"^\*\*Prefix:\*\*\s*([A-Z]{2,5}(?:,\s*[A-Z]{2,5})*)\s*$", re.M)
@@ -411,12 +412,30 @@ class Joined:
 
 
 def join(boards: dict[str, dict[str, Unit]]) -> dict[tuple[str, str], Joined]:
+    """The rows per slice across branches. A row whose id is outside the grammar is a board not yet
+    normalised, never a slice the other branches lack, so it is left out here and counted by
+    ``off_grammar`` (WB-11)."""
     out: dict[tuple[str, str], Joined] = {}
     for branch, units in boards.items():
         for unit in units.values():
             for row in (unit.board.rows if unit.board else ()):
-                out.setdefault((unit.id, row.id), Joined(unit.id, row.id)).rows[branch] = row
+                if SLICE_ID_RE.fullmatch(row.id):
+                    out.setdefault((unit.id, row.id), Joined(unit.id, row.id)).rows[branch] = row
     return dict(sorted(out.items()))
+
+
+def off_grammar(boards: dict[str, dict[str, Unit]]) -> dict[str, int]:
+    """Per branch, how many board rows carry an id outside the grammar, which says the branch has
+    not run `work:normalise` and `work:rename` since merging `main`."""
+    return {branch: sum(1 for unit in units.values() for row in (unit.board.rows if unit.board else ())
+                        if not SLICE_ID_RE.fullmatch(row.id))
+            for branch, units in boards.items()}
+
+
+def moves_text(moved: list[str], off: int) -> str:
+    if moved:
+        return ", ".join(moved) + (f", and {off} rows not on the grammar" if off else "")
+    return f"board not on the grammar, {off} rows. Run `mise run work:normalise -- --apply` and `work:rename` there" if off else "no mark"
 
 
 def unit_state(name: str, base: Optional[Unit], boards: dict[str, dict[str, Unit]]) -> str:
@@ -516,11 +535,12 @@ def board_text(repo: Repo, show_all: bool, measure: bool, commits: bool) -> str:
     lines += table(("Slice", "Unit", "Deliverable", "State", "Where", "Blocked on", "Flags"), work_rows)
     lines += ["", "## Branches", ""]
     branch_rows = []
+    off = off_grammar(boards)
     for b in found:
         if b.name == MAIN or (b.ahead_of_main == 0 and not show_all):
             continue
         moved = sorted(s for (u, s), j in joined.items() if b.name in j.moved)
-        row = [b.name, b.day, str(b.ahead_of_main), b.drift, b.worktree, ", ".join(moved) or "no mark"]
+        row = [b.name, b.day, str(b.ahead_of_main), b.drift, b.worktree, moves_text(moved, off.get(b.name, 0))]
         if measure:
             row.append(share_on_main(repo.root, b.tip))
         branch_rows.append(row)
@@ -698,11 +718,12 @@ def roadmap_regions(repo: Repo) -> dict[str, str]:
     completed += table(("Unit", "Kind", "State", "Slices", "Last day"), done_rows)
     completed += [""] + charts_text(main_units, joined, done_units, completed=True)
     branch_rows = []
+    off = off_grammar(boards)
     for b in found:
         if b.name == MAIN or b.ahead_of_main == 0:
             continue
         moved = sorted(s for (u, s), j in joined.items() if b.name in j.moved)
-        branch_rows.append((f"`{b.name}`", b.day, str(b.ahead_of_main), b.drift, ", ".join(moved) or "no mark"))
+        branch_rows.append((f"`{b.name}`", b.day, str(b.ahead_of_main), b.drift, moves_text(moved, off.get(b.name, 0))))
     branches_text = [f"Branches with a commit `main` lacks, from the same reading.", ""]
     branches_text += table(("Branch", "Tip", "Ahead of main", "Upstream", "Moves"), branch_rows)
     return {"glance": "\n".join(glance) + "\n", "branches": "\n".join(branches_text) + "\n",
