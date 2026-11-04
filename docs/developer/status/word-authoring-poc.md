@@ -3,7 +3,7 @@
 # Word authoring proof of concept - Status
 
 **Unit ID:** `word-authoring-poc`
-**Status:** built 2026-10-02. 🟡 Awaiting validation. WA-0 to WA-11 done (WA-11 is documentation and the manual Word
+**Status:** built 2026-10-10. 🟡 Awaiting validation. WA-0 to WA-11 done (WA-11 is documentation and the manual Word
 checklist, M1 to M14, which only the maintainer can run)
 **Last updated:** 2026-10-02
 **Plan:** [word-authoring-poc.md](../plans/word-authoring-poc.md)

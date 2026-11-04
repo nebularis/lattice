@@ -3,7 +3,7 @@
 # Formal Methods: Status
 
 **Unit ID:** `formal-methods` (epic)
-**Status:** built 2026-10-06. ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4, plus the FM-PF1/PF4 fixes from the
+**Status:** built 2026-10-27. ✅ Track D complete on `fm/phase-0-prover-spike` (D0-D4, plus the FM-PF1/PF4 fixes from the
 macOS reproduction). **FM-D1 decided 2026-10-06: Isabelle.** FM-D10 decided:
 Haskell and Scala both adopted as code-generation targets. The maintainer has also decided to
 continue track E's work on this same branch rather than cutting a fresh one, deferring the merge

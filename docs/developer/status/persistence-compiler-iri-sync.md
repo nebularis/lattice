@@ -3,7 +3,7 @@
 # Persistence Compiler / IRI-Patterns Sync — Status
 
 **Unit ID:** `persistence-compiler-iri-sync`
-**Status:** built 2026-09-23. ✅ Complete. All six slices done, 774/774 tests passing (validated 2026-09-25).
+**Status:** built 2026-09-25. ✅ Complete. All six slices done, 774/774 tests passing (validated 2026-09-25).
 **Last updated:** 2026-09-25 (Slice 6 documentation close-out, unit complete)
 **Plan:** [persistence-compiler-iri-sync.md](../plans/persistence-compiler-iri-sync.md)
 **Sketch (gap analysis):** [persistence-compiler-iri-sync.md](../sketches/persistence-compiler-iri-sync.md)

@@ -3,7 +3,7 @@
 # Formal Methods, Track B: Status
 
 **Unit ID:** `formal-methods-track-b` (phase, within the `formal-methods` epic)
-**Status:** built 2026-10-09. FMB-1, FMB-2 and FMB-3 done, 2026-10-07. **FMB-2.1 and FMB-2.2 done, 2026-10-09**, on branch
+**Status:** building 2026-10-09. FMB-1, FMB-2 and FMB-3 done, 2026-10-07. **FMB-2.1 and FMB-2.2 done, 2026-10-09**, on branch
 `fm/eligibility-pass` (machine S), part of the formal-methods epic's Eligibility pass (FM-EP)
 CCS's CCS-9b.3 waits on. FMB-5 attempted the same session, blocked (see below), deferred
 **Last updated:** 2026-10-09

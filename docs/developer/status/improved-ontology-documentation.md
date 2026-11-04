@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** verified 2026-10-17. In progress. OD-0 accepted. OD-1, OD-RC1, OD-RC2, OD-2 and OD-3 done. OD-4 and OD-5 built autonomously and committed locally, not pushed.
+**Status:** built 2026-10-20. In progress. OD-0 accepted. OD-1, OD-RC1, OD-RC2, OD-2 and OD-3 done. OD-4 and OD-5 built autonomously and committed locally, not pushed.
 **Last updated:** 2026-10-16
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
 **Sketches:** [improved-ontology-documentation.md](../sketches/improved-ontology-documentation.md),

@@ -3,7 +3,7 @@
 # Applied Insurance Reference - Status
 
 **Unit ID:** `applied-insurance-reference` (epic)
-**Status:** planned.
+**Status:** built 2026-11-02.
 **Plan:** [applied-insurance-reference.md](../plans/applied-insurance-reference.md)
 **Machines, branches and merges:** [applied-insurance-reference-lanes.md](../plans/applied-insurance-reference-lanes.md)
 **How to use this record:** lanes §5. In short: each machine edits only its own section. Machine R

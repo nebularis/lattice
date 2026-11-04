@@ -3,7 +3,7 @@
 # Computable contract substrate - Status
 
 **Unit ID:** `computable-contract-substrate`
-**Status:** verified 2026-10-29. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
+**Status:** built 2026-10-29. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
 **Last updated:** 2026-10-27
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
