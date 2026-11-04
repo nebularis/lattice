@@ -36,18 +36,18 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | realign/config-authoring-studio |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
-| [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed | docs/placement-vehicles-structure |
+| [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
-| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-08 | FMC-1 | 3 built, 3 planned |  |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned | fml/isabelle-layers |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 5 planned, 3 built, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
-| [formal-methods](plans/formal-methods.md) | epic | built 2026-10-27 | FM-D0 | 8 built |  |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | fml/isabelle-layers |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -114,6 +114,7 @@ gantt
     section formal-methods
     FM-0 :fm0, 2026-10-06, 2026-10-07
     FM-4 :fm4, 2026-10-27, 2026-10-28
+    FM-CG1 code generation from the layer :done, fmcg1, 2026-11-01, 2026-11-02
     FM-D0 environments :fmd0, 2026-10-06, 2026-10-07
     FM-D1 brief :fmd1, 2026-10-06, 2026-10-07
     FM-D2 Rocq track :fmd2, 2026-10-06, 2026-10-07
@@ -133,6 +134,7 @@ gantt
     FMC-2.1 well-formedness facts re-run :fmc21, 2026-10-08, 2026-10-09
     FMC-2.2 model the composed scheme dec :fmc22, 2026-10-08, 2026-10-09
     FMC-2.3 model ADR-A116 own rule ag :fmc23, 2026-10-08, 2026-10-09
+    FMC-4 a design model of ADR-A130 th :fmc4, 2026-10-27, 2026-10-28
     section formal-methods-track-e
     FME-1.0 home generation tooling :fme10, 2026-10-09, 2026-10-10
     FME-1.1 the kernel for real :fme11, 2026-10-06, 2026-10-07
@@ -661,7 +663,7 @@ flowchart LR
 | D | prover spike | ✅ FM-D0 to FM-D4 and FM-PF1 built, two Gate D criteria open |
 | A | ledger and harness | ⏳ not started, waits on Gate D and its ADR |
 | B | reference semantics and oracle | 🚧 FMB-1 to FMB-3, FMB-2.1 and FMB-2.2 built. FMB-4 planned, waits on CCS-12. FMB-5 building, blocked on a package-mirror gap |
-| C | design-time models | 🚧 FMC-1, FMC-2 and FMC-2.1 built. FMC-2.2, FMC-2.3 and FMC-3 planned, FMC-3 next. ADR-A116 Proposed. FM-4, a design model of ADR-A130, reads built on the epic board and briefed in track C's record |
+| C | design-time models | 🚧 FMC-1, FMC-2 and FMC-2.1 built. FMC-2.2, FMC-2.3 and FMC-3 planned, FMC-3 next. ADR-A116 Proposed. FMC-4, a design model of ADR-A130, is built and has its row here since 2026-11-04. |
 | E | prover programme | 🚧 FME-1.0, FME-1.1 and FME-1.4 built. FME-1.2 dropped. FME-1.3 planned, waits on the overlap-rule ADR (ADR-A116). FME-2 to FME-5 planned |
 | F | native tooling | ⏳ not started |
 | G | instrument assurance | ⏳ waits on FMB-4 and FMC-3 |
@@ -689,7 +691,7 @@ flowchart LR
 
 **Track H, the release.** Track H's Next action lists every planned FMH-2 slice built: FMH-2.6c to FMH-2.6g, FMH-2.7, FMH-2.8a to FMH-2.8c, FMH-2.9, FMH-2.11a and FMH-2.11b (the Persistence README in the literate layout), the test-suite work FMH-TS-1 and FMH-TS-2, a new `packages/persistence/python`, Oxigraph as the Persistence tests' default engine, and the release prepared as 0.19.0 with the applied modules re-pinned. The maintainer answered the review items Q1 to Q6 on 2026-10-21 and approved the second review's follow-ups on 2026-10-23, so nothing on the line awaits review. The tags `persistence-v0.19.0` and `ontologies-v0.19.0` exist, so the line is on `main`, although the record still lists the merge as the maintainer's and its board rows have not moved.
 
-**Isabelle models.** `fml/isabelle-layers` carries Isabelle/HOL models of the layers' laws and a code-generation spike, with Haskell and Scala exports run and Eligibility's decision table executed. The spike has no slice on the epic board yet.
+**Isabelle models.** `fml/isabelle-layers` carries Isabelle/HOL models of the layers' laws and a code-generation spike, with Haskell and Scala exports run and Eligibility's decision table executed. The spike is FM-CG1 on the epic's board, merged 2026-11-02, and FM-CG2, the generated Haskell as a differential oracle, is planned behind PDD-19.
 
 ### 4.4 Improved ontology documentation (IOD)
 
@@ -758,12 +760,12 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | pushed | no mark |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | local ahead 35, not pushed | ES-0, ES-1, ES-2, ES-3, ES-4, ES-5, ES-6, ES-7, ES-8, ES-9, LG-0, LG-1, LG-5, LG-6 |
-| `fml/isabelle-layers` | 2026-11-01 | 31 | pushed | board not on the grammar, 178 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | LG-2 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | LG-2 |
+| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | local ahead 35, not pushed | no mark |
+| `fml/isabelle-layers` | 2026-11-04 | 33 | local ahead 38, not pushed | FM-CG1, FM-CG2, FMC-4 |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | pushed | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 

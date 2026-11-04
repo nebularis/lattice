@@ -436,3 +436,5 @@ The historic slice ids and the ids the grammar gives them (plan work-board, WB-2
 | WA8 | WA-8 | word-authoring-poc |
 | WA9 | WA-9 | word-authoring-poc |
 | WA9a | WA-9a | word-authoring-poc |
+| FM-4 | FMC-4 | formal-methods-track-c |
+| FM-4.md | FMC-4.md | validation pack |
