@@ -41,9 +41,9 @@ set in one substitution.
    the ones that name a current version by hand, as before.
 4. **The data class is written in brackets** at the end of each change in a release note, rather than as a
    table column, since release notes are lists today.
-5. **The rehearsal is OD-REL itself.** The tests run the task over a fixture tree. OD-REL runs it over the
+5. **The rehearsal is OD-REL1 itself.** The tests run the task over a fixture tree. OD-REL1 runs it over the
    repository, with every check after it, as the next commit.
-6. **The catalogue says 0.18.0 from this commit**, so until OD-REL the check reports every member as off the
+6. **The catalogue says 0.18.0 from this commit**, so until OD-REL1 the check reports every member as off the
    release, which OD-D43 already allows on this branch.
 
 ## Test cases

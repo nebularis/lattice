@@ -2,6 +2,7 @@
 package org.nebularis.lattice.studio.http;
 
 import io.helidon.webserver.WebServer;
+import java.net.URI;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
 import java.io.IOException;
@@ -38,6 +39,16 @@ public final class StudioHttpServer implements AutoCloseable {
         this.api = api;
         this.staticRoot = staticDir == null ? null : realPath(staticDir);
         this.server = WebServer.builder().host(bind).port(port).routing(r -> r.any(this::handle)).build();
+    }
+
+    /** The page's policy, which lets it reach the broker's MQTT for events when the studio offers them (PM-Q20 (d)). */
+    private String csp() {
+        String events = api.eventsUrl();
+        if (events == null) {
+            return CSP;
+        }
+        URI u = URI.create(events);
+        return CSP + "; connect-src 'self' " + u.getScheme() + "://" + u.getRawAuthority();
     }
 
     private static Path realPath(Path dir) throws IOException {
@@ -138,13 +149,13 @@ public final class StudioHttpServer implements AutoCloseable {
         }
     }
 
-    private static void send(ServerResponse res, String method, ApiResponse r) {
+    private void send(ServerResponse res, String method, ApiResponse r) {
         res.status(r.status());
         r.headers().forEach(res::header);
         res.header("X-Content-Type-Options", "nosniff");
         res.header("Referrer-Policy", "no-referrer");
         if (r.headers().getOrDefault("Content-Type", "").startsWith("text/html")) {
-            res.header("Content-Security-Policy", CSP);
+            res.header("Content-Security-Policy", csp());
         }
         if (r.body().length == 0 || r.status() == 204 || r.status() == 304) {
             res.send();

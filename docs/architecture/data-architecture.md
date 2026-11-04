@@ -164,8 +164,8 @@ outside ADR-A54's layout. With `B` the configured base IRI and `D` = `B` + `doc/
 | Graph | IRI |
 |---|---|
 | wording (the mapped snapshot) | `D/rev/<n>/wording-graph` |
-| proposal (the worker's reading, WA6) | `D/rev/<n>/proposal-graph` |
-| analysis (findings and the LE program, WA4) | `D/rev/<n>/analysis-graph` |
+| proposal (the worker's reading, WA-6) | `D/rev/<n>/proposal-graph` |
+| analysis (findings and the LE program, WA-4) | `D/rev/<n>/analysis-graph` |
 | registry (one per deployment) | `B` + `registry` |
 
 These graphs are not platform contracts, carry no `dal:` claims and are not subject to the Store

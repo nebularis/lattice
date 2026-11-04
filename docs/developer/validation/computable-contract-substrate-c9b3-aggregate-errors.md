@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: CCS C9b3, aggregates over rows with no value
+# Validation Pack: CCS-9b.3, aggregates over rows with no value
 
 **Unit:** [`computable-contract-substrate`](../status/computable-contract-substrate.md)
 **Machine:** a macOS arm64 laptop (run R-L of the [discovery record](../../architecture/triple-store-discovery.md)). **Branch:** `ccs/c9b3-aggregate-errors`

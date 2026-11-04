@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO7, composite create and tombstone delete
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO7
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO7
 ([plan §3.5](../plans/formal-methods-track-h.md#ho7-composite-create-and-tombstone-delete-td-04)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decision 3 and
 [sketch §7.2 and §7.3](../sketches/persistence-aggregate-ownership.md). **Closes:** TD-04 (removed from the register).

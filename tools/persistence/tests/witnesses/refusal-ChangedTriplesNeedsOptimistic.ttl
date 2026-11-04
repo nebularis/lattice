@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# dal:ChangedTriples declared on a family with no version-row guard, whose delta would merge triple by triple (DR-Q2).
+# base: replace-encoding.ttl
+# remove: ex:DraftProfile dal:concurrencyProfile
+# remove: ex:DraftProfile dal:minConcurrencyLevel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:DraftProfile dal:concurrencyProfile dal:ProvidedConcurrency .

@@ -68,6 +68,10 @@ Every path must be inside this checkout. If not, or if the import fails, run `mi
 this checkout. Working in several checkouts at once, and integrating a bundle from a machine that
 cannot push, are in the developer guide, §9.
 
+## A running process and the build
+
+A build never writes a file that a running process has open. A JVM reads classes from its jar for as long as it runs, so a build that rewrites the jar under it, as `mise run check` does for the studio's shaded jars, leaves it failing with `NoClassDefFoundError` on the first class it had not loaded yet. A process started from the repository runs from a copy of what the build wrote, made just before it starts, as `mise run studio:up` does under `.build/config-studio/run/pinned` and the studio harness does under its cache (STD-308). A process that has to run from the build output itself is stopped before the build, and the task that starts it says so.
+
 ## Shell activation
 
 Installing `mise` is not enough. A new shell has no `mise`-managed tools on `PATH` until its profile

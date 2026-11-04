@@ -319,7 +319,7 @@ Not run: the property policy sample, which stays a JSON snapshot until CS12d ret
 
 | ID | Given / When / Then | Level | +/− | Result |
 |---|---|---|---|---|
-| CB1-01 | the facility form and a software licence form / `check`, `plan`, `assemble`, `reassemble` and `render` / admitted, denied and undetermined conditions, slots with no and two admitted variants refused, optional elements chosen and not, WA5 with permuted inputs and a repeat giving identical triples, WA6 no record on failure, reassembly sharing unchanged values, numbering after an omitted clause | L1 | + − | pass, `mise run check:wording-assembler`, 20 tests |
+| CB1-01 | the facility form and a software licence form / `check`, `plan`, `assemble`, `reassemble` and `render` / admitted, denied and undetermined conditions, slots with no and two admitted variants refused, optional elements chosen and not, WA-5 with permuted inputs and a repeat giving identical triples, WA-6 no record on failure, reassembly sharing unchanged values, numbering after an omitted clause | L1 | + − | pass, `mise run check:wording-assembler`, 20 tests |
 | CB1-02 | the rendered documents / `xmllint` against `contracts/document/document.xsd` / valid | L1 | + | pass, skipped where `xmllint` is absent |
 | CB1-03 | Wording with `wrd:AssemblyModel`, `wrd:assembledUnder`, the baseline model and `wrd:WA1Shape` / the literate extraction check, the wording and catalogue tests, the ontology catalog / consistent, every example conforming | L1 | + | pass, 243 tests and the catalog. The release bump waits for the merge, so `check:ontology-versioning` reports it unbumped |
 

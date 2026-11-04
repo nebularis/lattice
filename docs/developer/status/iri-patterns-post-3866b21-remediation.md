@@ -3,7 +3,7 @@
 # IRI and RDF Patterns, Post-3866b21 Remediation — Status
 
 **Unit ID:** `iri-patterns-post-3866b21-remediation`
-**Status:** ✅ Complete. Every review finding is dispositioned, and the compiler templates are aligned. Follow-on work lives in other units (see "Is this unit complete?")
+**Status:** merged 2026-09-23. Complete. Every review finding is dispositioned, and the compiler templates are aligned. Follow-on work lives in other units (see "Is this unit complete?")
 **Last updated:** 2026-09-23
 **Review:** [iri-patterns-post-3866b21-review.md](../review/iri-patterns-post-3866b21-review.md)
 **Documents changed:** [rdf-sparql-patterns-guide.md](../../architecture/rdf-sparql-patterns-guide.md) (summary in its Appendix D.3), [iri-identity-patterns.md](../../architecture/iri-identity-patterns.md), [iri-policy.md](../../architecture/iri-policy.md), `ontology/persistence/spec/persistence.ttl` (comments), `ontology/persistence/shapes/` (`StoreLocalEpochWarningShape` message)
@@ -21,7 +21,7 @@ What the corrected documents specify but this unit did not build, and where it i
 | Identity, privacy and claim-scheme profiles in the compiler | [`persistence-compiler-iri-sync`](persistence-compiler-iri-sync.md): identity ✅ Slice 3; privacy and claim schemes Slices 4–5 |
 | Request-time execution: `$requestDigest`, confirmation reads, outcome classification | The store SPI and the ingestion gateway (epic P2.3.1, P2.3.6). The caller contract is documented in `tools/persistence/README.md`, "Using the generated SPARQL directly" |
 | TCK tests T-12 to T-17, S-suite, R-suite | Written into guide Chapter 27 as specifications. Executable tests belong to the store SPI TCK (epic P0.5.6) |
-| Ratification of `iri-identity-patterns.md` and ADR-A82 | [phase-0-status.md](phase-0-status.md), P0.1.3 |
+| Ratification of `iri-identity-patterns.md` and ADR-A82 | [phase-0-status.md](phase-0-status.md), PLT-0.1.3 |
 | `pat:Revision` alignment (`prov:Activity` or `fnd:Evidence`) | Guide Appendix E item 3 |
 | `dal:` terms for the YAML-only declaration keys | Guide Appendix E item 10 |
 

@@ -83,3 +83,15 @@ def test_new_document_with_version_iri_passes(repo: Path) -> None:
     write(repo, "ontology/other/spec/other.ttl", document("0.1.0"))
     assert check(repo, "HEAD") == []
     assert check_unversioned(repo) == []
+
+
+def test_a_flagged_module_is_told_how_it_is_released() -> None:
+    """A standalone module is released on its own and a substrate layer with the release, which an
+    agent once got wrong for Persistence, so the check names the way for each flagged module."""
+    import ontology_version_check as ovc
+    lines = ovc.how_released(ovc.ROOT, ["ontology/persistence/spec/persistence.ttl: content changed",
+                                        "ontology/foundation/spec/foundation.ttl: content changed"])
+    assert len(lines) == 2
+    assert any("ontology/foundation is substrate" in l and "version:bump -- --increment" in l for l in lines)
+    assert any("ontology/persistence is standalone, released on its own" in l and "--layer-target persistence" in l and "move in unison" in l for l in lines)
+    assert ovc.how_released(ovc.ROOT, []) == []

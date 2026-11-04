@@ -33,14 +33,14 @@ Payload payload = Payload.of(new Triple(Iri.of("urn:ex:a"), Iri.of("urn:ex:name"
 Map<String, Object> values = Map.of("root", "urn:ex:a", "expectedSeq", 3, "payloadTriples", payload,
     "assertTriples", Payload.of(), "retractTriples", Payload.of());
 String digest = RequestDigest.requestDigest(replace, values);   // the value of $requestDigest
-String text = payload.sparql();                                  // the value of {{{payloadTriples}}}
+String text = Payload.slotText(replace, "payloadTriples", payload);   // the value of {{{payloadTriples}}}
 ```
 
 Before sending, `CallerCheck.check(replace, values)` throws `CallerCheckException` naming every reason a request is refused. The options of `CallerCheck.refusals` are `allowEmptyLogGraphs` (an audit over no graph then reports `NothingExamined`), `versionOf` (what is a version, to check the reference modes) and `membership` (a checkpoint's full list).
 
 The values are keyed by the names of the operation's parameters and slots. A value is an `Iri`, a `Lit`, a `Payload`, a `Rows`, a `String`, an integral number, or an `Iterable` for a `RegistryList`. A slot is a `Payload`, or `Rows` for `eventRows`. A Jena literal node is read as a literal where a `Long` or a `Position` is declared. `Payload.ofJena` builds a payload from Jena triples and refuses a blank node.
 
-In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`. The caller replaces the marker with the `sparql()` text of the value, by substitution and with no template engine. `Audit.run` does this for `logGraphs`. An unfilled marker is a syntax error, so a forgotten slot fails closed.
+In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`. The caller replaces the marker with the text the contract's encoding asks for, by substitution and with no template engine. `Payload.slotText(operation, name, value)` returns it, `sparql()` for the triples of `dal:GroundNTriples` and `rows()` for the rows `(s p o)` of `dal:TripleRows`, and `Rows` as its own `sparql()`. The request digest is over the canonical N-Triples whichever the encoding. `Audit.run` does this for `logGraphs`. An unfilled marker is a syntax error, so a forgotten slot fails closed.
 
 ## Differences from the Python library
 

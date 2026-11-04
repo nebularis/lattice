@@ -70,6 +70,8 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "etagForm": (DAL.ConcurrencyProfile, DAL.etagForm, ()),
     "etagRepresentation": (DAL.ConcurrencyProfile, DAL.etagRepresentation, ()),
     "deadlockPolicy": (DAL.ConcurrencyProfile, DAL.deadlockPolicy, ()),
+    # H2.12: which replace form an optimistic family is written with. No default, since absence means by capability.
+    "replaceForm": (DAL.ConcurrencyProfile, DAL.replaceForm, ()),
     "globalReadStrategy": (DAL.OrderingProfile, DAL.globalReadStrategy, ()),
     "lagWindowMillis": (DAL.OrderingProfile, DAL.lagWindowMillis, ()),
     "contiguityCheckMode": (DAL.OrderingProfile, DAL.contiguityCheckMode, ()),
@@ -98,7 +100,9 @@ _DIMENSION_SPEC: dict[str, tuple[URIRef, URIRef, tuple[URIRef, ...]]] = {
     "writeDiscipline": (DAL.WriteDisciplineProfile, DAL.writeDiscipline, ()),
     # H2.6f (2026-10-20).
     "membershipEncoding": (DAL.WriteDisciplineProfile, DAL.membershipEncoding, ()),
+    "replaceEncoding": (DAL.WriteDisciplineProfile, DAL.replaceEncoding, ()),
     "checkpointEvery": (DAL.WriteDisciplineProfile, DAL.checkpointEvery, ()),
+    "recordsStateDigest": (DAL.WriteDisciplineProfile, DAL.recordsStateDigest, ()),
 }
 
 

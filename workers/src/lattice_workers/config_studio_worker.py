@@ -72,10 +72,10 @@ class GraphStore(Protocol):
         """Write a named graph, replacing any prior content, with any `others` in the same write."""
 
     def graph_names(self) -> list[str]:
-        """The name of every named graph that holds a triple, for a refresh job."""
+        """The name of every named graph that holds a triple, for a rebuild job."""
 
     def construct(self, query: str) -> Graph:
-        """The graph a constant CONSTRUCT query gives, for a refresh job."""
+        """The graph a constant CONSTRUCT query gives, for a rebuild job."""
 
 
 def _time(value: str) -> Literal:
@@ -113,37 +113,37 @@ class ConfigStudioWorker:
         running = Graph() + graph
         running.add((job, CST.status, CST.Running))
         running.add((job, CST.startedAt, _time(self._clock())))
-        # A refresh job is read by the service alone, which waits for its end, so marking it running would cost a commit for no reader.
-        if graph.value(job, CST.kind) != CST.Refresh:
+        # A rebuild job is read by the service alone, which waits for its end, so marking it running would cost a commit for no reader.
+        if graph.value(job, CST.kind) != CST.Rebuild:
             self._store.put_graph(job_iri, running)
 
         final = Graph() + running
         final.remove((job, CST.status, None))
         self._record: Optional[Graph] = None
-        self._projections: dict[str, Graph] = {}
+        self._promotions: dict[str, Graph] = {}
         try:
             final += self._run(job, graph)
             final.add((job, CST.status, CST.Succeeded))
         except Exception as error:  # the job could not run, which the author reads as a failure
             self._record = None
-            self._projections = {}
+            self._promotions = {}
             for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult):
                 final.remove((job, predicate, None))
             final.add((job, CST.status, CST.Failed))
             final.add((job, CST.failureMessage, Literal(str(error) or type(error).__name__)))
         final.add((job, CST.finishedAt, _time(self._clock())))
         others = {f"{job_iri}:record": self._record} if self._record is not None and len(self._record) else {}
-        self._store.put_graph(job_iri, final, {**others, **self._projections})
+        self._store.put_graph(job_iri, final, {**others, **self._promotions})
 
     def _run(self, job: URIRef, graph: Graph) -> Graph:
         from . import config_studio_assembly
 
         input_ = lambda what: self._read(graph, job, CST.configGraph, what, allowed=lambda iri: iri == f"{job}:input")
-        if graph.value(job, CST.kind) == CST.Refresh:
-            # A refresh job names no workspace, target or input. It rebuilds every projection, which the writer replaces whole.
-            from .config_studio_refresh import refresh
+        if graph.value(job, CST.kind) == CST.Rebuild:
+            # A rebuild job names no workspace, target or input. It rebuilds every promotion, which the writer replaces whole.
+            from .config_studio_rebuild import rebuild
 
-            self._projections = refresh(self._store, self._root, str(job), self._clock())
+            self._promotions = rebuild(self._store, self._root, str(job), self._clock())
             return Graph()
         if graph.value(job, CST.kind) == CST.ToolCall:
             from .config_studio_mork_tools import run_tool
@@ -401,9 +401,9 @@ class WriterStore:
     def put_graph(self, graph_iri: str, graph: Graph, others: Optional[Mapping[str, Graph]] = None) -> None:
         job = _MESSAGE.fullmatch(graph_iri)
         workspace = _WORKSPACE.fullmatch(str(graph.value(URIRef(graph_iri), CST.workspace) or ""))
-        # A refresh job names no workspace, so its writes go to the partition of its own id.
-        refresh = workspace is None and (URIRef(graph_iri), CST.kind, CST.Refresh) in graph
-        if job is None or (workspace is None and not refresh):
+        # A rebuild job names no workspace, so its writes go to the partition of its own id.
+        rebuild = workspace is None and (URIRef(graph_iri), CST.kind, CST.Rebuild) in graph
+        if job is None or (workspace is None and not rebuild):
             raise ValueError(f"{graph_iri} is not a job graph naming its workspace")
         dataset = Dataset()
         named = dataset.graph(URIRef(graph_iri))

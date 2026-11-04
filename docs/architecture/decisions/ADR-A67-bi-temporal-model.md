@@ -22,13 +22,13 @@ The platform needs two independent time axes and currently models neither explic
 
 ### Query path split
 
-Bi-temporal queries over named graphs require either a per-graph temporal index or a temporal-filter pattern on every query. Materialise *current* projections for the hot path (subject to the NFR/SLO catalogue, P0.1.15); answer as-of queries from authoritative layers via a separate analytic path with relaxed SLOs. This is a deliberate two-path design, stated here rather than discovered later.
+Bi-temporal queries over named graphs require either a per-graph temporal index or a temporal-filter pattern on every query. Materialise *current* projections for the hot path (subject to the NFR/SLO catalogue, PLT-0.1.15), answer as-of queries from authoritative layers via a separate analytic path with relaxed SLOs. This is a deliberate two-path design, stated here rather than discovered later.
 
 ## Consequences
 
 - G6 (no `now()` inside guards, effects, or canonicalisation — time is an input) is the enforcement mechanism for rule 4; ArchUnit bans clock access in named packages.
 - ADR-A65's provenance record and this ADR's `lattice:transactionTime` are the same field — one write path sets it once, not twice.
-- The materialised-current / analytic-as-of split has SLO consequences that must be captured in `docs/architecture/nfr.md` (P0.1.15) before the query component's L7 benchmarks are meaningful.
+- The materialised-current / analytic-as-of split has SLO consequences that must be captured in `docs/architecture/nfr.md` (PLT-0.1.15) before the query component's L7 benchmarks are meaningful.
 - Every write path must be audited to confirm it never mutates a prior version in place; this is checked alongside ADR-A65's homogeneity audit (P2.5.1).
 
 ## Addendum (2026-10-27): the query-path split is not forced

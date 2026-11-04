@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# The dataset-guard variants of the whole-state template replaces of a named-graph family (persistence-delta-replace DR1). Invoice opts out of the rows form, since its deployment's spec would otherwise select it.
+# base: replace-form-rows.ttl
+# remove: ex:NoteProfile dal:replaceForm
+# remove: ex:MemoProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:InvoiceProfile dal:replaceForm dal:TemplateReplace .
+
+ex:MemoProfile dal:receiptModel dal:NoReceipt .
+
+ex:InvoiceEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:InvoiceClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:NoteEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:NoteClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .
+
+ex:MemoEpoch a dal:EpochProfile ;
+    dal:appliesTo       ex:MemoClass ;
+    dal:epochGuardScope dal:DatasetLevelGuard ;
+    dal:epochAuthority  dal:ExternalHighWaterMark .

@@ -2,6 +2,9 @@
 
 # Implementation Handover (Historical Reference)
 
+**Unit ID:** `implementation-handover-historical`
+**Status:** dropped 2026-09-20. Superseded and archived, replaced by platform-continuation and the individual phase handoffs.
+
 **Unit:** `implementation-handover`
 **State:** Superseded and archived
 **Date archived:** 2026-09-20

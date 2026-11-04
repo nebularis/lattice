@@ -23,6 +23,7 @@ import org.nebularis.lattice.studio.api.ApiResponse;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.writes.Command;
 
 class StudioApiTest {
     private static final String WS = Fixture.id(1);
@@ -381,6 +382,32 @@ class StudioApiTest {
         }
         assertEquals(202, f.post(WS_PATH + "/jobs", "kind=compile&target=eligibility", CONFIG).status());
         assertEquals(0, ws().getProperty(Cst.surfaceRevision).getInt());
+    }
+
+    /** DR4 (DR-Q5 (c), DR-Q7 (b)): a patch writes what a whole save of the same change writes, and is refused where a save would be. */
+    @Test
+    void aPatchLeavesThePartASaveOfTheSameChangeLeaves() {
+        f.createWorkspace("One");
+        String path = WS_PATH + "/graphs/vocabulary";
+        String label = "<" + LATTICE + "vocabulary#label>";
+        assertEquals(204, f.put(path, "\"0\"", Fixture.PREFIXES + "ex:a " + label + " \"old\" . ex:b " + label + " \"kept\" .").status());
+        String patch = "<" + Command.PATCH_ADD + "> { <https://example.org/a> " + label + " \"new\" . } "
+            + "<" + Command.PATCH_DEL + "> { <https://example.org/a> " + label + " \"old\" . }";
+        Map<String, String> trig = Map.of("content-type", "application/trig", "if-match", "\"1\"");
+        ApiResponse patched = f.send("PATCH", path, trig, patch);
+        assertEquals(204, patched.status(), patched.toString());
+        assertEquals("\"2\"", patched.headers().get("ETag"));
+        same(Fixture.model(Fixture.PREFIXES + "ex:a " + label + " \"new\" . ex:b " + label + " \"kept\" ."), f.store.graph(Graphs.config(WS, "vocabulary")));
+        assertEquals(412, f.send("PATCH", path, trig, patch).status(), "a patch against a stale revision");
+        assertEquals(428, f.send("PATCH", path, Map.of("content-type", "application/trig"), patch).status());
+        assertEquals(415, f.send("PATCH", path, Map.of("content-type", Fixture.TURTLE, "if-match", "\"2\""), "").status());
+        assertEquals(422, f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), "<urn:other> { <urn:a> <urn:b> <urn:c> . }").status());
+        String blank = "<" + Command.PATCH_ADD + "> { <https://example.org/a> " + label + " [] . } <" + Command.PATCH_DEL + "> { }";
+        assertEquals(400, f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), blank).status(), "a blank node is saved whole");
+        String onlyAdds = "<" + Command.PATCH_ADD + "> { <https://example.org/c> " + label + " \"added\" . } <" + Command.PATCH_DEL + "> { }";
+        ApiResponse added = f.send("PATCH", path, Map.of("content-type", "application/trig", "if-match", "\"2\""), onlyAdds);
+        assertEquals(204, added.status(), "a dataset keeps no empty graph, so an empty side is absent: " + added);
+        assertEquals("\"3\"", added.headers().get("ETag"));
     }
 
     @Test

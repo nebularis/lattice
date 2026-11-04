@@ -2,6 +2,9 @@
 
 # Eligibility Executable Compiler Implementation Status
 
+**Unit ID:** `eligibility-compiler`
+**Status:** built 2026-09-25. Implemented, awaiting validation in a network environment.
+
 **Unit:** `eligibility-compiler`
 **State:** Implemented, awaiting validation in network environment
 **Sketch:** [mork-eligibility-compiler.md](../sketches/mork-eligibility-compiler.md)

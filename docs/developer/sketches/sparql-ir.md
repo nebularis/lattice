@@ -8,7 +8,7 @@
 
 ## 1. The scene
 
-PDD-06 asks whether the persistence compiler gains a second IR, one that models SPARQL's semantics, between the configuration IR (`persistence.ir`) and the text. It was raised on 2026-10-12 after the H2.1 review, where two of the checker's rules about SPARQL scope were written from memory, were wrong, and were found only by running queries on rdflib (track H plan §5.1). On 2026-10-29, answering MR-Q6 ("should the compiled mapping be described in RDF"), the maintainer suggested that a SPARQL IR of our own would help well beyond MORK, for verification, validation, query optimisation and introspection.
+PDD-06 asks whether the persistence compiler gains a second IR, one that models SPARQL's semantics, between the configuration IR (`persistence.ir`) and the text. It was raised on 2026-10-12 after the FMH-2.1 review, where two of the checker's rules about SPARQL scope were written from memory, were wrong, and were found only by running queries on rdflib (track H plan §5.1). On 2026-10-29, answering MR-Q6 ("should the compiled mapping be described in RDF"), the maintainer suggested that a SPARQL IR of our own would help well beyond MORK, for verification, validation, query optimisation and introspection.
 
 Three facts make the question wider than the persistence compiler.
 
@@ -91,7 +91,7 @@ flowchart LR
 
 | | L1 syntax | L2 algebra | L3 both |
 |---|---|---|---|
-| **verification** | a semantics has to include the §18 translation, since the semantics is defined on algebra. Every rule about scope (H2.1's F4) lives in that translation | direct. The Isabelle model or reference evaluator is the §18.5 semantics over the IR | direct over the algebra, plus one translation to verify once, shared by every emitter |
+| **verification** | a semantics has to include the §18 translation, since the semantics is defined on algebra. Every rule about scope (FMH-2.1's F4) lives in that translation | direct. The Isabelle model or reference evaluator is the §18.5 semantics over the IR | direct over the algebra, plus one translation to verify once, shared by every emitter |
 | **validation against text** | parse the text, compare syntax trees. Equality is near-textual and easy to state | parse the text with an independent parser, translate to algebra, compare after normalising (§8.1). Jena ARQ's and rdflib's algebras differ in detail, so the normaliser is real work | either comparison. The syntax comparison catches printer faults, the algebra one catches translation faults |
 | **efficient-query rules** | R2, R3 and R4 are about groups and their order, which the syntax keeps | R4, R6 and R9 read well. R2 and R3 need the join order, which the algebra keeps as nesting, but `FILTER` is collected to the end of its group by §18.2.2.2, so "guard in its own group, first" (R3) is only partly visible | each rule reads the layer it is about |
 | **optimisation** | rewriting syntax is awkward, since scope is implicit | the natural place. Rewrites are algebra laws | rewrite the algebra, but printing then needs L2's algebra printer anyway |

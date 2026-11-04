@@ -3,10 +3,10 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** 🚧 LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
+**Status:** merged 2026-10-27. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
 **Last updated:** 2026-10-29
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/ledger-lg-0.md), [LG-1](../validation/ledger-lg-1.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md)
 
 ---
 
@@ -51,7 +51,7 @@ Since then the work has been design rather than build, and it has answered the w
 **Historical.** Kept as the record of how LG-1 was built. Its two 🔴 items are both discharged: the release tags exist and `check:published-decisions` passes, since ADR-A131 was published 2026-10-26. Read it for what was done, not for what is outstanding.
 
 Built on `docs/placement-vehicles-structure`, same session convention as LG-0 (one branch, one
-bundle). Full detail in the [LG-1 Validation Pack](../validation/ledger-lg-1.md)'s Handoff and
+bundle). Full detail in the [LG-1 Validation Pack](../validation/LG-1.md)'s Handoff and
 Results sections. In short:
 
 - `ontology/ledger/README.md` written in ADR-A126's layout and extracted: `spec/ledger.ttl`,
@@ -92,3 +92,16 @@ Results sections. In short:
   `check:agent-guidance`, and one flaky `reasoning_server` timing test) are pre-existing and
   unrelated, each confirmed in isolation. `check:site-sections` failed once (my edit to
   `eligibility/README.md` left its site copy stale) and is fixed (`build:site-sections` run).
+
+## Board
+
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
+| LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | briefed 2026-10-27 |  |
+| LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
+| LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
+| LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
+| LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
+- 2026-11-04: the board corrected on `docs/placement-vehicles-structure` (plan work-board, WB-7). LG-0 and LG-1 read merged, since `ontology/ledger/` reached `main` on 2026-10-27. LG-2 reads briefed, as this record said and against the row the adopt step took from its pack. LG-5 reads blocked on LG-4, with its part built ahead noted. LG-6, the fold investigation the ledger-folds-and-stores sketch adds after LG-5, has a row and leaves the identifier exceptions. The deliverables are the plan's.

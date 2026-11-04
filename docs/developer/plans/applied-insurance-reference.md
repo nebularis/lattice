@@ -2,6 +2,8 @@
 
 # Applied Insurance Reference — Epic
 
+**Prefix:** AIR
+
 **Unit type:** Epic
 **Epic:** `applied-insurance-reference`
 **Epic status:** Proposed. Scope decisions recorded 2026-09-26 (§5). Decomposed into seven
@@ -108,7 +110,7 @@ unit on R. Its §4 measures the interference with this epic. The constraints tha
 | Phase 2 (AIR-2.2 to AIR-2.7) completes before NRS N9 starts | N9 changes Foundation (a MAJOR bump), re-pinning `insurance/peril/spec` and `vocab`, which Phase 2 is authoring. CCS F1 has since run on its own (ADR-A114, Foundation 0.4.0, 2026-10-03) |
 | [CCS](computable-contract-substrate.md) C9 (Instrument rewrite, ADR-A104, with the Wording layer, ADR-A112) is merged before Phase 5 starts. NRS N4 moved into CCS on 2026-09-30 | A-101's term parameters qualify terms and legal relations, which need the new model (ADR-A-C1) |
 | CCS C10 re-pins `applied/capacity` | Behaviour's breaking MINOR cascades to its execution profile. After C10 Behaviour no longer imports Instrument, so the Instrument rewrite cascades nowhere outside Instrument. The epic does not author `applied/capacity` before Phase 5 |
-| Substrate S2 is authored with CCS C9b3 (NRS NQ-4, 2026-10-10), and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
+| Substrate S2 is authored with CCS-9b.3 (NRS NQ-4, 2026-10-10), and S7 with NRS N10 | both pairs change the same layer's semantics: Eligibility well-foundedness, and precedence |
 
 ## 4. Milestones
 

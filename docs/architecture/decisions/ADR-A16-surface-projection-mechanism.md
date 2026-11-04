@@ -71,3 +71,9 @@ Source-signature promotion stays in Surface, constrained as already stated — m
 ## Addendum (2026-09-18): a third operation
 
 ADR-A17 extends this ADR's "two operations and only two" decision with a third, Projection, for mapping intent neither promotion nor indexing covers. This does not reopen or weaken anything decided here: Promotion and Indexing keep their laws, their direct-emit path, and this ADR's rationale unchanged. Projection is additive, gets its own law register (ADR-A20), and — unlike Promotion and Indexing — lowers into MORK rather than emitting an artefact itself (ADR-A18).
+
+## Addendum (2026-11-01): a promotion's rows kept by the write that changes their source (proposed, for the maintainer's review)
+
+A materialised promotion's rows can be kept current by the write that changes their source, in the same request, instead of by a rebuild. The surface compiler emits, for each promotion, two operations of the persistence compiler's typed IR (ADR-A123). `clear` deletes the rows of every carrier the write's delta can have changed, its touched nodes and every node that reaches one of them by a proper prefix of the read path, and `fill` inserts them again from the source as the write left it. Rows are keyed to the carrier they derive from, so the work is the rows of those carriers and never the whole source. This keeps Promotion's laws, since the rows after any sequence of writes are the rows a rebuild gives.
+
+Where the rows land is the user's choice: beside the source, in the source's own graph, where every promoted property is in the contract's target namespace, or in a graph of the source's derived family, whose persistence profile mirrors the source's boundary by default. The caller names that graph. An index contract, and a source in a shared data graph, are not maintained in the write yet, and are rebuilt as before.

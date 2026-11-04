@@ -3,7 +3,7 @@
 # Track E: the prover programme (sketch)
 
 **Unit:** [formal-methods](../plans/formal-methods.md) (epic), track E
-**Status:** sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2) and acted on: E1.0 and E1.1 are done,
+**Status:** sketch, 2026-10-06. FM-D2 decided (ADR-A-FM2) and acted on: FME-1.0 and FME-1.1 are done,
 see the plan
 **Follows:** track D's spike, closed by [ADR-A-FM1](../../architecture/decisions/ADR-A-FM1-formal-methods-prover-choice.md)
 (Isabelle/HOL), evidenced by [formal-prover-experiment.md](../notes/formal-prover-experiment.md).
@@ -81,14 +81,14 @@ epic's decision to make), but ADR-A-FM2 confirms the two are compatible, not com
 - The comment-marker mechanism is **orthogonal** to the fenced-code-block mechanism
   `literate_extract.py` already uses and that track E's own generation direction (§4, above) will
   extend or parallel: one demarcates narrative prose for an annotation property, the other
-  demarcates a block of normative syntax (Turtle today, Isabelle once E1.0 decides how). Adopting
-  one does not require touching the other, and nothing E1.0 does should assume README prose
+  demarcates a block of normative syntax (Turtle today, Isabelle once FME-1.0 decides how). Adopting
+  one does not require touching the other, and nothing FME-1.0 does should assume README prose
   **outside** fenced blocks is free of such markers later: an Isabelle-block generator should skip
   HTML comments the same way a Turtle-block generator would need to, not choke on them.
 - If the "remove generated `.ttl` from git" idea is ever taken up, it is a repository-wide
   reproducibility change far larger than track E and deserves its own ADR regardless; track E's
   own generated `tools/proofs/<layer>/*.thy` should be designed to tolerate that outcome without
-  rework (generated from the README on demand, not hand-maintained), which E1.0's generation
+  rework (generated from the README on demand, not hand-maintained), which FME-1.0's generation
   direction already requires for its own reasons (epic principle E1).
 - The sketch's own nested-marker example has a real ambiguity worth fixing before anyone
   implements it (an inner `exclude` block reuses its enclosing block's `id` rather than a distinct

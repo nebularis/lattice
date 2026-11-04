@@ -3,13 +3,14 @@
 # Plan: Formal Methods, Track H: Persistence
 
 **Unit ID:** `formal-methods-track-h`
+**Prefix:** FMH
 **Unit type:** Phase (Epic Decomposition Model, `copilot-instructions.md`)
 **Epic:** [formal-methods](formal-methods.md)
 **Sketches:** [formal-methods-track-h.md](../sketches/formal-methods-track-h.md) (main),
 [formal-methods-track-h-protocols.md](../sketches/formal-methods-track-h-protocols.md) (rung T4,
 the centrepiece), [formal-methods-track-h-specification.md](../sketches/formal-methods-track-h-specification.md)
 (the specification registry and the typed IR, the enabling move),
-[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (H2's brief),
+[formal-methods-track-h-typed-ir.md](../sketches/formal-methods-track-h-typed-ir.md) (FMH-2's brief),
 [persistence-aggregate-ownership.md](../sketches/persistence-aggregate-ownership.md) (aggregate
 ownership, normative for the HO slices of [§3.5](#35-ho-aggregate-ownership))
 **Aggregate ownership:** the exploration note [persistence-aggregate-ownership.md](../notes/persistence-aggregate-ownership.md),
@@ -22,8 +23,8 @@ which holds the decisions (H-D14)
 design-time models, excludes all relational/SQL work)
 **Source:** [persistence-fml.md](../notes/rdf-engine/persistence-fml.md), an independent,
 exhaustive review of the Persistence layer against this epic's own techniques
-**Status:** In progress. H1 and the aggregate-ownership slices HO0 to HO9 are merged to `main` and
-signed off (2026-10-10). H2 is briefed, ADR-A123 is accepted (2026-10-10), H2.0 to H2.3 are merged and signed off
+**Status:** In progress. H1 and the aggregate-ownership slices FMH-HO0 to FMH-HO9 are merged to `main` and
+signed off (2026-10-10). FMH-2 is briefed, ADR-A123 is accepted (2026-10-10), FMH-2.0 to FMH-2.3 are merged and signed off
 (2026-10-12), and H2.4 is planned. The live state is in the status
 record
 
@@ -37,9 +38,9 @@ any relational or SQL-compilation work**, which is a separate review
 programme, not read as this track's scope (ADR-A-FM4 decision 1).
 
 This plan details **H1** (static hygiene: the cheapest, no-new-toolchain fixes, startable
-immediately) in full, and **H2, H3** (the typed IR and the specification registry — the enabling
+immediately) in full, and **FMH-2, FMH-3** (the typed IR and the specification registry — the enabling
 move) in enough detail to begin, since both are natural, low-risk follow-ons to H1 using tools
-already in the repository (Python, no new install). **H4 onward stay at outline level** (§4) until
+already in the repository (Python, no new install). **FMH-4 onward stay at outline level** (§4) until
 H1-H3 land, per the Epic Decomposition Model's rolling-wave rule, the same discipline every other
 track in this epic already follows for its own later slices.
 
@@ -48,10 +49,10 @@ track in this epic already follows for its own later slices.
 | Dependency | State | Blocks |
 |---|---|---|
 | `tools/persistence`'s existing compiler, templates, shapes and examples | exist, stable (ADR-A78, ADR-A79, ADR-A80) | nothing — H1 reads and checks what exists today |
-| an ADR for this track's home and scope | [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md), drafted 2026-10-08, **accepted 2026-10-10** (H-D1) | nothing blocking for H1 (pure analysis and additive checks, no new top-level directory needed yet); H5's protocol models should wait for ADR-A-FM4's acceptance, since they are the one place the ADR's own "marginally widens an existing convention" point (decision 3) matters |
-| track E's Isabelle pattern (`tools/proofs/<layer>/`) | established (ADR-A-FM2) | H6 only — reused, not re-decided |
-| track C's Alloy pattern (`tools/models/<topic>/`) | established (its own plan §4) | H5, H7 — reused, not re-decided |
-| a TLA+ or Quint toolchain | **not installed, not chosen** | H5's protocol models only. H1-H4 need no new toolchain at all |
+| an ADR for this track's home and scope | [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md), drafted 2026-10-08, **accepted 2026-10-10** (H-D1) | nothing blocking for H1 (pure analysis and additive checks, no new top-level directory needed yet), FMH-5's protocol models should wait for ADR-A-FM4's acceptance, since they are the one place the ADR's own "marginally widens an existing convention" point (decision 3) matters |
+| track E's Isabelle pattern (`tools/proofs/<layer>/`) | established (ADR-A-FM2) | FMH-6 only — reused, not re-decided |
+| track C's Alloy pattern (`tools/models/<topic>/`) | established (its own plan §4) | FMH-5, FMH-7 — reused, not re-decided |
+| a TLA+ or Quint toolchain | **not installed, not chosen** | FMH-5's protocol models only. H1-H4 need no new toolchain at all |
 | track A (the ledger and the harness) | not started (epic status) | nothing — this track's own claims and Validation Packs are the interim record, same arrangement tracks B and C already use |
 | CCS | CCS slice HQ-6b depends on this track (2026-10-10) | nothing here. HQ-6b binds ADR-A105's closures to the store: a closure's cut to the per-root sequence (AO-Q6) and its completeness to `dal:BlockingContiguityCheck`. HQ-6a holds no Persistence content |
 | insurml-alignment | no direct dependency either way | nothing. Persistence's own compiler and layer are not gated by its slices |
@@ -61,7 +62,7 @@ track in this epic already follows for its own later slices.
 The cheapest items in the review, needing no new toolchain, each tied to a specific, named finding
 (review §18, priority items 1-4; §12; §7.4; §8.1).
 
-### H1.1: the prefix antichain and overlap check
+### FMH-1.1: the prefix antichain and overlap check
 
 - A static check over every declared `dal:graphPrefix` and `dal:iriPrefix` value: do the declared
   prefixes form an antichain (no one a proper prefix of another) or, if a longest-prefix rule is
@@ -87,7 +88,7 @@ The cheapest items in the review, needing no new toolchain, each tied to a speci
   given the other rules) and confirm the harness reports it as uncovered; confirm every existing
   rule, shape and audit in `tools/persistence` today either has a witness or is listed as a gap.
 
-### H1.3: static template checks (S-3, S-4)
+### FMH-1.3: static template checks (S-3, S-4)
 
 - Two checks over every generated SPARQL template and its parameter-binding list, run per compile:
   **S-3**, every variable in an INSERT template is bound in every solution, or is on an explicit,
@@ -114,14 +115,14 @@ The cheapest items in the review, needing no new toolchain, each tied to a speci
 - **Closes:** the main sketch's L6 gap directly — review finding #9, which treats the composite-
   boundary case specifically as a soundness bug (an unswept closure member leaves exactly the
   dangling triple whole-replace exists to prevent), not a mere limitation. **This report should
-  flag that specific case as a refusal, not a documented limitation**, pending H2/H3 or a direct
+  flag that specific case as a refusal, not a documented limitation**, pending FMH-2/H3 or a direct
   fix to the composite-boundary templates (this track reports the gap; fixing
   `tools/persistence`'s own templates is that package's own follow-up, same division of labour
   track B already uses for defects it finds in `tools/mork_compilers`).
 - **Validation:** run against `tools/persistence`'s current examples; the composite-boundary gap
   must appear in the report, named, with the specific shape and property it was found against.
 
-### H1.5: stable compiled-profile labels
+### FMH-1.5: stable compiled-profile labels
 
 - Fix blank-node labelling in compiled profiles so that re-compiling the same configuration twice
   produces byte-identical output, closing the determinism gap the review names (§16.4) that
@@ -133,25 +134,25 @@ The cheapest items in the review, needing no new toolchain, each tied to a speci
   profile too, not only the final SPARQL text).
 
 **H1's overall validation:** one command runs all five checks across every example
-`tools/persistence` ships today, and the report is read by a maintainer before any of H2 onward
-starts, since H1.4's gap enumeration in particular may change what H2/H3 treat as urgent.
+`tools/persistence` ships today, and the report is read by a maintainer before any of FMH-2 onward
+starts, since H1.4's gap enumeration in particular may change what FMH-2/H3 treat as urgent.
 
-### H1.4b and H1.5 after the aggregate-ownership review (2026-10-10)
+### FMH-1.4b and FMH-1.5 after the aggregate-ownership review (2026-10-10)
 
 Both proceed now (AO-Q11). They do not wait for the HO slices.
 
-- **H1.4b** reports today's implementation, and its composite entries are these, each naming the
+- **FMH-1.4b** reports today's implementation, and its composite entries are these, each naming the
   register row and the HO slice that removes it: the bound property is assumed owned and nothing
-  declares it (TD-35, HO5), the replace sweep is quadratic (TD-36, HO1), an inverse path is
-  misread (TD-37, HO5), the payload lands in the log graph (TD-39, HO1), no composite create or
-  tombstone (TD-04, HO7), named graphs named from the root's local name (TD-38, HO8), and composite
-  operations that rely on the default graph against static check S-1 (TD-40, HO5). Write the
+  declares it (TD-35, FMH-HO5), the replace sweep is quadratic (TD-36, FMH-HO1), an inverse path is
+  misread (TD-37, FMH-HO5), the payload lands in the log graph (TD-39, FMH-HO1), no composite create or
+  tombstone (TD-04, FMH-HO7), named graphs named from the root's local name (TD-38, FMH-HO8), and composite
+  operations that rely on the default graph against static check S-1 (TD-40, FMH-HO5). Write the
   report's test so it asserts the entries present at the time it runs. Each HO slice that closes a
   gap removes its entry from that test in the same commit, and says so in its Validation Pack.
-  If H1.4b runs after HO1, omit the TD-39 and TD-36 entries.
-- **H1.5** is unchanged, and waits for nothing. The maintainer's merge of the branch is the sign-off for
-  every slice on it, including H1.4a (`validation/LOG.md` is retired on `main`). Stable labelling does not depend on what a
-  compiled profile contains, so HO slices that change compiled output regenerate H1.5's golden
+  If FMH-1.4b runs after FMH-HO1, omit the TD-39 and TD-36 entries.
+- **FMH-1.5** is unchanged, and waits for nothing. The maintainer's merge of the branch is the sign-off for
+  every slice on it, including FMH-1.4a (`validation/LOG.md` is retired on `main`). Stable labelling does not depend on what a
+  compiled profile contains, so HO slices that change compiled output regenerate FMH-1.5's golden
   files, if it has any, in the same commit.
 
 ## 3.5 HO: aggregate ownership
@@ -166,34 +167,34 @@ corrected and extended the findings (S1 to S6, F1 to F9). We decided AO-Q1 to AO
 is normative. Every slice below cites its sections, and a slice that finds the sketch wrong stops and
 asks.
 **Compatibility.** None is kept (sketch header). Remove, do not deprecate.
-**Order.** HO0, HO1, then HO3 to HO9 in order, end to end. HO2 is done: ADR-A122 was drafted on
+**Order.** FMH-HO0, FMH-HO1, then FMH-HO3 to FMH-HO9 in order, end to end. FMH-HO2 is done: ADR-A122 was drafted on
 2026-10-10 with the plan, and stays Proposed. The slices are built against it, and the maintainer accepts
-it, with the rest of the work package, when verifying at the close. HO8 may run at any point after HO3. H1.4b and H1.5 run alongside, as above.
+it, with the rest of the work package, when verifying at the close. FMH-HO8 may run at any point after HO3. FMH-1.4b and FMH-1.5 run alongside, as above.
 
 | Slice | Delivers | Modules | Tests | Closes | Blocked on |
 |---|---|---|---|---|---|
-| HO0 | the note and the spike corrected | the note, the spike | 18 spike checks | S1, S2, S5 in the documents | nothing |
-| HO1 | composite replace writes the payload to the default graph and sweeps in linear time | two templates | 7 | TD-39, TD-36 | nothing |
-| HO2 | ADR-A122 drafted, Proposed | documents only | none | | **done** 2026-10-10 |
-| HO3 | `dal:` vocabulary 0.3.0 (`dal:ownership`, reference data), two shapes, examples | `ontology/persistence` | 8 | | HO1 |
-| HO4 | ownership tree and path compiler, added beside the old walk | `boundary.py`, new `paths.py` (and one class in `terms.py`) | 10 | | HO3 |
-| HO5 | the compiler switches to the tree. Several owned edges sweep correctly | `resolver.py`, `operations.py`, `validator.py`, `boundary.py` (see H-D16) | 10 | TD-03, TD-35, TD-37, TD-40 | HO4, H-D16 |
-| HO6 | the refusals and the warning of sketch §5 | `validator.py` | 13 | | HO5 |
-| HO7 | composite create and tombstone delete | `operations.py`, four templates | 8 | TD-04 | HO6 |
-| HO8 | injective graph naming, within and across families | `operations.py`, `validator.py`, the named-graph templates | 6 | TD-38 | HO3 |
-| HO9 | documentation and close-out | documents | none | | HO7, HO8 |
+| FMH-HO0 | the note and the spike corrected | the note, the spike | 18 spike checks | S1, S2, S5 in the documents | nothing |
+| FMH-HO1 | composite replace writes the payload to the default graph and sweeps in linear time | two templates | 7 | TD-39, TD-36 | nothing |
+| FMH-HO2 | ADR-A122 drafted, Proposed | documents only | none | | **done** 2026-10-10 |
+| FMH-HO3 | `dal:` vocabulary 0.3.0 (`dal:ownership`, reference data), two shapes, examples | `ontology/persistence` | 8 | | FMH-HO1 |
+| FMH-HO4 | ownership tree and path compiler, added beside the old walk | `boundary.py`, new `paths.py` (and one class in `terms.py`) | 10 | | FMH-HO3 |
+| FMH-HO5 | the compiler switches to the tree. Several owned edges sweep correctly | `resolver.py`, `operations.py`, `validator.py`, `boundary.py` (see H-D16) | 10 | TD-03, TD-35, TD-37, TD-40 | FMH-HO4, H-D16 |
+| FMH-HO6 | the refusals and the warning of sketch §5 | `validator.py` | 13 | | FMH-HO5 |
+| FMH-HO7 | composite create and tombstone delete | `operations.py`, four templates | 8 | TD-04 | FMH-HO6 |
+| FMH-HO8 | injective graph naming, within and across families | `operations.py`, `validator.py`, the named-graph templates | 6 | TD-38 | FMH-HO3 |
+| FMH-HO9 | documentation and close-out | documents | none | | FMH-HO7, FMH-HO8 |
 
 Every slice that adds a refusal, warning, shape or template adds its witness in the same commit, or
-`mise run check:persistence` fails (H1.2, H1.3). Every slice ends with `mise run check:persistence`
+`mise run check:persistence` fails (H1.2, FMH-1.3). Every slice ends with `mise run check:persistence`
 passing, and reports the passed and xfailed counts it saw in its Validation Pack. Validation Packs are
-`docs/developer/validation/FMH-HO<n>.md`, in the form of [FMH-H1-4a](../validation/FMH-H1-4a.md).
+`docs/developer/validation/FMH-HO<n>.md`, in the form of [FMH-1.4a](../validation/FMH-1.4a.md).
 
-**Non-weakening.** HO5 deletes the H1.4a refusal, its witness, and tests H1.4a-T3, T4, T5 and T9, and
+**Non-weakening.** FMH-HO5 deletes the FMH-1.4a refusal, its witness, and tests H1.4a-T3, T4, T5 and T9, and
 rewrites T1, T2, T6, T7, T8, T10 and T11 for the tree. Each removal is justified by ADR-A122 decision
-1, and the HO5 Validation Pack lists every removed or rewritten test with its replacement, for the
+1, and the FMH-HO5 Validation Pack lists every removed or rewritten test with its replacement, for the
 maintainer to countersign at the gate.
 
-### HO0: correct the note and the spike
+### FMH-HO0: correct the note and the spike
 
 **Files.** `docs/developer/notes/persistence-aggregate-ownership.md`,
 `spikes/persistence-aggregate-ownership/{placement.py,test_spike.py,README.md}`.
@@ -204,7 +205,7 @@ is. Then:
 
 | Where | Change to make |
 |---|---|
-| §1 item 1, and §3 row "Delete the outgoing triples of the root and of every owned node" | the "today" verdict describes the compiler before H1.4a. Since H1.4a the placement shape is refused as `CompositeBoundaryMultipleProperties` (review S1) |
+| §1 item 1, and §3 row "Delete the outgoing triples of the root and of every owned node" | the "today" verdict describes the compiler before H1.4a. Since FMH-1.4a the placement shape is refused as `CompositeBoundaryMultipleProperties` (review S1) |
 | §3 row "Never delete a referenced entity" | Today: "a reference is swept when it is the shape's only `sh:node` (review F1, TD-35)". Verdict: "not supported, and a live hazard" |
 | §4.5, the two sentences beginning "Today this is limited" | replace with "This already happens when a shape's only `sh:node` is a reference (review F1, TD-35)." |
 | §4.1, "walking it gives the expected 12 nodes" | "11 nodes, since a policy is a reference (AO-Q1)" |
@@ -217,8 +218,8 @@ is. Then:
 
 - `OWNED_TREE[EX.LayerContractBinding]` becomes `{EX.hasShare: EX.Quant}`.
 - Remove `EX.connectsPolicy` from `FLAT_OWNED`. Add it to `REFERENCES`.
-- `first_property_path`'s docstring becomes "What the compiler did before H1.4a: the first node
-  property, in path order, followed with `+`. Since H1.4a the compiler refuses this shape
+- `first_property_path`'s docstring becomes "What the compiler did before FMH-1.4a: the first node
+  property, in path order, followed with `+`. Since FMH-1.4a the compiler refuses this shape
   (CompositeBoundaryMultipleProperties). Review S1."
 - `placement_graph` gains `shared_document: bool = False`. When true, add
   `P2 a Placement ; definedProgramme T2`, `T2 a Tower ; hasLayer L9`, `L9 a Layer ; attachment DocOwned`.
@@ -228,7 +229,7 @@ is. Then:
 
 | Test | Change |
 |---|---|
-| `test_the_first_property_alone_reaches_only_the_tower` | comment: "the compiler before H1.4a (review S1)". Assertion unchanged |
+| `test_the_first_property_alone_reaches_only_the_tower` | comment: "the compiler before FMH-1.4a (review S1)". Assertion unchanged |
 | `test_the_per_class_tree_takes_...` | subset `{"T","L1","L2","L3","LCB1","S1","Mc1","Mc2","DocOwned"}`. Add `"Pol1"` to the disjoint set. Add `assert len(pl.unrolled_paths(g).members) == 11` |
 | `test_a_vocabulary_guard_catches_a_forgotten_vocabulary_link` | `forgot = pl.REFERENCES - {EX.marketType, EX.status, EX.connectsPolicy}` |
 | `test_a_node_with_two_owners_is_found_and_an_outside_reference_is_listed` | rename to `test_a_shared_policy_is_a_reference_so_it_has_no_second_owner`. With `shared_policy=True, inbound_quote=True`, assert `pl.owners(g, [EX.P, EX.P2]) == {}` and `pl.inbound_from_outside(g, pl.unrolled_paths(g)) == set()` |
@@ -236,18 +237,18 @@ is. Then:
 
 **`README.md`.** Add to "What it does not show": "A store that runs writers one at a time. On such a
 store, a removal that computes its closure inside the update sees a concurrent write, and D1's orphan
-does not occur (review S5)." And: "`first_property_path` simulates the compiler before H1.4a (review S1)."
+does not occur (review S5)." And: "`first_property_path` simulates the compiler before FMH-1.4a (review S1)."
 
 **One command.** From the repository root, `python -m pytest spikes/persistence-aggregate-ownership -q`.
 Pass: `18 passed`.
 
-### HO1: fix the composite replace (TD-39, TD-36)
+### FMH-HO1: fix the composite replace (TD-39, TD-36)
 
 **Files.** `tools/persistence/src/persistence/templates/cas-replace-composite-property.mustache` and
 `-dataset-guard.mustache`, a new `tools/persistence/tests/test_composite_sweep.py`,
 `spikes/persistence-aggregate-ownership/test_spike.py`.
 
-**Change.** Exactly sketch §7.1's HO1 text, in both templates, and their header comments.
+**Change.** Exactly sketch §7.1's FMH-HO1 text, in both templates, and their header comments.
 
 **Tests** (`test_composite_sweep.py`, on rdflib's `Dataset`, using the shipped composite example and
 the instantiation pattern of `test_composite_boundary.py`'s `_replace_and_count_left`).
@@ -282,13 +283,13 @@ slot, which the replace now writes to the default graph. The fix is to the test 
 expected results. The helper removes the stand-in from the rendered text (taken from
 `templatecheck._SLOT_STAND_INS`, so it cannot drift), so the replace runs with an empty payload, as
 the tests always meant. Filtering the stand-in's subject out of the result instead was rejected,
-since it makes the assertion skip something. HO5 rewrites both tests for the tree.
+since it makes the assertion skip something. FMH-HO5 rewrites both tests for the tree.
 
 **Register.** Remove TD-39 and TD-36, naming HO1.
 
 **One command.** `mise run check:persistence && python -m pytest spikes/persistence-aggregate-ownership -q`.
 
-### HO2: draft ADR-A122
+### FMH-HO2: draft ADR-A122
 
 **Files.** `docs/architecture/decisions/ADR-A122-aggregate-ownership.md`, the catalogue
 `docs/architecture/decisions/README.md`.
@@ -299,16 +300,16 @@ agent does not change its status. If a slice finds the ADR wrong, it records the
 that slice's Validation Pack and in the status record, and proposes a dated addendum, rather than
 editing the decision text. Before the branch merges, re-check that no other branch has taken A122.
 
-### HO3: the vocabulary, persistence 0.3.0
+### FMH-HO3: the vocabulary, persistence 0.3.0
 
 **The data graph (AO-Q14, decided 2026-10-10: option a).** Also add `dal:dataGraph` (sketch §3.1),
 the shape `dal:CompositePropertyBoundaryRequiresDataGraphShape` (sketch §3.3) with its witness
 `shape-CompositePropertyBoundaryRequiresDataGraphShape.ttl`, and `dal:dataGraph` on every composite
-example and fixture. HO5 and HO7 then wrap every composite pattern and payload in
+example and fixture. FMH-HO5 and FMH-HO7 then wrap every composite pattern and payload in
 `GRAPH {{{dataGraph}}}` (sketch §7).
 
 **Files.** `ontology/persistence/spec/persistence.ttl`, `shapes/constraints.ttl`, `README.md`,
-`docs/aggregate-boundaries.md` (the terms only, the full rewrite is HO9), `examples/*.ttl`, the
+`docs/aggregate-boundaries.md` (the terms only, the full rewrite is FMH-HO9), `examples/*.ttl`, the
 catalog, and every current-version pin found by `git grep -n "persistence/0.2.1"` (not release
 history). Load skill `lattice-ontology-authoring` first.
 
@@ -317,7 +318,7 @@ the shape and every example, and add the shapes of §3.3. Add `dal:ownership dal
 `ex:lineItem` property shape of `composite-property-boundary-shacl.ttl`, and to the node property
 of every composite witness fixture under `tools/persistence/tests/witnesses/`. Add the two shape
 witnesses `shape-BoundaryOwnershipShape.ttl` and `shape-ReferenceDataShape.ttl`, each with data the
-shape reports and data it accepts (H1.2c rule). Then `mise run build:ontology-catalog` and
+shape reports and data it accepts (FMH-1.2c rule). Then `mise run build:ontology-catalog` and
 `mise run build:ontology-releases`.
 
 | ID | Given / When / Then | Level | +/- |
@@ -336,7 +337,7 @@ Put T1 to T6 and T8 in a new `tools/persistence/tests/test_ownership_vocabulary.
 **One command.** `mise run check:persistence && mise run check:ontology-catalog && mise run check:ontology-versioning`.
 End the handoff with 🔴 RELEASE TAGS REQUIRED for `persistence/0.3.0`, as skill `lattice-lifecycle` says.
 
-### HO4: the ownership tree and the path compiler
+### FMH-HO4: the ownership tree and the path compiler
 
 **Files.** `tools/persistence/src/persistence/boundary.py` (add `Step`, `Edge`, `OwnershipTree`,
 `walk_ownership`. Leave `walk_boundary_shape` and `Closure` untouched), a new
@@ -364,7 +365,7 @@ dependency. The random test uses the standard library only.
 
 **One command.** `mise run check:persistence`.
 
-### HO5: switch the compiler to the tree
+### FMH-HO5: switch the compiler to the tree
 
 **Files.** `resolver.py`, `operations.py`, `validator.py`, `boundary.py`, the two composite
 templates, `tools/persistence/tests/test_composite_boundary.py`, `test_boundary.py`,
@@ -372,7 +373,7 @@ templates, `tools/persistence/tests/test_composite_boundary.py`, `test_boundary.
 `spikes/persistence-aggregate-ownership/payload_graph.py`, and
 `spikes/persistence-oxigraph/{scenarios.py,rdflib_comparison.py}`.
 
-**Change.** Sketch §4.3 and §7.1 (HO5 paragraph):
+**Change.** Sketch §4.3 and §7.1 (FMH-HO5 paragraph):
 
 - the resolver stores `ownershipTree` and stops writing `compositeProperties`,
   `compositeEdgeProperties` and `maxTraversalDepth`
@@ -385,7 +386,7 @@ templates, `tools/persistence/tests/test_composite_boundary.py`, `test_boundary.
   its witness
 - `boundary.py` loses `walk_boundary_shape`, `Closure`, `reachable_properties` and
   `BoundaryCycleError`, with `refusal-BoundaryCycleError.ttl`
-- until HO6, an unclassified edge is simply not followed. Neither does a reference edge
+- until FMH-HO6, an unclassified edge is simply not followed. Neither does a reference edge
 
 | ID | Given / When / Then | Level | +/- |
 |---|---|---|---|
@@ -400,13 +401,13 @@ templates, `tools/persistence/tests/test_composite_boundary.py`, `test_boundary.
 | HO5-T9 | a member class at depth 3 that declares its own named-graph boundary / compile / `BoundaryConflict` | L3 | − |
 | HO5-T10 | a composite profile without `dal:dataGraph` / compile / `MissingDataGraph`. And with §10.2's data also copied into the default graph / replace / the default-graph copy is untouched | L3, L5 | − |
 
-List every removed or rewritten H1.4a test in the Validation Pack with its replacement (see
+List every removed or rewritten FMH-1.4a test in the Validation Pack with its replacement (see
 Non-weakening above). Run both spikes and update them to the new binding name. The aggregate-ownership
 spike's 18 checks must still pass. Remove TD-03, TD-35, TD-37 and TD-40 from the register, naming HO5.
 
 **One command.** `mise run check:persistence && python -m pytest spikes/persistence-aggregate-ownership -q`.
 
-### HO6: the refusals and the warning
+### FMH-HO6: the refusals and the warning
 
 **Files.** `validator.py`, one witness per kind under `tools/persistence/tests/witnesses/`, a new
 `tools/persistence/tests/test_ownership_refusals.py`.
@@ -432,7 +433,7 @@ spike's 18 checks must still pass. Remove TD-03, TD-35, TD-37 and TD-40 from the
 **One command.** `mise run check:persistence`. The witness count rises by seven: six refusals and one
 warning.
 
-### HO7: composite create and tombstone delete (TD-04)
+### FMH-HO7: composite create and tombstone delete (TD-04)
 
 **Files.** `operations.py`, new templates `create-if-absent-composite.mustache`,
 `create-if-absent-composite-dataset-guard.mustache`, `tombstone-delete-composite.mustache`,
@@ -452,11 +453,11 @@ template, and a new `tools/persistence/tests/test_composite_lifecycle.py`.
 | HO7-T8 | all four new templates / `hygiene` / no S-3 or S-4 finding beyond the reviewed previous-revision allowance on the tombstone | L1 | + |
 
 Remove TD-04 from the register, and the composite `AbsentRow` limitation from
-`tools/persistence/README.md`. Update the H1.4b entries.
+`tools/persistence/README.md`. Update the FMH-1.4b entries.
 
 **One command.** `mise run check:persistence`.
 
-### HO8: injective graph naming (TD-38)
+### FMH-HO8: injective graph naming (TD-38)
 
 AO-Q13 was answered with option a (H-D15). Build sketch §9 with these tests. Every named-graph
 template changes, so re-run every named-graph test and witness, and update any expectation that names
@@ -473,7 +474,7 @@ a graph IRI.
 
 Remove TD-38 from the register. **One command.** `mise run check:persistence`.
 
-### HO9: documentation and close-out
+### FMH-HO9: documentation and close-out
 
 Rewrite `ontology/persistence/docs/aggregate-boundaries.md` and the aggregate-boundary sections of
 `ontology/persistence/README.md` from the sketch (§1, §2, §5, §7, §8, §11), in the domain-neutral
@@ -481,48 +482,48 @@ terms of §10. Recommend named graphs for new deployments. Update `tools/persist
 (subcommands, known limitations, the `ownedPath` slot), and add a pointer to ADR-A122 at the top of
 the legacy sketch `docs/developer/sketches/persistence-profile-substrate.md` §4. Do not rewrite that
 sketch. Close the HO rows in the status record, update `docs/developer/INDEX.md` and
-`docs/traceability/matrix.csv` where they name the removed terms, and re-run H1.4b's report. Its
+`docs/traceability/matrix.csv` where they name the removed terms, and re-run FMH-1.4b's report. Its
 composite and graph-naming entries should all be gone.
 
-## 4. H2, H3: the typed IR and the specification registry
+## 4. FMH-2, FMH-3: the typed IR and the specification registry
 
 Detailed in [their own sketch](../sketches/formal-methods-track-h-specification.md). Two slices,
-H2 first (the typed IR, since it is the smaller, more self-contained change and several of H1's
+FMH-2 first (the typed IR, since it is the smaller, more self-contained change and several of H1's
 own checks — S-3, S-4, the term/value divergence — become structural guarantees once it exists
-rather than external checks running against untyped template text) and H3 second (the
+rather than external checks running against untyped template text) and FMH-3 second (the
 specification registry, which generates the rules, the selection table and the README's own
 tables from one source, closing the review's finding #3 drift and enabling the exhaustive
-cross-axis validation H4 needs as its input).
+cross-axis validation FMH-4 needs as its input).
 
-**H2 (typed IR), briefed 2026-10-10.** The design, its questions and its slices are in the
+**FMH-2 (typed IR), briefed 2026-10-10.** The design, its questions and its slices are in the
 [typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md). We decided (H-D18 to H-D20):
 
-- H2 is split into ten slices, H2.0 to H2.9 ([sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)).
+- FMH-2 is split into ten slices, FMH-2.0 to FMH-2.9 ([sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)).
 - Option A. Each operation is a typed value built by a builder, its SPARQL is rendered from it, and
   the Mustache templates and `chevron` are retired in H2.9.
 - The typed payload is designed in full ([sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload))
-  and reviewed by the maintainer before H2.8 is briefed.
+  and reviewed by the maintainer before FMH-2.8 is briefed.
 - H-D3 is ours to decide. We take a new ADR, A123, and a dated addendum to ADR-A79, which stays
   Accepted for the points A123 does not supersede ([sketch §6](../sketches/formal-methods-track-h-typed-ir.md#6-the-adrs)).
 
-What H2 still delivers, as outlined before the brief: typed parameters, read and write sets (now
+What FMH-2 still delivers, as outlined before the brief: typed parameters, read and write sets (now
 derived from the operation, not declared), guards tagged term or value, template variables tagged
 `Bound` or `OptionalAllowed`, the `OwnershipTree` and its `PropertyPath` as IR values, the payload
 check of ADR-A122 decision 6, and the required-parameter guard that closes TD-34. Its validation is
 unchanged. Every hazard of the [specification sketch §3](../sketches/formal-methods-track-h-specification.md#3-the-typed-intermediate-representation)
-becomes a refusal by type, and H1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
+becomes a refusal by type, and FMH-1.3's checks pass over the new output by construction. H2-Q1 to H2-Q6
 are answered ([sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)),
-ADR-A123 is accepted (2026-10-10). H2.0 to H2.3 are merged and signed off (2026-10-12).
+ADR-A123 is accepted (2026-10-10). FMH-2.0 to FMH-2.3 are merged and signed off (2026-10-12).
 
-### 4.1 H2.3: the named-graph row writers (planned 2026-10-12)
+### 4.1 FMH-2.3: the named-graph row writers (planned 2026-10-12)
 
-**Unit:** slice H2.3 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under
-ADR-A123 and its addendum of 2026-10-12. Builds on H2.2's harness, `GRAPH_ROLES` and typed bindings
-([FMH-H2-2](../validation/FMH-H2-2.md)). All four questions were decided on 2026-10-12.
+**Unit:** slice FMH-2.3 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under
+ADR-A123 and its addendum of 2026-10-12. Builds on FMH-2.2's harness, `GRAPH_ROLES` and typed bindings
+([FMH-2.2](../validation/FMH-2.2.md)). All four questions were decided on 2026-10-12.
 
 #### The scene, checked against the templates
 
-The sketch assigns H2.3 eight templates. Read on 2026-10-12, they are:
+The sketch assigns FMH-2.3 eight templates. Read on 2026-10-12, they are:
 
 | Template | Writes | Parameters | Note |
 |---|---|---|---|
@@ -535,7 +536,7 @@ The sketch assigns H2.3 eight templates. Read on 2026-10-12, they are:
 Three facts constrain the port.
 
 1. **The sweep collides with the corrected scope rule.** After F4 an `OPTIONAL` starts with an empty scope, so
-   `UnboundGraphVariable` refuses `OPTIONAL { GRAPH ?g { ... } }` when `?g` is bound outside it, and H2.1 added that very
+   `UnboundGraphVariable` refuses `OPTIONAL { GRAPH ?g { ... } }` when `?g` is bound outside it, and FMH-2.1 added that very
    case as a refusal test. That was wrong in intent. F4 is right about a `BIND`, whose value is computed inside the
    group and cannot see `?g`. It is wrong about a pattern, whose solutions are joined with the enclosing group on `?g`
    afterwards, so the result holds only `?g`'s triples. The rule exists to stop a `GRAPH ?g` whose result ranges over
@@ -551,10 +552,10 @@ Three facts constrain the port.
 
 | # | Question | Options and consequences | Leaning |
 |---|---|---|---|
-| H2.3-Q1 | `cas-replace-value-guard` uses the default graph | (a) **leave it unported in H2.3**, record it as TD-43, and decide where a `dal:NoBoundary` target's data lives when H2.7 changes the vocabulary, for example the profile's `dal:dataGraph` as for a composite family. Port it then, as a change. (b) Decide now that a `dal:NoBoundary` profile names a data graph, and port it in H2.3 as a change, which needs a vocabulary change before H2.7's. (c) Give the IR a default-graph role. Against ADR-A123 decision 2 and S-1, and a store's default graph differs between stores | (a). Nothing in H2.3 depends on it, and the decision belongs with H2.7's vocabulary. **Decided 2026-10-12: (a)** |
-| H2.3-Q2 | a `GRAPH ?g` inside an inner group, with `?g` bound outside it | (a) **`UnboundGraphVariable` counts a graph variable as bound when any enclosing group binds it**, since the join restricts the result. The scope a `BIND` sees stays bottom-up. The H2.1 refusal case for `OPTIONAL` becomes an accepted case, with an engine test that the result holds only `?g`'s triples. The three templates port unchanged. A store that evaluates the inner group literally bottom-up scans every graph before the join, where rdflib passes the outer binding in. That is a cost, not a wrong result, and joins TD-42's measurement in H2.4. (b) Keep the refusal, and move the sweep out of the `OPTIONAL`. That is a change to three templates, not a port, and alters the operations' behaviour when `?g` is empty | (a). **Decided 2026-10-12: (a) by default, and (c) as an override the caller chooses** (steps 1, 2 and 8) |
-| H2.3-Q3 | `$assertGraph` and `$retractGraph` | (a) **declare them optional, as the template treats them.** The port changes nothing, and a patch-log caller who leaves them out gets a receipt without them, unguarded, as today. H2.7 then declares requiredness per receipt model, since its parameter declarations live in the compiled profile, and the builder takes the resolved receipt model from there. (b) Pass the resolved dimensions to the builders now and make the two required under `dal:PatchLog`. A change in H2.3, and a second input to every builder | (a). **Decided 2026-10-12: (a)** |
-| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for H2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-H2-3`. Recorded as H-D21 |
+| H2.3-Q1 | `cas-replace-value-guard` uses the default graph | (a) **leave it unported in FMH-2.3**, record it as TD-43, and decide where a `dal:NoBoundary` target's data lives when FMH-2.7 changes the vocabulary, for example the profile's `dal:dataGraph` as for a composite family. Port it then, as a change. (b) Decide now that a `dal:NoBoundary` profile names a data graph, and port it in FMH-2.3 as a change, which needs a vocabulary change before FMH-2.7's. (c) Give the IR a default-graph role. Against ADR-A123 decision 2 and S-1, and a store's default graph differs between stores | (a). Nothing in FMH-2.3 depends on it, and the decision belongs with FMH-2.7's vocabulary. **Decided 2026-10-12: (a)** |
+| H2.3-Q2 | a `GRAPH ?g` inside an inner group, with `?g` bound outside it | (a) **`UnboundGraphVariable` counts a graph variable as bound when any enclosing group binds it**, since the join restricts the result. The scope a `BIND` sees stays bottom-up. The FMH-2.1 refusal case for `OPTIONAL` becomes an accepted case, with an engine test that the result holds only `?g`'s triples. The three templates port unchanged. A store that evaluates the inner group literally bottom-up scans every graph before the join, where rdflib passes the outer binding in. That is a cost, not a wrong result, and joins TD-42's measurement in H2.4. (b) Keep the refusal, and move the sweep out of the `OPTIONAL`. That is a change to three templates, not a port, and alters the operations' behaviour when `?g` is empty | (a). **Decided 2026-10-12: (a) by default, and (c) as an override the caller chooses** (steps 1, 2 and 8) |
+| H2.3-Q3 | `$assertGraph` and `$retractGraph` | (a) **declare them optional, as the template treats them.** The port changes nothing, and a patch-log caller who leaves them out gets a receipt without them, unguarded, as today. FMH-2.7 then declares requiredness per receipt model, since its parameter declarations live in the compiled profile, and the builder takes the resolved receipt model from there. (b) Pass the resolved dimensions to the builders now and make the two required under `dal:PatchLog`. A change in FMH-2.3, and a second input to every builder | (a). **Decided 2026-10-12: (a)** |
+| H2.3-Q4 | slice size | (a) **split into H2.3a and H2.3b**, about 12 test cases each. H2.3a: the Q2 rule and its engine test, `create-if-absent-named-graph` and its variant, `unconditional-write`. H2.3b: `cas-replace-named-graph` and `tombstone-delete-named-graph`, each with its variant. (b) One slice of about 25 cases, against the sizing rule | (a). **Decided 2026-10-12: (b), one slice.** The maintainer approved exceeding the slice-sizing rule (more than about 15 test cases) for FMH-2.3, so it is built and reviewed as one slice with one Validation Pack, `FMH-2.3`. Recorded as H-D21 |
 
 #### Parameter kinds
 
@@ -564,8 +565,8 @@ Three facts constrain the port.
 | `$epoch` | `Long` | yes | `DATATYPE = xsd:long` |
 | `$expectedSeq`, `$nextSeq` | `Position` | yes | `DATATYPE = xsd:long` |
 | `$requestDigest` | `Digest` | yes | `DATATYPE = xsd:string` |
-| `$assertGraph`, `$retractGraph` | `Iri` | no, per H2.3-Q3 | none until H2.7 |
-| `payloadTriples` | `Payload` | slot | none, the caller's (H2.8) |
+| `$assertGraph`, `$retractGraph` | `Iri` | no, per H2.3-Q3 | none until FMH-2.7 |
+| `payloadTriples` | `Payload` | slot | none, the caller's (FMH-2.8) |
 
 #### Steps
 
@@ -574,13 +575,13 @@ In one slice (H2.3-Q4). The H2.3a and H2.3b headings mark the order of work only
 H2.3a:
 
 1. Change `UnboundGraphVariable` per H2.3-Q2. Keep the bottom-up scope for `BIND` and for template variables. Move the
-   H2.1 case "GRAPH ?g in an OPTIONAL after an outer BIND of ?g" from the refusal table to the accepted cases, and keep
+   FMH-2.1 case "GRAPH ?g in an OPTIONAL after an outer BIND of ?g" from the refusal table to the accepted cases, and keep
    a refusal for a `GRAPH ?g` that nothing binds anywhere. The removed refusal is listed for countersignature under the
    non-weakening rule.
 2. Add the engine test for it: on rdflib, `BIND(<g1> AS ?g) OPTIONAL { GRAPH ?g { ?s ?p ?o } }` over two graphs returns
    only `<g1>`'s triples, and the same holds in a nested group and a `UNION` branch.
 3. Port `create-if-absent-named-graph`, its variant and `unconditional-write`. Add the stems to `BUILDERS`, so T1 to T6
-   and T20 of H2.2 cover them.
+   and T20 of FMH-2.2 cover them.
 4. Behaviour on rdflib: a create writes the payload into the root's own graph and a version row at `seq 1`. A second
    create of the same root writes nothing. A missing `$root` writes nothing. Without the guard, and while the store holds no
    version row, the expected result is a claim and a partial receipt with no row and no payload, since `NOT EXISTS` with an
@@ -596,8 +597,8 @@ H2.3b:
    leaves this one's graph alone, which is the join of step 1 doing its work. A tombstone empties `?g`, marks the row
    deleted and writes a deletion receipt with cause and actor, and a later replace of it writes nothing. A retry is a
    no-op. The variant rebases the row's epoch. A missing `$root` over two stored aggregates writes nothing, where
-   without the guard it writes every aggregate at that `seq`, as H2.1's T25b shows for a replace-shaped operation.
-7. TD-34's row lists the ported operations, and is removed only when H2.5 ports the last.
+   without the guard it writes every aggregate at that `seq`, as FMH-2.1's T25b shows for a replace-shaped operation.
+7. TD-34's row lists the ported operations, and is removed only when FMH-2.5 ports the last.
 8. **The caller-named graph, an override (H2.3-Q2 (c)).** A change after the ports, not a port. The four builders that
    name `?g` (create, replace, tombstone, each with its variant, and `unconditional-write`) take a second option,
    `graph_names`, `query` by default and `caller` on request. Under `caller` the operation declares `$g`, of kind `Iri`,
@@ -610,7 +611,7 @@ H2.3b:
    guard (R1). `check` validates every `equals` expression as a guard expression, so `ClockInGuard`, `UnknownFunction`,
    `WrongGuard` and `UndeclaredParameter` apply to it. A builder never passes guard conjuncts of its own. With guards
    off as well, naming the graph correctly is the caller's obligation alone, and the README says so. `instantiate`
-   takes `--caller-graph-names` until H2.7 records the choice in the compiled profile beside the guards term. Tests:
+   takes `--caller-graph-names` until FMH-2.7 records the choice in the compiled profile beside the guards term. Tests:
    with the right `$g` the result equals the default form on rdflib, a wrong `$g` writes nothing under the guard and
    writes into the named graph without it, and the substituted text holds `GRAPH <iri>`. An `equals` holding `NOW()` is refused with
    `ClockInGuard`, and one naming an undeclared parameter with `UndeclaredParameter`. The builder test of the guard computes
@@ -618,7 +619,7 @@ H2.3b:
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
+One Validation Pack, `FMH-2.3`, with one command, `mise run check:persistence`, which records the maintainer's approval to
 exceed the slice-sizing rule (H-D21). Every port passes the harness with guards off, its bindings equal its template's tags, every graph
 has the role `GRAPH_ROLES` gives it, and every semantic rule a builder relies on has an engine test (plan §5.1): the
 join on an outer `?g` (step 2), an unbound `OPTIONAL` variable skipping only its own template triple (the head on a
@@ -633,9 +634,9 @@ guard at the top level, a sweep without the join on `?g`, and a role swapped bet
 - `$assertGraph` and `$retractGraph` required under the patch-log model, H2.7.
 - The payload's own checks, H2.8.
 - Oxigraph, and the cost of a literal bottom-up sweep, H2.4.
-- Text-substituting callers of the default form. H2.1's T28 covers the IR, and step 8 substitutes text for the
+- Text-substituting callers of the default form. FMH-2.1's T28 covers the IR, and step 8 substitutes text for the
   caller-named form.
-- Recording `graph_names` in the compiled profile, H2.7, with the guards term.
+- Recording `graph_names` in the compiled profile, FMH-2.7, with the guards term.
 
 #### Estimate
 
@@ -645,7 +646,7 @@ caller-named override.
 ### 4.2 H2.4: the composite family, and what each store does (planned 2026-10-12)
 
 **Unit:** slice H2.4 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123
-and its two addenda of 2026-10-12. Builds on H2.2's harness and H2.3's ports. It has two parts of different kinds, the
+and its two addenda of 2026-10-12. Builds on FMH-2.2's harness and FMH-2.3's ports. It has two parts of different kinds, the
 ports of the composite family and the measurements the sketch's §4.3 and H2.3-Q2 left to it. All four questions were decided on
 2026-10-12.
 
@@ -661,9 +662,9 @@ Five facts constrain the slice.
 
 1. **The data graph is a constant.** Every composite pattern sits in `GRAPH {{{dataGraph}}}`, the profile's mandatory
    `dal:dataGraph` (ADR-A122 decision 3). There is no `?g`, so H2.3-Q2's rule does not arise and `graph_names` changes
-   nothing for these operations, as T28 of H2.3 already checks for append.
+   nothing for these operations, as T28 of FMH-2.3 already checks for append.
 2. **The owned path arrives as text.** `compile` binds `ownedPath` as a `PropertyPath` from `tree.owned_path()`, and since
-   the H2.2 review `operation_context` wraps it by its declared type and `Bindings.path` reads it. The harness compares
+   the FMH-2.2 review `operation_context` wraps it by its declared type and `Bindings.path` reads it. The harness compares
    paths by value, and tells apart a different order of alternatives (checked 2026-10-12), so builder and template must
    give the same path, which they do, since both take the binding.
 3. **The `OwnershipTree` is not in the compiled profile.** `instantiate` sees the path and not the tree. ADR-A123 decision
@@ -678,14 +679,14 @@ Five facts constrain the slice.
 
 #### What the measurements are for
 
-Each is a property of a store that the later tranches modelling each platform will branch on, and that H5's capability
+Each is a property of a store that the later tranches modelling each platform will branch on, and that FMH-5's capability
 record will carry with a probe. H2.4 writes the probes and records what rdflib and Oxigraph do. It decides nothing about
 which form to generate.
 
 | Probe | What it asks | How | Feeds |
 |---|---|---|---|
 | P1 `snapshotUpdateSemantics` | does the store fill both templates from one solution sequence and remove before it adds | `DELETE { GRAPH <g> { ?d <p> <o> } } INSERT { GRAPH <g> { ?i <p> <o> } } WHERE { VALUES (?i ?d) { (<s> UNDEF) (UNDEF <s>) } }`, and the same with the rows swapped. The specification keeps `<s> <p> <o>` in both. A store that applies each solution in turn loses it in one order | TD-42's linear form R2 (sketch §4.3) |
-| P2 request failure atomicity | does a request whose second operation fails keep its first | `INSERT DATA { ... } ; CREATE GRAPH <existing>`, then read. This is the failure half of `atomicUpdateRequest`. Its isolation half needs concurrent writers, which is H5's | R1, the two-operation form |
+| P2 request failure atomicity | does a request whose second operation fails keep its first | `INSERT DATA { ... } ; CREATE GRAPH <existing>`, then read. This is the failure half of `atomicUpdateRequest`. Its isolation half needs concurrent writers, which is FMH-5's | R1, the two-operation form |
 | P3 correlated graph join | does a `GRAPH ?g` in an inner group read only the graph an enclosing `BIND` names | time it over 1 and over 100 graphs of equal size. A store that evaluates the inner group before the join grows with the store | the cost note of H2.3-Q2, and whether `compile` should choose the caller-named form for a store |
 | P4 unbound graph variable in a template | is a template triple in `GRAPH ?g` with `?g` unbound skipped | run one and look for a new graph | TD-44 |
 
@@ -697,20 +698,20 @@ H2.4 stops and asks.
 
 | # | Question | Options and consequences | Leaning |
 |---|---|---|---|
-| H2.4-Q1 | ADR-A123 decision 4 says the IR holds a reference to the `OwnershipTree`, and `instantiate` has only the path | (a) **the compiled path is the IR's reference to the tree.** The builder takes it with `Bindings.path`, the read set marks the sweep `closure` with the path's text, and H5 reads the path. The tree stays in `persistence.boundary`, where `compile` and H2.8's payload check use it. A dated addendum corrects the wording of decision 4. (b) Carry the tree into the compiled profile, so `instantiate` can rebuild it. That needs the boundary shape in the profile, a vocabulary change, for no reader that the path does not already serve | (a). **Why it drifted, and the impact, 2026-10-12.** The sentence came from the typed IR brief (§3.1), which took the ownership sketch's "`OwnershipTree` as typed IR values" without checking where the IR is built. ADR-A79 already had `instantiate` read only the compiled profile, H2-Q5 (a) then kept the IR out of the profile, and FMH-H2-2's decision 2 put the builders in `instantiate`, so the IR can hold only what the profile holds, the path. Under (a) nothing in code changes. The read sets, H2.8's `payload-check` query and an SDK use the path. H4's C10 check and H5's models have the tree on the `compile` side, and a relational realisation reads it from the configuration. What `instantiate` cannot do is check the path against the tree, which HO4's property test and H4's C10 cover. **Decided 2026-10-12: (a)**, with H2-Q7 (A): the IR is not stored until PDD-06's ADR decides a stored IR, and the rules SI-1 to SI-6 of the [typed IR sketch §9.4](../sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) keep that possible. Recorded as ADR-A123's third addendum |
+| H2.4-Q1 | ADR-A123 decision 4 says the IR holds a reference to the `OwnershipTree`, and `instantiate` has only the path | (a) **the compiled path is the IR's reference to the tree.** The builder takes it with `Bindings.path`, the read set marks the sweep `closure` with the path's text, and FMH-5 reads the path. The tree stays in `persistence.boundary`, where `compile` and FMH-2.8's payload check use it. A dated addendum corrects the wording of decision 4. (b) Carry the tree into the compiled profile, so `instantiate` can rebuild it. That needs the boundary shape in the profile, a vocabulary change, for no reader that the path does not already serve | (a). **Why it drifted, and the impact, 2026-10-12.** The sentence came from the typed IR brief (§3.1), which took the ownership sketch's "`OwnershipTree` as typed IR values" without checking where the IR is built. ADR-A79 already had `instantiate` read only the compiled profile, H2-Q5 (a) then kept the IR out of the profile, and FMH-2.2's decision 2 put the builders in `instantiate`, so the IR can hold only what the profile holds, the path. Under (a) nothing in code changes. The read sets, FMH-2.8's `payload-check` query and an SDK use the path. FMH-4's C10 check and FMH-5's models have the tree on the `compile` side, and a relational realisation reads it from the configuration. What `instantiate` cannot do is check the path against the tree, which FMH-HO4's property test and FMH-4's C10 cover. **Decided 2026-10-12: (a)**, with H2-Q7 (A): the IR is not stored until PDD-06's ADR decides a stored IR, and the rules SI-1 to SI-6 of the [typed IR sketch §9.4](../sketches/formal-methods-track-h-typed-ir.md#94-rules-that-keep-a-clean-stored-ir-possible) keep that possible. Recorded as ADR-A123's third addendum |
 | H2.4-Q2 | where Oxigraph runs | (a) an optional extra of `tools/persistence`, (b) a spike only, (c) a required test dependency | **Decided 2026-10-12: a test-support package at `tools/testing/oxigraph`**, since it is not a runtime backend or store SPI (ADR-A75) but an engine for tests and conformance. It holds the in-memory Oxigraph adapter (`update`, `select`, `quads`, and binding `$name` parameters as a caller would), depends on `pyoxigraph>=0.5.11,<0.6`, and is installed by its own `bootstrap:testing-oxigraph`. The persistence engine tests are parametrised over rdflib and Oxigraph, and the Oxigraph cases skip when the package is absent. A task `check:persistence-oxigraph` installs it and runs them. `check:persistence` and `check` are unchanged. A new kind of directory under `tools/`, so [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md), accepted 2026-10-12 |
 | H2.4-Q3 | where the benchmark lives | (a) a spike, (b) a `mise` task, (c) a slow test | **Decided 2026-10-12: a proper check in a new root, `benchmark/persistence-composite-cost`, run on demand.** Its task, `check:persistence-composite-cost`, is not a dependency of `check`. As a check it has a pass criterion: at every size and on both engines the replace leaves exactly the payload and the right row, and it fails on a wrong result. It writes the timings and the fitted growth per engine to a generated, git-ignored report, and it does not fail on slowness, since no budget exists before H5. The maintainer confirmed this pass criterion, and that it must not fail on time, on 2026-10-12. A new root, so [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md), accepted 2026-10-12 |
-| H2.4-Q4 | slice size | (a) **two slices.** H2.4a ports the six templates with their behaviour and engine tests, needing no new toolchain. H2.4b adds Oxigraph per Q2, the probes P1 to P4 and the benchmark per Q3. (b) One slice, about 30 cases, beyond the sizing rule as H-D21 allowed for H2.3 | (a). The two parts are different kinds of work, H2.4a can start before Q2 and Q3 are settled, and only H2.4b can trigger the stop. **Decided 2026-10-12: (a)** |
+| H2.4-Q4 | slice size | (a) **two slices.** FMH-2.4a ports the six templates with their behaviour and engine tests, needing no new toolchain. FMH-2.4b adds Oxigraph per Q2, the probes P1 to P4 and the benchmark per Q3. (b) One slice, about 30 cases, beyond the sizing rule as H-D21 allowed for FMH-2.3 | (a). The two parts are different kinds of work, FMH-2.4a can start before Q2 and Q3 are settled, and only FMH-2.4b can trigger the stop. **Decided 2026-10-12: (a)** |
 
 #### Parameter kinds
 
-As H2.3: `$root`, `$newRev`, `$txnId`, `$cause` and `$actor` are `Iri`, `$epoch` is `Long`, `$expectedSeq` and `$nextSeq`
+As FMH-2.3: `$root`, `$newRev`, `$txnId`, `$cause` and `$actor` are `Iri`, `$epoch` is `Long`, `$expectedSeq` and `$nextSeq`
 are `Position`, `$requestDigest` is `Digest`, and `payloadTriples` is the payload slot. The composite family has no
 `$assertGraph` or `$retractGraph`.
 
 #### Steps
 
-H2.4a, the ports:
+FMH-2.4a, the ports:
 
 1. Port `create-if-absent-composite`, `cas-replace-composite-property`, `tombstone-delete-composite` and their variants,
    with the path read by `Bindings.path` and the data graph by `b.graph("dataGraph")`. Add the stems to `BUILDERS`, so
@@ -733,26 +734,26 @@ H2.4a, the ports:
    itself, an inverse step walks against the edge, and R0 stays right on an engine that applies an update one solution at a
    time, shown by a replace whose payload keeps a triple the aggregate already has, which must survive on rdflib.
 
-H2.4b, the measurements:
+FMH-2.4b, the measurements:
 
 0. **ADR-A124 and ADR-A125, accepted 2026-10-12.** [ADR-A124](../../architecture/decisions/ADR-A124-benchmark-root.md) gives
    the root `benchmark/`, and [ADR-A125](../../architecture/decisions/ADR-A125-test-support-tooling.md) gives `tools/testing/`.
-   AGENTS.md, the root README, the Copilot copy and ADR-A77's addendum already name both. H2.4b creates the two directories,
+   AGENTS.md, the root README, the Copilot copy and ADR-A77's addendum already name both. FMH-2.4b creates the two directories,
    and removes the README's note that they are still to be created.
-7. Oxigraph per H2.4-Q2, at `tools/testing/oxigraph`. Correct the spike README's caveat about Python versions, and the behaviour tests of step 3 and of H2.2 and H2.3 that run an update also run on Oxigraph
+7. Oxigraph per H2.4-Q2, at `tools/testing/oxigraph`. Correct the spike README's caveat about Python versions, and the behaviour tests of step 3 and of FMH-2.2 and FMH-2.3 that run an update also run on Oxigraph
    where the extra is installed.
 8. The probes P1 to P4 as tests that assert what each engine does today, so a change in either engine's behaviour fails a
    test, with a table of the results in the Validation Pack.
-9. The benchmark per H2.4-Q3, at `benchmark/persistence-composite-cost`, both engines, with M = N from 10 to 10,000. TD-42's row gains the Oxigraph figures, and its home is unchanged (H5 selects
+9. The benchmark per H2.4-Q3, at `benchmark/persistence-composite-cost`, both engines, with M = N from 10 to 10,000. TD-42's row gains the Oxigraph figures, and its home is unchanged (FMH-5 selects
    R2 by `snapshotUpdateSemantics`). If R0 is wrong on Oxigraph, stop and ask.
 
 #### Planned validation
 
-One Validation Pack per slice, `FMH-H2-4a` and `FMH-H2-4b`, each with `mise run check:persistence` as its one command,
-and for H2.4b also `mise run check:persistence-oxigraph` and `mise run check:persistence-composite-cost`, the second
+One Validation Pack per slice, `FMH-2.4a` and `FMH-2.4b`, each with `mise run check:persistence` as its one command,
+and for FMH-2.4b also `mise run check:persistence-oxigraph` and `mise run check:persistence-composite-cost`, the second
 run by hand. The adversarial probes at the gate include a path
 with one alternative dropped (the harness fails), the sweep moved out of its `OPTIONAL` (a replace of an empty aggregate
-then writes nothing), the guard at the top level (step 4 fails), and, for H2.4b, a probe that hard-codes one engine's
+then writes nothing), the guard at the top level (step 4 fails), and, for FMH-2.4b, a probe that hard-codes one engine's
 answer.
 
 #### Deliberate non-coverage
@@ -761,21 +762,21 @@ answer.
 - Recording the path or the read set in the compiled profile, H2.7.
 - The isolation half of `atomicUpdateRequest`, and the identical-insert conflict of the ownership sketch §15, which need
   concurrent writers, H5.
-- R1 and R2 themselves. H2.4 measures, and H5 chooses.
+- R1 and R2 themselves. H2.4 measures, and FMH-5 chooses.
 - Removing `?logGraph2`, a change for later.
 
 #### Estimate
 
-About 350k tokens for H2.4a and 400k for H2.4b, with ADR-A124 and the two new directories, against 400k for the whole slice in the sketch, which did not include the
+About 350k tokens for FMH-2.4a and 400k for FMH-2.4b, with ADR-A124 and the two new directories, against 400k for the whole slice in the sketch, which did not include the
 probes P2 to P4.
 
-### 4.3 H2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13, built 2026-10-13)
+### 4.3 FMH-2.5: key claims, the audits, and the self-calibrating guard (planned 2026-10-13, built 2026-10-13)
 
-**Unit:** slice H2.5 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123 and its four
-addenda. The last ports, guard D (FMH-H2-4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then H2.6 (§4.5).
-**Revised** after a design review of H2.5 and H2.6,
+**Unit:** slice FMH-2.5 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), under ADR-A123 and its four
+addenda. The last ports, guard D (FMH-2.4b decision 1), and the IR's `SELECT` rules. It runs first of the two, then FMH-2.6 (§4.5).
+**Revised** after a design review of FMH-2.5 and FMH-2.6,
 [track-h-feedback.md](../notes/track-h-feedback.md), whose points are cited below as "review §n". Every question is decided
-(2026-10-13). One slice of about 40 cases, beyond the sizing rule as H-D21 allowed for H2.3 (H-D23).
+(2026-10-13). One slice of about 40 cases, beyond the sizing rule as H-D21 allowed for FMH-2.3 (H-D23).
 
 #### The scene, checked against the templates
 
@@ -794,17 +795,17 @@ addenda. The last ports, guard D (FMH-H2-4b decision 1), and the IR's `SELECT` r
 
 Ten facts constrain the slice, checked against the code and the templates on 2026-10-13.
 
-1. **The IR has a top-level `SELECT`, and nothing enforces its rules.** `Select` (projection, `GROUP BY`, `HAVING`) exists since H2.1 and
-   renders and parses (H2.1's audit forms in T10). But the random property test (T20) generates only updates, and the checker does not
+1. **The IR has a top-level `SELECT`, and nothing enforces its rules.** `Select` (projection, `GROUP BY`, `HAVING`) exists since FMH-2.1 and
+   renders and parses (FMH-2.1's audit forms in T10). But the random property test (T20) generates only updates, and the checker does not
    refuse an ungrouped projected variable or a non-group term in `HAVING` (review §1.2, B1).
-2. **The IR has no sub-select.** Two templates need one (FMH-H2-1 decision 4).
+2. **The IR has no sub-select.** Two templates need one (FMH-2.1 decision 4).
 3. **No new graph role is needed.** `GRAPH_ROLES` already maps `pinnedGraph`, `retentionGraph`, `keyQuarantineGraph` and `keysGraph`,
-   and H2.2's T21 checks every template's graphs against it. `compile` binds `registryGraph`, but no template reads it, since the caller
+   and FMH-2.2's T21 checks every template's graphs against it. `compile` binds `registryGraph`, but no template reads it, since the caller
    reads the bucket list from it. The review's B3 is answered except for `?log` (fact 4).
 4. **`?log` ranges over the pinned graph and the log buckets.** It stays `LOG`, since the pinned head is the SPARQL realisation of receipt
-   retention and not a logical resource of its own (NQ2, decided 2026-10-13, H2.6's paper check tests it as a hypothesis).
+   retention and not a logical resource of its own (NQ2, decided 2026-10-13, FMH-2.6's paper check tests it as a hypothesis).
 5. **Merge relations are written to the keys graph**, `GRAPH {{{keysGraph}}} { ?other <mergeRelation> ?canonical }`, so merge-rewrite
-   writes outside no guard it should have. `KEYS` then holds two logical resources, key claims and merge records, which H2.6's mapping
+   writes outside no guard it should have. `KEYS` then holds two logical resources, key claims and merge records, which FMH-2.6's mapping
    tells apart by predicate (NQ7, answered by the template).
 6. **Quarantine is idempotent by its template**: `FILTER NOT EXISTS { GRAPH {{{keyQuarantineGraph}}} { ?claim pat:quarantinedOwner ?other } }`.
    A second run writes nothing, so its timestamp cannot repeat (review §1.5).
@@ -823,7 +824,7 @@ Ten facts constrain the slice, checked against the code and the templates on 202
 
 | # | Decided |
 |---|---|
-| H2.5-Q1 | **One `Select` value**, used as a query operation and wrapped as a `SubSelect` pattern element, in a **closed fragment**: projection of variables and aggregates, `GROUP BY` over variables, and `HAVING`. Boundness of a projected item follows the table below, not "each group is non-empty". Four refusals are **type rules of ADR-A123**, because each is illegal SPARQL or fails silently: an aggregate outside a projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate (which drops every group with no error), and an inner variable used outside a sub-select without being projected (a false correlation). Three are **fragment limits of H2.5**, each lifted when a template needs it, with an engine test: `ORDER BY`, `LIMIT` and `OFFSET` (non-determinism, and an order that differs by store), `DISTINCT` inside a sub-select (changes counts), and nested sub-selects (cost to the checker) |
+| H2.5-Q1 | **One `Select` value**, used as a query operation and wrapped as a `SubSelect` pattern element, in a **closed fragment**: projection of variables and aggregates, `GROUP BY` over variables, and `HAVING`. Boundness of a projected item follows the table below, not "each group is non-empty". Four refusals are **type rules of ADR-A123**, because each is illegal SPARQL or fails silently: an aggregate outside a projection or `HAVING`, a projected variable neither grouped nor aggregated, a `HAVING` term neither a group key nor an aggregate (which drops every group with no error), and an inner variable used outside a sub-select without being projected (a false correlation). Three are **fragment limits of FMH-2.5**, each lifted when a template needs it, with an engine test: `ORDER BY`, `LIMIT` and `OFFSET` (non-determinism, and an order that differs by store), `DISTINCT` inside a sub-select (changes counts), and nested sub-selects (cost to the checker) |
 | H2.5-Q2 | **A new kind, `Literal`**, guarded by `isLiteral($p) && LANG($p) = ""`. It catches a missing value and an IRI and accepts any timestamp datatype, with no datatype test a store could disagree with. Chosen over a calibrated `xsd:dateTime` test, which would refuse `xsd:dateTimeStamp` and `xsd:date`. The asymmetry with quarantine, which uses `NOW()`, is kept by the port and recorded |
 | H2.5-Q3 | **One slice, in six ordered gates** (below), with a stop condition on P5 (H-D23) |
 | NQ6 | **The Python caller's check is strict**: an `xsd:long` parameter must be exactly `xsd:long`, on any store, in H2.8. The SPARQL guard is the store-calibrated backstop. Added to ADR-A123's fourth addendum |
@@ -851,7 +852,7 @@ Boundness of a projected item, for the checker (review §1.2):
    **Stop and ask if a constant and a parameter diverge on any engine**, since guard D would then refuse every write there. Gates 2 to 6
    continue on rdflib meanwhile.
 4. A regression test on Oxigraph: a guarded write with the guards on applies. Before guard D every such write was refused (TD-45), which
-   closes with this gate except for its pinning part. Run the behaviour tests of H2.2 to H2.4 with guards on and with guards off, on both
+   closes with this gate except for its pinning part. Run the behaviour tests of FMH-2.2 to H2.4 with guards on and with guards off, on both
    engines, keeping the off cases as an axis rather than deleting them, since `--no-parameter-guards` stays supported. Update TSD-07's
    consequences.
 
@@ -860,7 +861,7 @@ Boundness of a projected item, for the checker (review §1.2):
 6. Every walk enters a sub-select: the role checks (T20, T21, T32, so SI-4 holds inside), `access_sets`, the harness normaliser (rdflib
    renames aggregates internally, so a builder emits them in the template's order, or the normaliser is shown to be insensitive to it), and
    guard placement (the guard group stays first in the outer `WHERE`, never inside a sub-select).
-7. The H2.1 property test (T20) also generates queries and asserts each renders and parses as exactly one query. The harness's
+7. The FMH-2.1 property test (T20) also generates queries and asserts each renders and parses as exactly one query. The harness's
    non-vacuity count includes query stems.
 8. Engine tests, on both engines (plan §5.1): a sub-select sees no outer variable and only its projections leave it, a sub-select inside a
    `GRAPH` block reads that graph, and a parameter and a sub-select's projection seen by a `FILTER` inside `NOT EXISTS`, bound by text
@@ -877,7 +878,7 @@ Boundness of a projected item, for the checker (review §1.2):
     writes `pat:retiredBy` and `pat:retiredAt`, and a retire by a non-owner writes nothing. Quarantine records every owner of a duplicated
     claim once, and a second run writes nothing (fact 6). Merge-rewrite links every non-canonical owner to the canonical one, in the keys
     graph, once. A stored literal owner is handled as the data invariant says, guards on and off.
-11. Missing parameters, as for H2.3 and H2.4: write, dual and retire with each parameter left out write nothing with guards on, and with
+11. Missing parameters, as for FMH-2.3 and H2.4: write, dual and retire with each parameter left out write nothing with guards on, and with
     guards off the test records what each engine does. Retire without `$now` is the case to watch.
 
 **Gate 5, the five audit ports.**
@@ -887,7 +888,7 @@ Boundness of a projected item, for the checker (review §1.2):
     audits.
 13. Behaviour, on both engines: each audit finds the defect it names on a fixture that has it, and nothing on a clean fixture that holds
     the data it inspects, reusing H1.2's witnesses. An append followed by a replace on the same stream gives a clean gap scan. Results are
-    compared as sets, never by `GROUP_CONCAT`'s order. Column names stay the templates' (the harness enforces it), since H2.6 declares them
+    compared as sets, never by `GROUP_CONCAT`'s order. Column names stay the templates' (the harness enforces it), since FMH-2.6 declares them
     as the audits' result contract.
 
 **Gate 6, findings and debt.**
@@ -895,21 +896,21 @@ Boundness of a projected item, for the checker (review §1.2):
     IRIs, `COUNT(DISTINCT ?seq)` over `xsd:long` and `xsd:integer` terms, `?S - ?L + 1` compared with a count, and `GROUP_CONCAT`'s order on
     rdflib under several hash seeds. A refusal test that `Now()` never binds the name of a declared parameter.
 15. **TD-34 is closed for every operation built with its guard**, and its residual moves to TD-43: the value guard's unguarded parameters,
-    and the guards-off case, which H2.8's `INFO` diagnostic reports.
+    and the guards-off case, which FMH-2.8's `INFO` diagnostic reports.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-5`, recording H-D23, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Adversarial
+One Validation Pack, `FMH-2.5`, recording H-D23, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Adversarial
 probes at the gate: the guard reverted to a fixed `xsd:long` (the Oxigraph guards-on regression fails), an aggregate projected with no
 `GROUP BY` counted as bound (a refusal fires), a sub-select that leaks an inner variable (a refusal fires), `NOT EXISTS` correlation broken
 (the engine test fails), an audit without its `DISTINCT` (a behaviour test fails), and `MIN` replaced by `MAX` (the merge test fails).
 
 #### Deliberate non-coverage
 
-- `cas-replace-value-guard` (TD-43, H2.7's vocabulary).
+- `cas-replace-value-guard` (TD-43, FMH-2.7's vocabulary).
 - The caller-side checks, including the strict `xsd:long` check (NQ6) and `logGraphs`, in H2.8. An empty `logGraphs` makes the gap scan
-  check only the pinned graph and report clean, a caller obligation for H2.8 and an applicability label for H9.
-- An ill-typed literal such as `"99999999999999999999"^^xsd:long`, which keeps its datatype on rdflib and passes the guard. H2.8's check.
+  check only the pinned graph and report clean, a caller obligation for FMH-2.8 and an applicability label for H9.
+- An ill-typed literal such as `"99999999999999999999"^^xsd:long`, which keeps its datatype on rdflib and passes the guard. FMH-2.8's check.
 - Binding over the SPARQL 1.1 Protocol, which no engine here offers in process.
 - `COUNT(?owner)` in quarantine counts solutions, not distinct owners, which is right while one keys graph holds the claims. A review item
   for when key sharding is honoured (TD-06, TD-41).
@@ -922,19 +923,19 @@ About 600k tokens, against 400k in the sketch, for the `SELECT` rules, the sub-s
 
 #### Built
 
-Built on 2026-10-13 as planned, in six gates. What it found and the decisions it leaves are in the [Validation Pack](../validation/FMH-H2-5.md). Fact 10's
+Built on 2026-10-13 as planned, in six gates. What it found and the decisions it leaves are in the [Validation Pack](../validation/FMH-2.5.md). Fact 10's
 four unknowns are answered in TSD-16 to TSD-19, and a fifth difference between the stores, TSD-17, was found by running the gap scan.
 
-### 4.4 H2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13, built 2026-10-13)
+### 4.4 FMH-2.6: the expected compiled profile, examples first, and the paper check (planned 2026-10-13, built 2026-10-13)
 
-**Unit:** slice H2.6 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), §7.2 for the paper check. It
-runs after H2.5 has merged (§4.5), so every operation it describes has a builder. It writes, before any vocabulary exists, what H2.7's
+**Unit:** slice FMH-2.6 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), §7.2 for the paper check. It
+runs after FMH-2.5 has merged (§4.5), so every operation it describes has a builder. It writes, before any vocabulary exists, what FMH-2.7's
 compiler will emit, and stops for the maintainer's review and commit of those files (examples first, the `lattice-lifecycle` skill).
 **Revised** after [track-h-feedback.md](../notes/track-h-feedback.md). Every question is decided (2026-10-13).
 
 #### What the contract holds
 
-Per generated operation, the profile H2.7 emits carries what ADR-A123 decisions 4 and 6, H2-Q5 and H2-Q6 promise (review §2.1, B4, B5):
+Per generated operation, the profile FMH-2.7 emits carries what ADR-A123 decisions 4 and 6, H2-Q5 and H2-Q6 promise (review §2.1, B4, B5):
 
 | Part | Holds |
 |---|---|
@@ -971,16 +972,16 @@ OWL-light and the kinds closed (review §2.2):
 | # | Decided |
 |---|---|
 | H2.6-Q1 | **`ontology/persistence/test/expected-profiles/`**, the layer's own test directory, which the layer layout names and Behaviour uses. Before writing, confirm that no check over the layer flags undeclared `dal:` terms, that the catalogue and release tooling ignore `test/` (the versioning check covers `spec/`, `vocab/`, `shapes/` and `projection/` only, and exempts test fixtures), and that nothing globs `ontology/*/test/` as SHACL suites. Persistence's README gains the directory |
-| H2.6-Q2 | **The eight examples** (each `<example>.expected.ttl`): `baseline-single-class`, `epoch-dataset-level-guard`, `composite-project-ownership`, `append-stream-dataset-guard`, `uniqueness-merge-policy`, `uniqueness-quarantine-policy`, `claim-scheme-dual-rotation` and `value-based-cas`, **plus one variant**, `baseline-single-class.caller-named.expected.ttl`, with guards off and caller-named graphs. The patch-log parameters are shown required, as H2.7 designs, and a missing boundary shape is shown explicitly. Only the composite dataset-guard variants are uncovered, and the agreement test asserts they differ by the dataset read alone |
+| H2.6-Q2 | **The eight examples** (each `<example>.expected.ttl`): `baseline-single-class`, `epoch-dataset-level-guard`, `composite-project-ownership`, `append-stream-dataset-guard`, `uniqueness-merge-policy`, `uniqueness-quarantine-policy`, `claim-scheme-dual-rotation` and `value-based-cas`, **plus one variant**, `baseline-single-class.caller-named.expected.ttl`, with guards off and caller-named graphs. The patch-log parameters are shown required, as FMH-2.7 designs, and a missing boundary shape is shown explicitly. Only the composite dataset-guard variants are uncovered, and the agreement test asserts they differ by the dataset read alone |
 | H2.6-Q3 | **The value guard is hand-declared**, marked `dal:declarationSource dal:HandDeclared`, with its guard status recorded per operation. Its agreement with the template's `$` variables uses the H-D11 convention, removed with TD-43 |
 | H2.6-Q4 | **The model is proposed now and the names are settled at review.** The Validation Pack shows the model as a class diagram with the proposed names |
 | NQ1, NQ2 | **The pinned head is a realisation of receipt retention**, so `?log` stays `LOG` and the pinned graph is part of `Receipt`'s realisation. The paper check tests it |
 | NQ3 | **The profile declares the digest contract** |
 | NQ4 | **Declaration nodes get minted IRIs**, derived from the target, the `templateId` and the parameter name or access index, for example `<…/compiled/LoanApplication/cas-replace-named-graph#param-root>`. No blank node and no order-dependent id in the new parts |
 
-Two rules hold for every value in the contract (review §2.6), and an H2.7 shape enforces them later: **no blank nodes** in the new parts,
+Two rules hold for every value in the contract (review §2.6), and an FMH-2.7 shape enforces them later: **no blank nodes** in the new parts,
 and **no SPARQL text**, so kinds, modes and resources are individuals, a caller-named graph's rule refers to `dal:graphIriTemplate`, and the
-owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, enforced for the contract from H2.6 on).
+owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, enforced for the contract from FMH-2.6 on).
 
 #### Steps
 
@@ -988,17 +989,17 @@ owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, 
    contract, minted IRIs and the result contract. Draft the model as a class diagram first.
 1. **The mapping in production code** (review §2.8). A data table beside `GRAPH_ROLES` in `builders.py` maps each graph role, and where a
    role holds two resources the predicate or the subject's type, to a logical resource kind. `access_sets` gains each access's mode and
-   logical key. Check each role against the templates. `KEYS` is known to hold two resources (H2.5 fact 5), and `META` is checked for the
+   logical key. Check each role against the templates. `KEYS` is known to hold two resources (FMH-2.5 fact 5), and `META` is checked for the
    append counter. Any other role found holding two is a finding for the review.
 2. **Write the nine expected profiles**: today's compiled profile for the example, plus the contract above, without `dal:templatePath`. The
    derived parts come from the builders through the table of step 1. Only the value guard is written by hand.
 3. **Five tests in `tools/persistence/tests`**, under `mise run check:persistence`:
    - *parse*: every expected profile parses
    - *agreement*, with three outcomes (review §2.8): equal, an **intended difference** listed in a reviewed table with its reason and the
-     slice that closes it (for example "H2.7: `$assertGraph` and `$retractGraph` required under `dal:PatchLog`"), or a failure. H2.7 empties
-     the table. Every builder exists, since H2.5 has merged, so there is no "skipped"
+     slice that closes it (for example "FMH-2.7: `$assertGraph` and `$retractGraph` required under `dal:PatchLog`"), or a failure. FMH-2.7 empties
+     the table. Every builder exists, since FMH-2.5 has merged, so there is no "skipped"
    - *base profile*: an expected profile, without the new terms, is byte-identical to today's `compile` output without `dal:templatePath`,
-     which H1.5's stable labels make possible. A change to compile output regenerates the expected files in the same commit
+     which FMH-1.5's stable labels make possible. A change to compile output regenerates the expected files in the same commit
    - *names*: every operation's declared parameter names equal the `$` names of its golden `.rq`, and for the value guard, of its template
    - *minted IRIs*: two compiles give the same node IRIs
 4. **The paper check** of [typed IR sketch §7.2](../sketches/formal-methods-track-h-typed-ir.md#72-the-paper-check-of-the-logical-resources-h26),
@@ -1009,12 +1010,12 @@ owned path stays in the `ownedPath` binding (SI-5 of the typed IR sketch §9.4, 
    *realisation only*, or *gap*. Expected and recorded as hypotheses for the maintainer: the pinned head is *realisation only*, the
    transaction claim is *logical* and §9's silence on it is a gap in §9 (a relational realisation needs an idempotency-key table), and the
    retention mark and dataset epoch are *logical*.
-5. **Stop** for the maintainer's review of the model, the names and the paper check, and commit of the expected profiles. H2.7 is briefed
+5. **Stop** for the maintainer's review of the model, the names and the paper check, and commit of the expected profiles. FMH-2.7 is briefed
    against them.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-6`, with `mise run check:persistence` as its one command, the expected profiles and the class diagram as its
+One Validation Pack, `FMH-2.6`, with `mise run check:persistence` as its one command, the expected profiles and the class diagram as its
 artefacts, the paper-check table, the list of proposed names, and the table of intended differences. Adversarial probes at the gate: a
 parameter dropped from one expected file (agreement fails), an undeclared `$` added to a golden `.rq` (the names test fails), an example's
 configuration changed without regenerating its expected profile (the base-profile test fails), and a blank node introduced into a
@@ -1025,7 +1026,7 @@ declaration (the minted-IRI test fails).
 - The vocabulary itself, its shapes and the compiler's emission, H2.7.
 - The composite dataset-guard variants, beyond the agreement test's assertion.
 - The relational realisation, which is checked on paper only (ADR-A-FM4 decision 1).
-- The digest algorithm beyond its declaration, H2.8, and isolation semantics, H5.
+- The digest algorithm beyond its declaration, FMH-2.8, and isolation semantics, H5.
 
 #### Estimate
 
@@ -1033,37 +1034,37 @@ About 300k tokens, against 150k in the sketch, for the mapping in production cod
 
 #### Built
 
-Built on 2026-10-13 and approved by the maintainer the same day. Review outcome: H-D24 to H-D28 (below), and three questions open in [the write-up](../notes/track-h-h26-review-questions.md) (H2.6-RQ4 to RQ6) that H2.7 waits for. Stopped for review, as step 5 says. The [Validation Pack](../validation/FMH-H2-6.md) lists three differences from this plan: ten files and not nine (the
+Built on 2026-10-13 and approved by the maintainer the same day. Review outcome: H-D24 to H-D28 (below), and three questions open in [the write-up](../notes/track-h-h26-review-questions.md) (FMH-2.6-RQ4 to RQ6) that FMH-2.7 waits for. Stopped for review, as step 5 says. The [Validation Pack](../validation/FMH-2.6.md) lists three differences from this plan: ten files and not nine (the
 enumerations are declared in a tenth), the base-profile test compares by isomorphism and not by bytes (parsing relabels a blank node), and the contract is
-derived in `persistence.contract`, with the checker giving each access a mode, so that H2.7 reads the same code.
+derived in `persistence.contract`, with the checker giving each access a mode, so that FMH-2.7 reads the same code.
 
-### 4.5 Order: H2.5, then H2.6, then H2.7, one at a time on the cloud agent
+### 4.5 Order: FMH-2.5, then FMH-2.6, then FMH-2.7, one at a time on the cloud agent
 
-**Decided 2026-10-13 (H-D22).** The two slices run one after the other on the cloud agent, not in parallel. **H2.5 goes first.**
+**Decided 2026-10-13 (H-D22).** The two slices run one after the other on the cloud agent, not in parallel. **FMH-2.5 goes first.**
 
 | Reason | Effect |
 |---|---|
-| with H2.5 merged, every operation has a builder | H2.6 derives every operation's declarations and accesses from code, with no hand-written entries for H2.5's ten, no "skipped" outcome, and no slice editing the other's files |
-| H2.6 adds the role-to-resource mapping and the access modes and keys in `builders.py` | it does so after H2.5's builders exist, so it covers them in one pass, and no precursor commit is needed |
-| the audits' column names are fixed by H2.5's ports | H2.6 declares them as the result contract from what H2.5 shipped |
-| H2.6 stops for the maintainer's commit of its examples | H2.7 starts from reviewed examples |
+| with FMH-2.5 merged, every operation has a builder | FMH-2.6 derives every operation's declarations and accesses from code, with no hand-written entries for FMH-2.5's ten, no "skipped" outcome, and no slice editing the other's files |
+| FMH-2.6 adds the role-to-resource mapping and the access modes and keys in `builders.py` | it does so after FMH-2.5's builders exist, so it covers them in one pass, and no precursor commit is needed |
+| the audits' column names are fixed by FMH-2.5's ports | FMH-2.6 declares them as the result contract from what FMH-2.5 shipped |
+| FMH-2.6 stops for the maintainer's commit of its examples | FMH-2.7 starts from reviewed examples |
 
 Each slice starts from `main` after the previous one merges, reads this plan section, its status record's next action and
 [track-h-feedback.md](../notes/track-h-feedback.md), and ends with its Validation Pack and a stop for the maintainer's review.
 
-**Extended 2026-10-14.** After H2.6, the order continues **H2.6b (§4.6), H2.7 (§4.7), H2.8 (§4.8)**, one at a time on the cloud agent, each from
-`main` after the previous one merges. H2.6b comes before H2.7 because it changes two operations and adds slots, so the vocabulary is published
-once (in the next substrate release since ADR-A129, 2026-10-20, earlier 0.4.0), against the final slots, and the approved expected profiles are regenerated once. H2.9 (retiring Mustache) follows H2.8.
+**Extended 2026-10-14.** After FMH-2.6, the order continues **FMH-2.6b (§4.6), FMH-2.7 (§4.7), FMH-2.8 (§4.8)**, one at a time on the cloud agent, each from
+`main` after the previous one merges. FMH-2.6b comes before FMH-2.7 because it changes two operations and adds slots, so the vocabulary is published
+once (in the next substrate release since ADR-A129, 2026-10-20, earlier 0.4.0), against the final slots, and the approved expected profiles are regenerated once. FMH-2.9 (retiring Mustache) follows H2.8.
 
-### 4.6 H2.6b: the event and patch-content slots (planned 2026-10-14)
+### 4.6 FMH-2.6b: the event and patch-content slots (planned 2026-10-14)
 
-**Unit:** a slice added on 2026-10-14 by two decisions on H2.6's review questions: H-D30 (H2.6-RQ5 B, an event carries domain triples) and
-H-D31 (H2.6-RQ6 B, a replace writes its patch content in the same update), with the
-[write-up](../notes/track-h-h26-review-questions.md). It changes operations, so it is not a port. It runs after H2.6 and before H2.7
+**Unit:** a slice added on 2026-10-14 by two decisions on FMH-2.6's review questions: H-D30 (FMH-2.6-RQ5 B, an event carries domain triples) and
+H-D31 (FMH-2.6-RQ6 B, a replace writes its patch content in the same update), with the
+[write-up](../notes/track-h-h26-review-questions.md). It changes operations, so it is not a port. It runs after FMH-2.6 and before FMH-2.7
 (§4.5), so the vocabulary is designed once, against the final slots. Questions H2.6b-Q1 to Q5 are for the maintainer before a branch.
 
 **Split 2026-10-14 (H-D33).** Discussing the patch log showed that persistence keeps history without reference to Foundation's versioning,
-and that a composite replace deletes an old version that ADR-A67 says stays queryable. H2.6b ships the event half only: the event slot
+and that a composite replace deletes an old version that ADR-A67 says stays queryable. FMH-2.6b ships the event half only: the event slot
 (Q4 (c)), the digest parts for payload and event (Q5), and `ReceiptModelNotHonoured` for **both** `dal:PatchLog` and
 `dal:SnapshotPerRevision`, since neither is honoured (confirmed by the maintainer 2026-10-14). The patch-log half (steps 2, the patch parts of 4 and 5, the delta names of 6, and
 Q1 and Q2's decisions) is held for the sketch [persistence: history, versions and the receipt models](../sketches/persistence-history-and-versioning.md),
@@ -1076,7 +1077,7 @@ VH-Q1 to VH-Q7. H2.10 is held with it.
 2. **The patch log is declared, validated and mostly not honoured** (TD-46, new). `dal:PatchLog` is "asserts/retracts delta graphs alongside
    each receipt", the validator *requires* at least it for every composite family (`CompositeBoundaryReceiptOnly`), and every example with a
    payload uses it. Yet only `cas-replace-named-graph` names delta graphs (`$assertGraph`, `$retractGraph`), and it never fills them. The
-   composite replace, both tombstones and both creates record nothing. Under H1.4c's rule a declaration the compiler cannot honour is a
+   composite replace, both tombstones and both creates record nothing. Under FMH-1.4c's rule a declaration the compiler cannot honour is a
    warning or a refusal, never silent.
 3. **`dal:SnapshotPerRevision` is never honoured** by any template, and nothing warns (TD-46).
 4. **The guide names delta graphs from the receipt** (§20.2): `urn:g:delta/orders/1/e<epoch>/<seq>/add` and `…/del`, computed client-side from
@@ -1107,8 +1108,8 @@ flowchart TB
 |---|---|---|---|
 | H2.6b-Q1 | which writes record patch content under `dal:PatchLog` | (a) **every write that changes an aggregate**: a create's add graph holds its payload (the query reuses the payload slot), a replace's add and del graphs hold what the caller computed, a tombstone's del graph holds the swept old state, which the query copies from its own sweep at no caller cost. Both families. (b) the replaces only, both families. (c) the named-graph replace only, as named today | (a). The validator demands a patch log for composites so that what changed can be audited, and (b) leaves creates and deletes unaudited. A tombstone's retract costs one more template line and no caller input **Decided 2026-10-14: (a).** Held with the patch-log half (H-D33) |
 | H2.6b-Q2 | who names the delta graphs | (a) **the query, from the receipt**: `IRI(CONCAT(STR($newRev), "/add"))` and `"/del"`, the guide's form, so `$assertGraph` and `$retractGraph` go and a caller cannot name them wrongly. The contract states the rule structurally, as it does a graph name. (b) the caller, as today, with the two parameters required under a patch log | (a), for the same reason the query names `?g` **Decided 2026-10-14: (a).** Held with the patch-log half (H-D33) |
-| H2.6b-Q3 | `dal:SnapshotPerRevision` | (a) **a compile warning, `ReceiptModelNotHonoured`, as `ShardingNotHonoured` is**, and TD-46 keeps the snapshot. (b) a refusal until it is built. (c) build it here | (a), which H1.4c's rule allows and which keeps every example compiling **Decided 2026-10-14: (a)**, and building the snapshot model is put on the roadmap as H2.10 (§5). |
-| H2.6b-Q4 | events per request, and what bounds an event's triples. Revised 2026-10-14 after reading guide §10.1, which answers it, see "Consistency and cost" below | (a) **one event per request**, its domain triples in `{{{eventTriples}}}`. A business fact of k events takes k requests and k receipts, and a failure part-way leaves some of them written. (b) k events in one request, each with its own seq. One update cannot mint k distinct ordinals (guide §10.1), and caller-supplied seqs would break the dense chain (G2). (c) **the guide's batch**: one request, one seq step, one receipt, the events given as `VALUES (?event ?eventType ?opSeq)` rows with `opSeq` from the caller, so an event's position is (epoch, seq, opSeq), the shape of Neptune Streams' (commitNum, opNum). Their domain triples share one `{{{eventTriples}}}` slot, every subject an event of the batch or a node the slot reaches from one, which H2.8 checks | (c). It is what the guide already specifies, k = 1 costs the same as (a), and nothing depends on solution order (TSD-01) because each row carries its own `opSeq`. The earlier leaning (a) rested on the wrong claim that several events need ordered rows **Decided 2026-10-14: (c).** |
+| H2.6b-Q3 | `dal:SnapshotPerRevision` | (a) **a compile warning, `ReceiptModelNotHonoured`, as `ShardingNotHonoured` is**, and TD-46 keeps the snapshot. (b) a refusal until it is built. (c) build it here | (a), which FMH-1.4c's rule allows and which keeps every example compiling **Decided 2026-10-14: (a)**, and building the snapshot model is put on the roadmap as H2.10 (§5). |
+| H2.6b-Q4 | events per request, and what bounds an event's triples. Revised 2026-10-14 after reading guide §10.1, which answers it, see "Consistency and cost" below | (a) **one event per request**, its domain triples in `{{{eventTriples}}}`. A business fact of k events takes k requests and k receipts, and a failure part-way leaves some of them written. (b) k events in one request, each with its own seq. One update cannot mint k distinct ordinals (guide §10.1), and caller-supplied seqs would break the dense chain (G2). (c) **the guide's batch**: one request, one seq step, one receipt, the events given as `VALUES (?event ?eventType ?opSeq)` rows with `opSeq` from the caller, so an event's position is (epoch, seq, opSeq), the shape of Neptune Streams' (commitNum, opNum). Their domain triples share one `{{{eventTriples}}}` slot, every subject an event of the batch or a node the slot reaches from one, which FMH-2.8 checks | (c). It is what the guide already specifies, k = 1 costs the same as (a), and nothing depends on solution order (TSD-01) because each row carries its own `opSeq`. The earlier leaning (a) rested on the wrong claim that several events need ordered rows **Decided 2026-10-14: (c).** |
 | H2.6b-Q5 | the digest over several slots | (a) **one part per slot, in a fixed order** (payload, add, del, or event), each the sorted canonical N-Triples of its slot, so a triple's role is part of what is hashed. Guide §15.2 gains a dated note. (b) one sorted list over every slot, as the guide's words read, which hashes `{t}` in the payload and `{t}` in the add graph alike | (a) **Decided 2026-10-14: (a).** With the patch log held, the parts are payload and event |
 
 #### Consistency and cost (for the held half)
@@ -1120,8 +1121,8 @@ What a patch must satisfy, for the state before, S(n−1), and after, S(n):
 3. `add ∩ del = ∅`
 4. `S(n) = (S(n−1) − del) ∪ add`, written in the same operation as the seq guard
 
-The caller computes the delta, because it read the aggregate before the CAS (guide §20.2). H2.8's caller check verifies rules 1 to 4
-before submission, and a later replay audit (H9) can verify them from the log alone. The seq guard decides a race, and the losing
+The caller computes the delta, because it read the aggregate before the CAS (guide §20.2). FMH-2.8's caller check verifies rules 1 to 4
+before submission, and a later replay audit (FMH-9) can verify them from the log alone. The seq guard decides a race, and the losing
 update writes nothing, its delta graphs included. The rule "one operation" holds on every store we have probed, and on Virtuoso it
 depends on the logging mode (TSD-06, TSD-Q13).
 
@@ -1182,12 +1183,12 @@ The patch log adds little to TD-42's quadratic cost and does not change its orde
 4. **The contract.** `persistence.contract` gains the two slots and the digest parts of Q5, in order: the payload part for an operation
    with a payload, the event part for an append. Each part is the sorted canonical N-Triples of what the request asserts. The event part
    is each row's `?event a ?eventType`, `pat:opSeq` and `pat:occurredAt` triples, as the rows give them, with the event triples, and
-   leaves out `pat:revision`, which the store mints. This slice declares the parts. H2.8 computes them. Regenerate the expected profiles
+   leaves out `pat:revision`, which the store mints. This slice declares the parts. FMH-2.8 computes them. Regenerate the expected profiles
    that change and list each for the maintainer's re-approval, since they were approved as data.
 5. **Behaviour on both engines.** A three-row append increments the seq once and writes one receipt, one claim and three events, each
    with its `opSeq` and the same `pat:revision`, under several hash seeds on rdflib (TSD-01). A retry with the same transaction id
    writes nothing. Event triples land in the same bucket, and an empty `eventTriples` writes the events only. A one-row append writes
-   the triples today's form writes. An empty `eventRows` gives no solution and writes nothing, which H2.8's caller check refuses before
+   the triples today's form writes. An empty `eventRows` gives no solution and writes nothing, which FMH-2.8's caller check refuses before
    sending.
 6. **Documents.** ADR-A123 gains a dated addendum, drafted for the maintainer: the two slots and the digest parts. Guide §15.2 gains a
    dated note on the parts. The README's append section and the operation table follow the new slots. TD-46 records that the warning
@@ -1196,22 +1197,22 @@ The patch log adds little to TD-42's quadratic cost and does not change its orde
 
 #### Built (2026-10-14), the event half
 
-Approved by the maintainer and complete, 2026-10-14. Steps 1 to 6 are built as written, with the [Validation Pack](../validation/FMH-H2-6b.md). Differences from the plan: the second planned probe
+Approved by the maintainer and complete, 2026-10-14. Steps 1 to 6 are built as written, with the [Validation Pack](../validation/FMH-2.6b.md). Differences from the plan: the second planned probe
 (the `VALUES` block in a group of its own) does not fail any test, since a group holding only a `VALUES` block joins as the bare block does,
 so the pack uses a mutation that ties the receipt to the event instead. An empty `eventRows` raises on rdflib and gives no solution on Oxigraph
 (TSD-21). `test_ho6_t14` now subtracts the warnings its base example reports on its own.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-6b`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: the
+One Validation Pack, `FMH-2.6b`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: the
 `VALUES` block moved into its own group, so it no longer joins the counter (the three-row test fails), the digest parts declared in the
 other order (the contract test fails), and a patch-log profile that compiles without the warning (the warning's witness fails).
 
 #### Deliberate non-coverage
 
 - Checks on the slots' content: subjects bounded to the batch's events (H2.8-Q2), distinct `opSeq` values, a non-empty `eventRows`
-  (H2.8).
-- The parameter guards no longer see `opSeq` or `occurredAt`, which become row values. H2.8's caller check covers them.
+  (FMH-2.8).
+- The parameter guards no longer see `opSeq` or `occurredAt`, which become row values. FMH-2.8's caller check covers them.
 - The held half below, and snapshot receipts (H-D33, TD-46).
 
 #### Held (H-D33): the patch-log half
@@ -1227,10 +1228,10 @@ consistency rules and costs above apply to it.
 
 About 250k tokens for the event half. The held half was about 200k of the original 450k.
 
-### 4.7 H2.7: the vocabulary and the compiler's emission (planned 2026-10-14)
+### 4.7 FMH-2.7: the vocabulary and the compiler's emission (planned 2026-10-14)
 
-**Unit:** slice H2.7 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices). It turns the reviewed expected profiles
-of H2.6, as H2.6b leaves them, into vocabulary, shapes and `compile` output. Questions H2.7-Q1 to Q4 are for the maintainer before a branch.
+**Unit:** slice FMH-2.7 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices). It turns the reviewed expected profiles
+of FMH-2.6, as FMH-2.6b leaves them, into vocabulary, shapes and `compile` output. Questions H2.7-Q1 to Q4 are for the maintainer before a branch.
 
 #### The scene
 
@@ -1248,13 +1249,13 @@ of H2.6, as H2.6b leaves them, into vocabulary, shapes and `compile` output. Que
 |---|---|---|---|
 | H2.7-Q1 | where a `dal:NoBoundary` target's data lives (TD-43) | (a) **a mandatory `dal:dataGraph`, as for a composite family**, refused without one (`MissingDataGraph`), and the value guard ported with every pattern in that graph, a change and not a port. (b) the target's own named graph through `dal:graphIriTemplate`, which makes each value its own aggregate graph. (c) leave TD-43 open and keep the hand declaration | (a). It is the composite precedent (AO-Q14), one graph per family, and it ends the last default-graph pattern and the last hand declaration **Decided by the maintainer 2026-10-20: (a).** (b) would spread values over a great many named graphs for no benefit |
 | H2.7-Q2 | where the run choices live | (a) **`compile` takes `--no-parameter-guards` and `--caller-graph-names`, records them in the profile (`dal:guardStatus`, `dal:graphNaming`), and `instantiate` follows the profile**, with its flags removed, since no compatibility is owed (H-D14). (b) keep the `instantiate` flags as an override, which lets a rendering disagree with its profile | (a) **Decided by the maintainer 2026-10-20: (a).** Under (b) a profile could say its queries are guarded while the rendered queries are not |
-| H2.7-Q3 | whether the payload check is a generated operation | (a) **yes, one `payload-check` operation per family that has a payload, of kind `PayloadCheck`, with its result columns**, so a caller in another language gets the query from `instantiate` (ADR-A123 decision 6). H2.7 adds the kind, H2.8 emits it. (b) no, a caller derives it from the payload contract | (a) **Decided by the maintainer 2026-10-20: (a).** About 30 to 60 triples per family in the profile, no runtime cost unless called, and no query rewritten per language |
-| H2.7-Q5 | how H2.7's vocabulary change is released, now that the substrate and standalone ontologies are one release (ADR-A129, added 2026-10-20) | (a) **H2.7 moves the release number itself** with `mise run release:prepare -- <next>`, so the versioning check passes on its branch, and the maintainer tags `ontologies-v<next>` after the merge. (b) H2.7 waits for a release that other units' changes also take, which leaves the versioning check failing on its branch until then | (a). The versioning check fails on a changed member whose number did not move (ADR-A129 decision 7) **Decided 2026-10-20, neither:** this branch ignores versioning until all its changes are complete, then bumps a minor when it merges into `main` (TD-64) |
-| H2.7-Q4 | how strictly the profile is compared once it is emitted | (a) **byte equality of `compile` output with the expected files**, replacing H2.6's base-profile and agreement tests, so the files become the golden output (H1.5's stable labels allow it). (b) isomorphism | (a) **Decided by the maintainer 2026-10-20: (b), isomorphism.** Byte equality ties the files to one serialiser, and an editor such as Protégé lays a file out its own way on save |
+| H2.7-Q3 | whether the payload check is a generated operation | (a) **yes, one `payload-check` operation per family that has a payload, of kind `PayloadCheck`, with its result columns**, so a caller in another language gets the query from `instantiate` (ADR-A123 decision 6). FMH-2.7 adds the kind, FMH-2.8 emits it. (b) no, a caller derives it from the payload contract | (a) **Decided by the maintainer 2026-10-20: (a).** About 30 to 60 triples per family in the profile, no runtime cost unless called, and no query rewritten per language |
+| H2.7-Q5 | how FMH-2.7's vocabulary change is released, now that the substrate and standalone ontologies are one release (ADR-A129, added 2026-10-20) | (a) **FMH-2.7 moves the release number itself** with `mise run release:prepare -- <next>`, so the versioning check passes on its branch, and the maintainer tags `ontologies-v<next>` after the merge. (b) FMH-2.7 waits for a release that other units' changes also take, which leaves the versioning check failing on its branch until then | (a). The versioning check fails on a changed member whose number did not move (ADR-A129 decision 7) **Decided 2026-10-20, neither:** this branch ignores versioning until all its changes are complete, then bumps a minor when it merges into `main` (TD-64) |
+| H2.7-Q4 | how strictly the profile is compared once it is emitted | (a) **byte equality of `compile` output with the expected files**, replacing FMH-2.6's base-profile and agreement tests, so the files become the golden output (FMH-1.5's stable labels allow it). (b) isomorphism | (a) **Decided by the maintainer 2026-10-20: (b), isomorphism.** Byte equality ties the files to one serialiser, and an editor such as Protégé lays a file out its own way on save |
 
 #### Revised 2026-10-20
 
-The vocabulary H2.7 publishes once (H-D34) now includes what H2.6c to H2.6f add: `dal:writeDiscipline` and its individuals,
+The vocabulary FMH-2.7 publishes once (H-D34) now includes what FMH-2.6c to H2.6f add: `dal:writeDiscipline` and its individuals,
 `dal:NoReceipt`, `dal:referenceMode` with `dal:ByIdentity` and `dal:Pinned`, and `dal:membershipEncoding` with `dal:FullMembership`,
 `dal:DeltaMembership` and `dal:checkpointEvery`, each with shapes and witnesses, and `pat:currentVersion`, `pat:previousVersion`,
 `pat:addsMember` and `pat:dropsMember` in the patterns vocabulary the templates use. Step 5 compares the emitted profile with the expected
@@ -1274,13 +1275,13 @@ moves on this branch. About 450k tokens.
    the operation id without the suffix (H-D25), and `instantiate` finds the builder by it.
 4. **TD-43** per Q1: the value guard's data graph, its builder and its guard, the hand declaration removed, and `HAND_DECLARED` emptied.
 5. **The tests.** Byte equality with the expected files (Q4). The intended-differences table is empty and the test that keeps it non-stale is
-   removed (FMH-H2-6 T5), which is listed for countersignature. Every witness.
+   removed (FMH-2.6 T5), which is listed for countersignature. Every witness.
 6. **Documents.** Both READMEs, ADR-A79's addendum (`dal:templatePath` gone, as ADR-A123 decision 10 said), the catalogue's release table
    (`mise run build:ontology-releases`), and 🔴 the release tag `ontologies-v<next>` owed (ADR-A129, Q5). Revised 2026-10-20.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-7`, with `mise run check:persistence`, `mise run check:persistence-oxigraph`, `mise run check:ontology-versioning`
+One Validation Pack, `FMH-2.7`, with `mise run check:persistence`, `mise run check:persistence-oxigraph`, `mise run check:ontology-versioning`
 and the ontology checks of the `lattice-ontology-authoring` skill. Probes at the gate: an operation with a blank-node declaration (a shape fails),
 an enumeration value outside its kind (a shape fails), a profile emitted without its run choices (byte equality fails), and the value guard's
 pattern moved back to the default graph (`DefaultGraphPattern`).
@@ -1293,17 +1294,17 @@ pattern moved back to the default graph (`DefaultGraphPattern`).
 
 About 600k tokens, with the ontology work and TD-43.
 
-### 4.8 H2.8: the typed payload and the caller-side checks (planned 2026-10-14)
+### 4.8 FMH-2.8: the typed payload and the caller-side checks (planned 2026-10-14)
 
-**Unit:** slice H2.8 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), building the decisions of the sketch's §4
-(PL-B, H2-Q1 to Q3), H2-Q4 (c)'s caller check, ADR-A123's first and fourth addenda, and §7.3's witnesses, over every slot H2.6b leaves. Questions
+**Unit:** slice FMH-2.8 of the [typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices), building the decisions of the sketch's §4
+(PL-B, H2-Q1 to Q3), H2-Q4 (c)'s caller check, ADR-A123's first and fourth addenda, and §7.3's witnesses, over every slot FMH-2.6b leaves. Questions
 H2.8-Q1 to Q3 are for the maintainer before a branch.
 
 #### The scene
 
-- Each slot's contract is emitted by H2.7: the payload, the event rows and event triples, and `logGraphs`. The add and del graphs are held
-  with H2.6b's patch-log half (H-D33), and their checks with them.
-- The digest contract and its parts are declared (H2.6, H2.6b-Q5) and nothing computes them.
+- Each slot's contract is emitted by FMH-2.7: the payload, the event rows and event triples, and `logGraphs`. The add and del graphs are held
+  with FMH-2.6b's patch-log half (H-D33), and their checks with them.
+- The digest contract and its parts are declared (FMH-2.6, H2.6b-Q5) and nothing computes them.
 - Nothing checks a payload's subjects against the boundary shape, and a payload is trusted text, outside ADR-A79's injection boundary.
 - The diagnostics have `WARNING` and `ERROR` only. H2-Q2 and the first addendum each need an `INFO` diagnostic, and the witness harness
   records only `WARNING` diagnostics (§7.3).
@@ -1312,15 +1313,15 @@ H2.8-Q1 to Q3 are for the maintainer before a branch.
 
 | # | Question | Options and consequences | Leaning |
 |---|---|---|---|
-| H2.8-Q1 | where the caller-side code lives | (a) **`persistence.payload` and `persistence.caller` in `tools/persistence`, as a reference implementation** the tests and the README use, not a published library. (b) a new package under `packages/`, the SDK sketch's option S-A, which needs its own ADR (ADR-A84's precedent) | (a). The SDK is held for the end of Track H **Decided by the maintainer 2026-10-20: (b).** Usable library code under `packages/`, with its own ADR, drafted before H2.8 is briefed |
+| H2.8-Q1 | where the caller-side code lives | (a) **`persistence.payload` and `persistence.caller` in `tools/persistence`, as a reference implementation** the tests and the README use, not a published library. (b) a new package under `packages/`, the SDK sketch's option S-A, which needs its own ADR (ADR-A84's precedent) | (a). The SDK is held for the end of Track H **Decided by the maintainer 2026-10-20: (b).** Usable library code under `packages/`, with its own ADR, drafted before FMH-2.8 is briefed |
 | H2.8-Q2 | what bounds an event's triples | (a) **every subject is an event of the batch or a node the slot reaches from one by any predicate**, the connected part, as H2.6b-Q4 (c) says. (b) an event shape per event type, which adopters would have to declare | (a), with (b) left for when a deployment asks for it **Decided by the maintainer 2026-10-20: (c), added that day:** every subject is an event of the batch or a node minted under one event's IRI, so an event may link to an aggregate but never describe it. (b) as an optional tightening where a deployment declares shapes |
-| H2.8-Q3 | an empty `logGraphs` | (a) **the caller check refuses it**, since an audit over the pinned graph alone reports clean (FMH-H2-5, non-coverage). (b) allow it with a warning | (a) **Decided by the maintainer 2026-10-20: (c), added that day:** the audit reports "nothing examined" as a third outcome beside clean and failed |
+| H2.8-Q3 | an empty `logGraphs` | (a) **the caller check refuses it**, since an audit over the pinned graph alone reports clean (FMH-2.5, non-coverage). (b) allow it with a warning | (a) **Decided by the maintainer 2026-10-20: (c), added that day:** the audit reports "nothing examined" as a third outcome beside clean and failed |
 
 #### Revised 2026-10-20
 
 - **Where (Q1 (b)).** The caller code is a library, `packages/persistence/python`, under ADR-A132 (Proposed). `tools/persistence` depends
   on it for the shared types (terms, payload, rows, contract reading) and never the reverse. The digest's vectors live in
-  `contracts/persistence/`. H2.8 is briefed once ADR-A132 is accepted.
+  `contracts/persistence/`. FMH-2.8 is briefed once ADR-A132 is accepted.
 - **Events (Q2 (c)).** The payload check of an append follows ADR-A123's addendum on the subjects of an event append (proposed): every
   subject is an event of the batch or a node minted under one event's IRI. A deployment's shapes per event type tighten it.
 - **Audits (Q3 (c)).** An audit's result has three values, clean, failed and nothing examined, the last when its log graphs are empty,
@@ -1334,7 +1335,7 @@ diagnostics), decided when it is briefed.
 
 1. **The `Payload` type** (sketch §4.2, PL-B): ground triples, each term through `persistence.terms`, rendered as sorted canonical N-Triples, no
    blank node, and the slot's text built from it. One type serves every slot. A `Rows` type does the same for `eventRows`, each value through `persistence.terms`. The rows slot
-   sits in an update's `WHERE`, so text that is not built this way can change the guards, not only the data written (H2.6b review).
+   sits in an update's `WHERE`, so text that is not built this way can change the guards, not only the data written (FMH-2.6b review).
 2. **The digest**, from the digest contract: its parts in order, each the sorted canonical N-Triples of its slot (H2.6b-Q5), hashed as guide §15.2
    says, with test vectors in `contracts/` that an independent tool verifies (ADR-A84 decision 5's precedent).
 3. **The payload checks.** For the payload slot, every subject is the root or reached from it by the owned
@@ -1353,7 +1354,7 @@ diagnostics), decided when it is briefed.
 
 #### Planned validation
 
-One Validation Pack, `FMH-H2-8`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: a payload with a
+One Validation Pack, `FMH-2.8`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes at the gate: a payload with a
 subject outside the aggregate (the check refuses), a literal holding `} } ; DROP ALL` (it stays a literal), a digest over a merged list (the vector
 test fails), an `xsd:integer` epoch on Oxigraph (the strict caller check refuses where the store's guard would pass), and an empty `logGraphs`.
 
@@ -1365,7 +1366,7 @@ test fails), an `xsd:integer` epoch on Oxigraph (the strict caller check refuses
 
 About 500k tokens.
 
-**H3 (specification registry), outline:**
+**FMH-3 (specification registry), outline:**
 - One machine-readable registry (syntax not yet chosen, specification sketch §2) generating:
   `shapes/constraints.ttl`'s cross-axis rules, the compiler's own validation predicate and
   selection table, the README's own rule tables, a new obligation-set field per generated
@@ -1374,16 +1375,16 @@ About 500k tokens.
   each other for agreement (closing finding #3's drift, review §7.3's V2/V3), and against the
   pre-existing hand-written versions for a one-time migration diff, reviewed by a maintainer before
   the hand-written versions are retired.
-- **From aggregate ownership:** the boundary rules of the ownership sketch §5 and HO8's two
+- **From aggregate ownership:** the boundary rules of the ownership sketch §5 and FMH-HO8's two
   graph-naming rules join the rule inventory as structural rules, recorded as their own kind, not as
   cross-axis predicates. The selection table gains composite create and composite tombstone delete,
   so the L5 totality check covers them ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
 - Also an **ADR-A79 addendum** when detailed, per ADR-A-FM4 decision 4.
 
-### 4.9 H2.6c: the write disciplines (planned 2026-10-20)
+### 4.9 FMH-2.6c: the write disciplines (planned 2026-10-20)
 
 **Unit:** a slice added by the history and versioning sketch's decisions of 2026-10-20 (VH-Q1 to VH-Q6, VH-D1, VH-D2, FS-Q1 to FS-Q7),
-taken at our leanings for the maintainer's review. It runs before H2.6d and H2.7, so H2.7 publishes the vocabulary with the disciplines in
+taken at our leanings for the maintainer's review. It runs before FMH-2.6d and FMH-2.7, so FMH-2.7 publishes the vocabulary with the disciplines in
 it. Versioning is ignored on this branch (TD-64).
 
 #### The scene
@@ -1399,7 +1400,7 @@ it. Versioning is ignored on this branch (TD-64).
 |---|---|---|
 | H2.6c-Q1 | the declaration | `dal:writeDiscipline` on the family's profile, one of `dal:InPlace` (the default, today's replace), `dal:AppendVersions` and `dal:AppendRecords` (FS-Q1 (b): in place with or without a patch log is one discipline, its receipt model says which) |
 | H2.6c-Q2 | which families may append versions | composite families, whose `dal:dataGraph` holds every version, and families with no boundary. A named-graph family appends versions as one graph per version, named from the version, which ADR-A51's content revision IRI already describes. The aggregate's own graph is never cleared |
-| H2.6c-Q3 | `AppendRecords` | the existing append form (`append-event`, H2.6b's batch), selected by the discipline. No new template |
+| H2.6c-Q3 | `AppendRecords` | the existing append form (`append-event`, FMH-2.6b's batch), selected by the discipline. No new template |
 | H2.6c-Q4 | the warning | `VersionedClassWrittenInPlace`, when a target class is a subclass of `fnd:Versioned` by IRI in the profile's loaded graphs and its discipline is `dal:InPlace`. No import of Foundation |
 | H2.6c-Q5 | `CompositeBoundaryReceiptOnly` | relaxed for `AppendVersions` and `AppendRecords`, where the history is in the data (VH-Q5) |
 
@@ -1424,7 +1425,7 @@ it. Versioning is ignored on this branch (TD-64).
 
 #### Planned validation
 
-`FMH-H2-6c`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes: an `append-version` that deletes the
+`FMH-2.6c`, with `mise run check:persistence` and `mise run check:persistence-oxigraph`. Probes: an `append-version` that deletes the
 prior version (the second-version test fails), one that skips `fnd:supersededBy` (the chain test fails), a versioned class compiled in
 place without the warning (its witness fails).
 
@@ -1432,9 +1433,9 @@ place without the warning (its witness fails).
 
 About 300k tokens.
 
-### 4.10 H2.6d: the patch log for in-place families, the link between versions, no receipt (planned 2026-10-20, revised the same day)
+### 4.10 FMH-2.6d: the patch log for in-place families, the link between versions, no receipt (planned 2026-10-20, revised the same day)
 
-The held half of H2.6b (§4.6, "Held (H-D33)"), narrowed by VH-Q5 to `dal:InPlace` families that declare `dal:PatchLog`: their replace,
+The held half of FMH-2.6b (§4.6, "Held (H-D33)"), narrowed by VH-Q5 to `dal:InPlace` families that declare `dal:PatchLog`: their replace,
 create and tombstone write delta graphs in the same update, named from the receipt (H2.6b-Q2), with H2.6b-Q1's coverage, and the guide's
 as-of read is restated to read backward from the current state (TD-48). `ReceiptModelNotHonoured` then warns only for
 `dal:SnapshotPerRevision` on in-place families. Two additions, decided 2026-10-20:
@@ -1445,7 +1446,7 @@ as-of read is restated to read backward from the current state (TD-48). `Receipt
   the append disciplines, whose versions and records take their position and transaction time from the receipt. The transaction claim
   stays wherever a compare-and-set or an append can be retried.
 
-Validation Pack `FMH-H2-6d`. About 280k tokens. Runs after H2.6c.
+Validation Pack `FMH-2.6d`. About 280k tokens. Runs after H2.6c.
 
 ### 4.11 H2.6e: how references between versions are declared (planned 2026-10-20)
 
@@ -1455,13 +1456,13 @@ unless an edge declares otherwise.
 | # | Question | Decision, at our leaning |
 |---|---|---|
 | H2.6e-Q1 | where the declaration sits | `dal:referenceMode` on a property shape of the boundary shape, beside `dal:ownership`, one of `dal:ByIdentity` (the default) and `dal:Pinned`. Ownership says what a write sweeps, the reference mode what a reference names |
-| H2.6e-Q2 | what persistence does with it | records it in the compiled profile, refuses `dal:Pinned` on an edge whose target class is not versioned, and the caller check (H2.8) refuses a payload whose object on a pinned edge is not a version, or on an identity edge is a version of a versioned class |
+| H2.6e-Q2 | what persistence does with it | records it in the compiled profile, refuses `dal:Pinned` on an edge whose target class is not versioned, and the caller check (FMH-2.8) refuses a payload whose object on a pinned edge is not a version, or on an identity edge is a version of a versioned class |
 | H2.6e-Q3 | the warning for evidence | `EvidenceEdgeByIdentity`, when the edge's subject class is a subclass of `fnd:Evidence` or `fnd:DerivedArtefact`, or of a class the profile names as a record, and its target is versioned, and the edge is by identity. A warning, so a deliberate choice compiles |
 | H2.6e-Q4 | reads | no generated read that resolves an identity through a root version's membership yet. A query that does so is written by the consumer, and a generated one waits for the first consumer that needs it |
 
 Pros: one declaration, where ownership already lives, so an adopter states both facts about an edge in one place. The checks are at
 compile time and in the caller, with no store cost. Cons: a second classification on every edge an adopter writes, though the default
-needs none. Deferring reads means early consumers write the resolving query themselves. `FMH-H2-6e`. About 120k tokens.
+needs none. Deferring reads means early consumers write the resolving query themselves. `FMH-2.6e`. About 120k tokens.
 
 ### 4.12 H2.6f: how a root version lists its members, with fixtures and a benchmark (planned 2026-10-20)
 
@@ -1481,7 +1482,7 @@ and not the default.
 
 Fixtures (EX-Q2 (b)): a TriG file per chosen strategy, the stored triples of E5 and E7 under each encoding, checked by a test against
 their counts. Benchmark (EX-Q2 (c), ADR-A124): `benchmark/persistence-membership/`, full against delta against in-place with a patch log,
-writes and reads at 1, 10 and 100 versions of a 500-member set, failing on a wrong count, never on time. `FMH-H2-6f`. About 300k tokens.
+writes and reads at 1, 10 and 100 versions of a 500-member set, failing on a wrong count, never on time. `FMH-2.6f`. About 300k tokens.
 
 ### 4.13 W-65: Wording shares values across assembled wordings (planned 2026-10-20, TD-65)
 
@@ -1515,9 +1516,9 @@ Pros: a mid-term change to one location writes one version, not three, and no ve
 location at a date resolves the identity through the set version, a join it did not need before, and a breaking change to AIR's exposure
 module at 0.x. `FMH-AIR-66`. About 80k tokens.
 
-### 4.18 H2.8c: the follow-ups of the H2.6 and H2.8 reviews (planned 2026-10-20)
+### 4.18 FMH-2.8c: the follow-ups of the FMH-2.6 and FMH-2.8 reviews (planned 2026-10-20)
 
-Decided by the maintainer on 2026-10-20 in the review of FMH-H2-6d to FMH-H2-8b. Runs after H2.8b and before H2.9, since H2.9 deletes the
+Decided by the maintainer on 2026-10-20 in the review of FMH-2.6d to FMH-2.8b. Runs after H2.8b and before FMH-2.9, since FMH-2.9 deletes the
 templates these steps would otherwise change twice.
 
 1. **Each edge stated once (H2.6e (2), the middle ground).** The payload contract names its boundary shape (H2.8b, D-31) and points at
@@ -1536,17 +1537,17 @@ templates these steps would otherwise change twice.
    place each, that under `dal:DeltaMembership` the digest's add and del parts hold the added and dropped members, and under a patch log
    the added and removed triples, with an example of each. The contract's part declarations carry the same note.
 
-`FMH-H2-8c`. About 150k tokens.
+`FMH-2.8c`. About 150k tokens.
 
-### 4.15 H2.9: Mustache retired (planned 2026-10-20)
+### 4.15 FMH-2.9: Mustache retired (planned 2026-10-20)
 
 The typed IR sketch's §7 slice: the templates, `render.py`, `chevron` and the equivalence harness go, and every generated operation is
-rendered from its builder. It runs after H2.8, so every operation has its final builder.
+rendered from its builder. It runs after FMH-2.8, so every operation has its final builder.
 
 | # | Question | Decision, at our leaning |
 |---|---|---|
 | H2.9-Q1 | how a request-time slot is marked once Mustache is gone | keep the `{{{name}}}` marker as a plain-text convention the library (ADR-A132) and any caller fill by substitution. It needs no dependency and every rendered query keeps its shape. The alternative, a SPARQL-native form, cannot carry a set of triples |
-| H2.9-Q2 | what replaces the harness's assurance | the recorded builder outputs (`builder-goldens.json`), the expected profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 over the builders' output. The goldens' order dependence that H2.6c found is fixed here by keying them on the operation, not on the first fixture that produces it |
+| H2.9-Q2 | what replaces the harness's assurance | the recorded builder outputs (`builder-goldens.json`), the expected profiles, the behaviour tests on both engines, and the static checks S-3 and S-4 over the builders' output. The goldens' order dependence that FMH-2.6c found is fixed here by keying them on the operation, not on the first fixture that produces it |
 | H2.9-Q3 | the injection corpus | runs over the builders and over the library's slot filling, since a slot is where untyped text enters |
 
 Added 2026-10-20 by the maintainer's decisions:
@@ -1554,15 +1555,15 @@ Added 2026-10-20 by the maintainer's decisions:
 - **D-12 (a).** The receipt-only composite create, replace and tombstone, reached only through the snapshot model, are deleted with the
   templates, and `dal:SnapshotPerRevision` on an in-place composite family is refused until snapshots are built (TD-46), with a witness.
   The tests that reached them through `receipt_only.py` are removed with them, listed for countersignature.
-- **The recorded builder outputs keyed by operation** (H2.6c's finding), so a new fixture never moves another builder's golden.
-- **`GeneratedOperation.template_id`** loses its suffix with the templates (H2.7, D-20), and `BUILDER_ONLY` (H2.8b) empties.
+- **The recorded builder outputs keyed by operation** (FMH-2.6c's finding), so a new fixture never moves another builder's golden.
+- **`GeneratedOperation.template_id`** loses its suffix with the templates (FMH-2.7, D-20), and `BUILDER_ONLY` (H2.8b) empties.
 
 Steps: remove the templates and their check, `render.py` and the `chevron` dependency, and the harness tests (listed for countersignature,
 since they are removed, ADR-grade justification: their subject no longer exists). S-3 reads the parameter declarations instead of the
-`$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-H2-9`. About 250k
+`$name` convention (H-D11). The README's "Using the generated SPARQL directly" and ADR-A79's addendum follow. `FMH-2.9`. About 250k
 tokens.
 
-**Built 2026-10-21** ([FMH-H2-9](../validation/FMH-H2-9.md)), awaiting review.
+**Built 2026-10-21** ([FMH-2.9](../validation/FMH-2.9.md)), awaiting review.
 
 ### 4.17 H2.6g: every NOT EXISTS reads the graph it means (planned 2026-10-20, TSD-34)
 
@@ -1578,18 +1579,18 @@ a `GRAPH` block, for example the deleted-row guard `FILTER NOT EXISTS { $root pa
    recorded in the test.
 4. A rule in the IR checker, so a new builder cannot reintroduce the shape: a `NotExists` inside a `GraphBlock` names its graph.
 
-`FMH-H2-6g`. About 120k tokens. Runs after H2.7, before H2.8.
+`FMH-2.6g`. About 120k tokens. Runs after FMH-2.7, before H2.8.
 
 ### 4.19 H2.11: the Persistence README as a literate specification (planned 2026-10-20)
 
-Asked for by the maintainer on 2026-10-20, to run after the rest of Track H's H2 work (H2.8c and H2.9). Sketch:
+Asked for by the maintainer on 2026-10-20, to run after the rest of Track H's FMH-2 work (FMH-2.8c and FMH-2.9). Sketch:
 [persistence: the README as a literate specification](../sketches/persistence-readme-literate.md). RL-Q1 to RL-Q7 decided by the
 maintainer on 2026-10-20, as the sketch's §6 records. It closes
 TD-01, the one module README neither literate nor in ADR-A126's layout. Versioning is ignored on this branch (TD-64).
 
 Split into two slices (RL-Q1 (a)), so the migration check judges one and a reviewer the other.
 
-#### H2.11a: conformance, graph for graph
+#### FMH-2.11a: conformance, graph for graph
 
 1. **Prerequisite (RL-Q3), met 2026-10-20.** The maintainer publishes the accepted ADRs the README cites (A78, A79, A80, A114, A122, A123, A132,
    A121 is already), and the text stops citing the proposed ones (A67, A82, A84, A128) and every working document, so the sources check passes on a migrated
@@ -1616,12 +1617,12 @@ Split into two slices (RL-Q1 (a)), so the migration check judges one and a revie
    The sources check, `check:persistence`, `check:persistence-oxigraph` and `check:ontology-catalog` pass, and the expected profiles are
    unchanged.
 
-Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-H2-11a`. About 400k tokens.
+Probe: change one restriction row in the migrated README, and the migration check fails naming the triple. `FMH-2.11a`. About 400k tokens.
 
-**Built 2026-10-21** ([FMH-H2-11a](../validation/FMH-H2-11a.md)), awaiting review. TD-01 is closed. The probe changed a domain, since the
+**Built 2026-10-21** ([FMH-2.11a](../validation/FMH-2.11a.md)), awaiting review. TD-01 is closed. The probe changed a domain, since the
 spec has no restriction row, and the migration check failed naming the triple.
 
-#### H2.11b: the narrative, the pictures, the gotchas
+#### FMH-2.11b: the narrative, the pictures, the gotchas
 
 1. **The running case (RL-Q2 (a))** through Detailed Design, in the sketch's eight steps: declare, compile, generate, write, race and
    retry, history, read back, keep it small. Each step names its example file, its generated operation and the test that holds it.
@@ -1634,39 +1635,87 @@ spec has no restriction row, and the migration check failed naming the triple.
    mermaid in the light and dark themes and checked before handoff.
 5. **Examples** keeps its usual contents: each shipped example with what it shows and the SPARQL it compiles to, cross-referenced from the
    narrative.
-6. **The check.** The migration check still passes with no reconciliation added, since H2.11b changes no generated graph. The sources
+6. **The check.** The migration check still passes with no reconciliation added, since FMH-2.11b changes no generated graph. The sources
    check passes.
 
 Probe: a diagram with a syntax error (the render check fails), a narrative paragraph citing a working document (the sources check fails).
-`FMH-H2-11b`. About 300k tokens.
+`FMH-2.11b`. About 300k tokens.
 
-**Built 2026-10-21** ([FMH-H2-11b](../validation/FMH-H2-11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
+**Built 2026-10-21** ([FMH-2.11b](../validation/FMH-2.11b.md)), awaiting review. The new subsections are 5.13 (the running case) and 5.14 (gotchas), and the
 cross references are 5.15. The migration check passes with the same 137 reconciliations, both probes failed as expected, and D-64 is closed.
+
+### 4.20 H2.12: the rows replace, selected by capability (planned 2026-11-01)
+
+#### The scene
+
+The generated replace sweeps the aggregate in its `WHERE`, one solution per stored triple (M), and carries the payload (N) and the patch log's delta (D) in its `INSERT` template, which every engine fills once per solution, so a replace costs M × (N + D + k) template fills: 17 s at M = N = 3,000 on the studio's store, TDB2 under Fuseki ([TSD-65](../../architecture/triple-store-discovery.md#tsd-65-a-deleteinsert-fills-every-template-quad-once-per-solution-on-every-engine-measured-whether-or-not-the-quad-is-then-skipped-and-only-jena-applies-a-quad-with-no-variable-once-per-operation), TD-42). The [linear replace sketch](../sketches/persistence-linear-named-graph-replace.md) measured the forms and the maintainer answered its questions on 2026-11-01. This slice carries those answers out. ADR-A123 decision 7 left the selection to the capability record, and gains an addendum.
+
+#### Decisions, from the sketch
+
+| Decided | Answer |
+|---|---|
+| the form (the sketch's LR-Q1) | R2, the payload and the delta carried as `VALUES` rows in `UNION` branches of one operation, selected where the store declares snapshot update semantics. R1′ is not generated (LR-Q5, for H5) |
+| the timing (the sketch's LR-Q2) | ahead of H5. The field is a boolean of the capability spec, which H5's record extension later subsumes |
+| an undeclared store (the sketch's LR-Q3) | an undeclared store stays on the template form, and an operator may opt a family into the rows form on its profile, taking responsibility |
+| a write that changes nothing (the sketch's LR-Q4) | a caller does not send a write whose delta is empty (STD-309, the compiler README's seventh obligation). Nothing in the operation changes |
+
+#### Design, settled here
+
+- **The capability field** is `dal:providesSnapshotUpdateSemantics`, an `xsd:boolean` of `dal:CapabilitySpec` beside `dal:providesSingleWriter`, absent meaning unknown. True today for Jena in memory, TDB2, Fuseki over TDB2 and Oxigraph from 0.5.12 (TSD-53, TSD-66, TSD-01). `persistence.capability.CapabilitySpec` carries it as `provides_snapshot_update_semantics`.
+- **The opt-in** is `dal:replaceForm` on `dal:ConcurrencyProfile`, a value of the closed `dal:ReplaceForm`: `dal:RowsReplace` selects the rows form whatever the spec says, `dal:TemplateReplace` keeps the template form whatever the spec says, and absent means by capability. It is its own dimension, `replaceForm`, with no baseline default, since absence is the meaning. A closed set and not a boolean, so that the forced template form can be stated and compared. `compile` refuses `dal:RowsReplace` against a spec that declares the field false (`ReplaceFormContradictsCapability`), since a declared false is a fact and the opt-in is for an unknown, and warns `ReplaceFormNotApplicable` when the form is declared on a family that has no sweeping replace. The resolved dimension in the compiled profile records whose choice the form was.
+- **The builders** are `cas-replace-named-graph-rows` and `cas-replace-composite-property-rows`, each with the receipt variants its family has and a dataset-guard variant, ten in all, at version 1. The sweep becomes the first branch of a `UNION`, the payload a `VALUES (?newS ?newP ?newO)` branch, under a patch log the asserted and retracted triples two more, and an empty group the last, so a replace of an empty aggregate by an empty payload still moves the row. The `INSERT` holds one triple of row variables per block in place of each slot. Create and tombstone do not change, since neither fills a payload per sweep solution (a tombstone is M × k).
+- **The IR** gains `PayloadRows(vars, param)`, a `VALUES` of three variables filled from a `Payload` parameter. The checker takes its variables as definitely bound within the branch, holds the parameter to kind `Payload`, and records the `INSERT` triple made of its variables as the payload access, so the contract's access set reads as the template form's. No new parameter kind, so the caller check and the digest are unchanged.
+- **The contract** records how each payload slot is written: `dal:payloadEncoding` gains `dal:TripleRows` beside `dal:GroundNTriples`, one row `(s p o)` per triple, and the encoding applies to every `Payload` slot of the operation. The digest is over the same sorted N-Triples lines in both forms, so a request's digest does not depend on the form.
+- **The callers.** `Payload.rows()` in both libraries renders the row text, and a `slot_text` helper picks the text by the contract's encoding. The studio's writer fills template slots by splicing quads and is the studio's to move, its profile declares no spec, so it stays on the template form until it does (TD-136).
+- **The stores that stay on the template form:** rdflib and RDF4J apply each solution in turn (TSD-01, TSD-67), and RDF4J has no correct composite operation today for a reason of its own (TSD-Q36).
+
+#### Steps
+
+1. The IR element, its checker rules and its rendering, with refusals in `test_ir.py`.
+2. The ten builders, their stems, versions and goldens, rendered and checked.
+3. The capability field, the dimension and the vocabulary, in the Persistence README's section 6 and shapes, extracted to the spec, with an example `replace-form-rows.ttl` holding one family selected by a spec and one by the opt-in, and its expected profile.
+4. The selection in `select_operations`, the two diagnostics, the contract's encoding, and `templatecheck` filling rows stand-ins where the contract says rows.
+5. Behaviour tests on every engine where the form is safe: the rows replace leaves what the template replace leaves, for both families, both guards and each receipt model, the lost race and the retry write nothing, and the four empty cases of the sketch's §5.3. On rdflib the rows tests are skipped by name, with the reason.
+6. Both caller libraries render rows and read the encoding, with vectors that the digest is equal across the forms.
+7. The benchmark renders R2 from the builder instead of deriving it from R0's text.
+8. Documents: the compiler README, the Persistence README's §5.6.2, §5.7 and §5.8, the ADR-A123 addendum, TD-42 and TD-136, the sketch's §6, the release note.
+
+#### Planned validation
+
+`FMH-2.12`. One command, `mise run check:persistence`, then `mise run check:persistence-conformance` on the three engines and the two library suites. Each expected profile that changes is listed for re-approval, and none of the existing twelve should, since no shipped example declares the field.
+
+#### Deliberate non-coverage
+
+R1′ (LR-Q5, H5). The studio's writer (TD-136). RDF4J (TSD-Q36). A probe of the field in `check:persistence-conformance` beyond P1, which already is its probe.
+
+#### Estimate
+
+About 400k tokens.
 
 ### 4.16 Order, from 2026-10-20
 
-H2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
-Then H2.7, H2.6g (TSD-34), H2.8a, H2.8b, H2.8c, H2.9, then H2.11a and H2.11b, the Persistence README (§4.19). Before the merge into `main`: TD-63, and one minor version bump (TD-64).
+FMH-2.6d, then H2.6e, then H2.6f, one at a time since they touch the same code. W-65 and AIR-66 touch other modules and may run beside them.
+Then FMH-2.7, H2.6g (TSD-34), H2.8a, H2.8b, FMH-2.8c, FMH-2.9, then FMH-2.11a and FMH-2.11b, the Persistence README (§4.19). Before the merge into `main`: TD-63, and one minor version bump (TD-64).
 
-## 5. H4 onward, outline only
+## 5. FMH-4 onward, outline only
 
 | Slice | Delivers | Rung | Depends on |
 |---|---|---|---|
-| H4 | exhaustive cross-axis validation (BDD/SMT) over the registry's own rule data: V1-V10 (review §7.3), most valuably V2 (no shape/compiler disagreement, checked universally) and V10 (every guarantee-forfeiting combination is warned, naming the law). **From aggregate ownership** (ownership sketch §15): C10 path-language equality by automata over the shape graph, graph-IRI-template injectivity across families (Z3 strings, review F11), C14's request bound with the largest aggregate, and the source review's `ClosuresDisjoint` Alloy model restated over classified edges | T3 | H3 |
-| H5 | **the capability-record extension** (full `StoreCapabilities`, three-valued, `unknown` pessimistic, bound to a TCK report digest — review's PV-D1), **the TLA+/Quint toolchain spike**, and **protocol models A-D** (guarded CAS, append form, first-write/create race, key claim) — the main sketch's matrix idea, first four cells. **From aggregate ownership** (ownership sketch §15): model A parametrised by boundary strategy (the composite delete set is read at execution), model C covering composite create, and a capability field for whether inserting an identical statement is a write-write conflict | T4 (first use anywhere in this epic) | H2 (read/write sets from the IR), nothing else |
-| H6 | Isabelle theories: `Resolution.thy` (determinism, locality, winner dominance, the capability-monotonicity-fails negative lemma), `Positions.thy` (order agreement of zero-padded positions, injectivity of revision IRIs), `Encoding.thy` (injectivity of the request-digest encoding, with the canonicalisation gap named as an explicit hypothesis, not assumed away), `Outcomes.thy` (totality, disjointness and soundness of the confirmation procedure, relative to an abstract history predicate H5's models discharge). **From aggregate ownership** (ownership sketch §15): `Encoding.thy` gains graph-IRI injectivity, `prefix · enc(r) · suffix`, under review F11's two rules | T5 | H1 (resolver as currently specified), H5 (for `Outcomes.thy`'s history predicate) |
-| H7 | protocol models E-J (outcome classification, epoch bump/restore, retention/pruning, global read, fencing, infrastructure-graph writers — expected to be the single richest source of new findings, nothing there is guarded today) | T4 | H5, H6 |
-| (deferred) | protocol model O, aggregate units: the removal rule, the parent-level create rule and the invariant row of the [ownership sketch §11](../sketches/persistence-aggregate-ownership.md#11-deferred-units-and-level-operations), seeded from the spike's `concurrency_model.py`. Built only if units are revived (AO-Q5) | T4 | H5 |
-| H8 | protocol models K-N (erasure, multi-aggregate writes, bulk load/cutover, shard migration), plus grounding every model built so far against at least one real MVCC-style backend (isolation probes, history checking, predicted-anomaly reproduction). **From aggregate ownership** (ownership sketch §15): K's store list includes composite members, L adds references across aggregates under the roots-only rule, M adds an out-of-band load that makes a node a member of two aggregates | T4/T7 | H7 |
-| H9 | detection-coverage closure: generate the nine missing audits the review names (L11's gap) from the same invariants H4's registry states, Alloy detection-completeness/soundness obligations per invariant, applicability labelling so a not-applicable audit cannot be read as "clean". **From aggregate ownership** (ownership sketch §15): four more audits, instance overlap, orphan member, reference into a member, and payload outside the tree for named-graph families with a boundary shape | T2/T0 | H3, H4 |
-| H10 | runtime monitors from the same invariants (T7): housekeeping evidence, capability drift, declaration drift, an erasure audit, a position-reuse audit, feeding track A's ledger once it exists. The four ownership audits of H9 become monitors with the rest | T7 | H9 |
+| FMH-4 | exhaustive cross-axis validation (BDD/SMT) over the registry's own rule data: V1-V10 (review §7.3), most valuably V2 (no shape/compiler disagreement, checked universally) and V10 (every guarantee-forfeiting combination is warned, naming the law). **From aggregate ownership** (ownership sketch §15): C10 path-language equality by automata over the shape graph, graph-IRI-template injectivity across families (Z3 strings, review F11), C14's request bound with the largest aggregate, and the source review's `ClosuresDisjoint` Alloy model restated over classified edges | T3 | FMH-3 |
+| FMH-5 | **the capability-record extension** (full `StoreCapabilities`, three-valued, `unknown` pessimistic, bound to a TCK report digest — review's PV-D1), **the TLA+/Quint toolchain spike**, and **protocol models A-D** (guarded CAS, append form, first-write/create race, key claim) — the main sketch's matrix idea, first four cells. **From aggregate ownership** (ownership sketch §15): model A parametrised by boundary strategy (the composite delete set is read at execution), model C covering composite create, and a capability field for whether inserting an identical statement is a write-write conflict | T4 (first use anywhere in this epic) | FMH-2 (read/write sets from the IR), nothing else |
+| FMH-6 | Isabelle theories: `Resolution.thy` (determinism, locality, winner dominance, the capability-monotonicity-fails negative lemma), `Positions.thy` (order agreement of zero-padded positions, injectivity of revision IRIs), `Encoding.thy` (injectivity of the request-digest encoding, with the canonicalisation gap named as an explicit hypothesis, not assumed away), `Outcomes.thy` (totality, disjointness and soundness of the confirmation procedure, relative to an abstract history predicate FMH-5's models discharge). **From aggregate ownership** (ownership sketch §15): `Encoding.thy` gains graph-IRI injectivity, `prefix · enc(r) · suffix`, under review F11's two rules | T5 | H1 (resolver as currently specified), FMH-5 (for `Outcomes.thy`'s history predicate) |
+| FMH-7 | protocol models E-J (outcome classification, epoch bump/restore, retention/pruning, global read, fencing, infrastructure-graph writers — expected to be the single richest source of new findings, nothing there is guarded today) | T4 | FMH-5, FMH-6 |
+| (deferred) | protocol model O, aggregate units: the removal rule, the parent-level create rule and the invariant row of the [ownership sketch §11](../sketches/persistence-aggregate-ownership.md#11-deferred-units-and-level-operations), seeded from the spike's `concurrency_model.py`. Built only if units are revived (AO-Q5) | T4 | FMH-5 |
+| FMH-8 | protocol models K-N (erasure, multi-aggregate writes, bulk load/cutover, shard migration), plus grounding every model built so far against at least one real MVCC-style backend (isolation probes, history checking, predicted-anomaly reproduction). **From aggregate ownership** (ownership sketch §15): K's store list includes composite members, L adds references across aggregates under the roots-only rule, M adds an out-of-band load that makes a node a member of two aggregates | T4/T7 | FMH-7 |
+| FMH-9 | detection-coverage closure: generate the nine missing audits the review names (L11's gap) from the same invariants FMH-4's registry states, Alloy detection-completeness/soundness obligations per invariant, applicability labelling so a not-applicable audit cannot be read as "clean". **From aggregate ownership** (ownership sketch §15): four more audits, instance overlap, orphan member, reference into a member, and payload outside the tree for named-graph families with a boundary shape | T2/T0 | FMH-3, FMH-4 |
+| FMH-10 | runtime monitors from the same invariants (T7): housekeeping evidence, capability drift, declaration drift, an erasure audit, a position-reuse audit, feeding track A's ledger once it exists. The four ownership audits of FMH-9 become monitors with the rest | T7 | FMH-9 |
 | ~~H2.10~~ | **Dropped 2026-10-20 (P6).** A family that appends versions needs no snapshot, since its root version and membership are one (VH-Q5 (3)). Snapshots of in-place families stay with TD-46, and `ReceiptModelNotHonoured` keeps warning for them | | |
 
 ### 5.1 Later: a SPARQL semantic IR (PDD-06, raised 2026-10-12)
 
-The maintainer's direction, to be patched into a later phase so H2 keeps its pace. Today `persistence.ir` is one
+The maintainer's direction, to be patched into a later phase so FMH-2 keeps its pace. Today `persistence.ir` is one
 typed syntax tree that carries both what the configuration means and how SPARQL writes it. Its checker encodes SPARQL's
-rules (scope, boundness, where a guard is evaluated) as claims written by hand. Two of them were wrong in H2.1, the
+rules (scope, boundness, where a guard is evaluated) as claims written by hand. Two of them were wrong in FMH-2.1, the
 guard's position (F1) and inner-group scope (F4), and both were found only by running queries on rdflib.
 
 ```mermaid
@@ -1690,23 +1739,23 @@ flowchart LR
 - **What it gives.** The checker's rules follow from a model of the specification instead of from memory, the model is
   a way for the maintainer and the agents to read SPARQL's semantics directly, and a MORK mapping could be lowered to
   SPARQL through the same IR.
-- **Where it sits.** After H2, whose builders define the fragment to model, and with or before H6, which sets up the
+- **Where it sits.** After FMH-2, whose builders define the fragment to model, and with or before FMH-6, which sets up the
   Isabelle theories. Not scheduled. The open options are in PDD-06.
 - **Until then.** Each semantic rule the checker encodes gets an engine test, as T29 does for scope, so a misreading
-  is found by a test and not by a later review. The H2.2 to H2.5 builders follow that rule.
+  is found by a test and not by a later review. The FMH-2.2 to FMH-2.5 builders follow that rule.
 
 ## 6. Milestones
 
 | # | Outcome | Slice |
 |---|---|---|
 | FMH1 | every rule, shape, warning and audit in `tools/persistence` has a witness fixture or is listed as a gap; S-3/S-4 pass on every shipped template; the declaration/implementation gap is enumerated as data, not prose | H1 |
-| FMH2 | the compiler's emitter cannot produce an untyped, unbound-variable, blank-node-bearing or term/value-confused operation, by construction | H2 |
-| FMH3 | the cross-axis rules exist in exactly one hand-written place, with the shapes, the compiler and the README all generated from it and checked to agree | H3 |
-| FMH4 | the first capability × strategy matrix cell exists, generated by a protocol model, not hand-written, with a named counterexample for at least one known-unsafe baseline | H5 |
-| FMH5 | the resolver's capability-monotonicity-fails negative lemma is proved, mirroring Eligibility's own De Morgan negative lemma | H6 |
-| FMH6 | at least one real backend has been grounded against a model's prediction, with a reproduced or a model-correcting result | H8 |
-| FMH7 | every invariant the review names has a detector, with applicability correctly labelled | H9 |
-| FMH-O | the composite strategy deletes exactly the declared aggregate: on the reference fixture (HO5), by the path property test (HO4), and by the automata check once H4 lands. No reference or reference data is ever swept | HO, H4 |
+| FMH2 | the compiler's emitter cannot produce an untyped, unbound-variable, blank-node-bearing or term/value-confused operation, by construction | FMH-2 |
+| FMH3 | the cross-axis rules exist in exactly one hand-written place, with the shapes, the compiler and the README all generated from it and checked to agree | FMH-3 |
+| FMH4 | the first capability × strategy matrix cell exists, generated by a protocol model, not hand-written, with a named counterexample for at least one known-unsafe baseline | FMH-5 |
+| FMH5 | the resolver's capability-monotonicity-fails negative lemma is proved, mirroring Eligibility's own De Morgan negative lemma | FMH-6 |
+| FMH6 | at least one real backend has been grounded against a model's prediction, with a reproduced or a model-correcting result | FMH-8 |
+| FMH7 | every invariant the review names has a detector, with applicability correctly labelled | FMH-9 |
+| FMH-O | the composite strategy deletes exactly the declared aggregate: on the reference fixture (FMH-HO5), by the path property test (FMH-HO4), and by the automata check once FMH-4 lands. No reference or reference data is ever swept | HO, FMH-4 |
 
 ## 7. Metrics and abandonment conditions
 
@@ -1721,8 +1770,8 @@ Following the epic's own §6 discipline, declared now rather than discovered mid
 
 | Signal | Action |
 |---|---|
-| the TLA+/Quint spike (H5) cannot carry model A to a result (pass or counterexample) within a budget comparable to track D's own prover spike | do not proceed past models A-D. H1-H4, H6 and H9-H10 do not depend on protocol models at all and continue regardless |
-| grounding (H8) finds a model's prediction does not reproduce on any real backend across two consecutive attempts | the model's own assumptions are wrong; revise or retire that specific model before building on it further, do not accumulate unverified models |
+| the TLA+/Quint spike (FMH-5) cannot carry model A to a result (pass or counterexample) within a budget comparable to track D's own prover spike | do not proceed past models A-D. H1-H4, FMH-6 and H9-H10 do not depend on protocol models at all and continue regardless |
+| grounding (FMH-8) finds a model's prediction does not reproduce on any real backend across two consecutive attempts | the model's own assumptions are wrong, revise or retire that specific model before building on it further, do not accumulate unverified models |
 | the witness-coverage check (H1.2) finds more than half of `tools/persistence`'s existing rules lack a witness | this is itself the finding, not a reason to stop — it means H1 is doing its job |
 
 ## 8. Decisions for the maintainer
@@ -1732,44 +1781,44 @@ None of these is taken without the maintainer.
 | # | Decision | Recommendation | State |
 |---|---|---|---|
 | H-D1 | accept, revise or reject [ADR-A-FM4](../../architecture/decisions/ADR-A-FM4-persistence-formal-methods-home-and-scope.md) | accept, including its point 3 (TLA+/Quint models share `tools/models/` with Alloy) | **decided 2026-10-10**: accepted as recommended |
-| H-D2 | TLA+ or Quint, for protocol models | undecided; H5's own toolchain spike decides it on measured evidence, the same discipline track D used for Rocq vs Isabelle | open, deferred to H5 |
-| H-D3 | whether the specification registry's and typed IR's design (H2, H3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | **decided 2026-10-10 for H2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79, since H2 replaces ADR-A79's template layer rather than refining it. H3's is decided when H3 is briefed |
-| H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until H2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once H2 lands | **decided 2026-10-09**: left as a documented, refused combination until H2's typed IR makes the fix structural. H1.4 carries the refusal |
+| H-D2 | TLA+ or Quint, for protocol models | undecided, FMH-5's own toolchain spike decides it on measured evidence, the same discipline track D used for Rocq vs Isabelle | open, deferred to FMH-5 |
+| H-D3 | whether the specification registry's and typed IR's design (FMH-2, FMH-3) are recorded as an ADR-A79 addendum or a fresh ADR | recommend an addendum, dated, per ADR-A-FM4 decision 4 and this repository's own practice for a decision found while building | **decided 2026-10-10 for FMH-2**, left to us by the maintainer: a new ADR-A123 and a dated addendum to ADR-A79, since FMH-2 replaces ADR-A79's template layer rather than refining it. FMH-3's is decided when FMH-3 is briefed |
+| H-D4 | whether the composite-boundary soundness gap (H1.4's flagged finding) is fixed immediately as a `tools/persistence` defect, or left as a documented, refused combination until FMH-2's typed IR makes the fix structural | recommend: refuse the combination now (cheap, one line in the existing validation predicate), fix properly once FMH-2 lands | **decided 2026-10-09**: left as a documented, refused combination until FMH-2's typed IR makes the fix structural. H1.4 carries the refusal |
 | H-D5 | whether track H's claims feed track A's ledger once it exists, or keep their own interim Validation-Pack record permanently | recommend: feed track A once it starts, per ADR-A-FM4 decision 7 | open, not urgent |
 
 Decisions H-D6 to H-D10 were taken as H1 progressed and are recorded, with their reasons, in the
 [status record](../status/formal-methods-track-h.md). Two, H-D11 and H-D12, are explained in
 [§13](#13-walkthrough-the-two-assumptions-behind-check-s-3-h-d11-and-h-d12). H-D13 to H-D16 come
-from H1.4a and the aggregate-ownership review, H-D17 from tracing that design through the later
+from FMH-1.4a and the aggregate-ownership review, H-D17 from tracing that design through the later
 phases ([ownership sketch §15](../sketches/persistence-aggregate-ownership.md#15-effect-on-the-later-track-h-slices)).
-H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md)).
+H-D18 to H-D20 and H2-Q1 to H2-Q6 come from FMH-2's brief ([typed IR sketch](../sketches/formal-methods-track-h-typed-ir.md)).
 
 | # | Decision | State |
 |---|---|---|
-| H-D11 | how check S-3 knows which variables the caller supplies | **decided 2026-10-09**: keep option A (the `$name` convention) and let H2's typed IR settle it. Walkthrough in §13.3 |
+| H-D11 | how check S-3 knows which variables the caller supplies | **decided 2026-10-09**: keep option A (the `$name` convention) and let FMH-2's typed IR settle it. Walkthrough in §13.3 |
 | H-D12 | whether a `BIND` counts as giving its variable a value | **decided 2026-10-09**: keep option A, record the limitation in this plan and in TD-34, and take option D (a required-parameter guard) in H2. Walkthrough in §13.4 |
-| H-D13 | what H1.4a binds for a shape with one node property, and whether the closure is walked in path order ([H1.4a Validation Pack](../validation/FMH-H1-4a.md)) | **decided 2026-10-10**: Option 1 (C1, C2 and C3), as a stop-gap. Its precondition, that the bound property is owned, is unchecked (review F1, TD-35) and is listed in H1.4b's report. HO5 replaces C1 and C2. C3's path order carries into the tree walk |
+| H-D13 | what FMH-1.4a binds for a shape with one node property, and whether the closure is walked in path order ([FMH-1.4a Validation Pack](../validation/FMH-1.4a.md)) | **decided 2026-10-10**: Option 1 (C1, C2 and C3), as a stop-gap. Its precondition, that the bound property is owned, is unchecked (review F1, TD-35) and is listed in FMH-1.4b's report. FMH-HO5 replaces C1 and C2. C3's path order carries into the tree walk |
 | H-D14 | the aggregate-ownership questions AO-Q1 to AO-Q12 | **decided 2026-10-10**, by agreeing with every leaning in the [review §6](../notes/persistence-aggregate-ownership-review.md#6-the-twelve-questions-answered). Built by the HO slices ([§3.5](#35-ho-aggregate-ownership)) from the [sketch](../sketches/persistence-aggregate-ownership.md). Also decided: no compatibility is kept, since nobody else uses `persistence` |
 | H-D15 | AO-Q13, how a named graph is named from its root ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) | **decided 2026-10-10**: option a, `ENCODE_FOR_URI` of the whole root IRI, since no standard limits IRI length, minted roots are short ASCII (about 1.2 times longer once encoded), and an over-long IRI would fail loudly where option c fails silently ([review §7](../notes/persistence-aggregate-ownership-review.md#7-one-new-question-ao-q13)) |
-| H-D16 | HO5 touches four Python modules (`resolver`, `operations`, `validator`, `boundary`) and HO4 three, more than the slice-sizing rule allows when read per file | **decided 2026-10-10: option A**, accept HO4 and HO5 as planned, one slice each. The resolver's extras, the operations' binding and the validator's checks read one structure, and most of the change is deletion. A split into two slices of two modules each is possible, with a temporary shim in the resolver that the second slice deletes. HO4 also touches three Python files (`boundary`, `paths`, `terms`), so the same question applies to it |
+| H-D16 | FMH-HO5 touches four Python modules (`resolver`, `operations`, `validator`, `boundary`) and FMH-HO4 three, more than the slice-sizing rule allows when read per file | **decided 2026-10-10: option A**, accept FMH-HO4 and FMH-HO5 as planned, one slice each. The resolver's extras, the operations' binding and the validator's checks read one structure, and most of the change is deletion. A split into two slices of two modules each is possible, with a temporary shim in the resolver that the second slice deletes. FMH-HO4 also touches three Python files (`boundary`, `paths`, `terms`), so the same question applies to it |
 | H-D17 | AO-Q14, which graph a composite aggregate lives in ([review §7.1](../notes/persistence-aggregate-ownership-review.md#71-a-further-question-ao-q14), F10) | **decided 2026-10-10: option a**, a mandatory named data graph (`dal:dataGraph`). LATTICE's patterns guide already requires every graph to be named (S-1), SPARQL leaves the default graph's contents to the store, and holding application data in named graphs is ordinary practice |
-| H-D18 | how many slices H2 is split into | **decided 2026-10-10**: as many as it needs. Ten are proposed, H2.0 to H2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |
+| H-D18 | how many slices FMH-2 is split into | **decided 2026-10-10**: as many as it needs. Ten are proposed, FMH-2.0 to FMH-2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |
 | H-D19 | whether the IR replaces the Mustache templates (option A) or adds typed declarations checked against them (option B) | **decided 2026-10-10: option A** |
 | H-D20 | how far the payload is typed | **decided 2026-10-10**: designed in full in the [typed IR sketch §4](../sketches/formal-methods-track-h-typed-ir.md#4-the-typed-payload), weighed by the configuration it asks of a user, and reviewed by the maintainer. Its own questions are H2-Q1 to H2-Q3 |
-| H-D21 | whether H2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for H2.3, so that the named-graph row writers are ported and reviewed together |
-| H-D22 | whether H2.5 and H2.6 run in parallel | **decided 2026-10-13**: one after the other, on the cloud agent, H2.5 first (§4.5). The parallel rules and the precursor commit the design review proposed are dropped |
-| H-D23 | whether H2.5 is split to respect the slice-sizing rule | **decided 2026-10-13**: one slice of about 40 cases in six ordered gates (§4.3), as H-D21 allowed for H2.3 |
-| H-D24 | the names of the new `dal:` terms of the expected profiles (H2.6 review question 1) | **decided 2026-10-13**: the proposed names are fine. H2.7 settles any change when it writes the vocabulary |
-| H-D25 | whether `dal:templateId` keeps the `.mustache` suffix (H2.6 review question 2) | **decided 2026-10-13**: drop it. The builder's identity is the operation id. The expected profiles already show it, and the base-profile test allows that one change to today's `compile` output. H2.7 emits it, and H2.9 retires the files |
-| H-D26 | whether `Event`, `MergeRecord` and `KeyQuarantine` are folded into another resource (H2.6 review question 3) | **decided 2026-10-13**: kept apart, since each has its own key in both realisations |
-| H-D27 | whether the gaps of the paper check are recorded in the relational note (H2.6 review question 7) | **decided 2026-10-13**: yes, as [lattice-sql.md §9.1](../notes/rdf-engine/lattice-sql.md#91-gaps-found-by-the-paper-check-of-formal-methods-h26-2026-10-13) |
-| H-D28 | the type of `$oldValue` and `$newValue` of the value guard (H2.6 review question 8) | **decided 2026-10-13**: `IriOrLiteral` for now. TD-43 settles it |
-| H-D29 | H2.6-RQ4, the pinned head | **decided 2026-10-14: A**, part of `Receipt`, as built. Reopened if a retention job becomes a generated operation |
-| H-D30 | H2.6-RQ5, the digest of `append-event` | **decided 2026-10-14: B.** An event carries domain triples, so the append gains a payload slot of event triples, and the digest's payload part covers that slot like any other write. A change to the operation, in its own slice with H2.8's payload check (see the [write-up](../notes/track-h-h26-review-questions.md#h26-rq5-the-digest-of-append-event)). Its open points: one event or several per request (the guide's example appends three), what bounds an event's triples (its subject, or a shape), and where `opSeq` comes from when the query assigns it |
-| H-D31 | H2.6-RQ6, the patch content of a patch log | **decided 2026-10-14: B**, the write records its delta graphs in the same update, since request atomicity varies by store and by configuration (TSD-06, TSD-Q13). Built in H2.6b (§4.6), whose questions settle which writes and who names the graphs |
-| H-D32 | the order of the remaining H2 slices | **decided 2026-10-14**: H2.6b, then H2.7, then H2.8, on the cloud agent (§4.5) |
-| H-D33 | H2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the sketch [persistence: history, versions and the receipt models](../sketches/persistence-history-and-versioning.md), VH-Q1 to VH-Q7. H2.6b ships the event half, with `ReceiptModelNotHonoured` for both receipt models (§4.6) |
-| H-D34 | whether H2.7 waits for the history and versioning sketch | **decided 2026-10-14**: H2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the vocabulary is published once (§4.7) |
+| H-D21 | whether FMH-2.3 is split to respect the slice-sizing rule (H2.3-Q4) | **decided 2026-10-12**: one slice of about 25 test cases. The maintainer approved exceeding the rule for FMH-2.3, so that the named-graph row writers are ported and reviewed together |
+| H-D22 | whether FMH-2.5 and FMH-2.6 run in parallel | **decided 2026-10-13**: one after the other, on the cloud agent, FMH-2.5 first (§4.5). The parallel rules and the precursor commit the design review proposed are dropped |
+| H-D23 | whether FMH-2.5 is split to respect the slice-sizing rule | **decided 2026-10-13**: one slice of about 40 cases in six ordered gates (§4.3), as H-D21 allowed for FMH-2.3 |
+| H-D24 | the names of the new `dal:` terms of the expected profiles (FMH-2.6 review question 1) | **decided 2026-10-13**: the proposed names are fine. FMH-2.7 settles any change when it writes the vocabulary |
+| H-D25 | whether `dal:templateId` keeps the `.mustache` suffix (FMH-2.6 review question 2) | **decided 2026-10-13**: drop it. The builder's identity is the operation id. The expected profiles already show it, and the base-profile test allows that one change to today's `compile` output. FMH-2.7 emits it, and FMH-2.9 retires the files |
+| H-D26 | whether `Event`, `MergeRecord` and `KeyQuarantine` are folded into another resource (FMH-2.6 review question 3) | **decided 2026-10-13**: kept apart, since each has its own key in both realisations |
+| H-D27 | whether the gaps of the paper check are recorded in the relational note (FMH-2.6 review question 7) | **decided 2026-10-13**: yes, as [lattice-sql.md §9.1](../notes/rdf-engine/lattice-sql.md#91-gaps-found-by-the-paper-check-of-formal-methods-h26-2026-10-13) |
+| H-D28 | the type of `$oldValue` and `$newValue` of the value guard (FMH-2.6 review question 8) | **decided 2026-10-13**: `IriOrLiteral` for now. TD-43 settles it |
+| H-D29 | FMH-2.6-RQ4, the pinned head | **decided 2026-10-14: A**, part of `Receipt`, as built. Reopened if a retention job becomes a generated operation |
+| H-D30 | FMH-2.6-RQ5, the digest of `append-event` | **decided 2026-10-14: B.** An event carries domain triples, so the append gains a payload slot of event triples, and the digest's payload part covers that slot like any other write. A change to the operation, in its own slice with FMH-2.8's payload check (see the [write-up](../notes/track-h-h26-review-questions.md#h26-rq5-the-digest-of-append-event)). Its open points: one event or several per request (the guide's example appends three), what bounds an event's triples (its subject, or a shape), and where `opSeq` comes from when the query assigns it |
+| H-D31 | FMH-2.6-RQ6, the patch content of a patch log | **decided 2026-10-14: B**, the write records its delta graphs in the same update, since request atomicity varies by store and by configuration (TSD-06, TSD-Q13). Built in FMH-2.6b (§4.6), whose questions settle which writes and who names the graphs |
+| H-D32 | the order of the remaining FMH-2 slices | **decided 2026-10-14**: FMH-2.6b, then FMH-2.7, then FMH-2.8, on the cloud agent (§4.5) |
+| H-D33 | FMH-2.6b's patch-log half, and H2.10 | **decided 2026-10-14**: held for the sketch [persistence: history, versions and the receipt models](../sketches/persistence-history-and-versioning.md), VH-Q1 to VH-Q7. FMH-2.6b ships the event half, with `ReceiptModelNotHonoured` for both receipt models (§4.6) |
+| H-D34 | whether FMH-2.7 waits for the history and versioning sketch | **decided 2026-10-14**: FMH-2.7 waits for VH-Q1, VH-Q3 and VH-Q5, so the vocabulary is published once (§4.7) |
 | H2-Q1 to H2-Q6 | the typed payload, a named-graph family with no boundary shape, closed-shape payloads, where the parameter guard runs, what the compiled profile carries, logical or SPARQL declarations ([sketch §5](../sketches/formal-methods-track-h-typed-ir.md#5-questions-for-the-maintainer)) | **answered 2026-10-10**: PL-B, with PL-D later as an SDK ([sketch](../sketches/persistence-client-sdk.md)), (a) and (b), (a), (c), and (a) on condition it keeps the relational realisation open. H2-Q6, that condition, **answered 2026-10-10: (a)**, a logical operation contract. Our reading of H2-Q2 confirmed ([typed IR sketch §1](../sketches/formal-methods-track-h-typed-ir.md#1-decisions-already-taken-2026-10-10)) |
 
 ## 9. Alignment with other work
@@ -1777,23 +1826,23 @@ H-D18 to H-D20 and H2-Q1 to H2-Q6 come from H2's brief ([typed IR sketch](../ske
 | Unit | Item | Relationship |
 |---|---|---|
 | this epic, track A | the ledger and the harness | track H's claims feed it once it exists (H-D5); until then, Validation Packs are the interim record |
-| this epic, track B | the reference semantics and the oracle | no direct dependency; track H does not need a Python reference oracle in track B's sense (there is no independent "meaning" of `dal:` configuration beyond the compiler itself, unlike Eligibility's laws). B2.1's hardening work (seed a compiler-side fault) is a methodological sibling to H1.2's witness-coverage work, not a dependency |
-| this epic, track C | the design-time models | H5/H7's protocol models reuse track C's `tools/models/` home (ADR-A-FM4 decision 3) and its "bounded scope, never read as a proof" discipline directly |
-| this epic, track E | the prover programme | H6 reuses track E's `tools/proofs/` home (ADR-A-FM2) and gate discipline unchanged, including the hardening items E1.4 queues (digest transitive definitions, characterising lemmas) — H6's own Isabelle work should apply E1.4's fixes from the start, not repeat the gaps it found |
+| this epic, track B | the reference semantics and the oracle | no direct dependency, track H does not need a Python reference oracle in track B's sense (there is no independent "meaning" of `dal:` configuration beyond the compiler itself, unlike Eligibility's laws). FMB-2.1's hardening work (seed a compiler-side fault) is a methodological sibling to H1.2's witness-coverage work, not a dependency |
+| this epic, track C | the design-time models | FMH-5/H7's protocol models reuse track C's `tools/models/` home (ADR-A-FM4 decision 3) and its "bounded scope, never read as a proof" discipline directly |
+| this epic, track E | the prover programme | FMH-6 reuses track E's `tools/proofs/` home (ADR-A-FM2) and gate discipline unchanged, including the hardening items FME-1.4 queues (digest transitive definitions, characterising lemmas) — FMH-6's own Isabelle work should apply FME-1.4's fixes from the start, not repeat the gaps it found |
 | CCS | HQ-6b, the store binding of ADR-A105 closures | CCS depends on this track. A closure's cut binds to the per-root sequence and receipt stream (AO-Q6), and its completeness to the blocking contiguity audit. This track owns both, and a change to either is agreed with HQ-6b first |
 | insurml-alignment | — | no direct dependency either way |
-| the platform, `workers/` | housekeeping jobs, the outbox, the store SPI | H9/H10's generated monitors extend `tools/persistence`'s own existing housekeeping boundary (ADR-A80), not a new runtime |
+| the platform, `workers/` | housekeeping jobs, the outbox, the store SPI | FMH-9/H10's generated monitors extend `tools/persistence`'s own existing housekeeping boundary (ADR-A80), not a new runtime |
 
 ## 10. Risks
 
 - **The cross-axis rule space (1.3×10⁸ combinations) may strain a naive BDD encoding** before
   one-hot consistency constraints and shard-count/identity-role multiplicities are added (review
-  §7.2's own caveat). H4's own first action is a size check before committing to exhaustive
+  §7.2's own caveat). FMH-4's own first action is a size check before committing to exhaustive
   checking as stated.
 - **TLA+/Quint authoring cost for a protocol as detailed as the guarded-write path (model A) may
   exceed the toolchain spike's own budget**, the same risk track D's prover spike carried for
   Isabelle/Rocq. The spike's own abandonment condition (§7) is stated for exactly this reason.
-- **Grounding (H8) needs a real MVCC-style backend available to this project's own CI/development
+- **Grounding (FMH-8) needs a real MVCC-style backend available to this project's own CI/development
   environment.** If none is practically available, grounding stays a manual, off-CI activity,
   recorded as such rather than silently skipped.
 - **The declaration/implementation gap (H1.4) may be larger than this sketch assumes** once
@@ -1810,20 +1859,20 @@ from scratch (the existing one is extended, not replaced).
 ## 12. Documentation deltas
 
 At each HO slice's gate, as listed in [§3.5](#35-ho-aggregate-ownership): the register rows it
-closes, `ontology/persistence` (HO3, HO9), `tools/persistence/README.md` (HO7, HO9), the ADR
-catalogue (HO2). At H1's gate: `tools/persistence/README.md` (the new checks and how to run them),
+closes, `ontology/persistence` (FMH-HO3, FMH-HO9), `tools/persistence/README.md` (FMH-HO7, FMH-HO9), the ADR
+catalogue (FMH-HO2). At H1's gate: `tools/persistence/README.md` (the new checks and how to run them),
 `docs/developer/plans/formal-methods.md` and `docs/developer/status/formal-methods.md` (track H
-added to the track board). At H5's gate: root `README.md` (the new TLA+/Quint toolchain, if a
+added to the track board). At FMH-5's gate: root `README.md` (the new TLA+/Quint toolchain, if a
 native install or image route is added), `mise.toml` (new `check:persistence-formal-*` tasks),
 `docs/architecture/ontology-architecture.md` (the capability-matrix idea, once it has its first
-populated row). At H9/H10's gate: `docs/architecture/semantic-platform.md` (new monitor job
-families), the ADR catalogue (the ADR-A79 addenda from H2/H3, if taken).
+populated row). At FMH-9/H10's gate: `docs/architecture/semantic-platform.md` (new monitor job
+families), the ADR catalogue (the ADR-A79 addenda from FMH-2/H3, if taken).
 
 
 ## 13. Walkthrough: the two assumptions behind check S-3 (H-D11 and H-D12)
 
 This section is for a reader who has not worked in `tools/persistence`. It explains what check S-3
-([H1.3](../validation/FMH-H1-3.md)) does, then the two assumptions it makes that the maintainer is asked
+([FMH-1.3](../validation/FMH-1.3.md)) does, then the two assumptions it makes that the maintainer is asked
 to confirm. Everything marked "demonstrated" was run against the real generated templates on
 2026-10-09. The code is `tools/persistence/src/persistence/templatecheck.py`.
 
@@ -1931,7 +1980,7 @@ of `?prevRev` in the `INSERT` makes the finding disappear.
 | **B. The compiler lists them** | Emit each operation's request-time parameters into the compiled profile, and have the check require the text's `$` names to equal that list | Closes the second row, and gives readers an explicit caller obligation list. Needs a new term in the `dal:` compiled-profile vocabulary under `ontology/persistence`, so a modelling decision and probably an ADR-A79 addendum |
 | **C. Keep `$`, add a guard** | Also refuse a `$` name that a `BIND` assigns or a sub-select projects | Cheap, catches nonsense like `BIND(... AS $x)`, but does not catch the realistic row-two slip above |
 
-**Recommendation, as a hypothesis.** Keep A for now and let the typed IR of H2 settle it. H2 gives
+**Recommendation, as a hypothesis.** Keep A for now and let the typed IR of FMH-2 settle it. FMH-2 gives
 every generated operation a declared parameter list in its intermediate representation
 ([§4](#4-h2-h3-the-typed-ir-and-the-specification-registry)), which is option B arriving as part of
 work already planned, without a separate ontology change today. The row-two risk is narrow while the
@@ -1990,7 +2039,7 @@ H-D12 decides how far the assumption extends into computed values.
 | **A. Trust a `BIND` over bound inputs** (current) | counts as having a value | Quiet. Misses the failure shown above |
 | **B. Distrust any `BIND` with inputs** | counts only a `BIND` that has none | Rough trial: about half the templates (12 of 24) would be reported, mostly noise, because every template that uses `?txnKey` or `?g` is caller-dependent. The trial also counted a few values derived from `NOW()` through a middle variable, so read 12 as an upper bound |
 | **C. Trust caller-dependent, distrust data-dependent** | a `BIND` over `$parameters` or constants counts. One over stored data does not | Reports the two append templates (`?n1`, `?rev`). The same trial also flagged three other templates through aggregate and alias artefacts that a real implementation would not. It is a defensible line (the caller contract is a separate obligation, stored data going wrong is an integrity hazard) but it needs an allowance or a guard to pass |
-| **D. Fix the templates, not the check** | add a required-parameter guard so a missing parameter writes **nothing** | The real remedy for the demonstration above. Belongs to H2, where each parameter is declared and a guard can be generated |
+| **D. Fix the templates, not the check** | add a required-parameter guard so a missing parameter writes **nothing** | The real remedy for the demonstration above. Belongs to FMH-2, where each parameter is declared and a guard can be generated |
 
 **Recommendation, as a hypothesis.** Keep A for now, record the limitation here and in TD-34, and
 take D in H2. Option C is the one to pick if you want the stored-counter case surfaced before H2.
@@ -2003,7 +2052,7 @@ folder runs it on both engines and compares.
 
 Both decisions were taken on 2026-10-09 in favour of option A, with the remedy deferred to H2.
 
-| Decision | Outcome | What it commits H2 to |
+| Decision | Outcome | What it commits FMH-2 to |
 |---|---|---|
 | **H-D11** | Keep the `$name` convention. The check reads the caller's parameters from the template text | The typed IR declares each operation's request-time parameters. When it does, the lexical convention is replaced by the declared list, and the check reads that |
 | **H-D12** | Keep trusting a `BIND` over bound inputs. The limitation is recorded here and as TD-34 | The typed IR declares required parameters and generates a guard so that an update with a missing parameter writes **nothing**, which is option D. TD-34 closes then |

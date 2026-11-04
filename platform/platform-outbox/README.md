@@ -13,7 +13,7 @@ A transactional outbox for CloudEvents, and a relay that publishes pending recor
 | `TransactionalOutbox` | `enqueue(idempotencyKey, event)`, `pending()` and `markPublished(record)`. |
 | `InMemoryTransactionalOutbox` | The one implementation. Enqueueing again with the same idempotency key yields the existing record. It holds state in memory only. |
 | `EventPublisher` | One method, `publish(CloudEvent)`. |
-| `RabbitMqEventPublisher` | Publishes to a durable topic exchange with the event type as routing key. `declareTopology` declares the exchange, a dead-letter exchange and a queue bound to `#`. |
+| `RabbitMqEventPublisher` | Publishes to a durable topic exchange with the event type as routing key, in the CloudEvents AMQP binding's binary mode: the attributes are `cloudEvents:` headers and the body is the data. `declareTopology` declares the exchange, a dead-letter exchange and a queue bound to `#`. |
 | `OutboxRelay` | `relayPending()` publishes each pending record and marks it published. A record whose publication throws stays pending for the next run. |
 
 There is no durable persistence in this module. A SQL-backed outbox would implement `TransactionalOutbox`.

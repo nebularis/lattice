@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from . import _build
 from ._tools import catalogue, stack as stack_module
@@ -18,6 +19,26 @@ from .topology import HarnessError, Studio, Topology, free_ports, new_run_id, qu
 READY_TIMEOUT = 240.0
 # Files the developer's own stack downloaded, seeded into the cache so a first run does not download them again.
 SEED = ("jena-fuseki-server-*.jar", "rabbitmq-server-*")
+
+
+def certificate(into: Path) -> Tuple[Path, Path, Path]:
+    """A server certificate, its key and the CA that signed it, in PEM, for the broker's TLS in a run, made by Erlang's `public_key`, which RabbitMQ already needs, so no platform needs openssl. The chain is signed with SHA-256, since TLS libraries refuse the default SHA-1."""
+    into.mkdir(parents=True, exist_ok=True)
+    cert, key, ca = into / "cert.pem", into / "key.pem", into / "ca.pem"
+    program = (
+        "K = [{key, {rsa, 2048, 65537}}, {digest, sha256}], "
+        "#{server_config := C} = public_key:pkix_test_data(#{server_chain => #{root => K, peer => K}, client_chain => #{root => K, peer => K}}), "
+        "{KT, KD} = proplists:get_value(key, C), "
+        f"ok = file:write_file(\"{cert.as_posix()}\", public_key:pem_encode([{{'Certificate', proplists:get_value(cert, C), not_encrypted}}])), "
+        f"ok = file:write_file(\"{ca.as_posix()}\", public_key:pem_encode([{{'Certificate', D, not_encrypted}} || D <- proplists:get_value(cacerts, C)])), "
+        f"ok = file:write_file(\"{key.as_posix()}\", public_key:pem_encode([{{KT, KD, not_encrypted}}])), "
+        "halt()."
+    )
+    erl = shutil.which("erl")
+    if erl is None:
+        raise HarnessError("making the broker's certificate needs Erlang. Run this through mise, which installs it")
+    subprocess.run([erl, "-noshell", "-eval", program], check=True, capture_output=True, timeout=60)
+    return cert, key, ca
 
 
 def _seed(cache: Path, from_dir: Path) -> None:
@@ -54,7 +75,7 @@ class ProcessStudio(Studio):
 
     def _start(self) -> None:
         t = self.topology
-        fuseki, amqp, dist, stream, service = free_ports(5)
+        fuseki, amqp, dist, stream, service, web_mqtt, web_mqtts = free_ports(7)
         cache = _build.cache_dir(self.root)
         _seed(cache, self.root / ".build" / "config-studio" / "infra")
         jars = _build.jars(self.root)
@@ -63,6 +84,9 @@ class ProcessStudio(Studio):
         stack.run, stack.infra, stack.data, stack.cache = self.run_dir / "run", self.run_dir / "infra", self.run_dir / "data", cache
         stack.fuseki_port, stack.rabbitmq_port, stack.rabbitmq_dist_port, stack.stream_port = fuseki, amqp, dist, stream
         stack.rabbitmq_node = f"{self.run_id}@localhost"
+        # The broker asks the service who a browser is, and serves the browser's events over TLS (PM-Q20 (d)).
+        stack.service_port, stack.web_mqtt_port = service, web_mqtt
+        stack.web_mqtt_tls = (web_mqtts, *certificate(self.run_dir / "tls"))
         stack.memory = t.store == "memory"
         self.stack = stack
 
@@ -73,14 +97,21 @@ class ProcessStudio(Studio):
         stack.wait_for("fuseki", fuseki, READY_TIMEOUT)
         stack.wait_for("rabbitmq", amqp, READY_TIMEOUT)
         stack.wait_for("rabbitmq", stream, READY_TIMEOUT)
+        # The broker has the run's own user and no guest, as the stack's does (PM-Q20 (d)).
+        stack.ensure_broker_user()
+        password, secret = stack.broker_credentials()
 
         env = {
             "LATTICE_FUSEKI_URL": f"http://127.0.0.1:{fuseki}", "LATTICE_FUSEKI_DATASET": "studio",
-            "LATTICE_AMQP_URI": f"amqp://guest:guest@127.0.0.1:{amqp}/%2F", "LATTICE_STUDIO_ASSETS": str(assets),
+            "LATTICE_AMQP_URI": stack.amqp_uri(password), "LATTICE_STUDIO_ASSETS": str(assets),
             "LATTICE_ROOT": str(self.root),
         }
-        writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": f"rabbitmq-stream://guest:guest@127.0.0.1:{stream}/%2f"}
-        service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth}
+        writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": stack.stream_uri(password)}
+        service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth,
+                       "LATTICE_STUDIO_EVENTS_URL": f"wss://127.0.0.1:{web_mqtts}/ws", "LATTICE_STUDIO_BROKER_SECRET": secret}
+        static = _build.web(self.root, self.run_dir / "web")
+        if static is not None:
+            service_env["LATTICE_STUDIO_STATIC"] = str(static)
         for i in range(1, t.writers + 1):
             name = f"writer-{i}"
             stack.spawn(name, ["java", "-jar", str(jars["writer"])], writer_env)

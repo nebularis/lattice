@@ -8,7 +8,7 @@
 
 ## What this document was
 
-The P0.1.3 deliverable: one proposed platform IRI profile for LATTICE, reviewed under ADR-A51. It specified a `urn:lattice:{tenantId}:{scope}:{family}:{localName}` lineage grammar, content revision and event IRIs beneath it, four entity minting strategies (`natural-key`, `derived-hash`, `surrogate-claimed`, `surrogate`), a content-hash procedure, a skolemization rule and a graph-name validator. The review history showed that a framework cannot mandate one identifier scheme for every adopter, and ADR-A82 replaced the profile with the framework-neutral pattern catalogue in [iri-identity-patterns.md](iri-identity-patterns.md).
+The PLT-0.1.3 deliverable: one proposed platform IRI profile for LATTICE, reviewed under ADR-A51. It specified a `urn:lattice:{tenantId}:{scope}:{family}:{localName}` lineage grammar, content revision and event IRIs beneath it, four entity minting strategies (`natural-key`, `derived-hash`, `surrogate-claimed`, `surrogate`), a content-hash procedure, a skolemization rule and a graph-name validator. The review history showed that a framework cannot mandate one identifier scheme for every adopter, and ADR-A82 replaced the profile with the framework-neutral pattern catalogue in [iri-identity-patterns.md](iri-identity-patterns.md).
 
 The body was removed rather than kept as "historical context" because it still read as guidance, and parts of it contradict the current catalogue. Section numbers cited by ADR-A51 and by the ADR-A51 review records refer to the removed body, which remains in version control:
 

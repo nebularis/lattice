@@ -63,6 +63,8 @@ mise run studio:web
 
 With the stack up, `mise exec -- yarn workspace @lattice/config-studio run test:stack` runs the browser tests over the real stack, against <http://127.0.0.1:8090>, or the address in `LATTICE_STUDIO_URL`.
 
+`mise run test:config-studio` runs the browser journeys against an in-memory fake of the service, in under a minute. `mise run test:config-studio-browser` runs them, then the real-stack tests against a stack the studio harness starts in isolation, so a stack of your own is left alone. Run it before a merge into `main` of a change to the studio, by convention, and list its result in the handoff.
+
 ## Depends on
 
 React 19, n3, `lucide-react`, Vite and TypeScript. The tests use Vitest and `@playwright/test`.

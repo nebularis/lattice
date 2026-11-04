@@ -67,21 +67,21 @@ actually contains; `proofs` says exactly that).
    file, its own `mise` tasks, its own tests, reviewed and merged the same way.
 3. The generation direction itself (which tool extends `literate_extract.py`, or a new generator,
    to produce Isabelle `.thy` datatypes from a README's fenced blocks) is **not** decided by this
-   ADR: it is track E's plan's own open question (E1.0), decided when that slice starts.
+   ADR: it is track E's plan's own open question (FME-1.0), decided when that slice starts.
 4. This ADR does not adopt, and does not block adopting, the attached improved-ontology-
    documentation sketch. If it is later taken up, its HTML-comment-marker mechanism writes richer
    annotations into `ontology/<layer>/spec/*.ttl` and friends; `tools/proofs/<layer>/`'s own
-   generation (whatever E1.0 decides) is a second, independent consumer of the same README, and
+   generation (whatever FME-1.0 decides) is a second, independent consumer of the same README, and
    needs no rework because of where its own output sits.
 
 ## Consequences
 
 - The Track E sketch's open-questions table (§4) marks FM-D2 resolved, citing this ADR. The Track
-  E plan's E1.0 slice is unblocked and may start: its own first task is scaffolding
+  E plan's FME-1.0 slice is unblocked and may start: its own first task is scaffolding
   `tools/proofs/`'s build project and deciding the generation-direction question this ADR leaves
   open.
 - The Track E status record's "next action" moves from "decide FM-D2" to "start E1.0."
-- Root `README.md` gains an entry for `tools/proofs/` once E1.0 creates it (repository topology
+- Root `README.md` gains an entry for `tools/proofs/` once FME-1.0 creates it (repository topology
   governance: "any new structure/folders/projects must be documented" there), not by this ADR
   itself, which creates no files under `tools/`.
 - `spikes/formal-prover/` is unaffected: it remains the track D record, on this branch, per
