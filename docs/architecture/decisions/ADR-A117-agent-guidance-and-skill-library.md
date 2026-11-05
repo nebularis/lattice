@@ -142,6 +142,6 @@ repository, and those rules are themselves private. Decision 5 extends to them.
 
 ## Addendum, 2026-11-05
 
-**Status:** Proposed
+**Status:** Accepted 2026-11-05
 
 The skill library is composed by Вивід from the domains and LATTICE's own sources under `.vyvid/` by `vyd install --project`, and committed ([ADR-A152](ADR-A152-vyvid-adoption.md) decision 5). The ten skills are fifteen. `lattice-toolchain` is `lattice-mise`, `lattice-windows` and `lattice-environment-lessons`, `lattice-triple-stores` is `lattice-probing`, `lattice-query-writing` and `lattice-shacl-testing`, `lattice-ontology-modelling` is added, and the rest keep their names. Where this decision names a skill by its old name, read the new one.

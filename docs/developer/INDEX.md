@@ -499,8 +499,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | planned | VM-5 | docs/developer/status/vyvid-migration.md#position |
 | WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |

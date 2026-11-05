@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 to VM-5 built, VM-1 and VM-3 verified, ADR-A152 accepted, trust point 3 run. VM-4 and VM-5 wait at their gates, with every other branch paused until the unit merges.
+**Status:** built 2026-11-05. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. VM-6 is next, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -16,13 +16,13 @@
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | built 2026-11-05, building 2026-11-05 |  |
-| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | built 2026-11-05, building 2026-11-05 |  |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | planned | VM-5 |
 
 ## Next action
 
-The maintainer runs `mise run check:hooks` for VM-4's and VM-5's gates, with `vyd check skills` and `mise run check:agent-guidance` beside it, accepts or rejects the addendum of 2026-11-05 on ADR-A117, and gives the word for VM-6, the copies removed. No `vyvid.toml` edit is pending, so trust holds.
+VM-6, the copies removed, with the word given through Вивід's side on 2026-11-05. Mark it building, commit the mark alone, then build it.
 
 ## Trust points
 
@@ -75,3 +75,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: VM-4 built. The seven board tasks run `vyd board`, `vyd work` and `vyd here` through `tools/vyd.py`, the `work` hook check is `vyd work check --staged`, and the post-merge hook regenerates the regions by `vyd work`, each skipping with a note where `vyd` is missing. The nine work-board tests rewritten over `vyd` on a probe project declared through `VYVID_CONFIG`, since an untrusted `vyvid.toml` writes nothing, every message read from `vyd` first and no scenario weakened. The old and new board outputs agree on this checkout but the four cells VM-1 recorded, INDEX.md regenerates byte for byte, ROADMAP.md with three of those cells and one generated sentence. `tools/work_board.py`, `tools/work_migrate.py` and their 58 tests removed, CAP-103 and CAP-104 re-pointed, TD-143 and TD-144 reworded as `vyd work roadmap`'s behaviours, for Вивід's side. One Вивід finding: under a git hook's `GIT_DIR`, `vyd` takes the status folder for the repository root and `vyd work check --staged` crashes, reproduced from a shell with `GIT_DIR` set, fixed in v0.2.7 where `vyd` starts, and `test_vm4_01` holds it. `mise run check` run after the slice, exit 0 in 194.10 s, its 3,447 lines compared line by line with VM-3's log, which was read whole, and differing only in `check:hooks` at 46 passed, `check:identifiers` at 855 files, and timings. Validation Pack [VM-4](../validation/VM-4.md).
 - 2026-11-05: v0.2.7 pinned, which runs under a git hook, so the `GIT_DIR` workaround in `tools/vyd.py` is gone and `test_vm4_01` now holds Вивід's fix, and which writes the roadmap from what a remote knows and cuts a gantt bar at a comma or a word, so TD-143 and TD-144 are closed and their rows removed. The roadmap regenerated at v0.2.7 and its diff read. `vyd config` says `configuration trust` now, and nothing of LATTICE's matched the old line.
 - 2026-11-05: VM-5 built. The ten old skills removed and fifteen composed by `vyd install --project`, eight under the old names and seven new. `vyd check skills` passes, and so do the eleven coverage runs against the old files at b08ece69 with the patch's maps, now under `docs/developer/notes/vm-5-coverage-maps/`, two rows set by hand and the wrapped fragments added as joined onto one line, no line lost. The `skills` hook check with two tests, 48 in `check:hooks`. AGENTS.md's table of fifteen, the marketplace, the addendum on ADR-A117, 35 citations renamed in prose by what each sentence is about, and the 201 register pointers re-pointed from the composed text, 156 by a fragment-matching script and 45 by hand from the headings. `build:knowledge` prints no note on a pointer, `check:knowledge` 38, `check:identifiers` 0 unresolved, `check:agent-guidance` 0 problems. The nine paragraphs the renames touched joined onto one line each. `mise run check` after the slice exit 0 in 324 s, its log compared line by line with VM-4's and differing only in `check:hooks` at 48, `check:identifiers` at 2111 identifiers in 860 files, and timings. Validation Pack [VM-5](../validation/VM-5.md).
+- 2026-11-05: VM-4 and VM-5 verified by the maintainer on d0ed6692, `check:hooks` 48 passed, `check:agent-guidance` 9 passed, `vyd check skills` 15 composed and no problem. The addendum of 2026-11-05 on ADR-A117 accepted. The plan changes for VM-6: the writing rules stay in AGENTS.md (decision 19), and only the general facet values move.
