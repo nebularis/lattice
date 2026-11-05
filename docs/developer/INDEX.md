@@ -81,7 +81,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
-| vyvid-migration | multi-slice unit | VM | building 2026-11-05 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md) |
+| vyvid-migration | multi-slice unit | VM | built 2026-11-05 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), 1 Validation Packs |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
@@ -496,7 +496,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | building 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the ADR | vyvid-migration | planned | VM-1 | docs/developer/status/vyvid-migration.md#position |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | planned | VM-2 | docs/developer/status/vyvid-migration.md#position |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | planned | VM-3 | docs/developer/status/vyvid-migration.md#position |

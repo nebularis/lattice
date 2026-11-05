@@ -27,7 +27,8 @@ BL = { removable = true, defined = "docs:developer/backlog.md", type = "backlog"
 ADR = { pattern = 'ADR-A-?[A-Za-z]{0,4}-?\d+[a-z]?', rule = "file", type = "decision", defined = "docs:architecture/decisions/*.md" }
 TSD = { pattern = 'TSD-\d+[a-z]?', rule = "heading", type = "discovery", defined = "docs:architecture/triple-store-discovery.md" }
 TSDQ = { removable = true, pattern = 'TSD-Q\d+', type = "discovery", defined = "docs:architecture/triple-store-discovery.md" }
-LGQ = { pattern = '(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+', rule = "question", type = "question", defined = ["docs:developer/plans/*.md", "docs:developer/sketches/*.md"] }
+# A question raised in a note, a record or a decision is counted and never failed, as LATTICE's own check treats it, which `removable` gives (plan vyvid-migration, VM-1).
+LGQ = { removable = true, pattern = '(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+', rule = "question", type = "question", defined = ["docs:developer/plans/*.md", "docs:developer/sketches/*.md"] }
 
 [[project.extractors]]
 kind = "owl-terms"

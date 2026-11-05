@@ -66,7 +66,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | building 2026-11-05 | VM-0 | 5 planned, 1 built, 1 building | vyvid-migration |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 5 planned, 1 built, 1 building | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -772,7 +772,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 4 | local ahead 4, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
+| `vyvid-migration` | 2026-11-05 | 5 | local ahead 5, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
