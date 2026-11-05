@@ -66,7 +66,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 3 built, 3 verified, 1 planned | vyvid-migration |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 4 built, 3 verified | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -426,6 +426,7 @@ gantt
     VM-3 the quanta and owners :vm3, 2026-11-05, 2026-11-06
     VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
     VM-5 the fifteen composed skills :vm5, 2026-11-05, 2026-11-06
+    VM-6 the moves :vm6, 2026-11-05, 2026-11-06
 ```
 
 ```mermaid
@@ -833,7 +834,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 98 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 99 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -905,7 +906,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **Let VM-6 on `vyvid-migration` run**, the copies removed, with VM-4 and VM-5 verified and the addendum of 2026-11-05 on ADR-A117 accepted (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, the board tasks run over `vyd` and the skills are composed by it.
+1. **Verify VM-6 on `vyvid-migration`**, `mise run check:knowledge` and `mise run check:identifiers`, accept or reject the addendum of 2026-11-05 on ADR-A134, and decide the merge into `main`, which ends the unit (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until it merges. ADR-A152 is accepted, VM-0 to VM-6 built, VM-1, VM-3, VM-4 and VM-5 verified, the index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`.
 2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.

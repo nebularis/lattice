@@ -17,7 +17,7 @@ These rows are LATTICE's.
 | What was learned | Goes in |
 |---|---|
 | what a store, tool, engine or platform actually does, found by probing or being surprised | [`docs/architecture/triple-store-discovery.md`](../../../docs/architecture/triple-store-discovery.md) as the next `TSD-`*n*, for a store. Otherwise the unit's status record until a register owns it |
-| a facet value an entry needs and the scheme lacks | [`docs/developer/facets.md`](../../../docs/developer/facets.md), as a row in its scheme's table with Ratified no, never in generated Turtle. Tag the entry with it in the same change |
+| a facet value an entry needs and the scheme lacks | a project facets file named by `facets` in `vyvid.toml`, as a row with Ratified no, or Вивід's general scheme through its side. Tag the entry with it in the same change |
 | a rule a skill states, so the index can rank it | the standard register, as a row whose Pointer is the skill's section, with Ratified no |
 
 The row for an answer found by falling back from the index is STD-272. For a store, the next row of the discovery record is the next `TSD-`*n*.

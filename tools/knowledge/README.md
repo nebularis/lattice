@@ -52,7 +52,7 @@ A register is a Markdown table whose column headers map to properties of Вив�
 
 ## Facets
 
-A facet is a closed set of values a register entry is tagged with, in its Activity, Quality and Technology columns ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) decisions 24 and 25). The [facet register](../../docs/developer/facets.md) is the source. Вивід's packaged general scheme carries the same three schemes, identical to the register row for row on 2026-11-05, and `vyd build` reads them as SKOS.
+A facet is a closed set of values a register entry is tagged with, in its Activity, Quality and Technology columns ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md) decisions 24 and 25). The values are Вивід's general scheme. LATTICE's facet register was identical to it row for row and was removed on 2026-11-05 (ADR-A152 decision 1). A value LATTICE needs which the scheme lacks goes in a project facets file named by `facets` in `vyvid.toml`.
 
 | Facet | Says | Follows |
 |---|---|---|
@@ -62,7 +62,7 @@ A facet is a closed set of values a register entry is tagged with, in its Activi
 
 Each facet follows a published division of its field, so it covers the field rather than this repository's habits and needs few additions. The definitions are our own words, and no value names private work.
 
-Each column of a scheme's table is the SKOS property that states its meaning: Label `skos:prefLabel`, Broader `skos:broader`, Related `skos:related`, Definition `skos:definition` and Scope note `skos:scopeNote`. A value with no broader value is a top concept of its scheme. Group yes is the editorial note "group", and Ratified no the editorial note "proposed".
+The scheme is SKOS, and a value's label, definition, scope note, broader and related values are its properties.
 
 **Tagging.** An entry takes one to three values of Activity and of Quality, and as many of Technology as it is specific to, always the most specific value that fits. A value may have several broader values, as SKOS allows, so Java is both a language and a platform. A group value organises the others and is never tagged. A question's value matches an entry's when one lies on the other's broader chain, so a mismatch hides nothing. A value outside its scheme is reported, never stored, since a forked vocabulary makes every filter unreliable and nothing would say so.
 
