@@ -147,7 +147,7 @@ def main() -> int:
     output = Path(request["output"])
     output.mkdir(parents=True, exist_ok=True)
     ox.serialize(quads, output=str(output / "quads.nq"), format=ox.RdfFormat.N_QUADS)
-    (output / "result.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+    (output / "result.json").write_text(json.dumps(result, indent=1), encoding="utf-8", newline="\n")
     return 0
 
 
