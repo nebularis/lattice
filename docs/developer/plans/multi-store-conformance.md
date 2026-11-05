@@ -35,7 +35,7 @@ Our generated SPARQL is tested on Oxigraph by default and on rdflib before a mer
 
 ## Rules for whoever builds it
 
-- Read `AGENTS.md` and the skills it names, `lattice-triple-stores`, `lattice-testing`, `lattice-toolchain`, `lattice-lifecycle` and `lattice-publication-hygiene` above all, and follow any private overlay `AGENTS.md` describes.
+- Read `AGENTS.md` and the skills it names, `lattice-probing`, `lattice-testing`, `lattice-mise`, `lattice-lifecycle` and `lattice-publication-hygiene` above all, and follow any private overlay `AGENTS.md` describes.
 - Ask the knowledge index before every design, query or test decision, more than once, with `--kind discovery`, `--kind standard --activity query-writing` and `--tech sparql,jena` among the questions. Start with `read` on TSD-04, TSD-10, TSD-18, TSD-40, TSD-41, TSD-42, TSD-43, STD-153, STD-173, STD-176, STD-274 and the STD-279 replacement, CAP-55, CAP-85, CAP-90. Report misses at each handoff and add what the fallback found to its register (STD-272).
 - Every command through `mise run` or `mise exec --`. Java 25 and Maven 3.9 come from mise.
 - One Validation Pack per slice, `docs/developer/validation/multi-store-conformance-msc<n>.md`, with test ids, exact commands, real results and an adversarial probe (break a pattern, never `FILTER(false)`). About 15 tests or more than two modules means split the slice.

@@ -18,7 +18,7 @@ A measured read-only open of 24 ms is why the knowledge index has no server (TSD
 
 ## Writing a sketch or a plan
 
-`graph:ask -- reaches <ID>` names what an entry touches. A plan's header declares the unit's slice prefix, `**Prefix:** CCS` (STD-303, STD-304). A design that depends on how a triple store evaluates SPARQL cites the finding in [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on (skill `lattice-triple-stores`). A design that generates a query states its cost in the terms of [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md).
+`graph:ask -- reaches <ID>` names what an entry touches. A plan's header declares the unit's slice prefix, `**Prefix:** CCS` (STD-303, STD-304). A design that depends on how a triple store evaluates SPARQL cites the finding in [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md) it rests on (skill `lattice-probing`). A design that generates a query states its cost in the terms of [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md).
 
 ## Presenting a question to the maintainer
 

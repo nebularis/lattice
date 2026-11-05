@@ -456,6 +456,24 @@ def test_vm4_01_the_work_check_runs_under_a_git_hooks_environment(work_repo: Pat
     assert work_messages(work_repo, rel) == []
 
 
+def test_vm5_01_the_skills_check_skips_with_a_note_where_vyd_is_absent(monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    change = hooks.Change(ROOT, (".claude/skills/lattice-lifecycle/SKILL.md",), False)
+    assert hooks.vyd("check", "skills")(change, []) == []
+    out = capsys.readouterr().out
+    assert "`vyd check skills` was skipped" in out and "mise run bootstrap" in out
+
+
+def test_vm5_02_the_skills_check_passes_on_this_checkout() -> None:
+    if shutil.which("vyd") is None:
+        pytest.skip("vyd is not installed")
+    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, timeout=60, cwd=ROOT).stdout
+    if "is not trusted" in config or "projects: none" in config:
+        pytest.skip("the binding is not trusted here, run `vyd trust` in the checkout")
+    change = hooks.Change(ROOT, (".claude/skills/lattice-lifecycle/SKILL.md",), False)
+    assert hooks.vyd("check", "skills")(change, []) == []
+
+
 # ---- VM-2: the index hooks over vyd, an absent tool skips and never blocks (ADR-A152 decision 4) ----
 
 PROBE_PROJECT = """[project]

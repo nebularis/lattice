@@ -100,7 +100,7 @@ What the default run no longer does: run the rdflib case of an `each_engine` tes
 - `CURRENT` is the first engine named, so the conformance run executes tests without `each_engine` on rdflib, and the default run on Oxigraph.
 - A missing Oxigraph still skips its cases (the original behaviour, which `test_h2_4b_t12` asserts). `check:persistence` depends on the bootstrap, so a build has it.
 - `check:persistence-conformance` runs the whole suite with no marker filter, so the engine-independent tests run a second time (about 40 s). A narrower filter (`conformance or oxigraph or rdflib`) would save that and miss the non-engine tests that now run on rdflib first, so the simpler form was kept.
-- `.claude/skills/**`, the ADR, plans and status records were not edited, as asked. The skills `lattice-toolchain` (line 34) and `lattice-triple-stores` (line 61) still name `check:persistence-oxigraph`.
+- `.claude/skills/**`, the ADR, plans and status records were not edited, as asked. The skills `lattice-mise` (line 34) and `lattice-probing` (line 61) still name `check:persistence-oxigraph`.
 
 ## Findings
 

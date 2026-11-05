@@ -98,7 +98,7 @@ Written 2026-10-21 for ES-0 and ES-1, once ES-Q1 and ES-Q4 to ES-Q9 were answere
 briefed after the C4 model and ADR-A130's acceptance, since ES-3's contract is the evaluator's
 interface (the evaluator implementation plan's EV-0). A builder that meets a question the brief does
 not answer stops, records it in the Validation Pack and the status record, and goes on with what does
-not depend on it. Skills: `lattice-ontology-authoring`, `lattice-toolchain`, `lattice-testing`,
+not depend on it. Skills: `lattice-ontology-authoring`, `lattice-mise`, `lattice-testing`,
 `lattice-publication-hygiene`.
 
 ### The vocabulary, for ES-0 and ES-1

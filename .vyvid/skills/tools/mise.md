@@ -13,7 +13,7 @@ ADR-A29 makes `mise` the one entry point. A `check:*` task that reads an artefac
 | Java under `platform/` | `check:java` |
 | an app under `apps/` | `check:frontend`, then `test:frontend` |
 | a formal-methods artefact | `check:formal-freshness`, and `check:proofs` where Isabelle is installed |
-| generated SPARQL, or a test that runs it on an engine | `check:persistence` on Oxigraph, and `check:persistence-conformance` on every engine before a merge (skill `lattice-triple-stores`) |
+| generated SPARQL, or a test that runs it on an engine | `check:persistence` on Oxigraph, and `check:persistence-conformance` on every engine before a merge (skill `lattice-probing`) |
 | a benchmark under `benchmark/` | its own `check:<area>-<topic>`, run on demand, never part of `check` (ADR-A124) |
 | `AGENTS.md` or a skill | `build:agent-guidance`, then `check:agent-guidance`. The "Where things are" table in `AGENTS.md` is generated from `repository-catalogue.md`, so edit a root, tool package or documentation area there |
 | a root, a tool package, a documentation area or a generated path | `repository-catalogue.md`, giving a new root or documentation area a `name` code asks for it by (see [Finding paths](#finding-paths)), then `build:agent-guidance` and `check:catalogue` |

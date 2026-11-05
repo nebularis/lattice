@@ -3,7 +3,7 @@ Grounded in the `python-test-melting` unit (2026-10-09), which took the ontology
 ## The defaults for every suite
 
 - **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
-- **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-toolchain`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
+- **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-mise`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
 
 - **Oxigraph runs the generated SPARQL.** A behaviour test that executes generated SPARQL runs on the default engine, Oxigraph (ADR-A125, addendum of 2026-10-21). rdflib stays the library the tools and pySHACL are built on.
 

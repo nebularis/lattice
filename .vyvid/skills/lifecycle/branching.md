@@ -1,6 +1,6 @@
 ## The hooks
 
-`mise run bootstrap` installs the hooks ([ADR-A133](../../../docs/architecture/decisions/ADR-A133-git-hooks.md)). The commit checks and merge gates are named in the skill `lattice-toolchain`. After any merge the `post-merge` hook runs `build:knowledge`. `LATTICE_HOOKS_SKIP` skips named checks, as `LATTICE_HOOKS_SKIP=links,writing` does, and `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
+`mise run bootstrap` installs the hooks ([ADR-A133](../../../docs/architecture/decisions/ADR-A133-git-hooks.md)). The commit checks and merge gates are named in the skill `lattice-mise`. After any merge the `post-merge` hook runs `build:knowledge`. `LATTICE_HOOKS_SKIP` skips named checks, as `LATTICE_HOOKS_SKIP=links,writing` does, and `mise run check:hooks` tests the dispatcher (`tools/hooks.py`) and the writing rules (`tools/writing_rules.py`).
 
 | a commit | the checks the staged files touch: the deny-list, literate freshness per module, agent guidance, the catalogue, the import guard, links in the touched Markdown, formal freshness, the site's copies and the writing rules. Published decisions and hard wraps warn |
 | a merge into `main` (a clean merge, or a commit on `main` while a merge or a squash is in progress) | the same checks over every file the merge changes, all blocking but the writing rules, plus published decisions over the whole tree and ontology versioning. `mise run hooks:merge` runs this by hand, for example before merging on GitHub |

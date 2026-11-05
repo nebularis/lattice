@@ -26,7 +26,7 @@ It reads the first of these that exists, and passes when none does:
 2. `${XDG_CONFIG_HOME:-~/.config}/lattice/deny-terms` on macOS and Linux
 3. `%APPDATA%\lattice\deny-terms` on Windows
 
-It is one of the checks the commit hook runs, which `mise run bootstrap` installs (ADR-A133, skill `lattice-toolchain`).
+It is one of the checks the commit hook runs, which `mise run bootstrap` installs (ADR-A133, skill `lattice-mise`).
 
 ## The private overlay
 

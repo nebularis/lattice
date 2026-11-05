@@ -330,6 +330,8 @@ def checks() -> list[Check]:
         Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
                               "docs/architecture/triple-store-discovery.md"),
               vyd("check", "identifiers")),
+        # The composed skills held to their sources by Вивід (ADR-A152 decision 5, plan vyvid-migration, VM-5).
+        Check("skills", (".claude/skills/*", ".vyvid/*", "vyvid.toml"), vyd("check", "skills")),
         # The work board (plan work-board, WB-4): the staged status records held to the ladder and the grammar, and
         # INDEX.md's region to the records, by Вивід (ADR-A152, plan vyvid-migration, VM-4).
         Check("work", ("docs/developer/status/*", "docs/developer/INDEX.md"), vyd("work", "check", "--staged")),

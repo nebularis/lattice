@@ -601,7 +601,7 @@ Left for the maintainer:
   unsafe on Oxigraph and R1 the other way round (P1 and P2), corrected in the sketch, (4) the spike's own checks had been failing since FMH-2.2, and are repaired.
   `check:persistence` gave `2111 passed, 1 xfailed`. Five implementation probes, all caught.
 - 2026-10-13: began [docs/architecture/triple-store-discovery.md](../../architecture/triple-store-discovery.md), the project's record of
-  how each triple store behaves (TSD-01 to TSD-14), with skill `lattice-triple-stores` and pointers from AGENTS.md, the testing,
+  how each triple store behaves (TSD-01 to TSD-14), with skill `lattice-probing` and pointers from AGENTS.md, the testing,
   toolchain and design skills, the docs site and the plugin marketplace. Writing it found that FMH-2.4b's P1 was wrong about rdflib: rdflib
   applies an update one solution at a time, in an order that follows `PYTHONHASHSEED` (`evalJoin` puts the solutions in a Python `set`),
   so the probe's answer changed by process and its test failed `check:persistence` in 2 of 3 runs. The test now sweeps seeds in child

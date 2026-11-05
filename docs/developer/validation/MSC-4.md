@@ -103,4 +103,4 @@ No other ratio or duration assertion exists. P3 was the only one.
 `mise run graph:ask -- misses` reports none recorded. Weak answers I met.
 
 - `find` with `--kind discovery --tech sparql` for the left-join cost ranked TSD-42 first, but a question on where cost probes belong (check or benchmark) returned CAP-55, CAP-57 and STD-044, none of which says that a timing assertion must not sit in `check`. ADR-A124 says it, and no standard states it. A standard for it (STD-290 onward is reserved) would make the index answer it.
-- The skill `lattice-triple-stores` (line 52) still says to turn a probe into a test under `test_store_probes.py`. A cost probe goes to a benchmark now, which the skill does not say. The skill is the lead's to edit.
+- The skill `lattice-probing` (line 52) still says to turn a probe into a test under `test_store_probes.py`. A cost probe goes to a benchmark now, which the skill does not say. The skill is the lead's to edit.
