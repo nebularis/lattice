@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 to VM-4 built, VM-1 and VM-3 verified, ADR-A152 accepted, trust point 3 run. VM-4 waits at its gate, with every other branch paused until the unit merges.
+**Status:** building 2026-11-05. VM-0 to VM-4 built, VM-1 and VM-3 verified, ADR-A152 accepted, trust point 3 run. VM-4 waits at its gate and VM-5 is building, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -17,7 +17,7 @@
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | built 2026-11-05, building 2026-11-05 |  |
-| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | planned | VM-4 |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | planned | VM-5 |
 
 ## Next action
