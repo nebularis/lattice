@@ -64,7 +64,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-05 | WL-0 | 7 built, 1 building | fix/studio-worker-heartbeat |
+| [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-05 | WL-0 | 8 built | fix/studio-worker-heartbeat |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
@@ -427,7 +427,7 @@ gantt
     WL-4 the held result reconnecting :wl4, 2026-11-05, 2026-11-06
     WL-5 short jobs past long ones :wl5, 2026-11-05, 2026-11-06
     WL-6 a view that attaches to its ru :wl6, 2026-11-05, 2026-11-06
-    WL-7 the status warning studio st :active, wl7, 2026-11-05, 2026-11-06
+    WL-7 the status warning studio st :wl7, 2026-11-05, 2026-11-06
 ```
 
 ```mermaid
@@ -781,7 +781,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | remote only | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | remote only | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | remote only | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 16 | local ahead 1, not pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | remote only | no mark |
 | `persistence-mbt` | 2026-09-23 | 191 | remote only | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | remote only | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
@@ -835,7 +835,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 98 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 99 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
