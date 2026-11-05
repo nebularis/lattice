@@ -162,6 +162,8 @@ export class FakeService {
   readonly submitted: Submitted[] = [];
   readonly deletedJobs: string[] = [];
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
+  /** Kinds of job that never finish, as a proposal that waits on a model does not (plan studio-worker-liveness). */
+  readonly hold = new Set<string>();
   private next = 1;
 
   async install(page: Page): Promise<void> {
@@ -192,6 +194,9 @@ export class FakeService {
     const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : job.kind === "dry-run" ? "DryRunJob" : "Compile";
     const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
+    if (this.hold.has(job.kind)) {
+      return `${PREFIX}${head} ; cst:status cst:Running .\n`;
+    }
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;

@@ -745,6 +745,11 @@ description = "Start each declared studio topology of test/studio-integration on
 depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
 run = "python -m pytest test/studio-integration -q -s -m studio_integration"
 
+[tasks."studio:liveness"]
+description = "Run the studio worker through a job longer than the broker's heartbeat, a job it lost and a message it cannot read, against a broker of the harness whose heartbeat is two seconds (plan studio-worker-liveness, WL-1). Needs the jars built under platform/*/target, as studio:integration does. On demand, never a dependency of check"
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+run = "python -m pytest test/studio-integration/test_worker_liveness.py -q -s -m studio_liveness"
+
 [tasks."studio:status"]
 description = "Show what studio:up started and which of the studio's ports are listening"
 run = "python tools/config_studio_stack.py status"

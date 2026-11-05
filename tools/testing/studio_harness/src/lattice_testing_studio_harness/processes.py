@@ -106,6 +106,8 @@ class ProcessStudio(Studio):
             "LATTICE_AMQP_URI": stack.amqp_uri(password), "LATTICE_STUDIO_ASSETS": str(assets),
             "LATTICE_ROOT": str(self.root),
         }
+        self.env = env
+        self.fuseki_url = env["LATTICE_FUSEKI_URL"]
         writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": stack.stream_uri(password)}
         service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth,
                        "LATTICE_STUDIO_EVENTS_URL": f"wss://127.0.0.1:{web_mqtts}/ws", "LATTICE_STUDIO_BROKER_SECRET": secret}
@@ -182,11 +184,58 @@ class ProcessStudio(Studio):
             time.sleep(0.5)
         raise HarnessError(f"fewer than {want} workers consume lattice.studio.jobs")
 
-    def consumers(self, queue: str) -> int:
+    # --- workers of a test's own --------------------------------------------------------------
+
+    WORKER_CODE = "from lattice_workers.config_studio_main import main; main()"
+
+    def start_worker(self, name: str, env: Optional[Dict[str, str]] = None, code: Optional[str] = None) -> None:
+        """Starts a worker the topology did not, as the process `name`. `env` is added to the workers' environment, for example
+        `LATTICE_AMQP_URI` with `?heartbeat=2` to shorten the broker's timeout, and `code` replaces the worker's entry point with a
+        program of the test's own, which a test uses to patch the worker before it runs (a slow job). Stopped with the run."""
+        self.stack.spawn(name, [sys.executable, "-c", code or self.WORKER_CODE], self._worker_env({**self.env, **(env or {})}))
+        self._track(name)
+
+    def stop_worker(self, name: str, kill: bool = False) -> None:
+        """Stops a worker started with `start_worker`, through its shutdown, or with `kill` at once, as a crash would."""
+        pid = self.pids.pop(name, None)
+        if pid is None:
+            return
+        if kill:
+            os.kill(pid, 9)
+            self.stack._pid_file(name).unlink(missing_ok=True)
+        else:
+            self.stack.stop(name)
+
+    def worker_running(self, name: str) -> bool:
+        return self.stack.pid(name) is not None
+
+    def log(self, name: str) -> str:
+        """The log of a process of the run, such as `worker-1`, `service` or `writer-1`."""
+        path = self.stack.run / f"{name}.log"
+        return path.read_text(errors="replace") if path.exists() else ""
+
+    def broker_log(self) -> str:
+        """What the run's RabbitMQ node logged, which names a connection it closed for missed heartbeats."""
+        folder = self.stack.infra / "rabbitmq" / "log"
+        return "\n".join(p.read_text(errors="replace") for p in sorted(folder.glob("*.log"))) if folder.exists() else ""
+
+    def amqp_uri(self, **parameters: str) -> str:
+        """The broker's URI for a client of the run, with query `parameters` such as `heartbeat=2`."""
+        base = self.env["LATTICE_AMQP_URI"]
+        return base + ("?" + "&".join(f"{k}={v}" for k, v in parameters.items()) if parameters else "")
+
+    def ctl(self, *args: str) -> str:
+        """The output of `rabbitmqctl` against the run's node."""
         ctl = self.stack.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if stack_module.WINDOWS else "rabbitmqctl")
-        out = subprocess.run(stack_module.command([str(ctl), "-n", self.stack.rabbitmq_node, "list_queues", "name", "consumers", "--formatter", "csv", "--silent"]),
-                             env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True).stdout
-        return queue_consumers(out, queue)
+        return subprocess.run(stack_module.command([str(ctl), "-n", self.stack.rabbitmq_node, *args]),
+                              env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True).stdout
+
+    def consumers(self, queue: str) -> int:
+        return queue_consumers(self.ctl("list_queues", "name", "consumers", "--formatter", "csv", "--silent"), queue)
+
+    def purge(self, queue: str) -> None:
+        """Drops every message of `queue`, so one test's leftovers do not reach the next."""
+        self.ctl("purge_queue", queue)
 
     # --- stop ----------------------------------------------------------------------------------
 

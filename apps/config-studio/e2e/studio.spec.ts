@@ -520,3 +520,21 @@ test("the instrument view shows terms in their tier and regimes as state machine
   // Nothing was saved into any part.
   expect(fake.workspaces.get([...fake.workspaces.keys()][0])!.graphs.meaning).not.toContain("DryRun");
 });
+
+test("a validation still running when the author leaves the workspace and comes back is not submitted again", async ({ page }) => {
+  // RC5 of plan studio-worker-liveness. Today each mount of the workspace submits its validations afresh, and the old closures go on
+  // polling, so jobs stack behind a long one. WL-6 attaches the view to the job it has, and this test then loses its `fail`.
+  test.fail();
+  const fake = new FakeService();
+  fake.hold.add("validate");
+  const ws = await lendingWorkspace(page, fake);
+  const validations = () => fake.submitted.filter((j) => j.kind === "validate").length;
+  await page.waitForTimeout(1500);
+  const first = validations();
+  expect(first).toBeGreaterThan(0);
+  await page.goto("/#/");
+  await page.goto(`/#/w/${ws}`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(validations()).toBe(first);
+});
