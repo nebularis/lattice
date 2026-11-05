@@ -143,9 +143,48 @@ public final class StudioApi {
         });
     }
 
-    /** What the start found that an administrator should know, which the studio shows (PM-Q3). */
+    /** What the start found that an administrator should know, which the studio shows (PM-Q3), and which queue has no worker now. */
     public List<String> warnings() {
-        return List.copyOf(warnings);
+        List<String> all = new java.util.ArrayList<>(warnings);
+        all.addAll(workerWarnings());
+        return List.copyOf(all);
+    }
+
+    /** How long the answer about the workers is kept, so a studio polling its status costs the broker one declare a queue in this time. */
+    private static final Duration WORKER_CHECK_EVERY = Duration.ofSeconds(10);
+    private final java.util.Map<String, long[]> consumerChecks = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * A warning for each queue of jobs that no worker consumes, so the author is told that a job waits and why, and the operator which
+     * worker to start (plan studio-worker-liveness, WL-Q6). A bus that cannot count consumers gives none. A queue that cannot be read
+     * gives none either, since a warning that cannot be checked would be a guess.
+     */
+    List<String> workerWarnings() {
+        List<String> out = new java.util.ArrayList<>();
+        for (String[] lane : new String[][] {
+            {org.nebularis.lattice.studio.jobs.Topology.JOBS_QUEUE, "validations, compilations and the rest", "mise run studio:worker"},
+            {org.nebularis.lattice.studio.jobs.Topology.JOBS_LONG_QUEUE, "proposals by a language model and publications", "mise run studio:worker-long"}}) {
+            long[] last = consumerChecks.computeIfAbsent(lane[0], k -> new long[] {Long.MIN_VALUE, -1});
+            synchronized (last) {
+                long now = System.nanoTime();
+                if (last[0] == Long.MIN_VALUE || now - last[0] > WORKER_CHECK_EVERY.toNanos()) {
+                    try {
+                        last[1] = bus.consumers(lane[0]);
+                    } catch (Exception e) {
+                        if (e instanceof InterruptedException) {
+                            Thread.currentThread().interrupt();
+                        }
+                        LOG.debug("the consumers of {} could not be counted", lane[0], e);
+                        last[1] = -1;
+                    }
+                    last[0] = now;
+                }
+                if (last[1] == 0) {
+                    out.add("No worker consumes " + lane[0] + ", so " + lane[1] + " wait. Start one with `" + lane[2] + "`.");
+                }
+            }
+        }
+        return out;
     }
 
     /**
@@ -475,7 +514,7 @@ public final class StudioApi {
 
     /** The warnings the start found, which the studio shows (PM-Q3), as {@code {"warnings": [...]}}. */
     private ApiResponse status() {
-        String json = warnings.stream().map(w -> "\"" + w.replace("\\", "\\\\").replace("\"", "\\\"") + "\"").collect(Collectors.joining(","));
+        String json = warnings().stream().map(w -> "\"" + w.replace("\\", "\\\\").replace("\"", "\\\"") + "\"").collect(Collectors.joining(","));
         return new ApiResponse(200, Map.of("Content-Type", "application/json"), ("{\"warnings\":[" + json + "]}").getBytes(StandardCharsets.UTF_8));
     }
 

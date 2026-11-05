@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -18,11 +18,11 @@
 | WL-4 | the held result, reconnecting with a backoff | built 2026-11-05 |  |
 | WL-5 | short jobs past long ones | built 2026-11-05 |  |
 | WL-6 | a view that attaches to its running job, no stacked validations | built 2026-11-05 |  |
-| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | building 2026-11-05 |  |
+| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | built 2026-11-05 |  |
 
 ## Next action
 
-Build WL-2 to WL-7 in order, each marked `building` before its first edit. The Validation Pack is [studio-worker-liveness](../validation/studio-worker-liveness.md).
+The maintainer verifies the unit and merges it. The Validation Pack is [studio-worker-liveness](../validation/studio-worker-liveness.md).
 
 ## History
 
@@ -42,3 +42,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-6 picked up, building.
 - 2026-11-05: WL-6 built. `GET /api/workspaces/{ws}/jobs?unfinished=true` is the new read. `awaitJob` ends on an abort signal, a validation's hook aborts when the workspace view goes and deletes its job, and the proposal views and the publication view attach to the unfinished job of their kind when they open. Two adversarial probes failed the new tests as they should. The worker acknowledges a job the store no longer holds. Not driven by a browser: the publication view's attach and the mapping proposal's.
 - 2026-11-05: WL-7 picked up, building.
+- 2026-11-05: WL-7 built. `/api/status` warns of a queue no worker consumes, the studio reads its warnings every half minute, the Build view counts a queued job's wait, and `studio:status` names a part that has ended with the last line of its log. The operations guide, the runbook, the worker's README, the contract, MEC-95 and an amendment to ADR-A136 (Proposed) describe the worker. The whole unit is built. TD-131 and TD-141 left the register with the plan.

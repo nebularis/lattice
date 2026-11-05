@@ -570,3 +570,13 @@ test("a proposal by a language model that is running when the author leaves the 
   fake.hold.clear();
   await expect(page.getByRole("status", { name: "Propose outcome" }).getByText("proposal added from language-model")).toBeVisible({ timeout: 15_000 });
 });
+
+test("a queue no worker consumes is reported to the author, who can dismiss it, and a new warning shows", async ({ page }) => {
+  const fake = new FakeService();
+  fake.warnings = ["No worker consumes lattice.studio.jobs.long, so proposals by a language model and publications wait. Start one with `mise run studio:worker-long`."];
+  await lendingWorkspace(page, fake);
+  const warning = page.getByRole("status").filter({ hasText: "The studio has warnings" });
+  await expect(warning).toContainText("No worker consumes lattice.studio.jobs.long");
+  await warning.getByRole("button", { name: "Dismiss" }).click();
+  await expect(warning).toHaveCount(0);
+});

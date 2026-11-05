@@ -24,6 +24,14 @@ public interface JobBus extends AutoCloseable {
         return null;
     }
 
+    /**
+     * How many workers consume {@code queue}, or -1 when the bus cannot say, as one without a broker cannot. The studio warns when a
+     * queue it publishes to has none (plan studio-worker-liveness, WL-Q6).
+     */
+    default int consumers(String queue) throws Exception {
+        return -1;
+    }
+
     @Override
     default void close() {
     }

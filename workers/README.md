@@ -48,7 +48,9 @@ mise run check:workers
 
 The worker behind the Configuration Studio, a supported part of LATTICE (ADR-A136). It reads a job graph from Fuseki, validates or compiles the submitted vocabulary, quantification, eligibility, persistence or surface configuration against a baseline, and sends the job graph back with its status, report, artefacts and gaps as a `job-update` to the workspace's store writer, never writing the store itself. The contract is in [`contracts/config-studio`](../contracts/config-studio/README.md). Install the extra with `-e "./workers[test,studio]"`.
 
-The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lattice.studio.jobs`.
+The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lattice.studio.jobs`, or the queue `LATTICE_WORKER_QUEUE` names. `lattice.studio.jobs.long` takes the jobs that last minutes, a proposal by a language model and a publication, which the service routes there by kind, so a validation never waits behind one. Run one worker for each queue (`mise run studio:worker`, `studio:worker-long`).
+
+The worker runs each job on a thread of its own and keeps every broker call on the connection's thread, so the broker's heartbeats are answered however long a job takes. It reads a job's graph before it runs it: a job already finished is left alone, one found `Running` was left by a worker that stopped and is written `Failed`, and one that names no workspace is rejected. When the connection is lost it connects again with a backoff and takes the message the broker delivers again for the job in hand, holding a finished result until it can publish it (`config_studio_consumer.py`).
 
 `config_studio_proposers.py` holds the contract builder's proposers and the `propose` job (ADR-A138 decision 5): the `Proposer` interface, the sentence-form proposer, and the language-model proposer with a pack the deployment supplies, configured as the [operations guide](../docs/operator/configuration-studio-operations.md) describes. Both language model proposers reach their model through `llm_providers.py`, the `LLMProvider` interface with a Chat Completions provider and an Anthropic one, chosen by `LATTICE_PROPOSER_PROVIDER`. `config_studio_dryrun.py` holds the dry run (ADR-A138 decision 7): a stated term's eligibility conditions decided over sample facts by their compiled SPARQL. `config_studio_assembly.py` holds the contract builder's jobs (ADR-A138): `assemble_all`, which runs `tools/wording_assembler` on each `cst:Assembly` of an `assemble` job's input and gives the job's findings and artefacts and the records its update writes, and `validate_library`, which checks each form of the library against Wording's laws.
 
@@ -56,8 +58,9 @@ The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lat
 |---|---|
 | `config_studio_jobs.py` | `run_job(...)`: the pure job logic, pySHACL validation and the persistence and surface compilers, run in process. Ontology files are found through the repository catalogue reader. Surface validation skips `constraints.ttl`, which pySHACL refuses (TD-11) |
 | `config_studio_layers.py` | the vocabulary resolution table, by `tools/vocabulary`'s resolver, and eligibility's compilation, expansion and question decisions, by `tools/mork_compilers`' IR and compiled SPARQL |
+| `config_studio_consumer.py` | `Consumer`: the connection thread and a thread for each job, the held result, the backoff, and the acknowledgement. It reaches the broker through a `BrokerSession`, so its rules are tested without one |
 | `config_studio_worker.py` | `TOPOLOGY` (the packaged `config-studio-topology.json`, identical to the contract's), `ConfigStudioWorker` (`accept`, `handle`), `WriterStore`, which reads from Fuseki and publishes each job graph to `lattice.studio.writes` keyed by its workspace, `RabbitMqConfigStudioWorker` (ack after the broker confirms the final update, nack without requeue on a malformed message, nack with requeue and re-raise on anything else) |
-| `config_studio_main.py` | `read_config(env)` and `main()`: connects with retry, declares the topology and the writes exchange, publishes on a channel in confirm mode, consumes with manual ack and `prefetch_count=1` |
+| `config_studio_main.py` | `read_config(env)`, `PikaSession` (the one place pika is touched) and `main()`: declares the topology and the writes exchange, publishes on a channel in confirm mode, consumes with manual ack and `prefetch_count=1`, logs each job, and stops after the job in hand on the first signal |
 
 | Variable | Required | Default |
 |---|---|---|
@@ -66,8 +69,9 @@ The runnable job: `python -m lattice_workers.config_studio_main`, consuming `lat
 | `LATTICE_FUSEKI_DATASET` | no | `studio` |
 | `LATTICE_FUSEKI_USER` | no | none |
 | `LATTICE_FUSEKI_PASSWORD` | no | none |
+| `LATTICE_WORKER_QUEUE` | no | `lattice.studio.jobs` |
 | `LATTICE_ROOT` | no | found from the working directory by the catalogue reader |
 
 `LATTICE_AMQP_URI`, `LATTICE_FUSEKI_PASSWORD` and `LATTICE_PROPOSER_KEY` may each be read from a file instead, by setting `NAME_FILE` to its path (`config_studio_secrets.py`, and the [operations guide](../docs/operator/configuration-studio-operations.md#secrets-in-files)).
 
-Tests: `mise exec -- python -m pytest workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py`.
+Tests: `mise exec -- python -m pytest workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_layers.py workers/tests/test_config_studio_consumer.py`. `mise run studio:liveness` runs the worker against a real broker whose heartbeat is two seconds.

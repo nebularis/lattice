@@ -65,6 +65,19 @@ public final class RabbitJobBus implements JobBus {
         channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
     }
 
+    /** A passive declare on a channel of its own, since the broker closes the channel of one that finds no queue. */
+    @Override
+    public int consumers(String queueName) throws IOException, TimeoutException {
+        Channel probe = connection.createChannel();
+        try {
+            return probe.queueDeclarePassive(queueName).getConsumerCount();
+        } finally {
+            if (probe.isOpen()) {
+                probe.close();
+            }
+        }
+    }
+
     @Override
     public byte[] transform(String id, String jobIri, String mediaType, byte[] sample, Duration timeout) throws Exception {
         CompletableFuture<byte[]> reply = new CompletableFuture<>();

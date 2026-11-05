@@ -166,6 +166,8 @@ export class FakeService {
   readonly hold = new Set<string>();
   /** Whether a language model is configured, so that a proposal by it succeeds. */
   modelConfigured = false;
+  /** What the service's status reports, such as a queue no worker consumes. */
+  warnings: string[] = [];
   private next = 1;
 
   async install(page: Page): Promise<void> {
@@ -237,7 +239,7 @@ export class FakeService {
     // the service's local authentication with one developer signed in, as `mise run studio:up` gives (ADR-A149 decision 9)
     const json = (body: unknown) => route.fulfill({ status: 200, body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
     if (parts[0] === "session") return json({ provider: "local", principal: "developer", admin: true, principalOption: ["developer"], administrator: ["developer"] });
-    if (parts[0] === "status") return json({ warnings: [] });
+    if (parts[0] === "status") return json({ warnings: this.warnings });
     if (parts[0] === "features") return json({ features: [] });
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));

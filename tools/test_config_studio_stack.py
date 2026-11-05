@@ -142,3 +142,25 @@ def test_the_compose_broker_publishes_on_loopback_alone_and_never_has_guest() ->
     ports = [line.strip() for line in (root / "docker-compose.desktop.yml").read_text().splitlines() if line.strip().startswith('- "')]
     assert ports and all(p.startswith('- "127.0.0.1:') for p in ports)
     assert "network_mode: host" in (root / "docker-compose.host-network.yml").read_text()
+
+
+def test_a_process_that_ended_on_its_own_is_reported_with_the_last_line_of_its_log(tmp_path: Path) -> None:
+    studio = stack.Stack(lattice_repo_catalogue.find_root())
+    studio.run = tmp_path
+    dies = "import sys; print('starting'); print('ValueError: the job names no workspace'); sys.exit(1)"
+    pid = studio.spawn("worker", [sys.executable, "-c", dies])
+    deadline = time.monotonic() + 10
+    while stack.alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.1)
+    said = studio.describe("worker", studio.pid("worker"))
+    assert said == "exited, last line of its log: ValueError: the job names no workspace"
+    assert studio.describe("transforms", studio.pid("transforms")) == "not started here"
+    assert studio.describe("worker", 123) == "running as 123"
+
+
+def test_the_last_line_skips_blank_ones_and_says_when_there_is_no_log(tmp_path: Path) -> None:
+    (tmp_path / "x.log").write_text("one\n\ntwo\n\n", encoding="utf-8")
+    assert stack.last_line(tmp_path / "x.log") == "two"
+    (tmp_path / "empty.log").write_text("\n", encoding="utf-8")
+    assert stack.last_line(tmp_path / "empty.log") == "(empty)"
+    assert stack.last_line(tmp_path / "none.log") == "(no log)"

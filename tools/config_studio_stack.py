@@ -449,7 +449,17 @@ class Stack:
             pid = self.pid(name)
             port = ports.get(name)
             serving = "" if port is None else (f", listening on {port}" if listening(port) else f", not listening on {port}")
-            print(f"{name}: {'running as ' + str(pid) if pid else 'not started here'}{serving}")
+            print(f"{name}: {self.describe(name, pid)}{serving}")
+
+    def describe(self, name: str, pid: Optional[int]) -> str:
+        """`running as {pid}`, or for a process this script started that has since ended, that it exited and the last line of its log, since
+        a worker that stops on its own is otherwise silent and the jobs behind it wait (plan studio-worker-liveness, RC6). Nothing started
+        here reads `not started here`."""
+        if pid:
+            return f"running as {pid}"
+        if not self._pid_file(name).exists():
+            return "not started here"
+        return f"exited, last line of its log: {last_line(self.run / f'{name}.log')}"
 
 
 # --- platform helpers ----------------------------------------------------------------------------
@@ -466,6 +476,15 @@ def data_dir(env: Dict[str, str], platform: str = sys.platform) -> Path:
     if platform == "darwin":
         return home / "Library" / "Application Support" / "LATTICE" / "studio"
     return Path(env.get("XDG_DATA_HOME") or home / ".local" / "share") / "lattice" / "studio"
+
+
+def last_line(log: Path) -> str:
+    """The last line of `log` that says something, or `(no log)`. A log of a worker ends in the line that tells why it stopped."""
+    try:
+        lines = [line.strip() for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    except OSError:
+        return "(no log)"
+    return lines[-1][:300] if lines else "(empty)"
 
 
 def write_private(path: Path, text: str) -> None:

@@ -108,4 +108,48 @@ class LanesTest {
         assertTrue(listed.getResource(proposal).hasProperty(Cst.startedAt));
         assertFalse(new String(f.send("GET", PATH, "unfinished=true", java.util.Map.of(), new byte[0]).body()).contains("example.org/cfg"), "an input is not listed");
     }
+
+    /** A bus that counts the consumers of each queue as the test says. */
+    private static final class Counting implements org.nebularis.lattice.studio.jobs.JobBus {
+        final java.util.Map<String, Integer> counts = new java.util.concurrent.ConcurrentHashMap<>();
+        int asked;
+
+        @Override
+        public void publish(String jobIri) {
+        }
+
+        @Override
+        public int consumers(String queue) {
+            asked++;
+            return counts.getOrDefault(queue, -1);
+        }
+    }
+
+    private String status(Fixture with) {
+        return new String(with.get("/api/status").body());
+    }
+
+    @Test
+    void theStatusNamesEachQueueNoWorkerConsumesAndToldWhichToStart() throws IOException {
+        Counting bus = new Counting();
+        bus.counts.put(Topology.JOBS_QUEUE, 1);
+        bus.counts.put(Topology.JOBS_LONG_QUEUE, 0);
+        Fixture with = new Fixture(Fixture.assetsDir(dir.resolve("a")), bus);
+        String text = status(with);
+        assertTrue(text.contains("No worker consumes lattice.studio.jobs.long"), text);
+        assertTrue(text.contains("mise run studio:worker-long"), text);
+        assertFalse(text.contains("No worker consumes lattice.studio.jobs,"), text);
+        bus.counts.put(Topology.JOBS_QUEUE, 0);
+        bus.counts.put(Topology.JOBS_LONG_QUEUE, 2);
+        String later = status(with);
+        assertTrue(later.contains("No worker consumes lattice.studio.jobs.long"), "the answer is kept for a while, so the broker is not asked at every poll: " + later);
+        assertEquals(2, bus.asked, "one count for each queue");
+    }
+
+    @Test
+    void aBusThatCannotCountConsumersGivesNoWarning() throws IOException {
+        Counting bus = new Counting();
+        Fixture with = new Fixture(Fixture.assetsDir(dir.resolve("b")), bus);
+        assertEquals("{\"warnings\":[]}", status(with));
+    }
 }

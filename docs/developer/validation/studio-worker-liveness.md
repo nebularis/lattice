@@ -127,3 +127,20 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **The dead-letter noise the plan asked about.** Before this slice a deleted queued validation reached `lattice.studio.dead` as `job graph not found`, one message per validation the author's view dropped. It is now acknowledged and logged at info.
 
 **Not covered.** The compile view already reads the job it selected and the workspace's compile jobs from the store, and is unchanged. The publication view's attach is not driven by a browser test, since the fake service does not hold publish jobs. The mapping proposal's attach is the meaning view's, repeated, and has no test of its own.
+
+## WL-7: the warnings, `studio:status` and the documents
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL7-01 | a bus that counts a queue's consumers as 0 / `/api/status` is read / it names the queue and the command that starts a worker for it | L3 | + | pass |
+| WL7-02 | the same, read again within ten seconds / the broker is asked once for each queue, and the answer is kept | L3 | + | pass |
+| WL7-03 | a bus that cannot count consumers / `/api/status` is read / no warning | L3 | − | pass |
+| WL7-04 | a warning from the service / the studio is open / it shows in a box that reads again every half minute, can be dismissed, and a new one shows | L6 | ± | pass |
+| WL7-05 | a process that ended on its own with an error / `studio:status` / `exited, last line of its log: {the error}`. One never started reads `not started here` | L1 | ± | pass, 2 cases |
+| WL7-06 | a job queued in the Build view / it waits / the step reads `Queued for N s` | L6 | + | read from the code, not driven by a browser test |
+
+`platform/config-studio-service` `LanesTest` (7 in all), `apps/config-studio/e2e/studio.spec.ts` (23) and `tools/test_config_studio_stack.py` (13).
+
+**Documents changed.** The operations guide (the worker's setting, the long queue, the table of what the worker does with a delivered job, `studio:status`, the health check), the runbook (Scenarios 6 and 7), the worker's README, the contract's README (the unfinished listing), ADR-A136 (an amendment, Proposed), the architecture document's account of a validation, and MEC-95.
+
+**Not covered.** The Build view's wait counter has no browser test, since the fake service answers a job's first read as running. The service's check is not run against a real broker with a queue that has no consumer, and `RabbitJobBus.consumers` is therefore read and not run: a passive declare on a channel of its own. `docker compose` is not run here.
