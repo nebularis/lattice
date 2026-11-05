@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-04.
+Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-05.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -38,15 +38,16 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
-| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned | fml/isabelle-layers |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 5 planned, 3 built, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
-| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | fml/isabelle-layers |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, docs/placement-vehicles-structure, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | built 2026-11-05 | TUT-0 | 5 built, 1 verified | tutorial/guide |
 | [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
@@ -112,7 +113,7 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section formal-methods
-    FM-0 :fm0, 2026-10-06, 2026-10-07
+    FM-0 track D the prover spike the :fm0, 2026-10-06, 2026-10-07
     FM-4 :fm4, 2026-10-27, 2026-10-28
     FM-CG1 code generation from the layer :done, fmcg1, 2026-11-01, 2026-11-02
     FM-D0 environments :fmd0, 2026-10-06, 2026-10-07
@@ -302,6 +303,21 @@ gantt
     OD-RC3 roots AGENTS.md table bypass :odrc3, 2026-10-19, 2026-10-20
     OD-REL1 first release 0.18.0 :odrel1, 2026-10-20, 2026-10-21
     OD-VER1 one release for the substrate :odver1, 2026-10-20, 2026-10-21
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title Lattice-tutorial
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section lattice-tutorial
+    TUT-0 the page its layout the home :tut0, 2026-10-14, 2026-10-15
+    TUT-1 chapters 0 to 3 :tut1, 2026-10-15, 2026-10-16
+    TUT-2 chapters 4 to 6 :tut2, 2026-10-15, 2026-10-16
+    TUT-3 chapters 7 to 9 :tut3, 2026-10-16, 2026-10-17
+    TUT-4 chapters 10 to 13 :tut4, 2026-10-16, 2026-10-17
+    TUT-5 the tutorial refreshed onto m :tut5, 2026-11-05, 2026-11-06
 ```
 
 ```mermaid
@@ -760,14 +776,16 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | pushed | LG-2 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | local ahead 35, not pushed | no mark |
-| `fml/isabelle-layers` | 2026-11-04 | 33 | local ahead 38, not pushed | FM-CG1, FM-CG2, FMC-4 |
-| `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, LG-2 |
-| `spikes/pol-map` | 2026-10-16 | 2 | pushed | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `ccs-trunk` | 2026-11-04 | 54 | remote only | FM-4, LG-2 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | remote only | FM-4, LG-2 |
+| `claude/priceless-brahmagupta-396048` | 2026-11-05 | 2 | local only | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
+| `fix/studio-worker-heartbeat` | 2026-11-05 | 18 | remote only | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fml/isabelle-layers` | 2026-11-04 | 33 | remote only | no mark |
+| `persistence-mbt` | 2026-09-23 | 1 | remote only | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | remote only | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
+| `tutorial/guide` | 2026-11-05 | 7 | local ahead 136, not pushed | TUT-0, TUT-1, TUT-2, TUT-3, TUT-4, TUT-5 |
+| `vyvid-migration` | 2026-11-04 | 1 | remote only | no mark |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -895,6 +913,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite, and place H3.1, the code-generation spike, under the formal-methods epic or track H.
 6. **Write the 34 board rows** section 9 counts as slices named only in prose, the ensemble's ten first, which needs a status record for the ensemble.
 7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
+8. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), push `tutorial/guide`, merge `main` into it again, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide (plan `lattice-tutorial` §9) starts on its own branch after it.
 
 ## 11. Completed units
 
@@ -904,9 +923,9 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 
 | Unit | Kind | State | Slices | Last day |
 |---|---|---|---|---|
-| DESIGN_SKETCHES_INDEX | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | [config-studio](plans/config-studio.md) | unit | merged 2026-10-30 | 0 | 2026-10-30 |
 | design-sketches-validation-summary | unit | merged 2026-09-20 | 0 | 2026-09-20 |
+| DESIGN_SKETCHES_INDEX | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | governance-surfaces | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | implementation-handover-historical | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | iri-patterns-post-3866b21-remediation | unit | merged 2026-09-23 | 0 | 2026-09-23 |
