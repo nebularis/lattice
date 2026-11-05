@@ -35,3 +35,22 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **A worker's idle memory**, measured on a Linux machine with 4 cores, Python 3.14, one worker started by the harness: 62 MB idle, 66 MB after a vocabulary validation, 104 MB after a validation of the ODRL mapping sample and 130 MB after its compilation. A second worker for long jobs (WL-Q3) costs about that much again, 60 MB at rest and up to 130 MB after a mapping compile.
 
 **Not covered.** The conclusion that the first incident's job was a proposal: the store was not available, so WL-1 does not confirm the job's kind. Each later slice turns one of these tests green, and a test turned green is not weakened.
+
+## WL-2: the job on its own thread
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL2-01 | a job that waits / delivered / it runs on a thread named `job`, the connection thread's `process` goes on being called, and nothing is acknowledged until the job ends | L1 | + | pass |
+| WL2-02 | a job that publishes its result / run / the publish is made on the connection thread and the acknowledgement follows it | L1 | + | pass |
+| WL2-03 | a message that is not a job, or a job the worker refuses / delivered / rejected without requeue, the next served, and a refused job is not marked failed | L1 | − | pass, 3 cases |
+| WL2-04 | a job that raises / run / marked failed, rejected without requeue, the next served and the consumer alive | L1 | − | pass |
+| WL2-05 | stop requested with a job in hand / the job ends / no other message taken and the process ends after the job's acknowledgement | L1 | + | pass |
+| WL2-06 | a broker that refuses connections / tried / backoff of 1, 2 and 5 s, then served | L1 | − | pass |
+| WL1-01 | the real-broker test of WL-1 | L5 | + | pass, 2026-11-05 (was failing) |
+| WL1-03 | the real-broker test of the unknown kind | L5 | − | pass, 2026-11-05 (was failing). The worker refuses the message, which is dead-lettered |
+
+`workers/tests/test_config_studio_consumer.py` (11 cases, with the two of WL-4) and `test/studio-integration/test_worker_liveness.py`.
+
+**Retired.** `test_acks_after_final_write_and_requeues_on_store_error` asserted that a store error requeues the job and ends the worker, which is RC2. The consumer replaces it: a job that cannot be run is marked failed where it can be and rejected without requeue (WL2-04). `test_malformed_message_is_nacked_without_requeue` is now `test_a_malformed_message_is_not_a_job` for the parsing and WL2-03 for the rejection. Neither is weakened. Each asserts what the adapter it tested promised, and that adapter, `RabbitMqConfigStudioWorker`, is gone.
+
+**Not covered.** A heartbeat interval longer than the poll interval of 0.25 s is assumed. The poll is the longest the connection thread is away from the broker, and a job thread's call waits for it.

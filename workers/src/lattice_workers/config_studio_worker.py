@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from dataclasses import dataclass
 from urllib.parse import quote
 from importlib import resources
 from pathlib import Path
@@ -18,9 +19,9 @@ from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF
 from rdflib.namespace import XSD
 
+from .config_studio_consumer import InvalidMessage
 from .config_studio_jobs import CST, run_job
 from .fuseki_gsp import GraphNotFound
-from .rabbitmq_surface_worker import RabbitMqChannel
 
 TOPOLOGY: dict[str, Any] = json.loads(
     resources.files("lattice_workers").joinpath("config-studio-topology.json").read_text(encoding="utf-8")
@@ -60,8 +61,20 @@ _WORKER_PREDICATES = (
 )
 
 
-class InvalidMessage(ValueError):
-    """The message is not a job this worker can read. It is refused without requeuing."""
+@dataclass(frozen=True)
+class Handled:
+    """What `handle` did with a job, for the worker's log: the job's kind and target as the store names them, and what became of it."""
+
+    kind: str
+    target: str
+    outcome: str
+
+    def __str__(self) -> str:
+        return f"{self.kind} {self.target} {self.outcome}"
+
+
+def _name(term: object) -> str:
+    return str(term).rsplit("#", 1)[-1] if term is not None else "unknown"
 
 
 class GraphStore(Protocol):
@@ -99,7 +112,7 @@ class ConfigStudioWorker:
             raise InvalidMessage("message is not a studio job IRI")
         return text
 
-    def handle(self, job_iri: str) -> None:
+    def handle(self, job_iri: str) -> Handled:
         job = URIRef(job_iri)
         try:
             written = self._get(job_iri)
@@ -109,6 +122,7 @@ class ConfigStudioWorker:
         for triple in written.triples((job, None, None)):
             if triple[1] not in _WORKER_PREDICATES:
                 graph.add(triple)
+        label = (_name(graph.value(job, CST.kind)), _name(graph.value(job, CST.target)))
 
         running = Graph() + graph
         running.add((job, CST.status, CST.Running))
@@ -134,6 +148,28 @@ class ConfigStudioWorker:
         final.add((job, CST.finishedAt, _time(self._clock())))
         others = {f"{job_iri}:record": self._record} if self._record is not None and len(self._record) else {}
         self._store.put_graph(job_iri, final, {**others, **self._promotions})
+        return Handled(*label, "succeeded" if (job, CST.status, CST.Succeeded) in final else "failed")
+
+    def fail(self, job_iri: str, message: str) -> None:
+        """Writes `Failed` and `message` on a job that is not finished, keeping what the service wrote. Nothing for one that is, or that
+        cannot be read, or that names no workspace and so cannot be written."""
+        job = URIRef(job_iri)
+        try:
+            written = self._get(job_iri)
+        except GraphNotFound:
+            return
+        if (job, CST.status, CST.Succeeded) in written or (job, CST.status, CST.Failed) in written:
+            return
+        if not _WORKSPACE.fullmatch(str(written.value(job, CST.workspace) or "")) and (job, CST.kind, CST.Rebuild) not in written:
+            return
+        failed = Graph()
+        for triple in written.triples((job, None, None)):
+            if triple[1] not in _WORKER_PREDICATES:
+                failed.add(triple)
+        failed.add((job, CST.status, CST.Failed))
+        failed.add((job, CST.failureMessage, Literal(message)))
+        failed.add((job, CST.finishedAt, _time(self._clock())))
+        self._store.put_graph(job_iri, failed)
 
     def _run(self, job: URIRef, graph: Graph) -> Graph:
         from . import config_studio_assembly
@@ -453,21 +489,3 @@ def declare_writes(channel: Any) -> None:
         name = WRITES["partitionStream"].format(i=i)
         channel.queue_declare(queue=name, durable=True, arguments=WRITES["partitionArguments"])
         channel.queue_bind(queue=name, exchange=WRITES["superStream"], routing_key=str(i), arguments={"x-stream-partition-order": i})
-
-
-class RabbitMqConfigStudioWorker:
-    """Acknowledges after the final write. Refuses a malformed message without requeuing."""
-
-    def __init__(self, worker: ConfigStudioWorker) -> None:
-        self._worker = worker
-
-    def handle(self, channel: RabbitMqChannel, delivery_tag: int, body: bytes) -> None:
-        try:
-            self._worker.handle(self._worker.accept(body))
-        except InvalidMessage:
-            channel.basic_nack(delivery_tag, requeue=False)
-        except Exception:
-            channel.basic_nack(delivery_tag, requeue=True)
-            raise
-        else:
-            channel.basic_ack(delivery_tag)

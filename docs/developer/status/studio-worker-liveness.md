@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -13,7 +13,7 @@
 |---|---|---|---|
 | WL-0 | the plan, this record, the board | built 2026-11-05 |  |
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | built 2026-11-05 |  |
-| WL-2 | the job on its own thread, the publisher and acknowledgement across threads | building 2026-11-05 |  |
+| WL-2 | the job on its own thread, the publisher and acknowledgement across threads | built 2026-11-05 |  |
 | WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | planned |  |
 | WL-4 | the held result, reconnecting with a backoff | planned |  |
 | WL-5 | short jobs past long ones | planned |  |
@@ -32,3 +32,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-1 picked up, building. The reproductions run the real worker entry point against a real broker started by the studio harness, since the unit tests fake the connection and cannot see a heartbeat.
 - 2026-11-05: WL-1 built. Three tests of `test/studio-integration/test_worker_liveness.py` fail on `main` for the reasons the plan gave: a 10 s job on a 2 s heartbeat is never finished (RC1), a job the first worker had started is run again by the second (RC3), and a `cst:Refresh` message stops the worker and the validation behind it waits without end (RC7). The view test (RC5) shows 2 validations submitted at the first mount of a workspace and 4 after the author leaves and returns, with the held jobs still polled. A worker is 62 MB idle and up to 130 MB after a mapping compile. Learned: `ProcessStudio` takes `workers = 0` and starts a patched worker with `start_worker`, which is how a test changes what a job does without changing the worker.
 - 2026-11-05: WL-2 picked up, building. The consumer is designed once for WL-2 to WL-4, as a connection thread that owns every AMQP call and a thread per job, so WL-3 (the check on delivery) and WL-4 (the held result) are changes to the same two modules and each is marked and committed in turn.
+- 2026-11-05: WL-2 built. `config_studio_consumer.py` holds the connection thread and the job threads, and `config_studio_main.py` is the pika session over it. WL1-01 and WL1-03 pass against the real broker, and WL1-02 waits for WL-3. The held result and the adoption of a redelivered job (WL-4) are in the same consumer and have their unit tests, which WL-4 will cite. `RabbitMqConfigStudioWorker` and its two tests are retired, see the pack. Two per-worker settings are new: `LATTICE_WORKER_QUEUE` names the queue, for WL-5.
