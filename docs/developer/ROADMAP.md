@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-04.
+Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-04.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -38,10 +38,10 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
-| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned | fml/isabelle-layers |
+| [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 5 planned, 3 built, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
-| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | fml/isabelle-layers |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, docs/placement-vehicles-structure, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
@@ -66,6 +66,7 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | no board |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -112,7 +113,7 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section formal-methods
-    FM-0 :fm0, 2026-10-06, 2026-10-07
+    FM-0 track D the prover spike the :fm0, 2026-10-06, 2026-10-07
     FM-4 :fm4, 2026-10-27, 2026-10-28
     FM-CG1 code generation from the layer :done, fmcg1, 2026-11-01, 2026-11-02
     FM-D0 environments :fmd0, 2026-10-06, 2026-10-07
@@ -760,14 +761,15 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | pushed | LG-2 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | local ahead 35, not pushed | no mark |
-| `fml/isabelle-layers` | 2026-11-04 | 33 | local ahead 38, not pushed | FM-CG1, FM-CG2, FMC-4 |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
+| `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
+| `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, LG-2 |
-| `spikes/pol-map` | 2026-10-16 | 2 | pushed | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
+| `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `vyvid-migration` | 2026-11-05 | 2 | local ahead 2, not pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -886,14 +888,14 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-02.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **WB-7 on the other live branches**: each merges `main`, runs `work:normalise`, `work:rename` and `build:work`, and marks its slices. `realign/config-authoring-studio` has done so.
-2. **Review `realign/config-authoring-studio`**, the consolidated studio and persistence-delta work, with its regenerated expected profiles, the two ADR-A123 addenda of 2026-11-02 and its standards STD-308 to STD-316, then merge it and delete the two persistence replace branches.
-3. **Bring `ccs-trunk` onto `main`** once its agent has the conflicts worked out.
-4. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first.
-5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite, and place H3.1, the code-generation spike, under the formal-methods epic or track H.
-6. **Write the 34 board rows** section 9 counts as slices named only in prose, the ensemble's ten first, which needs a status record for the ensemble.
+1. **Give the go-ahead for VM-1 on `vyvid-migration`**, the adoption of Вивід (plan [vyvid-migration](plans/vyvid-migration.md)), with every other branch paused until the unit merges. The answers are in the sketch, the handoff patch applies cleanly, and nothing is removed before its replacement is proven.
+2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first.
+3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
+4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
+5. **Move `spikes/pol-map` out of LATTICE**, by hand.
+6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
 7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 
 ## 11. Completed units
@@ -963,5 +965,6 @@ These are findings from building this roadmap, offered as hypotheses for the mai
 - **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten have no status record to carry a board at all.
 - **Two branches numbered the same standards.** `docs/work-board` and `realign/config-authoring-studio` both took STD-300 upward on 2026-11-02, and both held a TD-137. `check:identifiers` dates a row by its day, so first in wins found a tie, and at the realign branch's merge of `main` the work board's rows kept their numbers and the realign rows became STD-308 to STD-316 and TD-139. A branch cannot know what another numbers until a fetch, and the board's `--fetch` is the moment to look.
 - **The historic ids were the real cost.** Four of the five branch analyses asked for on 2026-11-02 were answered by content measurement in minutes, but the 34 track H ids took three passes to recognise as the packs' own spelling of boarded slices. A pack named by its slice closes that gap for new work.
-- **H3.1 is not track H's H3.** The code-generation spike on `fml/isabelle-layers` is the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. A slice that borrows a number from a plan it does not belong to is read as that plan's.
+- **H3.1 was not track H's H3.** The code-generation spike on `fml/isabelle-layers` was the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. It is homed as FM-CG1 and FM-CG2 on the formal-methods board since 2026-11-05. A slice that borrows a number from a plan it does not belong to is read as that plan's.
+- **Most of the index tooling was never LATTICE's.** Of the 5,800 lines under `tools/knowledge/`, about 280 derive the architectural quanta, and the board's 2,400 are configuration under Вивід. The switch planned as `vyvid-migration` keeps LATTICE's rules where they are and moves the code that reads them.
 - **The hand-written sections age with the epics.** Sections 2, 3, 4, 6 and 8 describe the epics' dependencies, layers, state and critical path as prose and diagrams, and each is refreshed at the events the lifecycle skill names, never by the tool. Where one disagrees with section 1, section 1 is right.
