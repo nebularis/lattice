@@ -3,19 +3,11 @@
 ## 3. The layer map
 {: #layers}
 
-LATTICE is a stack of small ontologies, each with one job. A layer may build on layers below it and
-never on layers above. If you know dimensional modelling, think of conformed dimensions that every
-mart shares, then marts that add their own facts on top, with the difference that the rule is
-written down and checked.
+LATTICE is a stack of small ontologies, each with one job. A layer may build on layers below it and never on layers above. If you know dimensional modelling, think of conformed dimensions that every mart shares, then marts that add their own facts on top, with the difference that the rule is written down and checked.
 
 ### The substrate and what sits on it
 
-**Substrate layers** hold mechanisms that make sense in any domain: identity, reference data,
-amounts, parties, conditions, text structure and state. They name no industry. **Instrument** is
-the first ontology built on them, the general shape of an agreement and the legal relations it
-creates. **Applied modules** under `ontology/applied/` add domain content, such as the insurance
-peril vocabulary, or cross-domain content not yet general enough for the substrate, such as
-capacity that can be drawn down.
+**Substrate layers** hold mechanisms that make sense in any domain: identity, reference data, amounts, accounts drawn down, parties, conditions, text structure and state. They name no industry. **Instrument** is the first ontology built on them, the general shape of an agreement and the legal relations it creates. **Applied modules** under `ontology/applied/` add domain content, such as the insurance peril vocabulary, or cross-domain content not yet general enough for the substrate, such as capacity that can be drawn down.
 
 In the diagram an arrow points from a layer to a layer that builds on it.
 
@@ -24,6 +16,7 @@ graph BT
   fnd["Foundation<br/>identity, versions, keys"] --> voc["Vocabulary<br/>reference data bound per contract"]
   voc --> qnt["Quantification<br/>amounts, units, ranges"]
   qnt --> pty["Party<br/>actors and roles"]
+  qnt --> ldg["Ledger<br/>amounts drawn and restored"]
   pty --> elg["Eligibility<br/>conditions and decisions"]
   elg --> wrd["Wording<br/>what the text says"]
   elg --> bhv["Behaviour<br/>states and transitions"]
@@ -38,15 +31,9 @@ graph BT
   class cls,icm,prl,cap applied;
 </div>
 
-The substrate order is strict. A layer may import any layer below it in the chain, so Party can use
-Foundation directly as well as through Vocabulary. Wording and Behaviour are siblings, and neither may
-name the other. `mise run check:import-guard` fails the build if any substrate layer imports, or even
-names, a layer above it or beside it. The applied modules follow their own one-way rule. A
-cross-domain module never imports a domain module, and a domain module never imports another
-domain's.
+The substrate order is strict. A layer may import any layer below it in the chain, so Party can use Foundation directly as well as through Vocabulary. Wording and Behaviour are siblings, and neither may name the other. `mise run check:import-guard` fails the build if any substrate layer imports, or even names, a layer above it or beside it. The applied modules follow their own one-way rule. A cross-domain module never imports a domain module, and a domain module never imports another domain's.
 
-Only the main imports are drawn. The full lists are in each document's `owl:imports`, as you saw for
-the classification module in chapter 1.
+Only the main imports are drawn. The full lists are in each document's `owl:imports`, as you saw for the classification module in chapter 1.
 
 ### Beside the stack
 
@@ -73,19 +60,12 @@ Every layer has the same folder layout, present in whole or in the parts that la
 | `examples/` | worked instances, the files this tutorial quotes | test fixtures |
 | `projection/` | declared contracts connecting this layer to another, for example Eligibility's to Party | published interfaces |
 
-The README is the source of truth. The `spec/`, `vocab/` and `shapes/` files are extracted from it,
-and the extractor has a check mode that reports any drift between them. When a layer's behaviour surprises you, its README says why it was designed that way,
-usually with a pointer to the decision record (ADR) behind it.
+The README is the source of truth. The `spec/`, `vocab/` and `shapes/` files are extracted from it, and the extractor has a check mode that reports any drift between them. When a layer's behaviour surprises you, its README says why it was designed that way, usually with a pointer to the decision record (ADR) behind it.
 
 ### Versions
 
-Each document carries a semantic version in its version IRI, and the documents that import it pin
-that exact version. A change that could break an importer raises the major number. Every release is
-listed on the site's [Ontology Releases](./architecture/ontology-releases.html) page.
+The substrate layers, with MORK, SPC, Surface and Persistence, are released together under one number, which every one of their documents carries in its version IRI. An applied module, such as classification, keeps its own version and names the release it builds on in its imports. That is why the classification module in chapter 1 imports Foundation and Vocabulary at the same number. A pinned release is what the data was checked against, much as a schema migration targets a known baseline. Every release is listed on the site's [Ontology Releases](./architecture/ontology-releases.html) page.
 
 ### Where the chapters go from here
 
-Chapters 4 to 9 climb the substrate with the facility agreement, from its keys to its covenant
-default. Chapter 10 adds the applied capacity module for drawdowns. Chapter 11 steps beside the stack
-to store and serve the result. Chapter 12 shows how the insurance domain is built on the same
-substrate, as a model for a domain of your own.
+Chapters 4 to 9 climb the substrate with the facility agreement, from its keys to its covenant default. Chapter 10 adds Ledger and the applied Capacity module for drawdowns. Chapter 11 steps beside the stack to store and serve the result. Chapter 12 shows how the insurance domain is built on the same substrate, as a model for a domain of your own.

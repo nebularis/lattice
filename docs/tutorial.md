@@ -17,8 +17,7 @@ description: A read-only tutorial for data architects, following one loan facili
   A Turtle excerpt in a chapter is a fenced turtle block preceded by an HTML
   comment "source: <repository-relative path>", and must match that file.
   `mise run check:tutorial-snippets` checks it, and checks every link to
-  https://github.com/nebularis/lattice/blob/main/... names a path that exists
-  (docs/developer/plans/lattice-tutorial.md §5).
+  https://github.com/nebularis/lattice/blob/main/... names a path that exists.
 -->
 
 {% include tutorial/00-why.md %}

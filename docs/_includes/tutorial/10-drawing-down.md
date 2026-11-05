@@ -3,91 +3,75 @@
 ## 10. Drawing down
 {: #capacity}
 
-A facility has a limit, and the borrower draws against it. The limit is a number in the agreement.
-What remains available changes with every drawdown and repayment. LATTICE keeps the two apart. The
-instrument states the **static** limit, and the running balance is **dynamic** state held
-elsewhere. This chapter shows where, and introduces the first applied module in the tutorial,
-Capacity.
+A facility has a limit, and the borrower draws against it. The limit is a number in the agreement. What remains available changes with every drawdown and repayment. LATTICE keeps the two apart. The instrument states the **static** limit, and the running balance is **dynamic** state, kept by the Ledger layer as a record of facts rather than a number someone updates.
 
-<div class="callout"><strong>Under construction.</strong> Capacity's design is written, and its
-runtime profile is published. Its source ontology, the classes an adopter would author against, is
-designed but not yet written. This chapter teaches the design and the parts that exist, and says
-which is which.</div>
+<div class="callout"><strong>Partly built.</strong> Ledger's account definition is released. The records of each draw, the postings and balance records shown below, are designed and appear in Ledger's own example, but are not yet released. The applied Capacity module, which joins limits into networks, has its runtime profile published and its source ontology still being designed. This chapter says which is which.</div>
 
-### The generic mechanism: an allowance
+### An account, not a balance column
 
-Behaviour already has a domain-neutral idea of something finite that is consumed: an **allowance**.
-Here is the smallest example, a balance of 100 and an effect that consumes 30.
+A Ledger **account** states an amount that is consumed and restored. Here is a 20,000,000 sterling revolving facility that the borrower draws in euros.
 
-<!-- source: ontology/behaviour/examples/sequential-allowance.ttl -->
+<!-- source: ontology/ledger/examples/revolving-facility.ttl -->
 ```turtle
-ex:allowance-definition
-    a bhv:AllowanceDefinition ;
-    bhv:allowanceSpace ex:allowance-space ;
-    bhv:absorptionPolicy bhv:Sequential ;
-    bhv:resetRecurrence ex:cycle-reset .
+ex:q-commitment a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
 
-ex:balance-100 a qnt:Quantity ;
-    qnt:onSpace ex:allowance-space ;
-    qnt:numericValue "100"^^xsd:decimal .
-
-ex:draw-30 a qnt:Quantity ;
-    qnt:onSpace ex:allowance-space ;
-    qnt:numericValue "30"^^xsd:decimal .
-
-ex:account-1
-    a bhv:AllowanceAccount ;
-    bhv:tracksAllowance ex:allowance-definition ;
-    bhv:availableBalance ex:balance-100 .
-
-ex:consume-effect
-    a bhv:EffectDefinition ;
-    bhv:targetKind bhv:AllowanceTarget ;
-    bhv:targetsAllowance ex:allowance-definition ;
-    bhv:consumesAmount ex:draw-30 ;
-    bhv:usesAllowance ex:allowance-definition .
+ex:facility a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-commitment ;
+    ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Borrower ;
+    ldg:mergeRule ldg:Refuse ;
+    ldg:conversionMethod ex:fx-2027-06-01 ;
+    rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in euros." .
 ```
 
-The **definition** says what the allowance is measured in, how draws are absorbed, and when it
-resets. The **account** holds the current balance. An **effect**, fired by a transition as in
-chapter 9, consumes an amount. This is enough for one balance with one limit.
-[Source on GitHub](https://github.com/nebularis/lattice/blob/main/ontology/behaviour/examples/sequential-allowance.ttl).
+- **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid.
+- **`ldg:unitOfAccount`** is a value space from chapter 7, and it must be extensive, since a balance only means something if amounts add.
+- **`ldg:admitsOwnerKind`** says whose account it can be, here a borrower.
+- **`ldg:mergeRule`** says what happens when several claims arrive at the same moment. `ldg:Refuse` refuses them all. Other rules take them in priority order or share the amount in proportion.
+- **`ldg:conversionMethod`** names how a drawing in another currency is converted, here by the day's recorded rate.
 
-### What a facility needs beyond one balance
+### Every draw is a fact, and the balance is derived
 
-Real facilities are networks of limits. Capacity's design document works through a lending case.
-A revolving facility of 10,000,000 has two subfacilities, 4,000,000 for working capital and
-6,000,000 for acquisitions. One drawdown then has to do several things at once.
+A relational design usually holds a `balance` column and updates it in place. Ledger records each draw or repayment as a fact of its own, a **posting**, and derives the balance by adding the postings up. If you have built an accounting journal, an event store or a fact table of transactions, the idea is the same, and so is the benefit. The history cannot be lost, and any balance can be read as of any point.
 
-- draw from a specific subfacility
-- stay within the total facility, not only the subfacility
-- reduce what remains of the total facility
-- leave a trace of what was allocated and why
-- be refused if a covenant-related eligibility guard fails
+Postings are ordered by a whole number, the **position**, not by a clock, since clocks on two machines rarely agree closely enough to order two claims. The first drawing, at position 1, looks like this in the example.
 
-Capacity models this as **resources** joined by typed **dependencies**. A subfacility *depletes* the
-total, so drawing from one reduces the other. The total *bounds* the subfacility, so the subfacility
-can never offer more than the total has left. A third kind of dependency *gates* a resource, making
-its activation depend on another's state or balance, such as a secondary facility that becomes
-available only once a primary facility is exhausted. A drawdown request is a **demand**, and what it actually received is a **draw**.
+<!-- source: ontology/ledger/examples/revolving-facility.ttl -->
+```turtle
+ex:draw-1-posting a ldg:Posting ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
+    ldg:amountAsDrawn ex:q-draw-1-eur ; ldg:conversionUsed ex:fx-2027-06-01 ;
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant .
+ex:balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-1-posting .
+```
 
-Capacity supplies the network. Lending supplies what a covenant, a borrower and a breach mean,
-through the layers you have already seen.
-[Capacity's design document](https://github.com/nebularis/lattice/blob/main/ontology/applied/capacity/docs/architecture-overview.md)
-has this case and others, such as API quotas, in full.
+The posting keeps both the sterling amount it counts and the euros actually drawn, with the rate it used. The balance record says what remains after it, and `prov:wasDerivedFrom` records which facts it was worked out from. The example's three positions:
 
-### A read model for transaction time
+| Position | Event | Euros | Rate | Sterling | Balance after |
+|---|---|---|---|---|---|
+| 1 | drawing | 11,500,000 | 0.87 | 10,005,000 debit | 9,995,000 |
+| 2 | repayment | 5,000,000 | 0.88 | 4,400,000 credit | 14,395,000 |
+| 3 | revaluation of the 6,500,000 euros still out | | 0.90 | 245,000 debit | 14,150,000 |
 
-Evaluating a drawdown by walking the general graph, through the instrument, its parameters and its
-regimes, would be slow at the moment a payment system needs an answer. Capacity therefore defines an
-**execution profile** (`capx:`), a compact, normalised copy of a capacity arrangement, materialised
-from the source graph by a deterministic projection. The source graph stays the source of truth. A
-data architect would call this a read model, or an operational data store built for one workload.
+Position 3 is not a new drawing. The euros still outstanding are worth more sterling at the year-end rate, so the account records the difference as a fact of its own. [Source on GitHub](https://github.com/nebularis/lattice/blob/main/ontology/ledger/examples/revolving-facility.ttl).
 
-The profile's shapes carry the rules a ledger would enforce. One is conservation. What a draw
-requested must equal what it was allocated plus what went unmet.
+### Accounts inside accounts
 
-<!-- source: ontology/applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl -->
+Accounts form a tree with `ldg:partOf`, which means "part of, and not in addition to". A sublimit sits inside a facility, and a draw from the sublimit uses up the facility too. A **key dimension** creates one account per value of a key the first time a draw names it, for example one sublimit per borrower in a syndicate, without declaring each in advance. The relational counterpart is a hierarchy of budget lines, with the rule that a child can never offer more than its parent has left.
+
+### Networks of limits, and a read model
+
+Some limits interact in ways a tree does not capture. A secondary facility may open only once a primary one is exhausted. The applied **Capacity** module is designed for these networks, with resources joined by typed dependencies that deplete, bound or gate one another. Its design document works through a revolving facility of 10,000,000 with two subfacilities, of 4,000,000 and 6,000,000. [Capacity's design document](https://github.com/nebularis/lattice/blob/main/docs/architecture/capacity-domain-analysis-and-design.md).
+
+Evaluating a drawdown by walking the whole graph would be slow at the moment a payment system needs an answer. Capacity therefore defines an **execution profile** (`capx:`), a compact copy of an arrangement materialised from the source graph, which stays the source of truth. A data architect would call it a read model. Its shapes carry the rules a ledger would enforce. One is conservation. What a draw requested must equal what it was allocated plus what went unmet.
+
+<!-- source: ontology/applied/capacity/spec/capacity-execution.ttl -->
 ```turtle
   sh:sparql [
     a sh:SPARQLConstraint ;
@@ -104,20 +88,8 @@ requested must equal what it was allocated plus what went unmet.
   ] .
 ```
 
-This is a SHACL shape written as a SPARQL query. The query selects every draw that breaks the rule,
-and each row it returns is reported as a violation. It is the graph form of a reconciliation query
-that returns the rows that do not balance.
-
-A draw ends with one of five statuses: **Allocated**, **PartiallyAllocated**, **Denied**,
-**Unavailable** or **Undetermined**. The last follows the same rule as everywhere else in LATTICE. If
-the data cannot decide, the answer says so.
-[Source on GitHub](https://github.com/nebularis/lattice/blob/main/ontology/applied/capacity/spec/applied_capacity_execution_spec_capx_Version2.ttl).
+This is a SHACL shape written as a SPARQL query, the graph form of a reconciliation query that returns the rows that do not balance. A draw ends with one of five statuses, **Allocated**, **PartiallyAllocated**, **Denied**, **Unavailable** or **Undetermined**, and the last follows the rule used throughout LATTICE. If the data cannot decide, the answer says so. [Source on GitHub](https://github.com/nebularis/lattice/blob/main/ontology/applied/capacity/spec/capacity-execution.ttl).
 
 ### How the pieces meet
 
-The facility's limit lives in its bound meaning (chapter 6), and its value may come from a blank in
-the form (chapter 5). A projection creates the dynamic resource from that static limit. Each draw
-can require an eligibility decision (chapter 8), and can be caused by a transition execution
-(chapter 9). When a construct proves general enough, it is promoted from Capacity into Behaviour
-under criteria set out in a proposed decision record, so the module also shows how applied content
-earns a place in the substrate.
+The facility's limit lives in its bound meaning (chapter 6), and its value may come from a blank in the form (chapter 5). Its account is a Ledger account. A draw can be refused by an eligibility decision (chapter 8), and can be caused by a transition (chapter 9). Behaviour's own simple allowances, a balance consumed by an effect, are to give way to Ledger accounts, so that every layer that counts down an amount does it the same way ([ADR-A131](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/ADR-A131-ledger-layer.md)).

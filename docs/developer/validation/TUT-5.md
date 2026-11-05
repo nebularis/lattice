@@ -36,13 +36,27 @@ The merge commit was made with `LATTICE_HOOKS_SKIP=import-guard,writing`. The ot
 
 Hard-wrapped lines are reported as warnings, including in the branch's own chapters. TUT-5's later steps unwrap the tutorial's files.
 
-## Remaining TUT-5 steps
+## Step 2: the tutorial refreshed, 2026-11-05
 
-- the 11 excerpt and link findings `mise run check:tutorial-snippets` reports against `main`
-- the tutorial's files unwrapped, and its references to working documents removed
-- chapter 10 rewritten on Ledger's revolving facility, chapter 3's versioning on the shared release
-- `fnd:Version` written as `fnd:Versioned` where the text names it
+- Eight excerpts re-copied from their current sources by a script, never retyped: the classification header (release 0.6.0, imports at 0.21.0), `fnd:Versioned` in the keys example (ADR-A141), the money space with its unit contract's identity, two Eligibility conditions without `elg:compatibilityOperation`, the renamed cure-expiry trigger, and the storm surge and hurricane, now from `peril/vocab/peril-vocab.ttl` since the example no longer declares them.
+- Prose updated where it named what changed: `fnd:Versioned` in chapters 2 and 4, chapter 3's versions on the one release (ADR-A129), chapter 12's intensity measure and module states.
+- Chapter 10 rewritten on Ledger's revolving facility, with the account definition as released and postings marked as designed and not yet released, and Capacity's moved files.
+- Ledger added to chapter 3's layer map and to chapter 13's table.
+- The page's comment no longer names the plan, a working document (ADR-A127).
+- Every chapter unwrapped, a paragraph or list entry to a line. `tools/writing_rules.py` skips `docs/_includes/`, so this was checked with a script of our own.
 
 ## Results
 
-Step 1 only, above. The rest to be filled at verification.
+Run 2026-11-05 on Windows 11.
+
+| Check | Result |
+|---|---|
+| `mise exec -- python tools/tutorial_snippets.py` | `OK 49 excerpts and 35 repository links match the checkout` |
+| `mise exec -- python -m pytest tools/test_tutorial_snippets.py -q` | `11 passed` |
+| `mise run check:catalogue` | passed |
+| `mise run check:site-sections` | passed, after `build:site-sections` |
+| `mise run check:published-decisions` | `sources: 0 failure(s)` |
+| `bundle exec jekyll build` | built, 14 chapters, 49 Turtle blocks highlighted, no placeholder |
+| served, in the browser | three Mermaid diagrams, 13, 5 and 6 nodes, no syntax error. No horizontal scroll at 375 px |
+
+Not run: `mise run check` as a whole, and the hook checks `import-guard` and `writing`, which fail on `main`'s own files (step 1).

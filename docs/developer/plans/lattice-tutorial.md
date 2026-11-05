@@ -4,7 +4,7 @@
 
 **Unit ID:** `lattice-tutorial` (TUT)
 **Unit type:** multi-slice unit, validation gate per slice
-**Status:** Every question answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4). TUT-0 to TUT-4 written, see the status record
+**Status:** TUT-0 to TUT-4 written, TUT-5 built. The Configuration Studio guide planned (§9, TUT-D6 to TUT-D11). See the status record
 **Status record:** [lattice-tutorial.md](../status/lattice-tutorial.md)
 **ADRs:** none needed (TUT-D4 adds no new kind of directory)
 **Depends on:** nothing unmerged. Every source the tutorial cites is on `main`
@@ -139,3 +139,58 @@ The maintainer accepted every leaning on 2026-10-14.
 | TUT-Q2 | Does `check:tutorial-snippets` join the `check` aggregate? | If yes, a stale excerpt fails the build for whoever changed the example, who may not know the tutorial exists. If no, the tutorial drifts until someone runs the check | yes. The check is stdlib-only and fast |
 | TUT-Q3 | If Rouge 3.30.0 has no Turtle lexer, how are excerpts shown? | (a) plain, unhighlighted blocks. (b) a client-side highlighter loaded by the layout, a script from a CDN | (a) accepted, then moot. Rouge 3.30.0 has a Turtle lexer, so excerpts are highlighted at build time with no script |
 | TUT-Q4 | The insurance modules are being built by the `applied-insurance-reference` epic now. How does chapter 12 treat them? | (a) teach what is merged, with a note that the modules are under construction. (b) wait for the epic's phase 2 | (a). Chapter 12 is written last, so it sees the latest state |
+
+## 9. The Configuration Studio guide
+
+Added 2026-11-05. `main` gained the Configuration Studio (ADR-A136), MORK's compilers to SPARQL, XSLT, JOLT and RML, and the Ledger layer. The maintainer asked for a plain-English guide, for the same reader as the tutorial, to using the studio, creating an ontology and moving data in and out of it with MORK, with any other topic the training needs.
+
+### Recorded decisions
+
+| ID | Decision |
+|---|---|
+| TUT-D6 | **A page of its own.** The guide is a new site section beside the tutorial, with its own layout, rather than a part of the tutorial page. The tutorial explains what LATTICE is, and the guide how to use it |
+| TUT-D7 | **Do-along.** The reader runs the studio and follows each step. TUT-D2 stays for the tutorial. The guide takes in part of the deferred hands-on unit (§7) |
+| TUT-D8 | **One worked example.** The studio's lending baseline sample, with a new loan feed in JSON and XML mapped into it, added as a studio sample with a test that keeps it running |
+| TUT-D9 | **Generated screenshots.** Taken by Playwright, against the fake service where it serves the view and the real stack where it does not, so they can be refreshed when the studio changes. Where the images live is agreed with the lead developer |
+| TUT-D10 | **No "For Dummies" in the title**, a Wiley trademark. A title such as "LATTICE from Scratch" keeps the pitch |
+| TUT-D11 | **Order.** TUT-5 brings the tutorial onto `main` first, by a squash merge that carries the AI disclosure trailer. The guide starts on a new branch from `main` after it |
+
+The lead developer's answers, 2026-11-05: an ontology editor in the studio is being considered, not planned. More database back ends, and the compilers to move data between them and LATTICE, are being planned. The studio on `main` is stable enough to document.
+
+### What the guide must say plainly
+
+- The studio configures an ontology but does not author one. A baseline is written in Turtle by hand or in a tool such as Protégé, and uploaded or replaced.
+- Data comes in from JSON and XML through compiled XSLT or JOLT, and from RDF through compiled SPARQL, each runnable in the studio on a sample. CSV compiles to RML, run by an RML engine of the adopter's choosing. No relational source is supported yet.
+- Data goes out of LATTICE by an RDF-to-RDF mapping, by SPARQL query results, or by exporting a workspace. `mork:egressProjection` is not compiled and the XSLT sidecar is not built. TUT-6 tests the RDF-to-RDF route from a LATTICE source before the guide teaches it.
+- Features whose decisions are still Proposed (ADR-A144, A147, A148, A149) are taught as new and marked as such, without citing those ADRs, as user-facing pages may cite only Accepted or published decisions.
+
+### Modules
+
+| # | Module |
+|---|---|
+| 1 | Start here: the pieces, and a word list |
+| 2 | Install and run the studio on Windows, macOS and Linux, and its common failures |
+| 3 | A tour: workspaces, the three modes, problems, saving and conflicts |
+| 4 | Your first ontology: an entity model in OWL, reusing LATTICE's layers, loading and replacing a baseline |
+| 5 | Reference data, amounts and rules, tested as you edit |
+| 6 | Storage and serving: Persistence, Surface, and reading a build |
+| 7 | MORK in plain English |
+| 8 | Mapping data in: JSON and XML on the canvas, samples run by stratum, keys and identity, running outside the studio, CSV and databases |
+| 9 | Letting a model help: proposals, importing RML, review |
+| 10 | Getting data out: what works today, and what is coming |
+| 11 | The contract builder: forms, assemblies, meaning, a dry run, Word |
+| 12 | Sharing and publishing |
+| 13 | Before production: authentication, operations, sizing |
+| Ref | How do I, troubleshooting, shortcuts |
+
+Modules 8 and 10 are kept short, so they are cheap to rewrite when the new back ends arrive.
+
+### Slices
+
+| Slice | Delivers | Estimate |
+|---|---|---|
+| TUT-6 | the studio run on a laptop, the routes in and out tested, the page, layout and site section, the worked sample and its test, the screenshot task | 250k tokens |
+| TUT-7 | modules 1 to 4 | 300k tokens |
+| TUT-8 | modules 5, 6 and 11 | 300k tokens |
+| TUT-9 | modules 7 to 10 | 400k tokens |
+| TUT-10 | modules 12, 13 and the reference | 150k tokens |
