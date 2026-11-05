@@ -6,14 +6,14 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 built, the sketch answered and the plan written. VM-1 briefed and waiting on the maintainer's go-ahead, with every other branch paused from then until the unit merges.
+**Status:** building 2026-11-05. VM-0 built. VM-1 building from 2026-11-05 on the maintainer's go-ahead, with every other branch paused until the unit merges.
 
 ## Position
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
-| VM-1 | the binding, `bootstrap:vyvid`, the comparison | briefed 2026-11-05 | the maintainer's go-ahead |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | building 2026-11-05, briefed 2026-11-05 |  |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the ADR | planned | VM-1 |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | planned | VM-2 |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | planned | VM-3 |
