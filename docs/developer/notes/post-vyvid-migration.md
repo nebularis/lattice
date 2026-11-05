@@ -2,9 +2,7 @@
 
 # How LATTICE works on Вивід after the migration
 
-**What this is.** A walkthrough of where LATTICE's registers and skills live now that the knowledge index and the work board are Вивід's, how a change to either reaches an agent, and how `mise`, the checks and the hooks hold it together. It was written on 2026-11-05 from the `vyvid-migration` branch at commit `cc660b52`, with Вивід at `v0.2.8`. [ADR-A152](../../architecture/decisions/ADR-A152-vyvid-adoption.md) and the [plan](../plans/vyvid-migration.md) hold the decisions. This note explains the result and decides nothing.
-
-**Written** 2026-11-05 on the `vyvid-migration` branch at the unit's merge into `main`, with Вивід at v0.2.10.
+**What this is.** A walkthrough of where LATTICE's registers and skills live now that the knowledge index and the work board are Вивід's, how a change to either reaches an agent, and how `mise`, the checks and the hooks hold it together. It was written on 2026-11-05 on the `vyvid-migration` branch at the unit's merge into `main`, with Вивід at `v0.2.10`. [ADR-A152](../../architecture/decisions/ADR-A152-vyvid-adoption.md) and the [plan](../plans/vyvid-migration.md) hold the decisions. This note explains the result and decides nothing.
 
 ## 1. The whole picture
 
