@@ -113,11 +113,7 @@ flowchart LR
 
 ## Slices in detail
 
-Written 2026-10-21, once LG-Q1 to LG-Q8 were answered, so that each slice can be built without a
-design decision. A builder that meets a question the brief does not answer stops at that point,
-records it in the slice's Validation Pack and the status record, and goes on with what does not
-depend on it. The skills to load are `lattice-ontology-authoring`, `lattice-mise`,
-`lattice-testing` and `lattice-publication-hygiene`.
+Written 2026-10-21, once LG-Q1 to LG-Q8 were answered, so that each slice can be built without a design decision. A builder that meets a question the brief does not answer stops at that point, records it in the slice's Validation Pack and the status record, and goes on with what does not depend on it. The skills to load are `lattice-ontology-authoring`, `lattice-mise`, `lattice-testing` and `lattice-publication-hygiene`.
 
 ### The vocabulary, for LG-0 to LG-2
 

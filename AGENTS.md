@@ -54,12 +54,7 @@ How to write a SPARQL constraint, a generated query or a test fixture that runs 
 
 **Bump an ontology version with `mise run version:bump`, and point the maintainer at it.** Without `--layer-target` it moves the substrate release, and with `--layer-target <module>` one standalone or applied module, by `--increment major|minor|patch` or `--new-version X.Y.Z`, its shapes too with `--with-shapes` or alone with `--only-shapes`. It extracts the READMEs it changed and regenerates the catalogs and the release register (CAP-105). Its rules are in `tools/bump_version.py`, read when asked how it works, never restated from memory: the substrate is one release (ADR-A129), every other module is released on its own, a module's spec documents move in unison (STD-230), and its shapes share one `.version`. `mise run check:ontology-versioning -- --base-ref main` names each module that needs a bump and the command for it.
 
-Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR.
-`mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes
-through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`.
-Only mise picks up this checkout's `.venv` and its dependencies, and a bare interpreter is the global
-one (skill `lattice-mise`). The [developer guide](docs/developer/developer-guide.md)
-describes every tool.
+Do not add a directory at the root, or a new kind of directory anywhere, without an accepted ADR. `mise` is the only task entry point (ADR-A29). Every command you run or give the maintainer goes through it, as `mise run <task>` or `mise exec -- <command>`, never a bare `python`, `pytest` or `pip`. Only mise picks up this checkout's `.venv` and its dependencies, and a bare interpreter is the global one (skill `lattice-mise`). The [developer guide](docs/developer/developer-guide.md) describes every tool.
 
 Code finds the repository root and every directory the [repository catalogue](repository-catalogue.md) names through its reader, `tools/lattice_repo_catalogue.py`, by a module's role or a root's or documentation area's name, such as `area("developer")` for the registers, never from `__file__` or a path written in code (STD-273, skill `lattice-mise`'s Finding paths).
 

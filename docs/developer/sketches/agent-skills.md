@@ -158,8 +158,7 @@ some that do not:
 | domain-neutral READMEs, sparing colons, sparing domain and range | core, `lattice-ontology-authoring` |
 | which remote to push to, editable installs from another clone | stays personal: true of one machine |
 
-The general lessons of `docs/developer/project-environment.md` (do not route around a blocked
-registry, hand off what cannot run) move to `lattice-constrained-environments`.
+The general lessons of `docs/developer/project-environment.md` (do not route around a blocked registry, hand off what cannot run) move to `lattice-constrained-environments`.
 
 ## 5. How a skill stays right
 

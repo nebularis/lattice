@@ -87,10 +87,7 @@ re-run are both in the history available to the maintainer, the final state is a
 
 **Two small, low-risk fixes made along the way, surfaced by running the checks for real rather than
 guessing:**
-1. `tools/import_guard.py`'s violation renderer printed a bare `Path`, giving backslash-separated
-   output on Windows that five of `test_import_guard.py`'s own fixtures compare against a
-   forward-slash string. Fixed to `.as_posix()`, per the documented convention (`lattice-mise`
-   skill: "a tool that prints a repository-relative path for comparison prints `Path.as_posix()`").
+1. `tools/import_guard.py`'s violation renderer printed a bare `Path`, giving backslash-separated output on Windows that five of `test_import_guard.py`'s own fixtures compare against a forward-slash string. Fixed to `.as_posix()`, per the documented convention (`lattice-mise` skill: "a tool that prints a repository-relative path for comparison prints `Path.as_posix()`").
 2. `test_import_guard.py`'s own diagram-order check read `ontology-architecture.md` without
    `encoding="utf-8"`, defaulting to the Windows locale codec, which cannot decode this document now
    that it is bigger. Fixed to read explicitly as UTF-8.
