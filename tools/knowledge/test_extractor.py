@@ -48,3 +48,11 @@ def test_vm3_03_the_units_name_every_module_tool_package_and_kind():
     assert all(units.get(tool.path) == [tool.path] for tool in catalogue.tools)
     assert all(units.get(tool.name) == [tool.path] for tool in catalogue.tools if tool.name not in catalogue.modules)
     assert set(units["substrate"]) == {m.name for m in catalogue.modules_of_kind("substrate")}
+
+
+def test_vm3_04_every_unit_path_names_a_declared_unit_and_a_module_sits_under_its_root():
+    _, result = extractor.extract(request())
+    declared = {unit for listed in result["units"].values() for unit in listed}
+    assert result["unit_paths"] and set(result["unit_paths"].values()) <= declared
+    assert result["unit_paths"]["ontology"] == "ontology" and result["unit_paths"]["ontology/foundation"] == "foundation"
+    assert result["unit_paths"]["tools/mork"] == "tools/mork"

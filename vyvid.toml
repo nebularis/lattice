@@ -14,6 +14,8 @@ hook_clients = ["claude-code", "copilot"]
 
 [project.identifiers]
 exceptions = "code:tools/knowledge/identifier-exceptions.txt"
+# The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.
+skip = ["slice-crosswalk-*"]
 
 [project.families]
 STD = { defined = "docs:developer/standards.md", type = "standard" }
@@ -29,6 +31,8 @@ TSD = { pattern = 'TSD-\d+[a-z]?', rule = "heading", type = "discovery", defined
 TSDQ = { removable = true, pattern = 'TSD-Q\d+', type = "discovery", defined = "docs:architecture/triple-store-discovery.md" }
 # A question raised in a note, a record or a decision is counted and never failed, as LATTICE's own check treats it, which `removable` gives (plan vyvid-migration, VM-1).
 LGQ = { removable = true, pattern = '(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+', rule = "question", type = "question", defined = ["docs:developer/plans/*.md", "docs:developer/sketches/*.md"] }
+# A slice is defined by its row on its home unit's board, copied into INDEX.md's Work table by mise run build:work (ADR-A151), so a plan's mention of one is checked. defined_only keeps a loose pattern from reading UTF-8 as a mention.
+SL = { pattern = '[A-Z]{2,5}-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*', defined = "docs:developer/INDEX.md", type = "slice", defined_only = true }
 
 [[project.extractors]]
 kind = "owl-terms"

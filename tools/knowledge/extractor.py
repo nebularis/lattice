@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""LATTICE's extractor for Вивід: the architectural quanta of the data and software views, and the catalogue's units, so
+"""LATTICE's extractor for Вивід: the architectural quanta of the data and software views, and the catalogue's units with their folders, so
 an Owner cell of a register names a module (ADR-A152 decision 1, ADR-A134 addendum of 2026-10-25).
 
 `vyd build` runs it as the command the `[[project.extractors]]` entry of vyvid.toml declares, in the checkout's root, with
@@ -47,6 +47,15 @@ def units(catalogue) -> dict[str, list[str]]:
         out[kind] = [m.name for m in catalogue.modules_of_kind(kind)]
     for name in catalogue.modules:
         out[name] = [name]
+    return out
+
+
+def unit_paths(catalogue, root: Path) -> dict[str, str]:
+    """Each unit's folder, so a term declared under it is owned by that unit and meets an Owner edge. Вивід takes the
+    longest path, so a module's folder wins over its root's."""
+    out = {area.path.rstrip("/"): area.path.rstrip("/") for area in catalogue.roots + catalogue.docs}
+    out.update({tool.path: tool.path for tool in catalogue.tools})
+    out.update({(root / m.path).resolve().relative_to(root).as_posix(): m.name for m in catalogue.modules.values()})
     return out
 
 
@@ -137,7 +146,7 @@ def extract(request: dict) -> tuple[list[ox.Quad], dict]:
                       ox.Quad(iri, RDF_TYPE, ki(kind), graph),
                       ox.Quad(iri, RDFS_LABEL, ox.Literal(part), graph)]
     result = {"protocol": request["protocol"], "version": VERSION, "problems": problems, "findings": findings,
-              "texts": texts, "prefixes": {}, "counts": counts, "units": units(catalogue)}
+              "texts": texts, "prefixes": {}, "counts": counts, "units": units(catalogue), "unit_paths": unit_paths(catalogue, root)}
     return quads, result
 
 

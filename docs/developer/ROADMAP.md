@@ -66,7 +66,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 3 built, 3 planned, 1 building | vyvid-migration |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 4 built, 3 planned | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -497,7 +497,7 @@ gantt
     VM-0 the sketch rewritten the plan :vm0, 2026-11-05, 2026-11-06
     VM-1 the binding bootstrap vyvid :vm1, 2026-11-05, 2026-11-06
     VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
-    VM-3 the quanta and owners extracto :active, vm3, 2026-11-05, 2026-11-06
+    VM-3 the quanta and owners extracto :vm3, 2026-11-05, 2026-11-06
 ```
 
 <!-- END GENERATED work-board-glance -->
@@ -774,7 +774,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 12 | local ahead 14, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
+| `vyvid-migration` | 2026-11-05 | 14 | local ahead 16, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -823,7 +823,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 100 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 100 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -895,7 +895,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **Run `vyd trust` in the `vyvid-migration` worktree, trust point 2**, since VM-3 added the quanta and owners extractor to `vyvid.toml`, and give the word for VM-4 (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 verified, VM-2 and VM-3 built.
+1. **Run `vyd trust` in the `vyvid-migration` worktree, trust point 3**, since VM-3 added the slice family to `vyvid.toml` after the full check ran trusted on its extractor, and give the word for VM-4 (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 verified, VM-2 and VM-3 built.
 2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.

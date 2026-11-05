@@ -35,14 +35,14 @@ class Built(NamedTuple):
 @pytest.fixture(scope="module")
 def built() -> Built:
     """Вивід's store for this checkout, rebuilt by `vyd build` so the tests read the corpus as it is now, with every
-    note the build printed."""
+    note and finding the build printed."""
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed, run `mise run bootstrap`")
     done = subprocess.run(["vyd", "build"], cwd=ROOT, capture_output=True, text=True)
     assert done.returncode == 0, done.stderr[-500:]
     output = done.stdout + done.stderr
     path = done.stdout.strip().splitlines()[-1].split(" at ", 1)[1]
-    return Built(ox.Store.read_only(path), [line[len("NOTE: "):] for line in output.splitlines() if line.startswith("NOTE: ")])
+    return Built(ox.Store.read_only(path), [line.split(": ", 1)[1] for line in output.splitlines() if line.startswith(("NOTE: ", "FINDING: "))])
 
 
 
@@ -312,6 +312,17 @@ def test_a_governed_quantum_exists(built):
     assert not [(str(r["id"].value), str(r["q"].value)) for r in rows]
 
 
+def test_a_terms_owner_meets_the_owner_edge_of_its_module(built):
+    """A term declared under a module's folder is owned by the node an Owner cell naming that module reaches, since the
+    extractor declares each unit's folder and Вивід gives a term the unit whose folder holds it (plan vyvid-migration, VM-3)."""
+    store = built.store
+    if not store.query(f"ASK {{ GRAPH <{INDEX}> {{ ?q a <{KI}Quantum> }} }}"):
+        pytest.skip("the quanta extractor did not run here. Run `vyd trust` in the checkout, then `vyd build`")
+    row = {str(r["o"].value) for r in _rows(store, f'SELECT ?o WHERE {{ GRAPH <{INDEX}> {{ ?e ki:identifier "MEC-01" ; ki:ownedBy ?o }} }}')}
+    terms = {str(r["o"].value) for r in _rows(store, f'SELECT DISTINCT ?o WHERE {{ GRAPH <{TERMS}> {{ ?t ki:ownedBy ?o FILTER STRSTARTS(STR(?t), "{KI}term/lattice/foundation.") }} }}')}
+    assert row == terms == {KI + "module/lattice/foundation"}
+
+
 def test_every_architectural_and_design_standard_names_its_check_or_why_it_has_none(built):
     """STD-002: a standard nobody can tell is broken holds only while every reader remembers it. A
     standard with a check does not also say why it has none."""
@@ -419,14 +430,14 @@ def test_every_table_in_a_register_is_a_data_table():
 def test_the_build_reports_nothing_but_the_known_notes(built):
     """Every problem Вивід finds in the corpus is a note of the build: a status it cannot read, a header it does not
     map, a value outside its set, a pointer or a signpost that resolves to nothing, a question unpromoted past its
-    thirty days, a superseded decision naming no successor. The knowledge base is consistent when the build prints
-    nothing but the notes this test knows, so a new note fails here (ADR-A152 decision 6)."""
+    thirty days, which is a finding, a superseded decision naming no successor. The knowledge base is consistent when
+    the build prints nothing but the notes and findings this test knows, so a new one fails here (ADR-A152 decision 6)."""
     unexpected = []
     for note in built.notes:
         cut = re.match(r"(\S+):\d+: (\S+) has a claim of \d+ characters, which is cut at 200$", note)
         if cut and (cut.group(2) in KNOWN_LONG_CLAIMS or not cut.group(1).startswith("docs/")):
             continue
-        if "moved to 'triple-stores'" in note or "is a command, and the vyvid.toml" in note:
+        if "moved to 'triple-stores'" in note or "is a command, and the vyvid.toml" in note or note.startswith("extractor '"):
             continue
         unexpected.append(note)
     assert not unexpected, unexpected

@@ -54,11 +54,7 @@ HQ-X4  # named in a plan, no board row yet
 HQ-X5  # named in a plan, no board row yet
 HQ-X6  # named in a plan, no board row yet
 HQ-X7  # named in a plan, no board row yet
-# unit ensemble, 1 slice(s)
-ES-9  # named in a plan, no board row yet
 # unit formal-methods-track-h, 5 slice(s)
-FMH-1.4a  # named in a plan, no board row yet
-FMH-2  # named in a plan, no board row yet
 FMH-H1  # named in a plan, no board row yet
 FMH-H1.4a  # named in a plan, no board row yet
 FMH-H2  # named in a plan, no board row yet
@@ -68,3 +64,19 @@ LG-1.5b  # named in a plan, no board row yet
 MSC-6  # named in a plan, no board row yet
 # unit ontology-remediation, 1 slice(s)
 OR-7a  # named in a plan, no board row yet
+
+# Test identifiers of the vocabulary-temporal-binding Validation Pack, which share the unit's slice prefix and are never slices. VTB-13 is also cited by temporal-binding-consumer-hardening's plan and status record.
+VTB-01
+VTB-02
+VTB-03
+VTB-04
+VTB-05
+VTB-06
+VTB-07
+VTB-08
+VTB-09
+VTB-10
+VTB-11
+VTB-12
+VTB-13
+VTB-14
