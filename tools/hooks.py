@@ -332,6 +332,19 @@ def whole(*args: str) -> Callable[[Change, list[str]], list[str]]:
     return lambda change, touched: run_tool(change, *args)
 
 
+def vyd(*args: str) -> Callable[[Change, list[str]], list[str]]:
+    """A check over Вивід, `vyd`, through tools/vyd.py. Where vyd is missing or says it did not run, a note and no
+    failure, since an absent tool never blocks (ADR-A152 decision 4, PRI-79)."""
+    def check(change: Change, touched: list[str]) -> list[str]:
+        code, output, skipped = tool_module(change, "vyd").run(list(args), cwd=str(change.root))
+        if skipped:
+            print("hooks: " + output.strip().splitlines()[-1])
+            return []
+        lines = [line for line in output.splitlines() if line.strip()]
+        return [] if code == 0 else lines[-20:] or [f"vyd {' '.join(args)} failed with exit code {code}"]
+    return check
+
+
 def checks() -> list[Check]:
     """The registry, in the order they run (ADR-A133 decision 5)."""
     return [
@@ -353,7 +366,7 @@ def checks() -> list[Check]:
         Check("published-decisions", ("*.md",), published_decisions, on_commit=WARN, on_merge=BLOCK),
         Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
                               "docs/architecture/triple-store-discovery.md"),
-              whole("tools/knowledge/identifiers.py")),
+              vyd("check", "identifiers")),
         Check("work", ("docs/developer/status/*", "docs/developer/INDEX.md"), work),
         Check("ontology-versioning", ("ontology/*",),
               lambda change, touched: (run_tool(change, "tools/ontology_version_check.py")
@@ -401,11 +414,12 @@ def install(root: Path, bootstrap: bool = False) -> list[str]:
 # ---- entry ------------------------------------------------------------------------------------
 
 def post_merge(root: Path) -> int:
-    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum).
-    The merge has already happened, so this never fails it."""
+    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum), with
+    `vyd build` (ADR-A152). The merge has already happened, so this never fails it."""
     change = Change(root, (), False)
     try:
-        lines = run_tool(change, "tools/knowledge/extract.py")
+        code, output, skipped = tool_module(change, "vyd").run(["build"], cwd=str(root))
+        lines = [] if code == 0 and not skipped else [line for line in output.strip().splitlines() if line.strip()][-20:]
     except Unavailable as reason:
         lines = [f"not rebuilt: {reason}. Run `mise run build:knowledge`"]
     print("hooks: post-merge, knowledge index " + ("rebuilt" if not lines else "\n  ".join(["not rebuilt"] + lines)))

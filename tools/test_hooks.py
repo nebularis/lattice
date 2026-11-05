@@ -389,3 +389,68 @@ def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: 
     (work_repo / "tools" / "work_board.py").unlink()
     assert hooks.post_merge(work_repo) == 0
     assert "Run `mise run build:work`" in capsys.readouterr().out
+
+
+# ---- VM-2: the index hooks over vyd, an absent tool skips and never blocks (ADR-A152 decision 4) ----
+
+PROBE_PROJECT = """[project]
+name = "probe"
+visibility = "private"
+docs = "code:docs"
+
+[project.families]
+STD = { defined = "docs:standards.md", type = "standard" }
+"""
+
+
+@pytest.fixture
+def vyd_repo(repo: Path) -> Path:
+    shutil.copy(TOOLS / "vyd.py", repo / "tools" / "vyd.py")
+    return repo
+
+
+def without_vyd(monkeypatch) -> None:
+    real = shutil.which
+    monkeypatch.setattr(shutil, "which", lambda name, *a, **k: None if name == "vyd" else real(name, *a, **k))
+
+
+def test_vm2_01_the_identifiers_check_skips_with_a_note_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    change = hooks.Change(vyd_repo, ("docs/developer/standards.md",), False)
+    assert hooks.vyd("check", "identifiers")(change, []) == []
+    out = capsys.readouterr().out
+    assert "`vyd check identifiers` was skipped" in out and "mise run bootstrap" in out
+
+
+def test_vm2_02_post_merge_says_the_index_was_not_rebuilt_and_never_fails_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    assert hooks.run(vyd_repo, "post-merge") == 0
+    out = capsys.readouterr().out
+    assert "not rebuilt" in out and "`vyd build` was skipped" in out and "mise run bootstrap" in out
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the fake vyd is a shell script")
+def test_vm2_03_a_vyd_that_did_not_run_skips_with_its_reason(vyd_repo: Path, monkeypatch, tmp_path_factory, capsys) -> None:
+    fake = tmp_path_factory.mktemp("bin") / "vyd"
+    fake.write_text("#!/bin/sh\necho 'vyvid.toml is not trusted' >&2\nexit 2\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
+    assert hooks.vyd("check", "identifiers")(hooks.Change(vyd_repo, (), False), []) == []
+    out = capsys.readouterr().out
+    assert "did not run" in out and "vyd trust" in out
+
+
+def test_vm2_04_the_identifiers_check_fails_a_mention_nothing_defines_where_vyd_is_present(vyd_repo: Path) -> None:
+    if shutil.which("vyd") is None:
+        pytest.skip("vyd is not installed")
+    (vyd_repo / "vyvid.toml").write_text(PROBE_PROJECT)
+    (vyd_repo / "docs").mkdir()
+    standards = vyd_repo / "docs" / "standards.md"
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-99.\n")
+    sh(vyd_repo, "git", "add", ".")
+    sh(vyd_repo, "git", "commit", "-q", "--no-verify", "-m", "probe")
+    check = hooks.vyd("check", "identifiers")
+    change = hooks.Change(vyd_repo, ("docs/standards.md",), False)
+    assert any("STD-99" in line for line in check(change, []))
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n")
+    assert check(change, []) == []

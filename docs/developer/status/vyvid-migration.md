@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-05. VM-0 and VM-1 built and verified, ADR-A152 accepted, the binding trusted. VM-2 building, with every other branch paused until the unit merges.
+**Status:** built 2026-11-05. VM-0 to VM-2 built, ADR-A152 accepted, the binding trusted. VM-3 waits on the maintainer's word, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | building 2026-11-05 |  |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | planned | VM-2 |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | planned | VM-3 |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | planned | VM-4 |
@@ -22,7 +22,7 @@
 
 ## Next action
 
-VM-2 is building. The next trust point is 2, VM-3's extractor entry, and no edit to `vyvid.toml` is made before it.
+The maintainer runs `mise run check:hooks` and gives the word for VM-3, which adds the quanta and owners extractor to `vyvid.toml`, trust point 2, so `vyd trust` lapses at its first edit and is asked for once the entry is written.
 
 ## Trust points
 
@@ -67,3 +67,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: VM-1's comparison run untrusted and recorded above. Agreement on the board, the regions, the hook check, the moves and the facets. One difference in the identifiers check, the question family failing in Вивід and never in LATTICE, with its disposition. One Вивід bug found, `vyd context` on a file-declared project. The bake-off started on this checkout.
 - 2026-11-05: the bake-off on this checkout scored both sides alike, hit@5 0.884 and MRR 0.806 on the 43, 0.800 and 0.567 on the held-out 5, the top five differing in 4 of 48 below the expected entries. The question family marked `removable` in `vyvid.toml` before any trust, so `vyd check identifiers` exits 0. The Validation Pack [VM-1](../validation/VM-1.md) written, eight tests passing with the eighth skipped until trust. VM-1 built and handed off, paused at trust point 1.
 - 2026-11-05: the maintainer accepted ADR-A152 and ran `vyd trust`, trust point 1. The pin moved to `v0.2.3`, which answers `vyd context` for a project only `vyvid.toml` declares, and the eight binding tests pass. `main`'s two technical-debt commits merged in. The 133 hard-wrapped lines under `.vyvid/` joined by a script that keeps every word, since those sources are hand-written and never regenerated (decision 16). VM-2 begun.
+- 2026-11-05: VM-2 built. `tools/vyd.py` runs `vyd` for a task or a hook and turns an absent tool, or an exit of 2, into a note and a pass. `graph:ask`, `build:knowledge` and `check:identifiers` run over it, `mise run vyd -- <args>` passes the rest through, the identifiers hook check and the post-merge rebuild run over it, with four tests in `tools/test_hooks.py`. AGENTS.md's index section cut to what is LATTICE's and the Copilot file regenerated. PRI-79 added, Proposed. The addenda of 2026-11-05 on ADR-A134 and ADR-A151 written, Proposed. The bake-off's first three questions return the same top five as before the switch. A second `vyd build` takes 3.5 s, so the post-merge hook stays cheap. Validation Pack [VM-2](../validation/VM-2.md).

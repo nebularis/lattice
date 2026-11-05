@@ -498,16 +498,20 @@ description = "Check the repository catalogue against the tree: every listed mod
 run = "python tools/lattice_repo_catalogue.py check"
 
 [tasks."check:identifiers"]
-description = "Check every stable identifier a working document mentions resolves to a definition: decisions by filename, register entries by row, with tools/knowledge/identifier-exceptions.txt as the baseline"
-run = "python tools/knowledge/identifiers.py && python -m pytest tools/knowledge/test_identifiers.py -q"
+description = "Check every stable identifier a working document mentions resolves to a definition, with vyd check identifiers over the families vyvid.toml declares and tools/knowledge/identifier-exceptions.txt as the baseline (ADR-A152). Skips with a note where vyd is missing"
+run = "python tools/vyd.py check identifiers && python -m pytest tools/knowledge/test_identifiers.py -q"
 
 [tasks."build:knowledge"]
-description = "Derive the knowledge index from the working documents and ontologies into .build/knowledge (ADR-A134). Never committed, rebuilt in about two seconds"
-run = "python tools/knowledge/extract.py"
+description = "Derive the knowledge index from the working documents and ontologies with vyd build, into Вивід's store for this checkout (ADR-A134, ADR-A152). Never committed, a few seconds after the first build. Skips with a note where vyd is missing"
+run = "python tools/vyd.py build"
 
 [tasks."graph:ask"]
-description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, sparql <query>, misses [--near], gap <what reading found> [id] [path:line], or close <id>. Opens the store read-only and exits, with no resident process (TSD-38)"
-run = "python tools/knowledge/ask.py"
+description = "Ask the knowledge index a question, through vyd (ADR-A152): find <words> [--kind --exclude --phase --audience --activity --quality --tech], read <id>, node <id>, reaches <id>, exists <text>, sparql <query>, misses [--near], gap <what reading found> [id] [path:line], close <id>. Skips with a note where vyd is missing"
+run = "python tools/vyd.py"
+
+[tasks.vyd]
+description = "Run any vyd command, Вивід, through mise, the one entry point (ADR-A152 decision 3): mise run vyd -- <args>. Skips with a note where vyd is missing"
+run = "python tools/vyd.py"
 
 [tasks."check:knowledge"]
 description = "Check the knowledge index: the T-Box honours ADR-A134, every facet tag is a value of its scheme, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"

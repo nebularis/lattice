@@ -66,7 +66,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 5 planned, 1 built, 1 building | vyvid-migration |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | building 2026-11-05 | VM-0 | 4 planned, 2 built, 1 building | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -495,7 +495,8 @@ gantt
     VTB-4 Surface resolves scoped bindin :vtb4, 2026-09-25, 2026-09-26
     section vyvid-migration
     VM-0 the sketch rewritten the plan :vm0, 2026-11-05, 2026-11-06
-    VM-1 the binding bootstrap vyvid :active, vm1, 2026-11-05, 2026-11-06
+    VM-1 the binding bootstrap vyvid :vm1, 2026-11-05, 2026-11-06
+    VM-2 the index tasks and hooks over :active, vm2, 2026-11-05, 2026-11-06
 ```
 
 <!-- END GENERATED work-board-glance -->
@@ -772,7 +773,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 5 | local ahead 5, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
+| `vyvid-migration` | 2026-11-05 | 9 | local ahead 11, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -821,7 +822,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 100 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -860,7 +861,6 @@ Read from the registers in this tree: 35 Proposed decisions, 18 pending design d
 | [A-148](../architecture/decisions/ADR-A148-mork-transform-backends.md) | MORK mappings over XML and JSON compiled to an XSLT stylesheet writing N-Triples and a JOL | Proposed, 2026-10-30 |
 | [A-149](../architecture/decisions/ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a r | Proposed, 2026-10-31 |
 | [A-151](../architecture/decisions/ADR-A151-the-work-board.md) | The work board: a slice's state written once on its home unit's board as a word and a day, | Proposed, 2026-11-02 |
-| [A-152](../architecture/decisions/ADR-A152-vyvid-adoption.md) | The knowledge index and the work board run on Вивід, installed by `bootstrap` and pinned,  | Proposed, 2026-11-05 |
 | [A-150](../architecture/decisions/ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from | Proposed, 2026-10-31 |
 
 ### 9.2 Pending design decisions
@@ -894,8 +894,8 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **Give the go-ahead for VM-1 on `vyvid-migration`**, the adoption of Вивід (plan [vyvid-migration](plans/vyvid-migration.md)), with every other branch paused until the unit merges. The answers are in the sketch, the handoff patch applies cleanly, and nothing is removed before its replacement is proven.
-2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first.
+1. **Run `vyd trust` again at trust point 2**, when VM-3 on `vyvid-migration` adds the quanta and owners extractor to `vyvid.toml`, and give the word for each slice as the one before is handed off (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 verified and VM-2 built.
+2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 5. **Move `spikes/pol-map` out of LATTICE**, by hand.
