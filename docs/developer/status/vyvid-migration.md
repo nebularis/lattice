@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-05. VM-0 to VM-2 built, ADR-A152 accepted, the binding trusted. VM-3 building, with every other branch paused until the unit merges.
+**Status:** built 2026-11-05. VM-0 to VM-3 built, ADR-A152 accepted. VM-3's `vyvid.toml` edit lapsed trust, trust point 2, and VM-4 waits on the maintainer's word, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -15,14 +15,14 @@
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
-| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | building 2026-11-05 |  |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | built 2026-11-05, building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | planned | VM-3 |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | planned | VM-4 |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | planned | VM-5 |
 
 ## Next action
 
-The maintainer runs `mise run check:hooks` and gives the word for VM-3, which adds the quanta and owners extractor to `vyvid.toml`, trust point 2, so `vyd trust` lapses at its first edit and is asked for once the entry is written.
+The maintainer runs `vyd trust` in this worktree, trust point 2, since VM-3's extractor entry lapsed it. `vyd build` then runs the extractor and the two skipped quanta tests run. Then the word for VM-4.
 
 ## Trust points
 
@@ -31,7 +31,7 @@ The maintainer runs `mise run check:hooks` and gives the word for VM-3, which ad
 | Point | After | What waits on it |
 |---|---|---|
 | 1 | VM-1's handoff, `vyvid.toml` as the patch gave it plus the question family marked `removable` | `vyd context`, `test_vm1_08`, and `vyd install --project` in VM-5. Everything else in VM-1's comparison ran untrusted, since an untrusted project gives knowledge alone |
-| 2 | VM-3's `[[project.extractors]]` entry for quanta and owners | VM-3's tests against the store |
+| 2 | VM-3's `[[project.extractors]]` entry for quanta and owners, written 2026-11-05 | the extractor's run in `vyd build`, the two quanta tests of `test_knowledge_base.py`, and `vyd install --project` in VM-5 |
 
 The user-configuration entry (VM-Q1, both), for the maintainer's own `config.toml`, binds by remote and names nothing the repository's file does not. It is here so the two are written once.
 
@@ -68,3 +68,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: the bake-off on this checkout scored both sides alike, hit@5 0.884 and MRR 0.806 on the 43, 0.800 and 0.567 on the held-out 5, the top five differing in 4 of 48 below the expected entries. The question family marked `removable` in `vyvid.toml` before any trust, so `vyd check identifiers` exits 0. The Validation Pack [VM-1](../validation/VM-1.md) written, eight tests passing with the eighth skipped until trust. VM-1 built and handed off, paused at trust point 1.
 - 2026-11-05: the maintainer accepted ADR-A152 and ran `vyd trust`, trust point 1. The pin moved to `v0.2.3`, which answers `vyd context` for a project only `vyvid.toml` declares, and the eight binding tests pass. `main`'s two technical-debt commits merged in. The 133 hard-wrapped lines under `.vyvid/` joined by a script that keeps every word, since those sources are hand-written and never regenerated (decision 16). VM-2 begun.
 - 2026-11-05: VM-2 built. `tools/vyd.py` runs `vyd` for a task or a hook and turns an absent tool, or an exit of 2, into a note and a pass. `graph:ask`, `build:knowledge` and `check:identifiers` run over it, `mise run vyd -- <args>` passes the rest through, the identifiers hook check and the post-merge rebuild run over it, with four tests in `tools/test_hooks.py`. AGENTS.md's index section cut to what is LATTICE's and the Copilot file regenerated. PRI-79 added, Proposed. The addenda of 2026-11-05 on ADR-A134 and ADR-A151 written, Proposed. The bake-off's first three questions return the same top five as before the switch. A second `vyd build` takes 3.5 s, so the post-merge hook stays cheap. Validation Pack [VM-2](../validation/VM-2.md).
+- 2026-11-05: v0.2.4 pinned, which keeps the misses log per project and prints a passing identifier check as one line. STD-319 added for the weak answer on how a register row is written. VM-3 built. `tools/knowledge/extractor.py` is the command `vyvid.toml` declares, run by `vyd build` once trusted, writing the fifteen quanta, identical to the old extractor's, and the catalogue's units. The knowledge tests re-pointed at Вивід's store as `test_knowledge_base.py`, 24 kept or restored of 69, the rest testing the old modules, and one new test holds the build's notes to the known ones. All passed before the deletions and after. Removed `extract.py`, `ask.py`, `identifiers.py`, `facets.py`, `anchors.py`, `embed.py`, `knowledge.ttl` and their six test modules, about 5,300 lines. `knowledge.ttl` held no term Вивід's vocabulary lacks. `facets.md` stays (decision 14). Two findings for Вивід's side: `vyd find WB-10 --kind slice` returns nothing, so slices are not indexed from this checkout, and the owl-terms extractor names a module by its directory, `module/lattice/ontology/ledger/vocab`, while a declared unit is `module/lattice/ledger`, so a term's owner and an Owner edge are different nodes. Validation Pack [VM-3](../validation/VM-3.md).

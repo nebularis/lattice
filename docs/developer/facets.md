@@ -4,7 +4,7 @@
 
 **Unit type:** [Register](../../tools/knowledge/README.md#facets)
 
-The Activity, Quality and Technology values register entries are tagged with, ratified by the maintainer 2026-10-26. `.build/knowledge/facets.ttl` is generated from it on every build.
+The Activity, Quality and Technology values register entries are tagged with, ratified by the maintainer 2026-10-26. Вивід's packaged general scheme carries the same values, identical to this register row for row on 2026-11-05, and `vyd build` reads them as SKOS (ADR-A152).
 
 ## Schemes
 

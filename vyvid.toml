@@ -34,6 +34,14 @@ LGQ = { removable = true, pattern = '(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+', rule = "
 kind = "owl-terms"
 paths = ["code:ontology/**/*.ttl"]
 
+# LATTICE's own extractor, run by `vyd build` once this file is trusted: the architectural quanta of the data and
+# software views, and the catalogue's units, so an Owner cell names a module (ADR-A152 decision 1).
+[[project.extractors]]
+kind = "lattice-quanta"
+command = ["mise", "exec", "--", "python", "tools/knowledge/extractor.py"]
+paths = ["code:ontology/**/*.ttl", "code:deployment/**/docker-compose.yml"]
+code = ["code:tools/knowledge/extractor.py", "code:tools/knowledge/quanta.py", "code:tools/lattice_repo_catalogue.py", "code:repository-catalogue.md"]
+
 [[project.recipes]]
 name = "sparql-for-studio"
 description = "When writing or generating SPARQL for the studio"

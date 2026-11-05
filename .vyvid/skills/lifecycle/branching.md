@@ -11,7 +11,7 @@ Branches here are usually squash-merged. `mise run work:board -- --measure` comp
 
 ## Merging
 
-`check:identifiers` is the identifier check. - **`tools/knowledge/knowledge.ttl` conflicts.** Take `main`'s file and add the branch's own relation rows back.
+`check:identifiers` is the identifier check.
 
 `mise run build:knowledge` rebuilds the index. The three tasks are `mise run work:normalise -- --apply`, `mise run work:rename -- --apply` and `mise run build:work`, and the join rule is ADR-A151. Versions move by `mise run release:prepare`.
 
