@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -18,7 +18,7 @@
 | WL-4 | the held result, reconnecting with a backoff | built 2026-11-05 |  |
 | WL-5 | short jobs past long ones | built 2026-11-05 |  |
 | WL-6 | a view that attaches to its running job, no stacked validations | built 2026-11-05 |  |
-| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | planned |  |
+| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | building 2026-11-05 |  |
 
 ## Next action
 
@@ -41,3 +41,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-5 built. `contracts/config-studio/amqp-topology.json` gains `lattice.studio.jobs.long`, the service routes by `Lanes`, the worker takes its queue from `LATTICE_WORKER_QUEUE`, `studio:up` starts `worker-long`, `studio:worker-long` runs one by hand, and the harness topology gains `long_workers`, default 1. With a worker for each queue a validation ends in a few seconds while a 25 s proposal runs. Learned: the harness's `spawn` appends to a process's log, so two tests that name a worker alike read each other's lines.
 - 2026-11-05: WL-6 picked up, building.
 - 2026-11-05: WL-6 built. `GET /api/workspaces/{ws}/jobs?unfinished=true` is the new read. `awaitJob` ends on an abort signal, a validation's hook aborts when the workspace view goes and deletes its job, and the proposal views and the publication view attach to the unfinished job of their kind when they open. Two adversarial probes failed the new tests as they should. The worker acknowledges a job the store no longer holds. Not driven by a browser: the publication view's attach and the mapping proposal's.
+- 2026-11-05: WL-7 picked up, building.
