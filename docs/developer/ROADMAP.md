@@ -66,7 +66,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 4 built, 3 planned | vyvid-migration |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 3 built, 2 planned, 1 verified, 1 building | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -416,6 +416,20 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
+    title Vyvid-migration
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section vyvid-migration
+    VM-0 the sketch rewritten the plan :vm0, 2026-11-05, 2026-11-06
+    VM-1 the binding bootstrap vyvid :vm1, 2026-11-05, 2026-11-06
+    VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
+    VM-3 the quanta and owners extracto :vm3, 2026-11-05, 2026-11-06
+    VM-4 the board tasks and the work :active, vm4, 2026-11-05, 2026-11-06
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
     title Word-authoring-poc
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -493,11 +507,6 @@ gantt
     VTB-2 12 fixtures 11 positive negat :vtb2, 2026-09-25, 2026-09-26
     VTB-3 tools vocabulary resolver :vtb3, 2026-09-25, 2026-09-26
     VTB-4 Surface resolves scoped bindin :vtb4, 2026-09-25, 2026-09-26
-    section vyvid-migration
-    VM-0 the sketch rewritten the plan :vm0, 2026-11-05, 2026-11-06
-    VM-1 the binding bootstrap vyvid :vm1, 2026-11-05, 2026-11-06
-    VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
-    VM-3 the quanta and owners extracto :vm3, 2026-11-05, 2026-11-06
 ```
 
 <!-- END GENERATED work-board-glance -->
@@ -770,11 +779,11 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
-| `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
+| `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
-| `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 15 | local ahead 17, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
+| `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
+| `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
+| `vyvid-migration` | 2026-11-05 | 17 | local ahead 19, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -866,7 +875,7 @@ Read from the registers in this tree: 34 Proposed decisions, 18 pending design d
 
 ### 9.2 Pending design decisions
 
-Every row of [pending-design-decisions.md](pending-design-decisions.md), which loses a row when a sketch, plan or ADR settles it.
+Every row of [pending-design-decisions.md](pending-design-decisions.md), which loses a row when a sketch, a plan or a decision settles it.
 
 | Decision | Question |
 |---|---|
@@ -895,7 +904,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **Let VM-4 on `vyvid-migration` run**, the board tasks over `vyd`, with trust point 3 run and VM-3 verified on 2026-11-05 (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 and VM-3 verified, VM-2 built.
+1. **Verify VM-4 on `vyvid-migration`**, `mise run check:hooks`, and give the word for VM-5, the composed skills (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 and VM-3 verified, VM-2 and VM-4 built, and the board tasks now run over `vyd`.
 2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.

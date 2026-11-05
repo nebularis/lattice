@@ -6,6 +6,7 @@ how to mend it, and exit 0, since an absent tool skips and never blocks (PRI-79)
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -18,7 +19,11 @@ def run(args: list[str], cwd: str | None = None) -> tuple[int, str, bool]:
     command = "vyd " + " ".join(args)
     if shutil.which("vyd") is None:
         return 0, f"vyd is not installed, so `{command}` was skipped. {MEND}\n", True
-    result = subprocess.run(["vyd", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    # A git hook exports GIT_DIR, under which `git -C <folder> rev-parse --show-toplevel` answers the folder itself, so
+    # vyd would take a status folder for the repository root (plan vyvid-migration, VM-4, reported to Вивід's side
+    # 2026-11-05). Without it git finds the repository from the working directory, which is the checkout.
+    env = {name: value for name, value in os.environ.items() if name != "GIT_DIR"}
+    result = subprocess.run(["vyd", *args], cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     output = result.stdout + result.stderr
     if result.returncode == 2:
         return 0, f"{output}`{command}` did not run, so it was skipped. {MEND}\n", True

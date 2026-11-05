@@ -546,16 +546,12 @@ description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
 [tasks."work:board"]
-description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards (plan work-board). --all, --fetch, --measure, --commits"
-run = "python tools/work_board.py board"
+description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards, through vyd board (plan work-board, ADR-A152). --all, --fetch, --measure, --commits"
+run = "python tools/vyd.py board"
 
 [tasks."build:work"]
-description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree (plan work-board)"
-run = "python tools/work_board.py build"
-
-[tasks."check:work-board"]
-description = "Test the work board: the board parser, the join across branches, the fold of remotes, the generated regions, the slice crosswalk and the board normaliser (plan work-board)"
-run = "python -m pytest tools/test_work_board.py tools/test_work_migrate.py -q"
+description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree, through vyd work build (plan work-board, ADR-A152). --check fails on a stale region and writes nothing"
+run = "python tools/vyd.py work build"
 
 [tasks."check:vyvid-binding"]
 description = "Test the binding to Вивід: vyvid.toml parses and its families resolve, bootstrap:vyvid decides rightly, and vyd context names LATTICE where the binding is trusted (ADR-A152, plan vyvid-migration)"
@@ -563,23 +559,23 @@ run = "python -m pytest tools/test_vyvid_binding.py -q"
 
 [tasks."work:rename"]
 description = "Build the slice id crosswalk from the historic ids and sweep every mention and Validation Pack name onto the grammar, idempotent. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py rename"
+run = "python tools/vyd.py work rename"
 
 [tasks."work:normalise"]
 description = "Rewrite every status record's slice board into the standard columns and state words, remove Branch lines, declare prefixes, idempotent. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py normalise"
+run = "python tools/vyd.py work normalise"
 
 [tasks."work:here"]
 description = "Who is in this worktree: write your presence (--role build|review|read, --model, --on) into .local/agents/, list the sessions touched in the last twelve hours, or --leave (plan work-board, WB-6)"
-run = "python tools/work_board.py here"
+run = "python tools/vyd.py here"
 
 [tasks."work:adopt"]
 description = "Bring the slices a record's other tables, a Validation Pack or a plan's tables name onto the unit's board, in the state the source gives, and regroup the identifier exceptions by unit. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py adopt"
+run = "python tools/vyd.py work adopt"
 
 [tasks."build:roadmap"]
-description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch (plan work-board)"
-run = "python tools/work_board.py roadmap"
+description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch, through vyd work roadmap (plan work-board, ADR-A152). --check, --fetch"
+run = "python tools/vyd.py work roadmap"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). Oxigraph is the default engine (STD-153), since the whole suite, the reasoner tests included, passed on both engines first (STD-274, 2026-10-27). check:mork-compilers-conformance runs the same suite on rdflib. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"
