@@ -17,7 +17,7 @@ For every `pytest` task `check` runs, this records the wall time serially and wi
 
 - a `--task` argument, with the pytest segment found wherever it falls among a run line's `&&`-joined steps, rather than assumed first (needed for tasks such as `check:identifiers`, whose script runs before its pytest segment)
 - a Windows memory sampler, reading the process tree from the Toolhelp32 snapshot and each process's working set from `GetProcessMemoryInfo` (`ctypes`, `psapi.dll`), parallel to the existing `ps`-based macOS and Linux path, in the same raw-Windows-API style `mem_check` already uses for system memory
-- `ROOT` from the repository catalogue reader, never from `__file__` (`lattice-toolchain`'s Finding paths, STD-273), since this file is touched now and the rule applies to it like any other
+- `ROOT` from the repository catalogue reader, never from `__file__` (`lattice-mise`'s Finding paths, STD-273), since this file is touched now and the rule applies to it like any other
 
 Committed separately (`7e8f7049`) from this measurement pass, since it is a tool fix, not a measurement.
 
@@ -52,7 +52,7 @@ TM11 reads: "only for suites TM9 finds executing generated or hand-written SPARQ
 
 ## `check:mork` could not be measured
 
-`tools/mork` (package `mork-communities`) is not installed in this checkout's `.venv`. Its own dependency chain blocks on this machine's pip mirror. `langchain-litellm` requires `litellm`, which requires `boto3`, and the mirror returns 403 on each package's newest release in turn (see `/memories/repo/lattice-conventions.md`, recorded 2026-10-27). Per `lattice-toolchain`, this is handed to the maintainer with the exact error rather than retried:
+`tools/mork` (package `mork-communities`) is not installed in this checkout's `.venv`. Its own dependency chain blocks on this machine's pip mirror. `langchain-litellm` requires `litellm`, which requires `boto3`, and the mirror returns 403 on each package's newest release in turn (see `/memories/repo/lattice-conventions.md`, recorded 2026-10-27). Per `lattice-constrained-environments`, this is handed to the maintainer with the exact error rather than retried:
 
 ```
 ERROR: Could not install requirement boto3<2.0,>=1.43.119-py3-none-any.whl

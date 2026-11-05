@@ -4,10 +4,7 @@
 
 **Unit ID:** `applied-insurance-reference-phase-5`
 **Epic:** [applied-insurance-reference](applied-insurance-reference.md)
-**Status:** Deferred (epic D2). Starts after Phases 1 to 4 are wired into Open CBAA and after
-[computable-contract-substrate](computable-contract-substrate.md) C9 (ADR-A104 Instrument and
-ADR-A112 Wording) is merged, and is detailed then, with ADR A-101 built on A-104 (epic §3b). NRS N4
-moved into that unit on 2026-09-30.
+**Status:** Deferred (epic D2). Starts after Phases 1 to 4 are wired into Open CBAA and after [computable-contract-substrate](computable-contract-substrate.md) C9 (ADR-A104 Instrument and ADR-A112 Wording) is merged, and is detailed then, with ADR-A101 built on ADR-A104 (epic §3b). NRS N4 moved into that unit on 2026-09-30.
 **Sketch:** [term-parameters.md](../sketches/term-parameters.md)
 
 ## Scope

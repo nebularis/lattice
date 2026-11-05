@@ -39,11 +39,7 @@ Built on the current branch (`docs/placement-vehicles-structure`), by the mainta
 for this session, rather than on a dedicated `ledger/lg-0-examples` branch as the plan names. Ten
 files written under `ontology/ledger/examples/`, one per row of the plan's table.
 
-**LG0-01 (parse with rdflib): authored, not yet run.** `mise run bootstrap` fails in this
-environment with an HTTP 403 from the configured package mirror while installing build dependencies
-(`setuptools>=68`), so `rdflib` is not available to this checkout's `.venv`. Per `lattice-toolchain`,
-this is handed to the maintainer rather than retried or routed around. Command to run once the
-environment is repaired:
+**LG0-01 (parse with rdflib): authored, not yet run.** `mise run bootstrap` fails in this environment with an HTTP 403 from the configured package mirror while installing build dependencies (`setuptools>=68`), so `rdflib` is not available to this checkout's `.venv`. Per `lattice-constrained-environments`, this is handed to the maintainer rather than retried or routed around. Command to run once the environment is repaired:
 
 ```bash
 mise exec -- python -c "import rdflib, glob

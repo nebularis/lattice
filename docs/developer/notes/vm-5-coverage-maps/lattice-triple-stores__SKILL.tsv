@@ -1,0 +1,26 @@
+line	destination	reason	score
+6	lattice-probing:7	moved or renamed heading, placed by hand	1.00
+8	lattice-probing:33	joined onto one line	1.00
+9	lattice-probing:33	joined onto one line	1.00
+10	lattice-probing:33	reworded, citation or placeholder	0.90
+11	lattice-probing:33	joined onto one line	1.00
+16	lattice-probing:38	joined onto one line	1.00
+17	lattice-probing:38	joined onto one line	1.00
+18	lattice-probing:39	reworded, citation or placeholder	0.92
+19	lattice-probing:39	joined onto one line	1.00
+20	lattice-probing:40	reworded, citation or placeholder	0.96
+25	lattice-probing:45	joined onto one line	1.00
+26	lattice-probing:45	joined onto one line	1.00
+27	lattice-probing:46	joined onto one line	1.00
+28	lattice-probing:46	joined onto one line	1.00
+29	lattice-probing:46	joined onto one line	1.00
+30	lattice-probing:47	joined onto one line	1.00
+31	lattice-probing:47	reworded, citation or placeholder	0.75
+32	lattice-probing:48	reworded, citation or placeholder	0.95
+47	lattice-probing:63	reworded, citation or placeholder	0.92
+68	lattice-probing:98	reworded, citation or placeholder	0.94
+73	lattice-query-writing:61	joined onto one line	1.00
+74	lattice-query-writing:61	moved or renamed heading, placed by hand	1.00
+75	lattice-query-writing:61	reworded, citation or placeholder	0.91
+76	lattice-query-writing:61	reworded, citation or placeholder	0.96
+77	lattice-query-writing:61	reworded, citation or placeholder	0.94

@@ -107,7 +107,7 @@ or examples, a version IRI, or a SHACL shape.*
 - domain-neutral READMEs, and referring to `fnd:Versioned`
 - the market-word rule and its exceptions (bound meaning, SPC's binder)
 
-### `lattice-toolchain`
+### `lattice-mise`
 
 *Use when building, testing or running checks, setting up or repairing an environment, or when a
 package install or tool fails.*
@@ -141,7 +141,7 @@ published: documentation, commit messages, examples, generated content.*
 | Repository Topology, Decisions and Links | core (table), `lattice-architecture` |
 | Documentation Lifecycle, Epic Decomposition Model | `lattice-lifecycle` |
 | Changing an ontology document | `lattice-ontology-authoring` |
-| Toolchain, Shell activation, Restricted or mirrored package registries | `lattice-toolchain` |
+| Toolchain, Shell activation, Restricted or mirrored package registries | `lattice-mise` and `lattice-constrained-environments` |
 | General Guidelines, Writing Style, What To Avoid, What To Reduce | core |
 | Documenting ontologies, Ponytail guardrails, SHACL-SPARQL | `lattice-ontology-authoring` |
 | Thinking / Reasoning for Coding and for Writing | core |
@@ -158,8 +158,7 @@ some that do not:
 | domain-neutral READMEs, sparing colons, sparing domain and range | core, `lattice-ontology-authoring` |
 | which remote to push to, editable installs from another clone | stays personal: true of one machine |
 
-The general lessons of `docs/developer/project-environment.md` (do not route around a blocked
-registry, hand off what cannot run) move to `lattice-toolchain`.
+The general lessons of `docs/developer/project-environment.md` (do not route around a blocked registry, hand off what cannot run) move to `lattice-constrained-environments`.
 
 ## 5. How a skill stays right
 
@@ -193,7 +192,7 @@ principles, its ontology change steps), and installs the plugin.
    (the ADR's addendum).
 4. `mise run skills:link`, and the checks of §5 in `mise run check`.
 5. The root `README.md`, the developer guide and getting started updated. TD-21 removed.
-6. `project-environment.md` folded into `lattice-toolchain`.
+6. `project-environment.md` folded into `lattice-environment-lessons`.
 
 ## 8. Questions
 
