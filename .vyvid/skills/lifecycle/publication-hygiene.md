@@ -10,17 +10,13 @@ Examples are `LG-1`, a phrase such as "not yet written in LG-2", `AIR-4.2`, `CCS
 
 - **A migrated README cites only published decisions** (ADR-A127). The published-decisions check reports such a citation in a README not yet migrated and fails one in a README migrated to the ADR-A126 layout, which blocks a merge into `main`. On a branch a release note may cite the Proposed decision its change rests on, and before the merge the maintainer accepts that decision, or the note cites the published text that states the rule instead (PDD-16).
 
-- **Check before handing off.** Search what you wrote under `ontology/` for slice, question and debt
-  identifiers and for the word "slice". An extracted section carries the identifier into generated
-  Turtle as well, so fix the README and regenerate.
+- **Check before handing off.** Search what you wrote under `ontology/` for slice, question and debt identifiers and for the word "slice". An extracted section carries the identifier into generated Turtle as well, so fix the README and regenerate.
 
 ## AI disclosure
 
 [GENAI_CONTRIBUTION.md](https://github.com/nebularis/lattice/blob/main/GENAI_CONTRIBUTION.md) governs the disclosure rules.
 
-- Substantial (tier A) and assisted (tier B) AI content is disclosed in every commit, with
-  `Generated-by:` and `AI-Content: substantial | assisted` trailers, and in every pull request, with
-  an "AI provenance" section. Review-only use (tier C) needs none.
+- Substantial (tier A) and assisted (tier B) AI content is disclosed in every commit, with `Generated-by:` and `AI-Content: substantial | assisted` trailers, and in every pull request, with an "AI provenance" section. Review-only use (tier C) needs none.
 
 ## The deny-list check
 
@@ -34,7 +30,4 @@ It is one of the checks the commit hook runs, which `mise run bootstrap` install
 
 ## The private overlay
 
-A maintainer's private guidance lives outside every repository, at `~/.config/lattice/private/`
-(`%USERPROFILE%\.config\lattice\private\` on Windows), usually a link to a private checkout.
-`AGENTS.md` says when it applies. Its content is held to the same rule as the deny-list. It never
-appears in a repository, a commit or a pull request, in any form.
+A maintainer's private guidance lives outside every repository, at `~/.config/lattice/private/` (`%USERPROFILE%\.config\lattice\private\` on Windows), usually a link to a private checkout. `AGENTS.md` says when it applies. Its content is held to the same rule as the deny-list. It never appears in a repository, a commit or a pull request, in any form.

@@ -59,8 +59,5 @@ A check judges only what the change touches, so a failure elsewhere in the tree 
 
 ## Rules for tasks and tools
 
-- A new Python package for a layer goes under `tools/<layer>/`, shaped like `tools/persistence/`:
-  `pyproject.toml` with a `src/` layout and a `test` extra, a README, `tests/conftest.py` with fixtures,
-  and `bootstrap:<pkg>` and `check:<pkg>` tasks wired into the aggregates.
-- A new build output outside `build/` or `.build/<name>/`, or a Maven module outside
-  `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
+- A new Python package for a layer goes under `tools/<layer>/`, shaped like `tools/persistence/`: `pyproject.toml` with a `src/` layout and a `test` extra, a README, `tests/conftest.py` with fixtures, and `bootstrap:<pkg>` and `check:<pkg>` tasks wired into the aggregates.
+- A new build output outside `build/` or `.build/<name>/`, or a Maven module outside `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.

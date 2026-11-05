@@ -2,7 +2,7 @@
 
 # ADR-A152: The knowledge index and the work board run on Вивід, installed and pinned, with LATTICE keeping a thin layer of its own
 
-**Status:** Proposed, 2026-11-05
+**Status:** Accepted 2026-11-05
 **Date:** 2026-11-05
 **Supersedes:** none
 **Related:** [ADR-A134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) (the knowledge index), [ADR-A151](ADR-A151-the-work-board.md) (the work board), [ADR-A133](ADR-A133-git-hooks.md) (the hooks and their moments), [ADR-A117](ADR-A117-agent-guidance-and-skill-library.md) (AGENTS.md and the skills), [ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` as the one entry point)

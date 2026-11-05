@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 and VM-1 built. VM-1's two trust-gated checks wait on `vyd trust`, and VM-2 waits on the maintainer's word, with every other branch paused until the unit merges.
+**Status:** building 2026-11-05. VM-0 and VM-1 built and verified, ADR-A152 accepted, the binding trusted. VM-2 building, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the ADR | planned | VM-1 |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | planned | VM-2 |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | planned | VM-3 |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | planned | VM-4 |
@@ -22,7 +22,7 @@
 
 ## Next action
 
-The maintainer runs `vyd trust` in this worktree, trust point 1, and gives the word for VM-2. `test_vm1_08` and `vyd context` then run, the latter once Вивід's side has fixed the `KeyError` on a file-declared project.
+VM-2 is building. The next trust point is 2, VM-3's extractor entry, and no edit to `vyvid.toml` is made before it.
 
 ## Trust points
 
@@ -63,6 +63,7 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 | the moves | none | `vyd move check --ref main`, nothing differs | none | none |
 | the facet register | `facets.md`, 329 table rows | the packaged general scheme, 329 rows, identical row for row, definitions and broader and narrower links included. Only the title, the licence line and the preamble differ | none | decision 14's comparison is done, no additions file is needed, and `facets.md` stays until VM-3 decides its future |
 | `find` | `graph:ask -- find`, hit@5 0.884 and MRR 0.806 on the 43 scored questions, 0.800 and 0.567 on the 5 held out | `vyd find`, the same four figures on this checkout, run through `mise run bench:lattice` in Вивід's checkout against this worktree | the top five differ in 4 of 48 questions, each time in the fourth or fifth place, and every expected entry keeps its rank | none |
-| the contract | none | `vyd context` fails with `KeyError: 'lattice'` when the project is declared by `vyvid.toml` and has no entry in the user configuration | Вивід's bug, reported to its side | retried after the fix or after the user-configuration entry is added |
+| the contract | none | `vyd context` fails with `KeyError: 'lattice'` when the project is declared by `vyvid.toml` and has no entry in the user configuration | Вивід's bug, reported to its side | fixed in 0.2.3, pinned 2026-11-05, after which `vyd context` names LATTICE and `test_vm1_08` passes |
 - 2026-11-05: VM-1's comparison run untrusted and recorded above. Agreement on the board, the regions, the hook check, the moves and the facets. One difference in the identifiers check, the question family failing in Вивід and never in LATTICE, with its disposition. One Вивід bug found, `vyd context` on a file-declared project. The bake-off started on this checkout.
 - 2026-11-05: the bake-off on this checkout scored both sides alike, hit@5 0.884 and MRR 0.806 on the 43, 0.800 and 0.567 on the held-out 5, the top five differing in 4 of 48 below the expected entries. The question family marked `removable` in `vyvid.toml` before any trust, so `vyd check identifiers` exits 0. The Validation Pack [VM-1](../validation/VM-1.md) written, eight tests passing with the eighth skipped until trust. VM-1 built and handed off, paused at trust point 1.
+- 2026-11-05: the maintainer accepted ADR-A152 and ran `vyd trust`, trust point 1. The pin moved to `v0.2.3`, which answers `vyd context` for a project only `vyvid.toml` declares, and the eight binding tests pass. `main`'s two technical-debt commits merged in. The 133 hard-wrapped lines under `.vyvid/` joined by a script that keeps every word, since those sources are hand-written and never regenerated (decision 16). VM-2 begun.

@@ -8,11 +8,7 @@ description: LATTICE's structure and the principles behind it. Use when a design
 This skill's tasks span the activities cross-layer-design, solution-architecture, dependency-analysis, architecture-decision-making, quality-attribute-analysis and technology-selection, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 
-This skill points to the architecture rather than restating it. The canonical sources are
-[ontology-architecture.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-architecture.md),
-[solution-design-specification.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/solution-design-specification.md)
-and the [ADR catalogue](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/README.md).
-Read the relevant one before deciding anything.
+This skill points to the architecture rather than restating it. The canonical sources are [ontology-architecture.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-architecture.md), [solution-design-specification.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/solution-design-specification.md) and the [ADR catalogue](https://github.com/nebularis/lattice/blob/main/docs/architecture/decisions/README.md). Read the relevant one before deciding anything.
 
 ## The layers
 
@@ -28,13 +24,9 @@ foundation
                                             └── behaviour runtime
 ```
 
-- Foundation to Behaviour are **substrate**, for any domain. Instrument is the first applied
-  ontology on them, and applied domains (`ontology/applied/`) sit above.
-- **A layer never imports or names a layer above it, a sibling, or an applied module.**
-  `mise run check:import-guard` enforces this for the substrate (ADR-A01 and its addendum). A change
-  to the order changes the guard's table and the diagram in `ontology-architecture.md` together.
-- A layer's README is its normative source. Substrate and layer READMEs stay domain-neutral, and
-  never name a downstream project.
+- Foundation to Behaviour are **substrate**, for any domain. Instrument is the first applied ontology on them, and applied domains (`ontology/applied/`) sit above.
+- **A layer never imports or names a layer above it, a sibling, or an applied module.** `mise run check:import-guard` enforces this for the substrate (ADR-A01 and its addendum). A change to the order changes the guard's table and the diagram in `ontology-architecture.md` together.
+- A layer's README is its normative source. Substrate and layer READMEs stay domain-neutral, and never name a downstream project.
 - Downstream projects, such as Open CBAA, depend on LATTICE's release tags, never the reverse.
 
 ## Principles that most designs meet
@@ -63,8 +55,6 @@ The standards for structure are in the skill `lattice-design`, with the LATTICE 
 
 ## Before changing a dependency
 
-- Read the architectural quanta the change touches, and ask whether it adds an import, an edge
-  between modules, or a runtime dependency that did not exist.
+- Read the architectural quanta the change touches, and ask whether it adds an import, an edge between modules, or a runtime dependency that did not exist.
 - An edge that crosses the layer order is an ADR, not a change.
-- A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83,
-  `mise run check:reasoning-isolation`).
+- A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83, `mise run check:reasoning-isolation`).

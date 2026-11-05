@@ -2,8 +2,7 @@
 
 The knowledge index is asked as AGENTS.md's "Asking the knowledge index" says. The design specification is `docs/architecture/solution-design-specification.md`.
 
-- `docs/architecture/ontology-architecture.md`, `solution-design-specification.md`,
-  `data-architecture.md` and `ux-design.md`
+- `docs/architecture/ontology-architecture.md`, `solution-design-specification.md`, `data-architecture.md` and `ux-design.md`
 
 ## Standards for a design
 
@@ -37,6 +36,4 @@ Epic-scoped blocks (`A-FM`, `A-CAP`) are reserved for their epics. An addendum t
 
 ## LATTICE is a framework
 
-It imposes no design decision on its users unless correctness needs it. It offers options, and
-where it can, configuration and capabilities that work on the user's chosen settings. A design that
-hard-codes one domain's practice as the only way is wrong at the substrate.
+It imposes no design decision on its users unless correctness needs it. It offers options, and where it can, configuration and capabilities that work on the user's chosen settings. A design that hard-codes one domain's practice as the only way is wrong at the substrate.
