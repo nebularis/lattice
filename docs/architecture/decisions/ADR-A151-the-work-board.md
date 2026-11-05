@@ -39,3 +39,9 @@ The sketch [work-board.md](../../developer/sketches/work-board.md) holds the mea
 10. **A unit's state is its board's roll-up, and is joined across branches.** Where a record has a board, its Status word and day are what the rows give, building while any row is building, else the lowest word of the rows at built or later, else blocked if any row is, else the highest of planned and briefed. The `work` check refuses a word that disagrees, and `work:normalise` sets it. The board and the roadmap's units table show `main`'s state and each branch whose record is further on, as they show a slice's.
 
 Provenance of the addendum: after the realign branch's merge of `main` the board read two of its units as planned, since the Units table read each unit's state from `main` alone. The maintainer chose on 2026-11-02 to join the state, roll it up from the board and hold the word to it (slice WB-10 of `work-board`). A first rule, building while any row was below built, read ten paused units as building, and was narrowed to a row actually building.
+
+## Addendum, 2026-11-05
+
+**Status:** Proposed 2026-11-05.
+
+The board this record defines is read and written by Вивід, `vyd board`, `vyd work` and `vyd here`, from 2026-11-05 ([ADR-A152](ADR-A152-vyvid-adoption.md)). The board's shape, the slice grammar, the roll-up of decision 10, the `work` hook check and the generated regions of INDEX.md and ROADMAP.md stand as above, declared to Вивід by the work settings in `vyvid.toml`. The task names stay, `work:board`, `build:work`, `build:roadmap`, `work:here` and the rest, each over `vyd` once the `vyvid-migration` unit moves them, and each skipping with a note where `vyd` is missing (PRI-79). LATTICE's own board tools go once `vyd board` answers the same across every branch, the comparison recorded in that unit's status record.

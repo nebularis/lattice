@@ -256,7 +256,7 @@ def test_or1_02_post_merge_rebuilds_the_index_and_never_fails(repo: Path, capsys
     assert "post-merge" in capsys.readouterr().out
 
 
-# ---- WB-4: the work board check and the post-merge registers -------------------------------------
+# ---- WB-4: the work board check and the post-merge registers, over vyd (ADR-A152, plan vyvid-migration, VM-4) ----
 
 RECORD = """# Alpha: status
 
@@ -272,16 +272,55 @@ RECORD = """# Alpha: status
 | AL-3 | the tool | planned | AL-2 |
 """
 
+# The probe project, with the work settings of this checkout's own vyvid.toml (sweep left out).
+WORK_PROJECT = """[project]
+name = "probe"
+visibility = "private"
+docs = "code:docs"
+
+[project.families]
+SL = { pattern = 'AL-\\d+', defined = "docs:developer/INDEX.md", type = "slice" }
+
+[project.work]
+status = "docs:developer/status"
+plans = "docs:developer/plans"
+sketches = "docs:developer/sketches"
+validation = "docs:developer/validation"
+reviews = "docs:developer/review"
+decisions = "docs:architecture/decisions"
+index = "docs:developer/INDEX.md"
+roadmap = "docs:developer/ROADMAP.md"
+levels = ["epic", "unit", "slice"]
+roadmap_section = "9"
+presence = ".local/agents"
+
+[project.work.markers]
+index_begin = "<!-- BEGIN GENERATED work-board. Written by `mise run build:work` from the status records. Edit a status record, never this region. -->"
+roadmap_begin = "<!-- BEGIN GENERATED work-board-{name}. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->"
+
+[project.work.commands]
+build = "mise run build:work"
+roadmap = "mise run build:roadmap"
+normalise = "mise run work:normalise -- --apply"
+rename = "mise run work:rename -- --apply"
+here = "mise run work:here --"
+"""
+
 
 @pytest.fixture
-def work_repo(repo: Path) -> Path:
-    shutil.copy(ROOT / "repository-catalogue.md", repo / "repository-catalogue.md")
-    for name in ("lattice_repo_catalogue.py", "work_board.py"):
-        shutil.copy(TOOLS / name, repo / "tools" / name)
-    for readme in (ROOT / "ontology").glob("**/README.md"):
-        target = repo / readme.relative_to(ROOT)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(readme, target)
+def work_repo(repo: Path, tmp_path_factory, monkeypatch) -> Path:
+    """A repository vyd reads as a project. A vyvid.toml nobody has trusted makes vyd write nothing, and a test never
+    trusts one, so the project is declared in a configuration this test writes and names in VYVID_CONFIG, with an
+    index store of its own."""
+    if shutil.which("vyd") is None:
+        pytest.skip("vyd is not installed")
+    shutil.copy(TOOLS / "vyd.py", repo / "tools" / "vyd.py")
+    scratch = tmp_path_factory.mktemp("vyd")
+    declared = WORK_PROJECT.replace("[project]\n", "", 1).replace("[project.", "[projects.")
+    config = scratch / "config.toml"
+    config.write_text(f'[framework]\nstore = "{(scratch / "index").as_posix()}"\n\n[[projects]]\ncode = "{repo.as_posix()}"\n{declared}',
+                      encoding="utf-8")
+    monkeypatch.setenv("VYVID_CONFIG", str(config))
     (repo / "docs" / "developer" / "status").mkdir(parents=True)
     (repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n")
     return repo
@@ -293,65 +332,80 @@ def record(root: Path, text: str = RECORD) -> str:
 
 
 def build(root: Path, *args: str) -> subprocess.CompletedProcess:
-    return sh(root, sys.executable, "tools/work_board.py", *args, check=False)
+    return sh(root, "vyd", "work", "build", *args, check=False)
 
 
 def work_messages(root: Path, *files: str) -> list[str]:
+    """What the work check says about the staged tree, after staging whatever the scenario changed."""
+    sh(root, "git", "add", ".")
     check = next(c for c in hooks.checks() if c.name == "work")
     outcomes = hooks.evaluate(hooks.Change(root, files, merge=False), [check], set())
     return [m for o in outcomes for m in o.messages]
 
 
+def row_line(text: str, slice_id: str) -> int:
+    return next(n for n, row in enumerate(text.splitlines(), 1) if slice_id in row)
+
+
 def test_wb4_01_a_well_formed_record_with_a_current_index_passes(work_repo: Path) -> None:
     rel = record(work_repo)
-    assert build(work_repo, "build").returncode == 0
+    assert build(work_repo).returncode == 0
     assert work_messages(work_repo, rel) == []
 
 
 def test_wb4_02_a_historic_state_word_is_refused(work_repo: Path) -> None:
-    rel = record(work_repo, RECORD.replace("| AL-2 | the join | building 2026-10-30 |", "| AL-2 | the join | Done (abc123) |"))
-    text = "\n".join(work_messages(work_repo, rel))
-    line = next(n for n, row in enumerate(RECORD.replace("building 2026-10-30 |", "Done (abc123) |").splitlines(), 1) if "AL-2" in row)
-    assert f"{rel}:{line}: AL-2" in text
-    assert "State cell opens with" in text and "work:normalise" in text
-    assert "merged" in text and "building" in text
+    text = RECORD.replace("| AL-2 | the join | building 2026-10-30 |", "| AL-2 | the join | Done (abc123) |")
+    rel = record(work_repo, text)
+    found = "\n".join(work_messages(work_repo, rel))
+    assert f"{rel}:{row_line(text, 'AL-2')}: AL-2: the State cell opens with 'Done (abc123)'" in found
+    assert "Run `mise run work:normalise -- --apply`" in found
+    assert "merged" in found and "building" in found
 
 
 def test_wb4_03_a_dated_state_needs_its_day(work_repo: Path) -> None:
-    rel = record(work_repo, RECORD.replace("| building 2026-10-30 | |", "| building | |"))
-    assert any("needs the day" in m for m in work_messages(work_repo, rel))
+    text = RECORD.replace("| building 2026-10-30 | |", "| building | |")
+    rel = record(work_repo, text)
+    build(work_repo)
+    found = work_messages(work_repo, rel)
+    assert f"{rel}:{row_line(text, 'AL-2')}: AL-2: building needs the day it was reached, as `building YYYY-MM-DD`" in found
 
 
 def test_wb4_04_slice_ids_follow_the_grammar(work_repo: Path) -> None:
     rel = record(work_repo, RECORD.replace("AL-3", "C9b3b"))
-    assert any("work:rename" in m and "C9b3b" in m for m in work_messages(work_repo, rel))
+    build(work_repo)
+    found = work_messages(work_repo, rel)
+    assert any("C9b3b: a slice id must match" in m and "Run `mise run work:rename -- --apply`" in m for m in found)
     ok = RECORD + "| HQ-6a.1 | a | planned | |\n| AIR-S1 | b | planned | |\n| OD-DOC1 | c | planned | |\n"
-    build(work_repo, "build")
-    assert not [m for m in work_messages(work_repo, record(work_repo, ok)) if "work:rename" in m]
+    rel = record(work_repo, ok)
+    build(work_repo)
+    assert work_messages(work_repo, rel) == []
 
 
 def test_wb4_05_the_status_line_opens_with_a_state_word(work_repo: Path) -> None:
-    rel = record(work_repo, RECORD.replace("building 2026-10-30. A-2 next.", "🔨 In progress"))
-    build(work_repo, "build")
-    assert any("Status line" in m for m in work_messages(work_repo, rel))
+    rel = record(work_repo, RECORD.replace("building 2026-10-30. A-2 next.", "\U0001F528 In progress"))
+    build(work_repo)
+    assert any("the Status line opens with '\U0001F528 In progress', not a word of planned" in m for m in work_messages(work_repo, rel))
     rel = record(work_repo, RECORD.replace("**Status:** building 2026-10-30. A-2 next.\n", ""))
-    build(work_repo, "build")
-    assert not [m for m in work_messages(work_repo, rel) if "Status line" in m]
+    build(work_repo)
+    assert work_messages(work_repo, rel) == []
 
 
 def test_wb10_04_a_status_word_its_board_does_not_give_is_refused(work_repo: Path) -> None:
     rel = record(work_repo, RECORD.replace("**Status:** building 2026-10-30.", "**Status:** planned."))
-    build(work_repo, "build")
-    text = "\n".join(work_messages(work_repo, rel))
-    assert "rolls up to 'building 2026-10-30'" in text and "work:normalise" in text
+    build(work_repo)
+    found = "\n".join(work_messages(work_repo, rel))
+    assert "the Status line reads 'planned', its board rolls up to 'building 2026-10-30'" in found
+    assert "Run `mise run work:normalise -- --apply`" in found
 
 
 def test_wb4_06_a_stale_index_region_is_refused_until_rebuilt(work_repo: Path) -> None:
     rel = record(work_repo)
-    build(work_repo, "build")
+    build(work_repo)
     record(work_repo, RECORD.replace("| AL-3 | the tool | planned |", "| AL-3 | the tool | building 2026-11-01 |"))
-    assert any("mise run build:work" in m for m in work_messages(work_repo, rel))
-    build(work_repo, "build")
+    found = work_messages(work_repo, rel)
+    assert any("docs/developer/INDEX.md: the work-board region is stale against the status records. Run `mise run build:work`" in m
+               for m in found)
+    build(work_repo)
     assert work_messages(work_repo, rel) == []
     check = next(c for c in hooks.checks() if c.name == "work")
     assert hooks.evaluate(hooks.Change(work_repo, ("README.md", "docs/developer/plans/x.md"), False), [check], set()) == []
@@ -367,7 +421,7 @@ def commit_all(root: Path) -> None:
     sh(root, "git", "commit", "-q", "--no-verify", "-m", "work board")
 
 
-def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: Path, capsys) -> None:
+def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: Path, monkeypatch, capsys) -> None:
     record(work_repo)
     roadmap = work_repo / "docs" / "developer" / "ROADMAP.md"
     roadmap.write_text("# Roadmap\n")
@@ -375,7 +429,7 @@ def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: 
     assert hooks.post_merge(work_repo) == 0
     out = capsys.readouterr().out
     assert "INDEX.md region regenerated" in out and "ROADMAP.md regions regenerated" in out
-    assert build(work_repo, "build", "--check").returncode == 0
+    assert build(work_repo, "--check").returncode == 0
     assert "<!-- BEGIN GENERATED work-board-glance" in roadmap.read_text()
     assert "<!-- BEGIN GENERATED work-board-branches" in roadmap.read_text()
     sh(work_repo, "git", "checkout", "-q", "-b", "feature")
@@ -385,7 +439,101 @@ def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: 
     out = capsys.readouterr().out
     assert "INDEX.md region regenerated" in out and "ROADMAP.md" not in out
     assert roadmap.read_text() == "# Roadmap\n"
-    assert build(work_repo, "build", "--check").returncode == 0
-    (work_repo / "tools" / "work_board.py").unlink()
+    assert build(work_repo, "--check").returncode == 0
+    without_vyd(monkeypatch)
     assert hooks.post_merge(work_repo) == 0
-    assert "Run `mise run build:work`" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "not regenerated" in out and "Run `mise run build:work`" in out
+
+
+
+def test_vm4_01_the_work_check_runs_under_a_git_hooks_environment(work_repo: Path, monkeypatch) -> None:
+    """A git hook exports GIT_DIR, under which vyd 0.2.6 took the status folder for the repository root and crashed. Vyvid
+    0.2.7 fixes it where vyd starts, and this holds the fix (plan vyvid-migration, VM-4)."""
+    rel = record(work_repo)
+    assert build(work_repo).returncode == 0
+    monkeypatch.setenv("GIT_DIR", str(work_repo / ".git"))
+    assert work_messages(work_repo, rel) == []
+
+
+def test_vm5_01_the_skills_check_skips_with_a_note_where_vyd_is_absent(monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    change = hooks.Change(ROOT, (".claude/skills/lattice-lifecycle/SKILL.md",), False)
+    assert hooks.vyd("check", "skills")(change, []) == []
+    out = capsys.readouterr().out
+    assert "`vyd check skills` was skipped" in out and "mise run bootstrap" in out
+
+
+def test_vm5_02_the_skills_check_passes_on_this_checkout() -> None:
+    if shutil.which("vyd") is None:
+        pytest.skip("vyd is not installed")
+    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, timeout=60, cwd=ROOT).stdout
+    if "is not trusted" in config or "projects: none" in config:
+        pytest.skip("the binding is not trusted here, run `vyd trust` in the checkout")
+    change = hooks.Change(ROOT, (".claude/skills/lattice-lifecycle/SKILL.md",), False)
+    assert hooks.vyd("check", "skills")(change, []) == []
+
+
+# ---- VM-2: the index hooks over vyd, an absent tool skips and never blocks (ADR-A152 decision 4) ----
+
+PROBE_PROJECT = """[project]
+name = "probe"
+visibility = "private"
+docs = "code:docs"
+
+[project.families]
+STD = { defined = "docs:standards.md", type = "standard" }
+"""
+
+
+@pytest.fixture
+def vyd_repo(repo: Path) -> Path:
+    shutil.copy(TOOLS / "vyd.py", repo / "tools" / "vyd.py")
+    return repo
+
+
+def without_vyd(monkeypatch) -> None:
+    real = shutil.which
+    monkeypatch.setattr(shutil, "which", lambda name, *a, **k: None if name == "vyd" else real(name, *a, **k))
+
+
+def test_vm2_01_the_identifiers_check_skips_with_a_note_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    change = hooks.Change(vyd_repo, ("docs/developer/standards.md",), False)
+    assert hooks.vyd("check", "identifiers")(change, []) == []
+    out = capsys.readouterr().out
+    assert "`vyd check identifiers` was skipped" in out and "mise run bootstrap" in out
+
+
+def test_vm2_02_post_merge_says_the_index_was_not_rebuilt_and_never_fails_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
+    without_vyd(monkeypatch)
+    assert hooks.run(vyd_repo, "post-merge") == 0
+    out = capsys.readouterr().out
+    assert "not rebuilt" in out and "`vyd build` was skipped" in out and "mise run bootstrap" in out
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the fake vyd is a shell script")
+def test_vm2_03_a_vyd_that_did_not_run_skips_with_its_reason(vyd_repo: Path, monkeypatch, tmp_path_factory, capsys) -> None:
+    fake = tmp_path_factory.mktemp("bin") / "vyd"
+    fake.write_text("#!/bin/sh\necho 'vyvid.toml is not trusted' >&2\nexit 2\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
+    assert hooks.vyd("check", "identifiers")(hooks.Change(vyd_repo, (), False), []) == []
+    out = capsys.readouterr().out
+    assert "did not run" in out and "vyd trust" in out
+
+
+def test_vm2_04_the_identifiers_check_fails_a_mention_nothing_defines_where_vyd_is_present(vyd_repo: Path) -> None:
+    if shutil.which("vyd") is None:
+        pytest.skip("vyd is not installed")
+    (vyd_repo / "vyvid.toml").write_text(PROBE_PROJECT)
+    (vyd_repo / "docs").mkdir()
+    standards = vyd_repo / "docs" / "standards.md"
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-99.\n")
+    sh(vyd_repo, "git", "add", ".")
+    sh(vyd_repo, "git", "commit", "-q", "--no-verify", "-m", "probe")
+    check = hooks.vyd("check", "identifiers")
+    change = hooks.Change(vyd_repo, ("docs/standards.md",), False)
+    assert any("STD-99" in line for line in check(change, []))
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n")
+    assert check(change, []) == []

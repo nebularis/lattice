@@ -47,8 +47,7 @@ no evaluator of sums yet.
 
 ## One command
 
-Run from the repository root of the worktree on machine R, with this checkout's packages first on
-`PYTHONPATH` (skill `lattice-toolchain`).
+Run from the repository root of the worktree on machine R, with this checkout's packages first on `PYTHONPATH` (skill `lattice-mise`).
 
 ```bash
 mise run check:ontology-catalog && mise run check:ontology-versioning && mise run check:import-guard

@@ -6,7 +6,7 @@ Run from the repository root: python tools/full_sweep.py [--base-ref REF]
 Each check's full output goes to .build/full-sweep/<check>.log. A failed check is printed in red
 with its failing tests, or the end of its output when it ran no tests. The tool packages are this
 checkout's: their source directories go first on PYTHONPATH, since an editable install can point at
-another clone (skill lattice-toolchain). Colour follows NO_COLOR and FORCE_COLOR, and is off when
+another clone (skill lattice-mise). Colour follows NO_COLOR and FORCE_COLOR, and is off when
 the output is not a terminal. Exits non-zero when any check fails.
 """
 

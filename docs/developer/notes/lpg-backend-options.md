@@ -504,7 +504,7 @@ Revisions are immutable, so a codec result can be cached by revision hash.
 | generated ingress runtime | `packages/` | an ADR, after ADR-A84's pattern |
 | platform adapter | a new Maven module under `platform/`, implementing `ScopedDataset` and later the A75 SPI | a plan |
 | engine fixture for tests | `tools/testing/` (ADR-A125) | a container runtime for most LPG stores |
-| probes and findings | `spikes/` for the first probe, then a discovery record beside `triple-store-discovery.md` | the `lattice-triple-stores` skill extended, or a sibling skill |
+| probes and findings | `spikes/` for the first probe, then a discovery record beside `triple-store-discovery.md` | the `lattice-probing` skill extended, or a sibling skill |
 | measurements | `benchmark/` (ADR-A124) | none |
 
 ### 4.7 Effect on decisions
