@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-05.
+Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-05.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -774,7 +774,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 14 | local ahead 16, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
+| `vyvid-migration` | 2026-11-05 | 15 | local ahead 17, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -895,7 +895,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
 
-1. **Run `vyd trust` in the `vyvid-migration` worktree, trust point 3**, since VM-3 added the slice family to `vyvid.toml` after the full check ran trusted on its extractor, and give the word for VM-4 (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 verified, VM-2 and VM-3 built.
+1. **Let VM-4 on `vyvid-migration` run**, the board tasks over `vyd`, with trust point 3 run and VM-3 verified on 2026-11-05 (plan [vyvid-migration](plans/vyvid-migration.md)). Every other branch stays paused until the unit merges. ADR-A152 is accepted, VM-1 and VM-3 verified, VM-2 built.
 2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.

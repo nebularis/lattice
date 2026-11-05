@@ -498,7 +498,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | planned | VM-3 | docs/developer/status/vyvid-migration.md#position |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | planned | VM-4 | docs/developer/status/vyvid-migration.md#position |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | planned | VM-5 | docs/developer/status/vyvid-migration.md#position |

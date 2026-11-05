@@ -39,8 +39,8 @@ Fifteen further defects, four of them blocking. The review's focus on the write 
 |---|---|---|
 | A‑1 | Padding widths still unfixed (`REV_WIDTH = 16 … 19 in production`; claim `nbytes=16` vs 80-bit examples), violating catalogue §10.2 verbatim. Completes review C3. | Blocking |
 | A‑2 | The epoch component of a revision IRI is **unpadded** (`e3`), so any cross-epoch lexical scan misorders (`e10 < e3`). Catalogue §10.2 requires one exact width per identity-bearing position. | Blocking |
-| A‑3 | **Restore resurrects erased personal data.** A graph drop under ADR‑A68 is not recorded anywhere outside the dataset, so the §24.4 restore runbook reinstates erased payload. The epoch bump does not help. | Blocking |
-| A‑4 | **Patch-log and snapshot-per-revision receipt models make ADR‑A68 erasure impossible** for any family containing personal data: the delta/snapshot graphs are a second, immutable copy. No document notices the interaction. | Blocking |
+| A‑3 | **Restore resurrects erased personal data.** A graph drop under ADR-A68 is not recorded anywhere outside the dataset, so the §24.4 restore runbook reinstates erased payload. The epoch bump does not help. | Blocking |
+| A‑4 | **Patch-log and snapshot-per-revision receipt models make ADR-A68 erasure impossible** for any family containing personal data: the delta/snapshot graphs are a second, immutable copy. No document notices the interaction. | Blocking |
 | A‑5 | Claim-scheme (HMAC secret) rotation is described as "a new version salt and a backfill", but **uniqueness is not enforced across scheme versions during the migration window**. Two owners can hold `v1` and `v2` claims for the same key. | Major |
 | A‑6 | §6.2's "ownership monotonicity" is asserted unconditionally; catalogue §6.4 states erasure breaks it. The post-`ASK` correctness argument therefore has an undeclared exception. | Major |
 | A‑7 | The guide's own S3 gap scan, S4 head query and F5 fork query use `GRAPH ?log` with a `STRSTARTS` prefix filter — forbidden by F6 (its own rule) and by catalogue §12.3. S4 additionally hard-codes one month bucket, so it returns the wrong head for any stream last written in an earlier bucket. | Major |
@@ -55,7 +55,7 @@ Fifteen further defects, four of them blocking. The review's focus on the write 
 
 ### 0.3 Overall judgement
 
-The review's verdict stands and is strengthened: **the patterns guide must not be implemented, and no production data may be written, until Gate 1 and Gate 2 below are passed.** The identity catalogue and ADR‑A82 are structurally sound; they need six targeted additions (WP‑15), most of which exist because the catalogue's rules were correct and the guide silently broke them — the catalogue's own refusal table did not require the compiler to *detect* those breaks.
+The review's verdict stands and is strengthened: **the patterns guide must not be implemented, and no production data may be written, until Gate 1 and Gate 2 below are passed.** The identity catalogue and ADR-A82 are structurally sound. They need six targeted additions (WP‑15), most of which exist because the catalogue's rules were correct and the guide silently broke them — the catalogue's own refusal table did not require the compiler to *detect* those breaks.
 
 ---
 
@@ -67,7 +67,7 @@ Eleven of the twenty-eight findings (C3, A‑1, A‑2, A‑12, A‑13, A‑14, B
 
 Create two new artefacts:
 
-1. `docs/architecture/profiles/reference-urn-profile-v1.md` — a concrete, versioned, opt-in identity profile in the sense of ADR‑A82 §6, containing **only** normative grammar:
+1. `docs/architecture/profiles/reference-urn-profile-v1.md` — a concrete, versioned, opt-in identity profile in the sense of ADR-A82 §6, containing **only** normative grammar:
    - every base (`urn:g:`, `urn:rev:`, `urn:key:`, `urn:txn:`, `urn:ev:`, `urn:stream:`, `urn:ds:`) with its owner and stability class;
    - exact widths: sequence **19** decimal digits, epoch **10** decimal digits, `opSeq` **5** decimal digits, claim digest **128 bits / 26 unpadded base32 characters**, P0 digest **160 bits / 32 characters**;
    - the digest schemes in catalogue §7.4 form (function, input literal, tuple encoder, encoding, exact width, verification-digest policy);
@@ -130,14 +130,14 @@ WHERE {
 4. **Fixed-width epoch (A‑2).** In the reference profile: epoch is 10 decimal digits, zero-padded, so `e0000000003 < e0000000010`. Update every example IRI. Alternatively, if unpadded epochs are retained, the guide must state that cross-epoch lexical range scans are unsupported and every prefix scan is epoch-pinned — but the padded form is cheaper than the caveat.
 
 5. **Restore must replay erasures (A‑3).** Add step 0 to §24.4 and a new subsection §24.6 *Erasure register*:
-   - every ADR‑A68 erasure appends an entry to an **erasure register held outside the dataset** (the same coordination store as the epoch high-water mark), recording the pseudonymous subject reference, the dropped graph locators, the legal basis reference, and the epoch at erasure;
+   - every ADR-A68 erasure appends an entry to an **erasure register held outside the dataset** (the same coordination store as the epoch high-water mark), recording the pseudonymous subject reference, the dropped graph locators, the legal basis reference, and the epoch at erasure,
    - restore tooling **must replay the register — dropping the listed graphs and re-asserting tombstones — before writers or readers are admitted**;
-   - the register itself must contain no personal data (ADR‑A68 rule 3);
+   - the register itself must contain no personal data (ADR-A68 rule 3),
    - backups taken before an erasure remain a copy; the runbook must state the backup expiry window that bounds it, and that window must be part of the erasure response the DPO review assesses.
 
 **Evidence:** TCK T‑5 rewritten to bump the dataset epoch only, then replay a structurally valid stale ETag (must be rejected); new T‑14 "restore the same backup twice, assert no epoch reuse"; new T‑15 "erase, restore, assert the erased graph is absent and the tombstone present".
 
-*Where:* guide §2.3, §10.1, §10.2, §14.1, §19.1 (+ new §19.1.1), §19.3, §19.5, §24.1, §24.4 (+ new §24.6), §25.7, Appendix A, Appendix B, Appendix C ("Epoch"), Chapter 27; catalogue §10.3 (WP‑15); ADR‑A68 consequences (WP‑13).
+*Where:* guide §2.3, §10.1, §10.2, §14.1, §19.1 (+ new §19.1.1), §19.3, §19.5, §24.1, §24.4 (+ new §24.6), §25.7, Appendix A, Appendix B, Appendix C ("Epoch"), Chapter 27, catalogue §10.3 (WP‑15), ADR-A68 consequences (WP‑13).
 
 ---
 
@@ -392,21 +392,21 @@ The guide's *detection* queries — the ones it relies on to prove the whole des
 
 ### WP‑13 — Privacy, erasure and the history models (A‑3, A‑4, A‑5, A‑6)
 
-This is the largest unclosed area and the one the review did not reach. ADR‑A68 decides *how* erasure works; the patterns guide decides *what history is kept*; **no document reconciles them**, and the combinations the guide recommends most strongly are the ones that make erasure impossible.
+This is the largest unclosed area and the one the review did not reach. ADR-A68 decides *how* erasure works. The patterns guide decides *what history is kept*. **No document reconciles them**, and the combinations the guide recommends most strongly are the ones that make erasure impossible.
 
 **Changes.**
 
-1. **Erasure register and restore replay (A‑3).** Specified in WP‑1 step 5. Add the corresponding consequence to ADR‑A68: "Erasure is durable only if it survives restore. A deployment must maintain an erasure register outside the dataset and replay it before admitting readers or writers after any restore, rebuild, or environment clone."
+1. **Erasure register and restore replay (A‑3).** Specified in WP‑1 step 5. Add the corresponding consequence to ADR-A68: "Erasure is durable only if it survives restore. A deployment must maintain an erasure register outside the dataset and replay it before admitting readers or writers after any restore, rebuild, or environment clone."
 2. **Receipt-model / privacy-class compatibility (A‑4).** State the matrix and make it a planner refusal:
 
    | Receipt model | Family contains personal data | Verdict |
    |---|---|---|
-   | `receipt_only` | yes | **Permitted.** Receipts carry pseudonymous references only (ADR‑A68 rule 3). Erasure = drop the per-subject payload graph + tombstone. |
+   | `receipt_only` | yes | **Permitted.** Receipts carry pseudonymous references only (ADR-A68 rule 3). Erasure = drop the per-subject payload graph + tombstone. |
    | `patch_log` | yes | **Refused** unless (a) delta graphs are per-subject and enumerable from the erasure register, **or** (b) delta payloads are crypto-shredded per subject. Otherwise the delta graphs are a second immutable copy of the personal data and the graph-drop mechanism cannot reach them. |
    | `snapshot_per_revision` | yes | **Refused** unless snapshots are per-subject and enumerable, or crypto-shredded. Same reasoning. |
    | any | no | Permitted. |
 
-   Note the sharp edge this creates: §20.4 and §30.1 currently require decision records to be `patch_log` or `snapshot_per_revision` ("never receipt-only"), and MORK decision records plausibly reference data subjects. The resolution is that a decision record may reference a subject **only pseudonymously**; any personal payload must live in the per-subject graph the decision *points at*, never inside the decision or its deltas. Add this as an explicit rule in §20.4 and §30.1, and as a shape in `ontology/governance/shapes/` per ADR‑A68's existing consequence.
+   Note the sharp edge this creates: §20.4 and §30.1 currently require decision records to be `patch_log` or `snapshot_per_revision` ("never receipt-only"), and MORK decision records plausibly reference data subjects. The resolution is that a decision record may reference a subject **only pseudonymously**. Any personal payload must live in the per-subject graph the decision *points at*, never inside the decision or its deltas. Add this as an explicit rule in §20.4 and §30.1, and as a shape in `ontology/governance/shapes/` per ADR-A68's existing consequence.
 
 3. **Crypto-shredding, if selected, must be specified (catalogue §11.5 names it; nothing defines it).** Add a new §24.5 *Crypto-shredding* covering: per-subject key derivation and custody, what is encrypted (payload triples? object literals? whole graph serialisation?), how encrypted content interacts with RDFC‑1.0 canonicalisation and content-addressed revision IRIs (a re-encryption changes bytes and therefore changes content identity — this must be designed, not discovered), key-destruction durability across backups, and the resulting as-of behaviour (a shredded revision is *unreadable*, so as-of reads must fail cleanly, not return partial state). If the deployment cannot specify these, it must select per-subject graph drop instead.
 4. **Claim-scheme rotation must preserve uniqueness (A‑5).** §6.1's docstring and catalogue §6.4 both describe rotation as "a new version salt and a backfill", which leaves a window where writer W1 (on `v1`) and writer W2 (on `v2`) each successfully claim the same normalized key. Specify a three-phase protocol:
@@ -419,10 +419,10 @@ This is the largest unclosed area and the one the review did not reach. ADR‑A6
    - monotonicity holds **except** where an erasure policy permits physical claim deletion;
    - in such families, the post-`ASK` is valid only in the absence of a concurrent erasure of that claim, and erasure must be serialised against claim allocation for the same key (via the shard sentinel, the external allocator, or a declared lock);
    - the family declares `erasure_precedence` (catalogue §11.5 already demands it) naming which of erasure and monotonicity wins and how reconciliation behaves.
-6. **Audit records must not reintroduce personal data.** §24.1's deletion receipt carries `pat:cause <urn:decision:gdpr-erasure/2026-09-21/7>`. Add a rule: a decision IRI, a receipt, a tombstone, a ledger entry and a graph *name* must contain no personal data or reversible derivative of a personal key (ADR‑A68 rules 3 and 5, catalogue §5.9). Add this to the PII data-model shape ADR‑A68 already requires at P0.3.8, and add an L1 fixture that fails a ledger containing personal data (already promised by ADR‑A68; not yet specified).
+6. **Audit records must not reintroduce personal data.** §24.1's deletion receipt carries `pat:cause <urn:decision:gdpr-erasure/2026-09-21/7>`. Add a rule: a decision IRI, a receipt, a tombstone, a ledger entry and a graph *name* must contain no personal data or reversible derivative of a personal key (ADR-A68 rules 3 and 5, catalogue §5.9). Add this to the PII data-model shape ADR-A68 already requires at P0.3.8, and add an L1 fixture that fails a ledger containing personal data (already promised by ADR-A68, not yet specified).
 7. **Environment clones.** Catalogue §4.4 requires synthetic data to use a distinct tenant or namespace rather than an environment substitution. Add to §24.4: cloning production into a lower environment is a restore for erasure purposes and must replay the erasure register; a clone that has not replayed it is a personal-data breach surface, not a test fixture.
 
-*Where:* guide §6.1, §6.2, §8.4, §20.4, §24.0, §24.1, §24.2, §24.4, new §24.5, §29.3, §30.1, Appendix C, Chapter 27 (K‑9, T‑15, new T‑22 "clone replays erasure register"), Appendix E items 5 and 7; ADR‑A68 (Decision and Consequences, see WP‑15); catalogue §6.4, §11.5, §13.7 (WP‑15).
+*Where:* guide §6.1, §6.2, §8.4, §20.4, §24.0, §24.1, §24.2, §24.4, new §24.5, §29.3, §30.1, Appendix C, Chapter 27 (K‑9, T‑15, new T‑22 "clone replays erasure register"), Appendix E items 5 and 7, ADR-A68 (Decision and Consequences, see WP‑15), catalogue §6.4, §11.5, §13.7 (WP‑15).
 
 ---
 
@@ -430,19 +430,19 @@ This is the largest unclosed area and the one the review did not reach. ADR‑A6
 
 **Changes.**
 
-1. **Repoint every ADR‑A51 citation (C1).** Exact sites and targets:
+1. **Repoint every ADR-A51 citation (C1).** Exact sites and targets:
 
    | Site | Current | Repoint to |
    |---|---|---|
-   | Status line | "identity-related corrections applied… ADR‑A51 review disposition" | Retain the historical reference; add "ADR‑A51 is superseded by ADR‑A82; identity grammar is now governed by the reference profile (WP‑0)." |
-   | `claim_iri` docstring | "matches ADR‑A51's minimum content-hash width" | reference profile §digest schemes; catalogue §7.4 |
-   | §7.5 | "`fnd:replacedBy` … (ADR‑A51)" | catalogue §11.3–11.4 plus the C2 resolution |
-   | §8.4 item 1 | "what ADR‑A51 names `surrogate-claimed`" | catalogue §6.4 |
-   | §19.4 ULID note | "ADR‑A51 rule 2" | catalogue §6.3 (Prohibition) and §6.4 |
+   | Status line | "identity-related corrections applied… ADR-A51 review disposition" | Retain the historical reference. Add "ADR-A51 is superseded by ADR-A82. Identity grammar is now governed by the reference profile (WP‑0)." |
+   | `claim_iri` docstring | "matches ADR-A51's minimum content-hash width" | reference profile §digest schemes, catalogue §7.4 |
+   | §7.5 | "`fnd:replacedBy` … (ADR-A51)" | catalogue §11.3–11.4 plus the C2 resolution |
+   | §8.4 item 1 | "what ADR-A51 names `surrogate-claimed`" | catalogue §6.4 |
+   | §19.4 ULID note | "ADR-A51 rule 2" | catalogue §6.3 (Prohibition) and §6.4 |
    | Appendix D.1 | table of A51-review corrections | retain as history; add a row-by-row status column recording which corrections this plan finds **incomplete** (revision IRI epoch → B1/A‑2; claim width → A‑1; illustrative-value drift → WP‑0; S6 → A‑16; S3 → A‑7) |
    | Appendix E item 9 | "a later split remains open" | now closed by WP‑0; update |
 
-   Also amend ADR‑A51's header: "Superseded by ADR‑A82" asserts a completed action while A82 is `Proposed`. Change to "To be superseded on ratification of ADR‑A82", or record both as proposals. Mirror in ADR‑A82's Consequences.
+   Also amend ADR-A51's header: "Superseded by ADR-A82" asserts a completed action while A82 is `Proposed`. Change to "To be superseded on ratification of ADR-A82", or record both as proposals. Mirror in ADR-A82's Consequences.
 
 2. **Resolve `fnd:replacedBy` (C2).** It is prescribed by P7 and §30.2, absent from the guide's own Foundation-term list (§23.3), and catalogue §11.4 forbids writing a relation the selected ontology does not define. Do one of:
    - confirm the term exists in Foundation and add it to §23.3 with its domain, range, transitivity and revocability; or
@@ -473,11 +473,11 @@ This is the largest unclosed area and the one the review did not reach. ADR‑A6
 
 6. **Terminology.** Appendix C must gain `Target IRI`, `As-of floor`, `Erasure register`, `Claim scheme`, `Dataset epoch` vs `Row epoch`, and must correct `Epoch` and `ETag` per WP‑1 and WP‑5.
 
-*Where:* as tabulated; plus ADR‑A51 header, ADR‑A82 Consequences, catalogue §11.4 cross-reference.
+*Where:* as tabulated, plus ADR-A51 header, ADR-A82 Consequences, catalogue §11.4 cross-reference.
 
 ---
 
-### WP‑15 — Amendments to the catalogue, ADR‑A82 and ADR‑A68
+### WP‑15 — Amendments to the catalogue, ADR-A82 and ADR-A68
 
 The catalogue was mostly right; its gap is that it stated rules without requiring anyone to *detect* violations. Six additions.
 
@@ -498,8 +498,8 @@ The catalogue was mostly right; its gap is that it stated rules without requirin
 - (6) **Erasure register.** Erasure is recorded outside the dataset and replayed before any restored, rebuilt or cloned dataset admits traffic.
 - (7) **History-model restriction.** A family containing personal data may not select a history model that duplicates personal payload into immutable derived graphs unless those graphs are per-subject and enumerable, or crypto-shredded.
 - (8) **Claim rotation and erasure precedence.** Claim-scheme rotation follows the dual-write protocol; the family declares erasure precedence against ownership monotonicity.
-- (9) **Backup window.** The residual exposure window is the backup retention period; it must be stated and accepted as part of the DPO review, which ADR‑A68 already requires before the Phase 0 exit gate.
-- Note that ADR‑A68's existing exception to ADR‑A65/A67 (graph drop is not a superseding version) now also needs an exception for **derived** graphs, which contradicts ADR‑A68 rule 4's "write-back never writes to a derived graph" only in the erasure direction. State that erasure may *delete* from derived layers even though normal writes may not *write* there.
+- (9) **Backup window.** The residual exposure window is the backup retention period. It must be stated and accepted as part of the DPO review, which ADR-A68 already requires before the Phase 0 exit gate.
+- Note that ADR-A68's existing exception to ADR-A65/A67 (graph drop is not a superseding version) now also needs an exception for **derived** graphs, which contradicts ADR-A68 rule 4's "write-back never writes to a derived graph" only in the erasure direction. State that erasure may *delete* from derived layers even though normal writes may not *write* there.
 
 ---
 
@@ -600,7 +600,7 @@ concurrency:
 | `http.etag_form: weak` with conditional writes | B7 |
 | `on_violation: merge` with `merge.relation` unset | C2 |
 | Any `min_level` unsupported by a current, configuration-bound TCK report | existing rule, now with the corrected gating set |
-| Identity profile absent, or a grammar restated in the family declaration | WP‑0, ADR‑A82 §5 |
+| Identity profile absent, or a grammar restated in the family declaration | WP‑0, ADR-A82 §5 |
 
 ---
 
@@ -641,9 +641,8 @@ Evidence: published reference profile; golden vectors; every guide example drawn
 WP‑4, WP‑6, WP‑7, WP‑8, WP‑9, WP‑10, WP‑11, WP‑12, WP‑16, WP‑17.
 Evidence: full gating TCK set green on (a) one single-writer engine, (b) one MVCC engine, (c) one engine with coarse conflict detection; epoch coordinator operating; registry-driven integrity queries running as alerts with zero rows; planner refusal matrix tested.
 
-**Gate 3 — Production data admitted.** *ADR‑A68's own precondition, now specified.*
-WP‑1 item 5, WP‑13, WP‑15 (ADR‑A68 amendments), T‑15, T‑22.
-Evidence: erasure register operating and replayed in a rehearsed restore; PII data-model shape and L1 failing fixture in `ontology/governance/shapes/`; receipt-model/privacy-class refusal enforced; claim-rotation protocol tested (K‑9); erasure precedence declared; **DPO/legal review completed against this mechanism, including the backup exposure window** — ADR‑A68 already requires this review and explicitly does not substitute for it.
+**Gate 3 — Production data admitted.** *ADR-A68's own precondition, now specified.*
+WP‑1 item 5, WP‑13, WP‑15 (ADR-A68 amendments), T‑15, T‑22. Evidence: erasure register operating and replayed in a rehearsed restore, PII data-model shape and L1 failing fixture in `ontology/governance/shapes/`, receipt-model/privacy-class refusal enforced, claim-rotation protocol tested (K‑9), erasure precedence declared, **DPO/legal review completed against this mechanism, including the backup exposure window** — ADR-A68 already requires this review and explicitly does not substitute for it.
 
 ---
 
@@ -684,7 +683,7 @@ Chapter 30.4's existing Phase‑0 correction remains valid and is amended: the e
 | C1 | WP‑14 | Status line, §7.5, §8.4, §19.4, Appendix D.1 | 1 |
 | C2 | WP‑14 | §7.5, §23.3, §29.3 | 1 |
 | C3 / A‑1 / A‑2 | WP‑0, WP‑1, WP‑14 | reference profile; §19.4; all examples | 1 |
-| A‑3 | WP‑1, WP‑13 | §24.4, new §24.6, ADR‑A68 | 3 |
+| A‑3 | WP‑1, WP‑13 | §24.4, new §24.6, ADR-A68 | 3 |
 | A‑4 | WP‑13 | §20.4, §30.1, catalogue §11.6 | 3 |
 | A‑5 | WP‑13 | §6.1, catalogue §6.4 | 3 |
 | A‑6 | WP‑13 | §6.2, §8.4, Appendix C | 3 |
@@ -731,5 +730,5 @@ This plan specifies mechanisms; seven choices are the maintainer's to make.
 ## 8. What this plan deliberately does not change
 
 - **The core insights stand and must be preserved verbatim:** the three clocks; dense-per-stream/sparse-across-streams; the in-transaction counter closing G2; the txn claim as the outcome mechanism; A1–A7's case for separating the version row; P0–P7 as a stack; capability discovery over declaration; `min_level` fail-fast; deletion as policy with audit; bi-temporality as configurable.
-- **The catalogue's framework-neutral stance (ADR‑A82)** is not weakened. The reference profile added in WP‑0 is opt-in under ADR‑A82 §6 and does not become adopter policy.
-- **ADR‑A68's mechanism** — per-subject graphs, graph drop plus tombstone, pseudonymous ledger references — is not replaced. WP‑13 closes the paths by which the rest of the architecture would have defeated it.
+- **The catalogue's framework-neutral stance (ADR-A82)** is not weakened. The reference profile added in WP‑0 is opt-in under ADR-A82 §6 and does not become adopter policy.
+- **ADR-A68's mechanism** — per-subject graphs, graph drop plus tombstone, pseudonymous ledger references — is not replaced. WP‑13 closes the paths by which the rest of the architecture would have defeated it.

@@ -387,6 +387,10 @@ SEPARATOR_RE = re.compile(r"^\|?\s*:?-{3,}")
 # Claims over the limit measured when the check was written, each a known debt. Remove an entry when its claim is
 # cut to the limit, and never add one.
 KNOWN_LONG_CLAIMS = frozenset({"TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296"})
+# Entries whose pointer covers the whole of a long file, which `read` refuses (TD-119). Вивід notes each at the build,
+# and this baseline fails on a new one and on one that has been fixed, as the old test did.
+KNOWN_WHOLE_FILE = frozenset({"CAP-52", "MEC-31", "MEC-55", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
+                              "MEC-74", "MEC-75", "PRI-04", "PRI-05", "PRI-08", "PRI-12"})
 
 
 def tracked(*patterns: str) -> list[Path]:
@@ -429,11 +433,16 @@ def test_every_table_in_a_register_is_a_data_table():
 
 def test_the_build_reports_nothing_but_the_known_notes(built):
     """Every problem Вивід finds in the corpus is a note of the build: a status it cannot read, a header it does not
-    map, a value outside its set, a pointer or a signpost that resolves to nothing, a question unpromoted past its
-    thirty days, which is a finding, a superseded decision naming no successor. The knowledge base is consistent when
-    the build prints nothing but the notes and findings this test knows, so a new one fails here (ADR-A152 decision 6)."""
-    unexpected = []
+    map, a value outside its set, a pointer or a signpost that resolves to nothing, a pointer at the whole of a long
+    file, a question unpromoted past its thirty days, which is a finding, a superseded decision naming no successor.
+    The knowledge base is consistent when the build prints nothing but the notes and findings this test knows, so a new
+    one fails here (ADR-A152 decision 6)."""
+    unexpected, whole = [], set()
     for note in built.notes:
+        at = re.match(r"\S+:\d+: (\S+) has a pointer at the whole of ", note)
+        if at:
+            whole.add(at.group(1))
+            continue
         cut = re.match(r"(\S+):\d+: (\S+) has a claim of \d+ characters, which is cut at 200$", note)
         if cut and (cut.group(2) in KNOWN_LONG_CLAIMS or not cut.group(1).startswith("docs/")):
             continue
@@ -441,3 +450,5 @@ def test_the_build_reports_nothing_but_the_known_notes(built):
             continue
         unexpected.append(note)
     assert not unexpected, unexpected
+    assert not whole - KNOWN_WHOLE_FILE, sorted(whole - KNOWN_WHOLE_FILE)
+    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline and TD-119: {sorted(KNOWN_WHOLE_FILE - whole)}"

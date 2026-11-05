@@ -3,6 +3,7 @@ defines, bootstrap:vyvid decides rightly, and `vyd context` names LATTICE where 
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
@@ -84,3 +85,13 @@ def test_vm1_08_vyd_context_names_lattice_where_trusted():
     done = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, timeout=60)
     assert done.returncode == 0, done.stderr[-400:]
     assert "project: lattice" in done.stdout
+
+
+def test_vm3_05_the_decision_pattern_matches_every_spelling_the_corpus_uses_and_no_prose(binding):
+    """The ADR family's pattern is LATTICE's, declared in vyvid.toml, so the spellings it must match and the prose it
+    must leave alone are pinned here as the old check pinned them."""
+    pattern = re.compile(binding["project"]["families"]["ADR"]["pattern"])
+    for spelling in ("ADR-A01", "ADR-A131", "ADR-A07b", "ADR-AC2", "ADR-A-C2", "ADR-A-FM2", "ADR-A-CAP1"):
+        assert pattern.fullmatch(spelling), spelling
+    for text in ("ADR", "an ADR for", "ADRs", "ADR-", "PDD-01", "TD-34"):
+        assert not pattern.fullmatch(text), text
