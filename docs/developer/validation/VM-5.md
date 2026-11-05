@@ -36,7 +36,7 @@ Run from the checkout's root, with `vyd check skills` and `mise run check:agent-
 
 ## Artefacts
 
-The fifteen skills under `.claude/skills/`, the six sources under `.vyvid/` with their citations renamed, the eleven maps under `docs/developer/notes/vm-5-coverage-maps/`, the `skills` check in `tools/hooks.py` with `test_vm5_01` and `test_vm5_02`, AGENTS.md's skills table and `.github/copilot-instructions.md`, `.claude-plugin/marketplace.json`, the addendum of 2026-11-05 on ADR-A117, the 35 renamed citations, and the 201 re-pointed cells of `standards.md` and `principles.md`.
+The fifteen skills under `.claude/skills/`, the six sources under `.vyvid/` with their citations renamed, the eleven maps under `docs/developer/notes/vm-5-coverage-maps/`, the `skills` check in `tools/hooks.py` with `test_vm5_01` and `test_vm5_02`, the task `check:skills` in `check` since 2026-11-05, AGENTS.md's skills table and `.github/copilot-instructions.md`, `.claude-plugin/marketplace.json`, the addendum of 2026-11-05 on ADR-A117, the 35 renamed citations, and the 201 re-pointed cells of `standards.md` and `principles.md`.
 
 ## Not covered here
 

@@ -59,4 +59,4 @@ Each merges `main` in, never rebasing, then in that checkout runs `vyd trust`, `
 
 ## Open questions
 
-None. The maintainer's decision is the merge itself.
+One, for after the merge. A machine without the domains has not been run end to end. The committed skills should still work there, `vyd check skills` and `vyd install --project` should exit 2 and say why, and whether every moved TSD and RDF mention resolves or skips should be proven on a clean clone, with the Windows run on machine S (plan decision 3). The merge itself is the maintainer's decision.

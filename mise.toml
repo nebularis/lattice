@@ -153,7 +153,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding", "check:skills"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -500,6 +500,10 @@ run = "python tools/lattice_repo_catalogue.py check"
 [tasks."check:identifiers"]
 description = "Check every stable identifier a working document mentions resolves to a definition, with vyd check identifiers over the families vyvid.toml declares and tools/knowledge/identifier-exceptions.txt as the baseline (ADR-A152). Skips with a note where vyd is missing"
 run = "python tools/vyd.py check identifiers"
+
+[tasks."check:skills"]
+description = "Check the committed skills under .claude/skills equal what their sources compose to, with vyd check skills, which skips with a note where vyd is missing or the binding is not trusted (ADR-A152 decision 5, plan vyvid-migration, VM-5)"
+run = "python tools/vyd.py check skills"
 
 [tasks."build:knowledge"]
 description = "Derive the knowledge index from the working documents and ontologies with vyd build, into Вивід's store for this checkout (ADR-A134, ADR-A152). Never committed, a few seconds after the first build. Skips with a note where vyd is missing"

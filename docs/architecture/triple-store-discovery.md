@@ -4,7 +4,7 @@
 
 The project's record of how each triple store behaves lives in the Вивід domain `triple-stores`, in [findings.md](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/findings.md) at tag `v0.1.0`, with the query-writing rules RDF-1 to RDF-30 in [query-standards.md](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/query-standards.md) and [query-rules.md](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/query-rules.md) at the same tag, and this page says what each finding means for LATTICE, keyed to the domain's identifiers ([ADR-A152](decisions/ADR-A152-vyvid-adoption.md) decision 7). The identifiers TSD-nn and the standards STD-026 to STD-054 and STD-279 LATTICE's documents cite resolve to the domain by the moves `vyvid.toml` declares.
 
-To read one, `mise run graph:ask -- read TSD-nn` prints a finding, and `mise run graph:ask -- find <the behaviour> --kind discovery` finds the ones that touch a behaviour. A new finding is recorded in the domain, skill `lattice-probing`, never here.
+To read one, `mise run graph:ask -- read TSD-nn` prints a finding, and `mise run graph:ask -- find <the behaviour> --kind discovery` finds the ones that touch a behaviour. A new finding is recorded in the domain, skill `lattice-probing`, never here. The index reads the domain's clone as it stands, which may be ahead of `v0.1.0`, so `read` can show a finding's newer text than the tagged file this page links, until the binding pins the domain to a tag (TD-148).
 
 ## The findings
 
