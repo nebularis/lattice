@@ -61,18 +61,21 @@ family = "TSD"
 to = "triple-stores"
 source = "code:docs/architecture/triple-store-discovery.md"
 commit = "4b94c0f0"
+copy_removed = true
 
 [[project.moves]]
 family = "TSDQ"
 to = "triple-stores"
 source = "code:docs/architecture/triple-store-discovery.md"
 commit = "4b94c0f0"
+copy_removed = true
 
 [[project.moves]]
 family = "STD"
 to = "triple-stores"
 source = "code:docs/developer/standards.md"
 commit = "4b94c0f0"
+copy_removed = true
 rows = { "STD-026" = "RDF-1", "STD-027" = "RDF-2", "STD-028" = "RDF-3", "STD-029" = "RDF-4", "STD-030" = "RDF-5", "STD-031" = "RDF-6", "STD-032" = "RDF-7", "STD-033" = "RDF-8", "STD-034" = "RDF-9", "STD-035" = "RDF-10", "STD-036" = "RDF-11", "STD-037" = "RDF-12", "STD-038" = "RDF-13", "STD-039" = "RDF-14", "STD-040" = "RDF-15", "STD-041" = "RDF-16", "STD-042" = "RDF-17", "STD-043" = "RDF-18", "STD-044" = "RDF-19", "STD-045" = "RDF-20", "STD-046" = "RDF-21", "STD-047" = "RDF-22", "STD-048" = "RDF-23", "STD-049" = "RDF-24", "STD-050" = "RDF-25", "STD-051" = "RDF-26", "STD-052" = "RDF-27", "STD-053" = "RDF-28", "STD-054" = "RDF-29", "STD-279" = "RDF-30" }
 
 [project.skill_values]

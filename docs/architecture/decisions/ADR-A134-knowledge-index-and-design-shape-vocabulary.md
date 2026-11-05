@@ -156,7 +156,7 @@ The index this record defines is built and asked by Вивід, `vyd`, from 2026
 
 ## Addendum of 2026-11-05: the facet register removed
 
-**Status:** Proposed
+**Status:** Accepted 2026-11-05
 
 **Narrows decision 26 and the addendum of 2026-10-26 on the facets.** The facet values are Вивід's general scheme, which was identical to the facet register row for row on 2026-11-05, so the register is removed and the scheme is read from the store ([ADR-A152](ADR-A152-vyvid-adoption.md) decision 1). A value LATTICE needs that the scheme lacks goes in a project facets file named by `facets` in `vyvid.toml`, or to the general scheme through Вивід's side.
 
