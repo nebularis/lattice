@@ -641,8 +641,7 @@ Evidence: published reference profile; golden vectors; every guide example drawn
 WP‑4, WP‑6, WP‑7, WP‑8, WP‑9, WP‑10, WP‑11, WP‑12, WP‑16, WP‑17.
 Evidence: full gating TCK set green on (a) one single-writer engine, (b) one MVCC engine, (c) one engine with coarse conflict detection; epoch coordinator operating; registry-driven integrity queries running as alerts with zero rows; planner refusal matrix tested.
 
-**Gate 3 — Production data admitted.** *ADR-A68's own precondition, now specified.*
-WP‑1 item 5, WP‑13, WP‑15 (ADR-A68 amendments), T‑15, T‑22. Evidence: erasure register operating and replayed in a rehearsed restore, PII data-model shape and L1 failing fixture in `ontology/governance/shapes/`, receipt-model/privacy-class refusal enforced, claim-rotation protocol tested (K‑9), erasure precedence declared, **DPO/legal review completed against this mechanism, including the backup exposure window** — ADR-A68 already requires this review and explicitly does not substitute for it.
+**Gate 3 — Production data admitted.** *ADR-A68's own precondition, now specified.* WP‑1 item 5, WP‑13, WP‑15 (ADR-A68 amendments), T‑15, T‑22. Evidence: erasure register operating and replayed in a rehearsed restore, PII data-model shape and L1 failing fixture in `ontology/governance/shapes/`, receipt-model/privacy-class refusal enforced, claim-rotation protocol tested (K‑9), erasure precedence declared, **DPO/legal review completed against this mechanism, including the backup exposure window** — ADR-A68 already requires this review and explicitly does not substitute for it.
 
 ---
 

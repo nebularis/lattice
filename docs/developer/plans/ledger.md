@@ -267,11 +267,7 @@ LG-Q8.
 and their recorded values satisfy Ledger's laws, checked as shapes over the records. Computing them
 is the evaluator's (CCS C12, B4a), not this slice's.
 
-1. **The rational probe first** (LG-Q6). Record in
-   [triple-store-discovery.md](../../architecture/triple-store-discovery.md) how rdflib and Oxigraph
-   parse, compare and round-trip `owl:rational` literals, for example `"1/3"^^owl:rational`, following
-   `lattice-probing`. If both handle it, `ldg:grantedProportion` takes `owl:rational`.
-   Otherwise it is two `xsd:integer` properties, numerator and denominator, and the README says why.
+1. **The rational probe first** (LG-Q6). Record in [triple-store-discovery.md](../../architecture/triple-store-discovery.md) how rdflib and Oxigraph parse, compare and round-trip `owl:rational` literals, for example `"1/3"^^owl:rational`, following `lattice-probing`. If both handle it, `ldg:grantedProportion` takes `owl:rational`. Otherwise it is two `xsd:integer` properties, numerator and denominator, and the README says why.
 2. The runtime terms above, in the README, extracted.
 3. Persistence's record families for postings, balance records and merge records, append-only.
 4. Shapes over records, each a law:

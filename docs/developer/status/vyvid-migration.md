@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. VM-6 waits at its gate, the last slice, with every other branch paused until the unit merges.
+**Status:** built 2026-11-05. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
 
 ## Position
 
@@ -22,7 +22,7 @@
 
 ## Next action
 
-The maintainer runs `mise run check:knowledge` and `mise run check:identifiers` for VM-6's gate, accepts or rejects the addendum of 2026-11-05 on ADR-A134, tells Вивід's side that VM-6 is built so TD-2 is cleared there, and decides the merge of `vyvid-migration` into `main`. No `vyvid.toml` edit is pending, so trust holds.
+The maintainer merges `vyvid-migration` into `main` by the review request [vyvid-migration-review.md](../review/vyvid-migration-review.md), which holds the checklist, then runs `vyd trust` in `~/work/lattice`, since the merged `vyvid.toml` is new there, and `mise run bootstrap`. Trust point 4 was run in this worktree on 2026-11-05.
 
 ## Trust points
 
@@ -79,3 +79,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: VM-4 and VM-5 verified by the maintainer on d0ed6692, `check:hooks` 48 passed, `check:agent-guidance` 9 passed, `vyd check skills` 15 composed and no problem. The addendum of 2026-11-05 on ADR-A117 accepted. The plan changes for VM-6: the writing rules stay in AGENTS.md (decision 19), and only the general facet values move.
 - 2026-11-05: VM-6 built. The domain's tag `v0.1.0` holds every finding and standard the moves name. `vyd move check --ref` on every branch of this checkout and its two remotes found nothing but VM-5's rename in TSD-34 on this branch and `file-absent` on branches older than the record. The identifier check on a store removed and rebuilt passed before and after the copies went, 0 unresolved. The record replaced by a page at its path keyed to the domain's identifiers, 27 of 29 linked slugs kept and two retargeted to the domain, the thirty standards rows removed. The facet register compared with the store on 325 rows with no difference and removed with its backup, the pointers to it moved, ADR-A134 taking an addendum. TD-146 records the writing rules kept in step by hand (decision 19). The bake-off equal to VM-1's, 0.884 and 0.806 on the 43, 0.800 and 0.567 on the 5. One Вивід finding: `vyd move check` with no ref reports every moved entry once the copies are gone. `mise run check` after the slice exit 0 in 179 s, its log compared line by line with VM-5's and differing only in the identifier count, the sources check's count and timings. Validation Pack [VM-6](../validation/VM-6.md).
 - 2026-11-05: VM-6 verified by the maintainer on c1136fde, `check:knowledge` 38, `check:identifiers` 0 unresolved. The addendum of 2026-11-05 on ADR-A134 accepted. v0.2.8 pinned, and the three moves marked `copy_removed`, which lapses trust, trust point 4, so `vyd move check` prints `copy-removed` and exits 0. The pack corrected for the `upstream` remote the maintainer removed and for the two anchors.
+- 2026-11-05: the merge prepared. Trust point 4 run by the maintainer, the board regenerated, v0.2.8 committed. `mise run check` at v0.2.8 exit 0, read against the previous log. Every suite `check` leaves out and the branch could touch run and passing, the conformance suites on every engine among them, the benchmarks and the Isabelle sessions not run and why said. `mise run hooks:merge` 11 checks ok. The review request [vyvid-migration-review.md](../review/vyvid-migration-review.md) holds the checklist, the merge is the maintainer's. TD-147 records the versioning task's argument defect.
