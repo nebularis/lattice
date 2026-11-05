@@ -5,17 +5,24 @@ node = "22"
 python = "3.14"
 erlang = "27"
 elixir = "1.17"
+uv = "0.13"
 
 [env]
 # Each checkout, git worktrees included, gets its own .venv, so an editable install never points
 # at another checkout (developer guide, "Several checkouts side by side").
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
+# Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
+VYVID_VERSION = "0.2.2"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets, and the git hooks"
-depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge"]
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge", "bootstrap:vyvid"]
+
+[tasks."bootstrap:vyvid"]
+description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
+run = "python tools/bootstrap_vyvid.py"
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
 [tasks."bootstrap:hooks"]
@@ -146,7 +153,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -545,6 +552,10 @@ run = "python tools/work_board.py build"
 [tasks."check:work-board"]
 description = "Test the work board: the board parser, the join across branches, the fold of remotes, the generated regions, the slice crosswalk and the board normaliser (plan work-board)"
 run = "python -m pytest tools/test_work_board.py tools/test_work_migrate.py -q"
+
+[tasks."check:vyvid-binding"]
+description = "Test the binding to Вивід: vyvid.toml parses and its families resolve, bootstrap:vyvid decides rightly, and vyd context names LATTICE where the binding is trusted (ADR-A152, plan vyvid-migration)"
+run = "python -m pytest tools/test_vyvid_binding.py -q"
 
 [tasks."work:rename"]
 description = "Build the slice id crosswalk from the historic ids and sweep every mention and Validation Pack name onto the grammar, idempotent. Reports without --apply (plan work-board, WB-2)"

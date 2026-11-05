@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-04.
+Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-05.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -66,7 +66,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | no board |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | building 2026-11-05 | VM-0 | 5 planned, 1 built, 1 building | vyvid-migration |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -493,6 +493,9 @@ gantt
     VTB-2 12 fixtures 11 positive negat :vtb2, 2026-09-25, 2026-09-26
     VTB-3 tools vocabulary resolver :vtb3, 2026-09-25, 2026-09-26
     VTB-4 Surface resolves scoped bindin :vtb4, 2026-09-25, 2026-09-26
+    section vyvid-migration
+    VM-0 the sketch rewritten the plan :vm0, 2026-11-05, 2026-11-06
+    VM-1 the binding bootstrap vyvid :active, vm1, 2026-11-05, 2026-11-06
 ```
 
 <!-- END GENERATED work-board-glance -->
@@ -769,7 +772,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `spikes/pol-map` | 2026-10-16 | 2 | local only | board not on the grammar, 149 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
 | `tutorial/guide` | 2026-10-16 | 5 | remote only | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `vyvid-migration` | 2026-11-05 | 2 | local ahead 2, not pushed | no mark |
+| `vyvid-migration` | 2026-11-05 | 4 | local ahead 4, not pushed | VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6 |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -818,7 +821,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -857,6 +860,7 @@ Read from the registers in this tree: 34 Proposed decisions, 18 pending design d
 | [A-148](../architecture/decisions/ADR-A148-mork-transform-backends.md) | MORK mappings over XML and JSON compiled to an XSLT stylesheet writing N-Triples and a JOL | Proposed, 2026-10-30 |
 | [A-149](../architecture/decisions/ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a r | Proposed, 2026-10-31 |
 | [A-151](../architecture/decisions/ADR-A151-the-work-board.md) | The work board: a slice's state written once on its home unit's board as a word and a day, | Proposed, 2026-11-02 |
+| [A-152](../architecture/decisions/ADR-A152-vyvid-adoption.md) | The knowledge index and the work board run on Вивід, installed by `bootstrap` and pinned,  | Proposed, 2026-11-05 |
 | [A-150](../architecture/decisions/ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from | Proposed, 2026-10-31 |
 
 ### 9.2 Pending design decisions

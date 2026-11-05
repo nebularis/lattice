@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "command -v vyd-hook >/dev/null 2>&1 && vyd-hook --client copilot --ask 'mise run graph:ask -- find' || echo '{}'",
+        "powershell": "if (Get-Command vyd-hook -ErrorAction SilentlyContinue) { vyd-hook --client copilot --ask 'mise run graph:ask -- find' } else { '{}' }",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}
