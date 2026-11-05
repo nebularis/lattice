@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -16,7 +16,7 @@
 | WL-2 | the job on its own thread, the publisher and acknowledgement across threads | built 2026-11-05 |  |
 | WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | built 2026-11-05 |  |
 | WL-4 | the held result, reconnecting with a backoff | built 2026-11-05 |  |
-| WL-5 | short jobs past long ones | planned |  |
+| WL-5 | short jobs past long ones | building 2026-11-05 |  |
 | WL-6 | a view that attaches to its running job, no stacked validations | planned |  |
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | planned |  |
 
@@ -37,3 +37,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-3 built. `handle` leaves a finished job alone, writes `Failed` on a job found running, refuses a job that names no workspace unless it is a rebuild, and logs the start of each job. `fail` is what the consumer calls for a job it could not run. `studio:liveness` passes all three cases. Recorded in the pack: a race between two workers on one queue that can leave a succeeded job reading `Failed`.
 - 2026-11-05: WL-4 picked up, building. Its code is in the consumer WL-2 committed. What remains is the connection's name, so the broker's own tools can find the worker's connection, a real-broker test that closes it mid-job, and the pack.
 - 2026-11-05: WL-4 built. A real broker closes the worker's connection three seconds into an eight second job. The worker reconnects, takes the redelivered message for the job in hand and finishes it once. The worker's connection is named, and the harness closes connections by name. Learned for a register: `rabbitmqctl list_connections` prints a pid in JSON as `Pid(#PID<...>)`, which `close_connection` refuses, and in its default table as `<node.creation.id.serial>`, which it takes.
+- 2026-11-05: WL-5 picked up, building. The service routes by kind to a second queue, `lattice.studio.jobs.long`, for a proposal by a model and for a publication. The worker takes its queue from `LATTICE_WORKER_QUEUE`, `studio:up` starts a worker for each queue, and the harness topology gains `long_workers`.
