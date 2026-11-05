@@ -448,8 +448,8 @@ def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: 
 
 
 def test_vm4_01_the_work_check_runs_under_a_git_hooks_environment(work_repo: Path, monkeypatch) -> None:
-    """A git hook exports GIT_DIR, under which vyd took the status folder for the repository root and crashed, so
-    tools/vyd.py runs it without GIT_DIR (plan vyvid-migration, VM-4)."""
+    """A git hook exports GIT_DIR, under which vyd 0.2.6 took the status folder for the repository root and crashed. Vyvid
+    0.2.7 fixes it where vyd starts, and this holds the fix (plan vyvid-migration, VM-4)."""
     rel = record(work_repo)
     assert build(work_repo).returncode == 0
     monkeypatch.setenv("GIT_DIR", str(work_repo / ".git"))
