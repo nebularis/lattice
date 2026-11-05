@@ -78,7 +78,9 @@ def test_vm1_07_bootstrap_installs_the_pinned_tag_otherwise():
 def test_vm1_08_vyd_context_names_lattice_where_trusted():
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed")
-    out = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, timeout=60).stdout
-    if "project: none" in out or "lattice" not in out:
+    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, timeout=60, cwd=ROOT).stdout
+    if "is not trusted" in config or "projects: none" in config:
         pytest.skip("the binding is not trusted here, run `vyd trust` in the checkout")
-    assert "lattice" in out
+    done = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, timeout=60)
+    assert done.returncode == 0, done.stderr[-400:]
+    assert "project: lattice" in done.stdout
