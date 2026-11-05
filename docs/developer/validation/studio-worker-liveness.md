@@ -54,3 +54,22 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **Retired.** `test_acks_after_final_write_and_requeues_on_store_error` asserted that a store error requeues the job and ends the worker, which is RC2. The consumer replaces it: a job that cannot be run is marked failed where it can be and rejected without requeue (WL2-04). `test_malformed_message_is_nacked_without_requeue` is now `test_a_malformed_message_is_not_a_job` for the parsing and WL2-03 for the rejection. Neither is weakened. Each asserts what the adapter it tested promised, and that adapter, `RabbitMqConfigStudioWorker`, is gone.
 
 **Not covered.** A heartbeat interval longer than the poll interval of 0.25 s is assumed. The poll is the longest the connection thread is away from the broker, and a job thread's call waits for it.
+
+## WL-3: the check on delivery
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL3-01 | a job the store holds as `Succeeded` or `Failed` / delivered / left as it is, with no write | L1 | − | pass, 2 cases |
+| WL3-02 | a job the store holds as `Running` / delivered / one write, `Failed` with a message saying the worker stopped, what the service wrote kept, no report, and the job not run | L1 | − | pass |
+| WL3-03 | a queued job / delivered / run to `Succeeded` | L1 | + | pass |
+| WL3-04 | a job naming no workspace that is not a rebuild, of the retired kind or a current one / delivered / refused as `InvalidMessage`, nothing written | L1 | − | pass, 2 cases |
+| WL3-05 | a rebuild job naming no workspace / delivered / run | L1 | + | pass |
+| WL3-06 | an unfinished job / `fail` / `Failed` and the message. A finished one is not written again | L1 | ± | pass |
+| WL3-07 | a job / run / its start is logged with its kind, target and IRI, and the consumer logs its end with the duration and what became of it | L1 | + | pass, 2 cases |
+| WL1-02 | the real-broker test of WL-1 | L5 | − | pass, 2026-11-05 (was failing). A second worker finds the job running and writes `Failed` |
+
+`workers/tests/test_config_studio_worker.py` and `test_config_studio_consumer.py`, and `test/studio-integration/test_worker_liveness.py`, which now passes all three of its cases in 43 s.
+
+**Changed, not weakened.** `test_same_job_twice_gives_same_graph` ran `handle` twice on one job, and a job the store holds as finished is not run again, so the second run would have compared the first with itself. It now sets the job back to the graph the service wrote before the second run, which keeps what it protects, that one job gives one graph.
+
+**Not covered.** Two workers on one queue where a lost connection redelivers a job to the idle one while the first still runs it. The idle worker marks the job `Failed`, and the first worker's result, published later, replaces that with `Succeeded`. If the first worker's result is applied before the other's `Failed`, the job reads `Failed` though it succeeded. The window is the time between the idle worker's read and its write, and a rerun is the author's to ask. WL-5 gives each lane one worker by default, and a second worker on a lane is the operator's choice.

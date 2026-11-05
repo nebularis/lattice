@@ -7,6 +7,7 @@ status, per `contracts/config-studio/README.md`.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import uuid
 from dataclasses import dataclass
@@ -59,6 +60,10 @@ _WORKER_PREDICATES = (
     CST.status, CST.startedAt, CST.finishedAt, CST.failureMessage, CST.conforms, CST.report, CST.artefact, CST.gap,
     CST.resolution, CST.expansion, CST.testResult,
 )
+
+
+LOG = logging.getLogger("lattice_workers.worker")
+LOST = "The worker stopped while it ran this job, so the job did not finish. Submit it again."
 
 
 @dataclass(frozen=True)
@@ -123,6 +128,21 @@ class ConfigStudioWorker:
             if triple[1] not in _WORKER_PREDICATES:
                 graph.add(triple)
         label = (_name(graph.value(job, CST.kind)), _name(graph.value(job, CST.target)))
+        status = written.value(job, CST.status)
+        rebuild = (job, CST.kind, CST.Rebuild) in written
+        # A message is delivered again whenever a worker stopped before it acknowledged, and the store says what became of the job.
+        if status in (CST.Succeeded, CST.Failed):
+            LOG.info("%s %s %s was delivered again after it ended %s, and is left as it is", *label, job_iri, _name(status))
+            return Handled(*label, "skipped")
+        if not rebuild and not _WORKSPACE.fullmatch(str(written.value(job, CST.workspace) or "")):
+            raise InvalidMessage(f"job {job_iri} of kind {label[0]} names no workspace, so its result could not be written")
+        if status == CST.Running and not rebuild:
+            # Only a worker that stopped leaves a job running, and the consumer keeps the job it still runs from reaching here. The job may
+            # have spent a model's tokens, so it is not run again unasked (plan studio-worker-liveness, WL-Q2).
+            LOG.warning("%s %s %s was running when its worker stopped, and is marked failed", *label, job_iri)
+            self.fail(job_iri, LOST)
+            return Handled(*label, "failed, its worker stopped")
+        LOG.info("%s %s %s starts", *label, job_iri)
 
         running = Graph() + graph
         running.add((job, CST.status, CST.Running))

@@ -306,3 +306,14 @@ def test_a_result_published_while_the_connection_is_down_waits_for_the_next_one_
     assert [p[:4] for p in broker.published] == [("lattice.studio.writes", "3", {"id": "c1"}, b"quads")]
     wait_for(lambda: broker.settled)
     stopped(consumer, thread)
+
+
+def test_each_job_is_logged_when_it_ends_with_its_duration_and_what_became_of_it(caplog):
+    broker, handler = FakeBroker(), Handler(lambda h, iri: "Validate Persistence succeeded")
+    broker.ready.append(JOB.encode())
+    with caplog.at_level("INFO", logger="lattice_workers.consumer"):
+        consumer, thread = started(broker, handler)
+        wait_for(lambda: broker.settled)
+        stopped(consumer, thread)
+    ended = [r.message for r in caplog.records if " ended in " in r.message]
+    assert len(ended) == 1 and JOB in ended[0] and "Validate Persistence succeeded" in ended[0]
