@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -17,7 +17,7 @@
 | WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | built 2026-11-05 |  |
 | WL-4 | the held result, reconnecting with a backoff | built 2026-11-05 |  |
 | WL-5 | short jobs past long ones | built 2026-11-05 |  |
-| WL-6 | a view that attaches to its running job, no stacked validations | planned |  |
+| WL-6 | a view that attaches to its running job, no stacked validations | building 2026-11-05 |  |
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | planned |  |
 
 ## Next action
@@ -39,3 +39,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-4 built. A real broker closes the worker's connection three seconds into an eight second job. The worker reconnects, takes the redelivered message for the job in hand and finishes it once. The worker's connection is named, and the harness closes connections by name. Learned for a register: `rabbitmqctl list_connections` prints a pid in JSON as `Pid(#PID<...>)`, which `close_connection` refuses, and in its default table as `<node.creation.id.serial>`, which it takes.
 - 2026-11-05: WL-5 picked up, building. The service routes by kind to a second queue, `lattice.studio.jobs.long`, for a proposal by a model and for a publication. The worker takes its queue from `LATTICE_WORKER_QUEUE`, `studio:up` starts a worker for each queue, and the harness topology gains `long_workers`.
 - 2026-11-05: WL-5 built. `contracts/config-studio/amqp-topology.json` gains `lattice.studio.jobs.long`, the service routes by `Lanes`, the worker takes its queue from `LATTICE_WORKER_QUEUE`, `studio:up` starts `worker-long`, `studio:worker-long` runs one by hand, and the harness topology gains `long_workers`, default 1. With a worker for each queue a validation ends in a few seconds while a 25 s proposal runs. Learned: the harness's `spawn` appends to a process's log, so two tests that name a worker alike read each other's lines.
+- 2026-11-05: WL-6 picked up, building.
