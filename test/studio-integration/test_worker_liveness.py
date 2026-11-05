@@ -98,6 +98,25 @@ def test_a_job_longer_than_the_brokers_timeout_finishes_on_one_connection(alone)
     assert alone.worker_running("worker-slow"), alone.log("worker-slow")[-600:]
 
 
+def test_a_job_goes_on_through_a_lost_connection_and_its_result_is_kept(alone) -> None:
+    """RC2. The broker closes the worker's connection three seconds into a job of eight. The job is neither failed nor run again."""
+    client = alone.client()
+    alone.start_worker("worker-slow", env={"LATTICE_TEST_JOB_SECONDS": "8"}, code=SLOW)
+    ws = workspace(client)
+    job = validate(client, ws)
+    deadline = time.monotonic() + 30
+    while "starts" not in alone.log("worker-slow") and time.monotonic() < deadline:
+        time.sleep(0.2)
+    time.sleep(3)
+    assert alone.close_connections("config-studio-worker") == 1
+    text = finished(client, job, 90)
+    assert status(text) == "Succeeded", text[:400]
+    log = alone.log("worker-slow")
+    assert log.count(" starts") == 1, "the job was started again:\n" + log[-1500:]
+    assert log.count("consuming lattice.studio.jobs") == 2, "the worker did not reconnect:\n" + log[-1500:]
+    assert alone.worker_running("worker-slow")
+
+
 def test_a_job_found_running_after_a_loss_is_failed_and_not_run_again(alone) -> None:
     """RC3. The worker dies after it marked the job running. The job comes back, and a second worker must not start it over."""
     client = alone.client()

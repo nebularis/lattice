@@ -233,6 +233,15 @@ class ProcessStudio(Studio):
     def consumers(self, queue: str) -> int:
         return queue_consumers(self.ctl("list_queues", "name", "consumers", "--formatter", "csv", "--silent"), queue)
 
+    def close_connections(self, named: str, reason: str = "closed by the test") -> int:
+        """Closes the broker's connections whose client-provided name contains `named`, as a network fault or a broker restart would, and
+        returns how many."""
+        listed = self.ctl("list_connections", "pid", "client_properties", "--silent")
+        pids = [line.split("\t", 1)[0] for line in listed.splitlines() if named in line and line.startswith("<")]
+        for pid in pids:
+            self.ctl("close_connection", pid, reason)
+        return len(pids)
+
     def purge(self, queue: str) -> None:
         """Drops every message of `queue`, so one test's leftovers do not reach the next."""
         self.ctl("purge_queue", queue)

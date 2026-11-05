@@ -62,7 +62,10 @@ class PikaSession:
 
     def __init__(self, uri: str, queue_name: str) -> None:
         self._queue = queue_name
-        self._connection = pika.BlockingConnection(pika.URLParameters(uri))
+        parameters = pika.URLParameters(uri)
+        # Named, as the Java components name theirs, so the broker's own tools show which connection is the worker's.
+        parameters.client_properties = {"connection_name": f"config-studio-worker {queue_name}"}
+        self._connection = pika.BlockingConnection(parameters)
         self._channel = self._connection.channel()
         declare_topology(self._channel, TOPOLOGY)
         self._channel.basic_qos(prefetch_count=1)

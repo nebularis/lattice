@@ -73,3 +73,17 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **Changed, not weakened.** `test_same_job_twice_gives_same_graph` ran `handle` twice on one job, and a job the store holds as finished is not run again, so the second run would have compared the first with itself. It now sets the job back to the graph the service wrote before the second run, which keeps what it protects, that one job gives one graph.
 
 **Not covered.** Two workers on one queue where a lost connection redelivers a job to the idle one while the first still runs it. The idle worker marks the job `Failed`, and the first worker's result, published later, replaces that with `Succeeded`. If the first worker's result is applied before the other's `Failed`, the job reads `Failed` though it succeeded. The window is the time between the idle worker's read and its write, and a rerun is the author's to ask. WL-5 gives each lane one worker by default, and a second worker on a lane is the operator's choice.
+
+## WL-4: the held result and the reconnection
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL4-01 | a job in hand / the connection is lost and the broker delivers the message again / the job is not started a second time, and its acknowledgement goes on the new tag | L1 | + | pass |
+| WL4-02 | a job that finishes while the broker is unreachable / the connection is lost / no tag from the lost connection is used, and when the broker delivers the message again the worker finds the job finished and acknowledges it | L1 | + | pass |
+| WL4-03 | a result published while the connection is down / the next connection opens / it is published once, on the connection thread, and the job is then acknowledged | L1 | + | pass |
+| WL4-04 | a worker started when the broker is not reachable / it is tried again / after 1, 2 and 5 s, then served (opened as WL2-06) | L1 | − | pass |
+| WL4-05 | a worker on a real broker, and a job of eight seconds / the broker closes the worker's connection at three / the worker reconnects, the message is delivered again and taken for the job in hand, the job ends `Succeeded`, and its start is logged once | L5 | + | pass, 2026-11-05, in 30 s |
+
+`workers/tests/test_config_studio_consumer.py` and `test/studio-integration/test_worker_liveness.py` (4 cases, about 55 s). The worker's connection is named `config-studio-worker {queue}`, as the Java components name theirs, so the broker's tools can find it, and the harness's `close_connections` closes it through `rabbitmqctl`.
+
+**Not covered.** A result that could not be published because the broker refused or could not route it, which is a fault of the topology and not of the connection. The job is then marked failed where it can be and rejected, as for any job that cannot be written (WL2-04). A worker killed with its result in hand has no result to keep, and the job is found running at the next delivery and failed (WL1-02).
