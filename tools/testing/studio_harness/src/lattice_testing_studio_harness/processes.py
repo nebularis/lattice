@@ -127,6 +127,10 @@ class ProcessStudio(Studio):
             name = f"worker-{i}"
             stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env(env))
             self._track(name)
+        for i in range(1, t.long_workers + 1):
+            name = f"worker-long-{i}"
+            stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env({**env, "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"}))
+            self._track(name)
         self.url = f"http://127.0.0.1:{service}"
         self._wait_health()
         self._wait_workers()
@@ -169,20 +173,19 @@ class ProcessStudio(Studio):
         raise HarnessError(f"the service did not answer {self.url}/api/health")
 
     def _wait_workers(self) -> None:
-        """Waits until the jobs queue has a consumer for each worker, so the first job does not wait for a cold start."""
-        want = self.topology.workers
-        if not want:
-            return
+        """Waits until each jobs queue has a consumer for each of its workers, so the first job does not wait for a cold start."""
+        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers}
         deadline = time.monotonic() + READY_TIMEOUT
-        while time.monotonic() < deadline:
-            if self.consumers("lattice.studio.jobs") >= want:
+        while any(wants.values()) and time.monotonic() < deadline:
+            if all(self.consumers(queue) >= want for queue, want in wants.items()):
                 return
             for name in [n for n in self.pids if n.startswith("worker-")]:
                 if self.stack.pid(name) is None:
                     log = self.stack.run / f"{name}.log"
                     raise HarnessError(f"{name} stopped. Last lines of {log}:\n" + "\n".join(log.read_text(errors="replace").splitlines()[-20:]))
             time.sleep(0.5)
-        raise HarnessError(f"fewer than {want} workers consume lattice.studio.jobs")
+        if any(wants.values()):
+            raise HarnessError(f"fewer workers than {wants} consume their queues")
 
     # --- workers of a test's own --------------------------------------------------------------
 

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 STORES = ("tdb2", "memory")
 AUTHS = ("local",)
 RUNNERS = ("processes", "compose")
-KEYS = {"name", "writers", "workers", "store", "auth", "runner"}
+KEYS = {"name", "writers", "workers", "long_workers", "store", "auth", "runner"}
 
 
 class HarnessError(RuntimeError):
@@ -29,6 +29,7 @@ class Topology:
     name: str
     writers: int = 1
     workers: int = 1
+    long_workers: int = 1
     store: str = "tdb2"
     auth: str = "local"
     runner: str = "processes"
@@ -38,7 +39,7 @@ class Topology:
             raise HarnessError(f"topology name {self.name!r} is letters, digits, hyphens and underscores")
         if self.writers < 1:
             raise HarnessError("a topology has at least one writer")
-        if self.workers < 0:
+        if self.workers < 0 or self.long_workers < 0:
             raise HarnessError("workers cannot be negative")
         for field, value, allowed in (("store", self.store, STORES), ("auth", self.auth, AUTHS), ("runner", self.runner, RUNNERS)):
             if value not in allowed:
@@ -53,7 +54,7 @@ class Topology:
             raise HarnessError(f"unknown topology keys {sorted(unknown)}")
         if "name" not in data:
             raise HarnessError("a topology has a name")
-        for key in ("writers", "workers"):
+        for key in ("writers", "workers", "long_workers"):
             if key in data and (type(data[key]) is not int):
                 raise HarnessError(f"{key} is a whole number")
         return cls(**data)

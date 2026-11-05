@@ -22,6 +22,7 @@ pytestmark = pytest.mark.studio_liveness
 CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#"
 BODY = "@prefix ex: <https://example.org/> .\nex:a ex:p ex:b .\n"
 HEARTBEAT = 2
+LONG = "lattice.studio.jobs.long"
 
 # A worker whose every job first sleeps, like a proposal waiting on a model.
 SLOW = """
@@ -49,7 +50,7 @@ m.main()
 
 @pytest.fixture(scope="module")
 def studio():
-    with Topology(name="liveness", workers=0).start() as running:
+    with Topology(name="liveness", workers=0, long_workers=0).start() as running:
         yield running
 
 
@@ -60,6 +61,7 @@ def alone(studio):
         for name in [n for n in studio.pids if n.startswith("worker-")]:
             studio.stop_worker(name)
         studio.purge("lattice.studio.jobs")
+        studio.purge(LONG)
     clear()
     yield studio
     clear()
@@ -101,20 +103,38 @@ def test_a_job_longer_than_the_brokers_timeout_finishes_on_one_connection(alone)
 def test_a_job_goes_on_through_a_lost_connection_and_its_result_is_kept(alone) -> None:
     """RC2. The broker closes the worker's connection three seconds into a job of eight. The job is neither failed nor run again."""
     client = alone.client()
-    alone.start_worker("worker-slow", env={"LATTICE_TEST_JOB_SECONDS": "8"}, code=SLOW)
+    alone.start_worker("worker-lost", env={"LATTICE_TEST_JOB_SECONDS": "8"}, code=SLOW)
     ws = workspace(client)
     job = validate(client, ws)
     deadline = time.monotonic() + 30
-    while "starts" not in alone.log("worker-slow") and time.monotonic() < deadline:
+    while f"{job} starts" not in alone.log("worker-lost") and time.monotonic() < deadline:
         time.sleep(0.2)
     time.sleep(3)
     assert alone.close_connections("config-studio-worker") == 1
     text = finished(client, job, 90)
     assert status(text) == "Succeeded", text[:400]
-    log = alone.log("worker-slow")
-    assert log.count(" starts") == 1, "the job was started again:\n" + log[-1500:]
+    log = alone.log("worker-lost")
+    assert log.count(f"{job} starts") == 1, "the job was started again:\n" + log[-1500:]
     assert log.count("consuming lattice.studio.jobs") == 2, "the worker did not reconnect:\n" + log[-1500:]
-    assert alone.worker_running("worker-slow")
+    assert alone.worker_running("worker-lost")
+
+
+def test_a_validation_finishes_while_a_long_job_is_still_running(alone) -> None:
+    """RC4. A proposal by a language model goes to the long queue and its worker, and a validation submitted behind it to the other."""
+    client = alone.client()
+    alone.start_worker("worker-1")
+    alone.start_worker("worker-long-1", env={"LATTICE_WORKER_QUEUE": LONG, "LATTICE_TEST_JOB_SECONDS": "25"}, code=SLOW)
+    deadline = time.monotonic() + 60
+    while (alone.consumers("lattice.studio.jobs") < 1 or alone.consumers(LONG) < 1) and time.monotonic() < deadline:
+        time.sleep(0.3)
+    ws = workspace(client)
+    proposal = client.job_id(client.submit_job(ws, "propose", "language-model", BODY))
+    time.sleep(1.5)
+    started = time.monotonic()
+    assert status(finished(client, validate(client, ws), 20)) == "Succeeded"
+    assert time.monotonic() - started < 15, "the validation waited for the proposal"
+    assert status(client.get_job(proposal).text) == "other", "the proposal had ended, so the validation did not overtake it"
+    finished(client, proposal, 90)
 
 
 def test_a_job_found_running_after_a_loss_is_failed_and_not_run_again(alone) -> None:

@@ -928,7 +928,7 @@ public final class StudioApi {
             return refusal(reply);
         }
         try {
-            bus.publish(jobIri);
+            bus.publish(jobIri, org.nebularis.lattice.studio.jobs.Lanes.isLong(description, jobIri));
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();

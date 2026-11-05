@@ -23,6 +23,7 @@ def test_sh_t1_the_shipped_topologies_load() -> None:
     loaded = {t.name: t for t in map(Topology.load, TOPOLOGIES)}
     assert (loaded["single"].writers, loaded["single"].workers) == (1, 1)
     assert (loaded["pair"].writers, loaded["pair"].workers) == (2, 2)
+    assert (loaded["single"].long_workers, loaded["pair"].long_workers) == (1, 1), "a topology has a worker for the long queue unless it says not"
     assert all(t.store == "tdb2" and t.auth == "local" and t.runner == "processes" for t in loaded.values())
 
 
@@ -59,7 +60,7 @@ def test_sh_t5_the_compose_file_of_each_topology(path: Path) -> None:
     topology = Topology.load(path)
     config = json.loads(json.dumps(compose_config(topology, "h12345678", PATHS, 49999)))
     services = config["services"]
-    assert set(services) == {"fuseki", "rabbitmq", "service", "proxy"} | {f"writer{i + 1}" for i in range(topology.writers)} | {f"worker{i + 1}" for i in range(topology.workers)}
+    assert set(services) == {"fuseki", "rabbitmq", "service", "proxy"} | {f"writer{i + 1}" for i in range(topology.writers)} | {f"worker{i + 1}" for i in range(topology.workers)} | {f"workerlong{i + 1}" for i in range(topology.long_workers)}
     published = [(n, p) for n, s in services.items() for p in s.get("ports", [])]
     assert published == [("service", "127.0.0.1:49999:8091")], "only the service is published, and on loopback"
     assert services["service"]["environment"]["LATTICE_STUDIO_BIND"] == "127.0.0.1"

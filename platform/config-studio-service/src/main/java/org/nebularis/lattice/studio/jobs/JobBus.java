@@ -7,6 +7,14 @@ public interface JobBus extends AutoCloseable {
     void publish(String jobIri) throws Exception;
 
     /**
+     * Publishes the job IRI to the queue of its lane, the long queue when {@code longJob} (see {@link Lanes}). A bus with one queue
+     * publishes to it.
+     */
+    default void publish(String jobIri, boolean longJob) throws Exception {
+        publish(jobIri);
+    }
+
+    /**
      * Asks the transforms worker to run the compile job {@code jobIri}'s transforms over {@code sample}, given as
      * {@code mediaType}, and waits up to {@code timeout} for its reply, a Turtle graph under
      * {@code urn:lattice:studio:transform:{id}} (ADR-A148). Null when no worker answered in time, as a bus without a

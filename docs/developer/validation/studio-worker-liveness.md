@@ -87,3 +87,24 @@ The first runs the unit tests of the worker, the harness and the service. The se
 `workers/tests/test_config_studio_consumer.py` and `test/studio-integration/test_worker_liveness.py` (4 cases, about 55 s). The worker's connection is named `config-studio-worker {queue}`, as the Java components name theirs, so the broker's tools can find it, and the harness's `close_connections` closes it through `rabbitmqctl`.
 
 **Not covered.** A result that could not be published because the broker refused or could not route it, which is a fault of the topology and not of the connection. The job is then marked failed where it can be and rejected, as for any job that cannot be written (WL2-04). A worker killed with its result in hand has no result to keep, and the job is found running at the next delivery and failed (WL1-02).
+
+## WL-5: short jobs past long ones
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL5-01 | a proposal by a language model, by a mapping proposal, and a publication / `Lanes.isLong` / long | L1 | + | pass |
+| WL5-02 | a validation, a compilation, a sentence-form proposal, an ODRL import, a rebuild and an assembly / `Lanes.isLong` / short | L1 | − | pass |
+| WL5-03 | the service / a validation, a proposal by a language model and a sentence-form proposal are submitted / the proposal alone is published to the long queue | L3 | ± | pass |
+| WL5-04 | the contract `amqp-topology.json` / compared with the Java constants and the worker's packaged copy / equal, and the long queue dead-letters like the short one | L3 | + | pass |
+| WL5-05 | a studio with a worker for each queue, the long one patched to take 25 s per job / a proposal is submitted, then a validation / the validation ends `Succeeded` in under 15 s while the proposal is still unfinished, and the proposal ends later | L5 | + | pass, 2026-11-05 |
+| WL5-06 | the harness's two shipped topologies, now with a worker for the long queue / each starts, runs the smoke scenario (which publishes) and stops / nothing left behind | L5 | + | pass, 2 in 50 s |
+
+`platform/config-studio-service` `LanesTest` (4) and `TopologyTest`, `workers/tests/test_config_studio_worker.py::test_topology_copy_equals_contract`, `test/studio-integration/test_worker_liveness.py` (now 5 cases, 95 s) and `test_smoke.py`.
+
+**What is long.** A proposal by a language model (`language-model`, `mapping-language-model`) and a publication. The list is `Lanes` in the service and nowhere else, since a worker runs whatever its queue gives it. A job of another kind that turns out to be long moves by one edit there.
+
+**The topology may be split further later**, as the maintainer said. Nothing here assumes two queues: a queue is a name in the contract, a routing key in `Lanes` and a worker started with `LATTICE_WORKER_QUEUE`.
+
+**Existing brokers.** The service and the worker declare the long queue when they start, as they do the others, so a broker that has none gets it. A `lattice.studio.jobs` that holds jobs from before keeps them, and the short worker runs them whatever their kind. A broker that has no worker on the long queue holds the long jobs, which WL-7 makes visible.
+
+**Not covered.** Docker Compose: the generated compose file has a service for the long worker (`tools/testing/studio_harness` unit test) but the run in containers was not made. `docker` has no daemon here.

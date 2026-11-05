@@ -55,7 +55,12 @@ public final class RabbitJobBus implements JobBus {
     /** A channel is not thread safe, so publishes take turns. */
     @Override
     public synchronized void publish(String jobIri) throws IOException, InterruptedException, TimeoutException {
-        channel.basicPublish(Topology.EXCHANGE, Topology.JOBS_ROUTING_KEY, PROPERTIES,
+        publish(jobIri, false);
+    }
+
+    @Override
+    public synchronized void publish(String jobIri, boolean longJob) throws IOException, InterruptedException, TimeoutException {
+        channel.basicPublish(Topology.EXCHANGE, Lanes.routingKey(longJob), PROPERTIES,
             jobIri.getBytes(StandardCharsets.UTF_8));
         channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
     }

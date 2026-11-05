@@ -8,7 +8,7 @@
 
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
 pinned here, or with `--docker` from the compose file. It then builds and starts the store writer, the service, the
-worker, the transforms worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
+worker, the long jobs' worker, the transforms worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
 the compose file also serves the built add-in over HTTPS on 3443, which Word needs. Each process writes its log and its
 process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
 TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
@@ -140,7 +140,7 @@ FUSEKI_MEMORY_STORE = """<#store> rdf:type <http://jena.hpl.hp.com/2005/11/Assem
 """
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
-ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "transforms", "addin", "web")
+ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "worker-long", "transforms", "addin", "web")
 
 
 class Stack:
@@ -395,6 +395,9 @@ class Stack:
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], self.env())
+        if self.pid("worker-long") is None:
+            # Jobs that take minutes have a queue and a worker of their own, so a validation never waits behind one (WL-Q3).
+            self.spawn("worker-long", [sys.executable, "-m", "lattice_workers.config_studio_main"], {**self.env(), "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"})
         if self.pid("transforms") is None:
             self.spawn("transforms", ["java", "-jar", str(self.pinned("transforms", built("config-studio-transforms")))], self.env())
         if self.claim("addin", ADDIN_PORT):

@@ -778,6 +778,11 @@ description = "Run the Configuration Studio's worker against Fuseki and RabbitMQ
 env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }
 run = "python -m lattice_workers.config_studio_main"
 
+[tasks."studio:worker-long"]
+description = "Run the Configuration Studio's worker for jobs that take minutes, a proposal by a language model and a publication, which have a queue of their own so that a validation never waits behind one"
+env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri", LATTICE_WORKER_QUEUE = "lattice.studio.jobs.long" }
+run = "python -m lattice_workers.config_studio_main"
+
 [tasks."studio:transforms"]
 description = "Build and run the Configuration Studio's transforms worker, which runs the mapping part's XSLT stylesheets and JOLT chains, against Fuseki and RabbitMQ"
 env = { LATTICE_FUSEKI_URL = "http://127.0.0.1:3130", LATTICE_FUSEKI_DATASET = "studio", LATTICE_AMQP_URI_FILE = ".build/config-studio/infra/broker/amqp-uri" }

@@ -12,6 +12,12 @@ public final class Topology {
     public static final String JOBS_QUEUE = "lattice.studio.jobs";
     public static final String JOBS_ROUTING_KEY = "lattice.studio.jobs";
     /**
+     * Jobs that take minutes, a proposal by a language model and a publication, on a queue of their own and a worker of their own, so a
+     * validation or a compilation never waits behind one (plan studio-worker-liveness, WL-Q3). See {@link Lanes}.
+     */
+    public static final String JOBS_LONG_QUEUE = "lattice.studio.jobs.long";
+    public static final String JOBS_LONG_ROUTING_KEY = "lattice.studio.jobs.long";
+    /**
      * Runs of a compiled transform (ADR-A148), each a request answered on its sender's direct reply-to. A request expires
      * when its sender stops waiting, so it is never dead-lettered.
      */
@@ -39,6 +45,8 @@ public final class Topology {
         channel.exchangeDeclare(DEAD_LETTER_EXCHANGE, "topic", true);
         channel.queueDeclare(JOBS_QUEUE, true, false, false, Map.of("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE));
         channel.queueBind(JOBS_QUEUE, EXCHANGE, JOBS_ROUTING_KEY);
+        channel.queueDeclare(JOBS_LONG_QUEUE, true, false, false, Map.of("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE));
+        channel.queueBind(JOBS_LONG_QUEUE, EXCHANGE, JOBS_LONG_ROUTING_KEY);
         channel.queueDeclare(TRANSFORMS_QUEUE, true, false, false, Map.of());
         channel.queueBind(TRANSFORMS_QUEUE, EXCHANGE, TRANSFORMS_ROUTING_KEY);
         channel.queueDeclare(DEAD_QUEUE, true, false, false, Map.of());
