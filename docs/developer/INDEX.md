@@ -492,13 +492,13 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SQ-5 | a Jepsen test against the Compose topology | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-6 | Locust load runs with reports | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
-| WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | planned | WL-Q1 to WL-Q6 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | planned | WL-Q1 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | studio-worker-liveness | planned | WL-Q2 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-4 | the held result, reconnecting with a backoff | studio-worker-liveness | planned | WL-Q4 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-5 | short jobs past long ones | studio-worker-liveness | planned | WL-Q3 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-6 | a view that attaches to its running job, no stacked validations | studio-worker-liveness | planned | WL-Q5 | docs/developer/status/studio-worker-liveness.md#position |
-| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | planned | WL-Q6 | docs/developer/status/studio-worker-liveness.md#position |
+| WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-4 | the held result, reconnecting with a backoff | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-5 | short jobs past long ones | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-6 | a view that attaches to its running job, no stacked validations | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |

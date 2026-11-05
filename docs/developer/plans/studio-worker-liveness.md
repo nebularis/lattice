@@ -7,7 +7,7 @@
 **Prefix:** WL
 **Status record:** [studio-worker-liveness.md](../status/studio-worker-liveness.md)
 **ADR:** an addendum to [ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md), drafted in WL-7 as Proposed
-**Status:** planned 2026-11-05. Every question below waits on the maintainer, and no slice starts before them.
+**Status:** accepted 2026-11-05. The maintainer answered WL-Q1 to WL-Q6 the same day, each answer recorded under its question. TD-131 and TD-141 left the debt register in the commit that records them.
 
 ## Scope
 
@@ -92,6 +92,8 @@ flowchart TD
 
 **WL-Q1. How does the worker keep its connection alive through a job of any length?**
 
+**Answered 2026-11-05: (a), run the job on its own thread, with every AMQP call on the connection's thread.**
+
 | Option | Change | Design overhead | Runtime overhead | Survives a 6.7 h job |
 |---|---|---|---|---|
 | (a) run the job on a thread, and keep every AMQP call on the connection's thread, through `add_callback_threadsafe` | about 60 lines in `config_studio_main.py`, with the publisher waiting on its confirm across threads | one rule to keep, that only one thread touches pika. This is pika's documented pattern | one thread per job. A CPU-bound validation still yields the GIL about every 5 ms | yes |
@@ -121,6 +123,8 @@ sequenceDiagram
 
 **WL-Q2. What does the worker do with a job it is handed that has already started or finished?** Every option acknowledges a job already `Succeeded` or `Failed` without running it, since that is what a repeated delivery of a finished job means. Each costs one read, which `handle` already makes.
 
+**Answered 2026-11-05: (a), mark a job found `Running` as `Failed` and ignore one already finished.**
+
 | Option | A job found `Running` | Queue change | A validation, seconds, after a loss | A proposal, 107,000 tokens, after a loss | A job that kills the process every time |
 |---|---|---|---|---|---|
 | (a) fail it, with a message saying the worker stopped while it ran | written `Failed` and acknowledged | none | fails, and the next edit submits it again | fails, and the author decides whether to spend again | one crash, then `Failed` |
@@ -130,6 +134,8 @@ sequenceDiagram
 Leaning (a). It holds the store as the only state, needs no migration and spends no one's tokens silently. Its cost is that a broker restart fails what was in flight, which the author sees and can repeat. A rebuild writes no `Running`, is waited for by the service alone and stays as it is. A job that cannot run at all, RC7, is treated the same way, written `Failed` where it names a workspace and otherwise rejected to `lattice.studio.dead`.
 
 **WL-Q3. How do short jobs get past a long one?**
+
+**Answered 2026-11-05: (b), a separate queue and worker for long jobs. The topology may need to be revisited later to split things up further.**
 
 ```mermaid
 flowchart LR
@@ -161,6 +167,8 @@ Leaning (b), since it is the only option that gives short jobs a guarantee. (c) 
 
 **WL-Q4. What does the worker do when its connection is lost with a job in hand?**
 
+**Answered 2026-11-05: (b), keep the result, reconnect and publish it.**
+
 | Option | The finished result | In `studio:up` | In a container |
 |---|---|---|---|
 | (a) exit at once and leave restarting to a supervisor | lost, and with WL-Q2 (a) the job is then `Failed` | stays down, since nothing restarts it | restarted |
@@ -171,6 +179,8 @@ Leaning (b), TD-131's own remedy. It keeps a result that may have cost a great d
 
 **WL-Q5. How does a long job survive the author changing workspace or reloading the page?**
 
+**Answered 2026-11-05: (a), re-read the workspace's unfinished jobs from the store when the view opens.**
+
 | Option | Back in the workspace | Reload | Change |
 |---|---|---|---|
 | (a) read the workspace's unfinished jobs from the store on mount and attach to each | the view shows it running, and applies its result when it ends | same | a new read in `contracts/`, generated types, and each long-job view attaching on mount |
@@ -180,6 +190,8 @@ Leaning (b), TD-131's own remedy. It keeps a result that may have cost a great d
 Leaning (a), since the store already holds the job and a reload is as likely as a switch. Every option passes an abort signal to `awaitJob`, ends the old closure's polling on unmount, and deletes a validation still queued when its view goes, so views stop stacking jobs. A queued job deleted this way already reaches `lattice.studio.dead` as `job graph not found`, and whether that is too noisy is checked in the slice.
 
 **WL-Q6. How does the author and the operator learn that the worker is down or busy?**
+
+**Answered 2026-11-05: (a), the service checks the queue's consumer count and warns, and the worker logs each job.**
 
 | Option | Author sees | Operator sees | Cost |
 |---|---|---|---|
