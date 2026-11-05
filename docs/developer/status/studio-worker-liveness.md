@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-05. WL-Q1 to WL-Q6 are answered.
+**Status:** building 2026-11-05. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -15,7 +15,7 @@
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | built 2026-11-05 |  |
 | WL-2 | the job on its own thread, the publisher and acknowledgement across threads | built 2026-11-05 |  |
 | WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | built 2026-11-05 |  |
-| WL-4 | the held result, reconnecting with a backoff | planned |  |
+| WL-4 | the held result, reconnecting with a backoff | building 2026-11-05 |  |
 | WL-5 | short jobs past long ones | planned |  |
 | WL-6 | a view that attaches to its running job, no stacked validations | planned |  |
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | planned |  |
@@ -35,3 +35,4 @@ Build WL-2 to WL-7 in order, each marked `building` before its first edit. The V
 - 2026-11-05: WL-2 built. `config_studio_consumer.py` holds the connection thread and the job threads, and `config_studio_main.py` is the pika session over it. WL1-01 and WL1-03 pass against the real broker, and WL1-02 waits for WL-3. The held result and the adoption of a redelivered job (WL-4) are in the same consumer and have their unit tests, which WL-4 will cite. `RabbitMqConfigStudioWorker` and its two tests are retired, see the pack. Two per-worker settings are new: `LATTICE_WORKER_QUEUE` names the queue, for WL-5.
 - 2026-11-05: WL-3 picked up, building.
 - 2026-11-05: WL-3 built. `handle` leaves a finished job alone, writes `Failed` on a job found running, refuses a job that names no workspace unless it is a rebuild, and logs the start of each job. `fail` is what the consumer calls for a job it could not run. `studio:liveness` passes all three cases. Recorded in the pack: a race between two workers on one queue that can leave a succeeded job reading `Failed`.
+- 2026-11-05: WL-4 picked up, building. Its code is in the consumer WL-2 committed. What remains is the connection's name, so the broker's own tools can find the worker's connection, a real-broker test that closes it mid-job, and the pack.

@@ -74,7 +74,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-worker-liveness | multi-slice unit | WL | built 2026-11-05 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
+| studio-worker-liveness | multi-slice unit | WL | building 2026-11-05 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
@@ -495,7 +495,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
-| WL-4 | the held result, reconnecting with a backoff | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-4 | the held result, reconnecting with a backoff | studio-worker-liveness | building 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-5 | short jobs past long ones | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-6 | a view that attaches to its running job, no stacked validations | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | planned |  | docs/developer/status/studio-worker-liveness.md#position |
