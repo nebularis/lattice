@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ontology_catalog import Catalog, closure  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 LAYER = ROOT / "ontology" / "behaviour"
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 BHV = Namespace(LATTICE + "behaviour#")
@@ -85,8 +86,8 @@ def _declared_classes(path: Path) -> set:
 
 def test_c10_01_imports() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
-    assert set(config.objects(None, OWL.imports)) == {URIRef(LATTICE + f"{layer}") for layer in (
-        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.8.0", "party/0.9.0", "eligibility/0.12.0")}
+    assert set(config.objects(None, OWL.imports)) == {URIRef(LATTICE + f"{layer}/{RELEASE}") for layer in (
+        "foundation", "vocabulary", "quantification", "party", "eligibility")}
     assert {str(i).rsplit("/", 1)[0] for i in runtime.objects(None, OWL.imports)} == {LATTICE + "behaviour"}
 
 

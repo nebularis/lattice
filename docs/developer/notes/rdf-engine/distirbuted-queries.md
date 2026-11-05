@@ -1,14 +1,6 @@
 # One SPARQL view over RDF and SQL
 
-**Technology exploration, 2026-10-03.** The sixth paper in the series. Paper 4
-([workload-modeling-and-robustness-testing-strategy.md](workload-modeling-and-robustness-testing-strategy.md))
-moved interval data into PostgreSQL and split tenants into separate datasets. Paper 5
-([ontology-to-relational-compiler.md](ontology-to-relational-compiler.md)) compiled shape-closed
-aggregates into SQL tables and emitted an R2RML mapping back to the ontology. Together they leave
-LATTICE data in several places: native RDF stores, compiled SQL tables, interval materialisations,
-per-tenant datasets and a central lakehouse. This paper asks whether all of it can be queried as one
-RDF dataset with SPARQL, which existing technology does that, whether anything must be built, and
-what it costs in performance.
+**Technology exploration, 2026-10-03.** The sixth paper in the series. Paper 4 ([workload-modeling-and-robustness-testing-strategy.md](workload-modelling.md)) moved interval data into PostgreSQL and split tenants into separate datasets. Paper 5 ([ontology-to-relational-compiler.md](lattice-sql.md)) compiled shape-closed aggregates into SQL tables and emitted an R2RML mapping back to the ontology. Together they leave LATTICE data in several places: native RDF stores, compiled SQL tables, interval materialisations, per-tenant datasets and a central lakehouse. This paper asks whether all of it can be queried as one RDF dataset with SPARQL, which existing technology does that, whether anything must be built, and what it costs in performance.
 
 Grading as before. **Fact** means a cited source says so, with the source named. **Judgement** means
 a reasoned position that a measurement could overturn. *(verify)* marks details from memory. Nothing
@@ -753,7 +745,7 @@ tier.
   heterogeneous and large data sources. ISWC 2019 *(verify)*.
 - Bancilhon, Spyratos. Update semantics of relational views. TODS 1981. Dayal, Bernstein. On the
   correct translation of update operations on relational views. TODS 1982.
-- LATTICE: ADR-A54, ADR-A75, `docs/architecture/Architecture Review.md` (G-08),
+- LATTICE: ADR-A54, ADR-A75, `docs/developer/review/Architecture Review.md` (G-08),
   `docs/developer/plans/lattice-platform-agentic-development-v0.2.md` (L8 taxonomy), papers 2 to 5
   in this directory.
 

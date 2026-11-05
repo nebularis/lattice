@@ -151,14 +151,14 @@ ex:Buyer a pty:Role ; rdfs:label "Buyer" .
 # Placeholders: conditions stated, not yet evaluable (C13).
 ex:goods-conform a elg:Condition ;
     elg:conditionKey "goods-conform-to-specification" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:conforming .
 ex:conforming a skos:Concept ; rdfs:label "the goods conform to the Specification" .
 
 ex:substantial-deprivation a elg:Condition ;
     elg:conditionKey "breach-deprives-buyer-of-substantially-the-whole-benefit" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:deprived .
 ex:deprived a skos:Concept ; rdfs:label "the breach deprives the Buyer of substantially the whole benefit of the Agreement" .
@@ -256,6 +256,26 @@ ex:buyer-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:buyer-occ-identity ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-02-15T00:00:00Z"^^xsd:dateTime ] ;
     pty:inRole ex:Buyer ; pty:occupiedBy ex:harrow .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:harrow-wording-identity a fnd:PersistentIdentity .
+ex:buyer-occ-identity a fnd:PersistentIdentity .
+ex:seller-occ-identity a fnd:PersistentIdentity .
+ex:harrow-identity a fnd:PersistentIdentity .
+ex:sec-12-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:sec-4-identity a fnd:PersistentIdentity .
+ex:sec-5-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:cl-12-1-identity a fnd:PersistentIdentity .
+ex:cl-12-2-identity a fnd:PersistentIdentity .
+ex:cl-12-3-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:cl-4-1-identity a fnd:PersistentIdentity .
+ex:cl-5-1-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:term-classes-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #

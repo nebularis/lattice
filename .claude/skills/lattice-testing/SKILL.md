@@ -1,14 +1,50 @@
 ---
 name: lattice-testing
-description: Diagnosing and speeding up a slow test suite, and writing or extending Python tests under tools/ that parse ontology graphs or call pySHACL. Use when a check task is slow, when adding a test that validates a graph against shapes, when sharing state across test modules with pytest fixtures, or when a repository-wide text scan needs to work on every platform.
+description: Diagnosing and speeding up a slow test suite, and writing or extending Python tests under tools/ that parse ontology graphs, call pySHACL or run SPARQL on an engine. Use when a check task is slow, when adding or parallelising a suite, when choosing its engine or splitting out conformance tests, when a suite may run short of memory, when adding a test that validates a graph against shapes, when sharing state across test modules with pytest fixtures, or when a repository-wide text scan needs to work on every platform.
 ---
 
 # Testing in LATTICE
+
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities testing and its kinds, such as unit-testing, regression-testing, conformance-testing and performance-testing, with performance-tuning and scenario-and-test-data, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
 
 Grounded in the `python-test-melting` unit (2026-10-09), which took the ontology test suite from
 456s serial to about 124s under `pytest-xdist`, with zero change to any test's meaning. Full
 detail: [the plan](../../../docs/developer/plans/python-test-melting.md) and
 [its status record](../../../docs/developer/status/python-test-melting.md).
+
+## The defaults for every suite
+
+These are how a suite is built from the start, not fixes applied once it is slow. A suite that departs from one says why in its task
+description.
+
+- **Parallel by test.** The task runs `pytest -n auto`, with `--dist worksteal`, or `--dist loadgroup` where a module's tests share one
+  slow per-process computation and are put in one `xdist_group`. Nothing a test writes is shared between workers: temporary
+  directories per test, no file written in the tree.
+- **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from
+  its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
+- **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-toolchain`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
+- **Parse once, copy, never share a mutable graph.** Session-scoped fixtures parse a document once per process, and a test that
+  changes a graph changes a copy. `_sparql_translated_once` (H1) parses and translates each query text once. A pure function that
+  parses SPARQL is memoised on its input and returns a fresh value.
+- **Oxigraph runs the generated SPARQL.** A behaviour test that executes generated SPARQL runs on the default engine, Oxigraph
+  (ADR-A125, addendum of 2026-10-21). rdflib stays the library the tools and pySHACL are built on.
+- **Conformance is not part of `check`.** A test whose subject is one engine's behaviour, such as a sweep over hash seeds on rdflib or a
+  probe of a TSD entry, is marked `conformance` and runs in the suite's `check:<suite>-conformance` task, with every engine we have, on
+  demand and before a merge (skill `lattice-lifecycle`). A new engine joins that task and adds nothing to `check`.
+- **Benchmarks are not part of `check` either.** A test that measures belongs under `benchmark/` and fails on a wrong result, never on
+  time (ADR-A124).
+- **Measured before and after.** A change made for speed records the wall time, the worker count and the peak memory, and keeps every
+  assertion, as the next section says.
+- **A new check is seen to fail before it is relied on.** Break what it checks, watch it fail, then restore it. A check that has never failed may be checking nothing.
+
+## Memory: `mem_check`
+
+Most runs happen on an 8 GB laptop with an editor and other tools open, so a suite must not take more memory than the machine has
+free. `tools/testing/mem_check` (`mise run bootstrap:testing-mem-check`, standard library only, macOS, Linux and Windows) reads what
+is available and `mem_check.workers(default, per_worker)` gives as many workers as fit in it less a 1 GiB reserve, up to the default
+count and never fewer than two, which runs longer and smaller. `MEM_CHECK_AVAILABLE_MIB` stands in for the machine. A suite adopts it with
+the hook its README shows, giving its own peak per worker, measured with `-n 0` (`tools/persistence/tests/conftest.py` gives 700 MiB
+from a measured 649 MB). Any other suite that can run short of memory, or that starts more than two workers, may use it the same way.
 
 ## Measure before changing anything
 
@@ -41,12 +77,43 @@ A slow suite's cause is a hypothesis until profiled. Guessing wrong costs more t
 
 ## `pytest-xdist`: the first thing to try
 
-`-n auto --dist loadfile` runs each file in its own worker process, so files are independent and
-parallel-safe by construction (no intra-file race). This was the single highest-value change in
-this unit: roughly a 3.6x reduction, confirmed with byte-identical outcomes. Try this before
-building anything else. A shared, session-scoped fixture (below) is still real and still worth
-doing, but each `xdist` worker gets its own fresh copy — cross-file sharing only happens for files
-that land in the same worker, which `loadfile` does not guarantee.
+`-n auto --dist worksteal` spreads the tests over workers, and an idle worker takes tests from a busy
+one. The first version, `--dist loadfile`, ran each file in its own worker so that files were
+independent by construction. It was the single highest-value change in this unit, roughly a 3.6x
+reduction with byte-identical outcomes, but a file is then the unit of work and the largest file sets
+a floor on the run. Measured on two machines with all tests passing, `worksteal` was 9 to 11 percent
+faster, and it cost about 2 percent more summed test time because each worker parses what it
+needs. A shared, session-scoped fixture (below) is still worth doing, but each `xdist` worker gets
+its own copy, so cross-file sharing happens only for tests that land on the same worker.
+
+More workers than cores doing real work do not help. On a laptop with four performance and four
+efficiency cores, 8 workers gave the same wall time as 4 and doubled the summed test time, since the
+same work ran at half the speed per worker. A summed time that doubles with the worker count is
+contention, not slow tests. `PYTEST_XDIST_AUTO_NUM_WORKERS` sets what `auto` means for one machine,
+and `mise run dev:time-ontology-tests -- --workers N --dist MODE` compares settings and reports
+when each worker finished and the peak memory.
+
+## Lessons from the persistence suite (FMH-TS-1)
+
+`check:persistence` went from 4m12s serial to about 1m35s on a loaded machine. What paid, in order: `-n auto --dist loadgroup`, a
+session-wide `_sparql_translated_once` (H1) for a suite that calls `pyshacl.validate` directly in many places, running the children of
+a hash-seed sweep side by side (a thread pool over `subprocess.run`), memoising a pure function that parses SPARQL
+(`templatecheck.analyse`), and parsing a fixture once per process (`witness._load_fixture`). A module whose tests share one slow
+per-process computation goes in one `xdist_group` (`--dist loadgroup`), or every worker repeats it. Count parses before caching them:
+a profile showed 5901 SPARQL parses of 1675 distinct texts, and the update texts of a sweep are distinct per history, so only reads gain.
+The summed CPU time rises with the worker count on 4 performance plus 4 efficiency cores, so keep `auto`. Not tried successfully: sharing
+rdflib's update parse tree between sweep children by pickle (`ParseResults` did not round-trip).
+
+## Speed: the record to read first
+
+[docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) records why the ontology
+suite was slow and what fixed it, rule by rule, with a tag on each saying whether it holds for any engine or only for rdflib, pySHACL,
+our harness or the machine. Its harness rules (H1 to H8) are the ones to apply here: translate each distinct query text once while
+pySHACL runs (`_sparql_translated_once`), sort the `PREFIX` block before keying, parse a fixture once and copy it (two parses of one
+document never compare equal as sets, because blank-node labels differ), distribute by test, match the workers to the cores that
+do real work, and check the machine (Low Power Mode, memory pressure, other applications) before reading a slow run as a regression.
+A shape or a fixture that changes for speed is replayed against the old results first (R7): `mise run dev:record-validations` before the
+change, `mise run dev:replay-validations` before and after it (`tools/validation_replay.py` explains the baseline).
 
 ## The shared graph and validation cache (`tools/conftest.py`)
 
@@ -117,19 +184,9 @@ working unchanged: this assigns onto the module's own namespace, so a bare `MODE
   on it**, so a pattern using `\b` can pass on one platform while finding nothing real on another.
   Use `([^A-Za-z0-9_]|$)` instead, which means the same thing on every platform.
 
-`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a
-`git grep` subprocess call: it walks the tree directly (so it also works in a source archive, with
-no `.git`), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does
-(so `^`/`$` anchor one line, not the whole file).
+`tools/conftest.py`'s `repo_files(roots, pattern, *, fixed=False, repo_root=ROOT)` replaces a `git grep` subprocess call: it lists files with `git ls-files` (tracked, and untracked but not ignored, so a file just written is scanned and an ignored directory never is), reads every file as UTF-8 explicitly, and matches line by line the way `git grep` does (so `^`/`$` anchor one line, not the whole file). In a checkout with no `.git` it raises, since a scan there cannot tell an ignored file from a tracked one.
 
-**The one real cost of walking the tree instead of asking git**: it sees *untracked* files too,
-which `git grep` would not. This bit the roll-out for real: a new test fixture file
-(`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the
-pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive.
-Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file
-to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not
-that the approach is wrong (skip a named list of build/dependency directories; `.git`, `__pycache__`,
-`node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
+**The one real cost of including untracked files**: it sees them too, which `git grep` would not. This bit the roll-out for real: a new test fixture file (`test_repo_files.py`) contained the literal string `"ins:Element"` as test data for exercising the pattern matcher itself, and a retired-term scan over `tools/` picked it up as a false positive. Fixed the same way the suite already handled its own `RETIRED`-constant test file: add the new file to the scan's own allow-list. If this keeps happening, it is a sign the roots are too broad, not that the approach is wrong (skip a named list of build and dependency directories, namely `.git`, `__pycache__`, `node_modules`, `.venv`, `.build`, `build`, `dist`, `target`, `.pytest_cache`, and similar).
 
 ## Writing a new SHACL-validating test
 
@@ -147,8 +204,9 @@ that the approach is wrong (skip a named list of build/dependency directories; `
 
 ## Tests that run SPARQL on an engine
 
-A test that executes generated SPARQL opts in to every engine with `@engines.each_engine`
-(`tools/persistence/tests/engines.py`), so it runs on rdflib and, where `tools/testing/oxigraph` is installed, on Oxigraph.
+A test that executes generated SPARQL opts in with `@engines.each_engine` (`tools/persistence/tests/engines.py`), so it runs on
+the engines `PERSISTENCE_ENGINES` names. `check:persistence` leaves it unset, which means Oxigraph, and
+`check:persistence-conformance` runs every engine we have, rdflib among them, with the tests marked `conformance`.
 What the engines do differently is recorded in
 [docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md), and skill
 `lattice-triple-stores` says how to probe and record a new difference. Two points from it matter for any such test.
@@ -156,6 +214,10 @@ What the engines do differently is recorded in
 - On rdflib, the order of solutions from a non-lazy join follows `PYTHONHASHSEED` (TSD-01). A test whose result depends on that
   order passes or fails by process. Fix the seed or sweep it in child processes.
 - rdflib drops a result row whose projected variables are all unbound (TSD-10). Project a variable you know is bound.
+- The cost of a query on rdflib depends on its form, and on Oxigraph it largely does not (TSD-22 to TSD-33). A cost measured on one
+  engine is a hypothesis for the other. `mise run check:sparql-constraint-query-cost` runs the same forms on both.
+
+**Prove conformance before trusting a new default (STD-274).** A suite that has only ever run on one engine is not known to agree with another, however routine switching its default sounds. Giving `tools/mork_compilers` an engine abstraction so its own `check:mork-compilers-conformance` could try Oxigraph found a real divergence on one of its 126 tests, a `GROUP_CONCAT` over a group with an unbound row that is unbound on Oxigraph and skips the row on rdflib (TSD-41, fixed 2026-10-27). Once the whole suite, its reasoner tests included, passed on both, Oxigraph became its default and the conformance task now runs rdflib. Run the whole suite on the candidate default first, with every test passing, before flipping it: where it does not, keep the suite's current engine as the default, add the conformance task anyway so the divergence stays visible, and record what you found as a store-discovery finding, not something the suite quietly works around.
 
 ## A pytest quirk on Windows worth knowing
 

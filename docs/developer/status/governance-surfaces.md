@@ -2,6 +2,9 @@
 
 # Governance Review Surfaces (MORK Bench and Surface Studio) Implementation Status
 
+**Unit ID:** `governance-surfaces`
+**Status:** merged 2026-09-20. Skeleton UIs implemented and fixture-backed, pending backend integration.
+
 **Unit:** `governance-surfaces`
 **State:** Skeleton UIs implemented, fixture-backed, pending backend integration
 **Sketches:**

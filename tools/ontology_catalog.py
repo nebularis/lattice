@@ -173,7 +173,7 @@ def write(root: Path) -> list[str]:
     for relative, text in expected_files(root).items():
         path = root / relative
         if not path.exists() or path.read_text(encoding="utf-8") != text:
-            path.write_text(text, encoding="utf-8")
+            path.write_text(text, encoding="utf-8", newline="\n")
             written.append(relative)
     return written
 

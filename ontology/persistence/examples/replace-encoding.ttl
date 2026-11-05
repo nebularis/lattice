@@ -1,0 +1,63 @@
+# How a replace carries the new state (persistence-delta-replace DR1), three ways.
+# ex:Ticket declares no encoding, so under dal:Optimistic its replace is the delta replace, which takes
+# the triples retracted and asserted against the state the caller read and sweeps nothing. It keeps a
+# patch log, so the same two slots are also written into the revision's add and del graphs.
+# ex:Draft declares dal:ChangedTriples outright and keeps no patch log, so the two slots go to the
+# aggregate alone. ex:Snapshot declares dal:WholeState, so its replace sends the whole state and
+# sweeps the old, and its deployment's capability spec declares snapshot update semantics, so that
+# replace is the rows form (H2.12). The form never bears on a family that writes the changed triples.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:TicketClass a dal:ClassScope ;
+    dal:targetClass ex:Ticket ;
+    dal:priority "20"^^xsd:integer .
+
+ex:TicketProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:TicketClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:ticket/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:PatchLog ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:DraftClass a dal:ClassScope ;
+    dal:targetClass ex:Draft ;
+    dal:priority "20"^^xsd:integer .
+
+ex:DraftProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:DraftClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:draft/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceEncoding     dal:ChangedTriples ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:ReceiptOnly ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:SnapshotClass a dal:ClassScope ;
+    dal:targetClass ex:Snapshot ;
+    dal:priority "20"^^xsd:integer .
+
+ex:SnapshotProfile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:SnapshotClass ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:snapshot/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:replaceEncoding     dal:WholeState ;
+    dal:orderingGrain       dal:CommitGrain ;
+    dal:receiptModel        dal:ReceiptOnly ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:SnapshotStore a dal:CapabilitySpec ;
+    dal:appliesToTarget                 ex:Snapshot ;
+    dal:providesCas                     dal:Linearizable ;
+    dal:providesSnapshotUpdateSemantics true .

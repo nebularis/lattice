@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A family that writes no receipt (dal:NoReceipt) and whose target class a profile names as a record (dal:recordClass, H2.8c, D-9). Nothing records
+# when a write to a record took effect, so the compile warns.
+# base: composite-property-boundary-shacl.ttl
+# remove: ex:OrderReceiptProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:OrderReceiptProfile dal:receiptModel dal:NoReceipt .
+ex:OrderBoundaryProfile dal:recordClass ex:Order .

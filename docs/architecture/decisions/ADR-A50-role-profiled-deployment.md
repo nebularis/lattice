@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §2.1 (G-23), ADR-A81, `solution-design-specification.md` §4.2
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.10. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context

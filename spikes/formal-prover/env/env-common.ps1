@@ -37,9 +37,9 @@ $FmxOpamExe   = Join-Path $FmxDownloads 'opam.exe'
 $FmxOpamVersion  = '2.6.0'
 $FmxOcamlVersion = '5.3.0'
 $FmxIsabelleName = 'Isabelle2025-2'
-# TUM's download link redirects to a plain-HTTP host. The Cambridge mirror serves the same file
-# over HTTPS.
-$FmxIsabelleUrl  = "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/$FmxIsabelleName.exe"
+# The release's own archive, which serves over HTTPS with no redirect. TUM's current-release
+# link redirects to a plain-HTTP host, and the Cambridge mirror holds only the current release.
+$FmxIsabelleUrl  = "https://isabelle.in.tum.de/website-$FmxIsabelleName/dist/$FmxIsabelleName.exe"
 
 function New-FmxDirectory([string] $Path) {
     if (-not (Test-Path $Path)) { New-Item -ItemType Directory -Force $Path | Out-Null }

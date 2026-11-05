@@ -2,6 +2,9 @@
 
 # Ontology Root Relocation Status
 
+**Unit ID:** `ontology-root-relocation`
+**Status:** merged 2026-09-20. Accepted.
+
 **Unit:** `ontology-root-relocation`
 **State:** Accepted
 **Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)

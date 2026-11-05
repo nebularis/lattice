@@ -34,7 +34,7 @@ This is not a plan and nothing here is scheduled. Items that graduate become sli
 | [R6](#r6-what-the-ingress-pipeline-stores-for-a-payload) | What ingress stores for a payload | design | egress parses untrusted text unnecessarily |
 | [R7](#r7-answer-set-programming-for-competing-interpretations) | ASP for competing interpretations | capability | force G5 into a formalism that cannot hold it |
 | [R8](#r8-shacl-12-rules) | SHACL 1.2 rules | **watch** | miss a standard home, or bet on one that does not land |
-| [R9](#r9-defeasible-logic-translations-and-what-n7-means) | Defeasible translations and N7's intent | **soundness** | claim a semantics we do not implement |
+| [R9](#r9-defeasible-logic-translations-and-what-n7-actually-means) | Defeasible translations and N7's intent | **soundness** | claim a semantics we do not implement |
 | [R10](#r10-engine-selection-if-and-when) | Engine selection | deferred | premature dependency |
 | [R11](#r11-prior-art-on-three-valued-expressions) | Prior art: FEEL, CEL, Cedar, Rego | survey | repeat a known mistake |
 | [R12](#r12-symboleo-and-obligation-lifecycle) | Symboleo and obligation lifecycle | design input | reinvent a studied state model |

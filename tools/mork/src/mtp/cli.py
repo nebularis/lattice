@@ -28,29 +28,29 @@ def build(out: Path, pack_version: str) -> int:
     partition_data = yaml.safe_load((data / "partition.yaml").read_text(encoding="utf-8"))
     out.mkdir(parents=True, exist_ok=True)
     l0 = render.render_l0(doctrine_data, facts)
-    (out / "l0.txt").write_text(l0, encoding="utf-8")
-    (out / "l0.json").write_text(json.dumps({"ontologyHash": facts.graph_hash, "termCount": len(facts.terms), "axiomCount": len(facts.axioms)}, indent=2) + "\n", encoding="utf-8")
-    (out / "pairs.md").write_text("# Minimal pairs\n\n" + "\n".join(f"- {pair}" for pair in doctrine_data.get("minimal_pairs", [])) + "\n", encoding="utf-8")
-    (out / "output_contract.txt").write_text("Use typed MCN code, reference, and minting positions. Keep confidence and uncertainty separate.\n", encoding="utf-8")
+    (out / "l0.txt").write_text(l0, encoding="utf-8", newline="\n")
+    (out / "l0.json").write_text(json.dumps({"ontologyHash": facts.graph_hash, "termCount": len(facts.terms), "axiomCount": len(facts.axioms)}, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (out / "pairs.md").write_text("# Minimal pairs\n\n" + "\n".join(f"- {pair}" for pair in doctrine_data.get("minimal_pairs", [])) + "\n", encoding="utf-8", newline="\n")
+    (out / "output_contract.txt").write_text("Use typed MCN code, reference, and minting positions. Keep confidence and uncertainty separate.\n", encoding="utf-8", newline="\n")
     counts = predicate_counts(root / "ontology" / "mork" / "examples")
-    (out / "stats.md").write_text("# Corpus statistics\n\n" + "\n".join(f"- `{predicate}`: {count}" for predicate, count in counts.most_common(20)) + "\n", encoding="utf-8")
+    (out / "stats.md").write_text("# Corpus statistics\n\n" + "\n".join(f"- `{predicate}`: {count}" for predicate, count in counts.most_common(20)) + "\n", encoding="utf-8", newline="\n")
     lenses = [yaml.safe_load(path.read_text(encoding="utf-8")) for path in sorted((data / "lenses").glob("*.yaml"))]
     lens_dir = out / "lenses"
     lens_dir.mkdir(exist_ok=True)
     for item in lenses:
-        (lens_dir / f"{item['id']}.txt").write_text(lens.render(item), encoding="utf-8")
+        (lens_dir / f"{item['id']}.txt").write_text(lens.render(item), encoding="utf-8", newline="\n")
     routes = yaml.safe_load((data / "routing.yaml").read_text(encoding="utf-8"))["routes"]
-    (out / "routing.yaml").write_text(yaml.safe_dump({"routes": routes}, sort_keys=True), encoding="utf-8")
+    (out / "routing.yaml").write_text(yaml.safe_dump({"routes": routes}, sort_keys=True), encoding="utf-8", newline="\n")
     cassette_dir = out / "cassettes"
     cassette_dir.mkdir(exist_ok=True)
     cassettes = [yaml.safe_load(path.read_text(encoding="utf-8")) for path in sorted((data / "cassettes").glob("*.yaml"))]
     outcomes = []
     tool = InProcessTool()
     for cassette in cassettes:
-        (cassette_dir / f"{cassette['id']}.txt").write_text(cassette["mcn"] + "\n", encoding="utf-8")
+        (cassette_dir / f"{cassette['id']}.txt").write_text(cassette["mcn"] + "\n", encoding="utf-8", newline="\n")
         outcomes.extend({"cassette": cassette["id"], "mutation": outcome.mutation, "verdict": outcome.verdict, "codes": outcome.codes} for outcome in (evaluate(mutation, tool) for mutation in seed_mutations(cassette["mcn"])))
-    (out / "diagnostics.json").write_text(json.dumps(outcomes, indent=2) + "\n", encoding="utf-8")
-    (out / "partition.md").write_text("# Partition\n\nDefault lens: " + partition_data["defaultLens"] + "\n", encoding="utf-8")
+    (out / "diagnostics.json").write_text(json.dumps(outcomes, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (out / "partition.md").write_text("# Partition\n\nDefault lens: " + partition_data["defaultLens"] + "\n", encoding="utf-8", newline="\n")
     pins = {"ontology": facts.graph_hash, **{f"term:{term.iri}": term.logical_hash for term in facts.terms}}
     lock.write(data / "pins.lock.json", pins)
     files = [path for path in out.rglob("*") if path.is_file() and path.name != "manifest.json"]

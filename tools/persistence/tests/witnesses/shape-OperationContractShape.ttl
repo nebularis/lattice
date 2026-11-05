@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# An operation whose kind is outside the closed enumeration of dal:OperationKind.
+# base: _base-contract.ttl
+# remove: ex:replace dal:operationKind dal:Replace
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:replace dal:operationKind dal:Bogus .

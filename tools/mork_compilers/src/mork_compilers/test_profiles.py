@@ -22,6 +22,7 @@ from rdflib.namespace import RDF
 
 from .common import mint
 from .eligibility_ir import IRCompileError, ProfilePlan, compile_profile
+from .engines import run_query
 from .namespaces import ELG, EXE, MORK, SH
 from .shacl_backend import compile_shapes
 from .sparql_backend import compile_query_template
@@ -37,21 +38,16 @@ ex:refused a skos:Concept .
 
 ex:consent a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:consented .
 
 ex:all-arm a elg:AdmissionProfile ;
     elg:hasCondition ex:solid-tumour-arm , ex:consent ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:any-arm a elg:AdmissionProfile ;
     elg:hasCondition ex:solid-tumour-arm , ex:consent ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AnySufficient .
 """
 
 # record -> (diagnosis candidate or None, consent candidate or None)
@@ -98,7 +94,7 @@ def name_of(profile: str, record: URIRef) -> str:
 def sparql(plan: ProfilePlan, data: Graph, profile: str) -> Dict[str, Tuple[str, object]]:
     artefact = compile_query_template(plan)
     template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-    rows = data.query(str(artefact.value(template, MORK.queryText)))
+    rows = run_query(data, str(artefact.value(template, MORK.queryText)))
     return {name_of(profile, row.record): (str(row.decision), row.diagnostic) for row in rows}
 
 
@@ -162,9 +158,9 @@ class ProfileTests(unittest.TestCase):
                 self.assertEqual(decision, EXPECTED[profile][name], f"{profile} {name}")  # sound
             self.assertEqual(outcomes, derivable[profile], profile)
 
-    def test_dimension_consistent_is_refused(self) -> None:
+    def test_an_unknown_composition_operation_is_refused(self) -> None:
         data = records("all-arm")
-        data.set((EX["all-arm"], ELG.compatibilityOperation, ELG.DimensionConsistent))
+        data.set((EX["all-arm"], ELG.compositionOperation, EX["some-downstream-operation"]))
         with self.assertRaises(IRCompileError):
             compile_profile(data, EX["all-arm"])
 
@@ -176,13 +172,13 @@ class ProfileTests(unittest.TestCase):
             set(artefact.objects(plan_node, EXE.hasConditionPlan)),
             {mint(EX["solid-tumour-arm"], "execplan"), mint(EX.consent, "execplan")},
         )
-        self.assertEqual(artefact.value(plan_node, EXE.usesCompatibilityOperation), ELG.AllRequired)
+        self.assertEqual(artefact.value(plan_node, EXE.usesCompositionOperation), ELG.AllRequired)
 
     def test_interval_profile_compiles_and_evaluates(self) -> None:
         data = Graph().parse(ROOT / "ontology/eligibility/examples/interval-containment.ttl")
         artefact = compile_query_template(compile_profile(data, EX["profile-a"]))
         template = next(artefact.subjects(RDF.type, MORK.QueryTemplate))
-        rows = [(row.record, str(row.decision), row.diagnostic) for row in data.query(str(artefact.value(template, MORK.queryText)))]
+        rows = [(row.record, str(row.decision), row.diagnostic) for row in run_query(data, str(artefact.value(template, MORK.queryText)))]
         self.assertEqual(rows, [(EX["decision-1"], "Permitted", None)])
 
     def test_profile_artefacts_are_deterministic(self) -> None:

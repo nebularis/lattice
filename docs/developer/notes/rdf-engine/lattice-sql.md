@@ -1,16 +1,6 @@
 # Compiling LATTICE to a relational model
 
-**Technology exploration, 2026-10-03.** The fifth paper in the series. Papers 1 to 3
-([rdf-datalog-engine-technology-exploration.md](rdf-datalog-engine-technology-exploration.md),
-[compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md),
-[engine-build-versus-adopt.md](engine-build-versus-adopt.md)) asked how to run LATTICE faster on an
-RDF engine. Paper 4,
-[workload-modeling-and-robustness-testing-strategy.md](workload-modeling-and-robustness-testing-strategy.md),
-found that throughput is not the risk, and its §19 already moved one computation (tower gap
-analysis) out of RDF into PostgreSQL range types. This paper asks the general version of that move:
-what it would cost, and what it would gain, to compile a domain ontology plus the full LATTICE stack
-into a relational schema, integrity constraints and stored procedures that run inside an ordinary
-SQL database.
+**Technology exploration, 2026-10-03.** The fifth paper in the series. Papers 1 to 3 ([rdf-datalog-engine-technology-exploration.md](lock-free-rdf-store.md), [compiled-persistence-physical-planning.md](compiled-persistence-profiles.md), [engine-build-versus-adopt.md](build-adopt-engine.md)) asked how to run LATTICE faster on an RDF engine. Paper 4, [workload-modeling-and-robustness-testing-strategy.md](workload-modelling.md), found that throughput is not the risk, and its §19 already moved one computation (tower gap analysis) out of RDF into PostgreSQL range types. This paper asks the general version of that move: what it would cost, and what it would gain, to compile a domain ontology plus the full LATTICE stack into a relational schema, integrity constraints and stored procedures that run inside an ordinary SQL database.
 
 Grading as before. **Fact** means a cited source says so. **Judgement** means a reasoned position
 that a prototype or measurement could overturn. *(verify)* marks details from memory that must be
@@ -462,7 +452,7 @@ to columns, the remainder to a flexible store.
 
 | Construct | SQL |
 |---|---|
-| `fnd:Version`, `fnd:supersededBy` | a version table per versioned class with `(entity_id, version_no)` key, and a `current_*` view |
+| `fnd:Versioned`, `fnd:supersededBy` | a version table per versioned class with `(entity_id, version_no)` key, and a `current_*` view |
 | `fnd:TemporalScope` (validFrom, validTo) | `valid_period tstzrange NOT NULL`, with `EXCLUDE USING gist (entity_key WITH =, valid_period WITH &&)` so that validity periods for one identity cannot overlap (needs `btree_gist`). `WITHOUT OVERLAPS` keys in PostgreSQL 18 where available *(verify)* |
 | `fnd:hasGovernanceState` | a foreign key to the governance concept table |
 | `fnd:Evidence`, `fnd:assertedBy` | an evidence table, linked by M31 |
@@ -638,7 +628,7 @@ Ponytail rung 4: a native platform feature covers it.
 
 | Layer | Treatment |
 |---|---|
-| MORK | ingestion mappings target the generated tables instead of triples. The MORK-to-RML compiler (`tools/mork2rml.py`) already produces RML. A relational target needs a MORK-to-SQL `INSERT`/`COPY` emitter from the same mapping DAG. Deferred until a deployment needs relational ingestion |
+| MORK | ingestion mappings target the generated tables instead of triples. The MORK-to-RML compiler (`tools/mork/src/mork2rml.py`) already produces RML. A relational target needs a MORK-to-SQL `INSERT`/`COPY` emitter from the same mapping DAG. Deferred until a deployment needs relational ingestion |
 | SPC | orchestration, not storage. Session state, if persisted, compiles like any other shape-closed class. No special rules |
 
 ---
@@ -683,10 +673,10 @@ per target, whether RDF or SQL is the system of record. That would be a new `dal
 ontology change under ADR-A86 with a minor version bump and the full versioning cascade. Until an
 ADR decides it, the choice lives in deployment configuration (decision RS-D5).
 
-### 9.1 Gaps found by the paper check of formal-methods H2.6 (2026-10-13)
+### 9.1 Gaps found by the paper check of formal-methods FMH-2.6 (2026-10-13)
 
-Formal-methods Track H slice H2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
-and checked them against this section ([Validation Pack FMH-H2-6](../../validation/FMH-H2-6.md), the paper check). The resources and operation kinds all have
+Formal-methods Track H slice FMH-2.6 wrote the expected compiled profile of each generated operation, with the logical resources each one reads and writes,
+and checked them against this section ([Validation Pack FMH-2.6](../../validation/FMH-2.6.md), the paper check). The resources and operation kinds all have
 a relational reading. These are the places where §9 is silent or incomplete, recorded here for a later revision of this paper. They are *judgement*: no relational
 compiler exists, so each is a reading of the text and not a measurement.
 
@@ -697,7 +687,7 @@ compiler exists, so each is a reading of the text and not a measurement.
 | tombstone | no row | whether a tombstone is a flag on the root row or a physical delete with the cascade, and how a version row keeps counting after it | add a row for the tombstone, since `Gone` is a distinct outcome of the write protocol |
 | `ProvidedConcurrency` | `concurrencyProfile` lists `Optimistic`, `LockingConcurrency` and `AppendOnly` | the unconditional write, which takes no version check | add a row. Likely a plain insert or upsert in one transaction |
 | `NoBoundary` value guard | no row. The aggregate boundary row covers the transaction scope | the value-based compare-and-set, a single `UPDATE … WHERE col = $old` | add a row, and note that the SPARQL form reads the default graph today (TD-43) |
-| the patch log's change table | "a change table written by the generated operation, or logical decoding of the base tables" | which one, and what the table holds | open on the SPARQL side too: no generated operation writes the patch content today ([H2.6 review questions](../track-h-h26-review-questions.md), RQ6) |
+| the patch log's change table | "a change table written by the generated operation, or logical decoding of the base tables" | which one, and what the table holds | open on the SPARQL side too: no generated operation writes the patch content today ([FMH-2.6 review questions](../track-h-h26-review-questions.md), RQ6) |
 | `SnapshotPerRevision`, erasure by cascade or key shredding, deadlock-ordered multi-aggregate locks | rows exist | nothing yet: no template generates a snapshot, an erasure or a multi-aggregate operation | outside the contract until a template does |
 
 Two consequences for this paper's reading of the persistence guide. The five audits (duplicate claim, fork, revision with several transactions, transaction on

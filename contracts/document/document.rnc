@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# LATTICE's document markup, major version 1 (ADR-A137). The source we write and review.
+# document.xsd is generated from it with Trang (mise run build:document-schema) and never edited.
+#
+# Structure and marks only, never meaning. What the marked text means is the Wording layer's RDF,
+# produced from this markup by the document-to-wording kit in contracts/xml.
+#
+# The text of a clause or a definition is mixed content and is read exactly, so a document keeps
+# no indentation inside one. Each run of text between marks is one literal part.
+
+default namespace = "https://www.nebularis.org/neuro-semantic/lattice/document/1"
+datatypes xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
+
+start = document
+
+document = element document {
+  attribute id { Uuid },
+  meta,
+  body
+}
+
+meta = element meta {
+  element title { xsd:string { minLength = "1" maxLength = "200" } },
+  element template { Key },
+  variable*
+}
+
+# A variable the document declares. Its content is the label shown to a drafter.
+variable = element variable {
+  attribute key { Key },
+  attribute type { ValueType },
+  xsd:string { minLength = "1" maxLength = "200" }
+}
+
+body = element body { (section | unmarked)* }
+
+section = element section {
+  attribute key { SectionKey },
+  (clause | definition | unmarked)*
+}
+
+clause = element clause {
+  attribute id { Uuid },
+  mixed { (var | ref)* }
+}
+
+# A definition names the term it defines.
+definition = element definition {
+  attribute id { Uuid },
+  attribute term { xsd:string { minLength = "1" maxLength = "100" } },
+  mixed { (var | ref)* }
+}
+
+# A use of a declared variable. Its content is the text the document shows for it, on one line.
+var = element var {
+  attribute key { Key },
+  xsd:string { maxLength = "1000" pattern = "[^\n\r]*" }
+}
+
+# A reference to another element of the document, by its identifier.
+ref = element ref {
+  attribute target { Uuid },
+  xsd:string { minLength = "1" maxLength = "200" pattern = "[^\n\r]*" }
+}
+
+# Text in the document that no element marks, inside a section or outside every section.
+unmarked = element unmarked { xsd:string { minLength = "1" maxLength = "10000" } }
+
+Uuid = xsd:string { pattern = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" }
+Key = xsd:string { pattern = "[a-z][a-z0-9\-]{0,39}" }
+SectionKey = xsd:string { pattern = "[a-z][a-z0-9\-]{0,31}" }
+ValueType = "money" | "percentage" | "date" | "duration" | "number" | "text" | "party"

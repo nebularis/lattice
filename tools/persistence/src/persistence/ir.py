@@ -56,11 +56,12 @@ class Kind(Enum):
     LITERAL = "Literal"
     PAYLOAD = "Payload"
     REGISTRY_LIST = "RegistryList"
+    ROWS = "Rows"
 
 
-SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST})
-"""Kinds that are Mustache-style request-time slots and not SPARQL variables. A set of triples or of graph
-IRIs is not one RDF term, so the caller fills the slot with text before sending."""
+SLOT_KINDS = frozenset({Kind.PAYLOAD, Kind.REGISTRY_LIST, Kind.ROWS})
+"""Kinds that are request-time slots, marked ``{{{name}}}`` in the text, and not SPARQL variables. A set of triples, of graph
+IRIs or of ``VALUES`` rows is not one RDF term, so the caller fills the slot with text before sending."""
 
 
 class Compare(Enum):
@@ -206,7 +207,7 @@ class Triple:
 @dataclass(frozen=True)
 class PayloadSlot:
     """Where the caller's payload triples go. It names a declared parameter of kind ``Payload``, and is
-    rendered as the Mustache tag ``{{{name}}}``, so an unrendered slot is a syntax error and fails closed."""
+    rendered as the plain-text marker ``{{{name}}}``, so an unfilled slot is a syntax error and fails closed."""
 
     param: str
 
@@ -214,6 +215,14 @@ class PayloadSlot:
 @dataclass(frozen=True)
 class RegistrySlot:
     """Where the caller's list of registry-listed graph IRIs goes, inside a ``VALUES`` block."""
+
+    param: str
+
+
+@dataclass(frozen=True)
+class RowsSlot:
+    """Where the caller's rows of a multi-variable ``VALUES`` block go, such as the events of an append. It names a declared
+    parameter of kind ``Rows`` and is rendered as the plain-text marker ``{{{name}}}``."""
 
     param: str
 
@@ -234,6 +243,8 @@ class GraphRole(Enum):
     RETENTION = "retention"
     PINNED = "pinned"
     DATASET = "dataset"
+    PATCH = "patch"
+    DERIVED = "derived"  # the materialised rows of a surface contract, kept by the write that changes their source (PM1)
 
 
 @dataclass(frozen=True)
@@ -345,6 +356,28 @@ class Values:
 
 
 @dataclass(frozen=True)
+class RowValues:
+    """``VALUES (?a ?b ...) { rows }`` with the rows supplied by the caller in a :class:`RowsSlot`, one row per event of an
+    append (formal-methods H2.6b). An empty slot gives no solution, so nothing is written. Each row carries its own values, so
+    nothing depends on the order a store visits the solutions in."""
+
+    vars: tuple
+    slot: RowsSlot
+
+
+@dataclass(frozen=True)
+class PayloadRows:
+    """``VALUES (?s ?p ?o) { rows }`` with one row per triple of a ``Payload`` parameter, supplied by the caller as rows
+    (``dal:TripleRows``). It carries the payload in the solutions instead of the template, so a write fills its template
+    once per payload triple and never once per sweep solution (TSD-65, formal-methods H2.12). An empty slot gives no
+    solution from its branch, which is why the rows replace keeps an empty branch beside it. The parameter keeps kind
+    ``Payload``, so the caller check and the request digest do not change with the form."""
+
+    vars: tuple
+    param: str
+
+
+@dataclass(frozen=True)
 class Union_:
     groups: tuple = ()
 
@@ -434,6 +467,6 @@ class Operation:
 __all__ = [
     "IrError", "Kind", "SLOT_KINDS", "Compare", "AccessMode", "Binding", "Param", "Var", "ParamRef", "Const", "RdfType", "A",
     "Path", "Triple", "PayloadSlot", "RegistrySlot", "GraphRole", "Graph", "Func", "Op", "Not", "TermGuard",
-    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "Union_",
+    "ValueGuard", "Group", "GraphBlock", "Optional_", "NotExists", "Bind", "Filter", "Values", "RowValues", "RowsSlot", "PayloadRows", "Union_",
     "Projected", "Select", "SubSelect", "ParameterGuard", "GUARDS_OFF", "Operation",
 ]

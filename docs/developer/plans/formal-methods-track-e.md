@@ -3,6 +3,7 @@
 # Plan: Formal Methods, Track E: the prover programme
 
 **Unit ID:** `formal-methods-track-e`
+**Prefix:** FME
 **Unit type:** Phase (Epic Decomposition Model, `copilot-instructions.md`)
 **Epic:** [formal-methods](formal-methods.md)
 **Sketch:** [formal-methods-track-e.md](../sketches/formal-methods-track-e.md)
@@ -11,10 +12,10 @@
 (FM-D1: Isabelle/HOL; FM-D10: Haskell and Scala as code-generation targets),
 [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)
 (FM-D2: `tools/proofs/`)
-**Status:** E1.0 done. E1.1 (the kernel, for real) done alongside it. E1.2 (rounding/residual)
-is retired from this track (2026-10-07): its real home is track B's B4 and E3/E4, not E1 (see
-§3). E1.3 (binding resolution) not started; track C's C2 is done, but the overlap-rule decision
-it surfaced is not yet made. E1.4 (hardening the gate and the kernel theory) queued 2026-10-08
+**Status:** FME-1.0 done. FME-1.1 (the kernel, for real) done alongside it. FME-1.2 (rounding/residual)
+is retired from this track (2026-10-07): its real home is track B's B4 and FME-3/E4, not E1 (see
+§3). FME-1.3 (binding resolution) not started, track C's C2 is done, but the overlap-rule decision
+it surfaced is not yet made. FME-1.4 (hardening the gate and the kernel theory) queued 2026-10-08
 after an implementation-level review, not started; see
 [the review response](../notes/formal-methods-more-feedback-response.md) §4
 
@@ -22,15 +23,19 @@ after an implementation-level review, not started; see
 
 Mechanise, in Isabelle/HOL, the formal-methods programme the epic names for track E (`formal-
 methods.md` §4): the logic kernel with the rounding and residual theorem and binding resolution
-(E1), the Eligibility denotation with one proved SPARQL compiler core (E2), the combinator
-algebra (E3), the evaluation context mechanising track B4's reference (E4), and the template
-library in rely and guarantee form (E5). This plan details E1 only; E2 to E5 stay at the epic's
-outline level until E1 is underway, per the Epic Decomposition Model's rolling-wave rule.
+(E1), the Eligibility denotation with one proved SPARQL compiler core (FME-2), the combinator
+algebra (FME-3), the evaluation context mechanising track B4's reference (FME-4), and the template
+library in rely and guarantee form (FME-5). This plan details E1 only, FME-2 to FME-5 stay at the epic's
+outline level until E1 is underway, per the Epic Decomposition Model's rolling-wave rule. FME-4 has three placed parts.
+E4a mechanises the Ledger laws (a draw succeeds or fails whole, conservation after rounding with its residual, draws at one position
+independent of the order of proposal) from B4a, after B4a. E4b mechanises the composition law (for ensembles acyclic over units and positions,
+evaluation in order reaches the least fixpoint) from B4b. E4c, only with ES-8, is the chaotic iteration theorem for cyclic components.
+Their timing is in the [Ledger](ledger.md) and [Ensemble](ensemble.md) plans.
 
 Every artefact follows the chain track D proved out (phase-0 plan §2.1): prose, shape, formal
 statement (extracted back into the README), proof with its assumption audit, an interface one
 instantiation discharges, adequacy against a reference, the compiled backend, a claim record, a
-report and a gate. The claim schema, `gate.py` (now fixed, PF1) and the GATE-marker convention
+report and a gate. The claim schema, `gate.py` (now fixed, FM-PF1) and the GATE-marker convention
 are reused as-is from `spikes/formal-prover/`; they move to `tools/proofs/` (ADR-A-FM2) rather
 than being rewritten.
 
@@ -40,16 +45,16 @@ than being rewritten.
 |---|---|---|
 | FM-D2 (home of track E's theories) | **decided and done: `tools/proofs/`, one subdirectory per layer** (ADR-A-FM2) | nothing further |
 | the literate-generation direction for Isabelle datatypes | **decided and done:** `isabelle-spec` fenced blocks, extending `tools/literate_extract.py` additively (new `--proofs-root` argument; every existing Turtle invocation unaffected) | nothing further |
-| track C's C2 (binding resolution, design-time model) | **done**, but the overlap-rule decision its own checked model surfaced (what composition does when two composed schemes disagree about a shared concept's `broader` parent) is not yet made, and the Vocabulary ADR insurml-alignment's IMA-D4a names is not yet drafted | E1.3 (binding resolution) specifically. E1.1 does not depend on it; E1.2 is retired (see §3) |
-| track B's B4 (the evaluation context's combinator algebra, rounding/residual rule) | not started, waits on CCS's C12 (`formal-methods-track-b.md` status) | the rounding/residual theorem, now retired from this plan's E1.2 and reassigned to E3/E4 once B4 states it precisely |
+| track C's C2 (binding resolution, design-time model) | **done**, but the overlap-rule decision its own checked model surfaced (what composition does when two composed schemes disagree about a shared concept's `broader` parent) is not yet made, and the Vocabulary ADR insurml-alignment's IMA-D4a names is not yet drafted | FME-1.3 (binding resolution) specifically. FME-1.1 does not depend on it, FME-1.2 is retired (see §3) |
+| track B's B4 (the evaluation context's combinator algebra, rounding/residual rule) | not started, waits on CCS's C12 (`formal-methods-track-b.md` status) | the rounding/residual theorem, now retired from this plan's FME-1.2 and reassigned to FME-3/E4 once B4 states it precisely |
 | an Isabelle image | does not exist in this spike (deferred, our instruction, 2026-10-06, confirmed again for E1: native/local route only) | epic E9's "only an image route's verdict is recorded" rule, and gate D's own smoke-suite criterion. Track E proceeds on native evidence; closing this before claims are recorded for gate E, not gate D, is our call to make when it is needed |
 
 ## 3. Slices
 
-### E1.0: home and generation tooling (prerequisite, not in the epic's own numbering) — done
+### FME-1.0: home and generation tooling (prerequisite, not in the epic's own numbering) — done
 
 - `tools/proofs/` scaffolded: `README.md`, `gate.py` and `claim-schema.json` carried over
-  unchanged in design from `spikes/formal-prover/` (PF1's fix included), `check.py` (builds every
+  unchanged in design from `spikes/formal-prover/` (FM-PF1's fix included), `check.py` (builds every
   layer's Isabelle session natively and runs the gate), and a `check:proofs` `mise` task. No
   Python package here (there is nothing to `pip install`): the native Isabelle install
   `bootstrap:formal-native-isabelle` already provides is reused as-is.
@@ -78,16 +83,16 @@ than being rewritten.
   tools/proofs/eligibility` passes: AQ, TA1, TA2, TL1-some, TL1-every, TL2, TL3a, TL3b all
   `passed`, no digest mismatch, no banned marker.
 
-### E1.1: the kernel (TA1, TA2), for real — done, folded into E1.0 above
+### FME-1.1: the kernel (TA1, TA2), for real — done, folded into FME-1.0 above
 
-Given E1.0's and E1.1's validation criteria turned out to need the same artefacts (the kernel's
-proofs had to exist, against the generated datatype, for E1.0's own "moved proofs still compile"
+Given FME-1.0's and FME-1.1's validation criteria turned out to need the same artefacts (the kernel's
+proofs had to exist, against the generated datatype, for FME-1.0's own "moved proofs still compile"
 criterion to mean anything), both were completed in one pass rather than two. Restated exactly as
 track D proved them, including the TA2 correction (negation is monotone, not order-reversing).
 Claim records match track D's own evidence, not merely a close port of it: identical statement
 digests.
 
-### E1.2: the rounding and residual theorem — retired from this track (2026-10-07)
+### FME-1.2: the rounding and residual theorem — retired from this track (2026-10-07)
 
 Attempted, and found blocked: neither `ontology/quantification/README.md` nor ADR-A93 to ADR-A95
 states `split`, `proRata`, or any rounding/residual-allocation rule, and neither does any other
@@ -99,13 +104,13 @@ track owns it.
 §6) directly: the reference-evaluator sketch's RE6 and RE-Q4 already state that the rounding and
 residual-allocation rule for `split`/`proRata` belongs to the evaluation context's combinator
 algebra, with a leaning already recorded. That is track B's **B4** (not yet started, waiting on
-CCS's C12) and this track's own **E3** (the combinator algebra) and **E4** (the evaluation
+CCS's C12) and this track's own **FME-3** (the combinator algebra) and **FME-4** (the evaluation
 context), mechanised once B4 states the rule precisely. There was never a Quantification-level
-theorem to prove: the rule was never Quantification's to state. This plan's own E1.2 heading is
-retired, not renamed — E1's numbering now runs E1.0, E1.1, E1.3 only, and the rounding/residual
-theorem reappears in whichever later plan details E3/E4.
+theorem to prove: the rule was never Quantification's to state. This plan's own FME-1.2 heading is
+retired, not renamed — E1's numbering now runs FME-1.0, FME-1.1, FME-1.3 only, and the rounding/residual
+theorem reappears in whichever later plan details FME-3/E4.
 
-### E1.3: binding resolution
+### FME-1.3: binding resolution
 
 - **Blocked, refreshed 2026-10-07**: track C's C2 is done — its Alloy model checked scheme
   composition and found that "union of membership, union of hierarchy" alone does not prevent two
@@ -115,11 +120,11 @@ theorem reappears in whichever later plan details E3/E4.
   Vocabulary ADR insurml-alignment's IMA-D4a names as shared with CCS's HQ-4 — neither made nor
   drafted yet. Do not start this part before that ADR exists: mechanising a semantics still being
   decided at design time risks proving the wrong thing precisely, the same reason this plan
-  already held E1.3 back before C2 itself existed.
+  already held FME-1.3 back before C2 itself existed.
 - **Validation:** TBD, including differential evidence against C2's model and whichever ADR
   accepts scheme composition, once both exist.
 
-### E1.4: harden the gate and the kernel theory — not started
+### FME-1.4: harden the gate and the kernel theory — not started
 
 Queued 2026-10-08 from an implementation-level review of the programme's own evidence (full
 disposition in [the review response](../notes/formal-methods-more-feedback-response.md) §2, §4).
@@ -165,13 +170,13 @@ Each item below is a confirmed, not merely alleged, property of the committed th
 **Validation:** each item above gets its own before/after pair, the specific mutation or defect it
 is meant to catch, shown failing before the fix and caught after, the same discipline track D's
 seeded defects and B1's own seeded mutation already use. Not a new proof target: a hardening pass
-over E1.0/E1.1's existing one.
+over FME-1.0/E1.1's existing one.
 
 ## 4. Test taxonomy and evidence
 
 Proof is its own evidentiary category, not a position on the `copilot-instructions.md` L0-L8
 taxonomy: a theorem's claim record (`method: Proof`) and `gate.py`'s report are the unit of
-evidence, as track D established. Where a slice also produces compiled, running code (E2's SPARQL
+evidence, as track D established. Where a slice also produces compiled, running code (FME-2's SPARQL
 compiler core, in particular), that code's conformance suite does sit on the L0-L8 scale (L3
 contract tests against the fragment gate, L4/L5 against a real store), and both kinds of evidence
 are named in that slice's own Validation Pack when it is written, not merged into one count here.
@@ -180,6 +185,6 @@ are named in that slice's own Validation Pack when it is written, not merged int
 
 Everything the epic already excludes (§10): running generated code against the live graph, Lean 4,
 timed automata, verifying third-party engines. `DesignEnv`/`RunEnv` and Behaviour's macrostep
-(track B4, E4's dependency, not yet built). Instrument assurance (track G). Scala's actual
+(track B4, FME-4's dependency, not yet built). Instrument assurance (track G). Scala's actual
 exercise from Isabelle's `export_code` (FM-D10 adopted it; proving it out is near-term follow-up
 work, not part of E1's own validation).

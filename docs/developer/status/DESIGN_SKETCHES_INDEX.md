@@ -4,7 +4,9 @@
 
 # Design Sketch Implementation Validation — Document Index (ARCHIVED)
 
-**Status:** Superseded. See `docs/developer/INDEX.md` for the current, consolidated tracking of all design sketches, plans, status records, reviews, and validation packs.
+**Unit ID:** `DESIGN_SKETCHES_INDEX`
+
+**Status:** dropped 2026-09-20. Superseded. See `docs/developer/INDEX.md` for the current, consolidated tracking of all design sketches, plans, status records, reviews, and validation packs.
 
 This document is kept for historical reference. For current work status, consult:
 - **Consolidated index:** [`docs/developer/INDEX.md`](../INDEX.md)
@@ -44,7 +46,7 @@ This document is kept for historical reference. For current work status, consult
 
 | Sketch | Status Document | Plan Document | Summary |
 |---|---|---|---|
-| **governance-and-versioning-migration.md** | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](./governance-surfaces-integration.md) | Studio and Bench fixture shells correct, role model demonstrated, permission enforcement not yet wired; 3 integration slices needed for Phase 2 & 5 |
+| **governance-and-versioning-migration.md** | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md) | Studio and Bench fixture shells correct, role model demonstrated, permission enforcement not yet wired. 3 integration slices needed for Phase 2 & 5 |
 
 ### Superseded/Archived 🗄️
 

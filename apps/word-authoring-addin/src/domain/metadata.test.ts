@@ -8,6 +8,7 @@ describe("metadata toXml/fromXml round trip", () => {
       documentId: "00000001-0000-4000-8000-000000000000",
       templateId: "facility-agreement",
       title: "Facility Agreement (sample)",
+      workspaceId: "0a1b2c3d-0000-4000-8000-000000000000",
       revision: 3,
       variables: [
         { variableKey: "facility-amount", label: "Facility amount", valueType: "money" },

@@ -1,0 +1,415 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The Configuration Studio's own terms (ADR-A136), a contract of the studio outside ontology/:
+# the service, the worker and the studio's browser code read and write them. A change that would
+# break a client is deprecated first, as contracts/config-studio/README.md says.
+
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/config-studio> a owl:Ontology ;
+    rdfs:comment "Workspaces, jobs and job results of the Configuration Studio." .
+
+# --- workspaces ---------------------------------------------------------------
+
+cst:Workspace a owl:Class ;
+    rdfs:comment "A baseline and the surface and persistence configuration authored against it. Described in its own graph, whose IRI is the workspace's." .
+
+cst:baselineGraph a owl:ObjectProperty ;
+    rdfs:comment "The graph holding the current baseline revision of a workspace, or the baseline a job read. A baseline revision is written once and never changed." ;
+    rdfs:range cst:Graph .
+
+cst:contractDigest a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The digest of a promotion contract's own triples when the last rebuild of the promoted partitions read it, so a start finds a contract added, changed or removed since (PM-Q3)." .
+
+cst:sourceFamily a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The family of aggregates a promotion of the studio reads, one of description, lineage, version and job, so the write of such an aggregate keeps the promotion's rows (PM2)." .
+
+cst:baselineRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The number of the current baseline revision, from 1. The ETag of the baseline." .
+
+cst:surfaceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved surface configuration, 0 before the first save. The ETag of that graph." .
+
+cst:persistenceRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved persistence configuration, 0 before the first save. The ETag of that graph." .
+
+cst:vocabularyRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved vocabulary configuration, 0 before the first save, and when a description written before the graph existed lacks it." .
+
+cst:quantificationRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved quantification configuration, 0 before the first save." .
+
+cst:eligibilityRevision a owl:DatatypeProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision of the saved eligibility configuration, 0 before the first save." .
+
+cst:createdAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cst:modifiedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cst:fromSample a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Sample ;
+    rdfs:comment "The sample a workspace was made from, when it was. The workspace is a copy, so a later change to the sample does not reach it." .
+
+# --- documents of a workspace's library ---------------------------------------
+
+cst:Document a owl:Class ;
+    rdfs:comment "A document of a workspace, in LATTICE's markup (ADR-A137), held in its own graph with the Wording graph its markup gives. Its IRI is that graph's. Its node in the workspace description carries its title as rdfs:label." .
+cst:document a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Document ;
+    rdfs:comment "A document the workspace holds." .
+cst:template a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:string ;
+    rdfs:comment "The key of the cst:DocumentTemplate the document was drafted from." .
+cst:revision a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:integer ;
+    rdfs:comment "The document's revision, from 1. A save names the revision it expects." .
+cst:markup a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Document ; rdfs:range xsd:string ;
+    rdfs:comment "The document's markup as saved, so it is returned exactly, unmarked text included." .
+
+# --- a document's report -------------------------------------------------------
+
+# GET /api/workspaces/{ws}/documents/{doc}/report is an sh:ValidationReport whose results carry these, beside
+# sh:focusNode, sh:resultSeverity and sh:resultMessage.
+
+cst:check a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "Which check gave a result of a document's report: shacl, template or detection." .
+cst:detectionKind a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What a detection found: placeholder, money, percentage, date, duration, defined-term or cross-reference." .
+cst:partIndex a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "The index of the text part a detection was found in." .
+cst:start a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "Where a detection starts in its element's text, in UTF-16 code units." .
+cst:end a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:integer ;
+    rdfs:comment "Where a detection ends in its element's text, in UTF-16 code units, exclusive." .
+cst:action a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What the add-in offers to do with a detection: mark-variable, mark-reference or none." .
+cst:suggestedKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The key suggested for a variable a detection would mark." .
+cst:suggestedValueType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The value type suggested for a variable a detection would mark." .
+cst:suggestedTarget a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:comment "The definition a use of its defined term would refer to." .
+
+# --- assemblies ------------------------------------------------------------------
+
+cst:Assembly a owl:Class ;
+    rdfs:comment "What a drafter asks to be assembled from a form of the library: the form, the choices and the settings. An assemble job gives its assembled wording (ADR-A139)." .
+cst:assembles a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "The form, a wrd:Wording of the library, the assembly draws from." .
+cst:choice a owl:ObjectProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "An optional element, or a variant with no inclusion condition, the drafter chose." .
+cst:setting a owl:ObjectProperty ; rdfs:domain cst:Assembly ;
+    rdfs:comment "A wrd:VariableValue the assembly sets, for a governing variable an inclusion condition reads or a variable the text shows." .
+cst:Assemble a cst:JobKind ; rdfs:comment "Assemble each cst:Assembly of the input under Wording's baseline model, giving its record and its document, or findings." .
+cst:Library a cst:Target ; rdfs:comment "The library configuration, Wording forms." .
+cst:AssemblyTarget a cst:Target ; rdfs:comment "The assembly configuration, a target of assemble jobs." .
+
+# --- proposals and their review (ADR-A138, ADR-A42) --------------------------------
+
+cst:Proposal a owl:Class ;
+    rdfs:comment "Stated meaning proposed for a clause, with its provenance and the reviewer's decision. Only a confirmed or retargeted proposal's templates are in the meaning configuration." .
+cst:span a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ;
+    rdfs:comment "The element of the library whose text the proposal reads." .
+cst:proposes a owl:ObjectProperty ; rdfs:domain cst:Proposal ;
+    rdfs:comment "A template the proposal proposes: a stated term, or a relation, qualifier or regime under it." .
+cst:payload a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "The templates the proposal proposes, as Turtle, kept with it whatever is decided." .
+cst:evidence a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "The words of the clause a proposer's candidate rests on." .
+cst:proposerVersion a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "The proposer's version and, for a language model, its model and pack, as the provenance of the proposal." .
+cst:DryRun a owl:Class ;
+    rdfs:comment "A dry run's request: a stated term and sample facts, decided by its conditions' compiled SPARQL, never saved." .
+cst:term a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:DryRun ;
+    rdfs:comment "The stated term whose conditions the dry run decides." .
+cst:fact a owl:ObjectProperty ; rdfs:domain cst:DryRun ;
+    rdfs:comment "A sample fact for one condition." .
+cst:forCondition a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:comment "The condition a sample fact is for." .
+cst:number a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:decimal ;
+    rdfs:comment "A sample fact's number, for an interval condition." .
+cst:concept a owl:ObjectProperty ;
+    rdfs:comment "A sample fact's concept, for a concept condition." .
+cst:ToolCall a cst:JobKind ; rdfs:comment "A tool job: one of MORK's proposal tools run for the studio's MCP server, its request a cst:ToolRequest." .
+cst:ToolRequest a owl:Class ; rdfs:comment "A tool job's request: the tool and its arguments." .
+cst:toolName a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ToolRequest ; rdfs:range xsd:string .
+cst:toolArguments a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ToolRequest ; rdfs:range xsd:string ;
+    rdfs:comment "The tool's arguments, a JSON object." .
+cst:DryRunJob a cst:JobKind ; rdfs:comment "A dry-run job: decide a stated term's conditions over sample facts, or run the mapping part over a sample source, writing nothing but the job." .
+cst:Propose a cst:JobKind ; rdfs:comment "Ask a proposer for stated meaning for every clause of the library that has none and none waiting." .
+cst:SentenceFormProposer a cst:Target ; rdfs:comment "The worker's sentence-form reader, as a proposer." .
+cst:LanguageModelProposer a cst:Target ; rdfs:comment "A language model through the deployment's provider, with a pack the deployment supplies." .
+cst:RmlImporter a cst:Target ; rdfs:comment "An RML mapping read into a MORK mapping scheme for the mapping part, with what MORK cannot say as warnings." .
+cst:MappingLanguageModelProposer a cst:Target ; rdfs:comment "A language model through the deployment's provider, given MORK's proposal tools as functions, as a proposer of a mapping scheme from a source vocabulary, checked over a sample source when one is given." .
+cst:OdrlProposer a cst:Target ; rdfs:comment "An ODRL 2.2 policy, compiled through the studio's MORK mapping scheme, as a proposer of one stated term for each of its rules (ADR-A144)." .
+cst:ImportDocument a owl:Class ;
+    rdfs:comment "A document a job imports, such as an ODRL policy, carried in the job's input with what it says it is (STD-292)." .
+cst:documentContent a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range xsd:string ;
+    rdfs:comment "The document's text, as received." .
+cst:documentMediaType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range xsd:string ;
+    rdfs:comment "The media type the document was received with, never one sniffed from its content." .
+cst:documentRole a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range cst:DocumentRole ;
+    rdfs:comment "What a job reads a document as, where a job reads several." .
+cst:DocumentRole a owl:Class ; rdfs:comment "What a job reads a document as." .
+cst:SourceVocabulary a cst:DocumentRole ; rdfs:comment "The vocabulary a mapping is proposed from." .
+cst:SampleSource a cst:DocumentRole ; rdfs:comment "Data in the source vocabulary, which a proposed mapping is run over and checked on." .
+cst:sourceNamespace a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ; rdfs:range xsd:string ;
+    rdfs:comment "The namespace of a source vocabulary's own terms, which its cards are limited to." .
+cst:importInto a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:ImportDocument ;
+    rdfs:comment "The clause of the library the imported terms are proposed on. Without one the job generates a form with a clause for each term." .
+cst:proposer a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:string ;
+    rdfs:comment "What made the proposal: manual, sentence-forms, language-model, or assistant for an MCP host." .
+cst:proposedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the proposal was made." .
+cst:decision a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range cst:ReviewDecision ;
+    rdfs:comment "The reviewer's decision, absent while the proposal waits." .
+cst:decidedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Proposal ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the decision was taken." .
+cst:ReviewDecision a owl:Class ;
+    rdfs:comment "One of the four decisions of ADR-A42 a reviewer takes on a proposal." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Confirm cst:Retarget cst:Decline cst:Defer ) ] .
+cst:Confirm a cst:ReviewDecision ; rdfs:comment "The proposal is right, and its templates are stated meaning." .
+cst:Retarget a cst:ReviewDecision ; rdfs:comment "The proposal is right once corrected, and its templates, as corrected, are stated meaning." .
+cst:Decline a cst:ReviewDecision ; rdfs:comment "The proposal is wrong, and its templates are not stated meaning." .
+cst:Defer a cst:ReviewDecision ; rdfs:comment "The proposal is set aside for later, and its templates are not stated meaning yet." .
+cst:Meaning a cst:Target ; rdfs:comment "The meaning configuration, stated meaning in ins:, validated with Instrument's shapes." .
+cst:Review a cst:Target ; rdfs:comment "The review configuration, proposals and their decisions." .
+cst:Mapping a cst:Target ; rdfs:comment "The mapping configuration, MORK mapping schemes and the guards they name, validated with MORK's shapes." .
+
+cst:DocumentTemplate a owl:Class ;
+    rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
+cst:templateKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "A document template's or a sample's key, lower-case letters, digits and hyphens." .
+cst:section a owl:ObjectProperty ; rdfs:domain cst:DocumentTemplate ; rdfs:range cst:TemplateSection ;
+    rdfs:comment "A section of the template." .
+cst:TemplateSection a owl:Class ;
+    rdfs:comment "A section of a document template. Its rdfs:label is its heading and its rdfs:comment the guidance shown to a drafter." .
+cst:sectionKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "The key a document's section names in its markup." .
+cst:order a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:integer ;
+    rdfs:comment "The section's place in its template, from 1." .
+cst:elementKind a owl:DatatypeProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "An element the section may hold, clause or definition." .
+cst:termKind a owl:DatatypeProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:string ;
+    rdfs:comment "A kind of term the section's elements may state: Obligation, Prohibition, Permission, Exclusion, Power, Definition or Deeming." .
+cst:required a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateSection ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether a document drafted from the template must hold an element in the section." .
+
+cst:variable a owl:ObjectProperty ; rdfs:domain cst:DocumentTemplate ; rdfs:range cst:TemplateVariable ;
+    rdfs:comment "A variable a document drafted from the template declares from the start." .
+cst:TemplateVariable a owl:Class ;
+    rdfs:comment "A variable of a document template. Its rdfs:label is the label shown to a drafter." .
+cst:variableKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateVariable ; rdfs:range xsd:string ;
+    rdfs:comment "The key a document's markup names the variable by." .
+cst:valueType a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:TemplateVariable ; rdfs:range xsd:string ;
+    rdfs:comment "The variable's value type: money, percentage, date, duration, number, text or party." .
+
+cst:DocumentSample a owl:Class ;
+    rdfs:comment "A sample document in LATTICE's markup, with its cst:templateKey as its key and a title as its rdfs:label." .
+cst:sampleKey a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:DocumentSample ; rdfs:range xsd:string ;
+    rdfs:comment "The sample's key, which names its file in contracts/document/samples." .
+
+cst:Graph a owl:Class ;
+    rdfs:comment "A named graph of the studio's dataset." .
+
+# --- samples ------------------------------------------------------------------
+
+cst:Sample a owl:Class ;
+    rdfs:comment "A starting point for a workspace: one or more Turtle files, sorted into baseline, surface and persistence when a workspace is made from it." .
+
+cst:part a owl:ObjectProperty ; rdfs:domain cst:Sample ; rdfs:range cst:SamplePart ;
+    rdfs:comment "A file a sample is made of." .
+
+cst:SamplePart a owl:Class ;
+    rdfs:comment "A file, named either by an ontology module, a role and a file name, resolved through the repository catalogue, or by a file name in contracts/config-studio/samples." .
+
+cst:module a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+cst:role a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+cst:fileName a owl:DatatypeProperty ; rdfs:domain cst:SamplePart ; rdfs:range xsd:string .
+
+# --- jobs ---------------------------------------------------------------------
+
+cst:Job a owl:Class ;
+    rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
+
+cst:JobKind a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall cst:Rebuild ) ] .
+cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
+cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
+cst:Rebuild a cst:JobKind ; rdfs:comment "Rebuild the studio's promotions whole from the store. A rebuild job names no workspace, target or input, and its update may carry the promotion graphs (ADR-A149 decision 14)." .
+cst:Fence a cst:JobKind ; rdfs:comment "Digest what an import leaves in the graph, so the workspace holds it, stored once and read only (ADR-A149 decision 6)." .
+cst:holdsImport a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Graph ; rdfs:comment "A fenced import the workspace holds, urn:lattice:studio:import:{digest}, labelled with rdfs:label. Its jobs read it as context." .
+cst:Publish a cst:JobKind ; rdfs:comment "Name the version a unit of the saved part would be published as, under ADR-A149's rule, writing nothing but the job." .
+cst:unit a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:comment "The root of the unit a publish job publishes." .
+cst:lineage a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The lineage a publish job names, the root's own IRI, a fnd:PersistentIdentity." .
+cst:version a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "The version a publish job names, {lineage}/rev/1-{digest}." .
+cst:digest a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ; rdfs:comment "The SHA-256 of the RDFC-1.0 canonical N-Quads of a unit's aggregate as drafted, in lower-case hexadecimal (ADR-A143)." .
+cst:unitKind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:range cst:PublicationUnit ; rdfs:comment "Which unit of publication a publish job's root is." .
+cst:current a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:comment "A lineage's latest published version." .
+cst:fromVersion a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:comment "The published version a compile job compiles, read from the registry instead of a request body (ADR-A149 decision 10)." .
+cst:pins a owl:ObjectProperty ; rdfs:comment "A published version this unit's version depends on: one it refers to, a followed lineage resolved when it was published, or the version holding a node it refers to (ADR-A149 decision 5)." .
+cst:dependsOn a owl:ObjectProperty ; rdfs:domain cst:Workspace ; rdfs:comment "A published lineage the workspace follows, or a version it pins. Its jobs read the version it resolves to as context (ADR-A149 decision 7)." .
+cst:PublicationUnit a owl:Class ; rdfs:comment "A kind of unit a workspace publishes: its root classes, its part and the property naming its members (publication-units.ttl)." .
+cst:rootClass a owl:ObjectProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "A class whose members are roots of the unit." .
+cst:memberBy a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:comment "The property by which a member names its root, so it is part of the unit." .
+cst:authoredIn a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:PublicationUnit ; rdfs:range xsd:string ; rdfs:comment "The workspace part the unit is authored in." .
+cst:Part a owl:Class ; rdfs:comment "A part of a workspace as an aggregate of the studio's store (ADR-A149 decision 13), rooted at {workspace}/part/{name}. Its graph holds the part's statements only, never this type." .
+cst:Lineage a owl:Class ; rdfs:comment "A published lineage as an aggregate of the studio's store, rooted at the lineage's IRI, holding its current version and its publications." .
+cst:PublishedVersion a owl:Class ; rdfs:comment "A published version as an aggregate of the studio's store, rooted at the version's IRI, created once and never replaced." .
+cst:FencedImport a owl:Class ; rdfs:comment "A fenced import as an aggregate of the studio's store, rooted at urn:lattice:studio:import:{digest}." .
+cst:Publication a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:comment "One act of publishing a version of a lineage (ADR-A51's event)." .
+cst:sequence a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range xsd:integer ; rdfs:comment "The publication's place in its lineage's, from 1." .
+cst:previousPublication a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range cst:Publication .
+cst:publishedAt a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range xsd:dateTime .
+cst:fromWorkspace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Publication ; rdfs:range cst:Workspace ; rdfs:comment "The workspace the version was published from." .
+cst:Analyse a cst:JobKind ; rdfs:comment "Read each clause of a document as the sentence-form proposer does, giving the analysis view and the relations it proposes." .
+
+cst:Target a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Vocabulary cst:Quantification cst:Eligibility cst:Persistence cst:Surface ) ] .
+cst:Vocabulary a cst:Target ; rdfs:comment "voc: and skos: configuration: schemes, concepts, contracts, bindings and scopes, resolved by tools/vocabulary. Validated, never compiled." .
+cst:Quantification a cst:Target ; rdfs:comment "qnt: configuration: value spaces, units, quantities and ranges. Validated, never compiled." .
+cst:Eligibility a cst:Target ; rdfs:comment "elg: configuration: conditions, profiles and questions, compiled by tools/mork_compilers." .
+cst:Persistence a cst:Target ; rdfs:comment "dal: configuration, compiled by tools/persistence." .
+cst:Surface a cst:Target ; rdfs:comment "srf: configuration, compiled by tools/surface." .
+
+cst:JobStatus a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Queued cst:Running cst:Succeeded cst:Failed ) ] .
+cst:Queued a cst:JobStatus ; rdfs:comment "Written by the service when the job is published." .
+cst:Running a cst:JobStatus ; rdfs:comment "Written by the worker when it starts the job." .
+cst:Succeeded a cst:JobStatus ; rdfs:comment "The job ran to the end. Whether the configuration conforms or compiled is cst:conforms." .
+cst:Failed a cst:JobStatus ; rdfs:comment "The job could not run, for example an input graph was missing. cst:failureMessage says why." .
+
+cst:kind a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:JobKind .
+cst:target a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Target .
+cst:status a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:JobStatus .
+cst:workspace a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Workspace .
+cst:configGraph a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range cst:Graph ;
+    rdfs:comment "The job's input: the configuration as submitted, written once under the job's IRI." .
+cst:contextGraph a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Graph ;
+    rdfs:comment "A graph the job reads as context and never validates, one of its workspace's configuration parts other than its target. A validation, compilation or dry run has one for each such part." .
+cst:submittedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:startedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:finishedAt a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:dateTime .
+cst:failureMessage a owl:DatatypeProperty ; rdfs:domain cst:Job ; rdfs:range xsd:string .
+
+cst:conforms a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range xsd:boolean ;
+    rdfs:comment "For a validation, the report's sh:conforms. For a compilation, true when the compiler produced its output without a refusal." .
+
+cst:report a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; rdfs:range sh:ValidationReport ;
+    rdfs:comment "Every finding of the job as a SHACL report. A compiler's refusal is an sh:Violation and its warning an sh:Warning, each with cst:code." .
+
+cst:code a owl:DatatypeProperty ; rdfs:domain sh:ValidationResult ; rdfs:range xsd:string ;
+    rdfs:comment "The compiler's name for a finding, for example CrossAxisViolation. Absent on a SHACL finding." .
+
+cst:artefact a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Artefact .
+
+cst:Transform a owl:Class ; rdfs:subClassOf cst:Job ;
+    rdfs:comment "A run of a compile job's transforms over a sample source in XML or JSON, answered on the request that asked for it and never stored (ADR-A148)." .
+cst:compileJob a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Transform ; rdfs:range cst:Job ;
+    rdfs:comment "The compile job of the mapping part whose stylesheets or chains the run took." .
+
+cst:Artefact a owl:Class ;
+    rdfs:comment "A file a compilation produced, kept as text so the author can read it." .
+cst:path a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string ;
+    rdfs:comment "Relative path, with / separators, as the compiler would have written it." .
+cst:mediaType a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
+cst:content a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string .
+cst:group a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:string ;
+    rdfs:comment "What an artefact or gap belongs to: a persistence target, a surface contract, or a mapping." .
+cst:stratum a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "The step of a mapping run that wrote the artefact, from 0, after every step whose output it reads." .
+
+cst:gap a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Gap .
+
+cst:Gap a owl:Class ;
+    rdfs:comment "Something a configuration declares that the generated SPARQL does not implement, as python -m persistence gaps reports it." .
+cst:obligation a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Gap ; rdfs:range xsd:string ;
+    rdfs:comment "Whose obligation the gap is: unimplemented, caller or housekeeping." .
+cst:message a owl:DatatypeProperty ; rdfs:range xsd:string .
+
+# --- what a layer's engine adds to a validation ------------------------------------
+
+cst:resolution a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Resolution .
+
+cst:Resolution a owl:Class ;
+    rdfs:comment "A scheme contract's resolution by tools/vocabulary for one time segment and one set of active binding scopes. The segments are those the contract's bindings' validity bounds draw, and the sets every combination of the scopes they name." .
+cst:contract a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:validFrom a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The segment's first instant. Absent for the segment before every bound." .
+cst:validTo a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The segment's first instant past it, exclusive. Absent for the segment after every bound." .
+cst:context a owl:ObjectProperty ; rdfs:domain cst:Resolution ;
+    rdfs:comment "An active binding scope. None means no scope is active." .
+cst:outcome a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution ; rdfs:range cst:Outcome .
+cst:scheme a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:binding a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Resolution .
+cst:tied a owl:ObjectProperty ; rdfs:domain cst:Resolution ;
+    rdfs:comment "A binding in a conflict: no binding is more specific than every other that applies." .
+
+cst:Outcome a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Resolved cst:Fallback cst:Conflict cst:Unresolved ) ] .
+cst:Resolved a cst:Outcome ; rdfs:comment "One binding applies and wins." .
+cst:Fallback a cst:Outcome ; rdfs:comment "No binding applies, so the contract's voc:boundScheme does." .
+cst:Conflict a cst:Outcome ; rdfs:comment "More than one binding survives strict-superset precedence, so nothing resolves." .
+cst:Unresolved a cst:Outcome ; rdfs:comment "No binding applies and the contract names no fallback scheme." .
+
+cst:expansion a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Expansion .
+cst:Expansion a owl:Class ;
+    rdfs:comment "A concept condition's decision for one member of its resolved scheme, as tools/mork_compilers expands it." .
+cst:condition a owl:ObjectProperty, owl:FunctionalProperty .
+cst:concept a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Expansion .
+cst:decision a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:range cst:Decision .
+
+cst:testResult a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:TestResult .
+cst:TestResult a owl:Class ;
+    rdfs:comment "An elg:Question decided by its condition's compiled SPARQL, run on the configuration as submitted." .
+cst:question a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:TestResult .
+cst:diagnostic a owl:DatatypeProperty ; rdfs:domain cst:TestResult ; rdfs:comment "The exe: diagnostic of an Undetermined decision, by local name." .
+cst:passed a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:TestResult ; rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the decision is the question's cst:expectedDecision. Absent when the question expects none." .
+
+cst:Decision a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Permitted cst:Denied cst:Undetermined cst:NotTested ) ] .
+cst:Permitted a cst:Decision .
+cst:Denied a cst:Decision .
+cst:Undetermined a cst:Decision .
+cst:NotTested a cst:Decision ; rdfs:comment "The condition reads its candidate from bound subjects, which the studio does not test yet, or does not compile." .
+
+# --- what the author adds to eligibility configuration -------------------------------
+
+cst:expectedDecision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:comment "On an elg:Question, the decision the author expects of it: elg:Permitted, elg:Denied or elg:Undetermined. A decision otherwise is a failed test, an sh:Violation with cst:code TestFailed." .
+cst:resolutionTime a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:range xsd:dateTime ;
+    rdfs:comment "On an elg:Question or a condition, the instant its scheme is resolved at. Absent, the job's submission time." .
+cst:resolutionScope a owl:ObjectProperty ;
+    rdfs:comment "On an elg:Question or a condition, a binding scope active when its scheme is resolved." .
+
+# --- Receipts: what each write did, written by the store writer in the same request (PRI-54) ---------
+
+cst:Receipt a owl:Class ;
+    rdfs:comment "One write a store writer applied: its command, cause, sender and times. A workspace's receipts are in urn:lattice:studio:ws:{ws}:receipts, a job's in urn:lattice:studio:job:{job}:receipts, deleted with the job, and a workspace's deletion in urn:lattice:studio:receipts. The principal is not recorded, since the studio authenticates no one." .
+cst:commandId a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The command's id, a lower-case UUID its sender chose. A command whose receipt exists is answered from it and not applied again." .
+cst:command a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, save-document, delete-document, submit-job, job-update, delete-job or set-access." .
+cst:sender a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The component that says it sent the command, service or worker. Not authenticated." .
+cst:principal a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "Who asked for the write, as the service authenticated them. A worker's write has none." .
+cst:owner a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range xsd:string ;
+    rdfs:comment "The principal who made or imported the workspace, or whom an administrator gave it. A workspace from before owners has none." .
+cst:mode a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Workspace ; rdfs:range cst:Mode ;
+    rdfs:comment "Who reads and writes the workspace. A workspace without one is shared." .
+cst:Mode a owl:Class ; rdfs:comment "Who may read and write a workspace (ADR-A149 decision 9)." .
+cst:Locked a cst:Mode ; rdfs:comment "Read and written by its owner and administrators only." .
+cst:ReadOnly a cst:Mode ; rdfs:comment "Read by everyone signed in, written by its owner and administrators." .
+cst:Shared a cst:Mode ; rdfs:comment "Read and written by everyone signed in." .
+cst:job a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Job ;
+    rdfs:comment "The job a write concerned." .
+cst:requestedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the sender asked for the write, where the command says." .
+cst:committedAt a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the writer applied the write, the transaction time." .
+cst:wrote a owl:ObjectProperty ; rdfs:domain cst:Receipt ; rdfs:range cst:Graph ;
+    rdfs:comment "A graph the write replaced, filled or cleared." .
+cst:receiptRevision a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:integer ;
+    rdfs:comment "The revision a save or a creation moved its graph to." .

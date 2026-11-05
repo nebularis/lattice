@@ -168,7 +168,7 @@ for what the sketch leaves unnamed. Nothing is added under `ontology/`, so no ve
 | position | `wrd:rankKey`, and `wrd:objectId` derived from position | §4.1, W7 |
 | tree | `wrd:directlyComprises` | §4.1 |
 
-The gaps are listed for C3. Element versions (`fnd:Version`) are not modelled: each revision is its
+The gaps are listed for C3. Element versions (`fnd:Versioned`) are not modelled: each revision is its
 own named graph.
 
 ### 4.1.1 Deferred: adopt the published Wording ontology
@@ -300,8 +300,8 @@ The plan's §3 lists the decisions (WA-D1 to WA-D13) with recommendations. None 
 
 ## 8. Follow-on enhancements (proposed, 2026-10-02)
 
-**Not authorised for implementation.** We asked for three further enhancements once WA0 to
-WA11 were running: richer, more deeply nested sample data, a web authoring app, and parity brought
+**Not authorised for implementation.** We asked for three further enhancements once WA-0 to
+WA-11 were running: richer, more deeply nested sample data, a web authoring app, and parity brought
 back to the Word add-in. This section is the design for all three. The plan's §3 gains decisions
 WA-D14 to WA-D20 for the maintainer to record, and its §4/§5 gain slices WA12 to WA20, none started.
 
@@ -378,12 +378,12 @@ Three panes, left to right:
 | Text | the open document's text, rendered as continuous prose per section, with every marked span (clause and definition boxes, variable and reference tags) shown in the same tag colours the add-in already uses (plan §2.3's tag table), so a drafter moving between clients sees the same thing | select text to open the markup pane on the right (below). Click an existing marked span to edit it instead of re-marking it |
 
 The right-hand pane is never one undifferentiated form. It is a fixed set of segregated panels, so
-the drafter always knows where to look, matching the add-in's own tab separation (plan WA9's
+the drafter always knows where to look, matching the add-in's own tab separation (plan WA-9's
 Markup/Analyse/Logical English/Graph tabs):
 
 | Panel | Shown when | Edits |
 |---|---|---|
-| Markup (selection) | text is selected in the middle pane, or a span is clicked | what the selection or span is: clause, definition, term, variable, reference, or unmarked. The same actions as the add-in's ribbon and right-click commands (plan WA9a), offered as buttons here instead |
+| Markup (selection) | text is selected in the middle pane, or a span is clicked | what the selection or span is: clause, definition, term, variable, reference, or unmarked. The same actions as the add-in's ribbon and right-click commands (plan WA-9a), offered as buttons here instead |
 | Definitions | always, as a standing list | each definition's term and body text. Clicking one selects and scrolls to it in the tree and text panes |
 | Variables | always, as a standing list | each variable's key, label and value type, and (new, not in the add-in today) a bound example value, kept as POC-only metadata (no new contract field is load-bearing elsewhere yet, WA13) |
 | Scope | always | the document's template and its section table (heading, admitted element kinds, admitted term kinds, from the applied template), read-only: a reference while marking, not an editing surface |
@@ -408,7 +408,7 @@ definitions with a title, a kind (the admitted element kind), tags (for search a
 example by template or by the term kind it would propose), and the same part shape a document
 element already has (literal, variable and reference parts). Inserting one copies its parts into
 the document at the selected tree position, exactly as "Insert sample" already copies a whole
-sample today (plan WA9). The catalogue is read-only in this tranche: a drafter cannot save their own
+sample today (plan WA-9). The catalogue is read-only in this tranche: a drafter cannot save their own
 document text back into the library. That is explicitly a further follow-on, not part of WA-D19.
 
 #### Theming (WA-D20)

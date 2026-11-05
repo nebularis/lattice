@@ -14,22 +14,18 @@ ex:billing-annual a skos:Concept .
 
 ex:tier-condition a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:tier-premium .
 
 ex:billing-condition a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:billing-annual .
 
 ex:profile-e4
     a elg:AdmissionProfile ;
     elg:hasCondition ex:tier-condition , ex:billing-condition ;
-    elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AnySufficient .
 
 ex:q-e4-a-tier a elg:Question ; elg:forCondition ex:tier-condition ; elg:candidateConcept ex:tier-premium .
 ex:q-e4-a-billing a elg:Question ; elg:forCondition ex:billing-condition ; elg:candidateConcept ex:billing-monthly .

@@ -46,16 +46,22 @@ KEY_CORPUS = [
     ("reserved-characters", "a/b c%d?e#f"),
     ("tuple-lookalike", "2:v13:x"),
     ("long", "x" * 256),
+    ("format-arabic-number-sign", 'Sample' + chr(0x0600)),
+    ("format-tag-character", 'Sample' + chr(0xE0041)),
+    ("dots-are-not-a-segment", "..."),
 ]
 KEY_NEGATIVES = [
     ("empty", "", "EmptyKeyComponent"),
     ("white-space-only", ' ' + chr(0x3000) + chr(0x00A0), "EmptyKeyComponent"),
     ("unassigned", 'sample' + chr(0x0378), "UnassignedCodePoint"),
+    # Format characters (General_Category Cf) are stripped by every pipeline, so a key made only of
+    # them is empty. The second is a format character NFKC_Casefold does not remove.
+    ("format-only", chr(0x200B) + chr(0x00AD), "EmptyKeyComponent"),
+    ("format-only-not-default-ignorable", chr(0x0600) + chr(0x0605), "EmptyKeyComponent"),
 ]
-# Default-ignorable code points only. NFKC_Casefold removes them, so the
-# casefold pipeline refuses this as empty, while NFKC keeps them and the
-# uppercase and lowercase pipelines mint from them (specification §4).
-DEFAULT_IGNORABLE_ONLY = chr(0x200B) + chr(0x00AD)
+# A natural key's components are path segments, and RFC 3986 removes . and .. from a path.
+# The last is two FULLWIDTH FULL STOPs, which NFKC turns into "..".
+DOT_SEGMENTS = [("dot-segment", "."), ("dot-segment-parent", ".."), ("dot-segment-after-nfkc", chr(0xFF0E) * 2)]
 SCOPES = ["acme", 'tenant-' + chr(0x00DF)]
 RANDOM_HEX = ["00112233445566778899aabbccddeeff", "ffffffffffffffffffffffffffffffff", "0f1e2d3c4b5a69788796a5b4c3d2e1f0"]
 POSITIONS = [(0, 0), (3, 42), (1, 10**18), (MAX_POSITION, MAX_POSITION)]
@@ -100,7 +106,7 @@ class _Doc:
         raise AssertionError(f"{vid}: expected {error}, reference minted")
 
 
-def _key_vectors(doc: _Doc, key: Mapping, extra: dict) -> None:
+def _key_vectors(doc: _Doc, key: Mapping, extra: dict, natural: bool = False) -> None:
     n = len(key["properties"])
     scoped = bool(key.get("scopeProperty"))
     rest = [f"part-{i}" for i in range(1, n)]
@@ -110,18 +116,22 @@ def _key_vectors(doc: _Doc, key: Mapping, extra: dict) -> None:
         if scoped:
             inputs["scope"] = SCOPES[i % len(SCOPES)]
         doc.ok(f"key-{i:02d}-{category}", category, inputs)
-    invisible = {**base, "key": [DEFAULT_IGNORABLE_ONLY, *rest]}
-    if scoped:
-        invisible["scope"] = SCOPES[0]
-    if "nfkc_casefold" in key["pipeline"]["steps"]:
-        doc.refused("neg-default-ignorable-only", "default-ignorable-only", invisible, "EmptyKeyComponent")
-    else:
-        doc.ok("key-default-ignorable-only-survives", "default-ignorable-only-survives-nfkc", invisible)
     for category, value, error in KEY_NEGATIVES:
         inputs = {**base, "key": [value, *rest]}
         if scoped:
             inputs["scope"] = SCOPES[0]
         doc.refused(f"neg-{category}", category, inputs, error)
+    if natural:
+        for category, value in DOT_SEGMENTS:
+            inputs = {**base, "key": [value, *rest]}
+            if scoped:
+                inputs["scope"] = SCOPES[0]
+            doc.refused(f"neg-{category}", category, inputs, "DotSegment")
+        if scoped:
+            for category, value in DOT_SEGMENTS[:2]:
+                doc.refused(f"neg-scope-{category}", category, {**base, "key": ["Sample-Value", *rest], "scope": value}, "DotSegment")
+    if scoped:
+        doc.refused("neg-empty-scope", "empty-scope", {**base, "key": ["Sample-Value", *rest], "scope": ""}, "EmptyScope")
     short = {**base, "key": ["Sample-Value"] * (n - 1)}
     if scoped:
         short["scope"] = SCOPES[0]
@@ -141,7 +151,7 @@ def generate(recipe: Recipe | Mapping, description: str | None = None) -> dict:
     doc = _Doc(recipe, secrets)
 
     if s in ("NaturalKeyIdentity", "DerivedHashIdentity"):
-        _key_vectors(doc, r["key"], {})
+        _key_vectors(doc, r["key"], {}, natural=s == "NaturalKeyIdentity")
     elif s == "SurrogateClaimedIdentity":
         if r["surrogate"]["kind"] == "CallerSuppliedSurrogate":
             extra = {"surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"}
@@ -161,16 +171,23 @@ def generate(recipe: Recipe | Mapping, description: str | None = None) -> dict:
     elif s == "PositionDerivedEvent":
         hashed = r["namespace"]["derivation"] == "HashedTargetDerivation"
         where = {"target": "urn:g:orders/1"} if hashed else {"namespaceToken": "orders-1"}
-        for i, (epoch, seq) in enumerate(POSITIONS):
+        # A position must fit its declared width, so the largest one that does is a vector too.
+        widest = (min(10 ** r["epochWidth"] - 1, MAX_POSITION), min(10 ** r["sequenceWidth"] - 1, MAX_POSITION))
+        fitting = [p for p in POSITIONS if p[0] < 10 ** r["epochWidth"] and p[1] < 10 ** r["sequenceWidth"]]
+        for i, (epoch, seq) in enumerate(fitting + ([widest] if widest not in fitting else [])):
             doc.ok(f"position-{i}", "position", {**where, "epoch": epoch, "seq": seq})
         if hashed:
             doc.ok("position-other-target", "position", {"target": "urn:g:orders/2", "epoch": 3, "seq": 42})
             doc.ok("position-non-ascii-target", "position", {"target": 'urn:g:commandes/' + chr(0x00E9) + 't' + chr(0x00E9), "epoch": 3, "seq": 42})
         else:
             doc.refused("neg-bad-token", "pattern", {"namespaceToken": "orders 1", "epoch": 3, "seq": 42}, "PatternMismatch")
+            doc.refused("neg-dot-token", "dot-segment", {"namespaceToken": "..", "epoch": 3, "seq": 42}, "DotSegment")
         doc.refused("neg-negative-seq", "range", {**where, "epoch": 3, "seq": -1}, "PositionOutOfRange")
         doc.refused("neg-seq-too-large", "range", {**where, "epoch": 3, "seq": MAX_POSITION + 1}, "PositionOutOfRange")
         doc.refused("neg-negative-epoch", "range", {**where, "epoch": -1, "seq": 1}, "PositionOutOfRange")
+        for name, width in (("epoch", r["epochWidth"]), ("seq", r["sequenceWidth"])):
+            if 10**width <= MAX_POSITION:
+                doc.refused(f"neg-{name}-exceeds-width", "width", {**where, "epoch": 3, "seq": 42, name: 10**width}, "PositionWidthOverflow")
     elif s == "ContentAddressedIdentity":
         for i, nq in enumerate(NQUADS):
             doc.ok(f"content-{i}", "already-canonical", {"canonicalNQuads": nq, "canonicalizer": "declared by the vector generator"})

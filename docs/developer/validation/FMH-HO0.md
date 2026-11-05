@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO0, correct the ownership note and its spike
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO0
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO0
 ([plan §3.5](../plans/formal-methods-track-h.md#ho0-correct-the-note-and-the-spike)).
 **Source:** [the review](../notes/persistence-aggregate-ownership-review.md), findings S1, S2, S5, F1 and F6.
 **Decisions needing confirmation:** none.
@@ -17,15 +17,15 @@ to be wrong or superseded. Documents only, no tool changes.
 - **Spike `placement.py`.** A policy is a reference (AO-Q1): the binding owns only its share,
   `connectsPolicy` leaves the flat list and joins the references. `placement_graph` gains
   `shared_document`, a second placement whose layer attaches the first placement's owned document.
-  `first_property_path` is documented as the compiler before H1.4a (S1).
+  `first_property_path` is documented as the compiler before FMH-1.4a (S1).
 - **Spike `test_spike.py`.** Seventeen checks become eighteen. The tree closure is 11 nodes. The
   shared-policy test is renamed and now asserts no second owner and no inbound edge. A new test
   shows a document with two owners.
 - **Spike README.** Names the pre-H1.4a simulation (S1) and the single-writer store (S5).
-- **Note.** The "today" verdicts describe the compiler before H1.4a (S1), a sweep of a reference is a
+- **Note.** The "today" verdicts describe the compiler before FMH-1.4a (S1), a sweep of a reference is a
   live hazard (F1, TD-35), 11 nodes, the single-owner example uses a shared document, named graphs
   still need the classified tree (F6), TD-26 reads TD-34, the payload defect is TD-39, the questions
-  are marked answered, and the recommendation that H1.4b and H1.5 wait is marked superseded.
+  are marked answered, and the recommendation that FMH-1.4b and FMH-1.5 wait is marked superseded.
 
 ## Test cases
 
@@ -55,5 +55,5 @@ Run on 2026-10-10 and restored. `connectsPolicy` was put back into the tree unde
 
 ## Deliberate non-coverage
 
-- The compiler. HO0 changes no tool. HO1 changes two templates.
+- The compiler. FMH-HO0 changes no tool. FMH-HO1 changes two templates.
 - A second engine. The spike uses rdflib only.

@@ -69,7 +69,6 @@ ex:lender-b-binding a voc:SchemeBinding ;
 
 ex:eligible-sector a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:sector-contract ;
     elg:requiredConcept ex:manufacturing , ex:retail ;

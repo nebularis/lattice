@@ -4,7 +4,7 @@
 """
 The declaration model, and the analyser that extracts it from a contract graph.
 
-Structurally this mirrors ``MorkGraphAnalyser`` in ``tools/mork2rml.py``: a set
+Structurally this mirrors ``MorkGraphAnalyser`` in ``tools/mork/src/mork2rml.py``: a set
 of frozen specification dataclasses, and one analyser class whose job is a
 faithful transcription of what was declared. Nothing here decides anything. It
 does apply the structural checks the layer's SHACL shapes also make, so that a
@@ -78,7 +78,7 @@ class Profile:
         ``srf:R1``: every surface in a stack shares one profile identity).
         Whether this digest is ever asserted into the graph as
         ``srf:profileIdentityHash`` is a separate, still-open question (see
-        ontology/surface/docs/OUTSTANDING-ITEMS.md §3.3); this method is a pure
+        the Surface outstanding items record §3.3); this method is a pure
         computation with no graph side effect either way.
         """
         return hashlib.sha256(self.identity().encode("utf-8")).hexdigest()
@@ -553,7 +553,7 @@ class SurfaceGraphAnalyser:
 
 
 def read_contracts(graph: Graph, only: Optional[str] = None) -> List[Contract]:
-    """Convenience wrapper, matching the shape of ``tools/mork2rml.py``'s entry points."""
+    """Convenience wrapper, matching the shape of ``tools/mork/src/mork2rml.py``'s entry points."""
     return SurfaceGraphAnalyser(graph).contracts(only=only)
 
 

@@ -4,7 +4,7 @@
 
 **Unit type:** Phase
 **Unit ID:** `phase-4`
-**Status:** ⏳ Placeholder — sub-programmes sized after Phase 3 measurement
+**Status:** planned. Placeholder, sub-programmes sized after Phase 3 measurement
 **Last updated:** 2026-09-22
 **Plan:** [phase-4-plan.md](../plans/phase-4-plan.md)
 **Sketch:** [phase-4-sketch.md](../sketches/phase-4-sketch.md)

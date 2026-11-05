@@ -1,0 +1,109 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Positive fixture (applied-insurance-reference AIR-4.2a and AIR-66,
+# TD-66): two versions of one insured's schedule that share an unchanged
+# location, its building and that building's valuation, and a warehouse
+# that changes address. No owl:Ontology header: not a released document.
+#
+# The first version, as of 2027-01-01, lists a factory and a warehouse.
+# A mid-term change on 2027-07-01 moves the warehouse to a new address. One
+# location version is written. The warehouse's stock asset and its
+# valuation name the warehouse and the stock by identity, so both are
+# unchanged and shared by the two schedule versions. A schedule version
+# is never edited once written: version 1 keeps its validity and its
+# governance state, and that version 2 supersedes it is read from
+# fnd:supersededBy. Neither version is exclusive: aeo:hasLocation and its
+# siblings are not inverse functional.
+
+@prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
+@prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/lattice/insurance/exposure/examples#> .
+
+ex:GBP a qnt:ValueSpace ;
+    qnt:spaceKey "gbp" ; qnt:orderKind qnt:TotalOrder ; qnt:densityKind qnt:Dense ;
+    qnt:spaceHash "gbp-v1" .
+
+ex:great-britain a skos:Concept ; skos:prefLabel "Great Britain"@en .
+
+# ---- The schedule, two versions of one identity ---------------------------
+
+ex:schedule-identity a aeo:ExposureIdentity , fnd:PersistentIdentity .
+
+ex:schedule-v1 a aeo:ExposureSet ;
+    fnd:hasIdentity ex:schedule-identity ;
+    fnd:supersededBy ex:schedule-v2 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasGovernanceState fnd:Active ;
+    aeo:reportingUnit ex:GBP ;
+    aeo:hasLocation ex:factory , ex:warehouse-v1 ;
+    aeo:hasAsset ex:factory-building , ex:warehouse-stock ;
+    aeo:hasValuation ex:building-valuation , ex:stock-valuation .
+
+ex:schedule-v2 a aeo:ExposureSet ;
+    fnd:hasIdentity ex:schedule-identity ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-07-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasGovernanceState fnd:Active ;
+    aeo:reportingUnit ex:GBP ;
+    aeo:hasLocation ex:factory , ex:warehouse-v2 ;
+    aeo:hasAsset ex:factory-building , ex:warehouse-stock ;
+    aeo:hasValuation ex:building-valuation , ex:stock-valuation .
+
+# ---- The unchanged members, listed by both versions ----------------------
+
+ex:factory-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+
+ex:factory a aeo:Location ;
+    fnd:hasIdentity ex:factory-identity ;
+    aeo:address [ a aeo:Address ; rdfs:label "Unit 4, Riverside Industrial Estate" ] ;
+    aeo:territory ex:great-britain ;
+    aeo:geoPrecision aeo-voc:Street .
+
+ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+
+ex:factory-building a aeo:Asset ;
+    fnd:hasIdentity ex:factory-building-identity ;
+    aeo:assetClass aeo-voc:Building ;
+    aeo:locatedAt ex:factory-identity .
+
+ex:building-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:factory-building-identity ;
+    aeo:valueType aeo-voc:Building ;
+    aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "4200000"^^xsd:decimal ] .
+
+# ---- The warehouse changes, its stock and the stock's valuation do not ----
+
+ex:warehouse-stock-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
+
+ex:warehouse-stock a aeo:Asset ;
+    fnd:hasIdentity ex:warehouse-stock-identity ;
+    aeo:assetClass aeo-voc:Stock ;
+    aeo:locatedAt ex:warehouse-identity .
+
+ex:stock-valuation a aeo:Valuation ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
+    aeo:valueOf ex:warehouse-stock-identity ;
+    aeo:valueType aeo-voc:Stock ;
+    aeo:valuationBasis aeo-voc:ReplacementCost ;
+    aeo:amount [ a qnt:Quantity ; qnt:onSpace ex:GBP ; qnt:numericValue "600000"^^xsd:decimal ] .
+
+ex:warehouse-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
+
+ex:warehouse-v1 a aeo:Location ;
+    fnd:hasIdentity ex:warehouse-identity ;
+    fnd:supersededBy ex:warehouse-v2 ;
+    aeo:address [ a aeo:Address ; rdfs:label "Depot Road" ] ;
+    aeo:territory ex:great-britain ;
+    aeo:geoPrecision aeo-voc:Street .
+
+ex:warehouse-v2 a aeo:Location ;
+    fnd:hasIdentity ex:warehouse-identity ;
+    aeo:address [ a aeo:Address ; rdfs:label "Canal Wharf" ] ;
+    aeo:territory ex:great-britain ;
+    aeo:geoPrecision aeo-voc:Street .

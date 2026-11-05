@@ -1,16 +1,36 @@
 ---
 name: lattice-ontology-authoring
-description: How to change a LATTICE ontology and model well in it. Use when editing anything under ontology/ (a layer README, spec, vocab, shapes, projection or examples), bumping or re-pinning a version IRI, writing a SHACL or SHACL-SPARQL shape, declaring a domain or range, simplifying a model, or naming a new technical term, in LATTICE or an applied ontology built on it.
+description: How to change a LATTICE ontology and model well in it. Use when editing anything under ontology/ (a layer README, spec, vocab, shapes, projection or examples), moving the release number or an applied module's version IRI, writing a SHACL or SHACL-SPARQL shape, declaring a domain or range, simplifying a model, or naming a new technical term, in LATTICE or an applied ontology built on it.
 ---
 
 # Authoring LATTICE ontologies
+
+Ask the knowledge index first, as AGENTS.md's "Asking the knowledge index" says, with `mise run graph:ask -- find <the task in your own words>` and every facet value that fits the task at hand, then `read` each entry that answers. Read each row's flags and the line under it, where an entry's boundary, its successor and the debt against it are named. This skill's tasks span the activities ontology-design, conceptual-data-modelling, logical-data-modelling, schema-design, identity-design, temporal-modelling, scenario-and-test-data and release-and-versioning, and a task often needs several of them, named together and separated by commas. `--activity`, `--quality` and `--tech` raise matching entries and hide none, while `--kind` filters exactly, so leave `--kind` off unless only one kind of entry will do. The index finds the rules this skill does not mention, and the entries related to the ones it does.
+
+This skill's tasks are the ones that need the declared terms, which `find` searches only with `--kind term`. Before declaring a class or property, ask `mise run graph:ask -- find <what the term would mean> --kind term`, and declare nothing the answer already holds. Ask it again to learn what an existing term means and what restricts it, its domain, range, functional or at most one value, since that is stated on the line under its row. Ask for the rules that govern the change separately, with no `--kind term`, because terms ranked with the entries push the rules out of the top five.
 
 ## Changing an ontology document
 
 Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, or a `shapes/` or
 `projection/` directory. Read the
 [versioning policy](https://github.com/nebularis/lattice/blob/main/docs/architecture/ontology-versioning-policy.md)
-(ADR-A86, ADR-A113) first. A skipped step breaks consumers silently, and has done so before.
+(ADR-A129, ADR-A86, ADR-A113) first. A skipped step breaks consumers silently, and has done so before.
+
+**Version bumps and `release:prepare` are a merge-time operation, never a branch-time one.** Steps 2
+to 6 below move every release member's `owl:versionIRI` to a new shared number (ADR-A129), which
+touches every substrate document whether or not its own content changed, and cascades
+into every applied module that pins the release. Nobody consumes a long-lived development branch's
+version numbers before it merges, so bumping mid-branch re-pins dozens of files for no reader, and
+the real bump still has to happen again, once, when the branch actually merges. A branch pins its
+imports to `main`'s versions at the branch point and never re-pins them itself, precisely as the
+Applied Insurance Reference lanes document states for machine S's branch
+(`docs/developer/plans/applied-insurance-reference-lanes.md` §1, §3: "Imports of LATTICE layers stay
+pinned to the versions of `main` at the branch point, and S never re-pins them... R re-pins the
+branch to `main`'s layer versions once, at the merge"). A new document a branch adds, such as a new
+layer's first README, cites the *current* release number throughout (matching whatever `main` is
+pinned to when the branch started), not a bumped one, and stays that way until the person merging
+runs the bump, once, for the whole branch's accumulated changes. Follow steps 2 to 6 only when
+the maintainer is actually preparing a merge into `main`, never as part of an ordinary slice.
 
 1. **Find the source of truth.** A literate layer's `README.md` is its source. Its fenced
    `turtle-spec`, `turtle-vocab` and `turtle-shapes` blocks generate the `.ttl` files, and
@@ -18,50 +38,54 @@ Follow every step for any change to `ontology/**/spec/`, `ontology/**/vocab/`, o
    regenerate:
 
    ```bash
-   python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . --shapes <shape files>
+   mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root .
    ```
 
-   - `--shapes` lists one file per `turtle-shapes` block, relative to the layer, in block order.
-     For example, Wording takes `shapes/structural.ttl shapes/constraints.ttl`, and Instrument adds
-     `shapes/single-expression.ttl`. The layer's README or its test names them.
+   - `turtle-shapes` blocks go, in order, to the shape files named in the layer's entry in the
+     [repository catalogue](https://github.com/nebularis/lattice/blob/main/repository-catalogue.md),
+     in its README. Adding, removing or reordering a shape block is an edit to that entry.
    - All `turtle-spec` blocks concatenate, in order, into `spec/<layer>.ttl`, and all `turtle-vocab`
      blocks into `vocab/<layer>-vocab.ttl`. The ontology header is itself a block, so a version bump
      is a README edit.
    - A `turtle-spec` block whose **first** line is `# @output-file "spec/<file>.ttl"` goes to that
      file instead, which gains `spec/<layer>.ttl`'s `@prefix` lines (ADR-A120). It states its own
      ontology header. All of a layer's spec documents share one version, bumped together even when
-     only one changed. The extractor refuses them otherwise.
+     only one changed. The extractor refuses them otherwise. The same directive works on a
+     `turtle-vocab` block, for a module with several vocabulary documents, with its own
+     one-shared-version rule independent of the spec documents' version (ADR-A120 addendum). A
+     nested module path (`--layer applied/insurance/peril`) is also accepted, its last segment
+     naming the default documents.
    - Add `--check` to compare without writing. Run it **before** relying on a README. If the layer
      already drifts, the README is not yet its source (technical debt TD-16). Compare the extracted
      and committed graphs (`rdflib.compare.graph_diff` over `to_isomorphic` graphs) before
      regenerating, and either restore the README or record the drift. A regeneration over a
      drifting layer can silently discard hand-maintained content.
-   - Persistence and the applied modules are not literate. Edit their `.ttl` directly.
-2. **Bump the version.** At major version zero an additive change is a MINOR, and a breaking one a
-   MINOR marked breaking (ADR-A113). Change the document's `owl:versionIRI`. A `shapes/` or
-   `projection/` directory is versioned by its `.version` file, never by the spec's IRI.
-3. **Compute the cascade, never trust a count.** A document whose only change is a re-pinned import
-   takes the imported change's bump level (ADR-A86). Build the import graph with
-   `find_in_scope_ttl_files` and `extract_version_iris` from `tools/ontology_version_check.py`, and
-   close it transitively from the changed IRI. MORK's IRIs are `http://`. A document with no version
-   of its own still re-pins, with no release.
-4. **Re-pin in one pass.** Version IRIs appear in spec and vocab files, literate README blocks,
-   `tools/surface/src/surface/namespaces.py`, examples and tests. Replace exact IRIs with one regex
-   alternation over the whole old-to-new mapping, so nothing is replaced twice. Tests also build
-   IRIs from fragments, such as `LATTICE + "behaviour/0.10.0"`. Move a test that locates the current
-   document to the new version, and keep a test that asserts history, a release row or a release
-   note. Leave alone `docs/architecture/ontology-releases.md` (generated),
+   - A module whose README has no extracted blocks is not literate, and its `.ttl` is edited directly. Persistence and the
+     insurance applied modules are literate. Check a README for `turtle-spec` blocks or a `generated` region before editing.
+   - A README migrated to the layout of ADR-A126 follows
+     [literate-specifications.md](https://github.com/nebularis/lattice/blob/main/docs/architecture/literate-specifications.md):
+     a term's axioms are written once, in its Description Logic Encoding section, and markers hide a
+     block, exclude text or send a region to another file.
+   - **A literate README never says "this document".** One README generates several documents, a
+     spec, a vocabulary, shape files and sometimes several spec documents (ADR-A120), and section 1
+     becomes the `dct:description` of more than one of them. A sentence such as "this document is the
+     configuration half of the layer" is wrong in every generated document but one, and confuses a
+     reader of the README itself. Describe the layer and its concepts. Where the split into documents
+     matters, it belongs in section 2's document table and section 3's extraction contract, which
+     name each file, never in prose that will be extracted.
+   - **A README, its examples and its shapes name no delivery identifier**, such as a slice, a plan
+     question or a technical debt item, and no delivery phrasing such as "this slice". Skill
+     `lattice-publication-hygiene`, "Delivery identifiers stay in working documents", has the rule.
+2. **Know which versioning applies.** The modules of the kinds listed in the repository catalogue's `[conventions.release]` (`substrate`, the layers of ADR-A01's order) are one release with one number, held there (ADR-A129). Their shapes and projection directories have no `.version` file. The standalone modules (MORK, SPC, Surface and Persistence), the applied modules and the examples keep their own versions and pin a release (ADR-A86, and ADR-A129's 2026-10-26 addendum). Look the kind up before every bump, in the module README's `[module]` block or from `mise run check:ontology-versioning -- --base-ref main`, whose `HOW` line names each flagged module's kind and how it is bumped, and never assume a module's version follows the release because its number matches.
+3. **Bump with `mise run version:bump`, never by hand.** Without `--layer-target` it moves the substrate release through `release:prepare`. With `--layer-target <module>` it moves one standalone or applied module: all of its spec documents to one number, since they move in unison (STD-230, ADR-A120, which the extractor enforces), never one document alone, and its vocab documents not at all, being a unit of their own (STD-222). `--increment major|minor|patch` or `--new-version X.Y.Z` sets the number, and at major version zero a breaking change is a minor (ADR-A113). `--with-shapes` moves the module's `shapes/.version`, one number for every shapes file, by the same increment from its own number, and `--only-shapes` moves it alone. It renames the README's `- **Unreleased**.` lead to the number, extracts each README it changed, regenerates the XML catalogs and the release register, and prints what is left, such as a module whose imports it re-pinned and the tags to create. The mechanics are in `tools/bump_version.py` and `tools/extract_bumped.py`. Read them to answer a detailed question rather than restating them.
+4. **A re-pin is a bump of its own.** A substrate release re-pins the imports of every module that imports a member, and each such module then takes its own bump, at the imported change's level (ADR-A86), with `--layer-target`. A pin of this module by another module is that module's to move.
+5. **Tests.** `release:prepare` leaves tests alone, since they assert history as well as the present.
+   Tests also build IRIs from fragments, such as `LATTICE + "behaviour/0.18.0"`. Move a test that
+   locates the current document to the new version, and keep a test that asserts history, a release
+   row or a release note. Leave alone `docs/architecture/ontology-releases.md` (generated),
    `tools/test_ontology_releases.py` and `tools/fixtures/import_guard/`.
-5. **Regenerate:** `mise run build:ontology-catalog`, then `mise run build:ontology-releases`, which
-   adds a row per new version and prints the tags to create. The tags are the maintainer's (skill
-   `lattice-lifecycle`).
-6. **Record the release** in the "Release notes" section of every README that has one, re-pins
-   included.
-7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`,
-   `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`,
-   `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp`
-   rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If
-   Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
+6. **Record.** `version:bump` has run `build:ontology-catalog` and `build:ontology-releases`, which adds the register rows and prints the tags to create: one `ontologies-vX.Y.Z` for a substrate release, and one `<name>-vX.Y.Z` per document of a module released on its own. The tags are the maintainer's (skill `lattice-lifecycle`). It has renamed each changed README's `- **Unreleased**.` release-note lead to the new number, or said that a README has none to write. Check that every sub-bullet under it opens with its class, *changes meaning*, *may invalidate* or *no effect* (ADR-A129), the form the versioning policy states. A change is written under `Unreleased` when it is made, on its branch, never first at the merge. Its note may cite the Proposed decision it rests on while on the branch, and that decision is accepted before the merge, since a migrated README cites only published decisions (skill `lattice-publication-hygiene`).
+7. **Check:** `mise run check:full-sweep` runs all of these but the literate checks, one line each. Or singly: `mise run check:ontology-catalog`, `check:ontology-versioning`, `check:import-guard`, `build:mtp`, `check:mtp`, `check:persistence`, `check:python-root`, `check:vocabulary`, `check:mork-compilers`, and the literate `--check` for every literate layer touched. `build:mtp` rewrites `ontology/mork/mtp/data/pins.lock.json` when MORK's version changes, so commit it. If Persistence's spec, examples or templates changed, run `mise run build:persistence-execution`.
 8. **Check the code under test is this checkout's** (skill `lattice-toolchain`).
 
 ## Modelling from reality
@@ -122,20 +146,18 @@ legal relation. Declare one only where it gives useful design-time entailment, o
 shape already checks. Otherwise say the subject and value in the property's comment and let a shape
 check use.
 
-**"Versioned".** A class that is a member of `fnd:Version` is *versioned*: it supports versions,
+**"Versioned".** A class that is a member of `fnd:Versioned` is *versioned*: it supports versions,
 provenance and the rest. Call a node "a version" only when it is one specific version. The class is
 to be renamed `fnd:Versioned` (technical debt TD-20).
 
 **Domain-neutral substrate.** Explain a substrate term from law, contract drafting or computing,
-never by appeal to "the market". Never cite a downstream project in a layer README. Prefer examples
-from several domains, such as lending, licences, trials and warranties, over insurance ones.
+never by appeal to "the market". Never cite a downstream project in a layer README. Draw examples
+from several domains, such as lending, licences, trials, warranties and insurance, and order them by
+what explains the mechanism best. Headings, captions and table columns name the domain or instrument
+an example comes from ("Lending", "A guarantee"), and never rank one domain's examples before or
+after another's.
 
-**No market words as technical terms.** A word with a market meaning reads as that meaning to an
-insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is
-**instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md` and
-`ontology/applied/insurance/` first. "Bound" stays where it is technical ("bound meaning",
-`ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the
-process-calculus term and stays.
+**No market words as technical terms.** A word with a market meaning reads as that meaning to an insurance reader. "Binder" names a binding authority or a cover note, so producing bound meaning is **instantiation**, done by an **instantiator**. Check a new term against `docs/glossary.md`, `ontology/applied/insurance/` and `find <its meaning> --kind term` first. "Bound" stays where it is technical ("bound meaning", `ins:boundIn`, `ins:boundFrom`), never alone where it could read as cover. SPC's "binder" is the process-calculus term and stays.
 
 **A "Formalisation" section names no tool.** Title it "Formalisation". Say what the type means, not
 the ADR, the generation mechanism or past evaluations, which are recorded where they were decided.
@@ -158,7 +180,30 @@ anything, check:
   simplification breaks, and discuss it with the maintainer if one exists.
 - **An accepted ADR wins.** A simplification contradicting one is a new decision.
 
+## Designing for the runtime
+
+A term written only at design time costs nothing to keep. A term written at runtime is written once per event, kept for the life of the instrument, and read on every path that needs it, so its shape is a runtime decision as much as a semantic one. Weigh four drivers together and quantify each before choosing, since they pull against one another and a model that serves only one of them is rejected on the others.
+
+| Driver | The question | Measured as |
+|---|---|---|
+| **Defensible history** | could we show a regulator how a number was arrived at, and reproduce it | every value derived from recorded facts rather than asserted, a reading available as of any point, and a replay that reproduces the number |
+| **Storage** | what does one event cost, permanently | triples written per event, times the events a year. Where a record is append-only, what is written is kept |
+| **Retrieval** | what does one read cost | the order of the read, whether one lookup, a fold bounded by a stated interval, or a scan of a lifetime, and the rows it touches |
+| **Throughput** | what waits for what | which nodes several writers contend for, and whether a barrier is the semantics or an artefact of the shape |
+
+Three rules follow.
+
+- **Count what is kept, not what changes.** An append-only record has no working set. A figure for triples written per event is a growth rate, so state it per year beside the volume the domain expects.
+- **Find the contended node before the slow query.** A node every writer touches, such as an aggregate every contract draws on, limits throughput whatever the read costs. Ask what writes it, not only what reads it.
+- **Reach for the domain's own mechanism first.** A cost the domain has met before usually has an answer already in its practice, and that answer carries meaning the layer should model anyway.
+
+**When an optimisation belongs in a layer, and when it belongs in a projection.** An optimisation with a meaning in the domain belongs in the layer that owns the concept. Closing a period, a running balance on a statement, and the split between a sub-ledger and a general ledger are each the domain's own answer to a cost, so each is modelled rather than hidden. An optimisation with no such meaning, such as a cache of a current value to serve reads at transaction rates, is projected through Surface onto a second set of terms tuned for reading, with the richer model remaining the system of record. Stratifying a domain concept moves meaning out of the layer that owns it, so look for the domain's own mechanism before splitting.
+
+The worked example is Ledger, in [ledger-history-and-runtime.md](../../../docs/developer/sketches/ledger-history-and-runtime.md), where the four drivers decide where a draw is recorded.
+
 ## SHACL-SPARQL shapes
+
+Before writing or changing a constraint query, find the rules of [docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) that apply, with `mise run graph:ask -- find <what the constraint checks> --kind standard --activity query-writing --tech shacl`, and follow its checklist (section 4.1, STD-042). Read the record whole when the query answers weakly. A constraint runs once per focus node, so its cost is multiplied by the nodes the shape targets. Most of its speed rules (R1 to R4, R8) are workarounds for how rdflib plans a query, and the record says which rules are portable. A rewrite for speed is a PATCH change to the shapes' version, replayed against the old shapes' results first.
 
 - **Declare prefixes inside the query**, with `PREFIX` lines at the top of `sh:select`, as
   `ontology/eligibility/shapes/constraints.ttl` does. Never point `sh:prefixes` at a namespace IRI
@@ -170,8 +215,9 @@ anything, check:
   then `GROUP BY $this HAVING (COUNT(DISTINCT ?x) != 1)`. Two or more, or high cardinality, need one
   grouped sub-query per count, each anchoring the subject before its own `OPTIONAL`. Several flat
   `OPTIONAL`s multiply rows, which `COUNT(DISTINCT …)` survives and plain `COUNT` and `SUM` do not.
-- **To probe that a test catches a broken shape, break a triple pattern**, never `FILTER (false)`,
-  which pySHACL reports for every focus node.
+- **To probe that a test catches a broken shape, break a triple pattern**, never `FILTER (false)`.
+  rdflib drops a constant false filter, so it removes no solutions (TSD-32), and a `NOT EXISTS` that contains
+  one is inverted.
 - **Test every cardinality rule at zero**, not only at too many.
 - **pySHACL drops a node shape's message reached through `sh:node`.** Put the message on the
   property shape that uses it.

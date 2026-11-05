@@ -17,6 +17,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 for source in ("tools/mork_compilers/src", "tools/persistence/src", "tools/surface/src", "packages/minting/python/src"):
     sys.path.insert(0, str(ROOT / source))
 sys.path.insert(0, str(ROOT / "tools"))
@@ -89,7 +90,7 @@ def _keyed(extra: str) -> Graph:
 
 def test_f1_01_spec_version_comments_and_layer() -> None:
     spec = _graph(SPEC)
-    assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/foundation"), OWL.versionIRI) == URIRef(LATTICE + "foundation/0.4.0")
+    assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/foundation"), OWL.versionIRI) == URIRef(LATTICE + f"foundation/{RELEASE}")
     for name in NEW_PROPERTIES:
         utility = str(spec.value(FND[name], FND.utility))
         assert utility.startswith("Subject:") and "Value:" in utility, name
@@ -289,7 +290,7 @@ def test_f1_10_nothing_pins_foundation_0_3_0() -> None:
 
 def test_f1_11_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(FOUNDATION / "README.md"), "--layer", "foundation", "--root", str(ROOT),
-                                  "--shapes", "shapes/constraints.ttl", "--check"]) == 0
+                                  "--check"]) == 0
     assert "**0.4.0** (additive, CCS F1" in (FOUNDATION / "README.md").read_text()
     register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("foundation-v0.4.0", "foundation-shapes-v0.2.0", "persistent-foundation-v0.1.0", "persistence-shapes-v0.2.0",
@@ -304,7 +305,7 @@ def test_f1_15_surface_promotes_every_identity_key_onto_versions() -> None:
     from surface import cli
 
     with tempfile.TemporaryDirectory() as out:
-        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE),
+        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), str(FOUNDATION / "spec" / "foundation.ttl"),
                          "--out", out, "--now", "2026-10-03T00:00:00Z"]) == 0
         generated = Graph()
         for path in Path(out).rglob("*.ttl"):
@@ -322,7 +323,7 @@ def test_f1_15_one_contract_alone_misses_the_external_key() -> None:
     from surface import cli
 
     with tempfile.TemporaryDirectory() as out:
-        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), "--out", out,
+        assert cli.main(["compile", "--contracts", str(SRF_EXAMPLE), "--sources", str(FND_EXAMPLE), str(FOUNDATION / "spec" / "foundation.ttl"), "--out", out,
                          "--now", "2026-10-03T00:00:00Z",
                          "--contract", "https://example.org/lattice/surface/keys#version-natural-keys"]) == 0
         generated = Graph()

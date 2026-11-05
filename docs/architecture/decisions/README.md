@@ -9,14 +9,16 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 - Filename: `ADR-{id}-{slug}.md`, for example `ADR-A01-layer-dependency-order.md`.
 - IDs are stable once assigned and are never reused, even if an ADR is superseded.
 - Each ADR uses the same shape: Status, Context, Decision, Consequences.
-- Status is one of `Proposed`, `Accepted`, `Superseded by ADR-{id}`.
+- Status is one of `Proposed`, `Accepted`, `Published`, `Superseded by ADR-{id}`. A published decision is an accepted one
+  that the maintainer has published, with its references to working documents in a closing Provenance section
+  and the architecture documents describing it ([ADR-A127](ADR-A127-published-architecture-decisions.md)).
 - An ADR may be amended in place for clarifications that do not change the decision. A change to the decision itself is a new ADR that supersedes the old one.
 
 ## Index
 
 | ADR | Title | Status |
 |---|---|---|
-| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addendum) | Accepted |
+| [A-01](ADR-A01-layer-dependency-order.md) | Layer dependency order and import direction (with addenda) | Accepted. Addenda 2026-10-18 (Ensemble) and 2026-10-19 (Ledger) Proposed |
 | [A-12](ADR-A12-identity-and-derivation-model.md) | Identity and derivation-authority model | Accepted |
 | [A-13](ADR-A13-dataset-graph-role-model.md) | Dataset, graph-role, and provenance model | Accepted |
 | [A-14](ADR-A14-conformance-levels.md) | Conformance-level framework | Accepted |
@@ -50,18 +52,18 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-42](ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) | MORK review snapshot and decision-learning boundary | Accepted |
 | [A-43](ADR-A43-mork-replayable-queue-and-calibrated-governance.md) | MORK replayable queue and calibrated governance | Accepted |
 | [A-44](ADR-A44-mork-teaching-pack-generated-content-boundary.md) | MORK Teaching Pack generated-content boundary | Accepted |
-| [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Accepted |
+| [A-03](ADR-A03-condition-taxonomy.md) | Eligibility condition taxonomy | Published |
 | [A-04](ADR-A04-interval-overlap-law-split.md) | Interval containment and overlap law split | Accepted |
-| [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Accepted |
-| [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Accepted |
+| [A-05](ADR-A05-compatibility-vocabulary.md) | Compatibility operation vocabulary | Published |
+| [A-06](ADR-A06-wildcard-semantics.md) | Wildcard semantics and limits | Published |
 | [A-07](ADR-A07-eligibility-authoring-direction.md) | Eligibility authoring direction and extraction contract | Accepted |
 | [A-07b](ADR-A07b-minimal-instrument-shape.md) | Minimal Instrument shape and versioning contract | Superseded by A-104 |
 | [A-08](ADR-A08-behaviour-four-tier-model.md) | Behaviour four-tier model | Accepted |
 | [A-09](ADR-A09-behaviour-selection-policy.md) | Behaviour selection policy | Accepted |
 | [A-10](ADR-A10-behaviour-activation-policy.md) | Behaviour activation policy | Accepted |
 | [A-11](ADR-A11-effect-and-target-binding.md) | Effect payload and target binding contract | Accepted, amended by A-106 |
-| [A-C1](ADR-AC1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
-| [A-C2](ADR-AC2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted |
+| [A-C1](ADR-A-C1-applied-layer-theorem-restatement.md) | Applied-layer theorem restatement policy | Accepted |
+| [A-C2](ADR-A-C2-clean-room-authoring-procedure.md) | Clean-room authoring procedure for substrate content (with addendum) | Accepted. Addendum 2026-10-18 (how examples are drawn and presented) Proposed |
 | [A-FM1](ADR-A-FM1-formal-methods-prover-choice.md) | Formal-methods prover choice and code-generation targets (Isabelle/HOL) | Accepted |
 | [A-FM2](ADR-A-FM2-formal-methods-theory-home.md) | Home of the formal-methods prover programme's theories (`tools/proofs/`) | Accepted |
 | [A-FM3](ADR-A-FM3-reference-evaluator-home-and-scope.md) | Home and scope of the reference evaluator and its oracle (`tools/reference/`) | Accepted |
@@ -83,18 +85,18 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-68](ADR-A68-pii-and-erasure.md) | PII and erasure | Proposed |
 | [A-69](ADR-A69-pack-trust-and-safe-sparql-subset.md) | Pack trust model and safe SPARQL subset | Proposed |
 | [A-71](ADR-A71-platform-licence-and-spi-seam.md) | Platform licence (MPL-2.0) and SPI seam | Proposed |
-| [A-74](ADR-A74-graph-primary-realm-model.md) | Graph-primary realm model | Proposed |
+| [A-74](ADR-A74-graph-primary-realm-model.md) | One declared authority per kind of state | Proposed |
 | [A-75](ADR-A75-three-tier-store-spi.md) | Three-tier store SPI (Core/Extended/Native) | Proposed |
 | [A-81](ADR-A81-control-plane-http-runtime.md) | Control Plane HTTP runtime | Proposed |
 | [A-82](ADR-A82-framework-neutral-identity-pattern-selection.md) | Framework-neutral identity pattern selection | Proposed |
 | [A-84](ADR-A84-standalone-minting-libraries.md) | Standalone minting libraries | Proposed |
-| [A-85](ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) | Vocabulary scoped and temporal binding resolution | Accepted |
+| [A-85](ADR-A85-vocabulary-scoped-temporal-binding-resolution.md) | Vocabulary scoped and temporal binding resolution | Published |
 | [A-86](ADR-A86-ontology-semantic-versioning.md) | Semantic versioning for ontology documents | Accepted |
-| [A-87](ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Eligibility concept inclusion and exclusion | Accepted |
+| [A-87](ADR-A87-eligibility-concept-inclusion-and-exclusion.md) | Eligibility concept inclusion and exclusion | Published |
 | [A-88](ADR-A88-ontology-import-resolution-for-consumers.md) | Ontology import resolution for consumers | Accepted |
 | [A-89](ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) | Eligibility IR for concept conditions and profile aggregation | Accepted |
-| [A-90](ADR-A90-eligibility-design-time-owl-class-backend.md) | Design-time OWL class backend for Eligibility | Accepted |
-| [A-91](ADR-A91-eligibility-candidate-evidence-binding.md) | Eligibility candidate evidence binding | Accepted |
+| [A-90](ADR-A90-eligibility-design-time-owl-class-backend.md) | Design-time OWL class backend for Eligibility | Published |
+| [A-91](ADR-A91-eligibility-candidate-evidence-binding.md) | Eligibility candidate evidence binding | Published |
 | [A-83](ADR-A83-test-only-reasoning-engine-isolation.md) | Test-only reasoning engine isolation | Accepted |
 | [A-92](ADR-A92-derived-artefact-contract-and-prov-o-alignment.md) | Foundation derived-artefact contract and PROV-O alignment | Accepted |
 | [A-93](ADR-A93-quantification-derived-rate-spaces.md) | Quantification derived rate spaces | Accepted |
@@ -104,25 +106,54 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-97](ADR-A97-mork-order-relations-in-owl-2-dl.md) | MORK order relations in OWL 2 DL | Accepted |
 | [A-98](ADR-A98-applied-layout-and-insurance-modules.md) | Applied layout and insurance modules (with addendum) | Accepted |
 | [A-99](ADR-A99-reference-vocabularies-and-peril-structure.md) | Reference vocabularies and peril structure | Accepted |
-| [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Accepted |
+| [A-100](ADR-A100-hierarchical-match-over-flat-schemes.md) | Hierarchical match over schemes without a hierarchy | Published |
+| [A-101](ADR-A101-term-parameters.md) | Term parameters | Proposed |
 | [A-102](ADR-A102-liability-direction-from-party-roles.md) | Liability direction from party roles | Accepted |
-| [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Accepted, with addenda |
-| [A-105](ADR-A105-closure-declarations.md) | Closure declarations | Accepted |
+| [A-103](ADR-A103-eligibility-set-readings.md) | Eligibility set readings and negation | Published |
+| [A-105](ADR-A105-closure-declarations.md) | Closure declarations | Published |
 | [A-104](ADR-A104-instrument-terms-and-legal-relations.md) | Instrument: terms and legal relations | Accepted, with addenda |
 | [A-106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) | Behaviour configuration, runtime, occasions and records | Accepted, with addenda |
+| [A-108](ADR-A108-multi-axis-temporal-scope.md) | Multi-axis temporal scope | Proposed |
+| [A-109](ADR-A109-importable-rule-body-fragment.md) | The importable rule-body fragment | Proposed |
 | [A-112](ADR-A112-wording-layer.md) | Wording layer | Accepted |
 | [A-113](ADR-A113-breaking-changes-at-major-version-zero.md) | Breaking changes at major version zero | Accepted |
 | [A-114](ADR-A114-external-and-natural-keys.md) | External and natural keys | Accepted |
 | [A-115](ADR-A115-quantification-context-values.md) | Quantification context values | Accepted |
 | [A-116](ADR-A116-vocabulary-scheme-composition.md) | Vocabulary scheme composition | Proposed |
-| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum |
+| [A-117](ADR-A117-agent-guidance-and-skill-library.md) | Agent guidance and the skill library | Accepted, with addendum. Addendum 2026-10-18 (private overlay) Proposed |
 | [A-118](ADR-A118-word-authoring-proof-of-concept.md) | Word authoring proof of concept | Proposed |
 | [A-119](ADR-A119-xslt-transformation-sidecar.md) | Bidirectional XSLT transformation sidecar | Proposed |
-| [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted |
+| [A-120](ADR-A120-literate-specs-with-several-documents.md) | Literate specs with several documents | Accepted, with addenda |
+| [A-121](ADR-A121-repository-catalogue.md) | The repository catalogue | Published |
 | [A-122](ADR-A122-aggregate-ownership.md) | Aggregate ownership, a classified boundary shape for every boundary strategy | Accepted, 2026-10-10 |
 | [A-123](ADR-A123-typed-operation-ir.md) | A typed operation IR for the persistence compiler | Accepted, 2026-10-10, three addenda 2026-10-12 |
 | [A-124](ADR-A124-benchmark-root.md) | A benchmark root for checks that measure, run on demand | Accepted, 2026-10-12 |
 | [A-125](ADR-A125-test-support-tooling.md) | Test-support tooling under `tools/testing/` | Accepted, 2026-10-12 |
+| [A-126](ADR-A126-literate-specification-layout-and-grammar.md) | Literate specification layout and grammar | Published |
+| [A-127](ADR-A127-published-architecture-decisions.md) | Published architecture decisions | Accepted, 2026-10-17 |
+| [A-128](ADR-A128-efficient-queries-and-shapes.md) | Efficient queries and shapes | Proposed, 2026-10-17 |
+| [A-129](ADR-A129-one-release-for-the-substrate.md) | One release for the substrate and standalone ontologies | Published |
+| [A-130](ADR-A130-ensemble-layer.md) | Ensemble, a substrate layer for relations between instruments | Proposed |
+| [A-131](ADR-A131-ledger-layer.md) | Ledger, a substrate layer for amounts consumed and restored over time | Accepted |
+| [A-133](ADR-A133-git-hooks.md) | Git hooks check what a change touches, never block a push, and gate the merge into `main` | Proposed, 2026-10-23 |
+| [A-134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) | A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by | Accepted, 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
+| [A-135](ADR-A135-contract-first-wire-types.md) | Contract-first wire types | Proposed, 2026-10-26 |
+| [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Accepted 2026-10-28, amended 2026-10-28 |
+| [A-137](ADR-A137-document-markup-vocabulary.md) | A document markup vocabulary of LATTICE's own, in XML | Accepted 2026-10-28 |
+| [A-138](ADR-A138-contract-builder.md) | The contract builder, a mode of the Configuration Studio | Accepted 2026-10-28 |
+| [A-139](ADR-A139-wording-baseline-assembly-model.md) | Wording's baseline assembly model | Accepted 2026-10-28 |
+| [A-140](ADR-A140-wording-assembler-topology.md) | Where the Wording assembler lives and how it runs | Accepted 2026-10-28 |
+| [A-141](ADR-A141-versioned-mixin-rename.md) | The mixin `fnd:Version` is renamed `fnd:Versioned` | Published, 2026-10-29 |
+| [A-142](ADR-A142-meaning-bearing-edges.md) | A meaning-bearing edge from a versioned thing is owned or pinned | Published, 2026-10-29 |
+| [A-143](ADR-A143-one-canonicalisation.md) | One canonicalisation for the substrate: RDFC-1.0, SHA-256, hex, with each layer naming its content | Published, 2026-10-29 |
+| [A-144](ADR-A144-odrl-import-through-mork.md) | The contract builder imports ODRL policies as proposals, through a MORK mapping | Proposed, 2026-10-29 |
+| [A-145](ADR-A145-set-comparisons-and-aggregate-bindings.md) | Set comparisons and aggregate bindings | Published, 2026-10-29 |
+| [A-146](ADR-A146-published-terms-versioned-by-release.md) | A published term is versioned by its release, so it carries no identity chain of its own | Published, 2026-10-29 |
+| [A-147](ADR-A147-skolem-rule-for-mapped-sources.md) | How a MORK run names a source's blank nodes: from the node that reaches each and its description, with component-scoped canonical labels for the rest | Proposed, 2026-10-29 |
+| [A-148](ADR-A148-mork-transform-backends.md) | MORK mappings over XML and JSON compiled to an XSLT stylesheet writing N-Triples and a JOLT chain writing JSON-LD, from one logical plan read by `tools/mork_rdf`'s reader | Proposed, 2026-10-30 |
+| [A-149](ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a registry, dependencies pinned, imports fenced, parts deciding saving and not reading, pluggable authentication and workspace modes | Proposed, 2026-10-31 |
+| [A-151](ADR-A151-the-work-board.md) | The work board: a slice's state written once on its home unit's board as a word and a day, slice ids on one grammar, the boards read across every branch by one tool, INDEX.md and ROADMAP.md generated from them, a hook check on the boards, and presence files for sessions sharing a worktree | Proposed, 2026-11-02 |
+| [A-150](ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from a declared configuration, checked against a model and under load on demand | Proposed, 2026-10-31 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,
 filed outside the main sequential pool for the same reason `A-CAP` and `A-C` are: this epic's
@@ -140,4 +171,6 @@ catalogues before filing (both agreed up to A115, 2026-10-07). At merge, main ha
 to this shared decision, so the concurrent Word authoring and XSLT decisions retain their content
 as A118 and A119.
 
-ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into [../../GOVERNANCE.md](../../GOVERNANCE.md) instead of a standalone ADR. A-17–A-28 are the Surface-MORK unified projection wave, numbered continuously from A-16 per the [ADR bundle outline](../../../ontology/surface/docs/adr-bundle-outline-surface-mork-unified-projection.md); accepted following maintainer sign-off on the [delivery plan](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md) Phase 0 architecture lock. A-45 through A-76 were reserved by forward reference from `solution-design-specification.md` and `Architecture Review.md`; A-48, A-50, A-51, A-54, A-57, A-59, A-62, A-63, A-65 through A-69, A-71, and A-74/A-75 are now filed as `Proposed`, drafted autonomously against that reserved block during Phase 0's P0.1 decision slices and pending ratification (see [phase-0-status.md](../../developer/status/phase-0-status.md)). A-76 (Maven vs Gradle) remains reserved, deferred to build-skeleton slice P0.2.1. A-78 through A-80 are assigned outside that reserved block, to avoid pre-empting a number a referring document already names for a different topic. The epic's own forward reference to "ADR-A44 amended" collides with the existing, unrelated, accepted A-44 (MORK Teaching Pack); that content is filed instead as new ADR-A81, the next free number after A-80. A-82 is framework-neutral identity-pattern selection. A-83 is the test-only reasoning-engine isolation ADR proposed by the `eligibility-compiler` plan (renumbered from A-81, which that plan had claimed in collision), drafted on 2026-09-25 for the `applied-ontology-readiness` unit's OWL backend. A-84 is the standalone identity-minting libraries, proposed by the `identity-minting` unit. A-85 is Vocabulary scoped and temporal binding resolution, accepted 2026-09-25 with the `vocabulary-temporal-binding` unit's closure; follow-on consumer hardening continues under `temporal-binding-consumer-hardening`. A-86 is semantic versioning for ontology documents, from the `ontology-semantic-versioning` unit. A-87 through A-92 were proposed by the `applied-ontology-readiness` unit and accepted on 2026-09-25. A-87 records the concept inclusion and exclusion change made to Eligibility in `9a12da4`. A-93 to A-96 are that unit's Phase C decisions, accepted on 2026-09-25. A-97 makes MORK's order relations OWL 2 DL, accepted on 2026-09-25. A-98 to A-100 and A-102 are the `applied-insurance-reference` epic's Phase 0 decisions. A-98, A-99 and A-102 were accepted on 2026-09-26. A-100 was rewritten the same day, first to move it out of the applied layer, then to reduce it to Eligibility and its compilers, and A-98 gained an addendum removing the applied module it had named. A-103, set readings for evidence bindings and condition negation, was accepted alongside it for the epic's Phase 3. A-101 is reserved for that epic's term parameters decision, drafted when its deferred contract phase starts. A-104 to A-111 were reserved by the `normative-rule-substrate` unit. A-104, A-105 and A-106 are drafted in the `computable-contract-substrate` unit, A-105 in its slice HQ-6a (2026-10-10). A-104 and A-106, retitled, are drafted by the `computable-contract-substrate` unit (its slices C1 and C2), which also holds A-112 and A-113 and the 2026-10-01 addenda to A-01 and A-C2, all accepted at the unit's Gate A on 2026-10-01. A-115, Quantification context values, was drafted by the same unit's slice C7b and accepted on 2026-10-05, with A-104's addenda of 2026-10-04 and 2026-10-05. This index is updated as each is added.
+A-130 (Ensemble) and A-131 (Ledger) are drafted on the `docs/placement-vehicles-structure` branch and A-132 is on `main`, so the git hooks decision takes A-133. A-134 is the knowledge index, drafted on the same branch. A-135 is contract-first wire types, on `main`. A-136 is the Configuration Studio, drafted on `claude/config-authoring-studio`. The next decision takes A-137.
+
+ADR numbering deliberately skips A-02. Eligibility (A-03–A-07 and A-07b) and Behaviour (A-08–A-11) are now assigned to the decisions authored in Gates 2 and 3. A-02 remains reserved for the document-hierarchy question folded into the order of authority in [the ontology architecture](../ontology-architecture.md#2-repository-conventions) instead of a standalone ADR. A-17–A-28 are the Surface-MORK unified projection wave, numbered continuously from A-16 as the Surface-MORK unified projection program planned them, and accepted following maintainer sign-off on that program's Phase 0 architecture lock. A-45 through A-76 were reserved by forward reference from `solution-design-specification.md` and `Architecture Review.md`. A-48, A-50, A-51, A-54, A-57, A-59, A-62, A-63, A-65 through A-69, A-71, and A-74/A-75 are now filed as `Proposed`, drafted autonomously against that reserved block during Phase 0's P0.1 decision slices and pending ratification (see [phase-0-status.md](../../developer/status/phase-0-status.md)). A-76 (Maven vs Gradle) remains reserved, deferred to build-skeleton slice P0.2.1. A-78 through A-80 are assigned outside that reserved block, to avoid pre-empting a number a referring document already names for a different topic. The epic's own forward reference to "ADR-A44 amended" collides with the existing, unrelated, accepted A-44 (MORK Teaching Pack). That content is filed instead as new ADR-A81, the next free number after A-80. A-82 is framework-neutral identity-pattern selection. A-83 is the test-only reasoning-engine isolation ADR proposed by the `eligibility-compiler` plan (renumbered from A-81, which that plan had claimed in collision), drafted on 2026-09-25 for the `applied-ontology-readiness` unit's OWL backend. A-84 is the standalone identity-minting libraries, proposed by the `identity-minting` unit. A-85 is Vocabulary scoped and temporal binding resolution, accepted 2026-09-25 with the `vocabulary-temporal-binding` unit's closure. Follow-on consumer hardening continues under `temporal-binding-consumer-hardening`. A-86 is semantic versioning for ontology documents, from the `ontology-semantic-versioning` unit. A-87 through A-92 were proposed by the `applied-ontology-readiness` unit and accepted on 2026-09-25. A-87 records the concept inclusion and exclusion change made to Eligibility in `9a12da4`. A-93 to A-96 are that unit's Phase C decisions, accepted on 2026-09-25. A-97 makes MORK's order relations OWL 2 DL, accepted on 2026-09-25. A-98 to A-100 and A-102 are the `applied-insurance-reference` epic's Phase 0 decisions. A-98, A-99 and A-102 were accepted on 2026-09-26. A-100 was rewritten the same day, first to move it out of the applied layer, then to reduce it to Eligibility and its compilers, and A-98 gained an addendum removing the applied module it had named. A-103, set readings for evidence bindings and condition negation, was accepted alongside it for the epic's Phase 3. A-101 is reserved for that epic's term parameters decision, drafted when its deferred contract phase starts. A-104 to A-111 were reserved by the `normative-rule-substrate` unit. A-104, A-105 and A-106 are drafted in the `computable-contract-substrate` unit, A-105 in its slice HQ-6a (2026-10-10). A-104 and A-106, retitled, are drafted by the `computable-contract-substrate` unit (its slices C1 and C2), which also holds A-112 and A-113 and the 2026-10-01 addenda to A-01 and A-C2, all accepted at the unit's Gate A on 2026-10-01. A-115, Quantification context values, was drafted by the same unit's slice C7b and accepted on 2026-10-05, with A-104's addenda of 2026-10-04 and 2026-10-05. This index is updated as each is added.

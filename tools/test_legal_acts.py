@@ -232,14 +232,16 @@ def test_c9b1_09_settled_with_approval_is_permitted() -> None:
     g = _example("reinsurance-claims-cooperation")
     assert g.value(RE.indemnify, INS.scope) == RE["settled-with-approval"]
     assert g.value(RE.indemnify, INS.arisesOnExerciseOf) == RE.settle
-    # The compiled decision. Claim 2 has no approval: the claims file's closure makes it Denied in the
-    # reference semantics (test_closures.py, HQ6a1-09), and the compilers apply closures in HQ-6a.2.
-    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Undetermined"}
+    # The compiled decision. Claim 2 has no approval, and the claims file's closure lets that absence
+    # decide (ADR-A105, HQ6a2-04), as the reference semantics does (test_closures.py, HQ6a1-09).
+    assert _decisions(g) == {"claim-1": "Permitted", "claim-2": "Denied"}
 
 
-def test_c9b1_09_without_the_settlements_reliance_the_claim_is_undetermined() -> None:
+def test_c9b1_09_without_the_settlements_reliance_the_claim_is_denied_under_the_claims_file() -> None:
+    # Was Undetermined before closures. The claims file's closure vouches that no other reliance was
+    # recorded, so the settlement's missing reliance decides (HQ6a2-04).
     g = _example("reinsurance-claims-cooperation", remove=((RE["settlement-1"], INS.pursuantTo, RE["approval-1"]),))
-    assert _decisions(g)["claim-1"] == "Undetermined"
+    assert _decisions(g)["claim-1"] == "Denied"
 
 
 # ---- C9b1-10: an exercise trigger is derived -----------------------------------------
@@ -254,7 +256,7 @@ def test_c9b1_10_on_exercise_is_a_derived_trigger() -> None:
         for trigger in g.subjects(RDF.type, INS.OnExercise):
             assert set(g.objects(trigger, BHV.triggerKind)) == {BHV.DerivedTrigger}, (path.name, trigger)
     g = _graph(EXAMPLES / "licence-notice.ttl")
-    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/on-notice-given")
+    trigger = URIRef("https://example.org/lattice/instrument/licence-notice/form/give-notice-on-notice-given")
     g.set((trigger, BHV.triggerKind, BHV.ExternalStimulus))
     assert any(f == str(trigger) and "bhv:DerivedTrigger, fixed" in m for f, m in _results(g))
 
@@ -305,7 +307,7 @@ def test_c9b1_13_an_acceptance_record_is_deprecated_with_a_warning() -> None:
     assert (BHV.AcceptanceRecord, OWL.deprecated, Literal(True)) in runtime
     record = ("@prefix bhv: <" + str(BHV) + "> .\n@prefix fnd: <" + str(FND) + "> .\n"
               "@prefix pty: <" + LATTICE + "party#> .\n@prefix ex: <https://example.org/r/> .\n"
-              "ex:v a fnd:Version . ex:p a pty:RoleOccupancy . "
+              "ex:v a fnd:Versioned . ex:p a pty:RoleOccupancy . "
               "ex:accept a bhv:AcceptanceRecord ; bhv:accepted ex:v ; bhv:actor ex:p .")
     found = _bhv_results(Graph().parse(data=record, format="turtle"))
     assert [(s, f.rsplit("/", 1)[-1]) for s, f, m in found] == [("Warning", "accept")]

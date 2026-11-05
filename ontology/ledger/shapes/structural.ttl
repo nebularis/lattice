@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldg:AccountDefinitionShape a sh:NodeShape ;
+    sh:targetClass ldg:AccountDefinition ;
+    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:conversionMethod ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergeRule ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:residualAllocation ; sh:maxCount 1 ], [ sh:path ldg:roundingMethod ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .

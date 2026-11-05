@@ -26,6 +26,7 @@
             "unicodeVersion": "16.0.0",
             "steps": [
               "reject_unassigned",
+              "strip_format",
               "nfkc",
               "trim_white_space",
               "uppercase_full",
@@ -44,7 +45,7 @@
           "widthBits": 160,
           "encoding": "base32"
         },
-        "recipeDigest": "sha256:38ce5a73f929a647583c587442c3d493afd79223d8162056acea43a75a403546"
+        "recipeDigest": "sha256:b371788209398065d2085751da33f3ab61d2f0d99777a00925dcac18a4a0031b"
       },
       "testSecrets": {},
       "positive": [
@@ -65,6 +66,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "widget-9"
+                },
+                {
+                  "step": "strip_format",
                   "output": "widget-9"
                 },
                 {
@@ -136,6 +141,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": " Widget-9 "
+                },
+                {
+                  "step": "strip_format",
                   "output": " Widget-9 "
                 },
                 {
@@ -212,6 +221,10 @@
                   "output": "\uff57idget-\uff19"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "\uff57idget-\uff19"
+                },
+                {
                   "step": "nfkc",
                   "output": "widget-9"
                 },
@@ -232,6 +245,84 @@
               "ucd": [
                 "DerivedNormalizationProps.txt FF57 NFKC compatibility -> 0077",
                 "UnicodeData.txt FF19 <wide> 0039"
+              ]
+            },
+            {
+              "step": "tuple",
+              "components": [
+                "iri",
+                "v1",
+                "sku",
+                "WIDGET-9"
+              ],
+              "hex": "333a697269323a7631333a736b75383a5749444745542d39"
+            },
+            {
+              "step": "digest",
+              "function": "SHA-256",
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216ccda6bf467e5c7c753ec1bb0f5"
+            },
+            {
+              "step": "truncate",
+              "widthBits": 160,
+              "hex": "b823783f51e7dfe63cab9d45cd6958849de216cc"
+            },
+            {
+              "step": "encode",
+              "encoding": "base32",
+              "value": "XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+            }
+          ],
+          "iri": "urn:ex:sku:XARXQP2R47P6MPFLTVC422KYQSO6EFWM"
+        },
+        {
+          "id": "dh-format-stripped",
+          "category": "format",
+          "inputs": {
+            "key": [
+              "Wid\u200bget\u00ad-9"
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "Wid\u200bget\u00ad-9",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "Wid\u200bget\u00ad-9"
+                },
+                {
+                  "step": "strip_format",
+                  "output": "Widget-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "Widget-9"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "Widget-9"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "WIDGET-9"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "WIDGET-9"
+                }
+              ],
+              "output": "WIDGET-9",
+              "ucd": [
+                "UnicodeData.txt 200B ; General_Category Cf",
+                "UnicodeData.txt 00AD ; General_Category Cf"
               ]
             },
             {
@@ -287,6 +378,16 @@
             ]
           },
           "error": "UnassignedCodePoint"
+        },
+        {
+          "id": "dh-format-only",
+          "category": "format",
+          "inputs": {
+            "key": [
+              "\u200b\u00ad"
+            ]
+          },
+          "error": "EmptyKeyComponent"
         }
       ],
       "format": []
@@ -323,6 +424,7 @@
                 "unicodeVersion": "16.0.0",
                 "steps": [
                   "reject_unassigned",
+                  "strip_format",
                   "nfkc_casefold",
                   "trim_white_space"
                 ]
@@ -337,7 +439,7 @@
             "iriTemplate": "urn:key:person-email:{schemeVersion}:{mac}"
           }
         ],
-        "recipeDigest": "sha256:ea6fa49ff46d789e8b5d0e8491e2f5ab77a813437d253767d336f06e553519e7"
+        "recipeDigest": "sha256:6b0e838a9ebb3d75c7d473b6bbe1f243230cdf6e0c74148bba411cd438bb87a6"
       },
       "testSecrets": {
         "example-key-v1": {
@@ -375,6 +477,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "strip_format",
                   "output": "ada@example.org"
                 },
                 {
@@ -458,6 +564,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "Ada@Example.org "
+                },
+                {
+                  "step": "strip_format",
                   "output": "Ada@Example.org "
                 },
                 {
@@ -548,6 +658,10 @@
                   "output": "ada@example.org\u200b"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "ada@example.org"
+                },
+                {
                   "step": "nfkc_casefold",
                   "output": "ada@example.org"
                 },
@@ -558,7 +672,7 @@
               ],
               "output": "ada@example.org",
               "ucd": [
-                "DerivedNormalizationProps.txt 200B..200F ; NFKC_CF; (empty)"
+                "UnicodeData.txt 200B ; General_Category Cf"
               ]
             },
             {
@@ -633,6 +747,10 @@
                   "output": "ada@exam\u00adple.org"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "ada@example.org"
+                },
+                {
                   "step": "nfkc_casefold",
                   "output": "ada@example.org"
                 },
@@ -643,7 +761,7 @@
               ],
               "output": "ada@example.org",
               "ucd": [
-                "DerivedNormalizationProps.txt 00AD ; NFKC_CF; (empty)"
+                "UnicodeData.txt 00AD ; General_Category Cf"
               ]
             },
             {
@@ -715,6 +833,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "stra\u00dfe@example.org"
+                },
+                {
+                  "step": "strip_format",
                   "output": "stra\u00dfe@example.org"
                 },
                 {
@@ -803,6 +925,10 @@
                   "output": "ada@example.org\u001f"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "ada@example.org\u001f"
+                },
+                {
                   "step": "nfkc_casefold",
                   "output": "ada@example.org\u001f"
                 },
@@ -885,6 +1011,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "\u1c89@example.org"
+                },
+                {
+                  "step": "strip_format",
                   "output": "\u1c89@example.org"
                 },
                 {
@@ -981,6 +1111,30 @@
             "omitSecret": "example-key-v1"
           },
           "error": "MissingSecret"
+        },
+        {
+          "id": "cl-format-only-not-default-ignorable",
+          "category": "format",
+          "inputs": {
+            "key": [
+              "\u0600\u0605"
+            ],
+            "scope": "acme",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "error": "EmptyKeyComponent"
+        },
+        {
+          "id": "cl-empty-scope",
+          "category": "empty-scope",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "",
+            "surrogate": "8f2c1b7e-3e4a-4f7c-9a6d-2b1e0c5d7f90"
+          },
+          "error": "EmptyScope"
         }
       ],
       "format": []
@@ -1008,6 +1162,7 @@
             "unicodeVersion": "16.0.0",
             "steps": [
               "reject_unassigned",
+              "strip_format",
               "nfkc",
               "trim_white_space",
               "uppercase_full",
@@ -1015,7 +1170,7 @@
             ]
           }
         },
-        "recipeDigest": "sha256:a0dbd1a701ab2b974bc7826ffdae3a8a40fc191e7ce53a7bf751e8a8cfd7a372"
+        "recipeDigest": "sha256:29c73e45a9782d895c99e4e6bae0780426c8cc904a0174510755a53a5186bddc"
       },
       "testSecrets": {},
       "positive": [
@@ -1037,6 +1192,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "acme"
+                },
+                {
+                  "step": "strip_format",
                   "output": "acme"
                 },
                 {
@@ -1067,6 +1226,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "pol-000123"
+                },
+                {
+                  "step": "strip_format",
                   "output": "pol-000123"
                 },
                 {
@@ -1124,6 +1287,10 @@
                   "output": "acme"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "acme"
+                },
+                {
                   "step": "nfkc",
                   "output": "acme"
                 },
@@ -1151,6 +1318,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "pol/000 123"
+                },
+                {
+                  "step": "strip_format",
                   "output": "pol/000 123"
                 },
                 {
@@ -1208,6 +1379,10 @@
                   "output": "acme"
                 },
                 {
+                  "step": "strip_format",
+                  "output": "acme"
+                },
+                {
                   "step": "nfkc",
                   "output": "acme"
                 },
@@ -1235,6 +1410,10 @@
               "after": [
                 {
                   "step": "reject_unassigned",
+                  "output": "\u00e9t\u00e9-1"
+                },
+                {
+                  "step": "strip_format",
                   "output": "\u00e9t\u00e9-1"
                 },
                 {
@@ -1272,6 +1451,96 @@
             }
           ],
           "iri": "urn:ex:policy:ACME/%C3%89T%C3%89-1"
+        },
+        {
+          "id": "nk-dots-are-not-a-segment",
+          "category": "dot-segment",
+          "inputs": {
+            "key": [
+              "acme",
+              "..."
+            ]
+          },
+          "trace": [
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "acme",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "acme"
+                },
+                {
+                  "step": "strip_format",
+                  "output": "acme"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "acme"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "acme"
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "ACME"
+                },
+                {
+                  "step": "nfkc",
+                  "output": "ACME"
+                }
+              ],
+              "output": "ACME"
+            },
+            {
+              "step": "normalize",
+              "component": 1,
+              "pipeline": "NfkcTrimUppercase",
+              "input": "...",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "..."
+                },
+                {
+                  "step": "strip_format",
+                  "output": "..."
+                },
+                {
+                  "step": "nfkc",
+                  "output": "..."
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "..."
+                },
+                {
+                  "step": "uppercase_full",
+                  "output": "..."
+                },
+                {
+                  "step": "nfkc",
+                  "output": "..."
+                }
+              ],
+              "output": "..."
+            },
+            {
+              "step": "percent-encode",
+              "components": [
+                "ACME",
+                "..."
+              ]
+            },
+            {
+              "step": "render",
+              "iri": "urn:ex:policy:ACME/..."
+            }
+          ],
+          "iri": "urn:ex:policy:ACME/..."
         }
       ],
       "negative": [
@@ -1284,6 +1553,28 @@
             ]
           },
           "error": "MissingKeyComponent"
+        },
+        {
+          "id": "nk-dot-segment",
+          "category": "dot-segment",
+          "inputs": {
+            "key": [
+              "acme",
+              ".."
+            ]
+          },
+          "error": "DotSegment"
+        },
+        {
+          "id": "nk-dot-segment-after-nfkc",
+          "category": "dot-segment",
+          "inputs": {
+            "key": [
+              "acme",
+              "\uff0e\uff0e"
+            ]
+          },
+          "error": "DotSegment"
         }
       ],
       "format": []
@@ -1628,6 +1919,238 @@
             "iri": "https://register.example.evil/party/01234567"
           },
           "error": "PatternMismatch"
+        }
+      ],
+      "format": []
+    },
+    {
+      "vectorsFormat": "lattice-minting-vectors/1",
+      "description": "Hand-authored recipe, not compiled from a fixture: a caller-supplied surrogate whose pattern admits any character. Whatever the pattern, a surrogate must be non-empty and made of RFC 3986 unreserved characters only.",
+      "recipe": {
+        "recipeFormat": "lattice-minting-recipe/1",
+        "role": "EntityRole",
+        "target": {
+          "class": "https://example.org/lending#PermissivePerson",
+          "deployment": null
+        },
+        "strategy": "SurrogateClaimedIdentity",
+        "iriTemplate": "urn:person:{surrogate}",
+        "surrogate": {
+          "kind": "CallerSuppliedSurrogate",
+          "pattern": "^.*$"
+        },
+        "claims": [
+          {
+            "constraintId": "person-email-unique",
+            "schemeVersion": "v1",
+            "schemeState": "Accepting",
+            "keyId": "example-key-v1",
+            "key": {
+              "properties": [
+                "https://example.org/lending#email"
+              ],
+              "scopeProperty": "https://example.org/lending#tenant",
+              "pipeline": {
+                "id": "NfkcTrimCasefold",
+                "unicodeVersion": "16.0.0",
+                "steps": [
+                  "reject_unassigned",
+                  "strip_format",
+                  "nfkc_casefold",
+                  "trim_white_space"
+                ]
+              }
+            },
+            "tupleEncoding": "length-prefixed-utf8/1",
+            "mac": {
+              "function": "HMAC-SHA-256",
+              "widthBits": 128,
+              "encoding": "base32"
+            },
+            "iriTemplate": "urn:key:person-email:{schemeVersion}:{mac}"
+          }
+        ],
+        "recipeDigest": "sha256:70a34e341d92d42694214ef9cca3fb173a8ba12200c5a0a16d235734ba4dfee3"
+      },
+      "testSecrets": {
+        "example-key-v1": {
+          "utf8": "lattice-guide-example-secret-not-for-production",
+          "hex": "6c6174746963652d67756964652d6578616d706c652d7365637265742d6e6f742d666f722d70726f64756374696f6e",
+          "note": "Published test secret. Never use in production."
+        }
+      },
+      "positive": [
+        {
+          "id": "ps-unreserved",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "Ada_1.x~y-z"
+          },
+          "trace": [
+            {
+              "step": "validate-surrogate",
+              "pattern": "^.*$",
+              "value": "Ada_1.x~y-z"
+            },
+            {
+              "step": "render",
+              "iri": "urn:person:Ada_1.x~y-z"
+            },
+            {
+              "step": "normalize",
+              "component": 0,
+              "pipeline": "NfkcTrimCasefold",
+              "input": "ada@example.org",
+              "after": [
+                {
+                  "step": "reject_unassigned",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "strip_format",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "nfkc_casefold",
+                  "output": "ada@example.org"
+                },
+                {
+                  "step": "trim_white_space",
+                  "output": "ada@example.org"
+                }
+              ],
+              "output": "ada@example.org"
+            },
+            {
+              "step": "tuple",
+              "claim": 0,
+              "components": [
+                "v1",
+                "person-email-unique",
+                "acme",
+                "ada@example.org"
+              ],
+              "hex": "323a763131393a706572736f6e2d656d61696c2d756e69717565343a61636d6531353a616461406578616d706c652e6f7267"
+            },
+            {
+              "step": "mac",
+              "claim": 0,
+              "function": "HMAC-SHA-256",
+              "keyId": "example-key-v1",
+              "hex": "bd02928d6b0fcb3377ba2e045432348f36d7c7ae4786045ddea7cd0cf8c7f70c"
+            },
+            {
+              "step": "truncate",
+              "claim": 0,
+              "widthBits": 128,
+              "hex": "bd02928d6b0fcb3377ba2e045432348f"
+            },
+            {
+              "step": "encode",
+              "claim": 0,
+              "encoding": "base32",
+              "value": "XUBJFDLLB7FTG552FYCFIMRUR4"
+            },
+            {
+              "step": "render",
+              "claim": 0,
+              "iri": "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+            }
+          ],
+          "iri": "urn:person:Ada_1.x~y-z",
+          "claimIris": [
+            "urn:key:person-email:v1:XUBJFDLLB7FTG552FYCFIMRUR4"
+          ]
+        }
+      ],
+      "negative": [
+        {
+          "id": "ps-slash",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "a/b"
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-hash",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "a#b"
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-query",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "a?b"
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-percent",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "a%2Fb"
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-empty",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": ""
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-non-ascii",
+          "category": "surrogate",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": "caf\u00e9"
+          },
+          "error": "UnsafeSurrogate"
+        },
+        {
+          "id": "ps-dot-segment",
+          "category": "dot-segment",
+          "inputs": {
+            "key": [
+              "ada@example.org"
+            ],
+            "scope": "acme",
+            "surrogate": ".."
+          },
+          "error": "DotSegment"
         }
       ],
       "format": []

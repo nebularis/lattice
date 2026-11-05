@@ -27,9 +27,9 @@ def _assigned_chars():
 
 # The three pipelines of specification §3.2.
 PIPELINES = {
-    "NfkcTrimCasefold": ["reject_unassigned", "nfkc_casefold", "trim_white_space"],
-    "NfkcTrimUppercase": ["reject_unassigned", "nfkc", "trim_white_space", "uppercase_full", "nfkc"],
-    "NfkcTrimLowercase": ["reject_unassigned", "nfkc", "trim_white_space", "lowercase_full", "nfkc"],
+    "NfkcTrimCasefold": ["reject_unassigned", "strip_format", "nfkc_casefold", "trim_white_space"],
+    "NfkcTrimUppercase": ["reject_unassigned", "strip_format", "nfkc", "trim_white_space", "uppercase_full", "nfkc"],
+    "NfkcTrimLowercase": ["reject_unassigned", "strip_format", "nfkc", "trim_white_space", "lowercase_full", "nfkc"],
 }
 
 
@@ -88,6 +88,19 @@ def test_nfkc_casefold_agrees_with_the_casefold_composition():
 def test_white_space_differs_from_isspace_only_at_the_information_separators():
     differ = [cp for cp in CODE_POINTS if (cp in ucd.WHITE_SPACE) != chr(cp).isspace()]
     assert differ == [0x1C, 0x1D, 0x1E, 0x1F]
+
+
+def test_format_matches_general_category():
+    for cp in CODE_POINTS:
+        assert (cp in ucd.FORMAT) == (unicodedata.category(chr(cp)) == "Cf"), f"U+{cp:04X}"
+
+
+def test_no_pipeline_leaves_a_format_character():
+    """Format characters are stripped first, and no later step makes one."""
+    corpus = _assigned_chars()
+    for pid, steps in PIPELINES.items():
+        for ch in corpus:
+            assert "Cf" not in {unicodedata.category(c) for c in _run(steps, "a" + ch + "b")}, f"{pid} U+{ord(ch):04X}"
 
 
 def test_every_pipeline_is_idempotent():

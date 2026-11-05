@@ -2,7 +2,8 @@
 """Reasoning isolation guardrail (ADR-A83 item 6).
 
 Fails when a ``pom.xml`` other than ``platform/reasoning-testkit``'s declares a
-reasoner or rules engine, or depends on the testkit outside ``test`` scope, or
+reasoner or rules engine, or depends on a test kit (``reasoning-testkit``, ``sparql-testkit``) outside
+``test`` scope, or
 when a ``pyproject.toml`` declares a reasoner, a rules engine or a JVM bridge.
 
 Usage::
@@ -19,15 +20,25 @@ import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import lattice_repo_catalogue  # noqa: E402
+
+ROOT = lattice_repo_catalogue.find_root()
 TESTKIT = Path("platform/reasoning-testkit/pom.xml")
 ENGINE = re.compile(r"hermit|openllet|pellet|drools|owlapi|owlready|jpype|py4j|pyjnius", re.IGNORECASE)
-SKIP = {"node_modules", "target", ".venv", "build", ".build"}
+# What a build tool writes beside the sources it builds, skipped where there is no catalogue to say.
+BUILD_TOOL = {"node_modules", "target", ".venv", ".build", "build"}
 POM = "{http://maven.apache.org/POM/4.0.0}"
 
 
 def files(root: Path, name: str) -> list[Path]:
-    return [p for p in sorted(root.rglob(name)) if not SKIP & set(p.relative_to(root).parts)]
+    """Every file called ``name`` in the repository catalogue's scope (STD-273). A root with no catalogue, such
+    as a test's temporary directory, is walked whole."""
+    try:
+        return lattice_repo_catalogue.load(root).files(name)
+    except (lattice_repo_catalogue.CatalogueError, OSError):
+        return [p for p in sorted(root.rglob(name)) if not BUILD_TOOL & set(p.relative_to(root).parts)]
 
 
 def check(root: Path) -> list[str]:
@@ -41,8 +52,8 @@ def check(root: Path) -> list[str]:
             artifact = dep.findtext(f"{POM}artifactId", "")
             if ENGINE.search(artifact) or ENGINE.search(dep.findtext(f"{POM}groupId", "")):
                 problems.append(f"{relative_posix}: declares {artifact}")
-            if artifact == "reasoning-testkit" and dep.findtext(f"{POM}scope") != "test":
-                problems.append(f"{relative_posix}: depends on reasoning-testkit outside test scope")
+            if artifact.endswith("-testkit") and dep.findtext(f"{POM}scope") != "test":
+                problems.append(f"{relative_posix}: depends on {artifact} outside test scope")
     for project in files(root, "pyproject.toml"):
         data = tomllib.loads(project.read_text())
         declared = list(data.get("project", {}).get("dependencies", []))

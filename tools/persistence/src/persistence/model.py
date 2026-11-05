@@ -12,6 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from rdflib import Literal as RdfLiteral
+from rdflib.namespace import XSD
+
 
 # The original six dimension names (sketch §3.3), used as plain strings
 # throughout, never as IRIs -- ``dal:dimension`` is an ``xsd:string``
@@ -62,27 +65,38 @@ DIMENSIONS = (
     "erasureStrategy",
     "erasurePrecedence",
     "perSubjectScoped",
+    # H2.6c (2026-10-20): how a family writes, by replacing, by appending versions or by appending records.
+    "writeDiscipline",
+    # H2.6f (2026-10-20): how a family that appends versions states each version's members, and how often it lists them all.
+    "membershipEncoding",
+    "checkpointEvery",
+    # H2.12 (2026-11-01): the replace form an operator opts a family into, or absent, which means by capability.
+    "replaceForm",
+    # persistence-delta-replace DR1 (2026-11-02): whether a replace carries the changed triples or the whole state. No baseline default,
+    # since absent means the changed triples for an optimistic family and the whole state for any other (operations.replace_encoding).
+    "replaceEncoding",
+    # DR4, from the studio line's DR2 (2026-11-01): whether such a family records the digest of the state each write leaves.
+    "recordsStateDigest",
 )
 
 # Dimensions whose resolved value is an RDF literal, emitted with
 # ``dal:resolvedLiteral`` rather than ``dal:resolvedValue``.
 LITERAL_DIMENSIONS = frozenset(
     {"lagWindowMillis", "asOfFloorSource", "txnShards", "logShards", "keyShards", "registryGraph",
-     "perSubjectScoped"}
+     "perSubjectScoped", "checkpointEvery", "recordsStateDigest"}
 )
 
 # Platform baseline defaults (sketch §3.4.1). Every dimension resolves to
 # one of these when no scope matches a target.
 #
-# ``epochGuardScope`` defaults to ``RowLevelGuardOnly`` deliberately: this
-# is the shape every existing template already generated before Slice 1 of
-# persistence-compiler-iri-sync, so declaring it as the explicit baseline
-# changes no existing deployment's generated SPARQL. It is the shape
-# ``dal:RowLevelGuardOnlyWarningShape`` calls discouraged, and this
-# baseline default is not exempt from that warning: see
-# ``validator.check_cross_axis``'s epoch-guard-scope row, which fires
-# whether the value came from an explicit ``dal:EpochProfile`` or from
-# this default, so the discouraged shape is never generated silently.
+# ``epochGuardScope`` defaults to ``RowLevelGuardOnly``, the shape
+# ``dal:RowLevelGuardOnlyWarningShape`` calls discouraged, and the baseline
+# default is not exempt from that warning: ``validator.check_cross_axis``'s
+# epoch-guard-scope row fires whether the value was declared or defaulted,
+# so the discouraged shape is never generated silently. The ontology
+# remediation of 2026-10-28 (OR-10) tried the dataset-level guard as the
+# baseline and found that the no-receipt builder families have no
+# dataset-guard variant, so the default stays until they do (TD-118).
 BASELINE_DEFAULTS: dict[str, str] = {
     "aggregateBoundary": "NamedGraphBoundary",
     "concurrencyProfile": "ProvidedConcurrency",
@@ -99,6 +113,13 @@ BASELINE_DEFAULTS: dict[str, str] = {
     "deadlockPolicy": "EngineDetectAndRetry",
     "contiguityCheckMode": "BlockingContiguityCheck",
     "retentionMode": "PrefixOnlyRetention",
+    # H2.6c: today's replace, so every example that declares no discipline compiles as before.
+    "writeDiscipline": "InPlace",
+    # H2.6f: every version lists its members, and a checkpoint is every 16th version under dal:DeltaMembership.
+    "membershipEncoding": "FullMembership",
+    "checkpointEvery": RdfLiteral(16, datatype=XSD.long),
+    # DR4: no state digest is recorded unless a profile asks for it (DR-Q3 (c)).
+    "recordsStateDigest": RdfLiteral(False),
     # Slice 4 (plan decision, following Slice 2 decision 2's precedent): no
     # default for epochAuthority, privacyClass, erasureStrategy,
     # erasurePrecedence or perSubjectScoped. An undeclared dal:PrivacyProfile

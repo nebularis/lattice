@@ -87,6 +87,27 @@ HermiT LGPL-3.0, and left the engine choice to this ADR.
 - The guardrail targets JVM reasoners, rules engines and JVM bridges. The root
   `reasoning` extra's `owlrl`, a pure-Python OWL RL engine, is outside its scope.
 
+## Addendum (2026-10-17): a long-running JVM
+
+Starting a JVM and loading the OWL API and HermiT was most of a call, and the Python tests make dozens of calls. Item 2 is
+extended, and the CLI contract is unchanged for one-shot use.
+
+- **`reasoning-testkit serve`** keeps one JVM running. A request is one line on standard input, the command and its arguments
+  separated by tabs as the other commands take them. An answer is one line on standard output, `{"result": ...}` or
+  `{"error": "..."}`. A request that fails does not end the server, and it ends when standard input does. Anything the libraries
+  print goes to standard error.
+- **A reasoner is kept for each of the last four distinct closures**, keyed by the content of the files, so several questions
+  about one closure load and classify it once. The number is `-Dlattice.reasoning.cache`.
+- **`mork_compilers.reasoning.run` uses it by default**, one JVM per Python process, started on the first call and ended with the
+  process. A call that exceeds `LATTICE_REASONING_TIMEOUT` kills the JVM and the next call starts another, so a stalled call still
+  fails the test and not the run (TD-31). `LATTICE_REASONING_SERVER=0` runs a JVM per call. A jar built before `serve` existed makes
+  the process fall back to that.
+- **Isolation is unchanged.** The server is the testkit's own code, and Python reaches it through the same module and the same
+  subprocess boundary. No Python package declares a reasoner or a JVM bridge, and `check:reasoning-isolation` still passes.
+- **Measured** on 41 closures from the ontology tests: 37.7 s with a JVM per call, 6.3 s through the server. The suite on four
+  workers went from about 82 s to about 55 s
+  ([the design record](../efficient-queries-and-shapes.md), H6).
+
 ## Open questions
 
 - ~~HermiT and the OWL API on Java 25~~: confirmed. Whether HermiT refuses or

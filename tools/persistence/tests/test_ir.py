@@ -16,7 +16,7 @@ from persistence import ir, ir_render
 from persistence.ir import (
     GUARDS_OFF, A, Bind, Binding, Compare, Const, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind, Not,
     NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, PayloadSlot, Path, Projected,
-    RegistrySlot, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
+    RegistrySlot, RowsSlot, RowValues, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from persistence.ir_render import RULES, check, render
 from persistence.paths import Step
@@ -42,6 +42,11 @@ def _long_filter(guard) -> Operation:
 
 def _with_param(*extra: Param) -> tuple:
     return (*PARAMS, *extra)
+
+
+def _rows_op(*vars_, slot="rows", declared=True) -> Operation:
+    params = _with_param(Param("rows", Kind.ROWS)) if declared else PARAMS
+    return valid(params=params, where_=(*where(), RowValues(tuple(Var(v) for v in vars_), RowsSlot(slot))))
 
 
 def _bad_construction(make) -> None:
@@ -116,6 +121,8 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("DefaultGraphPattern", "bare triple in WHERE", lambda: valid(where_=(*where(), Triple(ROOT, pat("p"), Var("x"))))),
         ("DefaultGraphPattern", "template element outside a graph", lambda: valid(insert_=(*insert(), Triple(ROOT, pat("p"), Var("x", binding=Binding.BOUND))))),
         ("NestedGraph", "graph in graph", lambda: valid(where_=(*where(), GraphBlock(META, (GraphBlock(TXN, ()),))))),
+        ("NotExistsWithoutGraph", "a NOT EXISTS in a GRAPH block whose body has no GRAPH (TSD-34)", lambda: valid(where_=(*where(), GraphBlock(META, (NotExists(Group((Triple(ROOT, pat("p"), Var("x")),))),))))),
+        ("NotExistsWithoutGraph", "a NOT EXISTS in a GRAPH block whose body holds only a filter (TSD-34)", lambda: valid(where_=(*where(), GraphBlock(META, (NotExists(Group((Filter(Not(Func("BOUND", (Var("now"),)))),))),))))),
         ("PathOutsideWhere", "path in INSERT", lambda: valid(insert_=(*insert(), GraphBlock(DATA, (Triple(ROOT, _PATH, ROOT),))))),
         ("PathOutsideWhere", "path in DELETE", lambda: valid(delete_=(GraphBlock(DATA, (Triple(ROOT, _PATH, ROOT),)),))),
         ("UnsupportedInTemplate", "filter in INSERT", lambda: valid(insert_=(GraphBlock(META, (Filter(Func("BOUND", (ROOT,))),)),))),
@@ -156,11 +163,13 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("ParameterGuardNotDerived", "a guard that is off and names parameters", lambda: replace(valid(), guard=replace(GUARDS_OFF, params=PARAMS[:1]))),
         ("ParameterGuardNotDerived", "a stray parameter", lambda: replace(valid(), guard=ParameterGuard(PARAMS[:6] + (Param("extra", Kind.IRI),)))),
         ("SlotMisuse", "payload in WHERE", lambda: valid(where_=(*where(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
-        ("SlotMisuse", "payload in DELETE", lambda: valid(delete_=(*delete(), GraphBlock(DATA, (PayloadSlot("payloadTriples"),))))),
-        ("SlotMisuse", "two payload slots", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("payloadTriples"),))))),
         ("SlotMisuse", "slot naming a non-payload parameter", lambda: valid(insert_=(*insert(), GraphBlock(META, (PayloadSlot("root"),))))),
         ("SlotMisuse", "slot bound as a term", lambda: valid(where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("p"), ParamRef("payloadTriples")),))))),
         ("SlotMisuse", "registry slot naming a payload", lambda: valid(where_=(*where(), Values(Var("log"), (RegistrySlot("payloadTriples"),))))),
+        ("SlotMisuse", "a rows slot naming a payload parameter", lambda: _rows_op("a", slot="payloadTriples")),
+        ("UndeclaredParameter", "a rows slot that is not declared", lambda: _rows_op("a", slot="nope")),
+        ("InvalidName", "rows that name a variable twice", lambda: _rows_op("a", "a")),
+        ("InvalidName", "rows with no variable", lambda: _rows_op()),
         ("UnknownFunction", "unsupported", lambda: valid(where_=(*where(), Bind(Func("RAND"), Var("r"))))),
         ("UnknownFunction", "wrong arity", lambda: valid(where_=(*where(), Bind(Func("STR", ()), Var("r"))))),
         ("UnknownFunction", "DISTINCT on a scalar", lambda: valid(where_=(*where(), Bind(Func("STR", (ROOT,), distinct=True), Var("r"))))),
@@ -272,3 +281,16 @@ def test_h2_1_t9_an_optional_parameter_is_not_guarded():
     op = valid(params=params, where_=(*where(), GraphBlock(META, (Triple(ROOT, pat("cause"), ParamRef("cause")),))))
     assert "cause" not in [p.name for p in op.guard.params]
     assert "BOUND($cause)" not in render(op)
+
+
+def test_h2_6b_t10_rows_of_values_bind_their_variables_in_every_solution_and_render_as_one_slot():
+    """`VALUES (?a ?b) { slot }`. A template variable tagged Bound may use them, and an unused rows parameter is refused like any other."""
+    op = valid(
+        params=_with_param(Param("rows", Kind.ROWS)),
+        where_=(RowValues((Var("a"), Var("b")), RowsSlot("rows")), *where()),
+        insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), Var("a", binding=Binding.BOUND)),))),
+    )
+    check(op)
+    assert "VALUES (?a ?b) { {{{rows}}} }" in render(op)
+    refused("UnusedParameter", valid(params=_with_param(Param("rows", Kind.ROWS))))
+    assert Kind.ROWS in ir.SLOT_KINDS and "rows" not in {p.name for p in op.guard.params}  # a slot is never guarded

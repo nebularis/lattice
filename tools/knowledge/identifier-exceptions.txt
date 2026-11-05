@@ -1,0 +1,70 @@
+# Identifiers that are mentioned in a working document but defined nowhere, each with the reason it
+# is allowed to stay. `mise run check:identifiers` fails on any unresolved identifier that is not
+# listed here, so this file is the baseline that lets the check catch a new break rather than the
+# corpus's history. Read by tools/knowledge/identifiers.py.
+#
+# An entry is compared on its normalised form, letters and digits only, so the spelling here does
+# not have to match the spelling at the mention site.
+#
+# Remove an entry when its decision is drafted. Do not add one to silence a mention that is simply
+# wrong: correct the mention instead.
+
+# Referenced only by an early planning document, under a numbering that was never drafted. These
+# come from docs/architecture/solution-design-specification.md and
+# docs/developer/review/Architecture Review.md, both written before the ADR catalogue settled, and
+# the numbers they cite were never taken up. Left as the historical record they are.
+ADR-A45
+ADR-A46
+ADR-A47
+ADR-A49
+ADR-A52
+ADR-A53
+ADR-A55
+ADR-A56
+ADR-A58
+ADR-A60
+ADR-A61
+ADR-A64
+ADR-A70
+
+# Cited by the phase 0 plan and two early sketches as the decision covering the repository's
+# agentic development contract. The contract was settled by ADR-A117 and ADR-A133 instead, and no
+# ADR-A76 was ever written.
+ADR-A76
+
+# Slices a plan names that no board holds a row for yet, found when the slice family gained its
+# definition (plan work-board, WB-2, TD-137). A row written on the home unit's board defines the slice,
+# and its line here goes in the same change. `mise run work:adopt` writes the rows a record's other
+# tables, a Validation Pack or a plan's tables give, and regroups what is left here by unit.
+# unit applied-insurance-reference, 7 slice(s)
+AIR-4  # named in a plan, no board row yet
+AIR-5  # named in a plan, no board row yet
+AIR-6.2a  # named in a plan, no board row yet
+AIR-6.2b  # named in a plan, no board row yet
+AIR-6.2c  # named in a plan, no board row yet
+AIR-6.2d  # named in a plan, no board row yet
+AIR-66  # named in a plan, no board row yet
+# unit computable-contract-substrate, 9 slice(s)
+HQ-6a  # named in a plan, no board row yet
+HQ-6b  # named in a plan, no board row yet
+HQ-X1  # named in a plan, no board row yet
+HQ-X2  # named in a plan, no board row yet
+HQ-X3  # named in a plan, no board row yet
+HQ-X4  # named in a plan, no board row yet
+HQ-X5  # named in a plan, no board row yet
+HQ-X6  # named in a plan, no board row yet
+HQ-X7  # named in a plan, no board row yet
+# unit ensemble, 1 slice(s)
+ES-9  # named in a plan, no board row yet
+# unit formal-methods-track-h, 5 slice(s)
+FMH-1.4a  # named in a plan, no board row yet
+FMH-2  # named in a plan, no board row yet
+FMH-H1  # named in a plan, no board row yet
+FMH-H1.4a  # named in a plan, no board row yet
+FMH-H2  # named in a plan, no board row yet
+# unit ledger, 1 slice(s)
+LG-1.5b  # named in a plan, no board row yet
+# unit multi-store-conformance, 1 slice(s)
+MSC-6  # named in a plan, no board row yet
+# unit ontology-remediation, 1 slice(s)
+OR-7a  # named in a plan, no board row yet

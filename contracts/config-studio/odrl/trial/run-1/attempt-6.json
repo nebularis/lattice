@@ -1,0 +1,50 @@
+{
+ "decoded": true,
+ "triples": 480,
+ "schemes": [
+  {
+   "scheme": "https://example.org/lattice/odrl/mapping#MS",
+   "queries": 67,
+   "strata": 1
+  }
+ ],
+ "findings": [
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "GuardUnsupported",
+   "about": "https://example.org/lattice/odrl/mapping#Map_CondAny",
+   "message": "a node shape uses <http://www.w3.org/2004/02/skos/core#inScheme>, which a guard cannot yet compile"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "GuardUnsupported",
+   "about": "https://example.org/lattice/odrl/mapping#Map_CondEq",
+   "message": "a node shape uses <http://www.w3.org/2004/02/skos/core#inScheme>, which a guard cannot yet compile"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "GuardUnsupported",
+   "about": "https://example.org/lattice/odrl/mapping#Map_CondInterval",
+   "message": "a node shape uses <http://www.w3.org/2004/02/skos/core#inScheme>, which a guard cannot yet compile"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "GuardUnsupported",
+   "about": "https://example.org/lattice/odrl/mapping#Map_CondNeq",
+   "message": "a node shape uses <http://www.w3.org/2004/02/skos/core#inScheme>, which a guard cannot yet compile"
+  },
+  {
+   "stage": "compile",
+   "severity": "error",
+   "code": "GuardUnsupported",
+   "about": "https://example.org/lattice/odrl/mapping#Map_CondNone",
+   "message": "a node shape uses <http://www.w3.org/2004/02/skos/core#inScheme>, which a guard cannot yet compile"
+  }
+ ],
+ "errors": 5,
+ "output_triples": 59
+}

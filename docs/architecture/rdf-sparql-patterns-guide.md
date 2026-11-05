@@ -11,7 +11,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## Uniqueness, Ordering and Concurrency in RDF — The LATTICE Pattern Guide
 
-**Status:** Authoritative architectural guide. Identity and IRI minting is a framework-neutral pattern catalogue, not a platform mandate: see [iri-identity-patterns.md](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation, [docs/developer/status/rdf-sparql-patterns-remediation.md](../developer/status/rdf-sparql-patterns-remediation.md) for the first correctness remediation (2026-09-23), and [docs/developer/status/iri-patterns-post-3866b21-remediation.md](../developer/status/iri-patterns-post-3866b21-remediation.md) for the second (epoch rebase after a bump, request-digest idempotency, retention of dormant heads, corrected sequencer density claims, and the other findings tracked there, summarised in [D.3](#d3-the-post-3866b21-remediation-pass-2026-09)).
+**Status:** Authoritative architectural guide. Identity and IRI minting is a framework-neutral pattern catalogue, not a platform mandate: see [iri-identity-patterns.md](iri-identity-patterns.md) and [ADR-A82](decisions/ADR-A82-framework-neutral-identity-pattern-selection.md). See [Appendix D](#appendix-d--traceability-to-the-source-notes) for disagreement with other documentation. The remediation passes are the first correctness remediation (2026-09-23) and the second (epoch rebase after a bump, request-digest idempotency, retention of dormant heads, corrected sequencer density claims, and the other findings, summarised in [D.3](#d3-the-post-3866b21-remediation-pass-2026-09)).
 
 **Audience:** anyone designing, implementing, reviewing or operating a LATTICE component that writes to an RDF store: the store SPI (A75), the Surface workflow, MORK governance, ingestion workers, and the ontology authors who decide where aggregate boundaries fall.
 
@@ -21,7 +21,7 @@ note: "Comprehensive guide with running examples. Start with 'How to read this g
 
 ## How to read this guide
 
-This is a long document, deliberately. The notes it consolidates were written as a sequence of increasingly hard questions ("how do I enforce a unique key?", "how do I order events?", "how do I know my write applied?", "what happens when I combine all three?"), and each answer exposed a failure mode in the previous one. The guide keeps that journey, because the *reasons* are what make the patterns safe to build; a table of solutions without the failures they answer is exactly the kind of summary that has already gone wrong once (see `docs/developer/notes/misalignment.md`).
+This is a long document, deliberately. The notes it consolidates were written as a sequence of increasingly hard questions ("how do I enforce a unique key?", "how do I order events?", "how do I know my write applied?", "what happens when I combine all three?"), and each answer exposed a failure mode in the previous one. The guide keeps that journey, because the *reasons* are what make the patterns safe to build; a table of solutions without the failures they answer is exactly the kind of summary that has already gone wrong once.
 
 Read it in one of three ways:
 
@@ -178,14 +178,14 @@ Every example in this guide uses the same small domain, so that a corrupted stat
 
 ```turtle
 @prefix ex:   <https://example.org/ns#> .                  # illustrative domain vocabulary
-@prefix pat:  <https://example.org/lattice/patterns#> .    # illustrative pattern vocabulary (Appendix A)
+@prefix pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .    # the pattern vocabulary (Appendix A)
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 ```
 
-`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on); it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). Its final IRI, and its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Version`, is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)); the local name is what matters here.
+`ex:` is a stand-in for an applied ontology. `pat:` is the vocabulary the patterns themselves need (`pat:seq`, `pat:epoch`, `pat:KeyClaim`, `pat:Revision` and so on), it is collected in [Appendix A](#appendix-a--the-pattern-vocabulary). The vocabulary is published as Persistence's `persistence-store` document. Its alignment to Foundation terms such as `fnd:recordedAt` and `fnd:Versioned` is a decision to be taken when the patterns are ratified as ADRs ([Chapter 30](#chapter-30--mapping-the-patterns-onto-lattice)).
 
 **Every IRI in this guide is illustrative.** The URN namespaces used in examples (`urn:g:`, `urn:rev:`, `urn:key:`, `urn:txn:`, `urn:order:`, `urn:person:`, `urn:ds:`, `urn:ev:`, `urn:tenant:`, `urn:decision:`, `urn:user:`) are unregistered URN namespace identifiers (RFC 8141). Copied verbatim into two deployments, they collide the moment the datasets are merged or federated. A deployment selects a controlled `https` authority, a `tag:` URI, or a registered scheme through its identity profile ([iri-identity-patterns.md §17](iri-identity-patterns.md#17-open-design-work)); the patterns do not depend on the choice.
 
@@ -581,7 +581,7 @@ pat:KeyClaimShape
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 INSERT {
   GRAPH <urn:g:keys> {
@@ -658,7 +658,7 @@ Under MVCC, two inserts of *different* triples do not conflict. Force them to co
 #   for i in 0..1023 -> GRAPH <urn:g:keys> { <urn:keyshard:i> pat:counter "0"^^xsd:long }
 
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 DELETE { GRAPH <urn:g:keys> { ?shard pat:counter ?n } }
 INSERT {
@@ -701,7 +701,7 @@ But when the property is also a unique key, the old claim must be retired and th
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 
 DELETE {
   GRAPH <urn:g:people> { ex:person-42 ex:email ?old }
@@ -1005,7 +1005,7 @@ Append three events to the `orders/1` stream, allocating positions inside the wr
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE { GRAPH <urn:g:meta/17> { ?stream pat:epoch ?rowEpoch ; pat:seq ?n ; pat:head ?prev } }
@@ -1259,6 +1259,17 @@ The as-of query is still expensive and gets worse with history depth. Realistic 
 2. **`validFrom`/`validTo` intervals materialised on the data**, which makes as-of a range filter at the cost of a rewrite on every update. This is where `fnd:TemporalScope` fits ([Chapter 23](#chapter-23--bi-temporal-modelling-configurable-not-mandated)).
 3. **Log replay**, as above, reserved for audit rather than serving traffic.
 
+> **Note, 2026-10-20 (formal-methods FMH-2.6d, TD-48).** The query above replays forward from the start of the log, so it needs every add graph
+> from the first revision. Under the prefix-only retention of [§24.2](#242-retention-and-pruning) the oldest buckets are dropped with their delta
+> graphs, and a triple that was added in a dropped bucket and never changed since is then missing from the result, though it is in the current
+> graph. The result is wrong and nothing says so. A read that goes **backward from the current state** needs only the log after the position `r`,
+> and its rule, which the patch invariants of the plan make sound (`del` is a subset of the old state, `add` is disjoint from it, so each
+> revision's change to a triple is the opposite of the one before), is as follows. For each triple, the first revision after `r` that touches it,
+> in its add or its del graph, decides. If that revision added it, the triple was absent at `r`. If that revision retracted it, the triple was
+> present at `r`. If no revision after `r` touches it, it is present at `r` exactly when it is in the current state. The state at `r` is the
+> triples the current state holds that no later revision added, plus those that a later revision first retracted. A generated as-of read is not
+> built (TD-48), and the form above stays correct for a family that has never pruned its log.
+
 ### S7 — Hybrid logical clocks for the sparse tier
 
 For the cross-stream tier on multi-writer or multi-region deployments, compute an HLC in the application and store it as one lexicographically sortable string, `{physicalMillis:013}:{logical:04}:{nodeId}`:
@@ -1397,7 +1408,7 @@ SELECT ?step WHERE { ?step ex:partOf ex:procedure-7 ; ex:rank ?r } ORDER BY ?r
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
@@ -1418,6 +1429,8 @@ WHERE {
 That is the primitive, abbreviated: the production form adds the dataset epoch guard, the head pointer, the txn claim and the receipt body ([§19.1](#191-the-write)). It is easy, and the sketch's LATTICE note called it "an elegant, enterprise-grade pattern that treats the RDF database more like a document store or event-sourced system", which is fair. Everything difficult is in what surrounds it: this chapter's variants, [Chapter 15](#chapter-15--learning-whether-it-applied)'s outcome problem, and the thirteen findings in [Chapter 18](#chapter-18--thirteen-findings-against-the-first-combined-pattern).
 
 Why whole-graph replace rather than a patch: if the previous version had three line items and the new one has two, a patch that forgets to delete the third leaves a dangling triple. Replacing the graph makes the write the complete state, which is what an aggregate is.
+
+**Its cost, and the rows form (2026-11-01).** With the payload in the template, a store fills the template once per solution of the sweep, so the write costs the old size times the new. The generated replace has a second form that carries the payload as `VALUES` rows in `UNION` branches beside the sweep, linear, and right only on a store that applies every deletion before any insertion, which SPARQL 1.1 defines and not every store does. The compiler selects it by the store's declared capability, and the Persistence README's §5.6.2 says how.
 
 ### 14.2 Variants
 
@@ -1509,6 +1522,8 @@ requestDigest = hex(SHA-256(enc([operationKind, target, expected,
 
 `operationKind` is the template's name (`cas-replace`, `append`, `create`, `tombstone`), `expected` is the expected `seq` as a decimal string for a CAS and the empty string otherwise, and `enc` is the tuple encoding of [Chapter 5](#chapter-5--p0-deterministic-iris--make-uniqueness-structural). The payload is skolemized before hashing, so the digest is a function of the request's content.
 
+> **Dated note, 2026-10-14 (formal-methods FMH-2.6b).** An `append` carries its events as rows, and the digest has one part per slot of the request in a fixed order. The event part covers each row's `rdf:type`, `pat:opSeq` and `pat:occurredAt` triples with the event triples the caller supplies, and leaves out `pat:revision`, which the store mints. The contract declares the part. The code that computes it is H2.8.
+
 ```sparql
 SELECT ?rev ?digest WHERE {
   GRAPH <urn:g:txn> { <urn:txn:01J8Q3Z5K9V2N7M4X6P1R8T0W2> pat:rev ?rev ; pat:requestDigest ?digest }
@@ -1529,6 +1544,8 @@ The confirmation read goes to the writer or primary, never to a replica: a repli
 An `Unknown` outcome is resolved by resending the *identical* request (same txn id, same digest), then confirming. A single confirmation read taken immediately after a transport failure is not definitive, because the original request may still be executing. The resend is safe: it either applies once or is a no-op against the claim. The server's maximum request duration bounds how long the original can remain in flight.
 
 The claim protects retries only while it is retained. A claim pruned too early turns a late retry of an applied CAS into a `412`, and the client, which can no longer find its own claim, may conclude it lost and re-apply its change on top of itself. For the append form, which has no version guard, the late retry is applied a second time. The txn graph's TTL is therefore at least the longest horizon over which any request can be redelivered (client retry window, outbox redelivery, dead-letter replay), and [§24.2](#242-retention-and-pruning) adds audits that detect a duplicate application after the claim is gone.
+
+**Note, 2026-10-20 (formal-methods H2.8a and H2.8b).** The digest of the persistence caller library is `hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))`, where each content part is one component, `enc` of that part's sorted canonical lines, and the parts follow the compiled profile's digest contract. The flat list of `request_digest` below cannot tell the payload of a replace from its added and retracted triples, and gives a different byte string for an operation with one content part. Where the two differ, the vectors in `contracts/persistence/` are the definition ([ADR-A132](decisions/ADR-A132-persistence-caller-library.md) decision 4). The same vectors fix the payload check (every subject is the root or reached from it by owned edges), the events of an append (every subject is an event of the batch or minted under one), the caller check of the parameters, the audit outcome (clean, failed or nothing examined) and the reference modes.
 
 ### 15.3 Making the store *enforce* the invariant: the SHACL trick
 
@@ -1835,7 +1852,7 @@ All positions client-computed, everything ground except the payload sweep, the p
 
 ```sparql
 PREFIX ex:  <https://example.org/ns#>
-PREFIX pat: <https://example.org/lattice/patterns#>
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 DELETE {
@@ -2271,7 +2288,7 @@ Foundation already has the terms the patterns need, with narrower domains:
 |---|---|---|
 | transaction time of a receipt | `fnd:recordedAt` (domain `fnd:Evidence`) | a `pat:Revision` could be modelled as `fnd:Evidence` for the write; otherwise `pat:recordedAt` stays a separate property with the same meaning |
 | valid time of a domain fact | `fnd:TemporallyScoped` → `fnd:hasTemporalScope` → `fnd:validFrom` / `fnd:validTo` | use as is |
-| identity across versions | `fnd:Version` with `fnd:hasIdentity` and `fnd:supersededBy` | the receipt chain (`pat:prevRev`) is the write-level analogue of the domain-level `fnd:supersededBy` |
+| identity across versions | `fnd:Versioned` with `fnd:hasIdentity` and `fnd:supersededBy` | the receipt chain (`pat:prevRev`) is the write-level analogue of the domain-level `fnd:supersededBy` |
 
 Whether `pat:Revision` becomes a `fnd:Evidence` subclass, and whether the receipt chain and `fnd:supersededBy` are unified or kept as separate layers (write log versus domain versioning), is an ontology decision to take with the ADR ([Appendix E](#appendix-e--what-remains-open)). This guide keeps them separate so that the pattern layer does not depend on a domain ontology.
 
@@ -2396,6 +2413,11 @@ Key claims are retired the same way by default ([§6.2](#62-p2-the-guarded-write
 | Snapshot graphs | policy per family | prune sealed snapshots older than the window. `pat:head` and `pat:current` never point at a pruned graph |
 
 **Why prefix-only.** The as-of floor is one number per family, the oldest position that as-of replay (S6) can reconstruct. Dropping a bucket from the middle leaves a hole above the floor that replay would read across silently. Prefix-only pruning also keeps each target's retained receipts contiguous above its low-water mark, which is what S3 checks. `dal:BucketAnyRetention` is incompatible with as-of log replay and is flagged by `dal:AsOfFloorRetentionCompatibilityShape`. `dal:asOfFloorSource` declares which job advances the floor.
+
+> **Note, 2026-10-20 (FMH-2.6d, TD-48).** S6 as written replays forward and breaks under this prefix retention, since it needs every add graph
+> from the start of the log and not only those above the low-water mark. A backward read from the current state needs only the
+> receipts above the low-water mark. The first revision after the as-of position that touches a triple decides it, so a triple the retained log
+> never touches is read from the current state and is not lost with a dropped bucket. The rule is in the note at S6.
 
 **Live heads are not always in the newest bucket.** A stream written once in March and never since has its head receipt in the March bucket. Dropping that bucket would leave `pat:head` pointing at nothing and break S4, the chain and the confirmation of the stream's next CAS. Before dropping a bucket, the retention job copies every receipt in it that is still some target's `pat:head` into `urn:g:txlog/pinned`, with the same IRI and triples. The simpler alternative, keeping any bucket that holds a live head, is valid but can stall retention indefinitely behind one dormant stream.
 
@@ -3195,10 +3217,10 @@ A sequencing that respects this: Phase 0.2 builds the port, the TCK harness and 
 
 ## Appendix A — The pattern vocabulary
 
-The `pat:` terms used throughout, as Turtle. The namespace IRI is illustrative; the local names are the contract. Alignment to Foundation is discussed in [§23.3](#233-aligning-pat-with-foundation).
+The `pat:` terms used throughout, as Turtle. The vocabulary is published as Persistence's `persistence-store` document, and the Turtle below is the guide's copy of it. Alignment to Foundation is discussed in [§23.3](#233-aligning-pat-with-foundation).
 
 ```turtle
-@prefix pat:  <https://example.org/lattice/patterns#> .
+@prefix pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -3229,6 +3251,8 @@ pat:current    a owl:ObjectProperty ;
     rdfs:comment "Snapshot-per-revision model only: the sealed payload graph that is the current state." .
 pat:deleted    a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
     rdfs:comment "Tombstone. Present and true when the target's payload has been deleted; the row and its counter survive (F10)." .
+pat:stateDigest a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "The digest of the state the target's last write left, where its family declares dal:recordsStateDigest, so an audit finds a graph changed outside the family's operations." .
 pat:fence      a owl:DatatypeProperty ; rdfs:range xsd:long ;
     rdfs:comment "Fencing token from an external lease (§16.2). Writes with an older token fail the guard." .
 pat:lockedBy   a owl:ObjectProperty ;   rdfs:comment "Editorial lease holder (§16.3)." .
@@ -3260,6 +3284,19 @@ pat:retracts   a owl:ObjectProperty ;   rdfs:comment "Patch-log model: the graph
 
 pat:revision   a owl:ObjectProperty ; rdfs:range pat:Revision ; rdfs:comment "The revision that wrote this event." .
 
+# ---- Versions (formal-methods FMH-2.6c to H2.6f; the append-version operations of tools/persistence) ----
+
+pat:currentVersion  a owl:ObjectProperty ;
+    rdfs:comment "On a version row: the version written last for this identity, the one a read resolves to. Rewritten by every append of a version, and absent before the first." .
+pat:previousVersion a owl:ObjectProperty ;
+    rdfs:comment "On a version: the version of the same identity that was current when this one was written. Links the chain of versions, which a version of a family that states its members as changes is read back along. The domain's own supersession term, for example fnd:supersededBy, is asserted under the domain's rule and never by the write." .
+pat:addsMember      a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member the version adds to those of the version before it." .
+pat:dropsMember     a owl:ObjectProperty ;
+    rdfs:comment "On a version that states its members as changes: a member of the version before it that this version does not have. A member dropped by a version is out of every version from it on until a later one adds it again." .
+pat:checkpoint      a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:comment "True on a version that lists every member, under the domain's membership property, the first version and every dal:checkpointEvery versions after it, so that a read of members never follows a chain back further than the nearest checkpoint." .
+
 # ---- Txn claim (subject = urn:txn:{id}; lives in urn:g:txn) ----
 
 pat:rev        a owl:ObjectProperty ; rdfs:range pat:Revision ;
@@ -3273,6 +3310,10 @@ pat:constraint a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:comment "Th
 pat:claimedBy  a owl:ObjectProperty ;   rdfs:comment "The entity that owns this key value. At most one (P1). Released only by its owner, or on the owner's behalf by erasure (§24.5)." .
 pat:retiredBy  a owl:ObjectProperty ;   rdfs:comment "The former owner that retired this claim. Tombstone; the node is kept, unless the family's erasure policy deletes it (§24.5)." .
 pat:retiredAt  a owl:DatatypeProperty ; rdfs:range xsd:dateTime ; rdfs:comment "Audit only." .
+pat:quarantinedOwner a owl:ObjectProperty ;
+    rdfs:comment "In the quarantine graph, on a claim: an owner of a duplicated claim that the quarantine operation recorded (P7). The claim itself is not touched." .
+pat:quarantinedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime ;
+    rdfs:comment "In the quarantine graph, on a claim: when the operation recorded the owner. Audit only." .
 pat:counter    a owl:DatatypeProperty ; rdfs:range xsd:long ;
     rdfs:comment "P3 sentinel counter on a key shard node. Rewritten by every claim in the shard to materialise a write conflict." .
 
@@ -3294,8 +3335,8 @@ Installed on backends whose `commitValidation ≥ SHACL_CORE`; run as an audit o
 **On `sh:prefixes`:** `pat:TxnCardinalityShape`, below, uses `sh:prefixes pat:` inside a `sh:sparql` constraint. For a SHACL engine to resolve the `pat:` prefix used inside that embedded SPARQL string, the node named by `sh:prefixes` (`pat:`, i.e. the ontology's own namespace IRI) must itself carry `sh:declare` triples binding the prefix, as SHACL-SPARQL requires — it is not enough for the Turtle document containing the shape to declare `@prefix pat:`. Declare it once, alongside the vocabulary itself (Appendix A):
 
 ```turtle
-<https://example.org/lattice/patterns#>
-    sh:declare [ sh:prefix "pat" ; sh:namespace "https://example.org/lattice/patterns#"^^xsd:anyURI ] .
+<https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+    sh:declare [ sh:prefix "pat" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"^^xsd:anyURI ] .
 ```
 
 Without this triple, an engine that actually enforces `sh:declare` (rather than falling back to the enclosing document's prefixes, which is not guaranteed) fails to resolve `pat:` inside the embedded SPARQL and the shape does not validate as intended — silently, unless the engine is configured to error on unresolved prefixes.
@@ -3306,7 +3347,7 @@ Without this triple, an engine that actually enforces `sh:declare` (rather than 
 
 ```turtle
 @prefix sh:  <http://www.w3.org/ns/shacl#> .
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Version row: F4 (one source of truth), F7 (one value, one datatype), F10 (tombstone shape)
@@ -3437,7 +3478,7 @@ pat:DatasetShape
 
 ## Appendix D — Traceability to the source notes
 
-Every position this guide takes is grounded in one of the source documents; where the earlier sketch diverged from the sources, the guide follows the sources. The review in `docs/developer/notes/misalignment.md` listed the divergences; each is resolved here as follows.
+Every position this guide takes is grounded in one of the source documents; where the earlier sketch diverged from the sources, the guide follows the sources. Each divergence is resolved here as follows.
 
 | Position in this guide | Source(s) | Earlier sketch said |
 |---|---|---|
@@ -3485,11 +3526,11 @@ A review of ADR-A51 ([docs/developer/review/ADR-A51-review.md](../developer/revi
 
 ### D.2 The IRI-patterns remediation pass (2026-09)
 
-A second review ([docs/developer/review/IRI-patterns-remediation.md](../developer/review/IRI-patterns-remediation.md)), following the replacement of ADR-A51 by ADR-A82 and the framework-neutral rewrite of [iri-identity-patterns.md](iri-identity-patterns.md), found this guide had accumulated its own defects independent of the identity-policy question: non-portable datatype arithmetic, unbound-graph prefix scans, a fencing token that never advanced, a fork-detection query invalidated by the guide's own deterministic-IRI design, weak ETags, and several places where a genuine deployment trade-off was written as a single mandated answer rather than a declared choice. All mechanical defects are fixed in this pass; every trade-off is now a pointer to a `dal:` property on `ontology/persistence/spec/persistence.ttl`, never a mandated fix. Not attempted in that pass: renumbering the 16-digit worked examples, wiring the new `dal:` terms into the `tools/persistence` compiler, and TCK tests for the corrected behaviours (T-1 through T-11 remained as they were). The renumbering and the tests were done in D.3. See `docs/developer/status/rdf-sparql-patterns-remediation.md` for the itemised disposition.
+A second review, following the replacement of ADR-A51 by ADR-A82 and the framework-neutral rewrite of [iri-identity-patterns.md](iri-identity-patterns.md), found this guide had accumulated its own defects independent of the identity-policy question: non-portable datatype arithmetic, unbound-graph prefix scans, a fencing token that never advanced, a fork-detection query invalidated by the guide's own deterministic-IRI design, weak ETags, and several places where a genuine deployment trade-off was written as a single mandated answer rather than a declared choice. All mechanical defects are fixed in this pass; every trade-off is now a pointer to a `dal:` property on `ontology/persistence/spec/persistence.ttl`, never a mandated fix. Not attempted in that pass: renumbering the 16-digit worked examples, wiring the new `dal:` terms into the `tools/persistence` compiler, and TCK tests for the corrected behaviours (T-1 through T-11 remained as they were). The renumbering and the tests were done in D.3.
 
 ### D.3 The post-3866b21 remediation pass (2026-09)
 
-A third review ([docs/developer/review/iri-patterns-post-3866b21-review.md](../developer/review/iri-patterns-post-3866b21-review.md)) found that several D.2 fixes were incomplete or introduced new defects, and that some advice was unsafe for production. The itemised disposition is in [docs/developer/status/iri-patterns-post-3866b21-remediation.md](../developer/status/iri-patterns-post-3866b21-remediation.md). The substantive changes:
+A third review found that several D.2 fixes were incomplete or introduced new defects, and that some advice was unsafe for production. The substantive changes:
 
 | Position in this guide (now) | Was | Finding |
 |---|---|---|

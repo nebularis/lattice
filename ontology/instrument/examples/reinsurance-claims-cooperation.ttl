@@ -169,7 +169,6 @@ ex:claim-2 a ex:Claim .
 ex:settled-with-approval a elg:Condition ;
     elg:conditionKey "settled-pursuant-to-an-approval" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ins-voc:ActivityContract ;
     elg:requiredConcept ins-voc:Approve .
@@ -211,6 +210,27 @@ ex:approve-stated a ins:Power , ins:Template ;
     ins:arisesUnder ex:term-1-2 ;
     ins:holder ex:Reinsurer ; ins:counterparty ex:Reinsured ;
     ins:activity ins-voc:Approve .
+
+# Each role occupancy holds from before the first act in this example.
+ex:insurer-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:insured-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:reinsured-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:reinsurer-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:policy-wording-identity a fnd:PersistentIdentity .
+ex:reinsurance-wording-identity a fnd:PersistentIdentity .
+ex:insured-occ-identity a fnd:PersistentIdentity .
+ex:insurer-occ-identity a fnd:PersistentIdentity .
+ex:reinsured-occ-identity a fnd:PersistentIdentity .
+ex:reinsurer-occ-identity a fnd:PersistentIdentity .
+ex:policy-identity a fnd:PersistentIdentity .
+ex:reinsurance-identity a fnd:PersistentIdentity .
+ex:pol-sec-4-identity a fnd:PersistentIdentity .
+ex:re-sec-1-identity a fnd:PersistentIdentity .
+ex:pol-cl-4-1-identity a fnd:PersistentIdentity .
+ex:re-cl-1-1-identity a fnd:PersistentIdentity .
+ex:re-cl-1-2-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ============
 
@@ -254,7 +274,6 @@ ex:arbitrary a skos:Concept ; rdfs:label "arbitrary, as determined" .
 ex:refused-arbitrarily a elg:Condition ;
     elg:conditionKey "refusal-found-arbitrary" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:arbitrary .
 

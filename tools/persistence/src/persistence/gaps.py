@@ -72,7 +72,7 @@ def _infrastructure_graphs_fixed(ct: CompiledTarget) -> Iterable[Gap]:
         )
 
 
-_WRITING = {"create-if-absent", "cas-replace", "tombstone-delete", "append"}
+_WRITING = {"create-if-absent", "cas-replace", "tombstone-delete", "append", "append-version"}
 
 
 def _retention_and_epoch_bump_not_generated(ct: CompiledTarget) -> Iterable[Gap]:

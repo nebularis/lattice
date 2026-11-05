@@ -4,7 +4,7 @@
 # Witness for revision-multi-txn-audit. One revision carries two txn values,
 # a merged fork. The second revision is in the pinned graph, so the audit is
 # shown to read it as well as the registry-listed buckets.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:txlog/1> {
   <urn:rev:1> a pat:Revision ; pat:txn <urn:txn:a>, <urn:txn:b> .

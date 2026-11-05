@@ -2,6 +2,9 @@
 
 # Design Sketches Validation Summary
 
+**Unit ID:** `design-sketches-validation-summary`
+**Status:** merged 2026-09-20. Validation of seven design sketches against the codebase, complete.
+
 **Date:** 2026-09-20  
 **Scope:** 7 design sketches in `/docs/developer/sketches/`  
 **Assessment:** Implementation extent and status for each design
@@ -103,7 +106,7 @@ All seven design sketches have been validated against the codebase, accepted ADR
 
 **Sketch:** [governance-and-versioning-migration.md](../sketches/governance-and-versioning-migration.md)  
 **Status Document:** [governance-surfaces.md](./governance-surfaces.md)  
-**Plan Document:** [governance-surfaces-integration.md](./governance-surfaces-integration.md)  
+**Plan Document:** [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md)  
 **What it describes:** UX design for MORK review and Surface authoring (role model, evidence rendering, decision units)
 
 **Implementation (Skeleton):**
@@ -165,7 +168,7 @@ All seven design sketches have been validated against the codebase, accepted ADR
 | MTP-L0 Generator Sketch | ✅ Complete | [llm-training-mtp.md](./llm-training-mtp.md) | — | Integrated into Phase 1 build |
 | MTP L2 Generator Sketch.md | ✅ Complete | [llm-training-mtp.md](./llm-training-mtp.md) | — | Integrated into Phase 1 build |
 | mork-eligibility-compiler.md | ⏳ Implemented, awaiting validation | [eligibility-compiler.md](./eligibility-compiler.md) | — | Requires network env for test run |
-| governance-and-versioning-migration.md | 🟡 Skeleton UI | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](./governance-surfaces-integration.md) | Phase 2 & 5 integration plan |
+| governance-and-versioning-migration.md | 🟡 Skeleton UI | [governance-surfaces.md](./governance-surfaces.md) | [governance-surfaces-integration.md](../plans/governance-surfaces-integration.md) | Phase 2 & 5 integration plan |
 | mtp-implementation-plan.md | ✅ Executed | [mtp-execution.md](./mtp-execution.md) | — | Plan complete, roadmap now closed |
 | implementation-handover.md | 🗄️ Archived | [implementation-handover-historical.md](./implementation-handover-historical.md) | — | Historical reference only |
 

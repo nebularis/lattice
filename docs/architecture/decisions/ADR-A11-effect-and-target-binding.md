@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-11: Effect payload and target binding contract
+# ADR-A11: Effect payload and target binding contract
 
-## Status
-
-Accepted. Target binding amended by [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) decision 2 (2026-10-01): a target is any resource through `bhv:targets`, checked by the shapes of the layer that declares the target kind.
+**Status:** Accepted. Target binding amended by [ADR-A106](ADR-A106-behaviour-configuration-runtime-occasions-and-records.md) decision 2 (2026-10-01): a target is any resource through `bhv:targets`, checked by the shapes of the layer that declares the target kind.
 
 ## Context
 

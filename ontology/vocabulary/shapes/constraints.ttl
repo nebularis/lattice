@@ -18,17 +18,14 @@
 #
 # The fourth shape (Historical provenance time) needs a resolution time that
 # belongs to whatever versioned record asserted voc:resolvedUnder, and
-# Vocabulary itself declares no such record class or timestamp property (the
-# sketch, §"SHACL validation", anticipates exactly this and permits fixture
-# metadata or a documented validation profile in its place). This file
-# therefore introduces one validation-profile-only term for that purpose:
+# Vocabulary itself declares no such record class or timestamp property. This
+# file therefore introduces one validation-profile-only term for that purpose:
 #
 #   vvp:resolvedAt — a valid-time "as-of" query point: the instant a
 #   voc:resolvedUnder-bearing record wants its binding resolved as of, on the
 #   same axis as fnd:validFrom/fnd:validTo and resolve()'s own `at` parameter.
-#   It is not a transaction-time "recorded when" timestamp (the guide's own
-#   convention for that axis is fnd:recordedAt/an ex:occurredAt-shaped
-#   property, guide §23.3) — naming it vvp:resolvedAt rather than
+#   It is not a transaction-time "recorded when" timestamp (that axis is
+#   fnd:recordedAt or an ex:occurredAt-shaped property) — naming it vvp:resolvedAt rather than
 #   vvp:recordedAt is deliberate, to avoid suggesting it answers "when was
 #   this written down" when it answers "resolved as of when." Not part of the
 #   normative Vocabulary specification (spec/vocabulary.ttl); used only by
@@ -121,3 +118,10 @@ voc:HistoricalProvenanceTimeShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+voc:BindingClosureShape a sh:NodeShape ;
+    sh:targetClass voc:BindingClosure ;
+    sh:property [ sh:path voc:closesBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:class voc:SchemeBinding ;
+        sh:message "A closure names exactly one scheme binding." ] ;
+    sh:property [ sh:path voc:closedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype <http://www.w3.org/2001/XMLSchema#dateTime> ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "A closure states exactly one zoned instant." ] .

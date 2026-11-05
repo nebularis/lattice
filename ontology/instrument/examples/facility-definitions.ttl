@@ -122,7 +122,7 @@ ex:MaterialAdverseEffect a skos:Concept ; rdfs:label "Material Adverse Effect" .
 # Placeholders: conditions stated, not yet evaluable (C13).
 ex:mae a elg:Condition ;
     elg:conditionKey "material-adverse-effect-on-the-obligors" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:adverse-effect .
 ex:adverse-effect a skos:Concept ;
@@ -130,14 +130,14 @@ ex:adverse-effect a skos:Concept ;
 
 ex:delivered-by-hand a elg:Condition ;
     elg:conditionKey "notice-delivered-by-hand" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:hand-delivery .
 ex:hand-delivery a skos:Concept ; rdfs:label "the notice has been delivered by hand to the addressee" .
 
 ex:notice-received a elg:Condition ;
     elg:conditionKey "notice-received" ;
-    elg:matchStrategy elg:ExactMatch ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:ExactMatch ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:received .
 ex:received a skos:Concept ; rdfs:label "the notice has been received by the addressee" .
@@ -234,6 +234,25 @@ ex:borrower-membership a pty:GroupMembership ;
     pty:memberOf ex:obligors ; pty:memberOccupancy ex:borrower-occ .
 ex:guarantor-membership a pty:GroupMembership ;
     pty:memberOf ex:obligors ; pty:memberOccupancy ex:guarantor-occ .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:fenwick-wording-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:guarantor-occ-identity a fnd:PersistentIdentity .
+ex:lender-occ-identity a fnd:PersistentIdentity .
+ex:obligors-identity a fnd:PersistentIdentity .
+ex:fenwick-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-18-identity a fnd:PersistentIdentity .
+ex:sec-23-identity a fnd:PersistentIdentity .
+ex:sec-30-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-1-2-identity a fnd:PersistentIdentity .
+ex:cl-1-3-identity a fnd:PersistentIdentity .
+ex:cl-18-1-identity a fnd:PersistentIdentity .
+ex:cl-23-1-identity a fnd:PersistentIdentity .
+ex:cl-30-2-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #

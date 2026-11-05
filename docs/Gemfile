@@ -1,9 +1,9 @@
 source "https://rubygems.org"
 
-# Pulls in the exact Jekyll version + plugin set GitHub Pages builds with,
-# so "works locally" and "works on Pages" stay the same claim.
-gem "github-pages", group: :jekyll_plugins
+# Jekyll itself. GitHub Pages builds docs/ with its own toolchain, so this Gemfile governs the local preview
+# only. The github-pages gem was dropped because it pins jekyll-remote-theme 0.4.3, which holds rubyzip below
+# 3.0 and so below the fix for GHSA-47m2-wp7j-p9vc. The site uses no theme and no plugin that gem adds.
+gem "jekyll", "~> 4.4"
 
-# Jekyll's built-in dev server (`jekyll serve`) needs webrick, which Ruby
-# stopped bundling by default from 3.0 onward.
+# Jekyll's built-in dev server (`jekyll serve`) needs webrick, which Ruby stopped bundling by default from 3.0 onward.
 gem "webrick"

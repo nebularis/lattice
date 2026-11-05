@@ -13,7 +13,6 @@ ex:tier-premium a skos:Concept ; skos:prefLabel "Premium tier"@en .
 ex:exact-condition
     a elg:ExactCondition ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
     # (sh:Warning), because the condition would state nothing to match against.
@@ -22,7 +21,6 @@ ex:exact-condition
 ex:set-condition
     a elg:SetMembershipCondition ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
     elg:wildcardSemantics elg:NoWildcard ;
     # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
     # (sh:Warning), because the condition would state nothing to match against.
@@ -31,7 +29,6 @@ ex:set-condition
 ex:interval-condition
     a elg:IntervalCondition ;
     elg:matchStrategy elg:IntervalContainment ;
-    elg:compatibilityOperation elg:DimensionConsistent ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet ex:allowed-band .
 
@@ -41,5 +38,4 @@ ex:allowed-band
 ex:wildcard-condition
     a elg:WildcardCondition ;
     elg:matchStrategy elg:Wildcard ;
-    elg:compatibilityOperation elg:AnySufficient ;
     elg:wildcardSemantics elg:SingleDimensionWildcard .

@@ -4,7 +4,7 @@
 """
 The MORK backend compiler family (ADR-A23, ADR-A24, delivery-plan Phase 5).
 
-Namespace bindings, following the convention ``tools/mork2rml.py`` and
+Namespace bindings, following the convention ``tools/mork/src/mork2rml.py`` and
 ``tools/surface/namespaces.py`` both already establish: declared once here,
 imported everywhere in this package.
 
@@ -28,6 +28,7 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS, XSD
 MORK = Namespace("http://www.nebularis.org/ontologies/Mork#")
 EXE = Namespace("https://www.nebularis.org/neuro-semantic/lattice/executable#")
 ELG = Namespace("https://www.nebularis.org/neuro-semantic/lattice/eligibility#")
+FND = Namespace("https://www.nebularis.org/neuro-semantic/lattice/foundation#")
 QNT = Namespace("https://www.nebularis.org/neuro-semantic/lattice/quantification#")
 VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 SWRL = Namespace("http://www.w3.org/2003/11/swrl#")
@@ -52,6 +53,7 @@ OUTPUT_PREFIXES = {
 __all__ = [
     "ELG",
     "EXE",
+    "FND",
     "MORK",
     "OUTPUT_PREFIXES",
     "OWL",

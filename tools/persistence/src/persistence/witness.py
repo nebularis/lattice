@@ -13,9 +13,13 @@ rule in four families and requires, for each, at least one fixture that
     kind, or the class name of another raised exception.
 ``warning``
     a named ``Diagnostic`` of severity WARNING.
+``info``
+    a named ``Diagnostic`` of severity INFO (H2.8b), which reports a fact about a configuration or a run and fails nothing. A fixture may
+    set a compile option with a ``# option: warn-unbounded-payload`` or ``# option: no-parameter-guards`` line.
 ``shape``
     a ``sh:NodeShape`` in ``ontology/persistence/shapes/constraints.ttl``.
-    It is witnessed when validating a fixture reports a result from it.
+    It is witnessed when validating a fixture reports a result from it, and
+    another fixture, which may be an expected compiled profile, conforms.
 ``audit``
     an always-on audit query template. It is witnessed by a dataset that
     makes it return at least one row, and a clean dataset that makes it
@@ -44,21 +48,23 @@ import pyshacl
 from rdflib import RDF, RDFS, Dataset, Graph, Literal, Namespace, URIRef
 
 from .compiler import CompileError, compile_targets, compile_to_graph
+from .builders import BUILDERS
 from .instantiate import instantiate_by_target
+from .ir_render import fill_slots
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
-REFUSAL, WARNING, SHAPE, AUDIT = "refusal", "warning", "shape", "audit"
-FAMILIES = (REFUSAL, WARNING, SHAPE, AUDIT)
+REFUSAL, WARNING, SHAPE, AUDIT, INFO = "refusal", "warning", "shape", "audit", "info"
+FAMILIES = (REFUSAL, WARNING, INFO, SHAPE, AUDIT)
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_DIR.parents[3]
 SPEC_TTL = REPO_ROOT / "ontology" / "persistence" / "spec" / "persistence.ttl"
 SHAPES_TTL = REPO_ROOT / "ontology" / "persistence" / "shapes" / "constraints.ttl"
 EXAMPLES_DIR = REPO_ROOT / "ontology" / "persistence" / "examples"
+EXPECTED_PROFILES_DIR = REPO_ROOT / "ontology" / "persistence" / "test" / "expected-profiles"
 WITNESS_DIR = REPO_ROOT / "tools" / "persistence" / "tests" / "witnesses"
 KNOWN_GAPS = WITNESS_DIR / "known-gaps.txt"
-TEMPLATE_DIR = PACKAGE_DIR / "templates"
 
 # Exceptions that are refusals in their own right, keyed by class name.
 # ``CrossAxisViolation`` is keyed by its ``kind`` instead.
@@ -167,6 +173,8 @@ def scan_source(source_dir: Path = PACKAGE_DIR) -> tuple[set[Rule], list[str]]:
         if name not in _REFUSAL_CALLS and name not in _WARNING_CALLS:
             continue
         family = REFUSAL if name in _REFUSAL_CALLS else WARNING
+        if name == "Diagnostic" and any(k.arg == "severity" and isinstance(k.value, ast.Constant) and k.value.value == "INFO" for k in call.keywords):
+            family = INFO
         kinds = source.kinds(_kind_node(call), owner)
         if kinds is None:
             problems.append(f"{filename}:{call.lineno}: cannot determine the kind passed to {name}()")
@@ -183,8 +191,8 @@ def shape_rules(shapes: Graph) -> set[Rule]:
     return {Rule(SHAPE, _local(s)) for s in shapes.subjects(RDF.type, SH.NodeShape) if isinstance(s, URIRef)}
 
 
-def audit_rules(template_dir: Path = TEMPLATE_DIR) -> set[Rule]:
-    return {Rule(AUDIT, p.name.removesuffix(".mustache")) for p in sorted(template_dir.glob("*-audit.mustache"))}
+def audit_rules() -> set[Rule]:
+    return {Rule(AUDIT, name) for name in sorted(BUILDERS) if name.endswith("-audit")}
 
 
 def _local(iri) -> str:
@@ -231,6 +239,22 @@ def _term(graph: Graph, text: str):
     return URIRef(graph.namespace_manager.expand_curie(text))
 
 
+@lru_cache(maxsize=None)
+def _parsed(text: str) -> Graph:
+    """One Turtle document parsed once per process. Never mutate the result, copy it (``Graph() + g`` keeps the blank-node labels)."""
+    graph = Graph()
+    graph.parse(data=text, format="turtle")
+    return graph
+
+
+def _add_parsed(graph: Graph, path: Path) -> None:
+    """What ``graph.parse(path)`` leaves in ``graph``, its triples and its prefix bindings, from the cached parse."""
+    parsed = _parsed(path.read_text(encoding="utf-8"))
+    for prefix, namespace in parsed.namespaces():
+        graph.bind(prefix, namespace)
+    graph += parsed
+
+
 def _load_fixture(path: Path) -> Graph:
     """The spec plus one fixture.
 
@@ -254,13 +278,12 @@ def _load_fixture(path: Path) -> Graph:
     directives = [m.groups() for line in text.splitlines() if (m := _DIRECTIVE.match(line))]
     bases = [value for kind, value in directives if kind == "base"]
     graph = Graph()
-    graph.parse(SPEC_TTL, format="turtle")
+    _add_parsed(graph, SPEC_TTL)
     if path.name == "capability-spec-example.ttl":
         bases = ["baseline-single-class.ttl"]
     for base in bases:
-        graph.parse(next(d / base for d in (EXAMPLES_DIR, WITNESS_DIR) if (d / base).is_file()), format="turtle")
-    body = Graph()
-    body.parse(data=text, format="turtle")
+        _add_parsed(graph, next(d / base for d in (EXAMPLES_DIR, WITNESS_DIR) if (d / base).is_file()))
+    body = _parsed(text)
     for kind, value in directives:
         if kind != "remove":
             continue
@@ -282,16 +305,19 @@ def observe_compile(fixtures: Iterable[Path]) -> Observed:
     it emits."""
     observed: Observed = {}
     for path in fixtures:
+        options = set(re.findall(r"^#\s*option:\s*(\S+)", path.read_text(encoding="utf-8"), re.M))
         try:
-            compiled = compile_targets(_load_fixture(path))
+            compiled = compile_targets(
+                _load_fixture(path), guards="no-parameter-guards" not in options, warn_unbounded_payload="warn-unbounded-payload" in options
+            )
         except CompileError as error:
             cause = error.cause
             _record(observed, Rule(REFUSAL, getattr(cause, "kind", None) or type(cause).__name__), path.name)
             continue
         for target in compiled:
             for diagnostic in target.diagnostics:
-                if diagnostic.severity == "WARNING":
-                    _record(observed, Rule(WARNING, diagnostic.kind), path.name)
+                if diagnostic.severity in ("WARNING", "INFO"):
+                    _record(observed, Rule(WARNING if diagnostic.severity == "WARNING" else INFO, diagnostic.kind), path.name)
     return observed
 
 
@@ -421,12 +447,8 @@ def run_audit(witness: AuditWitness) -> int:
     missing = sorted(set(_SLOT_PATTERN.findall(text)) - set(witness.bindings))
     if missing:
         raise ValueError(f"{witness.path.name}: no '# bind:' line for slot(s) {', '.join(missing)}")
-    # The caller's own step (render.REQUEST_TIME_SLOTS). A slot is a literal
-    # triple-brace tag with no escaping, so plain substitution is equivalent to
-    # a Mustache library, and keeps persistence.render the only chevron user.
-    query = text
-    for name, value in witness.bindings.items():
-        query = query.replace("{{{" + name + "}}}", value)
+    # The caller's own step: a slot is a plain-text marker, filled by substitution (H2.9-Q1).
+    query = fill_slots(text, witness.bindings)
     with _quiet_rdflib():
         return len(list(witness.dataset.query(query)))
 
@@ -562,7 +584,7 @@ def named_witness_problems(observed: Observed, witness_dir: Path = WITNESS_DIR) 
         return problems
     for path in sorted(witness_dir.glob("*.ttl")):
         family, _, name = path.name.removesuffix(".ttl").partition("-")
-        if family not in (REFUSAL, WARNING, SHAPE) or not name:
+        if family not in (REFUSAL, WARNING, INFO, SHAPE) or not name:
             continue
         if path.name not in observed.get(Rule(family, name), set()):
             seen = sorted(str(r) for r, files in observed.items() if path.name in files)
@@ -576,7 +598,8 @@ def _observations() -> tuple[Observed, tuple[str, ...]]:
     fixture, and run every audit witness."""
     fixtures = list(compile_fixtures())
     observed = observe_compile(fixtures)
-    fired, conforming = observe_shapes(fixtures)
+    # The expected compiled profiles are the positive fixtures of the shapes over a compiled profile (H2.7). They are not compiled.
+    fired, conforming = observe_shapes([*fixtures, *sorted(EXPECTED_PROFILES_DIR.glob("*.expected.ttl"))])
     problems_shapes: list[str] = []
     for rule, witnesses in fired.items():
         if rule in conforming:
@@ -596,6 +619,7 @@ def check_witness_coverage() -> Report:
 __all__ = [
     "AUDIT",
     "AuditWitness",
+    "INFO",
     "REFUSAL",
     "Report",
     "Rule",

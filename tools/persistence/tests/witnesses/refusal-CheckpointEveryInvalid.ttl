@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A checkpoint interval of zero, which no version number is a multiple of in a useful sense.
+# base: write-discipline-delta-membership.ttl
+# remove: ex:QuoteWriteProfile dal:checkpointEvery
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:QuoteWriteProfile dal:checkpointEvery "0"^^xsd:long .

@@ -24,7 +24,6 @@ ex:industrial-fire a skos:Concept ; skos:prefLabel "Industrial Fire"@en ; skos:b
 ex:hierarchical-condition
     a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:hazard-contract ;
     # Removing elg:requiredConcept raises elg:ConceptConditionDeclarationShape
@@ -48,6 +47,4 @@ ex:reference-profile a elg:OperationalProfile .
 ex:hierarchical-profile
     a elg:AdmissionProfile ;
     elg:hasCondition ex:hierarchical-condition ;
-    elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .

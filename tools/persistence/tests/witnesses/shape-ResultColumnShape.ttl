@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A result column whose kind is outside the closed enumeration of dal:ColumnKind.
+# base: _base-contract.ttl
+# remove: ex:audit-result-n dal:columnKind dal:ConcatenationColumn
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:audit-result-n dal:columnKind dal:Bogus .

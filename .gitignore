@@ -1,11 +1,20 @@
+# Externals
+temp-ext*
+
 # Operating-system and editor state
 .DS_Store
 .idea/
 .vscode/
 
 # Build artifacts and caches consolidated in .build/
+.build/site/
+.build/knowledge/
+.build/config-studio/
+.build/config-studio-test-results/
+.build/config-studio-stack-results/
 .build/pytest-cache/*
 !.build/pytest-cache/.gitkeep
+workers/.build/
 .build/full-sweep/*
 .build/yarn-cache/*
 !.build/yarn-cache/.gitkeep
@@ -100,3 +109,14 @@ WINGMAN
 # Generated benchmark reports (ADR-A124)
 benchmark/*/report.json
 benchmark/*/report.md
+benchmark/*/operations.json
+benchmark/*/operations/
+benchmark/*/sweep.json
+benchmark/*/sweep.md
+benchmark/*/cross_family.json
+benchmark/*/cross_family.md
+benchmark/*/late_posting.json
+benchmark/*/late_posting.md
+
+# The Configuration Studio test harness's runs and caches (tools/testing/studio_harness)
+.build/studio-harness/

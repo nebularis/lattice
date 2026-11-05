@@ -58,7 +58,8 @@ def recipe_validator():
 @pytest.fixture(scope="module")
 def anchor_recipes() -> dict[str, dict]:
     doc = json.loads((CONTRACTS / "anchor-vectors.json").read_text(encoding="utf-8"))
-    return {s["recipe"]["strategy"]: s["recipe"] for s in doc["sets"]}
+    # A set whose description says "not compiled" is hand-authored (OR-13: a permissive surrogate pattern) and has no fixture.
+    return {s["recipe"]["strategy"]: s["recipe"] for s in doc["sets"] if "not compiled" not in s.get("description", "")}
 
 
 # ---- The compiler reproduces the anchors ---------------------------------------------------------

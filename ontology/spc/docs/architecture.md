@@ -1,5 +1,7 @@
 # SPC Reference Architecture
 
+**Status.** A design companion to the SPC specification, not normative. Where it differs from [the SPC README](../README.md) the README holds. Nothing here is implemented, and the `morked` flag and the informal completeness claim in Phase 4 decide nothing: a mapping that passes SHACL on a sample gives no guarantee for every input, so runtime validation is never skipped on its account.
+
 The architecture decomposes into four deployment-time phases and one runtime phase. Each phase has clearly defined inputs, outputs, responsibilities, and technology bindings.
 
 ```mermaid
@@ -214,8 +216,8 @@ flowchart LR
 
     subgraph AB["📊 A-Box (RDF/Turtle)"]
         RDF["<pre>
-@prefix : &lt;http://spc.march.com/protocol/&gt; .
-@prefix spc: &lt;http://spc.march.com/ontology/core/&gt; .
+@prefix : &lt;https://www.nebularis.org/neuro-semantic/lattice/spc/protocol/&gt; .
+@prefix spc: &lt;https://www.nebularis.org/neuro-semantic/lattice/spc#&gt; .
 
 :ProtocolIndividual
     a spc:ProtocolIndividual ;

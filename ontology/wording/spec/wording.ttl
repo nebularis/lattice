@@ -14,20 +14,20 @@
 
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
 
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
@@ -155,13 +155,13 @@ wrd:displayText a owl:DatatypeProperty , owl:FunctionalProperty ;
 	rdfs:comment "The words a reference part shows, as the drafter wrote them: an inflected form or a variable's printed name. Subject: a text part with a reference. Value: a string, at most one. Without one, a renderer shows the target's own label." .
 
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
 	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract, that its wording relies on." ;
 	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
@@ -348,10 +348,10 @@ wrd:includes a owl:ObjectProperty ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Element ;
 	rdfs:comment "An element version the instance includes. Recorded at assembly, never recomputed. Subject: an assembled wording. Value: an element." .
 
-wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
+wrd:hasValue a owl:ObjectProperty ;
 	rdfs:label "has value"@en ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:VariableValue ;
-	rdfs:comment "A value the instance supplies. Each value record belongs to one assembled wording. Subject: an assembled wording. Value: a variable value." .
+	rdfs:comment "A value the instance supplies. A value record may be supplied by several assembled wordings, such as those of one instrument before and after an endorsement that leaves it alone. Subject: an assembled wording. Value: a variable value." .
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;
@@ -426,3 +426,14 @@ wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:label "placed under"@en ;
 	rdfs:domain wrd:Element ; rdfs:range wrd:Element ;
 	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .
+
+wrd:AssemblyModel a owl:Class ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable ;
+	rdfs:label "Assembly model"@en ;
+	rdfs:comment "A set of rules for drawing an assembled wording from a form: how inclusion conditions are decided, what an undetermined one does, and how a variation slot is resolved." ;
+	fnd:utility "Declare one individual per model, with an identity. An assembler names the model version it applied on every assembled wording it produces, with wrd:assembledUnder." .
+
+wrd:assembledUnder a owl:ObjectProperty ;
+	rdfs:label "assembled under"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:AssemblyModel ;
+	rdfs:comment "The assembly model version the assembled wording was produced under. Subject: an assembled wording. Value: an assembly model, exactly one for a wording drawn from a form (law WA1), none for a wording written from scratch." .

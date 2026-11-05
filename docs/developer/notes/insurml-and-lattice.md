@@ -210,7 +210,7 @@ flowchart LR
 
 | Layer of concern | InsurML | LATTICE |
 |---|---|---|
-| Identity and versions | IRI policy with patterns R0 to R12, versions as dated IRIs (D23, D67) | Foundation: `fnd:Version`, `fnd:PersistentIdentity`, `fnd:supersededBy`, keys (ADR-A114). Identity patterns chosen per deployment (ADR-A82) |
+| Identity and versions | IRI policy with patterns R0 to R12, versions as dated IRIs (D23, D67) | Foundation: `fnd:Versioned`, `fnd:PersistentIdentity`, `fnd:supersededBy`, keys (ADR-A114). Identity patterns chosen per deployment (ADR-A82) |
 | Controlled vocabulary | SKOS schemes, `iml:typeScheme`, `iml:attributeScheme` | Vocabulary: `voc:SchemeContract`, scoped and time-bounded `voc:SchemeBinding` with precedence (ADR-A85) |
 | Values and units | `amount` with an ISO 4217 currency, datatypes on variables | Quantification: value spaces, units, conversions, bounds, ranges, range sets, unresolved values, declared operations |
 | Parties | none (agents are an open IRI item, O1) | Party: actors, roles, occupancies, participation groups with shares, delegation |
@@ -260,7 +260,7 @@ they are: **same** (one can be read as the other), **close** (a convention bridg
 
 | InsurML | LATTICE | Verdict | Notes |
 |---|---|---|---|
-| every contract, group and component IRI is a version (D67) | every `wrd:Wording` and `wrd:Element` is an `fnd:Version` | same | |
+| every contract, group and component IRI is a version (D67) | every `wrd:Wording` and `wrd:Element` is an `fnd:Versioned` | same | |
 | `dcterms:identifier`, a slug shared by all versions | `fnd:hasIdentity` to a `fnd:PersistentIdentity`, with keys on it (`fnd:naturalKey`, ADR-A114) | close | InsurML has no identity resource. A slug is a natural key in LATTICE terms |
 | `iml:version`, a date with `-2`, `-3` suffixes (D23) | none on instances. Ontology documents use SemVer (ADR-A86) | partial | LATTICE does not prescribe how an instance version is labelled |
 | `iml:previousVersion` | inverse of `fnd:supersededBy` (functional, not transitive) | same | |
@@ -528,7 +528,7 @@ terms against `docs/glossary.md` and the insurance modules) applies to every map
 | Suitability | a condition on inclusion (D82) | none | low |
 | Schedule | a group type, a component type (Schedule Document) and a document scope value | `wrd-voc:Schedule`, a part holding an instance's particulars | low |
 | Market | an object attribute compared through conditions | a `voc:BindingScope` | medium |
-| Version | an IRI with a date | an `fnd:Version` with a persistent identity | low |
+| Version | an IRI with a date | an `fnd:Versioned` with a persistent identity | low |
 
 ---
 

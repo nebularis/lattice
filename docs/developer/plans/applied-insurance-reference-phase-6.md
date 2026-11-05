@@ -25,17 +25,27 @@ parties resolved per claim.
 | Slice | Content |
 |---|---|
 | AIR-6.1 | submission package, its lifecycle and its citation of an exposure set version |
-| AIR-6.2 | claim, loss cause chain (initiating, proximate, mechanism), role occupancies filled at notification |
-| AIR-6.3 | occurrence grouping into events by anchored window, if substrate track S4 has landed. Otherwise deferred |
-| AIR-6.4 | causation profiles selected by governing law, only after W-Q2's legal review |
+| AIR-6.2 onwards | claims, planned in [applied-insurance-reference-claims.md](applied-insurance-reference-claims.md) |
 
-Milestone M6 closes in 6.1 and 6.2.
+**Claims moved to their own plan (2026-10-16).** The [claims plan](applied-insurance-reference-claims.md)
+subsumes AIR-6.2 to AIR-6.4 with a fuller treatment, from the [claims sketch](../sketches/insurance-claims-ontology.md)
+and its companions. AIR-6.2 is now the claims core, AIR-6.3 (aggregation) and AIR-6.4 (causation
+profiles) keep their meaning, and AIR-6.5 to AIR-6.12 and AIR-6.W0 to AIR-6.W7 are new. This plan
+keeps AIR-6.1 (submission).
+
+Milestone M6 closes in AIR-6.1 and the claims plan's AIR-6.5.
 
 ## AIR-6.1 in detail
 
+**Added 2026-10-21, from phase 7's P7-Q2.** A request records the structure the broker asks for, as
+requested layers: each an attachment, a limit and a basis on the loss axis, with the scope it is
+asked for. A requested layer is a fact of what was asked, never the reference against which anything
+is computed as missing. Placed layers are phase 7's (AIR-7.1). If AIR-6.1 is built on its trip
+before this note reaches that branch, the requested layer is added by AIR-7.0's examples instead.
+
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-6.1] …`, the
 last being `[AIR-6.1] Handoff`. **Validation Pack:**
-[applied-insurance-reference-6.1](../validation/applied-insurance-reference-6.1.md). **Decisions:**
+[applied-insurance-reference-6.1](../validation/AIR-6.1.md). **Decisions:**
 ADR-A98 (decision 6: the prefix is fixed when the module is built). **Sketch:** asset exposure
 ontology §1, §5.8. **Milestone:** M6, first half. **Decided 2026-10-14:** AIR-6.1-Q1 (below), at
 its leaning.
@@ -56,7 +66,7 @@ What is left out, and what each item can build on, is in [leftovers](air-leftove
 
 `ontology/applied/insurance/submission/`, literate from the start (AIR-2.0): `README.md`,
 `spec/submission.ttl`, `vocab/submission-vocab.ttl`, `shapes/` with `.version` `0.1.0`,
-`examples/`. Namespace `https://www.nebularis.org/neuro-semantic/insurance/submission#`, prefix
+`examples/`. Namespace `https://www.nebularis.org/neuro-semantic/lattice/insurance/submission#`, prefix
 `sbm:` (proposed here under ADR-A98 decision 6), vocabulary `…/insurance/submission/vocab#`
 (`sbm-voc:`). Version IRIs `…/insurance/submission/0.1.0` and `…/insurance/submission-vocab/0.1.0`.
 The spec imports the exposure spec (`0.1.0`), and Foundation, Vocabulary and Party at the versions
@@ -67,7 +77,7 @@ are added, and the tests go in `tools/test_submission.py`, modelled on `tools/te
 
 | Term | Definition |
 |---|---|
-| `sbm:Submission` | `⊑ fnd:Version ⊓ fnd:Governable ⊓ fnd:Evidenced`, identity `sbm:SubmissionIdentity`. Exactly one `sbm:exposureSet` (an `aeo:ExposureSet` version, not its identity), any number of `sbm:requirement` (`aeo:CoverageRequirement`) and `sbm:existingCover` (`aeo:ExistingCover`), at least one `sbm:classOfBusiness` (`⊑ icm:classOfBusiness`), any number of `sbm:placementScope` (`voc:BindingScope`, the markets and regimes, which select the scheme bindings and the market profile, AIR-4.6), at most one `sbm:proposedPeriod` (`fnd:TemporalScope`), at most one `sbm:presentedBy` (`pty:RoleOccupancy`, the broker) |
+| `sbm:Submission` | `⊑ fnd:Versioned ⊓ fnd:Governable ⊓ fnd:Evidenced`, identity `sbm:SubmissionIdentity`. Exactly one `sbm:exposureSet` (an `aeo:ExposureSet` version, not its identity), any number of `sbm:requirement` (`aeo:CoverageRequirement`) and `sbm:existingCover` (`aeo:ExistingCover`), at least one `sbm:classOfBusiness` (`⊑ icm:classOfBusiness`), any number of `sbm:placementScope` (`voc:BindingScope`, the markets and regimes, which select the scheme bindings and the market profile, AIR-4.6), at most one `sbm:proposedPeriod` (`fnd:TemporalScope`), at most one `sbm:presentedBy` (`pty:RoleOccupancy`, the broker) |
 | `sbm:Approach` | `⊑ fnd:Evidenced ⊓ fnd:TemporallyScoped`. Exactly one `sbm:approachOf` (submission), exactly one `sbm:insurer` (`pty:Actor`), exactly one `sbm:approachStatus` |
 | `sbm:InformationRequest` | `⊑ fnd:Evidenced`. Exactly one `sbm:requestOf` (approach), exactly one `sbm:requestStatus`, any number of `sbm:asksForAttribute` (attribute type concepts, AIR-4.2) and `sbm:asksForFamily` (profile family concepts), at most one `sbm:questionText` (the insurer's own words, `xsd:string`), any number of `sbm:answeredBy` (`aeo:Assessment` or `fnd:Evidence`) |
 | `sbm:InformationGap` | `⊑ fnd:DerivedArtefact`. Exactly one `sbm:gapIn` (submission), exactly one `sbm:missingAttribute`, exactly one `sbm:gapSubject` (location, asset or legal entity), at most one `sbm:gapFor` (the request it answers, or none when the gap comes from a peril's relevant attributes) |
@@ -125,4 +135,4 @@ posture of the insured. One location already has them, so the gaps are the other
 
 ## Exit gate
 
-M6 demonstrated. W-Q2 and W-Q3 answered or carried as open items in the module READMEs.
+AIR-6.1's part of M6 demonstrated. The claims plan has its own exit gate (its §10), which closes the rest of M6, and M7 and M8.

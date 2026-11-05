@@ -17,7 +17,7 @@ from persistence.contract import BUILDER_VERSIONS, OPERATION_KINDS, stem_of
 
 def test_h2_6_t12_every_builder_has_a_version_and_a_logical_kind():
     stems = {stem_of(key) for key in BUILDERS}
-    assert set(BUILDER_VERSIONS) == set(OPERATION_KINDS) == stems | {"cas-replace-value-guard"}  # the value guard has no builder (TD-43)
+    assert set(BUILDER_VERSIONS) == set(OPERATION_KINDS) == stems  # every operation has a builder since H2.7 ported the value guard (TD-43)
 
 
 @pytest.mark.parametrize("key", sorted(BUILDERS))
@@ -44,3 +44,16 @@ def test_h2_6_t15_the_update_refuses_a_changed_text_under_an_unchanged_version(m
     monkeypatch.setattr(goldens, "recorded", lambda: bumped)
     monkeypatch.setattr(goldens.GOLDEN.__class__, "write_text", lambda self, *a, **k: 0)
     assert goldens.main(["--update"]) == 0
+
+
+def test_h2_9_t1_a_builders_recorded_text_belongs_to_its_operation_and_no_fixture_can_move_it(monkeypatch):
+    """H2.9-Q2 (the finding of H2.6c). The goldens are rendered from one canonical context, so adding, removing or changing a fixture moves no
+    builder's text. Taking every fixture away leaves the record as it is."""
+    from persistence import witness
+
+    def no_fixtures(*_a, **_k):
+        raise AssertionError("a golden read a fixture")
+
+    monkeypatch.setattr(witness, "compile_fixtures", no_fixtures)
+    monkeypatch.setattr(witness, "_load_fixture", no_fixtures)
+    assert goldens.current() == goldens.recorded()

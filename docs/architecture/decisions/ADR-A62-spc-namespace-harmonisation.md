@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §4.14, G-19, `ontology-architecture.md`, ADR-A01
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.12. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md). The namespace change itself has already been executed (see Consequences).
 
 ## Context
@@ -29,3 +30,7 @@ Adopt the second position now, the first later. The namespace harmonisation (a o
 - ADR-A01 (layer dependency order) is unaffected: SPC remains outside the Foundation→...→Behaviour dependency chain: it does not import from, or get imported by, any layer in that order.
 - Phase 3's gate audit (per the epic's own note) must confirm every workflow documented so far is in the uniform shape this ADR assumes, before Phase 4's SPC lift is attempted.
 - This ADR does not author `ontology/spc/projection/`; that remains empty until Phase 4.
+
+## Addendum, 2026-10-28
+
+Executed. `ontology/spc/spec/spc.ttl` and `ontology/spc/README.md` declare the ontology IRI `https://www.nebularis.org/neuro-semantic/lattice/spc`, the namespace `https://www.nebularis.org/neuro-semantic/lattice/spc#` and the version IRI under it, in place of the `example.org` placeholder they were released with at 0.2.0 and 0.19.0. The SPC architecture companion no longer names a host that is not the project's. The change is breaking for anything that imported SPC at a tag and takes the next release's number with the substrate (ADR-A129). Done in the ontology remediation unit, slice OR-6.

@@ -160,7 +160,11 @@
             "RecipeDigestMismatch",
             "UnsupportedRecipeFormat",
             "RuntimeUnicodeTooOld",
-            "CanonicalizerNotDeclared"
+            "CanonicalizerNotDeclared",
+            "DotSegment",
+            "EmptyScope",
+            "UnsafeSurrogate",
+            "PositionWidthOverflow"
           ]
         }
       }

@@ -7,7 +7,7 @@ A SHACL shape used as a boundary declaration is walked once, here, at compile ti
 backend is ever asked to execute SHACL to determine where a write's boundary lies (ADR-A78
 point 4). Every property shape that leads to a node carries ``dal:ownership``, and the owned edges
 compile to one SPARQL property path (:mod:`persistence.paths`). Only ``sh:property``, ``sh:path``,
-``sh:node``, ``sh:class`` and ``dal:ownership`` are interpreted. Any other SHACL construct in the
+``sh:node``, ``sh:class``, ``dal:ownership`` and ``dal:referenceMode`` are interpreted. Any other SHACL construct in the
 same shape (``sh:pattern``, ``sh:datatype``, and so on) is left untouched for the adopter's own
 validation tooling.
 """
@@ -43,6 +43,10 @@ REFERENCE = "Reference"
 VOCABULARY = "Vocabulary"
 VALUE = "Value"
 
+BY_IDENTITY = "ByIdentity"
+PINNED = "Pinned"
+_MODES = {DAL.ByIdentity: BY_IDENTITY, DAL.Pinned: PINNED}
+
 
 @dataclass(frozen=True)
 class Edge:
@@ -54,6 +58,7 @@ class Edge:
     kind: str  # OWNED | REFERENCE | VOCABULARY | VALUE
     target_shape: URIRef | None  # the sh:node
     target_class: URIRef | None  # the sh:class, else the sh:targetClass of the sh:node
+    reference_mode: str = BY_IDENTITY  # dal:referenceMode, ByIdentity when absent (H2.6e)
 
 
 @dataclass
@@ -68,6 +73,11 @@ class OwnershipTree:
     complex_paths: list[tuple[URIRef, Node]] = field(default_factory=list)  # (shape, property shape)
     unclassified: list[tuple[URIRef, Node, URIRef]] = field(default_factory=list)  # (shape, property shape, predicate)
     ownership_on_values: list[tuple[URIRef, Node, URIRef]] = field(default_factory=list)
+    unknown_modes: list[tuple[URIRef, URIRef, Node]] = field(default_factory=list)  # (shape, predicate, declared value)
+
+    def node_edges(self) -> list[Edge]:
+        """Every edge that leads to a node, of any kind: the edges a reference mode describes."""
+        return [e for e in self.edges if e.kind != VALUE]
 
     def owned_edges(self) -> list[Edge]:
         return [e for e in self.edges if e.kind == OWNED]
@@ -126,10 +136,14 @@ def walk_ownership(graph: Graph, root_shape: URIRef) -> OwnershipTree:
                 tree.complex_paths.append((shape, property_shape))
                 continue
             declared = functional_value(graph, property_shape, DAL.ownership)
+            declared_mode = functional_value(graph, property_shape, DAL.referenceMode)
+            mode = _MODES.get(declared_mode, BY_IDENTITY)
+            if declared_mode is not None and declared_mode not in _MODES:
+                tree.unknown_modes.append((shape, step.predicate, declared_mode))
             if _is_value(graph, property_shape):
                 if declared is not None:
                     tree.ownership_on_values.append((shape, property_shape, step.predicate))
-                tree.edges.append(Edge(shape, property_shape, step, VALUE, None, None))
+                tree.edges.append(Edge(shape, property_shape, step, VALUE, None, None, mode))
                 continue
             if declared is None or declared not in _KINDS:
                 tree.unclassified.append((shape, property_shape, step.predicate))
@@ -139,7 +153,7 @@ def walk_ownership(graph: Graph, root_shape: URIRef) -> OwnershipTree:
             if target_class is None and target_shape is not None:
                 target_class = functional_value(graph, target_shape, SH.targetClass)
             kind = _KINDS[declared]
-            tree.edges.append(Edge(shape, property_shape, step, kind, target_shape, target_class))
+            tree.edges.append(Edge(shape, property_shape, step, kind, target_shape, target_class, mode))
             if kind == OWNED and target_shape is not None:
                 queue.append(target_shape)
     return tree
@@ -147,5 +161,5 @@ def walk_ownership(graph: Graph, root_shape: URIRef) -> OwnershipTree:
 
 __all__ = [
     "MissingBoundaryShapeError",
-    "Edge", "OwnershipTree", "walk_ownership", "OWNED", "REFERENCE", "VOCABULARY", "VALUE",
+    "Edge", "OwnershipTree", "walk_ownership", "OWNED", "REFERENCE", "VOCABULARY", "VALUE", "BY_IDENTITY", "PINNED",
 ]

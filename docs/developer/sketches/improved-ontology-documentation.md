@@ -2,7 +2,7 @@
 
 # Improved Ontology Documentation.
 
-Draft for review, 2026-10-02. Unplanned: an exploration, with no plan, slice or ADR behind it. This spec defines an internal markup design and proposes an extention to the `literate_extract.py` tool. 
+Draft for review, 2026-10-02. Reviewed and planned 2026-10-14: see [the plan](../plans/improved-ontology-documentation.md), which keeps the marker idea and separates the rest. No ADR yet. This spec defines an internal markup design and proposes an extention to the `literate_extract.py` tool. 
 
 ## Overivew
 
@@ -16,7 +16,7 @@ I would propose that we DO NOT put this extensive narrative text inside the OWL/
 
 ```turtle-spec
 pfx:UsefulThing a owl:Class ;
-	rdfs:subClassOf fnd:Version ;
+	rdfs:subClassOf fnd:Versioned ;
 	rdfs:comment "DO NOT INCLUDE A LONG NARRATIVE DESCRIPTION IN THE COMMENTS HERE..." .
 ```
 

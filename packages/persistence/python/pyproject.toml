@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MPL-2.0
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-persistence"
+version = "0.1.0"
+description = "Caller library for the LATTICE generated persistence operations (ADR-A132). Standard library and rdflib only."
+readme = "README.md"
+license = "MPL-2.0"
+requires-python = ">=3.14"
+dependencies = ["rdflib>=7.0,<8"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "jsonschema>=4.20"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

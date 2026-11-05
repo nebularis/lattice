@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The sample "Policies from XML and JSON": each source's example document, which mapping mode offers as its sample source.
+# `tools/test_config_studio_stage.py` keeps each equal to the example's source file.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<urn:example:source/xml#Source> skos:example """<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<p:policies xmlns:p="urn:example:policy">
+  <p:policy number="P-1">
+    <p:holder>Ann "Annie" Lee</p:holder>
+    <p:cover><p:code>FIRE</p:code></p:cover>
+    <p:cover><p:code>FLOOD</p:code></p:cover>
+  </p:policy>
+  <p:policy number="P-2">
+    <p:holder>Bo</p:holder>
+    <p:cover><p:code>FIRE</p:code></p:cover>
+    <p:cover><p:code>QUAKE</p:code></p:cover>
+  </p:policy>
+</p:policies>
+""" .
+<urn:example:source/json#Source> skos:example """{"policies": [
+  {"number": "P-1", "holder": "Ann \\"Annie\\" Lee", "covers": [{"code": "FIRE"}, {"code": "FLOOD"}]},
+  {"number": "P-2", "holder": "Bo", "covers": [{"code": "FIRE"}, {"code": "QUAKE"}]}
+]}
+""" .

@@ -20,7 +20,7 @@ def render_l0(doctrine: dict, facts: Facts) -> str:
 
 def write_manifest(out: Path, files: list[Path], pack_version: str) -> None:
     rows = {str(path.relative_to(out)): "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(files)}
-    (out / "manifest.json").write_text(json.dumps({"mtp_version": pack_version, "files": rows}, indent=2) + "\n", encoding="utf-8")
+    (out / "manifest.json").write_text(json.dumps({"mtp_version": pack_version, "files": rows}, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def manifest_drift(out: Path) -> list[str]:

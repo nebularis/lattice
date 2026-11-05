@@ -167,6 +167,8 @@ Pre-evaluated admission/activation state snapshot used in the transaction loop.
 
 ## 5.2 Required runtime properties (minimal hot-path surface)
 
+A balance in this profile is a runtime projection of the source graph. It is written through a Persistence profile (ADR-A78), whose concurrency level and epoch guard decide what a concurrent draw sees, never by overwriting the node in place.
+
 ### On `capx:ExecutableResource`
 
 - `capx:resourceKey` (stable string key, unique within arrangement)

@@ -18,7 +18,7 @@ from persistence import templatecheck, witness
 from persistence.compiler import compile_to_graph
 
 EX = "https://example.org/lending#"
-PAT = "https://example.org/lattice/patterns#"
+PAT = "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#"
 
 
 def payload_destination() -> dict[str, list[str]]:

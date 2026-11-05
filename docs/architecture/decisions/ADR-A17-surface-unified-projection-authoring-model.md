@@ -6,7 +6,8 @@
 **Date:** 2026-09-18
 **Supersedes:** none
 **Related:** ADR-A16 (Surface projection mechanism), ADR-A18 (Surface-to-MORK lowering boundary), ADR-A01 (layer conventions)
-**Source plan:** [surface-mork-unified-projection-delivery-plan.md](../../../ontology/surface/docs/surface-mork-unified-projection-delivery-plan.md), [adr-bundle-outline-surface-mork-unified-projection.md](../../../ontology/surface/docs/adr-bundle-outline-surface-mork-unified-projection.md)
+**Unit:** [`surface-mork-unified-projection`](../../developer/plans/surface-mork-unified-projection-plan.md) (epic)
+**Source plan:** the Surface-MORK Unified Projection Program plan
 
 ## Context
 

@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-09: Behaviour selection policy
+# ADR-A09: Behaviour selection policy
 
-## Status
-
-Accepted
+**Status:** Accepted
 
 ## Context
 

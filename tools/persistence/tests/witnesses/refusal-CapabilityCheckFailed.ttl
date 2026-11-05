@@ -8,7 +8,7 @@
 
 ex:WeakEnvironment a dal:CapabilitySpec ;
     dal:appliesToTarget          ex:LoanApplication ;
-    dal:providesCas              "NONE" ;
+    dal:providesCas              dal:NoConcurrencyGuarantee ;
     dal:providesReasoning        false ;
-    dal:providesCommitValidation "NONE" ;
+    dal:providesCommitValidation dal:NoCommitValidation ;
     dal:providesSingleWriter     false .

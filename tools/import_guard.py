@@ -9,8 +9,10 @@ Two checks over the substrate layers of the order (CCS C10a, C10a-Q2):
 * no ``.ttl`` file under a layer names the namespace of a layer it may not
   import: a higher layer, a sibling, or any applied module
 
-Applied modules, MORK, SPC, Surface, Persistence and ``ontology/examples`` are
-outside the order and not checked.
+A standalone module (MORK, SPC, Surface, Persistence) is outside the order. Its
+documents may import only the module itself and the modules its catalogue entry's
+``imports`` names, which is checked on ``owl:imports`` only (ADR-A121, addendum of
+2026-10-21). Applied modules and ``ontology/examples`` are not checked.
 
 Usage::
 
@@ -29,22 +31,21 @@ from typing import Iterator, Optional
 from rdflib import Graph
 from rdflib.namespace import OWL
 
-ROOT = Path(__file__).resolve().parent.parent
+import lattice_repo_catalogue
 
-# The order of ADR-A01's 2026-10-01 addendum: each layer and the layers it may
-# import. Wording and Behaviour are siblings, so neither may name the other.
-# Behaviour's configuration and runtime documents share one namespace and one
-# entry. The runtime document imports configuration, which is the same layer.
-SUBSTRATE = ("foundation", "vocabulary", "quantification", "party", "eligibility")
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
+
+# The order of ADR-A01 and its 2026-10-01 addendum: each substrate layer and the layers it
+# may import, as the repository catalogue's substrate entries state it (ADR-A121). Wording and
+# Behaviour are siblings, so neither may name the other. Behaviour's configuration and runtime
+# documents share one namespace and one entry. The runtime document imports configuration, which
+# is the same layer.
 ALLOWED: dict[str, frozenset[str]] = {
-    "foundation": frozenset(),
-    "vocabulary": frozenset(SUBSTRATE[:1]),
-    "quantification": frozenset(SUBSTRATE[:2]),
-    "party": frozenset(SUBSTRATE[:3]),
-    "eligibility": frozenset(SUBSTRATE[:4]),
-    "wording": frozenset(SUBSTRATE),
-    "behaviour": frozenset(SUBSTRATE),
-    "instrument": frozenset(SUBSTRATE) | {"wording", "behaviour"},
+    m.name: frozenset(m.imports or ()) for m in CATALOGUE.modules_of_kind("substrate")
+}
+STANDALONE: dict[str, frozenset[str]] = {
+    m.name: frozenset(m.imports or ()) for m in CATALOGUE.modules_of_kind("standalone")
 }
 APPLIED = "applied"
 
@@ -63,7 +64,8 @@ class Violation:
 
     def render(self, root: Path) -> str:
         where = self.path.relative_to(root) if self.path.is_relative_to(root) else self.path
-        return f"{where}:{self.line}: {self.layer} {self.kind} {self.named}, which the order does not allow"
+        rule = "its catalogue entry does not declare" if self.layer in STANDALONE else "the order does not allow"
+        return f"{where.as_posix()}:{self.line}: {self.layer} {self.kind} {self.named}, which {rule}"
 
 
 def forbidden(layer: str, named: str) -> bool:
@@ -77,7 +79,7 @@ def forbidden(layer: str, named: str) -> bool:
 
 def layer_files(root: Path) -> Iterator[tuple[str, Path]]:
     for layer in ALLOWED:
-        directory = root / "ontology" / layer
+        directory = root / CATALOGUE.module(layer).path
         if directory.is_dir():
             for path in sorted(directory.rglob("*.ttl")):
                 yield layer, path
@@ -100,13 +102,32 @@ def name_violations(layer: str, path: Path) -> Iterator[Violation]:
                 yield Violation(path, number, layer, match.group(0), "names")
 
 
+def standalone_violations(root: Path) -> Iterator[Violation]:
+    """Each ``owl:imports`` of a standalone module's documents names the module itself, by one of its own version
+    IRIs, or a module its catalogue entry declares."""
+    for module, declared in STANDALONE.items():
+        directory = root / CATALOGUE.module(module).path
+        if not directory.is_dir():
+            continue
+        paths = sorted(directory.rglob("*.ttl"))
+        graphs = {path: Graph().parse(path, format="turtle") for path in paths}
+        own = {m.group(1) for g in graphs.values() for v in g.objects(None, OWL.versionIRI) if (m := LATTICE_IRI.match(str(v)))}
+        for path, graph in graphs.items():
+            lines = path.read_text().splitlines()
+            for target in sorted(str(t) for t in graph.objects(None, OWL.imports)):
+                match = LATTICE_IRI.match(target)
+                if match and match.group(1) not in own and match.group(1) not in declared:
+                    line = next((n for n, text in enumerate(lines, 1) if target in text), 0)
+                    yield Violation(path, line, module, target, "imports")
+
+
 def check(root: Path) -> list[Violation]:
     found: list[Violation] = []
     for layer, path in layer_files(root):
         imports = list(import_violations(layer, path))
         reported = {v.line for v in imports}
         found += imports + [v for v in name_violations(layer, path) if v.line not in reported]
-    return found
+    return found + list(standalone_violations(root))
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -116,7 +137,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     violations = check(root)
     for violation in violations:
         print(violation.render(root))
-    print(f"import guard: {len(violations)} violation(s) across {len(ALLOWED)} substrate layers")
+    print(f"import guard: {len(violations)} violation(s) across {len(ALLOWED)} substrate layers and {len(STANDALONE)} standalone modules")
     return 1 if violations else 0
 
 

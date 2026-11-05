@@ -1,0 +1,7 @@
+# One writer and one worker, on a TDB2 store in a temporary folder.
+name = "single"
+writers = 1
+workers = 1
+store = "tdb2"
+auth = "local"
+runner = "processes"

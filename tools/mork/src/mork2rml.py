@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This module has been produced using GenAI
+
 """
 MORK-to-RML Compiler
 

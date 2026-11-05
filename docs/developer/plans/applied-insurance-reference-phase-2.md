@@ -37,7 +37,7 @@ within one `broaderTransitive` chain) and a reasoner-free parse and shapes run t
 ## AIR-2.1 in detail
 
 **Machine:** S (Copilot Business). **Branch:** `air/2.1-peril-spec`. **Validation Pack:**
-[applied-insurance-reference-2.1](../validation/applied-insurance-reference-2.1.md), whose Handoff
+[applied-insurance-reference-2.1](../validation/AIR-2.1.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98, ADR-A99. **Sketch:** peril vocabulary §4, §6, §10.
 
 **Invariant:** the `prl:` properties exist with the characteristics ADR-A99 fixes, every peril
@@ -48,8 +48,8 @@ a well-formed fixture and reject each defect they name.
 
 | Document | Ontology IRI | Version IRI | Term namespace, prefix |
 |---|---|---|---|
-| `spec/peril.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/peril` | `…/insurance/peril/0.1.0` | `https://www.nebularis.org/neuro-semantic/insurance/peril#`, `prl:` |
-| `vocab/peril-vocab.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab` | `…/insurance/peril-vocab/0.1.0` | `https://www.nebularis.org/neuro-semantic/insurance/peril/vocab#`, `prl-voc:` |
+| `spec/peril.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril` | `…/insurance/peril/0.1.0` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril#`, `prl:` |
+| `vocab/peril-vocab.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab` | `…/insurance/peril-vocab/0.1.0` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#`, `prl-voc:` |
 
 Schemes and concepts are in `prl-voc:`, following ADR-A98 decision 6 (confirmed,
 2026-09-26). The sketches' examples write them as `prl:` (for example `prl:N.MET.TC`). Read those
@@ -161,7 +161,7 @@ shapes directory).
 
 **Machine:** S. **Branch:** `air/applied-reference`, commits `[AIR-2.0] …`, the last being
 `[AIR-2.0] Handoff`. The first slice of the trip. **Validation Pack:**
-[applied-insurance-reference-2.0](../validation/applied-insurance-reference-2.0.md).
+[applied-insurance-reference-2.0](../validation/AIR-2.0.md).
 **Decisions:** ADR-A120 (literate specs with several documents), with the addendum below.
 
 **Why (decided 2026-10-13).** Every AIR module the trip creates or changes is literate: its
@@ -249,7 +249,7 @@ shape, and the notes on the concepts `insurance/common` and AIR-2.1 already publ
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.2] …`, the
 last being `[AIR-2.2] Handoff`. **Validation Pack:**
-[applied-insurance-reference-2.2](../validation/applied-insurance-reference-2.2.md), whose Handoff
+[applied-insurance-reference-2.2](../validation/AIR-2.2.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (decision 5), ADR-A99. **Sketch:** peril vocabulary §3,
 §6.3.
 
@@ -479,7 +479,7 @@ within H to L is written by AIR-2.4 in its family's region. `prl:definingThresho
 
 **Machine:** S. **Branch:** `air/applied-reference`, commits `[AIR-2.3] …`, the last being
 `[AIR-2.3] Handoff`. **Validation Pack:**
-[applied-insurance-reference-2.3](../validation/applied-insurance-reference-2.3.md).
+[applied-insurance-reference-2.3](../validation/AIR-2.3.md).
 **Decisions:** ADR-A99, the shared rules above. **Sketch:** peril vocabulary §5.1 to §5.3.
 
 **Invariant:** every concept of sketch §5.1 to §5.3 exists once, with its code, its links to its
@@ -586,7 +586,7 @@ The counts were taken from the sketch on 2026-10-13. If the sketch has changed s
 ## AIR-2.4 in detail
 
 **Machine:** S. **Branch:** `air/applied-reference`, commits `[AIR-2.4] …`.
-**Validation Pack:** [applied-insurance-reference-2.4](../validation/applied-insurance-reference-2.4.md).
+**Validation Pack:** [applied-insurance-reference-2.4](../validation/AIR-2.4.md).
 **Decisions:** ADR-A99, the shared rules above. **Sketch:** peril vocabulary §5.4 to §5.8, §8.1.
 
 **Invariant:** as AIR-2.3, for H, P, C, F and L, and every link between the two family groups
@@ -686,7 +686,7 @@ the concept counts.
 
 **Machine:** S. **Branch:** `air/applied-reference`, commits `[AIR-2.6] …`. Built after AIR-2.2
 and before AIR-2.3 (lanes §4). **Validation Pack:**
-[applied-insurance-reference-2.6](../validation/applied-insurance-reference-2.6.md).
+[applied-insurance-reference-2.6](../validation/AIR-2.6.md).
 **Decisions:** ADR-A99, Q7 to Q10 of 2026-10-13. **Sketch:** peril vocabulary §6.4, §11.
 
 **Invariant:** each intensity measure has its own value space with a unit contract, the
@@ -839,7 +839,7 @@ AIR-2.3 and AIR-2.4 declare them later in the trip.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.7] …`, the
 last being `[AIR-2.7] Handoff`. **Validation Pack:**
-[applied-insurance-reference-2.7](../validation/applied-insurance-reference-2.7.md). **Decisions:**
+[applied-insurance-reference-2.7](../validation/AIR-2.7.md). **Decisions:**
 ADR-A99 (decision 1, reference editions as fallback), ADR-A100. **Sketch:** peril vocabulary §9.1,
 §9.4, MORK bridge §2.
 
@@ -926,7 +926,7 @@ Resolution uses `vocabulary.resolver.resolve` (`tools/vocabulary/src/vocabulary/
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-2.5] …`, the
 last being `[AIR-2.5] Handoff`. **Validation Pack:**
-[applied-insurance-reference-2.5](../validation/applied-insurance-reference-2.5.md). **Decisions:**
+[applied-insurance-reference-2.5](../validation/AIR-2.5.md). **Decisions:**
 ADR-A87 (wildcards), ADR-A99, ADR-A100. **Sketch:** peril vocabulary §7, §9.2, §9.3. **Milestone:** M1.
 
 **Invariant:** collections are editioned with the vocabulary, a collection used in a scope is

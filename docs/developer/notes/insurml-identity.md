@@ -37,7 +37,7 @@ for contracts, groups and components, would let both standards use the same iden
 
 | Rule | InsurML | LATTICE |
 |---|---|---|
-| A version is immutable. New text means a new version | every contract, group and component IRI is a version (D67) | every wording and element is a version (`fnd:Version`) |
+| A version is immutable. New text means a new version | every contract, group and component IRI is a version (D67) | every wording and element is a version (`fnd:Versioned`) |
 | A contract includes exact versions, never "the latest" | D80 | an assembled wording records the versions it includes (`wrd:includes`) |
 | A retired IRI is never reused | §5.4 | identities and keys are never reassigned |
 | Tools read data, not IRIs | identifier and version are stated as data so tools need not parse IRIs (D67) | identity is not position, and nothing is inferred from an IRI's shape |

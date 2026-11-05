@@ -43,6 +43,7 @@ This document is maintained as a living design record, alongside the ADR catalog
 | [ux-design.md](ux-design.md) | UX Design of platform components (e.g., MORK Workbench, Surface Contract Studio) |
 | [ontology-architecture.md](ontology-architecture.md) | Ontology layers, DL encodings, layer dependency order |
 | [rdf-sparql-patterns-guide.md](rdf-sparql-patterns-guide.md) | RDF implementation patterns |
+| [efficient-queries-and-shapes.md](efficient-queries-and-shapes.md), [triple-store-discovery.md](triple-store-discovery.md) | How to write queries and shapes that run in reasonable time, with the evidence of how each engine and validator behaves (ADR-A128) |
 | [semantic-platform.md](semantic-platform.md), [surface-workflow.md](surface-workflow.md), [release-stack-integration.md](release-stack-integration.md), [surface-projection-mork.md](surface-projection-mork.md), [mork-review-workbench.md](mork-review-workbench.md), [mork-queue-calibration-governance.md](mork-queue-calibration-governance.md), [ingestion-vision.md](ingestion-vision.md) | Per-component design notes this document synthesizes and cross-references rather than repeats |
 | ADR-A29 through ADR-A43 | Individual accepted decisions this document assembles into one coherent picture |
 
@@ -50,15 +51,15 @@ Read this document top to bottom once, then use it as a reference.
 
 ### **Solution Overview**
 
-There are 2 very distinct sides to LATTICE. The first is the "BUILD TIME" or "DESIGN TIME" platform, which is basically a set of react applications and other tools, glued together with various software services, messaging infrastructure, graph database(s), etc. This is a deployable system with many moving parts - it is something we (in this repo) are building and design and WE get to DECIDE how it works.
+LATTICE has two distinct sides. The first is the build-time (design-time) platform, a set of React applications and other tools, glued together with software services, messaging infrastructure and graph databases. It is a deployable system with many moving parts, built in this repository, and the project decides how it works.
 
-Then there is the other side of LATTICE - "PRODUCTION TIME", and that is where things are completely different. We do not own, define, or even know what "PRODUCTION" looks like! It will be different for everyone that builds on LATTICE. Perhaps someone will just use the ontologies and never touch the design-time application suite. Perhaps someone will use the full design-time suite to build their graph and configuration, but once it is populated, just use MORK as an integration layer, or maybe they use something else to pull data in and just use `surface` for making skos vocabularies available via entailment. We simply don't know what they will do, all we know is it will be code in another repo!
+The second side is production time, where the project does not own, define or know the deployment. Production differs for every adopter. An adopter may use only the ontologies and never touch the design-time application suite. An adopter may use the full design-time suite to build its graph and configuration and then use MORK only as an integration layer, or pull data in by other means and use `surface` only to make SKOS vocabularies available via entailment. What adopters do is not known, and their code lives in other repositories.
 
-We cannot decide which patterns are right for this 2nd use of `LATTICE`, because it is not an application we own. Multiple agent outputs have mentioned "multi-tenant", but `LATTICE` is not that kind of platform - though you could use it to build such a thing, I hope.
+The project cannot decide which patterns are right for this second use of `LATTICE`, because it is not an application the project owns. Multi-tenancy is not a goal, since `LATTICE` is not that kind of platform, although it could be used to build one.
 
-We will need to design a means for these users (who are building on top of lattice ontologies and perhaps re-using lattice services) to declaratively choose the patterns they want to use as configuration - perhaps this can be another dimension of `surface` (see the repository).
+Adopters, who build on LATTICE ontologies and may reuse LATTICE services, need a means to choose the patterns they use declaratively, as configuration. This may become another dimension of `surface`.
 
-Yes, we might write a query layer that automatically applies the separate version/identification/sequencing behaviour so the user doesn't need to think about it - but we do that by building a compiler, a query generatory/optimiser, and only then write the layer that uses those things and let the consumer decide if they want the pattern, the tools, the APIs, or the full stack for their app.
+A query layer may apply the separate version, identification and sequencing behaviour automatically, so the user need not think about it. It would be built by first building a compiler and a query generator and optimiser, and only then the layer that uses them, letting the consumer choose the pattern, the tools, the APIs or the full stack for their application.
 
 ---
 
@@ -431,11 +432,11 @@ This is deliberately the smallest correct answer, not a placeholder for a larger
 
 ### 4.4 Release Integration Exposure: the Answer to "Who Calls This?"
 
-This section exists because the request that produced this document asked it explicitly. `release-integration` is a **Java library**, not a standalone service. It has no network listener of its own and never will, per ADR-A31's constraint that LATTICE does not become a release engine.
+This section answers who calls `release-integration`, a question the requirements raised explicitly. `release-integration` is a **Java library**, not a standalone service. It has no network listener of its own and never will, per ADR-A31's constraint that LATTICE does not become a release engine.
 
 **Who calls it.** The Control Plane's Release facade, a thin application service inside `surface-control-plane` (not yet built, see [§4.2](#42-control-plane-runtime-decided-here)), calls `SemanticReleaseAssemblyService.assemble(...)`, then `SemanticReleaseCoordinator.publish(...)` in-process, in the same JVM, in response to an authenticated HTTP request from the Release Operator (`POST /release/candidates/{id}/publish`). No message queue sits in front of it, because assembly and packaging are bounded, deterministic operations over already-recorded evidence, not long-running graph computation.
 
-**How it is exposed.** As an HTTP facade over the library, following the pattern the request describes: "an API acting as a facade in front of something else." The facade's job is authentication, request mapping, and translating `IllegalArgumentException`/`IllegalStateException` into `4xx` responses, exactly as `SurfaceRevisionApi` already does for the workflow module. No new pattern is introduced, the same one is extended to Release.
+**How it is exposed.** As an HTTP facade over the library, following the pattern of an API acting as a facade in front of something else. The facade's job is authentication, request mapping, and translating `IllegalArgumentException`/`IllegalStateException` into `4xx` responses, exactly as `SurfaceRevisionApi` already does for the workflow module. No new pattern is introduced, the same one is extended to Release.
 
 **Where its evidence goes.**
 
@@ -486,41 +487,18 @@ Rules that apply uniformly:
 | External release stack | Rejects or fails to acknowledge a published artifact | Release Operator observes the release ledger has no corresponding external confirmation | LATTICE's own ledger already recorded the intent and receipt regardless, so the semantic evidence is not lost | Operator retries the external stack's own process, LATTICE's evidence does not need to be regenerated |
 | Calibration gate stale or missing | Bulk confirmation attempted for an untested pack/profile/model triple | `require_bulk_gate` raises `CalibrationRequiredError` | Bulk action is blocked outright, per-item review remains available | A new calibration run must pass before bulk action is re-enabled |
 
-### 4.7 Word Authoring Proof of Concept
+### 4.7 Word Authoring
 
-**Not a platform contract.** A spike (ADR-A118, Proposed) testing whether a drafter can mark a
-contract's text parts in Microsoft Word, with no local installation, and have the marked document
-read as Logical English and a proposed meaning. See the
-[sketch](../developer/sketches/word-authoring-poc.md) for the design and
-[ADR-A118](decisions/ADR-A118-word-authoring-proof-of-concept.md) for the decision record. Its
-code, vocabulary and graph layout may be removed or rewritten without deprecation, and nothing
-outside `platform/authoring-service`, `workers/src/lattice_workers/wording_le`,
-`apps/word-authoring-addin` and `contracts/authoring` may depend on them.
+**Not a platform contract.** The Word add-in (ADR-A118) is a client of the Configuration Studio (ADR-A136). A drafter marks a contract's text parts in Microsoft Word, and the studio stores the document as LATTICE's markup (ADR-A137) with the Wording graph it gives, reports on it, and reads it as Logical English and a proposed meaning. The add-in's code may be removed or rewritten without deprecation. The studio's API is a contract, as ADR-A136 makes it.
 
 | Part | Where | Does |
 |---|---|---|
-| add-in | `apps/word-authoring-addin` | applies templates, marks parts, reads the body's OOXML into a snapshot, shows findings, LE and the proposed graph |
-| service | `platform/authoring-service` | validates the snapshot, maps it to `wrd:` RDF, stores it in Fuseki, runs SHACL and construct detection, checks template conformance, queues analysis, seeds samples |
-| worker | `workers/src/lattice_workers/wording_le` and `wording_analysis_worker.py` | reads the wording graph, matches sentence forms, classifies modality, writes spans, an LE program and a proposal graph |
-| contracts | `contracts/authoring`, `contracts/events`, `contracts/openapi` | JSON Schemas, templates, samples, fixtures shared by the three runtimes |
-| stack | `deployment/compose/authoring`, `tools/authoring_stage.py` | one command builds, stages and starts everything, with the samples seeded |
-
-The service's HTTP surface (Javalin, decision WA-D4), methods and paths only:
-
-| Method | Path |
-|---|---|
-| GET | `/api/health` |
-| GET | `/api/templates` |
-| GET | `/api/templates/{templateId}` |
-| GET | `/api/samples` |
-| GET | `/api/samples/{sampleId}` |
-| GET | `/api/documents/{documentId}` |
-| PUT | `/api/documents/{documentId}/snapshot` |
-| GET | `/api/jobs/{jobId}` |
-| GET | `/api/documents/{documentId}/revisions/{revision}/analysis` |
-| GET | `/api/documents/{documentId}/revisions/{revision}/graph/{kind}` |
-
----
+| add-in | `apps/word-authoring-addin` | applies templates, marks parts, reads the body's OOXML into the document model, saves it as markup, shows the report, the LE and the proposed graph |
+| domain package | `packages/authoring-domain` | the document model, the markup reader and writer, shared with the studio's browser code |
+| studio service | `platform/config-studio-service`, `platform/config-studio-authoring` | validates the markup, maps it to `wrd:` RDF with the `document-to-wording` kit, has the store writers save it, and reports the Wording shapes, template conformance and construct detection |
+| worker | `workers/src/lattice_workers/wording_le`, the studio's `analyse` job | reads the wording graph, matches sentence forms, classifies modality, writes spans, an LE program and a proposal graph |
+| contracts | `contracts/config-studio`, `contracts/document`, `contracts/xml` | the HTTP API, the markup and its schemas, the kit |
+| stack | `mise run studio:up` | starts the studio and the add-in's development server, and with `--docker` the add-in's HTTPS proxy |
 
 ## 5. Infrastructure Design
 
@@ -553,7 +531,7 @@ flowchart TB
   Browser --> CPProc
 ```
 
-The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot in [the platform continuation status](../developer/status/platform-continuation.md) can run end to end, and is tracked there, not duplicated here.
+The Control Plane and worker processes are not yet containerized or added to Compose, they currently run only as Maven/`pytest` test targets. Adding them as Compose services is required before the pilot can run end to end.
 
 **Target shape (unchanged topology, hardened operational posture):** the same component graph, with PostgreSQL and RabbitMQ given persistent volumes and restart policies, Fuseki given a backup schedule for its dataset directory, and the Control Plane and worker tier each given their own container image with health checks. No additional component is introduced, this is an operational maturity step, not an architecture change, consistent with the single-writer, single-broker posture justified in [§7](#7-robustness-reliability-design).
 
@@ -589,14 +567,14 @@ The Control Plane and worker processes are not yet containerized or added to Com
 | Environment | Purpose | Difference from reference |
 |---|---|---|
 | Local development | Individual implementation work | Exactly the Compose stack in [§5.1](#51-deployment-topology) |
-| Pilot (seeded, local) | The author and reviewer pilot described in [the platform continuation status](../developer/status/platform-continuation.md) | Adds seeded demo identities and fixture scenarios, still single-host Compose |
+| Pilot (seeded, local) | The author and reviewer pilot | Adds seeded demo identities and fixture scenarios, still single-host Compose |
 | Future shared/production | Not yet planned in detail | Would add TLS termination, secret management, persistent volumes, and the hardening in [§5.1](#51-deployment-topology)'s target shape, deliberately deferred until the pilot proves the design |
 
 ---
 
 ## 6. UX Design
 
-Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically [MORK UXD](../../ontology/mork/docs/MORK%20UXD.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
+Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Workbench (canonically the MORK UXD design, with its decisions in [ADR-A42](decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) and [ADR-A43](decisions/ADR-A43-mork-replayable-queue-and-calibrated-governance.md)) and the newly authored Surface Contract Studio design at equivalent depth, including the Release view this document's [§4.4](#44-release-integration-exposure-the-answer-to-who-calls-this) requires. The cross-cutting principle repeated here because it governs every process map in [§2](#2-process-design): role perimeters and evidence redaction are enforced server-side, the browser never receives data it must hide from itself.
 
 ---
 
@@ -606,7 +584,7 @@ Full design is in [ux-design.md](ux-design.md), which covers the MORK Review Wor
 
 The CAP theorem describes a tradeoff that only manifests under a network partition between replicas of the same data. This platform, as scoped, runs one authoritative PostgreSQL instance, one authoritative Fuseki dataset, and one RabbitMQ broker per environment. It is not a multi-region, multi-writer, or multi-replica system. That is a deliberate boundary, not an oversight, because the product is a single-tenant-operator "studio" environment, not a globally distributed service.
 
-Given that scope, the request's aim to achieve C (Consistency) and A (Availability) is satisfied by construction in the absence of a partition, because there is only one partition-capable link in the whole system worth naming: the network path between the Control Plane and its data stores within one environment. The robustness design therefore focuses on what actually threatens this platform: component crashes, message loss, stale concurrent writes, and duplicate delivery, not multi-node network partitions.
+Given that scope, the aim of achieving C (Consistency) and A (Availability) is satisfied by construction in the absence of a partition, because there is only one partition-capable link in the whole system worth naming: the network path between the Control Plane and its data stores within one environment. The robustness design therefore focuses on what actually threatens this platform: component crashes, message loss, stale concurrent writes, and duplicate delivery, not multi-node network partitions.
 
 ### 7.2 Consistency Mechanisms
 

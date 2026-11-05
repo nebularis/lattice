@@ -258,7 +258,7 @@ Four structural facts matter here too.
 | what a norm does | deontic operator in the rule head | `ins:Obligation`, or nothing (no permission, prohibition or power term) |
 | who it binds | `lrml:Bearer` slot | `ins:obligor` → `pty:RoleOccupancy` |
 | who benefits | `lrml:AuxiliaryParty` slot | `ins:obligee` → `pty:RoleOccupancy` |
-| when it is in force | `lrml:TemporalCharacteristic` with legal status | `fnd:TemporalScope` on a `fnd:Version` |
+| when it is in force | `lrml:TemporalCharacteristic` with legal status | `fnd:TemporalScope` on a `fnd:Versioned` |
 | what it came from | `lrml:LegalSource` plus `lrml:Association` | `prov:wasDerivedFrom`, Open CBAA `stm:expressedBy` |
 | conflict between norms | `lrml:Override`, strength, suborder list | **nothing** |
 | consequence of breach | `lrml:Violation`, `PenaltyStatement`, `Reparation` | **nothing** (Behaviour can express it, nothing names it) |
@@ -357,7 +357,7 @@ A prescriptive statement is a reified rule whose head carries deontic force. The
 
 | Part | LATTICE |
 |---|---|
-| the statement's identity and versioning | `fnd:PersistentIdentity` + `fnd:Version` |
+| the statement's identity and versioning | `fnd:PersistentIdentity` + `fnd:Versioned` |
 | the statement's governance state | `fnd:Governable` |
 | the rule body | `elg:AdmissionProfile` with `elg:EvidenceBinding` per condition |
 | the rule head | proposed `nrm:PrescriptiveEffect` (§18), one per suborder position |
@@ -465,7 +465,7 @@ deontic subtype from an external ontology IRI. LATTICE is entitled to be that on
 
 ### 6.2 What LATTICE has today
 
-`ins:Obligation` and nothing else. It is a `fnd:Version`-bearing `ins:Element` with one or more
+`ins:Obligation` and nothing else. It is a `fnd:Versioned`-bearing `ins:Element` with one or more
 `ins:obligor` and `ins:obligee` role occupancies, optional `ins:fulfilledBy` naming a
 participation group, and an optional `ins:hasCondition` pointing at an `elg:Condition`.
 
@@ -639,7 +639,7 @@ ranges over `elg:Condition`, so a profile is a condition of another profile:
 
 ```turtle
 elg:AdmissionProfile a owl:Class ;
-    rdfs:subClassOf elg:Condition, fnd:Version,
+    rdfs:subClassOf elg:Condition, fnd:Versioned,
         [ a owl:Restriction ; owl:onProperty elg:hasCondition ;
           owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
 ```

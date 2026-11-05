@@ -52,6 +52,7 @@
 # | Construct                                           | Where                                |
 # |-----------------------------------------------------|--------------------------------------|
 # | an endorsement replacing a clause                   | ex:replace-2-1, Wording's Replace    |
+# | the section holding it is a new version             | ex:sec-2-v2, ex:wording-v2           |
 # | the amendment it states, from v1 to v2              | ex:mta-1, ins:statedIn               |
 # | effective before it is agreed                       | ex:mta-1's scope, the assents' times |
 # | each party's assent, the insured's first            | ex:assent-insured, ex:assent-insurer |
@@ -114,10 +115,19 @@ ex:replace-2-1 a wrd:Amendment ;
     wrd:replacement ex:cl-2-1-v2 ;
     wrd:expressedIn ex:endorsement-1-para-1 .
 
+# A wording's tree is evidence of its exact text, so the section holding the
+# replaced clause is a new version of the section, with the same identity.
+ex:sec-2-v2 a wrd:Element ;
+    fnd:hasIdentity ex:sec-2-identity ; fnd:hasGovernanceState fnd:Active ;
+    wrd:elementType wrd-voc:Section ; wrd:objectId "2" ; wrd:rankKey "b0" ;
+    prov:wasRevisionOf ex:sec-2 ;
+    wrd:directlyComprises ex:cl-2-1-v2 .
+ex:sec-2 fnd:supersededBy ex:sec-2-v2 .
+
 ex:wording-v2 a wrd:AssembledWording ;
     fnd:hasIdentity ex:wording-identity ; fnd:hasGovernanceState fnd:Active ;
-    wrd:directlyComprises ex:sec-2 , ex:cl-2-1-v2 ;
-    wrd:includes ex:sec-2 , ex:cl-2-1-v2 .
+    wrd:directlyComprises ex:sec-2-v2 ;
+    wrd:includes ex:sec-2-v2 , ex:cl-2-1-v2 .
 ex:wording-v1 fnd:supersededBy ex:wording-v2 .
 
 # ==== Roles, places and the cover's scope =====================================
@@ -131,14 +141,12 @@ ex:unit-9 a skos:Concept ; rdfs:label "Unit 9, Riverside Park" .
 ex:at-unit-7 a elg:Condition ;
     elg:conditionKey "loss-at-unit-7" ;
     elg:matchStrategy elg:ExactMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:unit-7 .
 
 ex:at-unit-7-or-9 a elg:Condition ;
     elg:conditionKey "loss-at-unit-7-or-9" ;
     elg:matchStrategy elg:SetMembership ;
-    elg:compatibilityOperation elg:AnySufficient ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredConcept ex:unit-7 , ex:unit-9 .
 
@@ -217,6 +225,20 @@ ex:loss-b ex:at ex:unit-9 ;
 ex:loss-c ex:at ex:unit-9 ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-03-20T13:00:00Z"^^xsd:dateTime ] ;
     fnd:hasEvidence [ a fnd:Evidence ; fnd:recordedAt "2028-03-21T10:00:00Z"^^xsd:dateTime ] .
+
+# Each role occupancy holds from before the first act in this example.
+ex:insurer-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+ex:insured-occ fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2028-01-01T00:00:00Z"^^xsd:dateTime ] .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:wording-identity a fnd:PersistentIdentity .
+ex:insured-occ-identity a fnd:PersistentIdentity .
+ex:insurer-occ-identity a fnd:PersistentIdentity .
+ex:policy-identity a fnd:PersistentIdentity .
+ex:sec-2-identity a fnd:PersistentIdentity .
+ex:cl-2-1-identity a fnd:PersistentIdentity .
+ex:endorsement-1-para-1-identity a fnd:PersistentIdentity .
+ex:endorsement-1-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 

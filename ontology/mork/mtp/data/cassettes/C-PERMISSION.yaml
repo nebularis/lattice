@@ -1,0 +1,30 @@
+id: C-PERMISSION
+source: ontology/mork/examples/Patterns/permission-implied-prohibition.ttl
+sample: ontology/mork/examples/Patterns/source-sample.ttl
+side: target
+focus: "a permission with the prohibition it excepts, which the law implies, its obligor the permission's holder (law I8)"
+mcn: |
+  @b <https://example.org/lattice/mtp/patterns/permission-implied-prohibition#>
+  @p src=<https://example.org/lattice/mtp/source#>
+  @p ins=<https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+  @p pty=<https://www.nebularis.org/neuro-semantic/lattice/party#>
+  %R Source fm mork:RDF lb "undertakings between named parties"
+  %X
+  src:Allowance RE
+  %T Concepts in Source
+  AllowanceConcept C ra src:Allowance
+  ByConcept C p src:by
+  AgainstConcept C p src:against
+  %M Scheme md mork:ReviewMode lb "an allowance to a permission and the prohibition it excepts" sdl [src <https://example.org/lattice/mtp/source#>]
+  Role_T MD xt pty:Role c role
+  Role_T_Label M cb Role_T xr rdfs:label r src:name
+  Allowance MD f AllowanceConcept xt ins:Term,ins:Template c term
+  Allowance_Relation MD cb Allowance xt ins:Permission,ins:Template xr ins:arisesUnder c relation
+  Allowance_Activity M cb Allowance_Relation xr ins:activity r src:act
+  Allowance_Holder MD cb Allowance_Relation tp Role_T f ByConcept xi ins:holder
+  Allowance_Counterparty MD cb Allowance_Relation tp Role_T f AgainstConcept xi ins:counterparty
+  Implied MD cb Allowance_Relation xt ins:Prohibition,ins:Template xi ins:excepts ct "implied-prohibition/${src:act}/${src:by}/${src:against}" n "The law implies the prohibition a permission excepts: the same act, its obligor the permission's holder (law I8). Named by act and parties, so permissions of one act share it."
+  Implied_Term MD cb Implied xt ins:Term,ins:Template xi ins:arisesUnder ct "implied-term/${src:act}/${src:by}/${src:against}"
+  Implied_Activity M cb Implied xr ins:activity r src:act
+  Implied_Obligor MD cb Implied tp Role_T f ByConcept xi ins:obligor
+  Implied_Obligee MD cb Implied tp Role_T f AgainstConcept xi ins:obligee

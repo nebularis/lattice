@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -70,5 +71,19 @@ def test_h2_4b_t12_the_oxigraph_cases_skip_where_the_package_is_absent():
         "import sys; sys.modules['lattice_testing_oxigraph'] = None; import pytest; "
         "sys.exit(pytest.main(['-q', '-p', 'no:cacheprovider', 'test_store_probes.py', '-k', 'test_h2_4b_t6']))"
     )
-    result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parent, capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parent, env={**{k: v for k, v in os.environ.items() if k != "PERSISTENCE_ENGINES_REQUIRED"}, "PERSISTENCE_ENGINES": "rdflib,oxigraph"}, capture_output=True, text=True)
     assert "1 passed, 1 skipped" in result.stdout, result.stdout[-400:]
+
+
+def test_ts2_t1_a_check_task_stops_where_an_engine_it_needs_is_absent():
+    """The check tasks set PERSISTENCE_ENGINES_REQUIRED, so a missing engine stops the run and names the task that installs it,
+    where a run by hand skips its cases (test_h2_4b_t12)."""
+    code = (
+        "import sys; sys.modules['lattice_testing_oxigraph'] = None; import pytest; "
+        "sys.exit(pytest.main(['-q', '-p', 'no:cacheprovider', 'test_store_probes.py', '-k', 'test_h2_4b_t6']))"
+    )
+    env = {**os.environ, "PERSISTENCE_ENGINES": "rdflib,oxigraph", "PERSISTENCE_ENGINES_REQUIRED": "1"}
+    result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parent, env=env, capture_output=True, text=True)
+    assert result.returncode != 0
+    assert "not installed: lattice_testing_oxigraph" in result.stdout + result.stderr
+    assert "bootstrap:testing-oxigraph" in result.stdout + result.stderr

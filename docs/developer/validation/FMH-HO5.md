@@ -2,7 +2,7 @@
 
 # Validation Pack: FMH-HO5, switch the compiler to the ownership tree
 
-**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice HO5
+**Unit:** [`formal-methods-track-h`](../status/formal-methods-track-h.md), slice FMH-HO5
 ([plan §3.5](../plans/formal-methods-track-h.md#ho5-switch-the-compiler-to-the-tree)).
 **Source:** [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md) decisions 1 to 3,
 [sketch §4.3, §5 and §7.1](../sketches/persistence-aggregate-ownership.md), and review findings F1, F4 and F10.
@@ -41,13 +41,13 @@ not a reference, not a vocabulary node, not another aggregate, and not the defau
 ## Deviations from the plan, for the maintainer
 
 1. **`CompositeBoundaryWithoutOwnedEdges` is added here and not in HO6.** A composite shape with no owned edge
-   has no path to bind, and the plan's HO5 leaves it to compile with nothing to sweep. Rewriting H1.4a-T6, which
-   asserted that such a shape compiled, needed a decision, and a refusal with a witness is the smaller one. HO6
+   has no path to bind, and the plan's FMH-HO5 leaves it to compile with nothing to sweep. Rewriting H1.4a-T6, which
+   asserted that such a shape compiled, needed a decision, and a refusal with a witness is the smaller one. FMH-HO6
    keeps its test (T5) and loses only the witness and the rule.
 2. **HO5-T8's example would not be refused.** The plan keys a constraint on `ex:name` of `ex:Organisation` and
    expects `UniquenessOutsideBoundary`. A key names a property, not a class, and `ex:name` is a value property of the
    project itself, so it is in `tree.predicates()`. The test uses `ex:serialNumber`, which no shape declares.
-3. **The HO1 tests move from the default graph to the data graph.** `test_composite_sweep.py` loads its data into
+3. **The FMH-HO1 tests move from the default graph to the data graph.** `test_composite_sweep.py` loads its data into
    `urn:g:orders` and looks for the payload there. The property each asserts is unchanged (the payload lands where
    the sweep deletes from, the sweep is linear, a stale sequence changes nothing).
 4. **The Oxigraph spike ran, in a Python 3.13 virtual environment**, since this machine's default Python (3.14)
@@ -58,7 +58,7 @@ not a reference, not a vocabulary node, not another aggregate, and not the defau
 
 Each removal is justified by ADR-A122 decision 1, which supersedes the rule the test asserted.
 
-| H1.4a test | Fate | Replacement |
+| FMH-1.4a test | Fate | Replacement |
 |---|---|---|
 | T1, the shipped example binds its one node property | rewritten | HO5-T1a, the owned path `(<lineItem>)?` and the data graph |
 | T2, a plain property that sorts first is not the bound property | rewritten | HO5-T2a, a value property is not followed |
@@ -73,14 +73,14 @@ Each removal is justified by ADR-A122 decision 1, which supersedes the rule the 
 | T11, the other member is left behind | rewritten | HO5-T6, now both are swept |
 
 **Countersigned 2026-10-10** at the maintainer's request. Each of the eleven rows was checked against the
-H1.4a test it replaces. The four deletions assert a refusal or a closure that ADR-A122 decision 1 removes,
+FMH-1.4a test it replaces. The four deletions assert a refusal or a closure that ADR-A122 decision 1 removes,
 and each property still worth keeping has a named replacement that asserts it (the other member is swept,
 the result does not depend on declaration order, the witnesses fire, owned edges on members at depth). The
 seven rewrites keep their property. This was a reading of the tests and not a run, so the one command below
 still decides.
 
 Also removed: `test_boundary.py`'s cycle test (recursion is allowed, so a shape that leads back to itself is
-walked once), its two walk tests (rewritten for the tree), the two deleted witnesses, and the HO1 tests'
+walked once), its two walk tests (rewritten for the tree), the two deleted witnesses, and the FMH-HO1 tests'
 default-graph expectation (deviation 3).
 
 ## Test cases
@@ -121,7 +121,7 @@ Run on 2026-10-10, each restored afterwards.
 
 | Mutation | Result |
 |---|---|
-| the replace reads the aggregate outside the data graph | T1 to T6 fail, and two of the HO1 tests |
+| the replace reads the aggregate outside the data graph | T1 to T6 fail, and two of the FMH-HO1 tests |
 | the owned path drops the inverse flag | T2 and T4 fail (the comment is left behind) |
 | `BoundaryConflict` stops reading the deeper member classes | T9 fails |
 
@@ -130,4 +130,4 @@ Run on 2026-10-10, each restored afterwards.
 - The refusals for an unclassified edge, a sequence path, ownership on a value, owned reference data and
   overlapping ownership. HO6. Until then an edge with no `dal:ownership` is simply not followed.
 - Create and tombstone delete for the composite strategy. HO7.
-- `ontology/persistence/docs/aggregate-boundaries.md` still describes a cycle-checked closure. HO9 rewrites it.
+- `ontology/persistence/docs/aggregate-boundaries.md` still describes a cycle-checked closure. FMH-HO9 rewrites it.

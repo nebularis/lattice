@@ -6,7 +6,6 @@
 **Unit type:** multi-slice unit, validation gate per slice
 **Status:** Every question answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4). TUT-0 to TUT-4 written, see the status record
 **Status record:** [lattice-tutorial.md](../status/lattice-tutorial.md)
-**Branch:** `tutorial/guide`, created from `main` 2026-10-14 at the maintainer's request
 **ADRs:** none needed (TUT-D4 adds no new kind of directory)
 **Depends on:** nothing unmerged. Every source the tutorial cites is on `main`
 

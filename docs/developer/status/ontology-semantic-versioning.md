@@ -3,11 +3,8 @@
 # Ontology Semantic Versioning - Status
 
 **Unit ID:** `ontology-semantic-versioning`
-**Status:** Slices 1-4 implemented, at our explicit direction to
-implement the plan autonomously (2026-09-25). ADR-A86 itself remains
-Proposed — ratifying it is a separate action for the maintainer this implementation does
-not take on its own behalf.
-**Last updated:** 2026-09-25
+**Status:** built 2026-11-03. One bump tool for the substrate release and for a module released on its own, at the maintainer's request. Before it, built 2026-09-25. Slices 1-4 implemented, at our explicit direction to implement the plan autonomously (2026-09-25). ADR-A86 itself remains Proposed, ratifying it is a separate action for the maintainer this implementation does not take on its own behalf.
+**Last updated:** 2026-11-03
 **Trigger:** request, 2026-09-25 ("implement the semantic versioning
 plan autonomously")
 **Plan:** [ontology-semantic-versioning.md](../plans/ontology-semantic-versioning.md)
@@ -106,7 +103,7 @@ time, and every file it left alone was left alone).
   `owl:versionIRI` is now that document's sole authoritative version signal;
   its `owl:priorVersion` was updated to point at `0.1.1` (its immediate
   predecessor) rather than removed.
-- **`applied/insurance/contract.ttl`'s namespace family** (`neuro-semantic/insurance/...`,
+- **`applied/insurance/contract.ttl`'s namespace family** (`neuro-semantic/lattice/insurance/...`,
   outside `lattice/`) was left exactly as it was, per the plan's explicit
   non-coverage — only its version number and its two disagreeing version
   signals were touched.
@@ -147,3 +144,7 @@ None recorded against this unit's own four slices — all are implemented.
 ADR-A86 ratification and the extraction-drift follow-up (both above) are
 open items for the maintainer, not blockers to what this unit set out to do.
 
+## History
+
+- 2026-11-03: picked up at the maintainer's request. `tools/bump_version.py` bumps the substrate release, or one module released on its own with `--layer-target`, by `--increment` or `--new-version`, with `--with-shapes` or `--only-shapes`, and prints the READMEs to extract, which `mise run version:bump` pipes to the extractor. An agent had told the maintainer that a standalone layer's spec documents move separately, which ADR-A120 forbids.
+- 2026-11-03: built. `mise run version:bump` runs `tools/extract_bumped.py`, which runs `tools/bump_version.py` and extracts the READMEs it prints, then regenerates the XML catalogs and the release register. Tried on this tree for persistence, minor with shapes (three spec documents 0.21.0 to 0.22.0, the Foundation import kept, the shapes 0.20.0 to 0.21.0, `check:ontology-versioning` against `main` clean) and for a substrate patch, then restored. CAP-105 for the maintainer. STD-111, STD-125 and STD-230 name the task, and STD-230 says a standalone module's spec documents move in unison too. AGENTS.md, the lifecycle and ontology-authoring skills and the developer guide point at the task.

@@ -14,7 +14,7 @@ from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, SH, XSD
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from test_parameter_bindings import ALL_SHAPES, LATTICE, LOWER, ONTOLOGY, READ_WITH, SPEC, VOCAB, _graph  # noqa: E402
+from test_parameter_bindings import ALL_SHAPES, LATTICE, LOWER, ONTOLOGY, READ_WITH, RELEASE, SPEC, VOCAB, _graph  # noqa: E402
 
 INS = Namespace(LATTICE + "instrument#")
 INS_VOC = Namespace(LATTICE + "instrument/vocab#")
@@ -101,12 +101,12 @@ def _when(text: str) -> datetime:
 def test_c9a_01_spec_terms() -> None:
     spec = _graph(SPEC)
     ontology = next(spec.subjects(RDF.type, OWL.Ontology))
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.17.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + f"instrument/{RELEASE}")
     terms = spec + _graph(SPEC.parent / "instrument-acts.ttl")                     # C9b1: assents are legal acts
     for term in ("Amendment", "amends", "resultsIn", "affectsExisting", "statedIn", "Assent",
                  "assentBy", "assentTo", "begins", "OnAcceptance"):
         assert terms.value(INS[term], FND.utility) is not None, term
-    assert (INS.Amendment, OWL.disjointWith, FND.Version) in spec
+    assert (INS.Amendment, OWL.disjointWith, FND.Versioned) in spec
     assert (INS_VOC.Conditional, None, None) in _graph(VOCAB)
 
 
@@ -201,7 +201,7 @@ def test_c9a_08_affecting_existing_occasions_needs_continuity() -> None:
 def test_c9a_09_formation_regime() -> None:
     g = _example("licence-amendments")
     assert (LIC_FORM["in-force"], INS.begins, INS_VOC.TheInstrument) in g
-    assert g.value(LIC_FORM["on-signed"], INS.by) is None                              # every ins:party
+    assert g.value(LIC_FORM["take-effect-on-signed"], INS.by) is None                              # every ins:party
     g.add((LIC_FORM["conditional"], INS.begins, INS_VOC.TheInstrument))
     assert any("at most one may" in m for _, m in _results(g))
     g = _example("licence-amendments")
@@ -279,7 +279,7 @@ def test_c9a_13_one_case_per_relation() -> None:
 def test_c9a_14_release_notes_and_versions() -> None:
     readme = (ONTOLOGY / "instrument" / "README.md").read_text()
     assert "- 0.15.0 (CCS C9a" in readme
-    assert (ONTOLOGY / "instrument" / "shapes" / ".version").read_text().strip() == "0.8.0"
+    assert not (ONTOLOGY / "instrument" / "shapes" / ".version").exists()
     register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text()
     for tag in ("instrument-v0.15.0", "instrument-vocab-v0.15.0", "instrument-shapes-v0.7.0"):
         assert f"| {tag} |" in register, tag

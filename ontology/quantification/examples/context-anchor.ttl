@@ -102,3 +102,12 @@ ex:grace-period a qnt:Range ;
         qnt:upperOffsetBy [ a qnt:Quantity ; qnt:onSpace ex:durations ;
                             qnt:numericValue "14"^^xsd:decimal ; qnt:inUnit ex:day ]
     ] .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .
+ex:allowance-year fnd:hasIdentity ex:allowance-year-identity .
+ex:allowance-year-identity a fnd:PersistentIdentity .
+ex:roles-identity a fnd:PersistentIdentity .

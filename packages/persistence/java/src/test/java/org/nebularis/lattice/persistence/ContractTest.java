@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MPL-2.0
+package org.nebularis.lattice.persistence;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.nebularis.lattice.persistence.TestSupport.operation;
+import static org.nebularis.lattice.persistence.TestSupport.values;
+import static org.nebularis.lattice.persistence.TestSupport.with;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.Test;
+
+/** Reading a compiled profile's contract, and the digest of requests to its operations. */
+class ContractTest {
+    private static final String REPLACE = "cas-replace-named-graph-patch-log";
+    private static final String XSD_DATETIME = "http://www.w3.org/2001/XMLSchema#dateTime";
+
+    static Triple t(String s, String p, String o) { return new Triple(Iri.of(s), Iri.of(p), Iri.of(o)); }
+
+    @Test void readsEveryOperationAndItsParameters() {
+        var ops = OperationContract.read(TestSupport.profiles().get("baseline-whole-state"));
+        var delta = OperationContract.read(TestSupport.profiles().get("baseline-single-class"));
+        assertTrue(delta.stream().anyMatch(o -> o.kind() == OperationKind.DELTA_REPLACE), "the default under dal:Optimistic is the delta replace (DR1)");
+        assertTrue(delta.stream().filter(o -> o.kind() == OperationKind.REPLACE).allMatch(o -> o.payload() != null && o.payload().parameter().equals("payloadTriples")),
+            "its only whole replace is replace-whole, which takes the whole state (DR4)");
+        var kinds = ops.stream().map(OperationContract::kind).collect(Collectors.toSet());
+        assertTrue(kinds.containsAll(List.of(OperationKind.CREATE, OperationKind.REPLACE, OperationKind.TOMBSTONE, OperationKind.AUDIT)));
+        var replace = operation("baseline-whole-state", REPLACE);
+        assertEquals("Position", replace.parameter("expectedSeq").orElseThrow().kind());
+        assertEquals("Digest", replace.parameter("requestDigest").orElseThrow().kind());
+        assertEquals("payloadTriples", replace.payload().parameter());
+        assertEquals("root", replace.payload().root());
+        assertTrue(replace.version() >= 1);
+    }
+
+    @Test void digestPartsInOrder() {
+        var replace = operation("baseline-whole-state", REPLACE);
+        assertEquals(List.of("OperationKindPart", "TargetPart", "ExpectedSeqPart", "PayloadPart", "AddPart", "DelPart"),
+            replace.digest().parts().stream().map(DigestPart::role).toList());
+        assertEquals("SHA-256", replace.digest().algorithm());
+        var append = operation("append-stream-dataset-guard", "append-event-dataset-guard");
+        var last = append.digest().parts().get(append.digest().parts().size() - 1);
+        assertEquals("EventPart", last.role());
+        assertEquals(List.of("eventRows", "eventTriples"), last.sources());
+        assertNull(operation("baseline-single-class", "key-claim-write").digest());
+    }
+
+    @Test void replaceDigestFromAProfile() {
+        var replace = operation("baseline-whole-state", REPLACE);
+        Triple a = t("urn:example:r", "urn:example:p", "urn:example:a"), b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        var v = values("root", Iri.of("urn:example:r"), "expectedSeq", 3, "payloadTriples", Payload.of(a, b), "assertTriples", Payload.of(b), "retractTriples", Payload.of());
+        String one = RequestDigest.requestDigest(replace, v);
+        assertEquals(64, one.length());
+        assertEquals(one, RequestDigest.requestDigest(replace, Map.copyOf(v)));
+        assertNotEquals(one, RequestDigest.requestDigest(replace, with(v, "assertTriples", Payload.of(), "retractTriples", Payload.of(b))));
+        assertNotEquals(one, RequestDigest.requestDigest(replace, with(v, "expectedSeq", 4)));
+        assertTrue(new String(RequestDigest.requestInput(replace, v), StandardCharsets.UTF_8).startsWith("7:Replace13:urn:example:r1:3"));
+    }
+
+    @Test void appendDigestMergesRowsAndTriplesIntoOnePart() {
+        var append = operation("append-stream-dataset-guard", "append-event-dataset-guard");
+        var when = new Lit("2026-10-20T10:00:00Z", XSD_DATETIME, null);
+        var rows = Rows.of(new EventRow(Iri.of("urn:e:1"), Iri.of("urn:T"), 1, when));
+        var v = values("stream", "urn:example:s", "eventRows", rows, "eventTriples", Payload.of(t("urn:e:1", "urn:example:p", "urn:example:o")));
+        String data = new String(RequestDigest.requestInput(append, v), StandardCharsets.UTF_8);
+        assertTrue(data.startsWith("6:Append13:urn:example:s0:"));
+        String needle = "urn:e:1> <urn:example:p>";
+        assertEquals(1, data.split(java.util.regex.Pattern.quote(needle), -1).length - 1);
+        assertNotEquals(RequestDigest.requestDigest(append, with(v, "eventTriples", Payload.of())), RequestDigest.requestDigest(append, v));
+    }
+
+    @Test void aMissingSourceIsNamed() {
+        var replace = operation("baseline-whole-state", REPLACE);
+        var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
+            values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", Payload.of(), "assertTriples", Payload.of())));
+        assertTrue(e.getMessage().contains("retractTriples"));
+    }
+
+    @Test void aBareStringIsNotAPayload() {
+        var replace = operation("baseline-whole-state", REPLACE);
+        var e = assertThrows(DigestException.class, () -> RequestDigest.requestDigest(replace,
+            values("root", "urn:example:r", "expectedSeq", 1, "payloadTriples", "<urn:a> <urn:b> <urn:c> .", "assertTriples", Payload.of(), "retractTriples", Payload.of())));
+        assertTrue(e.getMessage().contains("Payload"));
+    }
+
+    @Test void anOperationWithoutADigestRefuses() {
+        assertThrows(DigestException.class, () -> RequestDigest.requestDigest(operation("baseline-single-class", "key-claim-write"), Map.of()));
+    }
+
+    /** DR4, from the studio line's DR2: one prologue for a composed request, and the digest of a state, as the Python library gives them. */
+    @Test void composeHoistsOnePrologueAndAStateDigestIsOfItsLines() {
+        String joined = RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:a#>\nPREFIX b: <urn:b#>\nINSERT DATA { } ;"));
+        assertEquals(List.of("PREFIX a: <urn:a#>", "PREFIX b: <urn:b#>"), joined.lines().limit(2).toList());
+        assertThrows(IllegalArgumentException.class, () -> RequestDigest.compose(List.of("PREFIX a: <urn:a#>\nINSERT DATA { }", "PREFIX a: <urn:b#>\nINSERT DATA { }")));
+        Triple b = t("urn:example:r", "urn:example:p", "urn:example:b");
+        assertEquals("cc5c78894f9a048300351a2db7c1db372771b7c01f182a152a4b95d5dfc7974b", RequestDigest.stateDigest(Payload.of(b)), "the Python library's state_digest of the same triple");
+        assertEquals(RequestDigest.stateDigest(Payload.of(b, b)), RequestDigest.stateDigest(Payload.of(b)));
+    }
+}

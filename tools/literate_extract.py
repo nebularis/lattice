@@ -55,30 +55,67 @@ SPDX header, so its blocks state only its own ontology header and content. All
 of a layer's spec documents carry the same version (``owl:versionIRI ending
 /X.Y.Z``), or extraction fails.
 
-Usage::
+ADR-A120 addendum (2026-10-13, AIR-2.0): the same directive is read on the
+first line of a ``turtle-vocab`` block, and must name a ``.ttl`` file under the
+module's ``vocab/``, for example::
 
-    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
-        --layer surface \\
-        --root . \\
-        --shapes shapes/structural.ttl shapes/constraints.ttl
+    # @output-file "vocab/peril-intensity.ttl"
 
-    python3 -m tools.lattice.literate_extract ontology/surface/README.md \\
-        --layer surface --root . --check
+A module's vocabulary documents move in unison the same way its spec
+documents do: they all carry one ``owl:versionIRI`` version, independent of
+the spec documents' own shared version. ``--layer`` also accepts a path under
+``ontology/`` rather than a single segment, for example
+``applied/insurance/peril``, whose last segment names the module's default
+documents (``spec/peril.ttl``, ``vocab/peril-vocab.ttl``). A single-segment
+``--layer`` behaves exactly as before.
 
-    python3 -m tools.lattice.literate_extract ontology/eligibility/README.md \\
-        --layer eligibility --root . --proofs-root tools/proofs \
-        --reference-root tools/reference
-"""
+ADR-A126 (2026-10-17) adds HTML comment markers, documented for README authors in
+``docs/architecture/literate-specifications.md``. The scanner skips any other fence
+and any ordinary comment whole, so a tagged block or a marker shown inside one is
+text. ``<!-- start: {"key": value} -->`` opens a region and ``<!-- end -->`` closes
+the innermost, with one key of ``exclude``, ``output-file`` or ``generated``. A
+``generated`` region may also carry ``part``, ``classes`` and ``enumerations``, which choose what its class
+diagram draws. An ``output-file`` region sends the spec, vocab and shapes blocks inside it to that
+file. ``<!-- hidden`` or ``<!-- hidden: {"output-file": "..."}``, on its own line,
+wraps one tagged block that is extracted but not rendered, and is closed by a line
+holding only ``-->``. A block may name its file by one form only, the marker or its
+first line. A ``turtle-shapes`` block that names no file takes the next shape file of
+the module's extraction contract, which the repository catalogue states (ADR-A121),
+so there is no ``--shapes`` argument. A README with a "Description Logic Encoding" section uses the layout, so its
+top-level sections are checked by title: a missing, extra or repeated one is an
+error, and a misnumbered one a warning.
+
+Usage, from the repository root::
+
+    mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root .
+
+    mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --check
+
+    mise exec -- python tools/literate_extract.py ontology/eligibility/README.md \\
+        --layer eligibility --root . --proofs-root tools/proofs --reference-root tools/reference
+
+    mise exec -- python tools/literate_extract.py ontology/applied/insurance/peril/README.md \\
+        --layer applied/insurance/peril --root .
+
+``--layer`` is the module's name in the repository catalogue, its path under ``ontology/``.
+``--root`` is where outputs are written or compared. The catalogue is the nearest one above
+the README, so the extractor runs from any working directory. With none above it, it is found
+from ``LATTICE_ROOT`` or the working directory."""
 
 from __future__ import annotations
 
 import argparse
 import itertools
+import json
+import os
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
+
+import lattice_repo_catalogue
+import literate_grammar
 
 SPDX_TTL = "# SPDX-License-Identifier: MPL-2.0"
 SPDX_THY = "(* SPDX-License-Identifier: MPL-2.0 *)"
@@ -93,6 +130,24 @@ DECISION_CONST = {"Permitted": "PERMITTED", "Denied": "DENIED", "Undetermined": 
 FENCE_RE = re.compile(
     r"^```(?P<tag>turtle-spec|turtle-vocab|turtle-shapes|turtle-example|isabelle-spec)\s*$"
 )
+ANY_FENCE_RE = re.compile(r"^ {0,3}(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
+# A marker word followed by ":", "-->" or the end of the line. "<!-- end of a table -->" is an ordinary comment.
+MARKER_WORD_RE = re.compile(r"^<!--\s*(start|end|hidden)\s*(:|-->|$)")
+REGION_START_RE = re.compile(r"^<!--\s*start:\s*(?P<json>\{.*\})\s*-->\s*$")
+REGION_END_RE = re.compile(r"^<!--\s*end\s*-->\s*$")
+HIDDEN_RE = re.compile(r"^<!--\s*hidden(?::\s*(?P<json>\{.*\}))?\s*$")
+SECTION_RE = re.compile(r"^## (?P<number>\d+)\.\s+(?P<title>.+?)\s*$")
+REGION_KEYS: Dict[str, type] = {"exclude": bool, "output-file": str, "generated": str}
+# A generated region may also carry these keys, which choose what its view draws (ADR-A126 addendum, D-59).
+GENERATED_OPTIONS: Dict[str, type] = {"part": str, "classes": list, "enumerations": str}
+EXTRACTED_TO_ONTOLOGY = ("turtle-spec", "turtle-vocab", "turtle-shapes")
+CATALOGUE_TAG = "toml repository-catalogue"
+# The README layout of ADR-A126 decision 1, in order. Sections are found by title.
+LAYOUT = (
+    "Purpose and Scope", "Namespace and Prefixes", "Extraction Contract", "Overview", "Detailed Design",
+    "Description Logic Encoding", "Shapes", "Examples", "Canonicalisation", "Formalisation", "Dependencies",
+    "Release Notes", "Open Issues",
+)
 FUN_HEADER_RE = re.compile(r"^\s*fun\s+(?P<name>\w+)\s*::")
 CLAUSE_LINE_RE = re.compile(r'^\s*\|?\s*"(?P<clause>[^"]*)"\s*$')
 FENCE_END_RE = re.compile(r"^```\s*$")
@@ -103,44 +158,271 @@ VERSION_RE = re.compile(r"owl:versionIRI\s+<[^>]*/(?P<version>\d+\.\d+\.\d+)>")
 
 @dataclass(frozen=True)
 class Block:
-    """One fenced block, with its tag, its ordinal within that tag, and its body."""
+    """One fenced block, with its tag, its ordinal within that tag, and its body.
+
+    ``output_file`` is the JSON form of the directive (ADR-A126 decision 9), set by a
+    hidden block's marker or by an enclosing ``output-file`` region, and ``hidden`` says
+    the block sat inside a ``<!-- hidden`` comment."""
 
     tag: str
     ordinal: int
     body: str
     start_line: int
+    output_file: str | None = None
+    hidden: bool = False
+
+
+@dataclass(frozen=True)
+class Region:
+    """A ``<!-- start: {...} -->`` ... ``<!-- end -->`` region, by its one key."""
+
+    key: str
+    value: object
+    start_line: int
+    end_line: int
+    options: Mapping[str, object] = field(default_factory=dict, compare=False)
+
+
+@dataclass(frozen=True)
+class Section:
+    """A top-level ``## N. Title`` heading outside any fence or comment."""
+
+    number: int
+    title: str
+    line: int
+
+
+@dataclass(frozen=True)
+class Scan:
+    """``prose`` holds the 1-based numbers of the lines outside any fence, comment or marker, and
+    ``catalogue_lines`` those that open a repository catalogue block (ADR-A121)."""
+
+    blocks: List[Block]
+    regions: List[Region]
+    sections: List[Section]
+    prose: frozenset = frozenset()
+    catalogue_lines: Tuple[int, ...] = ()
 
 
 def parse_blocks(markdown: str) -> List[Block]:
     """Collect every recognised fenced block from a literate specification."""
-    blocks: List[Block] = []
-    counters: Dict[str, int] = {}
+    return scan(markdown).blocks
+
+
+def scan(markdown: str) -> Scan:
+    """Read a README once: its recognised blocks, its marker regions and its sections.
+
+    A fence of any other kind, and an ordinary HTML comment, are skipped whole, so a
+    tagged block or a marker shown inside one is text (ADR-A126 decision 8)."""
     lines = markdown.splitlines()
-    index = 0
-    while index < len(lines):
-        match = FENCE_RE.match(lines[index])
-        if match is None:
-            index += 1
-            continue
-        tag = match.group("tag")
-        start = index + 1
-        end = start
+    blocks: List[Block] = []
+    regions: List[Region] = []
+    sections: List[Section] = []
+    counters: Dict[str, int] = {}
+    open_regions: List[Tuple[str, object, int, Mapping[str, object]]] = []
+    prose: List[int] = []
+    catalogue_lines: List[int] = []
+
+    def read_block(at: int, tag: str, output_file: str | None, hidden: bool) -> int:
+        end = at + 1
         while end < len(lines) and not FENCE_END_RE.match(lines[end]):
+            if hidden and "-->" in lines[end]:
+                raise ValueError(f"line {end + 1}: '-->' inside a hidden block would end its comment early")
             end += 1
         if end >= len(lines):
-            raise ValueError(f"Unterminated {tag} block opened at line {index + 1}")
+            raise ValueError(f"Unterminated {tag} block opened at line {at + 1}")
         ordinal = counters.get(tag, 0)
         counters[tag] = ordinal + 1
-        blocks.append(
-            Block(
-                tag=tag,
-                ordinal=ordinal,
-                body="\n".join(lines[start:end]).rstrip() + "\n",
-                start_line=index + 1,
+        body = "\n".join(lines[at + 1:end]).rstrip() + "\n"
+        blocks.append(Block(tag, ordinal, body, at + 1, output_file, hidden))
+        return end + 1
+
+    def region_file(tag: str) -> str | None:
+        if tag not in EXTRACTED_TO_ONTOLOGY:
+            return None
+        return next((v for k, v, _, _ in reversed(open_regions) if k == "output-file"), None)
+
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        tagged = FENCE_RE.match(line)
+        if tagged:
+            index = read_block(index, tagged.group("tag"), region_file(tagged.group("tag")), False)
+            continue
+        fence = ANY_FENCE_RE.match(line)
+        if fence:
+            if fence.group("info").strip() == CATALOGUE_TAG:
+                catalogue_lines.append(index + 1)
+            index = _skip_fence(lines, index, fence.group("fence"))
+            continue
+        if line.startswith("<!--"):
+            if not MARKER_WORD_RE.match(line):
+                index = _skip_comment(lines, index)
+                continue
+            if REGION_END_RE.match(line):
+                if not open_regions:
+                    raise ValueError(f"line {index + 1}: <!-- end --> closes no region")
+                key, value, opened, options = open_regions.pop()
+                regions.append(Region(key, value, opened, index + 1, options))
+                index += 1
+                continue
+            start = REGION_START_RE.match(line)
+            if start:
+                key, value, options = _region_json(start.group("json"), index)
+                open_regions.append((key, value, index + 1, options))
+                index += 1
+                continue
+            hidden = HIDDEN_RE.match(line)
+            if hidden is None:
+                raise ValueError(f"line {index + 1}: malformed marker {line.strip()!r} (ADR-A126)")
+            output_file = None
+            if hidden.group("json"):
+                _, output_file = _marker_json(hidden.group("json"), index, {"output-file": str})
+            index += 1
+            while index < len(lines) and not lines[index].strip():
+                index += 1
+            inner = FENCE_RE.match(lines[index]) if index < len(lines) else None
+            if inner is None:
+                other = ANY_FENCE_RE.match(lines[index]) if index < len(lines) else None
+                if other and other.group("info").strip().startswith("mermaid"):
+                    raise ValueError(f"line {index + 1}: a mermaid diagram is never hidden (ADR-A126)")
+                raise ValueError(f"line {index + 1}: a hidden block holds one extracted fenced block (ADR-A126)")
+            tag = inner.group("tag")
+            if output_file is not None and tag not in EXTRACTED_TO_ONTOLOGY:
+                raise ValueError(f"line {index + 1}: a {tag} block takes no output-file (ADR-A126)")
+            enclosing = region_file(tag)
+            if output_file is not None and enclosing is not None:
+                raise ValueError(
+                    f"line {index + 1}: output-file is given twice, by the hidden block and by its region (ADR-A126)"
+                )
+            index = read_block(index, tag, output_file or enclosing, True)
+            while index < len(lines) and not lines[index].strip():
+                index += 1
+            if index >= len(lines) or lines[index].strip() != "-->":
+                raise ValueError(f"line {index + 1}: a hidden block ends with a line holding only '-->'")
+            index += 1
+            continue
+        section = SECTION_RE.match(line)
+        if section:
+            sections.append(Section(int(section.group("number")), section.group("title"), index + 1))
+        prose.append(index + 1)
+        index += 1
+    if open_regions:
+        raise ValueError(f"the region opened at line {open_regions[-1][2]} is never closed")
+    return Scan(blocks, regions, sections, frozenset(prose), tuple(catalogue_lines))
+
+
+def _skip_fence(lines: Sequence[str], at: int, fence: str) -> int:
+    closing = re.compile(rf"^ {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}\s*$")
+    for index in range(at + 1, len(lines)):
+        if closing.match(lines[index]):
+            return index + 1
+    raise ValueError(f"Unterminated fence opened at line {at + 1}")
+
+
+def _skip_comment(lines: Sequence[str], at: int) -> int:
+    if "-->" in lines[at][4:]:
+        return at + 1
+    for index in range(at + 1, len(lines)):
+        if "-->" in lines[index]:
+            return index + 1
+    raise ValueError(f"Unterminated HTML comment opened at line {at + 1}")
+
+
+def _marker_json(text: str, at: int, allowed: Mapping[str, type]) -> Tuple[str, object]:
+    """A marker's JSON: one key from ``allowed``, with a value of that key's type."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"line {at + 1}: marker JSON does not parse ({error.msg})") from None
+    if not isinstance(data, dict) or len(data) != 1:
+        raise ValueError(f"line {at + 1}: a marker holds exactly one key, one of {', '.join(allowed)}")
+    ((key, value),) = data.items()
+    if key not in allowed:
+        raise ValueError(f"line {at + 1}: unknown marker key {key!r}, expected one of {', '.join(allowed)}")
+    if type(value) is not allowed[key]:
+        raise ValueError(f"line {at + 1}: marker key {key!r} takes a {allowed[key].__name__}")
+    return key, value
+
+
+def _region_json(text: str, at: int) -> Tuple[str, object, Mapping[str, object]]:
+    """A region marker's JSON: one key from ``REGION_KEYS``, and for a ``generated`` region the further
+    keys of ``GENERATED_OPTIONS``, returned apart from it."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        data = None
+    if isinstance(data, dict) and len(data) > 1 and "generated" in data and not set(data) & (set(REGION_KEYS) - {"generated"}):
+        options = {k: v for k, v in data.items() if k != "generated"}
+        for key, value in options.items():
+            if key not in GENERATED_OPTIONS:
+                raise ValueError(
+                    f"line {at + 1}: unknown key {key!r} in a generated region, expected one of {', '.join(GENERATED_OPTIONS)}"
+                )
+            if type(value) is not GENERATED_OPTIONS[key]:
+                raise ValueError(f"line {at + 1}: key {key!r} of a generated region takes a {GENERATED_OPTIONS[key].__name__}")
+        if "classes" in options and not all(type(c) is str for c in options["classes"]):
+            raise ValueError(f"line {at + 1}: key 'classes' takes a list of CURIEs")
+        key, value = _marker_json(json.dumps({"generated": data["generated"]}), at, REGION_KEYS)
+        return key, value, options
+    key, value = _marker_json(text, at, REGION_KEYS)
+    return key, value, {}
+
+
+def _norm(title: str) -> str:
+    return " ".join(title.split()).casefold()
+
+
+def uses_layout(sections: Sequence[Section]) -> bool:
+    """Whether a README is migrated to the ADR-A126 layout: it has a "Description Logic Encoding" section."""
+    return any(_norm(s.title) == _norm(LAYOUT[5]) for s in sections)
+
+
+def layout_problems(
+    sections: Sequence[Section], catalogue_lines: Sequence[int] | None = None
+) -> Tuple[List[str], List[str]]:
+    """The errors and warnings of a README in the ADR-A126 layout. A README with no
+    "Description Logic Encoding" section is not yet migrated, and has neither. Given the lines
+    of its catalogue blocks, it also checks that there is one, in section 3 (RC1-C5)."""
+    if not uses_layout(sections):
+        return [], []
+    expected = {_norm(title): (number, title) for number, title in enumerate(LAYOUT, 1)}
+    errors: List[str] = []
+    warnings: List[str] = []
+    seen: Dict[str, Section] = {}
+    for section in sections:
+        key = _norm(section.title)
+        if key not in expected:
+            errors.append(f"line {section.line}: section {section.title!r} is not in the layout (ADR-A126)")
+        elif key in seen:
+            errors.append(f"line {section.line}: section {section.title!r} appears twice")
+        else:
+            seen[key] = section
+            number = expected[key][0]
+            if section.number != number:
+                warnings.append(
+                    f"line {section.line}: {section.title!r} is numbered {section.number}, the layout numbers it {number}"
+                )
+    errors += [f"section {number}, {title!r}, is missing" for key, (number, title) in expected.items() if key not in seen]
+    contract = seen.get(_norm(LAYOUT[2]))
+    if catalogue_lines is not None and contract is not None:
+        after = [s.line for s in sections if s.line > contract.line]
+        end = min(after) if after else float("inf")
+        inside = [n for n in catalogue_lines if contract.line < n < end]
+        if len(catalogue_lines) != 1 or len(inside) != 1:
+            errors.append(
+                f"the README needs exactly one repository catalogue entry, in section 3 (found {len(catalogue_lines)}, "
+                f"{len(inside)} of them in section 3)"
             )
-        )
-        index = end + 1
-    return blocks
+    return errors, warnings
+
+
+def _warn(message: str) -> None:
+    """A warning on stderr, in yellow where the stream is a terminal (and NO_COLOR is unset)."""
+    if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
+        sys.stderr.write(f"\033[33mWARNING {message}\033[0m\n")
+    else:
+        sys.stderr.write(f"WARNING {message}\n")
 
 
 def render(bodies: Sequence[str], header: str = SPDX_TTL) -> str:
@@ -270,6 +552,8 @@ def plan(
     shape_targets: Sequence[str],
     proofs_root: str | None = None,
     reference_root: str | None = None,
+    preambles: Mapping[str, str] | None = None,
+    generated_shapes: Mapping[str, str] | None = None,
 ) -> Dict[str, str]:
     """Map each output path to the document it should contain.
 
@@ -277,23 +561,47 @@ def plan(
     Every path is relative to ``--root`` (the ontology directory) except an
     ``isabelle-spec`` output, which is relative to the repository root, via
     ``proofs_root``, since ``tools/proofs/`` sits outside ``ontology/``
-    entirely (ADR-A-FM2).
+    entirely (ADR-A-FM2). ``layer`` may itself be a nested module path (for
+    example ``applied/insurance/peril``, ADR-A120 addendum): its last segment
+    names the module's default spec and vocabulary documents.
     """
-    default_spec = f"ontology/{layer}/spec/{layer}.ttl"
+    last_segment = layer.rsplit("/", 1)[-1]
+    default_spec = f"ontology/{layer}/spec/{last_segment}.ttl"
+    default_vocab = f"ontology/{layer}/vocab/{last_segment}-vocab.ttl"
     spec_docs: Dict[str, List[str]] = {}
     for block in blocks:
         if block.tag == "turtle-spec":
-            target, body = _spec_target(block, layer, default_spec)
+            target, body = _target(block, layer, default_spec)
             spec_docs.setdefault(target, []).append(body)
-    vocab_bodies = [b.body for b in blocks if b.tag == "turtle-vocab"]
-    shape_blocks = [b for b in blocks if b.tag == "turtle-shapes"]
+    vocab_docs: Dict[str, List[str]] = {}
+    for block in blocks:
+        if block.tag == "turtle-vocab":
+            target, body = _target(block, layer, default_vocab, under="vocab/")
+            vocab_docs.setdefault(target, []).append(body)
+    shape_docs: Dict[str, List[str]] = {}
+    positional: List[str] = []
+    for block in blocks:
+        if block.tag == "turtle-shapes":
+            target, body = _target(block, layer, None, under="shapes/")
+            if target is None:
+                positional.append(body)
+            else:
+                shape_docs.setdefault(target, []).append(body)
     isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
 
-    if len(shape_blocks) != len(shape_targets):
+    if preambles is not None and positional:
         raise ValueError(
-            f"{len(shape_blocks)} turtle-shapes block(s) found but "
-            f"{len(shape_targets)} shape target(s) declared; the extraction "
-            f"contract in the README and the --shapes argument must agree"
+            f"{len(positional)} turtle-shapes block(s) name no file. In a README in the layout, every shape block "
+            f"names its file, and the structural shapes are generated from section 6 (ADR-A126)"
+        )
+    for path in generated_shapes or {}:
+        if path in shape_docs:
+            raise ValueError(f"a shape block names {path}, which is generated from section 6's restrictions")
+    if len(positional) != len(shape_targets):
+        raise ValueError(
+            f"{len(positional)} turtle-shapes block(s) without an output-file found but "
+            f"{len(shape_targets)} shape file(s) in the extraction contract. The README and its "
+            f"repository catalogue entry must agree (ADR-A121)"
         )
     if isabelle_bodies and not proofs_root:
         raise ValueError(
@@ -311,23 +619,59 @@ def plan(
         )
 
     outputs: Dict[str, str] = {}
+    if preambles is not None:
+        # A README in the ADR-A126 layout: every spec or vocab document opens with the text its
+        # section 2 header row and section 6 compile to, and its blocks follow.
+        stray = sorted((set(spec_docs) | set(vocab_docs)) - set(preambles))
+        if stray:
+            raise ValueError(f"block(s) go to {', '.join(stray)}, which section 2's header table does not name")
+        for target, preamble in preambles.items():
+            bodies = [*spec_docs.pop(target, []), *vocab_docs.pop(target, [])]
+            if any(PREFIX_RE.search(body) for body in bodies):
+                raise ValueError(
+                    f"a block for {target} declares a prefix. In a README in the layout, section 2's prefix "
+                    f"table is the one source of prefixes (ADR-A126)"
+                )
+            # Blocks are ordered by their own text, so moving one in the README changes no generated
+            # file (OD-D18, ADR-A126 decision 10). Without @prefix lines, their order cannot matter.
+            outputs[target] = render([preamble, *sorted(bodies)])
     prefixes = PREFIX_RE.findall("\n".join(spec_docs.get(default_spec, [])))
     for target, bodies in spec_docs.items():
         if target != default_spec and prefixes:
             bodies = ["\n".join(prefixes) + "\n"] + bodies
         outputs[target] = render(bodies)
-    versions = {t: VERSION_RE.search(outputs[t]) for t in spec_docs}
+    spec_targets = [t for t in outputs if "/spec/" in t]
+    versions = {t: VERSION_RE.search(outputs[t]) for t in spec_targets}
     found = {m.group("version") for m in versions.values() if m}
-    if len(spec_docs) > 1 and len(found) > 1:
+    if len(spec_targets) > 1 and len(found) > 1:
         raise ValueError(
             f"{layer}'s spec documents carry different versions "
             f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(versions.items()))}); "
             f"a layer's spec documents move in unison (ADR-A120)"
         )
-    if vocab_bodies:
-        outputs[f"ontology/{layer}/vocab/{layer}-vocab.ttl"] = render(vocab_bodies)
-    for block, target in zip(shape_blocks, shape_targets):
-        outputs[f"ontology/{layer}/{target}"] = render([block.body])
+    vocab_prefixes = PREFIX_RE.findall("\n".join(vocab_docs.get(default_vocab, [])))
+    for target, bodies in vocab_docs.items():
+        if target != default_vocab and vocab_prefixes:
+            bodies = ["\n".join(vocab_prefixes) + "\n"] + bodies
+        outputs[target] = render(bodies)
+    vocab_targets = [t for t in outputs if "/vocab/" in t]
+    vocab_versions = {t: VERSION_RE.search(outputs[t]) for t in vocab_targets}
+    vocab_found = {m.group("version") for m in vocab_versions.values() if m}
+    if len(vocab_targets) > 1 and len(vocab_found) > 1:
+        raise ValueError(
+            f"{layer}'s vocabulary documents carry different versions "
+            f"({', '.join(f'{t}: {m.group(1) if m else None}' for t, m in sorted(vocab_versions.items()))}); "
+            f"a module's vocabulary documents move in unison (ADR-A120 addendum)"
+        )
+    for body, target in zip(positional, shape_targets):
+        path = f"ontology/{layer}/{target}"
+        if path in shape_docs:
+            raise ValueError(f"{path} is named both by the extraction contract and by a block's output-file")
+        outputs[path] = render([body])
+    for path, bodies in shape_docs.items():
+        outputs[path] = render(bodies)
+    for path, text in (generated_shapes or {}).items():
+        outputs[path] = render([text])
     if isabelle_bodies:
         # A path outside `root` (ontology/), marked with a recognisable prefix so
         # main() resolves it against --proofs-root instead of --root.
@@ -343,32 +687,62 @@ def plan(
     return outputs
 
 
-def _spec_target(block: Block, layer: str, default: str) -> tuple[str, str]:
-    """The spec document a ``turtle-spec`` block goes to, and its body without the directive."""
+def _target(block: Block, layer: str, default: str | None, under: str = "") -> tuple[str | None, str]:
+    """The document a block goes to, and its body without the directive. The directive
+    has two forms, a ``# @output-file`` first line (ADR-A120) and the JSON key of a marker
+    (``block.output_file``, ADR-A126 decision 9), and a block may carry only one. A block
+    with neither goes to ``default``."""
     first, _, rest = block.body.partition("\n")
     match = OUTPUT_FILE_RE.match(first)
-    if match is None:
-        return default, block.body
-    path = match.group("path")
-    if Path(path).is_absolute() or ".." in Path(path).parts or not path.endswith(".ttl"):
+    if match and block.output_file:
         raise ValueError(
-            f"turtle-spec block at line {block.start_line}: @output-file must name a .ttl "
-            f"file inside the layer directory, not {path!r}"
+            f"{block.tag} block at line {block.start_line}: output-file is given twice, by a marker "
+            f"and by the block's first line (ADR-A126)"
         )
-    return f"ontology/{layer}/{path}", rest.lstrip("\n")
+    if match:
+        path, body = match.group("path"), rest.lstrip("\n")
+    elif block.output_file:
+        path, body = block.output_file, block.body
+    else:
+        return default, block.body
+    if _escapes_layer(path) or not path.endswith(".ttl") or not path.startswith(under):
+        where = f"under the module's {under}" if under else "inside the layer directory"
+        raise ValueError(
+            f"{block.tag} block at line {block.start_line}: @output-file must name a .ttl "
+            f"file {where}, not {path!r}"
+        )
+    return f"ontology/{layer}/{path}", body
+
+
+def _escapes_layer(path: str) -> bool:
+    """Whether a directive's path would resolve outside its module directory: an
+    absolute path (POSIX-style, since Windows' ``Path.is_absolute()`` does not
+    recognise ``/tmp/x.ttl`` as absolute without a drive letter) or a ``..`` segment."""
+    return path.startswith("/") or Path(path).is_absolute() or ".." in Path(path).parts
+
+
+def contract_shapes(blocks: Sequence[Block], layer: str, readme: Path | None = None) -> List[str]:
+    """The module's shape files, relative to its directory and in extraction order, from its
+    repository catalogue entry. The catalogue is the nearest one above ``readme`` (RC2-C1), or,
+    with no ``readme`` or none above it, the one ``LATTICE_ROOT`` or the working directory
+    finds. It is read only when a shape block names no file, so a README outside the catalogue
+    with no such block still extracts (RC2-C2). After downstream catalogues exist (RC4), every
+    extraction will read it and check its generated files against the entry."""
+    if not any(
+        b.tag == "turtle-shapes" and not b.output_file and not OUTPUT_FILE_RE.match(b.body.partition("\n")[0])
+        for b in blocks
+    ):
+        return []
+    root = lattice_repo_catalogue.root_above(readme) if readme is not None else None
+    module = lattice_repo_catalogue.load(root).module(layer)
+    return [f.relative_to(module.path).as_posix() for f in module.files("shapes")]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Extract compiled Turtle from a layer README")
     parser.add_argument("readme", help="path to the layer README.md")
-    parser.add_argument("--layer", required=True, help="layer directory name, e.g. surface")
-    parser.add_argument("--root", default=".", help="repository root (default: .)")
-    parser.add_argument(
-        "--shapes",
-        nargs="*",
-        default=[],
-        help="shape output paths, relative to the layer directory, in document order",
-    )
+    parser.add_argument("--layer", required=True, help="the module's name in the repository catalogue, e.g. surface")
+    parser.add_argument("--root", default=".", help="where outputs are written or compared (default: .)")
     parser.add_argument(
         "--proofs-root",
         default=None,
@@ -397,8 +771,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     readme_path = Path(args.readme)
-    blocks = parse_blocks(readme_path.read_text(encoding="utf-8"))
-    outputs = plan(blocks, args.layer, args.shapes, args.proofs_root, args.reference_root)
+    text = readme_path.read_text(encoding="utf-8")
+    result = scan(text)
+    errors, warnings = layout_problems(result.sections, result.catalogue_lines)
+    for message in warnings:
+        _warn(f"{readme_path}: {message}")
+    if errors:
+        for message in errors:
+            print(f"LAYOUT {readme_path}: {message}", file=sys.stderr)
+        return 1
+    try:
+        shapes = contract_shapes(result.blocks, args.layer, readme_path)
+    except lattice_repo_catalogue.CatalogueError as error:
+        print(f"CATALOGUE {error}", file=sys.stderr)
+        return 1
+    try:
+        compiled = literate_grammar.compile_layout(text, result, args.layer) if uses_layout(result.sections) else None
+    except literate_grammar.GrammarError as error:
+        print(f"GRAMMAR {readme_path}: {error}", file=sys.stderr)
+        return 1
+    outputs = plan(
+        result.blocks, args.layer, shapes, args.proofs_root, args.reference_root,
+        compiled.documents if compiled else None, compiled.shapes if compiled else None,
+    )
 
     root = Path(args.root)
     proofs_root = Path(args.proofs_root) if args.proofs_root else None
@@ -419,8 +814,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                 drifted.append(relative)
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
+        # newline="\n" pins the line ending to LF regardless of platform: without it,
+        # Path.write_text() translates embedded "\n" to the OS separator, which turns
+        # into CRLF inside a multi-line SPARQL string literal on Windows, silently
+        # changing that literal's value (not just insignificant whitespace) and
+        # producing CRLF noise against the repository's LF-committed .ttl files.
+        target.write_text(content, encoding="utf-8", newline="\n")
         print(f"wrote {relative} ({len(content.splitlines())} lines)")
+
+    # A README in the layout is also an output: its generated regions, the Axiom Index and the
+    # class diagram, are rewritten in place (ADR-A126 decision 7).
+    if compiled is not None and compiled.readme != text:
+        if args.check:
+            drifted.append(f"{readme_path} (its generated regions: {', '.join(compiled.stale)})")
+        else:
+            readme_path.write_text(compiled.readme, encoding="utf-8", newline="\n")
+            print(f"wrote the generated regions of {readme_path}")
 
     if args.check:
         for relative in drifted:

@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A receipt model outside the closed enumeration of dal:ReceiptModel.
+# base: write-discipline-delta-membership.ttl
+# remove: ex:QuoteReceiptProfile dal:receiptModel dal:ReceiptOnly
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+
+ex:QuoteReceiptProfile dal:receiptModel dal:Bogus .

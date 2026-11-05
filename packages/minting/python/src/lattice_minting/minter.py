@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
 from . import ucd
-from .canonical import encode, hmac_sha256, percent_encode, sha256, tuple_bytes, uuid4_from
+from .canonical import encode, hmac_sha256, is_dot_segment, is_unreserved, percent_encode, sha256, tuple_bytes, uuid4_from
 from .errors import MintError
 from .recipe import Recipe
 
@@ -74,6 +74,8 @@ class Minter:
         if key.get("scopeProperty"):
             if not isinstance(inputs.get("scope"), str):
                 raise MintError("MissingKeyComponent", "the key's scope value is missing")
+            if inputs["scope"] == "":
+                raise MintError("EmptyScope", "the key's scope value is the empty string, which would encode as no scope")
             scope = [inputs["scope"]]
         normalized = [self._normalize(key["pipeline"], v, i, trace) for i, v in enumerate(values[: len(key["properties"])])]
         return scope, normalized
@@ -97,6 +99,10 @@ class Minter:
         if not isinstance(value, str) or re.fullmatch(pattern, value) is None:
             raise MintError("PatternMismatch", f"{what} {value!r} does not match {pattern}")
         return value
+
+    def _no_dot_segment(self, value: str, what: str) -> None:
+        if is_dot_segment(value):
+            raise MintError("DotSegment", f"{what} {value!r} is a path dot segment that RFC 3986 normalization removes")
 
     def _uuid(self, inputs: Mapping, trace: list) -> str:
         random_hex = inputs.get("randomHex")
@@ -124,6 +130,8 @@ class Minter:
             return Minted(iri, trace=trace)
         if s == "NaturalKeyIdentity":
             scope, normalized = self._key(self.r["key"], inputs, trace)
+            for v in scope + normalized:
+                self._no_dot_segment(v, "key component")
             parts = [percent_encode(v) for v in scope + normalized]
             trace.append({"step": "percent-encode", "components": parts})
             return self._done(render(self.r["iriTemplate"], {"key": "/".join(parts)}), trace)
@@ -151,6 +159,9 @@ class Minter:
         sur = self.r["surrogate"]
         if sur["kind"] == "CallerSuppliedSurrogate":
             value = self._match(sur["pattern"], inputs.get("surrogate"), "surrogate")
+            if not is_unreserved(value):
+                raise MintError("UnsafeSurrogate", f"surrogate {value!r} is empty or has a character outside RFC 3986's unreserved set")
+            self._no_dot_segment(value, "surrogate")
             trace.append({"step": "validate-surrogate", "pattern": sur["pattern"], "value": value})
         else:
             value = self._uuid(inputs, trace)
@@ -186,6 +197,7 @@ class Minter:
             namespace = inputs.get("namespaceToken")
             if not isinstance(namespace, str) or TOKEN.fullmatch(namespace) is None:
                 raise MintError("PatternMismatch", f"namespace token {namespace!r} is not [A-Za-z0-9._~-]+")
+            self._no_dot_segment(namespace, "namespace token")
             trace.append({"step": "validate-token", "pattern": "^[A-Za-z0-9._~-]+$", "value": namespace})
         padded = []
         for name, width in (("epoch", self.r["epochWidth"]), ("seq", self.r["sequenceWidth"])):
@@ -194,7 +206,10 @@ class Minter:
                 raise MintError("MissingKeyComponent", f"{name} is missing or not an integer")
             if not 0 <= v <= MAX_POSITION:
                 raise MintError("PositionOutOfRange", f"{name} {v} is outside 0..{MAX_POSITION}")
-            padded.append(f"{v:0{width}d}")
+            digits = f"{v:0{width}d}"
+            if len(digits) > width:
+                raise MintError("PositionWidthOverflow", f"{name} {v} needs {len(digits)} digits, more than its declared width {width}")
+            padded.append(digits)
         trace.append({"step": "pad", "epoch": padded[0], "seq": padded[1]})
         iri = render(self.r["iriTemplate"], {"namespace": namespace, "epoch": padded[0], "seq": padded[1]})
         return self._done(iri, trace)

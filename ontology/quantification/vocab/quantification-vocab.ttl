@@ -80,6 +80,8 @@ qnt:Compare a qnt:OperationKind .
 qnt:Contains a qnt:OperationKind .
 qnt:Overlaps a qnt:OperationKind .
 qnt:Difference a qnt:OperationKind .
+qnt:TruncatedDifference a qnt:OperationKind ;
+    rdfs:comment "Difference floored at the space's zero lower bound, the depletion operation law Q8 names. On a space with no zero lower bound it is Difference." .
 qnt:Sum a qnt:OperationKind .
 qnt:Ratio a qnt:OperationKind .
 qnt:Minimum a qnt:OperationKind .
@@ -175,6 +177,7 @@ qnt:RuntimeConformance a qnt:LawRegister ;
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 qnt:ContextRoleContract a voc:SchemeContract ;
+    rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/quantification> ;
     fnd:hasIdentity qnt:ContextRoleContract-identity ;
     fnd:hasGovernanceState fnd:Active ;
     skos:prefLabel "Context role scheme contract"@en ;

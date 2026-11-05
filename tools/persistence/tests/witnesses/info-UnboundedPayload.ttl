@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A named-graph family with payload operations and no dal:boundaryShape. A caller can check the form of a payload and not that every subject
+# belongs to the aggregate, which compile reports as information (H2.8b, ADR-A123 decision 6).
+# base: baseline-single-class.ttl

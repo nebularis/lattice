@@ -1,13 +1,6 @@
 # Build, adopt, or build on: the engine decision
 
-**Technology exploration, 2026-10-03.** The third paper on the RDF and Datalog engine. The first,
-[rdf-datalog-engine-technology-exploration.md](rdf-datalog-engine-technology-exploration.md)
-("paper 1"), designed an engine and chose its languages. The second,
-[compiled-persistence-physical-planning.md](compiled-persistence-physical-planning.md) ("paper 2"),
-compiled persistence profiles into that engine's physical structures. Both assumed the engine would
-be built. This paper tests that assumption against the existing database landscape, using the
-"lazy senior developer" ladder in `.github/prompts/ponytail.md` as its standard, and then costs the
-two build options in tokens.
+**Technology exploration, 2026-10-03.** The third paper on the RDF and Datalog engine. The first, [rdf-datalog-engine-technology-exploration.md](lock-free-rdf-store.md) ("paper 1"), designed an engine and chose its languages. The second, [compiled-persistence-physical-planning.md](compiled-persistence-profiles.md) ("paper 2"), compiled persistence profiles into that engine's physical structures. Both assumed the engine would be built. This paper tests that assumption against the existing database landscape, using the "lazy senior developer" ladder in `.github/prompts/ponytail.md` as its standard, and then costs the two build options in tokens.
 
 Grading is as in the earlier papers. **Fact** means a cited source says so. **Judgement** means a
 reasoned position that a measurement could overturn. *(verify)* marks product or licence details
@@ -423,7 +416,7 @@ times the context size, and output is a small fraction. In the measurements belo
 ### 11.2 Calibration from this session
 
 This session's debug log retains the last 59 main-agent calls and one subagent run. Earlier slices
-(WA10, WA11) fell outside it and cannot be measured. Full data in Appendix A.
+(WA-10, WA-11) fell outside it and cannot be measured. Full data in Appendix A.
 
 | Work | Calls | Mean context | G | E |
 |---|---|---|---|---|

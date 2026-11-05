@@ -46,7 +46,7 @@ the `lattice` plugin, and Copilot links the skills into its personal skills dire
 | Section | Contents |
 |---|---|
 | The contract | default and autonomous modes, never stating a check passed that was not run, pausing for design decisions, never committing, tagging, merging or pushing without the maintainer's go-ahead |
-| Writing | no semicolons, sparing colons, no superlatives, no binary reframes, no formulaic transitions or meta-commentary, examples introduced as examples, no market words coined as technical terms, "versioned" for `fnd:Version` |
+| Writing | no semicolons, sparing colons, no superlatives, no binary reframes, no formulaic transitions or meta-commentary, examples introduced as examples, no market words coined as technical terms, "versioned" for `fnd:Versioned` |
 | Privacy | the repository is public. Nothing identifying a person or a client. No secrets, private hostnames or credentials. Domain-neutral substrate text |
 | Where things are | the repository roots in one table, the documentation lifecycle in one line each, pointers to the developer guide |
 | The skills | each skill's name and when it applies |
@@ -104,7 +104,7 @@ or examples, a version IRI, or a SHACL shape.*
 - documenting ontologies: say a design decision once, sparing `rdfs:domain` and `rdfs:range`
 - the Ponytail guardrails for ontologies
 - authoring SHACL-SPARQL shapes
-- domain-neutral READMEs, and referring to `fnd:Version`
+- domain-neutral READMEs, and referring to `fnd:Versioned`
 - the market-word rule and its exceptions (bound meaning, SPC's binder)
 
 ### `lattice-toolchain`

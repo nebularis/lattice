@@ -4,7 +4,7 @@
 """
 Command line for the surface compiler.
 
-Argument and logging conventions follow ``tools/mork2rml.py``, so the two tools
+Argument and logging conventions follow ``tools/mork/src/mork2rml.py``, so the two tools
 behave the same way in a pipeline.
 
 ``compile``
@@ -219,7 +219,7 @@ def command_compile(args: argparse.Namespace) -> int:
         target.mkdir(parents=True, exist_ok=True)
         rendered = render(compiled)
         for name, text in sorted(rendered.items()):
-            (target / f"{name}.ttl").write_text(text, encoding="utf-8")
+            (target / f"{name}.ttl").write_text(text, encoding="utf-8", newline="\n")
 
         if args.mork_mapping:
             mapping = mork_interop.lift(compiled)
@@ -232,7 +232,7 @@ def command_compile(args: argparse.Namespace) -> int:
                     prefixes,
                     ["# SPDX-License-Identifier: MPL-2.0", "# MORK projection mapping record.", ""],
                 ),
-                encoding="utf-8",
+                encoding="utf-8", newline="\n",
             )
 
         print(
@@ -331,7 +331,32 @@ def command_mork(args: argparse.Namespace) -> int:
         for triple in mork_interop.lift(compiled, mapping_scheme=args.mapping_scheme):
             combined.add(triple)
     text = serialise(combined, prefixes, header + ["# MORK projection mapping records.", ""])
-    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
+    Path(args.out).write_text(text, encoding="utf-8", newline="\n") if args.out else print(text)
+    return 0
+
+
+def command_maintenance(args: argparse.Namespace) -> int:
+    """Write each promotion's clear and fill operations, which keep its rows from a write's delta (PM1), as
+    ``<key>-clear.rq`` and ``<key>-fill.rq`` and a ``manifest.json`` listing them in the order a write sends them."""
+    import json
+
+    from persistence.ir_render import render
+
+    from .maintenance import MaintenanceRefused, maintenance
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    for contract in read_contracts(parse_files(args.contracts), only=args.contract):
+        try:
+            m = maintenance(contract)
+        except MaintenanceRefused as refused:
+            print(f"error: {refused}", file=sys.stderr)
+            return 2
+        for part, op in (("clear", m.clear), ("fill", m.fill)):
+            (out / f"{m.key}-{part}.rq").write_text(render(op), encoding="utf-8", newline="\n")
+        manifest.append({"contract": str(m.contract), "key": m.key, "clear": f"{m.key}-clear.rq", "fill": f"{m.key}-fill.rq"})
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
     return 0
 
 
@@ -361,7 +386,7 @@ def command_lower(args: argparse.Namespace) -> int:
 
     combined = lower_all(contracts=contracts, projections=projections)
     text = serialise(combined, prefixes, header + ["# Lowered MORK mapping graph.", ""])
-    Path(args.out).write_text(text, encoding="utf-8") if args.out else print(text)
+    Path(args.out).write_text(text, encoding="utf-8", newline="\n") if args.out else print(text)
     return 0
 
 
@@ -417,6 +442,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     lower_cmd.add_argument("--out", default=None, help="output file (default: stdout)")
     lower_cmd.set_defaults(func=command_lower)
+
+    maint = sub.add_parser("maintenance", help="write each promotion's operations that keep its rows from a write's delta")
+    maint.add_argument("--contracts", nargs="+", required=True, help="declaration graph files")
+    maint.add_argument("--contract", default=None, help="only this contract IRI")
+    maint.add_argument("--out", required=True, help="the folder to write the operations and manifest.json into")
+    maint.set_defaults(func=command_maintenance)
 
     args = parser.parse_args(argv)
     logging.basicConfig(

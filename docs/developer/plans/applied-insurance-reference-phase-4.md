@@ -18,10 +18,13 @@ about the world, not about cover. No class the substrate already provides.
 |---|---|---|
 | AIR-4.1 | exposure set, location, legal entity, control relations, asset, interest, valuation. Spec, vocabulary and shapes created with one region per slice (lanes §8) | §5.1 to §5.3, §5.5, §5.6 |
 | AIR-4.2 | zones and pool participation, hazard attributes, assessments and profile shapes | §5.4, §5.7, §5.8 |
+| AIR-4.2a | share unchanged exposure members across versions (TD-49): no inverse-functional membership, designation, participation, assessment or attribute property, `aeo:MembershipShape` withdrawn, an example of two schedule versions. Added 2026-10-14, before 4.3 | §5.2 |
 | AIR-4.3 | dependencies, peril metrics, exposure units derived on demand (no materialisation required) | §5.9 to §5.11 |
 | AIR-4.4 | loss history with one `aeo:LossCause` node per link of the cause chain (peril, position, mechanism, agency), effective characteristic values defaulted from the cause's typical values as derived artefacts (epic D12), the loss event class in `insurance/common/` (D7), coverage requirements, existing cover, financial metrics | §5.12 to §5.14 |
 | AIR-4.5 | liability exposure: counterparty populations, relationship depth, exposure bases | §5.15 |
 | AIR-4.6 | London and US profiles as scheme bindings and shapes, the worked examples, and their persistence profiles (an aggregate boundary per exposure set version, a privacy profile for natural persons) | §10, §12, §5.2 |
+| AIR-4.2b | **built on the formal-methods Track H branch `claude/nice-bohr-pmj43u` as AIR-66 (TD-66), to bring across** (see "Handover from formal-methods Track H" below): an exposure version is never edited on succession, and `aeo:locatedAt` and `aeo:valueOf` name identities fixed by the set version's membership | below |
+| AIR-deferred-testing | the tests for the applied insurance slices built while testing is deferred (amendment of 2026-10-14), from AIR-4.2a, with their test plans collected here | per slice |
 
 After 4.1, 4.2 needs AIR-2.3, 2.4 and 2.6 (it links their concepts and uses their units), 4.3
 needs 4.2 (it reuses `aeo:perilScope`), 4.4 needs 4.3 (requirement scopes range over exposure
@@ -53,7 +56,7 @@ recorded in the status record's history. Those for slices whose briefs are not y
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.1] …`, the
 last being `[AIR-4.1] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.1](../validation/applied-insurance-reference-4.1.md), whose Handoff
+[applied-insurance-reference-4.1](../validation/AIR-4.1.md), whose Handoff
 section S fills in. **Decisions:** ADR-A98 (layout, namespaces), ADR-A102 (roles). **Sketch:**
 asset exposure ontology §3, §5.1 to §5.3, §5.5, §5.6, §6, §8.
 
@@ -101,7 +104,7 @@ snapshot versions.
 
 | Document | Ontology IRI | Version IRI | Prefix |
 |---|---|---|---|
-| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
+| `spec/exposure.ttl` | `https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure` | `…/insurance/exposure/0.1.0` | `aeo:` (`…/insurance/exposure#`) |
 | `vocab/exposure-vocab.ttl` | `…/insurance/exposure/vocab` | `…/insurance/exposure-vocab/0.1.0` | `aeo-voc:` (`…/insurance/exposure/vocab#`) |
 
 The spec imports, by exact version IRI, the live versions of Foundation (0.4.0), Vocabulary (0.4.0),
@@ -125,17 +128,27 @@ the mixins and restrictions in the sketch:
 
 | Class | From | Notes |
 |---|---|---|
-| `aeo:ExposureSet` | §5.2 | `fnd:Version`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
-| `aeo:Location` | §5.3 | `fnd:Version`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
+| `aeo:ExposureSet` | §5.2 | `fnd:Versioned`, `fnd:Governable`, `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:reportingUnit` to `qnt:Unit`. Identity class `aeo:ExposureIdentity ⊑ fnd:PersistentIdentity` |
+| `aeo:Location` | §5.3 | `fnd:Versioned`. Identity `aeo:LocationIdentity`. `aeo:address` to `aeo:Address` (a node), `aeo:geometry` (range left open, GeoSPARQL alignment is optional), `aeo:geoPrecision`, `aeo:territory ⊑ cls:territory` |
 | `aeo:LegalEntity` | §5.1 | `⊑ pty:Actor`, `⊑ fnd:NaturallyKeyed`. Registration and tax numbers and the LEI are `fnd:naturalKey`s, key nodes of declared `fnd:KeyScheme`s (Foundation README §8). A tax number's scheme is sensitive. Added 2026-10-13 (review R2): `aeo:industry ⊑ cls:industry` (0..*, no primary industry is privileged by the property, so a primary industry is an attribute of the entity's assessment), `aeo:domicile ⊑ cls:territory` (functional, the jurisdiction of incorporation or registration) and `aeo:legalForm` (functional). Trading names are `skos:altLabel`s of the entity. Entity status (active, dormant, in liquidation, dissolved) is an attribute type in AIR-4.2, because it changes over time and is evidenced like any assessment |
 | `aeo:ControlRelation` | §5.1 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:controller`, `aeo:controlled` (each exactly one `aeo:LegalEntity`), `aeo:controlKind`, optional `aeo:controlShare` (`qnt:Quantity`) |
-| `aeo:Asset` | §5.5 | `fnd:Version`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
+| `aeo:Asset` | §5.5 | `fnd:Versioned`. Identity `aeo:AssetIdentity`. `aeo:assetClass ⊑ cls:assetClass`, `aeo:locatedAt` (functional) to `aeo:Location`, `aeo:partOf` (asymmetric, irreflexive), `aeo:presence` to `aeo:Presence` (location, temporal scope, optional `aeo:presenceShare`) |
 | `aeo:Interest` | §5.5 | `fnd:TemporallyScoped`, `fnd:Evidenced`. `aeo:interestHolder` (`pty:RoleOccupancy`), `aeo:interestIn` (`aeo:Asset`), `aeo:interestKind`, optional `aeo:extent` (`qnt:Quantity`) |
 | `aeo:Valuation` | §5.6 | `fnd:Evidenced`, `fnd:TemporallyScoped`. `aeo:valueOf` (asset or location), `aeo:valueType`, `aeo:valuationBasis`, optional `aeo:valuationMethod`, `aeo:amount`, or `aeo:rate` with `aeo:horizon` (all `qnt:Quantity`) |
 
 Membership properties from the exposure set, each `owl:InverseFunctionalProperty`:
 `aeo:hasLocation`, `aeo:hasAsset`, `aeo:hasInterest`, `aeo:hasValuation`. The other membership
-properties of §5.2 arrive with their classes. Disjointness (§6) among this slice's classes, and
+properties of §5.2 arrive with their classes.
+
+> **Correction, 2026-10-14 (TD-49), made in AIR-4.2a.** The inverse functionality was wrong. The maintainer confirmed
+> the design the module's README states: unchanged members are shared across exposure set versions
+> by identity, not duplicated by node, so one location or asset version may belong to several
+> exposure set versions. The membership properties are plain object properties, and the
+> membership row of the shapes table below is withdrawn. The same applies to `aeo:hasAssessment`
+> (AIR-4.2) and to the planned `aeo:hasDependency`, `aeo:hasPerilMetric` and
+> `aeo:hasLossExperience`. `aeo:zoneDesignation` and `aeo:poolParticipation` are to be checked with
+> the fix, since designations follow a location's identity. An example with two schedule versions
+> sharing an unchanged location goes in with the fix. Disjointness (§6) among this slice's classes, and
 with `pty:Actor` for all but `aeo:LegalEntity`.
 
 ### Vocabulary, `core` region
@@ -187,7 +200,7 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | valuation | exactly one `aeo:valueOf`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | control | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
 | legal entity | at most one domicile and one legal form |
-| membership | a member belongs to at most one exposure set version |
+| membership | ~~a member belongs to at most one exposure set version~~ withdrawn 2026-10-14 (TD-49): unchanged members are shared across versions |
 
 ### Other files
 
@@ -221,11 +234,53 @@ in `.github/copilot-instructions.md` ("Authoring SHACL-SPARQL shapes").
 | AIR41-13 | a legal entity with two domiciles / validated / violation | L1 | − |
 | AIR41-14 | `aeo-voc:LendersLossPayee` / read / `skos:broader` `aeo-voc:LossPayee`, and every role and legal form has a note | L1 | + |
 
+## Handover from formal-methods Track H: AIR-66 and its follow-ups (2026-10-20)
+
+**On the AIR plate at its next start-up.** Built at the maintainer's request on the formal-methods Track H branch `claude/nice-bohr-pmj43u`
+(commit `e9c83562`, Validation Pack `FMH-AIR-66`), which the maintainer migrates to the AIR branches. Until then it is not on
+`air/applied-reference` or `main`.
+
+**Why.** The history and versioning sketch's example E5 showed a mid-term change to one location writing three versions, the location, its
+assets and their valuations, because `aeo:locatedAt` and `aeo:valueOf` named versions. And `examples/versions.ttl` edited version 1 on
+succession (`fnd:validTo` and the governance state), though a version is never edited. TD-66 recorded both. The design follows the
+maintainer's VH-Q2 decision: references name an identity inside content, and the root version, here the exposure set version, fixes which
+version of each member applies.
+
+**What changed.**
+
+| Area | Change |
+|---|---|
+| ranges | `aeo:locatedAt` to `aeo:LocationIdentity`. `aeo:valueOf` to `owl:unionOf (aeo:AssetIdentity aeo:LocationIdentity)`, where it had no range |
+| shapes | `aeo:AssetShape` and `aeo:ValuationShape` require an identity, not a version (SPARQL, house style). `aeo:ExposureSetShape` gains three violation-severity constraints: each `locatedAt` of a listed asset resolves to exactly one listed location, each `valueOf` of a listed valuation to exactly one listed asset or location, and no set lists two versions of one identity (which AIR-4.2a left uncovered). `aeo:PerilCompletenessShape` joins through `fnd:hasIdentity` |
+| examples | `versions.ttl` no longer edits version 1, and shows one location changing while its asset and valuation are shared unchanged. `core.ttl` and `units.ttl` name identities |
+| code | `tools/exposure_derivations.py` resolves `locatedAt` through the set's own locations and looks valuations up by identity. No test exercises it |
+| tests | AIR66-01 to AIR66-09 in `tools/test_exposure_ontology.py`, 41 passing on the branch |
+| README | a paragraph after §4's membership text, the diagram, the class and shape tables, a release-notes row. The module's version is not bumped (the branch ignores versioning, TD-64) |
+
+**To do when it lands in AIR.**
+
+1. Bring the commit across, then bump the exposure module's version under ADR-A86, as a breaking change at 0.x (ADR-A113), with its release
+   row and tag (the maintainer's).
+2. Decide the same change for the links AIR-66 left naming versions: `aeo:presenceLocation`, `aeo:assesses`, `aeo:interestIn`, `aeo:partOf`
+   and the zone and loss links. A presence is a period at a place, so `aeo:presenceLocation` is the first candidate.
+3. Scope `aeo:PerilCompletenessShape`'s join to one set version, which it does not do yet.
+4. Give `tools/exposure_derivations.py` a test.
+5. Ratify or change AIR-66's decisions taken alone (FMH-AIR-66): the union range of `aeo:valueOf`, the violation severity of the set
+   shapes, SPARQL type checks rather than `sh:class`, the new stock asset in `versions.ttl`.
+6. Remove TD-66 from the debt register, naming this slice.
+7. Re-check AIR-6.1's submission, which pins an exposure set version, and AIR-4.3 and 4.4's members for the same pattern, since every member
+   added after AIR-4.2a should name identities inside content.
+
+**Related, also on the Track H branch.** W-65 (TD-65) made `wrd:hasValue` sharable across assembled wordings, which the contract module of
+Phase 5 will rely on when an endorsement restates one value. Persistence gained per-family write disciplines (`dal:writeDiscipline`), reference
+modes per edge (`dal:referenceMode`) and membership encoding (`dal:membershipEncoding`), which an AIR deployment declares for its exposure
+families. The history and versioning sketch's §10.5 (E5) has the counts.
+
 ## AIR-4.2 in detail
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.2] …`, the
 last being `[AIR-4.2] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.2](../validation/applied-insurance-reference-4.2.md). **Decisions:**
+[applied-insurance-reference-4.2](../validation/AIR-4.2.md). **Decisions:**
 ADR-A98, ADR-A99. **Sketch:** asset exposure ontology §5.3, §5.4, §5.7, §5.8, §7, §8.
 **Decided 2026-10-13:** the proposal of that day (zones per hazard kind with empty reference
 editions, attribute types after OED, assessment kinds, the peril links), Q13 (two worked profiles),
@@ -512,7 +567,7 @@ the merge.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.3] …`, the
 last being `[AIR-4.3] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.3](../validation/applied-insurance-reference-4.3.md). **Decisions:**
+[applied-insurance-reference-4.3](../validation/AIR-4.3.md). **Decisions:**
 ADR-A90 (option B, single-valued paths from a case), ADR-A98, epic E3. Decided 2026-10-13: R8, R9.
 **Sketch:** asset exposure ontology §5.9 to §5.11, §6, §8. **Milestone:** M3, with AIR-4.6.
 
@@ -563,8 +618,8 @@ output file is evidence. Full curves and event tables are out of scope (epic §7
 | `DependencyKindContract` | `SupplyOfGoods`, `Utility`, `ItService`, `Logistics`, `Customer` | sketch §5.9. Customer dependencies give contingent business interruption on the customer side |
 | `SubstitutabilityContract` | `NotSubstitutable`, `PartlySubstitutable`, `FullySubstitutable` | |
 | `MetricKindContract` | `AverageAnnualLoss`, `OccurrenceExceedanceLoss`, `AggregateExceedanceLoss`, `OccurrenceTailValueAtRisk`, `AggregateTailValueAtRisk`, `ProbabilityOfEvents`, `HazardScore`, `ScenarioLoss` | Oasis Open Results Data (AAL, OEP, AEP and their TVaR), Solvency II's 1 in 200 convention for return periods, Lloyd's Realistic Disaster Scenarios for scenario losses. The note on `ProbabilityOfEvents` says it names a count with `aeo:returnPeriod` unused |
-| `PerspectiveContract` | `GroundUpLoss`, `InsuredLoss`, `ReinsuranceLoss` | Open Results Data's GUL, IL and RIL. The note says the market's "gross" is usually insured loss and its "net" loss after reinsurance, and that a metric states which it is |
-| `CalculationMethodContract` | the exceedance curve calculation methods of Open Results Data (for example full uncertainty and per-sample mean), those S is sure of | R checks them against the specification |
+| `PerspectiveContract` | `GroundUpLoss`, `InsuredLoss`, `NetOfReinsuranceLoss` | Open Results Data's GUL, IL and RI (perspectives 0, 1 and 2 of its list, which calls them ground-up, gross and net of all reinsurance). Corrected 2026-10-14: this brief first said RIL and named the third `ReinsuranceLoss`, which ORD's list uses for the reinsurers' loss. The note says the market's "gross" is usually insured loss and its "net" loss after reinsurance, and that a metric states which it is |
+| `CalculationMethodContract` | the four exceedance curve calculation methods of Open Results Data (EPCalc 1 to 4: `MeanDamage`, `FullUncertainty`, `PerSampleMean`, `SampleMean`, corrected 2026-10-14) | checked against the specification on 2026-10-14 |
 | `ModelOptionContract` | `SecondaryUncertainty`, `DemandSurge`, `StormSurgeIncluded`, `FireFollowingIncluded`, `ClimateConditioned` | |
 | `ScheduleGroupContract` | none. Bound per insured or drafter, at agreement or organisation scope | OED's location group field |
 
@@ -631,7 +686,7 @@ dependency data it would read is complete in this slice.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.4] …`, the
 last being `[AIR-4.4] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.4](../validation/applied-insurance-reference-4.4.md). **Decisions:**
+[applied-insurance-reference-4.4](../validation/AIR-4.4.md). **Decisions:**
 ADR-A98, ADR-A99, ADR-A103 (set readings), epic D7 and D12. **Sketch:** asset exposure ontology
 §5.12 to §5.14.
 **Decided 2026-10-13:** the proposal of that day, Q11 (option a, recorded and effective
@@ -687,7 +742,7 @@ Undetermined (sketch §5.12).
 
 | Term | Definition |
 |---|---|
-| `aeo:CoverageRequirement` | `⊑ fnd:Version ⊓ fnd:Evidenced`. Exactly one `aeo:requirementSource`, exactly one `aeo:requirementStrength`, at least one `aeo:requiredMeasure`, at most one `aeo:requirementScope` (`elg:AdmissionProfile` whose subject class is `aeo:ExposureUnit`, AIR-4.3), any number of `aeo:classOfBusiness`, at most one `aeo:owedTo` (`pty:RoleOccupancy`, the lender as mortgagee, for example) |
+| `aeo:CoverageRequirement` | `⊑ fnd:Versioned ⊓ fnd:Evidenced`. Exactly one `aeo:requirementSource`, exactly one `aeo:requirementStrength`, at least one `aeo:requiredMeasure`, at most one `aeo:requirementScope` (`elg:AdmissionProfile` whose subject class is `aeo:ExposureUnit`, AIR-4.3), any number of `aeo:classOfBusiness`, at most one `aeo:owedTo` (`pty:RoleOccupancy`, the lender as mortgagee, for example) |
 | `aeo:hasRequirement` | exposure set membership, inverse functional |
 | `aeo:MeasureConstraint` | exactly one `aeo:measure`, exactly one `aeo:bound` (`qnt:RangeSet` on the measure's space), at most one `aeo:atReturnPeriod` (`qnt:Quantity` in years, for `NetRetainedLoss`), at most one `aeo:relativeTo` (`aeo:FinancialMetric`) |
 | `aeo:measureSpace` | measure concept to the space its bounds are on |
@@ -791,7 +846,7 @@ the merge, not now.
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.5] …`, the
 last being `[AIR-4.5] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.5](../validation/applied-insurance-reference-4.5.md). **Decisions:**
+[applied-insurance-reference-4.5](../validation/AIR-4.5.md). **Decisions:**
 ADR-A102 (liability role types), epic E4. **Sketch:** asset exposure ontology §5.15, term
 parameters §7.3.
 
@@ -845,7 +900,7 @@ dependency of AIR-4.3), data subjects (direct, size two million records). Passes
 
 **Machine:** S (Copilot Business). **Branch:** `air/applied-reference`, commits `[AIR-4.6] …`, the
 last being `[AIR-4.6] Handoff`. **Validation Pack:**
-[applied-insurance-reference-4.6](../validation/applied-insurance-reference-4.6.md). **Decisions:**
+[applied-insurance-reference-4.6](../validation/AIR-4.6.md). **Decisions:**
 ADR-A99, ADR-A98. **Sketch:** asset exposure ontology §10, §12, §5.2.
 **Milestone:** M3, with AIR-4.3.
 
@@ -925,3 +980,72 @@ aggregates and privacy boundaries), `docs/architecture/ontology-architecture.md`
 ## Exit gate
 
 M3 demonstrated. Recommendations AI-1 to AI-4 closed or carried.
+
+## AIR-deferred-testing in detail
+
+**Amendment of 2026-10-14, for AIR slices only and until further notice.** The Python tests around
+`applied/insurance` parse large graphs and call pySHACL, and are slow. While the ontology layers are
+being built, a slice does not run `tools/test_exposure_ontology.py`, the catalog checks or
+`check:full-sweep`, and writes its test plan into its Validation Pack. This slice builds those
+tests later, in one pass, so the layers are not held up by them. The rest of the development
+contract stands: cheap static checks, the literate extraction and one-off scripts still run, and
+nothing is reported as passed that did not run.
+
+**Machine:** to be assigned. **Branch:** its own, from `air/applied-reference` after the trip merges.
+Write the tests with the `lattice-testing` skill: one shared, cached graph per module through the
+fixtures in `tools/conftest.py`, not a parse per test.
+
+**Slices whose tests this slice builds so far**
+
+| Slice | Test plan | Home |
+|---|---|---|
+| AIR-4.2a | AIR42a-01 to 05, in its Validation Pack | `tools/test_exposure_ontology.py` |
+| AIR-4.3 | AIR43-01 to 09 in the AIR-4.3 section above, and the probes below | `tools/test_exposure_ontology.py`, and `tools/test_exposure_derivations.py` (new) for AIR43-04 to 06 |
+| AIR-4.4 | AIR44-01 to 13 in the AIR-4.4 section above, and the probes below | `tools/test_exposure_ontology.py`, `tools/test_exposure_derivations.py`, and `tools/test_applied_shared_contracts.py` for the `insurance/common` additions |
+
+Later AIR slices built under the amendment add their rows here.
+
+**Negative cases already worked out.** Each is one change to a conforming fixture and the shape it
+must report, run once by hand when the slice was built.
+
+| Fixture | Change | Shape reported |
+|---|---|---|
+| `core.ttl` with `dependencies.ttl` | an exceedance metric with no return period, and with both a return period and a probability | `aeo:ExceedanceMetricShape` |
+| same | a hazard score on a space other than its `aeo:scoreSpace`, and with no score space | `aeo:HazardScoreShape` |
+| same | a scenario-loss metric with no scenario | `aeo:ScenarioMetricShape` |
+| same | a metric with no peril scope | `aeo:PerilMetricShape` and `aeo:MetricComparabilityShape` |
+| same | a dependency with no provider | `aeo:DependencyShape` |
+| same | a dependency that closes a cycle (warning) | `aeo:DependencyCycleShape` |
+| same | an insured-loss metric added to a comparison of ground-up metrics | `aeo:MetricComparabilityShape` |
+| same | an exposure unit with no location and no derivation run (warning for the run) | `aeo:ExposureUnitShape`, `aeo:UnitDerivationShape` |
+| `core.ttl` with `losses.ttl` | a loss dated after its experience's period | `aeo:LossInPeriodShape` |
+| same | incurred 20 with paid 380 and reserved 15 | `aeo:IncurredShape` |
+| same | one money amount in a second currency | `aeo:LossRecordCurrencyShape` |
+| same | a loss record with no date | `aeo:LossRecordShape` |
+| same | an effective agency that differs from the recorded one, with no defaulted node | `aeo:DefaultedAgencyShape` |
+| same | a defaulted node beside a recorded agency | `aeo:DefaultedAgencyShape` |
+| same | a cause with no position | `aeo:LossCauseShape` |
+| same | a limit bound on a duration space | `aeo:MeasureSpaceShape` |
+| same | a relative bound on the money space | `aeo:MeasureSpaceShape` |
+| same | a requirement that constrains the premium | `aeo:RequirementNoPremiumShape` |
+| same | a requirement scope bound to `aeo:Location` | `aeo:RequirementScopeShape` |
+| same | a requirement with no strength | `aeo:CoverageRequirementShape` |
+| same | a summary term on the wrong space | `aeo:TermSummaryShape` |
+| same | an existing cover with no reference and no summary term (warning) | `aeo:ExistingCoverEvidenceShape` |
+| same | a cover history event with no kind | `aeo:CoverHistoryEventShape` |
+| same | equity stated as a count | `aeo:FinancialMetricSpaceShape` |
+| same | a loss experience with no source | `aeo:LossExperienceShape` |
+
+**Positive cases.** `dependencies.ttl` with `core.ttl`, `units.ttl`, `versions.ttl`, `attributes.ttl`
+with `core.ttl` and the peril documents, and `losses.ttl` with `core.ttl`, each against every
+exposure shape: no result.
+
+**Cases that wait for CCS HQ-6a.2.** The M3 profile in `units.ttl` over the units
+`exposure_units` computes (AIR43-06): the flood units of sites A and B Permitted, C and D Denied, every
+wind unit Denied. With this branch's compilers site D's flood unit reads Undetermined
+(`exe:MissingCandidate`), because they ignore a closure.
+
+**Checks for R at verification, deferred with the tests:** `mise run build:ontology-catalog`,
+`build:ontology-releases` (rows for the versions the trip adds, including `insurance-common-v0.6.0`,
+written at the merge), `check:ontology-catalog`, `check:ontology-versioning` and
+`check:full-sweep`.

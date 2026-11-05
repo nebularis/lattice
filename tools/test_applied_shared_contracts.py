@@ -17,18 +17,20 @@ from pathlib import Path
 
 import pytest
 from pyshacl import validate
+import lattice_repo_catalogue
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 CLASSIFICATION = ROOT / "ontology" / "applied" / "classification"
 COMMON = ROOT / "ontology" / "applied" / "insurance" / "common"
 VOCAB_SHAPES = ROOT / "ontology" / "vocabulary" / "shapes"
 
 CLS = Namespace("https://www.nebularis.org/neuro-semantic/lattice/applied/classification#")
 CLSV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#")
-ICM = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common#")
-ICMV = Namespace("https://www.nebularis.org/neuro-semantic/insurance/common/vocab#")
+ICM = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common#")
+ICMV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab#")
 VOC = Namespace("https://www.nebularis.org/neuro-semantic/lattice/vocabulary#")
 PTY = Namespace("https://www.nebularis.org/neuro-semantic/lattice/party#")
 
@@ -85,29 +87,29 @@ def _cached_validate(request: pytest.FixtureRequest, validated) -> None:
 def test_classification_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _classification_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
     }
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.6.0"}
 
 
 def test_common_documents_parse_and_import_the_pinned_versions():
     spec_imports = {str(o) for o in _common_spec().objects(None, OWL.imports)}
     assert spec_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/party/0.9.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.2.0",
+        f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
+        f"https://www.nebularis.org/neuro-semantic/lattice/party/{RELEASE}",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.6.0",
     }
     vocab_imports = {str(o) for o in _common_vocab().objects(None, OWL.imports)}
-    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/insurance/common/0.5.0"}
+    assert vocab_imports == {"https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0"}
 
 
-# ---- AIR12-02: the nine contracts conform to Vocabulary's shapes ------------------------------
+# ---- AIR12-02: the ten contracts conform to Vocabulary's shapes (nine, then AIR-4.4's class of business) ---
 
 
-def test_nine_contracts_conform_to_vocabulary_shapes():
+def test_ten_contracts_conform_to_vocabulary_shapes():
     data = _all_contracts()
     shapes = _vocabulary_shapes()
     conforms, _, report = validate(data, shacl_graph=shapes, advanced=True, inference="none", allow_warnings=True)
@@ -123,8 +125,9 @@ def test_nine_contracts_conform_to_vocabulary_shapes():
         ICMV.ConsequenceContract,
         ICMV.HarmSubjectContract,
         ICMV.PoolContract,
+        ICMV.ClassOfBusinessContract,
     }
-    assert len(contracts) == 9
+    assert len(contracts) == 10
 
 
 # ---- AIR12-03: a contract without voc:constrainsProperty is a violation -----------------------
@@ -156,7 +159,7 @@ def test_classification_imports_no_insurance_document():
     spec_imports = {str(o) for o in _classification_spec().objects(None, OWL.imports)}
     vocab_imports = {str(o) for o in _classification_vocab().objects(None, OWL.imports)}
     for iri in spec_imports | vocab_imports:
-        assert "neuro-semantic/insurance/" not in iri
+        assert "neuro-semantic/lattice/insurance/" not in iri
 
 
 # ---- AIR12-06: no insurance term anywhere in classification/ ----------------------------------

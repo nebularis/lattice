@@ -2,6 +2,9 @@
 
 # Platform Continuation Status
 
+**Unit ID:** `platform-continuation`
+**Status:** merged 2026-09-20. Accepted after the first Surface control-plane implementation slice.
+
 **Unit:** `lattice-platform-development`
 **Plan:** [LATTICE Platform Agentic Development Plan](../plans/lattice-platform-agentic-development-v0.2.md)
 **Review:** [Platform Continuation Review](../review/platform-continuation-review.md)
@@ -78,7 +81,7 @@ Pass looks like: `Tests run: 9, Failures: 0, Errors: 0`, including `SurfaceRevis
 
 ## Reference Material
 
-- [Canonical Phase 0-7 plan](../../../.github/prompts/plan-morkSurfaceImplementation.prompt.md)
+- Canonical Phase 0-7 plan
 - [Implementation handover](../sketches/implementation-handover.md), including its "Do Not Break" invariants
 - [Validation status](validation-status.md)
 - [Validation status](validation-status.md)

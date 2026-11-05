@@ -43,6 +43,7 @@ ERRORS = {
     "UnassignedCodePoint", "EmptyKeyComponent", "MissingKeyComponent", "MissingSecret",
     "PatternMismatch", "PositionOutOfRange", "RecipeDigestMismatch", "UnsupportedRecipeFormat",
     "RuntimeUnicodeTooOld", "CanonicalizerNotDeclared",
+    "DotSegment", "EmptyScope", "UnsafeSurrogate", "PositionWidthOverflow",
 }
 
 
@@ -213,6 +214,18 @@ class Checker:
         if vec["error"] == "UnassignedCodePoint" and unicodedata.unidata_version == "16.0.0":
             text = "".join(vec["inputs"].get("key", []))
             self.check(at, any(unicodedata.category(ch) == "Cn" for ch in text), "no unassigned code point in input")
+
+        inp = vec["inputs"]
+        if vec["error"] == "EmptyScope":
+            self.check(at, inp.get("scope") == "", "scope is not the empty string")
+        if vec["error"] == "UnsafeSurrogate":
+            self.check(at, re.fullmatch(r"[A-Za-z0-9._~-]+", inp.get("surrogate", "")) is None, "surrogate is unreserved")
+        if vec["error"] == "DotSegment":
+            parts = [unicodedata.normalize("NFKC", k) for k in inp.get("key", [])] + [inp.get("scope"), inp.get("surrogate")]
+            self.check(at, any(p in (".", "..") for p in parts), "no component is . or ..")
+        if vec["error"] == "EmptyKeyComponent" and vec["category"] == "format":
+            text = "".join(inp["key"])
+            self.check(at, text != "" and all(unicodedata.category(ch) == "Cf" for ch in text), "input is not all format characters")
 
     def format(self, where: str, vec: dict) -> None:
         for s in vec["accept"]:

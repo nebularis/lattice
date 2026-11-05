@@ -102,9 +102,9 @@ class UcdTest {
 
     /** The three pipelines of specification §3.2. */
     static final Map<String, List<String>> PIPELINES = Map.of(
-            "NfkcTrimCasefold", List.of("reject_unassigned", "nfkc_casefold", "trim_white_space"),
-            "NfkcTrimUppercase", List.of("reject_unassigned", "nfkc", "trim_white_space", "uppercase_full", "nfkc"),
-            "NfkcTrimLowercase", List.of("reject_unassigned", "nfkc", "trim_white_space", "lowercase_full", "nfkc"));
+            "NfkcTrimCasefold", List.of("reject_unassigned", "strip_format", "nfkc_casefold", "trim_white_space"),
+            "NfkcTrimUppercase", List.of("reject_unassigned", "strip_format", "nfkc", "trim_white_space", "uppercase_full", "nfkc"),
+            "NfkcTrimLowercase", List.of("reject_unassigned", "strip_format", "nfkc", "trim_white_space", "lowercase_full", "nfkc"));
 
     @Test
     void recipesUseThePipelinesOfTheSpecification() {
@@ -122,6 +122,28 @@ class UcdTest {
                 assertEquals(PIPELINES.get(pipeline.get("id")), pipeline.get("steps"), p.getFileName().toString());
             }
         }
+    }
+
+    @Test
+    void formatMatchesTheJdk() {
+        List<String> differ = new ArrayList<>();
+        for (int cp = 0; cp <= LAST; cp++) {
+            if (Ucd.FORMAT.contains(cp) != (Character.getType(cp) == Character.FORMAT)) {
+                differ.add(String.format("U+%04X", cp));
+            }
+        }
+        assertEquals(List.of(), differ);
+    }
+
+    @Test
+    void noPipelineLeavesAFormatCharacter() {
+        List<String> corpus = assigned();
+        PIPELINES.forEach((id, steps) -> {
+            for (String s : corpus) {
+                assertTrue(run(steps, "a" + s + "b").codePoints().noneMatch(cp -> Character.getType(cp) == Character.FORMAT),
+                        () -> id + " " + String.format("U+%04X", s.codePointAt(0)));
+            }
+        });
     }
 
     @Test

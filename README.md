@@ -2,10 +2,7 @@
 
 A domain neutral semantic framework for representing governing instruments (contracts, protocols, agreements, etc) and the obligations, eligibility conditions, and lifecycle behaviours they define, as structured, queryable, versioned graphs.
 
-**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a
-clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every
-tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the
-whole architecture, five ways.
+**New to this repository?** [Getting Started](docs/developer/getting-started.md) bootstraps a clean clone end to end. The [Developer Guide](docs/developer/developer-guide.md) covers every tool and script and when to use it. [`docs/diagrams/`](docs/diagrams/README.md) pictures the whole architecture, five ways.
 
 ---
 
@@ -37,13 +34,14 @@ The layers described below are one family of mapping target, but not the only po
 
 #### Ontology Layers
 
-LATTICE is organised as seven layers, each an independent OWL/SHACL/SKOS module:
+LATTICE is organised as eight layers, each an independent OWL/SHACL/SKOS module:
 
 | Layer | Kind | What it models |
 |---|---|---|
 | **Foundation** | Substrate | Identity, versioning, provenance and evidence, governance state, temporal scoping, and a derived-artefact contract aligned with PROV-O ([ADR-A92](docs/architecture/decisions/ADR-A92-derived-artefact-contract-and-prov-o-alignment.md)). |
 | **Vocabulary** | Substrate | The governed mechanism by which external, domain-specific concept schemes get bound into the other layers without touching their core specifications, including scoped and time-bounded bindings. The vocabulary and SHACL shapes live under `ontology/vocabulary/`; a reference resolver for the scoped/temporal binding precedence law lives under `tools/vocabulary/`. See [ADR-A85](docs/architecture/decisions/ADR-A85-vocabulary-scoped-temporal-binding-resolution.md). |
 | **Quantification** | Substrate | Declared value spaces, quantities, ordered values, bounds, ranges, conversion, granularity, and recurrence — the mechanism behind any magnitude, interval, or ordinal comparison the other layers need. |
+| **Ledger** | Substrate | Amounts consumed and restored over time, and so conserved: account trees ("part of and not in addition to"), merge rules that arbitrate several draws at one position, postings and derived balances ([ADR-A131](docs/architecture/decisions/ADR-A131-ledger-layer.md)). |
 | **Party** | Substrate | 	Actors, the roles they occupy, and the direction and composition of obligation between them (e.g., modelling independently capped shares, joint obligation with a right of recourse, delegated accountability, or contingent role occupancy). |
 | **Eligibility** | Substrate | Admissibility criteria (conditions, unresolved questions, and decisions), including concept inclusion and exclusion and evidence bindings that evaluate an applied ontology's own properties. `tools/mork_compilers` compiles conditions and profiles to SPARQL, SHACL, and SWRL through one IR. See [ADR-A87](docs/architecture/decisions/ADR-A87-eligibility-concept-inclusion-and-exclusion.md), [ADR-A89](docs/architecture/decisions/ADR-A89-eligibility-ir-concept-conditions-and-profile-aggregation.md) and [ADR-A91](docs/architecture/decisions/ADR-A91-eligibility-candidate-evidence-binding.md). |
 | **Behaviour** | Substrate | State, transition, trigger, and effect, including a usable `Sequential` allowance profile. `Proportional` allowance semantics and reset edge cases remain explicitly deferred. |
@@ -89,6 +87,7 @@ lattice/
 ├── LICENSE                  # MPL 2.0 — ontology artefacts, tools/
 ├── LICENSE-DOCS.md          # CC BY-SA 4.0 — documentation, specifications
 ├── CONTRIBUTING.md
+├── repository-catalogue.md  # Where things live, read by tools (ADR-A121)
 ├── AGENTS.md                # Always-on instructions for AI agents (ADR-A117), imported by CLAUDE.md
 ├── .claude/skills/          # Agent skills, loaded by task, shared as a plugin by .claude-plugin/
 │
@@ -123,18 +122,22 @@ lattice/
 │
 ├── contracts/
 │   ├── identity/            # Minting recipe and vector schemas, anchor vectors, independent verifier
-│   └── authoring/           # Word authoring POC contracts, templates and samples (ADR-A118)
+│   ├── document/            # LATTICE's document markup, RELAX NG and generated XSD (ADR-A137)
+│   ├── xml/                 # XSLT kits, such as document-to-wording (ADR-A119)
+│   └── config-studio/       # Configuration Studio vocabulary, topology and samples (ADR-A136)
 │
 ├── platform/
 │   ├── reasoning-testkit/   # Test-only OWL reasoner harness, never a runtime dependency (ADR-A83)
-│   └── authoring-service/   # Word authoring POC service (ADR-A118)
+│   ├── config-studio-authoring/  # Documents in markup, mapped to Wording, and their report (ADR-A137, ADR-A138)
+│   └── config-studio-service/  # Configuration Studio service, proof of concept (ADR-A136)
 │
 ├── apps/
-│   └── word-authoring-addin/  # Word add-in, proof of concept (ADR-A118)
+│   ├── word-authoring-addin/  # Word add-in, a client of the Configuration Studio (ADR-A118, ADR-A136)
+│   └── config-studio/       # Authoring persistence and surface configuration, proof of concept (ADR-A136)
 │
 ├── deployment/
 │   └── compose/
-│       └── authoring/        # Word authoring POC compose stack (ADR-A118)
+│       └── config-studio/    # Fuseki, RabbitMQ and the Word add-in's HTTPS proxy for the Configuration Studio (ADR-A136)
 │
 ├── packages/
 │   └── minting/             # Standalone identity minting libraries (Python, Java), no LATTICE dependency
@@ -407,28 +410,9 @@ mise run services:down
 
 The service checks confirm container startup and reachability. They do not replace end-to-end integration tests.
 
-### Run the Word authoring POC
+### Run the Word add-in
 
-```bash
-mise run authoring:up
-```
-
-Builds the service jar and the add-in, stages the Docker build inputs, and brings up a standalone
-compose stack (Fuseki, RabbitMQ, the authoring service and worker, and a Caddy TLS proxy) bound to
-`127.0.0.1` only. Browse to [`https://localhost:3443`](https://localhost:3443) — it redirects to the
-harness, a browser-only stand-in for the real Word task pane backed by the real service. The
-browser will warn about the proxy's local certificate. Either accept the warning or run
-`mise run authoring:ca` first and trust `.build/authoring/lattice-authoring-root.crt`.
-
-```bash
-mise run check:authoring-stack   # starts the stack and runs its end-to-end suite
-mise run authoring:down          # stop the stack, keep its data
-mise run authoring:reset         # stop the stack and delete its data and local CA
-```
-
-See [`deployment/compose/authoring/README.md`](deployment/compose/authoring/README.md) for the
-service/port/volume reference. Loading the add-in inside real Word requires sideloading the
-manifest — a separate step covered in [`apps/word-authoring-addin/README.md`](apps/word-authoring-addin/README.md).
+The Word add-in is a client of the Configuration Studio, and `mise run studio:up` starts its development server with the rest of the studio. Its harness, a browser-only stand-in for the Word task pane, is at <http://127.0.0.1:4176/addin/harness.html>. Word itself loads add-ins over HTTPS only, so run `mise run studio:up -- --docker`, which also serves the built add-in at <https://localhost:3443/addin/taskpane.html> through a local proxy. Trust the proxy's certificate after `mise run studio:ca`, and sideload the manifest as [`apps/word-authoring-addin/README.md`](apps/word-authoring-addin/README.md) describes.
 
 The canonical active documentation locations are `plans`, `status`, and `review`.
 
@@ -458,6 +442,6 @@ Copilot run `mise run skills:link` from a LATTICE checkout. AI-assisted contribu
 
 ## Development environment
 
-Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the toolchain guide](docs/developer/toolchain.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/status/phase-0-1-handoff.md).
+Use [mise](https://mise.jdx.dev/) for repository toolchain setup and task orchestration. See [the developer guide](docs/developer/developer-guide.md), [Windows and WSL guidance](docs/developer/windows-wsl.md), and the [Phase 0 and 1 validation handoff](docs/developer/status/phase-0-1-handoff.md).
 
 For the current implementation boundaries and reading order, see the [platform implementation map](docs/architecture/implementation-map.md). Architecture decisions are indexed in [docs/architecture/decisions](docs/architecture/decisions/README.md).

@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-10: Behaviour activation policy
+# ADR-A10: Behaviour activation policy
 
-## Status
-
-Accepted
+**Status:** Accepted
 
 ## Context
 

@@ -9,8 +9,8 @@ description = "Design-time compiler for the LATTICE persistence profile substrat
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+  "lattice-persistence",
   "rdflib>=7.0,<8",
-  "chevron>=0.14,<1",
 ]
 
 [project.optional-dependencies]
@@ -26,5 +26,3 @@ persistence = "persistence.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-persistence = ["templates/*.mustache"]

@@ -10,7 +10,7 @@
 
 Party provides Actor, Role, and the reified qualified-relation individual (Role Occupancy) that connects them, scoped and time-bound. Participation Groups with outward and inward shares and composition rules, Delegation between an accountable role and a performing one, are both built on that reification.
 
-Party imports Foundation and Vocabulary, and is imported in turn by Instrument, Eligibility, and Behaviour, per the established dependency order. The direction matters more here than in prior ontologies, because upward references (e.g., an Obligation's obligor and obligee, an Effect populating a contingent occupancy, or a Guard testing a delegation's scope) are deliberately left to the higher layer's own projection file(s) to declare.
+Party imports Foundation and Quantification, and is imported in turn by Instrument, Eligibility, and Behaviour, per the established dependency order. The direction matters more here than in prior ontologies, because upward references (e.g., an Obligation's obligor and obligee, an Effect populating a contingent occupancy, or a Guard testing a delegation's scope) are deliberately left to the higher layer's own projection file(s) to declare.
 
 ## 2. Namespace and Prefixes
 
@@ -23,9 +23,30 @@ Party imports Foundation and Vocabulary, and is imported in turn by Instrument, 
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 ```
 
+The ontology header, stated here so the extracted document carries it.
+
+```turtle-spec
+<https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> .
+```
+
 ## 3. How to Read This Document
 
 Same convention as the prior two documents: genuine specification content is fenced ` ```turtle-spec `; illustration is fenced ` ```turtle-example ` and is never part of the extraction. Concatenate the prefix block above with every ` ```turtle-spec ` block from §5 onward to produce `spec/party.ttl`. 
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["projection", "spec", "vocab"]
+imports = ["foundation", "vocabulary", "quantification"]
+
+[module.extract]
+spec = ["spec/party.ttl"]
+```
 
 ## 4. Design Decisions
 
@@ -81,9 +102,9 @@ pty:Role a owl:Class ;
 
 ```turtle-spec
 pty:RoleOccupancy a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced, fnd:TemporallyScoped ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced, fnd:TemporallyScoped ;
     rdfs:comment "An actor's occupancy of a role, reified so it can carry a time scope and exist before it's filled." ;
-    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created — the role slot can exist before anyone fills it — and occupiedBy once an actor is bound, which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
+    fnd:utility "Represents one actor's occupancy of one role, for a period of time. Set inRole when the occupancy is created, since the role slot can exist before anyone fills it. Filling it is a new version of the occupancy that carries occupiedBy and supersedes the unfilled one, never an edit of the existing node (Foundation section 4), which may happen later or not at all. If the occupant changes, create a new RoleOccupancy sharing the old one's fnd:hasIdentity and link them with fnd:supersededBy. Use fnd:hasEvidence to record why a particular actor was bound." ;
     rdfs:subClassOf [
         a owl:Restriction ;
         owl:onProperty pty:inRole ;
@@ -99,7 +120,7 @@ pty:RoleOccupancy a owl:Class ;
 
 ```turtle-spec
 pty:ParticipationGroup a owl:Class ;
-    rdfs:subClassOf fnd:Version, fnd:Evidenced ;
+    rdfs:subClassOf fnd:Versioned, fnd:Evidenced ;
     rdfs:comment "A set of Role Occupancies standing together on one side of something, under at most one composition rule." ;
     fnd:utility "A set of Role Occupancies standing together on one side. Give it a hasCompositionRule to say how its members stand towards the other side, and connect members through GroupMembership individuals rather than a direct property. If composition changes, create a new version and link it with fnd:supersededBy." ;
     rdfs:subClassOf [
@@ -172,7 +193,7 @@ pty:Delegation a owl:Class ;
 
 ```turtle-spec
 [] a owl:AllDisjointClasses ;
-    owl:members ( pty:Actor pty:Role pty:RoleOccupancy pty:ParticipationGroup pty:GroupMembership pty:Delegation ) .
+    owl:members ( pty:Actor pty:Delegation pty:GroupMembership pty:ParticipationGroup pty:Role pty:RoleOccupancy ) .
 ```
 
 **Utility.** Actor, Role, RoleOccupancy, ParticipationGroup, GroupMembership, and Delegation are distinct kinds of thing. One individual should never be classified as more than one of them.
@@ -219,13 +240,13 @@ pty:memberOccupancy a owl:ObjectProperty, owl:FunctionalProperty ;
 pty:memberOf a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain pty:GroupMembership ;
     rdfs:range pty:ParticipationGroup ;
-    owl:inverseOf pty:hasParticipant ;
     rdfs:comment "The Participation Group a GroupMembership belongs to." ;
     fnd:utility "Functional and required (§6) — a membership always names exactly one group." .
 
 pty:hasParticipant a owl:ObjectProperty ;
     rdfs:domain pty:ParticipationGroup ;
     rdfs:range pty:GroupMembership ;
+    owl:inverseOf pty:memberOf ;
     rdfs:comment "The inverse of memberOf." ;
     fnd:utility "The inverse of memberOf — points a ParticipationGroup at its GroupMembership individuals. Typically used for querying a group's members rather than asserted directly." .
 ```
@@ -340,9 +361,10 @@ A role designed in from the outset, unoccupied until later; and an accountable/p
 ex:third-party-occ a pty:RoleOccupancy ;
     pty:inRole pty:Obligee .
 
-# Later, a separate Effect (Behaviour's, not Party's) adds:
-#   ex:third-party-occ pty:occupiedBy ex:claimant-x .
-# together with evidence recording why.
+# Later, a separate Effect (Behaviour's, not Party's) writes a new version of the occupancy,
+#   ex:third-party-occ-2 a pty:RoleOccupancy ; fnd:hasIdentity ex:third-party-occ-id ; pty:inRole pty:Obligee ; pty:occupiedBy ex:claimant-x .
+#   ex:third-party-occ fnd:supersededBy ex:third-party-occ-2 .
+# together with evidence recording why. The unfilled version stays as the record that the slot was open.
 
 # Accountable/performing split — the sponsor remains accountable;
 # the CRO performs, under a delegation with its own evidence and period.
@@ -362,8 +384,8 @@ ex:delegation-1
 |---|---|---|
 | `pty:Actor` | Class | bare, no mixins |
 | `pty:Role` | Class | bare; open at T-box, closed via `vocab/party-vocab.ttl` |
-| `pty:RoleOccupancy` | Class | `fnd:Version`, `fnd:Evidenced`, `fnd:TemporallyScoped`; `inRole` cardinality 1 |
-| `pty:ParticipationGroup` | Class | `fnd:Version`, `fnd:Evidenced`; `hasCompositionRule` at most 1; `hasParticipant` min 1 |
+| `pty:RoleOccupancy` | Class | `fnd:Versioned`, `fnd:Evidenced`, `fnd:TemporallyScoped`, `inRole` cardinality 1 |
+| `pty:ParticipationGroup` | Class | `fnd:Versioned`, `fnd:Evidenced`, `hasCompositionRule` at most 1, `hasParticipant` min 1 |
 | `pty:CompositionRule` | Class | open at T-box, closed via `vocab/party-vocab.ttl` |
 | `pty:GroupMembership` | Class | bare; `memberOccupancy`, `memberOf` each cardinality 1 |
 | `pty:Delegation` | Class | `fnd:Evidenced`, `fnd:TemporallyScoped`; `delegatesFrom`, `delegatesTo` each cardinality 1 |
@@ -379,3 +401,10 @@ ex:delegation-1
 | `pty:delegatesTo` | Object property | not globally functional; cardinality 1 per `Delegation` |
 
 Six classes mutually disjoint (§6).
+
+## 11. Release notes
+
+- **0.20.0**.
+  - no effect. An occupancy is filled by a new version that supersedes the unfilled one, never by an edit (Foundation section 4). The Quantification import the spec never used is dropped, and the three empty shape files are deleted with the `shapes` role, so Party's rules on shares and delegation are unchecked (TD-110).
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.nebularis.org/neuro-semantic/lattice/benchmark-report",
+  "title": "A benchmark report",
+  "description": "One run of one benchmark, kept in git as benchmark/reports/{benchmark}/{UTC date and time}-{short commit}.json (ADR-A150). It names the kind of machine and never its host name or its user (ADR-A124 decision 5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "benchmark", "commit", "date", "machine", "measures"],
+  "properties": {
+    "schema": {"const": 1},
+    "benchmark": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "the benchmark's folder name under benchmark/"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "the commit of the checkout that was measured"},
+    "date": {"type": "string", "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ$", "description": "when the run started, UTC"},
+    "notes": {"type": "string"},
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "os_version", "architecture", "processor_model", "processor_count", "memory_bytes", "java", "python", "power_mode", "load_average_at_start"],
+      "properties": {
+        "os": {"type": "string"},
+        "os_version": {"type": "string"},
+        "architecture": {"type": "string"},
+        "processor_model": {"type": "string"},
+        "processor_count": {"type": ["integer", "null"]},
+        "memory_bytes": {"type": ["integer", "null"]},
+        "java": {"type": ["string", "null"]},
+        "python": {"type": "string"},
+        "power_mode": {"type": ["string", "null"], "description": "macOS power settings from pmset -g, null where unreadable"},
+        "load_average_at_start": {"type": ["array", "null"], "items": {"type": "number"}, "minItems": 3, "maxItems": 3, "description": "the 1, 5 and 15 minute load averages when the run started"}
+      }
+    },
+    "measures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "unit", "repeats", "median", "iqr", "min", "max"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "unit": {"type": "string", "minLength": 1},
+          "repeats": {"type": "array", "minItems": 1, "items": {"type": "number"}, "description": "each timed repeat in order, warm-up repeats excluded"},
+          "median": {"type": "number"},
+          "iqr": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "first and third quartile, inclusive method"},
+          "min": {"type": "number"},
+          "max": {"type": "number"}
+        }
+      }
+    }
+  }
+}

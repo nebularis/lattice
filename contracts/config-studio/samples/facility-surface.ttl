@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The surface configuration of the facility agreement sample, two contracts over the baseline's
+# carrier data.
+#
+# The promotion restates the sector of a drawdown's borrower on the drawdown itself. The sector is
+# three hops from a drawdown, through the facility it is drawn under and that facility's borrower, so
+# a consumer asking which drawdowns carry a sector would otherwise traverse the path for each one.
+#
+# The index retrieves borrowers by sector. Its value population is the members of the scheme the
+# vocabulary configuration's sector contract resolves to at compile time, with a nominal class and a
+# membership assertion per member, and a closure relation over skos:broader so that asking for
+# industrials also finds a borrower in food processing. The 2026 edition is in force at the sample's
+# compile time, and the 2027 edition takes over on 2027-01-01.
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <https://example.org/lending#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:facility-surface-profile a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:facility-surface-profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 ;
+    srf:defaultPopulationBudget 5000 .
+
+# --- the promotion, over a three-hop read path ------------------------------------------------------
+
+ex:drawdown-sector-step-0 a srf:PathStep ;
+    srf:stepIndex 0 ;
+    srf:stepProperty ex:drawnUnder ;
+    srf:stepDirection srf:Forward .
+
+ex:drawdown-sector-step-1 a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty ex:borrower ;
+    srf:stepDirection srf:Forward .
+
+ex:drawdown-sector-step-2 a srf:PathStep ;
+    srf:stepIndex 2 ;
+    srf:stepProperty ex:borrowerSector ;
+    srf:stepDirection srf:Forward .
+
+ex:drawdown-sector-promotion a srf:PromotionContract ;
+    fnd:hasIdentity ex:drawdown-sector-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "drawdown-sector" ;
+    srf:carrier ex:Drawdown ;
+    srf:hasPathStep ex:drawdown-sector-step-0 , ex:drawdown-sector-step-1 , ex:drawdown-sector-step-2 ;
+    srf:targetNamespace "https://example.org/lending/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:promotesTo <https://example.org/lending/exec#drawdownSector> ;
+    srf:sourceFidelity srf:ExactSource .
+
+# --- the index, over a population drawn on the vocabulary -------------------------------------------
+
+ex:borrower-sector-population a srf:ContractBoundPopulation ;
+    srf:fromSchemeContract ex:SectorContract .
+
+ex:borrower-sector-index a srf:IndexContract ;
+    fnd:hasIdentity ex:borrower-sector-index-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "borrower-sector" ;
+    srf:carrier ex:Borrower ;
+    srf:readProperty ex:borrowerSector ;
+    srf:targetNamespace "https://example.org/lending/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:DefinitionAndMaterialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:valuePopulation ex:borrower-sector-population ;
+    srf:indexForm srf:NominalClass , srf:MembershipAssertion , srf:ClosureRelation ;
+    srf:namingPolicy srf:LocalNameFromValue ;
+    srf:closureBasis skos:broader .

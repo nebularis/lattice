@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A value of dal:retentionMode must be a retention mode of the spec.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:S a dal:ClassScope ; dal:targetClass ex:Thing .
+ex:P a dal:ReceiptProfile ; dal:appliesTo ex:S ; dal:retentionMode ex:NotInTheSpec .

@@ -16,7 +16,7 @@ dependency on CCS's main-branch progress at all — unlike B4 (the evaluation-co
 C12's conformance kit), which waits on CCS's C11a (merged, done) **and** C12 (not yet built,
 several CCS slices away, confirmed by reading `main` directly on 2026-10-07). This phase scopes
 only what is ready now: **B1, B2 and B3**. B4 is named for completeness (§6) and left for its own
-later phase document, exactly as track E left E1.3 for track C to unblock.
+later phase document, exactly as track E left FME-1.3 for track C to unblock.
 
 Track B's job, stated once in the reference-evaluator sketch and not restated here: the compilers
 (SPARQL, SHACL, SWRL, OWL backends today; CCS's C12/C13 tomorrow) can only be compared with each
@@ -140,16 +140,16 @@ of the phase (not here — this is a sketch, not the ADR):
 and residual rule (RE6, reference-evaluator.md §3) and CCS C12's conformance kit. Confirmed
 blocked by reading `main` directly: CCS's C12 is "waiting," blocked on C9, C11, C11a, AIR-3.3 and
 NRS N1, several tranche-D slices away from being briefable. Left for a later phase document, the
-same rolling-wave discipline track E used for E1.3 (blocked on track C's C2) and track C used for
+same rolling-wave discipline track E used for FME-1.3 (blocked on track C's C2) and track C used for
 C3 (blocked on CCS C13a).
 
 **A finding worth recording now, for whoever starts B4 later**: the reference-evaluator sketch's
 RE6 and RE-Q4 state that the rounding and residual-allocation rule for `split`/`proRata` belongs
 to the evaluation context's combinator algebra (B4), with a leaning already recorded ("largest
 remainder, with ties broken by a total order of accounts, declared per combinator use") — **not**
-to Quantification's ontology, where track E's E1.2 went looking for it and found nothing
+to Quantification's ontology, where track E's FME-1.2 went looking for it and found nothing
 (`formal-methods-track-e.md` status, "blocked, not merely unstarted"). This is the answer to
-E1.2's open question, read directly from a sketch already in the repository, not inferred: the
+FME-1.2's open question, read directly from a sketch already in the repository, not inferred: the
 theorem belongs with track B's own B4 and track E's own E3/E4 (the combinator algebra and the
 evaluation context), not with Eligibility's or Quantification's kernel. Track E's own status
 record should be corrected once this phase's sketch is accepted, not held open on a question this

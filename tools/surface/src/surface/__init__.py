@@ -10,7 +10,7 @@ over as authored. Compilation is one realisation strategy among several
 (ADR-A15), and this is the reference one — deterministic, auditable, and able
 to establish its own claims rather than assert them.
 
-Module map, following the layout ``tools/mork2rml.py`` establishes:
+Module map, following the layout ``tools/mork/src/mork2rml.py`` establishes:
 
 ``namespaces``  shared namespace bindings
 ``model``       specification dataclasses and ``SurfaceGraphAnalyser``

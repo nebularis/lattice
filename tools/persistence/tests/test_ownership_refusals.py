@@ -7,6 +7,8 @@ Validation Pack: docs/developer/validation/FMH-HO6.md. Test IDs are HO6-Tn."""
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from rdflib import Graph, Literal, URIRef
 
@@ -152,8 +154,11 @@ def test_ho6_t13_a_reference_to_the_root_class_does_not_warn():
     ],
 )
 def test_ho6_t14_each_new_witness_triggers_exactly_its_own_rule(family, kind):
-    observed = witness.observe_compile([witness.WITNESS_DIR / f"{family}-{kind}.ttl"])
-    assert set(observed) == {witness.Rule(family, kind)}
+    path = witness.WITNESS_DIR / f"{family}-{kind}.ttl"
+    base = re.search(r"^# base: (\S+)", path.read_text(encoding="utf-8"), re.MULTILINE).group(1)
+    # the composite example declares dal:PatchLog, so its own compile warns ReceiptModelNotHonoured (TD-46). That is the base's, not the witness's
+    own = set(witness.observe_compile([EXAMPLES_DIR / base])) if family == "warning" else set()
+    assert set(witness.observe_compile([path])) - own == {witness.Rule(family, kind)}
 
 
 def test_ho6_t15_a_named_graph_profile_that_names_a_shape_is_checked_by_the_same_rules():

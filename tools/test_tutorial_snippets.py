@@ -9,7 +9,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from tutorial_snippets import CHAPTERS, check  # noqa: E402
+import lattice_repo_catalogue as rc  # noqa: E402
+from tutorial_snippets import chapter_directory, check  # noqa: E402
+
+CHAPTERS = Path("chapters")
 
 SOURCE = """@prefix ex: <https://example.org/x#> .
 
@@ -36,50 +39,55 @@ def _excerpt(body: str, source: str = "ontology/x.ttl") -> str:
 
 
 def test_matching_excerpt_passes(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n    ex:name "A" .')))
+    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n    ex:name "A" .')), CHAPTERS)
     assert report.findings == [] and report.excerpts == 1
 
 
 def test_changed_line_is_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n    ex:name "Z" .')))
+    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n    ex:name "Z" .')), CHAPTERS)
     assert len(report.findings) == 1 and "no longer matches ontology/x.ttl" in report.findings[0]
 
 
 def test_missing_source_is_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt("ex:a a ex:Thing ;", source="ontology/gone.ttl")))
+    report = check(_repo(tmp_path, _excerpt("ex:a a ex:Thing ;", source="ontology/gone.ttl")), CHAPTERS)
     assert len(report.findings) == 1 and "does not exist" in report.findings[0]
 
 
 def test_source_outside_repository_is_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt("ex:a a ex:Thing ;", source="../x.ttl")))
+    report = check(_repo(tmp_path, _excerpt("ex:a a ex:Thing ;", source="../x.ttl")), CHAPTERS)
     assert len(report.findings) == 1 and "outside the repository" in report.findings[0]
 
 
 def test_turtle_without_source_comment_is_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, "Text.\n\n```turtle\nex:a a ex:Thing ;\n```\n"))
+    report = check(_repo(tmp_path, "Text.\n\n```turtle\nex:a a ex:Thing ;\n```\n"), CHAPTERS)
     assert len(report.findings) == 1 and "no source comment" in report.findings[0]
 
 
 def test_other_languages_need_no_source(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, "```bash\nmise run check\n```\n"))
+    report = check(_repo(tmp_path, "```bash\nmise run check\n```\n"), CHAPTERS)
     assert report.findings == [] and report.excerpts == 0
 
 
 def test_elision_checks_each_part_in_order(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n# …\nex:b a ex:Thing ;\n    ex:name "B" .')))
+    report = check(_repo(tmp_path, _excerpt('ex:a a ex:Thing ;\n# …\nex:b a ex:Thing ;\n    ex:name "B" .')), CHAPTERS)
     assert report.findings == []
 
 
 def test_elided_parts_out_of_order_are_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, _excerpt("ex:b a ex:Thing ;\n# …\nex:a a ex:Thing ;")))
+    report = check(_repo(tmp_path, _excerpt("ex:b a ex:Thing ;\n# …\nex:a a ex:Thing ;")), CHAPTERS)
     assert len(report.findings) == 1 and "part 2" in report.findings[0]
 
 
 def test_link_to_present_path_passes(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, f"See [x]({LINK}ontology/x.ttl) and [dir]({LINK.replace('blob', 'tree')}ontology).\n"))
+    report = check(_repo(tmp_path, f"See [x]({LINK}ontology/x.ttl) and [dir]({LINK.replace('blob', 'tree')}ontology).\n"), CHAPTERS)
     assert report.findings == [] and report.links == 2
 
 
 def test_link_to_missing_path_is_drift(tmp_path: Path) -> None:
-    report = check(_repo(tmp_path, f"See [x]({LINK}ontology/gone.ttl).\n"))
+    report = check(_repo(tmp_path, f"See [x]({LINK}ontology/gone.ttl).\n"), CHAPTERS)
     assert len(report.findings) == 1 and "ontology/gone.ttl names no path" in report.findings[0]
+
+
+def test_the_chapters_are_the_tutorial_sections_source() -> None:
+    catalogue = rc.load(Path(__file__).resolve().parent.parent)
+    assert chapter_directory(catalogue).as_posix() == "docs/_includes/tutorial"

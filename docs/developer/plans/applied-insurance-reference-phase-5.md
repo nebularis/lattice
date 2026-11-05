@@ -28,10 +28,10 @@ per claim, aggregate windows, hours clauses) stay on term parameters as designed
 general basis pattern, if any, comes from contract-amounts §1.7. The running totals against a limit
 are dynamic and live in `applied/capacity` through a Surface projection.
 
-**Comes back in: the evaluation context (2026-10-02).** The unplanned
-[evaluation-context.md](../sketches/evaluation-context.md) sketch outlines limits, retentions,
-aggregates, reinstatements and bases as ledger accounts, combinators and environments. This phase
-should not start its contract module until that design is settled (its §13).
+**Comes back in: the ledger (2026-10-02).** The [Ledger plan](ledger.md) ([ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)) takes limits, retentions,
+aggregates, reinstatements and bases as ledger accounts. This phase
+should not start its contract module until its slice LG-3 is done. Combinators and environments stay in the
+[evaluation-context.md](../sketches/evaluation-context.md) sketch (its §13).
 
 ## Slices
 
@@ -56,7 +56,7 @@ default candidate is bind-time authority, which does not.
 
 ## Documentation deltas
 
-Contract module README, `ontology/applied/capacity/docs/architecture-overview.md` (the compiled
+Contract module README, `docs/architecture/capacity-domain-analysis-and-design.md` (the compiled
 route and its parity contract), `solution-design-specification.md` (compilation is optional),
 `docs/architecture/ontology-architecture.md` §3.
 

@@ -5,6 +5,7 @@
 **Status:** Proposed
 **Date:** 2026-09-23
 **Related:** Architecture Review §5.7 (S-5), G-12, ADR-A75
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md)
 **Drafted in:** P0.1.13. Pending ratification — see [phase-0-status.md](../../developer/status/phase-0-status.md).
 
 ## Context

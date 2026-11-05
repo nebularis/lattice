@@ -18,7 +18,7 @@ decision 2).
 Wording imports Foundation, Vocabulary, Quantification and Eligibility, and is imported by
 Instrument. It names no term of a higher layer.
 
-This release (`0.7.0`) holds structure, text parts, references, document objects and variables
+This release (`0.19.0`) holds structure, text parts, references, document objects and variables
 (since `0.1.0`), tables, assembly and the values an instance supplies (since `0.2.0`), textual
 amendments with the shapes for the layer's laws (since `0.3.0`), and references by identity, with
 editions and reliance for documents outside the wording (since `0.7.0`). Breaking changes are listed
@@ -49,13 +49,27 @@ in the release notes (§10).
 - `turtle-example` blocks are illustrative only. The worked examples live in `examples/`.
 
 ```bash
-python3 tools/literate_extract.py ontology/wording/README.md --layer wording --root . \
-    --shapes shapes/structural.ttl shapes/constraints.ttl --check
+mise exec -- python tools/literate_extract.py ontology/wording/README.md --layer wording --root . --check
+```
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "substrate"
+roles = ["examples", "shapes", "spec", "vocab"]
+imports = ["foundation", "vocabulary", "quantification", "party", "eligibility"]
+
+[module.extract]
+spec = ["spec/wording.ttl"]
+vocab = ["vocab/wording-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
 ```
 
 ## 4. Worked examples
 
-Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-AC2-clean-room-authoring-procedure.md)).
+Authored before this specification ([ADR-A-C2](../../docs/architecture/decisions/ADR-A-C2-clean-room-authoring-procedure.md)).
 Each file opens with its premise.
 
 | Example | Shows |
@@ -85,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.12.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
 ```
 
 ### 5.2 Wordings and elements
@@ -101,13 +115,13 @@ The equivalence assertion on `WordingNode` also says something the reduntant sub
 
 ```turtle-spec
 wrd:Wording a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Wording"@en ;
 	rdfs:comment "The root of one document's wording tree." ;
 	fnd:utility "One should exist per document. Changed text leads to a new wording version with the same fnd:hasIdentity superseding the old." .
 
 wrd:Element a owl:Class ;
-	rdfs:subClassOf fnd:Version , fnd:Governable , wrd:WordingNode ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable , wrd:WordingNode ;
 	rdfs:label "Element"@en ;
 	rdfs:comment "A nestable part of a wording." ;
 	fnd:utility "Typed with wrd:elementType. Use one of the content classes of §5.6 where the part carries content of its own. A changed element requires a new element version." .
@@ -296,13 +310,13 @@ Law W8 checks that every reference finds exactly one version, or exactly one rel
 
 ```turtle-spec
 wrd:DocumentObject a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "Document object"@en ;
 	rdfs:comment "An attachment the wording relies on whose content is not digitised." ;
 	fnd:utility "Each instance is one edition, with the attachment's persistent identity. A wording relies on one edition of it (wrd:reliesOnEdition)." .
 
 wrd:ExternalDocument a owl:Class ;
-	rdfs:subClassOf prov:Entity , fnd:Version , wrd:LinkedDocument ;
+	rdfs:subClassOf prov:Entity , fnd:Versioned , wrd:LinkedDocument ;
 	rdfs:label "External document"@en ;
 	rdfs:comment "A document outside the contract, that its wording relies on." ;
 	fnd:utility "Each instance is one edition, with the document's persistent identity and the date it came into force. A wording relies on one edition (wrd:reliesOnEdition) or on the document as amended (wrd:reliesAsAmended)." .
@@ -419,7 +433,6 @@ loop may pass through words and variables alike. Instrument's shapes report each
 and its reference instantiator reports the whole loop in order, with the clause stating each hop
 (Instrument README §18.4).
 
-
 ### 5.10 Tables
 
 A table has two axes. Its fields say what is recorded, and are always declared in the wording, each
@@ -533,6 +546,12 @@ A variable value records an instance's value for one variable, and for one entry
 variable is a table field's. A multi-valued variable's values all sit on its one value record, so a
 single-valued variable is a variable whose record holds one value.
 
+A value record is never edited, so a change is a new record. Two assembled wordings of one instrument,
+before and after an endorsement, share every value record the endorsement leaves alone and differ in
+the one it changes, as they share the elements they both include. A record belongs to at least one
+assembled wording, and a value no wording supplies is reported
+([`shared-values.ttl`](examples/shared-values.ttl)).
+
 ```turtle-spec
 wrd:AssembledWording a owl:Class ;
 	rdfs:subClassOf wrd:Wording ;
@@ -550,10 +569,10 @@ wrd:includes a owl:ObjectProperty ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:Element ;
 	rdfs:comment "An element version the instance includes. Recorded at assembly, never recomputed. Subject: an assembled wording. Value: an element." .
 
-wrd:hasValue a owl:ObjectProperty , owl:InverseFunctionalProperty ;
+wrd:hasValue a owl:ObjectProperty ;
 	rdfs:label "has value"@en ;
 	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:VariableValue ;
-	rdfs:comment "A value the instance supplies. Each value record belongs to one assembled wording. Subject: an assembled wording. Value: a variable value." .
+	rdfs:comment "A value the instance supplies. A value record may be supplied by several assembled wordings, such as those of one instrument before and after an endorsement that leaves it alone. Subject: an assembled wording. Value: a variable value." .
 
 wrd:VariableValue a owl:Class ;
 	rdfs:label "Variable value"@en ;
@@ -653,6 +672,27 @@ wrd:placedUnder a owl:ObjectProperty , owl:FunctionalProperty ;
 	rdfs:comment "The library element an instance's own new element is presented under. Not a part-whole edge: the element's parent is the instance's assembled wording. Subject: an element. Value: an element, at most one." .
 ```
 
+### 5.14 The assembly model
+
+Assembly is the act of drawing an assembled wording from a form (§5.11, §5.12). An assembly model states how: how an inclusion condition is decided, what happens when it cannot be, and how a variation slot is resolved. Wording has one, the baseline model, whose semantics are §5.11 to §5.13 and the rules below. A second model is added as a second individual, and what an instrument reads of an assembled wording does not change.
+
+The baseline model decides each inclusion condition, three-valued, by Eligibility. Admitted includes the element and Denied leaves it out. Undetermined refuses the assembly, naming the governing variable it lacks. A variation slot whose variants admit none, or several, refuses the assembly. An optional element, and a variant with no inclusion condition, is included only when the drafter chooses it. Every mandatory child of an included element is included. A failed assembly produces findings and no assembled wording. Object ids are derived after assembly, by rank order among the included siblings, and a chosen variant takes its slot's number (law W7).
+
+An assembled wording records the model version it was assembled under, and the assembly as a `prov:Activity` that used the form versions, the settings and the model version. An assembled wording written from scratch, from no form, names no model.
+
+```turtle-spec
+wrd:AssemblyModel a owl:Class ;
+	rdfs:subClassOf fnd:Versioned , fnd:Governable ;
+	rdfs:label "Assembly model"@en ;
+	rdfs:comment "A set of rules for drawing an assembled wording from a form: how inclusion conditions are decided, what an undetermined one does, and how a variation slot is resolved." ;
+	fnd:utility "Declare one individual per model, with an identity. An assembler names the model version it applied on every assembled wording it produces, with wrd:assembledUnder." .
+
+wrd:assembledUnder a owl:ObjectProperty ;
+	rdfs:label "assembled under"@en ;
+	rdfs:domain wrd:AssembledWording ; rdfs:range wrd:AssemblyModel ;
+	rdfs:comment "The assembly model version the assembled wording was produced under. Subject: an assembled wording. Value: an assembly model, exactly one for a wording drawn from a form (law WA1), none for a wording written from scratch." .
+```
+
 ## 6. Vocabulary
 
 The inclusion modes, population methods, amendment operations and field orientations are closed sets of named individuals. Three scheme
@@ -673,10 +713,11 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.9.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.9.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypeContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Element type scheme contract"@en ;
@@ -684,18 +725,21 @@ wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	voc:boundScheme wrd-voc:ElementTypes .
 
 wrd-voc:ClassificationContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ClassificationContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Classification scheme contract"@en ;
 	voc:constrainsProperty wrd:classification .
 
 wrd-voc:DocumentKindContract a voc:SchemeContract ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:DocumentKindContract-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Document kind scheme contract"@en ;
 	voc:constrainsProperty wrd:documentKind .
 
 wrd-voc:ElementTypes a voc:ConceptScheme ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
 	fnd:hasIdentity wrd-voc:ElementTypes-identity ;
 	fnd:hasGovernanceState fnd:Active ;
 	skos:prefLabel "Baseline element types"@en ;
@@ -732,6 +776,14 @@ wrd-voc:Endorsement a skos:Concept ;
 	skos:prefLabel "Endorsement"@en ;
 	skos:altLabel "Amendment letter"@en ;
 	skos:definition "A document issued after a contract is made, stating changes to its wording."@en .
+
+# ---- Assembly models ------------------------------------------------------------
+
+wrd-voc:BaselineAssemblyModel a owl:NamedIndividual , wrd:AssemblyModel ;
+	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;
+	fnd:hasGovernanceState fnd:Active ;
+	rdfs:label "Baseline assembly model"@en ;
+	rdfs:comment "Wording's own assembly model: three-valued inclusion conditions, refusal on Undetermined, exactly one admitted variant per slot, and optional elements only when chosen (§5.14)." .
 
 # ---- Inclusion modes: a closed set -------------------------------------------
 
@@ -1053,8 +1105,8 @@ wrd:VariableValueShape a sh:NodeShape ;
 	sh:targetClass wrd:VariableValue ;
 	sh:property [ sh:path wrd:forVariable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class wrd:Variable ;
 		sh:message "A variable value is for exactly one variable." ] ;
-	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ; sh:maxCount 1 ;
-		sh:message "A variable value belongs to exactly one assembled wording." ] ;
+	sh:property [ sh:path [ sh:inversePath wrd:hasValue ] ; sh:minCount 1 ;
+		sh:message "A variable value belongs to at least one assembled wording." ] ;
 	sh:property [ sh:path wrd:forEntry ; sh:maxCount 1 ] ;
 	sh:property [ sh:path wrd:value ; sh:nodeKind sh:BlankNodeOrIRI ] ;
 	sh:property [ sh:path wrd:literalValue ; sh:nodeKind sh:Literal ] ;
@@ -1116,6 +1168,16 @@ data graph.
 | — | A cell's declared entry belongs to the table of the cell's field | `wrd:CellShape` |
 | W7 | Object ids are derived after assembly, never stored as identity | a design rule (§5.4) |
 | W8 | Every reference finds what it means in the wording holding it. A reference to an element or a variable finds exactly one version: the one a form comprises, or the one an assembled wording includes or, for a variable, declares through an included element. A reference to a document outside the wording finds exactly one reliance on it: in the wording itself, or for an assembled wording that states none, in the form it is assembled from | `wrd:W8FormShape`, `wrd:W8AssembledShape`, `wrd:W8RelianceShape` |
+
+Five more laws hold of every assembled wording an assembler produces (§5.14). WA1 is `wrd:WA1Shape` and an assembler's own record check. The rest are tests of the assembler.
+
+| Law | Statement |
+|---|---|
+| WA1 | An assembled wording drawn from a form names exactly one assembly model version |
+| WA2 | Whatever the model, the record satisfies W3 to W6 and W8 |
+| WA4 | Assembly reads the forms, the settings and the choices only, never runtime records or state |
+| WA5 | The same form versions, settings, choices and model version give the same record, up to minted identifiers |
+| WA6 | A failed assembly produces findings and no record |
 
 **A slot's conditions** are checked as a set. Every variant's conditions read the same governing
 variables. Where each variant has one interval condition over the same governing variable, no two
@@ -1341,11 +1403,15 @@ wrd:SlotConditionsShape a sh:NodeShape ;
 		sh:message "Two variants of a slot can both apply: their ranges overlap." ;
 		sh:select """
 			SELECT DISTINCT $this ?value WHERE {
-				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
-				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
-					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				# The guards sit in their own group, so that they run before the candidate points are
+				# enumerated. A FILTER applies to the whole group it is in, wherever it is written.
+				{
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
 				$this wrd:hasVariant ?va , ?value . FILTER (STR(?va) < STR(?value))
 				?va wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?ra .
 				?value wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?rb .
@@ -1370,11 +1436,15 @@ wrd:SlotConditionsShape a sh:NodeShape ;
 		sh:message "No variant of a slot applies to some admissible value of its governing variable." ;
 		sh:select """
 			SELECT DISTINCT $this ?value WHERE {
-				$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
-				FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
-					FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
-				FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				# The guards sit in their own group, so that they run before the candidate points are
+				# enumerated. A FILTER applies to the whole group it is in, wherever it is written.
+				{
+					$this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/wrd:readsVariable ?g .
+					FILTER NOT EXISTS { $this wrd:hasVariant ?v . FILTER NOT EXISTS { ?v wrd:includedWhen/elg:hasCondition ?c } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition ?c .
+						FILTER NOT EXISTS { ?c a elg:IntervalCondition ; wrd:readsVariable ?g } }
+					FILTER NOT EXISTS { $this wrd:hasVariant/wrd:includedWhen ?p . ?p elg:hasCondition ?c1 , ?c2 . FILTER (?c1 != ?c2) }
+				}
 				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r1 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r1 }
 				{ $this wrd:hasVariant/wrd:includedWhen/elg:hasCondition/elg:requiredRangeSet/qnt:hasRange ?r2 } UNION { ?g wrd:admissibleValues/qnt:hasRange ?r2 }
 				?r1 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e1 . ?r2 (qnt:lowerBound|qnt:upperBound)/qnt:boundValue/qnt:numericValue ?e2 .
@@ -1462,11 +1532,13 @@ wrd:W8AssembledShape a sh:NodeShape ;
 			SELECT DISTINCT $this ?element ?identity ?one ?other WHERE {
 				$this wrd:includes ?element .
 				{ ?element wrd:hasTextPart ?part . ?part wrd:refersToObject|wrd:refersToVariable ?identity } UNION { ?element wrd:linksTo ?identity }
+				# The versions of the identity come first, so that the two ways of being held are lookups.
+				# Pairing every included item first, and joining on the identity after, is quadratic.
+				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
+				FILTER (STR(?one) < STR(?other))
 				{ $this wrd:includes ?one , ?other }
 				UNION { $this wrd:includes ?d1 , ?d2 . ?d1 wrd:directlyComprises ?one . ?d2 wrd:directlyComprises ?other .
 				  ?one a/rdfs:subClassOf* wrd:Variable . ?other a/rdfs:subClassOf* wrd:Variable }
-				?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity .
-				FILTER (STR(?one) < STR(?other))
 			}""" ] .
 
 wrd:W8RelianceShape a sh:NodeShape ;
@@ -1488,6 +1560,20 @@ wrd:W8RelianceShape a sh:NodeShape ;
 			SELECT DISTINCT $this ?identity ?one ?other WHERE {
 				{ $this wrd:reliesOnEdition ?one , ?other . ?one fnd:hasIdentity ?identity . ?other fnd:hasIdentity ?identity . FILTER (STR(?one) < STR(?other)) }
 				UNION { $this wrd:reliesOnEdition ?one ; wrd:reliesAsAmended ?identity . ?one fnd:hasIdentity ?identity . BIND (?identity AS ?other) }
+			}""" ] .
+
+# ---- WA1: an assembled wording names one assembly model --------------------------
+# Stated as at most one. That a wording drawn from a form names one is held by every
+# assembler's own record check, since hand-assembled wordings predate the model.
+
+wrd:WA1Shape a sh:NodeShape ;
+	sh:targetClass wrd:AssembledWording ;
+	sh:sparql [ sh:prefixes wrd:LawPrefixes ;
+		sh:message "WA1: an assembled wording names at most one assembly model version." ;
+		sh:select """
+			SELECT DISTINCT $this ?value WHERE {
+				$this wrd:assembledUnder ?value , ?other .
+				FILTER (STR(?value) < STR(?other))
 			}""" ] .
 
 # ---- Amendments -------------------------------------------------------------------
@@ -1531,7 +1617,7 @@ wrd:AmendmentOperationShape a sh:NodeShape ;
 
 ## 9. How-to
 
-**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Version` with an identity
+**Author a form.** Make one `wrd:Wording` and its elements, each a `fnd:Versioned` with an identity
 and a governance state, joined by `wrd:directlyComprises` and ordered by rank key. Give each element
 its inclusion mode. For alternatives, add a `wrd:VariationSlot` carrying the shared number, with its
 variants under `wrd:hasVariant`. For a conditional part, give it `wrd:includedWhen` an admission
@@ -1571,7 +1657,7 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
 - 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b, the ADR-A112 addendum "references by
   identity"): `wrd:refersToObject`, `wrd:refersToVariable` and `wrd:linksTo` name a persistent
   identity, never a version, resolved within the wording holding the reference. Document objects and
-  external documents are editions, `fnd:Version`s. New: `wrd:reliesOnEdition` (static) and
+  external documents are editions, `fnd:Versioned`s. New: `wrd:reliesOnEdition` (static) and
   `wrd:reliesAsAmended` (ambulatory) from a wording to a document outside it, and `wrd:displayText`.
   Shapes 0.4.0 (breaking): a reference names an identity, display text only on a reference part,
   reliances, and law W8, which reports a reference that finds no version, or two, or no reliance.
@@ -1579,3 +1665,16 @@ Breaking versions at major version zero ([ADR-A113](../../docs/architecture/deci
   with it, with no other change (CCS C9b2).
 - 0.9.0 (`wording` and `wording-vocab`, breaking): re-pinned to Eligibility 0.12.0, whose set readings decide on completeness only under a closure
   (ADR-A105), and the layers re-pinned with it, with no other change (CCS HQ-6a.1).
+- Shapes 0.4.1: the slot-overlap and slot-coverage queries run their cheap guards as a sub-group before the
+  candidate points are enumerated, and law W8 looks up the versions of an identity before pairing the items a
+  wording holds. The same reports as before, from about half the work on the slot queries and W8.
+- **0.21.0**.
+  - may invalidate. New: `wrd:AssemblyModel`, `wrd:assembledUnder`, the baseline assembly model `wrd-voc:BaselineAssemblyModel` and law WA1's shape `wrd:WA1Shape` (§5.14). An assembled wording that names more than one assembly model is reported, though no earlier release had the property.
+- 0.19.0. Every document takes the release's number and imports the other layers at it (no effect). `wrd:hasValue` is no
+  longer inverse-functional, and a variable value belongs to at least one assembled wording, not exactly one. Two assembled
+  wordings of one instrument may share a value record, so an endorsement or a requote writes only the records it changes
+  (changes meaning, since a reasoner no longer merges two records that share a value). The shapes follow, accepting a value
+  in several assembled wordings (no effect). New example `shared-values.ttl`.
+- 0.18.0, the first release of the substrate and standalone modules as one set ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md)). Every document of the layer takes the release's number and imports the other layers at it (no effect). No other change.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

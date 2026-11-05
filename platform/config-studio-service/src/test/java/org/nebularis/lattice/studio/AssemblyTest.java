@@ -1,0 +1,201 @@
+// SPDX-License-Identifier: MPL-2.0
+package org.nebularis.lattice.studio;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Map;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.nebularis.lattice.studio.api.ApiResponse;
+import org.nebularis.lattice.studio.model.Parts;
+import org.nebularis.lattice.studio.store.Cst;
+import org.nebularis.lattice.studio.store.Graphs;
+import org.nebularis.lattice.studio.writes.Command;
+
+/** The library and assembly parts, the assemble job, and the record graph its update carries (CB1). */
+class AssemblyTest {
+    private static final String WS = Fixture.id(1);
+    private static final String WRD = "https://www.nebularis.org/neuro-semantic/lattice/wording#";
+    private static final String PREFIXES = Fixture.PREFIXES + "@prefix wrd: <" + WRD + "> .\n";
+    private static final String LIBRARY = PREFIXES + "ex:form a wrd:Wording ; wrd:directlyComprises ex:c1 .\nex:c1 a wrd:Text .\n";
+    private static final String ASSEMBLY = PREFIXES + """
+        ex:a a cst:Assembly ; cst:assembles ex:form ; cst:choice ex:c1 ; cst:setting ex:v .
+        ex:v a wrd:VariableValue ; wrd:forVariable ex:margin ; wrd:literalValue "2.5" .
+        """;
+
+    @TempDir Path dir;
+    Fixture f;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        f = new Fixture(Fixture.assetsDir(dir));
+        assertEquals(201, f.createWorkspace("Builder").status());
+    }
+
+    private static Model parse(String turtle) {
+        return org.apache.jena.riot.RDFParser.fromString(turtle, org.apache.jena.riot.Lang.TURTLE).toModel();
+    }
+
+    @Test
+    void formsGoToTheLibraryAndAnAssemblyWithItsValuesToTheAssembly() {
+        Map<Resource, String> owners = Parts.owners(parse(LIBRARY + ASSEMBLY.substring(PREFIXES.length())));
+        Map<String, String> byName = new java.util.HashMap<>();
+        owners.forEach((r, part) -> byName.put(r.isURIResource() ? r.getURI().substring("https://example.org/".length()) : r.toString(), part));
+        assertEquals("library", byName.get("form"));
+        assertEquals("library", byName.get("c1"));
+        assertEquals("assembly", byName.get("a"));
+        assertEquals("assembly", byName.get("v"), "a value record uses Wording's terms but belongs to its assembly");
+    }
+
+    @Test
+    void statedMeaningGoesToMeaningAndAProposalToReview() {
+        String ins = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
+        Model g = parse(PREFIXES + "@prefix ins: <" + ins + "> .\n"
+            + "ex:t a ins:Term , ins:Template ; ins:expressedIn ex:c1 .\n"
+            + "ex:o a ins:Obligation , ins:Template ; ins:arisesUnder ex:t .\n"
+            + "ex:p a cst:Proposal ; cst:span ex:c1 ; cst:proposes ex:t , ex:o ; cst:payload \"...\" .\n");
+        Map<String, String> byName = new java.util.HashMap<>();
+        Parts.owners(g).forEach((r, part) -> byName.put(r.getURI().substring("https://example.org/".length()), part));
+        assertEquals("meaning", byName.get("t"));
+        assertEquals("meaning", byName.get("o"));
+        assertEquals("review", byName.get("p"));
+    }
+
+    @Test
+    void aMappingAndTheGuardItNamesGoToMappingThoughItWritesInstrumentTerms() {
+        Model g = parse(PREFIXES + "@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .\n"
+            + "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            + "ex:m a mork:DataMapping ; mork:exactRBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/instrument#activity> ; mork:appliesWhen ex:g .\n"
+            + "ex:g a sh:NodeShape ; sh:property ex:gp .\n"
+            + "ex:gp sh:path ex:p ; sh:property [ sh:minCount 1 ] .\n"
+            + "ex:c a <http://www.w3.org/2002/07/owl#Class> .\n");
+        Map<String, String> byName = new java.util.HashMap<>();
+        Parts.owners(g).forEach((r, part) -> byName.put(r.isURIResource() ? r.getURI().substring("https://example.org/".length()) : "blank", part));
+        assertEquals("mapping", byName.get("m"));
+        assertEquals("mapping", byName.get("g"), "a guard uses no MORK term but goes with the mapping naming it");
+        assertEquals("mapping", byName.get("gp"), "a guard's named property shape goes with it too");
+        assertEquals("mapping", byName.get("blank"));
+        assertEquals("baseline", byName.get("c"));
+    }
+
+    @Test
+    void aDryRunJobIsQueuedForMeaningOnly() {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=meaning", LIBRARY);
+        assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));
+        String id = job.headers().get("Location").substring("/api/jobs/".length());
+        assertTrue(f.store.graph(Graphs.job(id)).contains(null, Cst.kind, Cst.DryRunJob));
+        assertEquals(400, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=library", LIBRARY).status());
+    }
+
+    @Test
+    void anRmlImportNeedsItsMappingAsOneImportDocument() {
+        String path = "/api/workspaces/" + WS + "/jobs";
+        assertEquals(422, f.post(path, "kind=propose&target=rml", LIBRARY).status());
+        String doc = LIBRARY + "<urn:x:rml> a cst:ImportDocument ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        assertEquals(202, f.post(path, "kind=propose&target=rml", doc).status());
+    }
+
+    @Test
+    void aMappingProposalNeedsOneSourceVocabularyAndAtMostOneSample() {
+        String doc = "<urn:x:%s> a cst:ImportDocument ; cst:documentRole cst:%s ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        String path = "/api/workspaces/" + WS + "/jobs";
+        assertEquals(422, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY).status());
+        assertEquals(422, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY + doc.formatted("s", "SampleSource")).status());
+        assertEquals(202, f.post(path, "kind=propose&target=mapping-language-model", LIBRARY + doc.formatted("v", "SourceVocabulary")).status());
+        assertEquals(202, f.post(path, "kind=propose&target=mapping-language-model",
+            LIBRARY + doc.formatted("v", "SourceVocabulary") + doc.formatted("s", "SampleSource")).status());
+    }
+
+    @Test
+    void aMappingDryRunNeedsItsSampleAsOneImportDocument() {
+        assertEquals(422, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=mapping", LIBRARY).status());
+        String sample = LIBRARY + "<urn:x:doc> a cst:ImportDocument ; cst:documentContent \"<urn:a> <urn:b> <urn:c> .\" ; cst:documentMediaType \"text/turtle\" .\n";
+        assertEquals(202, f.post("/api/workspaces/" + WS + "/jobs", "kind=dry-run&target=mapping", sample).status());
+    }
+
+    @Test
+    void aProposeJobNamesItsProposer() {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=sentence-forms", LIBRARY);
+        assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));
+        String id = job.headers().get("Location").substring("/api/jobs/".length());
+        Model description = f.store.graph(Graphs.job(id));
+        Resource node = description.createResource(Graphs.job(id));
+        assertTrue(description.contains(node, Cst.kind, Cst.Propose));
+        assertTrue(description.contains(node, Cst.target, Cst.SentenceFormProposer));
+        assertEquals(400, f.post("/api/workspaces/" + WS + "/jobs", "kind=propose&target=oracle", LIBRARY).status());
+    }
+
+    @Test
+    void bothPartsAreSavedUnderTheirOwnRevisions() {
+        assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/library", "\"0\"", LIBRARY).status());
+        assertEquals(204, f.put("/api/workspaces/" + WS + "/graphs/assembly", "\"0\"", ASSEMBLY).status());
+        assertEquals(422, f.put("/api/workspaces/" + WS + "/graphs/library", "\"1\"", ASSEMBLY).status(), "an assembly is not a form");
+    }
+
+    @Test
+    void anAssembleJobIsQueuedWithItsInput() {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=assemble&target=assembly", LIBRARY + ASSEMBLY.substring(PREFIXES.length()));
+        assertEquals(202, job.status(), () -> new String(job.body(), StandardCharsets.UTF_8));
+        String id = job.headers().get("Location").substring("/api/jobs/".length());
+        Model description = f.store.graph(Graphs.job(id));
+        Resource node = description.createResource(Graphs.job(id));
+        assertTrue(description.contains(node, Cst.kind, Cst.Assemble));
+        assertTrue(description.contains(node, Cst.target, Cst.target("assembly")));
+        assertEquals(400, f.post("/api/workspaces/" + WS + "/jobs", "kind=assemble&target=library", LIBRARY).status());
+    }
+
+    private String queued(String kind, String target) {
+        ApiResponse job = f.post("/api/workspaces/" + WS + "/jobs", "kind=" + kind + "&target=" + target, LIBRARY);
+        assertEquals(202, job.status());
+        return job.headers().get("Location").substring("/api/jobs/".length());
+    }
+
+    private Dataset update(String job, Model record) {
+        Model description = f.store.graph(Graphs.job(job));
+        Resource node = description.createResource(Graphs.job(job));
+        description.removeAll(node, Cst.status, null);
+        node.addProperty(Cst.status, Cst.Succeeded);
+        Dataset d = DatasetFactory.create();
+        d.addNamedModel(Graphs.job(job), description);
+        if (record != null) {
+            d.addNamedModel(Graphs.jobRecord(job), record);
+        }
+        return d;
+    }
+
+    @Test
+    void anAssembleJobsUpdateWritesItsRecordWhichGoesWithTheJob() {
+        String job = queued("assemble", "assembly");
+        Model record = ModelFactory.createDefaultModel();
+        record.createResource(Graphs.jobRecord(job) + "/record-1").addProperty(org.apache.jena.vocabulary.RDF.type, record.createResource(WRD + "AssembledWording"))
+            .addProperty(record.createProperty(WRD + "includes"), record.createResource("https://example.org/c1"));
+        assertEquals(200, f.writes.send(new Command(java.util.UUID.randomUUID().toString(), "worker", Command.Type.JOB_UPDATE, WS, job, null, null, null, null, null, update(job, record), null, false)).status());
+        assertTrue(f.store.graph(Graphs.jobRecord(job)).isIsomorphicWith(record));
+        assertEquals(204, f.send("DELETE", "/api/jobs/" + job, null, Map.of(), new byte[0]).status());
+        assertTrue(f.store.graph(Graphs.jobRecord(job)).isEmpty());
+    }
+
+    @Test
+    void aRecordIsRefusedFromAnotherKindOfJobOrWithForeignTerms() {
+        Model record = ModelFactory.createDefaultModel();
+        record.createResource("https://example.org/r").addProperty(record.createProperty(WRD + "includes"), record.createResource("https://example.org/c1"));
+        String validate = queued("validate", "library");
+        assertEquals(400, f.writes.send(Command.jobUpdate(WS, validate, update(validate, record))).status());
+
+        String assemble = queued("assemble", "assembly");
+        record.createResource("https://example.org/r").addProperty(record.createProperty("https://www.nebularis.org/neuro-semantic/lattice/persistence#label"), "x");
+        assertEquals(400, f.writes.send(Command.jobUpdate(WS, assemble, update(assemble, record))).status());
+        assertFalse(f.store.graph(Graphs.jobRecord(assemble)).size() > 0);
+    }
+}

@@ -100,3 +100,42 @@ scans `.claude/skills/` by default and needs no list.
   every project that installs the plugin, so it is reviewed as part of the library. A
   `.claude/settings.json` would apply only its `agent` and `subagentStatusLine` keys to them.
 - `mise run check:agent-guidance` checks the entry's source.
+
+## Addendum (2026-10-18): a private overlay
+
+**Status:** Proposed
+
+Decision 5 keeps personal guidance out of the repository. Some guidance is personal but not about
+one machine. A maintainer who also works on private projects needs rules about what may enter this
+repository, and those rules are themselves private. Decision 5 extends to them.
+
+1. **One path.** An agent reads `~/.config/lattice/private/AGENTS.md` before every task, if it
+   exists. On Windows the path is `%USERPROFILE%\.config\lattice\private\AGENTS.md`. The path is
+   literal on every platform, because an agent's file reader and Claude Code's `@` imports expand
+   `~` but not `XDG_CONFIG_HOME` or `%APPDATA%`. The folder is usually a link to a private checkout,
+   a symbolic link on macOS and Linux, a directory junction on Windows.
+2. **Precedence.** The overlay adds to the repository's rules and tightens them. It never relaxes
+   them. Where the two disagree, the stricter rule holds, so a contributor without an overlay is
+   bound by exactly the public rules.
+3. **Confidentiality.** Nothing in the overlay is quoted, cited or paraphrased in anything the
+   repository publishes. The publication hygiene skill names the overlay beside the deny-list.
+4. **How agents find it.** `AGENTS.md` says so in a short section, so every agent that reads
+   `AGENTS.md` and can read files finds it, including Copilot through the generated
+   `.github/copilot-instructions.md`. Claude Code users load it directly from a user-level rule,
+   `~/.claude/rules/<name>.md` (`%USERPROFILE%\.claude\rules\<name>.md` on Windows), holding an
+   `@` import of the overlay. Claude Code loads imports in user-level files without an approval
+   dialog. `CLAUDE.md` does not import it. A committed import of a path outside the project would
+   show every contributor an approval dialog naming that path.
+5. **Scope is the overlay's own.** A user-level rule loads in every project, so the overlay itself
+   decides which repositories it governs, for example by their git remotes. The repository does
+   not record how.
+
+**Consequences.**
+
+- A cloud agent working on a hosted checkout never sees an overlay, and works to the public rules.
+  That is the intended fallback.
+- The repository names the overlay's path, not its content or purpose beyond the sentence in
+  `AGENTS.md`.
+- Private skills stay in the personal skill directories this ADR already lists
+  (`~/.claude/skills/`, `~/.copilot/skills/`, `~/.agents/skills/`), linked from the same private
+  checkout.

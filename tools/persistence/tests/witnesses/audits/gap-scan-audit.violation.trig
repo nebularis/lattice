@@ -4,7 +4,7 @@
 # Witness for gap-scan-audit. Target A is at sequence 3 but has no receipt 2,
 # and target B is at sequence 2 with no receipts at all, which only a scan
 # driven from the version rows can see.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:meta/47> {
   <urn:t:A> a pat:VersionRow ; pat:seq 3 .

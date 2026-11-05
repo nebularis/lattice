@@ -2,8 +2,8 @@
 
 # Consent, groups and exercise
 
-**Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slices C9b1 to
-C9b4 (replacing the first C9b brief).
+**Unit:** [`computable-contract-substrate`](../plans/computable-contract-substrate.md), slices CCS-9b.1 to
+CCS-9b.4 (replacing the first C9b brief).
 **Status:** decided 2026-10-09, from our own paper and a review of it
 (§6). §1 moves into the Instrument README once the slices land.
 **Reads with:** the [CCS sketch](computable-contract-substrate.md) §5.3 and §5.8, the
@@ -192,7 +192,7 @@ tmpl:accelerate-direction a ins:Power , ins:Template ;
     ins:window tmpl:within-30-days-of-request .   # anchored at ins-voc:Proposed
 ```
 
-The names other than `ins:QualifyingRule` are illustrative, for C9b4's brief.
+The names other than `ins:QualifyingRule` are illustrative, for CCS-9b.4's brief.
 
 A liability rule (`pty:EachForOwnShare`, `pty:EachForWhole`) and a qualifying rule are both acting
 rules, answering how several parties act together, the first for duties and the second for powers. The
@@ -300,7 +300,7 @@ additivity declared by Quantification. The weight a qualifying rule reads is suc
 that can carry a base and change over time. Party's composition rules stay, for liability only, and
 read a measure word rather than a share property.
 
-**Removal is tracked** (decided, §6). C9b4 narrows both properties' stated meaning, marks them
+**Removal is tracked** (decided, §6). CCS-9b.4 narrows both properties' stated meaning, marks them
 deprecated, and adds a warning shape that reports every use. Slice C16c removes them, and is required
 before the CCS epic closes.
 
@@ -419,8 +419,8 @@ C9d's selection by grade becomes another member condition, and HQ-5's "any one m
 | # | Decision |
 |---|---|
 | 1 | "Majority Lenders" and its kind are definitions whose acting rule is a qualifying rule, `ins:QualifyingRule`. "Requisite" is avoided as lending-market vocabulary |
-| 2 | Slices: C9b1 legal acts, C9b2 additivity, HQ-6 deemings, C9b3 set comparisons and aggregate bindings, C9b4 qualifying rules, then C9d materiality and C9c incorporation. Before C9b3, the formal-methods epic's Eligibility work is completed on its own branch and merged |
-| 3 | Party's shares are narrowed and deprecated in C9b4, reported by a warning shape at every use, and removed in C16c, required before the epic closes |
+| 2 | Slices: CCS-9b.1 legal acts, CCS-9b.2 additivity, HQ-6 deemings, CCS-9b.3 set comparisons and aggregate bindings, CCS-9b.4 qualifying rules, then C9d materiality and C9c incorporation. Before CCS-9b.3, the formal-methods epic's Eligibility work is completed on its own branch and merged |
+| 3 | Party's shares are narrowed and deprecated in CCS-9b.4, reported by a warning shape at every use, and removed in C16c, required before the epic closes |
 | 4 | The acts tier holds juristic acts: declarations, exercises and notices with legal effect. Real acts of performance stay performance facts |
 | 5 | The Quantification cascade is accepted |
 | 6 | The reference time is stated once, by the word, as a context role whose value the proposal or meeting supplies. That covers a facility's request date and a bond's record date in one place |

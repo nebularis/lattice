@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This file has been produced using GenAI
 # No fork. Each revision has exactly one txn claim.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:txn> {
   <urn:txn:a> pat:rev <urn:rev:1> .

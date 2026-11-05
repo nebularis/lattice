@@ -16,6 +16,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 from test_parameter_bindings import READ_WITH  # noqa: E402
@@ -32,7 +33,7 @@ BHV = Namespace(LATTICE + "behaviour#")
 LAYER = ROOT / "ontology" / "instrument"
 SPEC, VOCAB = LAYER / "spec" / "instrument.ttl", LAYER / "vocab" / "instrument-vocab.ttl"
 EXAMPLES = sorted((LAYER / "examples").glob("*.ttl"))
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "party/spec/party.ttl", "party/vocab/party-vocab.ttl", "eligibility/spec/eligibility.ttl",
          "eligibility/vocab/eligibility-vocab.ttl", "wording/spec/wording.ttl", "wording/vocab/wording-vocab.ttl",
          "behaviour/spec/behaviour.ttl", "foundation/examples/keys.ttl"]
@@ -95,10 +96,10 @@ TMPL = Namespace("https://example.org/lattice/instrument/facility/form/")
 def test_c6_01_version_and_imports() -> None:
     spec = _graph(SPEC)
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/instrument")
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "instrument/0.17.0")
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + f"instrument/{RELEASE}")
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
-        "foundation/0.4.0", "vocabulary/0.4.0", "quantification/0.8.0", "party/0.9.0", "eligibility/0.12.0",
-        "wording/0.9.0", "behaviour/0.15.0")}
+        f"{m}/{RELEASE}" for m in (
+            "foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour"))}
     assert "behaviour-runtime" not in SPEC.read_text()
 
 
@@ -186,7 +187,7 @@ def test_c6_06_exclusion_of_an_obligation_by_another_party() -> None:
     ("ex:facility-v2 a ins:Instrument . ex:term-6-1 ins:boundIn ex:facility-v2 .", (), "/term-6-1", "law I2"),
     ("ex:term-6-1 ins:boundFrom tmpl:term-7-1 .", (), "/term-6-1", "law I2"),
     ("", ((EX["term-6-1"], INS.boundFrom, TMPL["term-6-1"]),), "/term-6-1", "law I2"),
-    ("ex:repay a fnd:Version .", (), "/repay", "never a version"),
+    ("ex:repay a fnd:Versioned .", (), "/repay", "never a version"),
     ("ex:repay ins:boundIn ex:facility-v1 .", (), "/repay", "carries no ins:boundIn"),
     ("ex:repay ins:obligor ex:Borrower .", ((EX.repay, INS.obligor, EX["borrower-occ"]),), "/repay", "laws I2, I13"),
     ("tmpl:repay ins:obligor ex:borrower-occ .", ((TMPL.repay, INS.obligor, EX.Borrower),), "/repay", "laws I2, I13"),
@@ -270,10 +271,8 @@ def test_c6_13_second_expression_conforms_except_to_the_optional_shape() -> None
 # ---- C6-14: literate source and release notes -------------------------------
 
 def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
-    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--shapes",
-                                  "shapes/structural.ttl", "shapes/constraints.ttl", "shapes/single-expression.ttl",
-                                  "--check"]) == 0
+    assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
     readme = (LAYER / "README.md").read_text()
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.8.0"
+    assert not (LAYER / "shapes" / ".version").exists()
     assert not (LAYER / "projection").exists()

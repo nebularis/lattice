@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-04: Interval containment and overlap law split
+# ADR-A04: Interval containment and overlap law split
 
-## Status
-
-Accepted
+**Status:** Accepted
 
 ## Context
 

@@ -184,7 +184,7 @@ than finding an actor. A `srf:PromotionContract` removes the hop:
 ```turtle-example
 ex:version-keys a srf:PromotionContract ;
     srf:contractKey "version-keys" ;
-    srf:carrier ex:Agreement ;                       # any fnd:Version class
+    srf:carrier ex:Agreement ;                       # any fnd:Versioned class
     srf:hasPathStep ex:step-0 , ex:step-1 ;
     srf:promotesTo fnd:externalKey ;                 # authored, locating
     srf:sourceFidelity srf:ExactSource ;

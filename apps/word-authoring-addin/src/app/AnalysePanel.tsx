@@ -1,43 +1,38 @@
-import type { Detection, SnapshotAccepted, ValidationResult } from "../domain/types";
-import type { JobView } from "../domain/types";
+import type { Detection, DocumentReport, ValidationResult } from "@lattice/authoring-domain";
+import type { JobStatus } from "../domain/poll";
 
 export interface AnalysePanelProps {
   canAnalyse: boolean;
   onAnalyse: () => void;
-  snapshotAccepted: SnapshotAccepted | null;
-  job: JobView | null;
+  jobStatus: JobStatus | null;
+  /** The studio's report on the document as last saved, null until a save has succeeded. */
+  report: DocumentReport | null;
   onAccept: (detection: Detection) => void;
 }
 
-function groupByElement<T extends { elementId: string | null }>(items: T[]): Map<string, T[]> {
-  const groups = new Map<string, T[]>();
+function groupByElement(items: ValidationResult[]): Map<string, ValidationResult[]> {
+  const groups = new Map<string, ValidationResult[]>();
   for (const item of items) {
     const key = item.elementId ?? "(document)";
-    const group = groups.get(key) ?? [];
-    group.push(item);
-    groups.set(key, group);
+    groups.set(key, [...(groups.get(key) ?? []), item]);
   }
   return groups;
 }
 
-/** The Analyse tab (plan WA9 "Panels"). */
-export function AnalysePanel({ canAnalyse, onAnalyse, snapshotAccepted, job, onAccept }: AnalysePanelProps): JSX.Element {
-  const validationGroups: Map<string, ValidationResult[]> = snapshotAccepted
-    ? groupByElement(snapshotAccepted.validation.results)
-    : new Map();
-
+/** The Analyse tab: saves the document to its workspace, runs the analyse job and lists the report. */
+export function AnalysePanel({ canAnalyse, onAnalyse, jobStatus, report, onAccept }: AnalysePanelProps): JSX.Element {
   return (
     <section aria-label="Analyse">
       <button type="button" disabled={!canAnalyse} onClick={onAnalyse}>
         Analyse
       </button>
 
-      {job && <p>Job: {job.status}</p>}
+      {jobStatus && <p>Job: {jobStatus}</p>}
 
-      {snapshotAccepted && (
+      {report && (
         <>
           <h2>Validation</h2>
-          {[...validationGroups.entries()].map(([elementId, results]) => (
+          {[...groupByElement(report.validation).entries()].map(([elementId, results]) => (
             <div key={elementId}>
               <h3>{elementId}</h3>
               <ul>
@@ -52,7 +47,7 @@ export function AnalysePanel({ canAnalyse, onAnalyse, snapshotAccepted, job, onA
 
           <h2>Template findings</h2>
           <ul>
-            {snapshotAccepted.templateFindings.map((finding, index) => (
+            {report.findings.map((finding, index) => (
               <li key={index}>
                 {finding.severity}: {finding.message}
               </li>
@@ -61,7 +56,7 @@ export function AnalysePanel({ canAnalyse, onAnalyse, snapshotAccepted, job, onA
 
           <h2>Detections</h2>
           <ul>
-            {snapshotAccepted.detections.map((detection, index) => (
+            {report.detections.map((detection, index) => (
               <li key={index}>
                 {detection.text} ({detection.kind})
                 {detection.suggestion.action !== "none" && (

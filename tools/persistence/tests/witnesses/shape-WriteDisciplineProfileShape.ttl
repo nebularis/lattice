@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A write discipline outside the closed enumeration of dal:WriteDiscipline.
+# base: write-discipline-delta-membership.ttl
+# remove: ex:QuoteWriteProfile dal:writeDiscipline dal:AppendVersions
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .
+
+ex:QuoteWriteProfile dal:writeDiscipline dal:Bogus .

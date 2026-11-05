@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-testing-jena"
+version = "0.1.0"
+description = "An in-memory Apache Jena ARQ engine for LATTICE's tests, checks and benchmarks, driven through platform/sparql-testkit (ADR-A125). Not a store SPI"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

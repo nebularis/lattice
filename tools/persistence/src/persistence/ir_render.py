@@ -9,9 +9,9 @@ a named rule (:data:`RULES`). The same walk derives the graphs and subjects the 
 writes (:func:`access_sets`), so a read or write set is never declared by hand and cannot drift from
 the query.
 
-The text carries the request-time variables as ``$name`` and the payload and registry slots as the
-Mustache tags ``{{{name}}}``, as the templates do. Predicates in the vocabulary namespaces are written
-with prefixes, so the output reads like the templates it replaces.
+The text carries the request-time variables as ``$name`` and the payload, registry and rows slots as the plain-text markers
+``{{{name}}}`` (H2.9-Q1), which :func:`fill_slots`, or any caller's own substitution, replaces with trusted text before the query is sent.
+No template engine is involved. Predicates in the vocabulary namespaces are written with prefixes.
 """
 
 from __future__ import annotations
@@ -26,11 +26,26 @@ from rdflib.namespace import XSD
 from .ir import (
     AccessMode, Binding, Bind, Compare, Const, Expr, Filter, Func, Graph, GraphBlock, GraphRole, Group, IrError, Kind,
     Not, NotExists, Op, Operation, Optional_, Param, ParameterGuard, ParamRef, Path, PayloadSlot, Projected, RdfType,
-    RegistrySlot,
+    PayloadRows, RegistrySlot, RowValues,
     SLOT_KINDS, Select, SubSelect, TermGuard, Triple, Union_, ValueGuard, Values, Var,
 )
 from .namespaces import PAT
 from .terms import Iri, Literal
+
+def slot_marker(name: str) -> str:
+    """The marker of the request-time slot ``name`` in rendered text, a plain string that a caller replaces (H2.9-Q1)."""
+    return "{{{" + name + "}}}"
+
+
+_SLOT_MARKER = re.compile(r"\{\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}\}")
+
+
+def fill_slots(text: str, values: dict) -> str:
+    """``text`` with the marker of each slot in ``values`` replaced by its value, which is trusted, already serialised SPARQL text.
+    One pass, so a value that holds a marker is not filled again, and a marker with no value is left as it is, which is a syntax error
+    in a query and fails closed."""
+    return _SLOT_MARKER.sub(lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), text)
+
 
 RULES: tuple[str, ...] = (
     "InvalidName",
@@ -45,6 +60,7 @@ RULES: tuple[str, ...] = (
     "MissingGraphRole",
     "DefaultGraphPattern",
     "NestedGraph",
+    "NotExistsWithoutGraph",
     "PathOutsideWhere",
     "UnsupportedInTemplate",
     "UntaggedTemplateVariable",
@@ -174,6 +190,7 @@ class _Checker:
         self.untagged: set[str] = set()
         self.clock_vars: set[str] = set()
         self.slot_uses: list[str] = []
+        self.payload_rows: dict[str, frozenset] = {}
         self.reads: set[Access] = set()
         self.writes: set[Access] = set()
         self.subselects: list[SubSelect] = []
@@ -194,6 +211,7 @@ class _Checker:
             raise IrError("InvalidForm", f"{op.id}: an operation is a SELECT or an update with an INSERT or DELETE template, not both and not neither")
         self._guard()
         self._find_clock_vars(op.where)
+        self._find_payload_rows(op.where)
         for block in op.delete:
             self._template(block, deleting=True)
         for block in op.insert:
@@ -273,9 +291,8 @@ class _Checker:
         for name, param in self.params.items():
             if name not in self.used_params:
                 raise IrError("UnusedParameter", f"{self.op.id}: parameter {name!r} is declared and never used")
-        payloads = [n for n in self.slot_uses if self.params[n].kind is Kind.PAYLOAD]
-        if len(payloads) > 1:
-            raise IrError("SlotMisuse", f"{self.op.id}: more than one payload slot")
+        # No limit on payload slots (H2.6d). A patch-log create writes its payload slot into the data graph and into its add graph, and a
+        # patch-log replace has a slot for each of its payload, add and del content.
 
     # ---- terms
 
@@ -357,9 +374,14 @@ class _Checker:
             scope.possible |= inner.definite - scope.definite | inner.possible
             return self._mentioned(el.group.elements)
         if isinstance(el, NotExists):
+            if graph is not None and not any(isinstance(e, GraphBlock) for e in el.group.elements):
+                # rdflib 7.6.0 can evaluate a body with no GRAPH of its own against the default graph, once the enclosing GRAPH block has
+                # yielded a solution (TSD-34). A body that names its graph does not depend on the enclosing context, on any store.
+                raise IrError("NotExistsWithoutGraph", f"{self.op.id}: a NOT EXISTS inside a GRAPH block must name its graph in its body (TSD-34)")
             inner = scope.inner(copy=True)
             self.absence += 1
-            self._group(el.group.elements, inner, graph)
+            # the body names its graph, so it is checked outside the enclosing block (a GRAPH inside a GRAPH is not a nested block here)
+            self._group(el.group.elements, inner, None)
             self.absence -= 1
             return self._mentioned(el.group.elements)
         if isinstance(el, Filter):
@@ -378,6 +400,28 @@ class _Checker:
             else:
                 scope.possible.add(el.var.name)
             return names | {el.var.name}
+        if isinstance(el, RowValues):
+            if not el.vars or not all(isinstance(v, Var) for v in el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: VALUES rows need one or more Vars")
+            for v in el.vars:
+                self._var(v)
+            if len({v.name for v in el.vars}) != len(el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: VALUES rows name a variable twice")
+            self._slot(el.slot.param, Kind.ROWS)
+            scope.definite |= {v.name for v in el.vars}
+            return {v.name for v in el.vars}
+        if isinstance(el, PayloadRows):
+            if len(el.vars) != 3 or not all(isinstance(v, Var) for v in el.vars):
+                raise IrError("InvalidName", f"{self.op.id}: payload rows need exactly three Vars, a subject, a predicate and an object")
+            for v in el.vars:
+                self._var(v)
+            names = {v.name for v in el.vars}
+            if len(names) != 3:
+                raise IrError("InvalidName", f"{self.op.id}: payload rows name a variable twice")
+            self._slot(el.param, Kind.PAYLOAD)
+            self.payload_rows[el.param] = frozenset(names)
+            scope.definite |= names
+            return names
         if isinstance(el, Values):
             if not isinstance(el.var, Var):
                 raise IrError("InvalidName", f"{self.op.id}: VALUES needs a Var")
@@ -475,6 +519,8 @@ class _Checker:
                 names.add(el.var.name)
             elif isinstance(el, Values):
                 names.add(el.var.name)
+            elif isinstance(el, (RowValues, PayloadRows)):
+                names |= {v.name for v in el.vars}
         return names
 
     def _slot(self, name: str, kind: Kind) -> None:
@@ -523,12 +569,18 @@ class _Checker:
                 for part in (el.subject, el.predicate, el.object):
                     if isinstance(part, Var):
                         self._tag(part)
-                target.add(self._access(block.graph, el, AccessMode.DELETE.value if deleting else AccessMode.INSERT.value))
+                mode = AccessMode.DELETE.value if deleting else AccessMode.INSERT.value
+                row_vars = frozenset(p.name for p in (el.subject, el.predicate, el.object) if isinstance(p, Var))
+                if not deleting and len(row_vars) == 3 and row_vars in self.payload_rows.values():
+                    # the triple of a payload's row variables writes the payload, as a payload slot does (H2.12)
+                    target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
+                else:
+                    target.add(self._access(block.graph, el, mode))
             elif isinstance(el, PayloadSlot):
-                if deleting:
-                    raise IrError("SlotMisuse", f"{self.op.id}: a payload slot is for an INSERT template, not a DELETE template")
+                # a slot in a DELETE template removes the caller's triples, which the delta replace does (persistence-delta-replace DR1)
                 self._slot(el.param, Kind.PAYLOAD)
-                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, AccessMode.INSERT.value))
+                mode = AccessMode.DELETE.value if deleting else AccessMode.INSERT.value
+                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
             else:
                 raise IrError("UnsupportedInTemplate", f"{self.op.id}: a template holds triples and a payload slot only, got {el!r}")
 
@@ -556,6 +608,26 @@ class _Checker:
                     raise IrError("OptionalTagOnBoundVariable", f"{self.op.id}: ?{name} is tagged OptionalAllowed and WHERE always binds it")
                 if name not in scope.possible:
                     raise IrError("UnboundTemplateVariable", f"{self.op.id}: ?{name} is tagged OptionalAllowed and WHERE never binds it")
+
+    def _find_payload_rows(self, group: Group) -> None:
+        """The row variables of each payload carried as rows, found before the templates are checked, so that the template triple
+        made of them is recorded as the payload's access (H2.12). The WHERE walk checks each element again."""
+
+        def walk(elements) -> None:
+            for el in elements:
+                if isinstance(el, PayloadRows) and len(el.vars) == 3 and all(isinstance(v, Var) for v in el.vars):
+                    self.payload_rows[el.param] = frozenset(v.name for v in el.vars)
+                elif isinstance(el, GraphBlock):
+                    walk(el.elements)
+                elif isinstance(el, (Optional_, NotExists)):
+                    walk(el.group.elements)
+                elif isinstance(el, Group):
+                    walk(el.elements)
+                elif isinstance(el, Union_):
+                    for g in el.groups:
+                        walk(g.elements)
+
+        walk(group.elements)
 
     # ---- expressions
 
@@ -932,7 +1004,7 @@ class _Out:
         if isinstance(el, GraphBlock):
             return self.graph_block(el)
         if isinstance(el, PayloadSlot):
-            return ["{{{" + el.param + "}}}"]
+            return [slot_marker(el.param)]
         if isinstance(el, Optional_):
             return self.braced("OPTIONAL", self.statements(el.group.elements))
         if isinstance(el, NotExists):
@@ -943,13 +1015,19 @@ class _Out:
             return [f"BIND({self.expr(el.expr)} AS ?{el.var.name})"]
         if isinstance(el, Values):
             items = " ".join(
-                ("{{{" + i.param + "}}}") if isinstance(i, RegistrySlot) else self.term(i) for i in el.items
+                slot_marker(i.param) if isinstance(i, RegistrySlot) else self.term(i) for i in el.items
             )
             return [f"VALUES ?{el.var.name} {{ {items} }}"]
         if isinstance(el, SubSelect):
             block = self.braced("", self.select_lines(el.select, self.statements(el.where.elements)))
             block[0] = block[0].lstrip()
             return block
+        if isinstance(el, RowValues):
+            names = " ".join(f"?{v.name}" for v in el.vars)
+            return ["VALUES (" + names + ") { " + slot_marker(el.slot.param) + " }"]
+        if isinstance(el, PayloadRows):
+            names = " ".join(f"?{v.name}" for v in el.vars)
+            return ["VALUES (" + names + ") { " + slot_marker(el.param) + " }"]
         if isinstance(el, Union_):
             out: list[str] = []
             for i, g in enumerate(el.groups):
@@ -1057,4 +1135,4 @@ def _template_lines(out: _Out, keyword: str, blocks: Iterable[GraphBlock]) -> li
     return [f"{keyword} {{", *("  " + ln for ln in lines), "}"]
 
 
-__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render"]
+__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render", "slot_marker", "fill_slots"]

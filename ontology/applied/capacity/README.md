@@ -13,28 +13,25 @@ Models finite capacity that can be drawn upon. Example uses include a loan facil
 
 Capacity models networks of such resources, atop [`behaviour`](../../behaviour/) allowances and [`quantification`](../../quantification/)'s handling of value spaces.
 
-**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates the dynamic resource from the instrument's static limit ([computable contract substrate](../../../docs/developer/sketches/computable-contract-substrate.md)
-§7.8). A threshold regime's state is then derived from the resource's value.
+**Static and dynamic.** An instrument states a limit, a static parameter. The running total drawn against it is dynamic, and lives here: a projection that Capacity defines, through Surface, creates the dynamic resource from the instrument's static limit ([ADR-A-CAP1](../../../docs/architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile.md)). A threshold regime's state is then derived from the resource's value.
 
-The design, its principles, and laws, are located in [`docs/architecture-overview.md`](docs/architecture-overview.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
+The design, its principles, and laws, are located in [the capacity domain analysis and design](../../../docs/architecture/capacity-domain-analysis-and-design.md), with runtime performance constraints documented in [`docs/perf.md`](docs/perf.md).
+
+**Status.** Withdrawn from release on 2026-10-28 and pre-release until its source ontology exists and its two non-insurance examples pass (its own acceptance condition). The tags at 0.17.0 stand as history, and nothing should pin them. The old file names, with their version suffix, are gone as of 0.18.0.
 
 ## 2. What is authored
 
 | Part | Namespace | File | State |
 |---|---|---|---|
 | source ontology: arrangements, resources, demands, draws, dependencies, rules | `cap:` | `spec/capacity.ttl` | **designed, not authored** (architecture overview §"Proposed applied ontology") |
-| runtime execution profile | `capx:` | [`spec/applied_capacity_execution_spec_capx_Version2.ttl`](spec/applied_capacity_execution_spec_capx_Version2.ttl) | authored, `0.10.0` |
+| runtime execution profile | `capx:` | [`spec/capacity-execution.ttl`](spec/capacity-execution.ttl) | authored, `0.19.0` |
 
 The execution profile's `capx:projectsFrom…` properties range over `cap:` classes that no document
 declares yet. They resolve when the source ontology is authored.
 
 ## 3. The execution profile (`capx:`)
 
-A compact, normalised view of a capacity arrangement for transaction-time evaluation
-([ADR-A-CAP1](../../../docs/architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile_Version2.md),
-Proposed). The source graph stays the source of truth. The profile is materialised from it by a
-deterministic projection, so an evaluator reads scalar values with bounded-hop lookups instead of
-traversing the generic graph.
+A compact, normalised view of a capacity arrangement for transaction-time evaluation ([ADR-A-CAP1](../../../docs/architecture/decisions/ADR-A-CAP1-capacity-runtime-projection-profile.md), Proposed). The source graph stays the source of truth. The profile is materialised from it by a deterministic projection, so an evaluator reads scalar values with bounded-hop lookups instead of traversing the generic graph.
 
 **Imports:** Foundation, Quantification, Eligibility and Behaviour's runtime document (which imports
 Behaviour's configuration). It does not import Instrument.
@@ -65,10 +62,7 @@ behaviour configuration
             └── applied/capacity execution profile (capx)
 ```
 
-Capacity sits above Behaviour and below any domain that uses it. A construct moves from Capacity into
-Behaviour only when the promotion criteria of
-[ADR-A-CAP2](../../../docs/architecture/decisions/ADR-A-CAP2-capacity-to-behaviour-promotion-criteria_Version2.md)
-(Proposed) are met (principle CP-9).
+Capacity sits above Behaviour and below any domain that uses it. A construct moves from Capacity into Behaviour only when the promotion criteria of [ADR-A-CAP2](../../../docs/architecture/decisions/ADR-A-CAP2-capacity-to-behaviour-promotion-criteria.md) (Proposed) are met (principle CP-9).
 
 The architecture overview predates ADR-A106 in two respects. Its proposed import list names
 Instrument, which an applied module may still import, since Instrument is a layer below it. Its
@@ -78,6 +72,11 @@ list of substrate layers puts Instrument below Behaviour, the order before ADR-A
 
 Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- **0.19.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
+- **0.18.0**.
+  - changes meaning ([ADR-A141](../../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - no effect. The execution profile's document is `spec/capacity-execution.ttl`, renamed from a name that carried a `_Version2` suffix, and `spec/capacity.ttl` stays reserved for the source ontology. The module is not in the release register.
 - 0.8.0 (breaking): the execution profile imports `behaviour-runtime` 0.8.0 in place of `behaviour`
   0.7.0. Its import closure no longer includes Instrument, so a consumer that reached Instrument's
   terms through it must import Instrument directly. ADR-A106.
@@ -88,8 +87,20 @@ Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/d
 - 0.13.0 (breaking): re-pinned to `behaviour-runtime` 0.13.0 and Eligibility 0.10.0, which follow
   Party 0.8.0's renamed shares and composition rules, with no other change (CCS C7c).
 - 0.13.1: re-pinned to `behaviour-runtime` 0.13.1, with no other change (ADR-A120).
+- 0.17.0: re-pinned to the substrate release 0.19.0, with no other change.
 - 0.14.0 (breaking): re-pinned to `behaviour-runtime` 0.14.0, whose records are narrowed to the
   evaluator's findings and whose acceptance record is deprecated (CCS C9b1), and to Quantification
   0.8.0 (CCS C9b2), with no other change.
 - 0.15.0 (breaking): re-pinned to `behaviour-runtime` 0.15.0 and Eligibility 0.12.0, whose set
   readings decide on completeness only under a closure (ADR-A105), with no other change (CCS HQ-6a.1).
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../../repository-catalogue.md)
+([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "applied"
+roles = ["docs", "spec"]
+```

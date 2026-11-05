@@ -4,6 +4,37 @@
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
+fnd:TemporalScopeShape a sh:NodeShape ;
+    sh:targetClass fnd:TemporalScope ;
+    sh:targetObjectsOf fnd:hasTemporalScope ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validFrom is one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validTo ; sh:maxCount 1 ; sh:datatype xsd:dateTime ; sh:pattern "(Z|[+-][0-9]{2}:[0-9]{2})$" ;
+        sh:message "validTo is at most one xsd:dateTime with a timezone."
+    ] ;
+    sh:property [
+        sh:path fnd:validFrom ; sh:lessThanOrEquals fnd:validTo ;
+        sh:message "A validity period is half-open: validFrom is not after validTo. Equal ends make an empty period, a state entered and left at one instant."
+    ] ;
+    sh:property [
+        sh:path fnd:estimatedStart ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+        sh:message "estimatedStart is at most one boolean."
+    ] .
+
+fnd:SupersessionAcyclicShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:supersededBy ;
+    sh:sparql [
+        sh:message "{$this} supersedes itself through a chain of fnd:supersededBy, so the chain has no latest version." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this <https://www.nebularis.org/neuro-semantic/lattice/foundation#supersededBy>+ $this .
+            }
+        """
+    ] .
+
 fnd:KeyShape a sh:NodeShape ;
     sh:targetClass fnd:Key ;
     sh:targetSubjectsOf fnd:keyValue , fnd:keyScheme ;
@@ -114,6 +145,22 @@ fnd:MergedNaturalKeyShape a sh:NodeShape ;
                 ?other fnd:naturalKey ?key ;
                        rdf:type/rdfs:subClassOf* fnd:MergedOnNaturalKey .
                 FILTER (?other != $this)
+            }
+        """
+    ] .
+
+fnd:MeaningBearingEdgeShape a sh:NodeShape ;
+    sh:targetSubjectsOf fnd:hasIdentity ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        sh:message "{$this} is versioned and its meaning-bearing edge {?p} leads to {?o}, which is neither versioned, minted under it nor a published term, so editing {?o} changes what a past version of {$this} meant." ;
+        sh:select """
+            SELECT $this ?p ?o WHERE {
+                $this ?p ?o .
+                ?p <https://www.nebularis.org/neuro-semantic/lattice/foundation#meaningBearing> true .
+                FILTER NOT EXISTS { ?o <https://www.nebularis.org/neuro-semantic/lattice/foundation#hasIdentity> ?identity }
+                FILTER NOT EXISTS { ?o <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?ontology }
+                FILTER (!STRSTARTS(STR(?o), STR($this)))
             }
         """
     ] .

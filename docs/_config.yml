@@ -1,6 +1,101 @@
-# Every page here (index.html, book.html, theory.md, ...) is hand-styled —
-# none of them use a Jekyll theme. Without this, the github-pages gem
-# silently defaults to `theme: jekyll-theme-primer`, which pulls in that
-# theme's own assets/css/style.scss and fails to compile locally under the
-# bundled (EOL) Ruby Sass gem with an encoding error.
+# Every page here (index.html, book.html, theory.md, ...) is hand-styled, and none uses a Jekyll theme. Stated so
+# that no toolchain, local or GitHub Pages, falls back to a default theme whose assets the site does not carry.
 theme: null
+
+
+# ADR-A127 decision 5 (OD-D37): an architecture decision is on the site only once the maintainer has published
+# it. The decisions directory is excluded, and each published decision is included by name. Jekyll's own
+# default exclusions are restated, since setting `exclude` replaces them.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle
+  - .jekyll-cache
+  - architecture/decisions/ADR-*
+# OD-D30, OD-D31, TD-53: the site publishes its declared sections only (repository-catalogue.md, "Site"). Working
+# documents and every directory no section uses are excluded. A section page that shows a file with
+# include_relative reads it from disk, so the file is excluded here and appears only inside that page.
+  - developer
+  - diagrams
+  - operator
+  - operational-guidance.md
+  - security
+  - traceability
+# The decisions directory's index lists every ADR, published or not. The decisions section's page is
+# architecture/published-architecture-decisions.md, which lists published decisions only.
+  - architecture/decisions/README.md
+# Data the repository topology check reads, not a page.
+  - architecture/repository-topology-migration.json
+# BEGIN GENERATED published-decisions. Written by `mise run build:published-decisions`. Do not edit by hand.
+include:
+  - ADR-A03-condition-taxonomy.md
+  - ADR-A05-compatibility-vocabulary.md
+  - ADR-A06-wildcard-semantics.md
+  - ADR-A100-hierarchical-match-over-flat-schemes.md
+  - ADR-A103-eligibility-set-readings.md
+  - ADR-A105-closure-declarations.md
+  - ADR-A114-external-and-natural-keys.md
+  - ADR-A121-repository-catalogue.md
+  - ADR-A122-aggregate-ownership.md
+  - ADR-A123-typed-operation-ir.md
+  - ADR-A126-literate-specification-layout-and-grammar.md
+  - ADR-A129-one-release-for-the-substrate.md
+  - ADR-A131-ledger-layer.md
+  - ADR-A132-persistence-caller-library.md
+  - ADR-A141-versioned-mixin-rename.md
+  - ADR-A142-meaning-bearing-edges.md
+  - ADR-A143-one-canonicalisation.md
+  - ADR-A145-set-comparisons-and-aggregate-bindings.md
+  - ADR-A146-published-terms-versioned-by-release.md
+  - ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md
+  - ADR-A79-persistence-compiler-toolchain.md
+  - ADR-A80-housekeeping-component-boundary.md
+  - ADR-A85-vocabulary-scoped-temporal-binding-resolution.md
+  - ADR-A87-eligibility-concept-inclusion-and-exclusion.md
+  - ADR-A90-eligibility-design-time-owl-class-backend.md
+  - ADR-A91-eligibility-candidate-evidence-binding.md
+# END GENERATED published-decisions
+# BEGIN GENERATED site-sections. Written by `mise run build:site-sections`. Do not edit by hand.
+defaults:
+  - scope:
+      path: "tutorial.md"
+    values:
+      layout: tutorial
+      title: "Tutorial"
+  - scope:
+      path: "theory.md"
+    values:
+      layout: theory
+      title: "Theoretical Foundations"
+  - scope:
+      path: "layer-specifications.md"
+    values:
+      layout: architecture
+      title: "Layer specifications"
+  - scope:
+      path: "architecture/index.md"
+    values:
+      layout: architecture
+      title: "Architecture"
+  - scope:
+      path: "architecture/published-architecture-decisions.md"
+    values:
+      layout: architecture
+      title: "Published architecture decisions"
+  - scope:
+      path: "operations.md"
+    values:
+      layout: architecture
+      title: "Operations"
+  - scope:
+      path: "glossary.md"
+    values:
+      layout: architecture
+      title: "Glossary"
+  - scope:
+      path: "contribute.md"
+    values:
+      layout: architecture
+      title: "Contributing"
+# END GENERATED site-sections

@@ -14,7 +14,7 @@ The persistence compiler generates SPARQL updates, and until track H nothing exe
 questions needed a running engine.
 
 1. What does a composite-boundary replace leave behind when the shape reaches more than one other
-   node ([FMH-H1.4a](../../docs/developer/validation/FMH-H1-4a.md)), and does it sweep exactly the
+   node ([FMH-1.4a](../../docs/developer/validation/FMH-1.4a.md)), and does it sweep exactly the
    aggregate now that it follows every owned edge ([FMH-HO5](../../docs/developer/validation/FMH-HO5.md))?
 2. What does the append update do when the caller leaves out a `$parameter`
    ([plan §13.4](../../docs/developer/plans/formal-methods-track-h.md), TD-34)?

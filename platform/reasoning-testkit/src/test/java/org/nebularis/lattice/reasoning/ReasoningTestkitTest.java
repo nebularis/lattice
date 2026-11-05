@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.StringReader;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,5 +84,56 @@ class ReasoningTestkitTest {
             System.setOut(original);
         }
         assertEquals("{\"result\": true}", out.toString().trim());
+    }
+
+    private String served(ReasoningTestkit.ReasonerCache cache, String... requests) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ReasoningTestkit.serve(new BufferedReader(new StringReader(String.join("\n", requests) + "\n")), new PrintStream(out), cache);
+        return out.toString().trim();
+    }
+
+    @Test
+    void serveAnswersEachLineAndSurvivesAFailure() throws Exception {
+        Path tbox = write("tbox.ttl", TBOX);
+        String answers = served(new ReasoningTestkit.ReasonerCache(2),
+                "satisfiable\t" + EX + "Engineer\t" + tbox,
+                "satisfiable\t" + EX + "Impossible\t" + tbox,
+                "nonsense\t" + tbox,
+                "subsumes\t" + EX + "Engineer\t" + EX + "Staff\t" + tbox,
+                "consistent\t" + dir.resolve("missing.ttl"));
+        String[] lines = answers.split("\n");
+        assertEquals(5, lines.length);
+        assertEquals("{\"result\": true}", lines[0]);
+        assertEquals("{\"result\": false}", lines[1]);
+        assertTrue(lines[2].startsWith("{\"error\": \"IllegalArgumentException: unknown command nonsense"), lines[2]);
+        assertEquals("{\"result\": true}", lines[3]);
+        assertTrue(lines[4].startsWith("{\"error\": "), lines[4]);
+    }
+
+    @Test
+    void serveKeepsOneReasonerPerDistinctClosureAndDropsTheOldest() throws Exception {
+        Path tbox = write("tbox.ttl", TBOX);
+        Path other = write("other.ttl", TBOX + "ex:Extra a owl:Class .\n");
+        Path third = write("third.ttl", TBOX + "ex:More a owl:Class .\n");
+        ReasoningTestkit.ReasonerCache cache = new ReasoningTestkit.ReasonerCache(2);
+        served(cache, "consistent\t" + tbox, "consistent\t" + tbox, "consistent\t" + other);
+        assertEquals(2, cache.size());
+        served(cache, "consistent\t" + third);
+        assertEquals(2, cache.size());
+    }
+
+    @Test
+    void serveKeysAClosureByContentNotByName() throws Exception {
+        Path first = write("first.ttl", TBOX);
+        ReasoningTestkit.ReasonerCache cache = new ReasoningTestkit.ReasonerCache(4);
+        served(cache, "consistent\t" + first);
+        Files.writeString(first, TBOX + "ex:Changed a owl:Class .\n");
+        served(cache, "consistent\t" + first);
+        assertEquals(2, cache.size());
+    }
+
+    @Test
+    void jsonStringEscapesWhatAMessageCanHold() {
+        assertEquals("\"a\\\"b\\\\c\\nd\\u0001\"", ReasoningTestkit.jsonString("a\"b\\c\nd\u0001"));
     }
 }

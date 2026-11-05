@@ -58,7 +58,7 @@ ins:LegalRelationShape a sh:NodeShape ;
 		sh:path ins:activity ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
 		sh:message "A relation has at most one activity, a concept."
 	] ;
-	sh:not [ sh:class fnd:Version ] ;
+	sh:not [ sh:class fnd:Versioned ] ;
 	sh:message "A relation is never a version: it changes only with its owner (law I18)." .
 
 ins:RelationTierShape a sh:NodeShape ;

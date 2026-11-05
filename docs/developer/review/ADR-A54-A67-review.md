@@ -432,7 +432,7 @@ It also resolves a hidden problem in rule 4: "replay supplies both [times]". If 
 | Deletion / erasure | Rule 1 (no PII in IRIs) | drop dataset | "prior versions remain queryable" | policy with audit and tombstones | Erasure clause in A67 |
 | `NOW()` | — | — | "engine pins at commit" | audit-only | Consistent once A67-1 is fixed |
 | Infrastructure graphs | — | missing | — | seven kinds | Add to grammar (A54-2) |
-| Time vocabulary | `fnd:Version` | — | `lattice:transactionTime` | `pat:recordedAt` / `fnd:recordedAt` | One property |
+| Time vocabulary | `fnd:Versioned` | — | `lattice:transactionTime` | `pat:recordedAt` / `fnd:recordedAt` | One property |
 
 **Positive interaction:** dataset-per-tenant plus the guide's dataset-level epoch gives per-tenant epochs. Restoring one tenant invalidates only that tenant's ETags and consumer positions. That is a real operational advantage and worth stating in A54.
 

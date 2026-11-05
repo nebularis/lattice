@@ -2,7 +2,7 @@
 
 # ADR-A125: Test-support tooling under `tools/testing/`
 
-**Status:** Accepted, 2026-10-12
+**Status:** Accepted, 2026-10-12, with addenda accepted 2026-10-21 and 2026-10-27
 **Date:** 2026-10-12
 **Supersedes:** none
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md),
@@ -10,6 +10,7 @@
 [ADR-A124](ADR-A124-benchmark-root.md),
 [Track H plan §4.2](../../developer/plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12)
 (H2.4-Q2, which raised it)
+**Unit:** [`formal-methods`](../../developer/plans/formal-methods.md) (epic), track H
 
 ## Context
 
@@ -49,3 +50,33 @@ reads back quads. It is used by tests and by benchmarks, and by nothing else. No
   imports from `tools/testing/` is a small addition, and until it exists the rule is kept by review.
 - A dependency of a test-support package is a test dependency of the suites that use it, recorded in the lock file like any
   other.
+
+## Addendum, 2026-10-21: Oxigraph is the default engine, conformance runs before a merge, and mem_check (accepted 2026-10-21)
+
+**Narrows decision 4.** Decided and accepted by the maintainer on 2026-10-21, as the later decision that decision 4 allows.
+
+1. **The persistence tests run their generated SPARQL on Oxigraph by default.** `check:persistence` needs
+   `tools/testing/oxigraph` and runs each engine test once, on Oxigraph. rdflib stays the library the compiler and pySHACL are
+   built on. Only the store that executes generated SPARQL in a behaviour test changes. Measured serially before the change, the
+   engine tests took 8.8 s on Oxigraph and 39.8 s on rdflib, at peaks of 347 MB and 403 MB.
+2. **Conformance is a run of its own.** A test whose subject is one engine's behaviour, not the generated SPARQL, is a conformance
+   test, for example a sweep over sixteen hash seeds on rdflib or a probe of a recorded store behaviour. It is marked so the default
+   run leaves it out. `check:persistence-conformance` runs the engine tests on every engine we have, with the conformance tests, on
+   demand and before a merge into `main`. It is not part of `check`, as the benchmarks of ADR-A124 are not. Each engine added later,
+   for example Jena, GraphDB or RDFox, joins this run and adds nothing to `check`.
+3. **`tools/testing/mem_check` says how much memory is available and how many workers fit in it.** A suite that runs in parallel
+   gives its own measured peak per worker. It runs as many workers as fit in what is available less a reserve, up to the count it
+   would use anyway and never fewer than two. `PYTEST_XDIST_AUTO_NUM_WORKERS` overrides it. It uses only the standard library, on macOS,
+   Linux and Windows, so it adds no dependency.
+
+Decision 4's last sentence is amended: the default `check` needs `tools/testing/oxigraph` and `tools/testing/mem_check` for the
+persistence tests. `mise run bootstrap` installs both, and a check task that finds one missing stops and names the task that installs
+it, instead of installing it on every run or skipping its cases. Applying the same split to the other suites is a slice of its own, ordered by their expected memory use.
+
+## Addendum, 2026-10-27: Jena joins the conformance runs
+
+Proposed by us and accepted by the maintainer 2026-10-27.
+
+1. **A second engine kit.** Apache Jena ARQ, the third engine the 2026-10-21 addendum foresaw, runs as `platform/sparql-testkit`, a Maven module serving an in-memory dataset over standard input and output, as `platform/reasoning-testkit` serves its reasoners (ADR-A83). `tools/testing/jena` drives it from Python with the methods of `tools/testing/oxigraph`. It needs no JVM bridge, so ADR-A83's isolation holds, and `check:reasoning-isolation` refuses a dependency on any test kit outside `test` scope.
+2. **Engine probes have a package of their own.** `tools/testing/sparql_probes` holds probes of how engines behave that are about no one tool, with the expected result per engine, run on rdflib, Oxigraph and Jena by `check:sparql-probes-conformance`.
+3. **One command for every engine.** `check:conformance` runs every conformance task in turn before a merge into `main`. No `check` default changes, and Jena adds nothing to `check`, as decision 2 of the 2026-10-21 addendum says.

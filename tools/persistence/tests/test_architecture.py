@@ -30,19 +30,19 @@ def _imported_names(tree: ast.AST) -> set[str]:
     return names
 
 
-def test_only_render_module_imports_chevron():
-    """ADR-A79 point 4: the trust boundary is the encoder. Only
-    persistence.render may import chevron; every other module, in
-    particular the resolver and the encoders themselves, must go through
-    render()'s type-enforced wrapper, never call chevron directly."""
+def test_no_module_imports_chevron():
+    """H2.9: the Mustache templates and the renderer are gone, so no module of the package may bring a template engine back. The
+    trust boundary of ADR-A79 point 4 is the encoder and the typed builders (persistence.ir)."""
     offenders = []
     for path in SRC.glob("*.py"):
-        if path.stem in ("render", "__init__"):
-            continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        if "chevron" in _imported_names(tree):
+        if {"chevron", "pystache"} & {name.split(".")[0] for name in _imported_names(tree)}:
             offenders.append(path.name)
-    assert offenders == [], f"only persistence.render may import chevron, found in: {offenders}"
+    assert offenders == [], f"a Mustache library is imported in: {offenders}"
+
+
+def test_the_package_ships_no_template_files():
+    assert not (SRC / "templates").exists() and not list(SRC.rglob("*.mustache"))
 
 
 def test_resolver_and_terms_do_not_call_wall_clock_functions():
@@ -62,28 +62,3 @@ def test_resolver_and_terms_do_not_call_wall_clock_functions():
                 if attr in ("now", "time", "utcnow"):
                     offenders.append(f"{name}.py: {attr}()")
     assert offenders == [], f"wall-clock call found in resolution-critical module(s): {offenders}"
-
-
-def test_chevron_render_is_never_called_with_a_dynamically_built_template_argument():
-    """A structural proxy for ADR-A79 point 4: the *template text* argument
-    to chevron.render must always come from load_template()'s file read,
-    never from an f-string, %-format, or .format() call that could smuggle
-    untrusted content into the template position itself (the context
-    argument's own safety is the encoders' job, checked in test_terms.py's
-    injection corpus; this test is about the template argument specifically,
-    the one thing that must always be Lattice-authored, reviewed source)."""
-    tree = ast.parse(_module_source("render"), filename="render.py")
-    offending_first_args = []
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "render"
-            and getattr(node.func.value, "id", None) == "chevron"
-        ):
-            if node.args and isinstance(node.args[0], (ast.JoinedStr, ast.BinOp)):
-                offending_first_args.append(node.lineno)
-    assert offending_first_args == [], (
-        f"chevron.render called with a dynamically-assembled template argument at line(s) "
-        f"{offending_first_args}; the template text must always come from load_template()"
-    )

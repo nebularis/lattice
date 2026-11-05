@@ -7,6 +7,7 @@ KINDS = frozenset({
     "UnsupportedRecipeFormat", "RecipeDigestMismatch", "RuntimeUnicodeTooOld",
     "MissingKeyComponent", "UnassignedCodePoint", "EmptyKeyComponent", "MissingSecret",
     "PatternMismatch", "PositionOutOfRange", "CanonicalizerNotDeclared",
+    "DotSegment", "EmptyScope", "UnsafeSurrogate", "PositionWidthOverflow",
 })
 
 

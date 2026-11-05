@@ -6,6 +6,7 @@
 **Date:** 2026-09-23
 **Supersedes:** [ADR-A51](ADR-A51-iri-and-identity-policy.md)
 **Related:** [IRI and Identity Patterns](../iri-identity-patterns.md), [RDF & SPARQL Patterns Guide](../rdf-sparql-patterns-guide.md), ADR-A54, ADR-A63, ADR-A68, ADR-A78
+**Unit:** [`phase-0`](../../developer/plans/phase-0-plan.md) (plan)
 **Drafted:** following our architectural direction. Pending ratification, see [phase-0-status.md](../../developer/status/phase-0-status.md).
 **Amended:** 2026-09-23, point 5, before ratification (see "Amendment", below).
 

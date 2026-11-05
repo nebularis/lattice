@@ -4,7 +4,7 @@
 # No gaps. Target A has receipts 1 to 3 across the pinned graph and a bucket.
 # Target B has a retention low-water mark of 2, so receipt 1 is legitimately
 # pruned and receipts 2 and 3 are the whole range.
-@prefix pat: <https://example.org/lattice/patterns#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
 
 <urn:g:meta/47> {
   <urn:t:A> a pat:VersionRow ; pat:seq 3 .

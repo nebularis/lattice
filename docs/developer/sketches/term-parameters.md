@@ -134,7 +134,7 @@ space, and a shape never needs a "currency present if amount present" rule.
 ### 4.3 Term relations
 
 ```
-ctr:TermRelation ⊑ fnd:Version ⊓ =1 ctr:relationSource ⊓ =1 ctr:relationTarget ⊓ =1 ctr:relationKind
+ctr:TermRelation ⊑ fnd:Versioned ⊓ =1 ctr:relationSource ⊓ =1 ctr:relationTarget ⊓ =1 ctr:relationKind
 ```
 
 Kinds: erosion, defence erosion, aggregation, aggregate deductible feed, attachment, drop-down,

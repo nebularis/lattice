@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A digest contract with an algorithm other than SHA-256.
+# base: _base-contract.ttl
+# remove: ex:replace-digest dal:digestAlgorithm "SHA-256"
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:replace-digest dal:digestAlgorithm "MD5" .

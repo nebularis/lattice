@@ -215,6 +215,7 @@ def _count(ds, text: str, **bindings) -> int:
     return int(str(list(ds.query(text, initBindings=bindings))[0][0]))
 
 
+@pytest.mark.conformance
 @engines.each_engine
 def test_h2_5_t12_what_a_sub_select_sees_of_the_variables_around_it():
     """SPARQL 1.1 evaluates a sub-select on its own, so `?s` inside it is a different variable from the `?s` the `VALUES`

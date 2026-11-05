@@ -32,12 +32,12 @@ Every row is a slice-level deliverable already named in the epic; this table exi
 
 | Document | New or amended | Producing slice(s) |
 |---|---|---|
-| `docs/architecture/data-architecture.md` | Amended (§1–3, §5–7 rewritten for A74) | P0.1.1, closed out at P1.1.4 |
-| `docs/architecture/iri-identity-patterns.md` | New, supersedes `iri-policy.md` in scope | P0.1.3, reframed by ADR-A82 |
-| `docs/architecture/nfr.md` + `nfr.yaml` | New | P0.1.15 |
-| Threat model document (owner + control per S-1…S-12) | New — place under `docs/architecture/` alongside the other normative specs (no existing home named; confirm during P0.1.14, do not invent a new top-level `docs/` root) | P0.1.14 |
-| `docs/architecture/decisions/ADR-A44-*.md` | Amended, not replaced (virtual threads, minimal server, deadline propagation, role-profiled deployment) | P0.1.10 |
-| `docs/architecture/decisions/ADR-A50` through `ADR-A76` (per the epic's per-slice ADR list in P0.1) | New | P0.1.1–P0.1.13, P0.2.1 |
+| `docs/architecture/data-architecture.md` | Amended (§1–3, §5–7 rewritten for A74) | PLT-0.1.1, closed out at P1.1.4 |
+| `docs/architecture/iri-identity-patterns.md` | New, supersedes `iri-policy.md` in scope | PLT-0.1.3, reframed by ADR-A82 |
+| `docs/architecture/nfr.md` + `nfr.yaml` | New | PLT-0.1.15 |
+| Threat model document (owner + control per S-1…S-12) | New — place under `docs/architecture/` alongside the other normative specs (no existing home named, confirm during PLT-0.1.14, do not invent a new top-level `docs/` root) | PLT-0.1.14 |
+| `docs/architecture/decisions/ADR-A44-*.md` | Amended, not replaced (virtual threads, minimal server, deadline propagation, role-profiled deployment) | PLT-0.1.10 |
+| `docs/architecture/decisions/ADR-A50` through `ADR-A76` (per the epic's per-slice ADR list in P0.1) | New | PLT-0.1.1–PLT-0.1.13, P0.2.1 |
 | `docs/architecture/ontology-architecture.md` | Amended — new `platform/` layer entry, `fnd:GovernanceState` mapping table | P0.3.1, P0.3.3, P0.3.4 |
 | `ontology/platform/` literate spec | New (ontology subproject, not `docs/architecture`, but cross-referenced from it per the existing pattern for `ontology/persistence`) | P0.3.3 |
 
@@ -66,9 +66,9 @@ The SDS describes the system as it exists **before** Phase 0. Phase 0 is the pha
 | SDS section | Change | Triggering slice |
 |---|---|---|
 | §1 Technical Capability Catalogue | Add rows for graph-primary lifecycle capabilities that did not exist before (canonicalisation, store SPI conformance, coordination realm); mark superseded rows (e.g. "Immutable graph-family registration" via JDBC) as superseded once P1.2.2 lands, not in Phase 0 | P0.4–P0.6 add rows; supersession is Phase 1 |
-| §3 Data Architecture Summary | Rewritten to match `data-architecture.md`'s A74 rewrite — this table currently states PostgreSQL is system of record for lifecycle state; that becomes the graph once T-GPM (Phase 1) lands, but Phase 0's SPI and coordination-realm work already changes the "no component other than Control Plane/worker writes these stores" rule to "no component writes the RDF store except through `ScopedDataset`" (G1) | P0.5.1, cross-check at P0.1.1 |
+| §3 Data Architecture Summary | Rewritten to match `data-architecture.md`'s A74 rewrite — this table currently states PostgreSQL is system of record for lifecycle state, that becomes the graph once T-GPM (Phase 1) lands, but Phase 0's SPI and coordination-realm work already changes the "no component other than Control Plane/worker writes these stores" rule to "no component writes the RDF store except through `ScopedDataset`" (G1) | P0.5.1, cross-check at PLT-0.1.1 |
 | §4.1 Component Inventory | Add every new `platform/*` module from §4 of this plan, with its technology, deployment unit, and system-of-record columns | Each introducing slice, per §4 table above |
-| §4.2 Control Plane Runtime | ADR-A44 is **amended**, not replaced (role-profiled deployment, virtual threads already assumed) — update the section to state the amendment explicitly, do not leave the pre-role-profiled description standing | P0.1.10, P0.7.3 |
+| §4.2 Control Plane Runtime | ADR-A44 is **amended**, not replaced (role-profiled deployment, virtual threads already assumed) — update the section to state the amendment explicitly, do not leave the pre-role-profiled description standing | PLT-0.1.10, P0.7.3 |
 | §4.5 RabbitMQ Topology | Extended, not replaced: add the ordering-class declarations (A59), poison-message policy (block-partition-and-page for strict per-key families), and priority/pool separation for runtime vs maintenance families that P0.8 introduces beyond the existing family table | P0.8.2, P0.8.4 |
 | §5.1 Deployment Topology | Diagram gains the coordination realm (H2/Postgres) and role-profiled process boundaries once P0.7 lands; Compose reference stack gets the corrected `deployment/compose` path | P0.7.6 |
 | §7 Robustness Design | §7.1's framing ("one authoritative PostgreSQL instance, one authoritative Fuseki dataset") is exactly what A74 changes — restate once the coordination realm (P0.6) and the CAP posture ADR (A48, already in the SDS backlog as a candidate) are ratified together | P0.6.4, cross-check against existing ADR-A48 candidate in SDS §8 |

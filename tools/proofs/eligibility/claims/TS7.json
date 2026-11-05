@@ -1,0 +1,13 @@
+{
+  "subject": "TS7",
+  "statedAs": "SetComparison.disjoint_decide_is_intersects_negated",
+  "statementDigest": "sha256:c5882d99a4641a96760ef5201783e75960661bee27f823e611fc98b4874b9e6b",
+  "method": "Proof",
+  "scope": "EveryMatchPredicate",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

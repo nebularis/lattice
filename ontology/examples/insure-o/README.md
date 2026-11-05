@@ -18,14 +18,7 @@ The package exercises the shared substrate across:
 
 ## Explicit exclusions
 
-This package explicitly excludes:
-
-- Risk Capital Vehicles / Tower constructs
-- ContractTowerBinding and tower linkage mechanics
-- Claims-handling / CHO extension ideas
-- CAT modelling
-- Negotiation, procurement, and quotation workflows
-- Named source-product constructs or acronyms from the source estate
+This package excludes constructs the public substrate does not define.
 
 ## Namespace
 
@@ -39,7 +32,7 @@ The working namespace for this applied layer is:
 
 The package uses the minimal subclassing approach agreed in the plan:
 
-- Structural classes are light subclasses of `ins:Instrument`, `ins:Term`, `ins:Obligation` and `ins:Qualifier` (re-mapped 2026-10-10 from the terms Instrument 0.9.0 retired, TD-28)
+- Structural classes are light subclasses of `ins:Instrument`, `ins:Term`, `ins:Obligation` and `ins:Qualifier` (re-mapped 2026-10-10 from the terms Instrument 0.9.0 retired)
 - Party roles remain vocabulary individuals and `pty:RoleOccupancy` relationships
 - Eligibility conditions are authored as `elg:Condition` individuals rather than a bespoke applied admission class
 - Behaviour capacity resources are a small `ino:` family of classes layered on `bhv:AllowanceDefinition` and `bhv:EffectDefinition`
@@ -55,3 +48,14 @@ The package uses the minimal subclassing approach agreed in the plan:
 - `execution/` — shadow-compilation and operational profile examples
 - `cases/` — worked scenarios
 - `test/` — defect fixtures
+
+## Repository catalogue entry
+
+The module's entry in the [repository catalogue](../../../repository-catalogue.md)
+([ADR-A121](../../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "example"
+roles = ["cases", "execution", "projection", "shapes", "spec", "test", "vocab"]
+```

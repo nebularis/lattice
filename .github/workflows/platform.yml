@@ -40,7 +40,7 @@ jobs:
       - uses: jdx/mise-action@v2
       - run: mise run bootstrap:python-root bootstrap:vocabulary bootstrap:mork bootstrap:mork-compilers bootstrap:surface bootstrap:persistence bootstrap:reference-eligibility
       - name: Surface literate extraction (--check)
-        run: mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --shapes shapes/structural.ttl shapes/constraints.ttl --check
+        run: mise exec -- python tools/literate_extract.py ontology/surface/README.md --layer surface --root . --check
       - run: mise run check:python-root
       - run: mise run check:vocabulary
       - run: mise run check:persistence

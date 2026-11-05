@@ -17,12 +17,15 @@ mechanism prose, and no insurance vocabulary in substrate text (ADR-A-C1).
 | Item | Layer | Change | Sketch ref | Enables |
 |---|---|---|---|---|
 | S1 | Vocabulary | concept-level lifecycle: deprecation, replacement and split across editions (already a Vocabulary open item) | L-P1, PV-O3 | edition upgrades of Phase 2 without breaking recorded values |
-| S2 | Eligibility | `HierarchicalMatch` with a chosen traversal: all broader links, or one named sub-property of `skos:broader` | L-P2, PV-O4 | Author with CCS slice C9b3, which edits the same hierarchical-match code paths (NRS NQ-4, 2026-10-10. Previously with NRS N5, now CCS HQ-6). kind-only matching (Phase 2 and 3 checks) |
+| S2 | Eligibility | `HierarchicalMatch` with a chosen traversal: all broader links, or one named sub-property of `skos:broader` | L-P2, PV-O4 | Author with CCS slice CCS-9b.3, which edits the same hierarchical-match code paths (NRS NQ-4, 2026-10-10. Previously with NRS N5, now CCS HQ-6). kind-only matching (Phase 2 and 3 checks) |
 | S3 | Eligibility | moved into Phase 3 as AIR-3.2 and AIR-3.3 (ADR-A103, epic D12) | L-P3, AL-2 | checks across cause and characteristics (M2) |
 | S4 | Capacity first, then Quantification per promotion criteria | grouping occurrences into episodes by a window anchored on the first occurrence | L-P5 | hours clauses, event aggregates (5.7, 6.3) |
 | S5 | Surface | generated classes from collections and characteristic conjunctions, optional per E3 | L-P4 | design-time checks over bundles and write-back scopes |
 | S6 | guidance only | spatial pattern: GeoSPARQL alignment, zones as concepts, spatial joins as derived artefacts | L-P6, AL-1 | Phase 4 zones |
 | S7 | Foundation | resolution policy for conflicting evidenced assertions of one attribute | AL-3 | Author with [NRS](normative-rule-substrate.md) N10 (epic §3b). several assessments of one building (Phase 4) |
+| S8 | Persistence | a disclosure class beside the privacy class, read by every export (legal privilege) | claims sketch S-CL2 | claims plan AIR-6.10 |
+| S9 | Persistence | retention per class after an anchoring event, and legal hold overriding retention and erasure | claims sketch S-CL3 | claims plan AIR-6.10 |
+| S10 | Persistence | erasure deferred by a duty to retain, a new `dal:ErasurePrecedence` member | claims sketch S-CL4 | claims plan AIR-6.10 |
 
 ## S6 in detail
 

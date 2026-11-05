@@ -2,7 +2,9 @@
 
 # Phase 5 Validation Handoff
 
-**Status:** Accepted
+**Unit ID:** `phase-5-handoff`
+
+**Status:** merged 2026-09-20. Accepted
 **Governing ADRs:** [ADR-A22](../../architecture/decisions/ADR-A22-mork-governance-and-versioning-foundation-alignment.md), [ADR-A25](../../architecture/decisions/ADR-A25-llm-participation-and-deterministic-production-gate.md), [ADR-A42](../../architecture/decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md)
 
 Run `python -m pytest workers/tests/test_mork_review.py workers/tests/test_mork_review_lifecycle.py workers/tests/test_mork_analysis_worker.py`, then `yarn check`, `yarn build`, and `yarn test`. Apply `workers/sql/V2__mork_review_ledger.sql` to PostgreSQL. Validate that each of Confirm, Retarget, Reshape, Decline, Teach, and Defer has its defined effect, stale snapshots conflict, and Domain Stewards cannot receive MCN, lint diagnostics, pack internals, or cross-tenant evidence.

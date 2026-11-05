@@ -1,0 +1,140 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Lending, with a drawing in another value space than the account's
+# (ADR-A131 decision 3). A 20,000,000 sterling revolving facility is
+# drawn in euros, each drawing converted at the rate recorded for its date. A
+# repayment is credited the same way. A later revaluation, at a further
+# recorded rate, restates the sterling-equivalent of the euros still
+# outstanding, without a fresh drawing.
+#
+# | Position | Event       | EUR amount | Rate (date)        | GBP equivalent | Direction | Balance after |
+# |----------|-------------|-----------:|---------------------|---------------:|-----------|--------------:|
+# | 1        | draw        | 11,500,000 | 0.87 (2027-06-01)   |     10,005,000 | debit     |     9,995,000 |
+# | 2        | repayment   |  5,000,000 | 0.88 (2027-09-01)   |      4,400,000 | credit    |    14,395,000 |
+# | 3        | revaluation |  6,500,000 outstanding, at 0.90 (2027-12-31), against 5,605,000 already recorded | | debit (245,000) | 14,150,000 |
+#
+# The facility's own stated amount (20,000,000) never changes. Position 3's
+# debit is the difference between the outstanding euros revalued at the new
+# rate (6,500,000 x 0.90 = 5,850,000) and the sterling already recorded for
+# them net of the repayment (10,005,000 - 4,400,000 = 5,605,000): 245,000.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/revolving-facility/> .
+
+# ==== The owner, units and conversions ========================================
+
+ex:borrower a fnd:PersistentIdentity ; rdfs:comment "The borrower, owner of the facility account." .
+ex:Borrower a owl:Class ; rdfs:comment "The kind of owner this account admits." .
+
+ex:currencies a qnt:UnitFamily .
+ex:GBP a qnt:Unit ; rdfs:label "pound sterling" .
+ex:EUR a qnt:Unit ; rdfs:label "euro" .
+
+ex:money a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-revolving-facility-money" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-revolving-facility-money-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+                       qnt:unitFamily ex:currencies ; qnt:canonicalUnit ex:GBP ] ;
+    qnt:hasOperationCapability ex:money-sum , ex:money-difference .
+ex:money-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:money .
+ex:money-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:money .
+
+ex:eur-to-gbp a qnt:Conversion ; qnt:fromUnit ex:EUR ; qnt:toUnit ex:GBP ;
+    qnt:conversionKind qnt:Contextual ; qnt:conversionFunction ex:fx-spot .
+ex:fx-spot a qnt:ConversionFunction ; rdfs:label "spot exchange rate on the context's date" .
+
+# Rate observations. Quantification has no property for the observed rate yet
+# (open question, as additivity.ttl notes), so the example states it with its
+# own ex:rate.
+ex:fx-2027-06-01 a qnt:ConversionContext ;
+    ex:forConversion ex:eur-to-gbp ; ex:rate 0.87 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-06-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:supports ex:fx-2027-06-01 ; fnd:recordedAt "2027-06-01T09:00:00Z"^^xsd:dateTime ] .
+ex:fx-2027-09-01 a qnt:ConversionContext ;
+    ex:forConversion ex:eur-to-gbp ; ex:rate 0.88 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-09-01T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:supports ex:fx-2027-09-01 ; fnd:recordedAt "2027-09-01T09:00:00Z"^^xsd:dateTime ] .
+ex:fx-2027-12-31 a qnt:ConversionContext ;
+    ex:forConversion ex:eur-to-gbp ; ex:rate 0.90 ;
+    fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-12-31T00:00:00Z"^^xsd:dateTime ] ;
+    fnd:hasEvidence [ a fnd:Evidence ; fnd:supports ex:fx-2027-12-31 ; fnd:recordedAt "2027-12-31T17:00:00Z"^^xsd:dateTime ] .
+
+ex:q-commitment a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
+
+ex:facility a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-commitment ;
+    ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Borrower ;
+    ldg:mergeRule ldg:Refuse ;
+    ldg:conversionMethod ex:fx-2027-06-01 ;
+    rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in euros." .
+
+# ==== Position 1: a euro drawing, converted at the day's spot rate ============
+
+ex:draw-1-proposal rdfs:comment "A drawing of EUR 11,500,000." .
+ex:q-draw-1-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "11500000"^^xsd:decimal ; qnt:inUnit ex:EUR .
+ex:draw-1-grant a ldg:Grant ;
+    ldg:forProposal ex:draw-1-proposal ;
+    ldg:requestedValue "10005000"^^xsd:decimal ; ldg:grantedValue "10005000"^^xsd:decimal .
+ex:draw-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:draw-1-grant .
+ex:draw-1-posting a ldg:Posting ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
+    ldg:amountAsDrawn ex:q-draw-1-eur ; ldg:conversionUsed ex:fx-2027-06-01 ;
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant .
+ex:balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-1-posting .
+
+# ==== Position 2: a repayment, credited at that day's rate ====================
+
+ex:q-repayment-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "5000000"^^xsd:decimal ; qnt:inUnit ex:EUR .
+ex:repayment-posting a ldg:Posting ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "4400000"^^xsd:decimal ;
+    ldg:amountAsDrawn ex:q-repayment-eur ; ldg:conversionUsed ex:fx-2027-09-01 ;
+    prov:wasDerivedFrom ex:fx-2027-09-01 .
+ex:balance-2 a ldg:BalanceRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "14395000"^^xsd:decimal ; ldg:availableValue "14395000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:repayment-posting .
+
+# ==== Position 3: revaluation of the euros still outstanding ==================
+
+ex:q-outstanding-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "6500000"^^xsd:decimal ; qnt:inUnit ex:EUR .
+ex:revaluation-proposal
+    rdfs:comment "A mark to market of the euros still outstanding, not a fresh drawing." .
+ex:revaluation-grant a ldg:Grant ;
+    ldg:forProposal ex:revaluation-proposal ;
+    ldg:requestedValue "245000"^^xsd:decimal ; ldg:grantedValue "245000"^^xsd:decimal .
+ex:revaluation-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:revaluation-grant .
+ex:revaluation-posting a ldg:Posting ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "245000"^^xsd:decimal ;
+    ldg:amountAsDrawn ex:q-outstanding-eur ; ldg:conversionUsed ex:fx-2027-12-31 ;
+    prov:wasDerivedFrom ex:revaluation-merge , ex:revaluation-grant .
+ex:balance-3 a ldg:BalanceRecord ;
+    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
+    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "14150000"^^xsd:decimal ; ldg:availableValue "14150000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:revaluation-posting .

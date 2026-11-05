@@ -28,6 +28,6 @@ A graph "failing LATTICE" is meaningless without naming a level. Ingestion and m
 
 ## Consequences
 
-- Every test fixture used in validation states which level it targets (recorded in [../../validation-and-test-plan.md](../../validation-and-test-plan.md)).
+- Every test fixture used in validation states which level it targets.
 - An L0–L2 fixture failing an L5+ check is expected behaviour, not a defect.
 - Eligibility's operational profiles (E1–E6) and Behaviour's operational profiles (B-P1–B-P7), once authored in Gates 2 and 3, each state which conformance level they require and which they produce.

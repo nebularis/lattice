@@ -1,14 +1,16 @@
+---
+published: true
+---
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
 # ADR-A100: Hierarchical match over schemes without a hierarchy
 
-**Status:** Accepted
-
+**Status:** Published, 2026-10-19. Accepted 2026-09-26.
+**Described in:** [Eligibility README](../../../ontology/eligibility/README.md)
 **Date:** 2026-09-26 (accepted in its final form, 2026-09-26) (NB: twice rewritten: first to place the concern in the substrate, then to reduce it to Eligibility and its compilers)
 
 **Related:** ADR-A85 (scoped binding resolution), ADR-A87 (concept exclusion), ADR-A89 (concept IR), ADR-A92 (derived artefacts), ADR-A13 (graph roles), ADR-A103 (set readings), ADR-A-C2, ADR-A98 (addendum)
 
-**Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (AIR-0.1, epic decision D11)
 
 ## Context
 
@@ -52,7 +54,7 @@ an `exe:Diagnostic`.
    consumer may lift a value through an exact mapping and evaluate it against the target scheme.
    An inexact mapping may advise, never decide. MORK is where proposed mappings wait for review
    (ADR-A13). Consumers read only the crosswalk.
-5. **Published crosswalks (MB-Q3).** An applied module may publish a reviewed crosswalk of a
+5. **Published crosswalks.** An applied module may publish a reviewed crosswalk of a
    widely used external list beside its reference edition, where the list owner's terms allow.
 
 ## Alternatives considered
@@ -76,7 +78,7 @@ needs to know which structure a scheme lacks.
   Undetermined (`exe:MissingCandidate`).
 - No applied `scheme-profile/` module exists (ADR-A98 addendum).
 
-## Implementation note (2026-09-26, AIR-3.1 planning)
+## Implementation note (2026-09-26)
 
 Two consequences above are corrected here. They change no decision:
 
@@ -84,3 +86,17 @@ Two consequences above are corrected here. They change no decision:
   vocabulary document does change: 0.6.0 → 0.7.0.
 - Adding a named individual is MINOR under the versioning policy, so Executable takes 0.5.0 →
   0.6.0, not a PATCH bump.
+
+## Addendum, 2026-10-27: the relation a condition walks
+
+Agreed by the maintainer. A condition under `elg:HierarchicalMatch` names the relation it walks with `elg:hierarchyRelation`, `skos:broader` or a declared sub-property of it, and `skos:broader` when it names none. A scheme may state more than one ordering, for example ISO 25964's generic ("a kind of") and partitive ("a part of") relations, and which one a clause relies on is the clause's question, so the choice sits on the condition rather than on the scheme or its binding. Decision 1 reads over that relation: a resolved scheme has a hierarchy for a condition when at least one member has a link of the condition's relation to another member. Laws L9, L11 and L14 say so.
+
+A hierarchical condition whose scheme binding does not apply at the resolution time has no closure to test a candidate against, so it is Undetermined for every candidate, as L9 states, reported with `exe:NoApplicableBinding`. A binding conflict still fails, as ADR-A85 decides. The OWL and SWRL backends refuse a hierarchical plan with no scheme, as decision 3 has the OWL backend refuse a scheme without a hierarchy.
+
+## Provenance
+
+**Unit:** [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) (plan)
+
+Part of the [`applied-insurance-reference`](../../developer/plans/applied-insurance-reference.md) unit (AIR-0.1, epic decision D11). Published crosswalks are question MB-Q3, and the implementation note was written in AIR-3.1 planning.
+
+The 2026-10-27 addendum is from the [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) unit, slice C9b3c, answering substrate item S2 of the applied insurance reference substrate plan.

@@ -12,11 +12,12 @@ the project. Every claim about a store elsewhere, in a sketch, an ADR, a Validat
 
 ## Before relying on a store
 
-1. Read the findings at a glance (§5 of the record) and every finding that touches what you are doing.
+1. Find every finding that touches what you are doing, with `mise run graph:ask -- find <the behaviour> --kind discovery`, and read each with `read TSD-nn`, which lists first the entries and terms the finding bears on. When the query answers weakly, read the findings at a glance (§5 of the record) instead.
 2. Check the versions. A finding holds for the versions it names. If yours differ, treat it as a hypothesis and re-run its
    reproduction.
 3. If the record is silent, do not reason from memory about what SPARQL or a store does. Probe it. Two of the typed IR's first
    rules were written from memory and were wrong (record §7.2).
+4. Validate on the strictest engine a consumer may use, not only on rdflib, which accepts IRIs and updates that others refuse (record TSD-35, TSD-37).
 
 ## Probing a store
 
@@ -48,16 +49,29 @@ Add an entry to the record in the shape of its §6.0, and a row to its §5 table
 
 Then:
 
-- Turn the probe into a test, under `tools/persistence/tests/test_store_probes.py` or the tool it concerns, opting in to every
-  engine with `@engines.each_engine`, so a change in a store fails a test.
+- Turn the probe into a test, under `tools/persistence/tests/test_store_probes.py` or the tool it concerns, opting in to every engine with `@engines.each_engine`, so a change in a store fails a test. A probe of cost is not a test. It goes to a benchmark under `benchmark/`, which reports per engine and version and fails only on a wrong result, never on time (ADR-A124, STD-290), as `benchmark/persistence-store-probes` does for TSD-42.
 - Point the documents that rely on the behaviour at the finding, and correct any that it contradicts, with a dated note.
 - A finding that turns out wrong is corrected in place, dated, and its story goes in the record's §7.
+- A finding that answers an open question in full goes in that row's Answered by column, and the row stays, with the question's own words in its Question cell. A finding that answers in part is named in the row's next step, and the question stays open.
+- A departure from the specification worth reporting upstream is written up in `docs/developer/notes/upstream-sparql-engine-reports.md`, with its tracker search and a reproduction complete enough to file from that file alone. Filing is the maintainer's decision.
 
 ## Stores and how to reach them
 
 | Store | Reached through | Install | Run its cases |
 |---|---|---|---|
 | rdflib | `rdflib.Dataset`, in the test process, parameters as `initBindings` | part of every Python bootstrap | `mise run check:persistence` |
-| Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence-oxigraph` |
+| Oxigraph | `tools/testing/oxigraph` (ADR-A125), parameters substituted as text | `mise run bootstrap:testing-oxigraph` | `mise run check:persistence` (the default engine), `mise run check:persistence-conformance` |
+| Apache Jena ARQ | `tools/testing/jena` (MSC-1), in-memory, one JVM per Python process from `platform/sparql-testkit`, parameters substituted as text, rdflib terms in and out | `mise run bootstrap:testing-jena` (builds the jar, needs Java) | conformance runs only: `mise run check:sparql-probes-conformance`, and `mise run check:conformance` for every conformance task |
+
+Engine probes that are not about one tool (the aggregate matrix, TSD-43) live in `tools/testing/sparql_probes` and run on all three engines, with the expected result per engine recorded beside the cases.
 
 A measurement of cost belongs in a benchmark under `benchmark/` (ADR-A124), which fails on a wrong result and never on time.
+`benchmark/sparql-constraint-query-cost` is the one for query forms, and `mise run check:sparql-constraint-query-cost` runs it.
+
+## Findings about cost
+
+How to write a query so that it runs in reasonable time is a design record, not a finding:
+[docs/architecture/efficient-queries-and-shapes.md](../../../docs/architecture/efficient-queries-and-shapes.md) (ADR-A128). A cost
+finding goes in the discovery record as TSD-22 to TSD-33 do, with its engine and version, and the design record's rule that rests on
+it cites it. When you find that a rule holds on one engine only, say so in both places, and mark it in the design record's table of
+what is specific to rdflib. A result on one engine is a hypothesis for the others until it is run on them.

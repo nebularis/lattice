@@ -78,7 +78,7 @@ design question, detailed when that slice starts, per this epic's rolling-wave d
    recorded claim, and that spike's own evidence, not this ADR, decides it.
 7. **Claims, gates and the assurance ledger.** Track H's claims use the same claim schema and
    gate discipline `tools/proofs/eligibility/gate.py` established (extended per the second
-   review's hardening items, track E's E1.4), reused, not reinvented, for
+   review's hardening items, track E's FME-1.4), reused, not reinvented, for
    `tools/proofs/persistence/`. Where track A (the ledger and the harness) exists by the time
    track H needs it, track H's claims feed it; until then, each slice's own Validation Pack is
    the record, the same interim arrangement tracks B and C already use.

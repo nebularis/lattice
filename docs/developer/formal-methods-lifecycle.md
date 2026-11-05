@@ -5,8 +5,7 @@
 How the `formal-methods` epic's tracks hook into every change, at every stage the Epic
 Decomposition Model names (the [lattice-lifecycle skill](../../.claude/skills/lattice-lifecycle/SKILL.md)): sketch, plan, implementation,
 validation. For what each track's own tool does mechanically, see the
-[Developer Guide](developer-guide.md) §4-§5. For the epic's own scope and tracks, see
-[`docs/developer/plans/formal-methods.md`](plans/formal-methods.md).
+[Developer Guide](developer-guide.md) §4-§5.
 
 **Read this before changing a law, wherever it lives** — an ontology's normative prose, a
 compiler's behaviour, or a platform service's own protocol guarantee. Not every change needs
@@ -82,7 +81,7 @@ the differential tests (`check:reference-eligibility`) are the primary formal-me
 behaviour change that disagrees with the independent reference fails there, not silently. If the
 disagreement is the compiler's bug, fix the compiler. If it is a finding that the reference itself
 was wrong or incomplete, fix the reference, with the same differential evidence recorded (track
-B2's own two findings, in `docs/developer/status/formal-methods-track-b.md`, are the worked
+B2's own two findings are the worked
 examples of exactly this).
 
 **A platform service change** (`platform/`, workers, apps): **not covered by any track today.**
@@ -95,7 +94,7 @@ or the protocol models, this section is what you are closing.
 
 ### Validation
 
-A slice's Validation Pack (`docs/developer/validation/<slice-id>.md`) that touches a law states,
+A slice's Validation Pack that touches a law states,
 in its own invariant paragraph, which of the three artefacts above it engages, and cites the
 actual command (`mise run check:formal-freshness`, `mise run check:proofs <layer>`, `mise run
 check:reference-eligibility`) anyone can re-run — the same "one command to run everything"
@@ -129,7 +128,7 @@ review-time judgements this document exists to prompt, not something a script ca
 
 ## 5. Where each track actually is today
 
-Concrete, not aspirational — check `docs/developer/status/formal-methods.md` for the current
+Concrete, not aspirational — check the formal methods status record for the current
 state before assuming a track covers a layer it does not yet:
 
 - **Track E**: Eligibility only (`tools/proofs/eligibility/`), laws TA1/TA2 (the kernel) and

@@ -18,7 +18,6 @@ ex:job-family-contract a voc:SchemeContract ; voc:boundScheme ex:job-families .
 ex:condition-e3
     a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard ;
     elg:constrainedByContract ex:job-family-contract ;
     elg:requiredConcept ex:engineering ;
@@ -27,9 +26,7 @@ ex:condition-e3
 ex:profile-e3
     a elg:AdmissionProfile ;
     elg:hasCondition ex:condition-e3 ;
-    elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
-    elg:wildcardSemantics elg:NoWildcard .
+    elg:compositionOperation elg:AllRequired .
 
 ex:question-e3-platform a elg:Question ; elg:forCondition ex:condition-e3 ; elg:candidateConcept ex:platform-engineering .
 ex:question-e3-contractor a elg:Question ; elg:forCondition ex:condition-e3 ; elg:candidateConcept ex:contractor-engineering .

@@ -1,0 +1,128 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Licensing, with seats keyed per site (ADR-A131 decision 3).
+# One account definition states the amount once, and a separate account is
+# derived for each key value the first draw against it names. A customer's
+# seat licence grants 500 seats a year at each site. London and Porto draw
+# independently, and the licence year's reset restores both keyed accounts to
+# their stated amount.
+#
+# | Account (key) | Before | Draw | After draw | Reset credit | After reset |
+# |----------------|-------:|-----:|-----------:|---------------:|------------:|
+# | seats, London  |    500 | -120 |        380 |           +120 |         500 |
+# | seats, Porto   |    500 |  -80 |        420 |            +80 |         500 |
+#
+# A draw proposes and merges even with nothing to arbitrate (decision 6), so
+# each keyed account gets its own one-grant merge record. A reset credit has
+# no competing claim to arbitrate, so it is posted directly, without a merge
+# record.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/licence-seats/> .
+
+# ==== The owner and the key dimension ========================================
+
+ex:customer a fnd:PersistentIdentity ;
+    rdfs:comment "The licensee, owner of the seat account." .
+
+ex:Licensee a owl:Class ;
+    rdfs:comment "The kind of owner this account admits." .
+
+ex:sites a skos:ConceptScheme ; skos:prefLabel "sites" .
+ex:london a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "London" .
+ex:porto a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "Porto" .
+
+# ==== The value space and the configuration ==================================
+
+ex:seats a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-licence-seats" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-licence-seats-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:seats-sum , ex:seats-difference .
+ex:seats-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:seats .
+ex:seats-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:seats .
+
+ex:q-500 a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "500"^^xsd:decimal .
+
+ex:licence-year a qnt:Recurrence ;
+    rdfs:comment "Annual, by the licence's anniversary." .
+
+ex:seat-licence a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-500 ;
+    ldg:unitOfAccount ex:seats ;
+    ldg:admitsOwnerKind ex:Licensee ;
+    ldg:mergeRule ldg:Refuse ;
+    ldg:resetRecurrence ex:licence-year ;
+    ldg:keyDimension ex:sites ;
+    rdfs:comment "500 seats a year, one account derived per site." .
+
+# ==== Position 1: the two sites draw independently ===========================
+
+ex:london-draw-proposal rdfs:comment "London's draw of 120 seats." .
+ex:london-draw-grant a ldg:Grant ;
+    ldg:forProposal ex:london-draw-proposal ;
+    ldg:requestedValue "120"^^xsd:decimal ; ldg:grantedValue "120"^^xsd:decimal .
+ex:london-draw-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:london ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:london-draw-grant .
+ex:london-draw-posting a ldg:Posting ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:london ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "120"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:london-draw-merge , ex:london-draw-grant .
+ex:london-balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:london ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "380"^^xsd:decimal ; ldg:availableValue "380"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:london-draw-posting .
+
+ex:porto-draw-proposal rdfs:comment "Porto's draw of 80 seats." .
+ex:porto-draw-grant a ldg:Grant ;
+    ldg:forProposal ex:porto-draw-proposal ;
+    ldg:requestedValue "80"^^xsd:decimal ; ldg:grantedValue "80"^^xsd:decimal .
+ex:porto-draw-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:porto ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:grant ex:porto-draw-grant .
+ex:porto-draw-posting a ldg:Posting ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:porto ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "80"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:porto-draw-merge , ex:porto-draw-grant .
+ex:porto-balance-1 a ldg:BalanceRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:porto ;
+    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "420"^^xsd:decimal ; ldg:availableValue "420"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:porto-draw-posting .
+
+# ==== Position 2: the licence year resets both sites =========================
+
+ex:london-reset-posting a ldg:Posting ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:london ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "120"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:licence-year .
+ex:london-balance-2 a ldg:BalanceRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:london ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "500"^^xsd:decimal ; ldg:availableValue "500"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:london-reset-posting .
+
+ex:porto-reset-posting a ldg:Posting ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:porto ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:amountValue "80"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:licence-year .
+ex:porto-balance-2 a ldg:BalanceRecord ;
+    ldg:onAccount ex:seat-licence ; ldg:forOwner ex:customer ; ldg:accountKey ex:porto ;
+    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:remainingValue "500"^^xsd:decimal ; ldg:availableValue "500"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:porto-reset-posting .

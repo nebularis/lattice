@@ -16,7 +16,7 @@ A run takes a contract, a source graph, and a profile, and emits four modules:
 Module boundaries follow invalidation classes rather than file size: a change
 to the carrier instance graph must be able to leave ``core.ttl`` untouched.
 
-The class structure follows ``MorkToRmlCompiler`` in ``tools/mork2rml.py``:
+The class structure follows ``MorkToRmlCompiler`` in ``tools/mork/src/mork2rml.py``:
 analyse, then plan, then emit, with a mutable context carried through. What
 differs is the algebra — MORK folds a mapping DAG into RML triples maps; this
 folds one contract plus its read set into a symbol inventory. Dependency order
@@ -118,7 +118,7 @@ def check_entailment_regime(profile) -> None:
         raise CompileError(
             f"profile {profile.iri} declares entailment regime "
             f"{profile.entailment_regime}, which this compiler does not act on. Only "
-            f"srf:NoEntailment is currently supported (ontology/surface/docs/OUTSTANDING-ITEMS.md §3.5)."
+            f"srf:NoEntailment is currently supported (Surface outstanding items record §3.5)."
         )
 
 
@@ -585,6 +585,17 @@ class SurfaceCompiler:
         contract = self.contract
         in_namespace = str(contract.promotes_to).startswith(str(contract.target_namespace))
         self.signature_scope = SRF.LocalSignature if in_namespace else SRF.SourceSignature
+
+        if not in_namespace and not any(
+            (contract.promotes_to, RDF.type, kind) in self.source
+            for kind in (RDF.Property, OWL.ObjectProperty, OWL.DatatypeProperty)
+        ):
+            raise CompileError(
+                f"{contract.iri} promotes onto {contract.promotes_to}, which is outside the contract's "
+                f"target namespace and which the source graph does not declare. A promotion outside its "
+                f"target namespace restates onto a property an authored layer declares (law srf:X6), so "
+                f"give the source graph that layer, or promote into the target namespace."
+            )
 
         if not in_namespace and contract.lossy:
             raise CompileError(

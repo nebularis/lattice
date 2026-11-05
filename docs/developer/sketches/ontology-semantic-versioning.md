@@ -37,7 +37,7 @@ reviewer nothing:
 | `mork/spec/Mork.ttl` | **none** — `owl:Ontology` declared, no `owl:versionIRI` at all | n/a |
 | `spc/spec/spc.ttl` | **none** — `owl:Ontology` declared, no `owl:versionIRI` at all | n/a |
 | `applied/capacity/.../applied_capacity_execution_spec_capx_Version2.ttl` | `.../neuro-semantic/lattice/applied/capacity/execution/0.0.1` | Yes |
-| `applied/insurance/spec/structure/contract.ttl` | `.../neuro-semantic/insurance/contract/0.1.1` **and separately** `owl:versionInfo "3.5.1"` | No — different namespace family entirely, and carries two disagreeing version signals on the same ontology |
+| `applied/insurance/spec/structure/contract.ttl` | `.../neuro-semantic/lattice/insurance/contract/0.1.1` **and separately** `owl:versionInfo "3.5.1"` | No — different namespace family entirely, and carries two disagreeing version signals on the same ontology |
 
 Four distinct problems sit inside that one table, and the proposal below has
 to answer all four, not just "add a number":
@@ -225,7 +225,7 @@ documented table.
   keeping exact pinning and revisiting only if the cascade becomes a real
   source of friction.
 - **`applied/insurance/contract.ttl`'s namespace family.** Its `owl:versionIRI`
-  base (`.../neuro-semantic/insurance/...`) sits entirely outside the
+  base (`.../neuro-semantic/lattice/insurance/...`) sits entirely outside the
   `lattice/` namespace tree, unlike `applied/capacity`'s. Is this deliberate —
   an applied ontology may legitimately choose its own namespace family,
   independent of the framework's own — or an oversight to correct alongside

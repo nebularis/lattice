@@ -1,0 +1,6 @@
+# Findings of tools/owl_profile.py allowed to stay, one per line as "kind iri", with the reason after them.
+# Remove a line when the finding is fixed, since the check fails on a stale exception.
+
+reserved http://www.w3.org/1999/02/22-rdf-syntax-ns#Property  redeclared as owl:Class by Vocabulary and Eligibility so a property can be the range of voc:constrainsProperty and elg:forProperty, TD-117
+reserved http://www.w3.org/2000/01/rdf-schema#Class  redeclared as owl:Class by Surface, TD-117
+reserved http://www.w3.org/1999/02/22-rdf-syntax-ns#List  redeclared by MORK, TD-117

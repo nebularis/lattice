@@ -87,6 +87,16 @@ public final class Canonical {
         return sb.toString();
     }
 
+    /** True for a non-empty value made only of RFC 3986 unreserved characters. */
+    public static boolean isUnreserved(String value) {
+        return !value.isEmpty() && value.chars().allMatch(c -> c < 128 && UNRESERVED[c] == 1);
+    }
+
+    /** True for exactly {@code .} or {@code ..}, which RFC 3986 §6.2.2.3 removes from a path. */
+    public static boolean isDotSegment(String value) {
+        return value.equals(".") || value.equals("..");
+    }
+
     /** §6.2: unreserved bytes kept, every other UTF-8 byte written %XX in uppercase hex. */
     public static String percentEncode(String value) {
         StringBuilder sb = new StringBuilder();

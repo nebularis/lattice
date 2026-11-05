@@ -4,6 +4,7 @@
 
 **Status:** Accepted
 **Date:** 2026-09-17
+**Unit:** [`computable-contract-substrate`](../../developer/plans/computable-contract-substrate.md) (plan), addendum 2026-10-01, [`ensemble`](../../developer/plans/ensemble.md) (plan), addendum 2026-10-18, [`ledger`](../../developer/plans/ledger.md) (plan), addendum 2026-10-19
 
 ## Context
 
@@ -45,7 +46,7 @@ Concretely:
 - `ontology/quantification/spec/quantification.ttl` gains an `owl:Ontology` header importing Foundation and Vocabulary, matching what its own README already claimed.
 - `ontology/party/spec/party.ttl` gains an `owl:imports` of Quantification.
 - The root README and `docs/architecture/ontology-architecture.md` are corrected to state this same seven-link order, so the layer table, the dependency diagram, and the compiled imports agree.
-- A future CI check (documented in [../../validation-and-test-plan.md](../../validation-and-test-plan.md), not yet built) can verify import closure mechanically once Eligibility, Instrument, and Behaviour exist and declare their own imports.
+- The import guard (`mise run check:import-guard`) verifies import closure mechanically for every layer.
 
   **Implementation note (2026-10-01):** built as `mise run check:import-guard`
   (`tools/import_guard.py`, computable contract substrate slice C10a), part of `mise run check`. It
@@ -79,3 +80,66 @@ Foundation
   substrate layer.
 
 Every other decision stands.
+
+## Addendum (2026-10-17, ADR-A126): where the ontology header is written
+
+The convention note above places a layer's ontology header in its README's first `turtle-spec` block. A
+README migrated to the layout of [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) states
+its header in section 2's header table instead, and the extractor writes it from there. A README not yet
+migrated keeps the note above. The dependency order is unchanged.
+
+## Addendum (2026-10-18): Ensemble above Instrument and Behaviour
+
+**Status:** Proposed, with [ADR-A130](ADR-A130-ensemble-layer.md).
+
+The dependency order becomes:
+
+```
+Foundation
+  └── Vocabulary
+        └── Quantification
+              └── Party
+                    └── Eligibility
+                          ├── Wording
+                          │     └── Instrument   (also imports Behaviour configuration)
+                          └── Behaviour configuration
+                                └── Behaviour runtime
+
+Instrument and Behaviour runtime
+  └── Ensemble   (the top substrate layer)
+```
+
+- Ensemble imports Instrument and Behaviour's runtime document, and through them every layer below.
+- Ensemble is the top substrate layer. Nothing in the substrate imports it, and no lower layer names
+  its terms.
+- Ensemble's README carries its catalogue entry with its imports, and the root catalogue lists it
+  after Instrument (ADR-A121), so `mise run check:import-guard` checks it with no change to the guard.
+
+## Addendum (2026-10-19): Ledger above Quantification
+
+**Status:** Accepted 2026-10-21, with [ADR-A131](ADR-A131-ledger-layer.md).
+
+With the 2026-10-18 addendum, the dependency order becomes:
+
+```
+Foundation
+  └── Vocabulary
+        └── Quantification
+              ├── Ledger
+              └── Party
+                    └── Eligibility
+                          ├── Wording
+                          │     └── Instrument   (also imports Behaviour configuration)
+                          └── Behaviour configuration   (also imports Ledger)
+                                └── Behaviour runtime
+
+Instrument and Behaviour runtime
+  └── Ensemble   (the top substrate layer)
+```
+
+- Ledger imports Foundation, Vocabulary and Quantification only.
+- Behaviour's configuration document imports Ledger, and every layer above reaches it through
+  Behaviour. Party, Eligibility and Wording do not import it, and Ledger names none of their terms.
+- Ledger's README carries its catalogue entry with its imports, the root catalogue lists it after
+  Quantification, and Behaviour's entry adds it to its imports (ADR-A121), so
+  `mise run check:import-guard` checks them with no change to the guard.

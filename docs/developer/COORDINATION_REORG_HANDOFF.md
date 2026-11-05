@@ -102,13 +102,13 @@ When you need to know:
 - **Where's the reference implementation?** → Part I (location field in each unit)
 
 ### Onboarding a new contributor
-1. Read [docs/developer/INDEX.md](docs/developer/INDEX.md) Parts I & IV for orientation
+1. Read [docs/developer/INDEX.md](INDEX.md) Parts I & IV for orientation
 2. Find their unit in the index
 3. Read the linked sketch, plan, and status doc in order
 4. Check the validation pack for test requirements
 
 ### Decomposing the epic
-1. Review [docs/developer/INDEX.md](docs/developer/INDEX.md) Parts I & II
+1. Review [docs/developer/INDEX.md](INDEX.md) Parts I & II
 2. Note what's complete vs. planned
 3. Ratify A74/A75 decision if not already done
 4. Revise Phase 2.1–2.4 to integrate compiler (new planning unit)

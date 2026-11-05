@@ -18,6 +18,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, SH
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = __import__("lattice_repo_catalogue").load(ROOT).release_version
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "tools" / "mork_compilers" / "src"))
 
@@ -33,12 +34,13 @@ EX = Namespace("https://example.org/lattice/quantification/additivity/")
 ONTOLOGY = ROOT / "ontology"
 QLAYER = ONTOLOGY / "quantification"
 EXAMPLE = QLAYER / "examples" / "additivity.ttl"
-LOWER = ["foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+LOWER = ["foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
          "quantification/vocab/quantification-vocab.ttl"]
 ALL_SHAPES = [ONTOLOGY / layer / "shapes" / f"{kind}.ttl"
               for layer in ("foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour",
                             "instrument")
-              for kind in ("structural", "constraints")]
+              for kind in ("structural", "constraints")
+              if (ONTOLOGY / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification and Party ship no empty shapes file (TD-110)
 
 
 def _graph(*sources) -> Graph:
@@ -145,7 +147,7 @@ def at_most(g: Graph, amount: Decimal, unit: URIRef, bound: URIRef) -> URIRef:
 
 def test_c9b2_01_terms() -> None:
     ontology = URIRef("https://www.nebularis.org/neuro-semantic/quantification")
-    assert MODEL.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "quantification/0.8.0")
+    assert MODEL.value(ontology, OWL.versionIRI) == URIRef(LATTICE + f"quantification/{RELEASE}")
     assert (QNT.additivity, RDF.type, OWL.FunctionalProperty) in MODEL
     assert MODEL.value(QNT.additivity, URIRef("http://www.w3.org/2000/01/rdf-schema#range")) == QNT.Additivity
     assert set(MODEL.subjects(RDF.type, QNT.Additivity)) == {QNT.Extensive, QNT.Intensive}
@@ -274,12 +276,12 @@ def test_c9b2_13_signing_down_is_ratio_then_scale() -> None:
 
 def test_c9b2_14_readme_is_the_source_and_records_the_release() -> None:
     assert literate_extract.main([str(QLAYER / "README.md"), "--layer", "quantification", "--root", str(ROOT),
-                                  "--shapes", "shapes/constraints.ttl", "--check"]) == 0
+                                  "--check"]) == 0
     readme = (QLAYER / "README.md").read_text()
     assert "**0.8.0** (additive, CCS C9b2" in readme and "Shapes 0.3.0 (breaking)" in readme
     assert "| `Sum` | yes, extensive | no, only plus an extent | no, intensive | yes, of one base | no |" in readme
     assert "Answered in principle (CCS C9b2)" in readme
-    assert (QLAYER / "shapes" / ".version").read_text().strip() == "0.3.0"
+    assert not (QLAYER / "shapes" / ".version").exists()
     worked = (QLAYER / "examples" / "examples.md").read_text()
     assert worked.count("qnt:additivity qnt:Extensive") == 2
 

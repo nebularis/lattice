@@ -201,7 +201,7 @@ tmpl:within-commitment a ins:ContinuingObligation , ins:Template ;
 # shared by every facility drawn from the form.
 ex:leverage-ok a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-ceiling" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
@@ -212,7 +212,7 @@ ex:leverage-ceiling a qnt:Bound ; qnt:onSpace ex:leverage-space ;
 
 ex:loans-within-commitment a elg:IntervalCondition ;
     elg:conditionKey "loans-outstanding-within-commitment" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;
@@ -255,6 +255,33 @@ ex:lender-occ a pty:RoleOccupancy ;
     fnd:hasIdentity ex:lender-occ-identity ;
     fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-11-01T00:00:00Z"^^xsd:dateTime ] ;
     pty:inRole ex:Lender ; pty:occupiedBy ex:ridgeway-bank .
+
+# Persistent identities: every versioned thing has exactly one, a fnd:PersistentIdentity.
+ex:halden-wording-identity a fnd:PersistentIdentity .
+ex:borrower-occ-identity a fnd:PersistentIdentity .
+ex:lender-occ-identity a fnd:PersistentIdentity .
+ex:halden-identity a fnd:PersistentIdentity .
+ex:sec-1-identity a fnd:PersistentIdentity .
+ex:sec-10-identity a fnd:PersistentIdentity .
+ex:sec-6-identity a fnd:PersistentIdentity .
+ex:sec-7-identity a fnd:PersistentIdentity .
+ex:cl-1-1-identity a fnd:PersistentIdentity .
+ex:cl-10-1-identity a fnd:PersistentIdentity .
+ex:cl-6-1-identity a fnd:PersistentIdentity .
+ex:cl-7-1-identity a fnd:PersistentIdentity .
+ex:cl-7-2-identity a fnd:PersistentIdentity .
+ex:var-commitment-identity a fnd:PersistentIdentity .
+ex:var-leverage-identity a fnd:PersistentIdentity .
+ex:var-repay-days-identity a fnd:PersistentIdentity .
+ex:form-identity a fnd:PersistentIdentity .
+ex:durations fnd:hasIdentity ex:durations-identity .
+ex:durations-identity a fnd:PersistentIdentity .
+ex:leverage-space fnd:hasIdentity ex:leverage-space-identity .
+ex:leverage-space-identity a fnd:PersistentIdentity .
+ex:money fnd:hasIdentity ex:money-identity .
+ex:money-identity a fnd:PersistentIdentity .
+ex:time fnd:hasIdentity ex:time-identity .
+ex:time-identity a fnd:PersistentIdentity .
 
 # ==== Generated bound meaning: the expected output, not stored (D4) ===========
 #
@@ -306,7 +333,7 @@ ex:leverage a ins:ContinuingObligation ;
     ins:maintains ex:leverage-ok-halden .
 ex:leverage-ok-halden a elg:IntervalCondition ;
     elg:conditionKey "leverage-within-ceiling-halden-v1" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:leverage-space ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:leverage-space ;
@@ -322,7 +349,7 @@ ex:within-commitment a ins:ContinuingObligation ;
     ins:maintains ex:loans-within-commitment-halden .
 ex:loans-within-commitment-halden a elg:IntervalCondition ;
     elg:conditionKey "loans-outstanding-within-commitment-halden-v1" ;
-    elg:matchStrategy elg:IntervalContainment ; elg:compatibilityOperation elg:AllRequired ;
+    elg:matchStrategy elg:IntervalContainment ; 
     elg:wildcardSemantics elg:NoWildcard ;
     elg:requiredRangeSet [ a qnt:RangeSet ; qnt:onSpace ex:money ;
         qnt:hasRange [ a qnt:Range ; qnt:onSpace ex:money ;

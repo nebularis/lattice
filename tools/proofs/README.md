@@ -43,7 +43,7 @@ mise run check:proofs
 
 | Platform | What the install does | Where Isabelle goes |
 |---|---|---|
-| macOS | downloads the macOS release from the Cambridge mirror (`spikes/formal-prover/env/install_native.py`) | `~/.local/share/lattice-formal/Isabelle2025-2.app` |
+| macOS | downloads the macOS release from the pinned release's archive (`spikes/formal-prover/env/install_native.py`) | `~/.local/share/lattice-formal/Isabelle2025-2.app` |
 | Linux, x86_64 or arm64 | downloads the Linux release the same way | `~/.local/share/lattice-formal/Isabelle2025-2` |
 | Windows | runs `spikes/formal-prover/env/install-isabelle.ps1`, which unpacks the Windows installer with 7-Zip (`7z` on `PATH`) and initialises Isabelle's bundled Cygwin | `C:/fmx/Isabelle2025-2` |
 
@@ -76,8 +76,8 @@ Regenerate a layer's `Kernel.thy` from its README after an `isabelle-spec` block
 platform:
 
 ```bash
-python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . \
-  --proofs-root tools/proofs --shapes <that layer's existing --shapes arguments, unchanged>
+mise exec -- python tools/literate_extract.py ontology/<layer>/README.md --layer <layer> --root . \
+  --proofs-root tools/proofs --reference-root tools/reference
 ```
 
 **A layer whose `spec`/`vocab`/`shapes` extraction already drifts from its README** (tracked as

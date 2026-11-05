@@ -19,8 +19,10 @@ changes. This script finds them.
 2. **Links.** Every ``https://github.com/nebularis/lattice/blob/main/<path>``
    or ``…/tree/main/<path>`` must name a path that exists in the checkout.
 
-Standard library only. Prints one ``DRIFT <chapter>: <reason>`` line per
-finding and exits 1 if there is any, else prints a summary and exits 0.
+The chapters are the source of the site's ``tutorial`` section, read from the
+repository catalogue (ADR-A121 decision 5). Standard library and the catalogue's
+reader only. Prints one ``DRIFT <chapter>: <reason>`` line per finding and exits 1
+if there is any, else prints a summary and exits 0.
 """
 
 from __future__ import annotations
@@ -32,8 +34,10 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 from urllib.parse import unquote
 
-ROOT = Path(__file__).resolve().parent.parent
-CHAPTERS = Path("docs") / "_includes" / "tutorial"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lattice_repo_catalogue as rc  # noqa: E402  (sibling module, ADR-A121 decision 5)
+
+SECTION = "tutorial"
 
 SOURCE_COMMENT = re.compile(r"^\s*<!--\s*source:\s*(\S+)\s*-->\s*$")
 FENCE_OPEN = re.compile(r"^\s*```\s*(\S*)\s*$")
@@ -156,12 +160,24 @@ def check_links(root: Path, text: str) -> tuple[int, List[str]]:
     return len(links), problems
 
 
-def check(root: Path = ROOT) -> Report:
+def chapter_directory(catalogue: rc.Catalogue) -> Path:
+    """The tutorial section's one source, the directory of its chapters, relative to the root."""
+    section = next((s for s in catalogue.site if s.name == SECTION), None)
+    if section is None or len(section.sources) != 1:
+        raise rc.CatalogueError(f"the site section {SECTION!r} must name its chapter directory as its one source")
+    return Path(section.sources[0])
+
+
+def check(root: Optional[Path] = None, chapters: Optional[Path] = None) -> Report:
+    """Check every chapter. ``chapters`` is relative to ``root``, and read from the catalogue when not given."""
+    root = rc.find_root(root)
+    if chapters is None:
+        chapters = chapter_directory(rc.load(root))
     report = Report(findings=[])
-    chapters = root / CHAPTERS
-    if not chapters.is_dir():
-        report.findings.append(f"{CHAPTERS.as_posix()}: no chapter directory")
+    if not (root / chapters).is_dir():
+        report.findings.append(f"{chapters.as_posix()}: no chapter directory")
         return report
+    chapters = root / chapters
     for chapter in sorted(chapters.glob("*.md")):
         name = chapter.relative_to(root).as_posix()
         text = chapter.read_text(encoding="utf-8")

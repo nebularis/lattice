@@ -1,0 +1,13 @@
+{
+  "subject": "TH2",
+  "statedAs": "Hierarchy.hier_decide_no_hierarchy_undetermined",
+  "statementDigest": "sha256:8a21a5b2c7f80f7e273552cc65ebe39fb79cc048936cfe73c8db9b2badcf4d5f",
+  "method": "Proof",
+  "scope": "EveryHierarchyRelation",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found (E1.4)",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

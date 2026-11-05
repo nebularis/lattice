@@ -1,10 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# ADR A-08: Behaviour four-tier model
+# ADR-A08: Behaviour four-tier model
 
-## Status
-
-Accepted
+**Status:** Accepted
 
 ## Context
 

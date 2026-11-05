@@ -21,12 +21,14 @@ from rdflib.namespace import OWL, PROV, RDF, RDFS, SH, SKOS
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "mork_compilers" / "src"))
 
+import lattice_repo_catalogue  # noqa: E402
 import literate_extract  # noqa: E402
 from conftest import repo_files  # noqa: E402
 from mork_compilers import reasoning  # noqa: E402
 from ontology_catalog import Catalog, closure  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE = lattice_repo_catalogue.load(ROOT).release_version
 LAYER = ROOT / "ontology" / "wording"
 CATALOG = ROOT / "ontology" / "catalog-v001.xml"
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
@@ -69,12 +71,12 @@ def _vocab_closure() -> Graph:
 def test_c3_01_imports_exactly_the_layers_below() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
     ontology = URIRef(SPEC_IRI)
-    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + "wording/0.9.0")  # C4-01, C5, C8b
+    assert spec.value(ontology, OWL.versionIRI) == URIRef(LATTICE + f"wording/{RELEASE}")  # C4-01, C5, C8b
     assert set(spec.objects(ontology, OWL.imports)) == {
-        URIRef(LATTICE + "foundation/0.4.0"),
-        URIRef(LATTICE + "vocabulary/0.4.0"),
-        URIRef(LATTICE + "quantification/0.8.0"),
-        URIRef(LATTICE + "eligibility/0.12.0"),
+        URIRef(LATTICE + f"foundation/{RELEASE}"),
+        URIRef(LATTICE + f"vocabulary/{RELEASE}"),
+        URIRef(LATTICE + f"quantification/{RELEASE}"),
+        URIRef(LATTICE + f"eligibility/{RELEASE}"),
     }
 
 
@@ -170,7 +172,7 @@ def test_c3_08_three_contracts_each_constraining_its_property() -> None:
 
 def test_c3_09_readme_blocks_equal_the_files() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "wording", "--root", str(ROOT),
-                                  "--shapes", "shapes/structural.ttl", "shapes/constraints.ttl", "--check"]) == 0
+                                  "--check"]) == 0
 
 
 def test_c3_10_both_versions_have_release_rows() -> None:
@@ -275,7 +277,7 @@ TRIAL = Namespace("https://example.org/lattice/wording/trial/")
 
 
 def test_c4_02_c5_01_every_example_conforms() -> None:
-    assert len(EXAMPLES) == 5  # C8b adds reused-clause.ttl
+    assert len(EXAMPLES) == 6  # C8b adds reused-clause.ttl, TD-65 shared-values.ttl
     for example in EXAMPLES:
         assert _violations(_example(example)) == set(), example.name
 
@@ -424,6 +426,25 @@ def test_c5_07_values_must_match_their_variable(data: str) -> None:
     assert _reported("ex:w a wrd:AssembledWording ; wrd:hasValue ex:v . " + data, "v", "W6")
 
 
+SHARED = Namespace("https://example.org/lattice/wording/shared-values/")
+
+
+def test_td65_two_assembled_wordings_share_value_records() -> None:
+    """TD-65: wrd:hasValue is not inverse-functional, so a record may belong to several wordings,
+    and a record in no wording is still reported."""
+    g = _graph(LAYER / "examples" / "shared-values.ttl")
+    shared = set(g.objects(SHARED["lease-v1"], WRD.hasValue)) & set(g.objects(SHARED["lease-v2"], WRD.hasValue))
+    assert shared == {SHARED["v-rent"], SHARED["v-notice"]}
+    assert set(g.objects(SHARED["lease-v1"], WRD.hasValue)) ^ set(g.objects(SHARED["lease-v2"], WRD.hasValue)) \
+        == {SHARED["v-days-1"], SHARED["v-days-2"]}
+    assert (WRD.hasValue, RDF.type, OWL.InverseFunctionalProperty) not in _vocab_closure()
+    assert _violations(g) == set()
+    g.add((SHARED["v-orphan"], RDF.type, WRD.VariableValue))
+    g.add((SHARED["v-orphan"], WRD.forVariable, SHARED["var-days"]))
+    g.add((SHARED["v-orphan"], WRD.literalValue, Literal(1)))
+    assert "v-orphan" in _violations(g)
+
+
 def _bound(name: str, sense: str, value, closed: bool) -> str:
     closure = "qnt:Closed" if closed else "qnt:Open"
     return f"ex:{name} qnt:boundValue [ qnt:numericValue {value} ] ; qnt:boundClosure {closure} . "
@@ -559,11 +580,12 @@ def test_c5_new_versions_have_release_rows() -> None:
 REUSED = Namespace("https://example.org/lattice/wording/reused-clause/")
 INSTRUMENT_EXAMPLES = ROOT / "ontology" / "instrument" / "examples"
 MODEL_FILES = [ROOT / "ontology" / p for p in (
-    "foundation/spec/foundation.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
+    "foundation/spec/foundation.ttl", "foundation/vocab/foundation-vocab.ttl", "vocabulary/spec/vocabulary.ttl", "quantification/spec/quantification.ttl",
     "eligibility/spec/eligibility.ttl", "wording/spec/wording.ttl", "wording/vocab/wording-vocab.ttl")]
 SHAPE_FILES = [ROOT / "ontology" / layer / "shapes" / f"{kind}.ttl"
                for layer in ("foundation", "vocabulary", "quantification", "eligibility", "wording")
-               for kind in ("structural", "constraints")]
+               for kind in ("structural", "constraints")
+               if (ROOT / "ontology" / layer / "shapes" / f"{kind}.ttl").is_file()]  # Quantification ships no empty shapes file (TD-110)
 
 
 def _c8b_violations(data: Graph) -> list[tuple[str, str]]:
@@ -587,13 +609,13 @@ def _reused(add: str = "", remove: tuple = ()) -> Graph:
 
 def test_c8b_01_spec_version_ranges_and_display_text() -> None:
     spec = _graph(LAYER / "spec" / "wording.ttl")
-    assert spec.value(URIRef(SPEC_IRI), OWL.versionIRI) == URIRef(LATTICE + "wording/0.9.0")
+    assert spec.value(URIRef(SPEC_IRI), OWL.versionIRI) == URIRef(LATTICE + f"wording/{RELEASE}")
     for p in (WRD.refersToObject, WRD.refersToVariable, WRD.linksTo, WRD.reliesAsAmended):
         assert spec.value(p, RDFS.range) == FND.PersistentIdentity, p
     assert spec.value(WRD.reliesOnEdition, RDFS.range) == WRD.LinkedDocument
     assert (WRD.displayText, RDF.type, OWL.DatatypeProperty) in spec
     for c in (WRD.DocumentObject, WRD.ExternalDocument):
-        assert (c, RDFS.subClassOf, FND.Version) in spec, c
+        assert (c, RDFS.subClassOf, FND.Versioned) in spec, c
 
 
 @pytest.mark.parametrize("path", sorted((LAYER / "examples").glob("*.ttl")) + [
@@ -682,7 +704,7 @@ def test_c8b_06a_a_revised_definition_leaves_the_clause_mentioning_it_alone() ->
 
 def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> None:
     spec = _graph(ROOT / "ontology" / "instrument" / "spec" / "instrument.ttl")
-    assert URIRef(LATTICE + "wording/0.9.0") in set(spec.objects(None, OWL.imports))
+    assert URIRef(LATTICE + f"wording/{RELEASE}") in set(spec.objects(None, OWL.imports))
     found = repo_files(("ontology", "tools"), LATTICE + "wording/0.6.0", fixed=True)
     assert [f for f in found if not f.endswith("catalog-v001.xml") and "fixtures/import_guard" not in f] == []
 
@@ -690,5 +712,5 @@ def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> No
 def test_c8b_09_readme_release_notes() -> None:
     readme = (LAYER / "README.md").read_text()
     assert "- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b" in readme
-    assert (LAYER / "shapes" / ".version").read_text().strip() == "0.4.0"
+    assert "- 0.18.0, the first release" in readme
     assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text()

@@ -1,10 +1,10 @@
 /**
- * The suggested-key rule and value-type guess WA3's `ConstructDetector` uses in Java
- * (`platform/authoring-service/.../detection/ConstructDetector.java`), ported for the ribbon's
+ * The suggested-key rule and value-type guess the studio's `Detector` uses in Java
+ * (`platform/config-studio-authoring/.../Detector.java`), ported for the ribbon's
  * `markVariable` command (plan WA9a). Kept in exact parity (S9a-06 checks every case of
- * `contracts/authoring/fixtures/suggested-keys.json` against both).
+ * `contracts/document/fixtures/suggested-keys.json` against both).
  */
-import type { ValueType } from "./types";
+import type { ValueType } from "@lattice/authoring-domain";
 
 const MONEY_PATTERN = /(?:GBP|USD|EUR|£|\$|€)\s?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s?(?:million|bn|m)\b)?/u;
 const PERCENTAGE_PATTERN = /\d+(?:\.\d+)?\s?(?:%|per cent\b|percent\b)/iu;

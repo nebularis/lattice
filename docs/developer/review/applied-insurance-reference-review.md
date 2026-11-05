@@ -17,7 +17,7 @@
 | ADR-A100 (reduced) | hierarchical match over schemes without a hierarchy, `exe:NoHierarchy`, crosswalks as SKOS with Foundation provenance, published crosswalks (MB-Q3) | [ADR](../../architecture/decisions/ADR-A100-hierarchical-match-over-flat-schemes.md) |
 | ADR-A103 | some-value and every-value readings for evidence bindings, and condition negation, in every backend | [ADR](../../architecture/decisions/ADR-A103-eligibility-set-readings.md) |
 | ADR-A102 | liability role types, unfilled occupancies, derived direction | [ADR](../../architecture/decisions/ADR-A102-liability-direction-from-party-roles.md) |
-| AIR-0.1 | catalogue rows, sketch citation notes and prefix alignment | [VP](../validation/applied-insurance-reference-0.1.md) |
+| AIR-0.1 | catalogue rows, sketch citation notes and prefix alignment | [VP](../validation/AIR-0.1.md) |
 
 ## Command
 

@@ -76,8 +76,8 @@
       "category": "position",
       "inputs": {
         "namespaceToken": "orders-1",
-        "epoch": 1,
-        "seq": 1000000000000000000
+        "epoch": 9999,
+        "seq": 99999999
       },
       "trace": [
         {
@@ -87,41 +87,15 @@
         },
         {
           "step": "pad",
-          "epoch": "0001",
-          "seq": "1000000000000000000"
+          "epoch": "9999",
+          "seq": "99999999"
         },
         {
           "step": "render",
-          "iri": "urn:ev:shipment:orders-1:0001:1000000000000000000"
+          "iri": "urn:ev:shipment:orders-1:9999:99999999"
         }
       ],
-      "iri": "urn:ev:shipment:orders-1:0001:1000000000000000000"
-    },
-    {
-      "id": "position-3",
-      "category": "position",
-      "inputs": {
-        "namespaceToken": "orders-1",
-        "epoch": 9223372036854775807,
-        "seq": 9223372036854775807
-      },
-      "trace": [
-        {
-          "step": "validate-token",
-          "pattern": "^[A-Za-z0-9._~-]+$",
-          "value": "orders-1"
-        },
-        {
-          "step": "pad",
-          "epoch": "9223372036854775807",
-          "seq": "9223372036854775807"
-        },
-        {
-          "step": "render",
-          "iri": "urn:ev:shipment:orders-1:9223372036854775807:9223372036854775807"
-        }
-      ],
-      "iri": "urn:ev:shipment:orders-1:9223372036854775807:9223372036854775807"
+      "iri": "urn:ev:shipment:orders-1:9999:99999999"
     }
   ],
   "negative": [
@@ -134,6 +108,16 @@
         "seq": 42
       },
       "error": "PatternMismatch"
+    },
+    {
+      "id": "neg-dot-token",
+      "category": "dot-segment",
+      "inputs": {
+        "namespaceToken": "..",
+        "epoch": 3,
+        "seq": 42
+      },
+      "error": "DotSegment"
     },
     {
       "id": "neg-negative-seq",
@@ -164,6 +148,26 @@
         "seq": 1
       },
       "error": "PositionOutOfRange"
+    },
+    {
+      "id": "neg-epoch-exceeds-width",
+      "category": "width",
+      "inputs": {
+        "namespaceToken": "orders-1",
+        "epoch": 10000,
+        "seq": 42
+      },
+      "error": "PositionWidthOverflow"
+    },
+    {
+      "id": "neg-seq-exceeds-width",
+      "category": "width",
+      "inputs": {
+        "namespaceToken": "orders-1",
+        "epoch": 3,
+        "seq": 100000000
+      },
+      "error": "PositionWidthOverflow"
     }
   ],
   "format": []

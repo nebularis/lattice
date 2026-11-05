@@ -1,0 +1,47 @@
+[
+ {
+  "assertions": [
+   {
+    "inverse": false,
+    "mapping": "urn:example:mapping/xml#Holder",
+    "property": "urn:example:target#holderName"
+   },
+   {
+    "inverse": true,
+    "mapping": "urn:example:mapping/xml#Insurer",
+    "property": "urn:example:target#insures"
+   },
+   {
+    "inverse": false,
+    "mapping": "urn:example:mapping/xml#Status",
+    "property": "urn:example:target#status"
+   }
+  ],
+  "glue": null,
+  "iri": null,
+  "mapping": "urn:example:mapping/xml#Policy",
+  "prefix": "urn:example:base/policy/",
+  "types": [
+   "urn:example:target#Policy"
+  ]
+ },
+ {
+  "assertions": [
+   {
+    "inverse": false,
+    "mapping": "urn:example:mapping/xml#Peril",
+    "property": "urn:example:target#peril"
+   }
+  ],
+  "glue": {
+   "parentIsSubject": false,
+   "property": "urn:example:target#coverOf"
+  },
+  "iri": null,
+  "mapping": "urn:example:mapping/xml#Cover",
+  "prefix": "urn:example:base/cover/",
+  "types": [
+   "urn:example:target#Cover"
+  ]
+ }
+]

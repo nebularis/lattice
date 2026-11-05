@@ -4,7 +4,7 @@
 
 Literate specification for the Surface layer.
 
-The workflow control boundary for immutable contract revisions and graph-reference jobs is documented in [the revision lifecycle guide](docs/revision-lifecycle.md). It wraps the existing compiler and does not alter this normative specification.
+The workflow control boundary for immutable contract revisions and graph-reference jobs is documented in [the revision lifecycle guide](../../docs/operator/surface-revision-lifecycle.md). It wraps the existing compiler and does not alter this normative specification.
 
 ---
 
@@ -202,14 +202,14 @@ Read paths tell the generator how to traverse from a carrier instance to the val
 
 Every contract names one `srf:SurfaceProfile`, and every generated artefact names the profile it was produced under. The profile is what lets two runs be compared at all:
 
-- **`generatorVersion`** and **`canonicalisationVersion`** pin the code and the canonical-form rules a profile's hashes depend on.
+- **`generatorVersion`** and **`canonicalisationVersion`** pin the code and the canonical-form rules a profile's hashes depend on. Every hash in this layer is computed under one rule, the substrate's canonicalisation (the substrate's digest rule, Persistence section 5.6): RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the named content. An artefact hash is over emitted bytes instead, reproducible only under the same generator version.
 - **`entailmentRegime`** matters specifically for `DefinitionOnly` output — a definitional surface answers nothing until something evaluates it under the named regime (`NoEntailment`, `RDFSEntailment`, `OWL2ELEntailment`, or `OWL2DLEntailment`). Declare `NoEntailment` only where every form the profile's contracts use is `Materialised`.
 - **`symbolMode`** chooses between `PunnedSymbols` (the default — a symbol's provenance record shares its IRI with the minted term) and `WrappedSymbols` (a separate provenance individual linked by `srf:denotes`, for toolchains that reject an individual and a class sharing an IRI).
 - **`namingNormalisation`**, together with a contract's `srf:namingPolicy` (`LocalNameFromValue`, `QualifiedLocalName`, or `DigestLocalName`), decides how identifier fragments get minted (§8 has the exact concatenation rules). `LocalNameFromValue` is injective only while local names stay unique across the population — the moment two schemes bind one dimension, or two namespaces share a local name, that stops holding, and a collision is a hard failure rather than a warning. `DigestLocalName` is the escape hatch: injective for any population, at the cost of a human-unreadable identifier.
 - **`permittedStackDepth`** bounds how many surfaces deep a generation run's read set may reach — this release caps it at one, so a surface may be built over another surface, but not over a surface built over a surface.
 - **`defaultPopulationBudget`** is the fallback a contract's own `srf:populationBudget` overrides.
 
-The practical consequence of all this living on the profile rather than being an implicit compiler default: **a profile change is an estate-wide regeneration.** Bump `namingNormalisation` or `symbolMode` and every minted IRI under that profile changes, so the profile carries its own version (it subclasses `fnd:Version`) and a change to any of these fields is a new profile version, deliberately, not a silent upgrade.
+The practical consequence of all this living on the profile rather than being an implicit compiler default: **a profile change is an estate-wide regeneration.** Bump `namingNormalisation` or `symbolMode` and every minted IRI under that profile changes, so the profile carries its own version (it subclasses `fnd:Versioned`) and a change to any of these fields is a new profile version, deliberately, not a silent upgrade.
 
 #### Authority, conservativity, and signature scope
 
@@ -245,6 +245,7 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 - **A `ClosureRelation` with no `closureBasis`, or a `closureBasis` with no `ClosureRelation`.** The two are required together (`srf:S3`), never one without the other.
 - **Choosing `NominalClass`/`MembershipAssertion` for a population that's actually open-ended.** This is what the population budget is for — if the count is unbounded or grows without a ceiling, it belongs in a `DirectProperty` promotion, not a per-value index.
 - **Promoting a lossy value onto an authored property.** A `DerivedSource` or `CrosswalkInexact` promotion may only mint its own property in its own namespace; pointing `srf:promotesTo` at a property the domain already declares requires exact or crosswalk-exact fidelity.
+- **Promoting onto a property no layer declares.** Outside its target namespace a promotion restates onto a property an authored layer declares, so the compiler refuses one whose property the source graph does not declare as a property. Compile against the layer that declares it, or promote into the target namespace.
 - **Assuming `LocalNameFromValue` is safe by default.** It's injective only until two schemes or namespaces collide on a local name — which happens exactly when a deployment grows to use more than one scheme for the same dimension. `QualifiedLocalName` or `DigestLocalName` avoid the failure mode outright.
 - **Treating a generated surface as evidence for a decision.** A surface accelerates a lookup; it is never itself the evidence for an admissibility decision or an execution record, and reaching an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on (§12).
 
@@ -270,6 +271,21 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 - `projection/*.ttl` files are authored directly, following existing practice in Eligibility, Instrument, and Behaviour.
 
 Extraction and drift checking are performed by `tools/lattice/literate_extract.py`.
+
+The module's entry in the [repository catalogue](../../repository-catalogue.md)
+([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+
+```toml repository-catalogue
+[module]
+kind = "standalone"
+roles = ["examples", "execution", "shapes", "spec", "test", "vocab"]
+imports = ["foundation", "vocabulary", "quantification"]
+
+[module.extract]
+spec = ["spec/surface.ttl"]
+vocab = ["vocab/surface-vocab.ttl"]
+shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
+```
 
 ## 4. Design Decisions
 
@@ -327,10 +343,10 @@ A contract must be able to name any class or property in the estate without impo
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.8.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.4.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.8.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -349,7 +365,7 @@ srf:SurfaceContract a owl:Class ;
 	rdfs:comment "A governed declaration that a relationship reachable from a carrier may be restated locally in a declared form." ;
 	fnd:utility "Author one whenever a question about a carrier must be answerable without traversing the path that establishes the answer. Give it a carrier, a read path, a realisation mode, a stable contract key, a target namespace for minted symbols, and a surface profile. Use PromotionContract to restate a value as a direct assertion and IndexContract to restate it as a retrievable symbol." ;
 	rdfs:subClassOf
-		fnd:Version ,
+		fnd:Versioned ,
 		fnd:Governable ,
 		[ a owl:Restriction ; owl:onProperty srf:carrier ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:contractKey ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -477,7 +493,7 @@ srf:RangePartitionPopulation a owl:Class ;
 
 ```turtle-spec
 srf:SurfaceProfile a owl:Class ;
-	rdfs:subClassOf fnd:Version ,
+	rdfs:subClassOf fnd:Versioned ,
 		[ a owl:Restriction ; owl:onProperty srf:generatorVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:canonicalisationVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:entailmentRegime ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
@@ -737,7 +753,7 @@ srf:readSourceKind a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:resolvedBindingScope a owl:ObjectProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:BindingScope ;
 	rdfs:comment "A scope that was active when a BoundSchemeSource read-set entry's scheme was resolved." ;
-	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable (Finding 2, docs/developer/plans/temporal-binding-consumer-hardening.md)." .
+	fnd:utility "Recorded on every BoundSchemeSource entry for a contract-bound population, whether or not any value is present — an empty set here means the unscoped context, exactly as for srf:activeBindingScope, so the two are always directly comparable." .
 
 srf:resolvedBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range voc:SchemeBinding ;
@@ -810,7 +826,7 @@ srf:generatorVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:canonicalisationVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:SurfaceProfile ; rdfs:range xsd:string ;
-	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under." .
+	rdfs:comment "The version of the canonicalisation contract a profile's hashes are computed under. The contract is the substrate's, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex (the substrate's digest rule, Persistence section 5.6), and the version names the rule that selects the content triples." .
 
 srf:namingPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:IndexContract ; rdfs:range xsd:string ;
@@ -835,12 +851,12 @@ srf:producedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:artefactHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of a generation run's emitted content." ;
+	rdfs:comment "The SHA-256, lowercase hex, of a generation run's emitted bytes as the generator version the profile binds serialised them." ;
 	fnd:utility "Compare across runs to establish that regeneration was deterministic. A change here with no change in the read set or profile is a generator defect." .
 
 srf:semanticContentHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:GeneratedSurface ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of the canonical, meaning-bearing inputs a generation run consumed." ;
+	rdfs:comment "The digest of the canonical, meaning-bearing inputs a generation run consumed: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the dataset whose graphs are the read set's inputs, each in a graph named by its entry (the substrate's digest rule, Persistence section 5.6)." ;
 	fnd:utility "Together with the profile identity, decides whether an existing surface may be reused rather than regenerated." .
 
 srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -849,7 +865,7 @@ srf:readVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 srf:readHash a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:string ;
-	rdfs:comment "The hash of an input's canonical content at the time it was read." .
+	rdfs:comment "The digest of an input's canonical content at the time it was read: the RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, of the input's graph (the substrate's digest rule, Persistence section 5.6)." .
 
 srf:resolvedAt a owl:DatatypeProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ReadSetEntry ; rdfs:range xsd:dateTime ;
@@ -1032,8 +1048,8 @@ Injectivity is not assumed. `LocalNameFromValue` is injective only while value l
 
 <https://www.nebularis.org/neuro-semantic/surface-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.8.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.8.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.21.0> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> .
 
 srf:NominalClass a srf:IndexForm ; rdfs:comment "One generated class per value, defined as the carrier restricted to that value." .
 srf:MembershipAssertion a srf:IndexForm ; rdfs:comment "Asserted typing of each carrier instance into the generated class for its value." .
@@ -1328,7 +1344,7 @@ srf:BoundSchemeGovernanceShape a sh:NodeShape ;
 srf:BoundSchemeSourceResolutionRecordedShape a sh:NodeShape ;
 	sh:targetClass srf:ReadSetEntry ;
 	sh:sparql [
-		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler. Discharges Finding 2 (docs/developer/plans/temporal-binding-consumer-hardening.md)." ;
+		sh:message "A BoundSchemeSource read-set entry must record the resolution instant that selected its scheme, so an auditor can recover why without re-running the compiler." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
@@ -1401,7 +1417,7 @@ srf:ExternalIndexDeferredShape a sh:NodeShape ;
 srf:CrosswalkRelationRequiredShape a sh:NodeShape ;
 	sh:targetClass srf:PromotionContract ;
 	sh:sparql [
-		sh:message "A crosswalk promotion names the mapping relation it traverses, and a non-crosswalk promotion names none. Discharges srf:X5." ;
+		sh:message "A crosswalk promotion names the mapping relation it traverses, and a non-crosswalk promotion names none. Checks the structural condition of srf:X5. The semantic law is discharged in its register, not by this shape." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
@@ -1437,7 +1453,7 @@ srf:DefinitionOnlyPromotionShape a sh:NodeShape ;
 srf:PromotionSignatureDisciplineShape a sh:NodeShape ;
 	sh:targetClass srf:PromotionContract ;
 	sh:sparql [
-		sh:message "A promotion onto a property outside the contract's target namespace reaches the authored signature: it must declare exact or crosswalk-exact fidelity and must be materialised rather than definitional. Discharges srf:X6." ;
+		sh:message "A promotion onto a property outside the contract's target namespace reaches the authored signature: it must declare exact or crosswalk-exact fidelity and must be materialised rather than definitional. Checks the structural condition of srf:X6. The semantic law is discharged in its register, not by this shape." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
@@ -1717,3 +1733,13 @@ ex:index-1 a srf:IndexContract ;
 	srf:contractKey "example" ;
 	srf:indexForm srf:NominalClass .
 ```
+
+## 14. Release notes
+
+- **0.21.0**.
+  - no effect. Imports re-pinned to release 0.21.0, with no other change.
+- **0.20.0**.
+  - changes meaning ([ADR-A141](../../docs/architecture/decisions/ADR-A141-versioned-mixin-rename.md)). Imports re-pinned to release 0.20.0, whose Foundation renames fnd:Version to fnd:Versioned, so a graph that typed a thing fnd:Version re-keys.
+  - no effect ([ADR-A143](../../docs/architecture/decisions/ADR-A143-one-canonicalisation.md)). Every hash names its content triples and the substrate's digest rule, RDFC-1.0 canonical N-Quads, SHA-256, lowercase hex, and the two promotion shapes say they check the structural condition of X5 and X6 rather than discharging them.
+
+Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).

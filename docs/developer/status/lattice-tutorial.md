@@ -3,27 +3,26 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** 🟡 All four chapter slices written. TUT-0 to TUT-3 committed, TUT-4 awaiting the maintainer's reading and the unit's acceptance
-**Last updated:** 2026-10-16
+**Status:** building 2026-11-05.
+**Last updated:** 2026-11-05
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
-**Branch:** `tutorial/guide`, local, created from `main` 2026-10-14. The maintainer pushes it
+
+## Position
+
+| Slice | Deliverable | State | Blocked on |
+|---|---|---|---|
+| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | verified 2026-10-14 |  |
+| TUT-1 | chapters 0 to 3 | built 2026-10-15 |  |
+| TUT-2 | chapters 4 to 6 | built 2026-10-15 |  |
+| TUT-3 | chapters 7 to 9 | built 2026-10-16 |  |
+| TUT-4 | chapters 10 to 13 | built 2026-10-16 | the maintainer's end-to-end reading (TUT4-05) |
+| TUT-5 | the tutorial refreshed onto `main`: excerpts, the site's rules, Ledger in chapter 10. [Validation Pack](../validation/TUT-5.md) | building 2026-11-05 |  |
 
 ## Current position
 
-Every question is answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4, plan §2 and §8). TUT-0, the
-skeleton, is committed on `tutorial/guide` (`2c99ead`), verified on Windows (its Validation Pack, Results). It holds the page, its layout, 14 placeholder
-chapters, the home page links, and `check:tutorial-snippets` with its tests, wired into `check`.
-Its [Validation Pack](../validation/TUT-0.md) lists the one command and the preview steps.
+Every question is answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4, plan §2 and §8). TUT-0 to TUT-4 are committed on `tutorial/guide` and pushed, without the AI disclosure trailer, which the squash merge into `main` carries. On 2026-11-05 `main` was merged into the branch at the maintainer's request, the first step of TUT-5.
 
-TUT-1 (chapters 0 to 3) is committed as `834d9e4`, TUT-2 (chapters 4 to 6) as `fe608d7`, and TUT-3
-(chapters 7 to 9) as `1f9a171`. TUT-4, chapters 10 to 13, is written, and its
-[Validation Pack](../validation/TUT-4.md) results are in. The page has no placeholder chapter left.
-
-**Next action, for the maintainer:** read chapters 10 to 13 and the tutorial end to end (TUT4-05,
-the unit's acceptance criterion 5), then commit TUT-4. Before pushing, add the AI disclosure
-trailer GENAI_CONTRIBUTION.md requires to `2c99ead`, `834d9e4`, `fe608d7`, `1f9a171` and the TUT-4
-commit. The tutorial is published when the branch is merged into `main`, whose `docs/` GitHub Pages
-builds.
+**Next action:** TUT-5, then the Configuration Studio guide on its own branch from `main` (plan to follow). The maintainer's end-to-end reading of chapters 10 to 13 (TUT4-05) is still the unit's acceptance.
 
 ## History
 
@@ -58,3 +57,5 @@ builds.
 - 2026-10-16: the maintainer committed TUT-3 as `1f9a171`, without the disclosure trailer. TUT-4
   written, chapters 10 to 13. Every excerpt matched on the first run. Chapter 3's Governance row
   corrected, since `ontology/governance/` holds only an empty README.
+- 2026-11-02 to 2026-11-05: `main` gained the Configuration Studio, MORK's new compilers, the Ledger layer and new rules for the site (user-facing documents cite no working document, Markdown is not hard-wrapped, a page is a declared site section). Against `main` the tutorial has 11 excerpt and link findings. The maintainer chose the recommended plan: refresh the tutorial onto `main` (TUT-5), then a separate do-along Studio guide.
+- 2026-11-05: `main` (`73b31c2c`) merged into `tutorial/guide` at the maintainer's request. Conflicts resolved: `docs/developer/INDEX.md` taken from `main` and regenerated, `mise.toml` takes `main`'s check list with `check:tutorial-snippets` added, `docs/Gemfile.lock` takes `main`'s with the Windows platform added by `bundle lock --add-platform x64-mingw-ucrt`. This record moved onto the board grammar. The tutorial check now reads its root and chapters from the catalogue, and the tutorial is declared as site section 2. The merge commit skipped `import-guard` and `writing`, whose failures are in `main`'s own files (TUT-5 Validation Pack).

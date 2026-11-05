@@ -18,7 +18,6 @@ ino:case-08-industrial-fire a skos:Concept ;
 
 ino:case-08-admission a elg:Condition ;
     elg:matchStrategy elg:HierarchicalMatch ;
-    elg:compatibilityOperation elg:AllRequired ;
     elg:wildcardSemantics elg:NoWildcard .
 
 ino:case-08-layer a bhv:AllowanceDefinition ;

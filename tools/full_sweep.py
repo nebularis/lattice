@@ -29,7 +29,8 @@ CHECKS = [
     *[(task, ["mise", "run", task]) for task in (
         "check:import-guard", "check:python-root", "check:deny-terms", "check:vocabulary",
         "check:mork-compilers", "check:reference-eligibility", "check:formal-freshness", "build:mtp",
-        "check:mtp", "check:persistence", "check:agent-guidance", "check:ontology-catalog")],
+        "check:mtp", "check:persistence", "check:agent-guidance", "check:ontology-catalog",
+        "check:published-decisions", "check:site-sections", "check:catalogue")],
 ]
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -83,7 +84,7 @@ def main() -> int:
         result = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True,
                                 encoding="utf-8", errors="replace")
         output = result.stdout + result.stderr
-        log.write_text(output, encoding="utf-8")
+        log.write_text(output, encoding="utf-8", newline="\n")
         counts, failed = outcome(output)
         passed = result.returncode == 0
         failures += not passed

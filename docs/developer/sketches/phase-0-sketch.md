@@ -32,6 +32,6 @@ Two things were found that are **not** mechanical and are **not** resolved here,
 
 ## Risks specific to starting this phase
 
-- P0.1 alone is 15 decision slices, several explicitly flagged by the epic as "expect to reject and re-run" (P0.1.1, P0.1.3). A phase-0 plan that assumes single-pass ADR ratification under-forecasts review cost.
+- P0.1 alone is 15 decision slices, several explicitly flagged by the epic as "expect to reject and re-run" (PLT-0.1.1, PLT-0.1.3). A phase-0 plan that assumes single-pass ADR ratification under-forecasts review cost.
 - P0.4 (canonicalisation) is named by the epic itself as "the single most load-bearing library in the system" and appears on the critical path summary (Part 14) alongside P0.5.8 and P2.1. Phase 0's own internal sequencing should protect P0.4's review bandwidth accordingly.
 - The coordination-realm reconstruction proof (P0.6.4 — drop the coordination store, restart, prove convergence) is the executable test of A74's central claim. If it fails, it is not a phase-0 bug, it is evidence A74 needs revisiting, and that would ripple through the whole epic. Flagged, not resolved, here.

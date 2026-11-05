@@ -11,26 +11,26 @@ two `pyproject.toml` files is therefore a defect, whichever file is right.
 
 from __future__ import annotations
 
+import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 from packaging.requirements import Requirement
 
-ROOT = Path(__file__).resolve().parents[1]
-_SKIPPED_DIRECTORIES = {"node_modules", ".venv", ".build", "build"}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import lattice_repo_catalogue  # noqa: E402
+
+CATALOGUE = lattice_repo_catalogue.load()
+ROOT = CATALOGUE.root
 # Bootstrapped by none of the pip tasks, so it never meets the other packages in one environment.
 _NOT_BOOTSTRAPPED = {"tools/spc/python/pyproject.toml"}
 _SHARED = ("pytest", "pytest-xdist")
 
 
 def _pyproject_files() -> list[Path]:
-    found = [
-        p for p in ROOT.rglob("pyproject.toml")
-        if not _SKIPPED_DIRECTORIES & set(p.relative_to(ROOT).parts)
-        and p.relative_to(ROOT).as_posix() not in _NOT_BOOTSTRAPPED
-    ]
-    return sorted(found)
+    return [p for p in CATALOGUE.files("pyproject.toml") if p.relative_to(ROOT).as_posix() not in _NOT_BOOTSTRAPPED]
 
 
 def _requirements(path: Path) -> list[str]:

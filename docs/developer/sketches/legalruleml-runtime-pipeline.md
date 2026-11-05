@@ -6,7 +6,7 @@
 
 Version 0.1, draft for review. Explores whether the construct mapping in
 [legalruleml-mapping.md](legalruleml-mapping.md) can be delivered as a **MORK mapping graph**
-compiled by `tools/mork2rml.py` into **RML**, and executed at runtime to ingest LegalRuleML
+compiled by `tools/mork/src/mork2rml.py` into **RML**, and executed at runtime to ingest LegalRuleML
 documents into LATTICE terms.
 
 **Short answer: yes for the structural 80%, and no for the part that matters most.** RML is a
@@ -42,8 +42,8 @@ The premise is stronger than it first appears. Four pieces are already built.
 
 | Piece | Where | State |
 |---|---|---|
-| MORK → RML compiler | `tools/mork2rml.py` | Built. The reference adapter under ADR-A19's staged pipeline |
-| **XPath reference formulation** | `tools/mork2rml.py`, `SourceFormat.XML → QL.XPath` | **Already emitted.** Not a new capability |
+| MORK → RML compiler | `tools/mork/src/mork2rml.py` | Built. The reference adapter under ADR-A19's staged pipeline |
+| **XPath reference formulation** | `tools/mork/src/mork2rml.py`, `SourceFormat.XML → QL.XPath` | **Already emitted.** Not a new capability |
 | RML executor | `tools/spc/python/src/spc/ingress/rml_executor.py` | Built. Two modes, RMLMapper via Java subprocess or `pyrml` in-process |
 | Compact-notation decoder precedent | `tools/mork/src/mcn_decoder.py` | Built. Maps `"xml"` → `ql:XPath` in its own codebook |
 
@@ -380,7 +380,7 @@ The accepted graph's read set carries all four. Consequences:
 
 ## 10. Gaps in the existing tooling
 
-Measured against `tools/mork2rml.py` as it stands.
+Measured against `tools/mork/src/mork2rml.py` as it stands.
 
 | # | Gap | Severity for this work | Note |
 |---|---|---|---|
@@ -444,3 +444,27 @@ extension lands.
 Risk 6 deserves the last word. Nothing here argues the importer should be built now. It argues that
 **if** it is built, the MORK mapping graph is the right deliverable, Route B is the right shape, and
 the refiner is where the engineering actually is.
+
+---
+
+## 13. Addendum, 2026-10-29: the RML route reconsidered for the contract builder
+
+**Narrows §2.2.** The contract builder's rule-language import (CB5) considered LegalRuleML before ODRL, and we chose ODRL, so nothing here is built. The reasoning is recorded so the choice can be revisited when a trigger for N12 brings LegalRuleML back.
+
+**What changes since §2.** Two facts make Route A cleaner than §2.1 judged. The studio's service already runs Saxon-HE 12.5 for the document-to-wording kit, so the OASIS normaliser costs no new dependency. Normalising first removes §2.1's serialisation sensitivity, since every mapping is written against the normalised form only. The route is then three deterministic steps, each an artefact a reviewer can run by hand:
+
+1. Validate the document against the OASIS schema at the receiving service (STD-298), with its dialect declared in the protocol, never sniffed (STD-292).
+2. Normalise it with the OASIS normaliser XSLT.
+3. Run RML compiled from a MORK mapping graph by `mork2rml`, then hand the shallow result to the refiner of §6.
+
+**What it would cost.**
+
+- `mork2rml` emits RML in the `semweb.mmlab.be` namespaces. It moves to the W3C community group's RML (`http://w3id.org/rml/`, its core and IO modules).
+- `@keyref` references need referencing object maps with join conditions, which `mork2rml` only partly supports (§10, gaps 1 and 2). This is the main work.
+- An engine for the new RML. Morph-KGC (Python) and RMLMapper (Java) both claim it, and their coverage of the core and IO modules needs checking before one is chosen.
+- A reviewer reads XPath in a mapping rather than class-to-class matches, so each MORK mapping needs a `mork:mappingNote` saying what it means.
+- The OASIS schemas and XSLTs need a licence check before a public repository bundles them.
+
+**Why ODRL went first.** ODRL is RDF in every serialisation (JSON-LD, Turtle, RDF/XML), so its natural mapping is RDF to RDF. Reading its JSON-LD as plain JSON with JSONPath would need a framing step first, one more stage to fail in a deployment. So CB5 compiles MORK mapping graphs to SPARQL `CONSTRUCT` for RDF sources, the backend §10 gap 6 already pointed to, and keeps `mork2rml` for sources that are not RDF. One mapping graph, a backend chosen by the source.
+
+**The showcase, when it comes.** §11's credit-licensing example, with its prohibition, strong-permission exception, override and two penalties, remains the first slice. Override and strength have no LATTICE counterpart until N10 and D5, so they come back as named refusals that cite their `@key`.

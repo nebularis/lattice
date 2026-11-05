@@ -37,7 +37,7 @@ shapes change in one module never moves another module's number. Namespaces and 
 |---|---|---|
 | cross-domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/applied/<module>#` | per module |
 | `classification/` | as above | `cls:` |
-| domain `<module>` | `https://www.nebularis.org/neuro-semantic/<domain>/<module>#` | per module |
+| domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/<domain>/<module>#` | per module |
 
 A module's `vocab/` document, where it has one, uses the namespace without its `#` plus
 `/vocab#`, and its own version IRI, `…/<module>-vocab/<semver>`.

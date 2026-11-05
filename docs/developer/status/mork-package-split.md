@@ -2,6 +2,9 @@
 
 # MORK Package Split Status
 
+**Unit ID:** `mork-package-split`
+**Status:** merged 2026-09-20. Accepted.
+
 **Unit:** `mork-package-split`
 **State:** Accepted
 **Decision:** [ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md)

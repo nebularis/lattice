@@ -20,3 +20,5 @@ convention track D and E's toolchains already use — see `tools/proofs/README.m
 
 - `vocabulary-scheme-composition/` — track C2: binding resolution with scheme composition, ahead
   of CCS's HQ-4 and insurml-alignment's IMA-D4a.
+- `ensemble-composition/` — track C4, briefed 2026-10-22, not yet built: ADR-A130's evaluation by
+  composition, refusal of cycles, two phases at a shared account, and signed shares.

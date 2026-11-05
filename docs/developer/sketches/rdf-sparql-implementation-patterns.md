@@ -400,7 +400,7 @@ When multiple options are enabled across graph families, each family must declar
 
 ## Appendix: References
 
-- `docs/architecture/Architecture Review.md` — Gap analysis and component spec (G-01 through G-34)
+- `docs/developer/review/Architecture Review.md` — Gap analysis and component spec (G-01 through G-34)
 - `docs/architecture/solution-design-specification.md` — Product surface (design-time plane)
 - `docs/architecture/data-architecture.md` — Current three-realm model (to be revisited under A74)
 - `docs/developer/notes/Uniqueness in RDF.md` — Portable patterns P0–P7
@@ -408,7 +408,7 @@ When multiple options are enabled across graph families, each family must declar
 - `docs/developer/notes/Optimistic concurrency in RDF stores.md` — Portable CAS patterns 1.1–1.5
 - `docs/developer/notes/Combine Concurrency And Ordering Plan.md` — A1–A7 and F1–F13 findings
 - `docs/developer/notes/optimistic-concurrency-in-rdf.md` — LATTICE-specific aggregate-boundary implications and optional CAS deployment framing
-- `docs/architecture/Architecture Review.md` — Appendix A (IRI/identity policy), Addendum 2 (generic graph backend API)
+- `docs/developer/review/Architecture Review.md` — Appendix A (IRI/identity policy), Addendum 2 (generic graph backend API)
 
 ---
 

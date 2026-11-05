@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A dal:NoReceipt family and a family that records receipts, whose classes hash to one of the 64 meta shards, so their version rows share a meta
+# graph. The second family's gap scan would report every row of the first as a gap (D-11, H2.8b).
+# base: baseline-single-class.ttl
+# remove: ex:LoanApplicationStrongProfile dal:receiptModel
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Mortgage58Class a dal:ClassScope ;
+    dal:targetClass ex:Mortgage58 ;
+    dal:priority "20"^^xsd:integer .
+
+ex:Mortgage58Profile a dal:DataAccessProfile ;
+    dal:appliesTo           ex:Mortgage58Class ;
+    dal:strategy            dal:NamedGraphBoundary ;
+    dal:graphIriTemplate    "urn:g:mortgage58/{id}" ;
+    dal:concurrencyProfile  dal:Optimistic ;
+    dal:minConcurrencyLevel dal:Linearizable ;
+    dal:orderingGrain       dal:EventGrain ;
+    dal:receiptModel        dal:ReceiptOnly ;
+    dal:metaTopology        dal:SharedSharded ;
+    dal:metaShards          "64"^^xsd:long .
+
+ex:LoanApplicationStrongProfile dal:receiptModel dal:NoReceipt .

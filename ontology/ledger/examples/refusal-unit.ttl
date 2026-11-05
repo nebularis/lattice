@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: a child account in a different unit of account from its
+# parent. A pound-denominated sublimit cannot be part of a dollar-denominated
+# section, since a draw on the child would debit the parent in an
+# incomparable unit. Refused by the shape requiring a child's unit of account
+# to equal its parent's.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-unit/> .
+
+ex:owner a fnd:PersistentIdentity .
+ex:OwnerKind a owl:Class .
+
+ex:pounds a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-unit-pounds" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-pounds-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:pounds-sum , ex:pounds-difference .
+ex:pounds-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:pounds .
+ex:pounds-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:pounds .
+
+ex:dollars a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-unit-dollars" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-dollars-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:dollars-sum , ex:dollars-difference .
+ex:dollars-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:dollars .
+ex:dollars-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:dollars .
+
+ex:q-100000-gbp a qnt:Quantity ; qnt:onSpace ex:pounds ; qnt:numericValue "100000"^^xsd:decimal .
+ex:q-10000-usd  a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "10000"^^xsd:decimal .
+
+ex:parent-account a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-100000-gbp ; ldg:unitOfAccount ex:pounds ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    rdfs:comment "A section stated in pounds." .
+
+ex:child-account a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-10000-usd ; ldg:unitOfAccount ex:dollars ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    ldg:partOf ex:parent-account ;
+    rdfs:comment "Refused. A dollar sublimit part of a pound section." .

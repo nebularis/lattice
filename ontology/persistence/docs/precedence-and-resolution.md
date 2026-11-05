@@ -2,7 +2,7 @@
 
 # Precedence and Resolution
 
-Written for a reader who has not read [the sketch](../../../docs/developer/sketches/persistence-profile-substrate.md). Cross-references it and [the guide](../../../docs/architecture/rdf-sparql-patterns-guide.md) rather than repeating them.
+Written for a reader new to the module. It cross-references [the guide](../../../docs/architecture/rdf-sparql-patterns-guide.md) and the [README](../README.md#553-precedence) rather than repeating them.
 
 ## The problem
 
@@ -33,4 +33,4 @@ The algorithm above never asks a real triple store anything. Step 2's `dal:Capab
 
 ## Worked example
 
-See the README's [worked example 2](../README.md#6-worked-example-2-a-shared-substrate-class-two-deployments) for the full lending/credit trace, including what changes when a `dal:CapabilitySpec` declaring no reasoning support is introduced.
+See the README's [section 8.2](../README.md#82-a-shared-class-two-deployments) for the full lending/credit trace, including what changes when a `dal:CapabilitySpec` declaring no reasoning support is introduced.

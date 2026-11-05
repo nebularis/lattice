@@ -18,7 +18,7 @@ reports 419 broken links, 340 of them distinct (2026-09-25):
 |---|---|---|
 | A. Jekyll build output | 290 | The checker walks `docs/**/*.md`, including `docs/_site/`, which `docs/.gitignore` ignores. These pages are copies built on one machine. |
 | B. Wrong relative depth | about 15 | The target exists, but the path climbs one directory too many or too few, for example `../../architecture/…` from `docs/operator/` or `../../tools/surface/` from `docs/developer/plans/`. |
-| C. Moved targets | about 20 | The target exists elsewhere: the phase handoffs in `status/`, `mtp-handoff.md` in `review/`, `governance-surfaces-integration.md` in `plans/`, `MorkEnhancements.md` and `eligibility-L9-replacement.md` under `ontology/surface/docs/`. |
+| C. Moved targets | about 20 | The target exists elsewhere: the phase handoffs in `status/`, `mtp-handoff.md` in `review/`, `governance-surfaces-integration.md` in `plans/`, the Surface-MORK plan and status records, which absorbed `MorkEnhancements.md` and `eligibility-L9-replacement.md` from `ontology/surface/docs/` before those were deleted. |
 | D. Missing targets | about 15 | No file exists: `toolchain.md`, `plans/repository-topology-and-documentation-governance.md`, `ordering-in-rdf.md`, `uniqueness-in-rdf.md`, `offline-phase-handoff.md`, `LLM Training.md`, `MORK UXD.md`, the `mtp/data` and `mtp/out` directories under `docs/`. |
 
 Group A is a checker defect, not a documentation one. It hides the 50 real

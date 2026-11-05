@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# dal:DeltaMembership with a family that writes in place. A delta is stored against the version before it (H2.6f).
+# base: write-discipline-delta-membership.ttl
+# remove: ex:QuoteWriteProfile dal:writeDiscipline
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/quoting#> .

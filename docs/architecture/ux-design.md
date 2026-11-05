@@ -6,7 +6,7 @@ Companion to [Platform Solution Design Specification](solution-design-specificat
 
 ## 1. MORK Review Workbench
 
-The canonical design is [MORK UXD](../../ontology/mork/docs/MORK%20UXD.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
+The canonical design is the MORK UXD, whose decisions are in [ADR-A42](decisions/ADR-A42-mork-review-snapshot-and-decision-learning-boundary.md) and [ADR-A43](decisions/ADR-A43-mork-replayable-queue-and-calibrated-governance.md). It is a complete, independently authored thesis on reviewable semantic alignment: the six-verb decision model (Confirm, Retarget, Reshape, Decline, Teach, Defer), the role perimeter table, the yield-ordered queue, the Bench/Atlas/Dossier/Boundary/Ledger/Studio surface set, the anti-pattern catalogue, and the build order. Read it in full before changing the Workbench. This section does not repeat it, it maps it onto the platform built around it.
 
 ### 1.1 Role-to-API bridge
 
@@ -123,7 +123,7 @@ Design rules for this view:
 2. Add job submission and polling for generation, parity, and invalidation, with explicit pending/running/failed states.
 3. Add the Release view, gated on real semantic gate evidence from the release ledger.
 4. Add the Projection editor's Technical Inspector panel wired to real staging-graph data, preserving the existing "cannot be requested here" rule.
-5. Add real-stack Playwright coverage per the [platform continuation status](../developer/status/platform-continuation.md).
+5. Add real-stack Playwright coverage.
 
 ## 3. Cross-Cutting UX Principles
 
@@ -137,7 +137,7 @@ Both products share these, stated once here rather than in each product's sectio
 
 ## 4. Word authoring add-in (proof of concept)
 
-**Not a platform contract.** The word authoring POC (ADR-A118, `docs/developer/plans/word-authoring-poc.md`), under `apps/word-authoring-addin`. Its code, markup and manifest may change or be withdrawn without deprecation.
+**Not a platform contract.** The word authoring POC (ADR-A118), under `apps/word-authoring-addin`. Its code, markup and manifest may change or be withdrawn without deprecation.
 
 ### 4.1 Tabs
 
@@ -212,4 +212,19 @@ in, rather than guessing or failing silently:
 its reason to the Markup tab and opens the pane, so the author is never left wondering why nothing
 happened. Every handler calls `event.completed()` in a `finally` block, since Word waits for it
 before considering the command finished.
+
+## 3. Configuration Studio
+
+A proof of concept ([ADR-A136](decisions/ADR-A136-configuration-studio.md)) for one role, the configuration author, who knows their baseline and not the `dal:` and `srf:` vocabularies by heart. It keeps §2.5's rules: no free-text Turtle box for configuration (a whole file may be imported, and is validated like an edit), no optimistic transition the server has not confirmed, and typed job states rather than one spinner.
+
+| Interaction | Mechanism | Failure shown as |
+|---|---|---|
+| Edit a field | the change applies to the graph in the browser, undoable | none until saved |
+| Validate | the unsaved graph is submitted 600 ms after the last edit, as a job | each finding on the field its focus node and path name, a badge in the navigation, a row in the problems drawer |
+| Save | `PUT` with `If-Match` on the graph's revision | `412` opens the line diff of theirs and mine, to keep mine or take theirs |
+| Compile | a job, polled until finished | queued, running, succeeded or failed, with the compiler's findings, the artefacts and the gaps |
+
+Every field and option comes from the vocabularies, with the option's `rdfs:comment` shown beside it, so the author reads what a value means where they choose it.
+
+A layer's engine answers the questions its shapes cannot, in the same live validation: how a scheme contract resolves for every period and set of scopes, shown as a table the author can try a moment against, and how a condition decides every concept of its scheme and each test, shown as a coloured tree and a pass or fail per test. What waits on other work is shown and marked as under construction, with what it waits on, rather than left out. The studio's [README](../../apps/config-studio/README.md) describes the views.
 

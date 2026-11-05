@@ -26,7 +26,7 @@ Round 3 (AIR-2.2, AIR-4.1, AIR-3.3) stopped when machine R moved to CCS. The sta
 Not now:
 - Phase 5 waits on CCS C9 and the C17 handoff.
 - AIR-6.2 (claims) follows Phase 5.
-- S2 is paired with CCS C9b3, and S7 with NRS N10.
+- S2 is paired with CCS-9b.3, and S7 with NRS N10.
 - S1, S4 and S5 change substrate layers that CCS is still bumping. The lanes plan merges substrate branches after AIR-6.1 anyway.
 
 ## What changed under the briefs since 2026-09-30

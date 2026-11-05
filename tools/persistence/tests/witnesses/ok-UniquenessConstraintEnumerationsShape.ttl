@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A uniqueness constraint with a policy and a level of the spec conforms, which shows that the enumeration shape detects only a value outside it.
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:S a dal:ClassScope ; dal:targetClass ex:Thing .
+ex:U a dal:UniquenessConstraint ; dal:appliesTo ex:S ; dal:keyProperty ( ex:code ) ; dal:onViolation dal:Quarantine ; dal:minEnforcementLevel dal:Advisory .
