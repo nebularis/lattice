@@ -121,8 +121,10 @@ class ConfigStudioWorker:
         job = URIRef(job_iri)
         try:
             written = self._get(job_iri)
-        except GraphNotFound as error:
-            raise InvalidMessage(f"job graph {job_iri} not found") from error
+        except GraphNotFound:
+            # The author closed the view that waited for it, or the service gave up on it, and deleted the job. That is an outcome and not a fault.
+            LOG.info("%s is gone from the store, so there is nothing to run", job_iri)
+            return Handled("unknown", "unknown", "gone")
         graph = Graph()
         for triple in written.triples((job, None, None)):
             if triple[1] not in _WORKER_PREDICATES:

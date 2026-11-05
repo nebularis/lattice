@@ -521,20 +521,52 @@ test("the instrument view shows terms in their tier and regimes as state machine
   expect(fake.workspaces.get([...fake.workspaces.keys()][0])!.graphs.meaning).not.toContain("DryRun");
 });
 
-test("a validation still running when the author leaves the workspace and comes back is not submitted again", async ({ page }) => {
-  // RC5 of plan studio-worker-liveness. Today each mount of the workspace submits its validations afresh, and the old closures go on
-  // polling, so jobs stack behind a long one. WL-6 attaches the view to the job it has, and this test then loses its `fail`.
-  test.fail();
+test("leaving a workspace ends the waiting on its validations, and coming back leaves no more of them than before", async ({ page }) => {
+  // RC5 of plan studio-worker-liveness. A held validation never ends, as one behind a long job does not. Each mount of the workspace
+  // submits its validations, and the old mount's closures used to go on polling and leave their jobs, so they stacked.
   const fake = new FakeService();
   fake.hold.add("validate");
   const ws = await lendingWorkspace(page, fake);
-  const validations = () => fake.submitted.filter((j) => j.kind === "validate").length;
+  const open = () => [...fake.jobs.entries()].filter(([id, j]) => j.kind === "validate" && !fake.deletedJobs.includes(id)).length;
   await page.waitForTimeout(1500);
-  const first = validations();
+  const first = open();
   expect(first).toBeGreaterThan(0);
   await page.goto("/#/");
+  await page.waitForTimeout(500);
+  expect(open()).toBe(0);
   await page.goto(`/#/w/${ws}`);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.waitForTimeout(1500);
-  expect(validations()).toBe(first);
+  expect(open()).toBe(first);
+});
+
+test("a proposal by a language model that is running when the author leaves the workspace is picked up when they return", async ({ page }) => {
+  const fake = new FakeService();
+  fake.hold.add("propose:language-model");
+  fake.modelConfigured = true;
+  await builderWorkspace(page, fake);
+  const open = async () => {
+    await page.getByRole("button", { name: "Builder" }).click();
+    await page.getByRole("link", { name: /^Meaning/ }).click();
+    return page.getByRole("group", { name: "Propose" });
+  };
+  let bar = await open();
+  await bar.getByLabel("Proposer").selectOption({ label: "Language model" });
+  await bar.getByRole("button", { name: "Propose" }).click();
+  await expect(bar.getByRole("button", { name: "Propose" })).toBeDisabled();
+  const proposals = () => fake.submitted.filter((s) => s.kind === "propose").length;
+  expect(proposals()).toBe(1);
+
+  // The author leaves, and the workspace's views go. The proposal is the store's, and goes on.
+  await page.goto("/#/");
+  await page.getByRole("button", { name: /Contract builder|Open/ }).first().click().catch(() => undefined);
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  bar = await open();
+  await expect(bar.getByRole("button", { name: "Propose" })).toBeDisabled();
+  expect(proposals(), "the view submitted the proposal again").toBe(1);
+
+  // The proposal ends, and the view applies its proposals as if it had waited all along.
+  fake.hold.clear();
+  await expect(page.getByRole("status", { name: "Propose outcome" }).getByText("proposal added from language-model")).toBeVisible({ timeout: 15_000 });
 });

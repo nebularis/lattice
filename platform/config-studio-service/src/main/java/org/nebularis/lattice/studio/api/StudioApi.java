@@ -455,7 +455,7 @@ public final class StudioApi {
             }
             if (s.length == 3 && s[2].equals("jobs")) {
                 return switch (method) {
-                    case "GET" -> listJobs(ws);
+                    case "GET" -> listJobs(ws, "true".equals(query(req.query()).get("unfinished")));
                     case "POST" -> submitJob(req, ws);
                     default -> notAllowed("GET, POST");
                 };
@@ -1231,11 +1231,11 @@ public final class StudioApi {
         return ApiResponse.turtle(200, Turtle.write(answer));
     }
 
-    private ApiResponse listJobs(String id) {
+    private ApiResponse listJobs(String id, boolean unfinished) {
         if (load(id) == null) {
             return notFound();
         }
-        return ApiResponse.turtle(200, Turtle.write(store.compileJobs(Graphs.workspace(id))));
+        return ApiResponse.turtle(200, Turtle.write(unfinished ? store.unfinishedJobs(Graphs.workspace(id)) : store.compileJobs(Graphs.workspace(id))));
     }
 
     /**

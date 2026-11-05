@@ -350,6 +350,13 @@ def test_a_job_the_store_holds_as_running_is_marked_failed_and_not_run():
     assert handled.outcome.startswith("failed")
 
 
+def test_a_job_the_store_no_longer_holds_is_acknowledged_and_nothing_is_written():
+    store = FakeStore()
+    handled = ConfigStudioWorker(store, ROOT, _clock()).handle(f"urn:lattice:studio:job:{uuid.uuid4()}")
+    assert handled.outcome == "gone"
+    assert store.history == []
+
+
 def test_a_queued_job_is_run():
     store = FakeStore()
     iri = submit(store, "validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")

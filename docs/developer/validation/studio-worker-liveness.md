@@ -108,3 +108,22 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **Existing brokers.** The service and the worker declare the long queue when they start, as they do the others, so a broker that has none gets it. A `lattice.studio.jobs` that holds jobs from before keeps them, and the short worker runs them whatever their kind. A broker that has no worker on the long queue holds the long jobs, which WL-7 makes visible.
 
 **Not covered.** Docker Compose: the generated compose file has a service for the long worker (`tools/testing/studio_harness` unit test) but the run in containers was not made. `docker` has no daemon here.
+
+## WL-6: a view that attaches to its job
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL6-01 | a workspace with queued, running and finished jobs of several kinds / the unfinished listing is read / the queued and running ones with kind, target and start, and no finished one and no input | L3 | ± | pass |
+| WL6-02 | a wait on a job / its signal aborts / the wait ends with an AbortError within 300 ms and the job is read no more. A signal already aborted ends at once. A job that finishes is returned | L1 | ± | pass, 3 cases |
+| WL6-03 | a workspace whose validations never finish / the author leaves it / its jobs leave the store, and on return as many are open as before | L6 | + | pass |
+| WL6-04 | a proposal by a language model running when the author leaves the workspace / they return / the view shows it running, submits nothing, and applies its proposals when it ends | L6 | + | pass |
+| WL6-05 | adversarial: the attach disabled in the meaning view, and the abort disabled in the validation hook / the same two tests / each fails (the propose button is enabled again, and 2 validations are left open instead of 0) | L6 | − | probed 2026-11-05, restored |
+| WL6-06 | a job whose graph the store no longer holds / delivered to the worker / acknowledged with nothing written, and not sent to the dead-letter queue | L1 | − | pass |
+
+`platform/config-studio-service` `LanesTest`, `apps/config-studio/src/jobs.test.ts`, `apps/config-studio/e2e/studio.spec.ts` (22 cases with the two new) and `workers/tests/test_config_studio_worker.py`. The unit tests of the app are 118, and the browser suite on the fake service 22.
+
+**What attaches.** The views that start a job of minutes: the meaning view's proposals, the mapping view's proposal by a model, and the publication view. Each reads the workspace's unfinished jobs when it opens and waits for the one of its kind as for one it had just submitted. Validations are not attached to. A validation still queued when its view goes is deleted, and one that is running is deleted as well, since nobody reads its result. The worker then finds a queued one gone, which is no longer a dead letter but an acknowledgement (WL6-06). The writer refuses the result of a running one and logs a refusal.
+
+**The dead-letter noise the plan asked about.** Before this slice a deleted queued validation reached `lattice.studio.dead` as `job graph not found`, one message per validation the author's view dropped. It is now acknowledged and logged at info.
+
+**Not covered.** The compile view already reads the job it selected and the workspace's compile jobs from the store, and is unchanged. The publication view's attach is not driven by a browser test, since the fake service does not hold publish jobs. The mapping proposal's attach is the meaning view's, repeated, and has no test of its own.
