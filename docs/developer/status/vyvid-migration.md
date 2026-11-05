@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 to VM-2 built, ADR-A152 accepted, the binding trusted. VM-3 waits on the maintainer's word, with every other branch paused until the unit merges.
+**Status:** building 2026-11-05. VM-0 to VM-2 built, ADR-A152 accepted, the binding trusted. VM-3 building, with every other branch paused until the unit merges.
 
 ## Position
 
@@ -15,7 +15,7 @@
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
-| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | planned | VM-2 |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | planned | VM-3 |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | planned | VM-4 |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | planned | VM-5 |
