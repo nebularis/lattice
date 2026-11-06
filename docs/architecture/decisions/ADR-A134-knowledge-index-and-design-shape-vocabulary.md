@@ -150,7 +150,7 @@ No bias keeps both, so the maintainer chose to leave terms out unless they are a
 
 ## Addendum of 2026-11-05: implemented by Вивід
 
-**Status:** Proposed 2026-11-05.
+**Status:** Accepted 2026-11-06
 
 The index this record defines is built and asked by Вивід, `vyd`, from 2026-11-05 ([ADR-A152](ADR-A152-vyvid-adoption.md)). Nothing above changes in meaning. The registers with their headers as schema, the facets as a register, the claim as the first bold sentence, ranking by meaning after exact filters, the flags under a row, the gaps and the misses, and questions and slices shown only when asked for, are what Вивід does for any project, and `vyvid.toml` declares LATTICE's families to it. What moves is where. The store is written under Вивід's own index directory for the checkout rather than `.build/knowledge`, the facet register is answered by Вивід's packaged scheme, identical to `docs/developer/facets.md` row for row on 2026-11-05, and the triple-store findings and the query-writing standards answer from its `triple-stores` domain under its identifiers (ADR-A152 decision 7). The task names stay, `graph:ask`, `build:knowledge` and `check:identifiers`, each over `vyd` and each skipping with a note where it is missing (PRI-79). The code under `tools/knowledge/` goes once LATTICE's knowledge tests pass against Вивід's store (ADR-A152 decision 6), keeping the extractor for quanta and owners.
 

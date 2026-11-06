@@ -6,15 +6,15 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-06. Merged into `main` by squash on 2026-11-06. VM-1, VM-3 to VM-8 verified, VM-0 and VM-2 built and waiting for the maintainer, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** verified 2026-11-06. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-06, building 2026-11-06, built 2026-11-05 |  |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05 |  |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: the maintainer verified VM-0 and VM-2, and accepted PRI-79 and the addenda of 2026-11-05 on ADR-A134 and ADR-A151.
 - 2026-11-06: the maintainer verified VM-7 and VM-8, accepting that the hook installing a newer `vyd` when a branch moves the pin is proven when that first happens. VM-0's Validation Pack written and its writing rules checked over whole files, 0 findings. VM-2's Q01 to Q03 asked again at `v0.2.14`, the same top five in the same order, and its Windows proof marked as pending the maintainer.
 - 2026-11-06: VM-0 and VM-2 reopened at the maintainer's word, for VM-0's Validation Pack and the check of its writing rules, and for VM-2's by-hand questions.
 - 2026-11-06: `mise run check:low-memory` passed on `main` at `2c4e5537` in 446 seconds, with `mem_check` never under 1.9 GiB against the guard's stop at 1 GiB, so the stop stays where it is. STD-321 ratified.

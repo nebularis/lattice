@@ -42,6 +42,6 @@ Provenance of the addendum: after the realign branch's merge of `main` the board
 
 ## Addendum, 2026-11-05
 
-**Status:** Proposed 2026-11-05.
+**Status:** Accepted 2026-11-06
 
 The board this record defines is read and written by Вивід, `vyd board`, `vyd work` and `vyd here`, from 2026-11-05 ([ADR-A152](ADR-A152-vyvid-adoption.md)). The board's shape, the slice grammar, the roll-up of decision 10, the `work` hook check and the generated regions of INDEX.md and ROADMAP.md stand as above, declared to Вивід by the work settings in `vyvid.toml`. The task names stay, `work:board`, `build:work`, `build:roadmap`, `work:here` and the rest, each over `vyd` once the `vyvid-migration` unit moves them, and each skipping with a note where `vyd` is missing (PRI-79). LATTICE's own board tools go once `vyd board` answers the same across every branch, the comparison recorded in that unit's status record.
