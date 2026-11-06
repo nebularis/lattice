@@ -332,16 +332,7 @@ Claude Code users elsewhere install the skills with `/plugin marketplace add neb
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the
 skills already load, or each appears twice.
 
-**Cloud sessions.** A Claude Code cloud environment prepares itself with
-[`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh). Paste the two lines from its header
-into the environment's **Setup script** field, and set its network access to **Custom**, with the
-default list of package managers included, plus `mise.jdx.dev` and `www.cl.cam.ac.uk`. It installs
-mise, Java 25 from Ubuntu's archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2, with its
-prebuilt HOL heap, from the Cambridge mirror. It links those and the image's Node and Maven into mise,
-and runs `mise run bootstrap`. GitHub serves a cloud session only its own repositories, so nothing is
-fetched from GitHub. The script always exits 0, as a cloud setup script must, and its last lines
-report how long setup took, which must stay under about five minutes for the environment to be
-cached.
+**Cloud sessions.** A Claude Code cloud environment prepares itself with [`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh). Paste the lines from its header into the environment's **Setup script** field, and set its network access to **Custom**, with the default list of package managers included, plus the hosts its header lists. The pasted lines write the user configuration, naming Вивід's domains and trusting this repository's committed `vyvid.toml` through `trusted_repositories`, since no terminal exists there for `vyd trust`. The script then installs mise, Java 25 from Ubuntu's archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2 from its own release archive. It links those and the image's Node and Maven into mise, installs `vyd` and clones its domains, and runs `mise run bootstrap`, whose knowledge step embeds the index, so the model and the vectors are in the snapshot. A later session starts from that snapshot with a fresh checkout, and a hook runs `bootstrap:vyvid` there in case a branch pins a newer `vyd`. The script always exits 0, as a cloud setup script must, and its last lines report how long setup took, which must stay under about five minutes for the environment to be cached.
 
 
 ## 9. Several checkouts side by side

@@ -3,6 +3,7 @@ defines, bootstrap:vyvid decides rightly, and `vyd context` names LATTICE where 
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -151,3 +152,42 @@ def test_vm3_05_the_decision_pattern_matches_every_spelling_the_corpus_uses_and_
         assert pattern.fullmatch(spelling), spelling
     for text in ("ADR", "an ADR for", "ADRs", "ADR-", "PDD-01", "TD-34"):
         assert not pattern.fullmatch(text), text
+
+
+SETUP = ROOT / "tools/claude-cloud-setup.sh"
+
+
+def pasted_lines() -> str:
+    """The lines the setup script's header says to paste, without the leading comment."""
+    lines = SETUP.read_text(encoding="utf-8").split("\n")
+    start = next(i for i, line in enumerate(lines) if "mkdir -p ~/.config/vyvid" in line)
+    end = next(i for i, line in enumerate(lines) if line.startswith("#") and "bash \"$s\"" in line)
+    return "\n".join(line[1:].strip() for line in lines[start:end + 1])
+
+
+def test_vm7_01_the_pasted_lines_trust_this_repository_and_name_its_domains(tmp_path):
+    config = "\n".join(line for line in pasted_lines().split("\n") if not line.startswith(("s=$(", "[ -n")))
+    subprocess.run(["bash", "-c", config], env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"}, check=True)
+    written = tomllib.loads((tmp_path / ".config/vyvid/config.toml").read_text(encoding="utf-8"))
+    binding = tomllib.loads((ROOT / "vyvid.toml").read_text(encoding="utf-8"))
+    assert written["framework"]["trusted_repositories"] == ["github.com/nebularis/lattice"]
+    assert [d["name"] for d in written["domains"]] == binding["project"]["domains"]
+    assert {d["trust"] for d in written["domains"]} == {"own"}
+
+
+def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
+    text = SETUP.read_text(encoding="utf-8")
+    assert text.index('step "vyvid" install_vyvid') < text.index('step "bootstrap" mise run bootstrap')
+    assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
+
+
+@pytest.mark.parametrize("remote, runs", [("", False), ("false", False), ("true", True)])
+def test_vm7_03_the_session_hook_runs_in_a_cloud_session_only(tmp_path, remote, runs):
+    settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
+    command = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    assert "bootstrap:vyvid" in command
+    fake = tmp_path / "mise"
+    fake.write_text(f"#!/bin/sh\ntouch {tmp_path}/ran\n", encoding="utf-8")
+    fake.chmod(0o755)
+    done = subprocess.run(["bash", "-c", command], env={"CLAUDE_CODE_REMOTE": remote, "PATH": f"{tmp_path}:/usr/bin:/bin"})
+    assert done.returncode == 0 and (tmp_path / "ran").exists() is runs

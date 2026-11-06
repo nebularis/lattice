@@ -33,6 +33,12 @@ LATTICE maintains about 500 lines for its index and board, the extractor for qua
 
 **Narrows decision 2.** `bootstrap:vyvid` replaces an installed `vyd` at another version only where the tool's `uv-receipt.toml` under uv's tool directory shows a git install. An editable or local-directory install, one from pip or pipx with no receipt, or one whose receipt cannot be read is left alone whatever its version, with the installed and pinned versions and the command that moves to the pin printed, exit zero. It still installs the pinned tag where `vyd` is absent, and reads no receipt then. Decision 2 compared versions alone, and on 2026-11-06 that replaced a maintainer's editable install of Вивід with the pinned tag, a loss of their working copy's binding that no message announced.
 
+## Addendum of 2026-11-06: a cloud session with no terminal
+
+**Status:** Proposed
+
+**Adds to decision 2's trust.** A cloud environment's pasted setup script writes the user configuration, naming the domains with `trust = "own"` and this repository in Вивід's `trusted_repositories`, so a committed `vyvid.toml` is trusted on any branch there with no `vyd trust`. We accept that a hostile branch is then trusted, since its hooks, instructions and skills reach the agent in that session anyway. A hash in the script would go stale on every change to `vyvid.toml`. The grant is pasted rather than held in `tools/claude-cloud-setup.sh`, so the repository does not vouch for itself. A person's machine is unchanged and still needs `vyd trust`.
+
 ## Provenance
 
 The sketch [vyvid-migration](../../developer/sketches/vyvid-migration.md) holds the facts, the table of what moves and what stays, and the answered questions VM-Q1 to VM-Q6. The plan [vyvid-migration](../../developer/plans/vyvid-migration.md) holds the decisions and the slices VM-1 to VM-6. Вивід's own plan names the switch as its slice VYD-2b.

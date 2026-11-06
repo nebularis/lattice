@@ -2,35 +2,53 @@
 #
 # Environment setup for Claude Code cloud sessions working on LATTICE.
 #
-# Paste this into the cloud environment's "Setup script" field, so that it runs
-# the copy in whichever clone the session has:
+# Paste this into the cloud environment's "Setup script" field. It states what the
+# person setting the environment up trusts, then runs the copy of this script in
+# whichever clone the session has:
 #
+#   mkdir -p ~/.config/vyvid
+#   { printf '[framework]\nkb = "~/vyvid-kb"\nglue = "stop"\ntrusted_repositories = ["github.com/nebularis/lattice"]\n'
+#     for d in lifecycle tools python triple-stores rdf-modelling; do
+#       printf '\n[[domains]]\nname = "%s"\nremote = "https://github.com/nebularis/vyvid-%s.git"\ntrust = "own"\ngit = { pull = "manual", commit = "manual", push = "manual" }\n' "$d" "$d"
+#     done; } > ~/.config/vyvid/config.toml
 #   s=$(ls -d /home/user/*/tools/claude-cloud-setup.sh "$PWD"/tools/claude-cloud-setup.sh 2>/dev/null | head -1)
 #   [ -n "$s" ] && bash "$s" || true
+#
+# The grant is pasted rather than kept here so the repository does not vouch for
+# itself. No terminal exists for `vyd trust`, and a hash would go stale on any
+# branch that changes vyvid.toml (ADR-A152).
 #
 # Network access: Custom, with "Also include default list of common package
 # managers" ticked, plus these hosts:
 #
 #   mise.jdx.dev        mise itself
 #   isabelle.in.tum.de  Isabelle, from the pinned release's own archive
+#   huggingface.co      the knowledge index's embedding model
+#   *.cdn.hf.co         where huggingface.co redirects for the model. This script
+#                       and a session are sent to different hosts, so a wildcard
 #
 # Rules the cloud imposes (code.claude.com/docs/en/cloud-environments):
 #   - a setup script that exits non-zero stops the session from starting, so
 #     this script always exits 0 and reports what failed instead
 #   - a script that takes longer than about five minutes is not cached, and
 #     then runs again for every new session
-#   - GitHub goes through a proxy that serves only the session's own
-#     repositories, so nothing here downloads from GitHub
+#   - a later session skips this script and starts from its snapshot, with a
+#     fresh checkout that can be newer than the one seen here
+#   - GitHub goes through its own proxy, whatever the list above says. A public
+#     repository can be cloned, and an archive of one not attached to the session
+#     is refused, so Вивід and its domains come by git
 #
 # Sources: mise from mise.jdx.dev, Java 25 from Ubuntu's archive, Python 3.14
 # from the deadsnakes PPA, Node 22 and Maven from the image, Isabelle2025-2
-# from its own release archive. Erlang/Elixir (check:spc, which runs no tests yet,
+# from its own release archive, Вивід and its domains from GitHub by git, its
+# embedding model from huggingface.co. Erlang/Elixir (check:spc, which runs no tests yet,
 # TD-22) and Playwright's browsers are left out.
 #
-# The container has no DNS of its own. Outbound HTTPS goes through the agent
-# proxy named in HTTPS_PROXY, which accepts CONNECT only. Section 0 points pip,
-# Yarn, Maven and apt at it. The proxy's port can change when a session
-# resumes, so a shell that was set up earlier can refresh itself with
+# A session's outbound HTTPS goes through the agent proxy named in HTTPS_PROXY,
+# which accepts CONNECT only. Section 0 points pip, Yarn, Maven and apt at it.
+# While this script runs in setup HTTPS_PROXY is unset and names resolve only for
+# allowed hosts, so section 0 does nothing then. The proxy's port can change when
+# a session resumes, so a shell that was set up earlier can refresh itself with
 #
 #   eval "$(bash tools/claude-cloud-setup.sh --proxy-only)"
 
@@ -173,9 +191,26 @@ for rc in /etc/profile.d/mise.sh "$HOME/.bashrc"; do
   grep -qF 'mise/shims' "$rc" 2>/dev/null || echo 'export PATH="$HOME/.local/share/mise/shims:$PATH"' >> "$rc"
 done
 
-### 5. Repository dependencies ################################################
+### 5. Вивід and its domains ##################################################
+# Before bootstrap, whose knowledge step builds the index and needs the domains.
+# The domains and their trust are in ~/.config/vyvid/config.toml, which the pasted
+# lines write. Without it the clone has nothing to do, and the index is built from
+# the project alone.
+
+export PATH="$HOME/.local/bin:$PATH"
+
+install_vyvid() {
+  mise run bootstrap:vyvid &&
+    vyd kb clone &&
+    vyd install --client claude-code
+}
+step "vyvid" install_vyvid
+
+### 6. Repository dependencies ################################################
 # Cached with the toolchains while setup stays under about five minutes. If
-# the summary shows it going over, move this step to a SessionStart hook.
+# the summary shows it going over, move this step to a SessionStart hook. The
+# knowledge step embeds the index, about a minute, which spares every later
+# session doing it. A session whose checkout is newer rebuilds only what changed.
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 step "bootstrap" mise run bootstrap
@@ -192,6 +227,8 @@ mise exec -- python --version 2>&1 || true
 mise exec -- node --version 2>&1 || true
 mise exec -- mvn --version 2>&1 | head -1 || true
 isabelle version 2>&1 || true
+vyd --version 2>&1 || true
+vyd config 2>&1 | grep -E '^(configuration trust|trusted repositories|project lattice)' || true
 
 log "Setup took ${SECONDS}s (cached only if under about 300s). Logs: $LOGS"
 if [ "${#FAILED_STEPS[@]}" -gt 0 ]; then
