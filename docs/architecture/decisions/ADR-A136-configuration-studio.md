@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day. A third, on deploying the writers apart on a super stream, is Proposed. A fourth, on the worker staying alive through a long job, was accepted 2026-11-06
+**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day. A third, on deploying the writers apart on a super stream, a fourth, on the worker staying alive through a long job, and the addendum of 2026-11-06 were accepted 2026-11-06
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -75,7 +75,7 @@ The maintainer decided the design on 2026-10-28, after reopening how a job's sta
 **Consequences.** A save costs a broker round trip more than it did. TDB2 applies one update at a time per dataset (TSD-62), so more writers do not write faster on one dataset, and more throughput needs a dataset per group of partitions. A delete leaves space TDB2 reclaims only by compaction. Any client of the broker can send a command, so the broker is as trusted as the store.
 
 
-## Amendment, 2026-10-28: the store writers deployed apart, on a super stream (Proposed)
+## Amendment, 2026-10-28: the store writers deployed apart, on a super stream (Accepted 2026-11-06)
 
 The maintainer decided the design on 2026-10-28, reopening where the writers of the second amendment run. It changes that amendment's decisions 1 and 2, and the others stand.
 
@@ -104,6 +104,6 @@ A job of minutes, above all a proposal by a language model, ended the worker: pi
 
 **Consequences.** A broker restart fails the jobs in flight, and the author submits them again. A second worker on one queue can write `Failed` for a job the first still runs, and the first's result replaces it, so a short window can leave a succeeded job reading `Failed`. A broker without a worker on the long queue holds long jobs, and the studio says so. An existing broker gets the new queue when the service or a worker next connects, and the jobs queue keeps what it held, for the short worker to run.
 
-## Addendum, 2026-11-06: a late status does not replace a success
+## Addendum, 2026-11-06: a late status does not replace a success (Accepted 2026-11-06)
 
 With two workers on one queue, a lost connection redelivers a job to the idle worker while the first still runs it, and decision 2 of the amendment of 2026-11-05 has the idle worker write `Failed`. The maintainer chose on 2026-11-06 that the writer drops an update that would change a job held as `Succeeded` to another status, so a job that succeeded keeps its status and results whichever write lands last. A `Succeeded` still replaces a `Failed`, so an author can read `Failed` until the first worker finishes. Jobs are coordination data outside the persistence profiles, so this is a check in the writer and no change to the persistence compiler.
