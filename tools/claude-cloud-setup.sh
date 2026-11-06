@@ -132,9 +132,11 @@ configure_proxy
 if [ "${1:-}" = "--finish-deferred" ]; then
   export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   failed=""
-  while IFS= read -r task; do
-    mise run "$task" || failed="$failed$task"$'\n'
-  done < "$DEFERRED"
+  # The list is read whole first and a task gets no standard input, since a task
+  # that read the file through the loop's would eat the names after its own.
+  for task in $(cat "$DEFERRED"); do
+    mise run "$task" < /dev/null || failed="$failed$task"$'\n'
+  done
   if [ -n "$failed" ]; then printf '%s' "$failed" > "$DEFERRED"; else rm -f "$DEFERRED"; fi
   exit 0
 fi

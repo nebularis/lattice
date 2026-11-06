@@ -19,6 +19,7 @@ A slow network or a larger bootstrap must not push a cloud environment's setup p
 | test_vm8_02 | two tasks deferred / a session starts / it says so, both run in the background and the file goes | L1 | the rest is finished | assertion | positive |
 | test_vm8_03 | a deferred task that fails / a session starts / it stays named | L1 | nothing lost | assertion | negative |
 | test_vm8_04 | a step's limit of 150 / the clock at 10, 149, 150 and 400 / it starts below the limit and is deferred at or above it | L1 | the limit | assertion | positive and negative |
+| test_vm8_06 | a task that reads all its standard input / the deferred list is finished / every task still runs and the file goes | L1 | nothing lost | assertion | negative |
 | test_vm8_05 | `mise.toml` / read / the index needs only pip and Вивід, and the dependencies and the index together are bootstrap | L1 | the split | assertion | positive |
 
 `test_vm7_03` was rewritten here, since the hook now runs the script's `--session` rather than `bootstrap:vyvid` itself, and it still proves the same two things.

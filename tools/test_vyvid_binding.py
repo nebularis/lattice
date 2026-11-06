@@ -225,6 +225,16 @@ def test_vm8_02_a_session_finishes_what_setup_deferred_and_says_so(tmp_path):
     assert not (tmp_path / ".lattice-setup-deferred").exists()
 
 
+def test_vm8_06_a_task_that_reads_standard_input_cannot_eat_the_deferred_list(tmp_path):
+    env = session_env(tmp_path)
+    fake = Path(env["PATH"].split(":")[0]) / "mise"
+    fake.write_text(f"#!/bin/sh\ncat > /dev/null\necho \"$2\" >> {tmp_path}/ran\n", encoding="utf-8")
+    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:testing-oxigraph\nbootstrap:frontend\n", encoding="utf-8")
+    subprocess.run(["bash", str(SETUP), "--finish-deferred"], env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+    assert ran(tmp_path) == ["bootstrap:testing-oxigraph", "bootstrap:frontend"]
+    assert not (tmp_path / ".lattice-setup-deferred").exists()
+
+
 def test_vm8_03_a_deferred_task_that_fails_stays_deferred(tmp_path):
     (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:dependencies\n", encoding="utf-8")
     subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path, mise_exit=1), capture_output=True, text=True)
