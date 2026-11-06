@@ -137,7 +137,7 @@ class ProcessStudio(Studio):
         self._wait_workers()
 
     def _worker_env(self, env: Dict[str, str]) -> Dict[str, str]:
-        """The worker's environment. The shell's `LATTICE_PROPOSER_*` settings are blanked, so a developer's key never reaches a run and spends on a language model, and a test sets its own through `env`. With `LATTICE_STUDIO_HARNESS_WORKER_ROOT` set, that checkout's worker and tool packages come first on `PYTHONPATH` and it is the worker's repository root."""
+        """The worker's environment. The shell's `LATTICE_PROPOSER_*` settings are blanked, so a developer's key never reaches a run and spends on a language model, and a test sets its own through `env` (STD-320). With `LATTICE_STUDIO_HARNESS_WORKER_ROOT` set, that checkout's worker and tool packages come first on `PYTHONPATH` and it is the worker's repository root."""
         env = {**{name: "" for name in os.environ if name.startswith("LATTICE_PROPOSER_")}, **env}
         other = _build.worker_root(self.root)
         if other is None:

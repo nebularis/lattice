@@ -13,15 +13,25 @@ uv = "0.13"
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 # Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
-VYVID_VERSION = "0.2.11"
+VYVID_VERSION = "0.2.13"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets, and the git hooks"
 depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge", "bootstrap:vyvid"]
 
+# A cloud environment's setup has about five minutes, so its script takes these apart (tools/claude-cloud-setup.sh).
+[tasks."bootstrap:index-packages"]
+description = "Install Вивід and the two packages the knowledge index's extractor imports, so build:knowledge can run while bootstrap:dependencies does, for a cloud environment's setup (plan vyvid-migration, VM-8)"
+depends = ["bootstrap:pip", "bootstrap:vyvid"]
+run = "python -m pip install -c requirements-lock.txt pyoxigraph pyyaml"
+
+[tasks."bootstrap:dependencies"]
+description = "Install what bootstrap installs other than Вивід and the index, in parallel, for a cloud environment's setup (plan vyvid-migration, VM-8)"
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks"]
+
 [tasks."bootstrap:vyvid"]
-description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
+description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, replacing an installed vyd at another version only where its uv receipt shows a git install, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
 run = "python tools/bootstrap_vyvid.py"
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
@@ -153,7 +163,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding", "check:skills"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "check:tutorial-snippets", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding", "check:skills"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -460,6 +470,10 @@ env = { MORK_SPARQL_ENGINE = "jena" }
 [tasks."check:formal-freshness"]
 description = "Check every tools/proofs/<layer>/Kernel.thy and tools/reference/<layer>/ law-coverage still matches its layer's literate README (formal-methods epic, epic principle E1)"
 run = "python tools/check_formal_freshness.py"
+
+[tasks."check:tutorial-snippets"]
+description = "Check every Turtle excerpt in the tutorial still matches its source file, and every repository link names a path that exists (plan lattice-tutorial, TUT-D5, TUT-Q1)"
+run = "python tools/tutorial_snippets.py && python -m pytest tools/test_tutorial_snippets.py -q"
 
 [tasks."build:agent-guidance"]
 description = "Write AGENTS.md's Where things are table from the repository catalogue, then .github/copilot-instructions.md from AGENTS.md (ADR-A117, ADR-A121)"
@@ -880,12 +894,13 @@ run = '$ErrorActionPreference = "SilentlyContinue"; Remove-Item -Recurse -Force 
 [tasks."bootstrap:jekyll"]
 description = "Install Ruby/Bundler/Jekyll locally for docs/ (GitHub Pages). Not part of the default bootstrap task — run explicitly when working on docs content."
 tools = { ruby = "3.4" }
-run = """
-cd docs
-gem install bundler -v 2.6.2 --conservative
-bundle config set --local path 'vendor/bundle'
-bundle install
-"""
+dir = "{{config_root}}/docs"
+# One command per entry. A multi-line run string runs only its first line under cmd.exe on Windows.
+run = [
+  "gem install bundler -v 2.6.2 --conservative",
+  "bundle config set --local path vendor/bundle",
+  "bundle install",
+]
 
 [tasks."serve:jekyll"]
 description = "Serve docs/ locally with Jekyll (run bootstrap:jekyll first)"

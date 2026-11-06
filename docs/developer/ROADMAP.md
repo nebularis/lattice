@@ -47,6 +47,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
 | [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
@@ -67,7 +68,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 9 built | fix/studio-worker-heartbeat |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 5 verified, 4 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-06 | VM-0 | 5 verified, 4 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -304,6 +305,26 @@ gantt
     OD-RC3 roots AGENTS.md table :odrc3, 2026-10-19, 2026-10-20
     OD-REL1 first release 0.18.0 :odrel1, 2026-10-20, 2026-10-21
     OD-VER1 one release for the substrate :odver1, 2026-10-20, 2026-10-21
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title Lattice-tutorial
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section lattice-tutorial
+    TUT-0 the page its layout :tut0, 2026-10-14, 2026-10-15
+    TUT-1 chapters 0 to 3 :tut1, 2026-10-15, 2026-10-16
+    TUT-10 the guide modules 12 :tut10, 2026-11-06, 2026-11-07
+    TUT-2 chapters 4 to 6 :tut2, 2026-10-15, 2026-10-16
+    TUT-3 chapters 7 to 9 :tut3, 2026-10-16, 2026-10-17
+    TUT-4 chapters 10 to 13 :tut4, 2026-10-16, 2026-10-17
+    TUT-5 the tutorial refreshed onto :tut5, 2026-11-05, 2026-11-06
+    TUT-6 the Configuration Studio :active, tut6, 2026-11-06, 2026-11-07
+    TUT-7 the guide modules 1 to 4 :tut7, 2026-11-06, 2026-11-07
+    TUT-8 the guide modules 5 :tut8, 2026-11-06, 2026-11-07
+    TUT-9 the guide modules 7 to 10 :tut9, 2026-11-06, 2026-11-07
 ```
 
 ```mermaid
@@ -801,12 +822,10 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8 |
+| `fix/studio-worker-heartbeat` | 2026-11-06 | 21 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
-| `tutorial/guide` | 2026-10-16 | 5 | pushed | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
-| `tutorial/studio-guide` | 2026-11-06 | 11 | pushed | TUT-0, TUT-1, TUT-2, TUT-3, TUT-4, TUT-5, TUT-6 |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
@@ -856,7 +875,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 101 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 102 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -921,20 +940,23 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 | PDD-17 | How the persistence compiler's default graph naming should answer Oxigraph reading every graph for the named-graph sweep. |
 | PDD-18 | How a proposing agent, and a mapping, reach reference data the applied layers hold as `skos:Concept`s, such as an activity, a peril or a line of business. |
 | PDD-19 | Whether generated code from the proofs becomes the evaluator itself, on several platforms, which PRI-47 and ADR-A-FM3 refuse as they stand. |
+| PDD-20 | Where the documentation site keeps images, such as the Configuration Studio guide's screenshots. |
+| PDD-21 | Whether the Configuration Studio guide's worked sample, a loan feed in JSON and XML mapped into the lending baseline, joins the studio's samples. |
 
 <!-- END GENERATED work-board-decisions -->
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06.
 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, accept or amend the Proposed amendment to ADR-A136, and note that the studio's stack now starts a second worker for the long queue.
-2. **Every other paused branch merges `main` in** before any other work, by the [review request's](review/vyvid-migration-review.md) steps for a paused branch.
+2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work. VM-7 and VM-8 need a session on the cloud environment to prove them, and a decision on the addendum of 2026-11-06 on ADR-A152 about a session with no terminal.
 3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 4. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
 7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
+8. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 
 ## 11. Completed units
 

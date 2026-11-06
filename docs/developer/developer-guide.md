@@ -249,6 +249,7 @@ ML_OPTIONS="--maxheap 600M"
 | `literate_extract.py` | README ⇄ generated-artefact drift (§3) | see §3 |
 | `full_sweep.py` | Runs every check an ontology change needs, one line each, failures in red, logs in `.build/full-sweep`. Uses this checkout's tool packages, and compares versions with `main` | `mise run check:full-sweep`, or `-- --base-ref REF` |
 | `check_formal_freshness.py` | Formal artefact ⇄ README drift (§4) | `mise run check:formal-freshness` |
+| `tutorial_snippets.py` | Every Turtle excerpt in the tutorial (`docs/_includes/tutorial/`) still matches its source file, and every link to a repository file names a path that exists (`lattice-tutorial`) | `mise run check:tutorial-snippets` |
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
 | `ontology_releases.py` | Release rows exist for every version, tags are named correctly | `mise run build:ontology-releases` / `check` |
@@ -332,16 +333,7 @@ Claude Code users elsewhere install the skills with `/plugin marketplace add neb
 `/plugin install lattice@nebularis`. Do not install the plugin inside this repository, where the
 skills already load, or each appears twice.
 
-**Cloud sessions.** A Claude Code cloud environment prepares itself with
-[`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh). Paste the two lines from its header
-into the environment's **Setup script** field, and set its network access to **Custom**, with the
-default list of package managers included, plus `mise.jdx.dev` and `www.cl.cam.ac.uk`. It installs
-mise, Java 25 from Ubuntu's archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2, with its
-prebuilt HOL heap, from the Cambridge mirror. It links those and the image's Node and Maven into mise,
-and runs `mise run bootstrap`. GitHub serves a cloud session only its own repositories, so nothing is
-fetched from GitHub. The script always exits 0, as a cloud setup script must, and its last lines
-report how long setup took, which must stay under about five minutes for the environment to be
-cached.
+**Cloud sessions.** A Claude Code cloud environment prepares itself with [`tools/claude-cloud-setup.sh`](../../tools/claude-cloud-setup.sh). Paste the lines from its header into the environment's **Setup script** field, and set its network access to **Custom**, with the default list of package managers included, plus the hosts its header lists. The pasted lines write the user configuration, naming Вивід's domains and trusting this repository's committed `vyvid.toml` through `trusted_repositories`, since no terminal exists there for `vyd trust`. The script then installs mise, Java 25 from Ubuntu's archive, Python 3.14 from the deadsnakes PPA and Isabelle2025-2 from its own release archive. It links those and the image's Node and Maven into mise, installs `vyd` and clones its domains, and builds the index with the rest of bootstrap running beside it, so the model and the vectors are in the snapshot. Setup past about five minutes is not cached, so a step starts only while there is time, and one that did not start is named in `~/.lattice-setup-deferred`. A later session starts from the snapshot with a fresh checkout, and its hook runs `bootstrap:vyvid` in case a branch pins a newer `vyd`, then installs anything deferred in the background. The script always exits 0, as a cloud setup script must, and its last lines report how long setup took and what was left for the session.
 
 
 ## 9. Several checkouts side by side

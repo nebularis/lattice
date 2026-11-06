@@ -6,19 +6,21 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-05. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
+**Status:** built 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
 
 ## Position
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
 | VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
-| VM-1 | the binding, `bootstrap:vyvid`, the comparison | built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
 | VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | built 2026-11-06, building 2026-11-06 |  |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 
 ## Next action
 
@@ -46,6 +48,17 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-8 built again. Isabelle is waited for at the end of setup.
+- 2026-11-06: VM-8 reopened. A snapshot's setup reached the dependencies at 156 seconds against a limit of 150, having waited on Isabelle, which no later step needs.
+- 2026-11-06: VM-8 built again. The dependencies run beside the index, and `bootstrap:testing-oxigraph` left setup, since `bootstrap:python` installs that package. The earlier entry's reading of the corrupted file was wrong. A test wrote the file while a real deferred run was reading it, and the read went on at byte 23 of the new text, which is `aph`. Reading the list whole first still prevents that.
+- 2026-11-06: VM-8 reopened. The snapshot's setup reached the dependencies at 154 seconds against a limit of 150, so a snapshot held none of them.
+- 2026-11-06: VM-8 built again. The loop read the deferred list on the standard input every task inherited, so the list is now read whole first and a task gets none. A fake task that reads its standard input failed before this and passes now. That this was the session's cause is the likeliest reading, since a real task's read was not observed.
+- 2026-11-06: VM-8 reopened. A session's background run left `~/.lattice-setup-deferred` holding the tail of a task's name.
+- 2026-11-06: VM-8 built on `main`. The index is built first with two packages, the rest of bootstrap starts only before a limit, and the session's hook finishes what did not start. The maintainer chose this over a short bootstrap with the rest left to an initial prompt, which would cost every session the installs and rely on the prompt. The second session's reading of the snapshot's own setup time is still due.
+- 2026-11-06: VM-8 begun on `main` at the maintainer's word, since a first session's setup took about 3 minutes 36 seconds against a limit of about five.
+- 2026-11-06: VM-7 built on `main`. Pinned `v0.2.13`. The setup script installs `vyd` and clones its domains before `bootstrap`, its header carries the pasted lines and the new hosts, and a SessionStart hook runs `bootstrap:vyvid` in cloud sessions only. Measured on another environment, a setup script is sent to a different model download host from a session, hence `*.cdn.hf.co`. The script has not yet run on the LATTICE environment, which the maintainer sets up from it.
+- 2026-11-06: VM-7 begun on `main` at the maintainer's word, for this slice only, so cloud sessions get Вивід's domains, trust and index.
+- 2026-11-06: VM-1 reopened on `main` after the squash. `bootstrap:vyvid` had written the maintainer's editable install over with the pinned tag, since `decide` compared versions alone. The script now replaces an installed `vyd` only where the tool's `uv-receipt.toml` shows a git install, leaving an editable, directory, pip or receiptless install alone with the command that moves to the pin, and still installs where `vyd` is absent. Verified the same day, `check:vyvid-binding` fourteen passed and `main` exercised with a fake `uv`.
 - 2026-11-04: the sketch, with Вивід's facts at 0.1.0, the table of what moves, five slices and VM-Q1 to VM-Q6, committed on `vyvid-migration` from `main`.
 - 2026-11-05: `main` merged into the branch. VM-Q1 to VM-Q6 answered by the maintainer through Вивід's side, with the changes since the first draft, skills composed and committed rather than cut, a reminder hook, generated regions honoured, the board in Вивід, Windows proven after the switch. A handoff patch of 35 files with eleven coverage maps received and found to apply cleanly. The sketch rewritten against Вивід 0.2.1, the plan written with twelve decisions and six slices, and this record opened. VM-0 built.
 - 2026-11-05: VM-1 begun. Вивід's side answered three points and raised two more, folded into the plan as decisions 13 to 15 and the revised 9 to 11. The pin is `v0.2.2`, released that day with the exit code of `vyd check skills` fixed. The patch's binding files applied, `vyvid.toml`, the reminder hook's settings for Claude Code and Copilot, and LATTICE's additions under `.vyvid/`. `uv` and `VYVID_VERSION` pinned in `mise.toml`, `bootstrap:vyvid` written as `tools/bootstrap_vyvid.py` and wired into `bootstrap`, `check:vyvid-binding` with eight tests. `facets.md` copied to `notes/facets-register-2026-11-05.md`. ADR-A152 drafted Proposed, since `vyvid.toml` and `.vyvid/` sit at the root. Paused at trust point 1.

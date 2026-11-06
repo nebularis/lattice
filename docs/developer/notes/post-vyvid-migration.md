@@ -297,7 +297,7 @@ The wrapper keeps the promise of PRI-79, that an absent tool skips and never blo
 | Task | Runs | Purpose |
 |---|---|---|
 | `mise run bootstrap` | `bootstrap:vyvid`, `bootstrap:hooks` and the rest | sets up a checkout |
-| `mise run bootstrap:vyvid` | `tools/bootstrap_vyvid.py` | installs `vyd` as a `uv` tool at `VYVID_VERSION` in `mise.toml`, and does nothing where `vyd` already reports that version |
+| `mise run bootstrap:vyvid` | `tools/bootstrap_vyvid.py` | installs `vyd` as a `uv` tool at `VYVID_VERSION` in `mise.toml`, does nothing where `vyd` already reports that version, and replaces an installed `vyd` at another version only where its `uv` receipt shows a git install, printing the command that moves to the pin for any other |
 | `mise run bootstrap:hooks` | `tools/hooks.py install --bootstrap` | installs the git hooks in the shared hooks folder, which covers every worktree |
 | `mise run vyd -- <args>` | `vyd <args>` | passes anything through |
 | `mise run graph:ask -- <args>` | `vyd <args>` | `find`, `read`, `exists`, `misses`, `gap`, `close` |
