@@ -1,9 +1,12 @@
-import time
-import sys
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
 """mem_check's choice of worker count (ADR-A125)."""
+
+import subprocess
+import sys
+import time
+from types import SimpleNamespace
 
 import mem_check
 from mem_check import GIB, MIB
@@ -72,3 +75,31 @@ def test_the_guard_leaves_a_limit_the_person_set(capfd, monkeypatch):
     monkeypatch.setenv("MEM_CHECK_AVAILABLE_MIB", "8000")
     assert guard.run([sys.executable, "-c", SHOW_LIMITS], poll=0.05) == 0
     assert "3 " in capfd.readouterr().out
+
+
+def test_available_percent_reads_the_figure_of_each_system(monkeypatch, tmp_path):
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="57\n"))
+    monkeypatch.setattr(sys, "platform", "darwin")
+    assert mem_check.available_percent() == 57
+    meminfo = tmp_path / "meminfo"
+    meminfo.write_text("MemTotal: 8000 kB\nMemFree: 100 kB\nMemAvailable: 2800 kB\n", encoding="ascii")
+    assert mem_check._percent_linux(str(meminfo)) == 35
+    monkeypatch.setattr(mem_check, "_windows_status", lambda: SimpleNamespace(dwMemoryLoad=65))
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert mem_check.available_percent() == 35
+
+
+def test_available_percent_is_none_where_it_cannot_be_read(monkeypatch, tmp_path):
+    def refuses(*_args, **_kwargs):
+        raise OSError
+
+    monkeypatch.setattr(subprocess, "run", refuses)
+    assert mem_check._percent_macos() is None
+    assert mem_check._percent_linux(str(tmp_path / "absent")) is None
+    no_available = tmp_path / "meminfo"
+    no_available.write_text("MemTotal: 8000 kB\n", encoding="ascii")
+    assert mem_check._percent_linux(str(no_available)) is None
+    monkeypatch.setattr(mem_check, "_windows_status", lambda: None)
+    assert mem_check._percent_windows() is None
+    monkeypatch.setattr(sys, "platform", "plan9")
+    assert mem_check.available_percent() is None
