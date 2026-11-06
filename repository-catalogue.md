@@ -370,6 +370,14 @@ order = 2
 sources = ["docs/_includes/tutorial"]
 
 [[site]]
+name = "studio-guide"
+title = "LATTICE from Scratch"
+page = "docs/studio-guide.md"
+layout = "studio-guide"
+order = 11
+sources = ["docs/_includes/studio-guide"]
+
+[[site]]
 name = "field-guide"
 title = "Field Guide"
 page = "docs/book.html"

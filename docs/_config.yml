@@ -98,4 +98,9 @@ defaults:
     values:
       layout: architecture
       title: "Contributing"
+  - scope:
+      path: "studio-guide.md"
+    values:
+      layout: studio-guide
+      title: "LATTICE from Scratch"
 # END GENERATED site-sections
