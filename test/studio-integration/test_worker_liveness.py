@@ -52,6 +52,7 @@ m.main()
 def studio():
     with Topology(name="liveness", workers=0, long_workers=0).start() as running:
         yield running
+    assert not running.leftovers(), "the run left processes behind"
 
 
 @pytest.fixture

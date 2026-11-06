@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from . import _build
+from . import _build, reaper
 from ._tools import catalogue, stack as stack_module
 from .client import Client
 from .topology import HarnessError, Studio, Topology, free_ports, new_run_id, queue_consumers
@@ -64,6 +64,7 @@ class ProcessStudio(Studio):
     def start(self) -> None:
         t = self.topology
         self.run_dir.mkdir(parents=True)
+        self.reaper = reaper.start(self.run_dir)
         self.started = True
         try:
             self._start()
@@ -261,6 +262,8 @@ class ProcessStudio(Studio):
             for name in reversed(list(self.pids)):
                 stack.stop(name)
         _build.remove(self.run_dir)
+        self.reaper.stdin.close()
+        self.reaper.wait()
 
     def leftovers(self) -> List[str]:
         """The names of the processes this run started that still run."""

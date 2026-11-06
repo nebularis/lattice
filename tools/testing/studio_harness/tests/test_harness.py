@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: MPL-2.0
-"""The harness's own tests. They start nothing, so `check:config-studio` runs them quickly. Test IDs are SH-Tn."""
+"""The harness's own tests. They start no studio, so `check:config-studio` runs them quickly. Test IDs are SH-Tn."""
 
 from __future__ import annotations
 
 import json
 import socket
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
 
 from lattice_testing_studio_harness import Client, HarnessError, Reply, Topology, free_ports
-from lattice_testing_studio_harness._tools import catalogue
+from lattice_testing_studio_harness._tools import catalogue, stack
 from lattice_testing_studio_harness.compose import Paths, compose_config, fuseki_config
 from lattice_testing_studio_harness.topology import new_run_id, queue_consumers
 
@@ -92,3 +95,27 @@ def test_sh_t8_queue_consumers_reads_rabbitmqctl_csv() -> None:
     assert queue_consumers(out, "lattice.studio.jobs") == 2
     assert queue_consumers(out, "lattice.studio.transforms") == 0
     assert queue_consumers(out, "absent") == 0
+
+
+def test_sh_t9_a_killed_starter_leaves_no_process_and_no_run_folder(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run-id"
+    (run_dir / "run").mkdir(parents=True)
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], **stack.detached())
+    (run_dir / "run" / "fuseki.pid").write_text(str(process.pid))
+    starter = subprocess.Popen([sys.executable, "-c", "import sys, time; from pathlib import Path; from lattice_testing_studio_harness import reaper; r = reaper.start(Path(sys.argv[1])); print('up', flush=True); time.sleep(120)", str(run_dir)], stdout=subprocess.PIPE, text=True)
+    try:
+        assert starter.stdout.readline().strip() == "up"
+        assert process.poll() is None, "the process stopped while its starter still ran"
+        starter.kill()
+        starter.wait()
+        process.wait(timeout=30)
+        deadline = time.monotonic() + 30
+        while run_dir.exists() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert not run_dir.exists()
+    finally:
+        starter.kill()
+        starter.stdout.close()
+        starter.wait()
+        process.kill()
+        process.wait()

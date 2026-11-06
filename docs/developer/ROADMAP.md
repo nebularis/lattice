@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-05.
+Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-06.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -64,10 +64,10 @@ Built from the status records on 11 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-05 | WL-0 | 8 built | fix/studio-worker-heartbeat |
+| [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 9 built | fix/studio-worker-heartbeat |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 4 verified, 3 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 5 verified, 4 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -429,6 +429,7 @@ gantt
     WL-5 short jobs past long ones :wl5, 2026-11-05, 2026-11-06
     WL-6 a view that attaches to its :wl6, 2026-11-05, 2026-11-06
     WL-7 the status warning :wl7, 2026-11-05, 2026-11-06
+    WL-8 a run that leaves no process :wl8, 2026-11-06, 2026-11-07
 ```
 
 ```mermaid
@@ -445,6 +446,8 @@ gantt
     VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
     VM-5 the fifteen composed skills :vm5, 2026-11-05, 2026-11-06
     VM-6 the moves :vm6, 2026-11-05, 2026-11-06
+    VM-7 cloud sessions the pin at :vm7, 2026-11-06, 2026-11-07
+    VM-8 cloud setup within its limit :vm8, 2026-11-06, 2026-11-07
 ```
 
 ```mermaid
@@ -798,11 +801,12 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
 | `tutorial/guide` | 2026-10-16 | 5 | pushed | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
+| `tutorial/studio-guide` | 2026-11-06 | 11 | pushed | TUT-0, TUT-1, TUT-2, TUT-3, TUT-4, TUT-5, TUT-6 |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
@@ -852,7 +856,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 100 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 101 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

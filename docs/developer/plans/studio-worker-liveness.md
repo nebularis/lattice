@@ -215,6 +215,7 @@ Built in order, each with its Validation Pack. WL-5 and WL-6 could change places
 | WL-5 | short jobs past long ones, with the topology and `studio:up` as the answer needs | WL-Q3 | 80k |
 | WL-6 | a view that attaches to its running job, an abort signal on `awaitJob`, and no stacked validations | WL-Q5 | 80k |
 | WL-7 | the `/status` warning, `studio:status`, the operations guide's outcome table and recovery steps, the worker's README, the ADR addendum, and MEC-95 | WL-Q6 | 40k |
+| WL-8 | a run that leaves no process behind when its test process is killed, found running WL-1's suite | | 15k |
 
 ## Validation
 

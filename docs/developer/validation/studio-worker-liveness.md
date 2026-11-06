@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-worker-liveness WL-1 to WL-7
+# Validation Pack: studio-worker-liveness WL-1 to WL-8
 
 **Plan:** [studio-worker-liveness](../plans/studio-worker-liveness.md)
 **Status record:** [studio-worker-liveness](../status/studio-worker-liveness.md)
@@ -144,3 +144,20 @@ The first runs the unit tests of the worker, the harness and the service. The se
 **Documents changed.** The operations guide (the worker's setting, the long queue, the table of what the worker does with a delivered job, `studio:status`, the health check), the runbook (Scenarios 6 and 7), the worker's README, the contract's README (the unfinished listing), ADR-A136 (an amendment, Proposed), the architecture document's account of a validation, and MEC-95.
 
 **Not covered.** The Build view's wait counter has no browser test, since the fake service answers a job's first read as running. The service's check is not run against a real broker with a queue that has no consumer, and `RabbitJobBus.consumers` is therefore read and not run: a passive declare on a channel of its own. `docker compose` is not run here.
+
+## WL-8: a run leaves nothing behind
+
+A run's processes stop when the process that started the run ends, however it ends. One command, `mise run studio:liveness`, for the suite, and the harness's own tests run in `mise run check:config-studio`.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL8-01 | a detached process with a pid file, and a starter with a reaper / the starter is killed with SIGKILL / the process stops and the run folder goes (SH-T9) | L4 | + | pass |
+| WL8-02 | adversarial: the reaper's `reap` call removed / the same test / it fails, the process still running after 30 s | L4 | − | failed as it should, restored |
+| WL8-03 | the liveness suite's stack, 8 processes / pytest is killed with SIGKILL mid-test / no process and no run folder | L8 | + | pass, by hand |
+| WL8-04 | the same / SIGINT, then SIGKILL 1.5 s into the teardown / no process and no run folder | L8 | + | pass, by hand |
+| WL8-05 | the same / SIGTERM / no process and no run folder | L8 | + | pass, by hand |
+| WL8-06 | the suite run to its end / the module's fixture stops the studio / `leftovers()` is empty | L5 | + | pass, 5 passed |
+
+`mise run studio:integration` 2 passed and `mise run check:config-studio` exit 0, with the reaper in place.
+
+**Not covered.** How long the reaper took in WL8-03 to WL8-05, since the check's process listing matched its own shell and it waited out its 120 s limit. WL8-03 to WL8-05 were run by a script that is not in the repository. A netsplit: `close_connections` in WL4-05 is an orderly close the worker is told about, and `os._exit` in RC3's test kills the worker, while in a netsplit the peer goes silent with no close and each side finds out only by its heartbeat. The `compose` runner (TD-150).
