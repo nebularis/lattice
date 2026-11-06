@@ -11,19 +11,15 @@
 
 ## 1. Goal and acceptance
 
-A read-only tutorial, published with the project's GitHub Pages site from `docs/`, that takes a
-reader who knows data architecture but has little exposure to ontologies to the point where they can
-read LATTICE's layers and examples, and judge how to build on LATTICE in a project of their own.
+A read-only tutorial, published with the project's GitHub Pages site from `docs/`, that takes a reader who knows data architecture but has little exposure to ontologies to the point where they can read LATTICE's layers and examples, and judge how to build on LATTICE in a project of their own.
 
 The unit is accepted when:
 
-1. `docs/tutorial.md` builds with the site's own Jekyll (`mise run serve:jekyll`) and renders every
-   chapter, every Mermaid diagram and every Turtle excerpt
+1. `docs/tutorial.md` builds with the site's own Jekyll (`mise run serve:jekyll`) and renders every chapter, every Mermaid diagram and every Turtle excerpt
 2. every Turtle excerpt matches its source file, checked by `mise run check:tutorial-snippets`
 3. every link to a repository file resolves on GitHub
 4. the site's home page links to the tutorial
-5. a reader of the intended audience (the maintainer) has read it end to end and found no chapter
-   that assumes knowledge an earlier chapter did not give
+5. a reader of the intended audience (the maintainer) has read it end to end and found no chapter that assumes knowledge an earlier chapter did not give
 
 ## 2. Recorded decisions
 
@@ -39,9 +35,7 @@ Recorded 2026-10-14, from the maintainer's answers.
 
 ## 3. The running example
 
-Most substrate example folders already model one loan facility agreement, with a borrower, a
-syndicate of lenders and a leverage covenant. The tutorial follows it through every layer, so
-each chapter adds one idea to a model the reader already knows.
+Most substrate example folders already model one loan facility agreement, with a borrower, a syndicate of lenders and a leverage covenant. The tutorial follows it through every layer, so each chapter adds one idea to a model the reader already knows.
 
 | Layer | Source | What it shows |
 |---|---|---|
@@ -58,12 +52,9 @@ each chapter adds one idea to a model the reader already knows.
 | Surface | `surface/examples/saas-subscription-currency.ttl` | promoting a value along a read path, the ontology's counterpart to denormalisation |
 | Applied insurance | `applied/insurance/common/`, `applied/insurance/peril/` | how a domain is built on the substrate |
 
-Party has no examples folder. Its ideas (actors, role occupancy, several and joint obligation) are
-taught from the Instrument facility examples, which use them.
+Party has no examples folder. Its ideas (actors, role occupancy, several and joint obligation) are taught from the Instrument facility examples, which use them.
 
-Each chapter re-reads its sources when it is written. This table was drawn from the files' header
-comments only, and a chapter whose source turns out not to show its idea picks another file from the
-same folder and records the change in the status record.
+Each chapter re-reads its sources when it is written. This table was drawn from the files' header comments only, and a chapter whose source turns out not to show its idea picks another file from the same folder and records the change in the status record.
 
 ## 4. Chapters
 
@@ -94,40 +85,25 @@ same folder and records the change in the status record.
 | TUT-3 | chapters 7 to 9, amounts, eligibility, behaviour | 200k tokens |
 | TUT-4 | chapters 10 to 13, capacity, storage, domains, next steps | 180k tokens |
 
-Each slice is read and approved by the maintainer before the next starts, since TUT-1 sets the
-voice and depth the rest follow.
+Each slice is read and approved by the maintainer before the next starts, since TUT-1 sets the voice and depth the rest follow.
 
 ### The excerpt check (TUT-0)
 
-An excerpt in a chapter is a fenced Turtle block preceded by an HTML comment naming its source, for
-example `<!-- source: ontology/instrument/examples/software-licence.ttl -->`. The check reads every
-chapter file, and for each excerpt confirms that its lines appear, in order and contiguous, in the
-named file, ignoring trailing whitespace. An excerpt may elide lines with a line holding only
-`# …`, which splits it into parts checked separately. The same check confirms that every link of the
-form `https://github.com/nebularis/lattice/blob/main/<path>` or `…/tree/main/<path>` names a path
-that exists in the checkout (TUT-Q1). The script uses the standard library only, and prints
-repository-relative paths with `Path.as_posix()`.
+An excerpt in a chapter is a fenced Turtle block preceded by an HTML comment naming its source, for example `<!-- source: ontology/instrument/examples/software-licence.ttl -->`. The check reads every chapter file, and for each excerpt confirms that its lines appear, in order and contiguous, in the named file, ignoring trailing whitespace. An excerpt may elide lines with a line holding only `# …`, which splits it into parts checked separately. The same check confirms that every link of the form `https://github.com/nebularis/lattice/blob/main/<path>` or `…/tree/main/<path>` names a path that exists in the checkout (TUT-Q1). The script uses the standard library only, and prints repository-relative paths with `Path.as_posix()`.
 
-Tests, at level L1, cover a matching excerpt, a changed line, a missing source file, an excerpt
-without a source comment, an elision, a link to a present path and a link to a missing one.
+Tests, at level L1, cover a matching excerpt, a changed line, a missing source file, an excerpt without a source comment, an elision, a link to a present path and a link to a missing one.
 
 ## 6. Publishing constraints
 
 - Only `docs/` is published. Links to repository files are absolute GitHub URLs to `main` (TUT-Q1).
 - The site uses no Jekyll theme. The layout carries all styling, including code highlighting.
-- The pinned `github-pages` gem brings Rouge 3.30.0, which has a Turtle lexer (tag `turtle`, file
-  `lib/rouge/lexers/turtle.rb` at tag `v3.30.0`). Excerpts are fenced as `turtle` and the layout
-  styles Rouge's token classes (TUT-Q3).
+- The pinned `github-pages` gem brings Rouge 3.30.0, which has a Turtle lexer (tag `turtle`, file `lib/rouge/lexers/turtle.rb` at tag `v3.30.0`). Excerpts are fenced as `turtle` and the layout styles Rouge's token classes (TUT-Q3).
 - Every new file carries the `CC-BY-SA-4.0` SPDX header, as the existing docs do.
-- Mermaid is loaded once by the layout, as in the theory layout. Every diagram is checked to render
-  before handoff.
+- Mermaid is loaded once by the layout, as in the theory layout. Every diagram is checked to render before handoff.
 
 ## 7. Deferred: the hands-on tutorial
 
-A later unit turns the tutorial into exercises the reader runs: install the toolchain, validate an
-example, break a shape and read the report, compile a condition to SPARQL. It depends on a stable
-task for each step and on a working local environment, and is not planned here. It is recorded in
-`docs/developer/INDEX.md` so it is not lost.
+A later unit turns the tutorial into exercises the reader runs: install the toolchain, validate an example, break a shape and read the report, compile a condition to SPARQL. It depends on a stable task for each step and on a working local environment, and is not planned here. It is recorded in `docs/developer/INDEX.md` so it is not lost.
 
 ## 8. Questions, answered
 

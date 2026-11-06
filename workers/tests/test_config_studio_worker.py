@@ -15,7 +15,8 @@ from rdflib.namespace import RDF, XSD
 
 from lattice_workers import config_studio_jobs as jobs
 from lattice_workers.config_studio_jobs import CST, SH
-from lattice_workers.config_studio_worker import ConfigStudioWorker, RabbitMqConfigStudioWorker, WriterStore
+from lattice_workers.config_studio_consumer import InvalidMessage
+from lattice_workers.config_studio_worker import ConfigStudioWorker, WriterStore
 from lattice_workers.fuseki_gsp import GraphNotFound
 from lattice_workers.config_studio_publish import version_graph
 
@@ -49,17 +50,6 @@ class FakeStore:
         self.history.append((graph_iri, Graph() + graph))
         for name, other in (others or {}).items():
             self.graphs[name] = Graph() + other
-
-
-class FakeChannel:
-    def __init__(self) -> None:
-        self.calls: list[tuple] = []
-
-    def basic_ack(self, delivery_tag: int) -> None:
-        self.calls.append(("ack", delivery_tag))
-
-    def basic_nack(self, delivery_tag: int, requeue: bool) -> None:
-        self.calls.append(("nack", delivery_tag, requeue))
 
 
 def _clock():
@@ -256,9 +246,12 @@ def test_same_job_twice_gives_same_graph(target, name):
     examples = PERSISTENCE_EXAMPLES if target == "persistence" else SURFACE_EXAMPLES
     store = FakeStore()
     iri = submit(store, "compile", target, examples / name)
+    queued = Graph() + store.graphs[iri]
     worker = ConfigStudioWorker(store, ROOT, _clock())
     worker.handle(iri)
     first = _without_times(store.graphs[iri])
+    # A job the store holds as finished is not run again (WL-Q2), so the second run starts from the job as the service wrote it.
+    store.graphs[iri] = Graph() + queued
     worker.handle(iri)
     assert to_isomorphic(first) == to_isomorphic(_without_times(store.graphs[iri]))
 
@@ -315,27 +308,107 @@ def test_a_job_naming_a_graph_outside_its_own_fails_without_reading_it(predicate
     b"urn:lattice:studio:job:" + str(uuid.uuid4()).encode() + b" extra",
     b"urn:lattice:studio:job:\xff\xfe",
 ])
-def test_malformed_message_is_nacked_without_requeue(body):
-    store, channel = FakeStore(), FakeChannel()
-    RabbitMqConfigStudioWorker(ConfigStudioWorker(store, ROOT, _clock())).handle(channel, 7, body)
-    assert channel.calls == [("nack", 7, False)]
-    assert not store.history
+def test_a_malformed_message_is_not_a_job(body):
+    with pytest.raises(InvalidMessage):
+        ConfigStudioWorker.accept(body)
 
 
-def test_acks_after_final_write_and_requeues_on_store_error():
-    store, channel = FakeStore(), FakeChannel()
+def test_a_job_message_names_its_iri():
+    iri = f"urn:lattice:studio:job:{uuid.uuid4()}"
+    assert ConfigStudioWorker.accept(iri.encode()) == iri
+
+
+def _held(store: FakeStore, iri: str, status) -> None:
+    job = URIRef(iri)
+    store.graphs[iri].set((job, CST.status, status))
+
+
+@pytest.mark.parametrize("status", [CST.Succeeded, CST.Failed])
+def test_a_job_the_store_holds_as_finished_is_left_as_it_is(status):
+    store = FakeStore()
     iri = submit(store, "validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
-    adapter = RabbitMqConfigStudioWorker(ConfigStudioWorker(store, ROOT, _clock()))
-    adapter.handle(channel, 1, iri.encode())
-    assert channel.calls == [("ack", 1)]
+    _held(store, iri, status)
+    store.history.clear()
+    handled = ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    assert handled.outcome == "skipped"
+    assert store.history == []
 
-    def broken(*_):
-        raise OSError("store down")
 
-    store.put_graph = broken
-    with pytest.raises(OSError):
-        adapter.handle(channel, 2, iri.encode())
-    assert channel.calls[-1] == ("nack", 2, True)
+def test_a_job_the_store_holds_as_running_is_marked_failed_and_not_run():
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
+    _held(store, iri, CST.Running)
+    job = URIRef(iri)
+    store.history.clear()
+    handled = ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    g = store.graphs[iri]
+    assert g.value(job, CST.status) == CST.Failed
+    assert "stopped while it ran" in str(g.value(job, CST.failureMessage))
+    assert g.value(job, CST.finishedAt) is not None and g.value(job, CST.report) is None
+    assert g.value(job, CST.configGraph) == URIRef(f"{iri}:input"), "what the service wrote is kept"
+    assert len(store.history) == 1, "one write: it was not marked running and run"
+    assert handled.outcome.startswith("failed")
+
+
+def test_a_job_the_store_no_longer_holds_is_acknowledged_and_nothing_is_written():
+    store = FakeStore()
+    handled = ConfigStudioWorker(store, ROOT, _clock()).handle(f"urn:lattice:studio:job:{uuid.uuid4()}")
+    assert handled.outcome == "gone"
+    assert store.history == []
+
+
+def test_a_queued_job_is_run():
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
+    assert ConfigStudioWorker(store, ROOT, _clock()).handle(iri).outcome == "succeeded"
+
+
+@pytest.mark.parametrize("kind", ["Refresh", "Validate"])
+def test_a_job_naming_no_workspace_that_is_not_a_rebuild_is_refused_and_nothing_is_written(kind):
+    store = FakeStore()
+    iri = f"urn:lattice:studio:job:{uuid.uuid4()}"
+    job = URIRef(iri)
+    g = Graph()
+    g.add((job, RDF.type, CST.Job))
+    g.add((job, CST.kind, CST[kind]))
+    g.add((job, CST.status, CST.Queued))
+    store.graphs[iri] = g
+    with pytest.raises(InvalidMessage, match="names no workspace"):
+        ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    assert store.history == []
+
+
+def test_a_rebuild_job_naming_no_workspace_is_run():
+    store = FakeStore()
+    iri = f"urn:lattice:studio:job:{uuid.uuid4()}"
+    job = URIRef(iri)
+    g = Graph()
+    g.add((job, RDF.type, CST.Job))
+    g.add((job, CST.kind, CST.Rebuild))
+    g.add((job, CST.status, CST.Queued))
+    store.graphs[iri] = g
+    assert ConfigStudioWorker(store, ROOT, _clock()).handle(iri).kind == "Rebuild"
+
+
+def test_fail_marks_an_unfinished_job_and_leaves_a_finished_one():
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", None)
+    job = URIRef(iri)
+    worker = ConfigStudioWorker(store, ROOT, _clock())
+    worker.fail(iri, "the worker could not run the job: OSError: store down")
+    assert store.graphs[iri].value(job, CST.status) == CST.Failed
+    assert "store down" in str(store.graphs[iri].value(job, CST.failureMessage))
+    writes = len(store.history)
+    worker.fail(iri, "again")
+    assert len(store.history) == writes
+
+
+def test_a_job_is_logged_when_it_starts_and_the_consumer_logs_when_it_ends(caplog):
+    store = FakeStore()
+    iri = submit(store, "validate", "persistence", PERSISTENCE_EXAMPLES / "baseline-single-class.ttl")
+    with caplog.at_level("INFO", logger="lattice_workers.worker"):
+        ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
+    assert any("Validate Persistence" in r.message and iri in r.message and "starts" in r.message for r in caplog.records)
 
 
 def test_topology_copy_equals_contract():

@@ -8,7 +8,7 @@
 
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
 pinned here, or with `--docker` from the compose file. It then builds and starts the store writer, the service, the
-worker, the transforms worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
+worker, the long jobs' worker, the transforms worker and the Word add-in's development server, and with `--dev` the browser code with hot reload. With `--docker`
 the compose file also serves the built add-in over HTTPS on 3443, which Word needs. Each process writes its log and its
 process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
 TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
@@ -140,7 +140,7 @@ FUSEKI_MEMORY_STORE = """<#store> rdf:type <http://jena.hpl.hp.com/2005/11/Assem
 """
 
 # Stopped in reverse, so the worker and service go before the store and the broker.
-ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "transforms", "addin", "web")
+ORDER = ("fuseki", "rabbitmq", "writer", "service", "worker", "worker-long", "transforms", "addin", "web")
 
 
 class Stack:
@@ -395,6 +395,9 @@ class Stack:
             self.wait_for("service", SERVICE_PORT)
         if self.pid("worker") is None:
             self.spawn("worker", [sys.executable, "-m", "lattice_workers.config_studio_main"], self.env())
+        if self.pid("worker-long") is None:
+            # Jobs that take minutes have a queue and a worker of their own, so a validation never waits behind one (WL-Q3).
+            self.spawn("worker-long", [sys.executable, "-m", "lattice_workers.config_studio_main"], {**self.env(), "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"})
         if self.pid("transforms") is None:
             self.spawn("transforms", ["java", "-jar", str(self.pinned("transforms", built("config-studio-transforms")))], self.env())
         if self.claim("addin", ADDIN_PORT):
@@ -446,7 +449,17 @@ class Stack:
             pid = self.pid(name)
             port = ports.get(name)
             serving = "" if port is None else (f", listening on {port}" if listening(port) else f", not listening on {port}")
-            print(f"{name}: {'running as ' + str(pid) if pid else 'not started here'}{serving}")
+            print(f"{name}: {self.describe(name, pid)}{serving}")
+
+    def describe(self, name: str, pid: Optional[int]) -> str:
+        """`running as {pid}`, or for a process this script started that has since ended, that it exited and the last line of its log, since
+        a worker that stops on its own is otherwise silent and the jobs behind it wait (plan studio-worker-liveness, RC6). Nothing started
+        here reads `not started here`."""
+        if pid:
+            return f"running as {pid}"
+        if not self._pid_file(name).exists():
+            return "not started here"
+        return f"exited, last line of its log: {last_line(self.run / f'{name}.log')}"
 
 
 # --- platform helpers ----------------------------------------------------------------------------
@@ -463,6 +476,15 @@ def data_dir(env: Dict[str, str], platform: str = sys.platform) -> Path:
     if platform == "darwin":
         return home / "Library" / "Application Support" / "LATTICE" / "studio"
     return Path(env.get("XDG_DATA_HOME") or home / ".local" / "share") / "lattice" / "studio"
+
+
+def last_line(log: Path) -> str:
+    """The last line of `log` that says something, or `(no log)`. A log of a worker ends in the line that tells why it stopped."""
+    try:
+        lines = [line.strip() for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    except OSError:
+        return "(no log)"
+    return lines[-1][:300] if lines else "(empty)"
 
 
 def write_private(path: Path, text: str) -> None:

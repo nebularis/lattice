@@ -6,10 +6,11 @@
 // language model proposes a scheme from a source vocabulary with MORK's proposal tools, and the author reviews each of
 // its mappings here, each review a mork:MappingReview the next proposal learns from.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Hammer, Network, Plus, Sparkles } from "lucide-react";
 import { CST, Graph, LABEL, MORK, PREFIXES, TYPE, compact, iri, literal, namespaceOf } from "@lattice/authoring-domain";
 import { api, awaitJob } from "../api";
+import { isAbort, useAttach, useUnmountSignal } from "../jobs";
 import type { Artefact, Job } from "../rdf/report";
 import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
@@ -495,6 +496,31 @@ function ProposePanel({ sample, onProposed }: { sample?: string; onProposed: (sc
   const [namespace, setNamespace] = useState("");
   const [state, setState] = useState<"idle" | "running" | "failed" | "done">("idle");
   const [message, setMessage] = useState<string>();
+  const signal = useUnmountSignal();
+  const latest = useRef(studio);
+  latest.current = studio;
+  /** Adds the scheme a finished proposal proposed, or says why it did not. The job is the one just submitted or the one found running when the view opened. */
+  const finish = useCallback((job: Job) => {
+    if (job.status === "Failed") {
+      setState("failed");
+      setMessage(job.failure ?? "The proposal failed.");
+      return;
+    }
+    const current = latest.current.model.state.configs.mapping!.current;
+    const applied = applyArtefacts(job.artefacts, { mapping: current });
+    if (applied.edits.mapping) latest.current.model.edit("mapping", () => applied.edits.mapping!);
+    const errors = job.issues.filter((i) => i.severity === "Violation").length;
+    setState("done");
+    setMessage(`Proposed${errors ? `, with ${errors} ${errors === 1 ? "error" : "errors"} left` : ", and its check passed"}. Review each mapping, then save.`);
+    onProposed(applied.edits.mapping?.ofType(MORK("MappingScheme")).find((s) => !current.has(s))?.value);
+  }, [onProposed]);
+  // A proposal started before the author left the workspace goes on in the store, and is waited for again here.
+  useAttach(
+    studio.id,
+    (job) => job.kind === "Propose" && job.target === "MappingLanguageModelProposer",
+    () => { setState("running"); setMessage(undefined); },
+    finish,
+  );
   const propose = async () => {
     const media = file && mediaTypeOf(file.name);
     if (!file || !media || media === "application/ld+json") {
@@ -510,19 +536,9 @@ function ProposePanel({ sample, onProposed }: { sample?: string; onProposed: (sc
       const samples = sample ? document(`urn:lattice:studio:ws:${id}:import/2`, sample, "text/turtle", "SampleSource") : undefined;
       const current = studio.model.state.configs.mapping!.current;
       const body = [source, samples].reduce((g: Graph, d) => (d ? g.merge(d) : g), current);
-      const job = await awaitJob(await api.submit(id, "propose", "mapping-language-model", body));
-      if (job.status === "Failed") {
-        setState("failed");
-        setMessage(job.failure ?? "The proposal failed.");
-        return;
-      }
-      const applied = applyArtefacts(job.artefacts, { mapping: current });
-      if (applied.edits.mapping) studio.model.edit("mapping", () => applied.edits.mapping!);
-      const errors = job.issues.filter((i) => i.severity === "Violation").length;
-      setState("done");
-      setMessage(`Proposed${errors ? `, with ${errors} ${errors === 1 ? "error" : "errors"} left` : ", and its check passed"}. Review each mapping, then save.`);
-      onProposed(applied.edits.mapping?.ofType(MORK("MappingScheme")).find((s) => !current.has(s))?.value);
+      finish(await awaitJob(await api.submit(id, "propose", "mapping-language-model", body), signal()));
     } catch (error) {
+      if (isAbort(error)) return;
       setState("failed");
       setMessage(error instanceof Error ? error.message : String(error));
     }

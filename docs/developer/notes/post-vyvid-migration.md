@@ -272,7 +272,7 @@ An edit to a domain has a consequence to remember. The domain lives in another r
 
 `vyd install` with no options sets up each client whose folder exists, and is safe to run again. A public domain's skills do not go to the user's folder unless its entry says `user_skills = true`, since a client prefers a personal skill to a project's of the same name, and a personal copy would hide the composed one.
 
-The writing rules stay in `AGENTS.md`, since anyone working without `vyd` reads them there (plan decision 19). No domain holds a copy to compare against, so TD-146 records that their consistency has no check.
+The writing rules stay in `AGENTS.md`, since anyone working without `vyd` reads them there (plan decision 19). No domain holds a copy to compare against, so TD-149 records that their consistency has no check.
 
 ## 5. How `mise` glues it together
 
@@ -426,6 +426,6 @@ An edit under `.vyvid/skills` lapses nothing, since it runs nothing. `mise run v
 - **The index reads the domain's clone as it stands, while the page links a tag.** The `triple-stores` clone is ahead of `v0.1.0` at the time of writing, so a `find` may show text newer than the page's link. Nothing in the binding pins the index to a tag. LATTICE's page says so, and TD-148 holds the pin to a tag.
 - **What a machine without the domains sees has not been run end to end.** The designed behaviour is that the committed skills still work, and that `vyd check skills` and `install --project` exit 2 and say why. Whether every moved `TSD` and `RDF` mention then resolves or skips on such a machine should be proven on a clean clone, along with the Windows run planned after the migration. It is the open item of the unit's review request, for the Windows run on machine S.
 - **A domain edit makes a project's skills check fail later, on an unrelated commit.** That is intended, though it surprises whoever meets it, so the reinstall belongs with the domain change.
-- **The writing rules have no consistency check,** recorded as TD-146.
+- **The writing rules have no consistency check,** recorded as TD-149.
 - **`vyd work check --staged` reads a record's text from the working tree, not the index.** It is recorded in Вивід's register. A bad record that is staged and then fixed only in the working tree passes.
 - **`vyd work roadmap` reads every remote under `refs/remotes`.** It is on Вивід's backlog as BL-2. LATTICE's remotes all point at one repository, so it does not bite here.

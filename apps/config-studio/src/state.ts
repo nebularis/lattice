@@ -283,6 +283,12 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
   const latest = useRef(state);
   latest.current = state;
   const dependencies = DEPENDS[part].map((p) => state.configs[p]?.current);
+  // Ends when the workspace's view goes, so no closure of an old mount goes on reading a job nobody shows (plan studio-worker-liveness, RC5).
+  const gone = useRef<AbortController>(undefined);
+  useEffect(() => {
+    gone.current = new AbortController();
+    return () => gone.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (!current || !baselineRevision) return;
@@ -303,10 +309,13 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
         return;
       }
       inFlight.current = true;
+      const signal = gone.current?.signal;
       dispatch({ type: "validation", part, validation: { state: "running", issues: latest.current.configs[part]?.validation.issues ?? [], of: graph, job: latest.current.configs[part]?.validation.job } });
+      let submitted: string | undefined;
       try {
-        const jobId = await api.submit(id, "validate", part, body());
-        const job = await awaitJob(jobId);
+        submitted = await api.submit(id, "validate", part, body());
+        const jobId = submitted;
+        const job = await awaitJob(jobId, signal);
         void api.deleteJob(jobId).catch(() => undefined);
         const validation: Validation =
           job.status === "Failed"
@@ -314,6 +323,11 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
             : { state: "done", issues: job.issues, of: graph, job };
         if (!queued.current) dispatch({ type: "validation", part, validation });
       } catch (error) {
+        if (signal?.aborted) {
+          // The view went while the job waited. Nobody wants its result, so it leaves the queue and the store.
+          if (submitted) void api.deleteJob(submitted).catch(() => undefined);
+          return;
+        }
         if (!queued.current) {
           dispatch({ type: "validation", part, validation: { state: "failed", issues: [], of: graph, message: error instanceof Error ? error.message : String(error) } });
         }
@@ -321,7 +335,7 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
         inFlight.current = false;
         const next = queued.current;
         queued.current = undefined;
-        if (next) void run(next);
+        if (next && !signal?.aborted) void run(next);
       }
     };
     const timer = setTimeout(() => void run(current), 600);

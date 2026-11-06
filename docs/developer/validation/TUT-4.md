@@ -7,10 +7,7 @@
 
 ## Invariant
 
-Chapters 10 to 13 finish the tutorial: the applied Capacity module, Persistence and Surface, how a
-domain is built on the substrate, and where to go next. Content still under construction is taught
-as it is merged and marked as such (TUT-Q4). Every excerpt is a verbatim copy of its source, and every
-claim is checked against the file it describes. With this slice the page has no placeholder chapter.
+Chapters 10 to 13 finish the tutorial: the applied Capacity module, Persistence and Surface, how a domain is built on the substrate, and where to go next. Content still under construction is taught as it is merged and marked as such (TUT-Q4). Every excerpt is a verbatim copy of its source, and every claim is checked against the file it describes. With this slice the page has no placeholder chapter.
 
 ## Test cases
 
@@ -30,13 +27,11 @@ TUT4-05 is also the unit's acceptance criterion 5 (plan §1).
 mise run check:tutorial-snippets
 ```
 
-Pass: `OK 48 excerpts and 34 repository links match the checkout`, then `10 passed`. To read the
-chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#capacity`.
+Pass: `OK 48 excerpts and 34 repository links match the checkout`, then `10 passed`. To read the chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#capacity`.
 
 ## Artefacts to inspect
 
-- `docs/_includes/tutorial/10-drawing-down.md`, `11-storing-and-serving.md`, `12-building-a-domain.md`,
-  `13-where-next.md`
+- `docs/_includes/tutorial/10-drawing-down.md`, `11-storing-and-serving.md`, `12-building-a-domain.md`, `13-where-next.md`
 - `docs/_includes/tutorial/03-layer-map.md`, one table row corrected (below)
 
 | Chapter | Sources re-read |
@@ -48,10 +43,8 @@ chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/t
 
 ## Deliberate non-coverage
 
-- Capacity's source ontology (`cap:`) is designed but not written, so chapter 10 teaches it from the
-  design document and the authored `capx:` profile, with a note saying so.
-- Persistence's dimensions are listed, not taught one by one. The README and the patterns guide are
-  linked.
+- Capacity's source ontology (`cap:`) is designed but not written, so chapter 10 teaches it from the design document and the authored `capx:` profile, with a note saying so.
+- Persistence's dimensions are listed, not taught one by one. The README and the patterns guide are linked.
 - The insurance `exposure/`, `submission/`, `claims/` and `contract/` modules are named as planned.
 - MORK, Governance and SPC are described in a paragraph each, as chapter 3 promised.
 
@@ -69,16 +62,11 @@ Run 2026-10-16 on Windows 11, against the maintainer's own `serve:jekyll` on por
 
 Corrected against sources while writing:
 
-- Chapter 3, committed in TUT-1, said Governance runs checks across all layers. `ontology/governance/`
-  holds only an empty README, so the row now says it is the planned home for such checks.
-- Chapter 10's example of a gating dependency now uses the design document's own, a secondary
-  facility opened once a primary one is exhausted.
-- Chapter 12 no longer names agency values the example does not show, and its table heading no
-  longer says three levels for a four-row table.
+- Chapter 3, committed in TUT-1, said Governance runs checks across all layers. `ontology/governance/` holds only an empty README, so the row now says it is the planned home for such checks.
+- Chapter 10's example of a gating dependency now uses the design document's own, a secondary facility opened once a primary one is exhausted.
+- Chapter 12 no longer names agency values the example does not show, and its table heading no longer says three levels for a four-row table.
 
-Found while writing, not fixed in this unit: `ontology/applied/insurance/domain-README.md` says
-`peril/` imports `common/`, but `peril/spec/peril.ttl` imports only Foundation and Quantification.
-Chapter 3's diagram follows the spec.
+Found while writing, not fixed in this unit: `ontology/applied/insurance/domain-README.md` says `peril/` imports `common/`, but `peril/spec/peril.ttl` imports only Foundation and Quantification. Chapter 3's diagram follows the spec.
 
 ## Adversarial probe
 

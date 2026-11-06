@@ -65,6 +65,7 @@ Built from the status records on 12 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
+| [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built | fix/studio-worker-heartbeat |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-06 | VM-0 | 5 verified, 4 built |  |
@@ -437,6 +438,25 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
+    title Studio-worker-liveness
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section studio-worker-liveness
+    WL-0 the plan this record :wl0, 2026-11-05, 2026-11-06
+    WL-1 reproductions that fail today :wl1, 2026-11-05, 2026-11-06
+    WL-2 the job on its own thread :wl2, 2026-11-05, 2026-11-06
+    WL-3 the check on delivery :wl3, 2026-11-05, 2026-11-06
+    WL-4 the held result :wl4, 2026-11-05, 2026-11-06
+    WL-5 short jobs past long ones :wl5, 2026-11-05, 2026-11-06
+    WL-6 a view that attaches to its :wl6, 2026-11-05, 2026-11-06
+    WL-7 the status warning :wl7, 2026-11-05, 2026-11-06
+    WL-8 a run that leaves no process :wl8, 2026-11-06, 2026-11-07
+    WL-9 a late Failed never replaces :wl9, 2026-11-06, 2026-11-07
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
     title Vyvid-migration
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -769,6 +789,8 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 The units outside an epic are rows of section 1's generated table, with their state, next slice and the branches that move them, and their own charts there once they have five dated slices. Nothing is listed twice.
 
+**More of the studio's browser journeys on the real stack, not yet a unit.** Added 2026-11-06. `mise run test:config-studio-browser` runs 23 journeys against the in-memory fake service and 3 against a real stack, so a fault in the service, the writer, the broker or the worker reaches only those 3. The first candidates are the journeys that wait on a job, among them what the `studio-worker-liveness` pack records as not driven by a browser, a view attaching to its running publication or mapping proposal, and the Build view's wait for a queued job.
+
 ## 6. The platform programme
 
 **Documents.** [epic plan](plans/lattice-platform-agentic-development-v0.2.md), phase plans [0](plans/phase-0-plan.md) to [4](plans/phase-4-plan.md), status records [0](status/phase-0-status.md) to [4](status/phase-4-status.md), [continuation status](status/platform-continuation.md).
@@ -856,7 +878,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 103 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -930,13 +952,14 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06.
 
-1. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work. VM-0, VM-2, VM-7 and VM-8 wait to be verified.
-2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
-3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
-4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
-5. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
-6. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
-7. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
+1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
+2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work. VM-0, VM-2, VM-7 and VM-8 wait to be verified.
+3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
+4. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
+5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
+6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
+7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
+8. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 
 ## 11. Completed units
 
@@ -1000,7 +1023,7 @@ gantt
 
 ## 12. Observations
 
-These are findings from building this roadmap, offered as hypotheses for the maintainer to check. Rewritten 2026-11-02, when sections 1, 7, 9 and 11 became generated.
+These are findings from building this roadmap, offered as hypotheses for the maintainer to check. Rewritten 2026-11-02, when sections 1, 7, 9 and 11 became generated. One added 2026-11-05.
 
 - **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten have no status record to carry a board at all.
 - **Two branches numbered the same standards.** `docs/work-board` and `realign/config-authoring-studio` both took STD-300 upward on 2026-11-02, and both held a TD-137. `check:identifiers` dates a row by its day, so first in wins found a tie, and at the realign branch's merge of `main` the work board's rows kept their numbers and the realign rows became STD-308 to STD-316 and TD-139. A branch cannot know what another numbers until a fetch, and the board's `--fetch` is the moment to look.
@@ -1008,3 +1031,4 @@ These are findings from building this roadmap, offered as hypotheses for the mai
 - **H3.1 was not track H's H3.** The code-generation spike on `fml/isabelle-layers` was the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. It is homed as FM-CG1 and FM-CG2 on the formal-methods board since 2026-11-05. A slice that borrows a number from a plan it does not belong to is read as that plan's.
 - **Most of the index tooling was never LATTICE's.** Of the 5,800 lines under `tools/knowledge/`, about 280 derive the architectural quanta, and the board's 2,400 are configuration under Вивід. The switch planned as `vyvid-migration` keeps LATTICE's rules where they are and moves the code that reads them.
 - **The hand-written sections age with the epics.** Sections 2, 3, 4, 6 and 8 describe the epics' dependencies, layers, state and critical path as prose and diagrams, and each is refreshed at the events the lifecycle skill names, never by the tool. Where one disagrees with section 1, section 1 is right.
+- **A durable queue outlives the names a release retires.** The studio's `lattice.studio.jobs` held messages of the kind `cst:Refresh` after a release renamed it, and the worker that met one ended and met it again at every start. The worker now rejects a job it cannot write and goes on, but a release that renames a kind, a queue or a routing key has no step that drains or migrates what a broker still holds, and `studio:up` does not say so.

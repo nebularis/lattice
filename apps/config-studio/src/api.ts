@@ -284,6 +284,15 @@ export const api = {
     return readJob(graph, `urn:lattice:studio:job:${jobId}`);
   },
 
+  /** The workspace's jobs that are queued or running, of every kind, which a view that opens reads to find the job it started before it was closed. */
+  async unfinishedJobs(id: string): Promise<Job[]> {
+    const { graph } = await turtle(`/api/workspaces/${id}/jobs?unfinished=true`);
+    return graph
+      .ofType(CST("Job"))
+      .map((j) => readJob(graph, j.value))
+      .sort((a, b) => (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
+  },
+
   async compileJobs(id: string): Promise<Job[]> {
     const { graph } = await turtle(`/api/workspaces/${id}/jobs`);
     return graph
@@ -304,19 +313,37 @@ export function jobId(iri: string): string {
 /** How long a job is left between reads while the service's events reach the tab, which wake it as soon as the job changes (PM3). */
 export const EVENT_FALLBACK_MS = 5000;
 
-/** Read a job until it finishes, again on each of its events, or, with no events, after a wait that grows to a second. */
+/** A promise that rejects as soon as `signal` aborts, so a wait ends then and not at the end of its timer. */
+function whenAborted(signal: AbortSignal | undefined, cancel: { off?: () => void }): Promise<never> {
+  return new Promise((_, reject) => {
+    if (!signal) return;
+    const abort = () => reject(new DOMException("aborted", "AbortError"));
+    if (signal.aborted) return abort();
+    signal.addEventListener("abort", abort, { once: true });
+    cancel.off = () => signal.removeEventListener("abort", abort);
+  });
+}
+
+/**
+ * Read a job until it finishes, again on each of its events, or, with no events, after a wait that grows to a second. With a `signal`,
+ * which a view aborts when it goes, the wait ends at once with an AbortError and the job is read no more.
+ */
 export async function awaitJob(id: string, signal?: AbortSignal): Promise<Job> {
   const events = watch(`urn:lattice:studio:job:${id}`);
+  const cancel: { off?: () => void } = {};
   try {
     let delay = 150;
+    const aborted = whenAborted(signal, cancel);
+    aborted.catch(() => undefined);
     for (;;) {
+      if (signal?.aborted) throw new DOMException("aborted", "AbortError");
       const job = await api.job(id);
       if (job.status === "Succeeded" || job.status === "Failed") return job;
-      await events.next(connected() ? EVENT_FALLBACK_MS : delay);
-      if (signal?.aborted) throw new DOMException("aborted", "AbortError");
+      await Promise.race([events.next(connected() ? EVENT_FALLBACK_MS : delay), aborted]);
       delay = Math.min(delay * 1.5, 1000);
     }
   } finally {
+    cancel.off?.();
     events.close();
   }
 }

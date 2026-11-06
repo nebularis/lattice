@@ -66,9 +66,13 @@ export interface TestResult {
 
 export interface Job {
   iri: string;
-  kind: "Validate" | "Compile" | "Assemble" | "Propose" | "DryRunJob";
-  target: "Persistence" | "Surface" | "Vocabulary" | "Quantification" | "Eligibility" | "Meaning" | "Mapping";
+  kind: "Validate" | "Compile" | "Assemble" | "Propose" | "DryRunJob" | "Publish" | "Fence" | "Analyse" | "ToolCall" | "Rebuild";
+  target:
+    | "Persistence" | "Surface" | "Vocabulary" | "Quantification" | "Eligibility" | "Meaning" | "Mapping"
+    | "SentenceFormProposer" | "LanguageModelProposer" | "OdrlProposer" | "MappingLanguageModelProposer" | "RmlImporter";
   status: JobStatus;
+  /** For a publish job, the root of the unit it prepares. */
+  unit?: string;
   submittedAt?: string;
   finishedAt?: string;
   conforms?: boolean;
@@ -93,6 +97,7 @@ export function readJob(graph: Graph, iri: string): Job {
     kind: (local("kind") ?? "Validate") as Job["kind"],
     target: (local("target") ?? "Persistence") as Job["target"],
     status: (local("status") ?? "Queued") as JobStatus,
+    unit: graph.value(iri, CST("unit")),
     submittedAt: graph.value(iri, CST("submittedAt")),
     finishedAt: graph.value(iri, CST("finishedAt")),
     conforms: conforms === undefined ? undefined : conforms === "true",

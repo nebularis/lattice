@@ -8,6 +8,11 @@
       "deadLetter": true
     },
     {
+      "name": "lattice.studio.jobs.long",
+      "routingKey": "lattice.studio.jobs.long",
+      "deadLetter": true
+    },
+    {
       "name": "lattice.studio.transforms",
       "routingKey": "lattice.studio.transforms",
       "deadLetter": false

@@ -805,7 +805,10 @@ public final class Writer {
         /**
          * A job's status and results, from the worker or from the service when the job could not be handed over. A job
          * deleted meanwhile stays deleted. Everything on the job node but what {@link #WORKER_PREDICATES} names must be as
-         * the service wrote it, so an update cannot move a job to another workspace or point it at another graph.
+         * the service wrote it, so an update cannot move a job to another workspace or point it at another graph. A job that
+         * succeeded keeps its status and results: a second worker that took the job for lost may write {@code Failed} after the
+         * first has finished, and the update is dropped, with no receipt and no event. The writes of a workspace are applied in
+         * order, so the check cannot race.
          */
         private Reply jobUpdate(int index, Command c) {
             String jobIri = Graphs.job(c.job());
@@ -829,6 +832,10 @@ public final class Writer {
             Model update = c.body().getNamedModel(jobIri);
             if (!sameValues(serviceTriples(existing, jobIri), serviceTriples(update, jobIri))) {
                 return Reply.refused("a job's update may change only its status and results");
+            }
+            Resource node = existing.createResource(jobIri);
+            if (existing.contains(node, Cst.status, Cst.Succeeded) && !update.contains(node, Cst.status, Cst.Succeeded)) {
+                return Reply.ok();
             }
             for (String name : names) {
                 if (Graphs.isPromoted(name) && c.body().getNamedModel(name).listStatements().toList().stream()

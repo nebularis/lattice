@@ -49,7 +49,7 @@ function layerResults(job: string, target: string, body: string): string {
 
 const A = "https://example.org/lattice/studio/assembly/";
 const E_BUILDER = "https://example.org/lattice/wording/facility-form/";
-const TARGETS: Record<string, string> = { "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
+const TARGETS: Record<string, string> = { "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", "mapping-language-model": "MappingLanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
  * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
@@ -162,6 +162,12 @@ export class FakeService {
   readonly submitted: Submitted[] = [];
   readonly deletedJobs: string[] = [];
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
+  /** Jobs that never finish while held, as a proposal that waits on a model does not (plan studio-worker-liveness): a kind, or `kind:target`. */
+  readonly hold = new Set<string>();
+  /** Whether a language model is configured, so that a proposal by it succeeds. */
+  modelConfigured = false;
+  /** What the service's status reports, such as a queue no worker consumes. */
+  warnings: string[] = [];
   private next = 1;
 
   async install(page: Page): Promise<void> {
@@ -192,13 +198,16 @@ export class FakeService {
     const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : job.kind === "dry-run" ? "DryRunJob" : "Compile";
     const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
+    if (this.hold.has(job.kind) || this.hold.has(`${job.kind}:${job.target}`)) {
+      return `${PREFIX}${head} ; cst:status cst:Running .\n`;
+    }
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
     }
     if (job.kind === "dry-run") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${dryRunResults(iri, job.body)}`;
     if (job.kind === "propose") {
-      if (job.target === "language-model") return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "no language model is configured" .\n`;
+      if (job.target === "language-model" && !this.modelConfigured) return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "no language model is configured" .\n`;
       return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${proposeResults(iri)}`;
     }
     if (job.kind === "assemble") {
@@ -230,7 +239,7 @@ export class FakeService {
     // the service's local authentication with one developer signed in, as `mise run studio:up` gives (ADR-A149 decision 9)
     const json = (body: unknown) => route.fulfill({ status: 200, body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
     if (parts[0] === "session") return json({ provider: "local", principal: "developer", admin: true, principalOption: ["developer"], administrator: ["developer"] });
-    if (parts[0] === "status") return json({ warnings: [] });
+    if (parts[0] === "status") return json({ warnings: this.warnings });
     if (parts[0] === "features") return json({ features: [] });
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
@@ -271,6 +280,11 @@ export class FakeService {
         this.jobs.set(id, job);
         this.submitted.push(job);
         return turtle(PREFIX, 202, { Location: `/api/jobs/${id}` });
+      }
+      if (parts[2] === "jobs" && url.searchParams.get("unfinished") === "true") {
+        const open = [...this.jobs.entries()].filter(([id, j]) => j.ws === parts[1] && !this.deletedJobs.includes(id) && (this.hold.has(j.kind) || this.hold.has(`${j.kind}:${j.target}`)));
+        const kindOf = (k: string) => (k === "validate" ? "Validate" : k === "propose" ? "Propose" : k === "compile" ? "Compile" : "Assemble");
+        return turtle(PREFIX + open.map(([id, j]) => `<urn:lattice:studio:job:${id}> a cst:Job ; cst:kind cst:${kindOf(j.kind)} ; cst:target cst:${TARGETS[j.target] ?? "Persistence"} ; cst:status cst:Running ; cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .\n`).join(""));
       }
       if (parts[2] === "jobs") {
         const compiles = [...this.jobs.entries()].filter(([, j]) => j.ws === parts[1] && j.kind === "compile");

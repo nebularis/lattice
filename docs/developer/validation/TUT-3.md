@@ -7,10 +7,7 @@
 
 ## Invariant
 
-Chapters 7 to 9 add Quantification, Vocabulary, Eligibility and Behaviour to the running facility,
-with Instrument's regimes and amendments, in the voice and depth of TUT-1 and TUT-2. Every excerpt
-is a verbatim copy of its source, and every claim about a layer is checked against that layer's
-README, spec, vocab or examples.
+Chapters 7 to 9 add Quantification, Vocabulary, Eligibility and Behaviour to the running facility, with Instrument's regimes and amendments, in the voice and depth of TUT-1 and TUT-2. Every excerpt is a verbatim copy of its source, and every claim about a layer is checked against that layer's README, spec, vocab or examples.
 
 ## Test cases
 
@@ -27,13 +24,11 @@ README, spec, vocab or examples.
 mise run check:tutorial-snippets
 ```
 
-Pass: `OK 43 excerpts and 17 repository links match the checkout`, then `10 passed`. To read the
-chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#amounts`.
+Pass: `OK 43 excerpts and 17 repository links match the checkout`, then `10 passed`. To read the chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#amounts`.
 
 ## Artefacts to inspect
 
-- `docs/_includes/tutorial/07-amounts-and-reference-data.md`, `08-rules-for-admission.md`,
-  `09-change-over-time.md`
+- `docs/_includes/tutorial/07-amounts-and-reference-data.md`, `08-rules-for-admission.md`, `09-change-over-time.md`
 
 | Chapter | Sources re-read |
 |---|---|
@@ -43,10 +38,8 @@ chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/t
 
 ## Deliberate non-coverage
 
-- Quantification's derived spaces, shares and signing down (cases 2 and 3 of `additivity.ttl`) are
-  named only through `qnt:Intensive`.
-- Behaviour's history states, concurrent regimes and allowances are not covered. Allowances return
-  with capacity in chapter 10.
+- Quantification's derived spaces, shares and signing down (cases 2 and 3 of `additivity.ttl`) are named only through `qnt:Intensive`.
+- Behaviour's history states, concurrent regimes and allowances are not covered. Allowances return with capacity in chapter 10.
 - Eligibility's evidence bindings are described and linked, not excerpted.
 
 ## Results
@@ -60,14 +53,9 @@ Run 2026-10-16 on Windows 11, against the maintainer's own `serve:jekyll` on por
 | TUT3-03 | passed |
 | TUT3-04 | awaiting the maintainer |
 
-Three claims were corrected against their sources before the check ran: the list of match
-strategies (chapter 8), what `bhv:isHypothetical` and `bhv:isCurrent` record, and what
-`ins:affectsExisting false` covers (chapter 9).
+Three claims were corrected against their sources before the check ran: the list of match strategies (chapter 8), what `bhv:isHypothetical` and `bhv:isCurrent` record, and what `ins:affectsExisting false` covers (chapter 9).
 
-Found while writing, not fixed in this slice: `tools/tutorial_snippets.py` compares excerpt lines as
-written, so an excerpt indented inside a Markdown list never matches. Chapter 7 keeps its excerpts
-outside the list. Teaching the check to remove a common indent is a small follow-up if lists with
-excerpts are wanted.
+Found while writing, not fixed in this slice: `tools/tutorial_snippets.py` compares excerpt lines as written, so an excerpt indented inside a Markdown list never matches. Chapter 7 keeps its excerpts outside the list. Teaching the check to remove a common indent is a small follow-up if lists with excerpts are wanted.
 
 ## Adversarial probe
 

@@ -62,6 +62,20 @@ public final class StudioStore implements AutoCloseable {
           }
         }""";
 
+    private static final String UNFINISHED_JOBS_QUERY = PREFIXES + """
+        CONSTRUCT {
+          ?job a cst:Job ; cst:kind ?kind ; cst:target ?target ; cst:status ?status ; cst:submittedAt ?submitted ; cst:startedAt ?started ;
+               cst:unit ?unit .
+        } WHERE {
+          GRAPH ?job {
+            ?job a cst:Job ; cst:workspace ?ws ; cst:kind ?kind ; cst:status ?status ; cst:submittedAt ?submitted .
+            OPTIONAL { ?job cst:target ?target }
+            OPTIONAL { ?job cst:unit ?unit }
+            OPTIONAL { ?job cst:startedAt ?started }
+            FILTER (?status IN (cst:Queued, cst:Running))
+          }
+        }""";
+
     /** The jobs promotion, read as the job graphs hold it: {@code ?job cst:workspace ?ws}. */
     private static final String JOBS_OF_QUERY = PROMOTION_PREFIXES
         + "CONSTRUCT { ?job cst:workspace ?ws } WHERE { GRAPH ?g { ?job prm:workspace ?ws } }";
@@ -243,6 +257,21 @@ public final class StudioStore implements AutoCloseable {
         Model out = ModelFactory.createDefaultModel();
         jobsOf(workspaceIri).listSubjects().forEachRemaining(job -> {
             ParameterizedSparqlString query = new ParameterizedSparqlString(COMPILE_JOBS_QUERY);
+            query.setIri("ws", workspaceIri);
+            query.setIri("job", job.getURI());
+            out.add(connection.queryConstruct(query.asQuery()));
+        });
+        return out;
+    }
+
+    /**
+     * The jobs of one workspace that are queued or running, of every kind, without their inputs: what a view that opens reads to find
+     * the job it started before it was closed (plan studio-worker-liveness, WL-Q5).
+     */
+    public Model unfinishedJobs(String workspaceIri) {
+        Model out = ModelFactory.createDefaultModel();
+        jobsOf(workspaceIri).listSubjects().forEachRemaining(job -> {
+            ParameterizedSparqlString query = new ParameterizedSparqlString(UNFINISHED_JOBS_QUERY);
             query.setIri("ws", workspaceIri);
             query.setIri("job", job.getURI());
             out.add(connection.queryConstruct(query.asQuery()));

@@ -520,3 +520,63 @@ test("the instrument view shows terms in their tier and regimes as state machine
   // Nothing was saved into any part.
   expect(fake.workspaces.get([...fake.workspaces.keys()][0])!.graphs.meaning).not.toContain("DryRun");
 });
+
+test("leaving a workspace ends the waiting on its validations, and coming back leaves no more of them than before", async ({ page }) => {
+  // RC5 of plan studio-worker-liveness. A held validation never ends, as one behind a long job does not. Each mount of the workspace
+  // submits its validations, and the old mount's closures used to go on polling and leave their jobs, so they stacked.
+  const fake = new FakeService();
+  fake.hold.add("validate");
+  const ws = await lendingWorkspace(page, fake);
+  const open = () => [...fake.jobs.entries()].filter(([id, j]) => j.kind === "validate" && !fake.deletedJobs.includes(id)).length;
+  await page.waitForTimeout(1500);
+  const first = open();
+  expect(first).toBeGreaterThan(0);
+  await page.goto("/#/");
+  await page.waitForTimeout(500);
+  expect(open()).toBe(0);
+  await page.goto(`/#/w/${ws}`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(open()).toBe(first);
+});
+
+test("a proposal by a language model that is running when the author leaves the workspace is picked up when they return", async ({ page }) => {
+  const fake = new FakeService();
+  fake.hold.add("propose:language-model");
+  fake.modelConfigured = true;
+  await builderWorkspace(page, fake);
+  const open = async () => {
+    await page.getByRole("button", { name: "Builder" }).click();
+    await page.getByRole("link", { name: /^Meaning/ }).click();
+    return page.getByRole("group", { name: "Propose" });
+  };
+  let bar = await open();
+  await bar.getByLabel("Proposer").selectOption({ label: "Language model" });
+  await bar.getByRole("button", { name: "Propose" }).click();
+  await expect(bar.getByRole("button", { name: "Propose" })).toBeDisabled();
+  const proposals = () => fake.submitted.filter((s) => s.kind === "propose").length;
+  expect(proposals()).toBe(1);
+
+  // The author leaves, and the workspace's views go. The proposal is the store's, and goes on.
+  await page.goto("/#/");
+  await page.getByRole("button", { name: /Contract builder|Open/ }).first().click().catch(() => undefined);
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  bar = await open();
+  await expect(bar.getByRole("button", { name: "Propose" })).toBeDisabled();
+  expect(proposals(), "the view submitted the proposal again").toBe(1);
+
+  // The proposal ends, and the view applies its proposals as if it had waited all along.
+  fake.hold.clear();
+  await expect(page.getByRole("status", { name: "Propose outcome" }).getByText("proposal added from language-model")).toBeVisible({ timeout: 15_000 });
+});
+
+test("a queue no worker consumes is reported to the author, who can dismiss it, and a new warning shows", async ({ page }) => {
+  const fake = new FakeService();
+  fake.warnings = ["No worker consumes lattice.studio.jobs.long, so proposals by a language model and publications wait. Start one with `mise run studio:worker-long`."];
+  await lendingWorkspace(page, fake);
+  const warning = page.getByRole("status").filter({ hasText: "The studio has warnings" });
+  await expect(warning).toContainText("No worker consumes lattice.studio.jobs.long");
+  await warning.getByRole("button", { name: "Dismiss" }).click();
+  await expect(warning).toHaveCount(0);
+});

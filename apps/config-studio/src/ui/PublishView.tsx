@@ -2,10 +2,12 @@
 // Publishing (ADR-A149): every unit of the workspace's saved parts, the version each was last published as, and a button
 // that publishes it. Nothing is published until someone presses it.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Link2, Pin, Send, Upload, X } from "lucide-react";
 import { CST, Graph, LABEL, SKOS, TYPE, localName } from "@lattice/authoring-domain";
-import { api, awaitJob, type WorkspaceSummary } from "../api";
+import { api, awaitJob, jobId, type WorkspaceSummary } from "../api";
+import { isAbort, useUnmountSignal } from "../jobs";
+import type { Job } from "../rdf/report";
 import { CONFIG_PARTS, type ConfigPart } from "../rdf/split";
 import { Spinner, download } from "./kit";
 import { useStudio } from "./Workspace";
@@ -62,21 +64,50 @@ export function PublishView() {
     }
   }, [units]);
 
+  const signal = useUnmountSignal();
+  /** Publishes what a finished publish job prepared, and shows the unit's new version. The job is the one just submitted or one found running when the view opened. */
+  const finish = async (root: string, id: string, job: Job) => {
+    try {
+      if (job.status === "Failed") throw new Error(job.failure ?? "The publish job failed.");
+      const lineage = await api.publish(studio.id, id);
+      void api.deleteJob(id).catch(() => undefined);
+      const version = lineage.value(root, CST("current")) ?? "";
+      setCurrent((c) => ({ ...c, [root]: version }));
+      setRows((r) => ({ ...r, [root]: { state: "published", version } }));
+    } catch (e) {
+      setRows((r) => ({ ...r, [root]: { state: "failed", message: e instanceof Error ? e.message : String(e) } }));
+    }
+  };
   const publish = async (u: Unit) => {
     setRows((r) => ({ ...r, [u.root]: { state: "publishing" } }));
     try {
       const id = await api.preparePublication(studio.id, u.part, u.root, u.importDigest);
-      const job = await awaitJob(id);
-      if (job.status === "Failed") throw new Error(job.failure ?? "The publish job failed.");
-      const lineage = await api.publish(studio.id, id);
-      void api.deleteJob(id).catch(() => undefined);
-      const version = lineage.value(u.root, CST("current")) ?? "";
-      setCurrent((c) => ({ ...c, [u.root]: version }));
-      setRows((r) => ({ ...r, [u.root]: { state: "published", version } }));
+      await finish(u.root, id, await awaitJob(id, signal()));
     } catch (e) {
+      if (isAbort(e)) return;
       setRows((r) => ({ ...r, [u.root]: { state: "failed", message: e instanceof Error ? e.message : String(e) } }));
     }
   };
+  // A publication begun before the author left the workspace goes on in the store, and is waited for again here.
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
+  useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const begun = (await api.unfinishedJobs(studio.id)).filter((j) => j.kind === "Publish" && j.unit);
+        for (const job of begun) {
+          setRows((r) => ({ ...r, [job.unit!]: { state: "publishing" } }));
+          void awaitJob(jobId(job.iri), controller.signal).then((done) => {
+            if (!controller.signal.aborted) void finishRef.current(job.unit!, jobId(job.iri), done);
+          }, () => undefined);
+        }
+      } catch {
+        // the next opening looks again
+      }
+    })();
+    return () => controller.abort();
+  }, [studio.id]);
 
   const summary = studio.model.state.summary!;
   if (error) return <div className="empty">{error}</div>;
