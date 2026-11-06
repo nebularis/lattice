@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
+**Status:** building 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
 
 ## Position
 
@@ -20,6 +20,7 @@
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | built 2026-11-06, building 2026-11-06 |  |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | building 2026-11-06 |  |
 
 ## Next action
 
@@ -47,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-8 begun on `main` at the maintainer's word, since a first session's setup took about 3 minutes 36 seconds against a limit of about five.
 - 2026-11-06: VM-7 built on `main`. Pinned `v0.2.13`. The setup script installs `vyd` and clones its domains before `bootstrap`, its header carries the pasted lines and the new hosts, and a SessionStart hook runs `bootstrap:vyvid` in cloud sessions only. Measured on another environment, a setup script is sent to a different model download host from a session, hence `*.cdn.hf.co`. The script has not yet run on the LATTICE environment, which the maintainer sets up from it.
 - 2026-11-06: VM-7 begun on `main` at the maintainer's word, for this slice only, so cloud sessions get Вивід's domains, trust and index.
 - 2026-11-06: VM-1 reopened on `main` after the squash. `bootstrap:vyvid` had written the maintainer's editable install over with the pinned tag, since `decide` compared versions alone. The script now replaces an installed `vyd` only where the tool's `uv-receipt.toml` shows a git install, leaving an editable, directory, pip or receiptless install alone with the command that moves to the pin, and still installs where `vyd` is absent. Verified the same day, `check:vyvid-binding` fourteen passed and `main` exercised with a fake `uv`.
