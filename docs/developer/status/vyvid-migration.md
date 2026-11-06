@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
+**Status:** building 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
 
 ## Position
 
@@ -19,6 +19,7 @@
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | building 2026-11-06 |  |
 
 ## Next action
 
@@ -46,6 +47,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-7 begun on `main` at the maintainer's word, for this slice only, so cloud sessions get Вивід's domains, trust and index.
 - 2026-11-06: VM-1 reopened on `main` after the squash. `bootstrap:vyvid` had written the maintainer's editable install over with the pinned tag, since `decide` compared versions alone. The script now replaces an installed `vyd` only where the tool's `uv-receipt.toml` shows a git install, leaving an editable, directory, pip or receiptless install alone with the command that moves to the pin, and still installs where `vyd` is absent. Verified the same day, `check:vyvid-binding` fourteen passed and `main` exercised with a fake `uv`.
 - 2026-11-04: the sketch, with Вивід's facts at 0.1.0, the table of what moves, five slices and VM-Q1 to VM-Q6, committed on `vyvid-migration` from `main`.
 - 2026-11-05: `main` merged into the branch. VM-Q1 to VM-Q6 answered by the maintainer through Вивід's side, with the changes since the first draft, skills composed and committed rather than cut, a reminder hook, generated regions honoured, the board in Вивід, Windows proven after the switch. A handoff patch of 35 files with eleven coverage maps received and found to apply cleanly. The sketch rewritten against Вивід 0.2.1, the plan written with twelve decisions and six slices, and this record opened. VM-0 built.
