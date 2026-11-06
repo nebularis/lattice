@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 
@@ -177,17 +178,70 @@ def test_vm7_01_the_pasted_lines_trust_this_repository_and_name_its_domains(tmp_
 
 def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
     text = SETUP.read_text(encoding="utf-8")
-    assert text.index('step "vyvid" install_vyvid') < text.index('step "bootstrap" mise run bootstrap')
+    assert text.index('step "vyvid" install_vyvid') < text.index('step "index" mise run bootstrap:index') < text.index('later 150 "dependencies"')
     assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
+
+
+def session_env(tmp_path: Path, mise_exit: int = 0) -> dict[str, str]:
+    """A home, a log folder and a fake mise that records each task it is asked for."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "mise"
+    fake.write_text(f"#!/bin/sh\necho \"$2\" >> {tmp_path}/ran\nexit {mise_exit}\n", encoding="utf-8")
+    fake.chmod(0o755)
+    return {"HOME": str(tmp_path), "LATTICE_SETUP_LOGS": str(tmp_path / "logs"), "PATH": f"{bin_dir}:/usr/bin:/bin", "CLAUDE_PROJECT_DIR": str(ROOT)}
+
+
+def ran(tmp_path: Path) -> list[str]:
+    return (tmp_path / "ran").read_text(encoding="utf-8").split() if (tmp_path / "ran").exists() else []
+
+
+def wait_for_background(tmp_path: Path) -> None:
+    pid = (tmp_path / "logs/deferred.pid").read_text(encoding="utf-8").strip()
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline and subprocess.run(["kill", "-0", pid], capture_output=True).returncode == 0:
+        time.sleep(0.05)
 
 
 @pytest.mark.parametrize("remote, runs", [("", False), ("false", False), ("true", True)])
 def test_vm7_03_the_session_hook_runs_in_a_cloud_session_only(tmp_path, remote, runs):
     settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
     command = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
-    assert "bootstrap:vyvid" in command
-    fake = tmp_path / "mise"
-    fake.write_text(f"#!/bin/sh\ntouch {tmp_path}/ran\n", encoding="utf-8")
-    fake.chmod(0o755)
-    done = subprocess.run(["bash", "-c", command], env={"CLAUDE_CODE_REMOTE": remote, "PATH": f"{tmp_path}:/usr/bin:/bin"})
-    assert done.returncode == 0 and (tmp_path / "ran").exists() is runs
+    done = subprocess.run(["bash", "-c", command], env={**session_env(tmp_path), "CLAUDE_CODE_REMOTE": remote}, capture_output=True, text=True)
+    assert done.returncode == 0 and ("bootstrap:vyvid" in ran(tmp_path)) is runs
+
+
+def test_vm8_01_a_session_with_nothing_deferred_only_keeps_the_pin(tmp_path):
+    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout == "" and ran(tmp_path) == ["bootstrap:vyvid"]
+
+
+def test_vm8_02_a_session_finishes_what_setup_deferred_and_says_so(tmp_path):
+    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:dependencies\nbootstrap:testing-oxigraph\n", encoding="utf-8")
+    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True)
+    wait_for_background(tmp_path)
+    assert done.returncode == 0 and "bootstrap:dependencies bootstrap:testing-oxigraph" in done.stdout and "index is ready" in done.stdout
+    assert ran(tmp_path) == ["bootstrap:vyvid", "bootstrap:dependencies", "bootstrap:testing-oxigraph"]
+    assert not (tmp_path / ".lattice-setup-deferred").exists()
+
+
+def test_vm8_03_a_deferred_task_that_fails_stays_deferred(tmp_path):
+    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:dependencies\n", encoding="utf-8")
+    subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path, mise_exit=1), capture_output=True, text=True)
+    wait_for_background(tmp_path)
+    assert (tmp_path / ".lattice-setup-deferred").read_text(encoding="utf-8") == "bootstrap:dependencies\n"
+
+
+@pytest.mark.parametrize("seconds, starts", [(10, True), (149, True), (150, False), (400, False)])
+def test_vm8_04_a_step_starts_only_before_its_limit(tmp_path, seconds, starts):
+    later = re.search(r"^later\(\) \{.*?^\}\n", SETUP.read_text(encoding="utf-8"), re.M | re.S).group(0)
+    script = f'log() {{ :; }}\nstep() {{ echo "$1" > {tmp_path}/started; }}\nDEFERRED={tmp_path}/deferred\n{later}SECONDS={seconds}\nlater 150 dependencies bootstrap:dependencies\n'
+    subprocess.run(["bash", "-c", script], check=True)
+    assert (tmp_path / "started").exists() is starts
+    assert (tmp_path / "deferred").exists() is not starts
+
+
+def test_vm8_05_the_index_needs_no_task_the_rest_of_bootstrap_installs():
+    tasks = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"]
+    assert set(tasks["bootstrap:index"]["depends"]) == {"bootstrap:pip", "bootstrap:vyvid"}
+    assert set(tasks["bootstrap:dependencies"]["depends"]) | {"bootstrap:knowledge", "bootstrap:vyvid"} == set(tasks["bootstrap"]["depends"])

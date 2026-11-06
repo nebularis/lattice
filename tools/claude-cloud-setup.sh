@@ -59,7 +59,8 @@ cd "$REPO_ROOT"
 
 ISABELLE=Isabelle2025-2
 ISABELLE_URL="https://isabelle.in.tum.de/website-${ISABELLE}/dist/${ISABELLE}_linux.tar.gz"
-LOGS=/tmp/lattice-setup
+LOGS="${LATTICE_SETUP_LOGS:-/tmp/lattice-setup}"
+DEFERRED="$HOME/.lattice-setup-deferred"
 mkdir -p "$LOGS"
 
 log()  { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -119,6 +120,39 @@ if [ "${1:-}" = "--proxy-only" ]; then
   exit 0
 fi
 configure_proxy
+
+### Sessions ##################################################################
+# --session is what the SessionStart hook runs in a cloud session, and what to run
+# by hand in a thread that runs no hook. It keeps vyd at the branch's pin. Where
+# setup left bootstrap tasks undone, it starts them in the background and says so,
+# and it does nothing more otherwise. --finish-deferred is that background run. It
+# leaves in $DEFERRED only what failed. Neither builds the index, since two builds
+# at once write into the same folder.
+
+if [ "${1:-}" = "--finish-deferred" ]; then
+  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+  failed=""
+  while IFS= read -r task; do
+    mise run "$task" || failed="$failed$task"$'\n'
+  done < "$DEFERRED"
+  if [ -n "$failed" ]; then printf '%s' "$failed" > "$DEFERRED"; else rm -f "$DEFERRED"; fi
+  exit 0
+fi
+
+if [ "${1:-}" = "--session" ]; then
+  export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+  command -v mise >/dev/null 2>&1 || exit 0
+  configure_proxy >/dev/null 2>&1
+  mise run bootstrap:vyvid > "$LOGS/session-vyvid.log" 2>&1
+  if [ -s "$DEFERRED" ]; then
+    if ! { [ -f "$LOGS/deferred.pid" ] && kill -0 "$(cat "$LOGS/deferred.pid")" 2>/dev/null; }; then
+      nohup bash "${BASH_SOURCE[0]}" --finish-deferred > "$LOGS/deferred.log" 2>&1 &
+      echo $! > "$LOGS/deferred.pid"
+    fi
+    echo "Cloud setup ran out of time, so these are installing in the background: $(tr '\n' ' ' < "$DEFERRED")The index is ready. A test or check that needs them must wait until $DEFERRED has gone. The log is $LOGS/deferred.log."
+  fi
+  exit 0
+fi
 
 FAILED_STEPS=()
 # Run a step, logging to its own file. Record a failure instead of stopping.
@@ -206,18 +240,33 @@ install_vyvid() {
 }
 step "vyvid" install_vyvid
 
-### 6. Repository dependencies ################################################
-# Cached with the toolchains while setup stays under about five minutes. If
-# the summary shows it going over, move this step to a SessionStart hook. The
-# knowledge step embeds the index, about a minute, which spares every later
-# session doing it. A session whose checkout is newer rebuilds only what changed.
+### 6. The index, then the rest if time allows ################################
+# Setup past about five minutes is not cached and runs again for every session.
+# The index comes first, since an agent needs it from its first question, and it
+# embeds in about a minute that every later session is then spared. The rest is
+# cached while it fits. A step is never killed, so it starts only before a limit
+# that leaves it room to finish. What did not start goes in $DEFERRED, and a
+# session's hook finishes it, so a slow network costs that session and no other.
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-step "bootstrap" mise run bootstrap
+rm -f "$DEFERRED"
+
+later() {
+  local limit="$1" name="$2" task="$3"
+  if [ "$SECONDS" -lt "$limit" ]; then
+    step "$name" mise run "$task"
+  else
+    log "$name left for the session (${SECONDS}s)"
+    echo "$task" >> "$DEFERRED"
+  fi
+}
+
+step "index" mise run bootstrap:index
+later 150 "dependencies" bootstrap:dependencies
 # Not part of bootstrap. The reasoner jar (ADR-A83) is what the tests that need
 # a reasoner skip without, and the Oxigraph package is what ADR-A125's tests use.
-step "reasoning testkit" mise run bootstrap:reasoning-testkit
-step "testing oxigraph" mise run bootstrap:testing-oxigraph
+later 250 "reasoning testkit" bootstrap:reasoning-testkit
+later 250 "testing oxigraph" bootstrap:testing-oxigraph
 
 ### Summary ###################################################################
 
@@ -231,6 +280,7 @@ vyd --version 2>&1 || true
 vyd config 2>&1 | grep -E '^(configuration trust|trusted repositories|project lattice)' || true
 
 log "Setup took ${SECONDS}s (cached only if under about 300s). Logs: $LOGS"
+[ -s "$DEFERRED" ] && log "Left for the session: $(tr '\n' ' ' < "$DEFERRED")"
 if [ "${#FAILED_STEPS[@]}" -gt 0 ]; then
   fail "Failed: ${FAILED_STEPS[*]}. The session still starts. Retry a step by hand."
 fi

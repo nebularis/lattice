@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && command -v mise >/dev/null 2>&1 && mise run bootstrap:vyvid >/dev/null 2>&1; exit 0",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && bash \"$CLAUDE_PROJECT_DIR/tools/claude-cloud-setup.sh\" --session; exit 0",
             "timeout": 120
           }
         ]
