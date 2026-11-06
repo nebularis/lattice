@@ -537,3 +537,54 @@ def test_vm2_04_the_identifiers_check_fails_a_mention_nothing_defines_where_vyd_
     assert any("STD-99" in line for line in check(change, []))
     standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n")
     assert check(change, []) == []
+
+
+# ---- the wrapper's own streams: a task's vyd can ask a question, and writes UTF-8 ----
+
+def recorded_run(monkeypatch, returncode: int) -> list[tuple[list[str], dict]]:
+    import vyd
+    calls: list[tuple[list[str], dict]] = []
+    monkeypatch.setattr(vyd.shutil, "which", lambda name, *a, **k: "vyd" if name == "vyd" else None)
+    monkeypatch.setattr(vyd.subprocess, "run", lambda args, **kw: calls.append((args, kw)) or subprocess.CompletedProcess(args, returncode, "", ""))
+    return calls
+
+
+def test_a_task_runs_vyd_on_its_own_streams_so_a_question_reaches_the_person(monkeypatch) -> None:
+    import vyd
+    calls = recorded_run(monkeypatch, 0)
+    assert vyd.main(["trust"]) == 0
+    (args, kw), = calls
+    assert args == ["vyd", "trust"]
+    assert not {"capture_output", "stdout", "stderr", "stdin"} & set(kw)
+
+
+def test_a_task_gives_vyd_utf8_mode_unless_the_caller_set_it(monkeypatch) -> None:
+    import vyd
+    monkeypatch.delenv("PYTHONUTF8", raising=False)
+    calls = recorded_run(monkeypatch, 0)
+    vyd.main(["--version"])
+    vyd.run(["check", "identifiers"])
+    assert [kw["env"]["PYTHONUTF8"] for _, kw in calls] == ["1", "1"]
+    monkeypatch.setenv("PYTHONUTF8", "0")
+    vyd.main(["--version"])
+    assert calls[-1][1]["env"]["PYTHONUTF8"] == "0"
+
+
+def test_a_task_whose_vyd_did_not_run_says_so_and_exits_zero(monkeypatch, capsys) -> None:
+    import vyd
+    recorded_run(monkeypatch, 2)
+    assert vyd.main(["build"]) == 0
+    assert "`vyd build` did not run" in capsys.readouterr().out
+
+
+def test_a_task_keeps_any_other_exit_code_of_vyd(monkeypatch) -> None:
+    import vyd
+    recorded_run(monkeypatch, 1)
+    assert vyd.main(["check", "identifiers"]) == 1
+
+
+def test_a_task_where_vyd_is_absent_says_so_and_exits_zero(monkeypatch, capsys) -> None:
+    import vyd
+    monkeypatch.setattr(vyd.shutil, "which", lambda name, *a, **k: None)
+    assert vyd.main(["trust"]) == 0
+    assert "`vyd trust` was skipped" in capsys.readouterr().out
