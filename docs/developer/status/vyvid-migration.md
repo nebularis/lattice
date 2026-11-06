@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: `mise run check:low-memory` passed on `main` at `2c4e5537` in 446 seconds, with `mem_check` never under 1.9 GiB against the guard's stop at 1 GiB, so the stop stays where it is. STD-321 ratified.
 - 2026-11-06: `mise run check` passed on `main` at `f969f24a`, one task at a time with `MISE_JOBS=1`, in 506 seconds with free memory never under 45%, after a run at the default was stopped for its memory (TD-150). STD-321 and `check:low-memory` came from it. The verdict on VM-0, VM-2, VM-7 and VM-8 stays the maintainer's.
 - 2026-11-06: re-checked at the maintainer's word. VM-2's `check:hooks` passed 48 tests, and `graph:ask` with no `vyd` on the path said what it skipped and exited 0. VM-0's three documents exist with no broken relative link, and INDEX.md's region is current. The adversarial probe of VM-7 and VM-8 is in VM-8's Validation Pack, and it found one test too weak, now tightened. The verdict on these slices stays the maintainer's.
 - 2026-11-06: VM-7 built again at `v0.2.14`, whose fence reader finds every heading of `docs/developer/developer-guide.md`, and the maintainer accepted the addendum of 2026-11-06 on ADR-A152 about a session with no terminal.
