@@ -104,3 +104,6 @@ A job of minutes, above all a proposal by a language model, ended the worker: pi
 
 **Consequences.** A broker restart fails the jobs in flight, and the author submits them again. A second worker on one queue can write `Failed` for a job the first still runs, and the first's result replaces it, so a short window can leave a succeeded job reading `Failed`. A broker without a worker on the long queue holds long jobs, and the studio says so. An existing broker gets the new queue when the service or a worker next connects, and the jobs queue keeps what it held, for the short worker to run.
 
+## Addendum, 2026-11-06: a late status does not replace a success
+
+With two workers on one queue, a lost connection redelivers a job to the idle worker while the first still runs it, and decision 2 of the amendment of 2026-11-05 has the idle worker write `Failed`. The maintainer chose on 2026-11-06 that the writer drops an update that would change a job held as `Succeeded` to another status, so a job that succeeded keeps its status and results whichever write lands last. A `Succeeded` still replaces a `Failed`, so an author can read `Failed` until the first worker finishes. Jobs are coordination data outside the persistence profiles, so this is a check in the writer and no change to the persistence compiler.

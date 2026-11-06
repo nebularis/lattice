@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 
-# Validation Pack: studio-worker-liveness WL-1 to WL-8
+# Validation Pack: studio-worker-liveness WL-1 to WL-9
 
 **Plan:** [studio-worker-liveness](../plans/studio-worker-liveness.md)
 **Status record:** [studio-worker-liveness](../status/studio-worker-liveness.md)
@@ -72,7 +72,7 @@ The first runs the unit tests of the worker, the harness and the service. The se
 
 **Changed, not weakened.** `test_same_job_twice_gives_same_graph` ran `handle` twice on one job, and a job the store holds as finished is not run again, so the second run would have compared the first with itself. It now sets the job back to the graph the service wrote before the second run, which keeps what it protects, that one job gives one graph.
 
-**Not covered.** Two workers on one queue where a lost connection redelivers a job to the idle one while the first still runs it. The idle worker marks the job `Failed`, and the first worker's result, published later, replaces that with `Succeeded`. If the first worker's result is applied before the other's `Failed`, the job reads `Failed` though it succeeded. The window is the time between the idle worker's read and its write, and a rerun is the author's to ask. WL-5 gives each lane one worker by default, and a second worker on a lane is the operator's choice.
+**Not covered.** Two workers on one queue where a lost connection redelivers a job to the idle one while the first still runs it. The idle worker marks the job `Failed`, and the first worker's result, published later, replaces that with `Succeeded`. If the first worker's result is applied before the other's `Failed`, the job read `Failed` though it succeeded, until WL-9 had the writer drop that update. An author can still read `Failed` until the first worker finishes. WL-5 gives each lane one worker by default, and a second worker on a lane is the operator's choice.
 
 ## WL-4: the held result and the reconnection
 
@@ -162,3 +162,15 @@ A run's processes stop when the process that started the run ends, however it en
 `mise run studio:integration` 2 passed and `mise run check:config-studio` exit 0, with the reaper in place.
 
 **Not covered.** How long the reaper took in WL8-03 to WL8-05, since the check's process listing matched its own shell and it waited out its 120 s limit. WL8-03 to WL8-05 were run by a script that is not in the repository. A netsplit: `close_connections` in WL4-05 is an orderly close the worker is told about, and `os._exit` in RC3's test kills the worker, while in a netsplit the peer goes silent with no close and each side finds out only by its heartbeat. The `compose` runner (TD-150).
+
+## WL-9: a late `Failed` never replaces a `Succeeded`
+
+The writes of a workspace are applied in order, so a job the store holds as `Succeeded` keeps its status and results whichever worker's write lands last.
+
+| ID | Given / When / Then | Level | +/− | Result |
+|---|---|---|---|---|
+| WL9-01 | a job updated to `Succeeded` with a result / an update saying `Failed` arrives / it is answered 200 and dropped, and the job reads `Succeeded` with its result | L3 | + | pass, failed before the check |
+| WL9-02 | the same two updates in one batch / applied / the job reads `Succeeded` | L3 | + | pass |
+| WL9-03 | a job updated to `Failed` / an update saying `Succeeded` arrives / the job reads `Succeeded` | L3 | + | pass |
+
+**Not covered.** The false `Failed` an author reads while the first worker still runs. Two real workers and a lost connection, which BL-14's rig would give.

@@ -107,6 +107,53 @@ class WritesTest {
         assertEquals(400, writer.apply(Command.create(Fixture.id(5), "x", at, "../etc", ModelFactory.createDefaultModel())).status());
     }
 
+    /** The job's graph with {@code status}, and with {@code cst:conforms} as a result where it succeeded. */
+    private Model ended(String jobIri, org.apache.jena.rdf.model.Resource status) {
+        Model model = ModelFactory.createDefaultModel().add(f.store.graph(jobIri));
+        Resource node = model.createResource(jobIri);
+        model.removeAll(node, Cst.status, null);
+        model.add(node, Cst.status, status);
+        if (status.equals(Cst.Succeeded)) {
+            model.addLiteral(node, Cst.conforms, true);
+        }
+        return model;
+    }
+
+    @Test
+    void aLateFailedDoesNotReplaceASucceededJobAndItsResults() {
+        String job = job();
+        String jobIri = Graphs.job(job);
+        Model succeeded = ended(jobIri, Cst.Succeeded);
+        Model failed = ended(jobIri, Cst.Failed);
+        assertEquals(200, writer.apply(Command.jobUpdate(WS, job, only(jobIri, succeeded))).status());
+        assertEquals(200, writer.apply(Command.jobUpdate(WS, job, only(jobIri, failed))).status(), "dropped, as a job's redelivered message is acknowledged");
+        Model stored = f.store.graph(jobIri);
+        Resource node = stored.createResource(jobIri);
+        assertEquals(Cst.Succeeded, node.getPropertyResourceValue(Cst.status));
+        assertTrue(stored.contains(node, Cst.conforms), "the job's results were lost");
+    }
+
+    @Test
+    void aLateFailedInTheSameBatchAsTheSuccessIsDropped() {
+        String job = job();
+        String jobIri = Graphs.job(job);
+        Model succeeded = ended(jobIri, Cst.Succeeded);
+        Model failed = ended(jobIri, Cst.Failed);
+        writer.apply(java.util.List.of(Command.jobUpdate(WS, job, only(jobIri, succeeded)), Command.jobUpdate(WS, job, only(jobIri, failed))));
+        assertEquals(Cst.Succeeded, f.store.graph(jobIri).createResource(jobIri).getPropertyResourceValue(Cst.status));
+    }
+
+    @Test
+    void aSucceededReplacesAFailedWrittenWhileTheJobStillRan() {
+        String job = job();
+        String jobIri = Graphs.job(job);
+        Model failed = ended(jobIri, Cst.Failed);
+        Model succeeded = ended(jobIri, Cst.Succeeded);
+        assertEquals(200, writer.apply(Command.jobUpdate(WS, job, only(jobIri, failed))).status());
+        assertEquals(200, writer.apply(Command.jobUpdate(WS, job, only(jobIri, succeeded))).status());
+        assertEquals(Cst.Succeeded, f.store.graph(jobIri).createResource(jobIri).getPropertyResourceValue(Cst.status));
+    }
+
     @Test
     void aJobUpdateMayChangeOnlyTheStatusAndTheResults() {
         String job = job();
