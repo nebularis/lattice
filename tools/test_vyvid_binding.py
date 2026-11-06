@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from bootstrap_vyvid import decide  # noqa: E402
+from bootstrap_vyvid import decide, install_kind  # noqa: E402
 from lattice_repo_catalogue import find_root  # noqa: E402
 
 ROOT = find_root()
@@ -71,8 +71,8 @@ def test_vm1_06_bootstrap_says_what_it_skipped_without_uv():
     assert command is None and "uv is missing" in message
 
 
-def test_vm1_07_bootstrap_installs_the_pinned_tag_otherwise():
-    message, command = decide("0.2.1", "0.2.2", have_uv=True)
+def test_vm1_07_bootstrap_installs_the_pinned_tag_over_a_git_install():
+    message, command = decide("0.2.1", "0.2.2", have_uv=True, kind="git")
     assert command is not None and command[-1].endswith("@v0.2.2") and "replacing 0.2.1" in message
 
 
@@ -85,6 +85,62 @@ def test_vm1_08_vyd_context_names_lattice_where_trusted():
     done = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, timeout=60)
     assert done.returncode == 0, done.stderr[-400:]
     assert "project: lattice" in done.stdout
+
+
+def write_receipt(tmp_path: Path, requirement: str) -> Path:
+    receipt = tmp_path / "uv-receipt.toml"
+    receipt.write_text(f'[tool]\nrequirements = [{{ name = "vyvid", {requirement} }}]\nentrypoints = [{{ name = "vyd", install-path = "/bin/vyd" }}]\n', encoding="utf-8")
+    return receipt
+
+
+def test_vm1_09_an_editable_install_at_another_version_is_left_alone(tmp_path):
+    key, note = install_kind(write_receipt(tmp_path, 'extras = ["symbols"], editable = "/somewhere/vyvid"'))
+    assert (key, note) == ("editable", None)
+    message, command = decide("0.2.12", "0.2.11", have_uv=True, kind=key)
+    assert command is None and "left alone" in message and "@v0.2.11" in message
+
+
+def test_vm1_10_a_directory_install_is_left_alone(tmp_path):
+    key, note = install_kind(write_receipt(tmp_path, 'directory = "/somewhere/vyvid"'))
+    assert (key, note) == ("directory", None)
+    message, command = decide("0.1.0", "0.2.11", have_uv=True, kind=key)
+    assert command is None and "left alone" in message and "@v0.2.11" in message
+
+
+def test_vm1_11_a_git_install_at_another_version_is_replaced(tmp_path):
+    key, note = install_kind(write_receipt(tmp_path, 'git = "https://github.com/nebularis/vyvid?tag=v0.2.10"'))
+    assert (key, note) == ("git", None)
+    message, command = decide("0.2.10", "0.2.11", have_uv=True, kind=key)
+    assert command is not None and command[-1].endswith("@v0.2.11") and "replacing 0.2.10" in message
+
+
+def test_vm1_12_a_missing_receipt_leaves_an_installed_vyd_alone(tmp_path):
+    """A vyd from pip or pipx has no uv receipt, and is never replaced."""
+    key, note = install_kind(tmp_path / "absent" / "uv-receipt.toml")
+    assert key is None and note is not None and "missing" in note
+    message, command = decide("0.2.12", "0.2.11", have_uv=True, kind=key)
+    assert command is None and "left alone" in message
+
+
+def test_vm1_13_an_unreadable_receipt_leaves_an_installed_vyd_alone(tmp_path):
+    receipt = tmp_path / "uv-receipt.toml"
+    receipt.write_text("not = [toml", encoding="utf-8")
+    key, note = install_kind(receipt)
+    assert key is None and note is not None and "could not be read" in note
+    message, command = decide("0.2.12", "0.2.11", have_uv=True, kind=key)
+    assert command is None and "left alone" in message
+
+
+def test_vm1_14_a_receipt_in_a_bad_encoding_is_unreadable_not_a_crash(tmp_path):
+    receipt = tmp_path / "uv-receipt.toml"
+    receipt.write_bytes(b"[tool]\nrequirements = [{ name = \"vyvid\", git = \"\xff\xfe\" }]\n")
+    key, note = install_kind(receipt)
+    assert key is None and note is not None and "could not be read" in note
+
+
+def test_vm1_15_an_absent_vyd_is_installed_without_a_receipt():
+    message, command = decide(None, "0.2.11", have_uv=True)
+    assert command is not None and command[-1].endswith("@v0.2.11") and "replacing" not in message
 
 
 def test_vm3_05_the_decision_pattern_matches_every_spelling_the_corpus_uses_and_no_prose(binding):

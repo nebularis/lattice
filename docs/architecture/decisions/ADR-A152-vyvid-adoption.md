@@ -27,6 +27,12 @@ The knowledge index of ADR-A134 and the work board of ADR-A151 were built in LAT
 
 LATTICE maintains about 500 lines for its index and board, the extractor for quanta and owners and the tests that stay, instead of about 8,200. A rule about asking the index lives once, in the general scope `vyd context` prints, and AGENTS.md keeps only what is LATTICE's. A rule about `mise`, probing a store or writing a query lives in a domain skill plus LATTICE's additions, composed and committed. A contributor without `vyd` has the build, the hooks and the committed skills, and no index or board, and every check tells them so. `bootstrap` reaches the network for one more tool. A `vyvid.toml` edit lapses the maintainer's trust of it, after which no extractor runs until `vyd trust` is run again in a terminal, so edits to it are batched. The move of the record is the one irreversible edge, a public URL, met by the page at the old path.
 
+## Addendum of 2026-11-06: a maintainer's own install is left alone
+
+**Status:** Accepted 2026-11-06
+
+**Narrows decision 2.** `bootstrap:vyvid` replaces an installed `vyd` at another version only where the tool's `uv-receipt.toml` under uv's tool directory shows a git install. An editable or local-directory install, one from pip or pipx with no receipt, or one whose receipt cannot be read is left alone whatever its version, with the installed and pinned versions and the command that moves to the pin printed, exit zero. It still installs the pinned tag where `vyd` is absent, and reads no receipt then. Decision 2 compared versions alone, and on 2026-11-06 that replaced a maintainer's editable install of Вивід with the pinned tag, a loss of their working copy's binding that no message announced.
+
 ## Provenance
 
 The sketch [vyvid-migration](../../developer/sketches/vyvid-migration.md) holds the facts, the table of what moves and what stays, and the answered questions VM-Q1 to VM-Q6. The plan [vyvid-migration](../../developer/plans/vyvid-migration.md) holds the decisions and the slices VM-1 to VM-6. Вивід's own plan names the switch as its slice VYD-2b.

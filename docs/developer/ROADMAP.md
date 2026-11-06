@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-05.
+Built from the status records on 11 branches, the units' own state from this tree, the newest board day 2026-11-06.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -66,7 +66,7 @@ Built from the status records on 11 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-05 | VM-0 | 4 verified, 3 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-06 | VM-0 | 5 verified, 2 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -780,7 +780,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 18 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
@@ -904,9 +904,9 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-05.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06.
 
-1. **Merge `vyvid-migration` into `main`** by its review request's checklist (plan [vyvid-migration](plans/vyvid-migration.md)), then run `vyd trust` and `mise run bootstrap` in `~/work/lattice`. Every slice is verified, ADR-A152 and the addenda on ADR-A117 and ADR-A134 are accepted, the index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch stays paused until the merge, then merges `main` in before any other work.
+1. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
 2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
 3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.

@@ -43,6 +43,7 @@ These are how a suite is built from the start, not fixes applied once it is slow
 - **A new check is seen to fail before it is relied on.** Break what it checks, watch it fail, then restore it. A check that has never failed may be checking nothing.
 
 - **Sized to the memory available.** The suite's `conftest.py` answers `pytest_xdist_auto_num_workers` with `mem_check` (below), from its own measured peak per worker, and `PYTEST_XDIST_AUTO_NUM_WORKERS` still overrides it.
+- **A test owns its environment.** A test that reads a family of environment variables blanks every variable of that family it does not set, since the shell's own settings reach the code under test through `os.environ` and fail or pass it for one developer alone. `workers/tests/test_config_studio_worker.py`'s `_propose` blanks `LATTICE_PROPOSER_*` before laying the test's values over them, after a developer's `LATTICE_PROPOSER_KEY_FILE` failed the suite on one machine.
 - **Paths from the catalogue.** A test finds a module's examples, a register or the root through the catalogue reader, as skill `lattice-mise`'s Finding paths shows (STD-273), never from `__file__` or a written path. The catalogue's scan does not read tests yet (TD-54), so a reviewer holds this.
 
 - **Oxigraph runs the generated SPARQL.** A behaviour test that executes generated SPARQL runs on the default engine, Oxigraph (ADR-A125, addendum of 2026-10-21). rdflib stays the library the tools and pySHACL are built on.

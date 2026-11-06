@@ -21,7 +21,7 @@ description = "Install configured toolchains and dependency sets, and the git ho
 depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge", "bootstrap:vyvid"]
 
 [tasks."bootstrap:vyvid"]
-description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
+description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, replacing an installed vyd at another version only where its uv receipt shows a git install, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
 run = "python tools/bootstrap_vyvid.py"
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
