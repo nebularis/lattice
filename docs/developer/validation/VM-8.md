@@ -42,6 +42,8 @@ A snapshot without the dependencies costs every session of it about two minutes,
 
 The next snapshot's run still reached them at 156 seconds, with Isabelle taking 79 seconds that held up every step after it, and it finished in about 3 minutes 47 seconds without them. No step before the end of setup uses Isabelle, so it is now waited for last, which on that run's times would have reached them at about 125 seconds.
 
+With Isabelle waited for last, the snapshot's run on 2026-11-06 reached the dependencies at 49 seconds and its last step finished at about 3 minutes 25 seconds, with the index done at 133 seconds and the dependencies, which took 153.99 seconds beside it, at 203. A session 13 minutes later reused the snapshot, with the dependencies in place and nothing deferred.
+
 ## Not covered here
 
-Whether the dependencies now fit in the snapshot, and setup's time with them beside the index. The limits of 150 and 250 seconds are chosen from these few runs, and a list of several tasks deferred for real has run only against a fake `mise`.
+The limits of 150 and 250 seconds are chosen from these few runs, and setup's times vary between them. A list of several tasks deferred for real has run only against a fake `mise`.

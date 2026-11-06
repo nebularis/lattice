@@ -33,4 +33,4 @@ A first session on the LATTICE environment, 2026-11-06, at `3ef90a2`. `vyd` 0.2.
 
 ## Not covered here
 
-Reuse of the snapshot, a rebuild on a checkout newer than the snapshot, and the hook's effect when a branch pins a newer `vyd`.
+The hook's effect when a branch pins a newer `vyd`. VM-8's Results record the reuse of the snapshot and a rebuild on a checkout newer than it.
