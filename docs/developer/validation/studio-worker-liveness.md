@@ -157,6 +157,7 @@ A run's processes stop when the process that started the run ends, however it en
 | WL8-04 | the same / SIGINT, then SIGKILL 1.5 s into the teardown / no process and no run folder | L8 | + | pass, by hand |
 | WL8-05 | the same / SIGTERM / no process and no run folder | L8 | + | pass, by hand |
 | WL8-06 | the suite run to its end / the module's fixture stops the studio / `leftovers()` is empty | L5 | + | pass, 5 passed |
+| WL8-07 | a shell with `LATTICE_PROPOSER_*` set / a run's worker is started / those settings are blank, and one a test passes through `env` is kept (SH-T10). The suite run with a shell's provider, model and key file set ends with the proposal failed and neither value in any process's log | L1, L5 | ± | pass, failed before the fix |
 
 `mise run studio:integration` 2 passed and `mise run check:config-studio` exit 0, with the reaper in place.
 

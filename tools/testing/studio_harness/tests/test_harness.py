@@ -15,6 +15,7 @@ import pytest
 from lattice_testing_studio_harness import Client, HarnessError, Reply, Topology, free_ports
 from lattice_testing_studio_harness._tools import catalogue, stack
 from lattice_testing_studio_harness.compose import Paths, compose_config, fuseki_config
+from lattice_testing_studio_harness.processes import ProcessStudio
 from lattice_testing_studio_harness.topology import new_run_id, queue_consumers
 
 ROOT = catalogue.find_root()
@@ -119,3 +120,12 @@ def test_sh_t9_a_killed_starter_leaves_no_process_and_no_run_folder(tmp_path: Pa
         starter.wait()
         process.kill()
         process.wait()
+
+
+def test_sh_t10_a_workers_proposer_settings_come_from_the_test_and_never_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LATTICE_STUDIO_HARNESS_WORKER_ROOT", raising=False)
+    monkeypatch.setenv("LATTICE_PROPOSER_KEY_FILE", "/from/the/shell")
+    monkeypatch.setenv("LATTICE_PROPOSER_MODEL", "from-the-shell")
+    studio = ProcessStudio(Topology(name="env"), ROOT)
+    assert studio._worker_env({"LATTICE_ROOT": "r"}) == {"LATTICE_ROOT": "r", "LATTICE_PROPOSER_KEY_FILE": "", "LATTICE_PROPOSER_MODEL": ""}
+    assert studio._worker_env({"LATTICE_PROPOSER_MODEL": "from-the-test"})["LATTICE_PROPOSER_MODEL"] == "from-the-test"
