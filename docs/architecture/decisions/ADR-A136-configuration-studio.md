@@ -2,7 +2,7 @@
 
 # ADR-A136: Configuration Studio, for authoring configuration against an applied ontology
 
-**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day. A third, on deploying the writers apart on a super stream, is Proposed
+**Status:** Accepted 2026-10-28, with its addendum and amendment. Its second amendment of 2026-10-28, on how the store is written and where it is kept, was accepted the same day. A third, on deploying the writers apart on a super stream, is Proposed. A fourth, on the worker staying alive through a long job, was accepted 2026-11-06
 **Date:** 2026-10-27
 **Related:** [ADR-A118](ADR-A118-word-authoring-proof-of-concept.md) (the runtime split this follows), [ADR-A38](ADR-A38-surface-output-publication-and-studio-authoring-boundary.md) (the Surface Contract Studio), [ADR-A78](ADR-A78-persistence-profile-substrate-and-aggregate-boundaries.md) and [ADR-A79](ADR-A79-persistence-compiler-toolchain.md) (the persistence substrate and its compiler), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) and [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (graph references across runtimes), [ADR-A135](ADR-A135-contract-first-wire-types.md) (wire types)
 **Unit:** [`config-studio`](../../developer/plans/config-studio.md)
@@ -89,7 +89,7 @@ The maintainer decided the design on 2026-10-28, reopening where the writers of 
 
 **Consequences.** RabbitMQ needs its stream plugin and a port for the stream protocol, advertised at an address the writers reach. Each partition keeps a week of writes or 1 GiB. TDB2 applies one update at a time per dataset (TSD-62), so more writer instances add availability and parallel checking, not commits, while one database serves them.
 
-## Amendment, 2026-11-05: the worker stays alive through a long job (Proposed)
+## Amendment, 2026-11-05: the worker stays alive through a long job (Accepted 2026-11-06)
 
 A job of minutes, above all a proposal by a language model, ended the worker: pika's blocking connection answers the broker's heartbeats only while its own thread is inside the library, so the broker closed a connection that a job held past its timeout, the result could not be published, and the same job came back at each start. This changes the worker's side of the job contract. The maintainer chose each of the options below on 2026-11-05.
 

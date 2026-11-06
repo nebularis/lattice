@@ -6,7 +6,7 @@
 **Unit type:** multi-slice unit, one worker, its queue contract and the views that wait on it
 **Prefix:** WL
 **Status record:** [studio-worker-liveness.md](../status/studio-worker-liveness.md)
-**ADR:** an addendum to [ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md), drafted in WL-7 as Proposed
+**ADR:** an addendum to [ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md), drafted in WL-7, accepted 2026-11-06
 **Status:** accepted 2026-11-05. The maintainer answered WL-Q1 to WL-Q6 the same day, each answer recorded under its question. TD-131 and TD-141 left the debt register in the commit that records them.
 
 ## Scope

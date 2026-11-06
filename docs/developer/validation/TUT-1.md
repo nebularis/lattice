@@ -7,11 +7,7 @@
 
 ## Invariant
 
-The orientation chapters give a data architect new to ontologies what every later chapter assumes:
-why LATTICE exists (chapter 0), the counterpart of each ontology idea in a relational model and
-where it misleads (chapter 1), enough Turtle to read every excerpt (chapter 2), and the layers and
-their dependency order (chapter 3). Every excerpt is a verbatim copy of its source, and every claim
-about LATTICE is checked against the file it describes.
+The orientation chapters give a data architect new to ontologies what every later chapter assumes: why LATTICE exists (chapter 0), the counterpart of each ontology idea in a relational model and where it misleads (chapter 1), enough Turtle to read every excerpt (chapter 2), and the layers and their dependency order (chapter 3). Every excerpt is a verbatim copy of its source, and every claim about LATTICE is checked against the file it describes.
 
 ## Test cases
 
@@ -31,8 +27,7 @@ TUT1-05 is the slice's acceptance. It sets the voice and depth TUT-2 to TUT-4 fo
 mise run check:tutorial-snippets
 ```
 
-Pass: `OK 9 excerpts and 3 repository links match the checkout`, then `10 passed`. To read the
-chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html`.
+Pass: `OK 9 excerpts and 3 repository links match the checkout`, then `10 passed`. To read the chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html`.
 
 ## Artefacts to inspect
 
@@ -49,8 +44,7 @@ Sources the chapters quote or describe, each re-read while writing:
 
 ## Deliberate non-coverage
 
-- Chapter 3's diagram draws only the main imports. The full lists are in each document's
-  `owl:imports`, as the chapter says.
+- Chapter 3's diagram draws only the main imports. The full lists are in each document's `owl:imports`, as the chapter says.
 - Chapters 4 to 13 remain placeholders until TUT-2 to TUT-4.
 
 ## Results
@@ -67,5 +61,4 @@ Run 2026-10-14 on Windows 11.
 
 ## Adversarial probe
 
-The check's own probe happened unplanned in TUT1-01. A paraphrased line in an excerpt was reported
-with its chapter, line and source, and passed once corrected.
+The check's own probe happened unplanned in TUT1-01. A paraphrased line in an excerpt was reported with its chapter, line and source, and passed once corrected.

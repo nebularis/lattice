@@ -7,10 +7,7 @@
 
 ## Invariant
 
-Chapters 4 to 6 add Foundation, Wording, Instrument and Party to the running facility, in the voice
-and depth TUT-1 set. Each idea is introduced through its data-architecture counterpart, every
-excerpt is a verbatim copy of its source, and every claim about a layer is checked against that
-layer's README, spec, shapes or examples.
+Chapters 4 to 6 add Foundation, Wording, Instrument and Party to the running facility, in the voice and depth TUT-1 set. Each idea is introduced through its data-architecture counterpart, every excerpt is a verbatim copy of its source, and every claim about a layer is checked against that layer's README, spec, shapes or examples.
 
 ## Test cases
 
@@ -27,8 +24,7 @@ layer's README, spec, shapes or examples.
 mise run check:tutorial-snippets
 ```
 
-Pass: `OK 25 excerpts and 10 repository links match the checkout`, then `10 passed`. To read the
-chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#identity`.
+Pass: `OK 25 excerpts and 10 repository links match the checkout`, then `10 passed`. To read the chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/tutorial.html#identity`.
 
 ## Artefacts to inspect
 
@@ -42,11 +38,9 @@ chapters as published, `mise run serve:jekyll` and open `http://127.0.0.1:4000/t
 
 ## Deliberate non-coverage
 
-- Instrument's time, regimes, triggers, survival and amendment are left to chapter 9, and its
-  conditions to chapters 7 and 8.
+- Instrument's time, regimes, triggers, survival and amendment are left to chapter 9, and its conditions to chapters 7 and 8.
 - Party's delegation is not covered. No facility example uses it.
-- The plan's chapter 7 source for Vocabulary, `vocabulary/examples/temporal-handover.ttl`, is
-  unchanged. Chapter 5 mentions reliance "as amended" without an excerpt.
+- The plan's chapter 7 source for Vocabulary, `vocabulary/examples/temporal-handover.ttl`, is unchanged. Chapter 5 mentions reliance "as amended" without an excerpt.
 
 ## Results
 
@@ -59,9 +53,7 @@ Run 2026-10-15 on Windows 11.
 | TUT2-03 | passed |
 | TUT2-04 | awaiting the maintainer |
 
-One claim was removed while checking sources. A first draft said a transfer of a lender's
-participation replaces an occupancy without changing the relations. No example or README shows
-that, so chapter 6 now says only what the example does.
+One claim was removed while checking sources. A first draft said a transfer of a lender's participation replaces an occupancy without changing the relations. No example or README shows that, so chapter 6 now says only what the example does.
 
 ## Adversarial probe
 
