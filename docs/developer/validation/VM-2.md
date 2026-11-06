@@ -28,10 +28,14 @@ mise run check:hooks
 
 Run from the checkout's root. A pass is every test passing, `test_vm2_04` skipped where `vyd` is not installed, and `test_vm2_03` skipped on Windows, where the fake `vyd` is a shell script.
 
+## Results
+
+Re-checked 2026-11-06 on `main` at Вивід `v0.2.14`. `mise run check:hooks` passed 48 tests. With `vyd` off the path, `graph:ask` said what it skipped and exited 0. `mise run graph:ask -- find` on Q01 to Q03 with `--activity ontology-design` returned the same top five as the record of the run before the switch, in the same order, listed under Tests.
+
 ## Artefacts
 
 `tools/vyd.py`, the `vyd` check and the post-merge rebuild in `tools/hooks.py`, the tasks `graph:ask`, `build:knowledge`, `check:identifiers` and `vyd` in `mise.toml`, AGENTS.md's "Asking the knowledge index" and `.github/copilot-instructions.md`, PRI-79 in `docs/developer/principles.md`, and the addenda of 2026-11-05 on ADR-A134 and ADR-A151.
 
 ## Not covered here
 
-The board tasks and the `work` check over `vyd`, which VM-4 covers. LATTICE's knowledge tests against Вивід's store and the removal of `tools/knowledge/`, which VM-3 covers, so `check:knowledge` and `tools/knowledge/test_identifiers.py` still test LATTICE's own code here. Windows, proven after the switch (plan, decision 3).
+The board tasks and the `work` check over `vyd`, which VM-4 covers. LATTICE's knowledge tests against Вивід's store and the removal of `tools/knowledge/`, which VM-3 covers, so `check:knowledge` and `tools/knowledge/test_identifiers.py` still test LATTICE's own code here. Windows, pending the maintainer's run of Вивід's manual test script on a Windows machine (plan, decision 3).
