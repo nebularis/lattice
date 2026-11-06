@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
+**Status:** built 2026-11-06. Merged into `main` by squash on 2026-11-06. VM-1, VM-3, VM-4, VM-5 and VM-6 verified, VM-0, VM-2, VM-7 and VM-8 built and waiting for the maintainer. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -19,7 +19,7 @@
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
+| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 
 ## Next action
@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-7 built again at `v0.2.14`, whose fence reader finds every heading of `docs/developer/developer-guide.md`, and the maintainer accepted the addendum of 2026-11-06 on ADR-A152 about a session with no terminal.
 - 2026-11-06: VM-7 reopened to pin `v0.2.14`, at the maintainer's word.
 - 2026-11-06: VM-8 built again. Isabelle is waited for at the end of setup.
 - 2026-11-06: VM-8 reopened. A snapshot's setup reached the dependencies at 156 seconds against a limit of 150, having waited on Isabelle, which no later step needs.

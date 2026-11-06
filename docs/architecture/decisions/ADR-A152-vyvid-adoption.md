@@ -35,7 +35,7 @@ LATTICE maintains about 500 lines for its index and board, the extractor for qua
 
 ## Addendum of 2026-11-06: a cloud session with no terminal
 
-**Status:** Proposed
+**Status:** Accepted 2026-11-06
 
 **Adds to decision 2's trust.** A cloud environment's pasted setup script writes the user configuration, naming the domains with `trust = "own"` and this repository in Вивід's `trusted_repositories`, so a committed `vyvid.toml` is trusted on any branch there with no `vyd trust`. We accept that a hostile branch is then trusted, since its hooks, instructions and skills reach the agent in that session anyway. A hash in the script would go stale on every change to `vyvid.toml`. The grant is pasted rather than held in `tools/claude-cloud-setup.sh`, so the repository does not vouch for itself. A person's machine is unchanged and still needs `vyd trust`.
 
