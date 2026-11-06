@@ -5,7 +5,7 @@
 **Unit ID:** `studio-worker-liveness`
 **Plan:** [studio-worker-liveness.md](../plans/studio-worker-liveness.md)
 **Mode:** default. Write, then hand off.
-**Status:** built 2026-11-06. WL-Q1 to WL-Q6 are answered.
+**Status:** building 2026-11-06. WL-Q1 to WL-Q6 are answered.
 
 ## Position
 
@@ -20,6 +20,7 @@
 | WL-6 | a view that attaches to its running job, no stacked validations | built 2026-11-05 |  |
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | built 2026-11-05 |  |
 | WL-8 | a run that leaves no process behind when its test process is killed | built 2026-11-06 |  |
+| WL-9 | a late `Failed` never replaces a `Succeeded` | building 2026-11-06 |  |
 
 ## Next action
 
@@ -51,3 +52,4 @@ The maintainer verifies the unit and merges it. The Validation Pack is [studio-w
 - 2026-11-06: merged `main` in again, which carries the tutorial and cloud setup for Вивід. Conflicts in `ROADMAP.md` and the debt register. Both sides had written a TD-149, so the tutorial's row on the mapping compile is now TD-151. TD-143 and TD-144, which `main` closed on 2026-11-05 and the tutorial's merge brought back, stay removed. The change of 2026-11-06 to the harness's workers follows STD-320.
 - 2026-11-06: the maintainer accepted the amendment of 2026-11-05 to ADR-A136. The hard-wrapped lines of the tutorial's documents and `getting-started.md`, which reached this branch with `main`, are joined, and CAP-106 gives the cloud setup script a row in the index.
 - 2026-11-06: `mise run test:config-studio-browser` run on the merged tree for the first time on this unit, 23 journeys and 3 on the real stack passed, with nothing left running. The `publishing ... failed` line in `check:config-studio`'s output is `StudioApiTest.aBusThatThrowsStillAnswers202WithAFailedJob`, whose bus throws on purpose.
+- 2026-11-06: WL-9 picked up, building. The maintainer chose option B for the race WL-3 recorded, a check in the writer that a job held as `Succeeded` is not changed by an update saying `Failed`.
