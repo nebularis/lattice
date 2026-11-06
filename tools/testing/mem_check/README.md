@@ -9,6 +9,8 @@ A suite that runs its tests in parallel measures what one worker needs at its pe
 as many workers as fit in what is available less a reserve of 1 GiB, up to the count it would use anyway and never fewer than two. A
 short machine, for example 8 GB with an editor open, runs fewer workers, which takes longer and stays within memory.
 
+`python -m mem_check.guard -- <command>`, which `mise run check:low-memory` uses, runs a command one task at a time with two workers and stops it if less than 1 GiB stays available, exiting 3.
+
 ```python
 import mem_check
 

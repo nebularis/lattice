@@ -58,6 +58,8 @@ More workers than cores that do real work add contention, not speed. On four per
 
 free. `tools/testing/mem_check` (`mise run bootstrap:testing-mem-check`, standard library only, macOS, Linux and Windows) reads what is available and `mem_check.workers(default, per_worker)` gives as many workers as fit in it less a 1 GiB reserve, up to the default count and never fewer than two, which runs longer and smaller. `MEM_CHECK_AVAILABLE_MIB` stands in for the machine. A suite adopts it with the hook its README shows, giving its own peak per worker, measured with `-n 0` (`tools/persistence/tests/conftest.py` gives 700 MiB from a measured 649 MB). Any other suite that can run short of memory, or that starts more than two workers, may use it the same way.
 
+**Look at the memory before a whole check or a large suite, and ask where it is short (STD-321).** Read what is available with `mise exec -- python -c "import mem_check; print(mem_check.available_bytes() / mem_check.GIB)"`. Under 4 GiB, or where the machine is already swapping, tell the maintainer the figure and ask which way to run it before starting. `mise run check` runs tasks in parallel and is faster. `mise run check:low-memory` runs one task at a time with two test workers, takes longer, and stops the run if less than 1 GiB stays available, exiting 3, which is neither a pass nor a test failure. The maintainer can also ask for the slower run at any time, and it is the way to run a check on a busy machine.
+
 ## Measure before changing anything
 
 A slow suite's cause is a hypothesis until profiled. Guessing wrong costs more than measuring.
