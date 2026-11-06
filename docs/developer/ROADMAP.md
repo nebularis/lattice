@@ -788,6 +788,8 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 The units outside an epic are rows of section 1's generated table, with their state, next slice and the branches that move them, and their own charts there once they have five dated slices. Nothing is listed twice.
 
+**More of the studio's browser journeys on the real stack, not yet a unit.** Added 2026-11-06. `mise run test:config-studio-browser` runs 23 journeys against the in-memory fake service and 3 against a real stack, so a fault in the service, the writer, the broker or the worker reaches only those 3. The first candidates are the journeys that wait on a job, among them what the `studio-worker-liveness` pack records as not driven by a browser, a view attaching to its running publication or mapping proposal, and the Build view's wait for a queued job.
+
 ## 6. The platform programme
 
 **Documents.** [epic plan](plans/lattice-platform-agentic-development-v0.2.md), phase plans [0](plans/phase-0-plan.md) to [4](plans/phase-4-plan.md), status records [0](status/phase-0-status.md) to [4](status/phase-4-status.md), [continuation status](status/platform-continuation.md).
