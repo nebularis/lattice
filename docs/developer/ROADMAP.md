@@ -803,7 +803,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-06 | 21 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8 |
+| `fix/studio-worker-heartbeat` | 2026-11-06 | 26 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8, WL-9 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
@@ -856,7 +856,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 104 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
