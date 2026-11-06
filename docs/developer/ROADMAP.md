@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-05.
+Built from the status records on 12 branches, the units' own state from this tree, the newest board day 2026-11-06.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -47,7 +47,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 5 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | built 2026-11-05 | TUT-0 | 5 built, 1 verified | tutorial/guide |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building | tutorial/studio-guide |
 | [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
@@ -67,6 +67,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-06 | VM-0 | 5 verified, 4 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
 | [xslt-sidecar](plans/xslt-sidecar.md) | multi-slice unit | planned |  | no board |  |
@@ -89,20 +90,20 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section applied-insurance-reference
-    AIR-1.1 set by R. No version bumps no :done, air11, 2026-11-02, 2026-11-03
-    AIR-1.2 set by R. Tags applied-classi :done, air12, 2026-11-02, 2026-11-03
-    AIR-2.0 insurance common and insura :air20, 2026-11-02, 2026-11-03
+    AIR-1.1 set by R. No version bumps :done, air11, 2026-11-02, 2026-11-03
+    AIR-1.2 set by R. Tags :done, air12, 2026-11-02, 2026-11-03
+    AIR-2.0 insurance common and :air20, 2026-11-02, 2026-11-03
     AIR-2.1 set by R three shape defects :done, air21, 2026-11-02, 2026-11-03
-    AIR-2.2 peril spec 0.4.0 0.5.0 co :air22, 2026-11-02, 2026-11-03
-    AIR-2.3 peril-vocab cause-N caus :air23, 2026-11-02, 2026-11-03
-    AIR-2.4 peril-vocab cause-H to ca :air24, 2026-11-02, 2026-11-03
+    AIR-2.2 peril spec 0.4.0 0.5.0 :air22, 2026-11-02, 2026-11-03
+    AIR-2.3 peril-vocab cause-N :air23, 2026-11-02, 2026-11-03
+    AIR-2.4 peril-vocab cause-H to :air24, 2026-11-02, 2026-11-03
     AIR-2.6 common-vocab 0.5.0 0.6.0 :air26, 2026-11-02, 2026-11-03
     AIR-3.1 :done, air31, 2026-10-14, 2026-10-15
     AIR-3.2 :done, air32, 2026-10-14, 2026-10-15
-    AIR-4.1 new module ontology applied i :air41, 2026-11-02, 2026-11-03
-    AIR-4.2 zones pool participation ass :air42, 2026-11-02, 2026-11-03
-    AIR-4.2a TD-49 fixed scope widened by :air42a, 2026-11-02, 2026-11-03
-    AIR-4.3 dependencies peril metrics m :air43, 2026-11-02, 2026-11-03
+    AIR-4.1 new module :air41, 2026-11-02, 2026-11-03
+    AIR-4.2 zones pool participation :air42, 2026-11-02, 2026-11-03
+    AIR-4.2a TD-49 fixed :air42a, 2026-11-02, 2026-11-03
+    AIR-4.3 dependencies peril metrics :air43, 2026-11-02, 2026-11-03
     AIR-4.4 insurance common 0.5.0 0.6.0 :air44, 2026-11-02, 2026-11-03
 ```
 
@@ -113,7 +114,7 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section formal-methods
-    FM-0 track D the prover spike the :fm0, 2026-10-06, 2026-10-07
+    FM-0 track D the prover spike :fm0, 2026-10-06, 2026-10-07
     FM-4 :fm4, 2026-10-27, 2026-10-28
     FM-CG1 code generation from the layer :done, fmcg1, 2026-11-01, 2026-11-02
     FM-D0 environments :fmd0, 2026-10-06, 2026-10-07
@@ -125,65 +126,65 @@ gantt
     section formal-methods-track-b
     FMB-1 kernel and denotation :fmb1, 2026-10-09, 2026-10-10
     FMB-2 differential tests against the :fmb2, 2026-10-09, 2026-10-10
-    FMB-2.1 harden the differential harnes :fmb21, 2026-10-09, 2026-10-10
-    FMB-2.2 verify fix the scheme-less hie :fmb22, 2026-10-09, 2026-10-10
-    FMB-3 Surface regeneration propert :fmb3, 2026-10-09, 2026-10-10
+    FMB-2.1 harden the differential :fmb21, 2026-10-09, 2026-10-10
+    FMB-2.2 verify fix the scheme-less :fmb22, 2026-10-09, 2026-10-10
+    FMB-3 Surface regeneration :fmb3, 2026-10-09, 2026-10-10
     FMB-5 measured mutation score :active, fmb5, 2026-10-09, 2026-10-10
     section formal-methods-track-c
     FMC-1 Alloy skeleton :fmc1, 2026-10-08, 2026-10-09
     FMC-2 scheme composition :fmc2, 2026-10-07, 2026-10-08
     FMC-2.1 well-formedness facts re-run :fmc21, 2026-10-08, 2026-10-09
-    FMC-2.2 model the composed scheme dec :fmc22, 2026-10-08, 2026-10-09
-    FMC-2.3 model ADR-A116 own rule ag :fmc23, 2026-10-08, 2026-10-09
-    FMC-4 a design model of ADR-A130 th :fmc4, 2026-10-27, 2026-10-28
+    FMC-2.2 model the composed scheme :fmc22, 2026-10-08, 2026-10-09
+    FMC-2.3 model ADR-A116 own rule :fmc23, 2026-10-08, 2026-10-09
+    FMC-4 a design model of ADR-A130 :fmc4, 2026-10-27, 2026-10-28
     section formal-methods-track-e
     FME-1.0 home generation tooling :fme10, 2026-10-09, 2026-10-10
     FME-1.1 the kernel for real :fme11, 2026-10-06, 2026-10-07
     FME-1.2 rounding and residual theorem :done, fme12, 2026-10-07, 2026-10-08
     FME-1.4 harden the gate and the kernel :fme14, 2026-10-09, 2026-10-10
     section formal-methods-track-h
-    FMH-1.1 prefix antichain and overlap c :fmh11, 2026-10-09, 2026-10-10
+    FMH-1.1 prefix antichain and overlap :fmh11, 2026-10-09, 2026-10-10
     FMH-1.2 :fmh12, 2026-10-09, 2026-10-10
-    FMH-1.2a witness harness audit witness :fmh12a, 2026-10-09, 2026-10-10
+    FMH-1.2a witness harness :fmh12a, 2026-10-09, 2026-10-10
     FMH-1.2b witnesses for the refusals and :fmh12b, 2026-10-09, 2026-10-10
     FMH-1.2c witnesses for the 13 remaining :fmh12c, 2026-10-09, 2026-10-10
-    FMH-1.2d refuse a multi-valued single-v :done, fmh12d, 2026-10-10, 2026-10-11
+    FMH-1.2d refuse a multi-valued :done, fmh12d, 2026-10-10, 2026-10-11
     FMH-1.3 static template checks S-3 and :done, fmh13, 2026-10-10, 2026-10-11
-    FMH-1.4a refuse a composite boundary wi :done, fmh14a, 2026-10-10, 2026-10-11
+    FMH-1.4a refuse a composite boundary :done, fmh14a, 2026-10-10, 2026-10-11
     FMH-1.4b the declaration implementation :done, fmh14b, 2026-10-10, 2026-10-11
-    FMH-1.4c a declaration the compiler can :done, fmh14c, 2026-10-10, 2026-10-11
+    FMH-1.4c a declaration the compiler :done, fmh14c, 2026-10-10, 2026-10-11
     FMH-1.5 stable labels :done, fmh15, 2026-10-10, 2026-10-11
     FMH-2.0 ADR-A123 :fmh20, 2026-10-10, 2026-10-11
     FMH-2.1 the typed IR and its renderer :fmh21, 2026-10-12, 2026-10-13
-    FMH-2.11a the Persistence README as a li :fmh211a, 2026-10-21, 2026-10-22
-    FMH-2.11b the narrative the pictures t :fmh211b, 2026-10-21, 2026-10-22
-    FMH-2.12 the rows replace selected by :fmh212, 2026-11-01, 2026-11-02
-    FMH-2.2 equivalence harness bootstra :fmh22, 2026-10-12, 2026-10-13
+    FMH-2.11a the Persistence README as a :fmh211a, 2026-10-21, 2026-10-22
+    FMH-2.11b the narrative the pictures :fmh211b, 2026-10-21, 2026-10-22
+    FMH-2.12 the rows replace :fmh212, 2026-11-01, 2026-11-02
+    FMH-2.2 equivalence harness :fmh22, 2026-10-12, 2026-10-13
     FMH-2.3 named-graph row writers :fmh23, 2026-10-12, 2026-10-13
     FMH-2.4a the composite ports :fmh24a, 2026-10-13, 2026-10-14
     FMH-2.4b Oxigraph probes benchmark :fmh24b, 2026-10-13, 2026-10-14
-    FMH-2.5 key claims audits guard D t :fmh25, 2026-10-23, 2026-10-24
-    FMH-2.6 expected compiled profiles pa :fmh26, 2026-10-13, 2026-10-14
-    FMH-2.6b event slots patch-log half he :fmh26b, 2026-10-14, 2026-10-15
+    FMH-2.5 key claims audits guard D :fmh25, 2026-10-23, 2026-10-24
+    FMH-2.6 expected compiled profiles :fmh26, 2026-10-13, 2026-10-14
+    FMH-2.6b event slots :fmh26b, 2026-10-14, 2026-10-15
     FMH-2.6c write disciplines :fmh26c, 2026-10-20, 2026-10-21
-    FMH-2.6d patch log for in-place familie :fmh26d, 2026-10-20, 2026-10-21
+    FMH-2.6d patch log for in-place :fmh26d, 2026-10-20, 2026-10-21
     FMH-2.6e :fmh26e, 2026-10-23, 2026-10-24
     FMH-2.6f :fmh26f, 2026-10-23, 2026-10-24
     FMH-2.6g :fmh26g, 2026-10-23, 2026-10-24
     FMH-2.8a :fmh28a, 2026-10-23, 2026-10-24
     FMH-2.8b :fmh28b, 2026-10-23, 2026-10-24
     FMH-2.8c edges once faster members :fmh28c, 2026-10-20, 2026-10-21
-    FMH-2.9 Mustache retired D-12 a go :fmh29, 2026-10-21, 2026-10-22
+    FMH-2.9 Mustache retired D-12 a :fmh29, 2026-10-21, 2026-10-22
     FMH-HO0 correct the ownership note and :done, fmhho0, 2026-10-10, 2026-10-11
     FMH-HO1 composite replace payload to :done, fmhho1, 2026-10-10, 2026-10-11
     FMH-HO2 draft ADR-A122 Proposed :fmhho2, 2026-10-10, 2026-10-11
-    FMH-HO3 dal vocabulary 0.3.0 dal :done, fmhho3, 2026-10-10, 2026-10-11
-    FMH-HO4 ownership tree and path compil :done, fmhho4, 2026-10-10, 2026-10-11
-    FMH-HO5 switch the compiler to the tre :done, fmhho5, 2026-10-10, 2026-10-11
-    FMH-HO6 ownership refusals and the roo :done, fmhho6, 2026-10-10, 2026-10-11
+    FMH-HO3 dal vocabulary 0.3.0 :done, fmhho3, 2026-10-10, 2026-10-11
+    FMH-HO4 ownership tree and path :done, fmhho4, 2026-10-10, 2026-10-11
+    FMH-HO5 switch the compiler to the :done, fmhho5, 2026-10-10, 2026-10-11
+    FMH-HO6 ownership refusals and the :done, fmhho6, 2026-10-10, 2026-10-11
     FMH-HO7 composite create and tombstone :done, fmhho7, 2026-10-10, 2026-10-11
     FMH-HO8 injective graph naming within :done, fmhho8, 2026-10-10, 2026-10-11
-    FMH-HO9 ownership documentation and cl :done, fmhho9, 2026-10-10, 2026-10-11
+    FMH-HO9 ownership documentation and :done, fmhho9, 2026-10-10, 2026-10-11
     FMH-W65 :fmhw65, 2026-10-23, 2026-10-24
 ```
 
@@ -231,36 +232,36 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section computable-contract-substrate
-    CCS-0 A-112 A-113 A-01 and ADR-A-C :ccs0, 2026-10-29, 2026-10-30
+    CCS-0 A-112 A-113 :ccs0, 2026-10-29, 2026-10-30
     CCS-1 A-104 :ccs1, 2026-10-29, 2026-10-30
     CCS-10 Behaviour split and layer flip :done, ccs10, 2026-10-10, 2026-10-11
     CCS-10a import guard :done, ccs10a, 2026-10-29, 2026-10-30
-    CCS-11 runtime records occasions in :done, ccs11, 2026-10-10, 2026-10-11
-    CCS-11a nested states history concur :done, ccs11a, 2026-10-10, 2026-10-11
+    CCS-11 runtime records occasions :done, ccs11, 2026-10-10, 2026-10-11
+    CCS-11a nested states history :done, ccs11a, 2026-10-10, 2026-10-11
     CCS-2 A-106 :ccs2, 2026-10-29, 2026-10-30
     CCS-3 Wording spec vocab and shapes :done, ccs3, 2026-10-10, 2026-10-11
-    CCS-4 Wording tables assembly vari :done, ccs4, 2026-10-10, 2026-10-11
-    CCS-5 Wording amendments law shapes :done, ccs5, 2026-10-10, 2026-10-11
-    CCS-6 instrument terms the five re :done, ccs6, 2026-10-10, 2026-10-11
-    CCS-7a regimes and gating split from :done, ccs7a, 2026-10-05, 2026-10-06
+    CCS-4 Wording tables assembly :done, ccs4, 2026-10-10, 2026-10-11
+    CCS-5 Wording amendments :done, ccs5, 2026-10-10, 2026-10-11
+    CCS-6 instrument terms :done, ccs6, 2026-10-10, 2026-10-11
+    CCS-7a regimes and gating :done, ccs7a, 2026-10-05, 2026-10-06
     CCS-7b terms in time :done, ccs7b, 2026-10-06, 2026-10-07
-    CCS-7c what terms are and who they b :done, ccs7c, 2026-10-27, 2026-10-28
-    CCS-8 values in stated meaning Word :done, ccs8, 2026-10-10, 2026-10-11
-    CCS-8a set comparisons qualifying ru :ccs8a, 2026-10-27, 2026-10-28
-    CCS-8b values in stated meaning Word :done, ccs8b, 2026-10-10, 2026-10-11
-    CCS-9a amendments assents and taking :done, ccs9a, 2026-10-10, 2026-10-11
-    CCS-9b.0 Eligibility sources legal act :done, ccs9b0, 2026-10-10, 2026-10-11
-    CCS-9b.1 Eligibility sources legal act :done, ccs9b1, 2026-10-10, 2026-10-11
-    CCS-9b.2 Eligibility sources legal act :done, ccs9b2, 2026-10-10, 2026-10-11
-    CCS-9b.3 set comparisons qualifying ru :ccs9b3, 2026-10-27, 2026-10-28
-    CCS-9b.3a set comparisons law L18 ADR- :done, ccs9b3a, 2026-10-29, 2026-10-30
-    CCS-9b.3c hierarchical match over a name :done, ccs9b3c, 2026-10-29, 2026-10-30
-    CCS-9b.4 set comparisons qualifying ru :ccs9b4, 2026-10-27, 2026-10-28
-    CCS-9c set comparisons qualifying ru :ccs9c, 2026-10-27, 2026-10-28
-    CCS-9d set comparisons qualifying ru :ccs9d, 2026-10-27, 2026-10-28
-    CCS-F1 external and natural keys ADR :done, ccsf1, 2026-10-10, 2026-10-11
-    HQ-6a.1 untimed closures ADR-A105 t :done, hq6a1, 2026-10-12, 2026-10-13
-    HQ-6a.2 untimed closures ADR-A105 t :done, hq6a2, 2026-10-16, 2026-10-17
+    CCS-7c what terms are :done, ccs7c, 2026-10-27, 2026-10-28
+    CCS-8 values in stated meaning :done, ccs8, 2026-10-10, 2026-10-11
+    CCS-8a set comparisons :ccs8a, 2026-10-27, 2026-10-28
+    CCS-8b values in stated meaning :done, ccs8b, 2026-10-10, 2026-10-11
+    CCS-9a amendments :done, ccs9a, 2026-10-10, 2026-10-11
+    CCS-9b.0 Eligibility sources :done, ccs9b0, 2026-10-10, 2026-10-11
+    CCS-9b.1 Eligibility sources :done, ccs9b1, 2026-10-10, 2026-10-11
+    CCS-9b.2 Eligibility sources :done, ccs9b2, 2026-10-10, 2026-10-11
+    CCS-9b.3 set comparisons :ccs9b3, 2026-10-27, 2026-10-28
+    CCS-9b.3a set comparisons :done, ccs9b3a, 2026-10-29, 2026-10-30
+    CCS-9b.3c hierarchical match over a :done, ccs9b3c, 2026-10-29, 2026-10-30
+    CCS-9b.4 set comparisons :ccs9b4, 2026-10-27, 2026-10-28
+    CCS-9c set comparisons :ccs9c, 2026-10-27, 2026-10-28
+    CCS-9d set comparisons :ccs9d, 2026-10-27, 2026-10-28
+    CCS-F1 external and natural keys :done, ccsf1, 2026-10-10, 2026-10-11
+    HQ-6a.1 untimed closures ADR-A105 :done, hq6a1, 2026-10-12, 2026-10-13
+    HQ-6a.2 untimed closures ADR-A105 :done, hq6a2, 2026-10-16, 2026-10-17
 ```
 
 ```mermaid
@@ -275,7 +276,7 @@ gantt
     GH-2 :gh2, 2026-10-24, 2026-10-25
     GH-3 :gh3, 2026-10-24, 2026-10-25
     GH-4 :gh4, 2026-10-24, 2026-10-25
-    GH-5 test suites leave the hooks t :gh5, 2026-11-03, 2026-11-04
+    GH-5 test suites leave the hooks :gh5, 2026-11-03, 2026-11-04
 ```
 
 ```mermaid
@@ -285,7 +286,7 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section improved-ontology-documentation
-    OD-0 ADRs the AGENTS.md rule the :od0, 2026-10-17, 2026-10-18
+    OD-0 ADRs the AGENTS.md rule :od0, 2026-10-17, 2026-10-18
     OD-1 scanner and markers :od1, 2026-10-17, 2026-10-18
     OD-2 sections 1 to 3 :od2, 2026-10-18, 2026-10-19
     OD-3 section 6 to OWL :od3, 2026-10-18, 2026-10-19
@@ -295,12 +296,12 @@ gantt
     OD-7 Vocabulary :od7, 2026-10-20, 2026-10-21
     OD-DOC1 published decisions :oddoc1, 2026-10-19, 2026-10-20
     OD-DOC2 site sections :done, oddoc2, 2026-10-20, 2026-10-21
-    OD-DOC2b working documents out of publi :oddoc2b, 2026-10-20, 2026-10-21
+    OD-DOC2b working documents out of :oddoc2b, 2026-10-20, 2026-10-21
     OD-ELC1 composition operation :odelc1, 2026-10-19, 2026-10-20
     OD-MC1 migration check labels :odmc1, 2026-10-20, 2026-10-21
     OD-RC1 catalogue and reader :odrc1, 2026-10-17, 2026-10-18
     OD-RC2 consumers use the reader :odrc2, 2026-10-18, 2026-10-19
-    OD-RC3 roots AGENTS.md table bypass :odrc3, 2026-10-19, 2026-10-20
+    OD-RC3 roots AGENTS.md table :odrc3, 2026-10-19, 2026-10-20
     OD-REL1 first release 0.18.0 :odrel1, 2026-10-20, 2026-10-21
     OD-VER1 one release for the substrate :odver1, 2026-10-20, 2026-10-21
 ```
@@ -312,12 +313,17 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section lattice-tutorial
-    TUT-0 the page its layout the home :tut0, 2026-10-14, 2026-10-15
+    TUT-0 the page its layout :tut0, 2026-10-14, 2026-10-15
     TUT-1 chapters 0 to 3 :tut1, 2026-10-15, 2026-10-16
+    TUT-10 the guide modules 12 :tut10, 2026-11-06, 2026-11-07
     TUT-2 chapters 4 to 6 :tut2, 2026-10-15, 2026-10-16
     TUT-3 chapters 7 to 9 :tut3, 2026-10-16, 2026-10-17
     TUT-4 chapters 10 to 13 :tut4, 2026-10-16, 2026-10-17
-    TUT-5 the tutorial refreshed onto m :tut5, 2026-11-05, 2026-11-06
+    TUT-5 the tutorial refreshed onto :tut5, 2026-11-05, 2026-11-06
+    TUT-6 the Configuration Studio :active, tut6, 2026-11-06, 2026-11-07
+    TUT-7 the guide modules 1 to 4 :tut7, 2026-11-06, 2026-11-07
+    TUT-8 the guide modules 5 :tut8, 2026-11-06, 2026-11-07
+    TUT-9 the guide modules 7 to 10 :tut9, 2026-11-06, 2026-11-07
 ```
 
 ```mermaid
@@ -359,9 +365,9 @@ gantt
     section persistence-compiler-iri-sync
     PCI-1 Dataset-level epoch guard G1 :pci1, 2026-09-23, 2026-09-24
     PCI-2 Ordering receipt concurrency a :pci2, 2026-09-23, 2026-09-24
-    PCI-3 Identity minting profile resol :pci3, 2026-09-23, 2026-09-24
-    PCI-4 Privacy erasure profile cros :pci4, 2026-09-25, 2026-09-26
-    PCI-5 Uniqueness onViolation recon :pci5, 2026-09-25, 2026-09-26
+    PCI-3 Identity minting profile :pci3, 2026-09-23, 2026-09-24
+    PCI-4 Privacy erasure profile :pci4, 2026-09-25, 2026-09-26
+    PCI-5 Uniqueness onViolation :pci5, 2026-09-25, 2026-09-26
     PCI-6 Documentation close-out :pci6, 2026-09-25, 2026-09-26
 ```
 
@@ -395,11 +401,11 @@ gantt
     axisFormat %d %b
     section projection-maintenance
     PM-0 the rename of PM-Q8 across the :pm0, 2026-11-01, 2026-11-02
-    PM-1 the surface backend a clear a :pm1, 2026-11-01, 2026-11-02
+    PM-1 the surface backend :pm1, 2026-11-01, 2026-11-02
     PM-2 the writer keeps each source :pm2, 2026-11-01, 2026-11-02
-    PM-3 CloudEvents for the writers a :pm3, 2026-11-01, 2026-11-02
+    PM-3 CloudEvents for the writers :pm3, 2026-11-01, 2026-11-02
     PM-3a the probes of the broker Web :pm3a, 2026-11-02, 2026-11-03
-    PM-3b PM-Q20 d the broker check :pm3b, 2026-11-02, 2026-11-03
+    PM-3b PM-Q20 d :pm3b, 2026-11-02, 2026-11-03
 ```
 
 ```mermaid
@@ -410,22 +416,40 @@ gantt
     axisFormat %d %b
     section studio-publication
     PB-1 a job input and its findings :pb1, 2026-10-31, 2026-11-01
-    PB-10 a brief the working store as :pb10, 2026-10-31, 2026-11-01
+    PB-10 a brief :pb10, 2026-10-31, 2026-11-01
     PB-11 the Java caller library :pb11, 2026-10-31, 2026-11-01
-    PB-12 the studio persistence profi :pb12, 2026-10-31, 2026-11-01
-    PB-13 the operations layer StudioO :pb13, 2026-10-31, 2026-11-01
-    PB-14 the writer workspace command :pb14, 2026-10-31, 2026-11-01
+    PB-12 the studio persistence :pb12, 2026-10-31, 2026-11-01
+    PB-13 the operations layer :pb13, 2026-10-31, 2026-11-01
+    PB-14 the writer workspace :pb14, 2026-10-31, 2026-11-01
     PB-15 the registry on PB-13 :pb15, 2026-10-31, 2026-11-01
-    PB-16 the migration of a store writt :pb16, 2026-10-31, 2026-11-01
-    PB-17 the projections of ADR-A149 de :pb17, 2026-10-31, 2026-11-01
-    PB-2 the Authenticator seam loc :pb2, 2026-10-31, 2026-11-01
+    PB-16 the migration of a store :pb16, 2026-10-31, 2026-11-01
+    PB-17 the projections of ADR-A149 :pb17, 2026-10-31, 2026-11-01
+    PB-2 the Authenticator seam :pb2, 2026-10-31, 2026-11-01
     PB-3 a workspace owner and mode :pb3, 2026-10-31, 2026-11-01
-    PB-4 the cst publication terms a :pb4, 2026-10-31, 2026-11-01
-    PB-5 the registry read API and br :pb5, 2026-10-31, 2026-11-01
-    PB-6 a workspace dependencies fo :pb6, 2026-10-31, 2026-11-01
+    PB-4 the cst publication terms :pb4, 2026-10-31, 2026-11-01
+    PB-5 the registry read API and :pb5, 2026-10-31, 2026-11-01
+    PB-6 a workspace dependencies :pb6, 2026-10-31, 2026-11-01
     PB-7 fenced imports stored once by :pb7, 2026-10-31, 2026-11-01
-    PB-8 artefacts naming their sources :pb8, 2026-10-31, 2026-11-01
-    PB-9 vocabulary bindings that selec :pb9, 2026-10-31, 2026-11-01
+    PB-8 artefacts naming their :pb8, 2026-10-31, 2026-11-01
+    PB-9 vocabulary bindings that :pb9, 2026-10-31, 2026-11-01
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title Vyvid-migration
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section vyvid-migration
+    VM-0 the sketch rewritten :vm0, 2026-11-05, 2026-11-06
+    VM-1 the binding :vm1, 2026-11-05, 2026-11-06
+    VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
+    VM-3 the quanta and owners :vm3, 2026-11-05, 2026-11-06
+    VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
+    VM-5 the fifteen composed skills :vm5, 2026-11-05, 2026-11-06
+    VM-6 the moves :vm6, 2026-11-05, 2026-11-06
+    VM-7 cloud sessions the pin at :vm7, 2026-11-06, 2026-11-07
+    VM-8 cloud setup within its limit :vm8, 2026-11-06, 2026-11-07
 ```
 
 ```mermaid
@@ -436,18 +460,18 @@ gantt
     axisFormat %d %b
     section word-authoring-poc
     WA-0 Preflight :wa0, 2026-10-02, 2026-10-03
-    WA-1 Contracts templates and sampl :wa1, 2026-10-02, 2026-10-03
+    WA-1 Contracts :wa1, 2026-10-02, 2026-10-03
     WA-10 Compose stack :wa10, 2026-10-02, 2026-10-03
     WA-11 Documentation and close-out :wa11, 2026-10-10, 2026-10-11
-    WA-2 Service model mapping and sha :wa2, 2026-10-02, 2026-10-03
-    WA-3 Detection templates and confo :wa3, 2026-10-02, 2026-10-03
+    WA-2 Service model :wa2, 2026-10-02, 2026-10-03
+    WA-3 Detection :wa3, 2026-10-02, 2026-10-03
     WA-4 API and HTTP adapter :wa4, 2026-10-02, 2026-10-03
-    WA-5 Fuseki RabbitMQ and the runna :wa5, 2026-10-02, 2026-10-03
+    WA-5 Fuseki :wa5, 2026-10-02, 2026-10-03
     WA-6 Logical English reading :wa6, 2026-10-02, 2026-10-03
     WA-7 Worker runtime :wa7, 2026-10-02, 2026-10-03
     WA-8 Add-in domain :wa8, 2026-10-02, 2026-10-03
     WA-9 Add-in task pane and harness :wa9, 2026-10-02, 2026-10-03
-    WA-9a Ribbon and right-click command :wa9a, 2026-10-02, 2026-10-03
+    WA-9a Ribbon and right-click :wa9a, 2026-10-02, 2026-10-03
 ```
 
 ```mermaid
@@ -457,18 +481,18 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section work-board
-    WB-0 the sketch the plan this rec :wb0, 2026-11-02, 2026-11-03
-    WB-1 tools work board.py work b :wb1, 2026-11-02, 2026-11-03
-    WB-10 a unit state joined across b :wb10, 2026-11-02, 2026-11-03
+    WB-0 the sketch the plan :wb0, 2026-11-02, 2026-11-03
+    WB-1 tools work board.py :wb1, 2026-11-02, 2026-11-03
+    WB-10 a unit state joined across :wb10, 2026-11-02, 2026-11-03
     WB-11 a branch whose boards are not :wb11, 2026-11-04, 2026-11-05
-    WB-2 the slice grammar work renam :wb2, 2026-11-02, 2026-11-03
-    WB-3 INDEX.md replaced ROADMAP.md :wb3, 2026-11-02, 2026-11-03
-    WB-4 the work check and the post- :wb4, 2026-11-02, 2026-11-03
-    WB-5 AGENTS.md the skills the sta :wb5, 2026-11-02, 2026-11-03
+    WB-2 the slice grammar :wb2, 2026-11-02, 2026-11-03
+    WB-3 INDEX.md replaced :wb3, 2026-11-02, 2026-11-03
+    WB-4 the work check and the :wb4, 2026-11-02, 2026-11-03
+    WB-5 AGENTS.md the skills :wb5, 2026-11-02, 2026-11-03
     WB-6 work here :wb6, 2026-11-02, 2026-11-03
     WB-7 the branches marked or deleted :wb7, 2026-11-02, 2026-11-03
     WB-8 a register collision dated to :wb8, 2026-11-02, 2026-11-03
-    WB-9 work rename keeps an excepti :wb9, 2026-11-02, 2026-11-03
+    WB-9 work rename keeps an :wb9, 2026-11-02, 2026-11-03
 ```
 
 ```mermaid
@@ -478,36 +502,36 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section ensemble
-    ES-0 examples first as data the mo :es0, 2026-10-21, 2026-10-22
-    ES-1 the layer its README ens Ens :es1, 2026-10-21, 2026-10-22
+    ES-0 examples first :es0, 2026-10-21, 2026-10-22
+    ES-1 the layer its README :es1, 2026-10-21, 2026-10-22
     section identity-minting
-    IM-0 ADR-A82 amendment ADR-A84 li :im0, 2026-09-24, 2026-09-25
-    IM-1 Vocabulary compiler recipe em :im1, 2026-09-24, 2026-09-25
-    IM-2 Pinned Unicode 16.0 tables Py :im2, 2026-09-24, 2026-09-25
-    IM-3 Java library vector coverage :im3, 2026-09-24, 2026-09-25
+    IM-0 ADR-A82 amendment ADR-A84 :im0, 2026-09-24, 2026-09-25
+    IM-1 Vocabulary :im1, 2026-09-24, 2026-09-25
+    IM-2 Pinned Unicode 16.0 tables :im2, 2026-09-24, 2026-09-25
+    IM-3 Java library :im3, 2026-09-24, 2026-09-25
     section ledger
-    LG-0 examples as data the model mu :done, lg0, 2026-10-27, 2026-10-28
-    LG-1 the configuration document th :done, lg1, 2026-10-27, 2026-10-28
+    LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
+    LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
     LG-2 :lg2, 2026-10-27, 2026-10-28
     section normative-rule-substrate
-    NRS-4 Deontic extension of Instrumen :done, nrs4, 2026-09-30, 2026-10-01
-    NRS-5 Closure declarations A-105 R :done, nrs5, 2026-10-10, 2026-10-11
+    NRS-4 Deontic extension of :done, nrs4, 2026-09-30, 2026-10-01
+    NRS-5 Closure declarations A-105 :done, nrs5, 2026-10-10, 2026-10-11
     section persistence-delta-replace
-    DR-1 the vocabulary the delta buil :dr1, 2026-11-02, 2026-11-03
+    DR-1 the vocabulary :dr1, 2026-11-02, 2026-11-03
     DR-2 both caller libraries checks :dr2, 2026-11-02, 2026-11-03
-    DR-3 the studio writer on the gen :active, dr3, 2026-11-01, 2026-11-02
-    DR-4 replace-whole load-whole :dr4, 2026-11-02, 2026-11-03
+    DR-3 the studio writer on the :active, dr3, 2026-11-01, 2026-11-02
+    DR-4 replace-whole :dr4, 2026-11-02, 2026-11-03
     section rdf-sparql-patterns-status
     RSP-1 Core patterns :rsp1, 2026-09-22, 2026-09-23
     RSP-2 Substrate and compiler :rsp2, 2026-09-22, 2026-09-23
     section studio-quality
-    SQ-1 the harness a topology from a :sq1, 2026-10-31, 2026-11-01
-    SQ-2 reports in git the compare ta :sq2, 2026-10-31, 2026-11-01
+    SQ-1 the harness :sq1, 2026-10-31, 2026-11-01
+    SQ-2 reports in git :sq2, 2026-10-31, 2026-11-01
     section vocabulary-temporal-binding
-    VTB-1 ADR-A85 proposal architecture :vtb1, 2026-09-25, 2026-09-26
-    VTB-2 12 fixtures 11 positive negat :vtb2, 2026-09-25, 2026-09-26
+    VTB-1 ADR-A85 proposal :vtb1, 2026-09-25, 2026-09-26
+    VTB-2 12 fixtures 11 :vtb2, 2026-09-25, 2026-09-26
     VTB-3 tools vocabulary resolver :vtb3, 2026-09-25, 2026-09-26
-    VTB-4 Surface resolves scoped bindin :vtb4, 2026-09-25, 2026-09-26
+    VTB-4 Surface resolves scoped :vtb4, 2026-09-25, 2026-09-26
 ```
 
 <!-- END GENERATED work-board-glance -->
@@ -776,16 +800,16 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | remote only | FM-4, LG-2 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | remote only | FM-4, LG-2 |
-| `claude/priceless-brahmagupta-396048` | 2026-11-05 | 2 | local only | no mark |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 18 | remote only | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
-| `fml/isabelle-layers` | 2026-11-04 | 33 | remote only | no mark |
-| `persistence-mbt` | 2026-09-23 | 1 | remote only | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `work:rename` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | remote only | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
-| `tutorial/guide` | 2026-11-05 | 7 | local ahead 136, not pushed | TUT-0, TUT-1, TUT-2, TUT-3, TUT-4, TUT-5 |
-| `vyvid-migration` | 2026-11-04 | 1 | remote only | no mark |
+| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
+| `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
+| `tutorial/guide` | 2026-10-16 | 5 | pushed | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
+| `tutorial/studio-guide` | 2026-11-06 | 11 | pushed | TUT-0, TUT-1, TUT-10, TUT-2, TUT-3, TUT-4, TUT-5, TUT-6, TUT-7, TUT-8, TUT-9 |
+| `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
 
@@ -834,7 +858,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 18 pending design decisions, 95 rows of [technical debt](technical-debt.md), and 26 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 104 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -877,7 +901,7 @@ Read from the registers in this tree: 34 Proposed decisions, 18 pending design d
 
 ### 9.2 Pending design decisions
 
-Every row of [pending-design-decisions.md](pending-design-decisions.md), which loses a row when a sketch, plan or ADR settles it.
+Every row of [pending-design-decisions.md](pending-design-decisions.md), which loses a row when a sketch, a plan or a decision settles it.
 
 | Decision | Question |
 |---|---|
@@ -899,21 +923,22 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 | PDD-17 | How the persistence compiler's default graph naming should answer Oxigraph reading every graph for the named-graph sweep. |
 | PDD-18 | How a proposing agent, and a mapping, reach reference data the applied layers hold as `skos:Concept`s, such as an activity, a peril or a line of business. |
 | PDD-19 | Whether generated code from the proofs becomes the evaluator itself, on several platforms, which PRI-47 and ADR-A-FM3 refuse as they stand. |
+| PDD-20 | Where the documentation site keeps images, such as the Configuration Studio guide's screenshots. |
+| PDD-21 | Whether the Configuration Studio guide's worked sample, a loan feed in JSON and XML mapped into the lending baseline, joins the studio's samples. |
 
 <!-- END GENERATED work-board-decisions -->
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-02.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06.
 
-1. **WB-7 on the other live branches**: each merges `main`, runs `work:normalise`, `work:rename` and `build:work`, and marks its slices. `realign/config-authoring-studio` has done so.
-2. **Review `realign/config-authoring-studio`**, the consolidated studio and persistence-delta work, with its regenerated expected profiles, the two ADR-A123 addenda of 2026-11-02 and its standards STD-308 to STD-316, then merge it and delete the two persistence replace branches.
-3. **Bring `ccs-trunk` onto `main`** once its agent has the conflicts worked out.
-4. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first.
-5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite, and place H3.1, the code-generation spike, under the formal-methods epic or track H.
-6. **Write the 34 board rows** section 9 counts as slices named only in prose, the ensemble's ten first, which needs a status record for the ensemble.
-7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
-8. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), push `tutorial/guide`, merge `main` into it again, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide (plan `lattice-tutorial` §9) starts on its own branch after it.
+1. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work. VM-7 and VM-8 need a session on the cloud environment to prove them, and a decision on the addendum of 2026-11-06 on ADR-A152 about a session with no terminal.
+2. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. The addenda of 2026-11-05 on ADR-A134 and ADR-A151, which point at ADR-A152, are among them.
+3. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
+4. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
+5. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
+6. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
+7. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 
 ## 11. Completed units
 
@@ -923,9 +948,9 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 
 | Unit | Kind | State | Slices | Last day |
 |---|---|---|---|---|
+| DESIGN_SKETCHES_INDEX | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | [config-studio](plans/config-studio.md) | unit | merged 2026-10-30 | 0 | 2026-10-30 |
 | design-sketches-validation-summary | unit | merged 2026-09-20 | 0 | 2026-09-20 |
-| DESIGN_SKETCHES_INDEX | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | governance-surfaces | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 | implementation-handover-historical | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | iri-patterns-post-3866b21-remediation | unit | merged 2026-09-23 | 0 | 2026-09-23 |
@@ -966,11 +991,11 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section multi-store-conformance
-    MSC-1 platform sparql-testkit to :done, msc1, 2026-10-27, 2026-10-29
-    MSC-2 Jena in the persistence engine :done, msc2, 2026-10-27, 2026-10-29
-    MSC-3 Jena in the compilers engines :done, msc3, 2026-10-27, 2026-10-29
+    MSC-1 platform sparql-testkit :done, msc1, 2026-10-27, 2026-10-29
+    MSC-2 Jena in the persistence :done, msc2, 2026-10-27, 2026-10-29
+    MSC-3 Jena in the compilers :done, msc3, 2026-10-27, 2026-10-29
     MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
-    MSC-5 TSD-42 and TSD-43 on Jena TSD :done, msc5, 2026-10-27, 2026-10-29
+    MSC-5 TSD-42 and TSD-43 on Jena :done, msc5, 2026-10-27, 2026-10-29
 ```
 
 <!-- END GENERATED work-board-completed -->
@@ -982,5 +1007,6 @@ These are findings from building this roadmap, offered as hypotheses for the mai
 - **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten have no status record to carry a board at all.
 - **Two branches numbered the same standards.** `docs/work-board` and `realign/config-authoring-studio` both took STD-300 upward on 2026-11-02, and both held a TD-137. `check:identifiers` dates a row by its day, so first in wins found a tie, and at the realign branch's merge of `main` the work board's rows kept their numbers and the realign rows became STD-308 to STD-316 and TD-139. A branch cannot know what another numbers until a fetch, and the board's `--fetch` is the moment to look.
 - **The historic ids were the real cost.** Four of the five branch analyses asked for on 2026-11-02 were answered by content measurement in minutes, but the 34 track H ids took three passes to recognise as the packs' own spelling of boarded slices. A pack named by its slice closes that gap for new work.
-- **H3.1 is not track H's H3.** The code-generation spike on `fml/isabelle-layers` is the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. A slice that borrows a number from a plan it does not belong to is read as that plan's.
+- **H3.1 was not track H's H3.** The code-generation spike on `fml/isabelle-layers` was the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. It is homed as FM-CG1 and FM-CG2 on the formal-methods board since 2026-11-05. A slice that borrows a number from a plan it does not belong to is read as that plan's.
+- **Most of the index tooling was never LATTICE's.** Of the 5,800 lines under `tools/knowledge/`, about 280 derive the architectural quanta, and the board's 2,400 are configuration under Вивід. The switch planned as `vyvid-migration` keeps LATTICE's rules where they are and moves the code that reads them.
 - **The hand-written sections age with the epics.** Sections 2, 3, 4, 6 and 8 describe the epics' dependencies, layers, state and critical path as prose and diagrams, and each is refreshed at the events the lifecycle skill names, never by the tool. Where one disagrees with section 1, section 1 is right.

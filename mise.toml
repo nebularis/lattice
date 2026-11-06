@@ -5,17 +5,34 @@ node = "22"
 python = "3.14"
 erlang = "27"
 elixir = "1.17"
+uv = "0.13"
 
 [env]
 # Each checkout, git worktrees included, gets its own .venv, so an editable install never points
 # at another checkout (developer guide, "Several checkouts side by side").
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
+# Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
+VYVID_VERSION = "0.2.13"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
 description = "Install configured toolchains and dependency sets, and the git hooks"
-depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge"]
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge", "bootstrap:vyvid"]
+
+# A cloud environment's setup has about five minutes, so its script takes these apart (tools/claude-cloud-setup.sh).
+[tasks."bootstrap:index"]
+description = "Build the knowledge index with only the two packages its extractor imports, ahead of the rest of bootstrap, for a cloud environment's setup (plan vyvid-migration, VM-8)"
+depends = ["bootstrap:pip", "bootstrap:vyvid"]
+run = ["python -m pip install -c requirements-lock.txt pyoxigraph pyyaml", "python tools/vyd.py build"]
+
+[tasks."bootstrap:dependencies"]
+description = "Install what bootstrap installs other than Вивід and the index, in parallel, for a cloud environment's setup (plan vyvid-migration, VM-8)"
+depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks"]
+
+[tasks."bootstrap:vyvid"]
+description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSION pins, a no-op where vyd already reports it, replacing an installed vyd at another version only where its uv receipt shows a git install, a message and no failure where uv is missing (ADR-A152, plan vyvid-migration)"
+run = "python tools/bootstrap_vyvid.py"
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
 [tasks."bootstrap:hooks"]
@@ -35,9 +52,9 @@ run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowled
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
 # fails on it.
 [tasks."bootstrap:knowledge"]
-description = "Build the knowledge index, fetching its embedding model on first run (ADR-A134)"
-depends = ["bootstrap:python"]
-run = "python tools/knowledge/extract.py --quiet"
+description = "Build the knowledge index with vyd build, fetching its embedding model on first run (ADR-A134, ADR-A152). Skips with a note where vyd is missing"
+depends = ["bootstrap:python", "bootstrap:vyvid"]
+run = "python tools/vyd.py build"
 
 # A virtual environment that mise creates with uv has no pip. This puts one in, and does nothing
 # where pip is already there.
@@ -146,7 +163,7 @@ run = "corepack enable && yarn install --immutable"
 
 [tasks.check]
 description = "Run all repository validation tasks"
-depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "check:tutorial-snippets", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks"]
+depends = ["check:python-root", "check:workers", "check:java", "check:frontend", "check:spc", "check:persistence", "check:vocabulary", "check:reference-eligibility", "check:mork-compilers", "check:mork-rdf", "check:mork-transforms", "check:wording-assembler", "check:mork", "check:ontology-versioning", "check:ontology-catalog", "check:import-guard", "check:owl-profile", "check:reasoning-isolation", "check:minting", "check:persistence-library", "check:formal-freshness", "check:catalogue", "check:identifiers", "check:knowledge", "check:agent-guidance", "check:tutorial-snippets", "build:mtp", "check:mtp", "check:published-decisions", "check:site-sections", "check:hooks", "check:vyvid-binding", "check:skills"]
 
 [tasks.test]
 description = "Run the repository test suites"
@@ -495,20 +512,28 @@ description = "Check the repository catalogue against the tree: every listed mod
 run = "python tools/lattice_repo_catalogue.py check"
 
 [tasks."check:identifiers"]
-description = "Check every stable identifier a working document mentions resolves to a definition: decisions by filename, register entries by row, with tools/knowledge/identifier-exceptions.txt as the baseline"
-run = "python tools/knowledge/identifiers.py && python -m pytest tools/knowledge/test_identifiers.py -q"
+description = "Check every stable identifier a working document mentions resolves to a definition, with vyd check identifiers over the families vyvid.toml declares and tools/knowledge/identifier-exceptions.txt as the baseline (ADR-A152). Skips with a note where vyd is missing"
+run = "python tools/vyd.py check identifiers"
+
+[tasks."check:skills"]
+description = "Check the committed skills under .claude/skills equal what their sources compose to, with vyd check skills, which skips with a note where vyd is missing or the binding is not trusted (ADR-A152 decision 5, plan vyvid-migration, VM-5)"
+run = "python tools/vyd.py check skills"
 
 [tasks."build:knowledge"]
-description = "Derive the knowledge index from the working documents and ontologies into .build/knowledge (ADR-A134). Never committed, rebuilt in about two seconds"
-run = "python tools/knowledge/extract.py"
+description = "Derive the knowledge index from the working documents and ontologies with vyd build, into Вивід's store for this checkout (ADR-A134, ADR-A152). Never committed, a few seconds after the first build. Skips with a note where vyd is missing"
+run = "python tools/vyd.py build"
 
 [tasks."graph:ask"]
-description = "Ask the knowledge index a question: find <words> [--kind --phase --audience], read <id>, node <id>, reaches <id>, exists <text>, sparql <query>, misses [--near], gap <what reading found> [id] [path:line], or close <id>. Opens the store read-only and exits, with no resident process (TSD-38)"
-run = "python tools/knowledge/ask.py"
+description = "Ask the knowledge index a question, through vyd (ADR-A152): find <words> [--kind --exclude --phase --audience --activity --quality --tech], read <id>, node <id>, reaches <id>, exists <text>, sparql <query>, misses [--near], gap <what reading found> [id] [path:line], close <id>. Skips with a note where vyd is missing"
+run = "python tools/vyd.py"
+
+[tasks.vyd]
+description = "Run any vyd command, Вивід, through mise, the one entry point (ADR-A152 decision 3): mise run vyd -- <args>. Skips with a note where vyd is missing"
+run = "python tools/vyd.py"
 
 [tasks."check:knowledge"]
-description = "Check the knowledge index: the T-Box honours ADR-A134, every facet tag is a value of its scheme, and the extractor derives every node with a claim and a pointer from the real corpus, including the gerund-to-noun bridge the index exists for"
-run = "python -m pytest tools/knowledge/test_vocabulary.py tools/knowledge/test_quanta.py tools/knowledge/test_extract.py tools/knowledge/test_embed.py tools/knowledge/test_facets.py tools/knowledge/test_ask.py -q"
+description = "Check the knowledge base is consistent against the store vyd build writes, and LATTICE's own extractor for quanta and owners (ADR-A134, ADR-A152). Skips where vyd is missing"
+run = "python -m pytest tools/knowledge/test_quanta.py tools/knowledge/test_extractor.py tools/knowledge/test_knowledge_base.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"
@@ -539,36 +564,36 @@ description = "Test the hooks dispatcher and the writing rules (ADR-A133)"
 run = "python -m pytest tools/test_hooks.py tools/test_writing_rules.py -q"
 
 [tasks."work:board"]
-description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards (plan work-board). --all, --fetch, --measure, --commits"
-run = "python tools/work_board.py board"
+description = "Where every unit and slice is, across every local and remote branch, from the status records' slice boards, through vyd board (plan work-board, ADR-A152). --all, --fetch, --measure, --commits"
+run = "python tools/vyd.py board"
 
 [tasks."build:work"]
-description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree (plan work-board)"
-run = "python tools/work_board.py build"
+description = "Write INDEX.md's generated work-board region, the Units and Work tables, from the status records in the working tree, through vyd work build (plan work-board, ADR-A152). --check fails on a stale region and writes nothing"
+run = "python tools/vyd.py work build"
 
-[tasks."check:work-board"]
-description = "Test the work board: the board parser, the join across branches, the fold of remotes, the generated regions, the slice crosswalk and the board normaliser (plan work-board)"
-run = "python -m pytest tools/test_work_board.py tools/test_work_migrate.py -q"
+[tasks."check:vyvid-binding"]
+description = "Test the binding to Вивід: vyvid.toml parses and its families resolve, bootstrap:vyvid decides rightly, and vyd context names LATTICE where the binding is trusted (ADR-A152, plan vyvid-migration)"
+run = "python -m pytest tools/test_vyvid_binding.py -q"
 
 [tasks."work:rename"]
 description = "Build the slice id crosswalk from the historic ids and sweep every mention and Validation Pack name onto the grammar, idempotent. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py rename"
+run = "python tools/vyd.py work rename"
 
 [tasks."work:normalise"]
 description = "Rewrite every status record's slice board into the standard columns and state words, remove Branch lines, declare prefixes, idempotent. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py normalise"
+run = "python tools/vyd.py work normalise"
 
 [tasks."work:here"]
 description = "Who is in this worktree: write your presence (--role build|review|read, --model, --on) into .local/agents/, list the sessions touched in the last twelve hours, or --leave (plan work-board, WB-6)"
-run = "python tools/work_board.py here"
+run = "python tools/vyd.py here"
 
 [tasks."work:adopt"]
 description = "Bring the slices a record's other tables, a Validation Pack or a plan's tables name onto the unit's board, in the state the source gives, and regroup the identifier exceptions by unit. Reports without --apply (plan work-board, WB-2)"
-run = "python tools/work_migrate.py adopt"
+run = "python tools/vyd.py work adopt"
 
 [tasks."build:roadmap"]
-description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch (plan work-board)"
-run = "python tools/work_board.py roadmap"
+description = "Write ROADMAP.md's generated regions, the programme at a glance with its gantt and the branches, from the status records on every branch, through vyd work roadmap (plan work-board, ADR-A152). --check, --fetch"
+run = "python tools/vyd.py work roadmap"
 
 [tasks."check:mork-compilers"]
 description = "Run the MORK backend compiler tests, including generated SPARQL executed against fixtures (ADR-A24, ADR-A89). Oxigraph is the default engine (STD-153), since the whole suite, the reasoner tests included, passed on both engines first (STD-274, 2026-10-27). check:mork-compilers-conformance runs the same suite on rdflib. -n auto sizes its workers with mem_check (tools/conftest.py, shared with check:ontology-catalog)"

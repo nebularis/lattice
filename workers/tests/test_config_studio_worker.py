@@ -565,7 +565,9 @@ def _propose(target, env=None) -> tuple[FakeStore, URIRef]:
             roles.add(triple)
     store.graphs[f"{iri}:input"] = sample - roles
     store.graphs[BASELINE_1] = roles
-    with mock.patch.dict(os.environ, env or {}, clear=False):
+    # The shell's own proposer settings are blanked, so a developer's LATTICE_PROPOSER_KEY_FILE cannot reach the worker.
+    ambient = {name: "" for name in os.environ if name.startswith("LATTICE_PROPOSER_")}
+    with mock.patch.dict(os.environ, {**ambient, **(env or {})}, clear=False):
         ConfigStudioWorker(store, ROOT, _clock()).handle(iri)
     return store, job
 

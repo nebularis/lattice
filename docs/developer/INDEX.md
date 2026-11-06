@@ -20,12 +20,12 @@ Every unit with a status record, its state from the record's Status line, and it
 
 | ID | Kind | Prefix | State | Next | Documents |
 |---|---|---|---|---|---|
+| DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | applied-insurance-reference | epic | AIR | built 2026-11-02 | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
 | applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
 | computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
 | config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
-| DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
 | ensemble | unit | ES | briefed | ES-0 | [plan](plans/ensemble.md), [status](status/ensemble.md), 2 Validation Packs |
@@ -82,6 +82,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
+| vyvid-migration | multi-slice unit | VM | built 2026-11-06 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), [review](review/vyvid-migration-review.md), 8 Validation Packs |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
@@ -392,6 +393,10 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | TUT-4 | chapters 10 to 13 | lattice-tutorial | built 2026-10-16 | the maintainer's end-to-end reading (TUT4-05) | docs/developer/status/lattice-tutorial.md#position |
 | TUT-5 | the tutorial refreshed onto `main`: excerpts, the site's rules, Ledger in chapter 10. Validation Pack | lattice-tutorial | built 2026-11-05 |  | docs/developer/status/lattice-tutorial.md#position |
 | TUT-6 | the Configuration Studio guide's groundwork: the studio run, the routes in and out tested, the page, layout and site section, the worked sample and its test, the screenshot task (plan §9) | lattice-tutorial | building 2026-11-06 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-7 | the guide's modules 1 to 4 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-8 | the guide's modules 5, 6 and 11 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-9 | the guide's modules 7 to 10 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-10 | the guide's modules 12, 13 and the quick reference | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | briefed 2026-10-27 |  | docs/developer/status/ledger.md#board |
@@ -502,6 +507,15 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | built 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | vyvid-migration | built 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | built 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
 | WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-2 | Service model, mapping and shapes | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |

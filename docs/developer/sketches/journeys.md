@@ -23,7 +23,7 @@ Facts checked on 2026-10-26 that constrain the options.
 
 - SPC models "subject-oriented process structures that govern typed interaction between participants" and leaves business vocabulary to imported ontologies (SPC README §1). Its ontology covers global and local session types, runtime configurations, message pools, interfaces and open subject systems.
 - The toolchain parses ProcessLE (`tools/spc/python/src/spc/processle`), encodes it to RDF, and has an `extension_encoder.py` for extension annotations and an `extension_config_gen.py` that writes JSON configuration from them. Both belong to the part the maintainer called not yet wired.
-- `bpmn` and `processle` are technology values in the [facet register](../facets.md). No BPMN file exists in the repository. The claims sketch mentions BPMN as what a consumer's system might use.
+- `bpmn` and `processle` are technology values in the [facet register](../../../tools/knowledge/README.md#facets). No BPMN file exists in the repository. The claims sketch mentions BPMN as what a consumer's system might use.
 - A downstream deployment pins release tags, and STD-008 records that its pins live in its own repository, which no check here can read. So this repository can derive journeys only for what it contains. That is its own local environment under `deployment/`, its examples and the tutorial's reference.
 - A new kind of directory needs an accepted ADR (AGENTS.md). A header line such as `Unit type:` does not, and the lifecycle skill already uses it for Epic, Phase and Register.
 - User-facing documents may not cite a sketch (ADR-A127). They may link durable guidance under `docs/developer/` and published ADRs. Where a journey lives therefore decides whether the tutorial or the site can point at it.

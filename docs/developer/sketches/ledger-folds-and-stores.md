@@ -196,7 +196,7 @@ None of it starts until LF-Q5 is answered.
 
 ## 9. The investigation
 
-All probes follow `lattice-triple-stores` and add entries to the discovery record. All benchmarks live under `benchmark/` and fail only on a wrong result (ADR-A124).
+All probes follow `lattice-probing` and add entries to the discovery record. All benchmarks live under `benchmark/` and fail only on a wrong result (ADR-A124).
 
 **Probes.**
 

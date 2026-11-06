@@ -1,0 +1,153 @@
+# SPDX-License-Identifier: MIT
+# LATTICE as a project of Вивід. `vyd trust` records this file before `vyd context` prints the contract here.
+
+[project]
+name = "lattice"
+visibility = "public"
+docs = "code:docs"
+facets = []
+domains = ["lifecycle", "tools", "python", "triple-stores", "rdf-modelling"]
+skills = "code:.vyvid/own"
+skill_prefix = "lattice-"
+skill_targets = [".claude/skills"]
+hook_clients = ["claude-code", "copilot"]
+
+[project.identifiers]
+exceptions = "code:tools/knowledge/identifier-exceptions.txt"
+# The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.
+skip = ["slice-crosswalk-*"]
+
+[project.families]
+STD = { defined = "docs:developer/standards.md", type = "standard" }
+PRI = { defined = "docs:developer/principles.md", type = "principle" }
+PAT = { defined = "docs:developer/patterns.md", type = "pattern" }
+MEC = { defined = "docs:developer/mechanisms.md", type = "mechanism" }
+CAP = { defined = "docs:developer/capabilities.md", type = "capability" }
+TD = { removable = true, defined = "docs:developer/technical-debt.md", type = "debt" }
+PDD = { removable = true, defined = "docs:developer/pending-design-decisions.md", type = "pending-decision" }
+BL = { removable = true, defined = "docs:developer/backlog.md", type = "backlog" }
+ADR = { pattern = 'ADR-A-?[A-Za-z]{0,4}-?\d+[a-z]?', rule = "file", type = "decision", defined = "docs:architecture/decisions/*.md" }
+TSD = { pattern = 'TSD-\d+[a-z]?', rule = "heading", type = "discovery", defined = "docs:architecture/triple-store-discovery.md" }
+TSDQ = { removable = true, pattern = 'TSD-Q\d+', type = "discovery", defined = "docs:architecture/triple-store-discovery.md" }
+# A question raised in a note, a record or a decision is counted and never failed, as LATTICE's own check treats it, which `removable` gives (plan vyvid-migration, VM-1).
+LGQ = { removable = true, pattern = '(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+', rule = "question", type = "question", defined = ["docs:developer/plans/*.md", "docs:developer/sketches/*.md"] }
+# A slice is defined by its row on its home unit's board, copied into INDEX.md's Work table by mise run build:work (ADR-A151), so a plan's mention of one is checked. defined_only keeps a loose pattern from reading UTF-8 as a mention.
+SL = { pattern = '[A-Z]{2,5}-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*', defined = "docs:developer/INDEX.md", type = "slice", defined_only = true }
+
+[[project.extractors]]
+kind = "owl-terms"
+paths = ["code:ontology/**/*.ttl"]
+
+# LATTICE's own extractor, run by `vyd build` once this file is trusted: the architectural quanta of the data and
+# software views, and the catalogue's units, so an Owner cell names a module (ADR-A152 decision 1).
+[[project.extractors]]
+kind = "lattice-quanta"
+command = ["mise", "exec", "--", "python", "tools/knowledge/extractor.py"]
+paths = ["code:ontology/**/*.ttl", "code:deployment/**/docker-compose.yml"]
+code = ["code:tools/knowledge/extractor.py", "code:tools/knowledge/quanta.py", "code:tools/lattice_repo_catalogue.py", "code:repository-catalogue.md"]
+
+[[project.recipes]]
+name = "sparql-for-studio"
+description = "When writing or generating SPARQL for the studio"
+steps = [
+  { step = "find", words = "{question}", kind = "standard", activity = "query-writing", tech = "sparql", limit = 6 },
+  { step = "linked", edges = ["decidedBy", "supports"], direction = "out" },
+  { step = "include", ids = ["CAP-52"] },
+  { step = "take", n = 3, per_kind = true },
+]
+
+[[project.moves]]
+family = "TSD"
+to = "triple-stores"
+source = "code:docs/architecture/triple-store-discovery.md"
+commit = "4b94c0f0"
+copy_removed = true
+
+[[project.moves]]
+family = "TSDQ"
+to = "triple-stores"
+source = "code:docs/architecture/triple-store-discovery.md"
+commit = "4b94c0f0"
+copy_removed = true
+
+[[project.moves]]
+family = "STD"
+to = "triple-stores"
+source = "code:docs/developer/standards.md"
+commit = "4b94c0f0"
+copy_removed = true
+rows = { "STD-026" = "RDF-1", "STD-027" = "RDF-2", "STD-028" = "RDF-3", "STD-029" = "RDF-4", "STD-030" = "RDF-5", "STD-031" = "RDF-6", "STD-032" = "RDF-7", "STD-033" = "RDF-8", "STD-034" = "RDF-9", "STD-035" = "RDF-10", "STD-036" = "RDF-11", "STD-037" = "RDF-12", "STD-038" = "RDF-13", "STD-039" = "RDF-14", "STD-040" = "RDF-15", "STD-041" = "RDF-16", "STD-042" = "RDF-17", "STD-043" = "RDF-18", "STD-044" = "RDF-19", "STD-045" = "RDF-20", "STD-046" = "RDF-21", "STD-047" = "RDF-22", "STD-048" = "RDF-23", "STD-049" = "RDF-24", "STD-050" = "RDF-25", "STD-051" = "RDF-26", "STD-052" = "RDF-27", "STD-053" = "RDF-28", "STD-054" = "RDF-29", "STD-279" = "RDF-30" }
+
+[project.skill_values]
+maintainer = "the maintainer"
+maintainer_first = "The maintainer"
+contract = "`AGENTS.md`"
+trunk = "main"
+plans = "docs/developer/plans"
+status = "docs/developer/status"
+sketches = "docs/developer/sketches"
+review = "docs/developer/review"
+validation = "docs/developer/validation"
+decisions = "docs/architecture/decisions"
+pending = "docs/developer/pending-design-decisions.md"
+debt = "docs/developer/technical-debt.md"
+index = "docs/developer/INDEX.md"
+ask = "mise run graph:ask -- find"
+read = "mise run graph:ask -- read"
+misses = "mise run graph:ask -- misses --near"
+gap = "mise run graph:ask -- gap"
+close = "mise run graph:ask -- close"
+board = "mise run work:board"
+here = "mise run work:here"
+build_work = "mise run build:work"
+check_work = "work"
+normalise = "mise run work:normalise"
+normalise_apply = "mise run work:normalise -- --apply"
+rename_apply = "mise run work:rename -- --apply"
+refresh_index = "mise run build:knowledge"
+check_identifiers = "mise run check:identifiers"
+plan_first = "🔴 PLAN FIRST"
+ready_to_branch = "🟢 READY TO BRANCH"
+release_notice = "🔴 RELEASE TAGS REQUIRED"
+hooks_install = "`mise run bootstrap`"
+hooks_merge = "`mise run hooks:merge`"
+check_all = "`mise run check`"
+visibility = "public"
+production_text = "everything under `ontology/` (READMEs, the documents generated from them, shapes, examples and the comments in them), the site's pages, and published ADRs outside their Provenance section (ADR-A127 decision 4, ADR-A126 decision 11)"
+working_documents = "Sketches, plans, status records, review requests, Validation Packs, the developer index, commit messages and agent memory"
+deny_check = "`mise run check:deny-terms`"
+developer_guide = "https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md"
+getting_started = "https://github.com/nebularis/lattice/blob/main/docs/developer/getting-started.md"
+other_authorities = "Maven, Yarn 4, Python tooling and Mix"
+packages = "`persistence`, `lattice_minting` or `surface`"
+import_check = "import persistence, lattice_minting, surface; print(persistence.__file__, lattice_minting.__file__, surface.__file__)"
+test_results = ".build/*-test-results/"
+benchmark_root = "benchmark/"
+shared_fixtures = "tools/conftest.py"
+discovery_record = "[docs/architecture/triple-store-discovery.md](../../../docs/architecture/triple-store-discovery.md)"
+upstream_reports = "`docs/developer/notes/upstream-sparql-engine-reports.md`"
+
+[project.work]
+status = "docs:developer/status"
+plans = "docs:developer/plans"
+sketches = "docs:developer/sketches"
+validation = "docs:developer/validation"
+reviews = "docs:developer/review"
+decisions = "docs:architecture/decisions"
+index = "docs:developer/INDEX.md"
+roadmap = "docs:developer/ROADMAP.md"
+sweep = ["docs:architecture", "code:.claude/skills"]
+levels = ["epic", "unit", "slice"]
+roadmap_section = "9"
+presence = ".local/agents"
+
+[project.work.markers]
+index_begin = "<!-- BEGIN GENERATED work-board. Written by `mise run build:work` from the status records. Edit a status record, never this region. -->"
+roadmap_begin = "<!-- BEGIN GENERATED work-board-{name}. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->"
+
+[project.work.commands]
+build = "mise run build:work"
+roadmap = "mise run build:roadmap"
+normalise = "mise run work:normalise -- --apply"
+rename = "mise run work:rename -- --apply"
+here = "mise run work:here --"
