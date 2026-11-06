@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: re-checked at the maintainer's word. VM-2's `check:hooks` passed 48 tests, and `graph:ask` with no `vyd` on the path said what it skipped and exited 0. VM-0's three documents exist with no broken relative link, and INDEX.md's region is current. The adversarial probe of VM-7 and VM-8 is in VM-8's Validation Pack, and it found one test too weak, now tightened. The verdict on these slices stays the maintainer's.
 - 2026-11-06: VM-7 built again at `v0.2.14`, whose fence reader finds every heading of `docs/developer/developer-guide.md`, and the maintainer accepted the addendum of 2026-11-06 on ADR-A152 about a session with no terminal.
 - 2026-11-06: VM-7 reopened to pin `v0.2.14`, at the maintainer's word.
 - 2026-11-06: VM-8 built again. Isabelle is waited for at the end of setup.
