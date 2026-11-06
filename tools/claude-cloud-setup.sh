@@ -200,9 +200,11 @@ step "packages" install_packages & packages_pid=$!
 step "isabelle" install_isabelle & isabelle_pid=$!
 command -v mise >/dev/null 2>&1 || step "mise" install_mise
 wait "$packages_pid" || FAILED_STEPS+=("packages")
-wait "$isabelle_pid" || FAILED_STEPS+=("isabelle")
+# Isabelle is waited for at the end of setup, since no step before then uses it and
+# its download has taken from 15 to 79 seconds.
 
 if ! command -v mise >/dev/null 2>&1; then
+  wait "$isabelle_pid"
   fail "mise is not installed. The session starts without LATTICE's mise tasks."
   exit 0
 fi
@@ -272,6 +274,7 @@ wait "$index_pid" || FAILED_STEPS+=("index")
 # Not part of bootstrap. The reasoner jar (ADR-A83) is what the tests that need
 # a reasoner skip without.
 later 250 "reasoning testkit" bootstrap:reasoning-testkit
+wait "$isabelle_pid" || FAILED_STEPS+=("isabelle")
 
 ### Summary ###################################################################
 

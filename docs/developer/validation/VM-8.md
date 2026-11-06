@@ -40,6 +40,8 @@ Sessions on the LATTICE environment, 2026-11-06, with the index built ahead of t
 
 A snapshot without the dependencies costs every session of it about two minutes, so they now run beside the index, and `bootstrap:testing-oxigraph` left setup, since `bootstrap:python` already installs that package.
 
+The next snapshot's run still reached them at 156 seconds, with Isabelle taking 79 seconds that held up every step after it, and it finished in about 3 minutes 47 seconds without them. No step before the end of setup uses Isabelle, so it is now waited for last, which on that run's times would have reached them at about 125 seconds.
+
 ## Not covered here
 
 Whether the dependencies now fit in the snapshot, and setup's time with them beside the index. The limits of 150 and 250 seconds are chosen from these few runs, and a list of several tasks deferred for real has run only against a fake `mise`.

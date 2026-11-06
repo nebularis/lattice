@@ -179,6 +179,7 @@ def test_vm7_01_the_pasted_lines_trust_this_repository_and_name_its_domains(tmp_
 def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
     text = SETUP.read_text(encoding="utf-8")
     assert text.index('step "vyvid" install_vyvid') < text.index('step "index packages"') < text.index('step "index" mise run build:knowledge & index_pid=$!') < text.index('later 150 "dependencies"') < text.index('wait "$index_pid"')
+    assert text.index('step "packages" install_packages') < text.index('later 250 "reasoning testkit"') < text.rindex('wait "$isabelle_pid"')
     assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
 
 

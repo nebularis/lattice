@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
+**Status:** built 2026-11-06. VM-0 to VM-5 built, VM-1, VM-3, VM-4 and VM-5 verified, ADR-A152 and the addendum of 2026-11-05 on ADR-A117 accepted, trust point 3 run. Every slice is verified and the unit waits for its merge into `main`, with every other branch paused until then.
 
 ## Position
 
@@ -20,7 +20,7 @@
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | built 2026-11-06, building 2026-11-06 |  |
-| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 
 ## Next action
 
@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-8 built again. Isabelle is waited for at the end of setup.
 - 2026-11-06: VM-8 reopened. A snapshot's setup reached the dependencies at 156 seconds against a limit of 150, having waited on Isabelle, which no later step needs.
 - 2026-11-06: VM-8 built again. The dependencies run beside the index, and `bootstrap:testing-oxigraph` left setup, since `bootstrap:python` installs that package. The earlier entry's reading of the corrupted file was wrong. A test wrote the file while a real deferred run was reading it, and the read went on at byte 23 of the new text, which is `aph`. Reading the list whole first still prevents that.
 - 2026-11-06: VM-8 reopened. The snapshot's setup reached the dependencies at 154 seconds against a limit of 150, so a snapshot held none of them.
