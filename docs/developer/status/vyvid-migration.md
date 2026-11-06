@@ -6,15 +6,15 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-06. Merged into `main` by squash on 2026-11-06. VM-1, VM-3, VM-4, VM-5 and VM-6 verified, VM-0, VM-2, VM-7 and VM-8 built and waiting for the maintainer. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** building 2026-11-06. Merged into `main` by squash on 2026-11-06. VM-1, VM-3, VM-4, VM-5 and VM-6 verified, VM-0, VM-2, VM-7 and VM-8 built and waiting for the maintainer. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | built 2026-11-05 |  |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | building 2026-11-06, built 2026-11-05 |  |
 | VM-1 | the binding, `bootstrap:vyvid`, the comparison | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | built 2026-11-05, building 2026-11-05 |  |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | building 2026-11-06, built 2026-11-05, building 2026-11-05 |  |
 | VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-06: VM-0 and VM-2 reopened at the maintainer's word, for VM-0's Validation Pack and the check of its writing rules, and for VM-2's by-hand questions.
 - 2026-11-06: `mise run check:low-memory` passed on `main` at `2c4e5537` in 446 seconds, with `mem_check` never under 1.9 GiB against the guard's stop at 1 GiB, so the stop stays where it is. STD-321 ratified.
 - 2026-11-06: `mise run check` passed on `main` at `f969f24a`, one task at a time with `MISE_JOBS=1`, in 506 seconds with free memory never under 45%, after a run at the default was stopped for its memory (TD-152). STD-321 and `check:low-memory` came from it. The verdict on VM-0, VM-2, VM-7 and VM-8 stays the maintainer's.
 - 2026-11-06: re-checked at the maintainer's word. VM-2's `check:hooks` passed 48 tests, and `graph:ask` with no `vyd` on the path said what it skipped and exited 0. VM-0's three documents exist with no broken relative link, and INDEX.md's region is current. The adversarial probe of VM-7 and VM-8 is in VM-8's Validation Pack, and it found one test too weak, now tightened. The verdict on these slices stays the maintainer's.
