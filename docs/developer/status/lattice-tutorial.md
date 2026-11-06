@@ -3,8 +3,8 @@
 # The LATTICE tutorial - Status
 
 **Unit ID:** `lattice-tutorial`
-**Status:** built 2026-11-05.
-**Last updated:** 2026-11-05
+**Status:** building 2026-11-06.
+**Last updated:** 2026-11-06
 **Plan:** [lattice-tutorial.md](../plans/lattice-tutorial.md)
 
 ## Position
@@ -17,6 +17,7 @@
 | TUT-3 | chapters 7 to 9 | built 2026-10-16 |  |
 | TUT-4 | chapters 10 to 13 | built 2026-10-16 | the maintainer's end-to-end reading (TUT4-05) |
 | TUT-5 | the tutorial refreshed onto `main`: excerpts, the site's rules, Ledger in chapter 10. [Validation Pack](../validation/TUT-5.md) | built 2026-11-05, building 2026-11-05 |  |
+| TUT-6 | the Configuration Studio guide's groundwork: the studio run, the routes in and out tested, the page, layout and site section, the worked sample and its test, the screenshot task (plan §9) | building 2026-11-06 |  |
 
 ## Current position
 
@@ -60,3 +61,4 @@ Every question is answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4, plan §2 and §8
 - 2026-11-02 to 2026-11-05: `main` gained the Configuration Studio, MORK's new compilers, the Ledger layer and new rules for the site (user-facing documents cite no working document, Markdown is not hard-wrapped, a page is a declared site section). Against `main` the tutorial has 11 excerpt and link findings. The maintainer chose the recommended plan: refresh the tutorial onto `main` (TUT-5), then a separate do-along Studio guide.
 - 2026-11-05: `main` (`73b31c2c`) merged into `tutorial/guide` at the maintainer's request. Conflicts resolved: `docs/developer/INDEX.md` taken from `main` and regenerated, `mise.toml` takes `main`'s check list with `check:tutorial-snippets` added, `docs/Gemfile.lock` takes `main`'s with the Windows platform added by `bundle lock --add-platform x64-mingw-ucrt`. This record moved onto the board grammar. The tutorial check now reads its root and chapters from the catalogue, and the tutorial is declared as site section 2. The merge commit skipped `import-guard` and `writing`, whose failures are in `main`'s own files (TUT-5 Validation Pack).
 - 2026-11-05: the maintainer accepted every recommendation for the Configuration Studio guide (plan §9, TUT-D6 to TUT-D11) and passed on the lead developer's answers. TUT-5 built: eight excerpts re-copied, chapter 10 rewritten on Ledger, Ledger in the layer map, the page's reference to the plan removed, every chapter unwrapped. Every check in its Validation Pack passed.
+- 2026-11-06: `tutorial/studio-guide` created from `tutorial/guide` at the maintainer's request, so the guide can go ahead while the tutorial waits for its reading. TUT-6 marked building.

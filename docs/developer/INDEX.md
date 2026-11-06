@@ -42,7 +42,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
-| lattice-tutorial | multi-slice unit |  | built 2026-11-05 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
+| lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
 | ledger | unit | LG | merged 2026-10-27 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
@@ -391,6 +391,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | TUT-3 | chapters 7 to 9 | lattice-tutorial | built 2026-10-16 |  | docs/developer/status/lattice-tutorial.md#position |
 | TUT-4 | chapters 10 to 13 | lattice-tutorial | built 2026-10-16 | the maintainer's end-to-end reading (TUT4-05) | docs/developer/status/lattice-tutorial.md#position |
 | TUT-5 | the tutorial refreshed onto `main`: excerpts, the site's rules, Ledger in chapter 10. Validation Pack | lattice-tutorial | built 2026-11-05 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-6 | the Configuration Studio guide's groundwork: the studio run, the routes in and out tested, the page, layout and site section, the worked sample and its test, the screenshot task (plan §9) | lattice-tutorial | building 2026-11-06 |  | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | briefed 2026-10-27 |  | docs/developer/status/ledger.md#board |
