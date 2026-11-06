@@ -19,13 +19,20 @@
 # branch that changes vyvid.toml (ADR-A152).
 #
 # Network access: Custom, with "Also include default list of common package
-# managers" ticked, plus these hosts:
+# managers" ticked, plus these hosts. This is the list setup last ran with:
 #
 #   mise.jdx.dev        mise itself
+#   mise-java.jdx.dev  mise-versions.jdx.dev
 #   isabelle.in.tum.de  Isabelle, from the pinned release's own archive
+#   dists.isabelle.cit.tum.de  www.cl.cam.ac.uk  mirror.clarkson.edu
 #   huggingface.co      the knowledge index's embedding model
 #   *.cdn.hf.co         where huggingface.co redirects for the model. This script
 #                       and a session are sent to different hosts, so a wildcard
+#   api.github.com  raw.githubusercontent.com
+#   tuf-repo-cdn.sigstore.dev  tuf-repo.github.com
+#   api.launchpad.net  ppa.launchpadcontent.net  the deadsnakes PPA
+#   download.java.net  builds.hex.pm  repo.yarnpkg.com
+#   rocq-prover.org  proofcraft.systems
 #
 # Rules the cloud imposes (code.claude.com/docs/en/cloud-environments):
 #   - a setup script that exits non-zero stops the session from starting, so
@@ -34,6 +41,9 @@
 #     then runs again for every new session
 #   - a later session skips this script and starts from its snapshot, with a
 #     fresh checkout that can be newer than the one seen here
+#   - the snapshot rebuilds when the pasted lines or the hosts change, and after
+#     about seven days. A change to setup in this file waits for that, so change a
+#     comment in the pasted lines to apply it. A change to --session applies at once
 #   - GitHub goes through its own proxy, whatever the list above says. A public
 #     repository can be cloned, and an archive of one not attached to the session
 #     is refused, so Вивід and its domains come by git
@@ -230,7 +240,7 @@ for rc in /etc/profile.d/mise.sh "$HOME/.bashrc"; do
 done
 
 ### 5. Вивід and its domains ##################################################
-# Before bootstrap, whose knowledge step builds the index and needs the domains.
+# Before the index, which reads the domains.
 # The domains and their trust are in ~/.config/vyvid/config.toml, which the pasted
 # lines write. Without it the clone has nothing to do, and the index is built from
 # the project alone.

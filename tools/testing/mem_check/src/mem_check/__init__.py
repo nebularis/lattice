@@ -55,7 +55,8 @@ def _linux() -> int | None:
     return None
 
 
-def _windows() -> int | None:
+def _windows_status():
+    """Windows' memory status, or ``None`` where it cannot be read."""
     import ctypes
 
     class MemoryStatus(ctypes.Structure):
@@ -71,7 +72,52 @@ def _windows() -> int | None:
             return None
     except (AttributeError, OSError):
         return None
-    return int(status.ullAvailPhys)
+    return status
+
+
+def _windows() -> int | None:
+    status = _windows_status()
+    return None if status is None else int(status.ullAvailPhys)
+
+
+def _percent_macos() -> int | None:
+    try:
+        return int(subprocess.run(["sysctl", "-n", "kern.memorystatus_level"], capture_output=True, text=True, timeout=5, check=True).stdout)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def _percent_linux(path: str = "/proc/meminfo") -> int | None:
+    found = {}
+    try:
+        with open(path, encoding="ascii") as meminfo:
+            for line in meminfo:
+                name, _, rest = line.partition(":")
+                if name in ("MemAvailable", "MemTotal"):
+                    found[name] = int(rest.split()[0])
+    except (OSError, ValueError, IndexError):
+        return None
+    return round(100 * found["MemAvailable"] / found["MemTotal"]) if found.get("MemTotal") and "MemAvailable" in found else None
+
+
+def _percent_windows() -> int | None:
+    status = _windows_status()
+    return None if status is None else 100 - int(status.dwMemoryLoad)
+
+
+def available_percent() -> int | None:
+    """The share of this machine's memory its operating system counts as available, or ``None`` where it cannot be read.
+
+    Each system's own figure, so the same percentage is not quite the same amount of room. macOS's counts memory it could
+    compress, and Linux's ``MemAvailable`` and Windows' memory load do not, so they should read lower under the same load. It
+    runs higher than ``available_bytes`` on macOS, which counts only what a new process can have with no such work."""
+    if sys.platform == "darwin":
+        return _percent_macos()
+    if sys.platform.startswith("linux"):
+        return _percent_linux()
+    if sys.platform == "win32":
+        return _percent_windows()
+    return None
 
 
 def available_bytes() -> int | None:

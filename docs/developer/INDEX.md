@@ -525,7 +525,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-7 | cloud sessions: the pin at `v0.2.13`, the setup script and its pasted lines, the hook | vyvid-migration | built 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | vyvid-migration | built 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | built 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
 | WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
