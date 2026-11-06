@@ -132,8 +132,8 @@ configure_proxy
 if [ "${1:-}" = "--finish-deferred" ]; then
   export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   failed=""
-  # The list is read whole first and a task gets no standard input, since a task
-  # that read the file through the loop's would eat the names after its own.
+  # The list is read whole first, so a write to the file during the run cannot
+  # shift what is read next, and a task gets no standard input to read it from.
   for task in $(cat "$DEFERRED"); do
     mise run "$task" < /dev/null || failed="$failed$task"$'\n'
   done
@@ -244,11 +244,12 @@ step "vyvid" install_vyvid
 
 ### 6. The index, then the rest if time allows ################################
 # Setup past about five minutes is not cached and runs again for every session.
-# The index comes first, since an agent needs it from its first question, and it
-# embeds in about a minute that every later session is then spared. The rest is
-# cached while it fits. A step is never killed, so it starts only before a limit
-# that leaves it room to finish. What did not start goes in $DEFERRED, and a
-# session's hook finishes it, so a slow network costs that session and no other.
+# The index always builds, since an agent needs it from its first question, and it
+# embeds in about a minute that every later session is then spared. The dependencies
+# run beside it, since it is mostly CPU and they are mostly network, and are cached
+# while they fit. A step is never killed, so it starts only before a limit that
+# leaves it room to finish. What did not start goes in $DEFERRED, and a session's
+# hook finishes it, so a slow network costs the sessions of that snapshot only.
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 rm -f "$DEFERRED"
@@ -263,12 +264,14 @@ later() {
   fi
 }
 
-step "index" mise run bootstrap:index
+# Before the two below, since one pip at a time writes this checkout's .venv.
+step "index packages" mise run bootstrap:index-packages
+step "index" mise run build:knowledge & index_pid=$!
 later 150 "dependencies" bootstrap:dependencies
+wait "$index_pid" || FAILED_STEPS+=("index")
 # Not part of bootstrap. The reasoner jar (ADR-A83) is what the tests that need
-# a reasoner skip without, and the Oxigraph package is what ADR-A125's tests use.
+# a reasoner skip without.
 later 250 "reasoning testkit" bootstrap:reasoning-testkit
-later 250 "testing oxigraph" bootstrap:testing-oxigraph
 
 ### Summary ###################################################################
 

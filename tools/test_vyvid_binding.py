@@ -178,7 +178,7 @@ def test_vm7_01_the_pasted_lines_trust_this_repository_and_name_its_domains(tmp_
 
 def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
     text = SETUP.read_text(encoding="utf-8")
-    assert text.index('step "vyvid" install_vyvid') < text.index('step "index" mise run bootstrap:index') < text.index('later 150 "dependencies"')
+    assert text.index('step "vyvid" install_vyvid') < text.index('step "index packages"') < text.index('step "index" mise run build:knowledge & index_pid=$!') < text.index('later 150 "dependencies"') < text.index('wait "$index_pid"')
     assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
 
 
@@ -253,5 +253,6 @@ def test_vm8_04_a_step_starts_only_before_its_limit(tmp_path, seconds, starts):
 
 def test_vm8_05_the_index_needs_no_task_the_rest_of_bootstrap_installs():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"]
-    assert set(tasks["bootstrap:index"]["depends"]) == {"bootstrap:pip", "bootstrap:vyvid"}
+    assert set(tasks["bootstrap:index-packages"]["depends"]) == {"bootstrap:pip", "bootstrap:vyvid"}
+    assert "depends" not in tasks["build:knowledge"], "it runs beside bootstrap:dependencies, so it must not start a second pip"
     assert set(tasks["bootstrap:dependencies"]["depends"]) | {"bootstrap:knowledge", "bootstrap:vyvid"} == set(tasks["bootstrap"]["depends"])

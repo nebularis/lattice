@@ -782,7 +782,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
 | `docs/placement-vehicles-structure` | 2026-11-04 | 115 | pushed | FM-4 |
-| `fix/studio-worker-heartbeat` | 2026-11-05 | 17 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7 |
+| `fix/studio-worker-heartbeat` | 2026-11-06 | 20 | pushed | WL-0, WL-1, WL-2, WL-3, WL-4, WL-5, WL-6, WL-7, WL-8 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |

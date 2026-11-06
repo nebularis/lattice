@@ -21,10 +21,10 @@ description = "Install configured toolchains and dependency sets, and the git ho
 depends = ["bootstrap:python", "bootstrap:frontend", "bootstrap:hooks", "bootstrap:knowledge", "bootstrap:vyvid"]
 
 # A cloud environment's setup has about five minutes, so its script takes these apart (tools/claude-cloud-setup.sh).
-[tasks."bootstrap:index"]
-description = "Build the knowledge index with only the two packages its extractor imports, ahead of the rest of bootstrap, for a cloud environment's setup (plan vyvid-migration, VM-8)"
+[tasks."bootstrap:index-packages"]
+description = "Install Вивід and the two packages the knowledge index's extractor imports, so build:knowledge can run while bootstrap:dependencies does, for a cloud environment's setup (plan vyvid-migration, VM-8)"
 depends = ["bootstrap:pip", "bootstrap:vyvid"]
-run = ["python -m pip install -c requirements-lock.txt pyoxigraph pyyaml", "python tools/vyd.py build"]
+run = "python -m pip install -c requirements-lock.txt pyoxigraph pyyaml"
 
 [tasks."bootstrap:dependencies"]
 description = "Install what bootstrap installs other than Вивід and the index, in parallel, for a cloud environment's setup (plan vyvid-migration, VM-8)"
