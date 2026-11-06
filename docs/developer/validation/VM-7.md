@@ -27,6 +27,10 @@ mise run check:vyvid-binding
 
 `tools/claude-cloud-setup.sh`, its header's pasted lines and hosts, `.claude/settings.json`, `mise.toml`'s `VYVID_VERSION`.
 
+## Results
+
+A first session on the LATTICE environment, 2026-11-06, at `3ef90a2`. `vyd` 0.2.13 installed and the five domains cloned. The project was trusted through `trusted_repositories`, `vyd check skills` passed with 15 composed, `lattice-quanta` ran, and two `find`s ranked in about 1.9 seconds each. That session's own setup ran from about 11:29:33 to 11:33:09, about 3 minutes 36 seconds against the limit of about five, of which `mise run bootstrap` took 162 seconds and its knowledge step 49.66.
+
 ## Not covered here
 
-The script itself has not run from this change. Its parts were measured on another cloud environment on 2026-11-06 with no `mise`, so what needs a real session on the LATTICE environment is `bootstrap:vyvid` under the linked Python 3.14, the `lattice-quanta` extractor with `mise` present, setup staying under about five minutes with the embedding in it, a rebuild on a checkout newer than the snapshot, and the hook.
+Reuse of the snapshot, a rebuild on a checkout newer than the snapshot, and the hook's effect when a branch pins a newer `vyd`.
