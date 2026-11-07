@@ -645,7 +645,7 @@ instrument behaviour, and generated tools run as workers, never against the live
 |-------|-------|
 | **Status** | ✅ Built, 2026-10-07. ADR-A117 accepted. Open CBAA's adoption is that project's own change |
 | **Unit ID** | `agent-skills` |
-| **Sketches** | [agent-skills.md](../sketches/agent-skills.md) |
+| **Sketches** | [agent-skills.md](../sketches/agent-skills.md), historical since 2026-11-07, its note naming what has changed since |
 | **ADRs** | [A-117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md), Accepted |
 
 LATTICE's guidance for AI agents as an always-on core (`AGENTS.md`) and six skills in

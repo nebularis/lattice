@@ -49,6 +49,8 @@ In `compose` the service listens on loopback inside its container, as the `local
 
 To run an older checkout, as the `studio-api` benchmark's `--checkout` does, set `LATTICE_STUDIO_HARNESS_JARS` (its `platform` folder), `LATTICE_STUDIO_HARNESS_ASSETS` (its staged `.build/config-studio`) and `LATTICE_STUDIO_HARNESS_WORKER_ROOT` (the checkout). The `processes` runner then starts the worker from this checkout's interpreter with that checkout's `workers/src`, `tools` and package sources first on `PYTHONPATH`, and its root as `LATTICE_ROOT`. The `compose` runner ignores the worker root.
 
+A run of the `processes` runner has a detached reaper, which stops its processes and removes its folder when the process that started it ends without finishing `stop()`, by SIGKILL for example. A killed run of the `compose` runner still leaves its containers, for `docker compose -p {run id} down -v`.
+
 A run folder is `.build/studio-harness/{run id}` (git-ignored). Setting `STUDIO_HARNESS_KEEP=1` keeps it after `stop()`, with the logs in `run/`.
 
 ## The client

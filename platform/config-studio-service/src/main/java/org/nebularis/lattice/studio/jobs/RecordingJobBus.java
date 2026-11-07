@@ -7,6 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /** A bus that only remembers what was published. Jobs stay queued, so this is for tests and a broker-less run. */
 public final class RecordingJobBus implements JobBus {
     private final List<String> published = new CopyOnWriteArrayList<>();
+    private final List<String> longJobs = new CopyOnWriteArrayList<>();
     private volatile java.util.function.Predicate<String> worker = iri -> false;
 
     /** Hands each job to {@code worker}, which says whether it ran the job. Only a job it did not run is recorded. For tests that stand in for the worker. */
@@ -21,7 +22,20 @@ public final class RecordingJobBus implements JobBus {
         }
     }
 
+    @Override
+    public void publish(String jobIri, boolean longJob) {
+        if (longJob) {
+            longJobs.add(jobIri);
+        }
+        publish(jobIri);
+    }
+
     public List<String> published() {
         return List.copyOf(published);
+    }
+
+    /** The jobs published to the long queue, among {@link #published()} and those a stand-in worker ran. */
+    public List<String> publishedLong() {
+        return List.copyOf(longJobs);
     }
 }

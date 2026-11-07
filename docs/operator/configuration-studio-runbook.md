@@ -192,7 +192,7 @@ ps -p $(cat .build/config-studio/run/service.pid) -o pid,command
 
 ## Scenario 6: Jobs stay queued
 
-**Symptom.** A validation or compilation never leaves `Queued` in the Build view, and `GET /api/jobs/{job}` shows `cst:status cst:Queued` and no `cst:startedAt`.
+**Symptom.** A validation or compilation never leaves `Queued` in the Build view, and `GET /api/jobs/{job}` shows `cst:status cst:Queued` and no `cst:startedAt`. The studio shows a warning, `No worker consumes lattice.studio.jobs`, when no worker is connected to the queue, and the Build view says how long the job has waited.
 
 **Diagnosis.** A job is written to Fuseki as queued, its IRI is published to RabbitMQ, and only a worker moves it on. Check the three links in order.
 
@@ -203,7 +203,7 @@ ps -p $(cat .build/config-studio/run/service.pid) -o pid,command
    ```
 
    `studio:up` and `studio:service` set it, so this means the service was started by hand without the variable.
-2. Is a worker connected? The worker stops at start if `LATTICE_AMQP_URI` or `LATTICE_FUSEKI_URL` is unset ("is required"), and stops if it meets an unexpected error, such as Fuseki being unreachable, after returning the message to the queue.
+2. Is a worker connected? The worker stops at start if `LATTICE_AMQP_URI` or `LATTICE_FUSEKI_URL` is unset ("is required"). It does not stop on a job that cannot run, nor when the broker goes: it marks such a job `Failed` where it can, rejects the message, and connects again with a backoff. `studio:status` shows a worker that ended as `exited, last line of its log: ...`.
 
    ```bash
    mise run studio:status
@@ -211,7 +211,7 @@ ps -p $(cat .build/config-studio/run/service.pid) -o pid,command
    mise exec -- $RMQ/rabbitmqctl -n studio@localhost list_queues name messages consumers
    ```
 
-   `lattice.studio.jobs` should show `consumers` 1. With 0, no worker is connected, and `messages` counts the jobs waiting.
+   `lattice.studio.jobs` and `lattice.studio.jobs.long` should each show `consumers` 1. With 0, no worker is connected, and `messages` counts the jobs waiting. A proposal by a language model and a publication wait on the long queue, which `studio:up` gives a worker of its own, `worker-long`, and `mise run studio:worker-long` starts by hand.
 3. Do the service and worker agree? Their `LATTICE_FUSEKI_URL`, `LATTICE_FUSEKI_DATASET` and `LATTICE_AMQP_URI` must name the same Fuseki, dataset and broker. A worker on a different dataset consumes the message and fails it with "job graph not found", which moves it to the dead-letter queue (`lattice.studio.dead`) rather than leaving it queued.
 
 **Remedy.**
@@ -224,14 +224,14 @@ ps -p $(cat .build/config-studio/run/service.pid) -o pid,command
    ```
 
    Or stop and start the whole stack. A worker that starts takes the messages already in the queue, since they are persistent.
-3. A worker that keeps stopping on the same message has met an error it requeues, and the message returns to the queue and is delivered again. Read the end of `worker.log` for the error. If it is Fuseki being unreachable, start Fuseki. If the message itself is the cause, remove it.
+3. A worker that stopped, with a job in hand, finds the message again at its next start. It writes a job it finds `Running` as `Failed` with a message saying the worker stopped, and goes on, so a job that kills the worker is run once. A message that cannot be read is rejected to `lattice.studio.dead`. If a queue still holds messages for a job that cannot be run, remove them.
 
    ```bash
    mise exec -- $RMQ/rabbitmqctl -n studio@localhost purge_queue lattice.studio.jobs
    ```
 
    Docker form: `docker compose -f deployment/compose/config-studio/docker-compose.yml exec rabbitmq rabbitmqctl purge_queue lattice.studio.jobs`. The jobs it held stay `Queued` in Fuseki. Delete them in the browser, or resubmit.
-4. Messages in `lattice.studio.dead`. These are messages the worker rejected as malformed or naming a missing job graph. Their jobs were deleted, or are from before a Fuseki restart. Clear them with `purge_queue lattice.studio.dead`.
+4. Messages in `lattice.studio.dead`. These are messages the worker rejected: malformed, naming a job with no workspace that is not a rebuild (a job of a kind a release retired, such as `Refresh`), or for a job that could not be run. A job whose graph is gone is acknowledged and is not among them. Clear them with `purge_queue lattice.studio.dead`.
 
 ---
 
@@ -259,7 +259,7 @@ curl -s http://127.0.0.1:8090/api/jobs/{job} | grep -i "failureMessage\|status"
 | `job lacks a known kind, a known target or a submission time` | The job graph is malformed, which a job the service wrote does not produce. Delete it and resubmit, and report it with the logs (Scenario 10) if it recurs |
 | Any other text | An error from the validation or compilation itself. Read `.build/config-studio/run/worker.log`, and report it with the logs |
 
-A job that fails is final. The worker does not retry it. Resubmit from the browser, or with `POST /api/workspaces/{ws}/jobs`. A job the worker had not finished when it stopped is redelivered and run again, giving the same graph but for its times.
+A job that fails is final. The worker does not retry it. Resubmit from the browser, or with `POST /api/workspaces/{ws}/jobs`. A job the worker had not finished when it stopped is delivered again, and the worker that finds it `Running` writes it `Failed` with `The worker stopped while it ran this job, so the job did not finish. Submit it again.` It is not run again unasked, since a proposal may have spent a model's tokens.
 
 ---
 

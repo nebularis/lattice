@@ -281,8 +281,9 @@ def describe_difference(call: dict, conforms: bool, rows: list[list[str]]) -> st
 
 def record_command(workers: str | None) -> list[str]:
     """The pytest command of `check:ontology-catalog`, with this module loaded as a plugin."""
-    run = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"][TASK]["run"]
-    tokens = shlex.split(run.split("&&")[0].strip())
+    run = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"][TASK]["run"]
+    # A run array, one command per entry (STD-322), or an older `&&` chain, whose first command is pytest.
+    tokens = shlex.split((run[0] if isinstance(run, list) else run.split("&&")[0]).strip())
     flags = tokens[3:]                                          # after `python -m pytest`
     if workers:
         kept, skip = [], False

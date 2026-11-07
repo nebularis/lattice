@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-testing-requires"
+version = "0.1.0"
+description = "A pytest marker for the Python packages a test needs, skipping it with the need named where the environment cannot provide one (STD-323)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = ["pytest>=8.0"]
+
+[project.entry-points.pytest11]
+lattice_requires = "lattice_testing_requires"
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

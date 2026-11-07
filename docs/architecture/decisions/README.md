@@ -138,7 +138,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-133](ADR-A133-git-hooks.md) | Git hooks check what a change touches, never block a push, and gate the merge into `main` | Proposed, 2026-10-23 |
 | [A-134](ADR-A134-knowledge-index-and-design-shape-vocabulary.md) | A knowledge index over the working documents, and a design-shape vocabulary to retrieve it by | Accepted, 2026-10-24, with addenda of 2026-10-25 and 2026-10-26 |
 | [A-135](ADR-A135-contract-first-wire-types.md) | Contract-first wire types | Proposed, 2026-10-26 |
-| [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Accepted 2026-10-28, amended 2026-10-28 |
+| [A-136](ADR-A136-configuration-studio.md) | Configuration Studio, for authoring configuration against an applied ontology | Accepted 2026-10-28, amended 2026-11-06 |
 | [A-137](ADR-A137-document-markup-vocabulary.md) | A document markup vocabulary of LATTICE's own, in XML | Accepted 2026-10-28 |
 | [A-138](ADR-A138-contract-builder.md) | The contract builder, a mode of the Configuration Studio | Accepted 2026-10-28 |
 | [A-139](ADR-A139-wording-baseline-assembly-model.md) | Wording's baseline assembly model | Accepted 2026-10-28 |
@@ -153,6 +153,7 @@ This directory holds the ADRs that govern LATTICE's substrate architecture. An A
 | [A-148](ADR-A148-mork-transform-backends.md) | MORK mappings over XML and JSON compiled to an XSLT stylesheet writing N-Triples and a JOLT chain writing JSON-LD, from one logical plan read by `tools/mork_rdf`'s reader | Proposed, 2026-10-30 |
 | [A-149](ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a registry, dependencies pinned, imports fenced, parts deciding saving and not reading, pluggable authentication and workspace modes | Proposed, 2026-10-31 |
 | [A-151](ADR-A151-the-work-board.md) | The work board: a slice's state written once on its home unit's board as a word and a day, slice ids on one grammar, the boards read across every branch by one tool, INDEX.md and ROADMAP.md generated from them, a hook check on the boards, and presence files for sessions sharing a worktree | Proposed, 2026-11-02 |
+| [A-152](ADR-A152-vyvid-adoption.md) | The knowledge index and the work board run on Вивід, installed by `bootstrap` and pinned, `vyvid.toml` and `.vyvid/` at the root, `mise` task names kept, an absent tool skips and never blocks, skills composed and committed, tests proven against Вивід before deletions, and the triple-store record moved by declared moves with a page at its old path | Accepted 2026-11-05 |
 | [A-150](ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from a declared configuration, checked against a model and under load on demand | Proposed, 2026-10-31 |
 
 **The `A-FM` block.** ADR-A-FM1 and its successors are the `formal-methods` epic's own ADRs,

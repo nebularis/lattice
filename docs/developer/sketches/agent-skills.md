@@ -3,13 +3,20 @@
 # Agent skills: LATTICE's guidance for AI agents, as a skill library
 
 **Unit:** `agent-skills` (this sketch). Takes over technical debt TD-21.
-**Status:** built 2026-10-07 on `main`. SQ1 to SQ5 answered (§8). ADR-A117 accepted, with an addendum on the plugin's source.
+**Status:** built 2026-10-07 on `main`. SQ1 to SQ5 answered (§8). ADR-A117 accepted, with an addendum on the plugin's source. **Historical since 2026-11-07.** Kept as the record of the design as built, and not maintained.
 **Decision:** [ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)
 (Proposed). Two tiers, six skills in `.claude/skills/`, shared as a Claude Code plugin from this
 repository.
 **Reads with:** [`.github/copilot-instructions.md`](../../../.github/copilot-instructions.md) (the
 source being split), the [developer guide](../developer-guide.md),
 [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md).
+
+**Superseded behaviour.** Where this sketch and the current tree differ, the current tree holds:
+
+- **The skills (§3, §5, §7).** The six skills are fifteen, composed by Вивід from its domains and LATTICE's sources under `.vyvid/` by `vyd install --project`, and committed ([ADR-A117](../../architecture/decisions/ADR-A117-agent-guidance-and-skill-library.md)'s addendum of 2026-11-05, [ADR-A152](../../architecture/decisions/ADR-A152-vyvid-adoption.md)). `AGENTS.md`'s skill table lists them. The marketplace names `./.claude` as its source, not six directories (ADR-A117's first addendum).
+- **`skills:link` on Windows (§6, SQ4).** It no longer copies on Windows. It makes a symbolic link, else a directory junction, else a copy only where no link can be made, per skill, and says which ([Directory links on Windows](../windows-links.md), unit `windows-portability`, XP-7).
+- **Tasks on Windows (§3, `lattice-mise`).** A task that needs a shell feature runs a Python script on every platform (STD-322), in place of a quoting rule for Windows.
+- **The git hooks (the deny-list check).** `bootstrap` installs the hooks into the shared hooks directory, covering every worktree, and the deny-list check is one of the commit checks ([ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md)). It is not opt-in, and not in `.git/hooks/`.
 
 ## 1. What changes
 
@@ -107,7 +114,7 @@ or examples, a version IRI, or a SHACL shape.*
 - domain-neutral READMEs, and referring to `fnd:Versioned`
 - the market-word rule and its exceptions (bound meaning, SPC's binder)
 
-### `lattice-toolchain`
+### `lattice-mise`
 
 *Use when building, testing or running checks, setting up or repairing an environment, or when a
 package install or tool fails.*
@@ -141,7 +148,7 @@ published: documentation, commit messages, examples, generated content.*
 | Repository Topology, Decisions and Links | core (table), `lattice-architecture` |
 | Documentation Lifecycle, Epic Decomposition Model | `lattice-lifecycle` |
 | Changing an ontology document | `lattice-ontology-authoring` |
-| Toolchain, Shell activation, Restricted or mirrored package registries | `lattice-toolchain` |
+| Toolchain, Shell activation, Restricted or mirrored package registries | `lattice-mise` and `lattice-constrained-environments` |
 | General Guidelines, Writing Style, What To Avoid, What To Reduce | core |
 | Documenting ontologies, Ponytail guardrails, SHACL-SPARQL | `lattice-ontology-authoring` |
 | Thinking / Reasoning for Coding and for Writing | core |
@@ -158,8 +165,7 @@ some that do not:
 | domain-neutral READMEs, sparing colons, sparing domain and range | core, `lattice-ontology-authoring` |
 | which remote to push to, editable installs from another clone | stays personal: true of one machine |
 
-The general lessons of `docs/developer/project-environment.md` (do not route around a blocked
-registry, hand off what cannot run) move to `lattice-toolchain`.
+The general lessons of `docs/developer/project-environment.md` (do not route around a blocked registry, hand off what cannot run) move to `lattice-constrained-environments`.
 
 ## 5. How a skill stays right
 
@@ -178,7 +184,7 @@ registry, hand off what cannot run) move to `lattice-toolchain`.
 | Agent | In this repository | In another project |
 |---|---|---|
 | Claude Code | nothing. `CLAUDE.md` and `.claude/skills/` load | `/plugin marketplace add nebularis/lattice`, then `/plugin install lattice@<marketplace name>`. `/plugin marketplace update` refreshes |
-| Copilot in VS Code or the CLI | nothing. Copilot's file and `.claude/skills/` load | from a LATTICE checkout, `mise run skills:link` links the six skills into `~/.copilot/skills/` (copies on Windows). Re-run after pulling |
+| Copilot in VS Code or the CLI | nothing. Copilot's file and `.claude/skills/` load | from a LATTICE checkout, `mise run skills:link` links the six skills into `~/.copilot/skills/` (copies on Windows, superseded 2026-11-07: see the note at the top). Re-run after pulling |
 | Copilot's cloud agent | nothing | sees only the project's own repository (SQ4) |
 | any other agent reading `AGENTS.md` | `AGENTS.md` | the project's own `AGENTS.md`, pointing at the skills' text |
 
@@ -193,7 +199,7 @@ principles, its ontology change steps), and installs the plugin.
    (the ADR's addendum).
 4. `mise run skills:link`, and the checks of §5 in `mise run check`.
 5. The root `README.md`, the developer guide and getting started updated. TD-21 removed.
-6. `project-environment.md` folded into `lattice-toolchain`.
+6. `project-environment.md` folded into `lattice-environment-lessons`.
 
 ## 8. Questions
 
@@ -248,8 +254,7 @@ then against KISS.
 ### SQ4. Copilot outside this repository
 
 - **(a) A link task** (`mise run skills:link`) into the personal skills directory.
-  - *Design.* One source on each machine. Symbolic links are unreliable on Windows, so it copies
-    there, and a copy goes stale until re-run.
+  - *Design.* One source on each machine. Symbolic links are unreliable on Windows, so it copies there, and a copy goes stale until re-run. *Superseded 2026-11-07: it links by junction on Windows, see the note at the top.*
   - *Runtime.* Covers Copilot in VS Code and the CLI. Copilot's cloud agent runs on GitHub, sees
     no personal directory, and so sees no LATTICE skill in another project.
 - **(b) A vendored copy** committed into the other project's `.github/skills/`, refreshed by a sync
@@ -284,10 +289,4 @@ does, so it never fails on a machine or in CI with no list:
 2. `${XDG_CONFIG_HOME:-~/.config}/lattice/deny-terms` on macOS and Linux
 3. `%APPDATA%\lattice\deny-terms` on Windows
 
-The file holds one case-insensitive regular expression per line, with `#` for comments. A line
-starting `!` names a path glob the check skips, for a file where a term may legitimately appear,
-such as synthetic data. By default the check reads only the lines a commit adds (`git diff
---cached`), and `--all` scans the tracked tree. A finding prints the file, the line and the
-pattern's line number in the list, never the pattern, so a shared terminal log does not repeat it.
-`mise run hooks:install` adds an opt-in git pre-commit hook that runs it. The hook lives in
-`.git/hooks/`, which is never committed.
+The file holds one case-insensitive regular expression per line, with `#` for comments. A line starting `!` names a path glob the check skips, for a file where a term may legitimately appear, such as synthetic data. By default the check reads only the lines a commit adds (`git diff --cached`), and `--all` scans the tracked tree. A finding prints the file, the line and the pattern's line number in the list, never the pattern, so a shared terminal log does not repeat it. `mise run hooks:install` adds an opt-in git pre-commit hook that runs it. The hook lives in `.git/hooks/`, which is never committed. *Superseded: `bootstrap` installs the hooks for every worktree (ADR-A133), see the note at the top.*

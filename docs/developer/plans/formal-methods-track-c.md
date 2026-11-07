@@ -125,7 +125,7 @@ maintainer accepts.
 #### C4 in detail
 
 **Machine:** R. **Branch:** `fm/c4-ensemble-model`, from this branch or `main` after it merges.
-**Commits are the maintainer's.** **Validation Pack:** [formal-methods-c4](../validation/FM-4.md).
+**Commits are the maintainer's.** **Validation Pack:** [formal-methods-c4](../validation/FMC-4.md).
 **Decisions modelled:** ADR-A130 decisions 3 (kinds, closed semantics), 4 (endpoints, narrowing), 5
 (units, positions, least fixpoint, order, cycles, independence of order) and 10 (signed shares), with
 ADR-A131 decisions 5 (an account shared by several instruments belongs to their ensemble) and 6 (two

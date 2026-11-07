@@ -55,9 +55,27 @@ public final class RabbitJobBus implements JobBus {
     /** A channel is not thread safe, so publishes take turns. */
     @Override
     public synchronized void publish(String jobIri) throws IOException, InterruptedException, TimeoutException {
-        channel.basicPublish(Topology.EXCHANGE, Topology.JOBS_ROUTING_KEY, PROPERTIES,
+        publish(jobIri, false);
+    }
+
+    @Override
+    public synchronized void publish(String jobIri, boolean longJob) throws IOException, InterruptedException, TimeoutException {
+        channel.basicPublish(Topology.EXCHANGE, Lanes.routingKey(longJob), PROPERTIES,
             jobIri.getBytes(StandardCharsets.UTF_8));
         channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
+    }
+
+    /** A passive declare on a channel of its own, since the broker closes the channel of one that finds no queue. */
+    @Override
+    public int consumers(String queueName) throws IOException, TimeoutException {
+        Channel probe = connection.createChannel();
+        try {
+            return probe.queueDeclarePassive(queueName).getConsumerCount();
+        } finally {
+            if (probe.isOpen()) {
+                probe.close();
+            }
+        }
     }
 
     @Override

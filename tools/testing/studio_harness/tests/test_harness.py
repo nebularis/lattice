@@ -1,17 +1,21 @@
 # SPDX-License-Identifier: MPL-2.0
-"""The harness's own tests. They start nothing, so `check:config-studio` runs them quickly. Test IDs are SH-Tn."""
+"""The harness's own tests. They start no studio, so `check:config-studio` runs them quickly. Test IDs are SH-Tn."""
 
 from __future__ import annotations
 
 import json
 import socket
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
 
 from lattice_testing_studio_harness import Client, HarnessError, Reply, Topology, free_ports
-from lattice_testing_studio_harness._tools import catalogue
+from lattice_testing_studio_harness._tools import catalogue, stack
 from lattice_testing_studio_harness.compose import Paths, compose_config, fuseki_config
+from lattice_testing_studio_harness.processes import ProcessStudio
 from lattice_testing_studio_harness.topology import new_run_id, queue_consumers
 
 ROOT = catalogue.find_root()
@@ -23,6 +27,7 @@ def test_sh_t1_the_shipped_topologies_load() -> None:
     loaded = {t.name: t for t in map(Topology.load, TOPOLOGIES)}
     assert (loaded["single"].writers, loaded["single"].workers) == (1, 1)
     assert (loaded["pair"].writers, loaded["pair"].workers) == (2, 2)
+    assert (loaded["single"].long_workers, loaded["pair"].long_workers) == (1, 1), "a topology has a worker for the long queue unless it says not"
     assert all(t.store == "tdb2" and t.auth == "local" and t.runner == "processes" for t in loaded.values())
 
 
@@ -59,7 +64,7 @@ def test_sh_t5_the_compose_file_of_each_topology(path: Path) -> None:
     topology = Topology.load(path)
     config = json.loads(json.dumps(compose_config(topology, "h12345678", PATHS, 49999)))
     services = config["services"]
-    assert set(services) == {"fuseki", "rabbitmq", "service", "proxy"} | {f"writer{i + 1}" for i in range(topology.writers)} | {f"worker{i + 1}" for i in range(topology.workers)}
+    assert set(services) == {"fuseki", "rabbitmq", "service", "proxy"} | {f"writer{i + 1}" for i in range(topology.writers)} | {f"worker{i + 1}" for i in range(topology.workers)} | {f"workerlong{i + 1}" for i in range(topology.long_workers)}
     published = [(n, p) for n, s in services.items() for p in s.get("ports", [])]
     assert published == [("service", "127.0.0.1:49999:8091")], "only the service is published, and on loopback"
     assert services["service"]["environment"]["LATTICE_STUDIO_BIND"] == "127.0.0.1"
@@ -91,3 +96,36 @@ def test_sh_t8_queue_consumers_reads_rabbitmqctl_csv() -> None:
     assert queue_consumers(out, "lattice.studio.jobs") == 2
     assert queue_consumers(out, "lattice.studio.transforms") == 0
     assert queue_consumers(out, "absent") == 0
+
+
+def test_sh_t9_a_killed_starter_leaves_no_process_and_no_run_folder(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run-id"
+    (run_dir / "run").mkdir(parents=True)
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], **stack.detached())
+    (run_dir / "run" / "fuseki.pid").write_text(str(process.pid))
+    starter = subprocess.Popen([sys.executable, "-c", "import sys, time; from pathlib import Path; from lattice_testing_studio_harness import reaper; r = reaper.start(Path(sys.argv[1])); print('up', flush=True); time.sleep(120)", str(run_dir)], stdout=subprocess.PIPE, text=True)
+    try:
+        assert starter.stdout.readline().strip() == "up"
+        assert process.poll() is None, "the process stopped while its starter still ran"
+        starter.kill()
+        starter.wait()
+        process.wait(timeout=30)
+        deadline = time.monotonic() + 30
+        while run_dir.exists() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert not run_dir.exists()
+    finally:
+        starter.kill()
+        starter.stdout.close()
+        starter.wait()
+        process.kill()
+        process.wait()
+
+
+def test_sh_t10_a_workers_proposer_settings_come_from_the_test_and_never_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LATTICE_STUDIO_HARNESS_WORKER_ROOT", raising=False)
+    monkeypatch.setenv("LATTICE_PROPOSER_KEY_FILE", "/from/the/shell")
+    monkeypatch.setenv("LATTICE_PROPOSER_MODEL", "from-the-shell")
+    studio = ProcessStudio(Topology(name="env"), ROOT)
+    assert studio._worker_env({"LATTICE_ROOT": "r"}) == {"LATTICE_ROOT": "r", "LATTICE_PROPOSER_KEY_FILE": "", "LATTICE_PROPOSER_MODEL": ""}
+    assert studio._worker_env({"LATTICE_PROPOSER_MODEL": "from-the-test"})["LATTICE_PROPOSER_MODEL"] == "from-the-test"

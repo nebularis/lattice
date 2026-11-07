@@ -50,22 +50,35 @@ function App() {
   );
 }
 
-/** The warnings of the service's start, such as a promotion contract out of date, shown until dismissed (PM-Q3). */
+/** How often the studio asks the service for its warnings, so a worker that stops while the page is open is noticed. */
+const WARNINGS_EVERY_MS = 30_000;
+
+/** The service's warnings, such as a promotion contract out of date at its start (PM-Q3) or a queue no worker consumes (plan studio-worker-liveness,
+ * WL-Q6), read again every half minute. Dismissing one hides that text until the page reloads, and a new warning shows. */
 function StartWarnings() {
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [dismissed, setDismissed] = useState<string[]>([]);
   useEffect(() => {
-    void api.warnings().then(setWarnings);
+    let live = true;
+    const read = () => void api.warnings().then((w) => live && setWarnings(w));
+    read();
+    const timer = setInterval(read, WARNINGS_EVERY_MS);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
   }, []);
-  if (warnings.length === 0) return null;
+  const shown = warnings.filter((w) => !dismissed.includes(w));
+  if (shown.length === 0) return null;
   return (
     <div className="construction start-warnings" role="status">
       <div className="grow">
-        <strong>The studio's start had warnings</strong>
-        {warnings.map((w) => (
+        <strong>The studio has warnings</strong>
+        {shown.map((w) => (
           <div key={w} className="small">{w}</div>
         ))}
       </div>
-      <button className="btn ghost sm" onClick={() => setWarnings([])}>Dismiss</button>
+      <button className="btn ghost sm" onClick={() => setDismissed((d) => [...d, ...shown])}>Dismiss</button>
     </div>
   );
 }

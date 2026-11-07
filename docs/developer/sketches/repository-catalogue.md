@@ -373,7 +373,7 @@ The catalogue only stays correct if the agents that do most of the moving keep i
 | [AGENTS.md](../../../AGENTS.md) "Where things are" | the table becomes a link to the catalogue's roots, or is generated from them by `mise run build:agent-guidance` (RC-Q6) |
 | [lattice-design](../../../.claude/skills/lattice-design/SKILL.md), "Links and paths" | moving a file updates its catalogue entry in the same change, then `check:catalogue` and `topology:links` find the rest |
 | [lattice-ontology-authoring](../../../.claude/skills/lattice-ontology-authoring/SKILL.md) | a new module, a new shapes file or a changed extraction order is a catalogue edit. The "README or its test names them" sentence points at the catalogue instead |
-| [lattice-toolchain](../../../.claude/skills/lattice-toolchain/SKILL.md) | a new tool package or `mise` task obtains paths from `lattice_catalogue`, never from `__file__` |
+| [lattice-mise](../../../.claude/skills/lattice-mise/SKILL.md) | a new tool package or `mise` task obtains paths from `lattice_catalogue`, never from `__file__` |
 | [lattice-architecture](../../../.claude/skills/lattice-architecture/SKILL.md) | a new root or a new kind of directory is a catalogue entry as well as an ADR |
 | [lattice-lifecycle](../../../.claude/skills/lattice-lifecycle/SKILL.md) | where status records, plans, sketches and Validation Packs live is read from the catalogue's `docs` block |
 

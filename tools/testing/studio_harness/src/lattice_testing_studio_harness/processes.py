@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from . import _build
+from . import _build, reaper
 from ._tools import catalogue, stack as stack_module
 from .client import Client
 from .topology import HarnessError, Studio, Topology, free_ports, new_run_id, queue_consumers
@@ -64,6 +64,7 @@ class ProcessStudio(Studio):
     def start(self) -> None:
         t = self.topology
         self.run_dir.mkdir(parents=True)
+        self.reaper = reaper.start(self.run_dir)
         self.started = True
         try:
             self._start()
@@ -106,6 +107,8 @@ class ProcessStudio(Studio):
             "LATTICE_AMQP_URI": stack.amqp_uri(password), "LATTICE_STUDIO_ASSETS": str(assets),
             "LATTICE_ROOT": str(self.root),
         }
+        self.env = env
+        self.fuseki_url = env["LATTICE_FUSEKI_URL"]
         writer_env = {**env, "LATTICE_FUSEKI_WRITE_DATASET": "studio-write", "LATTICE_STREAM_URI": stack.stream_uri(password)}
         service_env = {**env, "LATTICE_STUDIO_PORT": str(service), "LATTICE_STUDIO_BIND": "127.0.0.1", "LATTICE_STUDIO_AUTH": t.auth,
                        "LATTICE_STUDIO_EVENTS_URL": f"wss://127.0.0.1:{web_mqtts}/ws", "LATTICE_STUDIO_BROKER_SECRET": secret}
@@ -125,12 +128,17 @@ class ProcessStudio(Studio):
             name = f"worker-{i}"
             stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env(env))
             self._track(name)
+        for i in range(1, t.long_workers + 1):
+            name = f"worker-long-{i}"
+            stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env({**env, "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"}))
+            self._track(name)
         self.url = f"http://127.0.0.1:{service}"
         self._wait_health()
         self._wait_workers()
 
     def _worker_env(self, env: Dict[str, str]) -> Dict[str, str]:
-        """The worker's environment. With `LATTICE_STUDIO_HARNESS_WORKER_ROOT` set, that checkout's worker and tool packages come first on `PYTHONPATH` and it is the worker's repository root."""
+        """The worker's environment. The shell's `LATTICE_PROPOSER_*` settings are blanked, so a developer's key never reaches a run and spends on a language model, and a test sets its own through `env` (STD-320). With `LATTICE_STUDIO_HARNESS_WORKER_ROOT` set, that checkout's worker and tool packages come first on `PYTHONPATH` and it is the worker's repository root."""
+        env = {**{name: "" for name in os.environ if name.startswith("LATTICE_PROPOSER_")}, **env}
         other = _build.worker_root(self.root)
         if other is None:
             return env
@@ -167,26 +175,81 @@ class ProcessStudio(Studio):
         raise HarnessError(f"the service did not answer {self.url}/api/health")
 
     def _wait_workers(self) -> None:
-        """Waits until the jobs queue has a consumer for each worker, so the first job does not wait for a cold start."""
-        want = self.topology.workers
-        if not want:
-            return
+        """Waits until each jobs queue has a consumer for each of its workers, so the first job does not wait for a cold start."""
+        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers}
         deadline = time.monotonic() + READY_TIMEOUT
-        while time.monotonic() < deadline:
-            if self.consumers("lattice.studio.jobs") >= want:
+        while any(wants.values()) and time.monotonic() < deadline:
+            if all(self.consumers(queue) >= want for queue, want in wants.items()):
                 return
             for name in [n for n in self.pids if n.startswith("worker-")]:
                 if self.stack.pid(name) is None:
                     log = self.stack.run / f"{name}.log"
                     raise HarnessError(f"{name} stopped. Last lines of {log}:\n" + "\n".join(log.read_text(errors="replace").splitlines()[-20:]))
             time.sleep(0.5)
-        raise HarnessError(f"fewer than {want} workers consume lattice.studio.jobs")
+        if any(wants.values()):
+            raise HarnessError(f"fewer workers than {wants} consume their queues")
+
+    # --- workers of a test's own --------------------------------------------------------------
+
+    WORKER_CODE = "from lattice_workers.config_studio_main import main; main()"
+
+    def start_worker(self, name: str, env: Optional[Dict[str, str]] = None, code: Optional[str] = None) -> None:
+        """Starts a worker the topology did not, as the process `name`. `env` is added to the workers' environment, for example
+        `LATTICE_AMQP_URI` with `?heartbeat=2` to shorten the broker's timeout, and `code` replaces the worker's entry point with a
+        program of the test's own, which a test uses to patch the worker before it runs (a slow job). Stopped with the run."""
+        self.stack.spawn(name, [sys.executable, "-c", code or self.WORKER_CODE], self._worker_env({**self.env, **(env or {})}))
+        self._track(name)
+
+    def stop_worker(self, name: str, kill: bool = False) -> None:
+        """Stops a worker started with `start_worker`, through its shutdown, or with `kill` at once, as a crash would."""
+        pid = self.pids.pop(name, None)
+        if pid is None:
+            return
+        if kill:
+            os.kill(pid, 9)
+            self.stack._pid_file(name).unlink(missing_ok=True)
+        else:
+            self.stack.stop(name)
+
+    def worker_running(self, name: str) -> bool:
+        return self.stack.pid(name) is not None
+
+    def log(self, name: str) -> str:
+        """The log of a process of the run, such as `worker-1`, `service` or `writer-1`."""
+        path = self.stack.run / f"{name}.log"
+        return path.read_text(errors="replace") if path.exists() else ""
+
+    def broker_log(self) -> str:
+        """What the run's RabbitMQ node logged, which names a connection it closed for missed heartbeats."""
+        folder = self.stack.infra / "rabbitmq" / "log"
+        return "\n".join(p.read_text(errors="replace") for p in sorted(folder.glob("*.log"))) if folder.exists() else ""
+
+    def amqp_uri(self, **parameters: str) -> str:
+        """The broker's URI for a client of the run, with query `parameters` such as `heartbeat=2`."""
+        base = self.env["LATTICE_AMQP_URI"]
+        return base + ("?" + "&".join(f"{k}={v}" for k, v in parameters.items()) if parameters else "")
+
+    def ctl(self, *args: str) -> str:
+        """The output of `rabbitmqctl` against the run's node."""
+        ctl = self.stack.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if stack_module.WINDOWS else "rabbitmqctl")
+        return subprocess.run(stack_module.command([str(ctl), "-n", self.stack.rabbitmq_node, *args]),
+                              env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True).stdout
 
     def consumers(self, queue: str) -> int:
-        ctl = self.stack.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if stack_module.WINDOWS else "rabbitmqctl")
-        out = subprocess.run(stack_module.command([str(ctl), "-n", self.stack.rabbitmq_node, "list_queues", "name", "consumers", "--formatter", "csv", "--silent"]),
-                             env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True).stdout
-        return queue_consumers(out, queue)
+        return queue_consumers(self.ctl("list_queues", "name", "consumers", "--formatter", "csv", "--silent"), queue)
+
+    def close_connections(self, named: str, reason: str = "closed by the test") -> int:
+        """Closes the broker's connections whose client-provided name contains `named`, as a network fault or a broker restart would, and
+        returns how many."""
+        listed = self.ctl("list_connections", "pid", "client_properties", "--silent")
+        pids = [line.split("\t", 1)[0] for line in listed.splitlines() if named in line and line.startswith("<")]
+        for pid in pids:
+            self.ctl("close_connection", pid, reason)
+        return len(pids)
+
+    def purge(self, queue: str) -> None:
+        """Drops every message of `queue`, so one test's leftovers do not reach the next."""
+        self.ctl("purge_queue", queue)
 
     # --- stop ----------------------------------------------------------------------------------
 
@@ -200,6 +263,8 @@ class ProcessStudio(Studio):
             for name in reversed(list(self.pids)):
                 stack.stop(name)
         _build.remove(self.run_dir)
+        self.reaper.stdin.close()
+        self.reaper.wait()
 
     def leftovers(self) -> List[str]:
         """The names of the processes this run started that still run."""

@@ -90,6 +90,11 @@ def compose_config(topology: Topology, run_id: str, paths: Paths, published_port
             "build": {"context": str(paths.worker_context), "dockerfile": str(paths.deployment / "worker.Dockerfile")}, "image": image("worker"),
             "environment": env, "depends_on": infra, "networks": ["studio"],
         }
+    for i in range(1, topology.long_workers + 1):
+        services[f"workerlong{i}"] = {
+            "build": {"context": str(paths.worker_context), "dockerfile": str(paths.deployment / "worker.Dockerfile")}, "image": image("worker"),
+            "environment": {**env, "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"}, "depends_on": infra, "networks": ["studio"],
+        }
     return {"name": run_id, "services": services, "networks": {"studio": {}}, "volumes": {"data": {}} if topology.store == "tdb2" else {}}
 
 
@@ -176,15 +181,15 @@ class ComposeStudio(Studio):
         raise HarnessError(f"the service did not answer {self.url}/api/health")
 
     def _wait_workers(self) -> None:
-        want = self.topology.workers
+        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers}
         deadline = time.monotonic() + WAIT_TIMEOUT
-        while want and time.monotonic() < deadline:
+        while any(wants.values()) and time.monotonic() < deadline:
             out = self.docker("exec", "-T", "rabbitmq", "rabbitmqctl", "list_queues", "name", "consumers", "--formatter", "csv", "--silent", check=False).stdout
-            if queue_consumers(out, "lattice.studio.jobs") >= want:
+            if all(queue_consumers(out, queue) >= want for queue, want in wants.items()):
                 return
             time.sleep(0.5)
-        if want:
-            raise HarnessError(f"fewer than {want} workers consume lattice.studio.jobs")
+        if any(wants.values()):
+            raise HarnessError(f"fewer workers than {wants} consume their queues")
 
     def stop(self) -> None:
         """Removes the containers, the network, the volume and the images this run built, then the run's folder."""

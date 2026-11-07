@@ -1190,10 +1190,7 @@ The patch log adds little to TD-42's quadratic cost and does not change its orde
    writes nothing. Event triples land in the same bucket, and an empty `eventTriples` writes the events only. A one-row append writes
    the triples today's form writes. An empty `eventRows` gives no solution and writes nothing, which FMH-2.8's caller check refuses before
    sending.
-6. **Documents.** ADR-A123 gains a dated addendum, drafted for the maintainer: the two slots and the digest parts. Guide §15.2 gains a
-   dated note on the parts. The README's append section and the operation table follow the new slots. TD-46 records that the warning
-   now reports both models. Anything a store does that the record lacks goes into the triple-store record first (skill
-   `lattice-triple-stores`).
+6. **Documents.** ADR-A123 gains a dated addendum, drafted for the maintainer: the two slots and the digest parts. Guide §15.2 gains a dated note on the parts. The README's append section and the operation table follow the new slots. TD-46 records that the warning now reports both models. Anything a store does that the record lacks goes into the triple-store record first (skill `lattice-probing`).
 
 #### Built (2026-10-14), the event half
 

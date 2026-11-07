@@ -44,7 +44,7 @@ Every rule and finding carries one of these, because the same observation can be
 
 ### 1.2 Evidence
 
-The words are those of the [discovery record](triple-store-discovery.md#1-how-to-read-and-write-this-document): **Source** (we read the code at a named version),
+The words are those of the [discovery record](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/findings.md#1-how-to-read-and-write-this-record): **Source** (we read the code at a named version),
 **Observed** (we ran a probe and a script or a test shows it), **Documented** (the tool's own documentation says so) and **Reasoned** (it follows from other
 statements and is not yet observed, so it is a hypothesis). A statement without a tag of evidence is Observed.
 
@@ -217,7 +217,7 @@ SELECT … WHERE { { $this ex:variable ?g . FILTER EXISTS { $this ex:kind ex:Int
                  $this ex:value ?a . $this ex:value ?b . FILTER (?a < ?b) }
 ```
 
-**Why.** A `FILTER` applies to its whole group (spec, [§4.3 of the discovery record](triple-store-discovery.md#43-a-filter-applies-to-its-whole-group)), and rdflib builds every solution of
+**Why.** A `FILTER` applies to its whole group (spec, [§4.3 of the discovery record](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/findings.md#43-a-filter-applies-to-its-whole-group)), and rdflib builds every solution of
 the group before it tests any ([TSD-27](triple-store-discovery.md#tsd-27-a-filter-is-applied-after-its-groups-patterns-and-rdflib-does-not-move-it-earlier)). The two forms mean the same exactly when the guards read only variables the sub-group binds.
 
 **Gain.** rdflib, 14 to 27 times when the guards reject 90% of nodes, and 2 times on the real wording slots. Oxigraph, 1.3 to 1.5 times. **Scope.** rdflib mostly. **Not when:** the sub-group binds a

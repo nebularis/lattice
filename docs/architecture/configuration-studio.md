@@ -144,7 +144,7 @@ sequenceDiagram
     UI->>S: DELETE /api/jobs/{job}
 ```
 
-Findings of every engine are `sh:ValidationResult`s, so the browser reads one shape of finding and shows each on the field that caused it. A failure inside a job is written as `cst:Failed` with a message, and the message is acknowledged. A malformed message is refused without being requeued. A worker that stops mid-job leaves its message unacknowledged, so it is redelivered, and the job, which overwrites its own graph, runs again.
+Findings of every engine are `sh:ValidationResult`s, so the browser reads one shape of finding and shows each on the field that caused it. A failure inside a job is written as `cst:Failed` with a message, and the message is acknowledged. A malformed message is refused without being requeued. A worker that stops mid-job leaves its message unacknowledged, so it is delivered again, and the worker that finds the job `Running` writes it `Failed` and does not run it again, since a proposal may have spent a model's tokens (ADR-A136, addendum of 2026-11-05). A job that lasts minutes runs on a thread of its own, so the worker answers the broker's heartbeats while it runs, and goes to a queue of its own, so a validation does not wait behind it.
 
 A vocabulary validation also resolves every scheme contract for every time segment and set of scopes its bindings draw. An eligibility validation also compiles every condition, expands each concept condition over its resolved scheme, and decides each `elg:Question` with the condition's compiled SPARQL against the decision the author expects of it. A compilation writes the generated artefacts into the job graph, with the gaps the compiler reports.
 

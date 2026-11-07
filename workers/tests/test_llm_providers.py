@@ -68,10 +68,14 @@ def test_a_chat_completions_turn_from_another_provider_is_translated():
 
 def test_the_provider_is_chosen_by_the_environment():
     assert isinstance(provider_from_env({"LATTICE_PROPOSER_URL": "http://m/v1", "LATTICE_PROPOSER_MODEL": "m"}), ChatCompletionsProvider)
-    chosen = provider_from_env({"LATTICE_PROPOSER_PROVIDER": "anthropic", "LATTICE_PROPOSER_MODEL": "claude-opus-5-5",
-                                "LATTICE_PROPOSER_KEY": "sk-test", "LATTICE_PROPOSER_EFFORT": "high"})
-    assert isinstance(chosen, AnthropicProvider) and (chosen.model, chosen.effort, chosen.base_url) == ("claude-opus-5-5", "high", None)
     with pytest.raises(ValueError, match="no language model"):
         provider_from_env({"LATTICE_PROPOSER_PROVIDER": "anthropic"})
     with pytest.raises(ValueError, match="neither"):
         provider_from_env({"LATTICE_PROPOSER_PROVIDER": "other", "LATTICE_PROPOSER_MODEL": "m"})
+
+
+@pytest.mark.requires("anthropic")  # the provider makes the SDK's own client, with no fake
+def test_the_anthropic_provider_is_chosen_by_the_environment():
+    chosen = provider_from_env({"LATTICE_PROPOSER_PROVIDER": "anthropic", "LATTICE_PROPOSER_MODEL": "claude-opus-5-5",
+                                "LATTICE_PROPOSER_KEY": "sk-test", "LATTICE_PROPOSER_EFFORT": "high"})
+    assert isinstance(chosen, AnthropicProvider) and (chosen.model, chosen.effort, chosen.base_url) == ("claude-opus-5-5", "high", None)

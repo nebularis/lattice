@@ -59,6 +59,11 @@ include:
 # BEGIN GENERATED site-sections. Written by `mise run build:site-sections`. Do not edit by hand.
 defaults:
   - scope:
+      path: "tutorial.md"
+    values:
+      layout: tutorial
+      title: "Tutorial"
+  - scope:
       path: "theory.md"
     values:
       layout: theory
@@ -93,4 +98,9 @@ defaults:
     values:
       layout: architecture
       title: "Contributing"
+  - scope:
+      path: "studio-guide.md"
+    values:
+      layout: studio-guide
+      title: "LATTICE from Scratch"
 # END GENERATED site-sections

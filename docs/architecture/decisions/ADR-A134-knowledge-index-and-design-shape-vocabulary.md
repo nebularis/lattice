@@ -102,7 +102,7 @@ Embedding a section's first prose with each entry made both measures worse, beca
 
 **Narrows decision 24.** Decision 24 placed the facet schemes in `tools/knowledge/facets.ttl`, edited by hand. Every other register, the decisions and the layer READMEs are Markdown that a tool reads or generates Turtle from, so the facets were the one register a contributor could not amend as a table row, and the index had two authoring forms to keep in step (TD-81).
 
-**26. The facets are authored in the facet register, and their Turtle is generated on every build.** [`docs/developer/facets.md`](../../developer/facets.md) holds a table of the three schemes and a table per scheme, one row per value, whose columns are the SKOS properties that state their meaning. `tools/knowledge/facets.py` writes them into `.build/knowledge/facets.ttl` at the start of every build, and the Turtle is never committed, as STD-003 requires of anything a tool can derive. A malformed register, such as a broader value defined nowhere or one in another scheme, fails the build with its line rather than loading a forked scheme. The graph generated from the register was isomorphic to the hand-written file, 1,757 triples each, less its version, which is dropped since nothing outside this repository imports the facets. Decision 24 stands in every other respect.
+**26. The facets are authored in the facet register, and their Turtle is generated on every build.** [`docs/developer/facets.md`](../../../tools/knowledge/README.md#facets) holds a table of the three schemes and a table per scheme, one row per value, whose columns are the SKOS properties that state their meaning. `tools/knowledge/facets.py` writes them into `.build/knowledge/facets.ttl` at the start of every build, and the Turtle is never committed, as STD-003 requires of anything a tool can derive. A malformed register, such as a broader value defined nowhere or one in another scheme, fails the build with its line rather than loading a forked scheme. The graph generated from the register was isomorphic to the hand-written file, 1,757 triples each, less its version, which is dropped since nothing outside this repository imports the facets. Decision 24 stands in every other respect.
 
 ## Addendum of 2026-10-26: the environments under runtime
 
@@ -147,6 +147,18 @@ No bias keeps both, so the maintainer chose to leave terms out unless they are a
 **Narrows decision 31.** The work board indexed the slices of every plan as entries of the class Slice (ADR-A151 decision 5), 385 of them. Ranked among the register entries they took places in the top five that the entries answering a question about a design had held, as the terms of decision 31 once did. Measured on the bake-off's 43 questions with an expected answer, with the model of decision 20, hit@5 fell from 0.930 in late October to 0.837, and MRR from 0.857 to 0.779.
 
 34. **A slice is shown only when it is asked for.** `find` leaves the slices out unless `--kind` names `slice`, or the question names a slice by its identifier, which ranks it first as any entry named in a question is ranked. `--exclude` keeps them out as it keeps the terms out. With this, hit@5 on the same 43 questions is 0.884 and MRR 0.806, and on the 5 held out 0.800 and 0.567, the top five of every question matching an index without slices. The rest of the fall from 0.930 is the corpus's growth since the questions' expected answers were chosen, which no filter recovers.
+
+## Addendum of 2026-11-05: implemented by Вивід
+
+**Status:** Accepted 2026-11-06
+
+The index this record defines is built and asked by Вивід, `vyd`, from 2026-11-05 ([ADR-A152](ADR-A152-vyvid-adoption.md)). Nothing above changes in meaning. The registers with their headers as schema, the facets as a register, the claim as the first bold sentence, ranking by meaning after exact filters, the flags under a row, the gaps and the misses, and questions and slices shown only when asked for, are what Вивід does for any project, and `vyvid.toml` declares LATTICE's families to it. What moves is where. The store is written under Вивід's own index directory for the checkout rather than `.build/knowledge`, the facet register is answered by Вивід's packaged scheme, identical to `docs/developer/facets.md` row for row on 2026-11-05, and the triple-store findings and the query-writing standards answer from its `triple-stores` domain under its identifiers (ADR-A152 decision 7). The task names stay, `graph:ask`, `build:knowledge` and `check:identifiers`, each over `vyd` and each skipping with a note where it is missing (PRI-79). The code under `tools/knowledge/` goes once LATTICE's knowledge tests pass against Вивід's store (ADR-A152 decision 6), keeping the extractor for quanta and owners.
+
+## Addendum of 2026-11-05: the facet register removed
+
+**Status:** Accepted 2026-11-05
+
+**Narrows decision 26 and the addendum of 2026-10-26 on the facets.** The facet values are Вивід's general scheme, which was identical to the facet register row for row on 2026-11-05, so the register is removed and the scheme is read from the store ([ADR-A152](ADR-A152-vyvid-adoption.md) decision 1). A value LATTICE needs that the scheme lacks goes in a project facets file named by `facets` in `vyvid.toml`, or to the general scheme through Вивід's side.
 
 ## Provenance
 

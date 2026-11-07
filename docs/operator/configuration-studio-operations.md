@@ -99,6 +99,7 @@ Read by `config_studio_main.read_config`, and the proposer settings by each prop
 | `LATTICE_FUSEKI_URL` | yes | none | Fuseki's base URL. Unset stops the worker at start |
 | `LATTICE_FUSEKI_DATASET` | no | `studio` | The dataset name, which must be the service's |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | no | none | Basic authentication to Fuseki |
+| `LATTICE_WORKER_QUEUE` | no | `lattice.studio.jobs` | The queue this worker consumes. `studio:worker` takes the short jobs, and `studio:worker-long` sets `lattice.studio.jobs.long` for proposals by a language model and publications, which take minutes. Run one worker for each queue, or more where several long jobs at once are wanted |
 | `LATTICE_ROOT` | no | found from the working directory | The repository root, where the worker reads the ontology files it validates against |
 | `LATTICE_PROPOSER_PROVIDER` | no | `chat-completions` | Which language model provider the `language-model` and `mapping-language-model` proposers use. `chat-completions` speaks the Chat Completions wire format to `LATTICE_PROPOSER_URL`. `anthropic` uses Anthropic's Messages API through its SDK, with prompt caching on the conversation, so each turn of a mapping proposal reads the turns before it from the cache. Anything else fails the job. The `sentence-forms` and `rml` proposers need none of these settings |
 | `LATTICE_PROPOSER_URL` | for `chat-completions` | none | The endpoint's base URL, to which `/chat/completions` is added. For `anthropic`, it overrides the API's base URL, for example to reach a gateway. Without it, or without the model, a `chat-completions` job fails, saying no language model is configured |
@@ -248,18 +249,29 @@ Declared identically, and idempotently, by the service when it connects and by t
 | Exchange | `lattice.studio` | topic, durable |
 | Exchange | `lattice.studio.dlx` | topic, durable. The dead-letter exchange |
 | Queue | `lattice.studio.jobs` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs`. Dead-letters to `lattice.studio.dlx` |
+| Queue | `lattice.studio.jobs.long` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs.long`. Dead-letters to `lattice.studio.dlx`. Jobs that take minutes, a proposal by a language model and a publication, which the service chooses by kind (`Lanes`), so a validation never waits behind one |
 | Queue | `lattice.studio.transforms` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.transforms`. Each request expires when the service stops waiting for it, after 30 seconds |
 | Queue | `lattice.studio.dead` | durable. Bound to `lattice.studio.dlx` with key `#` |
 | Super stream | `lattice.studio.writes` | a direct exchange with `x-super-stream`. A write's routing key is its workspace's partition, `0` to `7` |
 | Streams | `lattice.studio.writes-0` to `-7` | one per partition, bound with `x-stream-partition-order`, keeping a week or 1 GiB. Consumed by the group `lattice.studio.writers` with a single active consumer per partition |
 
-A message is the job's IRI (`urn:lattice:studio:job:` and a lower-case UUID) in UTF-8, persistent, published with a broker confirm and a five-second timeout. The worker consumes with manual acknowledgement and one message in flight at a time (`prefetch_count=1`), and acknowledges only after the broker has confirmed the final job graph's `job-update`. The writer that applies it is the service's.
+A message is the job's IRI (`urn:lattice:studio:job:` and a lower-case UUID) in UTF-8, persistent, published with a broker confirm and a five-second timeout. The worker consumes with manual acknowledgement and one message in flight at a time (`prefetch_count=1`). It runs the job on a thread of its own, while the connection's thread answers the broker's heartbeats, so a job may take as long as it takes without the broker closing the connection. The job thread asks the connection thread to publish the final `job-update` and to acknowledge, and the message is acknowledged after the broker has confirmed the `job-update`. The writer that applies it is the service's.
 
-| Worker outcome | Broker action |
-|---|---|
-| Job run, whatever its result | Acknowledged |
-| Message that is not a job IRI, or names a job graph that does not exist | Rejected without requeue, so it moves to `lattice.studio.dead` |
-| Any other error, such as Fuseki being unreachable | Rejected with requeue, and the worker stops with the error |
+A worker looks at the job's graph before it runs it, because a message is delivered again whenever a worker stopped before it acknowledged.
+
+| What the worker finds or does | Broker action | The job |
+|---|---|---|
+| A job the store holds as `Queued`, run, whatever its result | Acknowledged | `Succeeded` or `Failed` |
+| A job the store holds as `Succeeded` or `Failed` | Acknowledged, nothing run or written | as it was |
+| A job the store holds as `Running`, which a worker that stopped left | Acknowledged, nothing run | written `Failed`, with a message saying the worker stopped while it ran the job, and that it should be submitted again. A job may have spent a model's tokens, so it is not run again unasked |
+| A job whose graph is gone, because its view closed or the service gave up | Acknowledged, nothing written | none |
+| A message that is not a job IRI, or a job that names no workspace and is not a rebuild, such as one of the retired `Refresh` kind | Rejected without requeue, so it moves to `lattice.studio.dead` | none |
+| Any other error, such as Fuseki being unreachable when the job's graph is read | The job is written `Failed` where it can be, with the error, and the message is rejected without requeue | `Failed` if it could be written |
+| The connection to the broker is lost with a job in hand | The job goes on. The worker connects again with a backoff of 1, 2, 5 and then 10 seconds, takes the message the broker delivers again for the job in hand, holds the result until the connection is back, publishes it, and acknowledges | as it would have been |
+
+The worker logs to standard output the queue it consumes, the start of each job (kind, target and IRI), its end (IRI, seconds and outcome) and each loss and recovery of the connection.
+
+The service tells the author when a queue has no consumer. `GET /api/status` counts the consumers of `lattice.studio.jobs` and `lattice.studio.jobs.long` by a passive declare, at most once every 10 seconds for each, and adds `No worker consumes {queue}, so ... wait. Start one with ...` to its warnings, which the studio shows in a box that it reads again every half minute.
 
 A store writer holds the partitions RabbitMQ gives it. It applies what waits for it in one request, replies to each write the service sent, then stores each partition's offset. It logs a write it refuses and passes over it, since a stream has no dead letters. If the store cannot take a batch, the writer retries it each second, holding its partitions in order. The service waits 10 seconds for a reply and then reads the write's receipt, answering `503` only when it finds none. To see which writer holds which partition: `mise exec -- $RMQ/rabbitmq-streams -n studio@localhost list_stream_group_consumers --stream lattice.studio.writes-0 --reference lattice.studio.writers`.
 
@@ -284,8 +296,8 @@ The first run downloads about 80 MB (Fuseki's jar and RabbitMQ's archive) and bu
 | `mise run studio:up` | The downloaded Fuseki and RabbitMQ, the built browser application served by the service on `8090` |
 | `mise run studio:up -- --docker` | Fuseki and RabbitMQ from `docker compose` instead of downloads. Needs Docker. Waits for both containers to be healthy |
 | `mise run studio:up -- --dev` | Also the browser code with hot reload on `4175`, proxying `/api` to the service. The browser application is not built. Browse `http://127.0.0.1:4175` |
-| `mise run studio:status` | Per part, the process id if its pid file names a live process, and whether its port is listening |
-| `mise run studio:down` | Stops what `up` started, in the order the web server, transforms worker, worker, service, RabbitMQ and Fuseki |
+| `mise run studio:status` | Per part, the process id if its pid file names a live process, and whether its port is listening. A part this script started that has since ended reads `exited, last line of its log: ...`, which for a worker names the error that stopped it |
+| `mise run studio:down` | Stops what `up` started, in the order the web server, transforms worker, the long jobs' worker, worker, service, RabbitMQ and Fuseki |
 
 `--docker` and `--dev` combine. `up` waits only for a port to listen, so a service that failed to bind because another program holds `8090` is reported as started (see the runbook), and it does not wait for the worker. Read `studio:status`, `service.log` and `worker.log` after a start.
 
@@ -305,6 +317,10 @@ mise run studio:service
 
 ```bash
 mise run studio:worker
+```
+
+```bash
+mise run studio:worker-long
 ```
 
 ```bash
@@ -335,7 +351,7 @@ mise run studio:down
 | Fuseki, service, worker, dev server | `SIGTERM` to the process group, then up to 60 seconds, then `SIGKILL` if it is still running (a message says so) | The service's shutdown hook closes its HTTP server, its AMQP connection and its store. The worker finishes the job in hand and then stops consuming, so no job is left half written. A JVM runs its shutdown hooks on `SIGTERM` |
 | Docker | `docker compose down --timeout 60`, when `up --docker` was used | The containers stop through Docker's own stop, with a minute before it kills |
 
-On Windows a detached console process can receive no termination request, so after `rabbitmqctl shutdown` has stopped RabbitMQ the script ends the process tree at once with `taskkill /T /F`. That loses nothing. TDB2 commits each update before Fuseki answers it, and recovers on the next start. The service keeps no state outside the store, and a write a writer had not acknowledged is redelivered. A job the worker had not acknowledged is redelivered, and running a job twice gives the same graph but for its times.
+On Windows a detached console process can receive no termination request, so after `rabbitmqctl shutdown` has stopped RabbitMQ the script ends the process tree at once with `taskkill /T /F`. That loses nothing. TDB2 commits each update before Fuseki answers it, and recovers on the next start. The service keeps no state outside the store, and a write a writer had not acknowledged is redelivered. A job the worker had not acknowledged is delivered again. The worker that finds it running writes it `Failed` and does not run it again (see the table of worker outcomes).
 
 `down` removes a pid file whose process has gone and says nothing for it. A part that was never started here is skipped.
 
@@ -377,9 +393,9 @@ A host that speaks MCP over stdio only reaches it through a bridge from stdio to
 | Dataset | `curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:3130/studio/sparql?query=ASK%7B%7D'` | `200` |
 | RabbitMQ, downloaded | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmq-diagnostics -n studio@localhost -q ping` | exit status 0 and no error. Use the version the stack script pins |
 | RabbitMQ, Docker | `docker compose -f deployment/compose/config-studio/docker-compose.yml exec rabbitmq rabbitmq-diagnostics -q ping` | exit status 0. This is also the container's health check |
-| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs` and `lattice.studio.transforms` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
+| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs`, `lattice.studio.jobs.long` and `lattice.studio.transforms` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
 
-The worker has no port. It is healthy when `worker.log` shows no error, the queue has one consumer, and a submitted job reaches `cst:Succeeded` or `cst:Failed`.
+The worker has no port. It is healthy when `worker.log` shows no error, each jobs queue has one consumer, `studio:status` shows no part as `exited`, and a submitted job reaches `cst:Succeeded` or `cst:Failed`. The studio shows a warning when a queue has none.
 
 ---
 

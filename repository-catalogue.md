@@ -254,6 +254,11 @@ path = "tools/testing/mem_check"
 import-names = ["mem_check"]
 
 [[tools]]
+name = "testing/requires"
+path = "tools/testing/requires"
+import-names = ["lattice_testing_requires"]
+
+[[tools]]
 name = "testing/jena"
 path = "tools/testing/jena"
 import-names = ["lattice_testing_jena"]
@@ -362,6 +367,22 @@ layout = "none"
 order = 1
 
 [[site]]
+name = "tutorial"
+title = "Tutorial"
+page = "docs/tutorial.md"
+layout = "tutorial"
+order = 2
+sources = ["docs/_includes/tutorial"]
+
+[[site]]
+name = "studio-guide"
+title = "LATTICE from Scratch"
+page = "docs/studio-guide.md"
+layout = "studio-guide"
+order = 11
+sources = ["docs/_includes/studio-guide"]
+
+[[site]]
 name = "field-guide"
 title = "Field Guide"
 page = "docs/book.html"
@@ -468,6 +489,7 @@ sources = [
     "docs/developer/developer-guide.md",
     "docs/developer/formal-methods-lifecycle.md",
     "docs/developer/windows-wsl.md",
+    "docs/developer/windows-links.md",
     "docs/developer/protege-import-walkthrough.md",
 ]
 ```

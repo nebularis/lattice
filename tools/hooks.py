@@ -38,15 +38,20 @@ HOOK_SCRIPT = f"""#!/bin/sh
 {HOOK_MARK}
 # Installed by `mise run hooks:install`. Runs the checks a change needs (tools/hooks.py).
 hook=$(basename "$0")
+# The first Python that starts, since a name on PATH can be a stub that only offers to install one, as python3 is on Windows.
+python_that_runs() {{
+  for p in python3 python py; do
+    if "$p" -c "import sys; sys.exit(sys.version_info < (3, 11))" >/dev/null 2>&1; then echo "$p"; return 0; fi
+  done
+  echo python
+}}
 if [ -f tools/hooks.py ]; then
   if command -v mise >/dev/null 2>&1; then exec mise exec -- python tools/hooks.py run "$hook"; fi
-  if command -v python3 >/dev/null 2>&1; then exec python3 tools/hooks.py run "$hook"; fi
-  exec python tools/hooks.py run "$hook"
+  exec "$(python_that_runs)" tools/hooks.py run "$hook"
 fi
 # A checkout from before the dispatcher: the deny-list check alone, as the old hook ran it.
 if [ "$hook" = pre-commit ] && [ -f tools/deny_terms.py ]; then
-  if command -v python3 >/dev/null 2>&1; then exec python3 tools/deny_terms.py; fi
-  exec python tools/deny_terms.py
+  exec "$(python_that_runs)" tools/deny_terms.py
 fi
 exit 0
 """
@@ -290,46 +295,22 @@ def wrapping(change: Change, touched: list[str]) -> list[str]:
             "entry on one line" for path, numbers in sorted(lines.items())]
 
 
-SLICE_ID_RE = __import__("re").compile(r"[A-Z]{2,5}-[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*")
-
-
-def work(change: Change, touched: list[str]) -> list[str]:
-    """The work board (plan work-board, WB-4). A touched status record's Status line and every row
-    of its board open with a state word, dated from building on, each slice id is in the grammar,
-    and INDEX.md's generated region agrees with the records in the tree."""
-    board = tool_module(change, "work_board")
-    repo = board.Repo.here(change.root)
-    status_dir = repo.status.as_posix() + "/"
-    messages: list[str] = []
-    states = ", ".join(board.STATES)
-    for rel in touched:
-        if not rel.startswith(status_dir) or not rel.endswith(".md") or not (change.root / rel).is_file():
-            continue
-        text = (change.root / rel).read_text(encoding="utf-8")
-        unit = board.parse_unit(Path(rel).stem, text)
-        if unit.status_text and unit.state is None:
-            messages.append(f"{rel}: the Status line opens with '{unit.status_text[:30]}', not a word of {states}, then its day")
-        rolled = board.rollup(unit.board.rows) if unit.board else None
-        if rolled and unit.state and (unit.state, unit.day) != rolled:
-            said, given = f"{unit.state} {unit.day}".strip(), f"{rolled[0]} {rolled[1]}".strip()
-            messages.append(f"{rel}: the Status line reads '{said}', its board rolls up to '{given}'. "
-                            "Run `mise run work:normalise -- --apply`")
-        for row in (unit.board.rows if unit.board else ()):
-            where = f"{rel}:{row.line}: {row.id}"
-            if row.state is None:
-                messages.append(f"{where}: the State cell opens with '{board.plain(row.raw, 30)}', not a word of {states}. Run `mise run work:normalise -- --apply` for the historic words")
-            elif row.state in board.DATED and not row.day:
-                messages.append(f"{where}: {row.state} needs the day it was reached, as `{row.state} 2026-11-02`")
-            if not SLICE_ID_RE.fullmatch(row.id):
-                messages.append(f"{where}: a slice id is PREFIX-segment(.segment)*, such as CCS-9b.3b. Run `mise run work:rename -- --apply` for the historic ids")
-    if any(rel.startswith(status_dir) or rel == repo.index.as_posix() for rel in touched):
-        messages += run_tool(change, "tools/work_board.py", "build", "--check")
-    return messages
-
-
 def whole(*args: str) -> Callable[[Change, list[str]], list[str]]:
     """A check that judges a set of files as a whole, once any of them is touched."""
     return lambda change, touched: run_tool(change, *args)
+
+
+def vyd(*args: str) -> Callable[[Change, list[str]], list[str]]:
+    """A check over Вивід, `vyd`, through tools/vyd.py. Where vyd is missing or says it did not run, a note and no
+    failure, since an absent tool never blocks (ADR-A152 decision 4, PRI-79)."""
+    def check(change: Change, touched: list[str]) -> list[str]:
+        code, output, skipped = tool_module(change, "vyd").run(list(args), cwd=str(change.root))
+        if skipped:
+            print("hooks: " + output.strip().splitlines()[-1])
+            return []
+        lines = [line for line in output.splitlines() if line.strip()]
+        return [] if code == 0 else lines[-20:] or [f"vyd {' '.join(args)} failed with exit code {code}"]
+    return check
 
 
 def checks() -> list[Check]:
@@ -353,8 +334,12 @@ def checks() -> list[Check]:
         Check("published-decisions", ("*.md",), published_decisions, on_commit=WARN, on_merge=BLOCK),
         Check("identifiers", ("docs/developer/*", "docs/architecture/decisions/*",
                               "docs/architecture/triple-store-discovery.md"),
-              whole("tools/knowledge/identifiers.py")),
-        Check("work", ("docs/developer/status/*", "docs/developer/INDEX.md"), work),
+              vyd("check", "identifiers")),
+        # The composed skills held to their sources by Вивід (ADR-A152 decision 5, plan vyvid-migration, VM-5).
+        Check("skills", (".claude/skills/*", ".vyvid/*", "vyvid.toml"), vyd("check", "skills")),
+        # The work board (plan work-board, WB-4): the staged status records held to the ladder and the grammar, and
+        # INDEX.md's region to the records, by Вивід (ADR-A152, plan vyvid-migration, VM-4).
+        Check("work", ("docs/developer/status/*", "docs/developer/INDEX.md"), vyd("work", "check", "--staged")),
         Check("ontology-versioning", ("ontology/*",),
               lambda change, touched: (run_tool(change, "tools/ontology_version_check.py")
                                        + run_tool(change, "tools/ontology_releases.py", "check")),
@@ -401,22 +386,24 @@ def install(root: Path, bootstrap: bool = False) -> list[str]:
 # ---- entry ------------------------------------------------------------------------------------
 
 def post_merge(root: Path) -> int:
-    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum).
-    The merge has already happened, so this never fails it."""
+    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum), with
+    `vyd build` (ADR-A152). The merge has already happened, so this never fails it."""
     change = Change(root, (), False)
     try:
-        lines = run_tool(change, "tools/knowledge/extract.py")
+        code, output, skipped = tool_module(change, "vyd").run(["build"], cwd=str(root))
+        lines = [] if code == 0 and not skipped else [line for line in output.strip().splitlines() if line.strip()][-20:]
     except Unavailable as reason:
         lines = [f"not rebuilt: {reason}. Run `mise run build:knowledge`"]
     print("hooks: post-merge, knowledge index " + ("rebuilt" if not lines else "\n  ".join(["not rebuilt"] + lines)))
-    # The work board's registers (plan work-board, WB-4): INDEX.md's region from the merged tree, and
-    # ROADMAP.md's regions on main only, left changed in the tree for the maintainer to commit.
-    steps = [("INDEX.md region", ["tools/work_board.py", "build"], "build:work")]
+    # The work board's registers (plan work-board, WB-4, ADR-A152): INDEX.md's region from the merged tree, and
+    # ROADMAP.md's regions on main only, by `vyd work`, left changed in the tree for the maintainer to commit.
+    steps = [("INDEX.md region", ["work", "build"], "build:work")]
     if branch(root) == MERGE_TARGET:
-        steps.append(("ROADMAP.md regions", ["tools/work_board.py", "roadmap"], "build:roadmap"))
+        steps.append(("ROADMAP.md regions", ["work", "roadmap"], "build:roadmap"))
     for label, args, task in steps:
         try:
-            failed = run_tool(change, *args)
+            code, output, skipped = tool_module(change, "vyd").run(args, cwd=str(root))
+            failed = [] if code == 0 and not skipped else [line for line in output.strip().splitlines() if line.strip()][-20:]
         except Unavailable as reason:
             failed = [str(reason)]
         print(f"hooks: post-merge, {label} " + ("regenerated" if not failed else f"not regenerated. Run `mise run {task}`\n  " + "\n  ".join(failed)))

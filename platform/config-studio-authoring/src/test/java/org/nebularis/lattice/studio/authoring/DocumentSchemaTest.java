@@ -38,8 +38,13 @@ class DocumentSchemaTest {
         int status = new Driver().run(new String[] {"-I", "rnc", "-O", "xsd",
             DOCUMENT.resolve("document.rnc").toString(), generated.toString()});
         assertEquals(0, status, "Trang could not translate document.rnc");
-        assertEquals(Files.readString(generated), Files.readString(DOCUMENT.resolve("document.xsd")),
+        // Trang writes the platform's line separator, and git keeps the committed copy with \n.
+        assertEquals(lf(Files.readString(generated)), lf(Files.readString(DOCUMENT.resolve("document.xsd"))),
             "document.xsd is stale: run mise run build:document-schema");
+    }
+
+    private static String lf(String text) {
+        return text.replace("\r\n", "\n");
     }
 
     @Test

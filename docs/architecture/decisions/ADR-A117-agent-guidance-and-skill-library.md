@@ -7,7 +7,7 @@
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (repository
 topology), [ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` as the task entry point),
 [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md), technical debt TD-21
-**Unit:** [`agent-skills`](../../developer/sketches/agent-skills.md) (sketch)
+**Unit:** [`agent-skills`](../../developer/sketches/agent-skills.md) (sketch, historical since 2026-11-07. Its note names what has changed since, the skill set and `skills:link` on Windows among it)
 
 ## Context
 
@@ -139,3 +139,9 @@ repository, and those rules are themselves private. Decision 5 extends to them.
 - Private skills stay in the personal skill directories this ADR already lists
   (`~/.claude/skills/`, `~/.copilot/skills/`, `~/.agents/skills/`), linked from the same private
   checkout.
+
+## Addendum, 2026-11-05
+
+**Status:** Accepted 2026-11-05
+
+The skill library is composed by Вивід from the domains and LATTICE's own sources under `.vyvid/` by `vyd install --project`, and committed ([ADR-A152](ADR-A152-vyvid-adoption.md) decision 5). The ten skills are fifteen. `lattice-toolchain` is `lattice-mise`, `lattice-windows` and `lattice-environment-lessons`, `lattice-triple-stores` is `lattice-probing`, `lattice-query-writing` and `lattice-shacl-testing`, `lattice-ontology-modelling` is added, and the rest keep their names. Where this decision names a skill by its old name, read the new one.

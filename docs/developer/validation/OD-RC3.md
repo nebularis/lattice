@@ -37,7 +37,7 @@ register.
 - `docs/developer/technical-debt.md`. Row TD-54 names the file and gives its count.
 - `docs/architecture/decisions/ADR-A121-repository-catalogue.md`. The addendum of 2026-10-19.
 - `mise.toml`. Three task descriptions.
-- `.claude/skills/lattice-toolchain/SKILL.md` and `docs/developer/developer-guide.md`. Where the table comes
+- `.claude/skills/lattice-mise/SKILL.md` and `docs/developer/developer-guide.md`. Where the table comes
   from and how to edit it.
 - `tools/test_lattice_repo_catalogue.py`. Tests RC3-T1 to RC3-T16.
 

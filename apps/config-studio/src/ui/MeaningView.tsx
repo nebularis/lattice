@@ -8,7 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Plus, Sparkles } from "lucide-react";
 import { Graph, INS, compact, localName } from "@lattice/authoring-domain";
 import { api, awaitJob } from "../api";
-import type { Issue } from "../rdf/report";
+import { isAbort, useAttach, useUnmountSignal } from "../jobs";
+import type { Issue, Job } from "../rdf/report";
 import { PARTS } from "../state";
 import { SeverityIcon, Spinner } from "./kit";
 import { flatten, formsOf, outline, type OutlineNode } from "../rdf/builder";
@@ -79,6 +80,16 @@ function usePropose(m: M) {
   const latest = useRef(m);
   latest.current = m;
   const id = m.studio.id;
+  const signal = useUnmountSignal();
+  /** Adds what a finished propose job proposed, or says why it did not. The job is the one just submitted, or the one found running when the view opened. */
+  const finish = useCallback((proposer: Proposer, job: Job) => {
+    if (job.status === "Failed") return setRun({ state: "failed", proposer, message: job.failure ?? "The propose job failed." });
+    const file = job.artefacts.find((a) => a.path === "review.ttl");
+    const current = latest.current.model.state.configs.review!.current;
+    const merged = mergeProposals(current, file ? Graph.parse(file.content) : Graph.empty());
+    if (merged.added > 0) latest.current.model.edit("review", (g) => mergeProposals(g, Graph.parse(file!.content)).review);
+    setRun({ state: "done", proposer, added: merged.added, issues: job.issues });
+  }, []);
   const start = useCallback(
     async (proposer: Proposer) => {
       const { model } = latest.current;
@@ -86,21 +97,26 @@ function usePropose(m: M) {
       for (const p of PARTS) body = body.merge(model.state.configs[p]?.current ?? Graph.empty());
       setRun({ state: "running", proposer });
       try {
-        const job = await awaitJob(await api.submit(id, "propose", proposer, body));
-        if (job.status === "Failed") return setRun({ state: "failed", proposer, message: job.failure ?? "The propose job failed." });
-        const file = job.artefacts.find((a) => a.path === "review.ttl");
-        const current = latest.current.model.state.configs.review!.current;
-        const merged = mergeProposals(current, file ? Graph.parse(file.content) : Graph.empty());
-        if (merged.added > 0) latest.current.model.edit("review", (g) => mergeProposals(g, Graph.parse(file!.content)).review);
-        setRun({ state: "done", proposer, added: merged.added, issues: job.issues });
+        finish(proposer, await awaitJob(await api.submit(id, "propose", proposer, body), signal()));
       } catch (error) {
+        if (isAbort(error)) return;
         setRun({ state: "failed", proposer, message: error instanceof Error ? error.message : String(error) });
       }
     },
-    [id],
+    [id, finish, signal],
+  );
+  // A proposal started before the author left the workspace goes on in the store, and is waited for again here.
+  useAttach(
+    id,
+    (job) => job.kind === "Propose" && job.target in PROPOSER_OF,
+    (job) => setRun({ state: "running", proposer: PROPOSER_OF[job.target] }),
+    (job) => finish(PROPOSER_OF[job.target], job),
   );
   return { run, start };
 }
+
+/** The proposers this view starts, by the target a job of theirs names. */
+const PROPOSER_OF: Record<string, Proposer> = { SentenceFormProposer: "sentence-forms", LanguageModelProposer: "language-model" };
 
 interface ImportRun {
   state: "running" | "done" | "failed";

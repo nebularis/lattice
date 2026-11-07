@@ -30,10 +30,10 @@ Every unit with a status record, its state from the record's Status line, and it
 | eligibility-compiler | unit |  | built 2026-09-25 |  | [plan](plans/eligibility-compiler.md), [status](status/eligibility-compiler.md) |
 | ensemble | unit | ES | briefed | ES-0 | [plan](plans/ensemble.md), [status](status/ensemble.md), 2 Validation Packs |
 | formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
-| formal-methods-track-c | phase | FMC | built 2026-10-08 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md) |
+| formal-methods-track-c | phase | FMC | built 2026-10-27 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md), 1 Validation Packs |
 | formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
 | formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
-| formal-methods | epic | FM | built 2026-10-27 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 2 Validation Packs |
+| formal-methods | epic | FM | built 2026-11-02 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 1 Validation Packs |
 | git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
@@ -42,6 +42,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
+| lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
 | ledger | unit | LG | merged 2026-10-27 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 3 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
@@ -74,6 +75,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
+| studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
@@ -81,6 +83,8 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
+| vyvid-migration | multi-slice unit | VM | verified 2026-11-06 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), [review](review/vyvid-migration-review.md), 9 Validation Packs |
+| windows-portability | unit | XP | built 2026-11-07 | XP-0 | [plan](plans/windows-portability.md), [status](status/windows-portability.md) |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
@@ -253,6 +257,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMC-2.2 | model the composed scheme, decision-level check | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-3 | slot exclusivity, SMT | formal-methods-track-c | planned | FMC-2 (done) | docs/developer/status/formal-methods-track-c.md#slices |
+| FMC-4 | a design model of ADR-A130, the Ensemble, in Alloy | formal-methods-track-c | built 2026-10-27 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FME-1.0 | home, generation tooling | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.1 | the kernel, for real | formal-methods-track-e | built 2026-10-06 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.2 | rounding and residual theorem | formal-methods-track-e | dropped 2026-10-07 | track B's B4, which waits on CCS's C12 | docs/developer/status/formal-methods-track-e.md#slices |
@@ -322,8 +327,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FM-D3 | Isabelle track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D4 | report | formal-methods | built 2026-10-10 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-PF1 | fixes | formal-methods | built 2026-10-07 |  | docs/developer/status/formal-methods.md#track-d |
-| FM-0 | FM-0 | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
-| FM-4 | FM-4 | formal-methods | built 2026-10-27 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-0 | track D, the prover spike, the pack that covers FM-D0 to FM-D4 | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-CG1 | code generation from the layer models, `spikes/isabelle-layers`: thirteen proved layer theories, two code-generation theories, Haskell, SML and Scala exports, Eligibility's decision table ex | formal-methods | merged 2026-11-02 |  | docs/developer/status/formal-methods.md#track-d |
+| FM-CG2 | the generated Haskell as a differential oracle beside the Python reference, under the four conditions the spike's README states | formal-methods | planned | PDD-19 | docs/developer/status/formal-methods.md#track-d |
 | GH-0 | GH-0 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-1 | GH-1 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-2 | GH-2 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
@@ -382,6 +388,17 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | IMA-4.3 | renderer and numbering, with the rule chosen for Q32 | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.4 | verification passes: references in every configuration, dependency acyclicity. Alternatives for every condition kind join when CCS C13a lands | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.5 | optimisation passes: question plans, dead components, specialisation | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
+| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | lattice-tutorial | verified 2026-10-14 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-1 | chapters 0 to 3 | lattice-tutorial | built 2026-10-15 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-2 | chapters 4 to 6 | lattice-tutorial | built 2026-10-15 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-3 | chapters 7 to 9 | lattice-tutorial | built 2026-10-16 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-4 | chapters 10 to 13 | lattice-tutorial | built 2026-10-16 | the maintainer's end-to-end reading (TUT4-05) | docs/developer/status/lattice-tutorial.md#position |
+| TUT-5 | the tutorial refreshed onto `main`: excerpts, the site's rules, Ledger in chapter 10. Validation Pack | lattice-tutorial | built 2026-11-05 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-6 | the Configuration Studio guide's groundwork: the studio run, the routes in and out tested, the page, layout and site section, the worked sample and its test, the screenshot task (plan §9) | lattice-tutorial | building 2026-11-06 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-7 | the guide's modules 1 to 4 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-8 | the guide's modules 5, 6 and 11 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-9 | the guide's modules 7 to 10 | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
+| TUT-10 | the guide's modules 12, 13 and the quick reference | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | briefed 2026-10-27 |  | docs/developer/status/ledger.md#board |
@@ -488,10 +505,37 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SQ-4 | the model and the Hypothesis state machine | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-5 | a Jepsen test against the Compose topology | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-6 | Locust load runs with reports | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
+| WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-3 | the check on delivery, a job that cannot run marked `Failed`, each job logged | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-4 | the held result, reconnecting with a backoff | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-5 | short jobs past long ones | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-6 | a view that attaches to its running job, no stacked validations | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-8 | a run that leaves no process behind when its test process is killed | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
+| WL-9 | a late `Failed` never replaces a `Succeeded` | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| XP-0 | plan, status record, STD-322, STD-323, TD-153 | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-1 | the `mise` skill split between the domain and LATTICE | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-2 | the small fixes: a task dependency, line endings, junctions, the hook's interpreter | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-3 | skips for a missing capability, and `LATTICE_REQUIRE_ALL` | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-4 | `check:vyvid-binding` under Git Bash | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-5 | the shell tasks as Python scripts | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-6 | the portability check | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-7 | ratification, `skills:link` by junction or copy, the directory links page | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
 | WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-2 | Service model, mapping and shapes | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |

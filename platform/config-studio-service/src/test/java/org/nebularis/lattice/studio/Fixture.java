@@ -80,6 +80,11 @@ final class Fixture {
             public byte[] transform(String id, String jobIri, String mediaType, byte[] sample, java.time.Duration timeout) throws Exception {
                 return busOverride.transform(id, jobIri, mediaType, sample, timeout);
             }
+
+            @Override
+            public int consumers(String queue) throws Exception {
+                return busOverride.consumers(queue);
+            }
         };
         this.api = new StudioApi(store, OPS, writes, given, clock, () -> new UUID(0, counter.incrementAndGet()), assets, features);
     }

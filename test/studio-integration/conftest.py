@@ -10,3 +10,4 @@ def pytest_addoption(parser) -> None:  # type: ignore[no-untyped-def]
 
 def pytest_configure(config) -> None:  # type: ignore[no-untyped-def]
     config.addinivalue_line("markers", "studio_integration: starts a Configuration Studio, on demand only (`mise run studio:integration`)")
+    config.addinivalue_line("markers", "studio_liveness: starts a Configuration Studio and drives its worker, on demand only (`mise run studio:liveness`)")

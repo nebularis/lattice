@@ -16,6 +16,18 @@ import { useStudio } from "./Workspace";
 
 const STEPS = ["Queued", "Running", "Finished"] as const;
 
+/** The seconds since `since`, counted while it is set, so a job that waits in the queue says how long it has waited. */
+function useWaited(since: string | undefined): number | undefined {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!since) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [since]);
+  const started = since ? Date.parse(since) : NaN;
+  return Number.isNaN(started) ? undefined : Math.max(0, Math.round((now - started) / 1000));
+}
+
 export function BuildView() {
   const { id, model, open } = useStudio();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -138,6 +150,7 @@ function StatusMark({ job }: { job: Job }) {
 
 function JobDetail({ job, onIssue }: { job: Job; onIssue: (issue: Issue) => void }) {
   const reached = job.status === "Queued" ? 0 : job.status === "Running" ? 1 : 2;
+  const waited = useWaited(job.status === "Queued" ? job.submittedAt : undefined);
   const groups = useMemo(() => {
     const out = new Map<string, Job["artefacts"]>();
     for (const a of job.artefacts) out.set(a.group, [...(out.get(a.group) ?? []), a]);
@@ -157,7 +170,7 @@ function JobDetail({ job, onIssue }: { job: Job; onIssue: (issue: Issue) => void
                 {i > 0 && <span className={`bar${i <= reached ? " on" : ""}`} />}
                 <span className={`step${i <= reached ? " on" : ""}`}>
                   {i === reached && reached < 2 ? <Spinner size={12} /> : i < reached || reached === 2 ? <Check size={13} /> : null}
-                  {s === "Finished" && reached === 2 ? job.status : s}
+                  {s === "Finished" && reached === 2 ? job.status : s === "Queued" && reached === 0 && waited !== undefined ? `Queued for ${waited} s` : s}
                 </span>
               </span>
             ))}

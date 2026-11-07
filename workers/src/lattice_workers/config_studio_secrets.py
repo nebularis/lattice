@@ -22,7 +22,7 @@ def secret(env: Mapping[str, str], name: str) -> Optional[str]:
     if not path:
         return (env.get(name) or "").strip() or None
     try:
-        value = Path(path).read_text(encoding="utf-8")
+        value = Path(path).read_text(encoding="utf-8", newline="")
     except OSError as error:
         raise ValueError(f"{name}_FILE names {path}, which cannot be read: {error.strerror}") from None
     value = value[:-2] if value.endswith("\r\n") else value[:-1] if value.endswith("\n") else value
