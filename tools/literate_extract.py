@@ -15,8 +15,9 @@ definition that is not a finite case table over a closed datatype (such as a
 predicate over equality) also stays hand-written, not generated.
 
 A ``fun name :: "..." where "..." | ...`` block inside an ``isabelle-spec``
-block, an exhaustive pattern match over a closed datatype's constructors, is
-also rendered a second time, as a generated Python module, into
+block whose first line is the directive ``(* @reference-table *)``, an
+exhaustive pattern match over a closed datatype's constructors, is also
+rendered a second time, as a generated Python module, into
 ``<reference-root>/<layer>/src/reference_<layer>/_kernel_defs.py``: the two
 languages' statements of the same function agree by construction, not by two
 independent authors' care. Isabelle itself is still hand-written and extracted
@@ -24,7 +25,9 @@ verbatim, never synthesised, so the prover checks exactly what was written
 and reviewed; only the Python side is generated. A README section may also
 carry a plain markdown table of the same truth table for a reader (FM-D17's
 convention), which is prose, not a fenced block, and is never extracted or
-checked mechanically.
+checked mechanically. A block without the directive is written to the theory
+verbatim, whatever Isabelle syntax it holds, ``fun`` included, and no Python is
+generated from it (FM-D17, widened 2026-11-07).
 
 Fence tags recognised:
 
@@ -35,9 +38,11 @@ Fence tags recognised:
 ``turtle-shapes``     written, in document order, to the shape files
                       named by the layer's extraction contract
 ``turtle-example``    never extracted
-``isabelle-spec``     concatenated into ``<proofs-root>/<layer>/Kernel.thy``;
-                      any ``fun`` clauses within it are also rendered into
-                      ``<reference-root>/<layer>/src/reference_<layer>/_kernel_defs.py``
+``isabelle-spec``     concatenated, verbatim, into ``<proofs-root>/<layer>/Kernel.thy``.
+                      A block whose first line is ``(* @reference-table *)`` also
+                      has its ``fun`` clauses rendered into
+                      ``<reference-root>/<layer>/src/reference_<layer>/_kernel_defs.py``;
+                      the directive itself is not written out
 ====================  ================================================
 
 Each extracted ``.ttl``/``.thy``/``.py`` gains the project's SPDX header as its
@@ -149,6 +154,9 @@ LAYOUT = (
     "Release Notes", "Open Issues",
 )
 FUN_HEADER_RE = re.compile(r"^\s*fun\s+(?P<name>\w+)\s*::")
+# The first-line directive that asks for an ``isabelle-spec`` block's ``fun`` clauses to be rendered
+# as a Python lookup table too (FM-D17). Without it the block is Isabelle text only.
+REFERENCE_TABLE_RE = re.compile(r"^\s*\(\*\s*@reference-table\s*\*\)\s*$")
 CLAUSE_LINE_RE = re.compile(r'^\s*\|?\s*"(?P<clause>[^"]*)"\s*$')
 FENCE_END_RE = re.compile(r"^```\s*$")
 OUTPUT_FILE_RE = re.compile(r'^#\s*@output-file\s+"(?P<path>[^"]+)"\s*$')
@@ -587,7 +595,9 @@ def plan(
                 positional.append(body)
             else:
                 shape_docs.setdefault(target, []).append(body)
-    isabelle_bodies = [b.body for b in blocks if b.tag == "isabelle-spec"]
+    isabelle_parts = [_isabelle_body(b) for b in blocks if b.tag == "isabelle-spec"]
+    isabelle_bodies = [body for body, _ in isabelle_parts]
+    table_bodies = [body for body, marked in isabelle_parts if marked]
 
     if preambles is not None and positional:
         raise ValueError(
@@ -609,13 +619,14 @@ def plan(
             "pass --proofs-root tools/proofs to extract them, or remove the "
             "block(s) if this layer has no formalised theory yet"
         )
-    fun_clauses = parse_fun_clauses("\n".join(isabelle_bodies))
+    fun_clauses = parse_fun_clauses("\n".join(table_bodies))
     truth_tables = {name: resolve_truth_table(clauses) for name, clauses in fun_clauses.items()}
+    if table_bodies and not truth_tables:
+        _warn("an isabelle-spec block is marked (* @reference-table *) but holds no fun clause, so no Python is rendered")
     if truth_tables and not reference_root:
         raise ValueError(
-            "isabelle-spec fun clause(s) found but --reference-root was not given; "
-            "pass --reference-root tools/reference to render their Python rendering, "
-            "or move the fun block(s) out of isabelle-spec if none is wanted"
+            "an isabelle-spec block marked (* @reference-table *) holds fun clause(s) but --reference-root was not given; "
+            "pass --reference-root tools/reference to render them as Python, or drop the marker if none is wanted"
         )
 
     outputs: Dict[str, str] = {}
@@ -685,6 +696,15 @@ def plan(
             f"@reference-root@/{layer}/src/reference_{layer}/_kernel_defs.py"
         ] = render_python(truth_tables, layer)
     return outputs
+
+
+def _isabelle_body(block: Block) -> tuple[str, bool]:
+    """An ``isabelle-spec`` block's body with the ``(* @reference-table *)`` directive removed from its
+    first line, and whether it carried one."""
+    lines = block.body.split("\n")
+    if lines and REFERENCE_TABLE_RE.match(lines[0]):
+        return "\n".join(lines[1:]).lstrip("\n"), True
+    return block.body, False
 
 
 def _target(block: Block, layer: str, default: str | None, under: str = "") -> tuple[str | None, str]:

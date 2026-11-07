@@ -27,7 +27,7 @@ and states only what is specific to its module.
 | 7 | Shapes | yes | yes | the shape files |
 | 8 | Examples | yes | no | nothing - example files are written by hand and linked from here |
 | 9 | Canonicalisation | no | yes | nothing |
-| 10 | Formalisation | no | yes | `isabelle-spec` blocks, to the module's Isabelle theory and the Python generated from it |
+| 10 | Formalisation | no | yes | `isabelle-spec` blocks, to the module's Isabelle theory, and the Python generated from a block marked `(* @reference-table *)` |
 | 11 | Dependencies | yes | no | nothing |
 | 12 | Release Notes | yes | yes | nothing. Checked |
 | 13 | Open Issues | yes | no | nothing |
@@ -356,6 +356,6 @@ Every version named in section 2, and every release in which the module changed,
 | `turtle-vocab` | `vocab/<layer>-vocab.ttl` |
 | `turtle-shapes` | the shape files the module's repository catalogue entry names, in order |
 | `turtle-example` | never extracted |
-| `isabelle-spec` | the layer's Isabelle theory, and the Python generated from its `fun` clauses |
+| `isabelle-spec` | the layer's Isabelle theory, verbatim, and the Python generated from the `fun` clauses of a block whose first line is `(* @reference-table *)` |
 
 The [tools README](https://github.com/nebularis/lattice/blob/main/tools/README.md) gives the commands.

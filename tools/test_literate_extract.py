@@ -288,3 +288,56 @@ def test_d59_a_generated_region_keeps_the_keys_that_choose_its_view() -> None:
     (region,) = literate_extract.scan(marker).regions
     assert (region.key, region.value) == ("generated", "class-diagram")
     assert region.options == {"part": "A", "classes": ["ex:A"]}
+
+
+# FM-D17, widened 2026-11-07: the Python rendering of an isabelle-spec block's fun clauses is asked
+# for by the first-line directive (* @reference-table *). A block without it is Isabelle text only.
+
+KERNEL_NAT = """theory Kernel
+imports Main
+begin
+
+datatype side = Lower | Upper
+
+fun step :: "nat \\<Rightarrow> nat" where
+  "step 0 = 0"
+| "step (Suc n) = n"
+
+end"""
+
+KERNEL_TABLE = """(* @reference-table *)
+theory Kernel
+imports Main
+begin
+
+datatype decision = Permitted | Denied | Undetermined
+
+fun neg3 :: "decision \\<Rightarrow> decision" where
+  "neg3 Permitted = Denied"
+| "neg3 Denied = Permitted"
+| "neg3 Undetermined = Undetermined"
+
+end"""
+
+
+def test_isabelle_fun_without_marker_is_written_verbatim_and_needs_no_reference_root() -> None:
+    out = plan(parse_blocks(_mixed_readme(("isabelle-spec", KERNEL_NAT))), "x", [], proofs_root="tools/proofs")
+    kernel = out["@proofs-root@/x/Kernel.thy"]
+    assert "fun step" in kernel and '"step (Suc n) = n"' in kernel
+    assert not any(key.startswith("@reference-root@") for key in out)
+
+
+def test_isabelle_marker_renders_python_and_is_not_written_out() -> None:
+    out = plan(
+        parse_blocks(_mixed_readme(("isabelle-spec", KERNEL_TABLE))), "x", [],
+        proofs_root="tools/proofs", reference_root="tools/reference",
+    )
+    kernel = out["@proofs-root@/x/Kernel.thy"]
+    assert "@reference-table" not in kernel
+    assert kernel.index("theory Kernel") < kernel.index("datatype decision")
+    assert "neg3" in out["@reference-root@/x/src/reference_x/_kernel_defs.py"]
+
+
+def test_isabelle_marker_needs_reference_root() -> None:
+    with pytest.raises(ValueError, match="reference-root"):
+        plan(parse_blocks(_mixed_readme(("isabelle-spec", KERNEL_TABLE))), "x", [], proofs_root="tools/proofs")
