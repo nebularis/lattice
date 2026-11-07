@@ -16,9 +16,11 @@ MEND = "Run `mise run bootstrap` to install it, or `vyd trust` in the checkout w
 def run(args: list[str], cwd: str | None = None) -> tuple[int, str, bool]:
     """vyd's exit code and output, and whether the command was skipped rather than run."""
     command = "vyd " + " ".join(args)
-    if shutil.which("vyd") is None:
+    found = shutil.which("vyd")
+    if found is None:
         return 0, f"vyd is not installed, so `{command}` was skipped. {MEND}\n", True
-    result = subprocess.run(["vyd", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    # The program found is the one run, which on Windows may be a launcher PATHEXT names, such as vyd.cmd.
+    result = subprocess.run([found, *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     output = result.stdout + result.stderr
     if result.returncode == 2:
         return 0, f"{output}`{command}` did not run, so it was skipped. {MEND}\n", True

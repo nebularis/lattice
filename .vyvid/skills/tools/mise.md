@@ -1,6 +1,9 @@
-## mise is the one entry point
+## Running tasks
 
-ADR-A29 makes `mise` the one entry point. A `check:*` task that reads an artefact a build writes, such as the studio's staged assets under `.build/config-studio/` or the rendered Teaching Pack, names that build in its `depends` (STD-299). The developer guide's "What `check` needs first" lists them. The task families also include `topology:*`.
+- **`mise` is the one entry point** (ADR-A29). Every build, test and check runs through it, and CI runs the same tasks. {{other_authorities}} remain their own dependency authorities.
+- `mise install` and `mise run bootstrap` are all `mise run check` needs. The builds a check reads include the studio's staged assets under `.build/config-studio/` and the rendered Teaching Pack (STD-299), and the developer guide's "What `check` needs first" lists them.
+- The task families are `bootstrap:*`, `check:*`, `build:*`, `clean:*` and `topology:*`. Some heavy checks are deliberately outside `check`, as the developer guide lists.
+- Run the checks a change needs, not only the aggregate, and run the aggregate with `--continue-on-error` for a true picture.
 
 ## Which checks a change needs
 
@@ -21,9 +24,13 @@ ADR-A29 makes `mise` the one entry point. A `check:*` task that reads an artefac
 
 ## Is the code under test this checkout's?
 
-Working in several checkouts at once, and integrating a bundle from a machine that cannot push, are in the developer guide, §9.
+Each checkout, git worktrees included, has its own `.venv`, which `mise.toml` creates, so `mise run bootstrap` in a checkout installs its packages again. Working in several checkouts at once, and integrating a bundle from a machine that cannot push, are in the developer guide, §9.
 
 ## A running process and the build
+
+## A running process and the build
+
+A build never writes a file that a running process has open. A JVM reads classes from its jar for as long as it runs, so a build that rewrites the jar under it leaves it failing with `NoClassDefFoundError` on the first class it had not loaded yet. A process started from the repository runs from a copy of what the build wrote, made just before it starts. A process that has to run from the build output itself is stopped before the build, and the task that starts it says so.
 
 `mise run check` rewrites the studio's shaded jars. `mise run studio:up` runs from a copy under `.build/config-studio/run/pinned` and the studio harness does under its cache (STD-308).
 
@@ -59,5 +66,8 @@ A check judges only what the change touches, so a failure elsewhere in the tree 
 
 ## Rules for tasks and tools
 
+- **A task that needs a shell feature, or that reads or writes text whose encoding or line endings matter, runs a Python script under `tools/`, the same on Windows, Linux and macOS** (STD-322). A shell feature is a variable, a glob, a redirect, a pipe, a loop, `cd` or a multi-line script. Text means files, streams and a process's output. Plain commands are a `run` array, one per entry, with `dir` instead of `cd`. The script opens text with `encoding="utf-8"`, writes it with `newline="\n"`, gives every `subprocess` call that uses text an encoding, and compares text with its line endings normalised. LATTICE keeps no `run_windows` variant but the formal-methods installers, which install a platform's own toolchain. `mise run check:portability` (CAP-108) fails a task that needs a shell, a Windows variant not listed in `tools/portability.py` with its reason, a text call that names no encoding beyond `tools/portability-baseline.txt` (TD-154), and a test that skips on the platform.
+- Ask {{maintainer}} to start Docker Desktop if its engine is not running. Do not start it yourself.
+
 - A new Python package for a layer goes under `tools/<layer>/`, shaped like `tools/persistence/`: `pyproject.toml` with a `src/` layout and a `test` extra, a README, `tests/conftest.py` with fixtures, and `bootstrap:<pkg>` and `check:<pkg>` tasks wired into the aggregates.
-- A new build output outside `build/` or `.build/<name>/`, or a Maven module outside `platform/pom.xml`, needs adding to `clean` and `clean-win`, which list exact paths.
+- A new build output outside `build/` or `.build/<name>/` needs adding to its area in `tools/clean.py`, and a Maven module outside `platform/pom.xml` to `clean:java`, which list exact paths. `tools/test_clean.py` checks what each area removes and keeps.

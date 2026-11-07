@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -117,8 +116,8 @@ def test_gh1_09_install_writes_every_hook(repo: Path) -> None:
     lines = hooks.install(repo)
     for name in hooks.HOOKS:
         hook = repo / ".git" / "hooks" / name
-        assert hooks.HOOK_MARK in hook.read_text()
-        assert hook.stat().st_mode & stat.S_IXUSR
+        assert hooks.HOOK_MARK in hook.read_text(encoding="utf-8")
+        assert os.access(hook, os.X_OK)  # the mode bit on POSIX. Git for Windows runs a hook whatever its mode
     assert len(lines) == len(hooks.HOOKS)
     assert sh(repo, "sh", "-n", str(repo / ".git" / "hooks" / "pre-commit")).returncode == 0
 
@@ -143,9 +142,9 @@ def test_gh1_12_the_installed_hook_refuses_a_denied_term(repo: Path, tmp_path_fa
     deny = tmp_path_factory.mktemp("deny") / "deny-terms"
     deny.write_text("forbidden-word\n")
     hooks.install(repo)
-    # Without mise on the path, the hook starts the dispatcher with python3, as on a bare checkout.
+    # Without mise on the path, the hook starts the dispatcher with the first Python that runs, as on a bare checkout.
     path = os.pathsep.join(d for d in os.environ.get("PATH", "").split(os.pathsep)
-                           if d and not (Path(d) / "mise").exists())
+                           if d and not shutil.which("mise", path=d))
     env = {**os.environ, "PATH": path, "LATTICE_DENY_TERMS": str(deny)}
     env.pop("LATTICE_HOOKS_SKIP", None)
     (repo / "README.md").write_text("A forbidden-word here.\n")
@@ -512,12 +511,17 @@ def test_vm2_02_post_merge_says_the_index_was_not_rebuilt_and_never_fails_where_
     assert "not rebuilt" in out and "`vyd build` was skipped" in out and "mise run bootstrap" in out
 
 
-@pytest.mark.skipif(os.name == "nt", reason="the fake vyd is a shell script")
 def test_vm2_03_a_vyd_that_did_not_run_skips_with_its_reason(vyd_repo: Path, monkeypatch, tmp_path_factory, capsys) -> None:
-    fake = tmp_path_factory.mktemp("bin") / "vyd"
-    fake.write_text("#!/bin/sh\necho 'vyvid.toml is not trusted' >&2\nexit 2\n")
-    fake.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
+    bin_dir = tmp_path_factory.mktemp("bin")
+    script = bin_dir / "fake_vyd.py"
+    script.write_text("import sys\nprint('vyvid.toml is not trusted', file=sys.stderr)\nsys.exit(2)\n", encoding="utf-8")
+    if os.name == "nt":
+        (bin_dir / "vyd.cmd").write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8", newline="")
+    else:
+        fake = bin_dir / "vyd"
+        fake.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n', encoding="utf-8", newline="\n")
+        fake.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
     assert hooks.vyd("check", "identifiers")(hooks.Change(vyd_repo, (), False), []) == []
     out = capsys.readouterr().out
     assert "did not run" in out and "vyd trust" in out

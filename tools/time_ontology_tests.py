@@ -52,8 +52,9 @@ parser.add_argument("--dist", help="xdist scheduling mode for the run, replacing
 parser.add_argument("--timeout", type=int, default=1800, help="seconds before a run, or a file with --per-file, is reported as hung and killed")
 args = parser.parse_args()
 
-run = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"][args.task]["run"]
-segments = [p.strip() for p in run.split("&&")]
+run = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"][args.task]["run"]
+# A run array, one command per entry (STD-322), or an older `&&` chain.
+segments = [p.strip() for p in run] if isinstance(run, list) else [p.strip() for p in run.split("&&")]
 pytest_index = next((i for i, s in enumerate(segments) if shlex.split(s)[:3] == ["python", "-m", "pytest"]), None)
 if pytest_index is None:
     print(f"{args.task}'s run line has no `python -m pytest` segment, so there is nothing for this tool to profile:\n  {run}")

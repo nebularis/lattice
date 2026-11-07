@@ -7,7 +7,7 @@
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (repository
 topology), [ADR-A29](ADR-A29-repository-toolchain-and-environment-boundary.md) (`mise` as the task entry point),
 [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md), technical debt TD-21
-**Unit:** [`agent-skills`](../../developer/sketches/agent-skills.md) (sketch)
+**Unit:** [`agent-skills`](../../developer/sketches/agent-skills.md) (sketch, historical since 2026-11-07. Its note names what has changed since, the skill set and `skills:link` on Windows among it)
 
 ## Context
 

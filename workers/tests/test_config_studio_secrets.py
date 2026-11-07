@@ -8,22 +8,24 @@ from lattice_workers.llm_providers import provider_from_env
 
 def test_a_secret_is_read_from_the_environment_or_the_file_it_names(tmp_path):
     key = tmp_path / "key"
-    key.write_text("sk-test-1 \n", encoding="utf-8")
+    key.write_bytes(b"sk-test-1 \n")
     assert secret({"K": " sk-direct "}, "K") == "sk-direct"
     assert secret({"K_FILE": str(key)}, "K") == "sk-test-1 "  # one line ending dropped, nothing else
-    key.write_text("sk-test-2\r\n", encoding="utf-8")
+    key.write_bytes(b"sk-test-2\r\n")
     assert secret({"K_FILE": str(key)}, "K") == "sk-test-2"  # read again each time, so a rotated value is used
+    key.write_bytes(b"sk-test-3\r\r\n")
+    assert secret({"K_FILE": str(key)}, "K") == "sk-test-3\r"  # one line ending, not every carriage return
     assert secret({}, "K") is None and secret({"K": "  "}, "K") is None
 
 
 def test_a_secret_set_twice_missing_or_empty_is_refused_without_its_value(tmp_path):
     key = tmp_path / "key"
-    key.write_text("sk-hidden", encoding="utf-8")
+    key.write_bytes(b"sk-hidden")
     with pytest.raises(ValueError, match="both set") as both:
         secret({"K": "sk-other", "K_FILE": str(key)}, "K")
     with pytest.raises(ValueError, match="cannot be read"):
         secret({"K_FILE": str(tmp_path / "absent")}, "K")
-    (tmp_path / "empty").write_text("\n", encoding="utf-8")
+    (tmp_path / "empty").write_bytes(b"\n")
     with pytest.raises(ValueError, match="empty"):
         secret({"K_FILE": str(tmp_path / "empty")}, "K")
     assert "sk-hidden" not in str(both.value) and "sk-other" not in str(both.value)

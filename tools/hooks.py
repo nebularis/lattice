@@ -38,15 +38,20 @@ HOOK_SCRIPT = f"""#!/bin/sh
 {HOOK_MARK}
 # Installed by `mise run hooks:install`. Runs the checks a change needs (tools/hooks.py).
 hook=$(basename "$0")
+# The first Python that starts, since a name on PATH can be a stub that only offers to install one, as python3 is on Windows.
+python_that_runs() {{
+  for p in python3 python py; do
+    if "$p" -c "import sys; sys.exit(sys.version_info < (3, 11))" >/dev/null 2>&1; then echo "$p"; return 0; fi
+  done
+  echo python
+}}
 if [ -f tools/hooks.py ]; then
   if command -v mise >/dev/null 2>&1; then exec mise exec -- python tools/hooks.py run "$hook"; fi
-  if command -v python3 >/dev/null 2>&1; then exec python3 tools/hooks.py run "$hook"; fi
-  exec python tools/hooks.py run "$hook"
+  exec "$(python_that_runs)" tools/hooks.py run "$hook"
 fi
 # A checkout from before the dispatcher: the deny-list check alone, as the old hook ran it.
 if [ "$hook" = pre-commit ] && [ -f tools/deny_terms.py ]; then
-  if command -v python3 >/dev/null 2>&1; then exec python3 tools/deny_terms.py; fi
-  exec python tools/deny_terms.py
+  exec "$(python_that_runs)" tools/deny_terms.py
 fi
 exit 0
 """

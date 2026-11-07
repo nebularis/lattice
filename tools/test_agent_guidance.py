@@ -50,12 +50,50 @@ def test_drift_a_missing_skill_and_a_wrong_name_are_reported(copy_of_guidance: P
 
 def test_link_replaces_its_own_links_and_refuses_others(copy_of_guidance: Path, tmp_path: Path) -> None:
     target = tmp_path / "personal"
-    assert "lattice-design" in agent_guidance.link(copy_of_guidance, target, copy=False)
+    made_by = agent_guidance.link(copy_of_guidance, target, copy=False)
+    assert made_by["lattice-design"] in ("symlink", "junction")
+    made = target / "lattice-design"
+    assert made.is_symlink() or made.is_junction()
+    assert (made / "SKILL.md").read_bytes() == (copy_of_guidance / ".claude/skills/lattice-design/SKILL.md").read_bytes()
     assert "lattice-design" in agent_guidance.link(copy_of_guidance, target, copy=False)
     (target / "lattice-design").unlink()
+    assert (copy_of_guidance / ".claude/skills/lattice-design/SKILL.md").is_file()
     (target / "lattice-design").mkdir()
     with pytest.raises(SystemExit):
         agent_guidance.link(copy_of_guidance, target, copy=False)
+
+
+def test_a_refused_symlink_becomes_a_junction(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    refused = OSError("A required privilege is not held by the client")
+    refused.winerror = 1314
+    junctions = []
+
+    def no_symlink(self: Path, *args: object, **kwargs: object) -> None:
+        raise refused
+
+    monkeypatch.setattr(Path, "symlink_to", no_symlink)
+    monkeypatch.setattr(agent_guidance, "make_junction", lambda dest, source: junctions.append((dest, source)))
+    assert agent_guidance.link_directory(tmp_path / "dest", tmp_path / "source") == "junction"
+    assert junctions == [(tmp_path / "dest", tmp_path / "source")]
+
+
+def test_a_skill_that_cannot_be_linked_is_copied_and_later_relinked(copy_of_guidance: Path, tmp_path: Path,
+                                                                     monkeypatch: pytest.MonkeyPatch) -> None:
+    target = tmp_path / "personal"
+    linker = agent_guidance.link_directory
+
+    def refuse(dest: Path, source: Path) -> str:
+        raise OSError("refused by policy")
+
+    monkeypatch.setattr(agent_guidance, "link_directory", refuse)
+    assert set(agent_guidance.link(copy_of_guidance, target, copy=False).values()) == {"copy"}
+    copied = target / "lattice-design"
+    assert not (copied.is_symlink() or copied.is_junction())
+    assert (copied / ".lattice-copy").is_file()
+    assert (copied / "SKILL.md").read_bytes() == (copy_of_guidance / ".claude/skills/lattice-design/SKILL.md").read_bytes()
+    monkeypatch.setattr(agent_guidance, "link_directory", linker)
+    assert agent_guidance.link(copy_of_guidance, target, copy=False)["lattice-design"] in ("symlink", "junction")
+    assert (copy_of_guidance / ".claude/skills/lattice-design/SKILL.md").is_file()
 
 
 @pytest.fixture

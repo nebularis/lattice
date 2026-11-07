@@ -84,6 +84,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
 | vyvid-migration | multi-slice unit | VM | verified 2026-11-06 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), [review](review/vyvid-migration-review.md), 9 Validation Packs |
+| windows-portability | unit | XP | built 2026-11-07 | XP-0 | [plan](plans/windows-portability.md), [status](status/windows-portability.md) |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
 | xslt-sidecar | multi-slice unit |  | planned |  | [plan](plans/xslt-sidecar.md), [status](status/xslt-sidecar.md) |
@@ -527,6 +528,14 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| XP-0 | plan, status record, STD-322, STD-323, TD-153 | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-1 | the `mise` skill split between the domain and LATTICE | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-2 | the small fixes: a task dependency, line endings, junctions, the hook's interpreter | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-3 | skips for a missing capability, and `LATTICE_REQUIRE_ALL` | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-4 | `check:vyvid-binding` under Git Bash | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-5 | the shell tasks as Python scripts | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-6 | the portability check | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
+| XP-7 | ratification, `skills:link` by junction or copy, the directory links page | windows-portability | built 2026-11-07 |  | docs/developer/status/windows-portability.md#position |
 | WA-0 | Preflight | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-1 | Contracts, templates and samples | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |
 | WA-2 | Service model, mapping and shapes | word-authoring-poc | built 2026-10-02 |  | docs/developer/status/word-authoring-poc.md#slice-board |

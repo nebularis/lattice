@@ -4,6 +4,7 @@ defines, bootstrap:vyvid decides rightly, and `vyd context` names LATTICE where 
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -183,14 +184,32 @@ def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
     assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
 
 
+def bash_path(path: Path) -> str:
+    """``path`` as bash reads it: unchanged on Linux and macOS, `/c/Users/...` under Git Bash on Windows, whose own
+    `cygpath` knows its mount table."""
+    if os.name != "nt":
+        return str(path)
+    return subprocess.run(["bash", "-c", 'cygpath -u "$1"', "_", str(path)], capture_output=True, text=True,
+                          encoding="utf-8", check=True).stdout.strip()
+
+
+def write_for_bash(path: Path, text: str) -> None:
+    """A file bash reads, with \\n line endings on every platform, since a \\r breaks a script and a task's name."""
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
 def session_env(tmp_path: Path, mise_exit: int = 0) -> dict[str, str]:
     """A home, a log folder and a fake mise that records each task it is asked for."""
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     fake = bin_dir / "mise"
-    fake.write_text(f"#!/bin/sh\necho \"$2\" >> {tmp_path}/ran\nexit {mise_exit}\n", encoding="utf-8")
+    write_for_bash(fake, f"#!/bin/sh\necho \"$2\" >> {bash_path(tmp_path)}/ran\nexit {mise_exit}\n")
     fake.chmod(0o755)
-    return {"HOME": str(tmp_path), "LATTICE_SETUP_LOGS": str(tmp_path / "logs"), "PATH": f"{bin_dir}:/usr/bin:/bin", "CLAUDE_PROJECT_DIR": str(ROOT)}
+    env = {"HOME": bash_path(tmp_path), "LATTICE_SETUP_LOGS": bash_path(tmp_path / "logs"),
+           "PATH": f"{bash_path(bin_dir)}:/usr/bin:/bin", "CLAUDE_PROJECT_DIR": bash_path(ROOT)}
+    # Windows' own variables: a process there needs SYSTEMROOT to start, and Git Bash mounts /tmp, which cygpath gives
+    # for the temporary folder, from TEMP. Bash on Linux and macOS reads neither.
+    return env | {name: os.environ[name] for name in ("SYSTEMROOT", "WINDIR", "TEMP", "TMP") if os.name == "nt" and name in os.environ}
 
 
 def ran(tmp_path: Path) -> list[str]:
@@ -198,9 +217,10 @@ def ran(tmp_path: Path) -> list[str]:
 
 
 def wait_for_background(tmp_path: Path) -> None:
+    """Until the process the script left in the background ends. Its pid is bash's own, so bash is asked."""
     pid = (tmp_path / "logs/deferred.pid").read_text(encoding="utf-8").strip()
     deadline = time.monotonic() + 20
-    while time.monotonic() < deadline and subprocess.run(["kill", "-0", pid], capture_output=True).returncode == 0:
+    while time.monotonic() < deadline and subprocess.run(["bash", "-c", f"kill -0 {pid}"], capture_output=True).returncode == 0:
         time.sleep(0.05)
 
 
@@ -218,7 +238,7 @@ def test_vm8_01_a_session_with_nothing_deferred_only_keeps_the_pin(tmp_path):
 
 
 def test_vm8_02_a_session_finishes_what_setup_deferred_and_says_so(tmp_path):
-    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:dependencies\nbootstrap:testing-oxigraph\n", encoding="utf-8")
+    write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:dependencies\nbootstrap:testing-oxigraph\n")
     done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True)
     wait_for_background(tmp_path)
     assert done.returncode == 0 and "bootstrap:dependencies bootstrap:testing-oxigraph" in done.stdout and "index is ready" in done.stdout
@@ -228,25 +248,26 @@ def test_vm8_02_a_session_finishes_what_setup_deferred_and_says_so(tmp_path):
 
 def test_vm8_06_a_task_that_reads_standard_input_cannot_eat_the_deferred_list(tmp_path):
     env = session_env(tmp_path)
-    fake = Path(env["PATH"].split(":")[0]) / "mise"
-    fake.write_text(f"#!/bin/sh\ncat > /dev/null\necho \"$2\" >> {tmp_path}/ran\n", encoding="utf-8")
-    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:testing-oxigraph\nbootstrap:frontend\n", encoding="utf-8")
+    write_for_bash(tmp_path / "bin" / "mise", f"#!/bin/sh\ncat > /dev/null\necho \"$2\" >> {bash_path(tmp_path)}/ran\n")
+    write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:testing-oxigraph\nbootstrap:frontend\n")
     subprocess.run(["bash", str(SETUP), "--finish-deferred"], env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
     assert ran(tmp_path) == ["bootstrap:testing-oxigraph", "bootstrap:frontend"]
     assert not (tmp_path / ".lattice-setup-deferred").exists()
 
 
 def test_vm8_03_a_deferred_task_that_fails_stays_deferred(tmp_path):
-    (tmp_path / ".lattice-setup-deferred").write_text("bootstrap:dependencies\n", encoding="utf-8")
+    write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:dependencies\n")
     subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path, mise_exit=1), capture_output=True, text=True)
     wait_for_background(tmp_path)
+    assert "bootstrap:dependencies" in ran(tmp_path)  # it was tried, so its staying is the script's doing
     assert (tmp_path / ".lattice-setup-deferred").read_text(encoding="utf-8") == "bootstrap:dependencies\n"
 
 
 @pytest.mark.parametrize("seconds, starts", [(10, True), (149, True), (150, False), (400, False)])
 def test_vm8_04_a_step_starts_only_before_its_limit(tmp_path, seconds, starts):
     later = re.search(r"^later\(\) \{.*?^\}\n", SETUP.read_text(encoding="utf-8"), re.M | re.S).group(0)
-    script = f'log() {{ :; }}\nstep() {{ echo "$1" > {tmp_path}/started; }}\nDEFERRED={tmp_path}/deferred\n{later}SECONDS={seconds}\nlater 150 dependencies bootstrap:dependencies\n'
+    here = bash_path(tmp_path)
+    script = f'log() {{ :; }}\nstep() {{ echo "$1" > {here}/started; }}\nDEFERRED={here}/deferred\n{later}SECONDS={seconds}\nlater 150 dependencies bootstrap:dependencies\n'
     subprocess.run(["bash", "-c", script], check=True)
     assert (tmp_path / "started").exists() is starts
     assert (tmp_path / "deferred").exists() is not starts

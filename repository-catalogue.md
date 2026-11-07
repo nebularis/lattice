@@ -254,6 +254,11 @@ path = "tools/testing/mem_check"
 import-names = ["mem_check"]
 
 [[tools]]
+name = "testing/requires"
+path = "tools/testing/requires"
+import-names = ["lattice_testing_requires"]
+
+[[tools]]
 name = "testing/jena"
 path = "tools/testing/jena"
 import-names = ["lattice_testing_jena"]
@@ -484,6 +489,7 @@ sources = [
     "docs/developer/developer-guide.md",
     "docs/developer/formal-methods-lifecycle.md",
     "docs/developer/windows-wsl.md",
+    "docs/developer/windows-links.md",
     "docs/developer/protege-import-walkthrough.md",
 ]
 ```

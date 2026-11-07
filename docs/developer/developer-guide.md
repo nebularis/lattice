@@ -314,7 +314,7 @@ is generated from `AGENTS.md`, never edited by hand.
 |---|---|
 | `build:agent-guidance` | writes `AGENTS.md`'s "Where things are" table from the repository catalogue, then Copilot's file from `AGENTS.md` |
 | `check:agent-guidance` | checks that table is current, that file, every skill's name and description, `AGENTS.md`'s skill table, the plugin marketplace and every link (in `check`) |
-| `skills:link` | links the skills into `~/.copilot/skills/` for Copilot in other projects, copying on Windows |
+| `skills:link` | links the skills into `~/.copilot/skills/` for Copilot in other projects: a symbolic link, else a directory junction on Windows, else a copy ([Directory links on Windows](windows-links.md)) |
 | `check:deny-terms` | checks staged changes against your personal, never published, list of terms (skill `lattice-publication-hygiene`) |
 | `hooks:install` | installs the git hooks into the shared hooks directory, covering every worktree. `bootstrap` runs it (ADR-A133) |
 | `hooks:run` | runs the commit checks over what is staged, as the commit hook does |

@@ -6,8 +6,9 @@
           .github/copilot-instructions.md from AGENTS.md
   check   fails if that table is stale, that file has drifted, a skill is malformed, AGENTS.md's skill
           table and .claude/skills/ disagree, the marketplace is wrong, or a link does not resolve
-  link    links (copies on Windows) the skills into a personal skills directory, by default
-          ~/.copilot/skills, for Copilot in projects other than LATTICE
+  link    links the skills into a personal skills directory, by default ~/.copilot/skills, for Copilot in
+          projects other than LATTICE: a symlink, else a directory junction on Windows, else a copy
+          (docs/developer/windows-links.md)
 
 Standard library only.
 """
@@ -16,9 +17,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -143,21 +144,59 @@ def check(root: Path) -> list[str]:
     return problems + link_problems(root, [f for f in files if f.is_file()])
 
 
-def link(root: Path, target: Path, copy: bool) -> list[str]:
+def make_junction(dest: Path, source: Path) -> None:
+    """``dest`` as a directory junction to ``source``, which Windows lets any user make where they may create ``dest``.
+    Python's own `_winapi.CreateJunction` makes it, or `mklink /J` where an interpreter lacks it."""
+    try:
+        import _winapi
+        create = getattr(_winapi, "CreateJunction")
+    except (ImportError, AttributeError):
+        create = None
+    if create is not None:
+        create(str(source.resolve()), str(dest))
+        return
+    made = subprocess.run(["cmd", "/c", "mklink", "/J", str(dest), str(source.resolve())],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if made.returncode != 0:
+        raise OSError(f"mklink /J {dest}: {made.stdout}{made.stderr}".strip())
+
+
+def link_directory(dest: Path, source: Path) -> str:
+    """``dest`` as a link to the directory ``source``, and which kind was made: a symlink, or a junction where Windows
+    refuses a symlink to a process without the privilege (error 1314). A junction needs no privilege and reads the same
+    through a path (docs/developer/windows-links.md). Raises OSError where neither can be made."""
+    try:
+        dest.symlink_to(source, target_is_directory=True)
+        return "symlink"
+    except OSError as error:
+        if getattr(error, "winerror", None) != 1314:
+            raise
+        make_junction(dest, source)
+        return "junction"
+
+
+def link(root: Path, target: Path, copy: bool) -> dict[str, str]:
+    """Each skill into ``target``, and how: `symlink`, `junction`, or `copy` where ``copy`` asks for one or no link could
+    be made, such as on a volume that holds no reparse point or where a policy refuses one."""
     target.mkdir(parents=True, exist_ok=True)
-    done = []
+    done = {}
     for skill in sorted(p for p in (root / SKILLS).iterdir() if p.is_dir()):
         dest = target / skill.name
-        if dest.is_symlink() or (dest.is_dir() and (dest / ".lattice-copy").exists()):
-            dest.unlink() if dest.is_symlink() else shutil.rmtree(dest)
+        linked = dest.is_symlink() or dest.is_junction()
+        if linked or (dest.is_dir() and (dest / ".lattice-copy").exists()):
+            dest.unlink() if linked else shutil.rmtree(dest)
         elif dest.exists():
             raise SystemExit(f"{dest} exists and was not made by this task. Remove it first.")
-        if copy:
+        how = "copy"
+        if not copy:
+            try:
+                how = link_directory(dest, skill)
+            except OSError as error:
+                print(f"skills:link: {skill.name} could not be linked ({error}), so it is copied", file=sys.stderr)
+        if how == "copy":
             shutil.copytree(skill, dest)
             (dest / ".lattice-copy").write_text("Copied by `mise run skills:link`. Re-run it after pulling.\n", encoding="utf-8", newline="\n")
-        else:
-            dest.symlink_to(skill, target_is_directory=True)
-        done.append(dest.name)
+        done[dest.name] = how
     return done
 
 
@@ -166,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("command", choices=["build", "check", "link"])
     parser.add_argument("--target", type=Path, default=Path.home() / ".copilot" / "skills",
                         help="for link: the personal skills directory (default ~/.copilot/skills)")
-    parser.add_argument("--copy", action="store_true", help="for link: copy instead of linking (the default on Windows)")
+    parser.add_argument("--copy", action="store_true", help="for link: copy instead of linking, on any platform")
     args = parser.parse_args(argv)
     if args.command == "build":
         agents = render_agents((ROOT / "AGENTS.md").read_text(encoding="utf-8"), rc.where_things_are(rc.load(ROOT)))
@@ -180,8 +219,11 @@ def main(argv: list[str] | None = None) -> int:
             print(problem)
         print(f"agent guidance: {len(problems)} problem(s)")
         return 1 if problems else 0
-    done = link(ROOT, args.target.expanduser(), args.copy or os.name == "nt")
-    print(f"{'copied' if args.copy or os.name == 'nt' else 'linked'} {', '.join(done)} into {args.target}")
+    done = link(ROOT, args.target.expanduser(), args.copy)
+    for how in ("symlink", "junction", "copy"):
+        names = [name for name, made in done.items() if made == how]
+        if names:
+            print(f"{'copied' if how == 'copy' else f'linked by {how}'}: {', '.join(names)} into {args.target}")
     return 0
 
 
