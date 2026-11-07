@@ -88,3 +88,8 @@ actually contains; `proofs` says exactly that).
   ADR-A-FM1. Nothing moves from it into `tools/proofs/`; track E's theories are freshly generated
   from the README, not ported from the spike's hand-written ones (epic principle E1, Track E
   sketch §1).
+
+## Addendum (2026-11-07): an applied development's general core
+
+Decided by the maintainer on 2026-11-07, answering WPG-Q4 of the waterfall proofs sketch, and first applied by the ledger unit's LG-7. A proof development whose terms are a domain's stays outside the repository and is cited nowhere in it. Only its domain-neutral core enters `tools/proofs/<layer>/`, restated in the layer's own terms and re-proved there under the gate, and the session's README attributes it as an external development of ours whose general core was rebuilt here, never as a proof imported. A spike session without claim records and gate markers, such as `spikes/isabelle-layers`, is not a home for a claim either track cites.
+
