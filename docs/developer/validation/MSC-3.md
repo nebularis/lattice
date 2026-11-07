@@ -35,7 +35,7 @@ The slice adds 11 tests in two modules. The two conformance suites themselves (1
 
 ## Commands and results
 
-All from `/Users/t4/work/lattice-wt/msc-3`, through `mise`.
+All from the MSC-3 worktree's root, through `mise`.
 
 | Command | Result |
 |---|---|

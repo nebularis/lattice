@@ -123,7 +123,7 @@ for surface_key in surfaces:
     
     result = subprocess.run(
         ["python", "-m", "surface", "lower", "--contracts", contract_path],
-        cwd="/Users/t4/work/lattice",
+        cwd=".",  # run from the root of your LATTICE checkout
         capture_output=True
     )
     
@@ -161,7 +161,7 @@ for mapping_iri in mappings:
 
 ```bash
 # Atomic replacement (recommended: use git or versioning system)
-cd /Users/t4/work/lattice
+cd <your lattice checkout>
 
 # Backup old packages
 cp -r ontology/surface/execution/ ontology/surface/execution.backup.$(date +%s)/
