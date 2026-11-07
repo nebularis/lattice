@@ -67,6 +67,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
+| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 | VR-1 | 6 planned, 1 building | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -565,6 +566,8 @@ gantt
     section studio-quality
     SQ-1 the harness :sq1, 2026-10-31, 2026-11-01
     SQ-2 reports in git :sq2, 2026-10-31, 2026-11-01
+    section v-rig
+    VR-1 the module ontology v-rig :active, vr1, 2026-11-07, 2026-11-08
     section vocabulary-temporal-binding
     VTB-1 ADR-A85 proposal :vtb1, 2026-09-25, 2026-09-26
     VTB-2 12 fixtures 11 :vtb2, 2026-09-25, 2026-09-26
@@ -844,7 +847,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-07 | 120 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-07 | 121 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -878,7 +881,8 @@ flowchart LR
     CCS12 --> CLOSE["CCS-14 to CCS-17, epic close"]
     K16c --> CLOSE
     REST --> IMA3["IMA phase 3"]
-    C4A["FM C4 Alloy model of A130"] --> A130["ADR-A130 accepted"]
+    VR4["v-rig VR-1 to VR-4,<br/>P1 against ledger and ensemble"] --> C4A["FM C4 Alloy model of A130"]
+    C4A --> A130["ADR-A130 accepted"]
     A130 --> ES012["Ensemble ES-0 to ES-2"]
     ES012 --> ES3C
     LG2C["Ledger LG-2"] --> ES3C
@@ -896,7 +900,7 @@ flowchart LR
 - **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-13 on the CCS board and NRS-1 on the NRS board, so relation plans wait on it twice over, and the evaluator does not.
 - **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and the ensemble gained a status record on 2026-11-04 carrying all ten of its rows.
 - **The ledger does not gate the ensemble as a unit. One slice does.** Refreshed 2026-11-07. ES-3 waits on LG-2 alone, ES-4 on LG-2 with LG-Q3 and LG-Q4 answered, and LG-4 gates only ES-8, the last ensemble slice. LG-3, LG-5 and LG-6 have no ensemble dependency. Two slices move the substrate release and so cannot be concurrent, LG-2 and ES-1, which puts ES-1 behind LG-2's merge rather than behind its build.
-- **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07 and waits on nothing.
+- **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07. Since 2026-11-07 it waits on [v-rig](plans/v-rig.md) VR-1 to VR-4, whose RDF projection of a verification rig's declared view is the requirements oracle for the ledger and ensemble drafts, so that ADR-A130's text settles before C4 models it rather than after.
 - **ADR-A130** alone takes the three CCS held questions HQ-2 (second case), HQ-7 and HQ-12, and it is still Proposed. ADR-A131 is Accepted and Ledger's layer is on `main`, and Ledger takes PDD-07, not a CCS held question.
 - **AIR-7.1** waits on Ensemble ES-4 and ES-5 and on Ledger LG-2 and LG-3, along with AIR-7.0, P7-Q5 and CCS's Instrument tranche. The ADRs are not the gate, the slices are.
 - **AIR Phase 5** waits on Open CBAA's integration of phases 1 to 4 and on Ledger LG-3, which is planned. PDD-08, the evaluation context, is split and unowned per `status/ledger.md`, with its pieces going to a Quantification slice, LG-2 and PDD-13.
@@ -981,7 +985,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
-3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
+3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted, placed after [v-rig](plans/v-rig.md) VR-1 to VR-4 on 2026-11-07 so the rig's findings reach the text first. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
 4. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
