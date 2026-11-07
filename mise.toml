@@ -13,7 +13,7 @@ uv = "0.13"
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 # Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
-VYVID_VERSION = "0.2.14"
+VYVID_VERSION = "0.2.16"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]

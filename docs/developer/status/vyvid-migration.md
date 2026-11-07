@@ -48,6 +48,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-07: Вивід pinned at `v0.2.16`, at the maintainer's word. 0.2.15 makes `vyd` keep the stream's own encoding and never crash on output or a closed pipe, and decode a child's output as UTF-8, so a project under a folder with Chinese characters on a GBK machine is found rather than its identifier check passing falsely. 0.2.16 decodes git's paths as file names and reports a path the machine cannot name, proven on Linux with eight legacy locales installed.
 - 2026-11-06: the maintainer verified VM-0 and VM-2, and accepted PRI-79 and the addenda of 2026-11-05 on ADR-A134 and ADR-A151.
 - 2026-11-06: the maintainer verified VM-7 and VM-8, accepting that the hook installing a newer `vyd` when a branch moves the pin is proven when that first happens. VM-0's Validation Pack written and its writing rules checked over whole files, 0 findings. VM-2's Q01 to Q03 asked again at `v0.2.14`, the same top five in the same order, and its Windows proof marked as pending the maintainer.
 - 2026-11-06: VM-0 and VM-2 reopened at the maintainer's word, for VM-0's Validation Pack and the check of its writing rules, and for VM-2's by-hand questions.
