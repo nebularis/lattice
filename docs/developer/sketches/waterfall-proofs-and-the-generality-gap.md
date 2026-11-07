@@ -4,7 +4,7 @@
 
 **Unit:** cross-unit. [ledger](../plans/ledger.md) at LG-2 and LG-4, [ensemble](../plans/ensemble.md) at ES-3, ES-6 and ES-8, [formal methods](../plans/formal-methods.md) at C4, E4a, E4b and E4c.
 **Status:** sketch, 2026-11-07. Investigative. Nothing here changes the model until its questions are answered.
-**Reads:** an Isabelle/HOL development of the reinsurance inurement waterfall, five theories, held outside this repository in a git-ignored working folder on the maintainer's machine. It is informative background and never a source of rules.
+**Reads:** an external Isabelle/HOL development of ours, five theories, on the reinsurance inurement waterfall, held outside this repository. It is informative background and never a source of rules. Where it is kept is not recorded here, since that changes and a working document that names it goes stale or breaches the public rules.
 **Supersedes:** a review note of 2026-10-27 that audited an earlier, unchecked listing of the same material. That note was removed from the repository on 2026-11-05 and its figures do not hold, for the reason in §1.
 
 Grading as in the engine papers. **Fact** means a theory text says so, or a build was run and read. **Judgement** means a reasoned reading that a check could overturn. Every claim below is marked.
