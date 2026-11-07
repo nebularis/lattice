@@ -48,7 +48,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
+| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 4 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, docs/placement-vehicles-structure, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -847,7 +847,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-07 | 121 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
+| `docs/placement-vehicles-structure` | 2026-11-07 | 122 | pushed | LG-7, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
