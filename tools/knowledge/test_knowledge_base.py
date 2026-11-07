@@ -389,7 +389,7 @@ SEPARATOR_RE = re.compile(r"^\|?\s*:?-{3,}")
 KNOWN_LONG_CLAIMS = frozenset({"TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296"})
 # Entries whose pointer covers the whole of a long file, which `read` refuses (TD-119). Вивід notes each at the build,
 # and this baseline fails on a new one and on one that has been fixed, as the old test did.
-KNOWN_WHOLE_FILE = frozenset({"CAP-52", "MEC-31", "MEC-55", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
+KNOWN_WHOLE_FILE = frozenset({"CAP-52", "MEC-31", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
                               "MEC-74", "MEC-75", "PRI-04", "PRI-05", "PRI-08", "PRI-12"})
 
 
