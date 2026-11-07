@@ -14,6 +14,10 @@
 #   s=$(ls -d /home/user/*/tools/claude-cloud-setup.sh "$PWD"/tools/claude-cloud-setup.sh 2>/dev/null | head -1)
 #   [ -n "$s" ] && bash "$s" || true
 #
+# A person with private domains writes the configuration with `vyd cloud script`
+# instead, on their own machine, and pastes its file in place of the lines that
+# write config.toml, keeping the last two lines after it.
+#
 # The grant is pasted rather than kept here so the repository does not vouch for
 # itself. No terminal exists for `vyd trust`, and a hash would go stale on any
 # branch that changes vyvid.toml (ADR-A152).
