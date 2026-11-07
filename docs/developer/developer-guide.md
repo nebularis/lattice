@@ -252,7 +252,7 @@ ML_OPTIONS="--maxheap 600M"
 | `tutorial_snippets.py` | Every Turtle excerpt in the tutorial (`docs/_includes/tutorial/`) still matches its source file, and every link to a repository file names a path that exists (`lattice-tutorial`) | `mise run check:tutorial-snippets` |
 | `ontology_catalog.py` | The import catalog (`ontology/catalog-v001.xml`) is complete and consistent (ADR-A88) | `mise run check:ontology-catalog` / `mise run build:ontology-catalog` |
 | `ontology_version_check.py` | Every changed ontology document bumped its version, with a release row (ADR-A86) | `mise run check:ontology-versioning` |
-| `ontology_releases.py` | Release rows exist for every version, tags are named correctly | `mise run build:ontology-releases` / `check` |
+| `ontology_releases.py` | Release rows exist for every version, tags are named correctly | `mise run build:ontology-releases` / `mise run check:ontology-releases`, which `check:ontology-versioning` runs first |
 | `bump_version.py`, `extract_bumped.py` | Bump the substrate release, or one module released on its own with its spec documents in unison and optionally its shapes, then extract the READMEs it changed and regenerate the catalogs and the release register (CAP-105) | `mise run version:bump -- [--layer-target <module>] --increment minor` |
 | `import_guard.py` | No substrate layer imports upward (ADR-A01 addendum, law B7) | `mise run check:import-guard` |
 | `reasoning_isolation_check.py` | A reasoner is declared only in `platform/reasoning-testkit` (ADR-A83) | `mise run check:reasoning-isolation` |
