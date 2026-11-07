@@ -387,7 +387,7 @@ Measured on 2026-11-02 after fetching, over every local branch and every remote-
 | `claude/fix-topology-links` | 56% on `main`, residue in two notes. The whole-tree link check `mise run topology:links` passes on this branch | its problem is solved. Deleted 2026-11-02, with its worktree, locally and on the remote |
 | `persistence-mbt` | a 421-line sketch of September, with INDEX rows. It proposes ADR-A84, a number since taken, and a `tools/persistence_mbt` library driving a store with compiler-generated SPARQL against a model built from the resolved profile, with a workload specification, expected concurrency behaviour and a growth oracle. Since then `check:persistence-conformance` runs 5,686 cases on three engines, `benchmark/persistence-store-probes` holds the probes, and the test-suite-performance and python-test-melting sketches cover the suites | the maintainer reviews §5.5 and §5.6 against the conformance suite. Adopt as a sketch only if they add a check the suite lacks, else drop |
 | `spikes/pol-map` | 0% on `main`, 4,205 lines | keep. Update to the current ontology before merging or adding |
-| `origin-ssh/tutorial/guide` | 2,208 lines, Gareth's | untouched |
+| `origin-ssh/tutorial/guide` | 2,208 lines, a collaborator's | untouched |
 | `origin-ssh/main-xg1czj` and `origin/origin-ssh/main-xg1czj` | one row, PDD-18, a number `main` already uses | brought onto this branch as PDD-19, both refs deleted |
 | `docs/work-board` | this | live |
 | `claude/happy-jones-abb1c4`, `claude/epic-noyce-e09046`, `claude/ontology-config-authoring-cc050f`, `worktree-agent-*` x 4 | nothing ahead | deleted 2026-11-02 with their worktrees |

@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-07.
+Built from the status records on 14 branches, the units' own state from this tree, the newest board day 2026-11-07.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -847,7 +847,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-07 | 122 | pushed | LG-7, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
+| `docs/placement-vehicles-structure` | 2026-11-07 | 124 | pushed | LG-7, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -909,7 +909,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 107 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 106 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

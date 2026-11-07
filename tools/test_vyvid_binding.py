@@ -179,7 +179,7 @@ def test_vm7_01_the_pasted_lines_trust_this_repository_and_name_its_domains(tmp_
 
 def test_vm7_02_the_setup_script_clones_the_domains_before_the_index_is_built():
     text = SETUP.read_text(encoding="utf-8")
-    assert text.index('step "vyvid" install_vyvid') < text.index('step "index packages"') < text.index('step "index" mise run build:knowledge & index_pid=$!') < text.index('later 150 "dependencies"') < text.index('wait "$index_pid"')
+    assert text.index('step "vyvid" install_vyvid') < text.index('step "index packages"') < text.index('step "index" limited mise run build:knowledge & index_pid=$!') < text.index('later 150 "dependencies"') < text.index('wait "$index_pid"')
     assert text.count('\nwait "$isabelle_pid"') == 1 and text.index('later 250 "reasoning testkit"') < text.index('\nwait "$isabelle_pid"')
     assert subprocess.run(["bash", "-n", str(SETUP)]).returncode == 0
 
@@ -278,3 +278,37 @@ def test_vm8_05_the_index_needs_no_task_the_rest_of_bootstrap_installs():
     assert set(tasks["bootstrap:index-packages"]["depends"]) == {"bootstrap:pip", "bootstrap:vyvid"}
     assert "depends" not in tasks["build:knowledge"], "it runs beside bootstrap:dependencies, so it must not start a second pip"
     assert set(tasks["bootstrap:dependencies"]["depends"]) | {"bootstrap:knowledge", "bootstrap:vyvid"} == set(tasks["bootstrap"]["depends"])
+
+
+def setup_functions() -> str:
+    """The script's step, limit and later functions, with the globals they read, to run on their own."""
+    text = SETUP.read_text(encoding="utf-8")
+    parts = [re.search(rf"^{name}\(\) \{{.*?^\}}\n", text, re.M | re.S).group(0) for name in ("step", "limited", "later")]
+    return 'log() { :; }\nfail() { :; }\nFAILED_STEPS=()\nTIMEOUT="$(command -v timeout || command -v gtimeout || true)"\n' + "".join(parts)
+
+
+@pytest.mark.skipif(not (shutil.which("timeout") or shutil.which("gtimeout")), reason="needs timeout, which the cloud's Linux has")
+def test_vm8_07_a_step_that_stalls_is_stopped_and_left_for_the_session(tmp_path):
+    here = bash_path(tmp_path)
+    write_for_bash(tmp_path / "mise", "#!/bin/sh\nsleep 30\n")
+    (tmp_path / "mise").chmod(0o755)
+    script = setup_functions() + f'PATH={here}:$PATH\nLOGS={here}\nDEFERRED={here}/deferred\nSTEP_LIMIT=1\nSECONDS=0\nlater 150 dependencies bootstrap:dependencies\n'
+    started = time.monotonic()
+    subprocess.run(["bash", "-c", script], check=True, timeout=25)
+    assert time.monotonic() - started < 15
+    assert (tmp_path / "deferred").read_text(encoding="utf-8") == "bootstrap:dependencies\n"
+
+
+def test_vm8_08_a_step_gets_no_standard_input_from_setup(tmp_path):
+    here = bash_path(tmp_path)
+    write_for_bash(tmp_path / "mise", f"#!/bin/sh\ncat > /dev/null\necho \"$2\" >> {here}/ran\n")
+    (tmp_path / "mise").chmod(0o755)
+    script = setup_functions() + f'PATH={here}:$PATH\nLOGS={here}\nDEFERRED={here}/deferred\nSTEP_LIMIT=60\nSECONDS=0\nlater 150 dependencies bootstrap:dependencies\n'
+    # setup's standard input stays open, as a pipe nobody writes to, so a step that read it would wait for ever
+    run = subprocess.Popen(["bash", "-c", script], stdin=subprocess.PIPE)
+    try:
+        assert run.wait(timeout=20) == 0
+    finally:
+        run.kill()
+    assert ran(tmp_path) == ["bootstrap:dependencies"]
+    assert not (tmp_path / "deferred").exists()

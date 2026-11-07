@@ -13,7 +13,7 @@ uv = "0.13"
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 # Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
-VYVID_VERSION = "0.2.16"
+VYVID_VERSION = "0.2.19"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
@@ -620,9 +620,14 @@ run = [
   { task = "check:mork-compilers-conformance:rdflib" },
   { task = "check:mork-compilers-conformance:jena" },
 ]
+[tasks."check:ontology-releases"]
+description = "Flag a current ontology version with no row in docs/architecture/ontology-releases.md (ADR-A86)"
+run = "python tools/ontology_releases.py check"
+
 [tasks."check:ontology-versioning"]
-description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, a missing version, or a current version with no release row (ADR-A86)"
-run = ["python tools/ontology_version_check.py", "python tools/ontology_releases.py check"]
+description = "Flag any ontology .ttl file changed without its owl:versionIRI, any shapes/projection file changed without its directory's .version, or a missing version, compared with HEAD, or with a ref passed as -- --base-ref REF (ADR-A86). Runs check:ontology-releases first"
+depends = ["check:ontology-releases"]
+run = "python tools/ontology_version_check.py"
 
 [tasks."build:ontology-releases"]
 description = "Add a row to docs/architecture/ontology-releases.md for each unreleased ontology version, and list the release tags a person must create (ADR-A86)"

@@ -73,7 +73,7 @@ The current `SurfaceRevisionApi` slice postdates these handoffs and has only the
 Per the Agentic Development Contract, run these yourself and report the result back.
 
 ```text
-cd /Users/t4/work/lattice
+cd <your lattice checkout>
 mise exec -- mvn -f platform/pom.xml -pl surface-workflow -am test
 ```
 
