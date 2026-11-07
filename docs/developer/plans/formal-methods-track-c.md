@@ -231,7 +231,7 @@ product overflows.
 | ID | Command | Claim | ADR | Expected | Scope |
 |---|---|---|---|---|---|
 | C4-A1 | `check RefusalCriterion` | the step graph is acyclic exactly when the same-position graph over parts is: refining by position and part is the whole of the refusal rule | A130 d5 | no counterexample | 5, 3 Position |
-| C4-A2 | `check UniqueOutcomeWhenAdmitted` | two runs that are each deterministic in what a step reads give the same outcome at every step, when admitted. This is the composition law at small scope, and order independence follows, since a schedule only sequences determined steps | A130 d5 | no counterexample | 5, 3 Position, 2 Run |
+| C4-A2 | `check UniqueOutcomeWhenAdmitted` | two runs that are each deterministic in what a step reads give the same outcome at every step, when admitted. This is the composition law at small scope, and order independence follows, since a schedule only sequences determined steps. **That premise is load-bearing and is checked separately as of 2026-11-07, by C4-A10 and C4-A11**, since an acyclic step graph whose steps are not totalised by their positions admits two linear extensions with different outcomes | A130 d5 | no counterexample | 5, 3 Position, 2 Run |
 | C4-A3 | `run CycleAdmitsTwoOutcomes` | without admission, two deterministic runs can differ. The reason cycles are refused | A130 d5 | an instance | 4 |
 | C4-A4 | `check SharedDrawsAddNoCycle` | parts drawing one account at one position never make the step graph cyclic by themselves, given the two phases | A131 d6 | no counterexample | 5, 3 Position |
 | C4-A5 | `run SingleStepDrawsCycle` | if each drawer instead read the balance the others left, at one position, the graph is cyclic. The reason for two phases | A131 d6 | an instance | 4 |
@@ -239,6 +239,9 @@ product overflows.
 | C4-A7 | `check SignedSharesSumToOrder` | where written lines reach the order and lines to stand do not exceed it, and every scaled line is exact, signed lines sum to the order | A130 d10 | no counterexample | 4 Line, 8 Int |
 | C4-A8 | `check SignedNeverAboveWritten` | no signed line exceeds its written line, and a line to stand is signed as written | A130 d10 | no counterexample | 4 Line, 8 Int |
 | C4-A9 | `check UnderwrittenSignedInFull` | where written lines fall short of the order at inception, every line is signed as written | A130 d10 | no counterexample | 4 Line, 8 Int |
+| C4-A10 | `check PositionsTotaliseSteps` | any two steps that draw one account are ordered by their positions or share one position. This is the fact C4-A2's "only sequences determined steps" rests on, stated so a change to the position model breaks this check instead of silently weakening C4-A2 | A130 d5, A131 d6 | no counterexample | 5, 3 Position |
+| C4-A11 | `run PartialPositionsAdmitTwoOutcomes` | with the position order relaxed to a partial order, two runs that are each a linear extension of it give different outcomes. Why the totality of C4-A10 is load-bearing and not decoration | A130 d5 | an instance | 4, 3 Position, 2 Run |
+| C4-A12 | `run ConservingRunOmitsAStep` | a run that never evaluates one of its planned steps still satisfies amount conservation. Why conservation is not a completeness check and the schedule needs its own | A130 d5 | an instance | 4, 8 Int |
 
 **Motivating cases.** Each a `run` with a predicate that pins the instance, expected to find one,
 confirming the design admits it. The README draws each instance.

@@ -85,7 +85,7 @@ and worked on macOS. They are candidates for tasks.
 | Isabelle | In `spikes/formal-prover/isabelle`, with `ISABELLE_HOME_USER` set: `isabelle build -v -d . FormalMethodsSpike`, then the same for `FormalMethodsSpikeDefects` |
 | Exported OCaml | `ocamlfind ocamlopt formal_methods_kernel.ml export_driver.ml -o drv` in a scratch directory |
 | Exported Haskell | `ghc -O0 Formal_Methods_Kernel.hs ExportDriver.hs -o drv` in a scratch directory |
-| Gate and defect checks | `python spikes/formal-prover/gate.py <track-dir>` and the four `check_s4.py` and `check_s5.py` scripts |
+| Gate and defect checks | `python spikes/formal-prover/gate.py <track-dir>` (that copy was removed on 2026-11-07, the gate is `tools/proofs/gate.py`) and the four `check_s4.py` and `check_s5.py` scripts |
 
 Compiling in place leaves git-ignored `*.vo` and `*.glob` files beside the Rocq sources. Scratch
 directories under `.build/formal/out/` keep the extraction and export builds out of the tracked tree.

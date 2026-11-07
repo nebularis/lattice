@@ -12,6 +12,11 @@ skill_prefix = "lattice-"
 skill_targets = [".claude/skills"]
 hook_clients = ["claude-code", "copilot"]
 
+# A whole-family move is delegated at load, so `read TSD-38` resolves bare. The STD move maps rows, which is
+# not, and LATTICE declares no RDF family, so the query-writing standards' own identifiers need this to resolve bare.
+[project.delegates]
+RDF = "triple-stores"
+
 [project.identifiers]
 exceptions = "code:tools/knowledge/identifier-exceptions.txt"
 # The slice crosswalk holds historic spellings by design (plan work-board), so it is never a mention.

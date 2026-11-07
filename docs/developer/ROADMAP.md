@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 13 branches, the units' own state from this tree, the newest board day 2026-11-07.
+Built from the status records on 14 branches, the units' own state from this tree, the newest board day 2026-11-07.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 3 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
+| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 4 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, docs/placement-vehicles-structure, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -67,6 +67,7 @@ Built from the status records on 13 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
+| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 | VR-1 | 6 planned, 1 building | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -565,6 +566,8 @@ gantt
     section studio-quality
     SQ-1 the harness :sq1, 2026-10-31, 2026-11-01
     SQ-2 reports in git :sq2, 2026-10-31, 2026-11-01
+    section v-rig
+    VR-1 the module ontology v-rig :active, vr1, 2026-11-07, 2026-11-08
     section vocabulary-temporal-binding
     VTB-1 ADR-A85 proposal :vtb1, 2026-09-25, 2026-09-26
     VTB-2 12 fixtures 11 :vtb2, 2026-09-25, 2026-09-26
@@ -769,7 +772,7 @@ flowchart LR
 
 **Track H, the release.** Track H's Next action lists every planned FMH-2 slice built: FMH-2.6c to FMH-2.6g, FMH-2.7, FMH-2.8a to FMH-2.8c, FMH-2.9, FMH-2.11a and FMH-2.11b (the Persistence README in the literate layout), the test-suite work FMH-TS-1 and FMH-TS-2, a new `packages/persistence/python`, Oxigraph as the Persistence tests' default engine, and the release prepared as 0.19.0 with the applied modules re-pinned. The maintainer answered the review items Q1 to Q6 on 2026-10-21 and approved the second review's follow-ups on 2026-10-23, so nothing on the line awaits review. The tags `persistence-v0.19.0` and `ontologies-v0.19.0` exist, so the line is on `main`, although the record still lists the merge as the maintainer's and its board rows have not moved.
 
-**Isabelle models.** `fml/isabelle-layers` carries Isabelle/HOL models of the layers' laws and a code-generation spike, with Haskell and Scala exports run and Eligibility's decision table executed. The spike is FM-CG1 on the epic's board, merged 2026-11-02, and FM-CG2, the generated Haskell as a differential oracle, is planned behind PDD-19.
+**Isabelle models.** `fml/isabelle-layers` carries Isabelle/HOL models of the layers' laws and a code-generation spike, with Haskell and Scala exports run and Eligibility's decision table executed. The spike is FM-CG1 on the epic's board, merged 2026-11-02, and FM-CG2, the generated Haskell as a differential oracle, is planned behind PDD-19. **A further code-generation pass on 2026-11-07** made Eligibility execute from the generated code, with ten results agreeing across Isabelle's `value`, a Haskell driver and a Scala driver. It found the generated code partial on HOL's cofinite set, where Scala warns six times and Haskell fails at run time without warning, which is TD-155 and a stated precondition the evaluator's interface owes at EV-0. **C4 gained three checks** on the same day, C4-A10 to C4-A12, isolating the premise C4-A2 rests on and showing that amount conservation does not detect an omitted step. **FM-D17 was widened on 2026-11-07** for the ledger unit's LG-7: the Python rendering of an `isabelle-spec` block is opt-in by a first-line directive, so a kernel block may hold any Isabelle definition, and the prover spike's duplicate gate was removed in favour of `tools/proofs/gate.py` (ADR-A-FM2's addendum).
 
 ### 4.4 Improved ontology documentation (IOD)
 
@@ -782,6 +785,8 @@ flowchart LR
 ### 4.5 Ensemble and Ledger, substrate layers
 
 Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and plan, for the maintainer's review. Its status record was created on 2026-11-04 with ES-0 and ES-1 briefed, their packs written, and ES-2 to ES-9 planned. Ledger's layer is on `main` with ADR-A131 Accepted. LG-0 (examples) and LG-1 (the configuration document) are built, verified and committed, LG-2 (the runtime document) is briefed and not started, and LG-3 to LG-5 are planned. LG-5, the benchmark, is part built ahead of LG-2.
+
+**A design pass on 2026-11-07** briefed LG-4, ES-3 and ES-8 further and raised ES-Q10 and WPG-Q2, from an external Isabelle development of a reinsurance inurement waterfall read as background ([sketch](sketches/waterfall-proofs-and-the-generality-gap.md)). No slice changed state. LG-4 takes conservation with an explicit residual term, which settles the open half of TD-95 in an instance, the allocation axioms corrected from five to four with monotonicity dropped, the merge rule as declared data never a default, and attribution across parties as a second conservation law. ES-3 takes the separation of uniqueness from computability, the positional total order as the condition ADR-A130 decision 5's independence-of-order bullet rests on, a unit reading only its declared predecessors as load-bearing, and a conformance case for schedule completeness, since conservation cannot see a unit that never ran. ES-8 carries a withdrawal: that development bears nothing on decision 5's criterion for admitting a cyclic component, because its counterexample solves a cycle over determined values while decision 5's least fixpoint is over the information order. The ledger does not gate the ensemble as a unit, only LG-2 does, and the ensemble's own head gate is C4 (section 8). WPG-Q4 was answered the same day: an applied development's general core is rebuilt under `tools/proofs/<layer>/` and the development itself stays outside the repository, now ADR-A-FM2's addendum, with LG-7 the first slice under it.
 
 | | Ensemble | Ledger |
 |---|---|---|
@@ -842,7 +847,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-07 | 118 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-07 | 124 | pushed | LG-7, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -876,18 +881,26 @@ flowchart LR
     CCS12 --> CLOSE["CCS-14 to CCS-17, epic close"]
     K16c --> CLOSE
     REST --> IMA3["IMA phase 3"]
-    A130["ADR-A130 accepted"] --> ES45["Ensemble ES-4 and ES-5"]
+    VR4["v-rig VR-1 to VR-4,<br/>P1 against ledger and ensemble"] --> C4A["FM C4 Alloy model of A130"]
+    C4A --> A130["ADR-A130 accepted"]
+    A130 --> ES012["Ensemble ES-0 to ES-2"]
+    ES012 --> ES3C
+    LG2C["Ledger LG-2"] --> ES3C
+    ES3C --> ES45["Ensemble ES-4 and ES-5"]
     ES45 --> AIR71["AIR-7.1 programme module"]
-    LG23["Ledger LG-2 and LG-3"] --> AIR71
+    LG2C --> AIR71
+    LG3C --> AIR71
     CBAA["Open CBAA integrates AIR 1 to 4"] --> AIR5["AIR phase 5"]
-    LG23 --> AIR5
+    LG3C --> AIR5
 ```
 
 **Reading it.**
 
 - **CCS-9b.3b and CCS-9b.4** gate the most work. CCS-9b.4, CCS-9d, CCS-9c and CCS-16c, the evaluator, the epic's close, FMB-4 and FM track G, and IMA Phase 3 sit downstream. CCS-13a does not, since it is blocked on NRS-1 only.
 - **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-13 on the CCS board and NRS-1 on the NRS board, so relation plans wait on it twice over, and the evaluator does not.
-- **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and Ensemble has no status record yet.
+- **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and the ensemble gained a status record on 2026-11-04 carrying all ten of its rows.
+- **The ledger does not gate the ensemble as a unit. One slice does.** Refreshed 2026-11-07. ES-3 waits on LG-2 alone, ES-4 on LG-2 with LG-Q3 and LG-Q4 answered, and LG-4 gates only ES-8, the last ensemble slice. LG-3, LG-5 and LG-6 have no ensemble dependency. Two slices move the substrate release and so cannot be concurrent, LG-2 and ES-1, which puts ES-1 behind LG-2's merge rather than behind its build.
+- **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07. Since 2026-11-07 it waits on [v-rig](plans/v-rig.md) VR-1 to VR-4, whose RDF projection of a verification rig's declared view is the requirements oracle for the ledger and ensemble drafts, so that ADR-A130's text settles before C4 models it rather than after.
 - **ADR-A130** alone takes the three CCS held questions HQ-2 (second case), HQ-7 and HQ-12, and it is still Proposed. ADR-A131 is Accepted and Ledger's layer is on `main`, and Ledger takes PDD-07, not a CCS held question.
 - **AIR-7.1** waits on Ensemble ES-4 and ES-5 and on Ledger LG-2 and LG-3, along with AIR-7.0, P7-Q5 and CCS's Instrument tranche. The ADRs are not the gate, the slices are.
 - **AIR Phase 5** waits on Open CBAA's integration of phases 1 to 4 and on Ledger LG-3, which is planned. PDD-08, the evaluation context, is split and unowned per `status/ledger.md`, with its pieces going to a Quantification slice, LG-2 and PDD-13.
@@ -896,7 +909,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 37 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 106 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -972,7 +985,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
-3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first.
+3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted, placed after [v-rig](plans/v-rig.md) VR-1 to VR-4 on 2026-11-07 so the rig's findings reach the text first. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
 4. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
@@ -1043,7 +1056,8 @@ gantt
 
 These are findings from building this roadmap, offered as hypotheses for the maintainer to check. Rewritten 2026-11-02, when sections 1, 7, 9 and 11 became generated. One added 2026-11-05.
 
-- **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten have no status record to carry a board at all.
+- **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten gained a record on 2026-11-04 and are no longer among them.
+- **A proof of a law for one domain's instance is not a proof of the law.** Added 2026-11-07. An external Isabelle development of the reinsurance inurement waterfall proves uniqueness over an acyclic dependency relation, and its argument uses only well-foundedness and the fact that a step reads its declared predecessors, so the general theorem looks to be a refactoring away. What it does not carry is Undetermined, which is the order ADR-A130 decision 5's least fixpoint is taken over, and reading one for the other had me report a decision unsound that is not. The gap worth naming is between the OWL encodings, the proofs and the runtime: a law can hold in all three and be a different law in each, and a code-generation spike found the generated code partial on a cofinite set that neither the encoding nor the proof restricts (TD-155).
 - **Two branches numbered the same standards.** `docs/work-board` and `realign/config-authoring-studio` both took STD-300 upward on 2026-11-02, and both held a TD-137. `check:identifiers` dates a row by its day, so first in wins found a tie, and at the realign branch's merge of `main` the work board's rows kept their numbers and the realign rows became STD-308 to STD-316 and TD-139. A branch cannot know what another numbers until a fetch, and the board's `--fetch` is the moment to look.
 - **The historic ids were the real cost.** Four of the five branch analyses asked for on 2026-11-02 were answered by content measurement in minutes, but the 34 track H ids took three passes to recognise as the packs' own spelling of boarded slices. A pack named by its slice closes that gap for new work.
 - **H3.1 was not track H's H3.** The code-generation spike on `fml/isabelle-layers` was the formal-methods epic's FM-D10 decision at work, and the plan's H3 is the specification registry. It is homed as FM-CG1 and FM-CG2 on the formal-methods board since 2026-11-05. A slice that borrows a number from a plan it does not belong to is read as that plan's.

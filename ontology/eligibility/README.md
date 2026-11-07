@@ -39,10 +39,7 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 - The restriction rows of section 6 that are checked in SHACL generate `shapes/structural.ttl`.
 - The two hidden blocks of section 7 generate `shapes/constraints.ttl` and `shapes/rules.ttl`, each naming
   its file.
-- The `isabelle-spec` block (section 10) generates `tools/proofs/eligibility/Kernel.thy`'s closed datatype
-  and the kernel connectives' defining equations (`or3`, `and3`, `neg3`), and is also rendered into
-  `tools/reference/eligibility/src/reference_eligibility/_kernel_defs.py`. The theory's proofs, and
-  `decision_leq`, are hand-written.
+- The `isabelle-spec` block (section 10) generates `tools/proofs/eligibility/Kernel.thy`'s closed datatype and the kernel connectives' defining equations (`or3`, `and3`, `neg3`), and, because its first line is the directive `(* @reference-table *)`, is also rendered into `tools/reference/eligibility/src/reference_eligibility/_kernel_defs.py`. The theory's proofs, and `decision_leq`, are hand-written.
 - Extraction rewrites the class diagram (section 4) and the Axiom Index (6.7), which are never edited by
   hand.
 - `turtle-example` blocks are illustrative only.
@@ -1840,6 +1837,7 @@ connective's identity, so the empty case decides. Open, `some_value` is Permitte
 and `every_value` Denied when a value is Denied, and each is otherwise Undetermined.
 
 ```isabelle-spec
+(* @reference-table *)
 theory Kernel
 imports Main
 begin

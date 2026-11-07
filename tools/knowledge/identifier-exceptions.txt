@@ -54,7 +54,11 @@ HQ-X4  # named in a plan, no board row yet
 HQ-X5  # named in a plan, no board row yet
 HQ-X6  # named in a plan, no board row yet
 HQ-X7  # named in a plan, no board row yet
+# unit ensemble, 1 slice(s)
+ES-9  # named in a plan, no board row yet
 # unit formal-methods-track-h, 5 slice(s)
+FMH-1.4a  # named in a plan, no board row yet
+FMH-2  # named in a plan, no board row yet
 FMH-H1  # named in a plan, no board row yet
 FMH-H1.4a  # named in a plan, no board row yet
 FMH-H2  # named in a plan, no board row yet

@@ -25,7 +25,7 @@ the generator again must never silently discard a proof.
 
 ## Shared infrastructure
 
-`gate.py` and `claim-schema.json` are carried over from `spikes/formal-prover/`, unchanged in
+`gate.py` and `claim-schema.json` were carried over from `spikes/formal-prover/`, whose own copies were removed on 2026-11-07 so that one gate exists (ADR-A-FM2's addendum), unchanged in
 design (PF1 already fixed there: `gate.py`'s digest check excludes any `defects/` path, so it
 does not depend on a filesystem's sort order). One gate script serves every layer here, the same
 way it served both provers in the spike.

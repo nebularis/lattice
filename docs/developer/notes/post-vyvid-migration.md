@@ -78,7 +78,7 @@ The index is built over the whole stack, so one `find` ranks LATTICE's entries a
 |---|---|---|---|
 | The 64 store findings, `docs/architecture/triple-store-discovery.md` | `findings.md` of `vyvid-triple-stores` | `TSD-nn`, unchanged | a page at the same path saying what each finding means for LATTICE, keyed to the domain's identifiers and linked at tag `v0.1.0` |
 | The open store questions, in the same file | `findings.md` of `vyvid-triple-stores` | `TSD-Qn`, unchanged | nothing of its own |
-| 30 query-writing standards, `STD-026` to `STD-054` and `STD-279` | `query-standards.md` of `vyvid-triple-stores` | `RDF-1` to `RDF-30` | the old identifiers keep working, by a move |
+| 30 query-writing standards, `STD-026` to `STD-054` and `STD-279` | `query-standards.md` of `vyvid-triple-stores` | `RDF-1` to `RDF-30` | the old identifiers keep working, by a move, and the new ones resolve bare by a delegation of the `RDF` family in `vyvid.toml`, since a move that maps rows is not delegated the way a whole-family move is |
 | The facet register, `docs/developer/facets.md` | `src/vyvid/data/facets.md` in Вивід, the general scope | the same values | nothing. All 325 rows were compared with the store with no difference, and the file was removed |
 | The T-Box, `tools/knowledge/knowledge.ttl` | `src/vyvid/data/knowledge.ttl` in Вивід | the same classes and properties | nothing |
 | What each register column means, inside the old extractor | `src/vyvid/data/register-types.toml` in Вивід | a declaration | nothing |
