@@ -14,9 +14,10 @@
 #   s=$(ls -d /home/user/*/tools/claude-cloud-setup.sh "$PWD"/tools/claude-cloud-setup.sh 2>/dev/null | head -1)
 #   [ -n "$s" ] && bash "$s" || true
 #
-# A person with private domains writes the configuration with `vyd cloud script`
-# instead, on their own machine, and pastes its file in place of the lines that
-# write config.toml, keeping the last two lines after it.
+# A person with private domains instead writes the whole setup script on their own
+# machine, these lines' work included, and pastes the file it writes:
+#
+#   vyd cloud script --output ~/cloud-setup.sh --domain <name> --grant github.com/nebularis/lattice --run tools/claude-cloud-setup.sh
 #
 # The grant is pasted rather than kept here so the repository does not vouch for
 # itself. No terminal exists for `vyd trust`, and a hash would go stale on any
@@ -171,11 +172,28 @@ if [ "${1:-}" = "--session" ]; then
 fi
 
 FAILED_STEPS=()
-# Run a step, logging to its own file. Record a failure instead of stopping.
+# Run a step, logging to its own file. Record a failure instead of stopping. A step
+# gets no standard input, since setup's own may be a pipe that never closes, and a
+# step that read it would wait for ever where the same step run in a session would not.
 step() {
-  local name="$1"; shift
+  local name="$1" rc; shift
   log "$name (${SECONDS}s)"
-  "$@" > "$LOGS/$name.log" 2>&1 || { tail -20 "$LOGS/$name.log"; fail "$name failed"; FAILED_STEPS+=("$name"); return 1; }
+  "$@" < /dev/null > "$LOGS/$name.log" 2>&1 && return 0
+  rc=$?
+  tail -20 "$LOGS/$name.log"
+  if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then fail "$name ran out of time after ${STEP_LIMIT}s"; else fail "$name failed"; fi
+  FAILED_STEPS+=("$name")
+  return "$rc"
+}
+
+# A step that waits on the network gets a time limit, so a download that stalls
+# cannot hold up the session's start. timeout signals the step's whole process
+# group, so a pip it started stops with it. It exits 124 at the limit, and 137 when
+# the step ignored the signal and was killed 10 seconds later.
+STEP_LIMIT="${LATTICE_STEP_LIMIT:-240}"
+TIMEOUT="$(command -v timeout || command -v gtimeout || true)"
+limited() {
+  if [ -n "$TIMEOUT" ]; then "$TIMEOUT" -k 10 "$STEP_LIMIT" "$@"; else "$@"; fi
 }
 
 ### 1. Packages: Java 25, Python 3.14 ##########################################
@@ -198,7 +216,7 @@ install_packages() {
 
 install_isabelle() {
   [ -x "/opt/$ISABELLE/bin/isabelle" ] ||
-    curl -fsSL "$ISABELLE_URL" | tar -xz -C /opt || return 1
+    curl -fsSL --connect-timeout 30 --max-time "$STEP_LIMIT" "$ISABELLE_URL" | tar -xz -C /opt || return 1
   ln -sf "/opt/$ISABELLE/bin/isabelle" /usr/local/bin/isabelle
 }
 
@@ -263,9 +281,11 @@ step "vyvid" install_vyvid
 # The index always builds, since an agent needs it from its first question, and it
 # embeds in about a minute that every later session is then spared. The dependencies
 # run beside it, since it is mostly CPU and they are mostly network, and are cached
-# while they fit. A step is never killed, so it starts only before a limit that
-# leaves it room to finish. What did not start goes in $DEFERRED, and a session's
-# hook finishes it, so a slow network costs the sessions of that snapshot only.
+# while they fit. A step starts only before a limit that leaves it room to finish,
+# and is stopped at $STEP_LIMIT if the network stalls. What did not start, or was
+# stopped, goes in $DEFERRED, and a session's hook finishes it, so a slow network
+# costs the sessions of that snapshot only. An index that was stopped is a failed
+# step, which an agent rebuilds with mise run build:knowledge.
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 rm -f "$DEFERRED"
@@ -273,7 +293,8 @@ rm -f "$DEFERRED"
 later() {
   local limit="$1" name="$2" task="$3"
   if [ "$SECONDS" -lt "$limit" ]; then
-    step "$name" mise run "$task"
+    step "$name" limited mise run "$task"
+    case $? in 124|137) log "$name left for the session (${SECONDS}s)"; echo "$task" >> "$DEFERRED" ;; esac
   else
     log "$name left for the session (${SECONDS}s)"
     echo "$task" >> "$DEFERRED"
@@ -282,7 +303,7 @@ later() {
 
 # Before the two below, since one pip at a time writes this checkout's .venv.
 step "index packages" mise run bootstrap:index-packages
-step "index" mise run build:knowledge & index_pid=$!
+step "index" limited mise run build:knowledge & index_pid=$!
 later 150 "dependencies" bootstrap:dependencies
 wait "$index_pid" || FAILED_STEPS+=("index")
 # Not part of bootstrap. The reasoner jar (ADR-A83) is what the tests that need
