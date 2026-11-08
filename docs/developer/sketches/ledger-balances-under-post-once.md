@@ -179,9 +179,9 @@ Each is a claim for the gate under LG-7's conventions, in the session as it stan
 | LR5 | the refinement, beyond one part | every rounded part is within one unit of the exact share, the recipient of a residual unit included, and the rounded fold over the tree conserves exactly while each account's rounded balance is within one unit per posting of the exact balance | about 120 lines, the second half needs an integer `spread` |
 | LC3 per step | nothing is posted to any account beyond its availability at that step, for every step and not the first only | a function giving the balances before step *i*, by recursion on the account list, and an induction showing `total (ps ! i) ≤ available (before i) (accts ! i)`. The bound is `spread`'s own `min`, so the proof is bookkeeping | about 40 lines, replacing LC3's second conclusion with a reviewed restatement |
 | LM1 | a refused merge grants nothing and changes nothing | a merge result type with a refusal, or a refusal decided before the rule, by LG-Q11 | about 30 lines once LG-Q11 is answered |
-| LO1 over multisets | order independence as `mset ps = mset ps'` | `HOL-Library.Multiset`, once the library builds on both machines under a memory limit | a restatement, the proof as it is |
+| LO1 over multisets | order independence as `mset ps = mset ps'` | `HOL-Library.Multiset`, reached as LG-Q14 decides, from source through a `sessions` clause under its leaning | a restatement, the proof as it is |
 
-LO1 as proved, over two lists without repeats with the same elements, is the multiset statement for proposals that are distinct, which a second order of the same proposals always is, so the library buys the natural statement and not a stronger theorem. The HOL-Library build is worth having for `Multiset` and for `Sublist` in the integer `spread`, and its cost is a heap of some gigabytes once per machine.
+LO1 as proved, over two lists without repeats with the same elements, is the multiset statement for proposals that are distinct, which a second order of the same proposals always is, so the library buys the natural statement and not a stronger theorem. The library is worth having for `Multiset` and for `Sublist` in the integer `spread`. It built on machine R on 2026-11-08 under a memory limit, and a `sessions "HOL-Library"` clause loads the theories named from source, so no other machine needs the heap (LG-Q14). LG-8 holds these claims.
 
 ## 7. What this sketch asks for
 
@@ -189,4 +189,4 @@ LO1 as proved, over two lists without repeats with the same elements, is the mul
 - LG-Q10, leaning (e) examined before (d).
 - LG-Q11 to LG-Q13, raised in the plan from §5.
 - One measurement, the ordered seek of §2.1's design C, before C is preferred to B.
-- The HOL-Library build on both machines, for LO1's statement and the integer `spread`.
+- LG-Q14, how the session reaches HOL-Library now that it built on machine R, for LO1's statement and the integer `spread`, which LG-8 then proves.
