@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 16 branches, the units' own state from this tree, the newest board day 2026-11-08.
+Built from the status records on 15 branches, the units' own state from this tree, the newest board day 2026-11-08.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ Built from the status records on 16 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked | ccs-trunk, ccs/board-corrections, pvs-fml-foo, realign/config-authoring-studio |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, fml/isabelle-layers, pvs-fml-foo, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -67,7 +67,7 @@ Built from the status records on 16 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
-| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · building 2026-11-08 on docs/placement-vehicles-structure | VR-1 | 4 planned, 2 built, 1 building | docs/placement-vehicles-structure |
+| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · built 2026-11-08 on docs/placement-vehicles-structure | VR-1 | 7 built | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -459,6 +459,22 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
+    title V-rig
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section v-rig
+    VR-1 the module ontology v-rig :vr1, 2026-11-08, 2026-11-09
+    VR-2 the synthetic mini-rig :vr2, 2026-11-08, 2026-11-09
+    VR-3 the tracked mapping scheme and :vr3, 2026-11-08, 2026-11-09
+    VR-4 P1 :vr4, 2026-11-08, 2026-11-09
+    VR-5 P2 and P3 :vr5, 2026-11-08, 2026-11-09
+    VR-6 P4 :vr6, 2026-11-08, 2026-11-09
+    VR-7 the seam for a read case :vr7, 2026-11-08, 2026-11-09
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
     title Vyvid-migration
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -567,10 +583,6 @@ gantt
     section studio-quality
     SQ-1 the harness :sq1, 2026-10-31, 2026-11-01
     SQ-2 reports in git :sq2, 2026-10-31, 2026-11-01
-    section v-rig
-    VR-1 the module ontology v-rig :vr1, 2026-11-08, 2026-11-09
-    VR-2 the synthetic mini-rig :vr2, 2026-11-08, 2026-11-09
-    VR-3 the tracked mapping scheme and :active, vr3, 2026-11-08, 2026-11-09
     section vocabulary-temporal-binding
     VTB-1 ADR-A85 proposal :vtb1, 2026-09-25, 2026-09-26
     VTB-2 12 fixtures 11 :vtb2, 2026-09-25, 2026-09-26
@@ -852,13 +864,13 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 3 | pushed | VR-1, VR-2, VR-3 |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 10 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
