@@ -13,7 +13,7 @@ uv = "0.13"
 _.python.venv = { path = ".venv", create = true }
 MAVEN_OPTS = "-Dstyle.color=always"
 # Вивід, vyd, the knowledge index and work board tooling (ADR-A152). Moved deliberately, like any pinned tool.
-VYVID_VERSION = "0.2.19"
+VYVID_VERSION = "0.2.23"
 PYTHONUNBUFFERED = "1"
 
 [tasks.bootstrap]
@@ -524,7 +524,7 @@ run = "python tools/vyd.py"
 
 [tasks."check:knowledge"]
 description = "Check the knowledge base is consistent against the store vyd build writes, and LATTICE's own extractor for quanta and owners (ADR-A134, ADR-A152). Skips where vyd is missing"
-run = "python -m pytest tools/knowledge/test_quanta.py tools/knowledge/test_extractor.py tools/knowledge/test_knowledge_base.py -q"
+run = "python -m pytest tools/knowledge/test_extractor.py tools/knowledge/test_knowledge_base.py -q"
 
 [tasks."check:agent-guidance"]
 description = "Check AGENTS.md's Where things are table is current, Copilot's file matches AGENTS.md, every skill is well formed and listed, the plugin marketplace is right, and every link resolves (ADR-A117)"

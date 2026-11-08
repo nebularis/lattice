@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 15 branches, the units' own state from this tree, the newest board day 2026-11-08.
+Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-08.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ Built from the status records on 15 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, fml/isabelle-layers, pvs-fml-foo, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -67,9 +67,9 @@ Built from the status records on 15 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
-| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · built 2026-11-08 on docs/placement-vehicles-structure | VR-1 | 7 built | docs/placement-vehicles-structure |
+| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure | VR-1 | 7 built | claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on air/asset-classes, claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built | vyvid-quanta-builtin |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -488,6 +488,7 @@ gantt
     VM-6 the moves :vm6, 2026-11-05, 2026-11-06
     VM-7 cloud sessions the pin at :vm7, 2026-11-06, 2026-11-07
     VM-8 cloud setup within its limit :vm8, 2026-11-06, 2026-11-07
+    VM-9 the quanta by own :vm9, 2026-11-08, 2026-11-09
 ```
 
 ```mermaid
@@ -866,12 +867,14 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 10 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 15 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
+| `vyvid-quanta-builtin` | 2026-11-08 | 2 | pushed | VM-9 |
 
 <!-- END GENERATED work-board-branches -->
 

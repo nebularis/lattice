@@ -43,13 +43,25 @@ SL = { pattern = '[A-Z]{2,5}-(?![QD]\d)[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*', d
 kind = "owl-terms"
 paths = ["code:ontology/**/*.ttl"]
 
-# LATTICE's own extractor, run by `vyd build` once this file is trusted: the architectural quanta of the data and
-# software views, and the catalogue's units, so an Owner cell names a module (ADR-A152 decision 1).
+# The repository catalogue (ADR-A121) is read by Вивід, which answers where a module or an area is by name.
+[project.catalogue]
+file = "code:repository-catalogue.md"
+module_root = "ontology"
+
+# The architectural quanta of the data and software views (ADR-A134 addendum of 2026-10-25) are Вивід's own kind, which takes its
+# modules from the catalogue, so a project that reads LATTICE gets them with no command to run (plan vyvid-migration, VM-9).
 [[project.extractors]]
-kind = "lattice-quanta"
-command = ["mise", "exec", "--", "python", "tools/knowledge/extractor.py"]
+kind = "quanta"
 paths = ["code:ontology/**/*.ttl", "code:deployment/**/docker-compose.yml"]
-code = ["code:tools/knowledge/extractor.py", "code:tools/knowledge/quanta.py", "code:tools/lattice_repo_catalogue.py", "code:repository-catalogue.md"]
+skip_kinds = ["scaffold"]
+
+# LATTICE's own extractor, run by `vyd build` once this file is trusted: the catalogue's units, so an Owner cell names a module,
+# a tool package, a root or a documentation area (ADR-A152 decision 1).
+[[project.extractors]]
+kind = "lattice-units"
+command = ["mise", "exec", "--", "python", "tools/knowledge/extractor.py"]
+paths = ["code:repository-catalogue.md"]
+code = ["code:tools/knowledge/extractor.py", "code:tools/lattice_repo_catalogue.py", "code:repository-catalogue.md"]
 
 [[project.recipes]]
 name = "sparql-for-studio"
