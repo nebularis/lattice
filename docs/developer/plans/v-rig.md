@@ -4,7 +4,7 @@
 
 **Unit ID:** `v-rig`
 **Prefix:** VR
-**Status:** proposed 2026-11-07 and approved by the maintainer the same day, from a design briefed in chat and the answers to VR-Q1 to VR-Q11. VR-1 is picked up.
+**Status:** proposed 2026-11-07 and approved by the maintainer the same day, from a design briefed in chat and the answers to VR-Q1 to VR-Q11. Built 2026-11-08, VR-1 to VR-7, each with its Validation Pack, awaiting review.
 **ADRs:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08, for the standalone module `ontology/v-rig/` ([ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) decision 1, [ADR-A129](../../architecture/decisions/ADR-A129-one-release-for-the-substrate.md)'s addendum of 2026-10-26, [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md)'s addendum of 2026-10-21)
 **Builds on:** the Wording layer ([ADR-A112](../../architecture/decisions/ADR-A112-wording-layer.md)), MORK mappings over RDF sources ([`tools/mork_rdf`](../../../tools/mork_rdf/README.md), CAP-99, MEC-92), the formal-methods tracks ([lifecycle](../formal-methods-lifecycle.md)), and the [phase 7 plan](applied-insurance-reference-phase-7.md)'s programme model, AIR-7.0 and AIR-7.1
 

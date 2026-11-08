@@ -79,13 +79,13 @@ def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=
     if checks is not None:
         (out / "p1" / "shapes").mkdir(parents=True, exist_ok=True)
         for layer, text in sorted(checks.shape_reports.items()):
-            (out / "p1" / "shapes" / f"{layer.replace('/', '-')}.txt").write_text(text, encoding="utf-8")
-        (out / "p1" / "competency.json").write_text(json.dumps(checks.competency, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            (out / "p1" / "shapes" / f"{layer.replace('/', '-')}.txt").write_text(text, encoding="utf-8", newline="\n")
+        (out / "p1" / "competency.json").write_text(json.dumps(checks.competency, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     if projection is not None:
         (out / "p1").mkdir(exist_ok=True)
-        (out / "p1" / "source.ttl").write_text(canonical_turtle(projection.source), encoding="utf-8")
-        (out / "p1" / "layers.ttl").write_text(canonical_turtle(projection.layers), encoding="utf-8")
-        (out / "p1" / "compiled.sparql").write_text(projection.compiled_text + "\n", encoding="utf-8")
+        (out / "p1" / "source.ttl").write_text(canonical_turtle(projection.source), encoding="utf-8", newline="\n")
+        (out / "p1" / "layers.ttl").write_text(canonical_turtle(projection.layers), encoding="utf-8", newline="\n")
+        (out / "p1" / "compiled.sparql").write_text(projection.compiled_text + "\n", encoding="utf-8", newline="\n")
     written = {
         "ir": out / "ir.ttl",
         "blind": out / "blind.ttl",
@@ -93,15 +93,15 @@ def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=
         "run": out / "run.json",
         "deny-terms": out / "deny-terms",
     }
-    written["ir"].write_text(canonical_turtle(graph), encoding="utf-8")
-    written["blind"].write_text(canonical_turtle(blind(graph)), encoding="utf-8")
-    written["findings"].write_text(canonical_turtle(findings_graph(graph)), encoding="utf-8")
-    written["run"].write_text(json.dumps(run_info, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    written["ir"].write_text(canonical_turtle(graph), encoding="utf-8", newline="\n")
+    written["blind"].write_text(canonical_turtle(blind(graph)), encoding="utf-8", newline="\n")
+    written["findings"].write_text(canonical_turtle(findings_graph(graph)), encoding="utf-8", newline="\n")
+    written["run"].write_text(json.dumps(run_info, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     written["report"] = out / "report.md"
-    written["report"].write_text(render(graph, run_info), encoding="utf-8")
+    written["report"].write_text(render(graph, run_info), encoding="utf-8", newline="\n")
     header = ["# Generated from a rig by the v-rig tool. Feed it to the deny-terms check with",
               f"# LATTICE_DENY_TERMS={written['deny-terms']} mise run check:deny-terms", ""]
-    written["deny-terms"].write_text("\n".join(header + deny_terms(graph)) + "\n", encoding="utf-8")
+    written["deny-terms"].write_text("\n".join(header + deny_terms(graph)) + "\n", encoding="utf-8", newline="\n")
     if projection is not None:
         written.update({"p1 source": out / "p1" / "source.ttl", "p1 layers": out / "p1" / "layers.ttl", "p1 compiled": out / "p1" / "compiled.sparql"})
     log.info("wrote %d file(s) under %s", len(written), out)

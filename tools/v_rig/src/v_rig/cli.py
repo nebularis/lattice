@@ -92,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
             p2_module.write_theory(theory_text, out)
             built, output = p2_module.build(out)
             record["p2"]["built"] = built
-            (out / "p2" / "build.log").write_text(output, encoding="utf-8")
+            (out / "p2" / "build.log").write_text(output, encoding="utf-8", newline="\n")
             if not built:
                 print(f"v_rig: the P2 build failed, see {out / 'p2' / 'build.log'}", file=sys.stderr)
         written = write_outputs(rig, graph, out, record, projection=projection, checks=checks)

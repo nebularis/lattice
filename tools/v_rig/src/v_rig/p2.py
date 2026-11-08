@@ -150,8 +150,8 @@ def write_theory(text: str, out: Path) -> list[Path]:
     directory = out / "p2"
     directory.mkdir(parents=True, exist_ok=True)
     theory_path = directory / f"{THEORY}.thy"
-    theory_path.write_text(text, encoding="utf-8")
-    (directory / "ROOT").write_text(root_file(), encoding="utf-8")
+    theory_path.write_text(text, encoding="utf-8", newline="\n")
+    (directory / "ROOT").write_text(root_file(), encoding="utf-8", newline="\n")
     shutil.copyfile(ledger_theory(), directory / "Ledger.thy")
     return [theory_path, directory / "ROOT", directory / "Ledger.thy"]
 

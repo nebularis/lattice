@@ -75,8 +75,8 @@ def write_vectors(found: dict[str, dict], out: Path) -> list[Path]:
     for name, document in sorted(found.items()):
         path = out / "p3" / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        path.write_text(json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         written.append(path)
     index = out / "p3" / "index.json"
-    index.write_text(json.dumps({"vectorsFormat": VECTOR_SCHEMA_VERSION, "vectors": sorted(found)}, indent=2) + "\n", encoding="utf-8")
+    index.write_text(json.dumps({"vectorsFormat": VECTOR_SCHEMA_VERSION, "vectors": sorted(found)}, indent=2) + "\n", encoding="utf-8", newline="\n")
     return written + [index]
