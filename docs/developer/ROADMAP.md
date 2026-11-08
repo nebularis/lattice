@@ -48,7 +48,7 @@ Built from the status records on 15 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 4 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, pvs-fml-foo, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -568,7 +568,8 @@ gantt
     section ledger
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
-    LG-2 :lg2, 2026-10-27, 2026-10-28
+    LG-2 the runtime document :lg2, 2026-10-27, 2026-11-08
+    LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     section normative-rule-substrate
     NRS-4 Deontic extension of :done, nrs4, 2026-09-30, 2026-10-01
     NRS-5 Closure declarations A-105 :done, nrs5, 2026-10-10, 2026-10-11
@@ -803,6 +804,10 @@ Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and
 
 **A design pass on 2026-11-07** briefed LG-4, ES-3 and ES-8 further and raised ES-Q10 and WPG-Q2, from an external Isabelle development of a reinsurance inurement waterfall read as background ([sketch](sketches/waterfall-proofs-and-the-generality-gap.md)). No slice changed state. LG-4 takes conservation with an explicit residual term, which settles the open half of TD-95 in an instance, the allocation axioms corrected from five to four with monotonicity dropped, the merge rule as declared data never a default, and attribution across parties as a second conservation law. ES-3 takes the separation of uniqueness from computability, the positional total order as the condition ADR-A130 decision 5's independence-of-order bullet rests on, a unit reading only its declared predecessors as load-bearing, and a conformance case for schedule completeness, since conservation cannot see a unit that never ran. ES-8 carries a withdrawal: that development bears nothing on decision 5's criterion for admitting a cyclic component, because its counterexample solves a cycle over determined values while decision 5's least fixpoint is over the information order. The ledger does not gate the ensemble as a unit, only LG-2 does, and the ensemble's own head gate is C4 (section 8). WPG-Q4 was answered the same day: an applied development's general core is rebuilt under `tools/proofs/<layer>/` and the development itself stays outside the repository, now ADR-A-FM2's addendum, with LG-7 the first slice under it.
 
+**LG-7 was built on 2026-11-08**, on machine S. `tools/proofs/ledger/` proves sixteen ledger laws under the gate from definitions in section 10 of the ledger README, among them the four allocation axioms for the proportional and priority rules, conservation with a residual over the account tree, settlement at one position independent of the order of proposal, and exact rounding by giving the residual to the first keys in order. LG-2's laws as tests and LG-4's conservation shape can cite them. WPG-Q1 was answered the same day, (a) holds, so the uniqueness argument is general once the body is a parameter that reads only its declared predecessors.
+
+**LG-2 was built on 2026-11-08**, on machine S, after LG-7. Ledger has a runtime document: named account instances, passes, postings at the drawn account only with an effective and a recorded position, balance records, merge records with their grants, and checkpoints. Sixteen SHACL-SPARQL shapes check recorded values against the laws LG-7 proved, among them the fold over a subtree, availability as the least balance along the path, the credit ceiling and a proportional merge's conservation, and a pass of 5,000 postings and 10,000 balance records validates in under a minute on rdflib. A periodic amount is one account per period (PDD-15). The `owl:rational` probe found no store compares the literal by value (TSD-70), so an exact share is two integers. Two questions are open for the maintainer, LG-Q9 on the running balance under post-once and LG-Q10 on a reinstatement under a capacity pool.
+
 | | Ensemble | Ledger |
 |---|---|---|
 | Prefix and home | `ens:`, `ontology/ensemble/` | `ldg:`, `ontology/ledger/` |
@@ -860,13 +865,13 @@ Branches with a commit `main` lacks, from the same reading.
 
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
-| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 9 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
+| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 10 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
-| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4, LG-2 |
+| `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 
 <!-- END GENERATED work-board-branches -->
@@ -924,7 +929,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 107 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

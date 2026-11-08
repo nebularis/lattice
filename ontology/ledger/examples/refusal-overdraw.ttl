@@ -46,7 +46,15 @@ ex:proposal-2 rdfs:comment "Requests 70." .
 # No ldg:Grant exists for either proposal: under ldg:Refuse, a merge that
 # cannot grant every proposal in full grants none of them.
 ex:merge-1 a ldg:MergeRecord ;
-    ldg:onAccount ex:tight-account ; ldg:forOwner ex:owner ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-tight-account ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:availableBefore "100"^^xsd:decimal ;
     ldg:refusalReason ex:overdrawn ;
     rdfs:comment "60 + 70 = 130 exceeds the 100 available. No grant. No posting follows." .
+
+# ==== The account instances and the passes ===================================
+
+ex:account-tight-account a ldg:Account ;
+    ldg:ofDefinition ex:tight-account ; ldg:forOwner ex:owner .
+ex:owner a ex:OwnerKind .
+ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .

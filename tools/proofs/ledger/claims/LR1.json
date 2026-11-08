@@ -1,0 +1,13 @@
+{
+  "subject": "LR1",
+  "statedAs": "Rounding.floor_split_conserves",
+  "statementDigest": "sha256:7deeeca41b2c07cee1d3c5b951a0ee4e706080990b0797af346c73653fcb1007",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

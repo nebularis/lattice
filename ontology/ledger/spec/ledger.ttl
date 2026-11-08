@@ -45,14 +45,20 @@ dct:description a owl:AnnotationProperty .
 
 ldg:AccountDefinition a owl:Class ;
     rdfs:comment "An amount consumed and restored, as the terms state it." ;
-    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always; state a parent, a reset, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always; state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
     fnd:utility "Names, by class, who may own this account: an instrument, an authority, an ensemble such as a programme or a vehicle, or any other fnd:PersistentIdentity. State one value for each kind the terms allow." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range rdfs:Class .
+
+ldg:closingRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The recurrence at whose boundaries the account's book closes and a checkpoint is written." ;
+    fnd:utility "Sets the trade between storage and read cost per account: a heavily drawn aggregate closes often and a quiet one seldom. A close is keyed on the recorded axis, so it seals the postings recorded by then. Leave unset for an account whose history is folded whole." ;
+    rdfs:domain ldg:AccountDefinition ;
+    rdfs:range qnt:Recurrence .
 
 ldg:conversionMethod a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How a draw in another value space than the account's is converted." ;
@@ -76,7 +82,7 @@ ldg:keyDimension a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The dimension that derives one account per key value." ;
     fnd:utility "States that this definition's amount applies once per key value (a site, a borrower), each key's account derived independently on the first draw that names it. Point at a skos:ConceptScheme naming the key values, or at a qnt:ValueSpace where the key is itself a quantity. Leave unset for an account with no key." ;
     rdfs:domain ldg:AccountDefinition ;
-    rdfs:range skos:ConceptScheme .
+    rdfs:range [ a owl:Class ; owl:unionOf ( skos:ConceptScheme qnt:ValueSpace ) ] .
 
 ldg:mergeRule a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "What happens when several draws at one position together exceed availability." ;
@@ -90,9 +96,15 @@ ldg:partOf a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range ldg:AccountDefinition .
 
+ldg:periodRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The recurrence whose periods each have an account of their own." ;
+    fnd:utility "States that the amount applies once per period (an annual seat licence, a quarterly support-hours bundle). The period key of an account is the bin of this recurrence that a draw's effective position falls in, computed at write and never supplied by the draw, and a draw whose effective position cannot be binned is Undetermined. One recurrence holds along a path. Leave unset for an amount that never renews." ;
+    rdfs:domain ldg:AccountDefinition ;
+    rdfs:range qnt:Recurrence .
+
 ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "When the account returns to its stated amount." ;
-    fnd:utility "States a recurrence (an annual seat licence, a quarterly support-hours bundle) at whose boundary the account resets. Leave unset for an account that never resets." ;
+    rdfs:comment "Deprecated: when the account was to return to its stated amount." ;
+    fnd:utility "Use ldg:periodRecurrence. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead (PDD-15). Removed with Behaviour's allowance terms (LG-3)." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
 
@@ -119,3 +131,5 @@ ldg:unitOfAccount a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "Names the value space an account's amounts are stated and posted in. The space must be extensive (qnt:additivity qnt:Extensive) with qnt:Sum and qnt:Difference capabilities, since Ledger holds only amounts whose parts add to the whole (§1)." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:ValueSpace .
+
+ldg:resetRecurrence owl:deprecated true .

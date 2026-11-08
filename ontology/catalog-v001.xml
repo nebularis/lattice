@@ -53,6 +53,7 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.0" uri="applied/insurance/peril/spec/peril.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity" uri="applied/insurance/peril/vocab/peril-intensity.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab" uri="applied/insurance/peril/vocab/peril-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.0" uri="ledger/spec/ledger-runtime.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.0" uri="ledger/vocab/ledger-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0" uri="ledger/spec/ledger.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/party-vocab/0.21.0" uri="party/vocab/party-vocab.ttl"/>
@@ -76,6 +77,7 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.0" uri="wording/vocab/wording-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0" uri="wording/spec/wording.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/ledger" uri="ledger/spec/ledger.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/ledger-runtime" uri="ledger/spec/ledger-runtime.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/ledger-vocab" uri="ledger/vocab/ledger-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party" uri="party/spec/party.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/party-vocab" uri="party/vocab/party-vocab.ttl"/>

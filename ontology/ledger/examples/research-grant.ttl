@@ -71,22 +71,23 @@ ex:staff-spend-grant a ldg:Grant ;
     ldg:forProposal ex:staff-spend-proposal ;
     ldg:requestedValue "90000"^^xsd:decimal ; ldg:grantedValue "90000"^^xsd:decimal .
 ex:staff-spend-merge a ldg:MergeRecord ;
-    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-staff-budget ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
     ldg:grant ex:staff-spend-grant .
 ex:staff-spend-posting a ldg:Posting ;
-    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-staff-budget ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "90000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:staff-spend-merge , ex:staff-spend-grant .
 ex:staff-balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:staff-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-staff-budget ;
+    ldg:inPass ex:pass-1 ;
     ldg:remainingValue "30000"^^xsd:decimal ; ldg:availableValue "30000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:staff-spend-posting .
 ex:grant-balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-grant-budget ;
+    ldg:inPass ex:pass-1 ;
     ldg:remainingValue "110000"^^xsd:decimal ; ldg:availableValue "110000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:staff-spend-posting .
 
@@ -97,39 +98,56 @@ ex:equipment-spend-grant a ldg:Grant ;
     ldg:forProposal ex:equipment-spend-proposal ;
     ldg:requestedValue "50000"^^xsd:decimal ; ldg:grantedValue "50000"^^xsd:decimal .
 ex:equipment-spend-merge a ldg:MergeRecord ;
-    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-equipment-budget ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
     ldg:grant ex:equipment-spend-grant .
 ex:equipment-spend-posting a ldg:Posting ;
-    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-equipment-budget ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "50000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-spend-merge , ex:equipment-spend-grant .
 ex:equipment-balance-2 a ldg:BalanceRecord ;
-    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-equipment-budget ;
+    ldg:inPass ex:pass-2 ;
     ldg:remainingValue "30000"^^xsd:decimal ; ldg:availableValue "30000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-spend-posting .
 ex:grant-balance-2 a ldg:BalanceRecord ;
-    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-grant-budget ;
+    ldg:inPass ex:pass-2 ;
     ldg:remainingValue "60000"^^xsd:decimal ; ldg:availableValue "60000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-spend-posting .
 
 # ==== Position 3: unspent equipment funds returned, capped at the ceiling ====
 
 ex:equipment-return-posting a ldg:Posting ;
-    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-equipment-budget ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Credit ; ldg:amountValue "50000"^^xsd:decimal ;
     rdfs:comment "55,000 claimed as unspent, granted only the 50,000 that reaches the ceiling (80,000)." .
 ex:equipment-balance-3 a ldg:BalanceRecord ;
-    ldg:onAccount ex:equipment-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-equipment-budget ;
+    ldg:inPass ex:pass-3 ;
     ldg:remainingValue "80000"^^xsd:decimal ; ldg:availableValue "80000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-return-posting .
 ex:grant-balance-3 a ldg:BalanceRecord ;
-    ldg:onAccount ex:grant-budget ; ldg:forOwner ex:institution ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-grant-budget ;
+    ldg:inPass ex:pass-3 ;
     ldg:remainingValue "110000"^^xsd:decimal ; ldg:availableValue "110000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-return-posting .
+
+# ==== The account instances and the passes ===================================
+
+ex:account-equipment-budget a ldg:Account ;
+    ldg:ofDefinition ex:equipment-budget ; ldg:forOwner ex:institution ;
+    ldg:partOfAccount ex:account-grant-budget .
+ex:account-grant-budget a ldg:Account ;
+    ldg:ofDefinition ex:grant-budget ; ldg:forOwner ex:institution .
+ex:account-staff-budget a ldg:Account ;
+    ldg:ofDefinition ex:staff-budget ; ldg:forOwner ex:institution ;
+    ldg:partOfAccount ex:account-grant-budget .
+ex:institution a ex:Grantee .
+ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
+ex:pass-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer .

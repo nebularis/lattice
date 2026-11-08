@@ -60,39 +60,50 @@ ex:proposal-3 rdfs:comment "The third proposal, 40 units." .
 ex:grant-1 a ldg:Grant ;
     ldg:forProposal ex:proposal-1 ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "34"^^xsd:decimal ;
-    ldg:grantedProportion "1/3"^^owl:rational .
+    ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
 ex:grant-2 a ldg:Grant ;
     ldg:forProposal ex:proposal-2 ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
-    ldg:grantedProportion "1/3"^^owl:rational .
+    ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
 ex:grant-3 a ldg:Grant ;
     ldg:forProposal ex:proposal-3 ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
-    ldg:grantedProportion "1/3"^^owl:rational .
+    ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
 
 ex:merge-1 a ldg:MergeRecord ;
-    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-delegated-aggregate ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:availableBefore "100"^^xsd:decimal ;
     ldg:grant ex:grant-1 , ex:grant-2 , ex:grant-3 .
 
 ex:posting-1 a ldg:Posting ;
-    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-delegated-aggregate ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-1 .
 ex:posting-2 a ldg:Posting ;
-    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-delegated-aggregate ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-2 .
 ex:posting-3 a ldg:Posting ;
-    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-delegated-aggregate ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "3"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-3 .
 
 ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:delegated-aggregate ; ldg:forOwner ex:authority ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-delegated-aggregate ;
+    ldg:inPass ex:pass-1 ;
     ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:posting-1 , ex:posting-2 , ex:posting-3 .
+
+# ==== The account instances and the passes ===================================
+
+ex:account-delegated-aggregate a ldg:Account ;
+    ldg:ofDefinition ex:delegated-aggregate ; ldg:forOwner ex:authority .
+ex:authority a ex:Authority .
+ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .

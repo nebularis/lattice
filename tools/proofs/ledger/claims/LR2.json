@@ -1,0 +1,13 @@
+{
+  "subject": "LR2",
+  "statedAs": "Rounding.to_first_sums_exactly, to_first_is_the_same_in_every_order",
+  "statementDigest": "sha256:ae1a31d8b6648b0d70c4b477758db6b57848c4e4e9bb2c4f3991a980ef3cbb0d",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": "LD4",
+  "statedAs": "Draws.a_purpose_debits_the_counting_path_in_the_same_draw",
+  "statementDigest": "sha256:86ccc14719c4efb226b862d71d4225a63972ca32ee3641e0ac9143db1c7ff96b",
+  "method": "Proof",
+  "scope": "EveryParentFunction",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

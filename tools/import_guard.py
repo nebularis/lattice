@@ -87,7 +87,7 @@ def layer_files(root: Path) -> Iterator[tuple[str, Path]]:
 
 def import_violations(layer: str, path: Path) -> Iterator[Violation]:
     graph = Graph().parse(path, format="turtle")
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
     for target in sorted(str(t) for t in graph.objects(None, OWL.imports)):
         match = LATTICE_IRI.match(target)
         if match and forbidden(layer, match.group(1)):
@@ -96,7 +96,7 @@ def import_violations(layer: str, path: Path) -> Iterator[Violation]:
 
 
 def name_violations(layer: str, path: Path) -> Iterator[Violation]:
-    for number, text in enumerate(path.read_text().splitlines(), 1):
+    for number, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         for match in LATTICE_IRI.finditer(text):
             if forbidden(layer, match.group(1)):
                 yield Violation(path, number, layer, match.group(0), "names")
@@ -113,7 +113,7 @@ def standalone_violations(root: Path) -> Iterator[Violation]:
         graphs = {path: Graph().parse(path, format="turtle") for path in paths}
         own = {m.group(1) for g in graphs.values() for v in g.objects(None, OWL.versionIRI) if (m := LATTICE_IRI.match(str(v)))}
         for path, graph in graphs.items():
-            lines = path.read_text().splitlines()
+            lines = path.read_text(encoding="utf-8").splitlines()
             for target in sorted(str(t) for t in graph.objects(None, OWL.imports)):
                 match = LATTICE_IRI.match(target)
                 if match and match.group(1) not in own and match.group(1) not in declared:
