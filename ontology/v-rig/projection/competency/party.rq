@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX pty: <https://www.nebularis.org/neuro-semantic/lattice/party#>
+PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+
+# question shares: Which group memberships name their actor, their role and their outward share?
+SELECT ?membership ?actor ?role ?share WHERE { ?membership a pty:GroupMembership ; pty:outwardShare ?share ; pty:memberOccupancy ?occupancy . ?occupancy pty:occupiedBy ?actor ; pty:inRole ?role . }
+
+# question groups: Which participation groups are party to an instrument under a stated composition rule?
+SELECT ?group ?rule ?instrument WHERE { ?group a pty:ParticipationGroup ; pty:hasCompositionRule ?rule . ?instrument ins:party ?group . }
+
+# question delegation: Which actors act for another, where one issues and another carries the risk?
+SELECT ?delegation ?from ?to WHERE { ?delegation a pty:Delegation ; pty:delegatesFrom ?from ; pty:delegatesTo ?to . }

@@ -109,10 +109,11 @@ mm:Map_Lines a mork:DataMapping , mork:Lookup ; mork:mappingScheme mm:Layers ;
 mm:Map_Element a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
     mork:mappingFor mm:C_BodyNode ; mork:deferredMapping mm:Cls_Element ;
     mork:conceptFQNameTemplate "element/{$vrig:locator}" ;
-    mork:compositeNarrowerMapping mm:Map_ObjectId , mm:Map_RankKey , mm:Map_ElementType , mm:Map_ParentWording , mm:Map_ParentElement , mm:Map_TextPart .
+    mork:compositeNarrowerMapping mm:Map_ObjectId , mm:Map_ElementType , mm:Map_ParentWording , mm:Map_ParentElement , mm:Map_TextPart .
 
+# An element's rank key is not written. Wording wants a string and the representation's ordinal is an integer, and a
+# mapping carries a value as the source gives it, so the row would state a type the layer refuses.
 mm:Map_ObjectId a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:objectId ; mork:dataRef "vrig:number" .
-mm:Map_RankKey a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:rankKey ; mork:dataRef "vrig:ordinal" .
 
 mm:Map_ElementType a mork:DataMapping , mork:Lookup ; mork:mappingScheme mm:Layers ;
     mork:exactRBoxMatch wrd:elementType ; mork:exactTBoxMatch skos:Concept ;

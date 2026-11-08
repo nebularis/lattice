@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+PREFIX wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+
+# question parties: Which instruments name their parties?
+SELECT ?instrument ?party WHERE { ?instrument a ins:Instrument ; ins:party ?party . }
+
+# question wording: Which instruments are expressed in a wording?
+SELECT ?instrument ?wording WHERE { ?instrument a ins:Instrument ; ins:expressedIn ?wording . ?wording a wrd:Wording . }
+
+# question limit: Which instruments state an amount as their limit, an account definition they are bound by?
+SELECT ?instrument ?account WHERE { ?instrument a ins:Instrument ; ?p ?account . ?account a ldg:AccountDefinition . }
+
+# question attachment: Which instruments state where they attach, a quantity of their own?
+SELECT ?instrument ?quantity WHERE { ?instrument a ins:Instrument ; ?p ?quantity . ?quantity a qnt:Quantity . }
+
+# question follows-form: Which instruments stand in a relation to another instrument, such as following its form or sitting above it?
+SELECT ?instrument ?other WHERE { ?instrument a ins:Instrument ; ?p ?other . ?other a ins:Instrument . FILTER (?instrument != ?other) }
+
+# question definitions: Which definitions are bound in an instrument and expressed in an element of its wording?
+SELECT ?definition ?instrument ?element WHERE { ?definition a ins:Definition ; ins:boundIn ?instrument ; ins:alsoExpressedIn ?element . }
+
+# question terms: Which terms, other than definitions, are bound in an instrument?
+SELECT ?term ?instrument WHERE { ?term ins:boundIn ?instrument . FILTER NOT EXISTS { ?term a ins:Definition } }

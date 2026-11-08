@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+
+# question bounded-scopes: Which temporally scoped things have a scope with both of its bounds?
+SELECT ?thing ?from ?to WHERE { ?thing fnd:hasTemporalScope ?scope . ?scope fnd:validFrom ?from ; fnd:validTo ?to . }
+
+# question instrument-period: Which instruments have a temporal scope, the period they are in force for?
+SELECT ?instrument ?scope WHERE { ?instrument a ins:Instrument ; fnd:hasTemporalScope ?scope . }
+
+# question identities: Which versioned things name their persistent identity?
+SELECT ?thing ?identity WHERE { ?thing fnd:hasIdentity ?identity . }

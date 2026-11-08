@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+
+# question amounts: Which account definitions state their amount as a quantity with a value?
+SELECT ?account ?value WHERE { ?account a ldg:AccountDefinition ; ldg:statedAmount ?amount . ?amount qnt:numericValue ?value . }
+
+# question units: Which account definitions state their unit of account?
+SELECT ?account ?unit WHERE { ?account a ldg:AccountDefinition ; ldg:unitOfAccount ?unit . }
+
+# question parts: Which account definitions are part of another, a sublimit within a limit?
+SELECT ?part ?whole WHERE { ?part a ldg:AccountDefinition ; ldg:partOf ?whole . }
+
+# question owners: Which account definitions say what kind of owner they admit?
+SELECT ?account ?kind WHERE { ?account a ldg:AccountDefinition ; ldg:admitsOwnerKind ?kind . }

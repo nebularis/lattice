@@ -135,7 +135,7 @@ vrig:digest a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:range xsd:string .
 
 vrig:documentId a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "The id of the document, programme or events file a locator's node was read from. For the events file it is the string events." ;
+    rdfs:comment "The id of the document, programme or events file a locator's node was read from. For the events file it is the string events. For a finding about the encoding rather than about a rig, such as a competency query with no answer, it is the path within the module of the tracked file that asked." ;
     rdfs:domain vrig:Locator ;
     rdfs:range xsd:string .
 

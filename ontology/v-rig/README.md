@@ -647,7 +647,7 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 #### `vrig:documentId`
 
-**Definition.** The id of the document, programme or events file a locator's node was read from. For the events file it is the string `events`.
+**Definition.** The id of the document, programme or events file a locator's node was read from. For the events file it is the string `events`. For a finding about the encoding rather than about a rig, such as a competency query with no answer, it is the path within the module of the tracked file that asked.
 
 **Domain.** `vrig:Locator`
 

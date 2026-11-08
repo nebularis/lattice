@@ -118,7 +118,7 @@ def project(graph: Graph, extensions: list[Path] = (), *, target: Graph | None =
                 focus = URIRef(finding.focus) if finding.focus else None
                 locator = graph.value(focus, VRIG.locator) if focus is not None else None
                 message = f"{finding.code}: {finding.message}"
-                result.findings.append((VRIG.UncertainMapping, locator, None, message, focus))
+                result.findings.append((VRIG.UncertainMapping, locator, finding.code, message, focus))
     result.compiled_text = "\n\n".join(texts)
     for fact in graph.subjects(RDF.type, VRIG.Fact):
         key = str(graph.value(fact, VRIG.key))

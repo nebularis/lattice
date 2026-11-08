@@ -73,8 +73,13 @@ def deny_terms(graph: Graph) -> list[str]:
     return sorted(terms, key=lambda t: (-len(t), t))
 
 
-def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=None) -> dict[str, Path]:
+def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=None, checks=None) -> dict[str, Path]:
     out.mkdir(parents=True, exist_ok=True)
+    if checks is not None:
+        (out / "p1" / "shapes").mkdir(parents=True, exist_ok=True)
+        for layer, text in sorted(checks.shape_reports.items()):
+            (out / "p1" / "shapes" / f"{layer.replace('/', '-')}.txt").write_text(text, encoding="utf-8")
+        (out / "p1" / "competency.json").write_text(json.dumps(checks.competency, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if projection is not None:
         (out / "p1").mkdir(exist_ok=True)
         (out / "p1" / "source.ttl").write_text(canonical_turtle(projection.source), encoding="utf-8")

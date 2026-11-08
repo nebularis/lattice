@@ -14,6 +14,7 @@ from rdflib import OWL, Graph, URIRef
 
 from . import canon
 from . import p1 as p1_module
+from . import p1_checks
 from .lift import RunInfo, lift, mark_readings
 from .out import OutError, counts, repository_root, resolve_out, write_outputs
 from .rig import RigError, read_rig
@@ -43,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", help="the output directory, default .local/v-rig/<rig digest>/ in the checkout")
     parser.add_argument("--extension", action="append", default=[], metavar="TTL",
                         help="a rig's extension graph, its reference data and its own mapping schemes, run after the tracked scheme. Repeatable")
+    parser.add_argument("--no-reasoner", action="store_true", help="skip the consistency check, which is then a reasoner-unavailable finding")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(levelname)s %(message)s", stream=sys.stderr)
@@ -54,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
         graph = lift(rig, info)
         projection = p1_module.project(graph, [Path(e) for e in args.extension])
         mark_readings(graph, projection.reading_keys)
-        p1_module.add_findings(graph, URIRef(canon.run_iri(rig.digest)), projection.findings)
+        checks = p1_checks.check_all(graph, projection.layers, reasoner=not args.no_reasoner)
+        p1_module.add_findings(graph, URIRef(canon.run_iri(rig.digest)), projection.findings + checks.findings)
         record = {
             "rig_digest": rig.digest, "format_version": rig.format_version, "checkout_commit": info.checkout_commit,
             "substrate_release": info.substrate_release, "vocabulary_version": info.vocabulary_version,
@@ -62,9 +65,10 @@ def main(argv: list[str] | None = None) -> int:
             "documents": [d.id for d in rig.documents], "programmes": [p.id for p in rig.programmes],
             "events": len(rig.events.events) if rig.events else 0, "counts": counts(graph),
             "p1": {"reading_keys": list(projection.reading_keys), "mapped_keys": sorted(projection.mapped_keys),
-                   "compile_findings": projection.compile_findings, "layer_triples": len(projection.layers)},
+                   "compile_findings": projection.compile_findings, "layer_triples": len(projection.layers),
+                   "consistent": checks.consistent, "competency": checks.competency},
         }
-        written = write_outputs(rig, graph, out, record, projection=projection)
+        written = write_outputs(rig, graph, out, record, projection=projection, checks=checks)
     except (RigError, OutError) as error:
         print(f"v_rig: {error}", file=sys.stderr)
         return 2
