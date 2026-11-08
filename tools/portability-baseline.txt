@@ -12,7 +12,6 @@ tools/bump_version.py 2
 tools/config_studio_stack.py 7
 tools/extract_bumped.py 1
 tools/guardrail_scan.py 1
-tools/import_guard.py 3
 tools/knowledge/test_knowledge_base.py 2
 tools/lattice_repo_catalogue.py 1
 tools/literate_migration_check.py 1
