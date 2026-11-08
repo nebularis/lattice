@@ -93,7 +93,7 @@ No action needed on E1 until one of those two clears.
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | planned | an ADR-A-FM2 addendum, one session that is not a layer's |
+| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | planned | the ADR-A-FM2 addendum of 2026-11-08, drafted and proposed, one session that is not a layer's |
 | FME-1.0 | home, generation tooling | built 2026-10-09 |  |
 | FME-1.1 | the kernel, for real | built 2026-10-06, folded into FME-1.0's pass |  |
 | FME-1.2 | rounding and residual theorem | dropped 2026-10-07, from this track's E1 — its real home is FME-3/E4, after track B's B4 (see Log, ) | track B's B4, which waits on CCS's C12 |
